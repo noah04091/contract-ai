@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 // import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
 import {
   Mail, CheckCircle, Shield, Zap, Play,
-  ArrowRight, ChevronDown, Star
+  ArrowRight, ChevronDown, Star, FolderOpen, Calendar, Search
 } from "lucide-react";
 
 const EmailUpload: React.FC = () => {
@@ -401,7 +401,7 @@ const EmailUpload: React.FC = () => {
             </div>
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>📁</span>
+                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Zentrale Verwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -411,7 +411,7 @@ const EmailUpload: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/features/fristen" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>📅</span>
+                <span className={styles.relatedIcon}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Automatische Erinnerungen</div>
                   <div className={styles.relatedDescription}>
@@ -421,7 +421,7 @@ const EmailUpload: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Analyse</div>
                   <div className={styles.relatedDescription}>

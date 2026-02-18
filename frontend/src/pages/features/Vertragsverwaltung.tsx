@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 // import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
 import {
   Search, Shield, Cloud, Tags, Clock,
-  ArrowRight, ChevronDown, FileText
+  ArrowRight, ChevronDown, FileText, Calendar, Mail
 } from "lucide-react";
 
 // Video - Auskommentiert bis Video erstellt wird
@@ -154,6 +154,7 @@ const Vertragsverwaltung: React.FC = () => {
                   <ArrowRight size={20} />
                 </Link>
                 <a href="#funktionen" className={styles.btnSecondary}>
+                  <Search size={18} />
                   Funktionen entdecken
                 </a>
               </div>
@@ -469,7 +470,7 @@ const Vertragsverwaltung: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -480,7 +481,7 @@ const Vertragsverwaltung: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>📅</span>
+                <span className={styles.relatedIcon}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>
@@ -491,7 +492,7 @@ const Vertragsverwaltung: React.FC = () => {
               </Link>
 
               <Link to="/features/email-upload" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}>📧</span>
+                <span className={styles.relatedIcon}><Mail size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>E-Mail-Upload</div>
                   <div className={styles.relatedDescription}>

@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   FileText, Shield, Zap, PenTool, CheckCircle,
-  ArrowRight, Clock, Target, ChevronDown, Layers
+  ArrowRight, Clock, Target, ChevronDown, Layers, Wrench, Sparkles
 } from "lucide-react";
 
 // Video
@@ -658,7 +658,7 @@ const Generator: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/contract-builder" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔧</span>
+                <span className={styles.relatedIcon}><Wrench size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Contract Builder</div>
                   <div className={styles.relatedDescription}>
@@ -669,7 +669,7 @@ const Generator: React.FC = () => {
               </Link>
 
               <Link to="/features/digitalesignatur" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✍️</span>
+                <span className={styles.relatedIcon}><PenTool size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
@@ -680,7 +680,7 @@ const Generator: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✨</span>
+                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>

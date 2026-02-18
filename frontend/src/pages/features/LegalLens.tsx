@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 // import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
 import {
   Eye, MousePointer, Scale, AlertTriangle,
-  ArrowRight, ChevronDown, Lightbulb, FileText, Clock, Zap
+  ArrowRight, ChevronDown, Lightbulb, FileText, Clock, Zap, Search, Sparkles
 } from "lucide-react";
 
 const LegalLens: React.FC = () => {
@@ -152,6 +152,7 @@ const LegalLens: React.FC = () => {
                   <ArrowRight size={20} />
                 </Link>
                 <a href="#funktionen" className={styles.btnSecondary}>
+                  <Eye size={18} />
                   Funktionen entdecken
                 </a>
               </div>
@@ -627,7 +628,7 @@ const LegalLens: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -638,7 +639,7 @@ const LegalLens: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✨</span>
+                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>
@@ -649,7 +650,7 @@ const LegalLens: React.FC = () => {
               </Link>
 
               <Link to="/features/vergleich" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>⚖️</span>
+                <span className={styles.relatedIcon}><Scale size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsvergleich</div>
                   <div className={styles.relatedDescription}>

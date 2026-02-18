@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   GitCompare, Shield, Zap, FileText, AlertTriangle, CheckCircle,
-  ArrowRight, Clock, Target, ChevronDown, BarChart3
+  ArrowRight, Clock, Target, ChevronDown, BarChart3, Search, Sparkles, Eye
 } from "lucide-react";
 
 // Video
@@ -648,7 +648,7 @@ const Vergleich: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -659,7 +659,7 @@ const Vergleich: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✨</span>
+                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>
@@ -670,7 +670,7 @@ const Vergleich: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>👁️</span>
+                <span className={styles.relatedIcon}><Eye size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>

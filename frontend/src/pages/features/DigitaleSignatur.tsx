@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   PenTool, CheckCircle, Mail, FileText, Shield, Zap,
-  ArrowRight, ChevronDown, Clock, AlertTriangle, Users
+  ArrowRight, ChevronDown, Clock, AlertTriangle, Users, Wrench, FolderOpen
 } from "lucide-react";
 
 // Video
@@ -669,7 +669,7 @@ const DigitaleSignatur: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📝</span>
+                <span className={styles.relatedIcon}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
@@ -680,7 +680,7 @@ const DigitaleSignatur: React.FC = () => {
               </Link>
 
               <Link to="/features/contract-builder" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔧</span>
+                <span className={styles.relatedIcon}><Wrench size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Contract Builder</div>
                   <div className={styles.relatedDescription}>
@@ -691,7 +691,7 @@ const DigitaleSignatur: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📁</span>
+                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>

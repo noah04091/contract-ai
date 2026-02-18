@@ -8,7 +8,7 @@ import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, Target, ChevronDown, ThumbsUp,
-  Languages, BarChart3, Download
+  Languages, BarChart3, Download, Sparkles, Scale
 } from "lucide-react";
 
 // Video
@@ -817,7 +817,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✨</span>
+                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsoptimierung</div>
                   <div className={styles.relatedDescription}>
@@ -828,7 +828,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
@@ -839,7 +839,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legalpulse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>⚖️</span>
+                <span className={styles.relatedIcon}><Scale size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Pulse</div>
                   <div className={styles.relatedDescription}>

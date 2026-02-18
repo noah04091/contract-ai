@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 // import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
 import {
   Wrench, Layers, MousePointer, Sparkles, FileDown, CheckCircle,
-  Shield, FileText, ArrowRight, ChevronDown, Clock, Zap, AlertTriangle
+  Shield, FileText, ArrowRight, ChevronDown, Clock, Zap, AlertTriangle, PenTool, Search
 } from "lucide-react";
 
 const ContractBuilder: React.FC = () => {
@@ -153,6 +153,7 @@ const ContractBuilder: React.FC = () => {
                   <ArrowRight size={20} />
                 </Link>
                 <a href="#funktionen" className={styles.btnSecondary}>
+                  <Layers size={18} />
                   Funktionen entdecken
                 </a>
               </div>
@@ -663,7 +664,7 @@ const ContractBuilder: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📝</span>
+                <span className={styles.relatedIcon}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
@@ -674,7 +675,7 @@ const ContractBuilder: React.FC = () => {
               </Link>
 
               <Link to="/features/digitalesignatur" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>✍️</span>
+                <span className={styles.relatedIcon}><PenTool size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
@@ -685,7 +686,7 @@ const ContractBuilder: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>

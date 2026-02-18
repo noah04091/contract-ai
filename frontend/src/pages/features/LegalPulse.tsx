@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Activity, TrendingUp, AlertTriangle, Bell, Shield, CheckCircle,
-  ArrowRight, ChevronDown, FileText, Clock, Zap
+  ArrowRight, ChevronDown, FileText, Clock, Zap, Search, Calendar, FolderOpen
 } from "lucide-react";
 
 // Video
@@ -667,7 +667,7 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -678,7 +678,7 @@ const LegalPulse: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📅</span>
+                <span className={styles.relatedIcon}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>
@@ -689,7 +689,7 @@ const LegalPulse: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📁</span>
+                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>

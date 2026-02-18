@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Wrench, Shield, Zap, FileText, AlertTriangle, CheckCircle,
-  ArrowRight, Clock, Target, ChevronDown, Sparkles
+  ArrowRight, Clock, Target, ChevronDown, Sparkles, Search, BarChart3
 } from "lucide-react";
 
 // Video
@@ -647,7 +647,7 @@ const Optimierung: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -658,7 +658,7 @@ const Optimierung: React.FC = () => {
               </Link>
 
               <Link to="/features/vergleich" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📊</span>
+                <span className={styles.relatedIcon}><BarChart3 size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsvergleich</div>
                   <div className={styles.relatedDescription}>
@@ -669,7 +669,7 @@ const Optimierung: React.FC = () => {
               </Link>
 
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📝</span>
+                <span className={styles.relatedIcon}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>

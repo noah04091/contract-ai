@@ -7,7 +7,7 @@ import Footer from "../../components/Footer";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Calendar, Clock, AlertTriangle, Mail, Shield,
-  ArrowRight, ChevronDown, Bell, FileText, Zap, Target
+  ArrowRight, ChevronDown, Bell, FileText, Zap, Target, FolderOpen, Search
 } from "lucide-react";
 
 // Video
@@ -649,7 +649,7 @@ const Fristen: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📁</span>
+                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -660,7 +660,7 @@ const Fristen: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>🔍</span>
+                <span className={styles.relatedIcon}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -671,7 +671,7 @@ const Fristen: React.FC = () => {
               </Link>
 
               <Link to="/features/email-upload" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}>📧</span>
+                <span className={styles.relatedIcon}><Mail size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>E-Mail Upload</div>
                   <div className={styles.relatedDescription}>
