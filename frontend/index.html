@@ -50,6 +50,116 @@
     />
     <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
 
+    <!-- ✅ Strukturierte Daten: Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Contract AI",
+      "alternateName": "Contract AI GmbH",
+      "url": "https://www.contract-ai.de",
+      "logo": "https://www.contract-ai.de/logo-contractai.webp",
+      "description": "KI-gestützte Vertragsanalyse, Optimierung und Verwaltung für Unternehmen und Privatpersonen in Deutschland.",
+      "foundingDate": "2024",
+      "founders": [
+        {
+          "@type": "Person",
+          "name": "Noah Liebold"
+        }
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Deutschland",
+        "addressCountry": "DE"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "email": "support@contract-ai.de",
+        "availableLanguage": ["German", "English"]
+      },
+      "sameAs": [
+        "https://www.linkedin.com/company/contract-ai"
+      ],
+      "areaServed": {
+        "@type": "Country",
+        "name": "Germany"
+      },
+      "knowsLanguage": ["de", "en"]
+    }
+    </script>
+
+    <!-- ✅ Strukturierte Daten: WebSite Schema mit SearchAction -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Contract AI",
+      "alternateName": "Contract AI - Vertragsmanagement mit KI",
+      "url": "https://www.contract-ai.de",
+      "description": "KI-gestützte Plattform für Vertragsanalyse, Optimierung, Vergleich und Verwaltung.",
+      "inLanguage": "de-DE",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.contract-ai.de/hilfe?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Contract AI",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.contract-ai.de/logo-contractai.webp"
+        }
+      }
+    }
+    </script>
+
+    <!-- ✅ Strukturierte Daten: SoftwareApplication Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Contract AI",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Contract Management Software",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "description": "Kostenloser Einstieg mit 3 Vertragsanalysen pro Monat",
+        "availability": "https://schema.org/InStock"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "127",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "featureList": [
+        "KI-Vertragsanalyse in 60 Sekunden",
+        "Vertragsoptimierung mit Verbesserungsvorschlägen",
+        "Vertragsvergleich mit Diff-Ansicht",
+        "Fristenkalender mit automatischen Erinnerungen",
+        "Digitale Signatur (eIDAS-konform)",
+        "Vertragsgenerator mit Vorlagen",
+        "Zentrale Vertragsverwaltung"
+      ],
+      "screenshot": "https://www.contract-ai.de/og-image.jpg",
+      "softwareVersion": "2.0",
+      "releaseNotes": "Neue Features: Legal Lens, Contract Builder, Legal Pulse",
+      "author": {
+        "@type": "Organization",
+        "name": "Contract AI"
+      }
+    }
+    </script>
+
     <!-- ✅ ERWEITERTE Content-Security-Policy FÜR PARTNER-WIDGETS -->
     <meta
       http-equiv="Content-Security-Policy"
