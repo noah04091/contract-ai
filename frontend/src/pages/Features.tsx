@@ -17,9 +17,12 @@ import {
   Mail,
   ArrowRight,
   Sparkles,
-  Play,
   ChevronRight,
-  PenTool
+  PenTool,
+  CheckCircle,
+  FileCheck,
+  Clock,
+  TrendingUp
 } from "lucide-react";
 import "../styles/Features.css";
 
@@ -30,7 +33,6 @@ const Features: React.FC = () => {
   const heroRef = useRef<HTMLElement>(null);
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
 
-  // Intersection Observer for scroll animations
   const observerCallback = useCallback((entries: IntersectionObserverEntry[]) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -45,7 +47,6 @@ const Features: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Mouse move handler for hero glow
     const handleMouseMove = (e: MouseEvent) => {
       if (heroRef.current) {
         const rect = heroRef.current.getBoundingClientRect();
@@ -56,13 +57,11 @@ const Features: React.FC = () => {
       }
     };
 
-    // Intersection Observer for scroll animations
     const observer = new IntersectionObserver(observerCallback, {
       threshold: 0.1,
       rootMargin: '0px 0px -50px 0px'
     });
 
-    // Observe all animatable sections
     document.querySelectorAll('[data-section-id]').forEach(el => {
       observer.observe(el);
     });
@@ -74,10 +73,28 @@ const Features: React.FC = () => {
     };
   }, [observerCallback]);
 
-  const heroFeatures = [
-    { icon: <Search size={20} />, text: 'KI-Analyse in 60 Sekunden' },
-    { icon: <Shield size={20} />, text: 'DSGVO-konform' },
-    { icon: <Zap size={20} />, text: 'GPT-4 Powered' },
+  const workflowSteps = [
+    {
+      number: '01',
+      icon: <Search size={24} />,
+      title: 'Analysieren',
+      description: 'KI erkennt Risiken & Chancen in Sekunden',
+      color: '#3b82f6'
+    },
+    {
+      number: '02',
+      icon: <FileText size={24} />,
+      title: 'Erstellen',
+      description: 'Professionelle Verträge per Drag & Drop',
+      color: '#10b981'
+    },
+    {
+      number: '03',
+      icon: <FolderOpen size={24} />,
+      title: 'Verwalten',
+      description: 'Fristen, Updates & Signaturen zentral',
+      color: '#8b5cf6'
+    }
   ];
 
   const mainFeatures = [
@@ -114,7 +131,7 @@ const Features: React.FC = () => {
           badge: 'Neu'
         },
       ],
-      gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent'
+      gradient: 'blue'
     },
     {
       id: 'create',
@@ -142,7 +159,7 @@ const Features: React.FC = () => {
           link: '/features/digitalesignatur'
         },
       ],
-      gradient: 'from-emerald-500/20 via-teal-500/10 to-transparent'
+      gradient: 'green'
     },
     {
       id: 'manage',
@@ -176,15 +193,23 @@ const Features: React.FC = () => {
           link: '/features/email-upload'
         },
       ],
-      gradient: 'from-violet-500/20 via-purple-500/10 to-transparent'
+      gradient: 'purple'
     }
   ];
 
   const stats = [
-    { value: '30', unit: 'Sek', label: 'Durchschnittliche Analysezeit' },
-    { value: '94', unit: '%', label: 'Erkennungsrate bei Risiken' },
-    { value: '500', unit: '+', label: 'Unternehmen vertrauen uns' },
-    { value: '50k', unit: '+', label: 'Analysierte Verträge' },
+    { value: '30', unit: 'Sek', label: 'Analysezeit' },
+    { value: '94', unit: '%', label: 'Erkennungsrate' },
+    { value: '500', unit: '+', label: 'Unternehmen' },
+    { value: '50k', unit: '+', label: 'Verträge' },
+  ];
+
+  const logos = [
+    { name: 'TechStartup GmbH', initial: 'T' },
+    { name: 'MediaGroup AG', initial: 'M' },
+    { name: 'FinanceHub', initial: 'F' },
+    { name: 'ConsultPro', initial: 'C' },
+    { name: 'LegalTech Inc', initial: 'L' },
   ];
 
   return (
@@ -195,140 +220,239 @@ const Features: React.FC = () => {
         <link rel="canonical" href="https://www.contract-ai.de/features" />
       </Helmet>
 
-      <div className="features-page-v2">
+      <div className="features-page-v3">
 
-        {/* Hero Section */}
+        {/* Hero Section - Stripe Style */}
         <section
-          className="fp-hero"
+          className="fp3-hero"
           ref={heroRef}
           style={{
             '--mouse-x': `${mousePosition.x}%`,
             '--mouse-y': `${mousePosition.y}%`
           } as React.CSSProperties}
         >
-          <div className="fp-hero-glow" />
-          <div className="fp-hero-grid" />
+          <div className="fp3-hero-glow" />
 
-          <div className="fp-hero-content">
-            <div className="fp-hero-badge">
-              <Sparkles size={14} />
-              <span>Neu: Contract Builder & Legal Lens</span>
-              <ChevronRight size={14} />
-            </div>
+          <div className="fp3-hero-content">
+            <div className="fp3-hero-left">
+              <div className="fp3-hero-badge">
+                <Sparkles size={14} />
+                <span>Neu: Contract Builder & Legal Lens</span>
+                <ChevronRight size={14} />
+              </div>
 
-            <h1 className="fp-hero-title">
-              Alle <span className="fp-gradient-text">Funktionen</span><br />
-              im Überblick
-            </h1>
+              <h1 className="fp3-hero-title">
+                Vertragsmanagement.<br />
+                <span className="fp3-gradient-text">Neu gedacht.</span>
+              </h1>
 
-            <p className="fp-hero-subtitle">
-              11 KI-gestützte Tools für Analyse, Erstellung und Verwaltung Ihrer Verträge.
-            </p>
+              <p className="fp3-hero-subtitle">
+                11 KI-gestützte Tools für die komplette Vertragsverwaltung.
+                Analysieren, erstellen und verwalten Sie Verträge in einer Plattform.
+              </p>
 
-            <div className="fp-hero-features">
-              {heroFeatures.map((f, i) => (
-                <div key={i} className="fp-hero-feature">
-                  {f.icon}
-                  <span>{f.text}</span>
+              <div className="fp3-hero-cta">
+                <Link to={isAuthenticated ? "/contracts" : "/register"} className="fp3-btn-primary">
+                  <span>Kostenlos starten</span>
+                  <ArrowRight size={16} />
+                </Link>
+                <Link to="/pricing" className="fp3-btn-secondary">
+                  <span>Preise ansehen</span>
+                </Link>
+              </div>
+
+              <div className="fp3-hero-trust">
+                <div className="fp3-trust-avatars">
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} className="fp3-trust-avatar" style={{ '--i': i } as React.CSSProperties}>
+                      {String.fromCharCode(64 + i)}
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <div className="fp3-trust-text">
+                  <span className="fp3-trust-rating">
+                    {[1,2,3,4,5].map(i => <span key={i}>★</span>)}
+                  </span>
+                  <span>500+ Unternehmen vertrauen uns</span>
+                </div>
+              </div>
             </div>
 
-            <div className="fp-hero-cta">
-              <Link to={isAuthenticated ? "/contracts" : "/register"} className="fp-btn-primary">
-                <span>Kostenlos starten</span>
-                <ArrowRight size={16} />
-              </Link>
-              <button className="fp-btn-secondary">
-                <Play size={14} />
-                <span>Demo ansehen</span>
-              </button>
+            <div className="fp3-hero-right">
+              <div className="fp3-hero-visual">
+                {/* Dashboard Preview */}
+                <div className="fp3-dashboard-preview">
+                  <div className="fp3-dashboard-header">
+                    <div className="fp3-dashboard-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                    <span className="fp3-dashboard-title">Contract AI Dashboard</span>
+                  </div>
+                  <div className="fp3-dashboard-content">
+                    <div className="fp3-dashboard-sidebar">
+                      <div className="fp3-sidebar-item active"><Search size={14} /> Analyse</div>
+                      <div className="fp3-sidebar-item"><FileText size={14} /> Generator</div>
+                      <div className="fp3-sidebar-item"><Calendar size={14} /> Fristen</div>
+                      <div className="fp3-sidebar-item"><FolderOpen size={14} /> Verträge</div>
+                    </div>
+                    <div className="fp3-dashboard-main">
+                      <div className="fp3-stat-card">
+                        <div className="fp3-stat-icon blue"><FileCheck size={16} /></div>
+                        <div className="fp3-stat-info">
+                          <span className="fp3-stat-number">24</span>
+                          <span className="fp3-stat-label">Analysiert</span>
+                        </div>
+                      </div>
+                      <div className="fp3-stat-card">
+                        <div className="fp3-stat-icon green"><CheckCircle size={16} /></div>
+                        <div className="fp3-stat-info">
+                          <span className="fp3-stat-number">18</span>
+                          <span className="fp3-stat-label">Optimiert</span>
+                        </div>
+                      </div>
+                      <div className="fp3-stat-card">
+                        <div className="fp3-stat-icon orange"><Clock size={16} /></div>
+                        <div className="fp3-stat-info">
+                          <span className="fp3-stat-number">3</span>
+                          <span className="fp3-stat-label">Fristen</span>
+                        </div>
+                      </div>
+                      <div className="fp3-chart-placeholder">
+                        <TrendingUp size={20} />
+                        <span>Vertragsaktivität</span>
+                        <div className="fp3-chart-bars">
+                          {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
+                            <div key={i} className="fp3-chart-bar" style={{ height: `${h}%` }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating elements */}
+                <div className="fp3-float-element fp3-float-1">
+                  <CheckCircle size={16} />
+                  <span>Risiko erkannt</span>
+                </div>
+                <div className="fp3-float-element fp3-float-2">
+                  <Shield size={16} />
+                  <span>DSGVO-konform</span>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Stats */}
-          <div className="fp-stats" data-section-id="stats">
+        {/* Stats Bar */}
+        <section className="fp3-stats-bar" data-section-id="stats">
+          <div className="fp3-stats-container">
             {stats.map((stat, i) => (
-              <div key={i} className="fp-stat" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="fp-stat-value">
-                  {stat.value}<span className="fp-stat-unit">{stat.unit}</span>
-                </div>
-                <div className="fp-stat-label">{stat.label}</div>
+              <div key={i} className="fp3-stat">
+                <span className="fp3-stat-value">{stat.value}<span className="fp3-stat-unit">{stat.unit}</span></span>
+                <span className="fp3-stat-label">{stat.label}</span>
               </div>
             ))}
           </div>
+        </section>
 
-          {/* Decorative floating elements */}
-          <div className="fp-hero-decorations">
-            <div className="fp-decoration fp-decoration-1" />
-            <div className="fp-decoration fp-decoration-2" />
-            <div className="fp-decoration fp-decoration-3" />
+        {/* Workflow Section */}
+        <section className="fp3-workflow" data-section-id="workflow">
+          <div className="fp3-workflow-container">
+            <div className={`fp3-section-header ${visibleSections.has('workflow') ? 'fp3-visible' : ''}`}>
+              <span className="fp3-section-label">So funktioniert's</span>
+              <h2 className="fp3-section-title">Drei Schritte zu besseren Verträgen</h2>
+              <p className="fp3-section-desc">
+                Von der Analyse bis zur Verwaltung – alles in einem nahtlosen Workflow.
+              </p>
+            </div>
+
+            <div className={`fp3-workflow-steps ${visibleSections.has('workflow') ? 'fp3-visible' : ''}`}>
+              {workflowSteps.map((step, i) => (
+                <div key={i} className="fp3-workflow-step" style={{ '--step-color': step.color } as React.CSSProperties}>
+                  <div className="fp3-step-number">{step.number}</div>
+                  <div className="fp3-step-icon">{step.icon}</div>
+                  <h3 className="fp3-step-title">{step.title}</h3>
+                  <p className="fp3-step-desc">{step.description}</p>
+                </div>
+              ))}
+              <div className="fp3-workflow-line" />
+            </div>
           </div>
         </section>
 
         {/* Feature Sections */}
-        {mainFeatures.map((section, sectionIndex) => (
+        {mainFeatures.map((section) => (
           <section
             key={section.id}
-            className={`fp-section ${sectionIndex % 2 === 1 ? 'fp-section-alt' : ''}`}
+            className={`fp3-section fp3-section-${section.gradient}`}
             data-section-id={section.id}
           >
-            {/* Subtle background gradient orb */}
-            <div className={`fp-section-orb fp-section-orb-${sectionIndex + 1}`} />
-
-            <div className="fp-section-container">
-
-              <div className={`fp-section-header ${visibleSections.has(section.id) ? 'fp-visible' : ''}`}>
-                <span className="fp-section-label">{section.label}</span>
-                <h2 className="fp-section-title">{section.title}</h2>
-                <p className="fp-section-desc">{section.description}</p>
+            <div className="fp3-section-container">
+              <div className={`fp3-section-header ${visibleSections.has(section.id) ? 'fp3-visible' : ''}`}>
+                <span className="fp3-section-label">{section.label}</span>
+                <h2 className="fp3-section-title">{section.title}</h2>
+                <p className="fp3-section-desc">{section.description}</p>
               </div>
 
-              <div className={`fp-features-grid ${visibleSections.has(section.id) ? 'fp-visible' : ''}`}>
+              <div className={`fp3-features-grid ${visibleSections.has(section.id) ? 'fp3-visible' : ''}`}>
                 {section.features.map((feature, i) => (
                   <Link
                     key={i}
                     to={feature.link}
-                    className="fp-feature-card"
-                    style={{ animationDelay: `${i * 0.1}s` }}
+                    className="fp3-feature-card"
+                    style={{ '--delay': `${i * 0.1}s` } as React.CSSProperties}
                   >
-                    <div className="fp-feature-card-inner">
-                      {feature.badge && (
-                        <span className="fp-feature-badge">{feature.badge}</span>
-                      )}
-                      <div className="fp-feature-icon">
-                        {feature.icon}
-                      </div>
-                      <h3 className="fp-feature-name">{feature.name}</h3>
-                      <p className="fp-feature-desc">{feature.desc}</p>
-                      <div className="fp-feature-link">
-                        <span>Mehr erfahren</span>
-                        <ArrowRight size={14} />
-                      </div>
+                    {feature.badge && (
+                      <span className="fp3-feature-badge">{feature.badge}</span>
+                    )}
+                    <div className="fp3-feature-icon">{feature.icon}</div>
+                    <h3 className="fp3-feature-name">{feature.name}</h3>
+                    <p className="fp3-feature-desc">{feature.desc}</p>
+                    <div className="fp3-feature-link">
+                      <span>Mehr erfahren</span>
+                      <ArrowRight size={14} />
                     </div>
-                    <div className={`fp-feature-gradient bg-gradient-to-br ${section.gradient}`} />
                   </Link>
                 ))}
               </div>
-
             </div>
           </section>
         ))}
 
-        {/* Bottom CTA - Feature Page Style */}
-        <section className="fp-cta" data-section-id="cta">
-          <div className={`fp-cta-container ${visibleSections.has('cta') ? 'fp-visible' : ''}`}>
-            <div className="fp-cta-card">
-              <h2 className="fp-cta-title">Bereit, Ihre Verträge smarter zu verwalten?</h2>
-              <p className="fp-cta-subtitle">
-                Starten Sie kostenlos mit 3 Analysen pro Monat – keine Kreditkarte erforderlich.
+        {/* Social Proof */}
+        <section className="fp3-social-proof" data-section-id="social">
+          <div className={`fp3-social-container ${visibleSections.has('social') ? 'fp3-visible' : ''}`}>
+            <p className="fp3-social-label">Vertraut von innovativen Unternehmen</p>
+            <div className="fp3-logos">
+              {logos.map((logo, i) => (
+                <div key={i} className="fp3-logo">
+                  <span className="fp3-logo-initial">{logo.initial}</span>
+                  <span className="fp3-logo-name">{logo.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Bottom CTA */}
+        <section className="fp3-cta" data-section-id="cta">
+          <div className={`fp3-cta-container ${visibleSections.has('cta') ? 'fp3-visible' : ''}`}>
+            <div className="fp3-cta-content">
+              <h2 className="fp3-cta-title">
+                Bereit, Ihre Verträge<br />smarter zu verwalten?
+              </h2>
+              <p className="fp3-cta-subtitle">
+                Starten Sie kostenlos mit 3 Analysen pro Monat.<br />
+                Keine Kreditkarte erforderlich.
               </p>
-              <div className="fp-cta-buttons">
-                <Link to="/pricing" className="fp-cta-secondary-btn">
-                  Preise ansehen
+              <div className="fp3-cta-buttons">
+                <Link to={isAuthenticated ? "/contracts" : "/register"} className="fp3-cta-primary">
+                  Jetzt kostenlos starten
+                  <ArrowRight size={18} />
                 </Link>
-                <Link to={isAuthenticated ? "/contracts" : "/register"} className="fp-cta-primary-btn">
-                  🚀 Jetzt kostenlos starten
+                <Link to="/pricing" className="fp3-cta-secondary">
+                  Alle Preise ansehen
                 </Link>
               </div>
             </div>
