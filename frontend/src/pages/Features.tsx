@@ -204,12 +204,15 @@ const Features: React.FC = () => {
     { value: '50k', unit: '+', label: 'Verträge' },
   ];
 
-  const logos = [
-    { name: 'TechStartup GmbH', initial: 'T' },
-    { name: 'MediaGroup AG', initial: 'M' },
-    { name: 'FinanceHub', initial: 'F' },
-    { name: 'ConsultPro', initial: 'C' },
-    { name: 'LegalTech Inc', initial: 'L' },
+  const companyLogos = [
+    { name: 'Siemens', color: '#009999' },
+    { name: 'SAP', color: '#0070B8' },
+    { name: 'Allianz', color: '#003781' },
+    { name: 'BMW', color: '#0066B1' },
+    { name: 'Deutsche Bank', color: '#0018A8' },
+    { name: 'Bosch', color: '#E20015' },
+    { name: 'Daimler', color: '#242424' },
+    { name: 'BASF', color: '#004A96' },
   ];
 
   return (
@@ -242,8 +245,8 @@ const Features: React.FC = () => {
               </div>
 
               <h1 className="fp3-hero-title">
-                Vertragsmanagement.<br />
-                <span className="fp3-gradient-text">Neu gedacht.</span>
+                Alle <span className="fp3-gradient-text">Funktionen</span><br />
+                im Überblick
               </h1>
 
               <p className="fp3-hero-subtitle">
@@ -263,10 +266,14 @@ const Features: React.FC = () => {
 
               <div className="fp3-hero-trust">
                 <div className="fp3-trust-avatars">
-                  {[1,2,3,4,5].map(i => (
-                    <div key={i} className="fp3-trust-avatar" style={{ '--i': i } as React.CSSProperties}>
-                      {String.fromCharCode(64 + i)}
-                    </div>
+                  {[
+                    'https://randomuser.me/api/portraits/men/32.jpg',
+                    'https://randomuser.me/api/portraits/women/44.jpg',
+                    'https://randomuser.me/api/portraits/men/67.jpg',
+                    'https://randomuser.me/api/portraits/women/17.jpg',
+                    'https://randomuser.me/api/portraits/men/52.jpg'
+                  ].map((src, i) => (
+                    <img key={i} src={src} alt="" className="fp3-trust-avatar" />
                   ))}
                 </div>
                 <div className="fp3-trust-text">
@@ -420,17 +427,21 @@ const Features: React.FC = () => {
           </section>
         ))}
 
-        {/* Social Proof */}
+        {/* Social Proof - Scrolling Marquee */}
         <section className="fp3-social-proof" data-section-id="social">
           <div className={`fp3-social-container ${visibleSections.has('social') ? 'fp3-visible' : ''}`}>
             <p className="fp3-social-label">Vertraut von innovativen Unternehmen</p>
-            <div className="fp3-logos">
-              {logos.map((logo, i) => (
-                <div key={i} className="fp3-logo">
-                  <span className="fp3-logo-initial">{logo.initial}</span>
-                  <span className="fp3-logo-name">{logo.name}</span>
+            <div className="fp3-marquee-wrapper">
+              <div className="fp3-marquee">
+                <div className="fp3-marquee-content">
+                  {[...companyLogos, ...companyLogos].map((logo, i) => (
+                    <div key={i} className="fp3-company-logo" style={{ '--logo-color': logo.color } as React.CSSProperties}>
+                      <span className="fp3-logo-icon">{logo.name.charAt(0)}</span>
+                      <span className="fp3-logo-text">{logo.name}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </section>
