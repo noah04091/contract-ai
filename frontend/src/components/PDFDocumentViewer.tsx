@@ -41,7 +41,10 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   useEffect(() => {
     if (highlightText && highlightText !== highlightRef.current) {
       highlightRef.current = highlightText;
-      searchAndHighlight(highlightText);
+      // Nur suchen wenn PDF bereits geladen (sonst macht onDocumentLoadSuccess das)
+      if (pdfDocumentRef.current) {
+        searchAndHighlight(highlightText);
+      }
     }
   }, [highlightText]);
 
@@ -184,6 +187,13 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     setNumPages(pdf.numPages);
     pdfDocumentRef.current = pdf; // Speichere PDF-Dokument für Text-Suche
     console.log(`📄 PDF geladen: ${pdf.numPages} Seiten`);
+
+    // Wenn highlightText bereits gesetzt ist, Suche jetzt starten
+    // (beim ersten Mount kommt highlightText oft VOR dem PDF-Load)
+    if (highlightText) {
+      console.log('🔄 PDF geladen — starte Suche nach highlightText');
+      searchAndHighlight(highlightText);
+    }
   };
 
   const onDocumentLoadError = (error: Error) => {
