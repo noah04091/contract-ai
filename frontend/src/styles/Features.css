@@ -810,103 +810,141 @@
 .fp3-company-logo {
   display: flex;
   align-items: center;
+  gap: 6px;
   white-space: nowrap;
-  opacity: 0.55;
   transition: opacity 0.3s ease;
   cursor: default;
-}
-
-.fp3-company-logo:hover {
-  opacity: 0.85;
-}
-
-.fp3-logo-wordmark {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+.fp3-company-logo:hover {
+  opacity: 1 !important;
+}
+
+.fp3-logo-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
 .fp3-logo-name {
-  color: #1e293b;
-}
-
-.fp3-logo-suffix {
-  color: #64748b;
-  font-weight: 400;
-}
-
-/* Modern Style - lowercase, rounded feel */
-.fp3-logo-modern .fp3-logo-name {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 600;
+}
+
+/* Each logo gets unique styling */
+.fp3-company-logo:nth-child(12n+1) {
+  opacity: 0.85;
+}
+.fp3-company-logo:nth-child(12n+1) .fp3-logo-name {
+  font-weight: 500;
+  font-size: 19px;
   letter-spacing: -0.02em;
 }
 
-.fp3-logo-modern .fp3-logo-suffix {
-  font-size: 13px;
+.fp3-company-logo:nth-child(12n+2) {
+  opacity: 0.9;
+}
+.fp3-company-logo:nth-child(12n+2) .fp3-logo-name {
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.12em;
 }
 
-/* Corporate Style - uppercase, structured */
-.fp3-logo-corporate .fp3-logo-name {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+.fp3-company-logo:nth-child(12n+3) {
+  opacity: 0.8;
 }
-
-.fp3-logo-corporate .fp3-logo-suffix {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-}
-
-/* Tech Style - clean, geometric */
-.fp3-logo-tech .fp3-logo-name {
+.fp3-company-logo:nth-child(12n+3) .fp3-logo-name {
+  font-weight: 600;
   font-size: 18px;
-  font-weight: 500;
   letter-spacing: -0.01em;
 }
-
-.fp3-logo-tech .fp3-logo-suffix {
+.fp3-company-logo:nth-child(12n+3) .fp3-logo-icon {
   font-size: 12px;
 }
 
-/* Classic Style - traditional, serif-like spacing */
-.fp3-logo-classic .fp3-logo-name {
+.fp3-company-logo:nth-child(12n+4) {
+  opacity: 0.75;
+}
+.fp3-company-logo:nth-child(12n+4) .fp3-logo-name {
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
+
+.fp3-company-logo:nth-child(12n+5) {
+  opacity: 0.85;
+}
+.fp3-company-logo:nth-child(12n+5) .fp3-logo-name {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.fp3-company-logo:nth-child(12n+6) {
+  opacity: 0.7;
+}
+.fp3-company-logo:nth-child(12n+6) .fp3-logo-name {
+  font-weight: 400;
   font-size: 17px;
-  font-weight: 600;
   letter-spacing: 0.01em;
 }
 
-.fp3-logo-classic .fp3-logo-suffix {
-  font-size: 14px;
-  font-weight: 400;
+.fp3-company-logo:nth-child(12n+7) {
+  opacity: 0.8;
+}
+.fp3-company-logo:nth-child(12n+7) .fp3-logo-name {
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+.fp3-company-logo:nth-child(12n+7) .fp3-logo-icon {
+  font-size: 16px;
 }
 
-/* Bold Style - heavy, impactful */
-.fp3-logo-bold .fp3-logo-name {
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+.fp3-company-logo:nth-child(12n+8) {
+  opacity: 0.85;
+}
+.fp3-company-logo:nth-child(12n+8) .fp3-logo-name {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: -0.03em;
 }
 
-.fp3-logo-bold .fp3-logo-suffix {
-  font-size: 11px;
+.fp3-company-logo:nth-child(12n+9) {
+  opacity: 0.7;
+}
+.fp3-company-logo:nth-child(12n+9) .fp3-logo-name {
   font-weight: 500;
+  font-size: 15px;
   letter-spacing: 0.03em;
 }
 
-/* Minimal Style - light, airy */
-.fp3-logo-minimal .fp3-logo-name {
-  font-size: 18px;
-  font-weight: 400;
-  letter-spacing: 0;
+.fp3-company-logo:nth-child(12n+10) {
+  opacity: 0.85;
+}
+.fp3-company-logo:nth-child(12n+10) .fp3-logo-name {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.1em;
 }
 
-.fp3-logo-minimal .fp3-logo-suffix {
+.fp3-company-logo:nth-child(12n+11) {
+  opacity: 0.75;
+}
+.fp3-company-logo:nth-child(12n+11) .fp3-logo-name {
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.fp3-company-logo:nth-child(12n+12) {
+  opacity: 0.9;
+}
+.fp3-company-logo:nth-child(12n+12) .fp3-logo-name {
+  font-weight: 900;
   font-size: 14px;
-  font-weight: 300;
-  opacity: 0.8;
+  letter-spacing: 0.15em;
 }
 
 /* ============================================
@@ -1106,15 +1144,15 @@
   }
 
   .fp3-marquee-content {
-    gap: 40px;
+    gap: 36px;
   }
 
-  .fp3-logo-wordmark {
-    font-size: 15px;
+  .fp3-logo-name {
+    font-size: 14px !important;
   }
 
-  .fp3-logo-symbol {
-    font-size: 8px;
+  .fp3-logo-icon {
+    font-size: 11px !important;
   }
 
   .fp3-social-label {
@@ -1123,7 +1161,7 @@
   }
 
   .fp3-social-proof {
-    padding: 40px 0;
+    padding: 36px 0;
   }
 
   .fp3-cta {
