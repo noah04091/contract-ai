@@ -24,6 +24,7 @@ interface ComparisonDifference {
   contract1: string;
   contract2: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
+  explanation?: string;
   impact: string;
   recommendation: string;
 }
@@ -451,6 +452,7 @@ const DifferenceView: React.FC<{
   const [activeDiffIndex, setActiveDiffIndex] = useState<number>(0);
   const [expandedPdfIndex, setExpandedPdfIndex] = useState<number | null>(null);
   const [activePdfTab, setActivePdfTab] = useState<1 | 2>(1);
+  const [expandedQuoteIndex, setExpandedQuoteIndex] = useState<number | null>(null);
   const diffRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const categories = [...new Set(differences.map(d => d.category))];
@@ -680,55 +682,150 @@ const DifferenceView: React.FC<{
                 </div>
               </div>
 
-              {showSideBySide ? (
-                (() => {
-                  // Compute diff if enabled
-                  const diffResult = showInlineDiff && diff.contract1 && diff.contract2
-                    ? computeWordDiff(diff.contract1, diff.contract2)
-                    : null;
-
-                  return (
-                    <div className="side-by-side-content">
-                      <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
-                        <h5>
-                          Vertrag 1
-                          {recommendedContract === 1 && <span className="rec-badge">✓</span>}
-                        </h5>
-                        <div className="contract-text">
-                          {diffResult ? (
-                            <DiffText segments={diffResult.segments1} variant="source" />
-                          ) : (
-                            diff.contract1
-                          )}
-                        </div>
-                      </div>
-                      <div className="vs-divider" style={{ backgroundColor: severityColor }}>
-                        <span>VS</span>
-                      </div>
-                      <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
-                        <h5>
-                          Vertrag 2
-                          {recommendedContract === 2 && <span className="rec-badge">✓</span>}
-                        </h5>
-                        <div className="contract-text">
-                          {diffResult ? (
-                            <DiffText segments={diffResult.segments2} variant="target" />
-                          ) : (
-                            diff.contract2
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()
+              {/* 1. Explanation — Hauptinhalt */}
+              {diff.explanation ? (
+                <div className="difference-explanation">
+                  {diff.explanation}
+                </div>
               ) : (
-                <div className="list-content">
-                  <div className="impact">
-                    <strong style={{ color: severityColor }}>Auswirkung:</strong> {diff.impact}
-                  </div>
+                /* Fallback für alte Daten ohne explanation */
+                <div className="difference-explanation fallback">
+                  {diff.impact}
                 </div>
               )}
 
+              {/* 2. Impact — juristische Einordnung */}
+              {diff.explanation && (
+                <div className="difference-impact">
+                  <Scale size={13} />
+                  <span>{diff.impact}</span>
+                </div>
+              )}
+
+              {/* 3. Originaltext — ausklappbar (bei explanation), direkt (bei Fallback) */}
+              {diff.explanation ? (
+                <>
+                  <button
+                    className="show-quotes-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedQuoteIndex(expandedQuoteIndex === index ? null : index);
+                    }}
+                  >
+                    {expandedQuoteIndex === index ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    Originaltext anzeigen
+                  </button>
+
+                  <AnimatePresence>
+                    {expandedQuoteIndex === index && (
+                      <motion.div
+                        className="quotes-panel"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      >
+                        {showSideBySide ? (
+                          (() => {
+                            const diffResult = showInlineDiff && diff.contract1 && diff.contract2
+                              ? computeWordDiff(diff.contract1, diff.contract2)
+                              : null;
+
+                            return (
+                              <div className="side-by-side-content">
+                                <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
+                                  <h5>
+                                    Vertrag 1
+                                    {recommendedContract === 1 && <span className="rec-badge">✓</span>}
+                                  </h5>
+                                  <div className="contract-text">
+                                    {diffResult ? (
+                                      <DiffText segments={diffResult.segments1} variant="source" />
+                                    ) : (
+                                      diff.contract1
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="vs-divider" style={{ backgroundColor: severityColor }}>
+                                  <span>VS</span>
+                                </div>
+                                <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
+                                  <h5>
+                                    Vertrag 2
+                                    {recommendedContract === 2 && <span className="rec-badge">✓</span>}
+                                  </h5>
+                                  <div className="contract-text">
+                                    {diffResult ? (
+                                      <DiffText segments={diffResult.segments2} variant="target" />
+                                    ) : (
+                                      diff.contract2
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <div className="stacked-quotes">
+                            <div className="quote-block"><strong>Vertrag 1:</strong> {diff.contract1}</div>
+                            <div className="quote-block"><strong>Vertrag 2:</strong> {diff.contract2}</div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
+              ) : (
+                /* Fallback: Zitate direkt anzeigen wenn keine explanation */
+                showSideBySide ? (
+                  (() => {
+                    const diffResult = showInlineDiff && diff.contract1 && diff.contract2
+                      ? computeWordDiff(diff.contract1, diff.contract2)
+                      : null;
+
+                    return (
+                      <div className="side-by-side-content">
+                        <div className={`contract-column ${recommendedContract === 1 ? 'recommended' : 'not-recommended'}`}>
+                          <h5>
+                            Vertrag 1
+                            {recommendedContract === 1 && <span className="rec-badge">✓</span>}
+                          </h5>
+                          <div className="contract-text">
+                            {diffResult ? (
+                              <DiffText segments={diffResult.segments1} variant="source" />
+                            ) : (
+                              diff.contract1
+                            )}
+                          </div>
+                        </div>
+                        <div className="vs-divider" style={{ backgroundColor: severityColor }}>
+                          <span>VS</span>
+                        </div>
+                        <div className={`contract-column ${recommendedContract === 2 ? 'recommended' : 'not-recommended'}`}>
+                          <h5>
+                            Vertrag 2
+                            {recommendedContract === 2 && <span className="rec-badge">✓</span>}
+                          </h5>
+                          <div className="contract-text">
+                            {diffResult ? (
+                              <DiffText segments={diffResult.segments2} variant="target" />
+                            ) : (
+                              diff.contract2
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="stacked-quotes">
+                    <div className="quote-block"><strong>Vertrag 1:</strong> {diff.contract1}</div>
+                    <div className="quote-block"><strong>Vertrag 2:</strong> {diff.contract2}</div>
+                  </div>
+                )
+              )}
+
+              {/* 4. Recommendation — Handlungsbox */}
               <div className="recommendation" style={{ borderColor: `${severityColor}30` }}>
                 <Zap size={14} style={{ color: '#0071e3' }} />
                 <span>{diff.recommendation}</span>
@@ -3302,6 +3399,77 @@ export default function EnhancedCompare() {
             font-size: 0.9rem;
             color: #0071e3;
             font-weight: 500;
+          }
+
+          /* Explanation — Anwaltliche Einordnung */
+          .difference-explanation {
+            font-size: 0.95rem;
+            line-height: 1.65;
+            color: #1d1d1f;
+            margin-bottom: 0.75rem;
+            padding: 0;
+          }
+
+          .difference-explanation.fallback {
+            color: #6e6e73;
+          }
+
+          .difference-impact {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: #6e6e73;
+            margin-bottom: 0.75rem;
+            font-style: italic;
+          }
+
+          .difference-impact svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+          }
+
+          .show-quotes-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid #e8e8ed;
+            border-radius: 8px;
+            background: #f5f5f7;
+            color: #6e6e73;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.75rem;
+          }
+
+          .show-quotes-btn:hover {
+            background: #e8e8ed;
+            color: #1d1d1f;
+          }
+
+          .quotes-panel {
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+          }
+
+          .stacked-quotes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+          }
+
+          .quote-block {
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: #f9f9f9;
+            border: 1px solid #e8e8ed;
+            font-size: 0.85rem;
+            color: #6e6e73;
+            line-height: 1.5;
           }
 
           /* PDF Preview Button */

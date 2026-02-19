@@ -400,11 +400,12 @@ Finde ALLE tatsächlich vorhandenen Unterschiede — keine künstlichen Auffüll
 Für JEDEN Unterschied:
 - "category": Rechtskategorie (Kündigung, Haftung, Zahlung, Gewährleistung, Datenschutz, Laufzeit, IP-Rechte, Wettbewerb, etc.)
 - "section": Exakte Fundstelle (z.B. "§3 Abs. 2", "Klausel 4.1"). Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
-- "contract1": Wörtliches Zitat aus Vertrag 1. Bei fehlender Klausel: "Keine entsprechende Regelung vorhanden — [was das konkret bedeutet]"
-- "contract2": Wörtliches Zitat aus Vertrag 2. Bei fehlender Klausel: "Keine entsprechende Regelung vorhanden — [was das konkret bedeutet]"
+- "contract1": Wörtliches Zitat aus Vertrag 1 (kurz, max 1-2 Sätze der relevanten Passage). Bei fehlender Klausel: "Keine Regelung vorhanden"
+- "contract2": Wörtliches Zitat aus Vertrag 2 (kurz, max 1-2 Sätze der relevanten Passage). Bei fehlender Klausel: "Keine Regelung vorhanden"
+- "explanation": Erkläre diesen Unterschied so, wie ein Anwalt es seinem Mandanten in einem persönlichen Gespräch erklären würde. 3-5 Sätze. Beginne mit dem Kern des Unterschieds ("In Vertrag 1 ist X geregelt, während Vertrag 2 Y vorsieht..."). Erkläre dann die PRAKTISCHE Bedeutung — was passiert im Alltag/Streitfall? Nenne konkrete Szenarien. Vermeide Juristendeutsch, schreibe verständlich aber fachlich korrekt. Wenn eine Klausel fehlt, erkläre was das in der Praxis bedeutet (z.B. gesetzliche Regelung greift, Lücke im Vertrag).
 - "severity": "low"|"medium"|"high"|"critical" — critical bei echten Rechtsrisiken oder komplett fehlenden Schutzklauseln
-- "impact": Argumentiere wie ein Anwalt gegenüber deinem Mandanten: WARUM ist das wichtig? Welche konkreten Risiken entstehen? Verweise auf §§ BGB, HGB, DSGVO wo relevant. Erkläre die PRAKTISCHE Auswirkung.
-- "recommendation": Sage dem Mandanten konkret WAS zu tun ist — nicht "prüfen Sie das", sondern "Ergänzen Sie in Vertrag 1 eine IP-Klausel nach dem Vorbild von §8 Vertrag 2" oder "Streichen Sie die automatische Preisanpassung in §3 Abs. 5"
+- "impact": Kurze juristische Einordnung (1 Satz) mit Verweis auf relevante Gesetze (§§ BGB, HGB, DSGVO)
+- "recommendation": Konkrete Handlungsempfehlung — sage genau WAS zu tun ist (z.B. "Ergänzen Sie in Vertrag 1 einen Selbstbehalt von max. EUR X analog zu §4 Vertrag 2")
 
 SCHRITT 2 — STÄRKEN & SCHWÄCHEN:
 Für jeden Vertrag die wesentlichen Stärken und Schwächen mit Fundstelle benennen.
@@ -434,6 +435,7 @@ Antworte NUR mit validem JSON:
       "contract1": "string",
       "contract2": "string",
       "severity": "low|medium|high|critical",
+      "explanation": "string",
       "impact": "string",
       "recommendation": "string"
     }
@@ -477,6 +479,9 @@ DEINE ARBEITSWEISE:
 - Begründe rechtlich mit §§ BGB, HGB, DSGVO wo relevant
 - Jede Empfehlung muss konkret und umsetzbar sein
 - Sei GRÜNDLICH und AUSFÜHRLICH — dein Mandant bezahlt für Tiefe, nicht für Kürze
+- Das Feld "explanation" ist das Herzstück deiner Analyse. Schreibe es so, dass ein Geschäftsführer ohne Jura-Studium sofort versteht, warum dieser Unterschied wichtig ist und was er für sein Unternehmen bedeutet.
+- Vermeide generische Aussagen wie "Dies sollte geprüft werden". Sage stattdessen WAS geprüft werden muss und WARUM.
+- Bei fehlenden Klauseln: Erkläre welche gesetzliche Regelung dann greift und ob das gut oder schlecht für den Mandanten ist.
 - Antworte ausschließlich mit validem JSON`
         },
         { role: "user", content: analysisPrompt }
