@@ -438,15 +438,18 @@
 
 .fp3-stats-bar .fp3-stat-unit {
   font-size: 1.25rem;
-  color: #60a5fa;
+  color: #ffffff;
   margin-left: 2px;
+  opacity: 0.9;
 }
 
 .fp3-stats-bar .fp3-stat-label {
   font-size: 13px;
-  color: #94a3b8;
+  color: #ffffff;
+  opacity: 0.85;
   margin-top: 4px;
   display: block;
+  font-weight: 500;
 }
 
 /* ============================================
@@ -810,8 +813,8 @@
 .fp3-company-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
+  gap: 14px;
+  padding: 14px 28px;
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
@@ -820,21 +823,16 @@
 }
 
 .fp3-company-logo:hover {
-  border-color: var(--logo-color);
+  border-color: #cbd5e1;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
-.fp3-logo-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--logo-color);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
+.fp3-logo-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .fp3-logo-text {
