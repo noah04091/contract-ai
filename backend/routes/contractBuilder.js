@@ -385,11 +385,11 @@ router.post('/import-from-generator', auth, async (req, res) => {
     let clauseNumber = 1;
     for (const section of sections) {
       if (section.type === 'preamble') {
-        const text = section.content.map(c => c.text || '').filter(Boolean).join('\n');
+        const preambleText = section.content.map(c => c.text || '').filter(Boolean).join('\n');
         addBlock({
           id: uuidv4(),
           type: 'preamble',
-          content: { text },
+          content: { preambleText },
           style: {},
           locked: false,
           aiGenerated: true
@@ -408,12 +408,16 @@ router.post('/import-from-generator', auth, async (req, res) => {
           }
         }
 
+        // §-Prefix aus dem Titel entfernen (ClauseBlock rendert die Nummer separat)
+        const rawTitle = section.title || '';
+        const clauseTitle = rawTitle.replace(/^§\s*\d+\s*/, '').trim() || `Klausel ${clauseNumber}`;
+
         addBlock({
           id: uuidv4(),
           type: 'clause',
           content: {
-            clauseTitle: section.title || `§ ${clauseNumber}`,
-            number: clauseNumber,
+            clauseTitle,
+            number: String(clauseNumber),
             body: bodyParts.join('\n')
           },
           style: {},
