@@ -5678,6 +5678,24 @@
   box-shadow: none;
 }
 
+.step3HeaderBtn.builder {
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  border-color: transparent;
+  color: white;
+}
+
+.step3HeaderBtn.builder:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+.step3HeaderBtn.builder:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .step3HeaderBtn.success {
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   border-color: transparent;

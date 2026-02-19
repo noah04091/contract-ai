@@ -14,6 +14,9 @@ const { v4: uuidv4 } = require('uuid');
 const OpenAI = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// PDF Generator Utilities für Import
+const { parseContractText, extractPartiesFromText } = require('../services/pdfGeneratorV2');
+
 // ============================================
 // DOKUMENT-MANAGEMENT
 // ============================================
@@ -219,6 +222,197 @@ router.post('/', auth, async (req, res) => {
   } catch (error) {
     console.error('[ContractBuilder] POST / Error:', error);
     res.status(500).json({ success: false, error: 'Fehler beim Erstellen des Dokuments' });
+  }
+});
+
+/**
+ * POST /api/contract-builder/import-from-generator
+ * Importiert einen generierten Vertrag als Builder-Dokument
+ */
+router.post('/import-from-generator', auth, async (req, res) => {
+  try {
+    const { contractText, contractType, parties, designVariant, contractId, name } = req.body;
+
+    if (!contractText || typeof contractText !== 'string') {
+      return res.status(400).json({ success: false, error: 'Vertragstext ist erforderlich' });
+    }
+
+    // 1. Text in Sections parsen
+    const sections = parseContractText(contractText);
+
+    // 2. Parteien aus Text extrahieren
+    const textParties = extractPartiesFromText(contractText);
+
+    // 3. Titel aus erstem Textabschnitt oder contractType ableiten
+    const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
+    let title = name || contractType || 'Importierter Vertrag';
+    // Suche nach einer ALL-CAPS Zeile als Titel
+    for (const line of lines) {
+      if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
+          !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
+        title = line;
+        break;
+      }
+    }
+
+    // 4. Design-Mapping: Generator-Variante → Builder-Design
+    const designMapping = {
+      executive:    { primaryColor: '#1a1a2e', fontFamily: 'Helvetica', preset: 'executive' },
+      modern:       { primaryColor: '#0066cc', fontFamily: 'Helvetica', preset: 'modern' },
+      minimal:      { primaryColor: '#333333', fontFamily: 'Helvetica', preset: 'minimal' },
+      elegant:      { primaryColor: '#c9a227', fontFamily: 'Times-Roman', preset: 'elegant' },
+      corporate:    { primaryColor: '#003366', fontFamily: 'Helvetica', preset: 'corporate' },
+      professional: { primaryColor: '#1B4332', fontFamily: 'Times-Roman', preset: 'professional' },
+      startup:      { primaryColor: '#E63946', fontFamily: 'Helvetica', preset: 'startup' },
+    };
+
+    const designConfig = designMapping[designVariant] || designMapping.executive;
+
+    // 5. Sections → Builder-Blöcke konvertieren
+    const blocks = [];
+    let order = 0;
+
+    // Header-Block
+    blocks.push({
+      id: uuidv4(),
+      type: 'header',
+      order: order++,
+      content: {
+        title: title,
+        subtitle: contractType ? `${contractType}` : ''
+      },
+      style: {},
+      locked: false,
+      aiGenerated: true
+    });
+
+    // Parties-Block aus extrahierten Parteien
+    const partyAName = textParties?.partyAName || parties?.seller || parties?.partyA || parties?.landlord || parties?.employer || '';
+    const partyBName = textParties?.partyBName || parties?.buyer || parties?.partyB || parties?.tenant || parties?.employee || '';
+    const partyAAddress = textParties?.partyAAddress || parties?.sellerAddress || '';
+    const partyBAddress = textParties?.partyBAddress || parties?.buyerAddress || '';
+
+    if (partyAName || partyBName) {
+      blocks.push({
+        id: uuidv4(),
+        type: 'parties',
+        order: order++,
+        content: {
+          parties: [
+            { role: 'Partei A', name: partyAName, address: partyAAddress },
+            { role: 'Partei B', name: partyBName, address: partyBAddress }
+          ]
+        },
+        style: {},
+        locked: false,
+        aiGenerated: true
+      });
+    }
+
+    // Sections → clause/preamble Blöcke
+    let clauseNumber = 1;
+    for (const section of sections) {
+      if (section.type === 'preamble') {
+        const text = section.content.map(c => c.text || '').filter(Boolean).join('\n');
+        blocks.push({
+          id: uuidv4(),
+          type: 'preamble',
+          order: order++,
+          content: { text },
+          style: {},
+          locked: false,
+          aiGenerated: true
+        });
+      } else if (section.type === 'section') {
+        // Formatiere Content als Text mit Nummerierung
+        const bodyParts = [];
+        for (const item of section.content) {
+          if (item.type === 'numbered') {
+            bodyParts.push(`(${bodyParts.filter(p => p.startsWith('(')).length + 1}) ${item.text}`);
+          } else if (item.type === 'letter') {
+            bodyParts.push(`${item.letter}) ${item.text}`);
+          } else if (item.type === 'bullet') {
+            bodyParts.push(`• ${item.text}`);
+          } else {
+            bodyParts.push(item.text);
+          }
+        }
+
+        blocks.push({
+          id: uuidv4(),
+          type: 'clause',
+          order: order++,
+          content: {
+            clauseTitle: section.title || `§ ${clauseNumber}`,
+            number: clauseNumber,
+            body: bodyParts.join('\n')
+          },
+          style: {},
+          locked: false,
+          aiGenerated: true
+        });
+        clauseNumber++;
+      }
+    }
+
+    // Signature-Block am Ende
+    blocks.push({
+      id: uuidv4(),
+      type: 'signature',
+      order: order++,
+      content: {
+        parties: [
+          { role: 'Partei A', name: partyAName },
+          { role: 'Partei B', name: partyBName }
+        ],
+        date: new Date().toLocaleDateString('de-DE'),
+        location: ''
+      },
+      style: {},
+      locked: false,
+      aiGenerated: true
+    });
+
+    // 6. ContractBuilder-Dokument erstellen
+    const document = new ContractBuilder({
+      userId: req.user.userId,
+      metadata: {
+        name: name || title || 'Importierter Vertrag',
+        contractType: contractType || 'individuell',
+        status: 'draft',
+        description: contractId ? `Importiert aus Generator (Vertrag: ${contractId})` : 'Importiert aus Generator'
+      },
+      content: {
+        blocks,
+        variables: []
+      },
+      design: {
+        preset: designConfig.preset || 'executive',
+        primaryColor: designConfig.primaryColor || '#0B1324',
+        secondaryColor: '#6B7280',
+        accentColor: '#3B82F6',
+        fontFamily: designConfig.fontFamily || 'Helvetica',
+        pageSize: 'A4',
+        marginTop: 25,
+        marginRight: 20,
+        marginBottom: 25,
+        marginLeft: 20
+      }
+    });
+
+    await document.save();
+
+    console.log(`[ContractBuilder] Import aus Generator: ${document._id} (${blocks.length} Blöcke, Design: ${designVariant || 'executive'})`);
+
+    res.status(201).json({
+      success: true,
+      documentId: document._id,
+      blockCount: blocks.length,
+      redirectUrl: `/contract-builder/${document._id}`
+    });
+  } catch (error) {
+    console.error('[ContractBuilder] POST /import-from-generator Error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Importieren des Vertrags' });
   }
 });
 

@@ -7,7 +7,7 @@ import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
-  Image, File, X, Info, Palette
+  Image, File, X, Info, Palette, Wrench
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -4648,6 +4648,61 @@ export default function Generate() {
     }
   };
 
+  // 🔧 Handler: Im Contract Builder bearbeiten
+  const [isImportingToBuilder, setIsImportingToBuilder] = useState(false);
+
+  const handleOpenInBuilder = async () => {
+    if (!contractText) return;
+
+    setIsImportingToBuilder(true);
+    try {
+      // Zuerst speichern, falls noch nicht gespeichert
+      if (!savedContractId) {
+        await handleSave();
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contract-builder/import-from-generator`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          contractText,
+          contractType: selectedType?.id || contractData.contractType,
+          parties: contractData.parties || formData,
+          designVariant: selectedDesignVariant,
+          contractId: savedContractId,
+          name: `${contractData.contractType || selectedType?.name || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        toast.success(`Vertrag mit ${data.blockCount} Blöcken in den Builder importiert!`, {
+          autoClose: 3000,
+          position: 'top-center'
+        });
+        navigate(`/contract-builder/${data.documentId}`);
+      } else {
+        toast.error(data.error || 'Fehler beim Import in den Builder', {
+          autoClose: 5000,
+          position: 'top-center'
+        });
+      }
+    } catch (error) {
+      console.error('Error importing to builder:', error);
+      toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', {
+        autoClose: 5000,
+        position: 'top-center'
+      });
+    } finally {
+      setIsImportingToBuilder(false);
+    }
+  };
+
   // 🔄 Handler for "Vertrag verbessern" (Contract Improvement)
   const handleImproveContract = async () => {
     if (!improvements.trim()) {
@@ -5607,6 +5662,21 @@ export default function Generate() {
                         >
                           <Send size={16} />
                           <span>Zur Signatur</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={handleOpenInBuilder}
+                          disabled={isImportingToBuilder || !contractText}
+                          className={`${styles.step3HeaderBtn} ${styles.builder}`}
+                          whileHover={!isImportingToBuilder ? { scale: 1.02 } : {}}
+                          whileTap={!isImportingToBuilder ? { scale: 0.98 } : {}}
+                          title="Im Contract Builder visuell bearbeiten"
+                        >
+                          {isImportingToBuilder ? (
+                            <div className={styles.tinySpinner}></div>
+                          ) : (
+                            <Wrench size={16} />
+                          )}
+                          <span>Im Builder</span>
                         </motion.button>
                       </div>
                     </div>
