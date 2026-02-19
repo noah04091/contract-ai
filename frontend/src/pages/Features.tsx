@@ -205,14 +205,16 @@ const Features: React.FC = () => {
   ];
 
   const companyLogos = [
-    { name: 'TechVenture AG', icon: 'TV' },
-    { name: 'FinanceGroup GmbH', icon: 'FG' },
-    { name: 'Industrial Solutions', icon: 'IS' },
-    { name: 'Mobility Partners', icon: 'MP' },
-    { name: 'InsureTech Pro', icon: 'IT' },
-    { name: 'Consulting Hub', icon: 'CH' },
-    { name: 'Media Networks', icon: 'MN' },
-    { name: 'Energy Systems', icon: 'ES' },
+    { name: 'nexora', icon: '●' },
+    { name: 'FINBRIDGE', icon: '■' },
+    { name: 'industrion', icon: '▲' },
+    { name: 'MOVENTO', icon: '◆' },
+    { name: 'quantis', icon: '○' },
+    { name: 'HELIX Group', icon: '◇' },
+    { name: 'vantage', icon: '□' },
+    { name: 'PRIMECORE', icon: '●' },
+    { name: 'elevate', icon: '▲' },
+    { name: 'STRATOS', icon: '■' },
   ];
 
   return (
@@ -430,14 +432,16 @@ const Features: React.FC = () => {
         {/* Social Proof - Scrolling Marquee */}
         <section className="fp3-social-proof" data-section-id="social">
           <div className={`fp3-social-container ${visibleSections.has('social') ? 'fp3-visible' : ''}`}>
-            <p className="fp3-social-label">Von Startups bis Konzerne – über 500 Unternehmen vertrauen uns</p>
+            <p className="fp3-social-label">Vertraut von über 500 Unternehmen</p>
             <div className="fp3-marquee-wrapper">
               <div className="fp3-marquee">
                 <div className="fp3-marquee-content">
                   {[...companyLogos, ...companyLogos].map((logo, i) => (
                     <div key={i} className="fp3-company-logo">
-                      <span className="fp3-logo-icon">{logo.icon}</span>
-                      <span className="fp3-logo-text">{logo.name}</span>
+                      <span className="fp3-logo-wordmark">
+                        <span className="fp3-logo-symbol">{logo.icon}</span>
+                        {logo.name}
+                      </span>
                     </div>
                   ))}
                 </div>
