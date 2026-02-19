@@ -205,16 +205,18 @@ const Features: React.FC = () => {
   ];
 
   const companyLogos = [
-    { name: 'nexora', icon: '●' },
-    { name: 'FINBRIDGE', icon: '■' },
-    { name: 'industrion', icon: '▲' },
-    { name: 'MOVENTO', icon: '◆' },
-    { name: 'quantis', icon: '○' },
-    { name: 'HELIX Group', icon: '◇' },
-    { name: 'vantage', icon: '□' },
-    { name: 'PRIMECORE', icon: '●' },
-    { name: 'elevate', icon: '▲' },
-    { name: 'STRATOS', icon: '■' },
+    { name: 'nexora', suffix: '', style: 'modern' },
+    { name: 'FINBRIDGE', suffix: 'AG', style: 'corporate' },
+    { name: 'industrion', suffix: '', style: 'tech' },
+    { name: 'Keller & Partner', suffix: 'GmbH', style: 'classic' },
+    { name: 'MOVENTO', suffix: '', style: 'bold' },
+    { name: 'quantis', suffix: 'group', style: 'minimal' },
+    { name: 'HELIX', suffix: 'Systems', style: 'corporate' },
+    { name: 'vantage', suffix: '', style: 'modern' },
+    { name: 'Bergmann', suffix: 'Consulting', style: 'classic' },
+    { name: 'STRATOS', suffix: 'AG', style: 'bold' },
+    { name: 'flowstate', suffix: '', style: 'tech' },
+    { name: 'PRIMECORE', suffix: 'GmbH', style: 'corporate' },
   ];
 
   return (
@@ -437,10 +439,10 @@ const Features: React.FC = () => {
               <div className="fp3-marquee">
                 <div className="fp3-marquee-content">
                   {[...companyLogos, ...companyLogos].map((logo, i) => (
-                    <div key={i} className="fp3-company-logo">
+                    <div key={i} className={`fp3-company-logo fp3-logo-${logo.style}`}>
                       <span className="fp3-logo-wordmark">
-                        <span className="fp3-logo-symbol">{logo.icon}</span>
-                        {logo.name}
+                        <span className="fp3-logo-name">{logo.name}</span>
+                        {logo.suffix && <span className="fp3-logo-suffix">{logo.suffix}</span>}
                       </span>
                     </div>
                   ))}

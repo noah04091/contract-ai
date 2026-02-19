@@ -811,43 +811,102 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
-  opacity: 0.5;
+  opacity: 0.55;
   transition: opacity 0.3s ease;
   cursor: default;
-  filter: grayscale(100%);
 }
 
 .fp3-company-logo:hover {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .fp3-logo-wordmark {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #334155;
-  letter-spacing: -0.02em;
+  align-items: baseline;
+  gap: 5px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.fp3-logo-symbol {
-  font-size: 10px;
+.fp3-logo-name {
+  color: #1e293b;
+}
+
+.fp3-logo-suffix {
   color: #64748b;
-  margin-right: 2px;
+  font-weight: 400;
 }
 
-/* Alternate styling for variety */
-.fp3-company-logo:nth-child(odd) .fp3-logo-wordmark {
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  text-transform: none;
-}
-
-.fp3-company-logo:nth-child(even) .fp3-logo-wordmark {
+/* Modern Style - lowercase, rounded feel */
+.fp3-logo-modern .fp3-logo-name {
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.02em;
+}
+
+.fp3-logo-modern .fp3-logo-suffix {
+  font-size: 13px;
+}
+
+/* Corporate Style - uppercase, structured */
+.fp3-logo-corporate .fp3-logo-name {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.fp3-logo-corporate .fp3-logo-suffix {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* Tech Style - clean, geometric */
+.fp3-logo-tech .fp3-logo-name {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.fp3-logo-tech .fp3-logo-suffix {
+  font-size: 12px;
+}
+
+/* Classic Style - traditional, serif-like spacing */
+.fp3-logo-classic .fp3-logo-name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.fp3-logo-classic .fp3-logo-suffix {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Bold Style - heavy, impactful */
+.fp3-logo-bold .fp3-logo-name {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.fp3-logo-bold .fp3-logo-suffix {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* Minimal Style - light, airy */
+.fp3-logo-minimal .fp3-logo-name {
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.fp3-logo-minimal .fp3-logo-suffix {
+  font-size: 14px;
+  font-weight: 300;
+  opacity: 0.8;
 }
 
 /* ============================================
