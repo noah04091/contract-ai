@@ -15,7 +15,7 @@ const OpenAI = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // PDF Generator Utilities für Import
-const { parseContractText, extractPartiesFromText } = require('../services/pdfGeneratorV2');
+const { parseContractText, extractPartiesFromText, getPartyLabels } = require('../services/pdfGeneratorV2');
 
 // ============================================
 // DOKUMENT-MANAGEMENT
@@ -240,13 +240,47 @@ router.post('/import-from-generator', auth, async (req, res) => {
     // 1. Text in Sections parsen
     const sections = parseContractText(contractText);
 
-    // 2. Parteien aus Text extrahieren
+    // 2. Parteien aus Text und formData extrahieren
     const textParties = extractPartiesFromText(contractText);
+
+    // Vertragstyp-spezifische Feld-Zuordnung (wie im Generator-Backend)
+    const PARTY_FIELD_MAP = {
+      mietvertrag:      { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+      kaufvertrag:      { a: 'seller', aAddr: 'sellerAddress', b: 'buyer', bAddr: 'buyerAddress' },
+      arbeitsvertrag:   { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+      freelancer:       { a: 'nameClient', aAddr: 'clientAddress', b: 'nameFreelancer', bAddr: 'freelancerAddress' },
+      nda:              { a: 'partyA', aAddr: 'partyAAddress', b: 'partyB', bAddr: 'partyBAddress' },
+      aufhebungsvertrag:{ a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+      darlehen:         { a: 'lender', aAddr: 'lenderAddress', b: 'borrower', bAddr: 'borrowerAddress' },
+      lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
+      werkvertrag:      { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+      pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+      gesellschaft:     { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' }
+    };
+
+    const typeKey = (contractType || '').toLowerCase();
+    const fieldMap = PARTY_FIELD_MAP[typeKey] || null;
+
+    // Parteinamen aus formData (parties) mit Typ-spezifischem Mapping extrahieren
+    let partyAName = '', partyBName = '', partyAAddress = '', partyBAddress = '';
+    if (fieldMap && parties) {
+      partyAName = parties[fieldMap.a] || '';
+      partyAAddress = parties[fieldMap.aAddr] || '';
+      partyBName = parties[fieldMap.b] || '';
+      partyBAddress = parties[fieldMap.bAddr] || '';
+    }
+    // Fallback: Aus dem Vertragstext extrahieren
+    if (!partyAName && textParties?.partyAName) partyAName = textParties.partyAName;
+    if (!partyBName && textParties?.partyBName) partyBName = textParties.partyBName;
+    if (!partyAAddress && textParties?.partyAAddress) partyAAddress = textParties.partyAAddress;
+    if (!partyBAddress && textParties?.partyBAddress) partyBAddress = textParties.partyBAddress;
+
+    // Rollen-Bezeichnungen basierend auf Vertragstyp
+    const partyLabels = getPartyLabels(contractType);
 
     // 3. Titel aus erstem Textabschnitt oder contractType ableiten
     const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
     let title = name || contractType || 'Importierter Vertrag';
-    // Suche nach einer ALL-CAPS Zeile als Titel
     for (const line of lines) {
       if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
           !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
@@ -268,15 +302,52 @@ router.post('/import-from-generator', auth, async (req, res) => {
 
     const designConfig = designMapping[designVariant] || designMapping.executive;
 
-    // 5. Sections → Builder-Blöcke konvertieren
+    // 5. Sections → Builder-Blöcke konvertieren (mit Seitenumbrüchen)
     const blocks = [];
     let order = 0;
 
+    // Hilfsfunktion: geschätzte Block-Höhe in px (A4 Seite ~ 1002px nutzbare Höhe)
+    const estimateBlockHeight = (block) => {
+      if (block.type === 'header') return 120;
+      if (block.type === 'parties') return 160;
+      if (block.type === 'signature') return 180;
+      if (block.type === 'page-break') return 0;
+      // Für Text-basierte Blöcke: ~20px pro Zeile, ~80 Zeichen pro Zeile
+      const text = block.content?.body || block.content?.text || '';
+      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 80));
+      const titleHeight = (block.content?.clauseTitle) ? 35 : 0;
+      return titleHeight + Math.max(lineCount * 22, 40);
+    };
+
+    const PAGE_HEIGHT = 900; // px, mit Sicherheitsabstand (echte Höhe ~1002px)
+    let currentPageHeight = 0;
+
+    const addBlock = (block) => {
+      const height = estimateBlockHeight(block);
+
+      // Seitenumbruch einfügen wenn Block nicht mehr passt (nicht vor dem ersten Block)
+      if (blocks.length > 0 && currentPageHeight + height > PAGE_HEIGHT) {
+        blocks.push({
+          id: uuidv4(),
+          type: 'page-break',
+          order: order++,
+          content: {},
+          style: {},
+          locked: false,
+          aiGenerated: false
+        });
+        currentPageHeight = 0;
+      }
+
+      block.order = order++;
+      blocks.push(block);
+      currentPageHeight += height;
+    };
+
     // Header-Block
-    blocks.push({
+    addBlock({
       id: uuidv4(),
       type: 'header',
-      order: order++,
       content: {
         title: title,
         subtitle: contractType ? `${contractType}` : ''
@@ -286,22 +357,23 @@ router.post('/import-from-generator', auth, async (req, res) => {
       aiGenerated: true
     });
 
-    // Parties-Block aus extrahierten Parteien
-    const partyAName = textParties?.partyAName || parties?.seller || parties?.partyA || parties?.landlord || parties?.employer || '';
-    const partyBName = textParties?.partyBName || parties?.buyer || parties?.partyB || parties?.tenant || parties?.employee || '';
-    const partyAAddress = textParties?.partyAAddress || parties?.sellerAddress || '';
-    const partyBAddress = textParties?.partyBAddress || parties?.buyerAddress || '';
-
+    // Parties-Block (party1/party2 Format für PartiesBlock-Komponente)
     if (partyAName || partyBName) {
-      blocks.push({
+      addBlock({
         id: uuidv4(),
         type: 'parties',
-        order: order++,
         content: {
-          parties: [
-            { role: 'Partei A', name: partyAName, address: partyAAddress },
-            { role: 'Partei B', name: partyBName, address: partyBAddress }
-          ]
+          party1: {
+            role: partyLabels.partyA || 'Partei A',
+            name: partyAName,
+            address: partyAAddress
+          },
+          party2: {
+            role: partyLabels.partyB || 'Partei B',
+            name: partyBName,
+            address: partyBAddress
+          },
+          partiesLayout: 'classic'
         },
         style: {},
         locked: false,
@@ -314,17 +386,15 @@ router.post('/import-from-generator', auth, async (req, res) => {
     for (const section of sections) {
       if (section.type === 'preamble') {
         const text = section.content.map(c => c.text || '').filter(Boolean).join('\n');
-        blocks.push({
+        addBlock({
           id: uuidv4(),
           type: 'preamble',
-          order: order++,
           content: { text },
           style: {},
           locked: false,
           aiGenerated: true
         });
       } else if (section.type === 'section') {
-        // Formatiere Content als Text mit Nummerierung
         const bodyParts = [];
         for (const item of section.content) {
           if (item.type === 'numbered') {
@@ -338,10 +408,9 @@ router.post('/import-from-generator', auth, async (req, res) => {
           }
         }
 
-        blocks.push({
+        addBlock({
           id: uuidv4(),
           type: 'clause',
-          order: order++,
           content: {
             clauseTitle: section.title || `§ ${clauseNumber}`,
             number: clauseNumber,
@@ -355,18 +424,17 @@ router.post('/import-from-generator', auth, async (req, res) => {
       }
     }
 
-    // Signature-Block am Ende
-    blocks.push({
+    // Signature-Block (signatureFields Format für SignatureBlock-Komponente)
+    addBlock({
       id: uuidv4(),
       type: 'signature',
-      order: order++,
       content: {
-        parties: [
-          { role: 'Partei A', name: partyAName },
-          { role: 'Partei B', name: partyBName }
+        signatureFields: [
+          { partyIndex: 0, label: `${partyLabels.partyA || 'Partei A'}${partyAName ? ': ' + partyAName : ''}`, showDate: true, showPlace: true },
+          { partyIndex: 1, label: `${partyLabels.partyB || 'Partei B'}${partyBName ? ': ' + partyBName : ''}`, showDate: true, showPlace: true }
         ],
-        date: new Date().toLocaleDateString('de-DE'),
-        location: ''
+        witnesses: 0,
+        signatureLayout: 'classic'
       },
       style: {},
       locked: false,
@@ -402,12 +470,14 @@ router.post('/import-from-generator', auth, async (req, res) => {
 
     await document.save();
 
-    console.log(`[ContractBuilder] Import aus Generator: ${document._id} (${blocks.length} Blöcke, Design: ${designVariant || 'executive'})`);
+    const pageCount = blocks.filter(b => b.type === 'page-break').length + 1;
+    console.log(`[ContractBuilder] Import aus Generator: ${document._id} (${blocks.length} Blöcke, ${pageCount} Seiten, Design: ${designVariant || 'executive'})`);
 
     res.status(201).json({
       success: true,
       documentId: document._id,
       blockCount: blocks.length,
+      pageCount,
       redirectUrl: `/contract-builder/${document._id}`
     });
   } catch (error) {
