@@ -889,6 +889,19 @@ const resolvePartyNames = (parties) => {
 };
 
 /**
+ * Prüft ob ein Firmenname ein Platzhalter ist (z.B. "TEST", "Firma", "Meine Firma")
+ * Gibt true zurück wenn der Name NICHT angezeigt werden sollte
+ */
+const isPlaceholderCompanyName = (name) => {
+  if (!name || typeof name !== 'string') return true;
+  const trimmed = name.trim();
+  if (trimmed.length < 3) return true;
+  const lower = trimmed.toLowerCase();
+  const placeholders = ['test', 'testing', 'testfirma', 'firma', 'meine firma', 'my company', 'company', 'example', 'beispiel', 'name', 'firmenname', 'xxx', 'abc', 'asdf', 'platzhalter'];
+  return placeholders.includes(lower);
+};
+
+/**
  * Proper Case Normalisierung für Namen und Adressen
  * Konvertiert "naomi baba" → "Naomi Baba", "richard oberle weg 27" → "Richard Oberle Weg 27"
  * Lässt bereits korrekte Groß-/Kleinschreibung unverändert (z.B. "GmbH", "Dr. Schmidt")
@@ -997,7 +1010,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           e(View, { style: styles.header },
             logoBase64 && e(Image, { src: logoBase64, style: styles.logo })
           ),
-          companyProfile?.companyName && e(View, { style: styles.companyInfo },
+          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName)) && e(View, { style: styles.companyInfo },
             e(Text, { style: styles.companyName }, companyProfile.companyName),
             companyProfile?.street && e(Text, null, companyProfile.street),
             companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`)
@@ -1043,7 +1056,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       e(View, { style: styles.coverPage },
         e(View, { style: styles.header },
           logoBase64 && e(Image, { src: logoBase64, style: styles.logo }),
-          companyProfile?.companyName && e(View, { style: styles.companyInfo },
+          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName)) && e(View, { style: styles.companyInfo },
             e(Text, { style: styles.companyName }, companyProfile.companyName)
           )
         ),
@@ -1087,7 +1100,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
           e(View, { style: styles.ornamentTop }),
           e(View, { style: styles.ornamentTopInner }),
           logoBase64 && e(Image, { src: logoBase64, style: styles.logo }),
-          companyProfile?.companyName && e(View, { style: styles.companyInfo },
+          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName)) && e(View, { style: styles.companyInfo },
             e(Text, { style: styles.companyName }, companyProfile.companyName),
             companyProfile?.street && e(Text, null, companyProfile.street),
             companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`)
@@ -1136,7 +1149,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
         e(View, { style: styles.headerBar },
           logoBase64 ? e(Image, { src: logoBase64, style: styles.logo }) : e(View, { style: { width: 50 } }),
           e(View, { style: styles.headerInfo },
-            e(Text, { style: styles.headerCompanyName }, companyProfile?.companyName || ''),
+            e(Text, { style: styles.headerCompanyName }, (!isPlaceholderCompanyName(companyProfile?.companyName) ? companyProfile.companyName : '')),
             companyProfile?.street && e(Text, null, companyProfile.street),
             companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`)
           )
@@ -1191,9 +1204,9 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
       e(View, { style: styles.header },
         logoBase64 ? e(Image, { src: logoBase64, style: styles.logo }) : e(View, { style: { width: 60 } }),
         e(View, { style: styles.companyInfo },
-          e(Text, { style: styles.companyName }, companyProfile?.companyName || ''),
-          companyProfile?.street && e(Text, null, companyProfile.street),
-          companyProfile?.zip && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`),
+          e(Text, { style: styles.companyName }, (!isPlaceholderCompanyName(companyProfile?.companyName) ? companyProfile.companyName : '')),
+          (!isPlaceholderCompanyName(companyProfile?.companyName) && companyProfile?.street) && e(Text, null, companyProfile.street),
+          (!isPlaceholderCompanyName(companyProfile?.companyName) && companyProfile?.zip) && e(Text, null, `${companyProfile.zip} ${companyProfile.city || ''}`),
           companyProfile?.contactPhone && e(Text, null, `Tel: ${companyProfile.contactPhone}`),
           companyProfile?.contactEmail && e(Text, null, companyProfile.contactEmail)
         )
@@ -1530,7 +1543,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, re
             e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
           e(Text, { style: styles.signatureName }, resolvedParties.partyAName || partyLabels.partyA),
-          companyProfile?.companyName && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
+          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName)) && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
         ),
         e(View, { style: styles.signatureColumn },
           e(Text, { style: styles.signatureLabel }, partyLabels.partyB),

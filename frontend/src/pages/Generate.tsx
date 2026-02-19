@@ -2899,11 +2899,24 @@ export default function Generate() {
   // Should show company profile tip?
   const shouldShowProfileTip = userPlan !== 'free' && !companyProfile && !tipDismissed;
 
+  // Prüft ob der Firmenname ein Platzhalter ist (z.B. "TEST")
+  const isValidCompanyProfile = (profile: any): boolean => {
+    if (!profile?.companyName) return false;
+    const name = profile.companyName.trim().toLowerCase();
+    if (name.length < 3) return false;
+    const placeholders = ['test', 'testing', 'testfirma', 'firma', 'meine firma', 'my company', 'company', 'example', 'beispiel', 'name', 'firmenname', 'xxx', 'abc', 'asdf', 'platzhalter'];
+    return !placeholders.includes(name);
+  };
+
   // Auto-activate company profile when initially loaded (only once)
+  // Nur aktivieren wenn ein echter Firmenname vorhanden ist (nicht "TEST" etc.)
   useEffect(() => {
-    if (companyProfile) {
+    if (companyProfile && isValidCompanyProfile(companyProfile)) {
       setUseCompanyProfile(true);
       console.log('✅ Company Profile initial aktiviert');
+    } else if (companyProfile) {
+      setUseCompanyProfile(false);
+      console.log('⚠️ Company Profile hat Platzhalter-Namen, nicht aktiviert:', companyProfile.companyName);
     }
   }, [companyProfile]); // Only depend on companyProfile, not useCompanyProfile!
 
@@ -3116,8 +3129,12 @@ export default function Generate() {
   };
 
   const toggleCompanyProfile = (enabled: boolean) => {
+    if (enabled && companyProfile && !isValidCompanyProfile(companyProfile)) {
+      toast.error('Bitte füllen Sie zuerst Ihr Firmenprofil mit einem echten Firmennamen aus.');
+      return;
+    }
     setUseCompanyProfile(enabled);
-    
+
     if (enabled && companyProfile && selectedType) {
       const updatedFormData = { ...formData };
       const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
@@ -3396,7 +3413,7 @@ export default function Generate() {
     }));
     const initialData: FormDataType = { title: `${type.name} - ${new Date().toLocaleDateString()}` };
     
-    if (useCompanyProfile && companyProfile) {
+    if (useCompanyProfile && companyProfile && isValidCompanyProfile(companyProfile)) {
       // 🏢 Vollständige Firmendaten aus Profil
       const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
       const companyFullAddress = `${companyProfile.street}\n${companyProfile.postalCode} ${companyProfile.city}${companyProfile.country && companyProfile.country !== 'Deutschland' ? `\n${companyProfile.country}` : ''}`;
