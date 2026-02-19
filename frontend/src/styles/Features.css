@@ -813,32 +813,27 @@
 .fp3-company-logo {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 28px;
+  padding: 14px 24px;
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid #e5e7eb;
+  border-left: 3px solid var(--brand-color);
   white-space: nowrap;
   transition: all 0.3s ease;
 }
 
 .fp3-company-logo:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+  border-left-color: var(--brand-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   transform: translateY(-2px);
-}
-
-.fp3-logo-img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  border-radius: 4px;
 }
 
 .fp3-logo-text {
   font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: -0.01em;
 }
 
 /* ============================================

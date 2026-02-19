@@ -205,14 +205,14 @@ const Features: React.FC = () => {
   ];
 
   const companyLogos = [
-    { name: 'Siemens', logo: 'https://logo.clearbit.com/siemens.com' },
-    { name: 'SAP', logo: 'https://logo.clearbit.com/sap.com' },
-    { name: 'Allianz', logo: 'https://logo.clearbit.com/allianz.com' },
-    { name: 'BMW', logo: 'https://logo.clearbit.com/bmw.com' },
-    { name: 'Deutsche Bank', logo: 'https://logo.clearbit.com/db.com' },
-    { name: 'Bosch', logo: 'https://logo.clearbit.com/bosch.com' },
-    { name: 'Mercedes-Benz', logo: 'https://logo.clearbit.com/mercedes-benz.com' },
-    { name: 'BASF', logo: 'https://logo.clearbit.com/basf.com' },
+    { name: 'Siemens', color: '#009999' },
+    { name: 'SAP', color: '#0070B8' },
+    { name: 'Allianz', color: '#003781' },
+    { name: 'BMW', color: '#0066B1' },
+    { name: 'Deutsche Bank', color: '#0018A8' },
+    { name: 'Bosch', color: '#E20015' },
+    { name: 'Mercedes-Benz', color: '#242424' },
+    { name: 'BASF', color: '#004A96' },
   ];
 
   return (
@@ -435,8 +435,7 @@ const Features: React.FC = () => {
               <div className="fp3-marquee">
                 <div className="fp3-marquee-content">
                   {[...companyLogos, ...companyLogos].map((logo, i) => (
-                    <div key={i} className="fp3-company-logo">
-                      <img src={logo.logo} alt={logo.name} className="fp3-logo-img" />
+                    <div key={i} className="fp3-company-logo" style={{ '--brand-color': logo.color } as React.CSSProperties}>
                       <span className="fp3-logo-text">{logo.name}</span>
                     </div>
                   ))}
