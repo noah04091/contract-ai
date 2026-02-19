@@ -1648,11 +1648,13 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
     logoBase64 = await urlToBase64(companyProfile.logoUrl);
   }
 
-  // Dokument-ID generieren
+  // Dokument-ID generieren (für Footer-Anzeige)
   const documentId = `DOC-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
-  // QR-Code generieren
-  const qrCode = await generateQRCode(`https://contract-ai.de/verify/${documentId}`);
+  // QR-Code generieren — mit echter Contract-ID für funktionierende Verifizierung
+  // contractId = MongoDB _id → /verify/:id Route findet den Vertrag in der DB
+  const verifyId = contractId || documentId;
+  const qrCode = await generateQRCode(`https://contract-ai.de/verify/${verifyId}`);
 
   // Parteien-Labels basierend auf Vertragstyp
   const partyLabels = getPartyLabels(contractType);
