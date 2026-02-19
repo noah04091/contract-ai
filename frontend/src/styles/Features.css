@@ -813,26 +813,27 @@
 .fp3-company-logo {
   display: flex;
   align-items: center;
-  padding: 14px 24px;
-  background: white;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  border-left: 3px solid var(--brand-color);
+  gap: 10px;
+  padding: 12px 20px;
+  background: transparent;
   white-space: nowrap;
   transition: all 0.3s ease;
+  opacity: 0.5;
 }
 
 .fp3-company-logo:hover {
-  border-color: #d1d5db;
-  border-left-color: var(--brand-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
+  opacity: 1;
+}
+
+.fp3-logo-icon {
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .fp3-logo-text {
   font-size: 15px;
-  font-weight: 700;
-  color: #334155;
+  font-weight: 600;
+  color: #64748b;
   letter-spacing: -0.01em;
 }
 
@@ -1033,15 +1034,20 @@
   }
 
   .fp3-marquee-content {
-    gap: 40px;
+    gap: 32px;
   }
 
   .fp3-company-logo {
-    padding: 10px 18px;
+    padding: 8px 14px;
   }
 
   .fp3-logo-text {
     font-size: 13px;
+  }
+
+  .fp3-social-label {
+    font-size: 12px;
+    padding: 0 20px;
   }
 
   .fp3-cta {

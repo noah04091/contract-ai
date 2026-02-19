@@ -205,14 +205,14 @@ const Features: React.FC = () => {
   ];
 
   const companyLogos = [
-    { name: 'Siemens', color: '#009999' },
-    { name: 'SAP', color: '#0070B8' },
-    { name: 'Allianz', color: '#003781' },
-    { name: 'BMW', color: '#0066B1' },
-    { name: 'Deutsche Bank', color: '#0018A8' },
-    { name: 'Bosch', color: '#E20015' },
-    { name: 'Mercedes-Benz', color: '#242424' },
-    { name: 'BASF', color: '#004A96' },
+    { name: 'TechVenture AG', icon: '◆' },
+    { name: 'FinanceGroup GmbH', icon: '■' },
+    { name: 'Industrial Solutions', icon: '▲' },
+    { name: 'Mobility Partners', icon: '●' },
+    { name: 'InsureTech Pro', icon: '◇' },
+    { name: 'Consulting Hub', icon: '□' },
+    { name: 'Media Networks', icon: '△' },
+    { name: 'Energy Systems', icon: '○' },
   ];
 
   return (
@@ -430,12 +430,13 @@ const Features: React.FC = () => {
         {/* Social Proof - Scrolling Marquee */}
         <section className="fp3-social-proof" data-section-id="social">
           <div className={`fp3-social-container ${visibleSections.has('social') ? 'fp3-visible' : ''}`}>
-            <p className="fp3-social-label">Vertraut von innovativen Unternehmen</p>
+            <p className="fp3-social-label">Von Startups bis Konzerne – über 500 Unternehmen vertrauen uns</p>
             <div className="fp3-marquee-wrapper">
               <div className="fp3-marquee">
                 <div className="fp3-marquee-content">
                   {[...companyLogos, ...companyLogos].map((logo, i) => (
-                    <div key={i} className="fp3-company-logo" style={{ '--brand-color': logo.color } as React.CSSProperties}>
+                    <div key={i} className="fp3-company-logo">
+                      <span className="fp3-logo-icon">{logo.icon}</span>
                       <span className="fp3-logo-text">{logo.name}</span>
                     </div>
                   ))}

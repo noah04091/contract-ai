@@ -14,6 +14,7 @@ import {
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
+import PDFDocumentViewer from "../components/PDFDocumentViewer";
 import "../styles/ContractPages.css";
 
 // Enhanced types for better comparison structure
@@ -443,9 +444,13 @@ const DifferenceView: React.FC<{
   showSideBySide: boolean;
   onToggleView: () => void;
   recommendedContract?: 1 | 2;
-}> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView, recommendedContract = 1 }) => {
+  file1: File | null;
+  file2: File | null;
+}> = ({ differences, selectedCategory, onCategoryChange, showSideBySide, onToggleView, recommendedContract = 1, file1, file2 }) => {
   const [showInlineDiff, setShowInlineDiff] = useState(true);
   const [activeDiffIndex, setActiveDiffIndex] = useState<number>(0);
+  const [expandedPdfIndex, setExpandedPdfIndex] = useState<number | null>(null);
+  const [activePdfTab, setActivePdfTab] = useState<1 | 2>(1);
   const diffRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const categories = [...new Set(differences.map(d => d.category))];
@@ -645,12 +650,33 @@ const DifferenceView: React.FC<{
                   <span className="category-badge">{diff.category}</span>
                   <h4>{diff.section}</h4>
                 </div>
-                <div
-                  className="severity-badge"
-                  style={{ backgroundColor: severityColor }}
-                >
-                  <SeverityIcon size={14} />
-                  <span>{diff.severity}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <motion.button
+                    className={`pdf-preview-btn ${expandedPdfIndex === index ? 'active' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (expandedPdfIndex === index) {
+                        setExpandedPdfIndex(null);
+                      } else {
+                        setExpandedPdfIndex(index);
+                        setActivePdfTab(1);
+                      }
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    disabled={!file1 && !file2}
+                    title={file1 || file2 ? 'PDF-Vorschau anzeigen' : 'PDF nur bei frischem Vergleich verfügbar'}
+                  >
+                    <Eye size={14} />
+                    <span>PDF</span>
+                  </motion.button>
+                  <div
+                    className="severity-badge"
+                    style={{ backgroundColor: severityColor }}
+                  >
+                    <SeverityIcon size={14} />
+                    <span>{diff.severity}</span>
+                  </div>
                 </div>
               </div>
 
@@ -707,6 +733,48 @@ const DifferenceView: React.FC<{
                 <Zap size={14} style={{ color: '#0071e3' }} />
                 <span>{diff.recommendation}</span>
               </div>
+
+              {/* PDF Preview Panel */}
+              <AnimatePresence>
+                {expandedPdfIndex === index && (file1 || file2) && (
+                  <motion.div
+                    className="pdf-preview-panel"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  >
+                    <div className="pdf-preview-tabs">
+                      <button
+                        className={`pdf-tab ${activePdfTab === 1 ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActivePdfTab(1); }}
+                        disabled={!file1}
+                      >
+                        Vertrag 1
+                      </button>
+                      <button
+                        className={`pdf-tab ${activePdfTab === 2 ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setActivePdfTab(2); }}
+                        disabled={!file2}
+                      >
+                        Vertrag 2
+                      </button>
+                      <button
+                        className="pdf-tab pdf-tab-close"
+                        onClick={(e) => { e.stopPropagation(); setExpandedPdfIndex(null); }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="pdf-preview-viewer" onClick={(e) => e.stopPropagation()}>
+                      <PDFDocumentViewer
+                        file={activePdfTab === 1 ? file1 : file2}
+                        highlightText={activePdfTab === 1 ? diff.contract1 : diff.contract2}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           );
         })}
@@ -1988,6 +2056,8 @@ export default function EnhancedCompare() {
                         showSideBySide={showSideBySide}
                         onToggleView={() => setShowSideBySide(!showSideBySide)}
                         recommendedContract={result.overallRecommendation.recommended}
+                        file1={file1}
+                        file2={file2}
                       />
                     </div>
                   )}
@@ -3234,6 +3304,111 @@ export default function EnhancedCompare() {
             font-weight: 500;
           }
 
+          /* PDF Preview Button */
+          .pdf-preview-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.7rem;
+            border: 1px solid #e8e8ed;
+            border-radius: 8px;
+            background: white;
+            color: #6e6e73;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+          }
+
+          .pdf-preview-btn:hover:not(:disabled) {
+            background: rgba(0, 113, 227, 0.08);
+            border-color: #0071e3;
+            color: #0071e3;
+          }
+
+          .pdf-preview-btn.active {
+            background: rgba(0, 113, 227, 0.1);
+            border-color: #0071e3;
+            color: #0071e3;
+          }
+
+          .pdf-preview-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+          }
+
+          /* PDF Preview Panel */
+          .pdf-preview-panel {
+            margin-top: 12px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e8e8ed;
+            background: #f5f5f7;
+          }
+
+          .pdf-preview-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #e8e8ed;
+            background: #fff;
+          }
+
+          .pdf-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6e6e73;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+          }
+
+          .pdf-tab:hover:not(:disabled) {
+            color: #1d1d1f;
+            background: #f5f5f7;
+          }
+
+          .pdf-tab.active {
+            color: #0071e3;
+          }
+
+          .pdf-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #0071e3;
+          }
+
+          .pdf-tab:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+          }
+
+          .pdf-tab-close {
+            flex: 0;
+            padding: 10px 16px;
+            color: #a1a1a6;
+          }
+
+          .pdf-tab-close:hover {
+            color: #ff453a;
+            background: rgba(255, 69, 58, 0.05);
+          }
+
+          .pdf-preview-viewer {
+            max-height: 500px;
+            overflow-y: auto;
+          }
+
           @media (max-width: 768px) {
             .profile-options {
               flex-direction: column;
@@ -3263,6 +3438,14 @@ export default function EnhancedCompare() {
             .analysis-details {
               flex-direction: column;
               gap: 0.5rem;
+            }
+
+            .pdf-preview-viewer {
+              max-height: 400px;
+            }
+
+            .pdf-preview-btn span {
+              display: none;
             }
           }
         `}</style>
