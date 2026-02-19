@@ -149,12 +149,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
         console.log(`✨ ${highlightedCount} präzise Matches hervorgehoben`);
 
-        // Schritt 3: Scrolle zum ersten Highlight
-        if (highlightedSpans.length > 0) {
-          setTimeout(() => {
-            highlightedSpans[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 100);
-        }
+        // Highlighting angewendet — User scrollt selbst zur markierten Stelle
 
         return highlightedCount > 0;
       } catch (error) {
@@ -244,9 +239,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         setFoundOnPage(1);
         setPageNumber(1);
         setIsSearching(false);
-        if (containerRef.current) {
-          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
         return;
       }
 
@@ -304,9 +296,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         setFoundOnPage(bestMatch.pageNum);
         setPageNumber(bestMatch.pageNum);
         setIsSearching(false);
-        if (containerRef.current) {
-          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
         return;
       }
 
