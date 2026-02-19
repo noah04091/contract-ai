@@ -204,21 +204,6 @@ const Features: React.FC = () => {
     { value: '50k', unit: '+', label: 'Verträge' },
   ];
 
-  const companyLogos = [
-    { name: 'nexora', icon: '◉', color: '#6366f1' },
-    { name: 'FINBRIDGE AG', icon: '', color: '#0f172a' },
-    { name: 'industrion', icon: '▲', color: '#f59e0b' },
-    { name: 'Keller & Partner', icon: '', color: '#475569' },
-    { name: 'MOVENTO', icon: '◆', color: '#06b6d4' },
-    { name: 'quantis group', icon: '', color: '#64748b' },
-    { name: 'HELIX', icon: '⬡', color: '#10b981' },
-    { name: 'vantage', icon: '●', color: '#8b5cf6' },
-    { name: 'Bergmann Consulting', icon: '', color: '#334155' },
-    { name: 'STRATOS', icon: '◈', color: '#0ea5e9' },
-    { name: 'flowstate', icon: '○', color: '#ec4899' },
-    { name: 'PRIMECORE', icon: '■', color: '#1e293b' },
-  ];
-
   return (
     <>
       <Helmet>
@@ -430,25 +415,6 @@ const Features: React.FC = () => {
             </div>
           </section>
         ))}
-
-        {/* Social Proof - Scrolling Marquee */}
-        <section className="fp3-social-proof" data-section-id="social">
-          <div className={`fp3-social-container ${visibleSections.has('social') ? 'fp3-visible' : ''}`}>
-            <p className="fp3-social-label">Vertraut von über 500 Unternehmen</p>
-            <div className="fp3-marquee-wrapper">
-              <div className="fp3-marquee">
-                <div className="fp3-marquee-content">
-                  {[...companyLogos, ...companyLogos].map((logo, i) => (
-                    <div key={i} className="fp3-company-logo" style={{ color: logo.color }}>
-                      {logo.icon && <span className="fp3-logo-icon">{logo.icon}</span>}
-                      <span className="fp3-logo-name">{logo.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Bottom CTA */}
         <section className="fp3-cta" data-section-id="cta">
