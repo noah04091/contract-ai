@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract AI - Feature Page Redesign Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 30%, #ffffff 70%, #f0f7ff 100%);
+      color: #1a1a2e;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================
+       ANIMATED GRADIENT ORBS - LIGHT VERSION
+       Contract AI Blau statt Lila/Schwarz
+       ============================================ */
+    .page-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .gradient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.5;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 122, 255, 0.15) 0%, transparent 70%);
+      top: -200px;
+      right: -100px;
+      animation: float1 20s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+      bottom: -150px;
+      left: -100px;
+      animation: float2 25s ease-in-out infinite;
+    }
+
+    .orb-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+      top: 40%;
+      left: 30%;
+      animation: float3 30s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-50px, 80px) scale(1.1); }
+      66% { transform: translate(30px, -40px) scale(0.9); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(60px, -50px) scale(1.15); }
+      66% { transform: translate(-40px, 30px) scale(0.85); }
+    }
+
+    @keyframes float3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-30px, -60px) scale(1.2); }
+    }
+
+    /* Subtle dots pattern */
+    .dots-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(rgba(0, 122, 255, 0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ============================================
+       MAIN CONTENT
+       ============================================ */
+    .main-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    /* ============================================
+       HERO SECTION - PREMIUM LIGHT
+       ============================================ */
+    .hero-section {
+      text-align: center;
+      padding: 60px 0 80px;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(0, 122, 255, 0.08);
+      border: 1px solid rgba(0, 122, 255, 0.2);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #007aff;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-badge svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .hero-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 28px;
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(59, 130, 246, 0.15) 100%);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 122, 255, 0.12);
+    }
+
+    .hero-icon::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 31px;
+      background: linear-gradient(135deg, #007aff, #3b82f6, #60a5fa);
+      z-index: -1;
+      opacity: 0.3;
+    }
+
+    .hero-icon svg {
+      width: 48px;
+      height: 48px;
+      color: #007aff;
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      color: #1a1a2e;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 50%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: #64748b;
+      max-width: 650px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    /* Feature Pills */
+    .feature-pills {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 122, 255, 0.12);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #334155;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+    }
+
+    .feature-pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.12);
+      border-color: rgba(0, 122, 255, 0.25);
+    }
+
+    .feature-pill svg {
+      width: 18px;
+      height: 18px;
+      color: #007aff;
+    }
+
+    /* CTA Buttons */
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #007aff 0%, #0066dd 100%);
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 28px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 122, 255, 0.2);
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #007aff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 122, 255, 0.08);
+      border-color: rgba(0, 122, 255, 0.3);
+    }
+
+    /* ============================================
+       PROGRESS TRACKER - NEU!
+       ============================================ */
+    .progress-tracker {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      margin: 60px auto;
+      padding: 0 20px;
+      max-width: 700px;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(0, 122, 255, 0.15);
+      margin-bottom: 14px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }
+
+    .step-circle svg {
+      width: 30px;
+      height: 30px;
+      color: #94a3b8;
+      position: relative;
+      z-index: 1;
+      transition: all 0.4s ease;
+    }
+
+    .progress-step.active .step-circle {
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 100%);
+      border-color: transparent;
+      box-shadow: 0 8px 32px rgba(0, 122, 255, 0.3);
+    }
+
+    .progress-step.active .step-circle svg {
+      color: white;
+    }
+
+    .progress-step.completed .step-circle {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+    }
+
+    .progress-step.completed .step-circle svg {
+      color: white;
+    }
+
+    .step-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      transition: color 0.3s ease;
+    }
+
+    .progress-step.active .step-label,
+    .progress-step.completed .step-label {
+      color: #1a1a2e;
+    }
+
+    .progress-connector {
+      width: 100px;
+      height: 3px;
+      background: rgba(0, 122, 255, 0.1);
+      margin: 0 -8px;
+      margin-bottom: 42px;
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-connector::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #007aff);
+      transition: width 0.6s ease;
+    }
+
+    .progress-connector.filled::after {
+      width: 100%;
+    }
+
+    /* ============================================
+       VIDEO/DEMO SECTION
+       ============================================ */
+    .video-section {
+      margin: 60px 0;
+    }
+
+    .video-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(0, 122, 255, 0.08);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #007aff;
+      margin-bottom: 16px;
+    }
+
+    .video-frame {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+      border-radius: 24px;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(59, 130, 246, 0.08) 100%);
+      border: 1px solid rgba(0, 122, 255, 0.1);
+      box-shadow: 0 20px 60px rgba(0, 122, 255, 0.1);
+    }
+
+    .video-placeholder {
+      width: 100%;
+      height: 500px;
+      background: linear-gradient(135deg, #f0f7ff 0%, #e8f4ff 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .video-placeholder svg {
+      width: 64px;
+      height: 64px;
+      color: #007aff;
+      opacity: 0.6;
+    }
+
+    .video-placeholder span {
+      color: #64748b;
+      font-size: 16px;
+    }
+
+    /* ============================================
+       GLASSMORPHISM CARDS
+       ============================================ */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 24px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.2), transparent);
+    }
+
+    /* ============================================
+       STATS SECTION - PREMIUM
+       ============================================ */
+    .stats-section {
+      margin: 80px 0;
+      text-align: center;
+    }
+
+    .stats-label {
+      font-size: 14px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 32px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .stat-card {
+      padding: 36px 28px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-card:hover {
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 122, 255, 0.1);
+      border-color: rgba(0, 122, 255, 0.15);
+    }
+
+    .stat-value {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* ============================================
+       HOW IT WORKS - STEP CARDS
+       ============================================ */
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 550px;
+      margin: 0 auto;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 40px;
+    }
+
+    .step-card {
+      padding: 44px 32px 36px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 24px;
+      text-align: center;
+      position: relative;
+      transition: all 0.4s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    }
+
+    .step-card:hover {
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-8px);
+      border-color: rgba(0, 122, 255, 0.2);
+      box-shadow: 0 16px 40px rgba(0, 122, 255, 0.12);
+    }
+
+    .step-number {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    }
+
+    .step-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: rgba(0, 122, 255, 0.08);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-icon svg {
+      width: 34px;
+      height: 34px;
+      color: #007aff;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 12px;
+    }
+
+    .step-desc {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       FEATURES GRID - PREMIUM
+       ============================================ */
+    .features-section {
+      margin: 80px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      padding: 32px 28px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 122, 255, 0.06);
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    .feature-card:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-4px);
+      border-color: rgba(0, 122, 255, 0.15);
+      box-shadow: 0 12px 32px rgba(0, 122, 255, 0.08);
+    }
+
+    .feature-card-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(0, 122, 255, 0.08);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .feature-card-icon svg {
+      width: 26px;
+      height: 26px;
+      color: #007aff;
+    }
+
+    .feature-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       CTA SECTION - FINAL
+       ============================================ */
+    .cta-section {
+      margin: 80px 0 40px;
+    }
+
+    .cta-card {
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.04) 0%, rgba(59, 130, 246, 0.08) 100%);
+      border: 1px solid rgba(0, 122, 255, 0.12);
+      border-radius: 28px;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.3), transparent);
+    }
+
+    .cta-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 550px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .main-content {
+        padding: 24px 16px 60px;
+      }
+
+      .hero-section {
+        padding: 40px 0 60px;
+      }
+
+      .hero-title {
+        font-size: 32px;
+      }
+
+      .feature-pills {
+        gap: 8px;
+      }
+
+      .feature-pill {
+        padding: 10px 16px;
+        font-size: 13px;
+      }
+
+      .progress-tracker {
+        flex-wrap: wrap;
+        gap: 24px;
+      }
+
+      .progress-connector {
+        display: none;
+      }
+
+      .stats-grid,
+      .steps-grid,
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        max-width: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background - LIGHT VERSION -->
+  <div class="page-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+  </div>
+  <div class="dots-overlay"></div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        KI-gestützt
+      </div>
+
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+        </svg>
+      </div>
+
+      <h1 class="hero-title">
+        Versteckte Risiken erkennen – <span class="highlight">automatisch</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Unsere KI liest, bewertet und erklärt Ihre Verträge in unter 60 Sekunden.
+        Risiken, Chancen und kritische Klauseln – alles auf einen Blick.
+      </p>
+
+      <div class="feature-pills">
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          In 60 Sekunden
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          98% Genauigkeit
+        </div>
+        <div class="feature-pill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          DSGVO-konform
+        </div>
+      </div>
+
+      <div class="hero-buttons">
+        <a href="#" class="btn-primary">
+          Vertrag jetzt analysieren
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </a>
+        <a href="#so-funktionierts" class="btn-secondary">
+          Wie es funktioniert
+        </a>
+      </div>
+    </section>
+
+    <!-- PROGRESS TRACKER - NEU! -->
+    <div class="progress-tracker">
+      <div class="progress-step completed">
+        <div class="step-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <span class="step-label">Hochladen</span>
+      </div>
+
+      <div class="progress-connector filled"></div>
+
+      <div class="progress-step active">
+        <div class="step-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
+        <span class="step-label">KI-Analyse</span>
+      </div>
+
+      <div class="progress-connector"></div>
+
+      <div class="progress-step">
+        <div class="step-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <span class="step-label">Ergebnis</span>
+      </div>
+    </div>
+
+    <!-- VIDEO/DEMO SECTION -->
+    <section class="video-section">
+      <div style="text-align: center;">
+        <div class="video-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Live Demo
+        </div>
+        <h2 class="section-title">Vertragsanalyse in Aktion</h2>
+      </div>
+      <div class="video-frame">
+        <div class="video-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          <span>Video / Screenshot hier</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="stats-section">
+      <p class="stats-label">Bereits über 10.000 Verträge analysiert</p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value">98%</div>
+          <div class="stat-label">Erkennungsgenauigkeit</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">&lt; 60s</div>
+          <div class="stat-label">Analysezeit</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">10,000+</div>
+          <div class="stat-label">Analysierte Verträge</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="so-funktionierts" style="margin: 80px 0;">
+      <div class="section-header">
+        <h2 class="section-title">So funktioniert's</h2>
+        <p class="section-subtitle">In nur 3 Schritten zu Ihrer Vertragsanalyse</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Vertrag hochladen</h3>
+          <p class="step-desc">PDF oder DOCX hochladen – verschlüsselt und sicher auf EU-Servern.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+          </div>
+          <h3 class="step-title">KI-Analyse</h3>
+          <p class="step-desc">Intelligente Erkennung von Vertragstyp, Klauseln und Risiken.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="m9 15 2 2 4-4"/>
+            </svg>
+          </div>
+          <h3 class="step-title">Ergebnis erhalten</h3>
+          <p class="step-desc">Übersichtlicher Report mit Chancen-Risiken-Score und Empfehlungen.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES GRID -->
+    <section class="features-section">
+      <div class="section-header">
+        <h2 class="section-title">Funktionen im Überblick</h2>
+        <p class="section-subtitle">Alles was Sie für die Vertragsanalyse brauchen</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h3>Risiko-Scanner</h3>
+          <p>Erkennt problematische Klauseln und versteckte Kostenfallen automatisch.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <h3>Fairness-Bewertung</h3>
+          <p>Bewertet Ausgewogenheit und zeigt einseitige Regelungen auf.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <h3>Verständlichkeits-Check</h3>
+          <p>Übersetzt Juristendeutsch in klare, verständliche Sprache.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <h3>Chancen-Analyse</h3>
+          <p>Zeigt nicht nur Risiken, sondern auch Ihre Vorteile im Vertrag.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3>Handlungsempfehlungen</h3>
+          <p>Konkrete Tipps zur Verbesserung problematischer Punkte.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3>PDF-Export</h3>
+          <p>Analyseergebnisse speichern und für Verhandlungen nutzen.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="cta-section">
+      <div class="cta-card">
+        <h2 class="cta-title">Versteckte Risiken aufdecken, bevor sie teuer werden</h2>
+        <p class="cta-subtitle">
+          Über 87% unserer Nutzer finden kritische Klauseln, die sie übersehen hätten.
+          Analysieren Sie Ihren Vertrag – in 60 Sekunden.
+        </p>
+        <div class="cta-buttons">
+          <a href="#" class="btn-secondary">So funktioniert's</a>
+          <a href="#" class="btn-primary">
+            Vertrag kostenlos analysieren
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

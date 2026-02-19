@@ -205,14 +205,14 @@ const Features: React.FC = () => {
   ];
 
   const companyLogos = [
-    { name: 'TechVenture AG', icon: '◆' },
-    { name: 'FinanceGroup GmbH', icon: '■' },
-    { name: 'Industrial Solutions', icon: '▲' },
-    { name: 'Mobility Partners', icon: '●' },
-    { name: 'InsureTech Pro', icon: '◇' },
-    { name: 'Consulting Hub', icon: '□' },
-    { name: 'Media Networks', icon: '△' },
-    { name: 'Energy Systems', icon: '○' },
+    { name: 'TechVenture AG', icon: 'TV' },
+    { name: 'FinanceGroup GmbH', icon: 'FG' },
+    { name: 'Industrial Solutions', icon: 'IS' },
+    { name: 'Mobility Partners', icon: 'MP' },
+    { name: 'InsureTech Pro', icon: 'IT' },
+    { name: 'Consulting Hub', icon: 'CH' },
+    { name: 'Media Networks', icon: 'MN' },
+    { name: 'Energy Systems', icon: 'ES' },
   ];
 
   return (

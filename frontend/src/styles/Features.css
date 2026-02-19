@@ -733,13 +733,34 @@
 .fp3-section-purple .fp3-feature-badge { background: linear-gradient(135deg, #6d28d9, #8b5cf6); }
 
 /* ============================================
-   SOCIAL PROOF - Scrolling Marquee
+   SOCIAL PROOF - Premium Scrolling Banner
    ============================================ */
 
 .fp3-social-proof {
-  padding: 60px 0;
-  background: #fafbfc;
+  padding: 80px 0;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   overflow: hidden;
+  position: relative;
+}
+
+.fp3-social-proof::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
+}
+
+.fp3-social-proof::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.2), transparent);
 }
 
 .fp3-social-container {
@@ -755,18 +776,33 @@
 }
 
 .fp3-social-label {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 32px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  font-weight: 600;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 40px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.fp3-social-label::before,
+.fp3-social-label::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #cbd5e1);
+}
+
+.fp3-social-label::after {
+  background: linear-gradient(90deg, #cbd5e1, transparent);
 }
 
 .fp3-marquee-wrapper {
   position: relative;
   width: 100%;
   overflow: hidden;
+  padding: 12px 0;
 }
 
 .fp3-marquee-wrapper::before,
@@ -775,19 +811,19 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 100px;
+  width: 150px;
   z-index: 2;
   pointer-events: none;
 }
 
 .fp3-marquee-wrapper::before {
   left: 0;
-  background: linear-gradient(90deg, #fafbfc 0%, transparent 100%);
+  background: linear-gradient(90deg, #f1f5f9 0%, transparent 100%);
 }
 
 .fp3-marquee-wrapper::after {
   right: 0;
-  background: linear-gradient(90deg, transparent 0%, #fafbfc 100%);
+  background: linear-gradient(90deg, transparent 0%, #f1f5f9 100%);
 }
 
 .fp3-marquee {
@@ -797,8 +833,12 @@
 
 .fp3-marquee-content {
   display: flex;
-  gap: 60px;
-  animation: marqueeScroll 30s linear infinite;
+  gap: 24px;
+  animation: marqueeScroll 35s linear infinite;
+}
+
+.fp3-marquee-content:hover {
+  animation-play-state: paused;
 }
 
 @keyframes marqueeScroll {
@@ -814,26 +854,84 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 20px;
-  background: transparent;
+  padding: 14px 22px;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
   white-space: nowrap;
-  transition: all 0.3s ease;
-  opacity: 0.5;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 4px 8px rgba(0, 0, 0, 0.02);
+  cursor: default;
 }
 
 .fp3-company-logo:hover {
-  opacity: 1;
+  transform: translateY(-2px);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow:
+    0 4px 12px rgba(59, 130, 246, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 .fp3-logo-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
   font-size: 14px;
-  color: #94a3b8;
+  font-weight: 700;
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #4f46e5;
+}
+
+/* Different colored icons for variety */
+.fp3-company-logo:nth-child(8n+1) .fp3-logo-icon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.fp3-company-logo:nth-child(8n+2) .fp3-logo-icon {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #16a34a;
+}
+
+.fp3-company-logo:nth-child(8n+3) .fp3-logo-icon {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #d97706;
+}
+
+.fp3-company-logo:nth-child(8n+4) .fp3-logo-icon {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  color: #7c3aed;
+}
+
+.fp3-company-logo:nth-child(8n+5) .fp3-logo-icon {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  color: #db2777;
+}
+
+.fp3-company-logo:nth-child(8n+6) .fp3-logo-icon {
+  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+  color: #0d9488;
+}
+
+.fp3-company-logo:nth-child(8n+7) .fp3-logo-icon {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #dc2626;
+}
+
+.fp3-company-logo:nth-child(8n+8) .fp3-logo-icon {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #4f46e5;
 }
 
 .fp3-logo-text {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: #64748b;
+  color: #334155;
   letter-spacing: -0.01em;
 }
 
@@ -1034,20 +1132,37 @@
   }
 
   .fp3-marquee-content {
-    gap: 32px;
+    gap: 16px;
   }
 
   .fp3-company-logo {
-    padding: 8px 14px;
+    padding: 10px 16px;
+    border-radius: 10px;
+  }
+
+  .fp3-logo-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-radius: 6px;
   }
 
   .fp3-logo-text {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .fp3-social-label {
     font-size: 12px;
     padding: 0 20px;
+  }
+
+  .fp3-social-label::before,
+  .fp3-social-label::after {
+    width: 24px;
+  }
+
+  .fp3-social-proof {
+    padding: 50px 0;
   }
 
   .fp3-cta {

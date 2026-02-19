@@ -316,7 +316,12 @@
       "Bash(npx jest:*)",
       "Bash(npx vercel@50.15.1 --prod)",
       "Bash(npx vercel@50.15.1 ls:*)",
-      "Bash(npx --yes vercel@50.15.1 --prod)"
+      "Bash(npx --yes vercel@50.15.1 --prod)",
+      "Bash(gh run list:*)",
+      "Bash(not defined\" errors. This broke contract saving and PDF preview\ngeneration on the Generate page.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebFetch(domain:search.google.com)",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(git status:*)"
     ],
     "deny": [],
     "ask": []

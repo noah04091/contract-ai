@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract AI - Feature Page V4 (Stripe-Level Premium)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       RESET & BASE
+       ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       CSS VARIABLES - PREMIUM COLOR SYSTEM
+       ============================================ */
+    :root {
+      /* Primary Blues */
+      --blue-50: #eff6ff;
+      --blue-100: #dbeafe;
+      --blue-200: #bfdbfe;
+      --blue-300: #93c5fd;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+
+      /* Neutrals */
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+
+      /* Gradients */
+      --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      --gradient-subtle: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
+      --shadow-xl: 0 24px 64px rgba(0,0,0,0.12);
+      --shadow-blue: 0 20px 50px rgba(59,130,246,0.25);
+
+      /* Animation */
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* ============================================
+       SCROLL ANIMATIONS
+       ============================================ */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .animate-delay-1 { transition-delay: 0.1s; }
+    .animate-delay-2 { transition-delay: 0.2s; }
+    .animate-delay-3 { transition-delay: 0.3s; }
+    .animate-delay-4 { transition-delay: 0.4s; }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .container-lg {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ============================================
+       AMBIENT BACKGROUND
+       ============================================ */
+    .ambient-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.4;
+    }
+
+    .orb-1 {
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      top: -300px;
+      right: -200px;
+      animation: ambientFloat1 30s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(147, 197, 253, 0.12) 0%, transparent 70%);
+      bottom: 20%;
+      left: -200px;
+      animation: ambientFloat2 25s ease-in-out infinite;
+    }
+
+    .orb-3 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.1) 0%, transparent 70%);
+      top: 50%;
+      right: 10%;
+      animation: ambientFloat3 20s ease-in-out infinite;
+    }
+
+    @keyframes ambientFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(-80px, 60px) scale(1.1); }
+      50% { transform: translate(40px, 120px) scale(0.95); }
+      75% { transform: translate(-40px, 40px) scale(1.05); }
+    }
+
+    @keyframes ambientFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(100px, -80px) scale(1.15); }
+      66% { transform: translate(60px, 60px) scale(0.9); }
+    }
+
+    @keyframes ambientFloat3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-60px, -40px) scale(1.2); }
+    }
+
+    /* ============================================
+       HERO SECTION - STRIPE-LEVEL
+       ============================================ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 0 80px;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    /* Premium Badge */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--gradient-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue-600);
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero-badge-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--blue-500);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* Massive Title */
+    .hero-title {
+      font-size: clamp(48px, 7vw, 80px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 28px;
+      color: var(--slate-900);
+    }
+
+    .hero-title-highlight {
+      position: relative;
+      display: inline-block;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-title-highlight::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transform-origin: left;
+      animation: underlineGrow 1s var(--ease-out-expo) 0.5s forwards;
+    }
+
+    @keyframes underlineGrow {
+      to { transform: scaleX(1); }
+    }
+
+    .hero-subtitle {
+      font-size: 20px;
+      color: var(--slate-500);
+      max-width: 540px;
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+
+    /* Hero CTA */
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--gradient-primary);
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-blue);
+      transition: all 0.4s var(--ease-out-expo);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 28px 60px rgba(59,130,246,0.35);
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 28px;
+      background: transparent;
+      border: 1.5px solid var(--slate-200);
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--slate-700);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-out-quad);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--blue-300);
+      background: var(--blue-50);
+      color: var(--blue-600);
+    }
+
+    /* Hero Visual - Interactive Demo Preview */
+    .hero-visual {
+      position: absolute;
+      right: -5%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 55%;
+      max-width: 700px;
+      z-index: 1;
+    }
+
+    .demo-window {
+      background: var(--gradient-glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-xl), 0 0 0 1px rgba(59,130,246,0.05);
+      transform: perspective(1000px) rotateY(-8deg) rotateX(2deg);
+      transition: transform 0.6s var(--ease-out-expo);
+    }
+
+    .demo-window:hover {
+      transform: perspective(1000px) rotateY(-4deg) rotateX(1deg) scale(1.02);
+    }
+
+    .demo-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+
+    .demo-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .demo-dot-red { background: #ff5f57; }
+    .demo-dot-yellow { background: #febc2e; }
+    .demo-dot-green { background: #28c840; }
+
+    .demo-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .demo-score {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 20px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .demo-score-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: conic-gradient(var(--blue-500) 75%, var(--slate-100) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .demo-score-circle::before {
+      content: '';
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .demo-score-value {
+      position: relative;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--blue-600);
+    }
+
+    .demo-score-text {
+      flex: 1;
+    }
+
+    .demo-score-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--slate-400);
+      margin-bottom: 4px;
+    }
+
+    .demo-score-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--slate-800);
+    }
+
+    .demo-findings {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .demo-finding {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      animation: findingSlideIn 0.5s var(--ease-out-expo) backwards;
+    }
+
+    .demo-finding:nth-child(1) { animation-delay: 0.2s; }
+    .demo-finding:nth-child(2) { animation-delay: 0.4s; }
+    .demo-finding:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes findingSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+    }
+
+    .demo-finding-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .demo-finding-icon.warning { background: #fef3c7; }
+    .demo-finding-icon.risk { background: #fee2e2; }
+    .demo-finding-icon.info { background: var(--blue-100); }
+
+    .demo-finding-text {
+      flex: 1;
+      font-size: 14px;
+      color: var(--slate-600);
+    }
+
+    .demo-finding-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .demo-finding-badge.high { background: #fee2e2; color: #dc2626; }
+    .demo-finding-badge.medium { background: #fef3c7; color: #d97706; }
+    .demo-finding-badge.low { background: var(--blue-100); color: var(--blue-600); }
+
+    /* Floating Elements */
+    .floating-element {
+      position: absolute;
+      background: white;
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 10;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .floating-element-1 {
+      top: 15%;
+      left: 55%;
+      animation-delay: 0s;
+    }
+
+    .floating-element-2 {
+      bottom: 20%;
+      left: 48%;
+      animation-delay: 1s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .floating-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .floating-icon.blue { background: var(--blue-100); }
+    .floating-icon.green { background: #dcfce7; }
+
+    .floating-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .floating-subtext {
+      font-size: 12px;
+      color: var(--slate-400);
+    }
+
+    /* ============================================
+       SECTION BASE
+       ============================================ */
+    .section {
+      position: relative;
+      padding: 120px 0;
+      z-index: 1;
+    }
+
+    .section-light {
+      background: var(--gradient-subtle);
+    }
+
+    .section-tinted {
+      background: linear-gradient(180deg, var(--blue-50) 0%, #f8fafc 100%);
+    }
+
+    /* Section Header */
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 72px;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--blue-100);
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--blue-600);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: clamp(36px, 5vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--slate-900);
+      margin-bottom: 20px;
+      line-height: 1.15;
+    }
+
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--slate-500);
+      line-height: 1.7;
+    }
+
+    /* ============================================
+       FEATURE CARDS - 3D TRANSFORM
+       ============================================ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+      position: relative;
+      padding: 32px;
+      background: white;
+      border: 1px solid var(--slate-100);
+      border-radius: 20px;
+      transition: all 0.5s var(--ease-out-expo);
+      cursor: default;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl);
+      border-color: transparent;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--blue-100);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      transition: all 0.4s var(--ease-out-expo);
+    }
+
+    .feature-card:hover .feature-icon {
+      background: var(--gradient-primary);
+      transform: scale(1.1);
+    }
+
+    .feature-icon svg {
+      width: 28px;
+      height: 28px;
+      color: var(--blue-600);
+      transition: color 0.3s;
+    }
+
+    .feature-card:hover .feature-icon svg {
+      color: white;
+    }
+
+    .feature-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 15px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       PROCESS STEPS - TIMELINE
+       ============================================ */
+    .process-container {
+      position: relative;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .process-line {
+      position: absolute;
+      left: 40px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--blue-200) 0%, var(--blue-400) 50%, var(--blue-200) 100%);
+    }
+
+    @media (max-width: 600px) {
+      .process-line { left: 24px; }
+    }
+
+    .process-step {
+      position: relative;
+      display: flex;
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .process-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .process-number {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+      background: white;
+      border: 3px solid var(--blue-500);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--blue-600);
+      box-shadow: var(--shadow-lg);
+      z-index: 1;
+      transition: all 0.4s var(--ease-out-expo);
+    }
+
+    @media (max-width: 600px) {
+      .process-number {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+      }
+    }
+
+    .process-step:hover .process-number {
+      background: var(--gradient-primary);
+      color: white;
+      border-color: var(--blue-600);
+      transform: scale(1.1);
+    }
+
+    .process-content {
+      flex: 1;
+      padding-top: 16px;
+    }
+
+    .process-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin-bottom: 10px;
+    }
+
+    .process-desc {
+      font-size: 16px;
+      color: var(--slate-500);
+      line-height: 1.7;
+    }
+
+    /* ============================================
+       RISK EXAMPLES - GLASSMORPHISM
+       ============================================ */
+    .risks-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 700px) {
+      .risks-grid { grid-template-columns: 1fr; }
+    }
+
+    .risk-card {
+      position: relative;
+      padding: 28px;
+      background: var(--gradient-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 20px;
+      box-shadow: var(--shadow-md);
+      transition: all 0.4s var(--ease-out-expo);
+      overflow: hidden;
+    }
+
+    .risk-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--risk-color, var(--blue-500));
+    }
+
+    .risk-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .risk-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .risk-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--slate-800);
+    }
+
+    .risk-badge {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .risk-badge.critical {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .risk-badge.warning {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .risk-issue {
+      padding: 14px 16px;
+      background: rgba(254, 226, 226, 0.5);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #b91c1c;
+      margin-bottom: 12px;
+    }
+
+    .risk-solution {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      background: rgba(220, 252, 231, 0.5);
+      border-radius: 10px;
+      font-size: 14px;
+      color: #166534;
+    }
+
+    .risk-solution svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ============================================
+       STATS SECTION - PREMIUM DARK
+       ============================================ */
+    .stats-section {
+      background: linear-gradient(135deg, var(--slate-900) 0%, var(--slate-800) 100%);
+      padding: 100px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stats-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(ellipse at top right, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                  radial-gradient(ellipse at bottom left, rgba(96, 165, 250, 0.1) 0%, transparent 50%);
+    }
+
+    .stats-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .stats-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .stats-header .section-eyebrow {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--blue-300);
+    }
+
+    .stats-header .section-title {
+      color: white;
+    }
+
+    .stats-header .section-subtitle {
+      color: var(--slate-400);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 40px 32px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(8px);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+
+    .stat-card:hover {
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-4px);
+    }
+
+    .stat-value {
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--blue-300) 0%, var(--blue-400) 50%, white 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 15px;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+
+    /* ============================================
+       FAQ - MODERN ACCORDION
+       ============================================ */
+    .faq-container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 0;
+      cursor: pointer;
+      list-style: none;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--slate-800);
+      transition: color 0.3s;
+    }
+
+    .faq-question::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq-question:hover {
+      color: var(--blue-600);
+    }
+
+    .faq-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--slate-100);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .faq-item[open] .faq-icon {
+      background: var(--blue-500);
+      transform: rotate(45deg);
+    }
+
+    .faq-icon svg {
+      width: 16px;
+      height: 16px;
+      color: var(--slate-600);
+      transition: color 0.3s;
+    }
+
+    .faq-item[open] .faq-icon svg {
+      color: white;
+    }
+
+    .faq-answer {
+      padding: 0 0 24px;
+      font-size: 15px;
+      color: var(--slate-500);
+      line-height: 1.7;
+    }
+
+    /* ============================================
+       CTA SECTION - PREMIUM
+       ============================================ */
+    .cta-section {
+      padding: 100px 0 120px;
+    }
+
+    .cta-card {
+      position: relative;
+      padding: 80px 60px;
+      background: var(--gradient-primary);
+      border-radius: 32px;
+      text-align: center;
+      overflow: hidden;
+      box-shadow: var(--shadow-blue);
+    }
+
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -30%;
+      width: 80%;
+      height: 150%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-title {
+      font-size: clamp(32px, 4vw, 44px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .cta-subtitle {
+      font-size: 18px;
+      color: rgba(255,255,255,0.85);
+      max-width: 500px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+
+    .btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 36px;
+      background: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--blue-600);
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.15);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+
+    .btn-white:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.2);
+    }
+
+    /* ============================================
+       TRUST BADGES
+       ============================================ */
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      padding: 60px 0;
+      border-top: 1px solid var(--slate-100);
+    }
+
+    .trust-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--slate-400);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .trust-badge svg {
+      width: 24px;
+      height: 24px;
+      color: var(--blue-500);
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 1100px) {
+      .hero-visual {
+        display: none;
+      }
+
+      .hero-content {
+        max-width: 100%;
+        text-align: center;
+      }
+
+      .hero-cta {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Background -->
+  <div class="ambient-bg">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+  </div>
+
+  <!-- ==========================================
+       HERO SECTION
+       ========================================== -->
+  <section class="hero">
+    <div class="container-lg">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="hero-badge-dot"></span>
+          KI-gestuetzte Vertragsanalyse
+        </div>
+
+        <h1 class="hero-title">
+          Versteckte Risiken<br>
+          <span class="hero-title-highlight">in Sekunden erkennen</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Unsere KI analysiert Ihre Vertraege und deckt kritische Klauseln auf,
+          bevor sie zum Problem werden. Klar, schnell, zuverlaessig.
+        </p>
+
+        <div class="hero-cta">
+          <a href="#" class="btn-primary">
+            Vertrag analysieren
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+          <a href="#demo" class="btn-secondary">
+            Live-Demo ansehen
+          </a>
+        </div>
+      </div>
+
+      <!-- Interactive Demo Visual -->
+      <div class="hero-visual">
+        <!-- Floating Elements -->
+        <div class="floating-element floating-element-1">
+          <div class="floating-icon blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="floating-text">DSGVO-konform</div>
+            <div class="floating-subtext">EU-Server</div>
+          </div>
+        </div>
+
+        <div class="floating-element floating-element-2">
+          <div class="floating-icon green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <div>
+            <div class="floating-text">&lt; 60 Sekunden</div>
+            <div class="floating-subtext">Analysezeit</div>
+          </div>
+        </div>
+
+        <!-- Demo Window -->
+        <div class="demo-window">
+          <div class="demo-header">
+            <span class="demo-dot demo-dot-red"></span>
+            <span class="demo-dot demo-dot-yellow"></span>
+            <span class="demo-dot demo-dot-green"></span>
+          </div>
+          <div class="demo-content">
+            <div class="demo-score">
+              <div class="demo-score-circle">
+                <span class="demo-score-value">75</span>
+              </div>
+              <div class="demo-score-text">
+                <div class="demo-score-label">Vertrags-Score</div>
+                <div class="demo-score-title">Arbeitsvertrag.pdf</div>
+              </div>
+            </div>
+            <div class="demo-findings">
+              <div class="demo-finding">
+                <div class="demo-finding-icon warning">&#9888;</div>
+                <span class="demo-finding-text">Kuendigungsfrist ungewoehnlich lang</span>
+                <span class="demo-finding-badge medium">Mittel</span>
+              </div>
+              <div class="demo-finding">
+                <div class="demo-finding-icon risk">&#10006;</div>
+                <span class="demo-finding-text">Wettbewerbsklausel sehr restriktiv</span>
+                <span class="demo-finding-badge high">Hoch</span>
+              </div>
+              <div class="demo-finding">
+                <div class="demo-finding-icon info">&#9432;</div>
+                <span class="demo-finding-text">Ueberstundenregelung unklar</span>
+                <span class="demo-finding-badge low">Niedrig</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Badges -->
+  <div class="container">
+    <div class="trust-badges">
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        256-bit Verschluesselung
+      </div>
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+        DSGVO-konform
+      </div>
+      <div class="trust-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Server in Deutschland
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       FEATURES SECTION
+       ========================================== -->
+  <section class="section section-light" id="features">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-eyebrow">Funktionen</span>
+        <h2 class="section-title">Alles was Sie fuer sichere Vertraege brauchen</h2>
+        <p class="section-subtitle">
+          Modernste KI-Technologie analysiert jeden Aspekt Ihrer Vertraege und liefert
+          klare, verstaendliche Ergebnisse.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card animate-on-scroll animate-delay-1">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Risiko-Erkennung</h3>
+          <p class="feature-desc">Automatische Identifizierung problematischer Klauseln und versteckter Kostenfallen.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll animate-delay-2">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Fairness-Score</h3>
+          <p class="feature-desc">Objektive Bewertung der Ausgewogenheit und Identifikation einseitiger Regelungen.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll animate-delay-3">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Instant-Analyse</h3>
+          <p class="feature-desc">Komplette Vertragsanalyse in unter 60 Sekunden statt Stunden oder Tagen.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll animate-delay-1">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Klare Sprache</h3>
+          <p class="feature-desc">Kompliziertes Juristendeutsch wird in verstaendliche Erklaerungen uebersetzt.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll animate-delay-2">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Chancen-Analyse</h3>
+          <p class="feature-desc">Zeigt nicht nur Risiken, sondern auch guenstige Klauseln und Vorteile auf.</p>
+        </div>
+
+        <div class="feature-card animate-on-scroll animate-delay-3">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">PDF-Export</h3>
+          <p class="feature-desc">Professionelle Reports zum Speichern, Teilen und fuer Verhandlungen.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       HOW IT WORKS - TIMELINE
+       ========================================== -->
+  <section class="section" id="process">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-eyebrow">So funktioniert's</span>
+        <h2 class="section-title">In 3 Schritten zur Vertragsanalyse</h2>
+        <p class="section-subtitle">
+          Einfacher Prozess, professionelles Ergebnis. Keine technischen Kenntnisse erforderlich.
+        </p>
+      </div>
+
+      <div class="process-container">
+        <div class="process-line"></div>
+
+        <div class="process-step animate-on-scroll animate-delay-1">
+          <div class="process-number">1</div>
+          <div class="process-content">
+            <h3 class="process-title">Vertrag hochladen</h3>
+            <p class="process-desc">
+              Laden Sie Ihren Vertrag als PDF oder DOCX hoch. Ihre Daten werden verschluesselt
+              uebertragen und auf deutschen Servern verarbeitet.
+            </p>
+          </div>
+        </div>
+
+        <div class="process-step animate-on-scroll animate-delay-2">
+          <div class="process-number">2</div>
+          <div class="process-content">
+            <h3 class="process-title">KI-Analyse</h3>
+            <p class="process-desc">
+              Unsere KI erkennt automatisch den Vertragstyp und analysiert jede Klausel
+              auf Risiken, Fairness und Verstaendlichkeit.
+            </p>
+          </div>
+        </div>
+
+        <div class="process-step animate-on-scroll animate-delay-3">
+          <div class="process-number">3</div>
+          <div class="process-content">
+            <h3 class="process-title">Ergebnis erhalten</h3>
+            <p class="process-desc">
+              Erhalten Sie einen detaillierten Report mit Chancen-Risiken-Score,
+              markierten Problemstellen und konkreten Handlungsempfehlungen.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       RISK EXAMPLES
+       ========================================== -->
+  <section class="section section-tinted" id="risks">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-eyebrow">Risikoerkennung</span>
+        <h2 class="section-title">Typische Vertragsrisiken die wir finden</h2>
+        <p class="section-subtitle">
+          Unsere KI erkennt kritische Klauseln und erklaert, warum sie problematisch sind.
+        </p>
+      </div>
+
+      <div class="risks-grid">
+        <div class="risk-card animate-on-scroll animate-delay-1" style="--risk-color: #dc2626;">
+          <div class="risk-header">
+            <h3 class="risk-title">Ueberlange Kuendigungsfristen</h3>
+            <span class="risk-badge critical">Kritisch</span>
+          </div>
+          <div class="risk-issue">
+            "Die Kuendigungsfrist betraegt 12 Monate zum Quartalsende."
+          </div>
+          <div class="risk-solution">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Ungewoehnlich lang - schraenkt Ihre Flexibilitaet stark ein. Standard sind 3 Monate.</span>
+          </div>
+        </div>
+
+        <div class="risk-card animate-on-scroll animate-delay-2" style="--risk-color: #d97706;">
+          <div class="risk-header">
+            <h3 class="risk-title">Versteckte Gebuehren</h3>
+            <span class="risk-badge warning">Warnung</span>
+          </div>
+          <div class="risk-issue">
+            "Zusaetzliche Gebuehren koennen nach Ermessen erhoben werden."
+          </div>
+          <div class="risk-solution">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Gefahr unbegrenzter Zusatzkosten - fordern Sie eine klare Obergrenze.</span>
+          </div>
+        </div>
+
+        <div class="risk-card animate-on-scroll animate-delay-3" style="--risk-color: #dc2626;">
+          <div class="risk-header">
+            <h3 class="risk-title">Einseitige Haftung</h3>
+            <span class="risk-badge critical">Kritisch</span>
+          </div>
+          <div class="risk-issue">
+            "Der Auftragnehmer haftet uneingeschraenkt fuer alle Schaeden."
+          </div>
+          <div class="risk-solution">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Extrem einseitig - fordern Sie eine angemessene Haftungsbegrenzung.</span>
+          </div>
+        </div>
+
+        <div class="risk-card animate-on-scroll animate-delay-4" style="--risk-color: #d97706;">
+          <div class="risk-header">
+            <h3 class="risk-title">Vage Leistungsbeschreibung</h3>
+            <span class="risk-badge warning">Warnung</span>
+          </div>
+          <div class="risk-issue">
+            "Arbeitszeiten werden flexibel nach Bedarf festgelegt."
+          </div>
+          <div class="risk-solution">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4"/>
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Hohes Streitpotential - bestehen Sie auf konkrete Definitionen.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       STATS SECTION
+       ========================================== -->
+  <section class="stats-section">
+    <div class="container">
+      <div class="stats-content">
+        <div class="stats-header animate-on-scroll">
+          <span class="section-eyebrow">Vertrauen</span>
+          <h2 class="section-title">Zahlen die ueberzeugen</h2>
+          <p class="section-subtitle">
+            Tausende Nutzer vertrauen auf Contract AI fuer ihre Vertragsanalyse.
+          </p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card animate-on-scroll animate-delay-1">
+            <div class="stat-value">98%</div>
+            <div class="stat-label">Erkennungsgenauigkeit</div>
+          </div>
+          <div class="stat-card animate-on-scroll animate-delay-2">
+            <div class="stat-value">&lt;60s</div>
+            <div class="stat-label">Durchschnittliche Analysezeit</div>
+          </div>
+          <div class="stat-card animate-on-scroll animate-delay-3">
+            <div class="stat-value">10k+</div>
+            <div class="stat-label">Analysierte Vertraege</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       FAQ SECTION
+       ========================================== -->
+  <section class="section" id="faq">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-eyebrow">FAQ</span>
+        <h2 class="section-title">Haeufig gestellte Fragen</h2>
+      </div>
+
+      <div class="faq-container">
+        <details class="faq-item animate-on-scroll">
+          <summary class="faq-question">
+            Ersetzt die Analyse eine Rechtsberatung?
+            <span class="faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+          </summary>
+          <p class="faq-answer">
+            Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen als Entscheidungshilfe.
+            Fuer komplexe rechtliche Fragen oder verbindliche Rechtsberatung sollten Sie einen Anwalt konsultieren.
+          </p>
+        </details>
+
+        <details class="faq-item animate-on-scroll">
+          <summary class="faq-question">
+            Welche Vertragsarten werden unterstuetzt?
+            <span class="faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+          </summary>
+          <p class="faq-answer">
+            Wir analysieren die meisten Standardvertraege: Arbeitsvertraege, Mietvertraege,
+            Kaufvertraege, NDAs, SaaS-Vertraege, Dienstleistungsvertraege und mehr.
+          </p>
+        </details>
+
+        <details class="faq-item animate-on-scroll">
+          <summary class="faq-question">
+            Wie genau ist die KI-Analyse?
+            <span class="faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+          </summary>
+          <p class="faq-answer">
+            Unsere KI erreicht 98% Erkennungsgenauigkeit bei problematischen Klauseln,
+            basierend auf tausenden analysierten Vertraegen und kontinuierlichem Training.
+          </p>
+        </details>
+
+        <details class="faq-item animate-on-scroll">
+          <summary class="faq-question">
+            Sind meine Daten sicher?
+            <span class="faq-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+          </summary>
+          <p class="faq-answer">
+            Absolut. Alle Daten werden mit 256-bit verschluesselt, ausschliesslich auf
+            deutschen Servern verarbeitet und nach DSGVO-Standards behandelt.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       CTA SECTION
+       ========================================== -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-card animate-on-scroll">
+        <div class="cta-content">
+          <h2 class="cta-title">Bereit, Ihre Vertraege zu schuetzen?</h2>
+          <p class="cta-subtitle">
+            Ueber 87% unserer Nutzer entdecken kritische Klauseln, die sie uebersehen haetten.
+            Starten Sie Ihre erste Analyse kostenlos.
+          </p>
+          <a href="#" class="btn-white">
+            Jetzt kostenlos analysieren
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SCROLL ANIMATION SCRIPT
+       ========================================== -->
+  <script>
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    // Observe all elements with animate-on-scroll class
+    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Smooth parallax effect for floating elements
+    document.addEventListener('mousemove', (e) => {
+      const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+      const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+
+      document.querySelectorAll('.floating-element').forEach((el, index) => {
+        const factor = (index + 1) * 0.5;
+        el.style.transform = `translate(${moveX * factor}px, ${moveY * factor}px)`;
+      });
+    });
+  </script>
+</body>
+</html>

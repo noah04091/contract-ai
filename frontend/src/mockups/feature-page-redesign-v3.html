@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract AI - Feature Page Redesign V3 (Clean Waves)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #ffffff;
+      color: #1a1a2e;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ============================================
+       FARB-DEFINITIONEN
+       ============================================ */
+    :root {
+      --color-white: #ffffff;
+      --color-tinted: #f0f7ff;
+      --color-gradient: #f5faff;
+      --color-premium: #0a1628;
+      --color-blue: #007aff;
+    }
+
+    /* ============================================
+       ANIMATED GRADIENT ORBS - LIGHT VERSION
+       ============================================ */
+    .page-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .gradient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.5;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(0, 122, 255, 0.12) 0%, transparent 70%);
+      top: -200px;
+      right: -100px;
+      animation: float1 20s ease-in-out infinite;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+      bottom: -150px;
+      left: -100px;
+      animation: float2 25s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(-50px, 80px) scale(1.1); }
+      66% { transform: translate(30px, -40px) scale(0.9); }
+    }
+
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(60px, -50px) scale(1.15); }
+      66% { transform: translate(-40px, 30px) scale(0.85); }
+    }
+
+    /* ============================================
+       MAIN LAYOUT
+       ============================================ */
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ============================================
+       SECTION BACKGROUNDS - CLEAN APPROACH
+       Sections are full-width with proper stacking
+       ============================================ */
+    .section {
+      position: relative;
+      padding: 80px 0;
+    }
+
+    /* White/Transparent sections */
+    .section--white {
+      background: var(--color-white);
+    }
+
+    /* Tinted sections (light blue) */
+    .section--tinted {
+      background: var(--color-tinted);
+    }
+
+    /* Gradient sections (very light blue) */
+    .section--gradient {
+      background: var(--color-gradient);
+    }
+
+    /* Premium dark section */
+    .section--premium {
+      background: var(--color-premium);
+      color: white;
+    }
+
+    /* ============================================
+       SECTION DIVIDERS - VERSCHIEDENE TYPEN
+       Für Abwechslung zwischen Sections
+       ============================================ */
+
+    /* BASE DIVIDER */
+    .divider {
+      display: block;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .divider svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* -------- TYPE 1: SANFTE WELLE -------- */
+    .divider--wave {
+      height: 60px;
+    }
+
+    /* -------- TYPE 2: DIAGONALE -------- */
+    .divider--diagonal {
+      height: 80px;
+    }
+
+    /* -------- TYPE 3: ASYMMETRISCHE KURVE -------- */
+    .divider--curve {
+      height: 70px;
+    }
+
+    /* -------- TYPE 4: KLEINE WELLE -------- */
+    .divider--small-wave {
+      height: 40px;
+    }
+
+    /* ============================================
+       FARB-KOMBINATIONEN
+       ============================================ */
+
+    /* White → Tinted */
+    .divider--white-to-tinted { background: var(--color-white); }
+    .divider--white-to-tinted svg path { fill: var(--color-tinted); }
+
+    /* Tinted → White */
+    .divider--tinted-to-white { background: var(--color-tinted); }
+    .divider--tinted-to-white svg path { fill: var(--color-white); }
+
+    /* White → Gradient */
+    .divider--white-to-gradient { background: var(--color-white); }
+    .divider--white-to-gradient svg path { fill: var(--color-gradient); }
+
+    /* Gradient → White */
+    .divider--gradient-to-white { background: var(--color-gradient); }
+    .divider--gradient-to-white svg path { fill: var(--color-white); }
+
+    /* Tinted → Gradient */
+    .divider--tinted-to-gradient { background: var(--color-tinted); }
+    .divider--tinted-to-gradient svg path { fill: var(--color-gradient); }
+
+    /* Gradient → Premium */
+    .divider--gradient-to-premium { background: var(--color-gradient); }
+    .divider--gradient-to-premium svg path { fill: var(--color-premium); }
+
+    /* Premium → White */
+    .divider--premium-to-white { background: var(--color-premium); }
+    .divider--premium-to-white svg path { fill: var(--color-white); }
+
+    /* ============================================
+       KEIN DIVIDER - NUR SUBTILE LINIE
+       ============================================ */
+    .section--with-top-line::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.15), transparent);
+    }
+
+    /* ============================================
+       HERO SECTION
+       ============================================ */
+    .hero {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
+
+    .hero-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 28px;
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.12) 0%, rgba(59, 130, 246, 0.18) 100%);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 122, 255, 0.15);
+      animation: iconPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% {
+        box-shadow: 0 8px 32px rgba(0, 122, 255, 0.15);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 12px 48px rgba(0, 122, 255, 0.25);
+        transform: scale(1.02);
+      }
+    }
+
+    .hero-icon svg {
+      width: 48px;
+      height: 48px;
+      color: #007aff;
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 24px;
+      color: #1a1a2e;
+    }
+
+    .hero-title .highlight {
+      display: block;
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 50%, #007aff 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerText 3s linear infinite;
+    }
+
+    @keyframes shimmerText {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: #64748b;
+      max-width: 650px;
+      margin: 0 auto 36px;
+      line-height: 1.65;
+    }
+
+    /* Pills */
+    .pills {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.12);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #334155;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .pill svg {
+      width: 16px;
+      height: 16px;
+      color: #007aff;
+    }
+
+    /* Buttons */
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #007aff 0%, #0066dd 100%);
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.2);
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #007aff;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 122, 255, 0.05);
+    }
+
+    /* ============================================
+       SECTION HEADER
+       ============================================ */
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .section--premium .section-title {
+      color: white;
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: #64748b;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .section--premium .section-subtitle {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* ============================================
+       CARDS
+       ============================================ */
+    .card {
+      padding: 28px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 122, 255, 0.1);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(0, 122, 255, 0.08);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .card-icon svg {
+      width: 24px;
+      height: 24px;
+      color: #007aff;
+    }
+
+    .card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ============================================
+       STEP CARDS
+       ============================================ */
+    .step-card {
+      padding: 40px 28px 32px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #007aff 0%, #3b82f6 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    }
+
+    .step-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: rgba(0, 122, 255, 0.08);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .step-icon svg {
+      width: 28px;
+      height: 28px;
+      color: #007aff;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* ============================================
+       LIST ITEMS
+       ============================================ */
+    .list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 24px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .list-item:hover {
+      transform: translateX(8px);
+      box-shadow: 0 8px 24px rgba(0, 122, 255, 0.08);
+    }
+
+    .list-item-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .list-item-content {
+      flex: 1;
+    }
+
+    .list-item-content strong {
+      color: #1a1a2e;
+    }
+
+    .list-item-content span {
+      color: #64748b;
+    }
+
+    /* ============================================
+       STATS (Premium Section)
+       ============================================ */
+    .stat-card {
+      padding: 36px 28px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* ============================================
+       FAQ
+       ============================================ */
+    .faq-container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a1a2e;
+      list-style: none;
+    }
+
+    .faq-question::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq-question::after {
+      content: '+';
+      font-size: 20px;
+      color: #007aff;
+    }
+
+    .faq-item[open] .faq-question::after {
+      content: '-';
+    }
+
+    .faq-answer {
+      padding: 0 24px 20px;
+      font-size: 15px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       CTA CARD
+       ============================================ */
+    .cta-card {
+      background: linear-gradient(135deg, #007aff 0%, #0066dd 50%, #3b82f6 100%);
+      border-radius: 24px;
+      padding: 56px 40px;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0, 102, 238, 0.3);
+    }
+
+    .cta-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 500px;
+      margin: 0 auto 28px;
+      line-height: 1.6;
+    }
+
+    .btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #007aff;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .btn-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ============================================
+       RELATED LINKS
+       ============================================ */
+    .related-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: white;
+      border: 1px solid rgba(0, 122, 255, 0.08);
+      border-radius: 16px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .related-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 122, 255, 0.1);
+    }
+
+    .related-icon {
+      font-size: 28px;
+    }
+
+    .related-content {
+      flex: 1;
+    }
+
+    .related-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+
+    .related-desc {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .related-arrow {
+      color: #007aff;
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="page-background">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- ==========================================
+         HERO SECTION (White Background)
+         ========================================== -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="hero">
+          <div class="hero-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </div>
+
+          <h1 class="hero-title">
+            Versteckte Risiken erkennen -<br>
+            <span class="highlight">automatisch</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Unsere KI liest, bewertet und erklaert Ihre Vertraege in unter 60 Sekunden.
+            Risiken, Chancen und kritische Klauseln - alles auf einen Blick.
+          </p>
+
+          <div class="pills">
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              In 60 Sekunden
+            </div>
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+              98% Genauigkeit
+            </div>
+            <div class="pill">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              DSGVO-konform
+            </div>
+          </div>
+
+          <div class="buttons">
+            <a href="#" class="btn-primary">Vertrag jetzt analysieren</a>
+            <a href="#" class="btn-secondary">Wie es funktioniert</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 1: Asymmetrische Kurve (White → Tinted) -->
+    <div class="divider divider--curve divider--white-to-tinted">
+      <svg viewBox="0 0 1200 70" preserveAspectRatio="none">
+        <path d="M0,20 C200,70 600,0 1200,40 L1200,70 L0,70 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         WARUM WICHTIG (Tinted Background)
+         ========================================== -->
+    <section class="section section--tinted">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Warum Vertragsanalyse so wichtig ist</h2>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <p>
+              Die meisten Vertraege sind kompliziert geschrieben und voller Risiken, die Laien uebersehen.
+              Versteckte Klauseln koennen teuer werden: Einseitige Haftung, unguenstige Kuendigungsfristen,
+              unklare Leistungsbeschreibungen.
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <p>
+              Contract AI erkennt diese Fallen automatisch und erklaert sie in verstaendlicher Sprache.
+              In unter 60 Sekunden wissen Sie, wo Ihre Risiken liegen und was Sie dagegen tun koennen.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 2: Diagonale (Tinted → White) -->
+    <div class="divider divider--diagonal divider--tinted-to-white">
+      <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+        <path d="M0,0 L1200,60 L1200,80 L0,80 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         DIE LOESUNG (White Background)
+         ========================================== -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Die Loesung: KI-gestuetzte Vertragsanalyse</h2>
+        </div>
+
+        <div style="max-width: 700px; margin: 0 auto;">
+          <div class="list-item">
+            <span class="list-item-icon">🎯</span>
+            <div class="list-item-content">
+              <strong>Automatische Risikobewertung:</strong>
+              <span> Jede Klausel wird auf Fairness und moegliche Nachteile geprueft</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">📊</span>
+            <div class="list-item-content">
+              <strong>Verstaendliche Scores:</strong>
+              <span> Chancen-Risiken-Bewertung mit Ampelsystem</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">💡</span>
+            <div class="list-item-content">
+              <strong>Konkrete Handlungsempfehlungen:</strong>
+              <span> Was Sie tun koennen, um Ihre Position zu verbessern</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">⚡</span>
+            <div class="list-item-content">
+              <strong>In Sekunden fertig:</strong>
+              <span> Upload, Analyse, Ergebnis - alles in unter einer Minute</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 3: Kleine Welle (White → Gradient) -->
+    <div class="divider divider--small-wave divider--white-to-gradient">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+        <path d="M0,10 Q300,40 600,20 T1200,30 L1200,40 L0,40 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         SO FUNKTIONIERT'S (Gradient Background)
+         ========================================== -->
+    <section class="section section--gradient">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">So funktioniert's - in 3 Schritten</h2>
+        </div>
+
+        <div class="grid-3">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <h3 class="step-title">Vertrag hochladen</h3>
+            <p class="step-desc">PDF oder DOCX hochladen - sicher auf EU-Servern.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <h3 class="step-title">KI-Analyse</h3>
+            <p class="step-desc">Intelligente Erkennung von Vertragstyp und Risiken.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="m9 15 2 2 4-4"/>
+              </svg>
+            </div>
+            <h3 class="step-title">Ergebnis erhalten</h3>
+            <p class="step-desc">Report mit Chancen-Risiken-Score und Empfehlungen.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 4: Diagonale umgekehrt (Gradient → White) -->
+    <div class="divider divider--diagonal divider--gradient-to-white">
+      <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+        <path d="M0,60 L1200,0 L1200,80 L0,80 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         FUNKTIONEN (White Background)
+         ========================================== -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Funktionen im Ueberblick</h2>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              </svg>
+            </div>
+            <h3>Risiko-Scanner</h3>
+            <p>Erkennt problematische Klauseln und versteckte Kostenfallen.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <h3>Fairness-Bewertung</h3>
+            <p>Bewertet Ausgewogenheit und zeigt einseitige Regelungen auf.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+              </svg>
+            </div>
+            <h3>Verstaendlichkeits-Check</h3>
+            <p>Uebersetzt Juristendeutsch in klare, verstaendliche Sprache.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <h3>Chancen-Analyse</h3>
+            <p>Zeigt nicht nur Risiken, sondern auch Ihre Vorteile.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <h3>Handlungsempfehlungen</h3>
+            <p>Konkrete Tipps zur Verbesserung problematischer Punkte.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <h3>PDF-Export</h3>
+            <p>Analyseergebnisse speichern und fuer Verhandlungen nutzen.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 5: Sanfte Welle (White → Tinted) -->
+    <div class="divider divider--wave divider--white-to-tinted">
+      <svg viewBox="0 0 1200 60" preserveAspectRatio="none">
+        <path d="M0,30 C150,60 350,0 600,30 C850,60 1050,0 1200,30 L1200,60 L0,60 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         TYPISCHE RISIKEN (Tinted Background)
+         ========================================== -->
+    <section class="section section--tinted">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Typische Vertragsrisiken</h2>
+          <p class="section-subtitle">Die wir automatisch erkennen</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Ueberlange Kuendigungsfristen</h3>
+            <p style="color: #dc2626; margin-bottom: 8px;"><strong>Risiko:</strong> 12 Monate Kuendigungsfrist als Mieter</p>
+            <p style="color: #059669;">→ "Ungewoehnlich lang - schraenkt Flexibilitaet stark ein."</p>
+          </div>
+
+          <div class="card">
+            <h3>Versteckte Kostenfallen</h3>
+            <p style="color: #dc2626; margin-bottom: 8px;"><strong>Risiko:</strong> "Zusaetzliche Gebuehren nach Ermessen"</p>
+            <p style="color: #059669;">→ "Gefahr unbegrenzter Zusatzkosten - Obergrenze verlangen."</p>
+          </div>
+
+          <div class="card">
+            <h3>Einseitige Haftungsklauseln</h3>
+            <p style="color: #dc2626; margin-bottom: 8px;"><strong>Risiko:</strong> "Vollstaendige Haftung beim Auftragnehmer"</p>
+            <p style="color: #059669;">→ "Extrem einseitig - Haftungsbegrenzung fordern."</p>
+          </div>
+
+          <div class="card">
+            <h3>Unklare Leistungsbeschreibung</h3>
+            <p style="color: #dc2626; margin-bottom: 8px;"><strong>Risiko:</strong> Vage definierte Arbeitszeiten</p>
+            <p style="color: #059669;">→ "Streitpotential hoch - Leistung konkretisieren."</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEIN Divider - sauberer Übergang mit Linie -->
+
+    <!-- ==========================================
+         WARUM CONTRACT AI (Gradient Background)
+         ========================================== -->
+    <section class="section section--gradient section--with-top-line">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Warum Contract AI?</h2>
+        </div>
+
+        <div style="max-width: 700px; margin: 0 auto;">
+          <div class="list-item">
+            <span class="list-item-icon">🎯</span>
+            <div class="list-item-content">
+              <strong>Objektive Bewertung</strong> <span>ohne kommerzielle Interessen</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">🇪🇺</span>
+            <div class="list-item-content">
+              <strong>Server in Deutschland</strong> <span>volle DSGVO-Konformitaet</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">📋</span>
+            <div class="list-item-content">
+              <strong>Verstaendliche Ergebnisse:</strong> <span>Ampelsystem statt Juristendeutsch</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">👤</span>
+            <div class="list-item-content">
+              <strong>Fuer jeden geeignet:</strong> <span>Ob Laie oder Profi</span>
+            </div>
+          </div>
+          <div class="list-item">
+            <span class="list-item-icon">⚡</span>
+            <div class="list-item-content">
+              <strong>Sofort verfuegbar:</strong> <span>Keine Termine, keine Wartezeiten</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 6: Kurve (Gradient → Premium) -->
+    <div class="divider divider--curve divider--gradient-to-premium">
+      <svg viewBox="0 0 1200 70" preserveAspectRatio="none">
+        <path d="M0,40 C400,0 800,70 1200,20 L1200,70 L0,70 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         SICHERHEIT & STATS (Premium Dark Background)
+         ========================================== -->
+    <section class="section section--premium">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Sicherheit & Datenschutz</h2>
+          <p class="section-subtitle">
+            Ihre Vertraege bleiben Ihre Daten. Verschluesselung bei Uebertragung und Speicherung,
+            Verarbeitung ausschliesslich auf EU-Servern.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="stat-card">
+            <div class="stat-value">98%</div>
+            <div class="stat-label">Erkennungsgenauigkeit</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">&lt; 60s</div>
+            <div class="stat-label">Analysezeit</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">10,000+</div>
+            <div class="stat-label">Analysierte Vertraege</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 7: Grosse Welle (Premium → White) -->
+    <div class="divider divider--wave divider--premium-to-white">
+      <svg viewBox="0 0 1200 60" preserveAspectRatio="none">
+        <path d="M0,0 C300,50 500,10 700,40 C900,70 1100,20 1200,40 L1200,60 L0,60 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         FAQ (White Background)
+         ========================================== -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Haeufige Fragen</h2>
+        </div>
+
+        <div class="faq-container">
+          <details class="faq-item">
+            <summary class="faq-question">Ersetzt die Analyse eine Rechtsberatung?</summary>
+            <p class="faq-answer">
+              Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen.
+              Fuer komplexe rechtliche Fragen sollten Sie einen Anwalt konsultieren.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Welche Vertragsarten koennen analysiert werden?</summary>
+            <p class="faq-answer">
+              Die meisten Standardvertraege: Arbeitsvertraege, Mietvertraege, Kaufvertraege, NDAs,
+              SaaS-Vertraege, Dienstleistungsvertraege und mehr.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Wie genau ist die KI-Analyse?</summary>
+            <p class="faq-answer">
+              Die KI erreicht 98% Erkennungsgenauigkeit bei problematischen Klauseln,
+              basierend auf tausenden analysierten Vertraegen.
+            </p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Was kostet die Vertragsanalyse?</summary>
+            <p class="faq-answer">
+              Free: 3 Analysen kostenlos. Business (19EUR/Monat): 25 Analysen.
+              Enterprise (29EUR/Monat): Unbegrenzte Analysen.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 8: Diagonale (White → Tinted) -->
+    <div class="divider divider--diagonal divider--white-to-tinted">
+      <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+        <path d="M0,60 L1200,0 L1200,80 L0,80 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         VERWANDTE FUNKTIONEN (Tinted Background)
+         ========================================== -->
+    <section class="section section--tinted">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Verwandte Funktionen</h2>
+        </div>
+
+        <div class="grid-3">
+          <a href="#" class="related-card">
+            <span class="related-icon">✨</span>
+            <div class="related-content">
+              <div class="related-title">Vertragsoptimierung</div>
+              <div class="related-desc">KI-Vorschlaege zur Verbesserung</div>
+            </div>
+            <svg class="related-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+
+          <a href="#" class="related-card">
+            <span class="related-icon">🔍</span>
+            <div class="related-content">
+              <div class="related-title">Legal Lens</div>
+              <div class="related-desc">Klauseln anklicken und verstehen</div>
+            </div>
+            <svg class="related-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+
+          <a href="#" class="related-card">
+            <span class="related-icon">⚖️</span>
+            <div class="related-content">
+              <div class="related-title">Legal Pulse</div>
+              <div class="related-desc">Ueberwachung auf Gesetzesaenderungen</div>
+            </div>
+            <svg class="related-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider 9: Kleine Welle (Tinted → White) -->
+    <div class="divider divider--small-wave divider--tinted-to-white">
+      <svg viewBox="0 0 1200 40" preserveAspectRatio="none">
+        <path d="M0,20 Q300,0 600,25 T1200,10 L1200,40 L0,40 Z"></path>
+      </svg>
+    </div>
+
+    <!-- ==========================================
+         FINAL CTA (White Background)
+         ========================================== -->
+    <section class="section section--white">
+      <div class="container">
+        <div class="cta-card">
+          <h2 class="cta-title">Versteckte Risiken aufdecken</h2>
+          <p class="cta-subtitle">
+            Ueber 87% unserer Nutzer finden kritische Klauseln, die sie uebersehen haetten.
+            Analysieren Sie Ihren Vertrag - in 60 Sekunden.
+          </p>
+          <a href="#" class="btn-white">Vertrag kostenlos analysieren</a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
