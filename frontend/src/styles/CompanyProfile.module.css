@@ -51,9 +51,9 @@
 }
 
 .cpHeroInner {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 .cpBackButton {
@@ -160,9 +160,9 @@
    MAIN CONTAINER - Single Column Layout
    ============================================ */
 .cpContainer {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 0;
+  padding: 1.5rem 2rem 0;
 }
 
 .cpContent {
@@ -371,8 +371,8 @@
    ============================================ */
 .cpFormGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
 }
 
 .cpFormGroup {
@@ -603,9 +603,9 @@
 }
 
 .cpStickyFooterInner {
-  max-width: 720px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -719,8 +719,8 @@
   .cpHeroInner,
   .cpContainer,
   .cpStickyFooterInner {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 
   .cpTitle {
@@ -728,7 +728,7 @@
   }
 
   .cpFormGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .cpPremiumHint {
@@ -776,6 +776,10 @@
 
   .cpSectionInner {
     padding: 0 1rem 1rem;
+  }
+
+  .cpFormGrid {
+    grid-template-columns: 1fr;
   }
 
   .cpLogoActions {
