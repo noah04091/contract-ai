@@ -371,7 +371,12 @@ ${preparedText2}
 ARBEITSWEISE — Du bist ein Anwalt, der beide Verträge nebeneinander auf dem Schreibtisch liegen hat. Gehe JEDEN Paragraphen durch:
 
 SCHRITT 1 — UNTERSCHIEDE (differences):
-Gehe das folgende Prüfschema Punkt für Punkt durch. Prüfe JEDEN Bereich: Gibt es einen Unterschied zwischen den Verträgen? Wenn ja → dokumentiere ihn. Wenn nein → überspringe ihn.
+Gehe das folgende Prüfschema Punkt für Punkt durch. Prüfe JEDEN Bereich: Gibt es einen ECHTEN, INHALTLICHEN Unterschied zwischen den Verträgen? Wenn ja → dokumentiere ihn. Wenn nein → überspringe ihn KOMPLETT.
+
+WICHTIG — KEINE identischen Klauseln aufnehmen:
+- Wenn beide Verträge eine Klausel IDENTISCH oder SINNGEMÄSS GLEICH regeln, ist das KEIN Unterschied. Überspringe es.
+- Schreibe NIEMALS "Beide Verträge enthalten identische Regelungen" oder "Keine Änderung erforderlich" — solche Einträge gehören nicht in die differences-Liste.
+- Nur ECHTE Abweichungen, fehlende Klauseln oder unterschiedliche Konditionen sind Unterschiede.
 
 PRÜFSCHEMA:
 □ Leistungsumfang / Vertragsgegenstand — Was genau wird geschuldet?
@@ -396,6 +401,7 @@ PRÜFSCHEMA:
 □ Schlussbestimmungen — Schriftformklausel? Salvatorische Klausel? Nebenabreden?
 
 Finde ALLE tatsächlich vorhandenen Unterschiede — keine künstlichen Auffüllungen, aber auch KEINE Auslassungen.
+Identische oder sinngemäß gleiche Regelungen gehören NICHT in die Liste — nur echte Abweichungen.
 
 Für JEDEN Unterschied:
 - "category": Rechtskategorie (Kündigung, Haftung, Zahlung, Gewährleistung, Datenschutz, Laufzeit, IP-Rechte, Wettbewerb, etc.)
@@ -510,6 +516,33 @@ function enhanceAnalysis(analysis) {
 
   // Ensure required fields exist
   if (!analysis.differences) analysis.differences = [];
+
+  // Filter out "differences" that are actually identical clauses (GPT sometimes includes them)
+  const beforeCount = analysis.differences.length;
+  const identicalPatterns = [
+    /beide verträge.*identisch/i,
+    /keine änderung erforderlich/i,
+    /in beiden verträgen gleich/i,
+    /identische regelung/i,
+    /sinngemäß gleich/i,
+    /keine abweichung/i,
+    /übereinstimmend geregelt/i,
+    /stimmen überein/i
+  ];
+  analysis.differences = analysis.differences.filter(diff => {
+    const textsToCheck = [diff.explanation || '', diff.impact || '', diff.recommendation || ''];
+    const isIdentical = textsToCheck.some(text =>
+      identicalPatterns.some(pattern => pattern.test(text))
+    );
+    if (isIdentical) {
+      console.log(`🔍 Identische Klausel gefiltert: "${diff.category}" (${diff.section})`);
+    }
+    return !isIdentical;
+  });
+  if (beforeCount !== analysis.differences.length) {
+    console.log(`🧹 ${beforeCount - analysis.differences.length} identische Klauseln gefiltert (${beforeCount} → ${analysis.differences.length})`);
+  }
+
   if (!analysis.contract1Analysis) analysis.contract1Analysis = { strengths: [], weaknesses: [], riskLevel: 'medium', score: 50 };
   if (!analysis.contract2Analysis) analysis.contract2Analysis = { strengths: [], weaknesses: [], riskLevel: 'medium', score: 50 };
   if (!analysis.overallRecommendation) analysis.overallRecommendation = { recommended: 1, reasoning: '', confidence: 50 };
