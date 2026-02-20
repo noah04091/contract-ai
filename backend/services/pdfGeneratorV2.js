@@ -1543,7 +1543,8 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, re
             e(Text, { style: styles.signatureHint }, 'Unterschrift')
           ),
           e(Text, { style: styles.signatureName }, resolvedParties.partyAName || partyLabels.partyA),
-          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName)) && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
+          // Signatur-Rolle basierend auf Profil-Typ: Business = Geschäftsführung, Personal = nichts
+          (companyProfile?.companyName && !isPlaceholderCompanyName(companyProfile.companyName) && companyProfile?.profileType !== 'personal') && e(Text, { style: styles.signatureRole }, '(Geschäftsführung)')
         ),
         e(View, { style: styles.signatureColumn },
           e(Text, { style: styles.signatureLabel }, partyLabels.partyB),

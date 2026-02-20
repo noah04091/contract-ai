@@ -1375,12 +1375,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
                 margin: 0 0 2mm 0;
                 font-weight: 600;
               ">${companyProfile?.companyName || 'Verkäufer'}</p>
-              <p style="
+              ${companyProfile?.profileType !== 'personal' ? `<p style="
                 font-family: ${theme.fontFamily};
                 font-size: 9pt;
                 color: #666;
                 margin: 0;
-              ">(Geschäftsführung)</p>
+              ">(Geschäftsführung)</p>` : ''}
             </div>
           </div>
 
