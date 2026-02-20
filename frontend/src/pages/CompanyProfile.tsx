@@ -1,5 +1,5 @@
 // Company Profile Page with Logo Upload
-// v4.0 - Stripe-Level Premium Design
+// v5.0 - Stripe-Level Premium Design with Profile Type Toggle
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
@@ -8,15 +8,19 @@ import {
   Phone, CreditCard, MapPin,
   AlertCircle, ArrowLeft, Lock, Sparkles,
   ChevronRight, Check, Info, Shield, Zap,
-  Globe, CheckCircle2
+  Globe, CheckCircle2, User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import styles from '../styles/CompanyProfile.module.css';
 
+// Profile Type
+type ProfileType = 'business' | 'personal';
+
 interface CompanyProfileData {
   _id?: string;
+  profileType?: ProfileType;
   companyName: string;
   legalForm: string;
   street: string;
@@ -35,6 +39,7 @@ interface CompanyProfileData {
 }
 
 const INITIAL_PROFILE: CompanyProfileData = {
+  profileType: 'business',
   companyName: '',
   legalForm: 'GmbH',
   street: '',
@@ -50,15 +55,43 @@ const INITIAL_PROFILE: CompanyProfileData = {
   bic: ''
 };
 
-const LEGAL_FORMS = [
-  'GmbH', 'AG', 'UG', 'KG', 'OHG', 'Einzelunternehmen',
-  'GbR', 'eK', 'Freiberufler', 'Sonstige'
+// Legal forms for businesses
+const BUSINESS_LEGAL_FORMS = [
+  'GmbH', 'AG', 'UG (haftungsbeschränkt)', 'KG', 'OHG',
+  'GbR', 'eK', 'Einzelunternehmen', 'Sonstige'
+];
+
+// Legal forms for personal/freelancers
+const PERSONAL_LEGAL_FORMS = [
+  'Privatperson', 'Freiberufler', 'Selbstständig', 'Kleinunternehmer', 'Sonstige'
 ];
 
 const COUNTRIES = [
   'Deutschland', 'Österreich', 'Schweiz', 'Niederlande',
   'Belgien', 'Frankreich', 'Italien', 'Spanien'
 ];
+
+// Dynamic labels based on profile type
+const getLabels = (profileType: ProfileType) => ({
+  pageTitle: profileType === 'business' ? 'Firmenprofil' : 'Mein Profil',
+  pageDescription: profileType === 'business'
+    ? 'Verwalten Sie Ihre Unternehmensdaten für automatische Vertragserstellung'
+    : 'Verwalten Sie Ihre persönlichen Daten für Verträge',
+  nameField: profileType === 'business' ? 'Firmenname' : 'Vollständiger Name',
+  namePlaceholder: profileType === 'business' ? 'Ihre Firma GmbH' : 'Max Mustermann',
+  logoTitle: profileType === 'business' ? 'Firmenlogo' : 'Profilbild',
+  logoSubtitle: profileType === 'business' ? 'Ihr visuelles Markenzeichen' : 'Ihr persönliches Bild',
+  dataTitle: profileType === 'business' ? 'Unternehmensdaten' : 'Persönliche Daten',
+  dataSubtitle: profileType === 'business' ? 'Grundlegende Firmendaten' : 'Ihre Adresse und Kontakt',
+  legalTitle: profileType === 'business' ? 'Rechts- & Steuerangaben' : 'Steuerangaben',
+  legalSubtitle: profileType === 'business' ? 'Gesetzlich erforderliche Daten' : 'Steuer-ID (optional)',
+  statusField: profileType === 'business' ? 'Rechtsform' : 'Status',
+  emailLabel: profileType === 'business' ? 'Geschäftliche E-Mail' : 'E-Mail-Adresse',
+  emailPlaceholder: profileType === 'business' ? 'info@ihrefirma.de' : 'max@beispiel.de',
+  vatLabel: profileType === 'business' ? 'USt-IdNr.' : 'Steuer-ID',
+  vatPlaceholder: profileType === 'business' ? 'DE123456789' : 'Steuer-Identifikationsnummer',
+  vatHint: profileType === 'business' ? 'Umsatzsteuer-Identifikationsnummer' : 'Ihre Steuer-ID (optional)',
+});
 
 // Section configuration
 interface SectionConfig {
@@ -69,55 +102,68 @@ interface SectionConfig {
   fields: (keyof CompanyProfileData)[];
   premiumOnly: boolean;
   gradient: string;
+  hideForPersonal?: boolean;
 }
 
-const SECTIONS: SectionConfig[] = [
-  {
-    id: 'logo',
-    title: 'Firmenlogo',
-    subtitle: 'Ihr visuelles Markenzeichen',
-    icon: <Camera size={22} strokeWidth={1.5} />,
-    fields: ['logoUrl'],
-    premiumOnly: true,
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-  },
-  {
-    id: 'company',
-    title: 'Unternehmensdaten',
-    subtitle: 'Grundlegende Firmendaten',
-    icon: <Building2 size={22} strokeWidth={1.5} />,
-    fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
-    premiumOnly: false,
-    gradient: 'linear-gradient(135deg, #0066ff 0%, #00d4ff 100%)'
-  },
-  {
-    id: 'legal',
-    title: 'Rechts- & Steuerangaben',
-    subtitle: 'Gesetzlich erforderliche Daten',
-    icon: <Shield size={22} strokeWidth={1.5} />,
-    fields: ['vatId', 'tradeRegister'],
-    premiumOnly: true,
-    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-  },
-  {
-    id: 'contact',
-    title: 'Kontaktdaten',
-    subtitle: 'Erreichbarkeit für Vertragspartner',
-    icon: <Phone size={22} strokeWidth={1.5} />,
-    fields: ['contactEmail', 'contactPhone'],
-    premiumOnly: true,
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-  },
-  {
-    id: 'banking',
-    title: 'Bankverbindung',
-    subtitle: 'Zahlungsdaten für Rechnungen',
-    icon: <CreditCard size={22} strokeWidth={1.5} />,
-    fields: ['bankName', 'iban', 'bic'],
-    premiumOnly: true,
-    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-  }
-];
+// Get sections based on profile type
+const getSections = (profileType: ProfileType): SectionConfig[] => {
+  const labels = getLabels(profileType);
+
+  const sections: SectionConfig[] = [
+    {
+      id: 'logo',
+      title: labels.logoTitle,
+      subtitle: labels.logoSubtitle,
+      icon: <Camera size={22} strokeWidth={1.5} />,
+      fields: ['logoUrl'],
+      premiumOnly: true,
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    },
+    {
+      id: 'company',
+      title: labels.dataTitle,
+      subtitle: labels.dataSubtitle,
+      icon: profileType === 'business'
+        ? <Building2 size={22} strokeWidth={1.5} />
+        : <User size={22} strokeWidth={1.5} />,
+      fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
+      premiumOnly: false,
+      gradient: profileType === 'business'
+        ? 'linear-gradient(135deg, #0066ff 0%, #00d4ff 100%)'
+        : 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)'
+    },
+    {
+      id: 'legal',
+      title: labels.legalTitle,
+      subtitle: labels.legalSubtitle,
+      icon: <Shield size={22} strokeWidth={1.5} />,
+      fields: profileType === 'business' ? ['vatId', 'tradeRegister'] : ['vatId'],
+      premiumOnly: true,
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      hideForPersonal: false
+    },
+    {
+      id: 'contact',
+      title: 'Kontaktdaten',
+      subtitle: 'Erreichbarkeit für Vertragspartner',
+      icon: <Phone size={22} strokeWidth={1.5} />,
+      fields: ['contactEmail', 'contactPhone'],
+      premiumOnly: true,
+      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    },
+    {
+      id: 'banking',
+      title: 'Bankverbindung',
+      subtitle: 'Zahlungsdaten für Rechnungen',
+      icon: <CreditCard size={22} strokeWidth={1.5} />,
+      fields: ['bankName', 'iban', 'bic'],
+      premiumOnly: true,
+      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+    }
+  ];
+
+  return sections;
+};
 
 export default function CompanyProfile() {
   const { user, isLoading, refetchUser } = useAuth();
@@ -126,6 +172,7 @@ export default function CompanyProfile() {
 
   const [profile, setProfile] = useState<CompanyProfileData>(INITIAL_PROFILE);
   const [originalProfile, setOriginalProfile] = useState<CompanyProfileData>(INITIAL_PROFILE);
+  const [profileType, setProfileType] = useState<ProfileType>('business');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -136,6 +183,23 @@ export default function CompanyProfile() {
 
   // Enterprise Check
   const isPremium = user?.subscriptionPlan === 'enterprise';
+
+  // Get dynamic labels and sections
+  const labels = useMemo(() => getLabels(profileType), [profileType]);
+  const SECTIONS = useMemo(() => getSections(profileType), [profileType]);
+  const legalForms = profileType === 'business' ? BUSINESS_LEGAL_FORMS : PERSONAL_LEGAL_FORMS;
+
+  // Handle profile type change
+  const handleProfileTypeChange = (newType: ProfileType) => {
+    setProfileType(newType);
+    // Update legal form to first option of new type
+    const newLegalForms = newType === 'business' ? BUSINESS_LEGAL_FORMS : PERSONAL_LEGAL_FORMS;
+    setProfile(prev => ({
+      ...prev,
+      profileType: newType,
+      legalForm: newLegalForms[0]
+    }));
+  };
 
   // Calculate completion data
   const completionData = useMemo(() => {
@@ -164,7 +228,7 @@ export default function CompanyProfile() {
       : 0;
 
     return { sections, completedSections, totalSections, overallPercentage };
-  }, [profile, logoPreview, isPremium]);
+  }, [profile, logoPreview, isPremium, SECTIONS]);
 
   // Load existing profile
   useEffect(() => {
@@ -190,6 +254,10 @@ export default function CompanyProfile() {
       if (data.success && data.profile) {
         setProfile(data.profile);
         setOriginalProfile(data.profile);
+        // Set profile type from loaded data
+        if (data.profile.profileType) {
+          setProfileType(data.profile.profileType);
+        }
         if (data.profile.logoUrl) {
           setLogoPreview(data.profile.logoUrl);
         }
@@ -208,7 +276,10 @@ export default function CompanyProfile() {
 
   const handleSave = async () => {
     if (!profile.companyName) {
-      toast.error('Bitte geben Sie einen Firmennamen ein');
+      toast.error(profileType === 'business'
+        ? 'Bitte geben Sie einen Firmennamen ein'
+        : 'Bitte geben Sie Ihren Namen ein'
+      );
       return;
     }
 
@@ -221,11 +292,14 @@ export default function CompanyProfile() {
       setSaving(true);
       const endpoint = isPremium ? '/api/company-profile' : '/api/company-profile/basic';
 
+      // Include profileType in save
+      const profileToSave = { ...profile, profileType };
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(profile)
+        body: JSON.stringify(profileToSave)
       });
 
       const data = await response.json();
@@ -234,7 +308,10 @@ export default function CompanyProfile() {
         setOriginalProfile(profile);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
-        toast.success('Firmenprofil erfolgreich gespeichert!');
+        toast.success(profileType === 'business'
+          ? 'Firmenprofil erfolgreich gespeichert!'
+          : 'Profil erfolgreich gespeichert!'
+        );
         await refetchUser();
       } else {
         throw new Error(data.message || 'Fehler beim Speichern');
@@ -321,7 +398,7 @@ export default function CompanyProfile() {
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>
           <div className={styles.loadingSpinner}></div>
-          <p>Lade Firmenprofil...</p>
+          <p>Lade Profil...</p>
         </div>
       </div>
     );
@@ -356,12 +433,12 @@ export default function CompanyProfile() {
             {logoPreview ? (
               <div className={styles.logoDisplay}>
                 <div className={styles.logoImageWrapper}>
-                  <img src={logoPreview} alt="Firmenlogo" />
+                  <img src={logoPreview} alt={labels.logoTitle} />
                 </div>
                 <div className={styles.logoMeta}>
                   <span className={styles.logoStatus}>
                     <CheckCircle2 size={14} />
-                    Logo hochgeladen
+                    {profileType === 'business' ? 'Logo hochgeladen' : 'Bild hochgeladen'}
                   </span>
                   <div className={styles.logoActions}>
                     <button
@@ -395,9 +472,12 @@ export default function CompanyProfile() {
                 ) : (
                   <>
                     <div className={styles.dropzoneIcon}>
-                      <Camera size={32} strokeWidth={1.5} />
+                      {profileType === 'business'
+                        ? <Camera size={32} strokeWidth={1.5} />
+                        : <User size={32} strokeWidth={1.5} />
+                      }
                     </div>
-                    <h4>Logo hochladen</h4>
+                    <h4>{profileType === 'business' ? 'Logo hochladen' : 'Profilbild hochladen'}</h4>
                     <p>Ziehen Sie ein Bild hierher oder klicken Sie zum Auswählen</p>
                     <span className={styles.dropzoneFormats}>PNG, JPG, SVG oder WebP bis 5MB</span>
                   </>
@@ -420,7 +500,7 @@ export default function CompanyProfile() {
             <div className={styles.formRow}>
               <div className={styles.formField}>
                 <label>
-                  Firmenname
+                  {labels.nameField}
                   <span className={styles.required}>*</span>
                   {!isPremium && <span className={styles.freeTag}>Kostenlos</span>}
                 </label>
@@ -428,13 +508,13 @@ export default function CompanyProfile() {
                   type="text"
                   value={profile.companyName}
                   onChange={(e) => handleInputChange('companyName', e.target.value)}
-                  placeholder="Ihre Firma GmbH"
+                  placeholder={labels.namePlaceholder}
                   className={styles.input}
                 />
               </div>
               <div className={`${styles.formField} ${!isPremium ? styles.fieldLocked : ''}`}>
                 <label>
-                  Rechtsform
+                  {labels.statusField}
                   {!isPremium && <Lock size={12} className={styles.lockIcon} />}
                 </label>
                 <select
@@ -443,7 +523,7 @@ export default function CompanyProfile() {
                   disabled={!isPremium}
                   className={styles.select}
                 >
-                  {LEGAL_FORMS.map(form => (
+                  {legalForms.map(form => (
                     <option key={form} value={form}>{form}</option>
                   ))}
                 </select>
@@ -524,28 +604,39 @@ export default function CompanyProfile() {
           <div className={styles.formSection}>
             <div className={styles.formRow}>
               <div className={styles.formField}>
-                <label>USt-IdNr.</label>
+                <label>{labels.vatLabel}</label>
                 <input
                   type="text"
                   value={profile.vatId}
                   onChange={(e) => handleInputChange('vatId', e.target.value)}
-                  placeholder="DE123456789"
+                  placeholder={labels.vatPlaceholder}
                   className={styles.input}
                 />
-                <span className={styles.fieldHint}>Umsatzsteuer-Identifikationsnummer</span>
+                <span className={styles.fieldHint}>{labels.vatHint}</span>
               </div>
-              <div className={styles.formField}>
-                <label>Handelsregister</label>
-                <input
-                  type="text"
-                  value={profile.tradeRegister}
-                  onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
-                  placeholder="HRB 12345, Amtsgericht Berlin"
-                  className={styles.input}
-                />
-                <span className={styles.fieldHint}>Registernummer & Registergericht</span>
-              </div>
+              {profileType === 'business' && (
+                <div className={styles.formField}>
+                  <label>Handelsregister</label>
+                  <input
+                    type="text"
+                    value={profile.tradeRegister}
+                    onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
+                    placeholder="HRB 12345, Amtsgericht Berlin"
+                    className={styles.input}
+                  />
+                  <span className={styles.fieldHint}>Registernummer & Registergericht</span>
+                </div>
+              )}
             </div>
+            {profileType === 'personal' && (
+              <div className={styles.tipsCard} style={{ marginTop: '1rem' }}>
+                <Info size={18} />
+                <div className={styles.tipsContent}>
+                  <strong>Info:</strong> Als Privatperson oder Freelancer ist die Steuer-ID optional.
+                  Sie wird nur benötigt, wenn Sie Rechnungen stellen möchten.
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -554,12 +645,12 @@ export default function CompanyProfile() {
           <div className={styles.formSection}>
             <div className={styles.formRow}>
               <div className={styles.formField}>
-                <label>Geschäftliche E-Mail</label>
+                <label>{labels.emailLabel}</label>
                 <input
                   type="email"
                   value={profile.contactEmail}
                   onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                  placeholder="info@ihrefirma.de"
+                  placeholder={labels.emailPlaceholder}
                   className={styles.input}
                 />
               </div>
@@ -623,8 +714,8 @@ export default function CompanyProfile() {
   return (
     <>
       <Helmet>
-        <title>Firmenprofil | Contract AI</title>
-        <meta name="description" content="Verwalten Sie Ihr Firmenprofil für die automatische Vertragserstellung" />
+        <title>{labels.pageTitle} | Contract AI</title>
+        <meta name="description" content={labels.pageDescription} />
       </Helmet>
 
       <div className={styles.page}>
@@ -649,14 +740,35 @@ export default function CompanyProfile() {
               <span>Dashboard</span>
             </button>
 
+            {/* Profile Type Toggle */}
+            <div className={styles.profileTypeToggle}>
+              <button
+                className={`${styles.toggleBtn} ${profileType === 'business' ? styles.toggleBtnActive : ''}`}
+                onClick={() => handleProfileTypeChange('business')}
+              >
+                <Building2 size={18} />
+                <span>Unternehmen</span>
+              </button>
+              <button
+                className={`${styles.toggleBtn} ${profileType === 'personal' ? styles.toggleBtnActive : ''}`}
+                onClick={() => handleProfileTypeChange('personal')}
+              >
+                <User size={18} />
+                <span>Privatperson / Freelancer</span>
+              </button>
+            </div>
+
             <div className={styles.headerContent}>
               <div className={styles.headerLeft}>
                 <div className={styles.headerIcon}>
-                  <Building2 size={28} strokeWidth={1.5} />
+                  {profileType === 'business'
+                    ? <Building2 size={28} strokeWidth={1.5} />
+                    : <User size={28} strokeWidth={1.5} />
+                  }
                 </div>
                 <div className={styles.headerText}>
-                  <h1>Firmenprofil</h1>
-                  <p>Verwalten Sie Ihre Unternehmensdaten für automatische Vertragserstellung</p>
+                  <h1>{labels.pageTitle}</h1>
+                  <p>{labels.pageDescription}</p>
                 </div>
               </div>
 
@@ -835,9 +947,18 @@ export default function CompanyProfile() {
                   <Info size={18} />
                   <div className={styles.tipsContent}>
                     <strong>Tipp:</strong>
-                    {activeSection === 'logo' && ' Ein professionelles Logo stärkt Ihre Markenidentität in Verträgen.'}
-                    {activeSection === 'company' && ' Vollständige Firmendaten sorgen für rechtssichere Verträge.'}
-                    {activeSection === 'legal' && ' Die USt-IdNr. ist für B2B-Geschäfte in der EU erforderlich.'}
+                    {activeSection === 'logo' && (profileType === 'business'
+                      ? ' Ein professionelles Logo stärkt Ihre Markenidentität in Verträgen.'
+                      : ' Ein Profilbild macht Ihre Verträge persönlicher und professioneller.'
+                    )}
+                    {activeSection === 'company' && (profileType === 'business'
+                      ? ' Vollständige Firmendaten sorgen für rechtssichere Verträge.'
+                      : ' Vollständige Adressdaten sorgen für rechtssichere Verträge.'
+                    )}
+                    {activeSection === 'legal' && (profileType === 'business'
+                      ? ' Die USt-IdNr. ist für B2B-Geschäfte in der EU erforderlich.'
+                      : ' Die Steuer-ID ist optional, wird aber für Rechnungsstellung benötigt.'
+                    )}
                     {activeSection === 'contact' && ' Kontaktdaten ermöglichen schnelle Kommunikation bei Vertragsthemen.'}
                     {activeSection === 'banking' && ' Bankdaten erscheinen automatisch auf generierten Rechnungen.'}
                   </div>
