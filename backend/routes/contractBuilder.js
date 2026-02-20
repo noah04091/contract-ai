@@ -306,20 +306,27 @@ router.post('/import-from-generator', auth, async (req, res) => {
     const blocks = [];
     let order = 0;
 
-    // Hilfsfunktion: geschätzte Block-Höhe in px (A4 Seite ~ 1002px nutzbare Höhe)
+    // Hilfsfunktion: geschätzte Block-Höhe in px
+    // A4 Seite = 1002px nutzbar, aber 265mm max-height + overflow:hidden im CSS
+    // Konservativ schätzen um Abschneiden zu vermeiden
     const estimateBlockHeight = (block) => {
-      if (block.type === 'header') return 120;
-      if (block.type === 'parties') return 160;
-      if (block.type === 'signature') return 180;
+      if (block.type === 'header') return 140;
+      if (block.type === 'parties') return 180;
+      if (block.type === 'signature') return 250;
       if (block.type === 'page-break') return 0;
-      // Für Text-basierte Blöcke: ~20px pro Zeile, ~80 Zeichen pro Zeile
-      const text = block.content?.body || block.content?.text || '';
-      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 80));
-      const titleHeight = (block.content?.clauseTitle) ? 35 : 0;
-      return titleHeight + Math.max(lineCount * 22, 40);
+      if (block.type === 'preamble') {
+        const text = block.content?.preambleText || '';
+        const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 70));
+        return Math.max(lineCount * 24, 60);
+      }
+      // Für clause-Blöcke: Titel + Body, ~24px pro Zeile, ~70 Zeichen pro Zeile
+      const text = block.content?.body || '';
+      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 70));
+      const titleHeight = (block.content?.clauseTitle) ? 45 : 0;
+      return titleHeight + Math.max(lineCount * 24, 50) + 20; // +20 für Margins
     };
 
-    const PAGE_HEIGHT = 900; // px, mit Sicherheitsabstand (echte Höhe ~1002px)
+    const PAGE_HEIGHT = 750; // px, konservativ (echte Höhe ~1002px, aber lieber eine Seite mehr als abgeschnitten)
     let currentPageHeight = 0;
 
     const addBlock = (block) => {

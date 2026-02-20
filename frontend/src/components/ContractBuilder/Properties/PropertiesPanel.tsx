@@ -42,6 +42,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     selectedBlockId,
     updateBlock,
     updateBlockContent,
+    updateBlockStyle,
     deleteBlock,
     duplicateBlock,
     applyStyleToAllOfType,
@@ -80,11 +81,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
   const updateStyle = (key: keyof BlockStyle, value: unknown) => {
     if (!selectedBlock) return;
 
-    updateBlock(selectedBlock.id, {
-      style: {
-        ...selectedBlock.style,
-        [key]: value,
-      },
+    updateBlockStyle(selectedBlock.id, {
+      [key]: value,
     });
   };
 
