@@ -242,9 +242,10 @@ router.post("/basic", verifyToken, async (req, res) => {
       });
     }
 
-    // Nur Basis-Daten speichern (Firmenname)
+    // Nur Basis-Daten speichern (Firmenname + profileType)
     const profileData = {
       userId,
+      profileType: req.body.profileType || 'business', // 'business' oder 'personal'
       companyName: req.body.companyName,
       updatedAt: new Date()
     };
@@ -309,8 +310,11 @@ router.post("/", verifyToken, requireEnterprise, async (req, res) => {
     }
     
     // Profil-Daten vorbereiten
+    const profileType = req.body.profileType || 'business'; // 'business' oder 'personal'
+
     const profileData = {
       userId,
+      profileType,
       companyName: req.body.companyName,
       legalForm: req.body.legalForm || '',
       street: req.body.street,
@@ -318,7 +322,8 @@ router.post("/", verifyToken, requireEnterprise, async (req, res) => {
       city: req.body.city,
       country: req.body.country,
       vatId: req.body.vatId || '',
-      tradeRegister: req.body.tradeRegister || '',
+      // Handelsregister nur für Business-Profile relevant
+      tradeRegister: profileType === 'business' ? (req.body.tradeRegister || '') : '',
       contactEmail: req.body.contactEmail || '',
       contactPhone: req.body.contactPhone || '',
       bankName: req.body.bankName || '',
@@ -345,7 +350,7 @@ router.post("/", verifyToken, requireEnterprise, async (req, res) => {
       { upsert: true }
     );
     
-    console.log("✅ Firmenprofil gespeichert für User:", req.user.userId);
+    console.log("✅ Profil gespeichert für User:", req.user.userId, "| Typ:", profileType);
 
     // 🎓 Onboarding: companyProfileComplete automatisch auf true setzen
     try {
