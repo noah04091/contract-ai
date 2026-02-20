@@ -1,13 +1,14 @@
 // Company Profile Page with Logo Upload
-// v3.0 - Stripe-Level Design Redesign
+// v4.0 - Stripe-Level Premium Design
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import {
-  Building, Upload, X, Save, Camera,
-  Phone, FileText, CreditCard,
+  Building2, Upload, X, Save, Camera,
+  Phone, CreditCard, MapPin,
   AlertCircle, ArrowLeft, Lock, Sparkles,
-  ChevronDown, Check, Info
+  ChevronRight, Check, Info, Shield, Zap,
+  Globe, CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -63,46 +64,58 @@ const COUNTRIES = [
 interface SectionConfig {
   id: string;
   title: string;
+  subtitle: string;
   icon: React.ReactNode;
   fields: (keyof CompanyProfileData)[];
   premiumOnly: boolean;
+  gradient: string;
 }
 
 const SECTIONS: SectionConfig[] = [
   {
     id: 'logo',
     title: 'Firmenlogo',
-    icon: <Camera size={20} />,
+    subtitle: 'Ihr visuelles Markenzeichen',
+    icon: <Camera size={22} strokeWidth={1.5} />,
     fields: ['logoUrl'],
-    premiumOnly: true
+    premiumOnly: true,
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
   },
   {
     id: 'company',
     title: 'Unternehmensdaten',
-    icon: <Building size={20} />,
+    subtitle: 'Grundlegende Firmendaten',
+    icon: <Building2 size={22} strokeWidth={1.5} />,
     fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
-    premiumOnly: false
+    premiumOnly: false,
+    gradient: 'linear-gradient(135deg, #0066ff 0%, #00d4ff 100%)'
   },
   {
     id: 'legal',
     title: 'Rechts- & Steuerangaben',
-    icon: <FileText size={20} />,
+    subtitle: 'Gesetzlich erforderliche Daten',
+    icon: <Shield size={22} strokeWidth={1.5} />,
     fields: ['vatId', 'tradeRegister'],
-    premiumOnly: true
+    premiumOnly: true,
+    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
   },
   {
     id: 'contact',
     title: 'Kontaktdaten',
-    icon: <Phone size={20} />,
+    subtitle: 'Erreichbarkeit für Vertragspartner',
+    icon: <Phone size={22} strokeWidth={1.5} />,
     fields: ['contactEmail', 'contactPhone'],
-    premiumOnly: true
+    premiumOnly: true,
+    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
   },
   {
     id: 'banking',
     title: 'Bankverbindung',
-    icon: <CreditCard size={20} />,
+    subtitle: 'Zahlungsdaten für Rechnungen',
+    icon: <CreditCard size={22} strokeWidth={1.5} />,
     fields: ['bankName', 'iban', 'bic'],
-    premiumOnly: true
+    premiumOnly: true,
+    gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
   }
 ];
 
@@ -119,70 +132,39 @@ export default function CompanyProfile() {
   const [hasChanges, setHasChanges] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>('company');
 
-  // Collapsible sections state - all expanded by default
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    logo: true,
-    company: true,
-    legal: true,
-    contact: true,
-    banking: true
-  });
-
-  // Enterprise Check - Vollständiges Firmenprofil nur für Enterprise User
+  // Enterprise Check
   const isPremium = user?.subscriptionPlan === 'enterprise';
 
-  // Calculate completion percentage
+  // Calculate completion data
   const completionData = useMemo(() => {
-    const fields: { key: keyof CompanyProfileData; weight: number; premiumOnly: boolean }[] = [
-      { key: 'companyName', weight: 15, premiumOnly: false },
-      { key: 'logoUrl', weight: 10, premiumOnly: true },
-      { key: 'legalForm', weight: 5, premiumOnly: true },
-      { key: 'street', weight: 10, premiumOnly: true },
-      { key: 'postalCode', weight: 5, premiumOnly: true },
-      { key: 'city', weight: 10, premiumOnly: true },
-      { key: 'vatId', weight: 10, premiumOnly: true },
-      { key: 'tradeRegister', weight: 5, premiumOnly: true },
-      { key: 'contactEmail', weight: 10, premiumOnly: true },
-      { key: 'contactPhone', weight: 5, premiumOnly: true },
-      { key: 'bankName', weight: 5, premiumOnly: true },
-      { key: 'iban', weight: 5, premiumOnly: true },
-      { key: 'bic', weight: 5, premiumOnly: true }
-    ];
-
-    let totalWeight = 0;
-    let completedWeight = 0;
-
-    fields.forEach(field => {
-      // For non-premium users, only count companyName
-      if (!isPremium && field.premiumOnly) return;
-
-      totalWeight += field.weight;
-      const value = profile[field.key];
-      if (value && String(value).trim() !== '') {
-        completedWeight += field.weight;
+    const sections = SECTIONS.map(section => {
+      if (!isPremium && section.premiumOnly) {
+        return { ...section, completion: 0, isLocked: true };
       }
+
+      const filledFields = section.fields.filter(field => {
+        if (field === 'logoUrl') return !!logoPreview;
+        const value = profile[field];
+        return value && String(value).trim() !== '';
+      });
+
+      const completion = section.fields.length > 0
+        ? Math.round((filledFields.length / section.fields.length) * 100)
+        : 0;
+
+      return { ...section, completion, isLocked: false };
     });
 
-    const percentage = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0;
-
-    return { percentage, totalWeight, completedWeight };
-  }, [profile, isPremium]);
-
-  // Calculate section completion
-  const getSectionCompletion = (section: SectionConfig): number => {
-    if (!isPremium && section.premiumOnly) return 0;
-
-    const filledFields = section.fields.filter(field => {
-      if (field === 'logoUrl') return !!logoPreview;
-      const value = profile[field];
-      return value && String(value).trim() !== '';
-    });
-
-    return section.fields.length > 0
-      ? Math.round((filledFields.length / section.fields.length) * 100)
+    const completedSections = sections.filter(s => s.completion === 100 && !s.isLocked).length;
+    const totalSections = sections.filter(s => !s.isLocked).length;
+    const overallPercentage = totalSections > 0
+      ? Math.round((completedSections / totalSections) * 100)
       : 0;
-  };
+
+    return { sections, completedSections, totalSections, overallPercentage };
+  }, [profile, logoPreview, isPremium]);
 
   // Load existing profile
   useEffect(() => {
@@ -224,13 +206,6 @@ export default function CompanyProfile() {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
-  };
-
   const handleSave = async () => {
     if (!profile.companyName) {
       toast.error('Bitte geben Sie einen Firmennamen ein');
@@ -258,7 +233,7 @@ export default function CompanyProfile() {
       if (data.success) {
         setOriginalProfile(profile);
         setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2000);
+        setTimeout(() => setSaveSuccess(false), 2500);
         toast.success('Firmenprofil erfolgreich gespeichert!');
         await refetchUser();
       } else {
@@ -352,494 +327,558 @@ export default function CompanyProfile() {
     );
   }
 
+  const renderSectionContent = (section: SectionConfig) => {
+    const sectionData = completionData.sections.find(s => s.id === section.id);
+    const isLocked = sectionData?.isLocked;
+
+    if (isLocked) {
+      return (
+        <div className={styles.lockedOverlay}>
+          <div className={styles.lockedContent}>
+            <div className={styles.lockedIconWrapper}>
+              <Lock size={24} />
+            </div>
+            <h4>Enterprise Feature</h4>
+            <p>Schalten Sie alle Profilfelder frei für professionelle Verträge</p>
+            <Link to="/pricing" className={styles.upgradeBtn}>
+              <Sparkles size={16} />
+              Jetzt freischalten
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    switch (section.id) {
+      case 'logo':
+        return (
+          <div className={styles.logoSection}>
+            {logoPreview ? (
+              <div className={styles.logoDisplay}>
+                <div className={styles.logoImageWrapper}>
+                  <img src={logoPreview} alt="Firmenlogo" />
+                </div>
+                <div className={styles.logoMeta}>
+                  <span className={styles.logoStatus}>
+                    <CheckCircle2 size={14} />
+                    Logo hochgeladen
+                  </span>
+                  <div className={styles.logoActions}>
+                    <button
+                      className={styles.logoBtn}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                    >
+                      <Upload size={14} />
+                      Ändern
+                    </button>
+                    <button
+                      className={`${styles.logoBtn} ${styles.logoBtnDanger}`}
+                      onClick={handleDeleteLogo}
+                    >
+                      <X size={14} />
+                      Entfernen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className={styles.logoDropzone}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {uploadingLogo ? (
+                  <div className={styles.uploadingState}>
+                    <div className={styles.loadingSpinner}></div>
+                    <span>Wird hochgeladen...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.dropzoneIcon}>
+                      <Camera size={32} strokeWidth={1.5} />
+                    </div>
+                    <h4>Logo hochladen</h4>
+                    <p>Ziehen Sie ein Bild hierher oder klicken Sie zum Auswählen</p>
+                    <span className={styles.dropzoneFormats}>PNG, JPG, SVG oder WebP bis 5MB</span>
+                  </>
+                )}
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/svg+xml,image/webp"
+              onChange={handleFileSelect}
+              style={{ display: 'none' }}
+            />
+          </div>
+        );
+
+      case 'company':
+        return (
+          <div className={styles.formSection}>
+            <div className={styles.formRow}>
+              <div className={styles.formField}>
+                <label>
+                  Firmenname
+                  <span className={styles.required}>*</span>
+                  {!isPremium && <span className={styles.freeTag}>Kostenlos</span>}
+                </label>
+                <input
+                  type="text"
+                  value={profile.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  placeholder="Ihre Firma GmbH"
+                  className={styles.input}
+                />
+              </div>
+              <div className={`${styles.formField} ${!isPremium ? styles.fieldLocked : ''}`}>
+                <label>
+                  Rechtsform
+                  {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                </label>
+                <select
+                  value={profile.legalForm}
+                  onChange={(e) => handleInputChange('legalForm', e.target.value)}
+                  disabled={!isPremium}
+                  className={styles.select}
+                >
+                  {LEGAL_FORMS.map(form => (
+                    <option key={form} value={form}>{form}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className={`${styles.formField} ${styles.fullWidth} ${!isPremium ? styles.fieldLocked : ''}`}>
+              <label>
+                <MapPin size={14} />
+                Straße & Hausnummer
+                {isPremium && <span className={styles.required}>*</span>}
+                {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+              </label>
+              <input
+                type="text"
+                value={profile.street}
+                onChange={(e) => handleInputChange('street', e.target.value)}
+                placeholder={isPremium ? "Musterstraße 123" : "Enterprise-Feature"}
+                disabled={!isPremium}
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={`${styles.formField} ${styles.small} ${!isPremium ? styles.fieldLocked : ''}`}>
+                <label>
+                  PLZ
+                  {isPremium && <span className={styles.required}>*</span>}
+                  {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                </label>
+                <input
+                  type="text"
+                  value={profile.postalCode}
+                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  placeholder={isPremium ? "12345" : "—"}
+                  disabled={!isPremium}
+                  className={styles.input}
+                />
+              </div>
+              <div className={`${styles.formField} ${!isPremium ? styles.fieldLocked : ''}`}>
+                <label>
+                  Stadt
+                  {isPremium && <span className={styles.required}>*</span>}
+                  {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                </label>
+                <input
+                  type="text"
+                  value={profile.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder={isPremium ? "Berlin" : "Enterprise"}
+                  disabled={!isPremium}
+                  className={styles.input}
+                />
+              </div>
+              <div className={`${styles.formField} ${!isPremium ? styles.fieldLocked : ''}`}>
+                <label>
+                  <Globe size={14} />
+                  Land
+                  {!isPremium && <Lock size={12} className={styles.lockIcon} />}
+                </label>
+                <select
+                  value={profile.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  disabled={!isPremium}
+                  className={styles.select}
+                >
+                  {COUNTRIES.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'legal':
+        return (
+          <div className={styles.formSection}>
+            <div className={styles.formRow}>
+              <div className={styles.formField}>
+                <label>USt-IdNr.</label>
+                <input
+                  type="text"
+                  value={profile.vatId}
+                  onChange={(e) => handleInputChange('vatId', e.target.value)}
+                  placeholder="DE123456789"
+                  className={styles.input}
+                />
+                <span className={styles.fieldHint}>Umsatzsteuer-Identifikationsnummer</span>
+              </div>
+              <div className={styles.formField}>
+                <label>Handelsregister</label>
+                <input
+                  type="text"
+                  value={profile.tradeRegister}
+                  onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
+                  placeholder="HRB 12345, Amtsgericht Berlin"
+                  className={styles.input}
+                />
+                <span className={styles.fieldHint}>Registernummer & Registergericht</span>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'contact':
+        return (
+          <div className={styles.formSection}>
+            <div className={styles.formRow}>
+              <div className={styles.formField}>
+                <label>Geschäftliche E-Mail</label>
+                <input
+                  type="email"
+                  value={profile.contactEmail}
+                  onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                  placeholder="info@ihrefirma.de"
+                  className={styles.input}
+                />
+              </div>
+              <div className={styles.formField}>
+                <label>Telefon</label>
+                <input
+                  type="tel"
+                  value={profile.contactPhone}
+                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                  placeholder="+49 30 12345678"
+                  className={styles.input}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'banking':
+        return (
+          <div className={styles.formSection}>
+            <div className={styles.formField}>
+              <label>Kreditinstitut</label>
+              <input
+                type="text"
+                value={profile.bankName}
+                onChange={(e) => handleInputChange('bankName', e.target.value)}
+                placeholder="Deutsche Bank AG"
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.formRow}>
+              <div className={`${styles.formField} ${styles.large}`}>
+                <label>IBAN</label>
+                <input
+                  type="text"
+                  value={profile.iban}
+                  onChange={(e) => handleInputChange('iban', e.target.value)}
+                  placeholder="DE89 3704 0044 0532 0130 00"
+                  className={styles.input}
+                />
+              </div>
+              <div className={styles.formField}>
+                <label>BIC / SWIFT</label>
+                <input
+                  type="text"
+                  value={profile.bic}
+                  onChange={(e) => handleInputChange('bic', e.target.value)}
+                  placeholder="COBADEFFXXX"
+                  className={styles.input}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <Helmet>
-        <title>Firmenprofil verwalten | Contract AI</title>
+        <title>Firmenprofil | Contract AI</title>
         <meta name="description" content="Verwalten Sie Ihr Firmenprofil für die automatische Vertragserstellung" />
       </Helmet>
 
-      <div className={styles.cpPage}>
-        {/* Hero Section with Completion Bar */}
-        <motion.div
-          className={styles.cpHero}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className={styles.cpHeroInner}>
+      <div className={styles.page}>
+        {/* Background Effects */}
+        <div className={styles.bgGradient}></div>
+        <div className={styles.bgPattern}></div>
+
+        {/* Main Content */}
+        <div className={styles.container}>
+          {/* Header */}
+          <motion.header
+            className={styles.header}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <button
-              className={styles.cpBackButton}
+              className={styles.backBtn}
               onClick={() => navigate('/dashboard')}
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={18} />
               <span>Dashboard</span>
             </button>
 
-            <div className={styles.cpHeroContent}>
-              <h1 className={styles.cpTitle}>Firmenprofil</h1>
-              <p className={styles.cpSubtitle}>
-                Ihre Unternehmensdaten für automatische Vertragserstellung
-              </p>
-            </div>
-
-            {/* Completion Bar */}
-            <div className={styles.cpCompletionWrapper}>
-              <div className={styles.cpCompletionHeader}>
-                <span className={styles.cpCompletionLabel}>Profilvollständigkeit</span>
-                <span className={styles.cpCompletionValue}>{completionData.percentage}%</span>
-              </div>
-              <div className={styles.cpCompletionBar}>
-                <motion.div
-                  className={styles.cpCompletionFill}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${completionData.percentage}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                />
-              </div>
-              {completionData.percentage < 100 && (
-                <p className={styles.cpCompletionHint}>
-                  {completionData.percentage < 50
-                    ? 'Fügen Sie weitere Daten hinzu für professionelle Verträge'
-                    : 'Fast vollständig! Nur noch wenige Felder fehlen'}
-                </p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Main Content - Single Column */}
-        <div className={styles.cpContainer}>
-          <div className={styles.cpContent}>
-
-            {/* Premium Hint - Subtle inline notice */}
-            {!isPremium && (
-              <motion.div
-                className={styles.cpPremiumHint}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <div className={styles.cpPremiumHintIcon}>
-                  <Sparkles size={16} />
+            <div className={styles.headerContent}>
+              <div className={styles.headerLeft}>
+                <div className={styles.headerIcon}>
+                  <Building2 size={28} strokeWidth={1.5} />
                 </div>
-                <div className={styles.cpPremiumHintText}>
-                  <span>Vollständiges Profil mit Enterprise</span>
-                  <p>Logo, Adresse, Steuerdaten & Bankverbindung freischalten</p>
+                <div className={styles.headerText}>
+                  <h1>Firmenprofil</h1>
+                  <p>Verwalten Sie Ihre Unternehmensdaten für automatische Vertragserstellung</p>
                 </div>
-                <Link to="/pricing" className={styles.cpPremiumHintButton}>
-                  Upgraden
-                </Link>
-              </motion.div>
-            )}
+              </div>
 
-            {/* Collapsible Sections */}
-            {SECTIONS.map((section, index) => {
-              const isExpanded = expandedSections[section.id];
-              const sectionCompletion = getSectionCompletion(section);
-              const isLocked = !isPremium && section.premiumOnly;
+              {/* Progress Ring */}
+              <div className={styles.progressRing}>
+                <svg viewBox="0 0 100 100">
+                  <circle
+                    className={styles.progressBg}
+                    cx="50"
+                    cy="50"
+                    r="42"
+                    fill="none"
+                    strokeWidth="8"
+                  />
+                  <motion.circle
+                    className={styles.progressFill}
+                    cx="50"
+                    cy="50"
+                    r="42"
+                    fill="none"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    initial={{ strokeDasharray: '0 264' }}
+                    animate={{
+                      strokeDasharray: `${(completionData.overallPercentage / 100) * 264} 264`
+                    }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                  />
+                </svg>
+                <div className={styles.progressText}>
+                  <span className={styles.progressValue}>{completionData.completedSections}</span>
+                  <span className={styles.progressLabel}>/{completionData.totalSections}</span>
+                </div>
+              </div>
+            </div>
+          </motion.header>
 
-              // Skip logo section content display for non-premium
-              if (section.id === 'logo' && !isPremium) {
-                return (
-                  <motion.div
-                    key={section.id}
-                    className={`${styles.cpSection} ${styles.cpSectionLocked}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.1 * index }}
-                  >
-                    <div className={styles.cpSectionHeader}>
-                      <div className={styles.cpSectionHeaderLeft}>
-                        <div className={styles.cpSectionIcon}>{section.icon}</div>
-                        <div className={styles.cpSectionTitleGroup}>
-                          <h3 className={styles.cpSectionTitle}>{section.title}</h3>
-                        </div>
+          {/* Main Grid */}
+          <div className={styles.mainGrid}>
+            {/* Sidebar Navigation */}
+            <motion.aside
+              className={styles.sidebar}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <nav className={styles.sidebarNav}>
+                {SECTIONS.map((section, index) => {
+                  const sectionData = completionData.sections.find(s => s.id === section.id);
+                  const isActive = activeSection === section.id;
+                  const isComplete = sectionData?.completion === 100;
+                  const isLocked = sectionData?.isLocked;
+
+                  return (
+                    <motion.button
+                      key={section.id}
+                      className={`${styles.navItem} ${isActive ? styles.navItemActive : ''} ${isLocked ? styles.navItemLocked : ''}`}
+                      onClick={() => !isLocked && setActiveSection(section.id)}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
+                    >
+                      <div
+                        className={styles.navItemIcon}
+                        style={{ background: isLocked ? '#94a3b8' : section.gradient }}
+                      >
+                        {section.icon}
                       </div>
-                      <div className={styles.cpSectionHeaderRight}>
-                        <span className={styles.cpUpgradePill}>
-                          <Lock size={12} />
-                          Enterprise
+                      <div className={styles.navItemText}>
+                        <span className={styles.navItemTitle}>{section.title}</span>
+                        <span className={styles.navItemSubtitle}>
+                          {isLocked ? 'Enterprise' : isComplete ? 'Vollständig' : section.subtitle}
                         </span>
                       </div>
-                    </div>
-                  </motion.div>
-                );
-              }
+                      <div className={styles.navItemStatus}>
+                        {isLocked ? (
+                          <Lock size={14} />
+                        ) : isComplete ? (
+                          <CheckCircle2 size={18} className={styles.checkIcon} />
+                        ) : (
+                          <ChevronRight size={18} />
+                        )}
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </nav>
 
-              return (
+              {/* Upgrade Card for Free Users */}
+              {!isPremium && (
                 <motion.div
-                  key={section.id}
-                  className={`${styles.cpSection} ${isLocked ? styles.cpSectionLocked : ''}`}
+                  className={styles.upgradeCard}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
                 >
-                  <button
-                    className={styles.cpSectionHeader}
-                    onClick={() => !isLocked && toggleSection(section.id)}
-                    disabled={isLocked}
-                  >
-                    <div className={styles.cpSectionHeaderLeft}>
-                      <div className={styles.cpSectionIcon}>{section.icon}</div>
-                      <div className={styles.cpSectionTitleGroup}>
-                        <h3 className={styles.cpSectionTitle}>{section.title}</h3>
-                        {!isLocked && sectionCompletion > 0 && (
-                          <div className={styles.cpSectionProgress}>
-                            <div
-                              className={styles.cpSectionProgressFill}
-                              style={{ width: `${sectionCompletion}%` }}
-                            />
+                  <div className={styles.upgradeCardGlow}></div>
+                  <div className={styles.upgradeCardContent}>
+                    <div className={styles.upgradeCardIcon}>
+                      <Zap size={20} />
+                    </div>
+                    <h4>Vollzugriff freischalten</h4>
+                    <p>Logo, Steuerdaten, Bankverbindung und mehr für professionelle Verträge</p>
+                    <Link to="/pricing" className={styles.upgradeCardBtn}>
+                      Enterprise ansehen
+                      <ChevronRight size={16} />
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </motion.aside>
+
+            {/* Content Area */}
+            <motion.main
+              className={styles.content}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <AnimatePresence mode="wait">
+                {SECTIONS.filter(s => s.id === activeSection).map(section => {
+                  const sectionData = completionData.sections.find(s => s.id === section.id);
+
+                  return (
+                    <motion.div
+                      key={section.id}
+                      className={styles.card}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className={styles.cardHeader}>
+                        <div
+                          className={styles.cardHeaderIcon}
+                          style={{ background: section.gradient }}
+                        >
+                          {section.icon}
+                        </div>
+                        <div className={styles.cardHeaderText}>
+                          <h2>{section.title}</h2>
+                          <p>{section.subtitle}</p>
+                        </div>
+                        {!sectionData?.isLocked && (
+                          <div className={styles.cardHeaderBadge}>
+                            {sectionData?.completion === 100 ? (
+                              <span className={styles.completeBadge}>
+                                <Check size={14} />
+                                Vollständig
+                              </span>
+                            ) : (
+                              <span className={styles.progressBadge}>
+                                {sectionData?.completion}%
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
-                    </div>
-                    <div className={styles.cpSectionHeaderRight}>
-                      {isLocked ? (
-                        <span className={styles.cpUpgradePill}>
-                          <Lock size={12} />
-                          Enterprise
-                        </span>
-                      ) : (
-                        <>
-                          {sectionCompletion === 100 && (
-                            <span className={styles.cpCompleteBadge}>
-                              <Check size={14} />
-                            </span>
-                          )}
-                          <motion.div
-                            animate={{ rotate: isExpanded ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <ChevronDown size={20} className={styles.cpChevron} />
-                          </motion.div>
-                        </>
-                      )}
-                    </div>
-                  </button>
 
-                  <AnimatePresence initial={false}>
-                    {isExpanded && !isLocked && (
-                      <motion.div
-                        className={styles.cpSectionContent}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                      >
-                        <div className={styles.cpSectionInner}>
-                          {/* Logo Section */}
-                          {section.id === 'logo' && (
-                            <div className={styles.cpLogoArea}>
-                              {logoPreview ? (
-                                <div className={styles.cpLogoPreview}>
-                                  <img src={logoPreview} alt="Firmenlogo" />
-                                  <div className={styles.cpLogoActions}>
-                                    <button
-                                      className={styles.cpLogoBtn}
-                                      onClick={() => fileInputRef.current?.click()}
-                                      disabled={uploadingLogo}
-                                    >
-                                      <Upload size={14} />
-                                      Ändern
-                                    </button>
-                                    <button
-                                      className={`${styles.cpLogoBtn} ${styles.cpLogoBtnDanger}`}
-                                      onClick={handleDeleteLogo}
-                                    >
-                                      <X size={14} />
-                                      Entfernen
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  className={styles.cpLogoUpload}
-                                  onClick={() => fileInputRef.current?.click()}
-                                >
-                                  {uploadingLogo ? (
-                                    <div className={styles.cpLogoUploading}>
-                                      <div className={styles.loadingSpinner}></div>
-                                      <span>Wird hochgeladen...</span>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <Upload size={28} strokeWidth={1.5} />
-                                      <span>Logo hochladen</span>
-                                      <small>JPG, PNG, SVG oder WebP (max. 5MB)</small>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                              <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                                onChange={handleFileSelect}
-                                style={{ display: 'none' }}
-                              />
-                              <div className={styles.cpInlineHint}>
-                                <Info size={14} />
-                                <span>Ihr Logo erscheint auf generierten Verträgen und Rechnungen</span>
-                              </div>
-                            </div>
-                          )}
+                      <div className={styles.cardContent}>
+                        {renderSectionContent(section)}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
 
-                          {/* Company Data Section */}
-                          {section.id === 'company' && (
-                            <div className={styles.cpFormGrid}>
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="companyName">
-                                  Firmenname
-                                  <span className={styles.cpRequired}>*</span>
-                                  {!isPremium && <span className={styles.cpFreeBadge}>Kostenlos</span>}
-                                </label>
-                                <input
-                                  id="companyName"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.companyName}
-                                  onChange={(e) => handleInputChange('companyName', e.target.value)}
-                                  placeholder="z.B. Muster GmbH"
-                                />
-                              </div>
-
-                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
-                                <label htmlFor="legalForm">
-                                  Rechtsform
-                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
-                                </label>
-                                <select
-                                  id="legalForm"
-                                  className={styles.cpInput}
-                                  value={profile.legalForm}
-                                  onChange={(e) => handleInputChange('legalForm', e.target.value)}
-                                  disabled={!isPremium}
-                                >
-                                  {LEGAL_FORMS.map(form => (
-                                    <option key={form} value={form}>{form}</option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <div className={`${styles.cpFormGroup} ${styles.cpFormGroupFull} ${!isPremium ? styles.cpFieldLocked : ''}`}>
-                                <label htmlFor="street">
-                                  Straße & Hausnummer
-                                  {isPremium && <span className={styles.cpRequired}>*</span>}
-                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
-                                </label>
-                                <input
-                                  id="street"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.street}
-                                  onChange={(e) => handleInputChange('street', e.target.value)}
-                                  placeholder={isPremium ? "z.B. Musterstraße 123" : "Enterprise-Feature"}
-                                  disabled={!isPremium}
-                                />
-                              </div>
-
-                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
-                                <label htmlFor="postalCode">
-                                  PLZ
-                                  {isPremium && <span className={styles.cpRequired}>*</span>}
-                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
-                                </label>
-                                <input
-                                  id="postalCode"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.postalCode}
-                                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                                  placeholder={isPremium ? "12345" : "Enterprise"}
-                                  disabled={!isPremium}
-                                />
-                              </div>
-
-                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
-                                <label htmlFor="city">
-                                  Stadt
-                                  {isPremium && <span className={styles.cpRequired}>*</span>}
-                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
-                                </label>
-                                <input
-                                  id="city"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.city}
-                                  onChange={(e) => handleInputChange('city', e.target.value)}
-                                  placeholder={isPremium ? "z.B. Berlin" : "Enterprise"}
-                                  disabled={!isPremium}
-                                />
-                              </div>
-
-                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
-                                <label htmlFor="country">
-                                  Land
-                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
-                                </label>
-                                <select
-                                  id="country"
-                                  className={styles.cpInput}
-                                  value={profile.country}
-                                  onChange={(e) => handleInputChange('country', e.target.value)}
-                                  disabled={!isPremium}
-                                >
-                                  {COUNTRIES.map(country => (
-                                    <option key={country} value={country}>{country}</option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Legal & Tax Section */}
-                          {section.id === 'legal' && (
-                            <div className={styles.cpFormGrid}>
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="vatId">USt-IdNr.</label>
-                                <input
-                                  id="vatId"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.vatId}
-                                  onChange={(e) => handleInputChange('vatId', e.target.value)}
-                                  placeholder="z.B. DE123456789"
-                                />
-                              </div>
-
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="tradeRegister">Handelsregister</label>
-                                <input
-                                  id="tradeRegister"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.tradeRegister}
-                                  onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
-                                  placeholder="z.B. HRB 12345"
-                                />
-                              </div>
-
-                              <div className={`${styles.cpInlineHint} ${styles.cpFormGroupFull}`}>
-                                <Info size={14} />
-                                <span>Diese Angaben werden für rechtskonforme Verträge benötigt</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Contact Section */}
-                          {section.id === 'contact' && (
-                            <div className={styles.cpFormGrid}>
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="contactEmail">E-Mail</label>
-                                <input
-                                  id="contactEmail"
-                                  type="email"
-                                  className={styles.cpInput}
-                                  value={profile.contactEmail}
-                                  onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                                  placeholder="info@firma.de"
-                                />
-                              </div>
-
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="contactPhone">Telefon</label>
-                                <input
-                                  id="contactPhone"
-                                  type="tel"
-                                  className={styles.cpInput}
-                                  value={profile.contactPhone}
-                                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                                  placeholder="+49 30 12345678"
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Banking Section */}
-                          {section.id === 'banking' && (
-                            <div className={styles.cpFormGrid}>
-                              <div className={`${styles.cpFormGroup} ${styles.cpFormGroupFull}`}>
-                                <label htmlFor="bankName">Bank</label>
-                                <input
-                                  id="bankName"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.bankName}
-                                  onChange={(e) => handleInputChange('bankName', e.target.value)}
-                                  placeholder="z.B. Deutsche Bank AG"
-                                />
-                              </div>
-
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="iban">IBAN</label>
-                                <input
-                                  id="iban"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.iban}
-                                  onChange={(e) => handleInputChange('iban', e.target.value)}
-                                  placeholder="DE89 3704 0044 0532 0130 00"
-                                />
-                              </div>
-
-                              <div className={styles.cpFormGroup}>
-                                <label htmlFor="bic">BIC</label>
-                                <input
-                                  id="bic"
-                                  type="text"
-                                  className={styles.cpInput}
-                                  value={profile.bic}
-                                  onChange={(e) => handleInputChange('bic', e.target.value)}
-                                  placeholder="COBADEFFXXX"
-                                />
-                              </div>
-
-                              <div className={`${styles.cpInlineHint} ${styles.cpFormGroupFull}`}>
-                                <Info size={14} />
-                                <span>Bankdaten erscheinen auf Rechnungen und in Zahlungsanweisungen</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+              {/* Tips Card */}
+              {activeSection && !completionData.sections.find(s => s.id === activeSection)?.isLocked && (
+                <motion.div
+                  className={styles.tipsCard}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
+                >
+                  <Info size={18} />
+                  <div className={styles.tipsContent}>
+                    <strong>Tipp:</strong>
+                    {activeSection === 'logo' && ' Ein professionelles Logo stärkt Ihre Markenidentität in Verträgen.'}
+                    {activeSection === 'company' && ' Vollständige Firmendaten sorgen für rechtssichere Verträge.'}
+                    {activeSection === 'legal' && ' Die USt-IdNr. ist für B2B-Geschäfte in der EU erforderlich.'}
+                    {activeSection === 'contact' && ' Kontaktdaten ermöglichen schnelle Kommunikation bei Vertragsthemen.'}
+                    {activeSection === 'banking' && ' Bankdaten erscheinen automatisch auf generierten Rechnungen.'}
+                  </div>
                 </motion.div>
-              );
-            })}
+              )}
+            </motion.main>
           </div>
         </div>
 
-        {/* Sticky Save Footer */}
+        {/* Sticky Save Bar */}
         <AnimatePresence>
           {hasChanges && (
             <motion.div
-              className={styles.cpStickyFooter}
+              className={styles.saveBar}
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className={styles.cpStickyFooterInner}>
-                <div className={styles.cpUnsavedNotice}>
-                  <AlertCircle size={16} />
+              <div className={styles.saveBarInner}>
+                <div className={styles.saveBarLeft}>
+                  <div className={styles.saveBarPulse}></div>
+                  <AlertCircle size={18} />
                   <span>Ungespeicherte Änderungen</span>
                 </div>
-                <div className={styles.cpStickyFooterActions}>
+                <div className={styles.saveBarActions}>
                   <button
-                    className={styles.cpCancelBtn}
+                    className={styles.discardBtn}
                     onClick={() => {
                       setProfile(originalProfile);
                       if (originalProfile.logoUrl) {
                         setLogoPreview(originalProfile.logoUrl);
+                      } else {
+                        setLogoPreview(null);
                       }
                     }}
                   >
                     Verwerfen
                   </button>
                   <motion.button
-                    className={`${styles.cpSaveBtn} ${saveSuccess ? styles.cpSaveBtnSuccess : ''}`}
+                    className={`${styles.saveBtn} ${saveSuccess ? styles.saveBtnSuccess : ''}`}
                     onClick={handleSave}
                     disabled={saving}
                     whileHover={{ scale: 1.02 }}
@@ -847,17 +886,17 @@ export default function CompanyProfile() {
                   >
                     {saving ? (
                       <>
-                        <div className={styles.loadingSpinnerSmall}></div>
+                        <div className={styles.btnSpinner}></div>
                         <span>Speichert...</span>
                       </>
                     ) : saveSuccess ? (
                       <>
-                        <Check size={16} />
+                        <Check size={18} />
                         <span>Gespeichert!</span>
                       </>
                     ) : (
                       <>
-                        <Save size={16} />
+                        <Save size={18} />
                         <span>Änderungen speichern</span>
                       </>
                     )}
