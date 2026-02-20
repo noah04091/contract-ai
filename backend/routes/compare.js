@@ -373,10 +373,11 @@ ARBEITSWEISE — Du bist ein Anwalt, der beide Verträge nebeneinander auf dem S
 SCHRITT 1 — UNTERSCHIEDE (differences):
 Gehe das folgende Prüfschema Punkt für Punkt durch. Prüfe JEDEN Bereich: Gibt es einen ECHTEN, INHALTLICHEN Unterschied zwischen den Verträgen? Wenn ja → dokumentiere ihn. Wenn nein → überspringe ihn KOMPLETT.
 
-WICHTIG — KEINE identischen Klauseln aufnehmen:
-- Wenn beide Verträge eine Klausel IDENTISCH oder SINNGEMÄSS GLEICH regeln, ist das KEIN Unterschied. Überspringe es.
-- Schreibe NIEMALS "Beide Verträge enthalten identische Regelungen" oder "Keine Änderung erforderlich" — solche Einträge gehören nicht in die differences-Liste.
-- Nur ECHTE Abweichungen, fehlende Klauseln oder unterschiedliche Konditionen sind Unterschiede.
+WICHTIG — KEINE identischen oder ähnlichen Klauseln aufnehmen:
+- Wenn beide Verträge eine Klausel IDENTISCH, SINNGEMÄSS GLEICH oder NUR GERINGFÜGIG ANDERS formulieren, ist das KEIN Unterschied. Überspringe es KOMPLETT.
+- Beginne NIEMALS eine Erklärung mit "Beide Verträge sehen...", "Beide Verträge regeln...", "Beide Verträge enthalten..." — das ist ein Zeichen, dass es kein echter Unterschied ist.
+- Schreibe NIEMALS "Keine Änderung erforderlich", "Stellen Sie sicher", oder generische Empfehlungen ohne konkreten Bezug zum Unterschied.
+- Nur ECHTE, MATERIELLE Abweichungen gehören in die Liste: unterschiedliche Fristen, Beträge, Konditionen, fehlende Klauseln, oder komplett andere Regelungsansätze.
 
 PRÜFSCHEMA:
 □ Leistungsumfang / Vertragsgegenstand — Was genau wird geschuldet?
@@ -519,6 +520,8 @@ function enhanceAnalysis(analysis) {
 
   // Filter out "differences" that are actually identical clauses (GPT sometimes includes them)
   const beforeCount = analysis.differences.length;
+
+  // Pattern-based detection: phrases that signal "no real difference"
   const identicalPatterns = [
     /beide verträge.*identisch/i,
     /keine änderung erforderlich/i,
@@ -527,17 +530,51 @@ function enhanceAnalysis(analysis) {
     /sinngemäß gleich/i,
     /keine abweichung/i,
     /übereinstimmend geregelt/i,
-    /stimmen überein/i
+    /stimmen überein/i,
+    /beide verträge (sehen|regeln|enthalten|haben|verfügen|beinhalten|legen|setzen|bestimmen|schreiben).{0,60}(gleich|identisch|ähnlich|übereinstimmend|dasselbe|dieselbe)/i,
+    /beide verträge regeln.{0,80}ähnlich/i,
+    /beide verträge sehen.{0,80}vor\b/i,
   ];
+
+  // Content-based detection: if contract1 and contract2 quotes are nearly identical
+  const normalizeText = (text) => (text || '').toLowerCase().replace(/[^a-zäöüß0-9]/g, '');
+  const textSimilarity = (a, b) => {
+    const na = normalizeText(a);
+    const nb = normalizeText(b);
+    if (!na || !nb || na.length < 10 || nb.length < 10) return 0;
+    if (na === nb) return 1;
+    // Simple check: if one contains the other or they share >90% characters
+    const shorter = na.length <= nb.length ? na : nb;
+    const longer = na.length > nb.length ? na : nb;
+    if (longer.includes(shorter)) return shorter.length / longer.length;
+    // Character overlap ratio
+    let matches = 0;
+    for (let i = 0; i < shorter.length; i++) {
+      if (longer.includes(shorter.substring(i, i + 8)) && i + 8 <= shorter.length) {
+        matches += 8;
+        i += 7;
+      }
+    }
+    return matches / longer.length;
+  };
+
   analysis.differences = analysis.differences.filter(diff => {
+    // Check 1: Pattern-based detection in explanation/impact/recommendation
     const textsToCheck = [diff.explanation || '', diff.impact || '', diff.recommendation || ''];
-    const isIdentical = textsToCheck.some(text =>
+    const matchesPattern = textsToCheck.some(text =>
       identicalPatterns.some(pattern => pattern.test(text))
     );
-    if (isIdentical) {
-      console.log(`🔍 Identische Klausel gefiltert: "${diff.category}" (${diff.section})`);
+
+    // Check 2: Contract quotes are nearly identical (>85% similar)
+    const quoteSimilarity = textSimilarity(diff.contract1, diff.contract2);
+    const quotesIdentical = quoteSimilarity > 0.85;
+
+    if (matchesPattern || quotesIdentical) {
+      const reason = matchesPattern ? 'Pattern-Match' : `Zitate ${Math.round(quoteSimilarity * 100)}% identisch`;
+      console.log(`🔍 Identische Klausel gefiltert: "${diff.category}" (${diff.section}) — ${reason}`);
+      return false;
     }
-    return !isIdentical;
+    return true;
   });
   if (beforeCount !== analysis.differences.length) {
     console.log(`🧹 ${beforeCount - analysis.differences.length} identische Klauseln gefiltert (${beforeCount} → ${analysis.differences.length})`);
