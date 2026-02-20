@@ -1,12 +1,13 @@
 // Company Profile Page with Logo Upload
-// v2.0 - Freemium Model: Firmenname für alle, Rest Premium
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+// v3.0 - Stripe-Level Design Redesign
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import {
-  Building, Upload, X, Save, Eye, Camera,
-  Phone, FileText, CreditCard, Globe,
-  AlertCircle, ArrowLeft, Lock, Sparkles, Crown
+  Building, Upload, X, Save, Camera,
+  Phone, FileText, CreditCard,
+  AlertCircle, ArrowLeft, Lock, Sparkles,
+  ChevronDown, Check, Info
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -58,6 +59,53 @@ const COUNTRIES = [
   'Belgien', 'Frankreich', 'Italien', 'Spanien'
 ];
 
+// Section configuration
+interface SectionConfig {
+  id: string;
+  title: string;
+  icon: React.ReactNode;
+  fields: (keyof CompanyProfileData)[];
+  premiumOnly: boolean;
+}
+
+const SECTIONS: SectionConfig[] = [
+  {
+    id: 'logo',
+    title: 'Firmenlogo',
+    icon: <Camera size={20} />,
+    fields: ['logoUrl'],
+    premiumOnly: true
+  },
+  {
+    id: 'company',
+    title: 'Unternehmensdaten',
+    icon: <Building size={20} />,
+    fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
+    premiumOnly: false
+  },
+  {
+    id: 'legal',
+    title: 'Rechts- & Steuerangaben',
+    icon: <FileText size={20} />,
+    fields: ['vatId', 'tradeRegister'],
+    premiumOnly: true
+  },
+  {
+    id: 'contact',
+    title: 'Kontaktdaten',
+    icon: <Phone size={20} />,
+    fields: ['contactEmail', 'contactPhone'],
+    premiumOnly: true
+  },
+  {
+    id: 'banking',
+    title: 'Bankverbindung',
+    icon: <CreditCard size={20} />,
+    fields: ['bankName', 'iban', 'bic'],
+    premiumOnly: true
+  }
+];
+
 export default function CompanyProfile() {
   const { user, isLoading, refetchUser } = useAuth();
   const navigate = useNavigate();
@@ -70,12 +118,73 @@ export default function CompanyProfile() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 🔐 Enterprise Check - Vollständiges Firmenprofil nur für Enterprise User
-  // Free & Business: Nur Firmenname | Enterprise: Voller Zugriff
+  // Collapsible sections state - all expanded by default
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    logo: true,
+    company: true,
+    legal: true,
+    contact: true,
+    banking: true
+  });
+
+  // Enterprise Check - Vollständiges Firmenprofil nur für Enterprise User
   const isPremium = user?.subscriptionPlan === 'enterprise';
 
-  // Load existing profile - auch für Free User
+  // Calculate completion percentage
+  const completionData = useMemo(() => {
+    const fields: { key: keyof CompanyProfileData; weight: number; premiumOnly: boolean }[] = [
+      { key: 'companyName', weight: 15, premiumOnly: false },
+      { key: 'logoUrl', weight: 10, premiumOnly: true },
+      { key: 'legalForm', weight: 5, premiumOnly: true },
+      { key: 'street', weight: 10, premiumOnly: true },
+      { key: 'postalCode', weight: 5, premiumOnly: true },
+      { key: 'city', weight: 10, premiumOnly: true },
+      { key: 'vatId', weight: 10, premiumOnly: true },
+      { key: 'tradeRegister', weight: 5, premiumOnly: true },
+      { key: 'contactEmail', weight: 10, premiumOnly: true },
+      { key: 'contactPhone', weight: 5, premiumOnly: true },
+      { key: 'bankName', weight: 5, premiumOnly: true },
+      { key: 'iban', weight: 5, premiumOnly: true },
+      { key: 'bic', weight: 5, premiumOnly: true }
+    ];
+
+    let totalWeight = 0;
+    let completedWeight = 0;
+
+    fields.forEach(field => {
+      // For non-premium users, only count companyName
+      if (!isPremium && field.premiumOnly) return;
+
+      totalWeight += field.weight;
+      const value = profile[field.key];
+      if (value && String(value).trim() !== '') {
+        completedWeight += field.weight;
+      }
+    });
+
+    const percentage = totalWeight > 0 ? Math.round((completedWeight / totalWeight) * 100) : 0;
+
+    return { percentage, totalWeight, completedWeight };
+  }, [profile, isPremium]);
+
+  // Calculate section completion
+  const getSectionCompletion = (section: SectionConfig): number => {
+    if (!isPremium && section.premiumOnly) return 0;
+
+    const filledFields = section.fields.filter(field => {
+      if (field === 'logoUrl') return !!logoPreview;
+      const value = profile[field];
+      return value && String(value).trim() !== '';
+    });
+
+    return section.fields.length > 0
+      ? Math.round((filledFields.length / section.fields.length) * 100)
+      : 0;
+  };
+
+  // Load existing profile
   useEffect(() => {
     if (!user || isLoading) return;
     loadProfile();
@@ -95,22 +204,16 @@ export default function CompanyProfile() {
       });
 
       const data = await response.json();
-      console.log('📥 Profil-Daten empfangen:', data);
-      
+
       if (data.success && data.profile) {
         setProfile(data.profile);
         setOriginalProfile(data.profile);
         if (data.profile.logoUrl) {
-          console.log('🖼️ Logo-URL gefunden:', data.profile.logoUrl);
           setLogoPreview(data.profile.logoUrl);
-        } else if (data.profile.logoKey) {
-          console.log('🔑 Logo-Key vorhanden, aber keine URL:', data.profile.logoKey);
-        } else {
-          console.log('❌ Kein Logo im Profil');
         }
       }
     } catch (error) {
-      console.error('❌ Fehler beim Laden des Profils:', error);
+      console.error('Fehler beim Laden des Profils:', error);
       toast.error('Fehler beim Laden des Profils');
     } finally {
       setLoading(false);
@@ -121,9 +224,14 @@ export default function CompanyProfile() {
     setProfile(prev => ({ ...prev, [field]: value }));
   };
 
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
   const handleSave = async () => {
-    // Free User: Nur Firmenname erforderlich
-    // Premium User: Alle Pflichtfelder
     if (!profile.companyName) {
       toast.error('Bitte geben Sie einen Firmennamen ein');
       return;
@@ -136,8 +244,6 @@ export default function CompanyProfile() {
 
     try {
       setSaving(true);
-      // Free/Business User: /basic Route (nur Firmenname)
-      // Premium/Enterprise User: vollständige Route
       const endpoint = isPremium ? '/api/company-profile' : '/api/company-profile/basic';
 
       const response = await fetch(endpoint, {
@@ -151,14 +257,15 @@ export default function CompanyProfile() {
 
       if (data.success) {
         setOriginalProfile(profile);
-        toast.success('✅ Firmenprofil erfolgreich gespeichert!');
-        // 🔄 User-Daten neu laden damit Onboarding-Checklist aktualisiert wird
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 2000);
+        toast.success('Firmenprofil erfolgreich gespeichert!');
         await refetchUser();
       } else {
         throw new Error(data.message || 'Fehler beim Speichern');
       }
     } catch (error) {
-      console.error('❌ Speichern fehlgeschlagen:', error);
+      console.error('Speichern fehlgeschlagen:', error);
       toast.error('Fehler beim Speichern des Profils');
     } finally {
       setSaving(false);
@@ -168,7 +275,6 @@ export default function CompanyProfile() {
   const handleLogoUpload = async (file: File) => {
     if (!file) return;
 
-    // File validation
     if (!['image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'].includes(file.type)) {
       toast.error('Nur JPG, PNG, SVG und WebP Dateien sind erlaubt');
       return;
@@ -191,21 +297,17 @@ export default function CompanyProfile() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setLogoPreview(data.logoUrl);
         setProfile(prev => ({ ...prev, logoUrl: data.logoUrl, logoKey: data.logoKey }));
-        toast.success('✅ Logo erfolgreich hochgeladen!');
-        
-        // Profil neu laden um sicherzustellen, dass alles korrekt ist
-        setTimeout(() => {
-          loadProfile();
-        }, 500);
+        toast.success('Logo erfolgreich hochgeladen!');
+        setTimeout(() => loadProfile(), 500);
       } else {
         throw new Error(data.message || 'Upload fehlgeschlagen');
       }
     } catch (error) {
-      console.error('❌ Logo-Upload fehlgeschlagen:', error);
+      console.error('Logo-Upload fehlgeschlagen:', error);
       toast.error('Fehler beim Hochladen des Logos');
     } finally {
       setUploadingLogo(false);
@@ -220,14 +322,14 @@ export default function CompanyProfile() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setLogoPreview(null);
         setProfile(prev => ({ ...prev, logoUrl: '', logoKey: '' }));
         toast.success('Logo erfolgreich gelöscht');
       }
     } catch (error) {
-      console.error('❌ Logo-Löschung fehlgeschlagen:', error);
+      console.error('Logo-Löschung fehlgeschlagen:', error);
       toast.error('Fehler beim Löschen des Logos');
     }
   };
@@ -250,7 +352,6 @@ export default function CompanyProfile() {
     );
   }
 
-
   return (
     <>
       <Helmet>
@@ -258,460 +359,514 @@ export default function CompanyProfile() {
         <meta name="description" content="Verwalten Sie Ihr Firmenprofil für die automatische Vertragserstellung" />
       </Helmet>
 
-      <div className={styles.companyProfilePage}>
-        <motion.header
-          className={styles.header}
+      <div className={styles.cpPage}>
+        {/* Hero Section with Completion Bar */}
+        <motion.div
+          className={styles.cpHero}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          <div className={styles.headerContent}>
-            <button 
-              className={styles.backButton}
+          <div className={styles.cpHeroInner}>
+            <button
+              className={styles.cpBackButton}
               onClick={() => navigate('/dashboard')}
             >
               <ArrowLeft size={16} />
-              Zurück zum Dashboard
+              <span>Dashboard</span>
             </button>
-            
-            <div className={styles.headerText}>
-              <h1>
-                <Building size={28} />
-                Firmenprofil
-              </h1>
-              <p>Verwalten Sie Ihre Firmendaten für die automatische Vertragserstellung</p>
+
+            <div className={styles.cpHeroContent}>
+              <h1 className={styles.cpTitle}>Firmenprofil</h1>
+              <p className={styles.cpSubtitle}>
+                Ihre Unternehmensdaten für automatische Vertragserstellung
+              </p>
+            </div>
+
+            {/* Completion Bar */}
+            <div className={styles.cpCompletionWrapper}>
+              <div className={styles.cpCompletionHeader}>
+                <span className={styles.cpCompletionLabel}>Profilvollständigkeit</span>
+                <span className={styles.cpCompletionValue}>{completionData.percentage}%</span>
+              </div>
+              <div className={styles.cpCompletionBar}>
+                <motion.div
+                  className={styles.cpCompletionFill}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${completionData.percentage}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                />
+              </div>
+              {completionData.percentage < 100 && (
+                <p className={styles.cpCompletionHint}>
+                  {completionData.percentage < 50
+                    ? 'Fügen Sie weitere Daten hinzu für professionelle Verträge'
+                    : 'Fast vollständig! Nur noch wenige Felder fehlen'}
+                </p>
+              )}
             </div>
           </div>
-        </motion.header>
+        </motion.div>
 
-        <div className={styles.profileContainer}>
-          {/* Premium Upgrade Banner für Free User */}
-          {!isPremium && (
-            <motion.div
-              className={styles.upgradeBanner}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className={styles.upgradeBannerContent}>
-                <div className={styles.upgradeBannerIcon}>
-                  <Crown size={24} />
-                </div>
-                <div className={styles.upgradeBannerText}>
-                  <h3>Vollständiges Firmenprofil freischalten</h3>
-                  <p>
-                    Mit dem Enterprise-Plan kannst du alle Firmendaten speichern für die automatische Vertragserstellung,
-                    inklusive Logo, Adresse, Steuerdaten und Bankverbindung.
-                  </p>
-                </div>
-                <Link to="/pricing" className={styles.upgradeBannerButton}>
+        {/* Main Content - Single Column */}
+        <div className={styles.cpContainer}>
+          <div className={styles.cpContent}>
+
+            {/* Premium Hint - Subtle inline notice */}
+            {!isPremium && (
+              <motion.div
+                className={styles.cpPremiumHint}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+              >
+                <div className={styles.cpPremiumHintIcon}>
                   <Sparkles size={16} />
-                  Jetzt upgraden
+                </div>
+                <div className={styles.cpPremiumHintText}>
+                  <span>Vollständiges Profil mit Enterprise</span>
+                  <p>Logo, Adresse, Steuerdaten & Bankverbindung freischalten</p>
+                </div>
+                <Link to="/pricing" className={styles.cpPremiumHintButton}>
+                  Upgraden
                 </Link>
-              </div>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
 
-          <motion.div
-            className={styles.profileCard}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            {/* Logo Section - Premium Only */}
-            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
-              <h3>
-                <Camera size={20} />
-                Firmenlogo
-                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
-              </h3>
+            {/* Collapsible Sections */}
+            {SECTIONS.map((section, index) => {
+              const isExpanded = expandedSections[section.id];
+              const sectionCompletion = getSectionCompletion(section);
+              const isLocked = !isPremium && section.premiumOnly;
 
-              {isPremium ? (
-                <>
-                  <div className={styles.logoContainer}>
-                    {logoPreview ? (
-                      <div className={styles.logoPreview}>
-                        <img
-                          src={logoPreview}
-                          alt="Firmenlogo"
-                          onError={(e) => {
-                            console.error('❌ Logo konnte nicht geladen werden:', logoPreview);
-                            console.error('Error:', e);
-                          }}
-                          onLoad={() => {
-                            console.log('✅ Logo erfolgreich geladen:', logoPreview);
-                          }}
-                          style={{
-                            display: 'block',
-                            maxWidth: '100%',
-                            height: 'auto'
-                          }}
-                        />
-                        <div className={styles.logoActions}>
-                          <button
-                            className={styles.logoActionButton}
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={uploadingLogo}
-                          >
-                            <Upload size={16} />
-                            Ändern
-                          </button>
-                          <button
-                            className={`${styles.logoActionButton} ${styles.danger}`}
-                            onClick={handleDeleteLogo}
-                          >
-                            <X size={16} />
-                            Entfernen
-                          </button>
+              // Skip logo section content display for non-premium
+              if (section.id === 'logo' && !isPremium) {
+                return (
+                  <motion.div
+                    key={section.id}
+                    className={`${styles.cpSection} ${styles.cpSectionLocked}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 * index }}
+                  >
+                    <div className={styles.cpSectionHeader}>
+                      <div className={styles.cpSectionHeaderLeft}>
+                        <div className={styles.cpSectionIcon}>{section.icon}</div>
+                        <div className={styles.cpSectionTitleGroup}>
+                          <h3 className={styles.cpSectionTitle}>{section.title}</h3>
                         </div>
                       </div>
-                    ) : (
-                      <div
-                        className={styles.logoUpload}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        {uploadingLogo ? (
-                          <div className={styles.uploadingState}>
-                            <div className={styles.loadingSpinner}></div>
-                            <span>Wird hochgeladen...</span>
-                          </div>
-                        ) : (
-                          <div className={styles.uploadPrompt}>
-                            <Upload size={32} />
-                            <span>Logo hochladen</span>
-                            <small>JPG, PNG, SVG oder WebP (max. 5MB)</small>
+                      <div className={styles.cpSectionHeaderRight}>
+                        <span className={styles.cpUpgradePill}>
+                          <Lock size={12} />
+                          Enterprise
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
+              return (
+                <motion.div
+                  key={section.id}
+                  className={`${styles.cpSection} ${isLocked ? styles.cpSectionLocked : ''}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 * index }}
+                >
+                  <button
+                    className={styles.cpSectionHeader}
+                    onClick={() => !isLocked && toggleSection(section.id)}
+                    disabled={isLocked}
+                  >
+                    <div className={styles.cpSectionHeaderLeft}>
+                      <div className={styles.cpSectionIcon}>{section.icon}</div>
+                      <div className={styles.cpSectionTitleGroup}>
+                        <h3 className={styles.cpSectionTitle}>{section.title}</h3>
+                        {!isLocked && sectionCompletion > 0 && (
+                          <div className={styles.cpSectionProgress}>
+                            <div
+                              className={styles.cpSectionProgressFill}
+                              style={{ width: `${sectionCompletion}%` }}
+                            />
                           </div>
                         )}
                       </div>
+                    </div>
+                    <div className={styles.cpSectionHeaderRight}>
+                      {isLocked ? (
+                        <span className={styles.cpUpgradePill}>
+                          <Lock size={12} />
+                          Enterprise
+                        </span>
+                      ) : (
+                        <>
+                          {sectionCompletion === 100 && (
+                            <span className={styles.cpCompleteBadge}>
+                              <Check size={14} />
+                            </span>
+                          )}
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown size={20} className={styles.cpChevron} />
+                          </motion.div>
+                        </>
+                      )}
+                    </div>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {isExpanded && !isLocked && (
+                      <motion.div
+                        className={styles.cpSectionContent}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                      >
+                        <div className={styles.cpSectionInner}>
+                          {/* Logo Section */}
+                          {section.id === 'logo' && (
+                            <div className={styles.cpLogoArea}>
+                              {logoPreview ? (
+                                <div className={styles.cpLogoPreview}>
+                                  <img src={logoPreview} alt="Firmenlogo" />
+                                  <div className={styles.cpLogoActions}>
+                                    <button
+                                      className={styles.cpLogoBtn}
+                                      onClick={() => fileInputRef.current?.click()}
+                                      disabled={uploadingLogo}
+                                    >
+                                      <Upload size={14} />
+                                      Ändern
+                                    </button>
+                                    <button
+                                      className={`${styles.cpLogoBtn} ${styles.cpLogoBtnDanger}`}
+                                      onClick={handleDeleteLogo}
+                                    >
+                                      <X size={14} />
+                                      Entfernen
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  className={styles.cpLogoUpload}
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  {uploadingLogo ? (
+                                    <div className={styles.cpLogoUploading}>
+                                      <div className={styles.loadingSpinner}></div>
+                                      <span>Wird hochgeladen...</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <Upload size={28} strokeWidth={1.5} />
+                                      <span>Logo hochladen</span>
+                                      <small>JPG, PNG, SVG oder WebP (max. 5MB)</small>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                              <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/svg+xml,image/webp"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                              />
+                              <div className={styles.cpInlineHint}>
+                                <Info size={14} />
+                                <span>Ihr Logo erscheint auf generierten Verträgen und Rechnungen</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Company Data Section */}
+                          {section.id === 'company' && (
+                            <div className={styles.cpFormGrid}>
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="companyName">
+                                  Firmenname
+                                  <span className={styles.cpRequired}>*</span>
+                                  {!isPremium && <span className={styles.cpFreeBadge}>Kostenlos</span>}
+                                </label>
+                                <input
+                                  id="companyName"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.companyName}
+                                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                                  placeholder="z.B. Muster GmbH"
+                                />
+                              </div>
+
+                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
+                                <label htmlFor="legalForm">
+                                  Rechtsform
+                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
+                                </label>
+                                <select
+                                  id="legalForm"
+                                  className={styles.cpInput}
+                                  value={profile.legalForm}
+                                  onChange={(e) => handleInputChange('legalForm', e.target.value)}
+                                  disabled={!isPremium}
+                                >
+                                  {LEGAL_FORMS.map(form => (
+                                    <option key={form} value={form}>{form}</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className={`${styles.cpFormGroup} ${styles.cpFormGroupFull} ${!isPremium ? styles.cpFieldLocked : ''}`}>
+                                <label htmlFor="street">
+                                  Straße & Hausnummer
+                                  {isPremium && <span className={styles.cpRequired}>*</span>}
+                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
+                                </label>
+                                <input
+                                  id="street"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.street}
+                                  onChange={(e) => handleInputChange('street', e.target.value)}
+                                  placeholder={isPremium ? "z.B. Musterstraße 123" : "Enterprise-Feature"}
+                                  disabled={!isPremium}
+                                />
+                              </div>
+
+                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
+                                <label htmlFor="postalCode">
+                                  PLZ
+                                  {isPremium && <span className={styles.cpRequired}>*</span>}
+                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
+                                </label>
+                                <input
+                                  id="postalCode"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.postalCode}
+                                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                                  placeholder={isPremium ? "12345" : "Enterprise"}
+                                  disabled={!isPremium}
+                                />
+                              </div>
+
+                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
+                                <label htmlFor="city">
+                                  Stadt
+                                  {isPremium && <span className={styles.cpRequired}>*</span>}
+                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
+                                </label>
+                                <input
+                                  id="city"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.city}
+                                  onChange={(e) => handleInputChange('city', e.target.value)}
+                                  placeholder={isPremium ? "z.B. Berlin" : "Enterprise"}
+                                  disabled={!isPremium}
+                                />
+                              </div>
+
+                              <div className={`${styles.cpFormGroup} ${!isPremium ? styles.cpFieldLocked : ''}`}>
+                                <label htmlFor="country">
+                                  Land
+                                  {!isPremium && <Lock size={12} className={styles.cpLockIcon} />}
+                                </label>
+                                <select
+                                  id="country"
+                                  className={styles.cpInput}
+                                  value={profile.country}
+                                  onChange={(e) => handleInputChange('country', e.target.value)}
+                                  disabled={!isPremium}
+                                >
+                                  {COUNTRIES.map(country => (
+                                    <option key={country} value={country}>{country}</option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Legal & Tax Section */}
+                          {section.id === 'legal' && (
+                            <div className={styles.cpFormGrid}>
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="vatId">USt-IdNr.</label>
+                                <input
+                                  id="vatId"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.vatId}
+                                  onChange={(e) => handleInputChange('vatId', e.target.value)}
+                                  placeholder="z.B. DE123456789"
+                                />
+                              </div>
+
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="tradeRegister">Handelsregister</label>
+                                <input
+                                  id="tradeRegister"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.tradeRegister}
+                                  onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
+                                  placeholder="z.B. HRB 12345"
+                                />
+                              </div>
+
+                              <div className={`${styles.cpInlineHint} ${styles.cpFormGroupFull}`}>
+                                <Info size={14} />
+                                <span>Diese Angaben werden für rechtskonforme Verträge benötigt</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Contact Section */}
+                          {section.id === 'contact' && (
+                            <div className={styles.cpFormGrid}>
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="contactEmail">E-Mail</label>
+                                <input
+                                  id="contactEmail"
+                                  type="email"
+                                  className={styles.cpInput}
+                                  value={profile.contactEmail}
+                                  onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                                  placeholder="info@firma.de"
+                                />
+                              </div>
+
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="contactPhone">Telefon</label>
+                                <input
+                                  id="contactPhone"
+                                  type="tel"
+                                  className={styles.cpInput}
+                                  value={profile.contactPhone}
+                                  onChange={(e) => handleInputChange('contactPhone', e.target.value)}
+                                  placeholder="+49 30 12345678"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Banking Section */}
+                          {section.id === 'banking' && (
+                            <div className={styles.cpFormGrid}>
+                              <div className={`${styles.cpFormGroup} ${styles.cpFormGroupFull}`}>
+                                <label htmlFor="bankName">Bank</label>
+                                <input
+                                  id="bankName"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.bankName}
+                                  onChange={(e) => handleInputChange('bankName', e.target.value)}
+                                  placeholder="z.B. Deutsche Bank AG"
+                                />
+                              </div>
+
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="iban">IBAN</label>
+                                <input
+                                  id="iban"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.iban}
+                                  onChange={(e) => handleInputChange('iban', e.target.value)}
+                                  placeholder="DE89 3704 0044 0532 0130 00"
+                                />
+                              </div>
+
+                              <div className={styles.cpFormGroup}>
+                                <label htmlFor="bic">BIC</label>
+                                <input
+                                  id="bic"
+                                  type="text"
+                                  className={styles.cpInput}
+                                  value={profile.bic}
+                                  onChange={(e) => handleInputChange('bic', e.target.value)}
+                                  placeholder="COBADEFFXXX"
+                                />
+                              </div>
+
+                              <div className={`${styles.cpInlineHint} ${styles.cpFormGroupFull}`}>
+                                <Info size={14} />
+                                <span>Bankdaten erscheinen auf Rechnungen und in Zahlungsanweisungen</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
                     )}
-                  </div>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/svg+xml,image/webp"
-                    onChange={handleFileSelect}
-                    style={{ display: 'none' }}
-                  />
-                </>
-              ) : (
-                <div className={styles.lockedContent}>
-                  <div className={styles.lockedPlaceholder}>
-                    <Lock size={24} />
-                    <span>Logo-Upload mit Premium freischalten</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Company Information - Firmenname FREE, Rest Premium */}
-            <div className={styles.formSection}>
-              <h3>
-                <Building size={20} />
-                Unternehmensdaten
-              </h3>
-
-              <div className={styles.formGrid}>
-                {/* Firmenname - IMMER FREI */}
-                <div className={styles.formGroup}>
-                  <label htmlFor="companyName">
-                    Firmenname *
-                    {!isPremium && <span className={styles.freeBadge}>Kostenlos</span>}
-                  </label>
-                  <input
-                    id="companyName"
-                    type="text"
-                    value={profile.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    placeholder="z.B. Muster GmbH"
-                    required
-                  />
-                </div>
-
-                {/* Rechtsform - Premium */}
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="legalForm">
-                    Rechtsform
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <select
-                    id="legalForm"
-                    value={profile.legalForm}
-                    onChange={(e) => handleInputChange('legalForm', e.target.value)}
-                    disabled={!isPremium}
-                  >
-                    {LEGAL_FORMS.map(form => (
-                      <option key={form} value={form}>{form}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Straße - Premium */}
-                <div className={`${styles.formGroup} ${styles.spanning} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="street">
-                    Straße & Hausnummer {isPremium && '*'}
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="street"
-                    type="text"
-                    value={profile.street}
-                    onChange={(e) => handleInputChange('street', e.target.value)}
-                    placeholder={isPremium ? "z.B. Musterstraße 123" : "Premium-Feature"}
-                    required={isPremium}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                {/* PLZ - Premium */}
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="postalCode">
-                    PLZ {isPremium && '*'}
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="postalCode"
-                    type="text"
-                    value={profile.postalCode}
-                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                    placeholder={isPremium ? "12345" : "Premium"}
-                    required={isPremium}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                {/* Stadt - Premium */}
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="city">
-                    Stadt {isPremium && '*'}
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="city"
-                    type="text"
-                    value={profile.city}
-                    onChange={(e) => handleInputChange('city', e.target.value)}
-                    placeholder={isPremium ? "z.B. Berlin" : "Premium"}
-                    required={isPremium}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                {/* Land - Premium */}
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="country">
-                    Land
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <select
-                    id="country"
-                    value={profile.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    disabled={!isPremium}
-                  >
-                    {COUNTRIES.map(country => (
-                      <option key={country} value={country}>{country}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Legal & Tax Information - Premium Only */}
-            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
-              <h3>
-                <FileText size={20} />
-                Rechts- & Steuerangaben
-                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
-              </h3>
-
-              <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="vatId">
-                    USt-IdNr.
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="vatId"
-                    type="text"
-                    value={profile.vatId}
-                    onChange={(e) => handleInputChange('vatId', e.target.value)}
-                    placeholder={isPremium ? "z.B. DE123456789" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="tradeRegister">
-                    Handelsregister
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="tradeRegister"
-                    type="text"
-                    value={profile.tradeRegister}
-                    onChange={(e) => handleInputChange('tradeRegister', e.target.value)}
-                    placeholder={isPremium ? "z.B. HRB 12345" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information - Premium Only */}
-            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
-              <h3>
-                <Phone size={20} />
-                Kontaktdaten
-                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
-              </h3>
-
-              <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="contactEmail">
-                    E-Mail
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="contactEmail"
-                    type="email"
-                    value={profile.contactEmail}
-                    onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                    placeholder={isPremium ? "info@firma.de" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="contactPhone">
-                    Telefon
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="contactPhone"
-                    type="tel"
-                    value={profile.contactPhone}
-                    onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                    placeholder={isPremium ? "+49 30 12345678" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Banking Information - Premium Only */}
-            <div className={`${styles.formSection} ${!isPremium ? styles.lockedSection : ''}`}>
-              <h3>
-                <CreditCard size={20} />
-                Bankverbindung
-                {!isPremium && <span className={styles.premiumBadge}><Lock size={12} /> Premium</span>}
-              </h3>
-
-              <div className={styles.formGrid}>
-                <div className={`${styles.formGroup} ${styles.spanning} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="bankName">
-                    Bank
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="bankName"
-                    type="text"
-                    value={profile.bankName}
-                    onChange={(e) => handleInputChange('bankName', e.target.value)}
-                    placeholder={isPremium ? "z.B. Deutsche Bank AG" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="iban">
-                    IBAN
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="iban"
-                    type="text"
-                    value={profile.iban}
-                    onChange={(e) => handleInputChange('iban', e.target.value)}
-                    placeholder={isPremium ? "DE89 3704 0044 0532 0130 00" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-
-                <div className={`${styles.formGroup} ${!isPremium ? styles.lockedField : ''}`}>
-                  <label htmlFor="bic">
-                    BIC
-                    {!isPremium && <Lock size={12} className={styles.lockIcon} />}
-                  </label>
-                  <input
-                    id="bic"
-                    type="text"
-                    value={profile.bic}
-                    onChange={(e) => handleInputChange('bic', e.target.value)}
-                    placeholder={isPremium ? "COBADEFFXXX" : "Premium-Feature"}
-                    disabled={!isPremium}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Save Actions */}
-            <div className={styles.actionSection}>
-              {hasChanges && (
-                <div className={styles.changesNotice}>
-                  <AlertCircle size={16} />
-                  <span>Sie haben ungespeicherte Änderungen</span>
-                </div>
-              )}
-
-              <motion.button
-                className={`${styles.saveButton} ${!hasChanges ? styles.disabled : ''}`}
-                onClick={handleSave}
-                disabled={saving || !hasChanges}
-                whileHover={hasChanges ? { scale: 1.02 } : {}}
-                whileTap={hasChanges ? { scale: 0.98 } : {}}
-              >
-                {saving ? (
-                  <>
-                    <div className={styles.loadingSpinner}></div>
-                    <span>Speichere...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} />
-                    <span>Profil speichern</span>
-                  </>
-                )}
-              </motion.button>
-            </div>
-          </motion.div>
-
-          {/* Info Panel */}
-          <motion.div
-            className={styles.infoPanel}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <div className={styles.infoCard}>
-              <Eye size={24} />
-              <h3>Automatische Verwendung</h3>
-              <p>
-                Ihre Firmendaten werden automatisch bei der Vertragserstellung verwendet.
-                So sparen Sie Zeit und vermeiden Tippfehler.
-              </p>
-            </div>
-
-            <div className={styles.infoCard}>
-              <Globe size={24} />
-              <h3>Rechtssicherheit</h3>
-              <p>
-                Vollständige Firmendaten sorgen für rechtskonforme Verträge mit
-                allen notwendigen Angaben für deutsche und EU-Geschäfte.
-              </p>
-            </div>
-          </motion.div>
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Sticky Save Footer */}
+        <AnimatePresence>
+          {hasChanges && (
+            <motion.div
+              className={styles.cpStickyFooter}
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className={styles.cpStickyFooterInner}>
+                <div className={styles.cpUnsavedNotice}>
+                  <AlertCircle size={16} />
+                  <span>Ungespeicherte Änderungen</span>
+                </div>
+                <div className={styles.cpStickyFooterActions}>
+                  <button
+                    className={styles.cpCancelBtn}
+                    onClick={() => {
+                      setProfile(originalProfile);
+                      if (originalProfile.logoUrl) {
+                        setLogoPreview(originalProfile.logoUrl);
+                      }
+                    }}
+                  >
+                    Verwerfen
+                  </button>
+                  <motion.button
+                    className={`${styles.cpSaveBtn} ${saveSuccess ? styles.cpSaveBtnSuccess : ''}`}
+                    onClick={handleSave}
+                    disabled={saving}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {saving ? (
+                      <>
+                        <div className={styles.loadingSpinnerSmall}></div>
+                        <span>Speichert...</span>
+                      </>
+                    ) : saveSuccess ? (
+                      <>
+                        <Check size={16} />
+                        <span>Gespeichert!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} />
+                        <span>Änderungen speichern</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
