@@ -901,6 +901,8 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
                   history: [localDoc],
                   historyIndex: 0,
                   isLocalMode: true,
+                  view: 'edit',
+                  selectedBlockId: null,
                 });
                 return;
               }
@@ -918,6 +920,8 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               history: [data.document],
               historyIndex: 0,
               isLocalMode: false,
+              view: 'edit', // Immer im Edit-Modus starten (verhindert gespeicherten Preview-State)
+              selectedBlockId: null, // Auswahl zurücksetzen für frisches Dokument
             });
           } catch (error) {
             set({ isLoading: false, error: (error as Error).message });

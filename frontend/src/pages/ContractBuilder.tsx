@@ -193,9 +193,17 @@ const ContractBuilder: React.FC = () => {
   }, [currentDocument]);
 
   // Dokument laden oder Typ-Auswahl zeigen
+  // WICHTIG: loadedIdRef verhindert eine Endlosschleife - loadDocument ändert currentDocument,
+  // was ohne Guard den useEffect erneut triggern und loadDocument endlos aufrufen würde.
+  // Das würde ALLE lokalen Änderungen (Blöcke löschen, Text bearbeiten, etc.) sofort rückgängig machen.
+  const loadedIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (id) {
-      loadDocument(id);
+      if (id !== loadedIdRef.current) {
+        loadedIdRef.current = id;
+        loadDocument(id);
+      }
     } else if (!currentDocument) {
       // Bei neuem Dokument ohne existierendes Dokument: Typ-Auswahl Modal zeigen
       setShowTypeSelector(true);
