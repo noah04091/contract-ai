@@ -505,7 +505,7 @@ DEINE GRÜNDLICHKEIT:
         { role: "user", content: analysisPrompt }
       ],
       temperature: 0.15,
-      max_tokens: 32000,
+      max_tokens: 16384,
       response_format: { type: "json_object" },
     });
 
