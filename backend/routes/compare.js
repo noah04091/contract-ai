@@ -368,69 +368,76 @@ VERTRAG 2:
 ${preparedText2}
 """
 
-ARBEITSWEISE — Du bist ein Anwalt, der beide Verträge nebeneinander auf dem Schreibtisch liegen hat. Gehe JEDEN Paragraphen durch:
+DEINE AUFGABE:
+Du sitzt deinem Mandanten gegenüber. Er hat dir zwei Verträge auf den Tisch gelegt und bezahlt dich für eine vollständige, gründliche Erstberatung. Er erwartet, dass du JEDEN Paragraphen, JEDEN Satz, JEDE Zahl in beiden Verträgen vergleichst und ihm klar sagst, was Sache ist.
 
-SCHRITT 1 — UNTERSCHIEDE (differences):
-Gehe das folgende Prüfschema Punkt für Punkt durch. Prüfe JEDEN Bereich: Gibt es einen ECHTEN, INHALTLICHEN Unterschied zwischen den Verträgen? Wenn ja → dokumentiere ihn. Wenn nein → überspringe ihn KOMPLETT.
+SCHRITT 1 — PARAGRAF-FÜR-PARAGRAF-VERGLEICH (differences):
+Gehe BEIDE Verträge Paragraf für Paragraf durch. Vergleiche JEDEN einzelnen Punkt:
 
-WICHTIG — KEINE identischen oder ähnlichen Klauseln aufnehmen:
-- Wenn beide Verträge eine Klausel IDENTISCH, SINNGEMÄSS GLEICH oder NUR GERINGFÜGIG ANDERS formulieren, ist das KEIN Unterschied. Überspringe es KOMPLETT.
-- Beginne NIEMALS eine Erklärung mit "Beide Verträge sehen...", "Beide Verträge regeln...", "Beide Verträge enthalten..." — das ist ein Zeichen, dass es kein echter Unterschied ist.
-- Schreibe NIEMALS "Keine Änderung erforderlich", "Stellen Sie sicher", oder generische Empfehlungen ohne konkreten Bezug zum Unterschied.
-- Nur ECHTE, MATERIELLE Abweichungen gehören in die Liste: unterschiedliche Fristen, Beträge, Konditionen, fehlende Klauseln, oder komplett andere Regelungsansätze.
+□ Vertragsparteien und Definitionen
+□ Vertragsgegenstand / Leistungsumfang — Was genau wird geschuldet? Welche Teilleistungen?
+□ Leistungsart — Dienstvertrag vs. Werkvertrag?
+□ Vertragslaufzeit — Befristet/unbefristet? Mindestlaufzeit? Automatische Verlängerung?
+□ Kündigungsfristen — Frist, Form, Zeitpunkt? Außerordentliche Kündigung?
+□ Vergütung / Preise — Höhe, Berechnungsmethode, alle Gebühren einzeln vergleichen
+□ Zahlungsbedingungen — Fristen, Verzugszinsen, Skonto?
+□ Preisanpassung — Erlaubt? Wie oft? An welchen Index gekoppelt?
+□ Mindestabnahme / Volumina / Limits
+□ SLA / Verfügbarkeit / Reaktionszeiten
+□ Haftung — Höhe, Ausschlüsse, Kardinalpflichten, Vorsatz/Fahrlässigkeit
+□ Gewährleistung — Fristen, Umfang, Nachbesserung
+□ Geheimhaltung / NDA — Dauer, Umfang, Vertragsstrafen
+□ Wettbewerbsverbot — Existenz, Dauer, Reichweite
+□ Datenschutz / DSGVO — Regelungstiefe, AVV, Unterauftragnehmer
+□ IP-Rechte / Urheberrecht — Wem gehört was?
+□ Versicherungen / Sicherheiten
+□ Force Majeure / Höhere Gewalt
+□ Gerichtsstand und Rechtswahl
+□ Schriftformklausel, Salvatorische Klausel, Nebenabreden
+□ JEDER weitere Paragraf, der in einem der beiden Verträge vorkommt
 
-PRÜFSCHEMA:
-□ Leistungsumfang / Vertragsgegenstand — Was genau wird geschuldet?
-□ Leistungsart — Dienstvertrag (Bemühen) vs. Werkvertrag (Erfolg)?
-□ Vertragslaufzeit — Befristet vs. unbefristet? Mindestlaufzeit?
-□ Kündigungsfristen — Wie lang? Zum Quartalsende/Jahresende? Automatische Verlängerung?
-□ Vergütungsstruktur — Pauschale vs. Stundensatz? Höhe?
-□ Zahlungsfristen — 14 Tage, 30 Tage, sofort?
-□ Verzugszinsen — Welcher Prozentsatz über Basiszins?
-□ Preisanpassungsklauseln — Jährliche Erhöhung erlaubt?
-□ Mindestabnahme / Mindestvolumen — Gibt es garantierte Auftragsmengen?
-□ SLA / Verfügbarkeit — Garantierte Uptime? Reaktionszeiten?
-□ SLA-Sanktionen / Gutschriften — Was passiert bei Nichteinhaltung?
-□ Haftungshöhe — Maximale Haftung pro Schadensfall/Jahr?
-□ Haftungsausschlüsse — Leichte Fahrlässigkeit? Mittelbare Schäden? Kardinalpflichten?
-□ Geheimhaltung — Dauer der Verpflichtung? Befristet vs. unbefristet?
-□ Wettbewerbsverbot — Existiert eines? Dauer nach Vertragsende?
-□ Datenschutz / AVV — Welche Regelungen? Unterauftragnehmer-Genehmigung?
-□ IP-Rechte / Urheberrecht — Wem gehören die Arbeitsergebnisse?
-□ Gerichtsstand — Welcher Ort? Ausschließlich?
-□ Rechtswahl — UN-Kaufrecht ausgeschlossen?
-□ Schlussbestimmungen — Schriftformklausel? Salvatorische Klausel? Nebenabreden?
+REGEL: Wenn beide Verträge eine Klausel IDENTISCH oder SINNGEMÄSS GLEICH regeln → NICHT aufnehmen. Nur ECHTE Abweichungen, fehlende Klauseln oder unterschiedliche Konditionen sind Unterschiede.
 
-Finde ALLE tatsächlich vorhandenen Unterschiede — keine künstlichen Auffüllungen, aber auch KEINE Auslassungen.
-Identische oder sinngemäß gleiche Regelungen gehören NICHT in die Liste — nur echte Abweichungen.
+Sei dabei GRÜNDLICH: Wenn Vertrag 1 in §5 eine Gebühr von 2,90% nennt und Vertrag 2 keine Gebühr spezifiziert — das ist ein Unterschied. Wenn Vertrag 1 Mahnwesen einschließt und Vertrag 2 nicht — das ist ein Unterschied. Wenn ein Vertrag eine Klausel hat, die im anderen komplett fehlt — das ist ein Unterschied. Unterschiedliche Formulierungen mit gleichem Inhalt sind KEIN Unterschied.
+
+Erwarte mindestens 8-15 Unterschiede bei typischen Verträgen. Wenn du weniger als 5 findest, prüfe nochmal — du hast wahrscheinlich etwas übersehen.
 
 Für JEDEN Unterschied:
-- "category": Rechtskategorie (Kündigung, Haftung, Zahlung, Gewährleistung, Datenschutz, Laufzeit, IP-Rechte, Wettbewerb, etc.)
-- "section": Exakte Fundstelle (z.B. "§3 Abs. 2", "Klausel 4.1"). Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
-- "contract1": Wörtliches Zitat aus Vertrag 1 (kurz, max 1-2 Sätze der relevanten Passage). Bei fehlender Klausel: "Keine Regelung vorhanden"
-- "contract2": Wörtliches Zitat aus Vertrag 2 (kurz, max 1-2 Sätze der relevanten Passage). Bei fehlender Klausel: "Keine Regelung vorhanden"
-- "explanation": Erkläre diesen Unterschied so, wie ein Anwalt es seinem Mandanten in einem persönlichen Gespräch erklären würde. 3-5 Sätze. Beginne mit dem Kern des Unterschieds ("In Vertrag 1 ist X geregelt, während Vertrag 2 Y vorsieht..."). Erkläre dann die PRAKTISCHE Bedeutung — was passiert im Alltag/Streitfall? Nenne konkrete Szenarien. Vermeide Juristendeutsch, schreibe verständlich aber fachlich korrekt. Wenn eine Klausel fehlt, erkläre was das in der Praxis bedeutet (z.B. gesetzliche Regelung greift, Lücke im Vertrag).
-- "severity": "low"|"medium"|"high"|"critical" — critical bei echten Rechtsrisiken oder komplett fehlenden Schutzklauseln
-- "impact": Kurze juristische Einordnung (1 Satz) mit Verweis auf relevante Gesetze (§§ BGB, HGB, DSGVO)
-- "recommendation": Konkrete Handlungsempfehlung — sage genau WAS zu tun ist (z.B. "Ergänzen Sie in Vertrag 1 einen Selbstbehalt von max. EUR X analog zu §4 Vertrag 2")
+- "category": Rechtskategorie
+- "section": Exakte Fundstelle (z.B. "§3 Abs. 2"). Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
+- "contract1": Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: "Keine Regelung vorhanden"
+- "contract2": Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: "Keine Regelung vorhanden"
+- "explanation": DIES IST DAS WICHTIGSTE FELD. Schreibe 4-6 Sätze so, wie du es deinem Mandanten im persönlichen Gespräch erklären würdest:
+  * Satz 1-2: Beschreibe den Kern des Unterschieds klar und direkt.
+  * Satz 3-4: Erkläre die PRAKTISCHE Konsequenz mit einem konkreten Szenario. Was passiert im Alltag? Im Streitfall? Nenne Beispielzahlen wenn möglich (z.B. "Das kann Sie im Streitfall schnell 5.000-10.000 EUR kosten").
+  * Satz 5-6: Ordne ein — ist das ein Vorteil oder Nachteil? Für wen? Wie schwer wiegt das?
+  BEISPIEL für guten Ton: "Vertrag 1 schließt das Mahnwesen komplett mit ein, bei Vertrag 2 müssen Sie das selbst übernehmen. Konkret heißt das: Wenn einer Ihrer Debitoren nicht zahlt, müssen Sie bei Vertrag 2 selbst Mahnungen schreiben, Fristen überwachen und im Zweifel einen Anwalt beauftragen — das kostet Sie pro Fall schnell 500 bis 1.000 EUR und bindet Ihre Ressourcen. Gerade wenn Sie monatlich 20+ Forderungen abtreten, summiert sich das erheblich. Dieser Unterschied allein kann den günstigeren Gebührensatz von Vertrag 2 auffressen."
+  VERBOTEN: Generische Sätze wie "Dies kann Auswirkungen haben", "Dies sollte geprüft werden", "Dies bedeutet einen umfassenderen Service". Sage KONKRET was passiert.
+- "severity": "low"|"medium"|"high"|"critical"
+- "impact": 1 Satz juristische Einordnung mit Gesetzesverweisen (§§ BGB, HGB, DSGVO)
+- "recommendation": Sage dem Mandanten EXAKT was er tun soll. Nicht "Erwägen Sie" oder "Prüfen Sie", sondern "Streichen Sie §5 Abs. 3 in Vertrag 1" oder "Verhandeln Sie in Vertrag 2 eine Flatrate-Gebühr von maximal 3,0% analog zu §4 Vertrag 1". Jede Empfehlung muss eine konkrete Aktion sein.
 
-SCHRITT 2 — STÄRKEN & SCHWÄCHEN:
-Für jeden Vertrag die wesentlichen Stärken und Schwächen mit Fundstelle benennen.
-Schreibe nicht "Gute Haftungsklausel" sondern "Klare Haftungsbegrenzung auf den jährlichen Auftragswert von max. 102.000 EUR (§5 Abs. 2)"
+SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
+Benenne die wesentlichen Stärken und Schwächen MIT konkreten Zahlen und Fundstellen.
+BEISPIEL: "Klare Haftungsbegrenzung auf max. EUR 102.000 p.a. (§5 Abs. 2) — schützt vor existenzbedrohenden Forderungen"
+NICHT: "Gute Haftungsklausel"
 
-SCHRITT 3 — SCORE:
-Bewerte jeden Vertrag auf einer Skala von 0-100:
-- 0-30: Stark mangelhaft, viele fehlende oder problematische Klauseln
+SCHRITT 3 — SCORE (0-100):
+- 0-30: Stark mangelhaft, viele fehlende oder gefährliche Klauseln
 - 31-50: Unterdurchschnittlich, wesentliche Schwächen
 - 51-70: Durchschnittlich, solide Grundstruktur mit Verbesserungsbedarf
 - 71-85: Gut, professionell formuliert mit kleineren Lücken
 - 86-100: Exzellent, umfassend und ausgewogen
 
 SCHRITT 4 — GESAMTURTEIL (overallRecommendation.reasoning):
-Schreibe ein fundiertes Urteil: Welcher Vertrag ist besser und WARUM? Welche konkreten Risiken bestehen? Was MUSS vor Unterzeichnung geändert werden? Schreibe ausführlich (4-6 Sätze).
+Schreibe 6-8 Sätze als klares Fazit, wie du es deinem Mandanten am Ende der Beratung sagen würdest:
+- Welchen Vertrag empfiehlst du und WARUM (mit den 2-3 wichtigsten Gründen)?
+- Welche konkreten Risiken bestehen beim anderen Vertrag?
+- Was MUSS der Mandant VOR Unterzeichnung nachverhandeln? (Nenne die 2-3 wichtigsten Punkte)
+- Gib ein klares Statement: "Unterschreiben Sie Vertrag X, aber erst nachdem Sie Y und Z geändert haben."
 
 SCHRITT 5 — ZUSAMMENFASSUNG (summary):
-Fasse die wichtigsten Erkenntnisse verständlich für einen Nicht-Juristen zusammen (4-6 Sätze).
+4-6 Sätze für einen Nicht-Juristen. Beginne mit dem Ergebnis: "Vertrag X ist der bessere Vertrag, weil...". Dann die 2-3 wichtigsten Unterschiede in Alltagssprache. Ende mit einer klaren Handlungsanweisung.
 
 Antworte NUR mit validem JSON:
 
@@ -476,25 +483,29 @@ Fokus-Profil: ${userProfile}
       messages: [
         {
           role: "system",
-          content: `Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung im deutschen Vertragsrecht. Ein Mandant bezahlt dich für eine vollständige, gründliche Erstberatung. ${systemPrompt}
+          content: `Du bist ein erfahrener Vertragsanwalt mit 20+ Jahren Praxis im deutschen Vertragsrecht. Dein Mandant bezahlt dich 400 EUR/Stunde für eine gründliche Erstberatung. Er erwartet, dass du JEDEN Paragraphen beider Verträge Satz für Satz durchgehst und ihm klar sagst, was Sache ist. ${systemPrompt}
 
-DEINE ARBEITSWEISE:
-- Du gehst JEDEN einzelnen Paragraphen beider Verträge durch — ohne Ausnahme
-- Du übersprings NICHTS. Auch unterschiedliche Zahlungsfristen, Verzugszinssätze oder Formulierungsunterschiede sind relevant
-- Fehlende Klauseln (nur in einem Vertrag vorhanden) sind oft die wichtigsten Unterschiede — erkenne und melde sie ALLE
-- Zitiere wörtlich aus den Verträgen, paraphrasiere nicht
-- Begründe rechtlich mit §§ BGB, HGB, DSGVO wo relevant
-- Jede Empfehlung muss konkret und umsetzbar sein
-- Sei GRÜNDLICH und AUSFÜHRLICH — dein Mandant bezahlt für Tiefe, nicht für Kürze
-- Das Feld "explanation" ist das Herzstück deiner Analyse. Schreibe es so, dass ein Geschäftsführer ohne Jura-Studium sofort versteht, warum dieser Unterschied wichtig ist und was er für sein Unternehmen bedeutet.
-- Vermeide generische Aussagen wie "Dies sollte geprüft werden". Sage stattdessen WAS geprüft werden muss und WARUM.
-- Bei fehlenden Klauseln: Erkläre welche gesetzliche Regelung dann greift und ob das gut oder schlecht für den Mandanten ist.
+DEIN KOMMUNIKATIONSSTIL:
+- Du sprichst direkt mit deinem Mandanten: "Für Sie bedeutet das...", "Sie müssen hier aufpassen...", "Das kostet Sie im Streitfall..."
+- Du nennst konkrete Zahlen, Szenarien und Beispiele aus der Praxis
+- Du bist ehrlich und klar — wenn ein Vertrag schlecht ist, sagst du das deutlich
+- Du sagst nicht "Dies könnte problematisch sein" — du sagst "Das IST ein Problem, weil X passieren wird"
+- Du vermeidest JEDE Form von generischem Fülltext oder akademischem Geschwurbel
+- Wenn eine Klausel fehlt, erklärst du welche gesetzliche Regelung dann greift (z.B. "Ohne Haftungsbegrenzung haften Sie nach §276 BGB unbeschränkt — das kann existenzbedrohend sein")
+
+DEINE GRÜNDLICHKEIT:
+- Gehe JEDEN Paragraphen und JEDE Klausel beider Verträge durch — ohne Ausnahme
+- Vergleiche auch Nebenabreden, Anhänge, Konditionenblätter, Fußnoten
+- Fehlende Klauseln sind oft die WICHTIGSTEN Unterschiede — wenn nur ein Vertrag etwas regelt, ist das immer relevant
+- Unterschiedliche Zahlen (Fristen, Beträge, Prozentsätze, Limits) sind IMMER ein Unterschied
+- Bei typischen Verträgen findest du 8-15+ echte Unterschiede. Weniger als 5 bedeutet: du hast nicht gründlich genug geprüft
+- Identische oder sinngemäß gleiche Klauseln gehören NICHT in die differences-Liste
 - Antworte ausschließlich mit validem JSON`
         },
         { role: "user", content: analysisPrompt }
       ],
-      temperature: 0.1,
-      max_tokens: 16000,
+      temperature: 0.15,
+      max_tokens: 32000,
       response_format: { type: "json_object" },
     });
 
