@@ -229,9 +229,236 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
     </div>
   );
 
+  // Formales Layout - mit Firmenstempel-Bereich
+  const renderFormalLayout = () => (
+    <div className={styles.formalLayout}>
+      <div className={styles.formalHeader}>Unterschriften</div>
+      {fields.map((field, index) => (
+        <div key={`fsig-${field.partyIndex ?? index}-${field.label || index}`} className={styles.formalSignatureField}>
+          {/* Ort, Datum Zeile */}
+          <div className={styles.formalPlaceDateRow}>
+            <div className={styles.formalPlaceDate}>
+              <span className={styles.formalLabel}>Ort, Datum</span>
+              <div className={styles.formalLine} />
+            </div>
+          </div>
+
+          <div className={styles.formalSignatureArea}>
+            {/* Firmenstempel */}
+            <div className={styles.formalStamp}>
+              <span className={styles.formalStampLabel}>Firmenstempel</span>
+            </div>
+            {/* Unterschrift */}
+            <div className={styles.formalSignature}>
+              <div className={styles.formalSigLine} />
+              <div className={styles.formalNameLabel}>
+                {isEditingLabel(index) ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyDown}
+                    className={styles.inlineInput}
+                  />
+                ) : (
+                  <VariableHighlight
+                    text={field.label || `(Name, Funktion)`}
+                    isPreview={isPreview}
+                    onDoubleClick={() => handleDoubleClick({ type: 'label', index }, field.label || '(Name, Funktion)')}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Zeugen formal */}
+      {witnesses !== undefined && witnesses > 0 && (
+        <div className={styles.formalWitnessSection}>
+          <div className={styles.formalWitnessTitle}>Zeugen:</div>
+          {Array.from({ length: witnesses }).map((_, index) => (
+            <div key={`fwitness-${index}`} className={styles.formalSignatureField}>
+              <div className={styles.formalPlaceDateRow}>
+                <div className={styles.formalPlaceDate}>
+                  <span className={styles.formalLabel}>Ort, Datum</span>
+                  <div className={styles.formalLine} />
+                </div>
+              </div>
+              <div className={styles.formalSignature} style={{ maxWidth: '350px' }}>
+                <div className={styles.formalSigLine} />
+                <div className={styles.formalNameLabel}>(Zeuge {index + 1})</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // Corporate Layout - Strukturierte Boxen
+  const renderCorporateLayout = () => (
+    <div className={styles.corporateLayout}>
+      <div className={styles.corporateHeader}>Unterschriften der Vertragsparteien</div>
+      <div className={styles.corporateGrid}>
+        {fields.map((field, index) => (
+          <div key={`csig2-${field.partyIndex ?? index}-${field.label || index}`} className={styles.corporateCard}>
+            <div className={styles.corporateCardHeader}>
+              <span className={styles.corporatePartyLabel}>Partei {index + 1}</span>
+            </div>
+            <div className={styles.corporateCardBody}>
+              <div className={styles.corporateField}>
+                <span className={styles.corporateFieldLabel}>Name / Firma</span>
+                <div className={styles.corporateFieldValue}>
+                  {isEditingLabel(index) ? (
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      onBlur={handleSave}
+                      onKeyDown={handleKeyDown}
+                      className={styles.inlineInput}
+                    />
+                  ) : (
+                    <VariableHighlight
+                      text={field.label || '___________________'}
+                      isPreview={isPreview}
+                      onDoubleClick={() => handleDoubleClick({ type: 'label', index }, field.label || '')}
+                    />
+                  )}
+                </div>
+              </div>
+              {field.showDate && (
+                <div className={styles.corporateField}>
+                  <span className={styles.corporateFieldLabel}>Datum</span>
+                  <div className={styles.corporateFieldLine} />
+                </div>
+              )}
+              {field.showPlace && (
+                <div className={styles.corporateField}>
+                  <span className={styles.corporateFieldLabel}>Ort</span>
+                  <div className={styles.corporateFieldLine} />
+                </div>
+              )}
+              <div className={styles.corporateField}>
+                <span className={styles.corporateFieldLabel}>Unterschrift</span>
+                <div className={styles.corporateSignatureLine} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {witnesses !== undefined && witnesses > 0 && (
+        <div className={styles.corporateWitness}>
+          <div className={styles.corporateWitnessTitle}>Zeugen</div>
+          <div className={styles.corporateGrid}>
+            {Array.from({ length: witnesses }).map((_, index) => (
+              <div key={`cwitness2-${index}`} className={styles.corporateCard}>
+                <div className={styles.corporateCardBody}>
+                  <div className={styles.corporateField}>
+                    <span className={styles.corporateFieldLabel}>Unterschrift</span>
+                    <div className={styles.corporateSignatureLine} />
+                  </div>
+                  <div className={styles.corporateFieldValue}>Zeuge {index + 1}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Elegant Layout - Dekorative Trennlinie, Serif-Labels
+  const renderElegantLayout = () => (
+    <div className={styles.elegantLayout}>
+      <div className={styles.elegantDecoLine} />
+      <div className={styles.elegantTitle}>Unterschriften</div>
+      <div className={styles.elegantGrid}>
+        {fields.map((field, index) => (
+          <div key={`esig-${field.partyIndex ?? index}-${field.label || index}`} className={styles.elegantField}>
+            {(field.showPlace || field.showDate) && (
+              <div className={styles.elegantMetaRow}>
+                {field.showPlace && (
+                  <div className={styles.elegantMeta}>
+                    <span className={styles.elegantMetaLabel}>Ort</span>
+                    <div className={styles.elegantMetaLine} />
+                  </div>
+                )}
+                {field.showDate && (
+                  <div className={styles.elegantMeta}>
+                    <span className={styles.elegantMetaLabel}>Datum</span>
+                    <div className={styles.elegantMetaLine} />
+                  </div>
+                )}
+              </div>
+            )}
+            <div className={styles.elegantSigArea}>
+              <div className={styles.elegantSigLine} />
+            </div>
+            <div className={styles.elegantLabel}>
+              {isEditingLabel(index) ? (
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={handleSave}
+                  onKeyDown={handleKeyDown}
+                  className={styles.inlineInput}
+                />
+              ) : (
+                <VariableHighlight
+                  text={field.label || 'Unterschrift'}
+                  isPreview={isPreview}
+                  onDoubleClick={() => handleDoubleClick({ type: 'label', index }, field.label || 'Unterschrift')}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {witnesses !== undefined && witnesses > 0 && (
+        <div className={styles.elegantWitnessSection}>
+          <div className={styles.elegantWitnessTitle}>Zeugen</div>
+          <div className={styles.elegantGrid}>
+            {Array.from({ length: witnesses }).map((_, index) => (
+              <div key={`ewitness-${index}`} className={styles.elegantField}>
+                <div className={styles.elegantSigArea}>
+                  <div className={styles.elegantSigLine} />
+                </div>
+                <div className={styles.elegantLabel}>Zeuge {index + 1}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderByLayout = () => {
+    switch (signatureLayout) {
+      case 'classic':
+        return renderClassicLayout();
+      case 'formal':
+        return renderFormalLayout();
+      case 'corporate':
+        return renderCorporateLayout();
+      case 'elegant':
+        return renderElegantLayout();
+      default:
+        return renderModernLayout();
+    }
+  };
+
   return (
     <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`}>
-      {signatureLayout === 'classic' ? renderClassicLayout() : renderModernLayout()}
+      {renderByLayout()}
     </div>
   );
 };

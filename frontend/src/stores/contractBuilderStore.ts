@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { contractTemplates, ContractTemplate } from '../data/contractTemplates';
+import type { DesignTemplate } from '../data/designTemplates';
 
 // ============================================
 // TYPES
@@ -14,6 +15,7 @@ import { contractTemplates, ContractTemplate } from '../data/contractTemplates';
 
 export type BlockType =
   | 'header'
+  | 'cover'
   | 'parties'
   | 'preamble'
   | 'clause'
@@ -91,9 +93,21 @@ export interface BlockContent {
   party2?: PartyInfo;
   showPartyIcons?: boolean;      // Icons bei Parteien einblenden (default: false)
   partiesLayout?: 'modern' | 'classic';  // Layout-Variante: modern (side-by-side) oder classic (vertikal)
+  // Cover Block
+  coverTitle?: string;
+  coverSubtitle?: string;
+  contractType?: string;
+  coverLogo?: string;
+  coverDate?: string;
+  referenceNumber?: string;
+  confidentialityNotice?: string;
+  partySummary1?: string;
+  partySummary2?: string;
+  coverLayout?: 'executive-center' | 'modern-sidebar' | 'minimal-clean' | 'corporate-banner' | 'elegant-frame';
+  coverAccentColor?: string;
   // Signature
   showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
-  signatureLayout?: 'modern' | 'classic';  // Layout: modern (Karten) oder classic (Linien)
+  signatureLayout?: 'modern' | 'classic' | 'formal' | 'corporate' | 'elegant';  // Layout-Varianten
   // Header
   headerLayout?: 'centered' | 'left-logo' | 'minimal';  // Layout: zentriert, Logo links, nur Titel
   // Clause
@@ -389,6 +403,7 @@ interface ContractBuilderActions {
   // Design Actions
   setDesignPreset: (preset: string) => void;
   updateDesign: (design: Partial<DesignConfig>) => void;
+  applyDesignTemplate: (template: DesignTemplate) => void;
 
   // UI Actions
   setZoom: (zoom: number) => void;
@@ -1700,6 +1715,39 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
           set((state) => {
             if (!state.document) return;
             state.document.design = { ...state.document.design, ...design };
+            state.hasUnsavedChanges = true;
+          });
+          get().pushToHistory();
+        },
+
+        applyDesignTemplate: (template) => {
+          set((state) => {
+            if (!state.document) return;
+
+            // 1. Design-Config aktualisieren (Farben, Fonts)
+            if (template.design) {
+              state.document.design = { ...state.document.design, ...template.design };
+            }
+
+            // 2. Block-Layouts non-destruktiv aktualisieren (nur Layout-Felder, nie Inhalte)
+            state.document.content.blocks.forEach((block) => {
+              switch (block.type) {
+                case 'cover':
+                  block.content.coverLayout = template.coverLayout;
+                  block.content.coverAccentColor = template.design?.accentColor;
+                  break;
+                case 'clause':
+                  block.content.clauseLayout = template.clauseLayout;
+                  break;
+                case 'parties':
+                  block.content.partiesLayout = template.partiesLayout;
+                  break;
+                case 'signature':
+                  block.content.signatureLayout = template.signatureLayout;
+                  break;
+              }
+            });
+
             state.hasUnsavedChanges = true;
           });
           get().pushToHistory();

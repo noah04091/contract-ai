@@ -232,3 +232,317 @@
     max-width: 100%;
   }
 }
+
+/* ============================================
+   FORMAL LAYOUT (Stempel + Ort/Datum)
+   ============================================ */
+
+.formalLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.formalHeader {
+  font-size: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.formalSignatureField {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formalPlaceDateRow {
+  max-width: 350px;
+}
+
+.formalPlaceDate {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.formalLabel {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.formalLine {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  min-width: 150px;
+}
+
+.formalSignatureArea {
+  display: flex;
+  gap: 32px;
+  align-items: flex-end;
+}
+
+.formalStamp {
+  width: 120px;
+  height: 80px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.formalStampLabel {
+  font-size: 0.75em;
+  color: inherit;
+  opacity: 0.4;
+  text-align: center;
+}
+
+.formalSignature {
+  flex: 1;
+  max-width: 300px;
+}
+
+.formalSigLine {
+  height: 1px;
+  background: currentColor;
+  margin-top: 40px;
+}
+
+.formalNameLabel {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.formalWitnessSection {
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.formalWitnessTitle {
+  font-size: inherit;
+  font-weight: 500;
+  color: inherit;
+  margin-bottom: 24px;
+}
+
+/* ============================================
+   CORPORATE LAYOUT (Strukturierte Boxen)
+   ============================================ */
+
+.corporateLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.corporateHeader {
+  font-size: inherit;
+  font-weight: 600;
+  color: inherit;
+  margin-bottom: 8px;
+}
+
+.corporateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.corporateCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.corporateCardHeader {
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.corporatePartyLabel {
+  font-size: 0.8em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.corporateCardBody {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.corporateField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.corporateFieldLabel {
+  font-size: 0.75em;
+  color: inherit;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.corporateFieldValue {
+  font-size: inherit;
+  color: inherit;
+  min-height: 1.5em;
+}
+
+.corporateFieldLine {
+  height: 1px;
+  background: #e2e8f0;
+  min-width: 100px;
+}
+
+.corporateSignatureLine {
+  height: 1px;
+  background: currentColor;
+  margin-top: 32px;
+}
+
+.corporateWitness {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.corporateWitnessTitle {
+  font-size: inherit;
+  font-weight: 500;
+  color: inherit;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .corporateGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   ELEGANT LAYOUT (Dekorativ, Serif)
+   ============================================ */
+
+.elegantLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.elegantDecoLine {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.3;
+}
+
+.elegantTitle {
+  text-align: center;
+  font-size: inherit;
+  font-weight: 400;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: inherit;
+  opacity: 0.7;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.elegantGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+}
+
+.elegantField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.elegantMetaRow {
+  display: flex;
+  gap: 16px;
+}
+
+.elegantMeta {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 1;
+}
+
+.elegantMetaLabel {
+  font-size: 0.85em;
+  color: inherit;
+  opacity: 0.5;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.elegantMetaLine {
+  flex: 1;
+  height: 1px;
+  background: #cbd5e0;
+}
+
+.elegantSigArea {
+  padding-top: 36px;
+}
+
+.elegantSigLine {
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.elegantLabel {
+  font-size: inherit;
+  color: inherit;
+  opacity: 0.6;
+  font-style: italic;
+  margin-top: 4px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.elegantWitnessSection {
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.elegantWitnessTitle {
+  text-align: center;
+  font-size: inherit;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: inherit;
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+  .elegantGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}

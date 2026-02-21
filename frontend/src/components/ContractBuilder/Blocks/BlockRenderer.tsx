@@ -5,6 +5,7 @@
 import React from 'react';
 import { Block } from '../../../stores/contractBuilderStore';
 import { HeaderBlock } from './HeaderBlock';
+import { CoverBlock } from './CoverBlock';
 import { PartiesBlock } from './PartiesBlock';
 import { ClauseBlock } from './ClauseBlock';
 import { SignatureBlock } from './SignatureBlock';
@@ -72,6 +73,16 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       case 'header':
         return (
           <HeaderBlock
+            blockId={block.id}
+            content={block.content}
+            isSelected={isSelected}
+            isPreview={isPreview}
+          />
+        );
+
+      case 'cover':
+        return (
+          <CoverBlock
             blockId={block.id}
             content={block.content}
             isSelected={isSelected}

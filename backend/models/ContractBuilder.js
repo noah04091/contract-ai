@@ -76,6 +76,19 @@ const BlockContentSchema = new mongoose.Schema({
   noticeText: String,
   showNoticeIcon: Boolean,
 
+  // Cover Block
+  coverTitle: String,
+  coverSubtitle: String,
+  contractType: String,
+  coverLogo: String,
+  coverDate: String,
+  referenceNumber: String,
+  confidentialityNotice: String,
+  partySummary1: String,
+  partySummary2: String,
+  coverLayout: { type: String, enum: ['executive-center', 'modern-sidebar', 'minimal-clean', 'corporate-banner', 'elegant-frame'] },
+  coverAccentColor: String,
+
   // Logo Block
   logoUrl: String,
   logoData: String,              // Base64-codiertes Bild
@@ -132,6 +145,7 @@ const BlockSchema = new mongoose.Schema({
     required: true,
     enum: [
       'header',           // Vertragskopf
+      'cover',            // Deckblatt
       'parties',          // Vertragsparteien
       'preamble',         // Präambel
       'clause',           // Standard-Klausel

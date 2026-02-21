@@ -28,6 +28,7 @@ import {
   Book,
   Info,
   BookOpen,
+  BookImage,
 } from 'lucide-react';
 import styles from './BlockToolbar.module.css';
 import { templateClauses } from '../../../data/templateClauses';
@@ -44,6 +45,7 @@ const blockCategories = [
   {
     name: 'Struktur',
     blocks: [
+      { type: 'cover' as BlockType, label: 'Deckblatt', icon: BookImage, description: 'Ganzseitiges Deckblatt' },
       { type: 'header' as BlockType, label: 'Kopfzeile', icon: FileText, description: 'Vertragstitel und Logo' },
       { type: 'parties' as BlockType, label: 'Parteien', icon: Users, description: 'Vertragsparteien definieren' },
       { type: 'preamble' as BlockType, label: 'Präambel', icon: ScrollText, description: 'Einleitender Text' },
@@ -229,6 +231,17 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
     };
 
     addBlock(newBlock);
+
+    // Auto Page-Break nach Deckblatt einfügen
+    if (type === 'cover') {
+      addBlock({
+        type: 'page-break',
+        content: {},
+        style: {},
+        locked: false,
+        aiGenerated: false,
+      });
+    }
   };
 
   // Gefilterte Kategorien
@@ -589,6 +602,18 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
         altText: 'Firmenlogo',
         width: 150,
         alignment: 'left',
+      };
+    case 'cover':
+      return {
+        coverTitle: 'Vertragstitel',
+        coverSubtitle: '',
+        contractType: '',
+        coverDate: new Date().toLocaleDateString('de-DE'),
+        referenceNumber: '',
+        confidentialityNotice: '',
+        partySummary1: '',
+        partySummary2: '',
+        coverLayout: 'executive-center',
       };
     case 'definitions':
       return {

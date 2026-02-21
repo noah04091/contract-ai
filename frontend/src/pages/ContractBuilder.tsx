@@ -17,6 +17,7 @@ import {
   VariablesPanel,
   ContractTypeSelector,
 } from '../components/ContractBuilder';
+import { DesignTemplateGallery } from '../components/ContractBuilder/DesignTemplateGallery';
 import { BuilderErrorBoundary } from '../components/ContractBuilder/BuilderErrorBoundary';
 import {
   Save,
@@ -47,6 +48,7 @@ import {
   AlertTriangle,
   CheckCircle,
   TrendingUp,
+  Palette,
 } from 'lucide-react';
 import { createUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { WelcomePopup } from '../components/Tour';
@@ -104,6 +106,7 @@ const ContractBuilder: React.FC = () => {
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [showDesignGallery, setShowDesignGallery] = useState(false);
   const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
@@ -1512,6 +1515,14 @@ const ContractBuilder: React.FC = () => {
           {/* Actions */}
           <div className={styles.mainActions}>
             <button
+              className={styles.iconButton}
+              onClick={() => setShowDesignGallery(true)}
+              title="Design-Vorlage wählen"
+            >
+              <Palette size={16} />
+            </button>
+
+            <button
               className={`${styles.iconButton} ${showAiAssistant ? styles.active : ''}`}
               onClick={() => setShowAiAssistant(!showAiAssistant)}
               title="KI-Assistent"
@@ -2185,6 +2196,12 @@ const ContractBuilder: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Design-Template-Galerie */}
+      <DesignTemplateGallery
+        isOpen={showDesignGallery}
+        onClose={() => setShowDesignGallery(false)}
+      />
 
       {/* Vertragstyp-Auswahl Modal */}
       <ContractTypeSelector

@@ -4,6 +4,7 @@
 
 export { BlockRenderer } from './BlockRenderer';
 export { HeaderBlock } from './HeaderBlock';
+export { CoverBlock } from './CoverBlock';
 export { PartiesBlock } from './PartiesBlock';
 export { ClauseBlock } from './ClauseBlock';
 export { SignatureBlock } from './SignatureBlock';

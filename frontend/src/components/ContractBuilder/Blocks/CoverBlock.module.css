@@ -1,0 +1,541 @@
+/**
+ * CoverBlock Styles - 5 Layout-Varianten
+ */
+
+.cover {
+  min-height: 600px;
+  position: relative;
+  font-family: inherit;
+  color: inherit;
+}
+
+.cover.selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* Inline Input */
+.inlineInput {
+  padding: 2px 6px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: inherit;
+  font-family: inherit;
+  color: inherit;
+  background: white;
+  outline: none;
+  text-align: inherit;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   EXECUTIVE CENTER - Klassisch zentriert
+   ============================================ */
+
+.executiveCenter {
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  text-align: center;
+  padding: 40px 60px;
+}
+
+.ecSpacer {
+  flex: 1;
+  min-height: 60px;
+}
+
+.ecContent {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.ecContractType {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+
+.ecDividerTop,
+.ecDividerBottom {
+  width: 80px;
+  border-top: 2px solid currentColor;
+  margin: 12px auto;
+}
+
+.ecTitle {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  max-width: 100%;
+}
+
+.ecSubtitle {
+  font-size: 1.1em;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.ecParties {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ecParty {
+  font-size: 1em;
+  min-width: 200px;
+}
+
+.ecPartyDivider {
+  font-size: 0.85em;
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.ecFooter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+
+.ecRef {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.ecDate {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+.ecConfidential {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+  margin-top: 8px;
+  padding: 4px 16px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+/* ============================================
+   MODERN SIDEBAR - Seitenleiste links
+   ============================================ */
+
+.modernSidebar {
+  display: flex;
+  min-height: 600px;
+  position: relative;
+}
+
+.msSidebar {
+  width: 8px;
+  min-height: 100%;
+  flex-shrink: 0;
+}
+
+.msContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 40px 40px 32px;
+}
+
+.msTop {
+  margin-bottom: auto;
+}
+
+.msContractType {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.msCenter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.msTitle {
+  font-size: 2.2em;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.msSubtitle {
+  font-size: 1.1em;
+  opacity: 0.6;
+}
+
+.msDivider {
+  width: 60px;
+  height: 3px;
+  margin: 16px 0;
+}
+
+.msParties {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.msParty {
+  font-size: 0.95em;
+  opacity: 0.8;
+}
+
+.msBottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 24px;
+}
+
+.msDate,
+.msRef,
+.msConfidential {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+/* ============================================
+   MINIMAL CLEAN - Ultra-clean
+   ============================================ */
+
+.minimalClean {
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  padding: 60px 60px 40px;
+}
+
+.mcSpacer {
+  flex: 2;
+}
+
+.mcCenter {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mcType {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  opacity: 0.4;
+}
+
+.mcTitle {
+  font-size: 1.6em;
+  font-weight: 400;
+  line-height: 1.3;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.mcSubtitle {
+  font-size: 0.95em;
+  opacity: 0.5;
+}
+
+.mcFooter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 40px;
+}
+
+.mcFooterRow {
+  display: flex;
+  gap: 40px;
+}
+
+.mcFooterItem {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.mcFooterMeta {
+  display: flex;
+  gap: 24px;
+  font-size: 0.8em;
+  opacity: 0.4;
+}
+
+/* ============================================
+   CORPORATE BANNER - Header-Balken oben
+   ============================================ */
+
+.corporateBanner {
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+}
+
+.cbBanner {
+  padding: 32px 40px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 120px;
+}
+
+.cbLogo {
+  max-height: 60px;
+  max-width: 180px;
+  object-fit: contain;
+}
+
+.cbType {
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.9;
+}
+
+.cbBody {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cbTitle {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 16px 0 0;
+}
+
+.cbSubtitle {
+  font-size: 1.1em;
+  opacity: 0.6;
+}
+
+.cbDivider {
+  border-top: 2px solid currentColor;
+  margin: 16px 0;
+  width: 80px;
+}
+
+.cbParties {
+  display: flex;
+  gap: 40px;
+  margin-top: 16px;
+}
+
+.cbParty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cbPartyLabel {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+}
+
+.cbFooter {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 40px 16px;
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.cbFooterLeft,
+.cbFooterRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cbConfidential {
+  margin: 0 40px 24px;
+  padding: 8px 16px;
+  border: 1px solid currentColor;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* ============================================
+   ELEGANT FRAME - Dekorativer Rahmen
+   ============================================ */
+
+.elegantFrame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 600px;
+  padding: 24px;
+}
+
+.efOuterFrame {
+  border: 2px solid currentColor;
+  padding: 6px;
+  width: 100%;
+  min-height: 550px;
+  display: flex;
+}
+
+.efInnerFrame {
+  border: 1px solid currentColor;
+  flex: 1;
+  display: flex;
+}
+
+.efContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 32px;
+  gap: 12px;
+}
+
+.efTopDecor,
+.efBottomDecor {
+  width: 60px;
+  border-top: 1px solid currentColor;
+  margin: 8px auto;
+}
+
+.efType {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+}
+
+.efTitle {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 8px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.efAccentLine {
+  width: 40px;
+  height: 2px;
+  margin: 8px auto;
+}
+
+.efSubtitle {
+  font-size: 1em;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.efParties {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.efParty {
+  font-size: 0.95em;
+  min-width: 180px;
+}
+
+.efPartyConnector {
+  font-size: 0.9em;
+  opacity: 0.5;
+}
+
+.efMeta {
+  margin-top: 24px;
+  display: flex;
+  gap: 24px;
+  font-size: 0.8em;
+  opacity: 0.5;
+}
+
+.efConfidential {
+  margin-top: 16px;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.4;
+}
+
+/* ============================================
+   Input Variants (same base but named for context)
+   ============================================ */
+
+.ecContractTypeInput,
+.ecTitleInput,
+.ecSubtitleInput,
+.ecPartyInput,
+.ecRefInput,
+.ecDateInput,
+.ecConfInput,
+.msTitleInput,
+.msTypeInput,
+.msSubInput,
+.msPartyInput,
+.msDateInput,
+.msRefInput,
+.msConfInput,
+.mcTypeInput,
+.mcTitleInput,
+.mcSubInput,
+.mcPartyInput,
+.mcDateInput,
+.mcRefInput,
+.cbTypeInput,
+.cbTitleInput,
+.cbSubInput,
+.cbPartyInput,
+.cbDateInput,
+.cbRefInput,
+.cbConfInput,
+.efTypeInput,
+.efTitleInput,
+.efSubInput,
+.efPartyInput,
+.efDateInput,
+.efRefInput,
+.efConfInput {
+  /* Inherit from .inlineInput */
+}

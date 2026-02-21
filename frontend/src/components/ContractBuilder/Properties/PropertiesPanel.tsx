@@ -580,6 +580,7 @@ const Section: React.FC<SectionProps> = ({
 function getBlockTypeLabel(type: string): string {
   const labels: Record<string, string> = {
     'header': 'Kopfzeile',
+    'cover': 'Deckblatt',
     'parties': 'Parteien',
     'preamble': 'Präambel',
     'clause': 'Klausel',
@@ -1059,8 +1060,15 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'signature': {
-      const signatureContent = content as { showSignatureIcons?: boolean; signatureLayout?: 'modern' | 'classic' };
+      const signatureContent = content as { showSignatureIcons?: boolean; signatureLayout?: string };
       const sigLayout = signatureContent.signatureLayout || 'modern';
+      const layoutDescriptions: Record<string, string> = {
+        modern: 'Modernes Layout mit separaten Ort/Datum Feldern und Karten',
+        classic: 'Traditionelles Layout mit "Ort, Datum ___" und Unterschriftslinien',
+        formal: 'Formell mit Firmenstempel-Bereich und "Ort, Datum"-Zeile',
+        corporate: 'Strukturierte Boxen pro Unterzeichner mit Firma und Titel',
+        elegant: 'Dekorative Trennlinie mit Akzentfarbe-Unterstrichen',
+      };
       return (
         <>
           {/* Layout-Auswahl */}
@@ -1069,16 +1077,16 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             <select
               className={styles.select}
               value={sigLayout}
-              onChange={(e) => onUpdate({ ...content, signatureLayout: e.target.value as 'modern' | 'classic' })}
+              onChange={(e) => onUpdate({ ...content, signatureLayout: e.target.value })}
             >
               <option value="modern">Modern (Karten)</option>
               <option value="classic">Klassisch (Linien)</option>
+              <option value="formal">Formal (Stempel)</option>
+              <option value="corporate">Corporate (Boxen)</option>
+              <option value="elegant">Elegant (Dekorativ)</option>
             </select>
             <p className={styles.fieldHint}>
-              {sigLayout === 'modern'
-                ? 'Modernes Layout mit separaten Ort/Datum Feldern und Karten'
-                : 'Traditionelles Layout mit "Ort, Datum ___" und Unterschriftslinien'
-              }
+              {layoutDescriptions[sigLayout] || ''}
             </p>
           </div>
 
@@ -1098,6 +1106,110 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
 
           <p className={styles.noContent}>
             Bearbeiten Sie die Unterschriftsfelder per Doppelklick direkt im Block.
+          </p>
+        </>
+      );
+    }
+
+    case 'cover': {
+      const coverContent = content as {
+        coverLayout?: string;
+        coverAccentColor?: string;
+        coverLogo?: string;
+      };
+      const cvLayout = coverContent.coverLayout || 'executive-center';
+      const layoutLabels: Record<string, string> = {
+        'executive-center': 'Klassisch-zentriert mit Trennlinien',
+        'modern-sidebar': 'Farbige Seitenleiste links',
+        'minimal-clean': 'Ultra-clean mit viel Whitespace',
+        'corporate-banner': 'Farbiger Header-Balken oben',
+        'elegant-frame': 'Dekorativer Doppellinien-Rahmen',
+      };
+
+      const handleCoverLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          setUploadError('Logo darf maximal 2MB groß sein');
+          setTimeout(() => setUploadError(null), 4000);
+          return;
+        }
+        setUploadError(null);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          onUpdate({ ...content, coverLogo: event.target?.result as string });
+        };
+        reader.readAsDataURL(file);
+      };
+
+      return (
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={cvLayout}
+              onChange={(e) => onUpdate({ ...content, coverLayout: e.target.value })}
+            >
+              <option value="executive-center">Executive (Zentriert)</option>
+              <option value="modern-sidebar">Modern (Sidebar)</option>
+              <option value="minimal-clean">Minimal (Clean)</option>
+              <option value="corporate-banner">Corporate (Banner)</option>
+              <option value="elegant-frame">Elegant (Rahmen)</option>
+            </select>
+            <p className={styles.fieldHint}>{layoutLabels[cvLayout] || ''}</p>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Akzentfarbe</label>
+            <div className={styles.colorInput}>
+              <input
+                type="color"
+                value={coverContent.coverAccentColor || '#0B1324'}
+                onChange={(e) => onUpdate({ ...content, coverAccentColor: e.target.value })}
+              />
+              <input
+                type="text"
+                className={styles.input}
+                value={coverContent.coverAccentColor || ''}
+                placeholder="#0B1324"
+                onChange={(e) => onUpdate({ ...content, coverAccentColor: e.target.value || undefined })}
+              />
+            </div>
+          </div>
+
+          {cvLayout === 'corporate-banner' && (
+            <div className={styles.field}>
+              <label className={styles.label}>Logo (für Banner)</label>
+              {coverContent.coverLogo ? (
+                <div className={styles.fieldGroup}>
+                  <img
+                    src={coverContent.coverLogo}
+                    alt="Logo"
+                    style={{ maxWidth: '100%', maxHeight: '60px', objectFit: 'contain', marginBottom: '8px' }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => onUpdate({ ...content, coverLogo: undefined })}
+                    style={{ width: '100%', justifyContent: 'center' }}
+                  >
+                    Logo entfernen
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input type="file" accept="image/*" onChange={handleCoverLogoUpload} style={{ fontSize: '12px' }} />
+                  {uploadError && (
+                    <p style={{ color: '#dc2626', fontSize: '0.75rem', margin: '4px 0 0' }}>{uploadError}</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          <p className={styles.noContent}>
+            Bearbeiten Sie Titel, Parteien und Datum per Doppelklick direkt im Block.
           </p>
         </>
       );
