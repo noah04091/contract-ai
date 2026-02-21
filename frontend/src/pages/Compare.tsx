@@ -1267,7 +1267,13 @@ export default function EnhancedCompare() {
                   type: "success"
                 });
               } else if (eventData.type === 'error') {
-                throw new Error(eventData.message);
+                setNotification({
+                  message: eventData.message || "Ein Fehler ist bei der Analyse aufgetreten. Bitte versuchen Sie es erneut.",
+                  type: "error"
+                });
+                setProgress(null);
+                setLoading(false);
+                return;
               }
             } catch (parseErr) {
               console.warn("SSE parse error:", parseErr, line);
