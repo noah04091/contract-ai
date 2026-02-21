@@ -134,9 +134,11 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         // Sortiere nach Match-Score (beste Matches zuerst)
         spanData.sort((a, b) => b.matchScore - a.matchScore);
 
-        // Schritt 2: Highlighte nur die besten Matches (max. 15 Spans)
-        const maxHighlights = 15;
-        const minScore = significantKeywords[0]?.length || 5; // Mindestens ein volles Keyword
+        // Schritt 2: Highlighte nur die besten Matches
+        // Mindestens 40% aller Keywords müssen matchen, um false positives zu vermeiden
+        const totalKeywordLength = significantKeywords.reduce((sum, kw) => sum + kw.length, 0);
+        const minScore = Math.max(totalKeywordLength * 0.4, 10);
+        const maxHighlights = 5;
 
         spanData.forEach(({ span, matchScore }) => {
           if (highlightedCount >= maxHighlights) return;

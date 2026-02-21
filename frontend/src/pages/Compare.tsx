@@ -1135,6 +1135,7 @@ export default function EnhancedCompare() {
       message: `Vergleich vom ${new Date(item.timestamp).toLocaleDateString('de-DE')} geladen`,
       type: 'success'
     });
+    setTimeout(() => setNotification(null), 5000);
   };
 
   // 📜 Delete from history via backend API
@@ -1178,6 +1179,7 @@ export default function EnhancedCompare() {
         message: 'Historie wurde gelöscht',
         type: 'success'
       });
+      setTimeout(() => setNotification(null), 5000);
       console.log('📜 Cleared all history from backend');
     } catch (err) {
       console.warn('Could not clear history:', err);
@@ -1266,6 +1268,7 @@ export default function EnhancedCompare() {
                   message: "Vertragsvergleich erfolgreich durchgeführt!",
                   type: "success"
                 });
+                setTimeout(() => setNotification(null), 5000);
               } else if (eventData.type === 'error') {
                 setNotification({
                   message: eventData.message || "Ein Fehler ist bei der Analyse aufgetreten. Bitte versuchen Sie es erneut.",
@@ -1350,6 +1353,7 @@ export default function EnhancedCompare() {
         message: 'PDF wurde erfolgreich erstellt!',
         type: 'success'
       });
+      setTimeout(() => setNotification(null), 5000);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unbekannter Fehler beim PDF-Export';
       setNotification({
@@ -2217,8 +2221,7 @@ export default function EnhancedCompare() {
                 style={{
                   position: 'fixed',
                   bottom: '2rem',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
+                  right: '2rem',
                   padding: '1rem 1.5rem',
                   borderRadius: '12px',
                   display: 'flex',
