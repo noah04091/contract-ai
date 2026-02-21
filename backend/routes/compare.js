@@ -402,25 +402,35 @@ Sei dabei GRÜNDLICH: Wenn Vertrag 1 in §5 eine Gebühr von 2,90% nennt und Ver
 
 Finde JEDEN echten Unterschied — nicht mehr, nicht weniger. Bei kurzen Konditionenblättern können das 3 sein, bei umfangreichen Verträgen 15+. Erfinde KEINE künstlichen Unterschiede, um die Liste aufzublähen. Aber überspringe auch NICHTS, nur weil es klein erscheint — auch ein unterschiedlicher Verzugszinssatz oder eine andere Schriftformklausel ist relevant.
 
-Für JEDEN Unterschied:
+Für JEDEN Unterschied dokumentiere die folgenden Felder. Hier ist ein PERFEKTES BEISPIEL, das exakt den Ton und die Tiefe zeigt, die du für JEDEN Unterschied liefern musst:
+
+BEISPIEL-UNTERSCHIED (so muss JEDER deiner Einträge klingen):
+{
+  "category": "Leistungsumfang",
+  "section": "§11 Abs. 1",
+  "contract1": "GRENKEFACTORING übernimmt den Zahlungseinzug, das Mahnwesen und das außergerichtliche Inkasso bis einschließlich Mahnbescheid.",
+  "contract2": "Keine Regelung vorhanden",
+  "explanation": "Hier liegt ein ganz wesentlicher Unterschied: Bei Vertrag 1 kümmert sich GRENKEFACTORING komplett um das Mahnwesen — wenn ein Debitor nicht zahlt, schreiben die die Mahnungen, überwachen die Fristen und treiben die Forderung bis zum Mahnbescheid ein. Bei Vertrag 2 müssen Sie das alles selbst machen. Konkret heißt das für Sie: Pro säumigem Debitor rechnen Sie mit 2-4 Stunden Aufwand für Mahnschreiben, Fristenüberwachung und Telefonate, plus 500 bis 1.500 EUR Anwaltskosten falls es zum Mahnbescheid kommt. Wenn Sie monatlich 20+ Forderungen abtreten und nur 10% davon Zahlungsverzug haben, sprechen wir von 2-3 Fällen pro Monat — das sind schnell 15.000 bis 20.000 EUR Mehrkosten im Jahr. Dieser Unterschied allein kann den auf den ersten Blick günstigeren Gebührensatz von Vertrag 2 komplett auffressen.",
+  "severity": "high",
+  "impact": "Ohne vertragliches Mahnwesen trägt der Factoringkunde das volle Beitreibungsrisiko und die Kosten der Rechtsverfolgung selbst (§§ 286, 288 BGB).",
+  "recommendation": "Verhandeln Sie in Vertrag 2 die Aufnahme einer Mahnwesen-Klausel analog zu §11 Abs. 1 Vertrag 1, mindestens bis zum außergerichtlichen Mahnverfahren."
+}
+
+REGELN FÜR JEDEN UNTERSCHIED:
 - "category": Rechtskategorie
-- "section": Exakte Fundstelle (z.B. "§3 Abs. 2"). Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
-- "contract1": Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: "Keine Regelung vorhanden"
-- "contract2": Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: "Keine Regelung vorhanden"
-- "explanation": DIES IST DAS WICHTIGSTE FELD. Schreibe 4-6 Sätze so, wie du es deinem Mandanten im persönlichen Gespräch erklären würdest:
-  * Satz 1-2: Beschreibe den Kern des Unterschieds klar und direkt.
-  * Satz 3-4: Erkläre die PRAKTISCHE Konsequenz mit einem konkreten Szenario. Was passiert im Alltag? Im Streitfall? Nenne Beispielzahlen wenn möglich (z.B. "Das kann Sie im Streitfall schnell 5.000-10.000 EUR kosten").
-  * Satz 5-6: Ordne ein — ist das ein Vorteil oder Nachteil? Für wen? Wie schwer wiegt das?
-  BEISPIEL für guten Ton: "Vertrag 1 schließt das Mahnwesen komplett mit ein, bei Vertrag 2 müssen Sie das selbst übernehmen. Konkret heißt das: Wenn einer Ihrer Debitoren nicht zahlt, müssen Sie bei Vertrag 2 selbst Mahnungen schreiben, Fristen überwachen und im Zweifel einen Anwalt beauftragen — das kostet Sie pro Fall schnell 500 bis 1.000 EUR und bindet Ihre Ressourcen. Gerade wenn Sie monatlich 20+ Forderungen abtreten, summiert sich das erheblich. Dieser Unterschied allein kann den günstigeren Gebührensatz von Vertrag 2 auffressen."
-  VERBOTEN: Generische Sätze wie "Dies kann Auswirkungen haben", "Dies sollte geprüft werden", "Dies bedeutet einen umfassenderen Service". Sage KONKRET was passiert.
+- "section": Exakte Fundstelle. Bei fehlenden Klauseln: die Fundstelle des Vertrags, der die Klausel HAT
+- "contract1"/"contract2": Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: "Keine Regelung vorhanden"
+- "explanation": 4-6 Sätze wie im Beispiel oben. Sprich den Mandanten DIREKT an ("Für Sie heißt das...", "Sie müssen dann..."). Nenne KONKRETE Zahlen, Szenarien, EUR-Beträge. VERBOTEN: "Dies kann Auswirkungen haben", "Überlegen Sie ob", "Erwägen Sie", "Dies sollte geprüft werden", "Dies bedeutet einen umfassenderen Service". Wenn du so einen Satz schreiben willst, frage dich: WAS GENAU passiert? WIE VIEL kostet es? WANN tritt es ein? Und schreibe DAS stattdessen.
 - "severity": "low"|"medium"|"high"|"critical"
-- "impact": 1 Satz juristische Einordnung mit Gesetzesverweisen (§§ BGB, HGB, DSGVO)
-- "recommendation": Sage dem Mandanten EXAKT was er tun soll. Nicht "Erwägen Sie" oder "Prüfen Sie", sondern "Streichen Sie §5 Abs. 3 in Vertrag 1" oder "Verhandeln Sie in Vertrag 2 eine Flatrate-Gebühr von maximal 3,0% analog zu §4 Vertrag 1". Jede Empfehlung muss eine konkrete Aktion sein.
+- "impact": 1 Satz juristische Einordnung MIT Gesetzesverweisen (§§ BGB, HGB, DSGVO). Nicht ohne §§!
+- "recommendation": Eine KONKRETE Aktion. Nicht "Erwägen Sie" oder "Prüfen Sie", sondern "Streichen Sie §5 Abs. 3" oder "Verhandeln Sie in Vertrag 2 eine Gebühr von max. 3,0% analog zu §4 Vertrag 1".
 
 SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
 Benenne die wesentlichen Stärken und Schwächen MIT konkreten Zahlen und Fundstellen.
-BEISPIEL: "Klare Haftungsbegrenzung auf max. EUR 102.000 p.a. (§5 Abs. 2) — schützt vor existenzbedrohenden Forderungen"
-NICHT: "Gute Haftungsklausel"
+GUT: "Klare Haftungsbegrenzung auf max. EUR 102.000 p.a. (§5 Abs. 2) — schützt Sie vor existenzbedrohenden Forderungen"
+GUT: "Mahnwesen inklusive bis Mahnbescheid (§11) — spart Ihnen 15.000-20.000 EUR/Jahr an Beitreibungskosten"
+SCHLECHT: "Gute Haftungsklausel" (zu vage, keine Zahlen)
+SCHLECHT: "Keine spezifizierte Flatrate-Gebühr, was Flexibilität bieten kann" (fehlende Gebühren sind eine SCHWÄCHE, kein Vorteil!)
 
 SCHRITT 3 — SCORE (0-100):
 - 0-30: Stark mangelhaft, viele fehlende oder gefährliche Klauseln
@@ -430,11 +440,9 @@ SCHRITT 3 — SCORE (0-100):
 - 86-100: Exzellent, umfassend und ausgewogen
 
 SCHRITT 4 — GESAMTURTEIL (overallRecommendation.reasoning):
-Schreibe 6-8 Sätze als klares Fazit, wie du es deinem Mandanten am Ende der Beratung sagen würdest:
-- Welchen Vertrag empfiehlst du und WARUM (mit den 2-3 wichtigsten Gründen)?
-- Welche konkreten Risiken bestehen beim anderen Vertrag?
-- Was MUSS der Mandant VOR Unterzeichnung nachverhandeln? (Nenne die 2-3 wichtigsten Punkte)
-- Gib ein klares Statement: "Unterschreiben Sie Vertrag X, aber erst nachdem Sie Y und Z geändert haben."
+Schreibe 6-8 Sätze als klares Fazit, wie du es deinem Mandanten am Ende der Beratung ins Gesicht sagen würdest. Beispiel für den richtigen Ton:
+"Meine klare Empfehlung ist Vertrag 2. Er bietet Ihnen mit der festgelegten Flatrate von 2,90% eine kalkulierbare Kostenstruktur und der Sicherungseinbehalt von 10% schützt Sie bei Forderungsausfällen. Vertrag 1 hat hier gefährliche Lücken — ohne definierte Gebühren können die Kosten je nach Auslegung deutlich höher ausfallen. ABER: Vertrag 2 hat einen gravierenden Nachteil beim Mahnwesen. Sie müssen vor Unterzeichnung zwei Dinge verhandeln: Erstens, GRENKEFACTORING muss das Mahnwesen übernehmen — sonst zahlen Sie dafür 15.000-20.000 EUR pro Jahr extra. Zweitens, der Selbstbehalt von 1.000 EUR sollte auf 500 EUR reduziert werden. Unterschreiben Sie Vertrag 2, aber erst wenn diese beiden Punkte geklärt sind."
+Schreibe DEIN Fazit in diesem Stil — direkt, mit Zahlen, mit klarer Handlungsanweisung.
 
 SCHRITT 5 — ZUSAMMENFASSUNG (summary):
 4-6 Sätze für einen Nicht-Juristen. Beginne mit dem Ergebnis: "Vertrag X ist der bessere Vertrag, weil...". Dann die 2-3 wichtigsten Unterschiede in Alltagssprache. Ende mit einer klaren Handlungsanweisung.
