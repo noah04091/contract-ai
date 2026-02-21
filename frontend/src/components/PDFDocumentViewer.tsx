@@ -48,7 +48,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }
   }, [highlightText]);
 
-  // Apply yellow highlighting to text spans in TextLayer - PRECISE MATCHING
+  // Apply yellow highlighting to text spans in TextLayer - CONTIGUOUS TEXT MATCHING
   useEffect(() => {
     if (!highlightText) return;
 
@@ -56,104 +56,132 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     const applyHighlights = () => {
       try {
         const textLayer = document.querySelector('.react-pdf__Page__textContent');
-        if (!textLayer) {
-          console.log('⚠️ TextLayer nicht gefunden im DOM');
-          return false;
-        }
+        if (!textLayer) return false;
 
         // Entferne alte Highlights
-        const oldHighlights = textLayer.querySelectorAll('.pdf-highlight');
-        oldHighlights.forEach(el => el.classList.remove('pdf-highlight'));
+        textLayer.querySelectorAll('.pdf-highlight').forEach(el => el.classList.remove('pdf-highlight'));
 
-        // Finde alle spans im TextLayer
-        const spans = textLayer.querySelectorAll('span');
-        if (spans.length === 0) {
-          console.log('⚠️ Keine Spans im TextLayer gefunden');
-          return false;
-        }
+        const spans = Array.from(textLayer.querySelectorAll('span'));
+        if (spans.length === 0) return false;
 
+        // Baue zusammenhängenden Text aus allen Spans mit Position-Tracking
+        const spanEntries: { span: Element; start: number; end: number }[] = [];
+        let fullText = '';
+
+        spans.forEach((span) => {
+          const text = span.textContent || '';
+          const start = fullText.length;
+          fullText += text;
+          spanEntries.push({ span, start, end: fullText.length });
+          fullText += ' '; // Leerzeichen zwischen Spans
+        });
+
+        const fullTextLower = fullText.toLowerCase();
         const searchLower = highlightText.toLowerCase().trim();
 
-        // STRIKTE Stopwords-Liste (inkl. generische Vertragsbezeichnungen)
+        // Hilfsfunktion: Markiere alle Spans die in [matchStart, matchEnd) liegen
+        const highlightRange = (matchStart: number, matchEnd: number): number => {
+          let count = 0;
+          spanEntries.forEach(({ span, start, end }) => {
+            if (start < matchEnd && end > matchStart) {
+              span.classList.add('pdf-highlight');
+              count++;
+            }
+          });
+          return count;
+        };
+
+        // Strategie 1: Exakter Substring-Match auf zusammenhängendem Seitentext
+        const exactIdx = fullTextLower.indexOf(searchLower);
+        if (exactIdx !== -1) {
+          const count = highlightRange(exactIdx, exactIdx + searchLower.length);
+          console.log(`✨ Exakter Match: ${count} Spans markiert`);
+          return count > 0;
+        }
+
+        // Strategie 2: Flexibler Match (Whitespace-Unterschiede ignorieren)
+        try {
+          const escaped = searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const flexPattern = escaped.replace(/\s+/g, '\\s+');
+          const regex = new RegExp(flexPattern);
+          const match = regex.exec(fullTextLower);
+          if (match) {
+            const count = highlightRange(match.index, match.index + match[0].length);
+            console.log(`✨ Flexibler Match: ${count} Spans markiert`);
+            return count > 0;
+          }
+        } catch {
+          // Regex kann bei sehr langem Text fehlschlagen — weiter zu Strategie 3
+        }
+
+        // Strategie 3: Sliding Window — finde die zusammenhängende Span-Region
+        // mit der höchsten Keyword-Dichte (Fallback wenn GPT den Text umformuliert hat)
         const stopwords = new Set([
-          // Artikel & Pronomen
           'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines',
           'und', 'oder', 'aber', 'wenn', 'dann', 'weil', 'dass', 'daß',
-          // Verben
           'ist', 'sind', 'war', 'wird', 'werden', 'wurde', 'wurden', 'sein', 'haben', 'hat', 'hatte',
           'kann', 'können', 'soll', 'sollen', 'muss', 'müssen', 'darf', 'dürfen',
-          // Präpositionen
           'am', 'im', 'an', 'in', 'um', 'zum', 'zur', 'auf', 'bei', 'nach', 'vor', 'aus',
           'über', 'unter', 'durch', 'gegen', 'ohne', 'mit', 'für', 'als', 'bis', 'von',
-          // Sonstige
           'sich', 'nicht', 'auch', 'noch', 'nur', 'schon', 'sehr', 'mehr', 'bereits',
           'sowie', 'soweit', 'sofern', 'jedoch', 'daher', 'dabei', 'hierzu', 'hierbei',
-          // Generische Vertragsbezeichnungen (NICHT highlighten)
           'vertrag', 'vertrags', 'verträge', 'kaufvertrag', 'mietvertrag', 'arbeitsvertrag',
-          'dienstvertrag', 'werkvertrag', 'vereinbarung', 'abkommen', 'anlage', 'anlagen',
-          'paragraph', 'paragraf', 'absatz', 'satz', 'ziffer', 'nummer', 'punkt',
+          'vereinbarung', 'anlage', 'anlagen', 'paragraph', 'absatz', 'satz', 'ziffer',
           'artikel', 'seite', 'datum', 'unterschrift', 'parteien', 'partei'
         ]);
 
-        // Extrahiere NUR signifikante Keywords (Wörter >= 5 Buchstaben)
-        const significantKeywords = searchLower
+        const keywords = searchLower
           .split(/[\s,.:;!?()"'„"°§€%\d]+/)
           .filter(word => word.length >= 5 && !stopwords.has(word))
-          .slice(0, 8); // Maximal 8 Keywords
+          .slice(0, 12);
 
-        console.log(`📋 Signifikante Keywords:`, significantKeywords);
+        if (keywords.length === 0) return true; // Keine Keywords → PDF ohne Highlighting zeigen
 
-        if (significantKeywords.length === 0) {
-          console.log('ℹ️ Keine signifikanten Keywords - Vertrag wird ohne Highlighting angezeigt');
-          return true; // Trotzdem erfolgreich - zeige PDF ohne Highlighting
+        // Score für jeden Span berechnen
+        const spanScores = spans.map((span) => {
+          const text = (span.textContent || '').toLowerCase();
+          let score = 0;
+          keywords.forEach(kw => { if (text.includes(kw)) score++; });
+          return score;
+        });
+
+        // Sliding Window: Finde beste zusammenhängende Region
+        const windowSize = Math.min(Math.max(10, keywords.length * 3), spans.length);
+        let bestStart = 0;
+        let bestScore = 0;
+
+        // Initiales Fenster
+        let currentScore = 0;
+        for (let i = 0; i < windowSize; i++) currentScore += spanScores[i];
+        bestScore = currentScore;
+
+        // Fenster über alle Spans schieben
+        for (let i = 1; i <= spans.length - windowSize; i++) {
+          currentScore -= spanScores[i - 1];
+          currentScore += spanScores[i + windowSize - 1];
+          if (currentScore > bestScore) {
+            bestScore = currentScore;
+            bestStart = i;
+          }
         }
 
-        let highlightedCount = 0;
-        const highlightedSpans: Element[] = [];
+        // Nur markieren wenn mindestens 30% der Keywords im Fenster gefunden wurden
+        if (bestScore < keywords.length * 0.3) {
+          console.log('ℹ️ Kein ausreichender Match gefunden — kein Highlighting');
+          return true;
+        }
 
-        // Schritt 1: Sammle alle Span-Texte und ihre Positionen
-        const spanData: { span: Element; text: string; matchScore: number }[] = [];
-
-        spans.forEach((span) => {
-          const spanText = span.textContent?.toLowerCase().trim() || '';
-          if (spanText.length < 3) return; // Ignoriere sehr kurze Spans
-
-          // Berechne Match-Score: Wie viele Keywords matchen?
-          let matchScore = 0;
-          significantKeywords.forEach(keyword => {
-            if (spanText.includes(keyword)) {
-              matchScore += keyword.length; // Längere Matches zählen mehr
-            }
-          });
-
-          if (matchScore > 0) {
-            spanData.push({ span, text: spanText, matchScore });
+        // Nur die Spans im besten Fenster markieren die tatsächlich Keywords enthalten
+        let count = 0;
+        for (let i = bestStart; i < bestStart + windowSize && i < spans.length; i++) {
+          if (spanScores[i] > 0) {
+            spans[i].classList.add('pdf-highlight');
+            count++;
           }
-        });
+        }
 
-        // Sortiere nach Match-Score (beste Matches zuerst)
-        spanData.sort((a, b) => b.matchScore - a.matchScore);
-
-        // Schritt 2: Highlighte nur die besten Matches
-        // Mindestens 40% aller Keywords müssen matchen, um false positives zu vermeiden
-        const totalKeywordLength = significantKeywords.reduce((sum, kw) => sum + kw.length, 0);
-        const minScore = Math.max(totalKeywordLength * 0.4, 10);
-        const maxHighlights = 5;
-
-        spanData.forEach(({ span, matchScore }) => {
-          if (highlightedCount >= maxHighlights) return;
-          if (matchScore < minScore) return; // Nur wenn mindestens ein ganzes Keyword matched
-
-          span.classList.add('pdf-highlight');
-          highlightedSpans.push(span);
-          highlightedCount++;
-        });
-
-        console.log(`✨ ${highlightedCount} präzise Matches hervorgehoben`);
-
-        // Highlighting angewendet — User scrollt selbst zur markierten Stelle
-
-        return highlightedCount > 0;
+        console.log(`✨ Window-Match: ${count} Spans markiert (${bestScore}/${keywords.length} Keywords im Fenster)`);
+        return count > 0;
       } catch (error) {
         console.error('❌ Fehler beim Highlighting:', error);
         return false;
