@@ -2435,6 +2435,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     let text = contract.content || contract.extractedText || contract.fullText;
     let pdfQuality = null;
+    let usedOCR = false; // Wird im S3-Extraktionsblock gesetzt, falls OCR verwendet wurde
 
     // HTML-Stripping: Wenn content HTML enthält, Tags entfernen
     if (text && /<[a-z][\s\S]*>/i.test(text)) {
@@ -2517,6 +2518,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }
 
         text = extractionResult.text;
+        usedOCR = extractionResult.usedOCR || false;
 
         // Warnungen an Frontend senden (inkl. OCR-Warnungen)
         if (extractionResult.warnings.length > 0) {
@@ -2569,8 +2571,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Stufe 1: Vorverarbeitung (schnell)
     sendEvent('status', { message: 'Bereite Text auf...', progress: 15 });
 
-    const isOCR = extractionResult?.usedOCR || false;
-    const cleanedText = clauseParser.preprocessText(text, { isOCR });
+    const cleanedText = clauseParser.preprocessText(text, { isOCR: usedOCR });
     const { text: filteredText, removedBlocks } = clauseParser.removeHeaderFooter(cleanedText);
 
     sendEvent('status', {
