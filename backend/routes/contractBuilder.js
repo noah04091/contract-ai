@@ -281,7 +281,10 @@ router.post('/import-from-generator', auth, async (req, res) => {
     // 3. Titel aus erstem Textabschnitt oder contractType ableiten
     const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
     let title = name || contractType || 'Importierter Vertrag';
+    // Dekorative Zeichen die keine echten Titel sind (═, =, ─, -, _, *, ~, etc.)
+    const isDecorativeLine = (line) => /^[\s═=─\-_*~#•·.,:;|/\\<>+^]+$/.test(line);
     for (const line of lines) {
+      if (isDecorativeLine(line)) continue; // Dekorationslinien überspringen
       if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
           !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
         title = line;
@@ -351,13 +354,14 @@ router.post('/import-from-generator', auth, async (req, res) => {
       currentPageHeight += height;
     };
 
-    // Header-Block
+    // Header-Block (showDivider: false — Generator-Dekorationslinien nicht doppelt anzeigen)
     addBlock({
       id: uuidv4(),
       type: 'header',
       content: {
         title: title,
-        subtitle: contractType ? `${contractType}` : ''
+        subtitle: contractType ? `${contractType}` : '',
+        showDivider: false
       },
       style: {},
       locked: false,

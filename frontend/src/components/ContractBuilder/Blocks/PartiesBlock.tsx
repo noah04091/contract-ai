@@ -110,11 +110,25 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
     );
   };
 
+  // Prüft ob ein Feld einen echten Wert hat (nicht leer, kein Platzhalter, kein "-")
+  const hasRealValue = (value: string | undefined): boolean => {
+    if (!value || !value.trim()) return false;
+    if (value.trim() === '-' || value.trim() === '–') return false;
+    if (/^\{\{.*\}\}$/.test(value.trim())) return false; // Variable-Platzhalter
+    return true;
+  };
+
   const renderParty = (party: typeof party1, partyNum: 1 | 2) => {
     if (!party) return null;
 
     // Eindeutige Prefix für Variablen pro Partei
     const prefix = getVariablePrefix(partyNum);
+
+    // Optionale Felder: In Preview/PDF nur anzeigen wenn ausgefüllt
+    const showTaxId = !isPreview || hasRealValue(party.taxId);
+    const showEmail = !isPreview || hasRealValue(party.email);
+    const showPhone = !isPreview || hasRealValue(party.phone);
+    const showAddress = !isPreview || hasRealValue(party.address);
 
     return (
       <div className={styles.partyCard}>
@@ -139,40 +153,48 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
             </span>
           </div>
 
-          {/* Adresse */}
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>Adresse:</span>
-            <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'address', party.address || '', `{{${prefix}_adresse}}`)}
-            </span>
-          </div>
+          {/* Adresse - in Preview nur wenn ausgefüllt */}
+          {showAddress && (
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>Adresse:</span>
+              <span className={styles.detailValue}>
+                {renderEditableField(partyNum, 'address', party.address || '', `{{${prefix}_adresse}}`)}
+              </span>
+            </div>
+          )}
 
-          {/* Steuer-ID */}
-          <div className={styles.detailRow}>
-            {showPartyIcons && <FileText size={12} className={styles.detailIcon} />}
-            {!showPartyIcons && <span className={styles.detailLabel}>Steuer-ID:</span>}
-            <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'taxId', party.taxId || '', `{{${prefix}_steuer_id}}`)}
-            </span>
-          </div>
+          {/* Steuer-ID - in Preview nur wenn ausgefüllt */}
+          {showTaxId && (
+            <div className={styles.detailRow}>
+              {showPartyIcons && <FileText size={12} className={styles.detailIcon} />}
+              {!showPartyIcons && <span className={styles.detailLabel}>Steuer-ID:</span>}
+              <span className={styles.detailValue}>
+                {renderEditableField(partyNum, 'taxId', party.taxId || '', `{{${prefix}_steuer_id}}`)}
+              </span>
+            </div>
+          )}
 
-          {/* E-Mail */}
-          <div className={styles.detailRow}>
-            {showPartyIcons && <Mail size={12} className={styles.detailIcon} />}
-            {!showPartyIcons && <span className={styles.detailLabel}>E-Mail:</span>}
-            <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'email', party.email || '', `{{${prefix}_email}}`)}
-            </span>
-          </div>
+          {/* E-Mail - in Preview nur wenn ausgefüllt */}
+          {showEmail && (
+            <div className={styles.detailRow}>
+              {showPartyIcons && <Mail size={12} className={styles.detailIcon} />}
+              {!showPartyIcons && <span className={styles.detailLabel}>E-Mail:</span>}
+              <span className={styles.detailValue}>
+                {renderEditableField(partyNum, 'email', party.email || '', `{{${prefix}_email}}`)}
+              </span>
+            </div>
+          )}
 
-          {/* Telefon */}
-          <div className={styles.detailRow}>
-            {showPartyIcons && <Phone size={12} className={styles.detailIcon} />}
-            {!showPartyIcons && <span className={styles.detailLabel}>Telefon:</span>}
-            <span className={styles.detailValue}>
-              {renderEditableField(partyNum, 'phone', party.phone || '', `{{${prefix}_telefon}}`)}
-            </span>
-          </div>
+          {/* Telefon - in Preview nur wenn ausgefüllt */}
+          {showPhone && (
+            <div className={styles.detailRow}>
+              {showPartyIcons && <Phone size={12} className={styles.detailIcon} />}
+              {!showPartyIcons && <span className={styles.detailLabel}>Telefon:</span>}
+              <span className={styles.detailValue}>
+                {renderEditableField(partyNum, 'phone', party.phone || '', `{{${prefix}_telefon}}`)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -197,9 +219,11 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
           <div className={styles.classicName}>
             {renderEditableField(1, 'name', p1.name || '', `{{${prefix1}_name}}`)}
           </div>
-          <div className={styles.classicAddress}>
-            {renderEditableField(1, 'address', p1.address || '', `{{${prefix1}_adresse}}`)}
-          </div>
+          {(!isPreview || hasRealValue(p1.address)) && (
+            <div className={styles.classicAddress}>
+              {renderEditableField(1, 'address', p1.address || '', `{{${prefix1}_adresse}}`)}
+            </div>
+          )}
           <div className={styles.classicDesignation}>
             - nachfolgend "<span className={styles.classicRole}>
               {renderEditableField(1, 'role', p1.role || '', 'Auftraggeber')}
@@ -213,9 +237,11 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
           <div className={styles.classicName}>
             {renderEditableField(2, 'name', p2.name || '', `{{${prefix2}_name}}`)}
           </div>
-          <div className={styles.classicAddress}>
-            {renderEditableField(2, 'address', p2.address || '', `{{${prefix2}_adresse}}`)}
-          </div>
+          {(!isPreview || hasRealValue(p2.address)) && (
+            <div className={styles.classicAddress}>
+              {renderEditableField(2, 'address', p2.address || '', `{{${prefix2}_adresse}}`)}
+            </div>
+          )}
           <div className={styles.classicDesignation}>
             - nachfolgend "<span className={styles.classicRole}>
               {renderEditableField(2, 'role', p2.role || '', 'Auftragnehmer')}
