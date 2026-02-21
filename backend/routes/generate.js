@@ -2078,9 +2078,8 @@ router.post("/", verifyToken, async (req, res) => {
         aufhebungsvertrag:{ a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
         darlehen:         { a: 'lender', aAddr: 'lenderAddress', b: 'borrower', bAddr: 'borrowerAddress' },
         lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
-        werkvertrag:      { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
+        werkvertrag:      { a: 'client', aAddr: 'clientAddress', b: 'contractor', bAddr: 'contractorAddress' },
         pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
-        gesellschaft:     { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
       };
 
       const v2Input = { ...formData };

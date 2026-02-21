@@ -3691,7 +3691,7 @@ export default function Generate() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<string | null> => {
     try {
       // ✅ UPDATE wenn bereits gespeichert, CREATE wenn neu
       const isUpdate = !!savedContractId;
@@ -3787,12 +3787,15 @@ export default function Generate() {
           }, 100);
         }
 
+        return contractId || null;
+
       } else {
         throw new Error(data.error || 'Speichern fehlgeschlagen');
       }
     } catch (error) {
       console.error("❌ Fehler beim Speichern:", error);
       toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      return null;
     }
   };
 
@@ -4656,9 +4659,10 @@ export default function Generate() {
 
     setIsImportingToBuilder(true);
     try {
-      // Zuerst speichern, falls noch nicht gespeichert
-      if (!savedContractId) {
-        await handleSave();
+      // Zuerst speichern, falls noch nicht gespeichert — returnedId verhindert stale closure
+      let resolvedContractId = savedContractId;
+      if (!resolvedContractId) {
+        resolvedContractId = await handleSave();
       }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contract-builder/import-from-generator`, {
@@ -4673,7 +4677,7 @@ export default function Generate() {
           contractType: selectedType?.id || contractData.contractType,
           parties: contractData.parties || formData,
           designVariant: selectedDesignVariant,
-          contractId: savedContractId,
+          contractId: resolvedContractId,
           name: `${contractData.contractType || selectedType?.name || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`
         })
       });

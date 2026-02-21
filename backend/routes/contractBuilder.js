@@ -237,6 +237,14 @@ router.post('/import-from-generator', auth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Vertragstext ist erforderlich' });
     }
 
+    // Input-Validierung: Max 500KB Text, Name max 200 Zeichen
+    if (contractText.length > 512000) {
+      return res.status(400).json({ success: false, error: 'Vertragstext ist zu lang (max. 500KB)' });
+    }
+    if (name && (typeof name !== 'string' || name.length > 200)) {
+      return res.status(400).json({ success: false, error: 'Dokumentname ist zu lang (max. 200 Zeichen)' });
+    }
+
     // 1. Text in Sections parsen
     const sections = parseContractText(contractText);
 
@@ -253,9 +261,8 @@ router.post('/import-from-generator', auth, async (req, res) => {
       aufhebungsvertrag:{ a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
       darlehen:         { a: 'lender', aAddr: 'lenderAddress', b: 'borrower', bAddr: 'borrowerAddress' },
       lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
-      werkvertrag:      { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' },
-      pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
-      gesellschaft:     { a: 'employer', aAddr: 'employerAddress', b: 'employee', bAddr: 'employeeAddress' }
+      werkvertrag:      { a: 'client', aAddr: 'clientAddress', b: 'contractor', bAddr: 'contractorAddress' },
+      pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' }
     };
 
     const typeKey = (contractType || '').toLowerCase();
@@ -463,7 +470,9 @@ router.post('/import-from-generator', auth, async (req, res) => {
         name: name || title || 'Importierter Vertrag',
         contractType: contractType || 'individuell',
         status: 'draft',
-        description: contractId ? `Importiert aus Generator (Vertrag: ${contractId})` : 'Importiert aus Generator'
+        description: contractId && typeof contractId === 'string' && /^[a-f0-9]{24}$/i.test(contractId)
+          ? `Importiert aus Generator (Vertrag: ${contractId})`
+          : 'Importiert aus Generator'
       },
       content: {
         blocks,
