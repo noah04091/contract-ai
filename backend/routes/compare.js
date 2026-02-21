@@ -400,7 +400,7 @@ REGEL: Wenn beide Verträge eine Klausel IDENTISCH oder SINNGEMÄSS GLEICH regel
 
 Sei dabei GRÜNDLICH: Wenn Vertrag 1 in §5 eine Gebühr von 2,90% nennt und Vertrag 2 keine Gebühr spezifiziert — das ist ein Unterschied. Wenn Vertrag 1 Mahnwesen einschließt und Vertrag 2 nicht — das ist ein Unterschied. Wenn ein Vertrag eine Klausel hat, die im anderen komplett fehlt — das ist ein Unterschied. Unterschiedliche Formulierungen mit gleichem Inhalt sind KEIN Unterschied.
 
-Erwarte mindestens 8-15 Unterschiede bei typischen Verträgen. Wenn du weniger als 5 findest, prüfe nochmal — du hast wahrscheinlich etwas übersehen.
+Finde JEDEN echten Unterschied — nicht mehr, nicht weniger. Bei kurzen Konditionenblättern können das 3 sein, bei umfangreichen Verträgen 15+. Erfinde KEINE künstlichen Unterschiede, um die Liste aufzublähen. Aber überspringe auch NICHTS, nur weil es klein erscheint — auch ein unterschiedlicher Verzugszinssatz oder eine andere Schriftformklausel ist relevant.
 
 Für JEDEN Unterschied:
 - "category": Rechtskategorie
@@ -498,7 +498,7 @@ DEINE GRÜNDLICHKEIT:
 - Vergleiche auch Nebenabreden, Anhänge, Konditionenblätter, Fußnoten
 - Fehlende Klauseln sind oft die WICHTIGSTEN Unterschiede — wenn nur ein Vertrag etwas regelt, ist das immer relevant
 - Unterschiedliche Zahlen (Fristen, Beträge, Prozentsätze, Limits) sind IMMER ein Unterschied
-- Bei typischen Verträgen findest du 8-15+ echte Unterschiede. Weniger als 5 bedeutet: du hast nicht gründlich genug geprüft
+- Die Anzahl der Unterschiede hängt vom Vertrag ab — kurze Konditionenblätter haben vielleicht 3, umfangreiche Verträge 15+. Finde ALLE echten Unterschiede, aber erfinde keine künstlichen
 - Identische oder sinngemäß gleiche Klauseln gehören NICHT in die differences-Liste
 - Antworte ausschließlich mit validem JSON`
         },
