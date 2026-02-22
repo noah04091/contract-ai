@@ -160,7 +160,7 @@ export default function AGB() {
             {/* 1. Geltungsbereich */}
             <section
               id="geltungsbereich"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["geltungsbereich"] = el; }}
               data-section-id="geltungsbereich"
             >
@@ -200,7 +200,7 @@ export default function AGB() {
             {/* 2. Vertragsschluss */}
             <section
               id="vertragsschluss"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["vertragsschluss"] = el; }}
               data-section-id="vertragsschluss"
             >
@@ -246,7 +246,7 @@ export default function AGB() {
             {/* 3. Leistungsumfang */}
             <section
               id="leistungsumfang"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["leistungsumfang"] = el; }}
               data-section-id="leistungsumfang"
             >
@@ -349,7 +349,7 @@ export default function AGB() {
             {/* 4. Tarife */}
             <section
               id="tarife"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["tarife"] = el; }}
               data-section-id="tarife"
             >
@@ -438,7 +438,7 @@ export default function AGB() {
             {/* 5. Laufzeit */}
             <section
               id="laufzeit"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["laufzeit"] = el; }}
               data-section-id="laufzeit"
             >
@@ -509,7 +509,7 @@ export default function AGB() {
             {/* 6. Rechte */}
             <section
               id="rechte"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["rechte"] = el; }}
               data-section-id="rechte"
             >
@@ -559,7 +559,7 @@ export default function AGB() {
             {/* 7. Datenschutz */}
             <section
               id="datenschutz"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["datenschutz"] = el; }}
               data-section-id="datenschutz"
             >
@@ -618,7 +618,7 @@ export default function AGB() {
             {/* 8. Haftung */}
             <section
               id="haftung"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["haftung"] = el; }}
               data-section-id="haftung"
             >
@@ -681,7 +681,7 @@ export default function AGB() {
             {/* 9. Änderungen */}
             <section
               id="aenderungen"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["aenderungen"] = el; }}
               data-section-id="aenderungen"
             >
@@ -719,7 +719,7 @@ export default function AGB() {
             {/* 10. Streitbeilegung */}
             <section
               id="streitbeilegung"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["streitbeilegung"] = el; }}
               data-section-id="streitbeilegung"
             >
@@ -770,7 +770,7 @@ export default function AGB() {
             {/* 11. Schlussbestimmungen */}
             <section
               id="schlussbestimmungen"
-              className={`${styles.section} ${styles.animateOnScroll}`}
+              className={styles.section}
               ref={(el) => { addToRefs(el); sectionRefs.current["schlussbestimmungen"] = el; }}
               data-section-id="schlussbestimmungen"
             >
