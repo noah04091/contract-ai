@@ -321,7 +321,9 @@
       "Bash(not defined\" errors. This broke contract saving and PDF preview\ngeneration on the Generate page.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "WebFetch(domain:search.google.com)",
       "WebFetch(domain:developers.google.com)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx tsc --noEmit; echo EXIT_CODE:$LASTEXITCODE\")",
+      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx vite build 2>&1; Write-Host EXITCODE:$LASTEXITCODE\")"
     ],
     "deny": [],
     "ask": []

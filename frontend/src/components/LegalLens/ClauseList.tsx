@@ -194,10 +194,10 @@ const ClauseList: React.FC<ClauseListProps> = ({
           block: 'center'
         });
 
-        // Kurzes visuelles Highlight für bessere Sichtbarkeit
-        element.style.animation = 'pulse-highlight 1s ease-out';
+        // Kurzes visuelles Highlight für bessere Sichtbarkeit (CSS Module class)
+        element.classList.add(styles.pulseHighlight);
         setTimeout(() => {
-          element.style.animation = '';
+          element.classList.remove(styles.pulseHighlight);
         }, 1000);
       }
     }
@@ -464,11 +464,14 @@ const ClauseList: React.FC<ClauseListProps> = ({
             ) : (
               <>
                 {/* Wirklich keine Klauseln gefunden */}
-                <span className={styles.emptyIcon}>📄</span>
-                <h4 className={styles.emptyTitle}>Keine Klauseln gefunden</h4>
-                <p className={styles.emptyText}>
-                  Der Vertrag enthält keine analysierbaren Klauseln.
-                </p>
+                <FileText size={48} strokeWidth={1} className={styles.emptyIconSvg} />
+                <h4 className={styles.emptyTitle}>Keine Klauseln erkannt</h4>
+                <p className={styles.emptyText}>Versuchen Sie:</p>
+                <ul className={styles.emptyHintList}>
+                  <li>Das Dokument erneut hochzuladen</li>
+                  <li>Eine bessere Scan-Qualität (mind. 300 DPI)</li>
+                  <li>Die PDF-Ansicht zu nutzen und Klauseln manuell zu markieren</li>
+                </ul>
               </>
             )}
           </div>

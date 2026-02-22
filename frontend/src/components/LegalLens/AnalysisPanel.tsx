@@ -2,7 +2,7 @@
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GitCompare, BookmarkPlus } from 'lucide-react';
+import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle } from 'lucide-react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -148,14 +148,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   // Error State - verbessert mit errorInfo
   if (error) {
-    const errorIcon = errorInfo?.type === 'network' ? '📶' :
-                      errorInfo?.type === 'timeout' ? '⏱️' :
-                      errorInfo?.type === 'server' ? '🖥️' : '⚠️';
+    const ErrorIcon = errorInfo?.type === 'network' ? Wifi :
+                      errorInfo?.type === 'timeout' ? Clock :
+                      errorInfo?.type === 'server' ? Server : AlertTriangle;
 
     return (
       <div className={styles.analysisContent}>
         <div className={styles.errorState}>
-          <span className={styles.errorIcon}>{errorIcon}</span>
+          <span className={styles.errorIcon}>
+            <ErrorIcon size={32} strokeWidth={1.5} />
+          </span>
           <p className={styles.errorTitle}>{errorInfo?.message || error}</p>
           {errorInfo?.hint && (
             <p className={styles.errorHint}>{errorInfo.hint}</p>
@@ -187,13 +189,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </h4>
           </div>
           {streamingText ? (
-            <div style={{
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              fontSize: '0.9rem',
-              lineHeight: 1.7,
-              color: '#374151',
-              whiteSpace: 'pre-wrap'
-            }}>
+            <div className={styles.streamingTextContent}>
               {streamingText}
               <span className={styles.streamingCursor} />
             </div>
@@ -278,58 +274,33 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
       {/* 🎯 ACTION BADGE - DAS WICHTIGSTE ZUERST */}
       <div
-        className={styles.analysisSection}
-        style={{
-          background: actionInfo.bgColor,
-          border: `2px solid ${actionInfo.color}`,
-          borderRadius: '12px'
-        }}
+        className={`${styles.analysisSection} ${styles.actionBadgeSection}`}
+        style={{ '--action-bg': actionInfo.bgColor, '--action-color': actionInfo.color } as React.CSSProperties}
       >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: actionReason ? '0.75rem' : 0
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '2rem' }}>{actionInfo.emoji}</span>
+        <div className={styles.actionBadgeHeader} style={{ marginBottom: actionReason ? '0.75rem' : 0 }}>
+          <div className={styles.actionBadgeInfo}>
+            <span className={styles.actionEmoji}>{actionInfo.emoji}</span>
             <div>
-              <h3 style={{
-                margin: 0,
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                color: actionInfo.color
-              }}>
+              <h3 className={styles.actionTitle}>
                 {actionInfo.text}
               </h3>
-              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+              <span className={styles.metaLabel}>
                 Handlungsempfehlung
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div className={styles.actionBadgeInfo}>
             {riskAssessment && (() => {
               const scoreInfo = getRiskScoreInfo(riskAssessment.score);
               return (
-                <div style={{
-                  textAlign: 'right',
-                  padding: '0.5rem 1rem',
-                  background: 'white',
-                  borderRadius: '8px',
-                  minWidth: '100px'
-                }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: scoreInfo.color }}>
+                <div className={styles.scoreCard} style={{ '--score-color': scoreInfo.color } as React.CSSProperties}>
+                  <div className={styles.scoreValue}>
                     {riskAssessment.score}/100
                   </div>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: scoreInfo.color,
-                    marginBottom: '2px'
-                  }}>
+                  <div className={styles.scoreLabel}>
                     {scoreInfo.label}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                  <div className={styles.scoreHint}>
                     {scoreInfo.hint}
                   </div>
                 </div>
@@ -339,12 +310,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
         {/* ✅ FIX: actionReason NUR zeigen wenn NICHT schon in "Auf einen Blick" */}
         {actionReason && !showOneSentenceSummary && (
-          <p style={{
-            margin: 0,
-            fontSize: '0.95rem',
-            color: '#374151',
-            fontWeight: 500
-          }}>
+          <p className={styles.actionReasonText}>
             {actionReason}
           </p>
         )}
@@ -353,27 +319,20 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       {/* 📖 Einfache Erklärung - IMMER anzeigen mit Fallback-Text */}
       <div className={styles.analysisSection}>
         <div
-          className={styles.sectionHeader}
+          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
           onClick={() => toggleSection('explanation')}
-          style={{ cursor: 'pointer' }}
         >
           <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>{getCurrentPerspectiveInfo().icon}</span>
             Was bedeutet das?
           </h4>
-          <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+          <span className={styles.sectionToggle}>
             {expandedSections.has('explanation') ? '▼' : '▶'}
           </span>
         </div>
         {expandedSections.has('explanation') && (
           <>
-            <p style={{
-              fontSize: '1rem',
-              lineHeight: 1.7,
-              color: '#1e293b',
-              margin: '0 0 1rem 0',
-              fontWeight: 500
-            }}>
+            <p className={styles.explanationMainText}>
               {perspectiveData?.explanation?.simple ||
                perspectiveData?.explanation?.summary ||
                'Diese Klausel regelt einen bestimmten Aspekt des Vertrags. Die detaillierte Erklärung wird gerade erstellt.'}
@@ -381,29 +340,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
             {/* Was das für DICH bedeutet - HIGHLIGHT */}
             {perspectiveData?.explanation?.whatItMeansForYou && (
-              <div style={{
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: '8px',
-                padding: '1rem',
-                marginBottom: '1rem'
-              }}>
-                <div style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: '#3b82f6',
-                  marginBottom: '0.5rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em'
-                }}>
+              <div className={styles.whatItMeansBox}>
+                <div className={styles.whatItMeansLabel}>
                   💡 Was das für dich bedeutet
                 </div>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.95rem',
-                  color: '#1e40af',
-                  lineHeight: 1.6
-                }}>
+                <p className={styles.whatItMeansText}>
                   {perspectiveData.explanation.whatItMeansForYou}
                 </p>
               </div>
@@ -427,103 +368,57 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       {worstCase && (
         <div className={styles.analysisSection}>
           <div
-            className={styles.sectionHeader}
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
             onClick={() => toggleSection('worstCase')}
-            style={{ cursor: 'pointer' }}
           >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>⚠️</span>
               Worst-Case Szenario
             </h4>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            <span className={styles.sectionToggle}>
               {expandedSections.has('worstCase') ? '▼' : '▶'}
             </span>
           </div>
           {expandedSections.has('worstCase') && (
-            <div style={{ display: 'grid', gap: '0.75rem' }}>
-              <p style={{
-                margin: 0,
-                fontSize: '0.95rem',
-                color: '#374151',
-                lineHeight: 1.6
-              }}>
+            <div className={styles.contentGrid}>
+              <p className={styles.contentParagraph}>
                 {worstCase.scenario}
               </p>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '0.75rem'
-              }}>
+              <div className={styles.worstCaseGrid}>
                 {/* Finanzielles Risiko */}
-                <div style={{
-                  background: '#fef2f2',
-                  border: '1px solid #fecaca',
-                  borderRadius: '8px',
-                  padding: '0.875rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: '#dc2626',
-                    marginBottom: '0.375rem',
-                    textTransform: 'uppercase'
-                  }}>
+                <div className={styles.riskCardFinancial}>
+                  <div className={styles.riskCardLabelRed}>
                     💰 Finanzielles Risiko
                   </div>
-                  <div style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    color: '#991b1b'
-                  }}>
+                  <div className={styles.riskCardValueRed}>
                     {worstCase.financialRisk || 'Nicht bezifferbar'}
                   </div>
                 </div>
 
                 {/* Zeitliches Risiko */}
-                <div style={{
-                  background: '#fefce8',
-                  border: '1px solid #fde047',
-                  borderRadius: '8px',
-                  padding: '0.875rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: '#ca8a04',
-                    marginBottom: '0.375rem',
-                    textTransform: 'uppercase'
-                  }}>
+                <div className={styles.riskCardTime}>
+                  <div className={styles.riskCardLabelYellow}>
                     ⏰ Zeitliche Bindung
                   </div>
-                  <div style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 700,
-                    color: '#854d0e'
-                  }}>
+                  <div className={styles.riskCardValueYellow}>
                     {worstCase.timeRisk || 'Keine Angabe'}
                   </div>
                 </div>
               </div>
 
               {worstCase.probability && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.8rem',
-                  color: '#64748b'
-                }}>
+                <div className={styles.probabilityRow}>
                   <span>Wahrscheinlichkeit:</span>
-                  <span style={{
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '4px',
-                    fontWeight: 600,
-                    background: worstCase.probability === 'likely' ? '#fef2f2' :
-                               worstCase.probability === 'possible' ? '#fffbeb' : '#f0fdf4',
-                    color: worstCase.probability === 'likely' ? '#dc2626' :
-                           worstCase.probability === 'possible' ? '#d97706' : '#16a34a'
-                  }}>
+                  <span
+                    className={styles.probabilityBadge}
+                    style={{
+                      '--prob-bg': worstCase.probability === 'likely' ? '#fef2f2' :
+                                   worstCase.probability === 'possible' ? '#fffbeb' : '#f0fdf4',
+                      '--prob-color': worstCase.probability === 'likely' ? '#dc2626' :
+                                      worstCase.probability === 'possible' ? '#d97706' : '#16a34a'
+                    } as React.CSSProperties}
+                  >
                     {PROBABILITY_LABELS[worstCase.probability] || worstCase.probability}
                   </span>
                 </div>
@@ -537,35 +432,22 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
         <div className={styles.analysisSection}>
           <div
-            className={styles.sectionHeader}
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
             onClick={() => toggleSection('risks')}
-            style={{ cursor: 'pointer' }}
           >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>📊</span>
               Risiko-Faktoren
             </h4>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            <span className={styles.sectionToggle}>
               {expandedSections.has('risks') ? '▼' : '▶'}
             </span>
           </div>
           {expandedSections.has('risks') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className={styles.risksColumn}>
               {riskAssessment.reasons.map((reason: string, idx: number) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '0.5rem',
-                    padding: '0.5rem 0.75rem',
-                    background: '#f8fafc',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    color: '#374151'
-                  }}
-                >
-                  <span style={{ color: '#ef4444' }}>●</span>
+                <div key={idx} className={styles.riskItem}>
+                  <span className={styles.riskDot}>●</span>
                   {reason}
                 </div>
               ))}
@@ -578,57 +460,31 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       {betterAlternative && (
         <div className={styles.analysisSection}>
           <div
-            className={styles.sectionHeader}
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
             onClick={() => toggleSection('alternative')}
-            style={{ cursor: 'pointer' }}
           >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>💼</span>
               Bessere Alternative
             </h4>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            <span className={styles.sectionToggle}>
               {expandedSections.has('alternative') ? '▼' : '▶'}
             </span>
           </div>
           {expandedSections.has('alternative') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className={styles.alternativeColumn}>
               {/* Vorgeschlagene Formulierung */}
-              <div style={{
-                background: '#f0fdf4',
-                border: '1px solid #86efac',
-                borderRadius: '8px',
-                padding: '1rem'
-              }}>
-                <div style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: '#16a34a',
-                  marginBottom: '0.5rem',
-                  textTransform: 'uppercase'
-                }}>
+              <div className={styles.suggestionBox}>
+                <div className={styles.suggestionLabel}>
                   Vorgeschlagene Formulierung
                 </div>
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.9rem',
-                  color: '#166534',
-                  fontStyle: 'italic',
-                  lineHeight: 1.6
-                }}>
+                <p className={styles.suggestionText}>
                   "{betterAlternative.text}"
                 </p>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                <div className={styles.alternativeActions}>
                   <button
                     onClick={() => copyText(betterAlternative.text)}
-                    style={{
-                      padding: '0.375rem 0.75rem',
-                      background: '#16a34a',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer'
-                    }}
+                    className={styles.copyButtonGreen}
                   >
                     📋 Kopieren
                   </button>
@@ -639,18 +495,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         setCompareWhyBetter(betterAlternative.whyBetter || '');
                         setShowCompareModal(true);
                       }}
-                      style={{
-                        padding: '0.375rem 0.75rem',
-                        background: '#3b82f6',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.375rem'
-                      }}
+                      className={styles.compareButtonBlue}
                     >
                       <GitCompare size={12} />
                       Vergleichen
@@ -660,36 +505,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               </div>
 
               {betterAlternative.whyBetter && (
-                <p style={{
-                  margin: 0,
-                  fontSize: '0.875rem',
-                  color: '#374151',
-                  lineHeight: 1.6
-                }}>
+                <p className={styles.whyBetterText}>
                   <strong>Warum besser:</strong> {betterAlternative.whyBetter}
                 </p>
               )}
 
               {betterAlternative.howToAsk && (
-                <div style={{
-                  background: '#eff6ff',
-                  borderRadius: '8px',
-                  padding: '0.875rem'
-                }}>
-                  <div style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: '#3b82f6',
-                    marginBottom: '0.375rem'
-                  }}>
+                <div className={styles.howToAskBox}>
+                  <div className={styles.howToAskLabel}>
                     🗣️ So fragst du danach:
                   </div>
-                  <p style={{
-                    margin: 0,
-                    fontSize: '0.875rem',
-                    color: '#1e40af',
-                    fontStyle: 'italic'
-                  }}>
+                  <p className={styles.howToAskText}>
                     "{betterAlternative.howToAsk}"
                   </p>
                 </div>
@@ -703,43 +529,37 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       {marketComparison && (
         <div className={styles.analysisSection}>
           <div
-            className={styles.sectionHeader}
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
             onClick={() => toggleSection('market')}
-            style={{ cursor: 'pointer' }}
           >
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>📈</span>
               Marktvergleich
             </h4>
-            <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+            <span className={styles.sectionToggle}>
               {expandedSections.has('market') ? '▼' : '▶'}
             </span>
           </div>
           {expandedSections.has('market') && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem'
-              }}>
-                <span style={{
-                  padding: '0.375rem 0.75rem',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: 600,
-                  background: marketComparison.isStandard ? '#f0fdf4' : '#fef2f2',
-                  color: marketComparison.isStandard ? '#16a34a' : '#dc2626'
-                }}>
+            <div className={styles.marketColumn}>
+              <div className={styles.marketBadgeRow}>
+                <span
+                  className={styles.marketBadge}
+                  style={{
+                    '--market-bg': marketComparison.isStandard ? '#f0fdf4' : '#fef2f2',
+                    '--market-color': marketComparison.isStandard ? '#16a34a' : '#dc2626'
+                  } as React.CSSProperties}
+                >
                   {marketComparison.isStandard ? '✓ Marktüblich' : '✗ Nicht marktüblich'}
                 </span>
               </div>
               {marketComparison.marketRange && (
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151' }}>
+                <p className={styles.marketInfoText}>
                   <strong>Üblicher Standard:</strong> {marketComparison.marketRange}
                 </p>
               )}
               {marketComparison.deviation && (
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151' }}>
+                <p className={styles.marketInfoText}>
                   <strong>Abweichung:</strong> {marketComparison.deviation}
                 </p>
               )}
@@ -770,51 +590,28 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <span className={styles.loadingText}>Generiere Alternativen...</span>
           </div>
         ) : alternatives.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className={styles.alternativesColumn}>
             {alternatives.map((alt, idx) => (
-              <div
-                key={idx}
-                style={{
-                  padding: '1rem',
-                  background: '#f8fafc',
-                  borderRadius: '8px',
-                  border: '1px solid #e2e8f0'
-                }}
-              >
-                <p style={{
-                  margin: '0 0 0.75rem 0',
-                  fontSize: '0.9rem',
-                  color: '#1e293b',
-                  fontStyle: 'italic',
-                  lineHeight: 1.6
-                }}>
+              <div key={idx} className={styles.alternativeCard}>
+                <p className={styles.alternativeCardText}>
                   "{alt.text}"
                 </p>
                 {alt.benefits && alt.benefits.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '0.5rem' }}>
+                  <div className={styles.benefitsRow}>
                     {alt.benefits.map((benefit, bIdx) => (
-                      <span
-                        key={bIdx}
-                        style={{
-                          fontSize: '0.7rem',
-                          padding: '0.2rem 0.5rem',
-                          background: '#dbeafe',
-                          color: '#1d4ed8',
-                          borderRadius: '4px'
-                        }}
-                      >
+                      <span key={bIdx} className={styles.benefitTag}>
                         {benefit}
                       </span>
                     ))}
                   </div>
                 )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: '#64748b' }}>
-                  <span style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
-                  }} />
+                <div className={styles.difficultyRow}>
+                  <span
+                    className={styles.difficultyDot}
+                    style={{
+                      '--diff-color': alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
+                    } as React.CSSProperties}
+                  />
                   <span>
                     {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
                      alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
@@ -824,7 +621,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             ))}
           </div>
         ) : (
-          <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748b' }}>
+          <p className={styles.emptyAlternativesText}>
             Klicken Sie auf "Generieren", um weitere alternative Formulierungen zu erhalten.
           </p>
         )}

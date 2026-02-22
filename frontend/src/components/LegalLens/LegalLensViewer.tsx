@@ -23,7 +23,15 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // PDF.js Worker Setup
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// DEV-only logging - stripped in production builds by tree-shaking
+const isDev = import.meta.env.DEV;
+const devLog = (...args: unknown[]) => { if (isDev) console.log(...args); };
+const devWarn = (...args: unknown[]) => { if (isDev) console.warn(...args); };
+
 type ViewMode = 'text' | 'pdf';
+
+// German legal abbreviations that should NOT be treated as sentence endings
+const GERMAN_LEGAL_ABBREVIATIONS = /\b(Nr|Art|Abs|Ziff|lit|bzw|ca|etc|ggf|inkl|max|min|vgl|gem|ggü|usw|z\.?B|u\.?a|d\.?h|i\.?d\.?R|S|Rn|bez|bspw|lt|zzgl|abzgl|Tel|Fax|Str|Prof|Dr|i\.?V|evtl|einschl|sog|vorgen|nachf|Dipl|Ing|Aufl|Bd|Hrsg|allg|insb|entspr|ff|Fn|Kap|Zl|o\.?g|a\.?a\.?O|m\.?E|m\.?w\.?N|Anm|Anh)\.\s*$/i;
 
 // ✅ NEU: Selection Mode für flexible Markierung
 type SelectionMode = 'sentence' | 'paragraph' | 'custom';
@@ -306,7 +314,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         const data = await response.json();
         setPdfUrl(data.url || data.fileUrl);
       } catch (err) {
-        console.error('[Legal Lens] PDF Load Error:', err);
+        devLog('[Legal Lens] PDF Load Error:', err);
         setPdfError(err instanceof Error ? err.message : 'PDF Ladefehler');
       } finally {
         setPdfLoading(false);
@@ -337,7 +345,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           setIndustryKeywords(response.detectedKeywords || []);
         }
       } catch (err) {
-        console.warn('[Legal Lens] Could not load industry context:', err);
+        devWarn('[Legal Lens] Could not load industry context:', err);
       }
     };
     loadIndustry();
@@ -356,10 +364,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         setIndustryAutoDetected(false);
         setIndustryConfidence(0);
         setIndustryKeywords([]);
-        console.log(`[Legal Lens] Industry manually changed to: ${industry}`);
+        devLog(`[Legal Lens] Industry manually changed to: ${industry}`);
       }
     } catch (err) {
-      console.error('[Legal Lens] Failed to set industry:', err);
+      devLog('[Legal Lens] Failed to set industry:', err);
     } finally {
       setIndustryLoading(false);
     }
@@ -488,7 +496,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           setPageNumber(1); // Keine Klausel ausgewählt → Seite 1
         }
       } catch (err) {
-        console.warn('[Legal Lens] Text-Index Extraktion fehlgeschlagen:', err);
+        devWarn('[Legal Lens] Text-Index Extraktion fehlgeschlagen:', err);
         setPdfIndexReady(false);
         setPageNumber(1);
       }
@@ -501,7 +509,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const findPageForClause = useCallback((clauseText: string): number | null => {
     const textIndex = pdfTextIndexRef.current;
     if (textIndex.size === 0) {
-      console.log('[Legal Lens] findPageForClause: No text index available');
+      devLog('[Legal Lens] findPageForClause: No text index available');
       return null;
     }
 
@@ -520,11 +528,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       .filter(w => w.length >= 4 && !stopWords.includes(w));
 
     if (clauseWords.length === 0) {
-      console.log('[Legal Lens] findPageForClause: No significant words');
+      devLog('[Legal Lens] findPageForClause: No significant words');
       return null;
     }
 
-    console.log('[Legal Lens] findPageForClause: Searching for words:', clauseWords.slice(0, 5).join(', '));
+    devLog('[Legal Lens] findPageForClause: Searching for words:', clauseWords.slice(0, 5).join(', '));
 
     // Strategie 1: Suche nach Wort-Sequenzen
     const searchSequences = [
@@ -567,7 +575,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       return bestPage;
     }
 
-    console.log('[Legal Lens] findPageForClause: No match found');
+    devLog('[Legal Lens] findPageForClause: No match found');
     return null;
   }, []);
 
@@ -646,7 +654,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
 
     highlightContainerRef.current = container;
-    console.log('[Legal Lens] Created', spans.length, 'highlight overlays');
+    devLog('[Legal Lens] Created', spans.length, 'highlight overlays');
   }, []);
 
   // ✅ FIX v7: PDF-Sync mit Schutz vor Navigation bei PDF-Klick
@@ -657,11 +665,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingNavigationRef = useRef<string | null>(null);
 
+  // ========== EFFECT 0: Clear highlights on zoom/page change ==========
+  useEffect(() => {
+    clearHighlight();
+  }, [scale, pageNumber, clearHighlight]);
+
   // ========== EFFECT 1: View-Wechsel Handler ==========
   useEffect(() => {
     if (viewMode === 'text' && prevViewModeRef.current === 'pdf') {
       clearHighlight();
-      console.log('[Legal Lens] View switched to Text');
+      devLog('[Legal Lens] View switched to Text');
     }
     prevViewModeRef.current = viewMode;
   }, [viewMode, clearHighlight]);
@@ -673,7 +686,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // ✅ FIX v7: KEINE Navigation wenn User gerade in PDF geklickt hat!
     // PDF-Klick-Klauseln haben IDs wie "pdf-paragraph-xxx" oder "pdf-sentence-xxx"
     if (selectedClause.id.startsWith('pdf-')) {
-      console.log('[Legal Lens] Skipping navigation - clause created from PDF click');
+      devLog('[Legal Lens] Skipping navigation - clause created from PDF click');
       lastNavigatedClauseIdRef.current = selectedClause.id;
       return;
     }
@@ -683,12 +696,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       return;
     }
 
-    console.log('[Legal Lens] New clause from text view:', selectedClause.id);
+    devLog('[Legal Lens] New clause from text view:', selectedClause.id);
 
     // Wenn Index noch nicht geladen, merken für später
     if (pdfTextIndexRef.current.size === 0) {
       pendingNavigationRef.current = selectedClause.id;
-      console.log('[Legal Lens] PDF index not ready, pending navigation');
+      devLog('[Legal Lens] PDF index not ready, pending navigation');
       return;
     }
 
@@ -701,7 +714,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       console.log(`[Legal Lens] Navigating to page ${targetPage}`);
       setPageNumber(targetPage);
     } else {
-      console.log('[Legal Lens] Could not find clause in PDF');
+      devLog('[Legal Lens] Could not find clause in PDF');
     }
   }, [viewMode, selectedClause?.id, pdfUrl, findPageForClause]);
 
@@ -718,7 +731,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       return;
     }
 
-    console.log('[Legal Lens] PDF index ready, executing pending navigation');
+    devLog('[Legal Lens] PDF index ready, executing pending navigation');
     lastNavigatedClauseIdRef.current = selectedClause.id;
     pendingNavigationRef.current = null;
 
@@ -727,7 +740,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       console.log(`[Legal Lens] Navigating to page ${targetPage}`);
       setPageNumber(targetPage);
     } else {
-      console.log('[Legal Lens] Could not find clause in PDF index');
+      devLog('[Legal Lens] Could not find clause in PDF index');
     }
   }, [pdfIndexReady, selectedClause, findPageForClause]);
 
@@ -737,14 +750,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     // Skip wenn User gerade in PDF geklickt hat
     if (pdfClickActiveRef.current) {
-      console.log('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
+      devLog('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
       pdfClickActiveRef.current = false;
       return;
     }
 
     // Skip für PDF-erstellte Klauseln (die sind bereits markiert)
     if (selectedClause.id.startsWith('pdf-')) {
-      console.log('[Legal Lens] PDF highlight: Skipping - clause from PDF click');
+      devLog('[Legal Lens] PDF highlight: Skipping - clause from PDF click');
       return;
     }
 
@@ -752,8 +765,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       clearTimeout(syncPdfHighlightTimeoutRef.current);
     }
 
-    // Längerer Timeout (1200ms) damit die neue Seite Zeit hat zu rendern
-    syncPdfHighlightTimeoutRef.current = setTimeout(() => {
+    // Highlight-Logik als Funktion für Retry-Fähigkeit
+    const attemptHighlight = () => {
       if (pdfClickActiveRef.current) {
         pdfClickActiveRef.current = false;
         return;
@@ -763,19 +776,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       const textLayer = document.querySelector('.react-pdf__Page__textContent');
       if (!textLayer) {
-        console.log('[Legal Lens] PDF highlight: No text layer found');
+        devLog('[Legal Lens] PDF highlight: No text layer found');
         return;
       }
 
       const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
       if (allSpans.length === 0) {
-        console.log('[Legal Lens] PDF highlight: No spans found');
+        devLog('[Legal Lens] PDF highlight: No spans found');
         return;
       }
 
-      // ✅ WORT-BASIERTES MATCHING mit zusammenhängendem Bereich
-      console.log('[Legal Lens] PDF highlight: Starting word-based matching...');
-      console.log('[Legal Lens] PDF highlight: Clause text:', selectedClause.text.substring(0, 100));
+      // WORT-BASIERTES MATCHING mit zusammenhängendem Bereich
+      devLog('[Legal Lens] PDF highlight: Starting word-based matching...');
+      devLog('[Legal Lens] PDF highlight: Clause text:', selectedClause.text.substring(0, 100));
 
       // Extrahiere signifikante Wörter aus der Klausel (längere Wörter = eindeutiger)
       const stopWords = new Set(['der', 'die', 'das', 'und', 'oder', 'für', 'von', 'mit', 'bei', 'auf', 'aus', 'nach', 'über', 'unter', 'einer', 'einem', 'einen', 'eine', 'sind', 'wird', 'werden', 'kann', 'können', 'soll', 'haben', 'sein', 'nicht', 'auch', 'wenn', 'dass', 'diese', 'dieser', 'dieses', 'sowie', 'durch', 'muss', 'darf', 'zum', 'zur', 'den', 'dem', 'des', 'als', 'ist', 'hat', 'nur']);
@@ -788,11 +801,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         .slice(0, 10);
 
       if (clauseWords.length < 2) {
-        console.log('[Legal Lens] PDF highlight: Not enough significant words');
+        devLog('[Legal Lens] PDF highlight: Not enough significant words');
         return;
       }
 
-      console.log('[Legal Lens] PDF highlight: Searching for words:', clauseWords.join(', '));
+      devLog('[Legal Lens] PDF highlight: Searching for words:', clauseWords.join(', '));
 
       // Sortiere Spans nach visueller Position (Lesereihenfolge)
       const spansWithData = allSpans.map(span => ({
@@ -801,13 +814,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         text: (span.textContent || '').toLowerCase().normalize('NFC')
       })).sort((a, b) => {
         const yDiff = a.rect.top - b.rect.top;
-        if (Math.abs(yDiff) > 8) return yDiff;
+        const lineTolerance = 8 * scale;
+        if (Math.abs(yDiff) > lineTolerance) return yDiff;
         return a.rect.left - b.rect.left;
       });
 
-      // NEUER ANSATZ: Suche nach dem BESTEN Startpunkt
-      // Wir suchen einen Span der das erste Wort enthält UND
-      // in dessen Nähe auch andere Klausel-Wörter vorkommen
+      // Suche nach dem BESTEN Startpunkt
       let bestAnchorIndex = -1;
       let bestScore = 0;
 
@@ -831,11 +843,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       }
 
       if (bestAnchorIndex === -1 || bestScore < Math.ceil(clauseWords.length * 0.4)) {
-        console.log('[Legal Lens] PDF highlight: No good match found. Best score:', bestScore);
+        devLog('[Legal Lens] PDF highlight: No good match found. Best score:', bestScore);
         return;
       }
 
-      console.log('[Legal Lens] PDF highlight: Found best anchor at index', bestAnchorIndex, 'with score', bestScore);
+      devLog('[Legal Lens] PDF highlight: Found best anchor at index', bestAnchorIndex, 'with score', bestScore);
 
       // Finde Start und Ende basierend auf Wort-Vorkommen
       const firstMatchIdx = bestAnchorIndex;
@@ -858,7 +870,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         spansToHighlight.push(spansWithData[i].span);
       }
 
-      console.log('[Legal Lens] PDF highlight: Highlighting spans', firstMatchIdx, 'to', lastMatchIdx, '(', spansToHighlight.length, 'spans)');
+      devLog('[Legal Lens] PDF highlight: Highlighting spans', firstMatchIdx, 'to', lastMatchIdx, '(', spansToHighlight.length, 'spans)');
 
       // Erstelle Highlight-Overlays
       createHighlightOverlays(spansToHighlight);
@@ -868,7 +880,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       if (spansToHighlight.length > 0) {
         spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 1200);
+    };
+
+    // 500ms Timeout mit Retry wenn Text-Layer noch nicht bereit
+    syncPdfHighlightTimeoutRef.current = setTimeout(() => {
+      const textLayer = document.querySelector('.react-pdf__Page__textContent');
+      if (!textLayer || textLayer.querySelectorAll('span').length === 0) {
+        // Text-Layer noch nicht bereit, retry nach 500ms
+        syncPdfHighlightTimeoutRef.current = setTimeout(attemptHighlight, 500);
+        return;
+      }
+      attemptHighlight();
+    }, 500);
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {
@@ -926,7 +949,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           }
         };
 
-        console.log('[Legal Lens] FREI-MODUS:', selectedText.substring(0, 60) + '...');
+        devLog('[Legal Lens] FREI-MODUS:', selectedText.substring(0, 60) + '...');
 
         // ✅ FIX v4: Flag setzen BEVOR selectClause aufgerufen wird
         // Verhindert dass PDF-Sync useEffect die Markierung überschreibt
@@ -965,6 +988,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     let startIdx = clickedIndex;
     let endIdx = clickedIndex;
 
+    // Adaptive span search windows based on page size
+    const totalSpans = allSpans.length;
+    const sentenceBackward = Math.min(Math.max(30, Math.floor(totalSpans * 0.05)), 60);
+    const sentenceForward = Math.min(Math.max(40, Math.floor(totalSpans * 0.07)), 80);
+    const paragraphBackward = Math.min(Math.max(80, Math.floor(totalSpans * 0.15)), 250);
+    const paragraphForward = Math.min(Math.max(100, Math.floor(totalSpans * 0.2)), 300);
+
     // ========== SATZ-MODUS ==========
     if (selectionMode === 'sentence') {
       // Suche Satzanfang (rückwärts bis . ! ? oder Anfang)
@@ -981,50 +1011,54 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           break;
         }
         startIdx = i;
-        // Max 30 Spans zurück
-        if (clickedIndex - i > 30) break;
+        if (clickedIndex - i > sentenceBackward) break;
       }
 
       // Suche Satzende (vorwärts bis . ! ?)
       for (let i = clickedIndex; i < allSpans.length; i++) {
         endIdx = i;
         const text = spanData[i].text;
-        // Echtes Satzende (nicht bei Abkürzungen wie "Nr.", "Art.", "Abs.")
+        // Echtes Satzende (nicht bei Abkürzungen)
         if (/[.!?]\s*$/.test(text)) {
-          const isAbbrev = /\b(Nr|Art|Abs|Ziff|lit|bzw|ca|etc|ggf|inkl|max|min|vgl|gem|ggü|usw|z\.B|u\.a|d\.h|i\.d\.R|S|Rn)\.\s*$/i.test(text);
-          if (!isAbbrev) break;
+          if (!GERMAN_LEGAL_ABBREVIATIONS.test(text)) break;
         }
-        // Max 40 Spans vorwärts
-        if (i - clickedIndex > 40) break;
+        if (i - clickedIndex > sentenceForward) break;
       }
     }
 
     // ========== PARAGRAPH-MODUS ==========
     else if (selectionMode === 'paragraph') {
-      // Regex für Paragraph-Überschriften: § X, Art. X, Artikel X, X. Titel, römische Ziffern
+      // Extended paragraph start patterns
       const isParagraphStart = (text: string): boolean => {
         const trimmed = text.trim();
-        return /^(§\s*\d|Art\.?\s*\d|Artikel\s*\d|\d+\.\d*\s+[A-ZÄÖÜ]|[IVX]+\.\s|[A-Z]\)\s)/.test(trimmed);
+        return /^(§\s*\d|Art\.?\s*\d|Artikel\s*\d|\d+\.\d*\s+[A-ZÄÖÜ]|[IVX]+\.\s|[A-Z]\)\s|\d+\)\s|[a-z]\)\s|Punkt\s+\d|Abschnitt\s+\d|Teil\s+\d|Ziffer\s+\d|Anlage\s+\d|Anhang\s+\d)/i.test(trimmed);
       };
 
       // RÜCKWÄRTS: Finde den Paragraph-Start (§ X)
       for (let i = clickedIndex - 1; i >= 0; i--) {
         const text = spanData[i].text;
 
-        // Hauptparagraph gefunden (§ X, Art. X)
         if (isParagraphStart(text)) {
           startIdx = i;
           break;
         }
 
         startIdx = i;
-        // Max 100 Spans zurück
-        if (clickedIndex - i > 100) break;
+        if (clickedIndex - i > paragraphBackward) break;
       }
 
-      // VORWÄRTS: Finde das Ende (nächster § oder Art.)
+      // VORWÄRTS: Finde das Ende (nächster § oder Art. oder empty block)
+      let consecutiveShort = 0;
       for (let i = clickedIndex + 1; i < allSpans.length; i++) {
         const text = spanData[i].text;
+
+        // 3+ consecutive empty/very short spans = paragraph break
+        if (text.trim().length < 2) {
+          consecutiveShort++;
+          if (consecutiveShort >= 3) { endIdx = i - 3; break; }
+        } else {
+          consecutiveShort = 0;
+        }
 
         // Nächster Hauptparagraph = Ende dieses Paragraphen
         if (isParagraphStart(text)) {
@@ -1033,11 +1067,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         }
 
         endIdx = i;
-        // Max 150 Spans vorwärts (Paragraphen können lang sein)
-        if (i - clickedIndex > 150) break;
+        if (i - clickedIndex > paragraphForward) break;
       }
 
-      console.log('[Legal Lens] PARAGRAPH: Start:', startIdx, 'End:', endIdx, 'Spans:', endIdx - startIdx + 1);
+      devLog('[Legal Lens] PARAGRAPH: Start:', startIdx, 'End:', endIdx, 'Spans:', endIdx - startIdx + 1);
     }
 
     // Sicherheit: Mindestens der geklickte Span
@@ -1063,7 +1096,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     // Mindestlänge prüfen
     if (selectedText.length < 10) {
-      console.log('[Legal Lens] Text zu kurz:', selectedText.length);
+      devLog('[Legal Lens] Text zu kurz:', selectedText.length);
       return;
     }
 
@@ -1355,7 +1388,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 );
                 return response.analysis;
               } catch (error) {
-                console.error('Inline Analysis Error:', error);
+                devLog('Inline Analysis Error:', error);
                 return null;
               }
             }}

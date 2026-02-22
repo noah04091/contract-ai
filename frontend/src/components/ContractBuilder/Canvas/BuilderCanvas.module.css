@@ -79,7 +79,7 @@
   height: 297mm; /* Feste A4 Höhe */
   min-height: 297mm;
   max-height: 297mm;
-  background: white;
+  background: var(--background-primary, #ffffff);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.05),
     0 8px 16px rgba(0, 0, 0, 0.1),
@@ -98,11 +98,16 @@
   --accent-color: #3182ce;
   --text-primary: #1a202c;
   --text-secondary: #4a5568;
+  --text-muted: #9ca3af;
   --font-family: 'Inter', sans-serif;
   --heading-font: 'Inter', sans-serif;
+  --background-primary: #ffffff;
+  --background-secondary: #f8fafc;
+  --border-color: #e2e8f0;
+  --base-font-size: 13px;
 
   font-family: var(--font-family);
-  font-size: 13px; /* Standard-Schriftgröße für alle Blöcke */
+  font-size: var(--base-font-size, 13px);
   color: var(--text-primary);
 }
 
@@ -128,9 +133,8 @@
   padding-top: 28px; /* Platz für Block-Controls (Drag-Handles etc.) */
   margin-top: -28px; /* Kompensiere das Padding nach oben */
 
-  /* WICHTIG: Explizite Farbe für konsistentes PDF-Rendering */
-  /* CSS Custom Properties werden von html2canvas nicht immer korrekt aufgelöst */
-  color: #1a202c;
+  /* Farbe erbt von .paper (via CSS Custom Properties) */
+  color: inherit;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

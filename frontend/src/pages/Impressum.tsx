@@ -1,221 +1,316 @@
+// Impressum - Stripe-Level Legal Page Design
+import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { motion } from "framer-motion";
-import styles from "../styles/Impressum.module.css";
-import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle, Link as LinkIcon, Scale, Shield, Copyright } from "lucide-react";
+import { Link } from "react-router-dom";
+import styles from "../styles/LegalPage.module.css";
 import Footer from "../components/Footer";
+import {
+  FileText, Mail, Phone, User, Globe, Building2,
+  CreditCard, Scale, Shield, ExternalLink, ArrowRight,
+  Calendar, MapPin, Briefcase
+} from "lucide-react";
 
 export default function Impressum() {
+  // Scroll animation
+  const animatedRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    animatedRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const addToRefs = (el: HTMLElement | null) => {
+    if (el && !animatedRefs.current.includes(el)) {
+      animatedRefs.current.push(el);
+    }
+  };
+
+  // Structured Data
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Contract AI",
+    "url": "https://www.contract-ai.de",
+    "logo": "https://www.contract-ai.de/logo.png",
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+49-176-55549923",
+      "contactType": "customer service",
+      "availableLanguage": ["German", "English"]
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Richard-Oberle-Weg 27",
+      "addressLocality": "Durmersheim",
+      "postalCode": "76648",
+      "addressCountry": "DE"
+    }
+  };
+
   return (
     <>
       <Helmet>
-        <title>Impressum | Contract AI</title>
-        <meta name="description" content="Alle rechtlichen Angaben und Kontaktdaten zu Contract AI findest du im Impressum." />
-        <meta name="keywords" content="Impressum, Anbieterkennzeichnung, Kontakt Contract AI" />
+        <title>Impressum | Contract AI - Rechtliche Angaben</title>
+        <meta name="description" content="Impressum von Contract AI. Alle rechtlichen Angaben, Kontaktdaten und Informationen gemäß § 5 TMG zum KI-gestützten Vertragsmanagement." />
+        <meta name="keywords" content="Impressum, Contract AI, Anbieterkennzeichnung, Kontakt, rechtliche Angaben" />
         <link rel="canonical" href="https://www.contract-ai.de/impressum" />
-        {/* Open Graph / Facebook */}
         <meta property="og:title" content="Impressum | Contract AI" />
-        <meta property="og:description" content="Rechtliche Informationen und Kontaktdaten zu Contract AI findest du hier im Impressum." />
+        <meta property="og:description" content="Rechtliche Informationen und Kontaktdaten zu Contract AI." />
         <meta property="og:url" content="https://www.contract-ai.de/impressum" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Impressum | Contract AI" />
-        <meta name="twitter:description" content="Hier findest du alle rechtlichen Angaben zu Contract AI." />
-        <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <script type="application/ld+json">
+          {JSON.stringify(organizationSchema)}
+        </script>
       </Helmet>
 
-      <div className={styles.container}>
-        <motion.div 
-          className={styles.header}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className={styles.headerContent}>
-            <motion.div 
-              className={styles.iconContainer}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              <FileText size={28} className={styles.icon} />
-            </motion.div>
-            <motion.h1
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
-              Impressum
-            </motion.h1>
-          </div>
-          <motion.div 
-            className={styles.headerBlur}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          />
-        </motion.div>
+      <div className={styles.pageBackground}>
+        <div className={styles.container}>
+          {/* Hero Section */}
+          <header className={styles.hero}>
+            <div className={styles.heroBadge}>
+              <span className={styles.heroBadgeDot}></span>
+              Rechtliche Informationen
+            </div>
 
-        <motion.div 
-          className={styles.content}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <div className={styles.card}>
-            {/* Betreiber-Info */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              <h2>Contract AI – betrieben von</h2>
+            <div className={styles.heroIconWrapper}>
+              <FileText className={styles.heroIcon} />
+            </div>
+
+            <h1 className={styles.heroTitle}>Impressum</h1>
+            <p className={styles.heroSubtitle}>
+              Angaben gemäß § 5 TMG und § 18 Abs. 2 MStV
+            </p>
+
+            <div className={styles.lastUpdated}>
+              <Calendar size={14} />
+              Stand: Februar 2025
+            </div>
+          </header>
+
+          {/* Main Content Card */}
+          <div className={`${styles.contentCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+
+            {/* Betreiber */}
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <Building2 size={22} />
+                </div>
+                <h2 className={styles.sectionTitle}>Betreiber der Plattform</h2>
+              </div>
+
               <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <User size={18} className={styles.infoIcon} />
-                  <div><strong>Noah Liebold</strong></div>
-                </div>
-                <div className={styles.infoGroup}>
-                  <Building size={18} className={styles.infoIcon} />
-                  <div>Einzelunternehmen<br />Tätigkeitsbereich: Softwareentwicklung & KI-basierte SaaS-Lösungen</div>
-                </div>
-                <div className={styles.infoGroup}>
-                  <Globe size={18} className={styles.infoIcon} />
-                  <div>Richard-Oberle-Weg 27<br />76648 Durmersheim<br />Deutschland</div>
+                <p>
+                  <strong className={styles.textStrong}>Contract AI</strong> wird betrieben von:
+                </p>
+
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoCard}>
+                    <div className={styles.infoIcon}>
+                      <User size={20} />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Inhaber</div>
+                      <div className={styles.infoValue}>Noah Liebold</div>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoCard}>
+                    <div className={styles.infoIcon}>
+                      <Briefcase size={20} />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Unternehmensform</div>
+                      <div className={styles.infoValue}>Einzelunternehmen</div>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoCard}>
+                    <div className={styles.infoIcon}>
+                      <MapPin size={20} />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>Adresse</div>
+                      <div className={styles.infoValue}>
+                        Richard-Oberle-Weg 27<br />
+                        76648 Durmersheim<br />
+                        Deutschland
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={styles.infoCard}>
+                    <div className={styles.infoIcon}>
+                      <CreditCard size={20} />
+                    </div>
+                    <div className={styles.infoContent}>
+                      <div className={styles.infoLabel}>USt-IdNr.</div>
+                      <div className={styles.infoValue}>DE361461136</div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </motion.div>
+            </section>
 
             {/* Kontakt */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.3 }}
-            >
-              <h2>Kontakt</h2>
-              <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <Phone size={18} className={styles.infoIcon} />
-                  <div><a href="tel:+4917655549923" className={styles.link}>0176 5554 9923</a></div>
+            <section className={`${styles.section} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <Mail size={22} />
                 </div>
-                <div className={styles.infoGroup}>
-                  <Mail size={18} className={styles.infoIcon} />
-                  <div><a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a></div>
-                </div>
-                <div className={styles.infoGroup}>
-                  <LinkIcon size={18} className={styles.infoIcon} />
-                  <div><a href="https://contract-ai.de" target="_blank" rel="noreferrer" className={styles.link}>https://contract-ai.de</a></div>
-                </div>
+                <h2 className={styles.sectionTitle}>Kontakt</h2>
               </div>
-            </motion.div>
 
-            {/* Angaben gemäß § 5 TMG */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.3 }}
-            >
-              <h2>Angaben gemäß § 5 TMG</h2>
-              <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <User size={18} className={styles.infoIcon} />
-                  <div>
-                    <strong>Noah Liebold</strong><br />
-                    Einzelunternehmer<br />
-                    Haupttätigkeit: Softwareentwicklung, KI-gestützte Webanwendungen, digitale SaaS-Plattformen.
+              <div className={styles.contactGrid}>
+                <a href="tel:+4917655549923" className={styles.contactCard}>
+                  <div className={styles.contactIcon}>
+                    <Phone size={22} />
                   </div>
-                </div>
-              </div>
-            </motion.div>
+                  <div>
+                    <div className={styles.contactLabel}>Telefon</div>
+                    <div className={styles.contactValue}>0176 5554 9923</div>
+                  </div>
+                </a>
 
-            {/* USt-IdNr */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.3 }}
-            >
-              <h2>Umsatzsteuer-Identifikationsnummer</h2>
-              <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <CreditCard size={18} className={styles.infoIcon} />
-                  <div>USt-IdNr.: DE361461136</div>
-                </div>
-              </div>
-            </motion.div>
+                <a href="mailto:info@contract-ai.de" className={styles.contactCard}>
+                  <div className={styles.contactIcon}>
+                    <Mail size={22} />
+                  </div>
+                  <div>
+                    <div className={styles.contactLabel}>E-Mail</div>
+                    <div className={styles.contactValue}>info@contract-ai.de</div>
+                  </div>
+                </a>
 
-            {/* Verantwortlich für Inhalt */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9, duration: 0.3 }}
-            >
-              <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+                <a href="https://contract-ai.de" target="_blank" rel="noreferrer" className={styles.contactCard}>
+                  <div className={styles.contactIcon}>
+                    <Globe size={22} />
+                  </div>
+                  <div>
+                    <div className={styles.contactLabel}>Website</div>
+                    <div className={styles.contactValue}>contract-ai.de</div>
+                  </div>
+                </a>
+              </div>
+            </section>
+
+            {/* Tätigkeitsbereich */}
+            <section className={`${styles.section} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <Briefcase size={22} />
+                </div>
+                <h2 className={styles.sectionTitle}>Tätigkeitsbereich</h2>
+              </div>
+
               <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <User size={18} className={styles.infoIcon} />
-                  <div>Noah Liebold<br />Richard-Oberle-Weg 27<br />76648 Durmersheim</div>
+                <p>
+                  Softwareentwicklung, KI-gestützte Webanwendungen und digitale SaaS-Plattformen
+                  im Bereich Vertragsmanagement und Rechtstechnologie.
+                </p>
+
+                <div className={styles.highlightBox}>
+                  Contract AI bietet KI-basierte Vertragsanalyse, -optimierung und -generierung
+                  für Unternehmen und Privatpersonen. Alle Daten werden DSGVO-konform auf
+                  deutschen Servern verarbeitet.
                 </div>
               </div>
-            </motion.div>
+            </section>
+
+            {/* Verantwortlich für Inhalte */}
+            <section className={`${styles.section} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <User size={22} />
+                </div>
+                <h2 className={styles.sectionTitle}>Verantwortlich für den Inhalt</h2>
+              </div>
+
+              <div className={styles.sectionContent}>
+                <p className={styles.textMuted}>Gemäß § 18 Abs. 2 MStV:</p>
+                <p>
+                  <strong className={styles.textStrong}>Noah Liebold</strong><br />
+                  Richard-Oberle-Weg 27<br />
+                  76648 Durmersheim
+                </p>
+              </div>
+            </section>
 
             {/* Haftungsausschluss */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0, duration: 0.3 }}
-            >
-              <h2>Haftungsausschluss</h2>
-              <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <Scale size={18} className={styles.infoIcon} />
-                  <div>
-                    <strong>Haftung für Inhalte:</strong><br />
-                    Ich bin gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Für fremde Inhalte übernehme ich gemäß §§ 8–10 TMG keine Haftung.
-                  </div>
+            <section className={`${styles.section} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <Scale size={22} />
                 </div>
-                <div className={styles.infoGroup}>
-                  <LinkIcon size={18} className={styles.infoIcon} />
-                  <div>
-                    <strong>Haftung für Links:</strong><br />
-                    Für Inhalte externer Webseiten, auf die ich verlinke, übernehme ich keine Verantwortung. Für diese sind ausschließlich deren Betreiber verantwortlich.
-                  </div>
-                </div>
-                <div className={styles.infoGroup}>
-                  <Copyright size={18} className={styles.infoIcon} />
-                  <div>
-                    <strong>Urheberrecht:</strong><br />
-                    Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht.
-                  </div>
-                </div>
+                <h2 className={styles.sectionTitle}>Haftungsausschluss</h2>
               </div>
-            </motion.div>
 
-            {/* Verbraucherstreitbeilegung */}
-            <motion.div
-              className={styles.section}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.1, duration: 0.3 }}
-            >
-              <h2>Verbraucherstreitbeilegung (VSBG)</h2>
               <div className={styles.sectionContent}>
-                <div className={styles.infoGroup}>
-                  <Shield size={18} className={styles.infoIcon} />
-                  <div>
-                    Ich bin nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-                  </div>
+                <h3 className={styles.textStrong} style={{ marginBottom: '12px', fontSize: '1rem' }}>
+                  Haftung für Inhalte
+                </h3>
+                <p>
+                  Ich bin gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den
+                  allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG bin ich jedoch nicht
+                  verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen.
+                </p>
+
+                <h3 className={styles.textStrong} style={{ marginBottom: '12px', marginTop: '24px', fontSize: '1rem' }}>
+                  Haftung für Links
+                </h3>
+                <p>
+                  Für Inhalte externer Webseiten, auf die ich verlinke, übernehme ich keine
+                  Verantwortung. Für diese sind ausschließlich deren Betreiber verantwortlich.
+                </p>
+
+                <h3 className={styles.textStrong} style={{ marginBottom: '12px', marginTop: '24px', fontSize: '1rem' }}>
+                  Urheberrecht
+                </h3>
+                <p>
+                  Alle Inhalte dieser Website unterliegen dem deutschen Urheberrecht.
+                  Vervielfältigung, Bearbeitung oder Verbreitung bedürfen der schriftlichen
+                  Zustimmung des Autors.
+                </p>
+              </div>
+            </section>
+
+            {/* Streitbeilegung */}
+            <section className={`${styles.section} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.sectionHeader}>
+                <div className={styles.sectionIcon}>
+                  <Shield size={22} />
                 </div>
-                <div className={styles.infoGroup}>
-                  <AlertCircle size={18} className={styles.infoIcon} />
-                  <div>
-                    Plattform der EU-Kommission zur Online-Streitbeilegung:{" "}
+                <h2 className={styles.sectionTitle}>Verbraucherstreitbeilegung</h2>
+              </div>
+
+              <div className={styles.sectionContent}>
+                <p>
+                  Ich bin nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren
+                  vor einer Verbraucherschlichtungsstelle teilzunehmen.
+                </p>
+
+                <div className={`${styles.highlightBox} ${styles.warning}`}>
+                  <p style={{ margin: 0 }}>
+                    <strong>EU-Streitbeilegung:</strong> Die Europäische Kommission stellt eine
+                    Plattform zur Online-Streitbeilegung (OS) bereit:{' '}
                     <a
                       href="https://ec.europa.eu/consumers/odr"
                       target="_blank"
@@ -223,16 +318,28 @@ export default function Impressum() {
                       className={styles.link}
                     >
                       https://ec.europa.eu/consumers/odr
+                      <ExternalLink size={12} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
                     </a>
-                  </div>
+                  </p>
                 </div>
               </div>
-            </motion.div>
+            </section>
           </div>
-        </motion.div>
+
+          {/* Footer CTA */}
+          <div className={`${styles.footerCta} ${styles.animateOnScroll}`} ref={addToRefs}>
+            <h3 className={styles.footerCtaTitle}>Haben Sie Fragen?</h3>
+            <p className={styles.footerCtaText}>
+              Kontaktieren Sie uns - wir helfen Ihnen gerne weiter.
+            </p>
+            <Link to="/contact" className={styles.footerCtaButton}>
+              Kontakt aufnehmen
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* Footer */}
       <Footer />
     </>
   );

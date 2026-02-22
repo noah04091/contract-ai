@@ -1,6 +1,7 @@
 /**
  * DesignTemplateGallery - Modal zur Auswahl von Design-Vorlagen
  * Zeigt 8 Templates als CSS-gerenderte Preview-Karten
+ * Previews zeigen strukturelle Unterschiede: Cover, Header, Preamble, Definitions, Clauses, Signature
  */
 
 import React, { useState } from 'react';
@@ -104,6 +105,7 @@ export const DesignTemplateGallery: React.FC<DesignTemplateGalleryProps> = ({
 
 /**
  * TemplatePreview - CSS-gerenderte Mini-Vorschau eines Templates
+ * Zeigt strukturelle Unterschiede: Cover, Header, Preamble, Definitions, Clauses, Signature
  */
 const TemplatePreview: React.FC<{ template: DesignTemplate }> = ({ template }) => {
   const { primaryColor, secondaryColor, accentColor, fontFamily } = template.preview;
@@ -142,9 +144,110 @@ const TemplatePreview: React.FC<{ template: DesignTemplate }> = ({ template }) =
         )}
       </div>
 
+      {/* Header mini */}
+      <div className={styles.previewHeader}>
+        {template.headerLayout === 'centered' && (
+          <div className={styles.pvHeaderCentered}>
+            <div className={styles.pvHeaderTitle} style={{ backgroundColor: primaryColor }} />
+            <div className={styles.pvHeaderDivider} style={{ backgroundColor: accentColor }} />
+          </div>
+        )}
+        {template.headerLayout === 'left-logo' && (
+          <div className={styles.pvHeaderLeft}>
+            <div className={styles.pvLogoBox} style={{ borderColor: accentColor }} />
+            <div className={styles.pvHeaderTitle} style={{ backgroundColor: primaryColor }} />
+          </div>
+        )}
+        {template.headerLayout === 'minimal' && (
+          <div className={styles.pvHeaderMinimal}>
+            <div className={styles.pvHeaderTitle} style={{ backgroundColor: primaryColor }} />
+          </div>
+        )}
+      </div>
+
+      {/* Preamble mini */}
+      <div className={styles.previewPreamble}>
+        {template.preambleLayout === 'accent-bar' && (
+          <div className={styles.pvPreambleAccent}>
+            <div className={styles.pvPreambleBar} style={{ backgroundColor: accentColor }} />
+            <div className={styles.pvPreambleLines}>
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '90%' }} />
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '60%' }} />
+            </div>
+          </div>
+        )}
+        {template.preambleLayout === 'bordered' && (
+          <div className={styles.pvPreambleBordered} style={{ borderColor: secondaryColor }}>
+            <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '85%' }} />
+            <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '55%' }} />
+          </div>
+        )}
+        {template.preambleLayout === 'minimal' && (
+          <div className={styles.pvPreambleMinimal}>
+            <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '80%' }} />
+            <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '50%' }} />
+          </div>
+        )}
+        {template.preambleLayout === 'quote' && (
+          <div className={styles.pvPreambleQuote}>
+            <div className={styles.pvQuoteMark} style={{ color: accentColor }}>&ldquo;</div>
+            <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '70%' }} />
+            <div className={styles.pvQuoteMark} style={{ color: accentColor }}>&rdquo;</div>
+          </div>
+        )}
+      </div>
+
+      {/* Definitions mini */}
+      <div className={styles.previewDefs}>
+        {template.definitionsLayout === 'card' && (
+          <div className={styles.pvDefsCards}>
+            {[1, 2].map((i) => (
+              <div key={i} className={styles.pvDefCard} style={{ borderLeftColor: accentColor, borderColor: secondaryColor }}>
+                <div className={styles.pvLine} style={{ backgroundColor: primaryColor, width: '35%', opacity: 0.6 }} />
+              </div>
+            ))}
+          </div>
+        )}
+        {template.definitionsLayout === 'table' && (
+          <div className={styles.pvDefsTable}>
+            <div className={styles.pvDefsTableRow} style={{ borderBottomColor: secondaryColor }}>
+              <div className={styles.pvLine} style={{ backgroundColor: primaryColor, width: '30%', opacity: 0.5 }} />
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '55%' }} />
+            </div>
+            <div className={styles.pvDefsTableRow} style={{ borderBottomColor: secondaryColor }}>
+              <div className={styles.pvLine} style={{ backgroundColor: primaryColor, width: '25%', opacity: 0.5 }} />
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '60%' }} />
+            </div>
+          </div>
+        )}
+        {template.definitionsLayout === 'inline' && (
+          <div className={styles.pvDefsInline}>
+            <div className={styles.pvDefsInlineRow}>
+              <div className={styles.pvLine} style={{ backgroundColor: primaryColor, width: '25%', opacity: 0.7 }} />
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '55%' }} />
+            </div>
+            <div className={styles.pvDefsSep} style={{ backgroundColor: secondaryColor }} />
+            <div className={styles.pvDefsInlineRow}>
+              <div className={styles.pvLine} style={{ backgroundColor: primaryColor, width: '20%', opacity: 0.7 }} />
+              <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '50%' }} />
+            </div>
+          </div>
+        )}
+        {template.definitionsLayout === 'numbered' && (
+          <div className={styles.pvDefsNumbered}>
+            {['a', 'b'].map((letter) => (
+              <div key={letter} className={styles.pvDefsNumRow}>
+                <span className={styles.pvDefsNumLabel} style={{ color: accentColor }}>({letter})</span>
+                <div className={styles.pvLine} style={{ backgroundColor: secondaryColor, width: '70%' }} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Clause mini */}
       <div className={styles.previewClauses}>
-        {[1, 2, 3].map((i) => (
+        {[1, 2].map((i) => (
           <div key={i} className={styles.pvClause}>
             <div
               className={styles.pvClauseTitle}

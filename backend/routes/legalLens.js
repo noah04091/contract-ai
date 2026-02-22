@@ -48,6 +48,34 @@ const analysisRateLimiter = rateLimit({
 });
 
 // ============================================
+// RETRY UTILITY
+// ============================================
+
+/**
+ * Retry mit exponentiellem Backoff für GPT-Batch-Aufrufe.
+ * @param {Function} fn - Async Funktion die ausgeführt werden soll
+ * @param {number} maxRetries - Maximale Anzahl an Wiederholungen (default: 2)
+ * @param {number} baseDelay - Basis-Delay in ms (default: 1000)
+ * @returns {Promise<*>} - Ergebnis der Funktion
+ */
+async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.warn(`[LegalLens Retry] Versuch ${attempt + 1} fehlgeschlagen, retry in ${delay}ms:`, error.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
+// ============================================
 // CACHE CONFIGURATION (Phase 4: TTL + Version)
 // ============================================
 
@@ -55,7 +83,7 @@ const analysisRateLimiter = rateLimit({
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2617,7 +2645,66 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     let allClauses = [];
     let batchIndex = 0;
+    let failedBatchCount = 0;
     const existingTextHashes = new Set(); // Cross-Batch-Deduplizierung
+
+    // Hilfsfunktion: Klauseln aus GPT-Ergebnis validieren und aufbereiten
+    const processBatchClauses = (batchClauses) => {
+      return batchClauses
+        .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
+        .map((clause, idx) => {
+          const riskAssessment = clauseParser.assessClauseRisk(clause.text);
+          const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
+
+          return {
+            id: clause.id || `clause_stream_${allClauses.length + idx + 1}`,
+            number: clause.number || `${allClauses.length + idx + 1}`,
+            title: clause.title || null,
+            text: clause.text,
+            type: clause.type || 'paragraph',
+            riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+            riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
+            riskKeywords: analyzableCheck.nonAnalyzable ? [] :
+              (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
+            riskIndicators: {
+              level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
+              keywords: analyzableCheck.nonAnalyzable ? [] :
+                (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
+              score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
+            },
+            nonAnalyzable: analyzableCheck.nonAnalyzable,
+            nonAnalyzableReason: analyzableCheck.reason,
+            clauseCategory: analyzableCheck.category
+          };
+        });
+    };
+
+    // Hilfsfunktion: Deduplizierung und Streaming
+    const deduplicateAndStream = (validClauses, currentBatchIndex) => {
+      const uniqueValidClauses = validClauses.filter(c => {
+        const normalized = (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
+        const hash = clauseParser.generateHash(normalized);
+        if (existingTextHashes.has(hash)) {
+          console.log(`[Dedup] Cross-Batch Duplikat entfernt: "${(c.text || '').substring(0, 50)}..."`);
+          return false;
+        }
+        existingTextHashes.add(hash);
+        return true;
+      });
+
+      allClauses = [...allClauses, ...uniqueValidClauses];
+
+      if (uniqueValidClauses.length > 0) {
+        sendEvent('clauses_batch', {
+          newClauses: uniqueValidClauses,
+          totalSoFar: allClauses.length,
+          batchIndex: currentBatchIndex,
+          totalBatches: batches.length
+        });
+      }
+
+      return uniqueValidClauses;
+    };
 
     for (const batch of batches) {
       batchIndex++;
@@ -2629,69 +2716,41 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       });
 
       try {
-        // GPT-Segmentierung für diesen Batch
-        const batchClauses = await clauseParser.gptSegmentClausesBatch(batch, contract.name || '');
+        // GPT-Segmentierung mit Retry und exponentiellem Backoff
+        const batchClauses = await retryWithBackoff(
+          () => clauseParser.gptSegmentClausesBatch(batch, contract.name || ''),
+          2, 1000
+        );
 
-        // Gültige Klauseln filtern und mit Risk-Assessment + NonAnalyzable-Check versehen
-        const validClauses = batchClauses
-          .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
-          .map((clause, idx) => {
-            const riskAssessment = clauseParser.assessClauseRisk(clause.text);
-            // Prüfe ob Klausel analysierbar ist (Titel, Metadaten, Unterschriften = nicht analysierbar)
-            const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
-
-            return {
-              id: clause.id || `clause_stream_${allClauses.length + idx + 1}`,
-              number: clause.number || `${allClauses.length + idx + 1}`,
-              title: clause.title || null,
-              text: clause.text,
-              type: clause.type || 'paragraph',
-              riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
-              riskScore: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score,
-              // FIX: riskKeywords als String-Array für MongoDB-Kompatibilität
-              riskKeywords: analyzableCheck.nonAnalyzable ? [] :
-                (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
-              riskIndicators: {
-                level: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
-                // FIX: Keywords auch als Strings für MongoDB-Kompatibilität
-                keywords: analyzableCheck.nonAnalyzable ? [] :
-                  (riskAssessment.keywords || []).map(k => typeof k === 'string' ? k : k.keyword),
-                score: analyzableCheck.nonAnalyzable ? 0 : riskAssessment.score
-              },
-              // Neue Felder für nicht-analysierbare Klauseln
-              nonAnalyzable: analyzableCheck.nonAnalyzable,
-              nonAnalyzableReason: analyzableCheck.reason,
-              clauseCategory: analyzableCheck.category  // 'clause', 'title', 'metadata', 'signature'
-            };
-          });
-
-        // Cross-Batch-Deduplizierung: Nur Klauseln mit neuem Text-Hash behalten
-        const uniqueValidClauses = validClauses.filter(c => {
-          const normalized = (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
-          const hash = clauseParser.generateHash(normalized);
-          if (existingTextHashes.has(hash)) {
-            console.log(`[Dedup] Cross-Batch Duplikat entfernt: "${(c.text || '').substring(0, 50)}..."`);
-            return false;
-          }
-          existingTextHashes.add(hash);
-          return true;
-        });
-
-        allClauses = [...allClauses, ...uniqueValidClauses];
-
-        // Neue Klauseln direkt streamen!
-        if (uniqueValidClauses.length > 0) {
-          sendEvent('clauses_batch', {
-            newClauses: uniqueValidClauses,
-            totalSoFar: allClauses.length,
-            batchIndex,
-            totalBatches: batches.length
-          });
-        }
+        const validClauses = processBatchClauses(batchClauses);
+        deduplicateAndStream(validClauses, batchIndex);
 
       } catch (batchError) {
-        console.error(`❌ [Legal Lens] Batch ${batchIndex} Fehler:`, batchError.message);
-        sendEvent('warning', { message: `Batch ${batchIndex} konnte nicht analysiert werden` });
+        console.error(`[Legal Lens] Batch ${batchIndex} fehlgeschlagen nach Retries:`, batchError.message);
+        failedBatchCount++;
+
+        // Split-Fallback: Batch halbieren und Hälften einzeln versuchen
+        if (batch.length > 3) {
+          console.log(`[Legal Lens] Split-Fallback: Teile Batch ${batchIndex} (${batch.length} Blöcke) in 2 Hälften`);
+          const mid = Math.floor(batch.length / 2);
+          const halves = [batch.slice(0, mid), batch.slice(mid)];
+
+          for (let halfIdx = 0; halfIdx < halves.length; halfIdx++) {
+            try {
+              const halfClauses = await clauseParser.gptSegmentClausesBatch(halves[halfIdx], contract.name || '');
+              const validHalfClauses = processBatchClauses(halfClauses);
+              deduplicateAndStream(validHalfClauses, batchIndex);
+              console.log(`[Legal Lens] Split-Hälfte ${halfIdx + 1}/2 erfolgreich: ${validHalfClauses.length} Klauseln`);
+            } catch (halfError) {
+              console.error(`[Legal Lens] Split-Hälfte ${halfIdx + 1}/2 fehlgeschlagen:`, halfError.message);
+              sendEvent('warning', {
+                message: `Teil von Batch ${batchIndex} konnte nicht analysiert werden`
+              });
+            }
+          }
+        } else {
+          sendEvent('warning', { message: `Batch ${batchIndex} konnte nicht analysiert werden` });
+        }
       }
 
       // Kleine Pause zwischen Batches
@@ -2711,19 +2770,73 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Zähle "gerettete" Klauseln
     const recoveredCount = allClauses.filter(c => c.recovered).length;
 
-    console.log(`📊 [Coverage] Text: ${textCoveragePercent}% (${extractedTextLength}/${originalTextLength} Zeichen)`);
-    console.log(`📊 [Coverage] Blöcke: ${blockCoveragePercent}% (${allClauses.length}/${rawBlocks.length})`);
+    console.log(`[Coverage] Text: ${textCoveragePercent}% (${extractedTextLength}/${originalTextLength} Zeichen)`);
+    console.log(`[Coverage] Blöcke: ${blockCoveragePercent}% (${allClauses.length}/${rawBlocks.length})`);
+    if (failedBatchCount > 0) {
+      console.log(`[Coverage] ${failedBatchCount} Batches fehlgeschlagen (Split-Fallback wurde versucht)`);
+    }
     if (recoveredCount > 0) {
-      console.log(`📊 [Coverage] ${recoveredCount} Klauseln wurden aus verwaisten Blöcken gerettet`);
+      console.log(`[Coverage] ${recoveredCount} Klauseln wurden aus verwaisten Blöcken gerettet`);
     }
 
+    // ===== ORPHAN BLOCK RECOVERY (Phase 6) =====
+    // Bei niedriger Coverage und fehlgeschlagenen Batches: verwaiste Blöcke retten
+    if (textCoveragePercent < 80 && failedBatchCount > 0) {
+      console.log(`[Recovery] Coverage ${textCoveragePercent}% mit ${failedBatchCount} fehlgeschlagenen Batches - starte Orphan-Recovery`);
+      sendEvent('status', { message: 'Versuche fehlende Abschnitte zu retten...', progress: 87 });
+
+      // Finde Blöcke, die nicht in Klauseln vorkommen (via Text-Matching)
+      const coveredTexts = new Set(
+        allClauses.map(c => (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 100))
+      );
+
+      const orphanBlocks = rawBlocks.filter(block => {
+        const blockSnippet = (block.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 100);
+        // Block gilt als verwaist wenn kein Klausel-Text damit beginnt
+        return !coveredTexts.has(blockSnippet) &&
+          !allClauses.some(c => (c.text || '').toLowerCase().includes(blockSnippet.substring(0, 50)));
+      });
+
+      if (orphanBlocks.length > 0) {
+        console.log(`[Recovery] ${orphanBlocks.length} verwaiste Blöcke gefunden, versuche Rettung...`);
+        try {
+          const recovered = await retryWithBackoff(
+            () => clauseParser.gptSegmentClausesBatch(orphanBlocks, contract.name || ''),
+            1, 2000
+          );
+
+          const recoveredClauses = processBatchClauses(recovered).map(c => ({
+            ...c,
+            recovered: true
+          }));
+
+          const uniqueRecovered = deduplicateAndStream(recoveredClauses, batches.length + 1);
+          console.log(`[Recovery] ${uniqueRecovered.length} Klauseln aus verwaisten Blöcken gerettet`);
+        } catch (recoveryError) {
+          console.error('[Recovery] Orphan-Recovery fehlgeschlagen:', recoveryError.message);
+        }
+      }
+
+      // Recalculate coverage after recovery
+      const newExtractedLength = allClauses.reduce((sum, c) => sum + (c.text?.length || 0), 0);
+      const newCoveragePercent = Math.round((newExtractedLength / originalTextLength) * 100);
+      if (newCoveragePercent > textCoveragePercent) {
+        console.log(`[Recovery] Coverage verbessert: ${textCoveragePercent}% → ${newCoveragePercent}%`);
+      }
+    }
+
+    // Recalculate final coverage (may have changed after recovery)
+    const finalExtractedLength = allClauses.reduce((sum, c) => sum + (c.text?.length || 0), 0);
+    const finalTextCoverage = Math.round((finalExtractedLength / originalTextLength) * 100);
+    const finalRecoveredCount = allClauses.filter(c => c.recovered).length;
+
     // Warnung bei niedriger Coverage
-    if (textCoveragePercent < 80) {
-      console.warn(`⚠️ [Coverage] WARNUNG: Nur ${textCoveragePercent}% des Textes wurde erfasst!`);
+    if (finalTextCoverage < 80) {
+      console.warn(`[Coverage] WARNUNG: Nur ${finalTextCoverage}% des Textes wurde erfasst!`);
       sendEvent('warning', {
         type: 'low_coverage',
-        message: `Hinweis: ${textCoveragePercent}% des Vertragstextes wurden analysiert. Einige Abschnitte könnten fehlen.`,
-        textCoverage: textCoveragePercent,
+        message: `Hinweis: ${finalTextCoverage}% des Vertragstextes wurden analysiert. Einige Abschnitte könnten fehlen.`,
+        textCoverage: finalTextCoverage,
         blockCoverage: blockCoveragePercent
       });
     }
@@ -2753,11 +2866,12 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
               batchCount: batches.length,
               // Coverage-Metriken für Qualitätssicherung
               coverage: {
-                textPercent: textCoveragePercent,
+                textPercent: finalTextCoverage,
                 blockPercent: blockCoveragePercent,
                 originalLength: originalTextLength,
-                extractedLength: extractedTextLength,
-                recoveredClauses: recoveredCount
+                extractedLength: finalExtractedLength,
+                recoveredClauses: finalRecoveredCount,
+                failedBatches: failedBatchCount
               }
             },
             'legalLens.preprocessStatus': 'completed',
@@ -2785,10 +2899,11 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       riskSummary,
       source: 'streaming',
       coverage: {
-        textPercent: textCoveragePercent,
+        textPercent: finalTextCoverage,
         blockPercent: blockCoveragePercent,
-        recoveredClauses: recoveredCount,
-        verified: textCoveragePercent >= 80
+        recoveredClauses: finalRecoveredCount,
+        failedBatches: failedBatchCount,
+        verified: finalTextCoverage >= 80
       }
     });
 

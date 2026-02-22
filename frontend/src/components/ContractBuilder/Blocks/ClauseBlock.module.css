@@ -173,7 +173,7 @@
 .clause.indented .clauseBody {
   margin-left: 32px;
   padding-left: 16px;
-  border-left: 2px solid #e2e8f0;
+  border-left: 2px solid var(--accent-color, #3182ce);
 }
 
 .clause.indented .subclauses {
@@ -185,8 +185,8 @@
    ============================================ */
 
 .clause.boxed {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--background-secondary, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   padding: 16px 20px;
   margin: 16px 0;
@@ -194,7 +194,7 @@
 
 .clause.boxed.selected {
   background: #f0f9ff;
-  border-color: #3182ce;
+  border-color: var(--accent-color, #3182ce);
   margin: 16px 0;
   padding: 16px 20px;
 }
@@ -202,11 +202,11 @@
 .clause.boxed .clauseHeader {
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
 }
 
 .clause.boxed .clauseNumber {
-  color: #3182ce;
+  color: var(--accent-color, #3182ce);
 }
 
 .clause.boxed .subclauses {

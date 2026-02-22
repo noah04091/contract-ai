@@ -132,6 +132,9 @@ export interface BlockContent {
   witnesses?: number;
   // Preamble
   preambleText?: string;
+  preambleLayout?: 'accent-bar' | 'bordered' | 'minimal' | 'quote';
+  // Definitions Layout
+  definitionsLayout?: 'card' | 'table' | 'inline' | 'numbered';
   // Attachment (Legacy - einzelne Datei, für Abwärtskompatibilität)
   attachmentTitle?: string;
   attachmentDescription?: string;
@@ -1735,6 +1738,18 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
                 case 'cover':
                   block.content.coverLayout = template.coverLayout;
                   block.content.coverAccentColor = template.design?.accentColor;
+                  break;
+                case 'header':
+                  block.content.headerLayout = template.headerLayout;
+                  if (template.design?.accentColor) {
+                    block.content.dividerColor = template.design.accentColor;
+                  }
+                  break;
+                case 'preamble':
+                  block.content.preambleLayout = template.preambleLayout;
+                  break;
+                case 'definitions':
+                  block.content.definitionsLayout = template.definitionsLayout;
                   break;
                 case 'clause':
                   block.content.clauseLayout = template.clauseLayout;

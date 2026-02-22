@@ -1,9 +1,12 @@
 /**
- * PreambleBlock Styles
+ * PreambleBlock Styles - 4 Layout-Varianten
  */
 
+/* ============================================
+ * BASE (shared)
+ * ============================================ */
+
 .preamble {
-  /* Text-Eigenschaften werden vom Wrapper geerbt */
   text-align: inherit;
   font-family: inherit;
   font-size: inherit;
@@ -12,14 +15,22 @@
   letter-spacing: inherit;
   color: inherit;
   margin: 20px 0;
-  padding: 16px;
-  background: #f8fafc;
-  border-left: 3px solid var(--accent-color, #3182ce);
-  border-radius: 0 8px 8px 0;
 }
 
 .preamble.selected {
-  background: rgba(49, 130, 206, 0.08);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+}
+
+/* ============================================
+ * LAYOUT: accent-bar (default)
+ * ============================================ */
+
+.accentBar {
+  padding: 16px;
+  background: var(--background-secondary, #f8fafc);
+  border-left: 3px solid var(--accent-color, #3182ce);
+  border-radius: 0 8px 8px 0;
 }
 
 .preambleHeader {
@@ -35,7 +46,6 @@
 }
 
 .preambleContent {
-  /* Erbt vom Parent */
   font-size: inherit;
   font-weight: inherit;
   color: inherit;
@@ -51,7 +61,148 @@
   white-space: pre-wrap;
 }
 
-/* Inline Editing Styles */
+/* ============================================
+ * LAYOUT: bordered
+ * ============================================ */
+
+.bordered {
+  padding: 20px 24px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 4px;
+  background: none;
+}
+
+.borderedHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.borderedLine {
+  flex: 1;
+  height: 1px;
+  background: var(--border-color, #e2e8f0);
+}
+
+.borderedTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-color, #1a365d);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.borderedContent {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: center;
+}
+
+.borderedContent p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ============================================
+ * LAYOUT: minimal
+ * ============================================ */
+
+.minimal {
+  padding: 12px 0;
+  background: none;
+  border: none;
+}
+
+.minimalHeader {
+  margin-bottom: 8px;
+}
+
+.minimalTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #4a4a4a);
+  font-variant: small-caps;
+  letter-spacing: 0.08em;
+}
+
+.minimalContent {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  font-style: italic;
+}
+
+.minimalContent p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ============================================
+ * LAYOUT: quote
+ * ============================================ */
+
+.quote {
+  padding: 24px 32px;
+  background: none;
+  border: none;
+  position: relative;
+  text-align: center;
+}
+
+.quoteContent {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  font-family: inherit;
+  line-height: 1.8;
+  letter-spacing: inherit;
+  text-align: center;
+  font-style: italic;
+  position: relative;
+  padding: 16px 8px;
+}
+
+.quoteContent::before {
+  content: '\201C';
+  display: block;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--accent-color, #3182ce);
+  opacity: 0.6;
+  font-style: normal;
+  margin-bottom: 4px;
+}
+
+.quoteContent::after {
+  content: '\201D';
+  display: block;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--accent-color, #3182ce);
+  opacity: 0.6;
+  font-style: normal;
+  margin-top: 4px;
+}
+
+.quoteContent p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* ============================================
+ * INLINE EDITING (shared)
+ * ============================================ */
+
 .editable {
   cursor: text;
   border-radius: 4px;

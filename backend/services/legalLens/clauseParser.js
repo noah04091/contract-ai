@@ -11,6 +11,15 @@
 const crypto = require('crypto');
 const OpenAI = require('openai');
 
+// Structured logger - debug output only when LEGAL_LENS_DEBUG=true
+const DEBUG = process.env.LEGAL_LENS_DEBUG === 'true';
+const log = {
+  debug: (...args) => DEBUG && console.log('[LegalLens]', ...args),
+  info: (...args) => console.log('[LegalLens]', ...args),
+  warn: (...args) => console.warn('[LegalLens]', ...args),
+  error: (...args) => console.error('[LegalLens]', ...args)
+};
+
 // OpenAI Client für GPT-Segmentierung
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -60,6 +69,18 @@ class ClauseParser {
       ]
     };
 
+    // Pre-compiled regex patterns for word-boundary matching in risk assessment
+    this.riskPatterns = {};
+    for (const [severity, keywords] of Object.entries(this.riskKeywords)) {
+      this.riskPatterns[severity] = keywords.map(keyword => ({
+        keyword,
+        regex: keyword.includes(' ')
+          ? new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+          : new RegExp(`(?:^|[\\s,.;:!?()\\[\\]"'„"«»])${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$|[\\s,.;:!?()\\[\\]"'„"«»])`, 'gi'),
+        severity
+      }));
+    }
+
     // Paragraph-Erkennungsmuster
     this.paragraphPatterns = [
       // § 1, § 2.1, § 3 Absatz 2
@@ -91,8 +112,8 @@ class ClauseParser {
    * @returns {Object} Strukturierte Klauseln mit Metadaten
    */
   parseContract(text, options = {}) {
-    console.log('📜 Legal Lens: Starte Clause Parsing...');
-    console.log(`📊 Text-Länge: ${text.length} Zeichen`);
+    log.info('Starte Clause Parsing...');
+    log.debug(`Text-Länge: ${text.length} Zeichen`);
 
     // Optionen mit Defaults
     const {
@@ -107,7 +128,7 @@ class ClauseParser {
 
     // Schritt 1: Erkenne Sektionen und Paragraphen
     const sections = this.extractSections(cleanedText);
-    console.log(`📁 ${sections.length} Sektionen erkannt`);
+    log.debug(`${sections.length} Sektionen erkannt`);
 
     // Schritt 2: Extrahiere Klauseln aus jeder Sektion
     const clauses = [];
@@ -140,7 +161,7 @@ class ClauseParser {
       }
     }
 
-    console.log(`✅ ${clauses.length} Klauseln extrahiert`);
+    log.info(`${clauses.length} Klauseln extrahiert`);
 
     // Risiko-Zusammenfassung
     const riskSummary = this.calculateRiskSummary(clauses);
@@ -507,8 +528,7 @@ class ClauseParser {
     const lowerText = trimmedText.toLowerCase();
     const lowerTitle = (title || '').toLowerCase();
 
-    // DEBUG: Logging für Diagnose
-    console.log(`[detectNonAnalyzable] title="${title}", text="${trimmedText.substring(0, 50)}...", lowerTitle="${lowerTitle}"`);
+    log.debug(`[detectNonAnalyzable] title="${title}", text="${trimmedText.substring(0, 50)}...", lowerTitle="${lowerTitle}"`);
 
     // ===== ESCAPE HATCHES - IMMER ANALYSIERBAR =====
     // Diese Keywords bedeuten: Klausel ist IMMER relevant, auch wenn kurz!
@@ -523,6 +543,21 @@ class ClauseParser {
       'gewährleistung', 'garantie', 'mängel',
       'geheimhaltung', 'vertraulich', 'datenschutz',
       'wettbewerb', 'konkurrenz',
+      // Zuständigkeit & Gerichtsstand
+      'erfüllungsort', 'leistungsort',
+      'zuständig', 'zuständigkeit',
+      'schriftform', 'textform',
+      'salvatorisch',
+      'abtretung', 'übertragung',
+      'nebenabreden',
+      'schlussbestimmung',
+      'mitteilung', 'zustellung',
+      'aufrechnung', 'zurückbehaltung',
+      'streitigkeiten', 'streitigkeit',
+      'schiedsgericht', 'schlichtung', 'mediation',
+      'rechtswahl', 'rechtsordnung',
+      'insolvenz', 'zahlungsunfähig',
+      'verbot', 'untersagt',
       // Paragraph-Referenzen
       '§', 'abs.', 'absatz', 'ziffer', 'artikel', 'gemäß', 'nach maßgabe',
       // Vertragsbestandteile
@@ -536,31 +571,30 @@ class ClauseParser {
     );
 
     if (hasRelevantContent) {
-      console.log(`[detectNonAnalyzable] ESCAPE: Relevanter Inhalt gefunden für "${title}" - bleibt analysierbar`);
+      log.debug(`[detectNonAnalyzable] ESCAPE: Relevanter Inhalt für "${title}" - bleibt analysierbar`);
       return { nonAnalyzable: false, reason: null, category: 'clause' };
     }
 
     // ===== TITEL-BASIERTE ERKENNUNG (Priorität!) =====
     // Wenn der Titel eindeutig auf nicht-analysierbar hindeutet
 
-    // Titel ist "Vertragsname", "Vertragstitel" oder ähnlich
+    // Titel ist "Vertragsname", "Vertragstitel" oder ähnlich (exakte Matches)
     if (lowerTitle === 'vertragsname' || lowerTitle === 'vertragstitel' ||
-        lowerTitle === 'titel' || lowerTitle === 'name' ||
-        lowerTitle.includes('vertragsname') || lowerTitle.includes('vertragstitel')) {
-      console.log(`[detectNonAnalyzable] MATCH: contract_title via title="${lowerTitle}"`);
+        lowerTitle === 'titel' || lowerTitle === 'name') {
+      log.debug(`[detectNonAnalyzable] MATCH: contract_title via title="${lowerTitle}"`);
       return { nonAnalyzable: true, reason: 'contract_title', category: 'title' };
     }
 
     // Titel enthält "Vertragsparteien", "Parteien"
     if (lowerTitle === 'vertragsparteien' || lowerTitle === 'parteien' ||
         lowerTitle === 'vertragspartner' || lowerTitle.includes('vertragsparteien')) {
-      console.log(`[detectNonAnalyzable] MATCH: metadata via title="${lowerTitle}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: metadata via title="${lowerTitle}"`);
       return { nonAnalyzable: true, reason: 'contract_parties', category: 'metadata' };
     }
 
     // Titel enthält "Ort" und/oder "Datum"
     if (lowerTitle.includes('ort') && lowerTitle.includes('datum')) {
-      console.log(`[detectNonAnalyzable] MATCH: date_location via title="${lowerTitle}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: date_location via title="${lowerTitle}"`);
       return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
     }
     if (lowerTitle === 'ort und datum' || lowerTitle === 'ort, datum' || lowerTitle === 'datum und ort') {
@@ -571,7 +605,7 @@ class ClauseParser {
     if (lowerTitle.includes('unterzeichnung') || lowerTitle.includes('unterschrift') ||
         lowerTitle.includes('unterzeichner') || lowerTitle.includes('signatur') ||
         lowerTitle.includes('signature')) {
-      console.log(`[detectNonAnalyzable] MATCH: signature_field via title="${lowerTitle}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: signature_field via title="${lowerTitle}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
 
@@ -589,7 +623,7 @@ class ClauseParser {
       const signatureScore = signatureIndicators.filter(Boolean).length;
 
       if (signatureScore >= 2) {
-        console.log(`[detectNonAnalyzable] MATCH: signature_field via short text + ${signatureScore} indicators for title="${title}"`);
+        log.debug(`[detectNonAnalyzable] MATCH: signature_field via short text + ${signatureScore} indicators for title="${title}"`);
         return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
       }
 
@@ -606,19 +640,19 @@ class ClauseParser {
 
       // Bei kurzen Texten (< 100 Zeichen) mit Datum-Mustern
       if (trimmedText.length < 100 && dateLocationScore >= 2) {
-        console.log(`[detectNonAnalyzable] MATCH: date_location via short text + ${dateLocationScore} indicators for title="${title}"`);
+        log.debug(`[detectNonAnalyzable] MATCH: date_location via short text + ${dateLocationScore} indicators for title="${title}"`);
         return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
       }
     }
 
     // ===== TEXT-BASIERTE ERKENNUNG =====
 
-    // 1. Zu kurz für sinnvolle Analyse (< 30 Zeichen ohne Titel)
-    if (trimmedText.length < 30) {
+    // 1. Zu kurz für sinnvolle Analyse (< 15 Zeichen ohne Titel)
+    if (trimmedText.length < 15) {
       // Ausnahme: Wenn es wie eine echte Mini-Klausel aussieht
-      const looksLikeClause = /§|abs\.|artikel|ziffer|\d+\.\d+/.test(lowerText);
+      const looksLikeClause = /§|abs\.|artikel|ziffer|\d+\.\d+|gerichtsstand|erfüllungsort|anwendbar|recht|salvatorisch/.test(lowerText);
       if (!looksLikeClause) {
-        console.log(`[detectNonAnalyzable] MATCH: too_short (${trimmedText.length} chars) for title="${title}"`);
+        log.debug(`[detectNonAnalyzable] MATCH: too_short (${trimmedText.length} chars) for title="${title}"`);
         return { nonAnalyzable: true, reason: 'too_short', category: 'metadata' };
       }
     }
@@ -634,7 +668,7 @@ class ClauseParser {
     ];
     if (titlePatterns.some(p => p.test(trimmedText)) ||
         (trimmedText.length < 50 && lowerTitle.includes('vertragsname'))) {
-      console.log(`[detectNonAnalyzable] MATCH: contract_title via TEXT pattern for title="${title}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: contract_title via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'contract_title', category: 'title' };
     }
 
@@ -649,13 +683,22 @@ class ClauseParser {
       /^[a-zäöüß]{3,}\s+(im\s+)?(januar|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)\s+\d{4}$/i  // "München im Januar 2024"
     ];
     if (dateLocationPatterns.some(p => p.test(trimmedText))) {
-      console.log(`[detectNonAnalyzable] MATCH: date_location via TEXT pattern for title="${title}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: date_location via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
     }
-    // Kurzer Text + title enthält "ort" oder "datum" einzeln
-    if (trimmedText.length < 80 && (lowerTitle.includes('ort') || lowerTitle.includes('datum'))) {
-      console.log(`[detectNonAnalyzable] MATCH: date_location via short+title for title="${title}"`);
-      return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
+    // Kurzer Text + title enthält "ort" oder "datum" als standalone Wort
+    if (trimmedText.length < 80) {
+      const isStandaloneOrt = /\bort\b/i.test(lowerTitle) &&
+        !/erfüllungsort|leistungsort|standort|einsatzort|dienstort/i.test(lowerTitle);
+      const isStandaloneDatum = /\bdatum\b/i.test(lowerTitle) &&
+        !/vertragsdatum|startdatum|enddatum/i.test(lowerTitle);
+      if (isStandaloneOrt || isStandaloneDatum) {
+        const hasLegalContent = alwaysAnalyzableKeywords.some(kw => lowerText.includes(kw));
+        if (!hasLegalContent) {
+          log.debug(`[detectNonAnalyzable] MATCH: date_location via short+title for title="${title}"`);
+          return { nonAnalyzable: true, reason: 'date_location', category: 'metadata' };
+        }
+      }
     }
 
     // 4. Unterschriftsfelder Erkennung
@@ -674,33 +717,33 @@ class ClauseParser {
       /^(für|name|gez\.|i\.?\s*a\.?|p\.?\s*p\.?)[:\s]*$/i
     ];
     if (signaturePatterns.some(p => p.test(trimmedText))) {
-      console.log(`[detectNonAnalyzable] MATCH: signature_field via TEXT pattern for title="${title}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: signature_field via TEXT pattern for title="${title}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
     // Kurzer Text + enthält Unterschriftslinie-ähnliche Struktur
     if (trimmedText.length < 150 && trimmedText.includes('_') &&
         (lowerText.includes('auftraggeber') || lowerText.includes('auftragnehmer') ||
          lowerText.includes('steuerberater') || lowerText.includes('unterschrift'))) {
-      console.log(`[detectNonAnalyzable] MATCH: signature_field via underscore+keyword for title="${title}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: signature_field via underscore+keyword for title="${title}"`);
       return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
     }
 
     // 5. Reine Kontaktdaten/Adressen (ohne rechtlichen Inhalt)
     const onlyAddressPattern = /^[a-zäöüß\s\.\-]+\s*\n?\s*(str\.|straße|weg|platz|gasse)?\s*\d+[a-z]?\s*\n?\s*\d{5}\s+[a-zäöüß\s\-]+$/i;
     if (onlyAddressPattern.test(trimmedText) && trimmedText.length < 150) {
-      console.log(`[detectNonAnalyzable] MATCH: address_only for title="${title}"`);
+      log.debug(`[detectNonAnalyzable] MATCH: address_only for title="${title}"`);
       return { nonAnalyzable: true, reason: 'address_only', category: 'metadata' };
     }
 
     // 6. Seitenzahlen, Header/Footer
     const pagePattern = /^(seite\s*)?\d+(\s*(von|\/)\s*\d+)?$/i;
     if (pagePattern.test(trimmedText)) {
-      console.log(`[detectNonAnalyzable] MATCH: page_number via text pattern`);
+      log.debug(`[detectNonAnalyzable] MATCH: page_number via text pattern`);
       return { nonAnalyzable: true, reason: 'page_number', category: 'metadata' };
     }
 
     // Analysierbar - DEBUG: Log dass Klausel als analysierbar eingestuft wurde
-    console.log(`[detectNonAnalyzable] RESULT: analyzable=true for title="${title}"`);
+    log.debug(`[detectNonAnalyzable] RESULT: analyzable=true for title="${title}"`);
     return { nonAnalyzable: false, reason: null, category: 'clause' };
   }
 
@@ -712,42 +755,32 @@ class ClauseParser {
     if (!text || typeof text !== 'string') {
       return { level: 'low', score: 0, keywords: [] };
     }
-    const lowerText = text.toLowerCase();
+    const lowerText = ' ' + text.toLowerCase() + ' '; // Pad for word-boundary matching
     let score = 0;
     const foundKeywords = [];
+    const foundSet = new Set();
 
-    // High-Risk Keywords (+25 Punkte)
-    for (const keyword of this.riskKeywords.high) {
-      if (lowerText.includes(keyword)) {
-        score += 25;
-        foundKeywords.push({ keyword, severity: 'high' });
+    // Word-boundary matching using pre-compiled regex patterns
+    const pointsMap = { high: 25, medium: 10, low: 2 };
+    for (const [severity, patterns] of Object.entries(this.riskPatterns)) {
+      const points = pointsMap[severity] || 2;
+      for (const { keyword, regex } of patterns) {
+        regex.lastIndex = 0; // Reset regex state
+        if (!foundSet.has(keyword) && regex.test(lowerText)) {
+          score += points;
+          foundKeywords.push({ keyword, severity });
+          foundSet.add(keyword);
+        }
       }
     }
 
-    // Medium-Risk Keywords (+10 Punkte)
-    for (const keyword of this.riskKeywords.medium) {
-      if (lowerText.includes(keyword)) {
-        score += 10;
-        foundKeywords.push({ keyword, severity: 'medium' });
-      }
-    }
+    // Bonus for short clauses with risk keywords (concentrated risk)
+    if (text.length < 100 && foundKeywords.length > 0) score += 5;
 
-    // Low-Risk Keywords (+2 Punkte)
-    for (const keyword of this.riskKeywords.low) {
-      if (lowerText.includes(keyword)) {
-        score += 2;
-        foundKeywords.push({ keyword, severity: 'low' });
-      }
-    }
-
-    // Zusätzliche Faktoren
-    // Lange Klauseln sind oft komplexer
-    if (text.length > 500) score += 5;
-    if (text.length > 1000) score += 10;
-
-    // Viele Verneinungen können problematisch sein
-    const negations = (lowerText.match(/\b(nicht|kein|keine|keinen|ohne|niemals|ausgeschlossen)\b/g) || []).length;
-    score += negations * 5;
+    // Negation scoring - unique count, capped at 15
+    const negations = (lowerText.match(/\b(nicht|kein|keine|keinen|ohne|niemals|ausgeschlossen)\b/g) || []);
+    const uniqueNegations = new Set(negations).size;
+    score += Math.min(uniqueNegations * 5, 15);
 
     // Begrenzen auf 0-100
     score = Math.min(100, Math.max(0, score));
@@ -866,8 +899,8 @@ class ClauseParser {
    * 2. GPT-basierte semantische Segmentierung
    */
   async parseContractIntelligent(text, options = {}) {
-    console.log('🧠 [Legal Lens] Starte INTELLIGENTE Klausel-Extraktion...');
-    console.log(`📊 Text-Länge: ${text.length} Zeichen`);
+    log.debug('🧠 [Legal Lens] Starte INTELLIGENTE Klausel-Extraktion...');
+    log.debug(`📊 Text-Länge: ${text.length} Zeichen`);
 
     const {
       detectRisk = true,
@@ -876,31 +909,31 @@ class ClauseParser {
     } = options;
 
     // ===== STUFE 1: Technische Vorverarbeitung =====
-    console.log('📋 Stufe 1: Technische Vorverarbeitung...');
+    log.debug('📋 Stufe 1: Technische Vorverarbeitung...');
 
     // 1a. Grundlegende Textbereinigung
     let cleanedText = this.preprocessText(text, { isOCR });
 
     // 1b. Header/Footer entfernen (wiederkehrende Textblöcke)
     const { text: filteredText, removedBlocks } = this.removeHeaderFooter(cleanedText);
-    console.log(`🗑️ ${removedBlocks.length} Header/Footer-Blöcke entfernt`);
+    log.debug(`🗑️ ${removedBlocks.length} Header/Footer-Blöcke entfernt`);
 
     // 1c. Text in grobe Blöcke aufteilen (mit Position-Tracking)
     const rawBlocks = this.createTextBlocks(filteredText);
-    console.log(`📦 ${rawBlocks.length} Roh-Blöcke erstellt`);
+    log.debug(`📦 ${rawBlocks.length} Roh-Blöcke erstellt`);
 
     // ===== STUFE 2: GPT-basierte Segmentierung =====
-    console.log('🧠 Stufe 2: GPT-Segmentierung...');
+    log.debug('🧠 Stufe 2: GPT-Segmentierung...');
 
     const gptClauses = await this.gptSegmentClauses(rawBlocks, contractName);
-    console.log(`✅ GPT hat ${gptClauses.length} Klauseln identifiziert`);
+    log.debug(`✅ GPT hat ${gptClauses.length} Klauseln identifiziert`);
 
     // ===== Nachbearbeitung =====
     // FIX: Filtere ungültige Klauseln (null/undefined/leerer Text)
     const validClauses = gptClauses.filter(clause =>
       clause && clause.text && typeof clause.text === 'string' && clause.text.trim().length > 0
     );
-    console.log(`📋 ${validClauses.length} gültige Klauseln nach Filterung`);
+    log.debug(`📋 ${validClauses.length} gültige Klauseln nach Filterung`);
 
     const clauses = validClauses.map((clause, index) => {
       // Risiko-Vorbewertung
@@ -977,8 +1010,6 @@ class ClauseParser {
       /Seite\s+\d+\s+von\s+\d+/gi,
       // Dateiname-Wiederholungen
       /\d{6}\s+\w+\s+-\s+DE\s+–\s+\d{2}\/\d{2}\/\d{4}\s+V[\d.]+/g,
-      // Dokument-Header mit Adresse (erscheint auf jeder Seite)
-      /GRENKEFACTORING GmbH\s+Neuer Markt 2[\s\S]*?Handelsregister Nr\.\s*\d+/g,
       // Ausdruck vom Datum
       /Ausdruck vom \d{2}\.\d{2}\.\d{4}/g,
       // Dateinamen
@@ -1023,7 +1054,7 @@ class ClauseParser {
         const lowerLine = line.toLowerCase();
         const isLikelyLegalContent = legalKeywords.some(kw => lowerLine.includes(kw));
         if (isLikelyLegalContent) {
-          console.log(`[Header/Footer] Behalte wiederholte Zeile mit Legal-Content: "${line.substring(0, 60)}..."`);
+          log.debug(`[Header/Footer] Behalte wiederholte Zeile mit Legal-Content: "${line.substring(0, 60)}..."`);
           continue; // Nicht entfernen
         }
         repeatedLines.push(line);
@@ -1135,7 +1166,7 @@ class ClauseParser {
       // Mindestens 15 Blöcke pro Batch (halbe Batch-Größe)
       for (let i = idealEnd; i > startIdx + 15; i--) {
         if (blocksForGPT[i].isStructuralStart) {
-          console.log(`📍 Batch-Trennung bei Block ${i} (struktureller Start)`);
+          log.debug(`📍 Batch-Trennung bei Block ${i} (struktureller Start)`);
           return i;
         }
       }
@@ -1150,7 +1181,7 @@ class ClauseParser {
       const batchEnd = findBatchEnd(i);
       const batchBlocks = blocksForGPT.slice(i, batchEnd);
       batchNum++;
-      console.log(`📦 Batch ${batchNum}: Blöcke ${i + 1} bis ${batchEnd} (${batchBlocks.length} Blöcke)`);
+      log.debug(`📦 Batch ${batchNum}: Blöcke ${i + 1} bis ${batchEnd} (${batchBlocks.length} Blöcke)`);
 
       const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
 
@@ -1212,7 +1243,7 @@ Antworte NUR mit einem JSON-Array:
 
           // Fallback: GPT hat 0 Klauseln zurückgegeben
           if (clausesArray.length === 0 && batchBlocks.length > 0) {
-            console.warn(`⚠️ GPT returned 0 clauses for ${batchBlocks.length} blocks - block-per-clause fallback`);
+            log.warn(`⚠️ GPT returned 0 clauses for ${batchBlocks.length} blocks - block-per-clause fallback`);
             for (const block of batchBlocks) {
               if (block.text && block.text.trim().length > 10) {
                 clausesArray.push({
@@ -1253,8 +1284,8 @@ Antworte NUR mit einem JSON-Array:
             }
           }
         } catch (parseError) {
-          console.error('⚠️ GPT JSON Parse Error:', parseError.message);
-          console.log('Raw response:', content.substring(0, 500));
+          log.error('⚠️ GPT JSON Parse Error:', parseError.message);
+          log.debug('Raw response:', content.substring(0, 500));
 
           // Fallback: Behandle jeden Block als eigene Klausel
           for (const block of batchBlocks) {
@@ -1273,10 +1304,10 @@ Antworte NUR mit einem JSON-Array:
           }
         }
       } catch (apiError) {
-        console.error('❌ GPT API Error:', apiError.message);
+        log.error('❌ GPT API Error:', apiError.message);
 
         // Fallback: Verwende regelbasierten Parser
-        console.log('⚠️ Fallback auf regelbasierten Parser...');
+        log.warn('⚠️ Fallback auf regelbasierten Parser...');
         for (const block of batchBlocks) {
           const clauseId = `fallback_${block.id}`;
           if (!processedClauseIds.has(clauseId)) {
@@ -1341,7 +1372,7 @@ Antworte NUR mit einem JSON-Array:
 
     // Wenn zu viele Tokens, reduziere Text pro Block
     if (estimatedTokens > MAX_INPUT_TOKENS) {
-      console.warn(`⚠️ [Token-Limit] Batch zu groß (${estimatedTokens} Tokens), reduziere Text pro Block...`);
+      log.debug(`⚠️ [Token-Limit] Batch zu groß (${estimatedTokens} Tokens), reduziere Text pro Block...`);
 
       blocksForGPT = blocks.map(b => ({
         id: b.id,
@@ -1354,12 +1385,12 @@ Antworte NUR mit einem JSON-Array:
       totalChars = blocksForGPT.reduce((sum, b) => sum + b.text.length, 0);
       estimatedTokens = this.estimateTokens(totalChars);
 
-      console.log(`✅ [Token-Limit] Reduziert auf ${estimatedTokens} Tokens`);
+      log.debug(`✅ [Token-Limit] Reduziert auf ${estimatedTokens} Tokens`);
     }
 
     // Finale Warnung wenn immer noch zu groß
     if (estimatedTokens > MAX_INPUT_TOKENS) {
-      console.error(`❌ [Token-Limit] Batch immer noch zu groß (${estimatedTokens} Tokens), einige Blöcke werden übersprungen!`);
+      log.error(`❌ [Token-Limit] Batch immer noch zu groß (${estimatedTokens} Tokens), einige Blöcke werden übersprungen!`);
       // Nimm nur die ersten N Blöcke die ins Limit passen
       let currentTokens = 0;
       const safeBlocks = [];
@@ -1369,7 +1400,7 @@ Antworte NUR mit einem JSON-Array:
           safeBlocks.push(block);
           currentTokens += blockTokens;
         } else {
-          console.warn(`⚠️ [Token-Limit] Block ${block.id} übersprungen (würde Limit überschreiten)`);
+          log.warn(`⚠️ [Token-Limit] Block ${block.id} übersprungen (würde Limit überschreiten)`);
         }
       }
       blocksForGPT = safeBlocks;
@@ -1424,7 +1455,7 @@ Antworte NUR mit einem JSON-Array:
 
       // ===== FALLBACK: GPT hat 0 Klauseln zurückgegeben =====
       if (clausesArray.length === 0 && blocks.length > 0) {
-        console.warn(`⚠️ GPT returned 0 clauses for ${blocks.length} blocks - block-per-clause fallback`);
+        log.warn(`⚠️ GPT returned 0 clauses for ${blocks.length} blocks - block-per-clause fallback`);
         for (const block of blocks) {
           if (block.text && block.text.trim().length > 10) {
             clausesArray.push({
@@ -1467,13 +1498,13 @@ Antworte NUR mit einem JSON-Array:
       const orphanedBlocks = blocks.filter(b => !coveredBlockIds.has(b.id));
 
       if (orphanedBlocks.length > 0) {
-        console.log(`⚠️ [Coverage] ${orphanedBlocks.length} von ${blocks.length} Blöcken wurden von GPT nicht erfasst!`);
+        log.debug(`⚠️ [Coverage] ${orphanedBlocks.length} von ${blocks.length} Blöcken wurden von GPT nicht erfasst!`);
 
         // Erstelle Klauseln für verwaiste Blöcke
         for (const orphan of orphanedBlocks) {
           // Nur wenn Block substantiellen Text hat (nicht nur Whitespace)
           if (orphan.text && orphan.text.trim().length > 10) {
-            console.log(`📥 [Coverage] Füge verwaisten Block hinzu: "${orphan.text.substring(0, 50)}..."`);
+            log.debug(`📥 [Coverage] Füge verwaisten Block hinzu: "${orphan.text.substring(0, 50)}..."`);
             clausesArray.push({
               id: `recovered_${orphan.id}`,
               title: null,
@@ -1490,7 +1521,7 @@ Antworte NUR mit einem JSON-Array:
 
       // Log Coverage Statistics
       const coveragePercent = Math.round((coveredBlockIds.size / blocks.length) * 100);
-      console.log(`✅ [Coverage] ${coveragePercent}% der Blöcke erfasst (${coveredBlockIds.size}/${blocks.length})`);
+      log.debug(`✅ [Coverage] ${coveragePercent}% der Blöcke erfasst (${coveredBlockIds.size}/${blocks.length})`);
 
       // ===== TEXT-BASIERTE DEDUPLIZIERUNG =====
       // Entfernt Duplikate die durch Orphaned-Block-Recovery oder GPT-Überlappung entstehen
@@ -1506,18 +1537,18 @@ Antworte NUR mit einem JSON-Array:
           seenTextHashes.add(textHash);
           deduplicatedClauses.push(clause);
         } else {
-          console.log(`[Dedup] Duplikat entfernt: "${(clause.text || '').substring(0, 50)}..."`);
+          log.debug(`[Dedup] Duplikat entfernt: "${(clause.text || '').substring(0, 50)}..."`);
         }
       }
 
       if (deduplicatedClauses.length < clausesArray.length) {
-        console.log(`[Dedup] ${clausesArray.length - deduplicatedClauses.length} Duplikate in Batch entfernt`);
+        log.debug(`[Dedup] ${clausesArray.length - deduplicatedClauses.length} Duplikate in Batch entfernt`);
       }
 
       return deduplicatedClauses;
 
     } catch (error) {
-      console.error('❌ GPT Batch Error:', error.message);
+      log.error('❌ GPT Batch Error:', error.message);
 
       // Fallback: Jeden Block als Klausel behandeln
       return blocks.map(block => ({

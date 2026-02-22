@@ -1,6 +1,7 @@
 /**
  * PreambleBlock - Präambel / Vorwort des Vertrags
  * Unterstützt Inline-Editing per Doppelklick
+ * 4 Layout-Varianten: accent-bar (default), bordered, minimal, quote
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -21,7 +22,7 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { preambleText } = content;
+  const { preambleText, preambleLayout = 'accent-bar' } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -59,30 +60,78 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
     }
   }, [handleSave]);
 
-  return (
-    <div className={`${styles.preamble} ${isSelected ? styles.selected : ''}`}>
-      <div className={styles.preambleHeader}>
-        <span className={styles.preambleTitle}>Präambel</span>
+  const textContent = preambleText || 'Die Vertragsparteien vereinbaren Folgendes:';
+
+  const renderEditor = () => (
+    <textarea
+      ref={textareaRef}
+      value={editValue}
+      onChange={(e) => setEditValue(e.target.value)}
+      onBlur={handleSave}
+      onKeyDown={handleKeyDown}
+      className={styles.inlineTextarea}
+      rows={Math.max(3, editValue.split('\n').length)}
+    />
+  );
+
+  const renderText = () => (
+    <VariableHighlight
+      text={textContent}
+      multiline
+      isPreview={isPreview}
+      onDoubleClick={handleDoubleClick}
+    />
+  );
+
+  // Layout: accent-bar (default)
+  if (preambleLayout === 'accent-bar' || !preambleLayout) {
+    return (
+      <div className={`${styles.preamble} ${styles.accentBar} ${isSelected ? styles.selected : ''}`}>
+        <div className={styles.preambleHeader}>
+          <span className={styles.preambleTitle}>Präambel</span>
+        </div>
+        <div className={styles.preambleContent}>
+          {isEditing ? renderEditor() : renderText()}
+        </div>
       </div>
-      <div className={styles.preambleContent}>
-        {isEditing ? (
-          <textarea
-            ref={textareaRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineTextarea}
-            rows={Math.max(3, editValue.split('\n').length)}
-          />
-        ) : (
-          <VariableHighlight
-            text={preambleText || 'Die Vertragsparteien vereinbaren Folgendes:'}
-            multiline
-            isPreview={isPreview}
-            onDoubleClick={handleDoubleClick}
-          />
-        )}
+    );
+  }
+
+  // Layout: bordered
+  if (preambleLayout === 'bordered') {
+    return (
+      <div className={`${styles.preamble} ${styles.bordered} ${isSelected ? styles.selected : ''}`}>
+        <div className={styles.borderedHeader}>
+          <span className={styles.borderedLine} />
+          <span className={styles.borderedTitle}>PRÄAMBEL</span>
+          <span className={styles.borderedLine} />
+        </div>
+        <div className={styles.borderedContent}>
+          {isEditing ? renderEditor() : renderText()}
+        </div>
+      </div>
+    );
+  }
+
+  // Layout: minimal
+  if (preambleLayout === 'minimal') {
+    return (
+      <div className={`${styles.preamble} ${styles.minimal} ${isSelected ? styles.selected : ''}`}>
+        <div className={styles.minimalHeader}>
+          <span className={styles.minimalTitle}>Präambel</span>
+        </div>
+        <div className={styles.minimalContent}>
+          {isEditing ? renderEditor() : renderText()}
+        </div>
+      </div>
+    );
+  }
+
+  // Layout: quote
+  return (
+    <div className={`${styles.preamble} ${styles.quote} ${isSelected ? styles.selected : ''}`}>
+      <div className={styles.quoteContent}>
+        {isEditing ? renderEditor() : renderText()}
       </div>
     </div>
   );

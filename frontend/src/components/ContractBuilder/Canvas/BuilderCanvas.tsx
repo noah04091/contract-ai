@@ -328,8 +328,13 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     '--accent-color': design?.accentColor || '#3182ce',
     '--text-primary': design?.textPrimary || '#1a202c',
     '--text-secondary': design?.textSecondary || '#4a5568',
+    '--text-muted': design?.textMuted || '#9ca3af',
     '--font-family': design?.fontFamily || 'Inter, sans-serif',
     '--heading-font': design?.headingFont || 'Inter, sans-serif',
+    '--background-primary': design?.backgroundPrimary || '#ffffff',
+    '--background-secondary': design?.backgroundSecondary || '#f8fafc',
+    '--border-color': design?.borderColor || '#e2e8f0',
+    '--base-font-size': `${design?.baseFontSize || 13}px`,
   } as React.CSSProperties;
 
   const zoomStyle: React.CSSProperties = {
