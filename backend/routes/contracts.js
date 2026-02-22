@@ -552,7 +552,7 @@ router.updateOnboardingChecklist = updateOnboardingChecklist;
 // 🚀 V2: Gibt jetzt { contracts, totalCount } zurück - spart separaten countDocuments() Call!
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
   const Envelope = require("../models/Envelope");
-  const db = client.db("contractai");
+  const db = client.db("contract_ai");
 
   // 🚀 OPTIMIERT: Erst Count berechnen (schnell, nur $match + $count)
   const countResult = await contractsCollection.aggregate([
@@ -1217,7 +1217,7 @@ router.get('/names', verifyToken, async (req, res) => {
 router.get('/debug-company-profile', verifyToken, async (req, res) => {
   try {
     // WICHTIG: req.db verwenden (gleiche Connection wie companyProfile.js)
-    const db = req.db || client.db("contractai");
+    const db = req.db || client.db("contract_ai");
     const userId = req.user.userId;
 
     // 0. DB-Name und alle Collections auflisten
@@ -3816,7 +3816,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     // Company Profile laden (immer versuchen)
     let companyProfile = null;
     try {
-      const db = client.db("contractai");
+      const db = client.db("contract_ai");
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
@@ -3941,7 +3941,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       const db = req.db;
       if (!db) {
       }
-      const profileDb = db || client.db("contractai");
+      const profileDb = db || client.db("contract_ai");
 
       // Versuche zuerst mit ObjectId, dann mit String
       const rawProfile = await profileDb.collection("company_profiles").findOne({
@@ -4118,7 +4118,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     // Company Profile laden
     let companyProfile = null;
     try {
-      const db = req.db || client.db("contractai");
+      const db = req.db || client.db("contract_ai");
       const rawProfile = await db.collection("company_profiles").findOne({
         $or: [
           { userId: new ObjectId(req.user.userId) },
@@ -4334,7 +4334,7 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     // Company Profile laden
     let companyProfile = null;
     if (contract.hasCompanyProfile) {
-      const db = client.db("contractai");
+      const db = client.db("contract_ai");
       companyProfile = await db.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
