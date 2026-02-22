@@ -155,7 +155,7 @@ export default function AGB() {
           </nav>
 
           {/* Main Content Card */}
-          <div className={`${styles.contentCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.contentCard}>
 
             {/* 1. Geltungsbereich */}
             <section

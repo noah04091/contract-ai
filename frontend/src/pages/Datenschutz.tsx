@@ -104,7 +104,7 @@ export default function Datenschutz() {
           </header>
 
           {/* Main Content Card */}
-          <div className={`${styles.contentCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.contentCard}>
 
             {/* Table of Contents */}
             <div className={styles.tocSection}>

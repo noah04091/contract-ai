@@ -106,7 +106,7 @@ export default function Impressum() {
           </header>
 
           {/* Main Content Card */}
-          <div className={`${styles.contentCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+          <div className={styles.contentCard}>
 
             {/* Betreiber */}
             <section className={styles.section}>
