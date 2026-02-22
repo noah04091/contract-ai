@@ -3704,7 +3704,8 @@ export default function Generate() {
 
       // ✅ Lösche gecachtes HTML bei Updates, damit PDF neu generiert wird
       const bodyData: any = {
-        name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+        name: formData.title
+          || `${selectedType?.name || contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
         content: contractText || '',
         isGenerated: true,
         contractType: selectedType?.id || contractData.contractType,
@@ -3726,8 +3727,9 @@ export default function Generate() {
         }
       };
 
-      // Bei Updates: Lösche HTML Cache, damit neu generiert wird
+      // Bei Updates: Name nicht überschreiben (wurde bei /generate korrekt gesetzt)
       if (isUpdate) {
+        delete bodyData.name;
         bodyData.htmlContent = null;
         bodyData.contractHTML = null;
       } else {
@@ -3949,7 +3951,8 @@ export default function Generate() {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+              name: formData.title
+                || `${selectedType?.name || contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
               content: contractText,
               htmlContent: generatedHTML,
               isGenerated: true,
@@ -4678,7 +4681,8 @@ export default function Generate() {
           parties: contractData.parties || formData,
           designVariant: selectedDesignVariant,
           contractId: resolvedContractId,
-          name: `${contractData.contractType || selectedType?.name || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`
+          name: formData.title
+            || `${selectedType?.name || contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`
         })
       });
 
@@ -4806,7 +4810,8 @@ export default function Generate() {
 
           // ✅ Lösche gecachtes HTML bei Updates, damit PDF neu generiert wird
           const bodyData: any = {
-            name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+            name: formData.title
+              || `${selectedType?.name || contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
             content: contractText,
             isGenerated: true,
             metadata: {
@@ -4825,8 +4830,9 @@ export default function Generate() {
             }
           };
 
-          // Bei Updates: Lösche HTML Cache
+          // Bei Updates: Name nicht überschreiben (wurde bei /generate korrekt gesetzt)
           if (isUpdate) {
+            delete bodyData.name;
             bodyData.htmlContent = null;
             bodyData.contractHTML = null;
           } else {
