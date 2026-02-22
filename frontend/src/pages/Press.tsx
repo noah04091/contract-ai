@@ -8,7 +8,7 @@ import Footer from "../components/Footer";
 import {
   Newspaper, Download, User, Mail, MessageSquare,
   Calendar, Copy, Check, Image, FileText, ChevronRight,
-  ArrowRight, ExternalLink, Quote, Building2, Zap
+  ArrowRight, ExternalLink, Quote, Building2
 } from "lucide-react";
 
 interface PressRelease {
@@ -37,21 +37,21 @@ export default function Press() {
 
   const pressReleases: PressRelease[] = [
     {
-      date: "01.08.2025",
-      title: "Contract AI startet offiziellen Live-Betrieb",
-      description: "Nach erfolgreicher Beta-Phase geht die KI-gestützte Vertragsplattform unter contract-ai.de in den produktiven Einsatz.",
+      date: "Q1 2025",
+      title: "Contract AI erreicht 100.000 analysierte Verträge",
+      description: "Ein wichtiger Meilenstein: Über 100.000 Verträge wurden auf der Plattform analysiert. Die Community wächst auf über 5.000 aktive Nutzer.",
       link: "#"
     },
     {
-      date: "15.07.2025",
-      title: "Launch der Beta-Version mit ersten Nutzerfeedbacks",
-      description: "Die Beta-Phase liefert wertvolle Einblicke und positive Rückmeldungen von über 500 Early Adopters.",
+      date: "Q4 2024",
+      title: "Legal Lens Launch & Seed-Finanzierung",
+      description: "Contract AI veröffentlicht die revolutionäre Klausel-Analyse mit KI-Erklärungen und schließt erfolgreich eine Seed-Runde mit deutschen Business Angels ab.",
       link: "#"
     },
     {
-      date: "01.06.2025",
-      title: "Vertragsanalyse meets KI – Contract AI revolutioniert LegalTech",
-      description: "Das deutsche Startup bringt moderne KI-Technologie in die alltägliche Vertragsverwaltung.",
+      date: "Q2 2024",
+      title: "Contract AI wird in Deutschland gegründet",
+      description: "Das LegalTech-Startup wird gegründet mit dem Ziel, KI-gestützte Vertragsanalyse für alle zugänglich zu machen.",
       link: "#"
     }
   ];
@@ -95,7 +95,7 @@ export default function Press() {
     }
   ];
 
-  const boilerplateText = "Contract AI ist ein deutsches LegalTech-Startup, das KI-gestützte Vertragsanalyse, -optimierung und -verwaltung für Privatpersonen, Unternehmen und Kanzleien anbietet. Die Plattform analysiert Verträge innerhalb von Sekunden, erkennt rechtliche Risiken, bietet Einsparpotenziale und erinnert automatisch an wichtige Fristen. Contract AI ist DSGVO-konform, nutzt Serverstandorte in Deutschland und wurde 2025 von Noah Liebold gegründet.";
+  const boilerplateText = "Contract AI ist ein deutsches LegalTech-Startup, das KI-gestützte Vertragsanalyse, -optimierung und -verwaltung für Privatpersonen, Unternehmen und Kanzleien anbietet. Die Plattform analysiert Verträge innerhalb von Sekunden, erkennt rechtliche Risiken, bietet Einsparpotenziale und erinnert automatisch an wichtige Fristen. Contract AI ist DSGVO-konform, nutzt Serverstandorte in Deutschland und wurde 2024 von Noah Liebold gegründet.";
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -264,7 +264,7 @@ export default function Press() {
                 <h3 className={styles.founderName}>Noah Liebold</h3>
                 <p className={styles.founderRole}>Gründer & Geschäftsführer</p>
                 <p className={styles.founderBio}>
-                  Noah hat Contract AI 2025 gegründet, mit dem Ziel, Vertragsverwaltung für alle
+                  Noah hat Contract AI 2024 gegründet, mit dem Ziel, Vertragsverwaltung für alle
                   einfach, effizient und verständlich zu machen. Er bringt Erfahrung aus dem
                   Versicherungs- und Vertriebsumfeld mit und kombiniert juristische Strukturen
                   mit KI-Technologie.
@@ -323,10 +323,10 @@ export default function Press() {
                 <Mail size={24} />
               </div>
               <div className={styles.contactInfo}>
-                <h3 className={styles.contactName}>Noah Liebold</h3>
+                <h3 className={styles.contactName}>Jaron Seeger</h3>
                 <p className={styles.contactRole}>Pressesprecher</p>
-                <a href="mailto:info@contract-ai.de" className={styles.contactEmail}>
-                  info@contract-ai.de
+                <a href="mailto:presse@contract-ai.de" className={styles.contactEmail}>
+                  presse@contract-ai.de
                   <ExternalLink size={14} />
                 </a>
                 <p className={styles.responseTime}>
@@ -352,21 +352,6 @@ export default function Press() {
                   <p className={styles.faqAnswer}>{faq.answer}</p>
                 </div>
               ))}
-            </div>
-          </section>
-
-          {/* Media Mentions */}
-          <section className={`${styles.mediaSection} ${styles.animateOnScroll}`} ref={addToRefs}>
-            <div className={styles.sectionHeader}>
-              <div className={styles.sectionIcon}>
-                <Zap size={22} />
-              </div>
-              <h2 className={styles.sectionTitle}>Contract AI in den Medien</h2>
-            </div>
-
-            <div className={styles.mediaPlaceholder}>
-              <Newspaper size={48} />
-              <p>Medienerwähnungen und Pressestimmen werden hier bald erscheinen.</p>
             </div>
           </section>
 
