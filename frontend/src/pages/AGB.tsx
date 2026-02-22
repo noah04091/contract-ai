@@ -369,7 +369,7 @@ export default function AGB() {
                     <div className={styles.infoContent}>
                       <div className={styles.infoLabel}>Free-Tarif</div>
                       <div className={styles.infoValue}>
-                        Kostenlos, 3 Vertragsanalysen pro Monat, Grundfunktionen verfügbar.
+                        Kostenlos, 3 Vertragsanalysen einmalig, Grundfunktionen verfügbar.
                       </div>
                     </div>
                   </div>
