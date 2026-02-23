@@ -132,7 +132,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/envelopes", "/generate", "/legal-pulse"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1397,7 +1397,7 @@ export default function Navbar() {
                   <div className={styles.navSectionTitleNew}>KI-ASSISTENT</div>
                   <ul className={styles.navListNew}>
                     <li className={styles.navItemNew}>
-                      <Link to="/Generate" className={`${styles.navLinkNew} ${location.pathname === '/Generate' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/generate" className={`${styles.navLinkNew} ${location.pathname === '/generate' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Sparkles size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>Vertrag erstellen</span>
                       </Link>

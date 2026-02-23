@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -1622,6 +1623,12 @@ export default function Envelopes() {
 
   return (
     <>
+      <Helmet>
+        <title>Digitale Signaturen – Verträge unterschreiben | Contract AI</title>
+        <meta name="description" content="Verwalten Sie digitale Signaturen: Verträge versenden, Unterschriften tracken und signierte Dokumente sicher speichern." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+
       {/* 🌐 Offline Banner */}
       {isOffline && (
         <div style={{

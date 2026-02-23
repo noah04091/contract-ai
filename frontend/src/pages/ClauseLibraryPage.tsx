@@ -1,6 +1,7 @@
 // ClauseLibraryPage.tsx - Klausel-Bibliothek 2.0 mit 3-Tab-System
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -167,6 +168,12 @@ const ClauseLibraryPage: React.FC = () => {
   const tabInfo = getTabInfo();
 
   return (
+    <>
+    <Helmet>
+      <title>Klausel-Bibliothek – Vertragsklauseln verwalten | Contract AI</title>
+      <meta name="description" content="Verwalten Sie Ihre Vertragsklauseln: Eigene Klauseln speichern, Musterklauseln nutzen und das Rechtslexikon durchsuchen." />
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className={styles.container}>
       {/* Header */}
       <header className={styles.header}>
@@ -393,6 +400,7 @@ const ClauseLibraryPage: React.FC = () => {
         )}
       </main>
     </div>
+    </>
   );
 };
 

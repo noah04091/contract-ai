@@ -112,6 +112,17 @@ const Blog: React.FC = () => {
           content="Insights und Expertenwissen rund um Verträge, KI und Optimierung — im Contract AI Blog."
         />
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.contract-ai.de" },
+              { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://www.contract-ai.de/blog" }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <div className={styles.blog}>

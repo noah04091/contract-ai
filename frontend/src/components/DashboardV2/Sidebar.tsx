@@ -72,7 +72,7 @@ const navigation: NavSection[] = [
         id: 'generate',
         label: 'Vertrag erstellen',
         icon: Sparkles,
-        href: '/Generate',
+        href: '/generate',
       },
       {
         id: 'optimizer',

@@ -253,7 +253,8 @@ function AppWithLoader() {
 
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
-            <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
+            <Route path="/generate" element={<RequireAuth><Generate /></RequireAuth>} />
+            <Route path="/Generate" element={<Navigate to="/generate" replace />} /> {/* SEO: Redirect uppercase */}
             <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
             <Route path="/integrations" element={<RequireAuth><Integrations /></RequireAuth>} />

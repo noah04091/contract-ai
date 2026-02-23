@@ -317,7 +317,7 @@ export default function DashboardV2() {
                 <Plus size={18} />
                 Neuer Vertrag
               </Link>
-              <Link to="/Generate" className={styles.btnSecondary}>
+              <Link to="/generate" className={styles.btnSecondary}>
                 <Sparkles size={18} />
                 KI-Generator
               </Link>
@@ -521,7 +521,7 @@ export default function DashboardV2() {
         <section className={styles.quickSection}>
           <h2 className={styles.sectionTitle}>Schnellzugriff</h2>
           <div className={styles.quickGrid}>
-            <Link to="/Generate" className={styles.quickCard}>
+            <Link to="/generate" className={styles.quickCard}>
               <div className={styles.quickIcon} style={{ background: 'linear-gradient(135deg, #8B5CF6, #6366F1)' }}>
                 <Sparkles size={22} />
               </div>

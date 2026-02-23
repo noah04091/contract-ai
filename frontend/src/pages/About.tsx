@@ -144,8 +144,19 @@ const About: React.FC = () => {
         <meta name="twitter:title" content="Über uns – Contract AI" />
         <meta name="twitter:description" content="Wir sind das Team hinter Contract AI – der führenden Plattform für smarte, KI-gestützte Vertragsanalysen." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.contract-ai.de" },
+              { "@type": "ListItem", "position": 2, "name": "Über uns", "item": "https://www.contract-ai.de/about" }
+            ]
+          })}
+        </script>
       </Helmet>
-      
+
       <div className={styles.aboutPage}>
         {/* Hero Section with Parallax */}
         <section className={styles.heroSection}>

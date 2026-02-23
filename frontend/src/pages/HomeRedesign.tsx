@@ -566,22 +566,25 @@ const HomeRedesign = () => {
             "offers": [
               {
                 "@type": "Offer",
-                "name": "Free",
+                "name": "Starter",
+                "description": "3 KI-Vertragsanalysen kostenlos",
                 "price": "0",
                 "priceCurrency": "EUR",
                 "availability": "https://schema.org/InStock"
               },
               {
                 "@type": "Offer",
-                "name": "Premium",
-                "price": "9.90",
+                "name": "Business",
+                "description": "25 KI-Analysen/Monat, Optimierung, Vergleich, KI-Chat, digitale Signaturen",
+                "price": "19",
                 "priceCurrency": "EUR",
                 "availability": "https://schema.org/InStock"
               },
               {
                 "@type": "Offer",
-                "name": "Business",
-                "price": "19.90",
+                "name": "Enterprise",
+                "description": "Unbegrenzte Analysen, alle Features, Team-Management, API-Zugang",
+                "price": "29",
                 "priceCurrency": "EUR",
                 "availability": "https://schema.org/InStock"
               }
@@ -594,6 +597,56 @@ const HomeRedesign = () => {
               "ratingCount": "127",
               "reviewCount": "89"
             },
+            "review": [
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Lisa Kramer" },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Habe bei meinem Werkvertrag einen Passus übersehen, der mich 280€ extra gekostet hätte. Contract AI hat das sofort erkannt!"
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Marcus T." },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Endlich verstehe ich meine Mietverträge ohne Anwalt. Die KI erklärt alles verständlich — spart Zeit und Geld."
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Sarah Müller" },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Dachte, mein Handyvertrag läuft noch 6 Monate. War tatsächlich schon kündbar — 180€ gespart!"
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Daniel Richter" },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Für NDA-Verträge mit Investoren nutze ich nur noch Contract AI. Kein Rechtsanwalt nötig für Standardverträge."
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Thomas W." },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Hab meinen Lieferantenvertrag gecheckt und eine versteckte Preisklausel gefunden. Hätte mich 2.400€ mehr pro Jahr gekostet!"
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Julia Schmidt" },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Bei uns im Team nutzen jetzt alle Contract AI für Freelancer-Verträge. Spart uns echt Zeit!"
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Kevin B." },
+                "reviewRating": { "@type": "Rating", "ratingValue": "4", "bestRating": "5" },
+                "reviewBody": "Mein Fitnessstudio-Abo lief automatisch weiter. Contract AI hat mein Sonderkündigungsrecht erkannt — 360€ zurück!"
+              },
+              {
+                "@type": "Review",
+                "author": { "@type": "Person", "name": "Dr. Anna Peters" },
+                "reviewRating": { "@type": "Rating", "ratingValue": "5", "bestRating": "5" },
+                "reviewBody": "Als Steuerberaterin muss ich oft Verträge prüfen. Contract AI ist fester Teil meines Workflows. Die Risiko-Analyse ist top."
+              }
+            ],
             "provider": {
               "@id": "https://www.contract-ai.de/#organization"
             }
@@ -838,7 +891,7 @@ const HomeRedesign = () => {
                 <h3>Analyse</h3>
                 <p>Verträge KI-basiert auswerten, Risiken erkennen & Transparenz gewinnen.</p>
                 <Link to="/features/vertragsanalyse" className="feature-link">
-                  Mehr erfahren
+                  Vertragsanalyse entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -858,7 +911,7 @@ const HomeRedesign = () => {
                 <h3>Optimierung</h3>
                 <p>Unvorteilhafte Klauseln erkennen und durch bessere Formulierungen ersetzen.</p>
                 <Link to="/features/optimierung" className="feature-link">
-                  Mehr erfahren
+                  Optimierung entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -878,7 +931,7 @@ const HomeRedesign = () => {
                 <h3>Fristen</h3>
                 <p>Kündigungsfristen automatisch erkennen & rechtzeitig per Mail erinnert werden.</p>
                 <Link to="/features/fristen" className="feature-link">
-                  Mehr erfahren
+                  Fristenkalender entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -902,7 +955,7 @@ const HomeRedesign = () => {
                 <h3>Vergleich</h3>
                 <p>Zwei Verträge gegenüberstellen, Unterschiede visuell hervorheben.</p>
                 <Link to="/features/vergleich" className="feature-link">
-                  Mehr erfahren
+                  Vertragsvergleich entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -924,7 +977,7 @@ const HomeRedesign = () => {
                 <h3>Legal Lens</h3>
                 <p>Interaktive Vertragsanalyse mit Risiko-Score, Smart Summary & Verhandlungs-Empfehlungen.</p>
                 <Link to="/features/legal-lens" className="feature-link">
-                  Mehr erfahren
+                  Legal Lens entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -948,7 +1001,7 @@ const HomeRedesign = () => {
                 <h3>Generator</h3>
                 <p>Vertragsdokumente aus KI-Vorlagen erzeugen – z. B. Freelancer-, NDA- oder Mietverträge.</p>
                 <Link to="/features/generator" className="feature-link">
-                  Mehr erfahren
+                  Vertragsgenerator entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -972,7 +1025,7 @@ const HomeRedesign = () => {
                 <h3>Digitale Signatur</h3>
                 <p>Verträge rechtssicher digital signieren lassen – mit Audit Trail, E-Mail-Benachrichtigung & versiegeltem PDF.</p>
                 <Link to="/features/digitalesignatur" className="feature-link">
-                  Mehr erfahren
+                  Digitale Signatur entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -992,7 +1045,7 @@ const HomeRedesign = () => {
                 <h3>Legal Pulse</h3>
                 <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
                 <Link to="/features/legalpulse" className="feature-link">
-                  Mehr erfahren
+                  Legal Pulse entdecken
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
                     <path d="m12 5 7 7-7 7"></path>
@@ -1417,7 +1470,7 @@ const HomeRedesign = () => {
                 </ul>
                 <div className="cm-cta reveal-text">
                   <Link to="/features/email-upload" className="cm-btn-primary" data-track="cta-email-upload">
-                    Mehr erfahren
+                    E-Mail Upload entdecken
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
                       <path d="m12 5 7 7-7 7"></path>

@@ -455,6 +455,7 @@ export default function ContractDetails() {
     <>
       <Helmet>
         <title>Vertragsdetails ansehen | Contract AI</title>
+        <meta name="robots" content="noindex, nofollow" />
         <meta name="description" content="Detaillierte Einblicke in deine hochgeladenen Verträge. Sieh Klauseln, Analyseergebnisse und Optimierungsvorschläge im Detail." />
         <meta name="keywords" content="Vertragsdetails, Vertrag ansehen, Vertragsanalyse, Contract AI" />
         <link rel="canonical" href="https://www.contract-ai.de/contract-details" />

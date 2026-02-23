@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useNavigate, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -1322,6 +1323,12 @@ const ContractBuilder: React.FC = () => {
   }
 
   return (
+    <>
+    <Helmet>
+      <title>Contract Builder – Visueller Vertragsbaukasten | Contract AI</title>
+      <meta name="description" content="Erstellen Sie Verträge visuell per Drag & Drop. Nutzen Sie Bausteine, Variablen und KI-Unterstützung für professionelle Verträge." />
+      <meta name="robots" content="noindex, nofollow" />
+    </Helmet>
     <div className={styles.builderPage}>
       <WelcomePopup
         featureId="contract-builder"
@@ -2225,6 +2232,7 @@ const ContractBuilder: React.FC = () => {
         onDuplicateDraft={handleDuplicateDraft}
       />
     </div>
+    </>
   );
 };
 

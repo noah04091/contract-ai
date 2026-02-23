@@ -1,5 +1,6 @@
 // 📁 src/pages/Optimizer.tsx - APPLE DESIGN REVOLUTION ✨
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import ReactDOM from "react-dom";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2501,6 +2502,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
 
   return (
     <>
+      <Helmet>
+        <title>Vertragsoptimierung – KI-Verbesserungsvorschläge | Contract AI</title>
+        <meta name="description" content="Optimieren Sie Ihre Verträge mit KI: Schwache Klauseln erkennen, Verbesserungsvorschläge erhalten und faire Verträge erstellen." />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
+
       {/* Welcome Popup */}
       <WelcomePopup
         featureId="optimizer"

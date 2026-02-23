@@ -266,15 +266,93 @@ export default function Pricing() {
     <>
       <Helmet>
         <title>Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€</title>
-        <meta name="description" content="Vergleiche unsere Preise: Business (19€) und Enterprise (29€). KI-gestützte Vertragsanalyse, Risikoerkennung & Optimierung. Jetzt kostenlos starten!" />
-        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Kosten, KI Vertragsanalyse Preis, Legal Tech Preise" />
+        <meta name="description" content="Vergleiche unsere Preise: Business (19€/Monat) und Enterprise (29€/Monat). KI-gestützte Vertragsanalyse, Risikoerkennung & Optimierung. 14 Tage Geld-zurück-Garantie. Jetzt kostenlos starten!" />
+        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Kosten, KI Vertragsanalyse Preis, Legal Tech Preise, Vertragsmanagement Software Preise, Vertrag prüfen Kosten" />
         <link rel="canonical" href="https://www.contract-ai.de/pricing" />
         <meta name="robots" content="index, follow" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse" />
-        <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Business & Enterprise Pläne. Jetzt kostenlos testen!" />
+        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€" />
+        <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
         <meta property="og:url" content="https://www.contract-ai.de/pricing" />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.contract-ai.de" },
+              { "@type": "ListItem", "position": 2, "name": "Preise", "item": "https://www.contract-ai.de/pricing" }
+            ]
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Contract AI",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Vertragsmanagement Software",
+            "operatingSystem": "Web",
+            "url": "https://www.contract-ai.de",
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "bestRating": "5",
+              "worstRating": "1",
+              "ratingCount": "127",
+              "reviewCount": "89"
+            },
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Starter",
+                "description": "3 KI-Vertragsanalysen kostenlos. Basis-Vertragsverwaltung, Contract Builder und Klausel-Bibliothek.",
+                "price": "0",
+                "priceCurrency": "EUR",
+                "priceValidUntil": "2026-12-31",
+                "availability": "https://schema.org/InStock",
+                "url": "https://www.contract-ai.de/register"
+              },
+              {
+                "@type": "Offer",
+                "name": "Business",
+                "description": "25 KI-Analysen/Monat, Optimierung, Vergleich, KI-Chat, Legal Lens, digitale Signaturen, Priority Support.",
+                "price": "19",
+                "priceCurrency": "EUR",
+                "priceValidUntil": "2026-12-31",
+                "billingIncrement": "P1M",
+                "availability": "https://schema.org/InStock",
+                "url": "https://www.contract-ai.de/pricing"
+              },
+              {
+                "@type": "Offer",
+                "name": "Enterprise",
+                "description": "Unbegrenzte KI-Analysen, alle Premium-Features, Team-Management (bis 10 User), REST API-Zugang, White-Label Reports.",
+                "price": "29",
+                "priceCurrency": "EUR",
+                "priceValidUntil": "2026-12-31",
+                "billingIncrement": "P1M",
+                "availability": "https://schema.org/InStock",
+                "url": "https://www.contract-ai.de/pricing"
+              }
+            ]
+          })}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(faq => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
+          })}
+        </script>
       </Helmet>
 
       <div className={styles.pricingPage}>
@@ -286,7 +364,7 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            Wähle deinen Plan:<br />
+            KI-Vertragsanalyse – Preise & Tarife<br />
             <span className={styles.heroHighlight}>Transparent. Flexibel. Fair.</span>
           </motion.h1>
           <motion.div

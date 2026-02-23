@@ -37,6 +37,16 @@ const HelpCenter: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGuide, setExpandedGuide] = useState<string | null>(null);
 
+  // SEO: Structured Data Schemas
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.contract-ai.de" },
+      { "@type": "ListItem", "position": 2, "name": "Hilfe-Center", "item": "https://www.contract-ai.de/hilfe" }
+    ]
+  };
+
   // 📚 KOMPLETTE FEATURE-ANLEITUNGEN (Super einfach erklärt!)
   const guides: GuideSection[] = [
     {
@@ -1143,6 +1153,24 @@ const HelpCenter: React.FC = () => {
         <meta property="og:description" content="Alle Funktionen von Contract AI verständlich erklärt - von Upload bis zur digitalen Signatur." />
         <meta property="og:url" content="https://www.contract-ai.de/hilfe" />
         <meta property="og:type" content="website" />
+
+        <script type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqItems.map(faq => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
+          })}
+        </script>
       </Helmet>
 
       <div className={styles.helpCenter}>
