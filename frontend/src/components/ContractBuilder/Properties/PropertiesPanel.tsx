@@ -842,19 +842,42 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
     }
 
-    case 'preamble':
+    case 'preamble': {
+      const preambleLayout = (content as { preambleLayout?: 'accent-bar' | 'bordered' | 'minimal' | 'quote' }).preambleLayout || 'bordered';
       return (
-        <div className={styles.field}>
-          <label className={styles.label}>Präambeltext</label>
-          <textarea
-            className={styles.textarea}
-            rows={4}
-            value={String(content.preambleText || '')}
-            placeholder="Die nachfolgend genannten Vertragsparteien schließen folgenden Vertrag:"
-            onChange={(e) => onUpdate({ ...content, preambleText: e.target.value })}
-          />
-        </div>
+        <>
+          <div className={styles.field}>
+            <label className={styles.label}>Layout</label>
+            <select
+              className={styles.select}
+              value={preambleLayout}
+              onChange={(e) => onUpdate({ ...content, preambleLayout: e.target.value as 'accent-bar' | 'bordered' | 'minimal' | 'quote' })}
+            >
+              <option value="bordered">Umrahmt</option>
+              <option value="accent-bar">Akzent-Leiste</option>
+              <option value="minimal">Minimal</option>
+              <option value="quote">Zitat-Stil</option>
+            </select>
+            <p className={styles.fieldHint}>
+              {preambleLayout === 'bordered' && 'Dezente Umrandung mit zentriertem Titel'}
+              {preambleLayout === 'accent-bar' && 'Farbige Leiste am linken Rand'}
+              {preambleLayout === 'minimal' && 'Schlicht ohne Rahmen oder Hintergrund'}
+              {preambleLayout === 'quote' && 'Zentriert mit dekorativen Anführungszeichen'}
+            </p>
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>Präambeltext</label>
+            <textarea
+              className={styles.textarea}
+              rows={4}
+              value={String(content.preambleText || '')}
+              placeholder="Die nachfolgend genannten Vertragsparteien schließen folgenden Vertrag:"
+              onChange={(e) => onUpdate({ ...content, preambleText: e.target.value })}
+            />
+          </div>
+        </>
       );
+    }
 
     case 'clause': {
       const clauseContent = content as { clauseLayout?: 'standard' | 'indented' | 'boxed' };

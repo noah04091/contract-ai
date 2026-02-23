@@ -317,23 +317,25 @@ router.post('/import-from-generator', auth, async (req, res) => {
     let order = 0;
 
     // Hilfsfunktion: geschätzte Block-Höhe in px
-    // A4 Seite = 1002px nutzbar, aber 265mm max-height + overflow:hidden im CSS
-    // Konservativ schätzen um Abschneiden zu vermeiden
+    // A4 Seite = 1002px nutzbar (265mm bei 96 DPI), Inhaltsbreite ~174mm → ~85 Zeichen/Zeile
+    // Frontend auto-pagebreak bei 1002px fängt Überlauf sicher ab
+    const CHARS_PER_LINE = 85;
+    const LINE_HEIGHT = 22; // px, passend für 11pt Schrift mit 1.6 Zeilenabstand
     const estimateBlockHeight = (block) => {
-      if (block.type === 'header') return 140;
-      if (block.type === 'parties') return 180;
-      if (block.type === 'signature') return 250;
+      if (block.type === 'header') return 120;
+      if (block.type === 'parties') return 160;
+      if (block.type === 'signature') return 220;
       if (block.type === 'page-break') return 0;
       if (block.type === 'preamble') {
         const text = block.content?.preambleText || '';
-        const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 70));
-        return Math.max(lineCount * 24, 60);
+        const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+        return Math.max(lineCount * LINE_HEIGHT, 50) + 60; // +60 für Titel, Rahmen, Padding
       }
-      // Für clause-Blöcke: Titel + Body, ~24px pro Zeile, ~70 Zeichen pro Zeile
+      // Für clause-Blöcke: Titel + Body
       const text = block.content?.body || '';
-      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / 70));
-      const titleHeight = (block.content?.clauseTitle) ? 45 : 0;
-      return titleHeight + Math.max(lineCount * 24, 50) + 20; // +20 für Margins
+      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+      const titleHeight = (block.content?.clauseTitle) ? 40 : 0;
+      return titleHeight + Math.max(lineCount * LINE_HEIGHT, 40) + 16; // +16 für Margins
     };
 
     const PAGE_HEIGHT = 920; // px (echte Höhe ~1002px, 8% Sicherheitspuffer für Schätzungs-Ungenauigkeit)

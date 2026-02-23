@@ -81,7 +81,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = React.memo(({
       style={style}
       className={`
         ${styles.sortableBlock}
-        ${isSelected ? styles.selected : ''}
+        ${isSelected && !isPreview ? styles.selected : ''}
         ${isDragging ? styles.dragging : ''}
         ${block.locked ? styles.locked : ''}
         ${isPreview ? styles.preview : ''}
@@ -171,7 +171,7 @@ export const SortableBlock: React.FC<SortableBlockProps> = React.memo(({
       <div className={styles.blockContent}>
         <BlockRenderer
           block={block}
-          isSelected={isSelected}
+          isSelected={isSelected && !isPreview}
           isPreview={isPreview}
           pageNumber={pageNumber}
         />
