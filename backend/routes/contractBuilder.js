@@ -301,15 +301,8 @@ router.post('/import-from-generator', auth, async (req, res) => {
 
     // 4. Design-Mapping: Generator-Variante → Builder-Design (vollständige DesignConfig + Layouts)
     const designMapping = {
-      executive: {
-        preset: 'executive',
-        primaryColor: '#0B1324', secondaryColor: '#6B7280', accentColor: '#D4AF37',
-        fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif', baseFontSize: 12,
-        textPrimary: '#0B1324', textSecondary: '#4a4a4a', textMuted: '#9ca3af',
-        backgroundPrimary: '#FDFBF7', backgroundSecondary: '#F7F4ED', borderColor: '#D4AF37',
-        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'indented',
-        partiesLayout: 'classic', preambleLayout: 'bordered', signatureLayout: 'formal'
-      },
+      // Standard/Default: schlichte Builder-Defaults ohne Design-Styling
+      executive: { primaryColor: '#1a1a2e', fontFamily: 'Helvetica', preset: 'executive' },
       modern: {
         preset: 'modern',
         primaryColor: '#3B82F6', secondaryColor: '#64748B', accentColor: '#0D9488',
@@ -599,7 +592,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
         preset: designConfig.preset || 'executive',
         primaryColor: designConfig.primaryColor || '#0B1324',
         secondaryColor: designConfig.secondaryColor || '#6B7280',
-        accentColor: designConfig.accentColor || '#D4AF37',
+        accentColor: designConfig.accentColor || '#3B82F6',
         fontFamily: designConfig.fontFamily || 'Helvetica',
         headingFont: designConfig.headingFont || designConfig.fontFamily || 'Helvetica',
         baseFontSize: designConfig.baseFontSize || 11,
