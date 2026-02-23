@@ -4859,6 +4859,7 @@ export default function Generate() {
           contractType: selectedType?.id || contractData.contractType,
           parties: contractData.parties || formData,
           designVariant: selectedDesignVariant,
+          customDesign: selectedDesignVariant === 'custom' ? customDesign : undefined,
           contractId: resolvedContractId,
           name: formData.title
             || `${selectedType?.name || contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`

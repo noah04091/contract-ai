@@ -299,18 +299,133 @@ router.post('/import-from-generator', auth, async (req, res) => {
       }
     }
 
-    // 4. Design-Mapping: Generator-Variante → Builder-Design
+    // 4. Design-Mapping: Generator-Variante → Builder-Design (vollständige DesignConfig + Layouts)
     const designMapping = {
-      executive:    { primaryColor: '#1a1a2e', fontFamily: 'Helvetica', preset: 'executive' },
-      modern:       { primaryColor: '#0066cc', fontFamily: 'Helvetica', preset: 'modern' },
-      minimal:      { primaryColor: '#333333', fontFamily: 'Helvetica', preset: 'minimal' },
-      elegant:      { primaryColor: '#c9a227', fontFamily: 'Times-Roman', preset: 'elegant' },
-      corporate:    { primaryColor: '#003366', fontFamily: 'Helvetica', preset: 'corporate' },
-      professional: { primaryColor: '#1B4332', fontFamily: 'Times-Roman', preset: 'professional' },
-      startup:      { primaryColor: '#E63946', fontFamily: 'Helvetica', preset: 'startup' },
+      executive: {
+        preset: 'executive',
+        primaryColor: '#0B1324', secondaryColor: '#6B7280', accentColor: '#D4AF37',
+        fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif', baseFontSize: 12,
+        textPrimary: '#0B1324', textSecondary: '#4a4a4a', textMuted: '#9ca3af',
+        backgroundPrimary: '#FDFBF7', backgroundSecondary: '#F7F4ED', borderColor: '#D4AF37',
+        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'indented',
+        partiesLayout: 'classic', preambleLayout: 'bordered', signatureLayout: 'formal'
+      },
+      modern: {
+        preset: 'modern',
+        primaryColor: '#3B82F6', secondaryColor: '#64748B', accentColor: '#0D9488',
+        fontFamily: 'Inter, sans-serif', headingFont: 'Inter, sans-serif', baseFontSize: 11,
+        textPrimary: '#1e293b', textSecondary: '#475569', textMuted: '#94a3b8',
+        backgroundPrimary: '#ffffff', backgroundSecondary: '#f0fdf4', borderColor: '#d1fae5',
+        coverLayout: 'modern-sidebar', headerLayout: 'left-logo', clauseLayout: 'boxed',
+        partiesLayout: 'modern', preambleLayout: 'accent-bar', signatureLayout: 'modern'
+      },
+      minimal: {
+        preset: 'minimal',
+        primaryColor: '#1a1a1a', secondaryColor: '#9ca3af', accentColor: '#6b7280',
+        fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', headingFont: 'Helvetica Neue, Helvetica, Arial, sans-serif', baseFontSize: 11,
+        textPrimary: '#1a1a1a', textSecondary: '#4b5563', textMuted: '#9ca3af',
+        backgroundPrimary: '#ffffff', backgroundSecondary: '#fafafa', borderColor: '#e5e7eb',
+        coverLayout: 'minimal-clean', headerLayout: 'minimal', clauseLayout: 'standard',
+        partiesLayout: 'classic', preambleLayout: 'minimal', signatureLayout: 'classic'
+      },
+      elegant: {
+        preset: 'elegant',
+        primaryColor: '#2c1810', secondaryColor: '#6B7280', accentColor: '#c9a227',
+        fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif', baseFontSize: 12,
+        textPrimary: '#2c1810', textSecondary: '#5c4033', textMuted: '#8b7355',
+        backgroundPrimary: '#FFFDF8', backgroundSecondary: '#faf7f2', borderColor: '#c9a227',
+        coverLayout: 'elegant-frame', headerLayout: 'centered', clauseLayout: 'indented',
+        partiesLayout: 'classic', preambleLayout: 'quote', signatureLayout: 'elegant'
+      },
+      corporate: {
+        preset: 'corporate',
+        primaryColor: '#003366', secondaryColor: '#4A5568', accentColor: '#2B6CB0',
+        fontFamily: 'Helvetica Neue, Helvetica, Arial, sans-serif', headingFont: 'Helvetica Neue, Helvetica, Arial, sans-serif', baseFontSize: 11,
+        textPrimary: '#1a202c', textSecondary: '#4A5568', textMuted: '#718096',
+        backgroundPrimary: '#F8FAFF', backgroundSecondary: '#EBF4FF', borderColor: '#b3d4fc',
+        coverLayout: 'corporate-banner', headerLayout: 'left-logo', clauseLayout: 'boxed',
+        partiesLayout: 'modern', preambleLayout: 'bordered', signatureLayout: 'corporate'
+      },
+      professional: {
+        preset: 'professional',
+        primaryColor: '#1B4332', secondaryColor: '#4A5568', accentColor: '#2D6A4F',
+        fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif', baseFontSize: 11,
+        textPrimary: '#1B4332', textSecondary: '#4A5568', textMuted: '#718096',
+        backgroundPrimary: '#F8FFF8', backgroundSecondary: '#ECFDF5', borderColor: '#2D6A4F',
+        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'indented',
+        partiesLayout: 'classic', preambleLayout: 'bordered', signatureLayout: 'formal'
+      },
+      startup: {
+        preset: 'startup',
+        primaryColor: '#2B2D42', secondaryColor: '#8D99AE', accentColor: '#E63946',
+        fontFamily: 'system-ui, Inter, sans-serif', headingFont: 'system-ui, Inter, sans-serif', baseFontSize: 11,
+        textPrimary: '#2B2D42', textSecondary: '#4a4e69', textMuted: '#8D99AE',
+        backgroundPrimary: '#ffffff', backgroundSecondary: '#FFF0F0', borderColor: '#E63946',
+        coverLayout: 'modern-sidebar', headerLayout: 'minimal', clauseLayout: 'standard',
+        partiesLayout: 'modern', preambleLayout: 'accent-bar', signatureLayout: 'modern'
+      },
+      legal: {
+        preset: 'legal',
+        primaryColor: '#800020', secondaryColor: '#6B7280', accentColor: '#800020',
+        fontFamily: "'Times New Roman', Times, serif", headingFont: "'Times New Roman', Times, serif", baseFontSize: 13,
+        textPrimary: '#1a1a1a', textSecondary: '#333333', textMuted: '#666666',
+        backgroundPrimary: '#FFFDF8', backgroundSecondary: '#faf8f5', borderColor: '#800020',
+        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'standard',
+        partiesLayout: 'classic', preambleLayout: 'quote', signatureLayout: 'formal'
+      },
+      tech: {
+        preset: 'tech',
+        primaryColor: '#164E63', secondaryColor: '#475569', accentColor: '#0891B2',
+        fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace", headingFont: 'Inter, system-ui, sans-serif', baseFontSize: 10.5,
+        textPrimary: '#0f172a', textSecondary: '#334155', textMuted: '#64748b',
+        backgroundPrimary: '#FAFFFE', backgroundSecondary: '#F0FDFA', borderColor: '#99f6e4',
+        coverLayout: 'modern-sidebar', headerLayout: 'left-logo', clauseLayout: 'standard',
+        partiesLayout: 'modern', preambleLayout: 'minimal', signatureLayout: 'modern'
+      },
+      finance: {
+        preset: 'finance',
+        primaryColor: '#0F172A', secondaryColor: '#475569', accentColor: '#1E40AF',
+        fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif', baseFontSize: 12,
+        textPrimary: '#0F172A', textSecondary: '#334155', textMuted: '#64748b',
+        backgroundPrimary: '#F8FAFC', backgroundSecondary: '#EFF6FF', borderColor: '#1E40AF',
+        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'indented',
+        partiesLayout: 'classic', preambleLayout: 'bordered', signatureLayout: 'formal'
+      },
+      creative: {
+        preset: 'creative',
+        primaryColor: '#4C1D95', secondaryColor: '#6B7280', accentColor: '#7C3AED',
+        fontFamily: 'system-ui, Inter, sans-serif', headingFont: 'system-ui, Inter, sans-serif', baseFontSize: 11,
+        textPrimary: '#4C1D95', textSecondary: '#6B21A8', textMuted: '#9ca3af',
+        backgroundPrimary: '#FEFBFF', backgroundSecondary: '#F5F3FF', borderColor: '#7C3AED',
+        coverLayout: 'modern-sidebar', headerLayout: 'minimal', clauseLayout: 'standard',
+        partiesLayout: 'modern', preambleLayout: 'accent-bar', signatureLayout: 'modern'
+      },
     };
 
-    const designConfig = designMapping[designVariant] || designMapping.executive;
+    // Custom-Design oder Mapping verwenden
+    const { customDesign } = req.body;
+    let designConfig;
+    if (designVariant === 'custom' && customDesign) {
+      designConfig = {
+        preset: 'custom',
+        primaryColor: customDesign.primaryColor || '#0B1324',
+        secondaryColor: customDesign.secondaryColor || '#6B7280',
+        accentColor: customDesign.accentColor || '#3B82F6',
+        fontFamily: customDesign.fontFamily || 'Helvetica',
+        headingFont: customDesign.fontFamily || 'Helvetica',
+        baseFontSize: 11,
+        textPrimary: customDesign.primaryColor || '#0B1324',
+        textSecondary: '#4a4a4a',
+        textMuted: '#9ca3af',
+        backgroundPrimary: '#ffffff',
+        backgroundSecondary: '#f8f9fa',
+        borderColor: customDesign.accentColor || '#e5e7eb',
+        coverLayout: 'executive-center', headerLayout: 'centered', clauseLayout: 'standard',
+        partiesLayout: 'classic', preambleLayout: 'bordered', signatureLayout: 'classic'
+      };
+    } else {
+      designConfig = designMapping[designVariant] || designMapping.executive;
+    }
 
     // 5. Sections → Builder-Blöcke konvertieren (mit Seitenumbrüchen)
     const blocks = [];
@@ -368,7 +483,8 @@ router.post('/import-from-generator', auth, async (req, res) => {
       content: {
         title: title,
         subtitle: contractType ? `${contractType}` : '',
-        showDivider: false
+        showDivider: false,
+        headerLayout: designConfig.headerLayout || 'centered'
       },
       style: {},
       locked: false,
@@ -391,7 +507,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
             name: partyBName,
             address: partyBAddress
           },
-          partiesLayout: 'classic'
+          partiesLayout: designConfig.partiesLayout || 'classic'
         },
         style: {},
         locked: false,
@@ -407,7 +523,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
         addBlock({
           id: uuidv4(),
           type: 'preamble',
-          content: { preambleText },
+          content: { preambleText, preambleLayout: designConfig.preambleLayout || 'bordered' },
           style: {},
           locked: false,
           aiGenerated: true
@@ -436,7 +552,8 @@ router.post('/import-from-generator', auth, async (req, res) => {
           content: {
             clauseTitle,
             number: String(clauseNumber),
-            body: bodyParts.join('\n')
+            body: bodyParts.join('\n'),
+            clauseLayout: designConfig.clauseLayout || 'standard'
           },
           style: {},
           locked: false,
@@ -456,7 +573,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
           { partyIndex: 1, label: `${partyLabels.partyB || 'Partei B'}${partyBName ? ': ' + partyBName : ''}`, showDate: true, showPlace: true }
         ],
         witnesses: 0,
-        signatureLayout: 'classic'
+        signatureLayout: designConfig.signatureLayout || 'classic'
       },
       style: {},
       locked: false,
@@ -481,9 +598,17 @@ router.post('/import-from-generator', auth, async (req, res) => {
       design: {
         preset: designConfig.preset || 'executive',
         primaryColor: designConfig.primaryColor || '#0B1324',
-        secondaryColor: '#6B7280',
-        accentColor: '#3B82F6',
+        secondaryColor: designConfig.secondaryColor || '#6B7280',
+        accentColor: designConfig.accentColor || '#D4AF37',
         fontFamily: designConfig.fontFamily || 'Helvetica',
+        headingFont: designConfig.headingFont || designConfig.fontFamily || 'Helvetica',
+        baseFontSize: designConfig.baseFontSize || 11,
+        textPrimary: designConfig.textPrimary || designConfig.primaryColor || '#0B1324',
+        textSecondary: designConfig.textSecondary || '#4a4a4a',
+        textMuted: designConfig.textMuted || '#9ca3af',
+        backgroundPrimary: designConfig.backgroundPrimary || '#ffffff',
+        backgroundSecondary: designConfig.backgroundSecondary || '#f8f9fa',
+        borderColor: designConfig.borderColor || '#e5e7eb',
         pageSize: 'A4',
         marginTop: 25,
         marginRight: 20,
