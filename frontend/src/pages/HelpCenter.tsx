@@ -889,11 +889,13 @@ const HelpCenter: React.FC = () => {
   ];
 
   // 📋 UMFASSENDE FAQ
+  // ⚠️ Static content only – answers may contain HTML links.
+  // Never populate from DB or user input without sanitization (XSS risk).
   const faqItems: FAQItem[] = [
     // General
     {
       question: 'Wie sicher sind meine Vertragsdaten?',
-      answer: 'Höchste Sicherheit ist garantiert: Alle Daten werden verschlüsselt übertragen (TLS 1.3) und gespeichert (AES-256). Server stehen in Deutschland (DSGVO-konform). Zugriff nur Sie + verschlüsselte Backups. Automatische Löschung nach 30 Tagen (außer Sie verlängern). Keine Weitergabe an Dritte.',
+      answer: 'Höchste Sicherheit ist garantiert: Alle Daten werden verschlüsselt übertragen (TLS 1.3) und gespeichert (AES-256). Server stehen in Deutschland (DSGVO-konform). Zugriff nur Sie + verschlüsselte Backups. Automatische Löschung nach 30 Tagen (außer Sie verlängern). Keine Weitergabe an Dritte. Details zu Datenschutz und Sicherheit finden Sie in unserem <a href="/ki-vertragsanalyse">KI-Vertragsanalyse Guide</a>.',
       category: 'security'
     },
     {
@@ -903,12 +905,12 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Ersetzt Contract AI einen Anwalt?',
-      answer: 'NEIN! Contract AI ist ein hochmodernes Analyse-Tool, das Sie bei der ersten Einschätzung unterstützt und Zeit spart. Bei komplexen rechtlichen Fragen, hohen Vertragssummen oder kritischen Verträgen empfehlen wir IMMER die Beratung durch einen Fachanwalt. Nutzen Sie unsere Analyse als Grundlage für das Anwaltsgespräch.',
+      answer: 'NEIN! Contract AI ist ein hochmodernes Analyse-Tool, das Sie bei der ersten Einschätzung unterstützt und Zeit spart. Bei komplexen rechtlichen Fragen, hohen Vertragssummen oder kritischen Verträgen empfehlen wir IMMER die Beratung durch einen Fachanwalt. Nutzen Sie unsere <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> als Grundlage für das Anwaltsgespräch.',
       category: 'general'
     },
     {
       question: 'Wie funktioniert die KI-Analyse?',
-      answer: 'Unsere KI basiert auf GPT-4 und wurde mit tausenden deutschen Verträgen, Gesetzen und Urteilen trainiert. Sie erkennt: problematische Klauseln, unausgewogene Bedingungen, rechtliche Risiken, fehlende Regelungen, unklare Formulierungen. Die Analyse erfolgt anhand bewährter juristischer Standards und aktueller Rechtsprechung (BGB, HGB, ArbG, etc.).',
+      answer: 'Unsere KI basiert auf GPT-4 und wurde mit tausenden deutschen Verträgen, Gesetzen und Urteilen trainiert. Sie erkennt: problematische Klauseln, unausgewogene Bedingungen, rechtliche Risiken, fehlende Regelungen, unklare Formulierungen. Die Analyse erfolgt anhand bewährter juristischer Standards und aktueller Rechtsprechung (BGB, HGB, ArbG, etc.). Mehr Details: <a href="/ki-vertragsanalyse">So funktioniert KI-Vertragsanalyse</a>.',
       category: 'technical'
     },
     {
@@ -1089,7 +1091,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Wie genau ist die KI-Analyse?',
-      answer: 'Sehr genau! Unsere KI wurde mit tausenden deutschen Verträgen trainiert und erreicht eine Erkennungsrate von über 95% bei Standardklauseln. WICHTIG: Die Analyse ist eine Unterstützung, kein Ersatz für Rechtsberatung. Bei kritischen Verträgen empfehlen wir immer zusätzlich einen Fachanwalt.',
+      answer: 'Sehr genau! Unsere KI wurde mit tausenden deutschen Verträgen trainiert und erreicht eine Erkennungsrate von über 95% bei Standardklauseln. WICHTIG: Die Analyse ist eine Unterstützung, kein Ersatz für Rechtsberatung. Bei kritischen Verträgen empfehlen wir immer zusätzlich einen Fachanwalt. Mehr zur Genauigkeit erfahren Sie in unserem <a href="/ki-vertragsanalyse">Guide zur KI-Vertragsanalyse</a>.',
       category: 'general'
     },
     {
@@ -1528,7 +1530,7 @@ const HelpCenter: React.FC = () => {
                             </button>
                             {openFAQ === globalIndex && (
                               <div className={styles.faqAnswer}>
-                                <p>{faq.answer}</p>
+                                <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                               </div>
                             )}
                           </div>
@@ -1565,7 +1567,7 @@ const HelpCenter: React.FC = () => {
                             </button>
                             {openFAQ === globalIndex && (
                               <div className={styles.faqAnswer}>
-                                <p>{faq.answer}</p>
+                                <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                               </div>
                             )}
                           </div>
@@ -1602,7 +1604,7 @@ const HelpCenter: React.FC = () => {
                             </button>
                             {openFAQ === globalIndex && (
                               <div className={styles.faqAnswer}>
-                                <p>{faq.answer}</p>
+                                <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                               </div>
                             )}
                           </div>
@@ -1639,7 +1641,7 @@ const HelpCenter: React.FC = () => {
                             </button>
                             {openFAQ === globalIndex && (
                               <div className={styles.faqAnswer}>
-                                <p>{faq.answer}</p>
+                                <p dangerouslySetInnerHTML={{ __html: faq.answer }} />
                               </div>
                             )}
                           </div>
