@@ -127,7 +127,7 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Was kostet KI-Vertragsanalyse?",
-      answer: "Bei Contract AI können Sie mit dem kostenlosen Starter-Tarif bis zu 3 Verträge analysieren. Der Business-Tarif (19 EUR/Monat) enthält 25 Analysen monatlich, der Enterprise-Tarif (29 EUR/Monat) bietet unbegrenzte Analysen. Zum Vergleich: Eine anwaltliche Vertragsprüfung kostet typischerweise 150-500 EUR pro Vertrag."
+      answer: "Bei Contract AI können Sie mit dem kostenlosen Starter-Tarif bis zu 3 Verträge analysieren. Der Business-Tarif (19 EUR/Monat) enthält 25 Analysen monatlich, der Enterprise-Tarif (29 EUR/Monat) bietet unbegrenzte Analysen. Zum Vergleich: Eine anwaltliche Vertragsprüfung kostet je nach Kanzlei und Vertragsumfang oft einen dreistelligen Betrag pro Vertrag."
     },
     {
       question: "Sind meine Vertragsdaten bei der KI-Analyse sicher?",
@@ -176,7 +176,7 @@ const KiVertragsanalyse: React.FC = () => {
     <>
       <Helmet>
         <title>KI-Vertragsanalyse: Vertrag in 60 Sek. prüfen | Contract AI</title>
-        <meta name="description" content="KI-Vertragsanalyse: Vertrag hochladen, in 60 Sekunden Risiken erkennen, Handlungsempfehlungen erhalten. DSGVO-konform, Server in Deutschland. Kostenlos testen. Der komplette Guide: KI vs. Anwalt, Kosten, Funktionsweise." />
+        <meta name="description" content="KI-Vertragsanalyse: Vertrag hochladen und in 60 Sekunden Risiken erkennen. DSGVO-konform, deutsche Server. Der komplette Guide: Funktionsweise, Kosten, KI vs. Anwalt." />
         <meta name="keywords" content="KI Vertragsanalyse, KI Vertragsprüfung, Vertragsanalyse KI, automatische Vertragsanalyse, KI Vertragscheck, Vertragsanalyse Software, Vertrag KI prüfen, Contract AI, Vertragsanalyse online, KI Vertragsmanagement" />
 
         <link rel="canonical" href="https://www.contract-ai.de/ki-vertragsanalyse" />
@@ -319,6 +319,24 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={styles.trustBadge}><Users size={18} /> 5.000+ Nutzer</div>
           </div>
         </div>
+
+        {/* ==========================================
+            QUICK ANSWER (above the fold for UX)
+            ========================================== */}
+        <section className={styles.pillarQuickAnswer}>
+          <div className={styles.container}>
+            <div className={`${styles.pillarQuickAnswerBox} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <h2 className={styles.pillarQuickAnswerTitle}>Das Wichtigste in Kürze</h2>
+              <ul className={styles.pillarQuickAnswerList}>
+                <li><strong>Was:</strong> KI liest Ihren Vertrag und erkennt automatisch Risiken, unfaire Klauseln und fehlende Regelungen.</li>
+                <li><strong>Wie schnell:</strong> Vollständige Analyse in unter 60 Sekunden statt Stunden oder Tagen.</li>
+                <li><strong>Für wen:</strong> Privatpersonen, Freelancer, KMU, Startups und Rechtsabteilungen.</li>
+                <li><strong>Kosten:</strong> Kostenloser Einstieg möglich. Deutlich günstiger als eine anwaltliche Einzelprüfung.</li>
+                <li><strong>Wichtig:</strong> KI-Vertragsanalyse ergänzt anwaltliche Beratung, ersetzt sie aber nicht bei komplexen Rechtsfragen.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
         {/* ==========================================
             TABLE OF CONTENTS
@@ -566,8 +584,8 @@ const KiVertragsanalyse: React.FC = () => {
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Kosten</div>
-                <div className={styles.pillarComparisonValue}>Pauschale (ab 0 EUR/Monat)</div>
-                <div className={styles.pillarComparisonValue}>Pro Vertrag (150-500+ EUR)</div>
+                <div className={styles.pillarComparisonValue}>Monatliche Pauschale</div>
+                <div className={styles.pillarComparisonValue}>Pro Vertrag (je nach Kanzlei)</div>
               </div>
 
               <div className={styles.pillarComparisonRow}>
@@ -726,15 +744,15 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.statNumber}>&lt; 60s</div>
-                <div className={styles.statLabel}>Analyse statt Stunden oder Tage beim Anwalt</div>
+                <div className={styles.statLabel}>Analyse statt Stunden oder Tage bei manueller Prüfung</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>10x</div>
-                <div className={styles.statLabel}>schneller als manuelle Vertragsprüfung</div>
+                <div className={styles.statNumber}>24/7</div>
+                <div className={styles.statLabel}>verfügbar, ohne Terminvereinbarung</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.statNumber}>Ab 0 EUR</div>
-                <div className={styles.statLabel}>statt 150-500 EUR pro Anwaltsprüfung</div>
+                <div className={styles.statLabel}>kostenlos starten, je nach Bedarf skalieren</div>
               </div>
             </div>
 
@@ -1040,6 +1058,33 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            METHODIK & TRANSPARENZ (E-E-A-T)
+            ========================================== */}
+        <section className={styles.pillarContentSection}>
+          <div className={styles.container}>
+            <div className={`${styles.pillarMethodBox} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <h3 className={styles.pillarMethodTitle}>Methodik &amp; Transparenz</h3>
+              <p className={styles.pillarMethodText}>
+                Die KI-Vertragsanalyse von Contract AI basiert auf GPT-4 und wurde mit spezialisierten
+                Analysepipelines für den deutschen Rechtsraum optimiert. Die Ergebnisse stellen eine
+                automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
+              </p>
+              <p className={styles.pillarMethodText}>
+                <strong>Limitationen:</strong> Die KI-Analyse eignet sich hervorragend zur schnellen
+                Identifikation gängiger Vertragsrisiken und problematischer Klauseln. Bei besonders
+                komplexen Vertragskonstruktionen, individuellen Sonderfällen oder Verträgen mit hohem
+                Streitwert empfehlen wir ergänzend die Konsultation eines Fachanwalts. Die KI-Ergebnisse
+                können dabei als strukturierte Grundlage für das Anwaltsgespräch dienen.
+              </p>
+              <p className={styles.pillarMethodText}>
+                Dieser Guide wird regelmäßig aktualisiert und spiegelt den Stand der Technologie
+                sowie aktuelle Entwicklungen im Legal-Tech-Markt wider. Letzte Aktualisierung: Juni 2025.
+              </p>
             </div>
           </div>
         </section>
