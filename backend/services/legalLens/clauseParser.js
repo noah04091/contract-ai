@@ -530,6 +530,26 @@ class ClauseParser {
 
     log.debug(`[detectNonAnalyzable] title="${title}", text="${trimmedText.substring(0, 50)}...", lowerTitle="${lowerTitle}"`);
 
+    // ===== HOHE-KONFIDENZ OVERRIDES (vor Escape Hatch) =====
+    // Diese Muster sind so eindeutig, dass sie auch bei Vorhandensein
+    // von rechtlichen Keywords als nicht-analysierbar gelten
+
+    // Unterschriftsfelder: Titel enthält "Unterschrift/Signatur" UND Unterstriche im Text
+    if ((lowerTitle.includes('unterschrift') || lowerTitle.includes('signatur') ||
+         lowerTitle.includes('signature') || lowerTitle.includes('unterzeichn')) &&
+        /__{3,}/.test(trimmedText)) {
+      log.debug(`[detectNonAnalyzable] PRIORITY: signature_field via title+underscores for "${title}"`);
+      return { nonAnalyzable: true, reason: 'signature_field', category: 'signature' };
+    }
+
+    // Vertragsparteien: Exakter Titelmatch (nicht Substring, um "Pflichten der Vertragsparteien" nicht zu treffen)
+    if (lowerTitle === 'vertragsparteien' || lowerTitle === 'parteien' ||
+        lowerTitle === 'vertragspartner' || lowerTitle === 'die vertragsparteien' ||
+        lowerTitle === 'die parteien') {
+      log.debug(`[detectNonAnalyzable] PRIORITY: contract_parties via exact title for "${title}"`);
+      return { nonAnalyzable: true, reason: 'contract_parties', category: 'metadata' };
+    }
+
     // ===== ESCAPE HATCHES - IMMER ANALYSIERBAR =====
     // Diese Keywords bedeuten: Klausel ist IMMER relevant, auch wenn kurz!
     const alwaysAnalyzableKeywords = [
