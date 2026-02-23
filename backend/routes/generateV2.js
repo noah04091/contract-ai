@@ -1646,7 +1646,9 @@ function loadContractTypeProfile(contractType) {
     'darlehen': '../contractTypes/darlehen',
     'gesellschaft': '../contractTypes/gesellschaft',
     'aufhebungsvertrag': '../contractTypes/aufhebungsvertrag',
-    'pacht': '../contractTypes/pacht'
+    'pacht': '../contractTypes/pacht',
+    'kooperation': '../contractTypes/kooperation',
+    'berater': '../contractTypes/berater'
   };
 
   const modulePath = typeMap[contractType];

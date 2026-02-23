@@ -2057,7 +2057,8 @@ router.post("/", verifyToken, async (req, res) => {
   const V2_SUPPORTED_TYPES = [
     'individuell', 'darlehen', 'kaufvertrag', 'mietvertrag',
     'freelancer', 'arbeitsvertrag', 'nda', 'aufhebungsvertrag',
-    'gesellschaft', 'lizenzvertrag', 'pacht', 'werkvertrag'
+    'gesellschaft', 'lizenzvertrag', 'pacht', 'werkvertrag',
+    'kooperation', 'berater'
   ];
 
   const shouldUseV2 = V2_SUPPORTED_TYPES.includes(type);
@@ -2080,6 +2081,9 @@ router.post("/", verifyToken, async (req, res) => {
         lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
         werkvertrag:      { a: 'client', aAddr: 'clientAddress', b: 'contractor', bAddr: 'contractorAddress' },
         pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+        kooperation:      { a: 'partnerA', aAddr: 'partnerAAddress', b: 'partnerB', bAddr: 'partnerBAddress' },
+        berater:          { a: 'clientName', aAddr: 'clientAddress', b: 'consultantName', bAddr: 'consultantAddress' },
+        individuell:      { a: 'partyAName', aAddr: 'partyAAddress', b: 'partyBName', bAddr: 'partyBAddress' },
       };
 
       const v2Input = { ...formData };
