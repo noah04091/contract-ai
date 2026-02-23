@@ -303,8 +303,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       try {
         const apiUrl = getApiUrl();
+        const token = localStorage.getItem('token');
         const response = await fetch(`${apiUrl}/api/s3/view?contractId=${contractId}`, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
 
         if (!response.ok) {
