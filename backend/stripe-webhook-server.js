@@ -269,7 +269,13 @@ async function handleStripeEvent(event) {
         });
       }
 
-      // 2. Custom Invoice PDF generieren (für Renewals)
+      // 2. Custom Invoice PDF generieren (NUR für Renewals, nicht für Erstabschluss)
+      // Beim Erstabschluss generiert checkout.session.completed bereits die PDF
+      if (invoice.billing_reason === 'subscription_create') {
+        console.log(`📄 Erstabschluss (subscription_create) - PDF wird von checkout.session.completed generiert, überspringe`);
+        return;
+      }
+
       setImmediate(async () => {
         const client = new MongoClient(MONGO_URI);
         try {
@@ -278,8 +284,7 @@ async function handleStripeEvent(event) {
           const invoicesCollection = db.collection("invoices");
           const usersCollection = db.collection("users");
 
-          // Duplikat-Check: Existiert bereits eine Custom-PDF für diese Stripe-Rechnung?
-          // (z.B. weil checkout.session.completed sie schon generiert hat)
+          // Sicherheits-Duplikat-Check
           if (invoice.number) {
             const existingPdf = await invoicesCollection.findOne({
               stripeInvoiceNumber: invoice.number
