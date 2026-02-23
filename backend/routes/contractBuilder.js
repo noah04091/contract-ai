@@ -336,7 +336,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
       return titleHeight + Math.max(lineCount * 24, 50) + 20; // +20 für Margins
     };
 
-    const PAGE_HEIGHT = 750; // px, konservativ (echte Höhe ~1002px, aber lieber eine Seite mehr als abgeschnitten)
+    const PAGE_HEIGHT = 920; // px (echte Höhe ~1002px, 8% Sicherheitspuffer für Schätzungs-Ungenauigkeit)
     let currentPageHeight = 0;
 
     const addBlock = (block) => {
@@ -407,7 +407,7 @@ router.post('/import-from-generator', auth, async (req, res) => {
         addBlock({
           id: uuidv4(),
           type: 'preamble',
-          content: { preambleText },
+          content: { preambleText, preambleLayout: 'bordered' },
           style: {},
           locked: false,
           aiGenerated: true
