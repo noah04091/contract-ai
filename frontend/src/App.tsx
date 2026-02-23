@@ -70,6 +70,7 @@ const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
 const ContractBuilderFeature = lazy(() => import("./pages/features/ContractBuilder"));
 const LegalLensFeature = lazy(() => import("./pages/features/LegalLens"));
 const Features = lazy(() => import("./pages/Features")); // 📋 Features Übersichtsseite
+const KiVertragsanalyse = lazy(() => import("./pages/KiVertragsanalyse")); // 🎯 SEO Pillar Page
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
@@ -188,6 +189,9 @@ function AppWithLoader() {
 
             {/* 📋 Features Übersichtsseite */}
             <Route path="/features" element={<Features />} />
+
+            {/* 🎯 SEO Pillar Page */}
+            <Route path="/ki-vertragsanalyse" element={<KiVertragsanalyse />} />
 
             {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />

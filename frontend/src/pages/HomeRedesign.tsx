@@ -2017,6 +2017,7 @@ const HomeRedesign = () => {
                 <div className="footer-column">
                   <h4>Funktionen</h4>
                   <ul>
+                    <li><Link to="/ki-vertragsanalyse">KI-Vertragsanalyse</Link></li>
                     <li><Link to="/features/vertragsanalyse">Vertragsanalyse</Link></li>
                     <li><Link to="/features/optimierung">Optimierung</Link></li>
                     <li><Link to="/features/fristen">Fristen</Link></li>

@@ -3687,3 +3687,322 @@
     padding: 14px 24px;
   }
 }
+
+/* ============================================
+   PILLAR PAGE STYLES
+   ============================================ */
+
+/* Table of Contents */
+.pillarTocSection {
+  padding: 0 0 32px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.pillarToc {
+  max-width: 700px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,255,0.95) 100%);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.1);
+  padding: 28px 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.pillarTocTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pillarTocNav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pillarTocLink {
+  color: #3b82f6;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.pillarTocLink:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: #1d4ed8;
+}
+
+/* Content Section */
+.pillarContentSection {
+  padding: 64px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Prose Text Blocks */
+.pillarProse {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.pillarProse p {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #334155;
+  margin-bottom: 20px;
+}
+
+.pillarProse h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 40px;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.pillarProse strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* Pillar List */
+.pillarList {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 24px 0;
+}
+
+.pillarList li {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #334155;
+  padding: 10px 0 10px 24px;
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.pillarList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 8px;
+  height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+
+.pillarList li:last-child {
+  border-bottom: none;
+}
+
+/* Category Definition Block (Wikipedia-style) */
+.pillarDefinition {
+  background: linear-gradient(135deg, rgba(248, 250, 255, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+}
+
+.pillarDefinition p {
+  font-size: 17px;
+  line-height: 1.75;
+  color: #1e293b;
+  margin: 0;
+  font-style: italic;
+}
+
+.pillarDefinition p strong {
+  font-style: normal;
+  color: #0f172a;
+}
+
+/* Highlight Box */
+.pillarHighlight {
+  display: flex;
+  gap: 20px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(147, 197, 253, 0.08) 100%);
+  border-left: 4px solid #3b82f6;
+  border-radius: 0 12px 12px 0;
+  margin: 28px 0;
+}
+
+.pillarHighlightIcon {
+  flex-shrink: 0;
+  color: #3b82f6;
+  margin-top: 2px;
+}
+
+.pillarHighlight h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.pillarHighlight p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #475569;
+  margin: 0;
+}
+
+/* Comparison Table */
+.pillarComparisonTable {
+  max-width: 800px;
+  margin: 0 auto 40px auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  background: #fff;
+}
+
+.pillarComparisonHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.pillarComparisonHeaderCell {
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pillarComparisonAi {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.pillarComparisonLawyer {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pillarComparisonRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.pillarComparisonRow:last-child {
+  border-bottom: none;
+}
+
+.pillarComparisonLabel {
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  background: rgba(248, 250, 255, 0.5);
+}
+
+.pillarComparisonValue {
+  padding: 14px 20px;
+  font-size: 14px;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.textGreen {
+  color: #22c55e;
+}
+
+.textGray {
+  color: #94a3b8;
+}
+
+/* Responsive Pillar Styles */
+@media (max-width: 768px) {
+  .pillarToc {
+    padding: 20px 24px;
+  }
+
+  .pillarProse {
+    padding: 0 16px;
+  }
+
+  .pillarProse p {
+    font-size: 16px;
+  }
+
+  .pillarProse h3 {
+    font-size: 20px;
+  }
+
+  .pillarHighlight {
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .pillarComparisonTable {
+    font-size: 13px;
+  }
+
+  .pillarComparisonHeader {
+    grid-template-columns: 0.8fr 1fr 1fr;
+  }
+
+  .pillarComparisonRow {
+    grid-template-columns: 0.8fr 1fr 1fr;
+  }
+
+  .pillarComparisonHeaderCell {
+    padding: 12px 12px;
+    font-size: 12px;
+  }
+
+  .pillarComparisonLabel {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+
+  .pillarComparisonValue {
+    padding: 12px 12px;
+    font-size: 13px;
+  }
+
+  .pillarContentSection {
+    padding: 40px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .pillarComparisonHeader {
+    grid-template-columns: 0.6fr 1fr 1fr;
+  }
+
+  .pillarComparisonRow {
+    grid-template-columns: 0.6fr 1fr 1fr;
+  }
+
+  .pillarComparisonHeaderCell {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+
+  .pillarComparisonLabel,
+  .pillarComparisonValue {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+}

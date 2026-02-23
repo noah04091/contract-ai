@@ -51,6 +51,17 @@
   </url>
 
   <!-- ========================================== -->
+  <!-- SEO PILLAR PAGES                            -->
+  <!-- ========================================== -->
+
+  <url>
+    <loc>https://www.contract-ai.de/ki-vertragsanalyse</loc>
+    <lastmod>2025-06-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- ========================================== -->
   <!-- FEATURE-LANDINGPAGES                       -->
   <!-- ========================================== -->
 

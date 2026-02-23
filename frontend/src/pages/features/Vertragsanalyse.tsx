@@ -848,6 +848,17 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
+
+              <Link to="/ki-vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon}><BookOpen size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>KI-Vertragsanalyse Guide</div>
+                  <div className={styles.relatedDescription}>
+                    Der komplette Guide: Wie KI-Vertragsanalyse funktioniert, KI vs. Anwalt, Kosten
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
             </div>
           </div>
         </section>
