@@ -52,8 +52,8 @@
   position: fixed;
   inset: 0;
   z-index: 10001;
-  background: rgba(0, 0, 0, 0.05);
-  pointer-events: auto;
+  background: transparent;
+  pointer-events: none;  /* Klicks gehen durch zum Hintergrund */
 }
 
 .mascotContainer {
@@ -64,6 +64,7 @@
   display: flex;
   align-items: flex-end;
   gap: 0;
+  pointer-events: auto;  /* Maskottchen bleibt klickbar */
 }
 
 .mascotFigure {

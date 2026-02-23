@@ -323,7 +323,9 @@
       "WebFetch(domain:developers.google.com)",
       "Bash(git status:*)",
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx tsc --noEmit; echo EXIT_CODE:$LASTEXITCODE\")",
-      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx vite build 2>&1; Write-Host EXITCODE:$LASTEXITCODE\")"
+      "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx vite build 2>&1; Write-Host EXITCODE:$LASTEXITCODE\")",
+      "Bash(git hash-object:*)",
+      "Bash(git ls-tree:*)"
     ],
     "deny": [],
     "ask": []
