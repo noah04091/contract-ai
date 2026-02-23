@@ -221,8 +221,11 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="Rechnung-${invoiceNumber}.pdf"`);
 
-        // PDF Buffer direkt senden
-        return res.send(customInvoice.file);
+        // MongoDB Binary zu Buffer konvertieren falls nötig
+        const pdfBuffer = Buffer.isBuffer(customInvoice.file)
+          ? customInvoice.file
+          : Buffer.from(customInvoice.file.buffer || customInvoice.file);
+        return res.send(pdfBuffer);
       } else {
         console.log(`❌ Keine Custom PDF gefunden, verwende Stripe Fallback`);
       }
