@@ -153,6 +153,28 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Blog-Artikel (Cluster: KI-Vertragsanalyse Pillar) -->
+  <url>
+    <loc>https://www.contract-ai.de/blog/ki-vs-anwalt-vertrag-pruefen</loc>
+    <lastmod>2026-02-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.contract-ai.de/blog/dsgvo-ki-vertragsanalyse</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://www.contract-ai.de/blog/ki-vertragsanalyse-genauigkeit</loc>
+    <lastmod>2026-02-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Blog-Artikel -->
   <url>
     <loc>https://www.contract-ai.de/blog/legal-lens-vertragsklauseln-verstehen</loc>

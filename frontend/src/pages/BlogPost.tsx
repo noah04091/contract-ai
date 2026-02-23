@@ -249,6 +249,22 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
             }
           })}
         </script>
+        {fullArticle?.faqs && fullArticle.faqs.length > 0 && (
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": fullArticle.faqs.map((faq: { question: string; answer: string }) => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            })}
+          </script>
+        )}
       </Helmet>
 
       <div className={styles.blogPost} ref={articleRef}>
