@@ -793,7 +793,7 @@ const KiVertragsanalyse: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.functionsGrid}>
+            <div className={styles.securityGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon}><Shield size={24} /></div>
                 <h3 className={styles.functionTitle}>Deutsche Server</h3>

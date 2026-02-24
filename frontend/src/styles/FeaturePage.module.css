@@ -3124,7 +3124,7 @@
 
 .whyGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
@@ -3274,6 +3274,21 @@
   gap: 24px;
   max-width: 1000px;
   margin: 0 auto;
+}
+
+.securityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .securityGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 .functionCard {
