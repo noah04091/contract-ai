@@ -322,6 +322,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const activeBlock = activeId ? blocks.find((b: Block) => b.id === activeId) : null;
 
   // Page Styles basierend auf Design
+  const resolvedFont = design?.fontFamily || 'Inter, sans-serif';
   const pageStyles: React.CSSProperties = {
     '--primary-color': design?.primaryColor || '#1a365d',
     '--secondary-color': design?.secondaryColor || '#2d3748',
@@ -329,12 +330,14 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     '--text-primary': design?.textPrimary || '#1a202c',
     '--text-secondary': design?.textSecondary || '#4a5568',
     '--text-muted': design?.textMuted || '#9ca3af',
-    '--font-family': design?.fontFamily || 'Inter, sans-serif',
-    '--heading-font': design?.headingFont || 'Inter, sans-serif',
+    '--font-family': resolvedFont,
+    '--heading-font': design?.headingFont || resolvedFont,
     '--background-primary': design?.backgroundPrimary || '#ffffff',
     '--background-secondary': design?.backgroundSecondary || '#f8fafc',
     '--border-color': design?.borderColor || '#e2e8f0',
     '--base-font-size': `${design?.baseFontSize || 13}px`,
+    // Direkte font-family als inline style (höchste CSS-Priorität)
+    fontFamily: resolvedFont,
   } as React.CSSProperties;
 
   const zoomStyle: React.CSSProperties = {

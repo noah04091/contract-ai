@@ -254,6 +254,25 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 <option value="'Source Code Pro', 'Courier New', monospace">Source Code Pro</option>
               </optgroup>
             </select>
+            <span style={{ fontSize: '10px', color: '#718096', marginTop: '4px', display: 'block' }}>
+              Aktiv: {currentDocument?.design?.fontFamily || 'Standard'}
+            </span>
+            <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+              <button
+                type="button"
+                style={{ fontSize: '10px', padding: '2px 6px', cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#f7fafc' }}
+                onClick={() => updateDesign({ fontFamily: 'Georgia, serif', headingFont: 'Georgia, serif' })}
+              >
+                Test: Serif
+              </button>
+              <button
+                type="button"
+                style={{ fontSize: '10px', padding: '2px 6px', cursor: 'pointer', border: '1px solid #e2e8f0', borderRadius: '4px', background: '#f7fafc' }}
+                onClick={() => updateDesign({ fontFamily: 'Inter, sans-serif', headingFont: 'Inter, sans-serif' })}
+              >
+                Test: Sans
+              </button>
+            </div>
           </div>
 
           <div className={styles.fieldRow}>
