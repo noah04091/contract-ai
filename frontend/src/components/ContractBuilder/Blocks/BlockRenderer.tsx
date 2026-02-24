@@ -30,6 +30,19 @@ interface BlockRendererProps {
   pageNumber?: number; // Für Seitenumbrüche
 }
 
+// Font-Stacks mit Fallbacks
+const fontStacks: Record<string, string> = {
+  'Inter': "'Inter', system-ui, sans-serif",
+  'Roboto': "'Roboto', Arial, sans-serif",
+  'Open Sans': "'Open Sans', Arial, sans-serif",
+  'Lato': "'Lato', Arial, sans-serif",
+  'Merriweather': "'Merriweather', Georgia, serif",
+  'Georgia': "Georgia, 'Times New Roman', serif",
+  'Times New Roman': "'Times New Roman', Times, serif",
+  'Arial': "Arial, Helvetica, sans-serif",
+  'Source Code Pro': "'Source Code Pro', 'Courier New', monospace",
+};
+
 export const BlockRenderer: React.FC<BlockRendererProps> = ({
   block,
   isSelected,
@@ -37,8 +50,12 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
   pageNumber = 1,
 }) => {
   // Block-spezifische Styles anwenden
+  const resolvedFont = block.style?.fontFamily
+    ? (fontStacks[block.style.fontFamily] || block.style.fontFamily)
+    : undefined;
+
   const blockStyles: React.CSSProperties = {
-    fontFamily: block.style?.fontFamily,
+    fontFamily: resolvedFont,
     fontSize: block.style?.fontSize ? `${block.style.fontSize}px` : undefined,
     fontWeight: block.style?.fontWeight,
     fontStyle: block.style?.fontStyle,

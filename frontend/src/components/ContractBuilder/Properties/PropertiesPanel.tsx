@@ -43,6 +43,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     updateBlock,
     updateBlockContent,
     updateBlockStyle,
+    updateDesign,
     deleteBlock,
     duplicateBlock,
     applyStyleToAllOfType,
@@ -227,19 +228,31 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           onToggle={() => toggleSection('typography')}
         >
           <div className={styles.field}>
-            <label className={styles.label}>Schriftfamilie</label>
+            <label className={styles.label}>Schriftart (Dokument)</label>
             <select
               className={styles.select}
-              value={selectedBlock.style?.fontFamily || ''}
-              onChange={(e) => updateStyle('fontFamily', e.target.value || undefined)}
+              value={currentDocument?.design?.fontFamily || ''}
+              onChange={(e) => {
+                const font = e.target.value || 'Inter, sans-serif';
+                updateDesign({ fontFamily: font, headingFont: font });
+              }}
             >
-              <option value="">Standard</option>
-              <option value="Inter">Inter</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Arial">Arial</option>
-              <option value="Roboto">Roboto</option>
-              <option value="Open Sans">Open Sans</option>
+              <option value="">Standard (Inter)</option>
+              <optgroup label="Sans-Serif">
+                <option value="Inter, sans-serif">Inter</option>
+                <option value="Roboto, Arial, sans-serif">Roboto</option>
+                <option value="'Open Sans', Arial, sans-serif">Open Sans</option>
+                <option value="Lato, Arial, sans-serif">Lato</option>
+                <option value="Arial, Helvetica, sans-serif">Arial</option>
+              </optgroup>
+              <optgroup label="Serif">
+                <option value="Georgia, 'Times New Roman', serif">Georgia</option>
+                <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                <option value="Merriweather, Georgia, serif">Merriweather</option>
+              </optgroup>
+              <optgroup label="Monospace">
+                <option value="'Source Code Pro', 'Courier New', monospace">Source Code Pro</option>
+              </optgroup>
             </select>
           </div>
 
