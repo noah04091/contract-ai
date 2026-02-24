@@ -574,8 +574,8 @@ const KiVertragsanalyse: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '48px' }}>
-              <div className={`${styles.solutionComparison} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'row', alignItems: 'stretch' }}>
-                <div className={`${styles.comparisonCard} ${styles.before}`} style={{ flex: 1 }}>
+              <div className={`${styles.solutionComparison} ${styles.comparisonHorizontal} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={`${styles.comparisonCard} ${styles.before}`}>
                   <span className={styles.comparisonLabel}>Vorher</span>
                   <div className={styles.comparisonIcon}><FileText size={32} /></div>
                   <div className={styles.comparisonTitle}>Manuelle Prüfung</div>
@@ -584,8 +584,8 @@ const KiVertragsanalyse: React.FC = () => {
                   </div>
                   <div className={styles.comparisonTime}><Clock size={16} /> 2-4 Stunden pro Vertrag</div>
                 </div>
-                <div className={styles.comparisonArrow} style={{ transform: 'rotate(0deg)', alignSelf: 'center' }}><ArrowRight size={24} /></div>
-                <div className={`${styles.comparisonCard} ${styles.after}`} style={{ flex: 1 }}>
+                <div className={styles.comparisonArrow}><ArrowRight size={24} /></div>
+                <div className={`${styles.comparisonCard} ${styles.after}`}>
                   <span className={styles.comparisonLabel}>Nachher</span>
                   <div className={styles.comparisonIcon}><Zap size={32} /></div>
                   <div className={styles.comparisonTitle}>KI-Analyse</div>
@@ -1162,7 +1162,7 @@ const KiVertragsanalyse: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.functionsGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon}><Cpu size={24} /></div>
                 <h3 className={styles.functionTitle}>KI wird spezialisierter</h3>

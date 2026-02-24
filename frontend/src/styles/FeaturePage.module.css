@@ -3072,6 +3072,31 @@
   transform: rotate(90deg);
 }
 
+/* Horizontal comparison layout (used on pillar pages) */
+.comparisonHorizontal {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.comparisonHorizontal .comparisonCard {
+  flex: 1;
+}
+
+.comparisonHorizontal .comparisonArrow {
+  transform: rotate(0deg);
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .comparisonHorizontal {
+    flex-direction: column;
+  }
+
+  .comparisonHorizontal .comparisonArrow {
+    transform: rotate(90deg);
+  }
+}
+
 .solutionText {
   font-size: 17px;
   line-height: 1.8;
