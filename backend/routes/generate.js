@@ -2090,7 +2090,7 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(401).json({ message: "Benutzer nicht gefunden." });
     }
 
-    const plan = (user.subscription?.plan || user.plan || 'free').toLowerCase();
+    const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
     const generateLimit = getFeatureLimit(plan, 'generate');
 
     if (generateLimit !== Infinity) {
