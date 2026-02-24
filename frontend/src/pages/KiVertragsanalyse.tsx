@@ -58,7 +58,7 @@ const KiVertragsanalyse: React.FC = () => {
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "KI-Vertragsanalyse: Der komplette Guide 2025",
+    "headline": "KI-Vertragsanalyse: Der komplette Guide 2026",
     "description": "Alles was Sie über KI-gestützte Vertragsanalyse wissen müssen: Wie sie funktioniert, was sie kostet, KI vs. Anwalt im Vergleich und für wen sie sich lohnt.",
     "author": {
       "@type": "Organization",
@@ -74,8 +74,8 @@ const KiVertragsanalyse: React.FC = () => {
         "url": "https://www.contract-ai.de/logo.png"
       }
     },
-    "datePublished": "2025-01-15",
-    "dateModified": "2025-06-01",
+    "datePublished": "2025-01-15T00:00:00+01:00",
+    "dateModified": "2026-02-24T00:00:00+01:00",
     "mainEntityOfPage": "https://www.contract-ai.de/ki-vertragsanalyse",
     "image": "https://www.contract-ai.de/og/og-ki-vertragsanalyse.png"
   };
@@ -182,19 +182,19 @@ const KiVertragsanalyse: React.FC = () => {
         <link rel="canonical" href="https://www.contract-ai.de/ki-vertragsanalyse" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="KI-Vertragsanalyse: Der komplette Guide 2025 | Contract AI" />
+        <meta property="og:title" content="KI-Vertragsanalyse: Der komplette Guide 2026 | Contract AI" />
         <meta property="og:description" content="Alles über KI-Vertragsanalyse: Wie sie funktioniert, was sie kostet, KI vs. Anwalt im Vergleich. Kostenlos testen." />
         <meta property="og:type" content="article" />
         <meta property="og:url" content="https://www.contract-ai.de/ki-vertragsanalyse" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-ki-vertragsanalyse.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
-        <meta property="article:published_time" content="2025-01-15" />
-        <meta property="article:modified_time" content="2025-06-01" />
+        <meta property="article:published_time" content="2025-01-15T00:00:00+01:00" />
+        <meta property="article:modified_time" content="2026-02-24T00:00:00+01:00" />
         <meta property="article:author" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="KI-Vertragsanalyse: Der komplette Guide 2025 | Contract AI" />
+        <meta name="twitter:title" content="KI-Vertragsanalyse: Der komplette Guide 2026 | Contract AI" />
         <meta name="twitter:description" content="Alles über KI-Vertragsanalyse: Wie sie funktioniert, was sie kostet, KI vs. Anwalt im Vergleich. Kostenlos testen." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-ki-vertragsanalyse.png" />
 
@@ -219,7 +219,7 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={styles.heroContent}>
               <div className={styles.heroBadge}>
                 <span className={styles.heroBadgeDot}></span>
-                Der komplette Guide 2025
+                Der komplette Guide 2026
               </div>
 
               <h1 className={styles.heroTitle}>
@@ -1083,7 +1083,7 @@ const KiVertragsanalyse: React.FC = () => {
               </p>
               <p className={styles.pillarMethodText}>
                 Dieser Guide wird regelmäßig aktualisiert und spiegelt den Stand der Technologie
-                sowie aktuelle Entwicklungen im Legal-Tech-Markt wider. Letzte Aktualisierung: Juni 2025.
+                sowie aktuelle Entwicklungen im Legal-Tech-Markt wider. Letzte Aktualisierung: Februar 2026.
               </p>
             </div>
           </div>
