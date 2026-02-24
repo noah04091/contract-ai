@@ -25,7 +25,7 @@ export const articles: Article[] = [
   {
     id: 20,
     slug: 'ki-vs-anwalt-vertrag-pruefen',
-    title: 'KI vs. Anwalt: Vertrag prüfen lassen im Vergleich 2025',
+    title: 'KI vs. Anwalt: Vertrag prüfen lassen im Vergleich 2026',
     subtitle: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchen Sie einen Anwalt? Ein ehrlicher Vergleich mit konkreten Empfehlungen.',
     excerpt: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchen Sie einen Anwalt? Ein ehrlicher, neutraler Vergleich mit konkreten Empfehlungen für verschiedene Vertragstypen.',
     category: 'tipps',
@@ -132,7 +132,7 @@ export const articles: Article[] = [
     readTime: '7 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '🔒',
-    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f2?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&q=80',
     faqs: [
       {
         question: 'Ist KI-Vertragsanalyse DSGVO-konform?',
