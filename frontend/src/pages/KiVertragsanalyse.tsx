@@ -374,7 +374,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Definition</span>
-              <h2 className={styles.sectionTitle}>Was ist KI-Vertragsanalyse?</h2>
+              <h2 className={styles.sectionTitle}>Was ist <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span>?</h2>
             </div>
 
             <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs}>
@@ -488,7 +488,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>KI-Vertragsanalyse in Aktion</h2>
+              <h2 className={styles.sectionTitle}>KI-Vertragsanalyse <span style={{ color: '#3b82f6' }}>in Aktion</span></h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie Contract AI einen Vertrag in unter 60 Sekunden analysiert
                 und versteckte Risiken aufdeckt.
@@ -509,7 +509,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Schritt für Schritt</span>
-              <h2 className={styles.sectionTitle}>Wie funktioniert KI-Vertragsanalyse?</h2>
+              <h2 className={styles.sectionTitle}>Wie funktioniert <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Von der PDF-Datei zum vollständigen Analyse-Report in drei einfachen Schritten.
               </p>
@@ -574,28 +574,24 @@ const KiVertragsanalyse: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '48px' }}>
-              <div className={`${styles.solutionComparison} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={`${styles.comparisonCard} ${styles.before}`}>
+              <div className={`${styles.solutionComparison} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'row', alignItems: 'stretch' }}>
+                <div className={`${styles.comparisonCard} ${styles.before}`} style={{ flex: 1 }}>
                   <span className={styles.comparisonLabel}>Vorher</span>
                   <div className={styles.comparisonIcon}><FileText size={32} /></div>
                   <div className={styles.comparisonTitle}>Manuelle Prüfung</div>
-                  <ul className={styles.comparisonList}>
-                    <li>Juristisches Fachwissen nötig</li>
-                    <li>Stunden bis Tage Zeitaufwand</li>
-                    <li>Subjektive Bewertung</li>
-                  </ul>
+                  <div className={styles.comparisonDesc}>
+                    Juristisches Fachwissen nötig. Stunden bis Tage Zeitaufwand. Subjektive Bewertung je nach Erfahrung.
+                  </div>
                   <div className={styles.comparisonTime}><Clock size={16} /> 2-4 Stunden pro Vertrag</div>
                 </div>
-                <div className={styles.comparisonArrow}><ArrowRight size={24} /></div>
-                <div className={`${styles.comparisonCard} ${styles.after}`}>
+                <div className={styles.comparisonArrow} style={{ transform: 'rotate(0deg)', alignSelf: 'center' }}><ArrowRight size={24} /></div>
+                <div className={`${styles.comparisonCard} ${styles.after}`} style={{ flex: 1 }}>
                   <span className={styles.comparisonLabel}>Nachher</span>
                   <div className={styles.comparisonIcon}><Zap size={32} /></div>
                   <div className={styles.comparisonTitle}>KI-Analyse</div>
-                  <ul className={styles.comparisonList}>
-                    <li>Keine Vorkenntnisse nötig</li>
-                    <li>Ergebnis in unter 60 Sekunden</li>
-                    <li>Algorithmisch konsistent</li>
-                  </ul>
+                  <div className={styles.comparisonDesc}>
+                    Keine Vorkenntnisse nötig. Ergebnis in unter 60 Sekunden. Algorithmisch konsistent und objektiv.
+                  </div>
                   <div className={styles.comparisonTime}><Zap size={16} /> Unter 60 Sekunden</div>
                 </div>
               </div>
@@ -667,14 +663,14 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ehrlicher Vergleich</span>
-              <h2 className={styles.sectionTitle}>KI vs. Anwalt: Wann lohnt sich was?</h2>
+              <h2 className={styles.sectionTitle}><span style={{ color: '#3b82f6' }}>KI vs. Anwalt</span>: Wann lohnt sich was?</h2>
               <p className={styles.sectionSubtitle}>
                 Die Wahrheit ist: Beides hat seine Berechtigung. Hier sehen Sie, wann welche Option die bessere Wahl ist.
               </p>
             </div>
 
             <div className={`${styles.pillarComparisonTable} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <div className={styles.pillarComparisonHeader}>
+              <div className={styles.pillarComparisonHeader} style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)' }}>
                 <div className={styles.pillarComparisonHeaderCell}></div>
                 <div className={`${styles.pillarComparisonHeaderCell} ${styles.pillarComparisonAi}`}>
                   <Cpu size={20} />
@@ -772,7 +768,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Beispiel-Ergebnisse</span>
-              <h2 className={styles.sectionTitle}>Das findet KI-Vertragsanalyse in Ihrem Vertrag</h2>
+              <h2 className={styles.sectionTitle}>Das findet KI-Vertragsanalyse in <span style={{ color: '#3b82f6' }}>Ihrem Vertrag</span></h2>
               <p className={styles.sectionSubtitle}>
                 Typische Risiken, die unsere KI in Verträgen erkennt — oft übersehen bei manueller Prüfung.
               </p>
@@ -841,7 +837,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Anwendungsbereiche</span>
-              <h2 className={styles.sectionTitle}>Welche Verträge kann KI analysieren?</h2>
+              <h2 className={styles.sectionTitle}>Welche Verträge kann <span style={{ color: '#3b82f6' }}>KI analysieren</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 KI-Vertragsanalyse funktioniert mit nahezu allen gängigen Vertragstypen im deutschen Rechtsraum.
               </p>
@@ -899,11 +895,11 @@ const KiVertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}><Zap size={28} /></div>
-                <h3 className={styles.whyTitle}>SaaS & Dienstleistung</h3>
+                <div className={styles.whyIcon}><CheckCircle size={28} /></div>
+                <h3 className={styles.whyTitle}>Alle weiteren Verträge</h3>
                 <p className={styles.whyDesc}>
-                  Analyse von SLA-Garantien, Datenschutzklauseln, automatischer
-                  Verlängerung, Preisanpassungsklauseln und Exit-Bedingungen.
+                  SaaS-Verträge, Dienstleistungsverträge, Werkverträge, Kooperationsverträge,
+                  Gesellschaftsverträge und mehr — die KI erkennt den Vertragstyp automatisch.
                 </p>
               </div>
             </div>
@@ -917,7 +913,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum immer mehr Menschen KI-Vertragsanalyse nutzen</h2>
+              <h2 className={styles.sectionTitle}>Warum immer mehr Menschen<br/><span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span> nutzen</h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -935,7 +931,7 @@ const KiVertragsanalyse: React.FC = () => {
               </div>
             </div>
 
-            <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs}>
+            <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs} style={{ marginTop: '48px' }}>
               <p>
                 Die wachsende Beliebtheit von KI-Vertragsanalyse hat klare Gründe: In einer Welt,
                 in der Verträge immer komplexer werden, bietet KI eine <strong>demokratisierende Kraft</strong>.
@@ -968,7 +964,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Datenschutz</span>
-              <h2 className={styles.sectionTitle}>Sicherheit und DSGVO bei KI-Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}><span style={{ color: '#3b82f6' }}>Sicherheit</span> und DSGVO bei KI-Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
                 Verträge enthalten sensible Daten. Deshalb hat Datenschutz bei Contract AI höchste Priorität.
               </p>
@@ -1029,11 +1025,11 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             SECTION 7: CONTRACT AI PLATTFORM
             ========================================== */}
-        <section className={styles.pillarContentSection} id="contract-ai">
+        <section className={styles.pillarContentSection} id="contract-ai" style={{ paddingBottom: '80px' }}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Die Plattform</span>
-              <h2 className={styles.sectionTitle}>Contract AI: Mehr als nur Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}><span style={{ color: '#3b82f6' }}>Contract AI</span>: Mehr als nur Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
                 Contract AI ist die einzige Plattform im DACH-Raum, die Vertragsanalyse,
                 Optimierung, Erstellung und Verwaltung in einer Lösung vereint.
@@ -1108,18 +1104,47 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
             </div>
 
-            <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs} style={{ marginTop: '48px' }}>
-              <h3>Für wen ist Contract AI geeignet?</h3>
-              <p>
-                Contract AI richtet sich an alle, die mit Verträgen arbeiten:
-              </p>
-              <ul className={styles.pillarList}>
-                <li><strong>Privatpersonen:</strong> Mietvertrag vor der Unterschrift prüfen, Arbeitsvertrag verstehen, Kaufvertrag absichern</li>
-                <li><strong>Freelancer &amp; Selbstständige:</strong> Kundenverträge schnell bewerten, NDAs prüfen, eigene Verträge erstellen</li>
-                <li><strong>Kleine &amp; mittlere Unternehmen:</strong> Lieferantenverträge prüfen, Vertragsverwaltung digitalisieren, Compliance sicherstellen</li>
-                <li><strong>Startups:</strong> Investorenverträge verstehen, Kooperationsverträge bewerten, ohne teure Kanzlei</li>
-                <li><strong>Rechtsabteilungen:</strong> Massenprüfung von Verträgen, Qualitätssicherung, Effizienzsteigerung</li>
-              </ul>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs} style={{ marginTop: '64px' }}>
+              <span className={styles.sectionEyebrow}>Zielgruppen</span>
+              <h2 className={styles.sectionTitle}>Für wen ist <span style={{ color: '#3b82f6' }}>Contract AI</span> geeignet?</h2>
+            </div>
+
+            <div className={styles.solutionFeatures} style={{ maxWidth: '700px', margin: '0 auto' }}>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Users size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Privatpersonen</h4>
+                  <p>Mietvertrag vor der Unterschrift prüfen, Arbeitsvertrag verstehen, Kaufvertrag absichern</p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Globe size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Freelancer & Selbstständige</h4>
+                  <p>Kundenverträge schnell bewerten, NDAs prüfen, eigene Verträge erstellen</p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Building2 size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Kleine & mittlere Unternehmen</h4>
+                  <p>Lieferantenverträge prüfen, Vertragsverwaltung digitalisieren, Compliance sicherstellen</p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Zap size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Startups</h4>
+                  <p>Investorenverträge verstehen, Kooperationsverträge bewerten, ohne teure Kanzlei</p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Scale size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Rechtsabteilungen</h4>
+                  <p>Massenprüfung von Verträgen, Qualitätssicherung, Effizienzsteigerung</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1127,56 +1152,50 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             SECTION: ZUKUNFT & MARKT
             ========================================== */}
-        <section className={styles.pillarContentSection} id="zukunft">
+        <section className={styles.functionsSection} id="zukunft">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ausblick</span>
-              <h2 className={styles.sectionTitle}>Warum KI-Vertragsanalyse 2026 zum Standard wird</h2>
+              <h2 className={styles.sectionTitle}>Warum KI-Vertragsanalyse 2026<br/><span style={{ color: '#3b82f6' }}>zum Standard</span> wird</h2>
               <p className={styles.sectionSubtitle}>
                 Die Digitalisierung juristischer Prozesse beschleunigt sich. Drei Entwicklungen treiben den Wandel.
               </p>
             </div>
 
-            <div className={styles.solutionFeatures}>
-              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Cpu size={20} /></div>
-                <div className={styles.solutionFeatureText}>
-                  <h4>Die KI-Modelle werden besser und spezialisierter</h4>
-                  <p>
-                    Während frühe KI-Modelle nur einfache Textmuster erkannten, verstehen heutige Modelle
-                    wie GPT-4 den rechtlichen Kontext von Vertragsklauseln. Die nächste Generation wird
-                    noch spezialisierter: trainiert auf spezifische Rechtsgebiete, Jurisdiktionen und
-                    Vertragstypen. Für Nutzer bedeutet das: immer präzisere und zuverlässigere Analysen.
-                  </p>
-                </div>
+            <div className={styles.functionsGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}><Cpu size={24} /></div>
+                <h3 className={styles.functionTitle}>KI wird spezialisierter</h3>
+                <p className={styles.functionDesc}>
+                  Während frühe KI-Modelle nur einfache Textmuster erkannten, verstehen heutige Modelle
+                  wie GPT-4 den rechtlichen Kontext von Vertragsklauseln. Die nächste Generation wird
+                  noch spezialisierter: trainiert auf spezifische Rechtsgebiete, Jurisdiktionen und
+                  Vertragstypen. Für Nutzer bedeutet das: immer präzisere und zuverlässigere Analysen.
+                </p>
               </div>
-              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><TrendingUp size={20} /></div>
-                <div className={styles.solutionFeatureText}>
-                  <h4>Unternehmen können sich manuelle Prüfung nicht mehr leisten</h4>
-                  <p>
-                    Das Volumen an Verträgen wächst in Unternehmen jährlich. Gleichzeitig steigen
-                    regulatorische Anforderungen (DSGVO, Lieferkettengesetz, ESG-Compliance).
-                    Manuelle Prüfung jedes einzelnen Vertrags wird zunehmend unwirtschaftlich.
-                    KI-Vertragsanalyse als Erstprüfung wird zur Notwendigkeit, nicht zum Nice-to-have.
-                  </p>
-                </div>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}><TrendingUp size={24} /></div>
+                <h3 className={styles.functionTitle}>Manuelle Prüfung wird unwirtschaftlich</h3>
+                <p className={styles.functionDesc}>
+                  Das Volumen an Verträgen wächst in Unternehmen jährlich. Gleichzeitig steigen
+                  regulatorische Anforderungen (DSGVO, Lieferkettengesetz, ESG-Compliance).
+                  Manuelle Prüfung jedes einzelnen Vertrags wird zunehmend unwirtschaftlich.
+                  KI-Vertragsanalyse als Erstprüfung wird zur Notwendigkeit, nicht zum Nice-to-have.
+                </p>
               </div>
-              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Users size={20} /></div>
-                <div className={styles.solutionFeatureText}>
-                  <h4>Legal Tech wird demokratisch</h4>
-                  <p>
-                    Was bisher nur Großkanzleien und Konzernen mit eigenem Legal-Tech-Budget vorbehalten war,
-                    wird durch SaaS-Plattformen wie Contract AI für jeden zugänglich. Privatpersonen prüfen
-                    ihren Mietvertrag vor der Unterschrift, Freelancer bewerten Kundenverträge selbst,
-                    KMU digitalisieren ihr Vertragsmanagement. Die Einstiegshürde sinkt, der Nutzen steigt.
-                  </p>
-                </div>
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon}><Users size={24} /></div>
+                <h3 className={styles.functionTitle}>Legal Tech wird demokratisch</h3>
+                <p className={styles.functionDesc}>
+                  Was bisher nur Großkanzleien und Konzernen mit eigenem Legal-Tech-Budget vorbehalten war,
+                  wird durch SaaS-Plattformen wie Contract AI für jeden zugänglich. Privatpersonen prüfen
+                  ihren Mietvertrag vor der Unterschrift, Freelancer bewerten Kundenverträge selbst,
+                  KMU digitalisieren ihr Vertragsmanagement. Die Einstiegshürde sinkt, der Nutzen steigt.
+                </p>
               </div>
             </div>
 
-            <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs}>
+            <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs} style={{ marginTop: '48px' }}>
               <div className={styles.pillarHighlight}>
                 <div className={styles.pillarHighlightIcon}>
                   <TrendingUp size={24} />
@@ -1203,7 +1222,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen &amp; Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen zur KI-Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}>Häufige Fragen zur <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span></h2>
               <p className={styles.sectionSubtitle}>
                 Die wichtigsten Fragen und Antworten rund um KI-gestützte Vertragsprüfung.
               </p>
@@ -1230,7 +1249,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Weiterlesen</span>
-              <h2 className={styles.sectionTitle}>Vertiefende Artikel zur KI-Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}>Vertiefende Artikel zur <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>
