@@ -2,7 +2,7 @@
  * BlockRenderer - Rendert den richtigen Block-Typ basierend auf block.type
  */
 
-import React from 'react';
+import React, { Component } from 'react';
 import { Block } from '../../../stores/contractBuilderStore';
 import { HeaderBlock } from './HeaderBlock';
 import { CoverBlock } from './CoverBlock';
@@ -22,6 +22,49 @@ import { NumberedListBlock } from './NumberedListBlock';
 import { DefinitionsBlock } from './DefinitionsBlock';
 import { NoticeBlock } from './NoticeBlock';
 import styles from './BlockRenderer.module.css';
+
+// Error Boundary für einzelne Blöcke — verhindert dass ein fehlerhafter Block den Builder crasht
+interface BlockErrorBoundaryProps {
+  blockId: string;
+  blockType: string;
+  children: React.ReactNode;
+}
+
+interface BlockErrorBoundaryState {
+  hasError: boolean;
+}
+
+class BlockErrorBoundary extends Component<BlockErrorBoundaryProps, BlockErrorBoundaryState> {
+  constructor(props: BlockErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): BlockErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error(`[BlockRenderer] Fehler in Block ${this.props.blockType} (${this.props.blockId}):`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className={styles.blockError}>
+          <span>Block konnte nicht geladen werden ({this.props.blockType})</span>
+          <button
+            className={styles.blockErrorRetry}
+            onClick={() => this.setState({ hasError: false })}
+          >
+            Erneut versuchen
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface BlockRendererProps {
   block: Block;
@@ -270,7 +313,9 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       style={blockStyles}
       data-highlight={block.style?.highlight}
     >
-      {renderBlock()}
+      <BlockErrorBoundary blockId={block.id} blockType={block.type}>
+        {renderBlock()}
+      </BlockErrorBoundary>
 
       {/* Legal Basis Tags */}
       {block.legalBasis && block.legalBasis.length > 0 && !isPreview && (

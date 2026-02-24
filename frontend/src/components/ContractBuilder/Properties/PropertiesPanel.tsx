@@ -264,7 +264,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 className={styles.input}
                 value={selectedBlock.style?.fontSize || ''}
                 placeholder="14"
-                onChange={(e) => updateStyle('fontSize', e.target.value ? Number(e.target.value) : undefined)}
+                min={6}
+                max={72}
+                onChange={(e) => updateStyle('fontSize', e.target.value ? Math.min(72, Math.max(6, Number(e.target.value))) : undefined)}
               />
             </div>
             <div className={styles.field}>
@@ -293,7 +295,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 value={selectedBlock.style?.lineHeight || ''}
                 placeholder="1.6"
                 step="0.1"
-                onChange={(e) => updateStyle('lineHeight', e.target.value ? Number(e.target.value) : undefined)}
+                min={0.5}
+                max={4}
+                onChange={(e) => updateStyle('lineHeight', e.target.value ? Math.min(4, Math.max(0.5, Number(e.target.value))) : undefined)}
               />
             </div>
             <div className={styles.field}>
@@ -376,16 +380,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 className={styles.spacingInput}
                 placeholder="T"
                 title="Margin Top"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.marginTop || ''}
-                onChange={(e) => updateStyle('marginTop', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('marginTop', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
               <input
                 type="number"
                 className={styles.spacingInput}
                 placeholder="B"
                 title="Margin Bottom"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.marginBottom || ''}
-                onChange={(e) => updateStyle('marginBottom', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('marginBottom', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
             </div>
           </div>
@@ -398,32 +406,40 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 className={styles.spacingInput}
                 placeholder="T"
                 title="Padding Top"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.paddingTop || ''}
-                onChange={(e) => updateStyle('paddingTop', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('paddingTop', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
               <input
                 type="number"
                 className={styles.spacingInput}
                 placeholder="R"
                 title="Padding Right"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.paddingRight || ''}
-                onChange={(e) => updateStyle('paddingRight', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('paddingRight', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
               <input
                 type="number"
                 className={styles.spacingInput}
                 placeholder="B"
                 title="Padding Bottom"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.paddingBottom || ''}
-                onChange={(e) => updateStyle('paddingBottom', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('paddingBottom', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
               <input
                 type="number"
                 className={styles.spacingInput}
                 placeholder="L"
                 title="Padding Left"
+                min={0}
+                max={100}
                 value={selectedBlock.style?.paddingLeft || ''}
-                onChange={(e) => updateStyle('paddingLeft', e.target.value ? Number(e.target.value) : undefined)}
+                onChange={(e) => updateStyle('paddingLeft', e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : undefined)}
               />
             </div>
           </div>
@@ -457,7 +473,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 className={styles.input}
                 value={selectedBlock.style?.borderWidth || ''}
                 placeholder="1"
-                onChange={(e) => updateStyle('borderWidth', e.target.value ? Number(e.target.value) : undefined)}
+                min={0}
+                max={20}
+                onChange={(e) => updateStyle('borderWidth', e.target.value ? Math.min(20, Math.max(0, Number(e.target.value))) : undefined)}
               />
             </div>
           </div>
@@ -487,7 +505,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
                 className={styles.input}
                 value={selectedBlock.style?.borderRadius || ''}
                 placeholder="0"
-                onChange={(e) => updateStyle('borderRadius', e.target.value ? Number(e.target.value) : undefined)}
+                min={0}
+                max={50}
+                onChange={(e) => updateStyle('borderRadius', e.target.value ? Math.min(50, Math.max(0, Number(e.target.value))) : undefined)}
               />
             </div>
           </div>

@@ -389,31 +389,45 @@ const generateInitialsLogo = (initials, color = '#1a1a1a') => {
   return `data:image/svg+xml;base64,${base64}`;
 };
 
+// HTML-Escape-Funktion um XSS zu verhindern — alle User-Inputs vor HTML-Einbettung escapen
+function escapeHtml(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 // 🎨 ENTERPRISE HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - VOLLSTÄNDIGE VERSION
 const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false, parties = null) => {
-  console.log("🚀 Starte ENTERPRISE HTML-Formatierung für:", contractType);
-  console.log('🎨 Design-Variante:', designVariant);
-  console.log('📄 Vertragstyp:', contractType);
-  console.log('🏢 Company Profile vorhanden:', !!companyProfile);
-  console.log('📝 Entwurf-Modus:', isDraft);
-  console.log('👥 Parties Data:', parties);
-  
-  // 🔍 DEBUG: Company Profile Details
+  // XSS-Schutz: Alle User-kontrollierten Strings in companyProfile und parties escapen
+  // Logo-URLs (base64/S3) dürfen nicht escaped werden da sie als src="" genutzt werden
   if (companyProfile) {
-    console.log('🔍 DEBUG Company Profile Details:', {
-      companyName: companyProfile.companyName,
-      street: companyProfile.street,
-      city: companyProfile.city,
-      contactPhone: companyProfile.contactPhone,
-      contactEmail: companyProfile.contactEmail,
-      hasLogoUrl: !!companyProfile.logoUrl,
-      hasLogoKey: !!companyProfile.logoKey,
-      logoUrlType: companyProfile.logoUrl ? (companyProfile.logoUrl.startsWith('data:') ? 'base64' : 'url') : 'none'
-    });
-  } else {
-    console.log('❌ DEBUG: Company Profile ist NULL oder UNDEFINED!');
+    const cp = companyProfile;
+    companyProfile = {
+      ...cp,
+      companyName: escapeHtml(cp.companyName),
+      legalForm: escapeHtml(cp.legalForm),
+      street: escapeHtml(cp.street),
+      postalCode: escapeHtml(cp.postalCode),
+      city: escapeHtml(cp.city),
+      contactEmail: escapeHtml(cp.contactEmail),
+      contactPhone: escapeHtml(cp.contactPhone),
+      tradeRegister: escapeHtml(cp.tradeRegister),
+      vatId: escapeHtml(cp.vatId),
+      // Logo-URLs bleiben unescaped (werden als src="" genutzt, nicht als Text)
+      logoUrl: cp.logoUrl,
+      logoKey: cp.logoKey,
+    };
   }
-  
+  if (parties && typeof parties === 'object') {
+    const p = parties;
+    parties = {};
+    for (const [key, value] of Object.entries(p)) {
+      parties[key] = typeof value === 'string' ? escapeHtml(value) : value;
+    }
+  }
+  contractType = escapeHtml(contractType) || 'Vertrag';
+
+  console.log("🚀 Starte ENTERPRISE HTML-Formatierung für:", contractType);
+
   // 🎨 ERWEITERTES LOGO-LOADING MIT INITIALEN-FALLBACK
   let logoBase64 = null;
   let useInitialsFallback = false;
@@ -598,7 +612,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   console.log('🎨 Verwendetes Theme:', designVariant, theme);
 
   // 📝 INTELLIGENTE TEXT-VERARBEITUNG mit verbesserter Struktur
-  const lines = contractText.split('\n');
+  // XSS-Schutz: Contract-Text escapen bevor er in HTML eingebettet wird
+  // Strukturelle Marker (§, ---, Nummerierung) bleiben erhalten da escapeHtml nur &<>"' betrifft
+  const safeContractText = escapeHtml(contractText);
+  const lines = safeContractText.split('\n');
   let htmlContent = '';
   let currentSection = '';
   let inSignatureSection = false;
@@ -2053,6 +2070,55 @@ router.post("/", verifyToken, async (req, res) => {
     return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
   }
 
+  // Input-Validierung: Länge begrenzen um exzessive OpenAI-Kosten zu vermeiden
+  if (formData.customRequirements && formData.customRequirements.length > 5000) {
+    return res.status(400).json({ message: "Individuelle Anforderungen zu lang (max. 5000 Zeichen)." });
+  }
+  if (typeof type !== 'string' || type.length > 100) {
+    return res.status(400).json({ message: "Ungültiger Vertragstyp." });
+  }
+  // MongoDB-Operator-Schutz: Keine $-Felder in formData erlauben
+  const formDataKeys = Object.keys(formData);
+  if (formDataKeys.some(k => k.startsWith('$'))) {
+    return res.status(400).json({ message: "Ungültige Feldnamen." });
+  }
+
+  // Server-seitige Usage-Limit-Prüfung
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(401).json({ message: "Benutzer nicht gefunden." });
+    }
+
+    const plan = (user.subscription?.plan || user.plan || 'free').toLowerCase();
+    const generateLimit = getFeatureLimit(plan, 'generate');
+
+    if (generateLimit !== Infinity) {
+      // Generierungen diesen Monat zählen
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const generationsThisMonth = await contractsCollection.countDocuments({
+        userId: req.user.userId,
+        isGenerated: true,
+        createdAt: { $gte: startOfMonth }
+      });
+
+      if (generationsThisMonth >= generateLimit) {
+        return res.status(403).json({
+          message: `Monatliches Generierungslimit erreicht (${generateLimit}). Bitte upgraden Sie Ihren Plan.`,
+          limitReached: true,
+          currentUsage: generationsThisMonth,
+          limit: generateLimit
+        });
+      }
+    }
+  } catch (limitError) {
+    console.error('[Generate] Usage-Limit-Check Fehler:', limitError);
+    // Bei Fehler weitermachen, nicht blockieren
+  }
+
   // ===== V2 SYSTEM: Automatische Aktivierung für unterstützte Contract-Types =====
   const V2_SUPPORTED_TYPES = [
     'individuell', 'darlehen', 'kaufvertrag', 'mietvertrag',
@@ -2218,7 +2284,7 @@ router.post("/", verifyToken, async (req, res) => {
         console.log("🔄 [V2] Aktualisiere bestehenden Vertrag:", existingContractId);
 
         await contractsCollection.updateOne(
-          { _id: new ObjectId(existingContractId) },
+          { _id: new ObjectId(existingContractId), userId: req.user.userId },
           {
             $set: {
               content: result.contractText,
@@ -3225,7 +3291,7 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
       console.log("🔄 [V1] Aktualisiere bestehenden Vertrag:", existingContractId);
 
       await contractsCollection.updateOne(
-        { _id: new ObjectId(existingContractId) },
+        { _id: new ObjectId(existingContractId), userId: req.user.userId },
         {
           $set: {
             content: contractText,
@@ -4027,9 +4093,9 @@ router.post("/change-design", verifyToken, async (req, res) => {
     updateData.contractHTML = newHTML;
     console.log("✅ Neues HTML generiert, Länge:", newHTML.length);
 
-    // Design-Variante und HTML im Vertrag aktualisieren
+    // Design-Variante und HTML im Vertrag aktualisieren (userId als Sicherheits-Check)
     await contractsCollection.updateOne(
-      { _id: new ObjectId(contractId) },
+      { _id: new ObjectId(contractId), userId: req.user.userId },
       { $set: updateData }
     );
 
@@ -4086,15 +4152,15 @@ router.post("/toggle-draft", verifyToken, async (req, res) => {
       isDraft
     );
     
-    // Vertrag aktualisieren
+    // Vertrag aktualisieren (userId als Sicherheits-Check)
     await contractsCollection.updateOne(
-      { _id: new ObjectId(contractId) },
-      { 
-        $set: { 
+      { _id: new ObjectId(contractId), userId: req.user.userId },
+      {
+        $set: {
           status: newStatus,
           contractHTML: newHTML,
           lastModified: new Date()
-        } 
+        }
       }
     );
     

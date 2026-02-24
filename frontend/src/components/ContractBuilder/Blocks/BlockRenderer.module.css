@@ -22,6 +22,35 @@
   font-size: 14px;
 }
 
+.blockError {
+  padding: 16px 20px;
+  background: #fffbeb;
+  border: 1px dashed #f59e0b;
+  border-radius: 6px;
+  color: #92400e;
+  text-align: center;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.blockErrorRetry {
+  padding: 4px 12px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  color: #92400e;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.blockErrorRetry:hover {
+  background: #fde68a;
+}
+
 .legalBasis {
   display: flex;
   flex-wrap: wrap;

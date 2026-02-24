@@ -322,7 +322,18 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
   const activeBlock = activeId ? blocks.find((b: Block) => b.id === activeId) : null;
 
   // Page Styles basierend auf Design
-  const resolvedFont = design?.fontFamily || 'Inter, sans-serif';
+  // Font-Whitelist: Verhindert CSS-Injection über unvalidierte Font-Werte
+  const ALLOWED_FONTS = [
+    'Inter, sans-serif', 'Roboto, Arial, sans-serif', "'Open Sans', Arial, sans-serif",
+    'Lato, Arial, sans-serif', 'Arial, Helvetica, sans-serif',
+    "Georgia, 'Times New Roman', serif", "'Times New Roman', Times, serif",
+    'Merriweather, Georgia, serif', "'Source Code Pro', 'Courier New', monospace",
+    'system-ui, Inter, sans-serif', "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    "'SF Mono', 'Fira Code', 'Consolas', monospace", 'Georgia, serif',
+    'Inter, system-ui, sans-serif',
+  ];
+  const rawFont = design?.fontFamily || 'Inter, sans-serif';
+  const resolvedFont = ALLOWED_FONTS.includes(rawFont) ? rawFont : 'Inter, sans-serif';
   const pageStyles: React.CSSProperties = {
     '--primary-color': design?.primaryColor || '#1a365d',
     '--secondary-color': design?.secondaryColor || '#2d3748',

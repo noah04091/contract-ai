@@ -4,12 +4,16 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../hooks/useAuth";
 import styles from "../styles/FeaturePage.module.css";
 import Footer from "../components/Footer";
+import AutoPlayVideo from "../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, ChevronDown, Brain,
   BarChart3, Sparkles, Scale, Users, Building2, GraduationCap,
   TrendingUp, Lock, Globe, Cpu, Eye, ListChecks
 } from "lucide-react";
+
+const analyseVideo = "/Videos/analyse.mp4";
+import analyseImg from "../assets/Analyse.webp";
 
 const KiVertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -366,7 +370,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             SECTION 1: WAS IST KI-VERTRAGSANALYSE?
             ========================================== */}
-        <section className={styles.pillarContentSection} id="was-ist-ki-vertragsanalyse">
+        <section className={styles.functionsSection} id="was-ist-ki-vertragsanalyse">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Definition</span>
@@ -478,6 +482,27 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
+            VIDEO SECTION
+            ========================================== */}
+        <section className={styles.videoSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>So sieht's aus</span>
+              <h2 className={styles.sectionTitle}>KI-Vertragsanalyse in Aktion</h2>
+              <p className={styles.sectionSubtitle}>
+                Sehen Sie, wie Contract AI einen Vertrag in unter 60 Sekunden analysiert
+                und versteckte Risiken aufdeckt.
+              </p>
+            </div>
+            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <div className={styles.videoFrame}>
+                <AutoPlayVideo src={analyseVideo} poster={analyseImg} alt="KI-Vertragsanalyse Demo" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
             SECTION 2: WIE FUNKTIONIERT ES?
             ========================================== */}
         <section className={styles.processSection} id="wie-funktioniert">
@@ -546,6 +571,91 @@ const KiVertragsanalyse: React.FC = () => {
                 Analysepipelines, die auf tausenden deutschen Verträgen optimiert wurden. Das Ergebnis:
                 Eine Analyse, die sowohl technisch präzise als auch für Laien verständlich ist.
               </p>
+            </div>
+
+            <div style={{ marginTop: '48px' }}>
+              <div className={`${styles.solutionComparison} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={`${styles.comparisonCard} ${styles.before}`}>
+                  <span className={styles.comparisonLabel}>Vorher</span>
+                  <div className={styles.comparisonIcon}><FileText size={32} /></div>
+                  <div className={styles.comparisonTitle}>Manuelle Prüfung</div>
+                  <ul className={styles.comparisonList}>
+                    <li>Juristisches Fachwissen nötig</li>
+                    <li>Stunden bis Tage Zeitaufwand</li>
+                    <li>Subjektive Bewertung</li>
+                  </ul>
+                  <div className={styles.comparisonTime}><Clock size={16} /> 2-4 Stunden pro Vertrag</div>
+                </div>
+                <div className={styles.comparisonArrow}><ArrowRight size={24} /></div>
+                <div className={`${styles.comparisonCard} ${styles.after}`}>
+                  <span className={styles.comparisonLabel}>Nachher</span>
+                  <div className={styles.comparisonIcon}><Zap size={32} /></div>
+                  <div className={styles.comparisonTitle}>KI-Analyse</div>
+                  <ul className={styles.comparisonList}>
+                    <li>Keine Vorkenntnisse nötig</li>
+                    <li>Ergebnis in unter 60 Sekunden</li>
+                    <li>Algorithmisch konsistent</li>
+                  </ul>
+                  <div className={styles.comparisonTime}><Zap size={16} /> Unter 60 Sekunden</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            PROBLEM SECTION
+            ========================================== */}
+        <section className={styles.problemSection}>
+          <div className={styles.container}>
+            <div className={styles.problemGrid}>
+              <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.sectionEyebrow}>Das Problem</span>
+                <h2 className={styles.sectionTitleLeft}>Warum so viele Menschen Vertragsrisiken übersehen</h2>
+                <p className={styles.problemText}>
+                  Verträge sind oft absichtlich kompliziert geschrieben. Juristische Fachsprache,
+                  verschachtelte Klauseln und versteckte Bedingungen machen es selbst aufmerksamen
+                  Lesern schwer, alle Risiken zu erkennen. Die Folge: Man unterschreibt Verträge,
+                  die einen benachteiligen — ohne es zu wissen.
+                </p>
+                <div className={styles.problemStats}>
+                  <div className={styles.problemStat}>
+                    <div className={styles.problemStatNumber}>73%</div>
+                    <div className={styles.problemStatLabel}>unterschreiben Verträge ohne vollständiges Verständnis</div>
+                  </div>
+                  <div className={styles.problemStat}>
+                    <div className={styles.problemStatNumber}>4+</div>
+                    <div className={styles.problemStatLabel}>Stunden dauert eine gründliche manuelle Prüfung</div>
+                  </div>
+                </div>
+              </div>
+              <div className={`${styles.problemVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.problemDoc}>
+                  <div className={styles.problemDocHeader}>
+                    <div className={styles.problemDocIcon}><FileText size={24} /></div>
+                    <div>
+                      <div className={styles.problemDocTitle}>Arbeitsvertrag.pdf</div>
+                      <div className={styles.problemDocSubtitle}>18 Seiten • Komplexes Juristendeutsch</div>
+                    </div>
+                  </div>
+                  <div className={styles.problemDocLines}>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                    <div className={styles.problemDocLine}></div>
+                  </div>
+                  <div className={styles.problemDocHighlight}>
+                    <div className={styles.problemDocHighlightText}>
+                      "...der Arbeitnehmer verzichtet unwiderruflich auf alle Ansprüche..."
+                    </div>
+                  </div>
+                </div>
+                <div className={`${styles.problemWarning} ${styles.problemWarning1}`}>
+                  <AlertTriangle size={14} /> Versteckte Klausel
+                </div>
+                <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
+                  <AlertTriangle size={14} /> Risiko übersehen
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -656,9 +766,78 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
+            RISK CARDS SECTION
+            ========================================== */}
+        <section className={styles.risksSection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Beispiel-Ergebnisse</span>
+              <h2 className={styles.sectionTitle}>Das findet KI-Vertragsanalyse in Ihrem Vertrag</h2>
+              <p className={styles.sectionSubtitle}>
+                Typische Risiken, die unsere KI in Verträgen erkennt — oft übersehen bei manueller Prüfung.
+              </p>
+            </div>
+            <div className={styles.risksGrid}>
+              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Einseitige Haftungsklausel</h4>
+                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.critical}`}>
+                  "Der Mieter haftet uneingeschränkt für alle Schäden an der Mietsache."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Extrem einseitig — fordern Sie eine Begrenzung auf Vorsatz und grobe Fahrlässigkeit.</span>
+                </div>
+              </div>
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Überlange Kündigungsfrist</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Warnung</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  "Die Kündigungsfrist beträgt 6 Monate zum Quartalsende."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Deutlich über dem gesetzlichen Standard von 3 Monaten — schränkt Ihre Flexibilität ein.</span>
+                </div>
+              </div>
+              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Versteckte Kostenklausel</h4>
+                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.critical}`}>
+                  "Zusätzliche Gebühren können nach Ermessen des Vermieters erhoben werden."
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Gefahr unbegrenzter Zusatzkosten — fordern Sie eine klare Auflistung aller Nebenkosten.</span>
+                </div>
+              </div>
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>Fehlende Datenschutzklausel</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Warnung</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  Keine Regelung zur Verarbeitung personenbezogener Daten gefunden.
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>DSGVO-Verstoß möglich — bestehen Sie auf eine Datenschutzvereinbarung als Anlage.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
             SECTION 4: VERTRAGSARTEN
             ========================================== */}
-        <section className={styles.pillarContentSection} id="vertragsarten">
+        <section className={styles.whySection} id="vertragsarten">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Anwendungsbereiche</span>
@@ -765,13 +944,27 @@ const KiVertragsanalyse: React.FC = () => {
                 Freelancer vor nachteiligen Klauseln und Unternehmen optimieren ihre Vertragsprozesse.
               </p>
             </div>
+
+            <div className={styles.beispielSection}>
+              <div className={`${styles.beispielBox} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.beispielIcon}><Sparkles size={28} /></div>
+                <p className={styles.beispielText}>
+                  Ich habe meinen neuen Arbeitsvertrag hochgeladen und in 30 Sekunden drei
+                  problematische Klauseln gefunden, die ich komplett übersehen hätte. Die
+                  Wettbewerbsklausel allein hätte mich zwei Jahre an die Firma gebunden.
+                </p>
+                <p className={styles.beispielHinweis}>
+                  — Typisches Nutzererlebnis bei Contract AI
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ==========================================
             SECTION 6: SICHERHEIT & DATENSCHUTZ
             ========================================== */}
-        <section className={styles.pillarContentSection} id="sicherheit">
+        <section className={styles.functionsSection} id="sicherheit">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Datenschutz</span>
@@ -944,31 +1137,46 @@ const KiVertragsanalyse: React.FC = () => {
               </p>
             </div>
 
+            <div className={styles.solutionFeatures}>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Cpu size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Die KI-Modelle werden besser und spezialisierter</h4>
+                  <p>
+                    Während frühe KI-Modelle nur einfache Textmuster erkannten, verstehen heutige Modelle
+                    wie GPT-4 den rechtlichen Kontext von Vertragsklauseln. Die nächste Generation wird
+                    noch spezialisierter: trainiert auf spezifische Rechtsgebiete, Jurisdiktionen und
+                    Vertragstypen. Für Nutzer bedeutet das: immer präzisere und zuverlässigere Analysen.
+                  </p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><TrendingUp size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Unternehmen können sich manuelle Prüfung nicht mehr leisten</h4>
+                  <p>
+                    Das Volumen an Verträgen wächst in Unternehmen jährlich. Gleichzeitig steigen
+                    regulatorische Anforderungen (DSGVO, Lieferkettengesetz, ESG-Compliance).
+                    Manuelle Prüfung jedes einzelnen Vertrags wird zunehmend unwirtschaftlich.
+                    KI-Vertragsanalyse als Erstprüfung wird zur Notwendigkeit, nicht zum Nice-to-have.
+                  </p>
+                </div>
+              </div>
+              <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.solutionFeatureIcon}><Users size={20} /></div>
+                <div className={styles.solutionFeatureText}>
+                  <h4>Legal Tech wird demokratisch</h4>
+                  <p>
+                    Was bisher nur Großkanzleien und Konzernen mit eigenem Legal-Tech-Budget vorbehalten war,
+                    wird durch SaaS-Plattformen wie Contract AI für jeden zugänglich. Privatpersonen prüfen
+                    ihren Mietvertrag vor der Unterschrift, Freelancer bewerten Kundenverträge selbst,
+                    KMU digitalisieren ihr Vertragsmanagement. Die Einstiegshürde sinkt, der Nutzen steigt.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h3>1. Die KI-Modelle werden besser und spezialisierter</h3>
-              <p>
-                Während frühe KI-Modelle nur einfache Textmuster erkannten, verstehen heutige Modelle
-                wie GPT-4 den rechtlichen Kontext von Vertragsklauseln. Die nächste Generation wird
-                noch spezialisierter: trainiert auf spezifische Rechtsgebiete, Jurisdiktionen und
-                Vertragstypen. Für Nutzer bedeutet das: immer präzisere und zuverlässigere Analysen.
-              </p>
-
-              <h3>2. Unternehmen können sich manuelle Prüfung nicht mehr leisten</h3>
-              <p>
-                Das Volumen an Verträgen wächst in Unternehmen jährlich. Gleichzeitig steigen
-                regulatorische Anforderungen (DSGVO, Lieferkettengesetz, ESG-Compliance).
-                Manuelle Prüfung jedes einzelnen Vertrags wird zunehmend unwirtschaftlich.
-                KI-Vertragsanalyse als Erstprüfung wird zur Notwendigkeit, nicht zum Nice-to-have.
-              </p>
-
-              <h3>3. Legal Tech wird demokratisch</h3>
-              <p>
-                Was bisher nur Großkanzleien und Konzernen mit eigenem Legal-Tech-Budget vorbehalten war,
-                wird durch SaaS-Plattformen wie Contract AI für jeden zugänglich. Privatpersonen prüfen
-                ihren Mietvertrag vor der Unterschrift, Freelancer bewerten Kundenverträge selbst,
-                KMU digitalisieren ihr Vertragsmanagement. Die Einstiegshürde sinkt, der Nutzen steigt.
-              </p>
-
               <div className={styles.pillarHighlight}>
                 <div className={styles.pillarHighlightIcon}>
                   <TrendingUp size={24} />

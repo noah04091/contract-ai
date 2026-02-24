@@ -4324,10 +4324,18 @@ export default function Generate() {
         
         if (generatedHTML && generatedHTML.length > 100) {
           console.log("🎨 Verwende HTML-Version für html2pdf.js Export");
-          
+
+          // HTML sanitizen um XSS zu verhindern (generatedHTML kommt vom Backend/OpenAI)
+          const DOMPurify = (await import('dompurify')).default;
+          const sanitizedHTML = DOMPurify.sanitize(generatedHTML, {
+            ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','div','span','br','hr','ul','ol','li','table','thead','tbody','tr','th','td','strong','b','em','i','u','a','img','blockquote','pre','code','section','article','header','footer','sup','sub'],
+            ALLOWED_ATTR: ['style','class','id','href','src','alt','width','height','colspan','rowspan'],
+            ALLOW_DATA_ATTR: false
+          });
+
           // Erstelle einen sichtbaren Container für besseres Rendering
           const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = generatedHTML;
+          tempDiv.innerHTML = sanitizedHTML;
           tempDiv.style.cssText = `
             position: fixed;
             left: 0;
@@ -4396,12 +4404,16 @@ export default function Generate() {
             width: 794px;
             color: #000;
           `;
+          // HTML-Escape um XSS zu verhindern
+          const escapeHtml = (text: string) => text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          const safeType = escapeHtml(contractData.contractType || 'Vertrag');
+          const safeText = escapeHtml(contractText).replace(/\n/g, '<br/>');
           element.innerHTML = `
             <h1 style="color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 30px;">
-              ${contractData.contractType || 'Vertrag'}
+              ${safeType}
             </h1>
             <div style="line-height: 1.8; color: #333; white-space: pre-wrap; font-size: 12pt;">
-              ${contractText.replace(/\n/g, '<br/>')}
+              ${safeText}
             </div>
           `;
           
@@ -4708,9 +4720,15 @@ export default function Generate() {
         throw new Error("PDF generation not possible");
       }
 
-      // Generate PDF as Blob
+      // Generate PDF as Blob — HTML sanitizen um XSS zu verhindern
+      const DOMPurifyFallback = (await import('dompurify')).default;
+      const sanitizedFallbackHTML = DOMPurifyFallback.sanitize(generatedHTML, {
+        ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','div','span','br','hr','ul','ol','li','table','thead','tbody','tr','th','td','strong','b','em','i','u','a','img','blockquote','pre','code','section','article','header','footer','sup','sub'],
+        ALLOWED_ATTR: ['style','class','id','href','src','alt','width','height','colspan','rowspan'],
+        ALLOW_DATA_ATTR: false
+      });
       const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = generatedHTML;
+      tempDiv.innerHTML = sanitizedFallbackHTML;
       tempDiv.style.cssText = `
         position: fixed;
         left: -9999px;
@@ -4837,7 +4855,7 @@ export default function Generate() {
   const [isImportingToBuilder, setIsImportingToBuilder] = useState(false);
 
   const handleOpenInBuilder = async () => {
-    if (!contractText) return;
+    if (!contractText || isImportingToBuilder) return;
 
     setIsImportingToBuilder(true);
     try {
@@ -4846,13 +4864,31 @@ export default function Generate() {
       if (!resolvedContractId) {
         resolvedContractId = await handleSave();
       }
+      // Null-Check: Falls Speichern fehlgeschlagen ist
+      if (!resolvedContractId) {
+        toast.error('Vertrag konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.', {
+          autoClose: 5000, position: 'top-center'
+        });
+        setIsImportingToBuilder(false);
+        return;
+      }
+
+      // Auth-Token validieren
+      const authToken = localStorage.getItem('token');
+      if (!authToken) {
+        toast.error('Authentifizierung erforderlich. Bitte melden Sie sich erneut an.', {
+          autoClose: 5000, position: 'top-center'
+        });
+        setIsImportingToBuilder(false);
+        return;
+      }
 
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contract-builder/import-from-generator`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${authToken}`
         },
         body: JSON.stringify({
           contractText,
@@ -4865,14 +4901,24 @@ export default function Generate() {
         })
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Ungültige Antwort vom Server');
+      }
 
       if (res.ok && data.success) {
-        toast.success(`Vertrag mit ${data.blockCount} Blöcken in den Builder importiert!`, {
+        const blockCount = data.blockCount || 0;
+        toast.success(`Vertrag mit ${blockCount} Blöcken in den Builder importiert!`, {
           autoClose: 3000,
           position: 'top-center'
         });
-        navigate(`/contract-builder/${data.documentId}`);
+        // documentId validieren bevor navigiert wird
+        if (data.documentId) {
+          setIsImportingToBuilder(false);
+          navigate(`/contract-builder/${data.documentId}`);
+        }
       } else {
         toast.error(data.error || 'Fehler beim Import in den Builder', {
           autoClose: 5000,
@@ -5061,7 +5107,11 @@ export default function Generate() {
         if (response.ok) {
           const blob = await response.blob();
           const url = window.URL.createObjectURL(blob);
-          setPdfPreviewUrl(url);
+          // Alte Blob-URL freigeben um Memory-Leak zu verhindern
+          setPdfPreviewUrl(prev => {
+            if (prev) window.URL.revokeObjectURL(prev);
+            return url;
+          });
           console.log("✅ V2 PDF-Vorschau erstellt mit Design:", selectedDesignVariant);
         } else {
           throw new Error('PDF-Vorschau konnte nicht erstellt werden');

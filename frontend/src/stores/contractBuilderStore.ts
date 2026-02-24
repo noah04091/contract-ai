@@ -834,7 +834,20 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 // ============================================
 
 // Cache für Base64-Daten, lebt außerhalb des Store-States
+// Begrenzt auf MAX_CACHE_SIZE Einträge (FIFO) um Memory-Leaks zu vermeiden
+const MAX_ATTACHMENT_CACHE_SIZE = 20;
 const attachmentCache = new Map<string, string>();
+
+function addToAttachmentCache(key: string, value: string) {
+  // FIFO: Älteste Einträge entfernen wenn Cache voll
+  if (attachmentCache.size >= MAX_ATTACHMENT_CACHE_SIZE && !attachmentCache.has(key)) {
+    const firstKey = attachmentCache.keys().next().value;
+    if (firstKey !== undefined) {
+      attachmentCache.delete(firstKey);
+    }
+  }
+  attachmentCache.set(key, value);
+}
 
 // Guard: Verhindert dass pushToHistory während Undo/Redo aufgerufen wird
 // (Auto-PageBreak feuert nach Undo und würde canRedo sofort zurücksetzen)
@@ -850,14 +863,14 @@ function stripAttachmentsForHistory(doc: ContractDocument): ContractDocument {
     if (block.type !== 'attachment') continue;
     if (block.content.attachmentFile && block.content.attachmentFile.startsWith('data:')) {
       const cacheKey = `${block.id}::legacy`;
-      attachmentCache.set(cacheKey, block.content.attachmentFile);
+      addToAttachmentCache(cacheKey, block.content.attachmentFile);
       block.content.attachmentFile = `__cached__::${cacheKey}`;
     }
     if (block.content.attachments) {
       for (const att of block.content.attachments) {
         if (att.file && att.file.startsWith('data:')) {
           const cacheKey = `${block.id}::${att.id}`;
-          attachmentCache.set(cacheKey, att.file);
+          addToAttachmentCache(cacheKey, att.file);
           att.file = `__cached__::${cacheKey}`;
         }
       }
@@ -904,6 +917,8 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
         // ============================================
 
         loadDocument: async (id: string) => {
+          // Cache beim Dokumentwechsel leeren
+          attachmentCache.clear();
           set({ isLoading: true, error: null });
 
           // Lokales Dokument aus localStorage laden

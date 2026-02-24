@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 const ContractBuilder = require('../models/ContractBuilder');
 const auth = require('../middleware/verifyToken');
 const { v4: uuidv4 } = require('uuid');
@@ -13,6 +14,69 @@ const { v4: uuidv4 } = require('uuid');
 // OpenAI für KI-Funktionen
 const OpenAI = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Subscription-Check für KI-Endpoints
+const { MongoClient, ObjectId } = require('mongodb');
+const { isBusinessOrHigher } = require('../constants/subscriptionPlans');
+
+// Input-Validierung für KI-Endpoints
+const MAX_AI_INPUT_LENGTH = 10000; // max 10KB Text pro AI-Request
+function validateAiInput(fields, res) {
+  for (const [name, value] of Object.entries(fields)) {
+    if (value === undefined || value === null || (typeof value === 'string' && !value.trim())) {
+      res.status(400).json({ success: false, error: `Pflichtfeld "${name}" fehlt oder ist leer.` });
+      return false;
+    }
+    if (typeof value === 'string' && value.length > MAX_AI_INPUT_LENGTH) {
+      res.status(400).json({ success: false, error: `Eingabe "${name}" ist zu lang (max. ${MAX_AI_INPUT_LENGTH} Zeichen).` });
+      return false;
+    }
+  }
+  return true;
+}
+
+// Subscription-Check: Nur Business+ darf KI-Funktionen nutzen
+async function checkAiAccess(req, res) {
+  let client;
+  try {
+    client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    const user = await client.db('contract_ai').collection('users').findOne({ _id: new ObjectId(req.user.userId) });
+    await client.close();
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Benutzer nicht gefunden.' });
+      return false;
+    }
+    const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
+    if (!isBusinessOrHigher(plan)) {
+      res.status(403).json({
+        success: false,
+        error: 'KI-Funktionen erfordern ein Business-Abo oder höher.',
+        upgradeUrl: '/pricing'
+      });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    if (client) await client.close().catch(() => {});
+    console.error('[ContractBuilder] AI Access Check Error:', err);
+    // Bei Fehler trotzdem durchlassen (fail-open) um UX nicht zu blockieren
+    return true;
+  }
+}
+
+// PDFKit für PDF-Export
+const PDFDocument = require('pdfkit');
+
+// Rate-Limiter für KI-Endpoints (max 10 Requests pro Minute pro User)
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  message: { success: false, error: 'Zu viele Anfragen. Bitte warte kurz.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // PDF Generator Utilities für Import
 const { parseContractText, extractPartiesFromText, getPartyLabels } = require('../services/pdfGeneratorV2');
@@ -70,6 +134,40 @@ router.get('/', auth, async (req, res) => {
   } catch (error) {
     console.error('[ContractBuilder] GET / Error:', error);
     res.status(500).json({ success: false, error: 'Fehler beim Laden der Dokumente' });
+  }
+});
+
+/**
+ * GET /api/contract-builder/templates/public
+ * Öffentliche Templates laden
+ * WICHTIG: Muss VOR /:id definiert werden, da Express sonst "templates" als :id matcht!
+ * Auth erforderlich für Usage-Tracking und personalisierte Empfehlungen
+ */
+router.get('/templates/public', auth, async (req, res) => {
+  try {
+    const { category, limit = 20 } = req.query;
+
+    // Validate limit (1-50)
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
+
+    const query = {
+      'template.isTemplate': true,
+      'template.isPublic': true
+    };
+
+    if (category && typeof category === 'string') {
+      query['template.category'] = category;
+    }
+
+    const templates = await ContractBuilder.find(query)
+      .sort({ 'template.downloads': -1 })
+      .limit(safeLimit)
+      .select('metadata template design.preset');
+
+    res.json({ success: true, templates });
+  } catch (error) {
+    console.error('[ContractBuilder] GET /templates/public Error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Laden der Templates' });
   }
 });
 
@@ -299,15 +397,19 @@ router.post('/import-from-generator', auth, async (req, res) => {
       }
     }
 
-    // 4. Design-Mapping: Generator-Variante → Builder-Design
+    // 4. Design-Mapping: Generator-Variante → Builder-Design (alle 11 Varianten)
     const designMapping = {
-      executive:    { primaryColor: '#1a1a2e', fontFamily: 'Helvetica', preset: 'executive' },
-      modern:       { primaryColor: '#0066cc', fontFamily: 'Helvetica', preset: 'modern' },
-      minimal:      { primaryColor: '#333333', fontFamily: 'Helvetica', preset: 'minimal' },
-      elegant:      { primaryColor: '#c9a227', fontFamily: 'Times-Roman', preset: 'elegant' },
-      corporate:    { primaryColor: '#003366', fontFamily: 'Helvetica', preset: 'corporate' },
-      professional: { primaryColor: '#1B4332', fontFamily: 'Times-Roman', preset: 'professional' },
-      startup:      { primaryColor: '#E63946', fontFamily: 'Helvetica', preset: 'startup' },
+      executive:    { primaryColor: '#1a1a1a', secondaryColor: '#333333', accentColor: '#4a4a4a', fontFamily: "'Times New Roman', Times, serif", preset: 'executive' },
+      modern:       { primaryColor: '#0066cc', secondaryColor: '#0052a3', accentColor: '#00a3cc', fontFamily: 'Inter, sans-serif', preset: 'modern' },
+      minimal:      { primaryColor: '#2d2d2d', secondaryColor: '#4a4a4a', accentColor: '#2d2d2d', fontFamily: 'Inter, sans-serif', preset: 'minimal' },
+      elegant:      { primaryColor: '#2c1810', secondaryColor: '#4a3728', accentColor: '#c9a227', fontFamily: "Georgia, 'Times New Roman', serif", preset: 'elegant' },
+      corporate:    { primaryColor: '#003366', secondaryColor: '#004080', accentColor: '#0066cc', fontFamily: 'Inter, sans-serif', preset: 'corporate' },
+      professional: { primaryColor: '#1B4332', secondaryColor: '#2D6A4F', accentColor: '#40916C', fontFamily: "Georgia, 'Times New Roman', serif", preset: 'professional' },
+      startup:      { primaryColor: '#E63946', secondaryColor: '#D62839', accentColor: '#FF6B6B', fontFamily: 'Inter, sans-serif', preset: 'startup' },
+      legal:        { primaryColor: '#800020', secondaryColor: '#A0002A', accentColor: '#C41E3A', fontFamily: "Georgia, 'Times New Roman', serif", preset: 'legal' },
+      tech:         { primaryColor: '#0891B2', secondaryColor: '#0E7490', accentColor: '#22D3EE', fontFamily: 'Inter, sans-serif', preset: 'tech' },
+      finance:      { primaryColor: '#0F172A', secondaryColor: '#1E293B', accentColor: '#D4AF37', fontFamily: "Georgia, 'Times New Roman', serif", preset: 'finance' },
+      creative:     { primaryColor: '#7C3AED', secondaryColor: '#6D28D9', accentColor: '#A78BFA', fontFamily: 'Inter, sans-serif', preset: 'creative' },
     };
 
     const designConfig = designMapping[designVariant] || designMapping.executive;
@@ -483,9 +585,9 @@ router.post('/import-from-generator', auth, async (req, res) => {
       design: {
         preset: designConfig.preset || 'executive',
         primaryColor: designConfig.primaryColor || '#0B1324',
-        secondaryColor: '#6B7280',
-        accentColor: '#3B82F6',
-        fontFamily: designConfig.fontFamily || 'Helvetica',
+        secondaryColor: designConfig.secondaryColor || '#6B7280',
+        accentColor: designConfig.accentColor || '#3B82F6',
+        fontFamily: designConfig.fontFamily || 'Inter, sans-serif',
         pageSize: 'A4',
         marginTop: 25,
         marginRight: 20,
@@ -830,9 +932,15 @@ router.put('/:id/variables', auth, async (req, res) => {
  * POST /api/contract-builder/ai/clause
  * KI-Klausel generieren
  */
-router.post('/ai/clause', auth, async (req, res) => {
+router.post('/ai/clause', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { description, contractType, existingClauses, preferences } = req.body;
+
+    // Input-Validierung
+    if (!validateAiInput({ 'Beschreibung': description }, res)) return;
 
     const tone = preferences?.tone || 'formal';
     const length = preferences?.length || 'mittel';
@@ -893,7 +1001,17 @@ Erstelle eine professionelle, rechtssichere Klausel.`;
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const rawClause = response?.choices?.[0]?.message?.content;
+    if (!rawClause) {
+      return res.status(502).json({ success: false, error: 'Keine Antwort von der KI erhalten.' });
+    }
+    let result;
+    try {
+      result = JSON.parse(rawClause);
+    } catch (parseError) {
+      console.error('[ContractBuilder] /ai/clause JSON-Parse Error:', parseError.message);
+      return res.status(502).json({ success: false, error: 'KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen.' });
+    }
 
     res.json({
       success: true,
@@ -911,9 +1029,15 @@ Erstelle eine professionelle, rechtssichere Klausel.`;
  * POST /api/contract-builder/ai/optimize
  * Klausel optimieren
  */
-router.post('/ai/optimize', auth, async (req, res) => {
+router.post('/ai/optimize', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { clauseText, optimizationGoal } = req.body;
+
+    // Input-Validierung
+    if (!validateAiInput({ 'Klauseltext': clauseText }, res)) return;
 
     const goals = {
       // English keys (legacy)
@@ -948,10 +1072,21 @@ Behalte {{variablen}} bei.`
         }
       ],
       temperature: 0.2,
+      max_tokens: 2000,
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const rawOptimize = response?.choices?.[0]?.message?.content;
+    if (!rawOptimize) {
+      return res.status(502).json({ success: false, error: 'Keine Antwort von der KI erhalten.' });
+    }
+    let result;
+    try {
+      result = JSON.parse(rawOptimize);
+    } catch (parseError) {
+      console.error('[ContractBuilder] /ai/optimize JSON-Parse Error:', parseError.message);
+      return res.status(502).json({ success: false, error: 'KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen.' });
+    }
 
     // Map 'optimized' to 'optimizedText' for frontend compatibility
     res.json({
@@ -970,9 +1105,15 @@ Behalte {{variablen}} bei.`
  * POST /api/contract-builder/ai/explain
  * Klausel erklären
  */
-router.post('/ai/explain', auth, async (req, res) => {
+router.post('/ai/explain', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { clauseText } = req.body;
+
+    // Input-Validierung
+    if (!validateAiInput({ 'Klauseltext': clauseText }, res)) return;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -997,7 +1138,17 @@ router.post('/ai/explain', auth, async (req, res) => {
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const rawExplain = response?.choices?.[0]?.message?.content;
+    if (!rawExplain) {
+      return res.status(502).json({ success: false, error: 'Keine Antwort von der KI erhalten.' });
+    }
+    let result;
+    try {
+      result = JSON.parse(rawExplain);
+    } catch (parseError) {
+      console.error('[ContractBuilder] /ai/explain JSON-Parse Error:', parseError.message);
+      return res.status(502).json({ success: false, error: 'KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen.' });
+    }
 
     res.json({ success: true, ...result });
   } catch (error) {
@@ -1010,9 +1161,15 @@ router.post('/ai/explain', auth, async (req, res) => {
  * POST /api/contract-builder/ai/copilot
  * Echtzeit-Copilot-Vorschläge
  */
-router.post('/ai/copilot', auth, async (req, res) => {
+router.post('/ai/copilot', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { text, context, cursorPosition } = req.body;
+
+    // Input-Validierung
+    if (!validateAiInput({ 'Text': text }, res)) return;
 
     // Schnelle Antwort für Copilot
     const response = await openai.chat.completions.create({
@@ -1045,7 +1202,17 @@ Gib einen hilfreichen Vorschlag.`
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const rawCopilot = response?.choices?.[0]?.message?.content;
+    if (!rawCopilot) {
+      return res.status(502).json({ success: false, error: 'Keine Antwort von der KI erhalten.' });
+    }
+    let result;
+    try {
+      result = JSON.parse(rawCopilot);
+    } catch (parseError) {
+      console.error('[ContractBuilder] /ai/copilot JSON-Parse Error:', parseError.message);
+      return res.status(502).json({ success: false, error: 'KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen.' });
+    }
 
     res.json({ success: true, ...result });
   } catch (error) {
@@ -1058,8 +1225,11 @@ Gib einen hilfreichen Vorschlag.`
  * POST /api/contract-builder/ai/legal-score
  * Legal Health Score berechnen
  */
-router.post('/ai/legal-score', auth, async (req, res) => {
+router.post('/ai/legal-score', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { documentId, blocks, contractType } = req.body;
 
     let document = null;
@@ -1155,8 +1325,9 @@ Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
         max_tokens: 1500
       });
 
-      const rawContent = response.choices[0].message.content;
-      console.log('[ContractBuilder] OpenAI Response:', rawContent?.substring(0, 200));
+      const rawContent = response?.choices?.[0]?.message?.content;
+      if (!rawContent) throw new Error('Keine Antwort von OpenAI erhalten');
+      console.log('[ContractBuilder] OpenAI Response:', rawContent.substring(0, 200));
       result = JSON.parse(rawContent);
     } catch (openaiError) {
       // OpenAI-Fehler oder JSON-Parse-Fehler
@@ -1259,9 +1430,15 @@ Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
  * POST /api/contract-builder/ai/intent
  * Intent Detection - natürliche Sprache verstehen
  */
-router.post('/ai/intent', auth, async (req, res) => {
+router.post('/ai/intent', auth, aiLimiter, async (req, res) => {
   try {
+    // Subscription-Check
+    if (!(await checkAiAccess(req, res))) return;
+
     const { description } = req.body;
+
+    // Input-Validierung
+    if (!validateAiInput({ 'Beschreibung': description }, res)) return;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -1293,10 +1470,21 @@ Antworte als JSON:
         }
       ],
       temperature: 0.2,
+      max_tokens: 1500,
       response_format: { type: 'json_object' }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const rawIntent = response?.choices?.[0]?.message?.content;
+    if (!rawIntent) {
+      return res.status(502).json({ success: false, error: 'Keine Antwort von der KI erhalten.' });
+    }
+    let result;
+    try {
+      result = JSON.parse(rawIntent);
+    } catch (parseError) {
+      console.error('[ContractBuilder] /ai/intent JSON-Parse Error:', parseError.message);
+      return res.status(502).json({ success: false, error: 'KI-Antwort konnte nicht verarbeitet werden. Bitte erneut versuchen.' });
+    }
 
     res.json({ success: true, ...result });
   } catch (error) {
@@ -1324,55 +1512,344 @@ router.post('/:id/export/pdf', auth, async (req, res) => {
       return res.status(404).json({ success: false, error: 'Dokument nicht gefunden' });
     }
 
-    // TODO: PDF-Generierung implementieren (kann bestehenden pdfGeneratorV2 nutzen)
-    // Für jetzt: Placeholder-Response
+    const blocks = document.content?.blocks || [];
+    const design = document.design || {};
+    const metadata = document.metadata || {};
 
-    res.json({
-      success: true,
-      message: 'PDF-Export wird vorbereitet',
-      documentId: document._id
+    // Size-Limit: max 200 Blocks pro PDF
+    if (blocks.length > 200) {
+      return res.status(400).json({ success: false, error: 'Dokument hat zu viele Blöcke für den PDF-Export (max. 200).' });
+    }
+
+    // PDF-Font Mapping (Builder-Fonts → PDFKit-Fonts)
+    const fontMap = {
+      'Inter': 'Helvetica',
+      'Roboto': 'Helvetica',
+      'Open Sans': 'Helvetica',
+      'Lato': 'Helvetica',
+      'Merriweather': 'Times-Roman',
+      'Georgia': 'Times-Roman',
+      'Times New Roman': 'Times-Roman',
+      'Arial': 'Helvetica',
+      'Source Code Pro': 'Courier',
+    };
+
+    const resolveFont = (fontName) => {
+      if (!fontName) return 'Helvetica';
+      for (const [key, value] of Object.entries(fontMap)) {
+        if (fontName.includes(key)) return value;
+      }
+      return 'Helvetica';
+    };
+
+    const baseFont = resolveFont(design.fontFamily);
+    const primaryColor = design.primaryColor || '#1a365d';
+
+    // PDF erstellen
+    const pdf = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 55, right: 55 },
+      info: {
+        Title: metadata.name || 'Vertrag',
+        Author: 'Contract AI - ContractBuilder',
+        Subject: metadata.contractType || 'Vertrag',
+      }
     });
+
+    // Response-Header setzen
+    const fileName = (metadata.name || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß\s_-]/g, '').trim();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}.pdf"`);
+    pdf.pipe(res);
+
+    let y = pdf.y;
+
+    for (const block of blocks) {
+      // Seitenumbruch prüfen (50px Puffer unten)
+      if (y > 740) {
+        pdf.addPage();
+        y = 50;
+      }
+
+      switch (block.type) {
+        case 'header': {
+          const title = block.content?.title || '';
+          const subtitle = block.content?.subtitle || '';
+
+          pdf.font(`${baseFont}-Bold`).fontSize(20).fillColor(primaryColor);
+          pdf.text(title, 55, y, { align: 'center', width: 485 });
+          y = pdf.y + 8;
+
+          if (subtitle) {
+            pdf.font(baseFont).fontSize(11).fillColor('#666666');
+            pdf.text(subtitle, 55, y, { align: 'center', width: 485 });
+            y = pdf.y + 6;
+          }
+
+          if (block.content?.showDivider !== false) {
+            pdf.moveTo(55, y).lineTo(540, y).strokeColor(primaryColor).lineWidth(1).stroke();
+            y += 15;
+          }
+          y += 10;
+          break;
+        }
+
+        case 'cover': {
+          const title = block.content?.title || '';
+          const subtitle = block.content?.subtitle || '';
+          const date = block.content?.date || '';
+
+          y = 200;
+          pdf.font(`${baseFont}-Bold`).fontSize(28).fillColor(primaryColor);
+          pdf.text(title, 55, y, { align: 'center', width: 485 });
+          y = pdf.y + 15;
+
+          if (subtitle) {
+            pdf.font(baseFont).fontSize(14).fillColor('#555555');
+            pdf.text(subtitle, 55, y, { align: 'center', width: 485 });
+            y = pdf.y + 10;
+          }
+
+          if (date) {
+            pdf.font(baseFont).fontSize(11).fillColor('#888888');
+            pdf.text(date, 55, y, { align: 'center', width: 485 });
+            y = pdf.y;
+          }
+
+          pdf.addPage();
+          y = 50;
+          break;
+        }
+
+        case 'parties': {
+          pdf.font(`${baseFont}-Bold`).fontSize(13).fillColor(primaryColor);
+          pdf.text('Vertragsparteien', 55, y, { width: 485 });
+          y = pdf.y + 10;
+
+          const partyA = block.content?.partyA || {};
+          const partyB = block.content?.partyB || {};
+
+          pdf.font(`${baseFont}-Bold`).fontSize(10).fillColor('#333333');
+          pdf.text(partyA.role || 'Partei A', 55, y);
+          y = pdf.y + 3;
+          pdf.font(baseFont).fontSize(10).fillColor('#444444');
+          if (partyA.name) { pdf.text(partyA.name, 55, y); y = pdf.y + 2; }
+          if (partyA.address) { pdf.text(partyA.address, 55, y); y = pdf.y + 2; }
+          y += 10;
+
+          pdf.font(`${baseFont}-Bold`).fontSize(10).fillColor('#333333');
+          pdf.text(partyB.role || 'Partei B', 55, y);
+          y = pdf.y + 3;
+          pdf.font(baseFont).fontSize(10).fillColor('#444444');
+          if (partyB.name) { pdf.text(partyB.name, 55, y); y = pdf.y + 2; }
+          if (partyB.address) { pdf.text(partyB.address, 55, y); y = pdf.y + 2; }
+          y += 15;
+          break;
+        }
+
+        case 'preamble': {
+          const preambleText = block.content?.preambleText || '';
+          pdf.font(baseFont).fontSize(10).fillColor('#444444');
+          pdf.text(preambleText, 55, y, { width: 485, align: 'justify' });
+          y = pdf.y + 15;
+          break;
+        }
+
+        case 'clause': {
+          const clauseTitle = block.content?.clauseTitle || '';
+          const body = block.content?.body || '';
+
+          if (clauseTitle) {
+            // Prüfen ob genug Platz für Titel + etwas Text
+            if (y > 700) { pdf.addPage(); y = 50; }
+            pdf.font(`${baseFont}-Bold`).fontSize(12).fillColor(primaryColor);
+            pdf.text(clauseTitle, 55, y, { width: 485 });
+            y = pdf.y + 5;
+          }
+
+          if (body) {
+            pdf.font(baseFont).fontSize(10).fillColor('#333333');
+            pdf.text(body, 55, y, { width: 485, align: 'justify', lineGap: 3 });
+            y = pdf.y + 12;
+          }
+          break;
+        }
+
+        case 'signature': {
+          // Sicherstellen dass Unterschriften auf neue Seite kommen wenn wenig Platz
+          if (y > 620) { pdf.addPage(); y = 50; }
+
+          y += 30;
+          const sigWidth = 200;
+
+          // Partei A (links)
+          pdf.moveTo(55, y + 30).lineTo(55 + sigWidth, y + 30).strokeColor('#333333').lineWidth(0.5).stroke();
+          pdf.font(baseFont).fontSize(9).fillColor('#666666');
+          pdf.text(block.content?.signatureA?.label || 'Unterschrift Partei A', 55, y + 35, { width: sigWidth });
+          pdf.text('Ort, Datum: _______________', 55, y + 50, { width: sigWidth });
+
+          // Partei B (rechts)
+          const rightX = 310;
+          pdf.moveTo(rightX, y + 30).lineTo(rightX + sigWidth, y + 30).stroke();
+          pdf.text(block.content?.signatureB?.label || 'Unterschrift Partei B', rightX, y + 35, { width: sigWidth });
+          pdf.text('Ort, Datum: _______________', rightX, y + 50, { width: sigWidth });
+
+          y += 80;
+          break;
+        }
+
+        case 'table': {
+          const rows = block.content?.rows || [];
+          const headers = block.content?.headers || [];
+
+          if (headers.length > 0) {
+            const colWidth = 485 / Math.max(headers.length, 1);
+            pdf.font(`${baseFont}-Bold`).fontSize(9).fillColor('#333333');
+            headers.forEach((h, i) => {
+              pdf.text(h || '', 55 + i * colWidth, y, { width: colWidth - 5 });
+            });
+            y = pdf.y + 5;
+            pdf.moveTo(55, y).lineTo(540, y).strokeColor('#cccccc').lineWidth(0.5).stroke();
+            y += 5;
+          }
+
+          pdf.font(baseFont).fontSize(9).fillColor('#444444');
+          for (const row of rows) {
+            if (y > 740) { pdf.addPage(); y = 50; }
+            const cols = Array.isArray(row) ? row : (row.cells || []);
+            const colWidth = 485 / Math.max(cols.length, 1);
+            cols.forEach((cell, i) => {
+              pdf.text(String(cell || ''), 55 + i * colWidth, y, { width: colWidth - 5 });
+            });
+            y = pdf.y + 4;
+          }
+          y += 10;
+          break;
+        }
+
+        case 'divider': {
+          pdf.moveTo(55, y + 5).lineTo(540, y + 5).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
+          y += 15;
+          break;
+        }
+
+        case 'spacer': {
+          y += (block.content?.height || 20);
+          break;
+        }
+
+        case 'page-break': {
+          pdf.addPage();
+          y = 50;
+          break;
+        }
+
+        case 'numbered-list': {
+          const items = block.content?.items || [];
+          const listTitle = block.content?.title || '';
+
+          if (listTitle) {
+            pdf.font(`${baseFont}-Bold`).fontSize(11).fillColor(primaryColor);
+            pdf.text(listTitle, 55, y, { width: 485 });
+            y = pdf.y + 5;
+          }
+
+          pdf.font(baseFont).fontSize(10).fillColor('#333333');
+          items.forEach((item, i) => {
+            if (y > 740) { pdf.addPage(); y = 50; }
+            pdf.text(`${i + 1}. ${item.text || item || ''}`, 65, y, { width: 470, lineGap: 2 });
+            y = pdf.y + 4;
+          });
+          y += 10;
+          break;
+        }
+
+        case 'definitions': {
+          const terms = block.content?.terms || [];
+          pdf.font(`${baseFont}-Bold`).fontSize(12).fillColor(primaryColor);
+          pdf.text('Definitionen', 55, y, { width: 485 });
+          y = pdf.y + 8;
+
+          for (const term of terms) {
+            if (y > 720) { pdf.addPage(); y = 50; }
+            pdf.font(`${baseFont}-Bold`).fontSize(10).fillColor('#333333');
+            pdf.text(`"${term.term || ''}"`, 55, y, { width: 485 });
+            y = pdf.y + 2;
+            pdf.font(baseFont).fontSize(10).fillColor('#555555');
+            pdf.text(term.definition || '', 70, y, { width: 470 });
+            y = pdf.y + 8;
+          }
+          y += 5;
+          break;
+        }
+
+        case 'notice': {
+          const noticeText = block.content?.text || block.content?.body || '';
+          const noticeType = block.content?.type || 'info';
+          const bgColors = { info: '#EBF8FF', warning: '#FFFBEB', error: '#FEF2F2' };
+
+          pdf.rect(55, y, 485, 5).fillColor(bgColors[noticeType] || '#EBF8FF').fill();
+          y += 8;
+          pdf.font(`${baseFont}-Bold`).fontSize(10).fillColor('#333333');
+          pdf.text(block.content?.title || 'Hinweis', 65, y, { width: 465 });
+          y = pdf.y + 3;
+          pdf.font(baseFont).fontSize(9).fillColor('#555555');
+          pdf.text(noticeText, 65, y, { width: 465 });
+          y = pdf.y + 12;
+          break;
+        }
+
+        case 'date-field': {
+          const label = block.content?.label || 'Datum';
+          pdf.font(baseFont).fontSize(10).fillColor('#333333');
+          pdf.text(`${label}: _______________`, 55, y, { width: 485 });
+          y = pdf.y + 10;
+          break;
+        }
+
+        case 'custom': {
+          const customText = block.content?.text || block.content?.body || block.content?.html || '';
+          if (customText) {
+            // Strip HTML tags for plain text rendering
+            const plainText = customText.replace(/<[^>]+>/g, '').trim();
+            pdf.font(baseFont).fontSize(10).fillColor('#333333');
+            pdf.text(plainText, 55, y, { width: 485, lineGap: 2 });
+            y = pdf.y + 10;
+          }
+          break;
+        }
+
+        default:
+          // Unbekannte Blöcke überspringen
+          break;
+      }
+
+      pdf.y = y;
+    }
+
+    // Seitennummern hinzufügen
+    const pageCount = pdf.bufferedPageRange();
+    for (let i = 0; i < pageCount.count; i++) {
+      pdf.switchToPage(i);
+      pdf.font(baseFont).fontSize(8).fillColor('#999999');
+      pdf.text(`Seite ${i + 1} von ${pageCount.count}`, 55, 780, {
+        width: 485,
+        align: 'center'
+      });
+    }
+
+    pdf.end();
   } catch (error) {
     console.error('[ContractBuilder] POST /:id/export/pdf Error:', error);
-    res.status(500).json({ success: false, error: 'Fehler beim PDF-Export' });
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: 'Fehler beim PDF-Export' });
+    }
   }
 });
 
 // ============================================
 // TEMPLATES
 // ============================================
-
-/**
- * GET /api/contract-builder/templates
- * Öffentliche Templates laden
- */
-router.get('/templates/public', auth, async (req, res) => {
-  try {
-    const { category, limit = 20 } = req.query;
-
-    // Validate limit (1-50)
-    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
-
-    const query = {
-      'template.isTemplate': true,
-      'template.isPublic': true
-    };
-
-    if (category && typeof category === 'string') {
-      query['template.category'] = category;
-    }
-
-    const templates = await ContractBuilder.find(query)
-      .sort({ 'template.downloads': -1 })
-      .limit(safeLimit)
-      .select('metadata template design.preset');
-
-    res.json({ success: true, templates });
-  } catch (error) {
-    console.error('[ContractBuilder] GET /templates/public Error:', error);
-    res.status(500).json({ success: false, error: 'Fehler beim Laden der Templates' });
-  }
-});
 
 /**
  * POST /api/contract-builder/:id/save-as-template
