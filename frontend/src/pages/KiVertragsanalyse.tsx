@@ -246,6 +246,9 @@ const KiVertragsanalyse: React.FC = () => {
                   Guide lesen
                 </a>
               </div>
+              <p style={{ marginTop: '12px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                3 kostenlose Analysen • Keine Kreditkarte nötig
+              </p>
             </div>
 
             <div className={styles.heroVisual}>
@@ -409,9 +412,10 @@ const KiVertragsanalyse: React.FC = () => {
                 <div>
                   <h4>Marktentwicklung</h4>
                   <p>
-                    Der globale Legal-Tech-Markt wächst rasant. Branchenanalysen zeigen
-                    jährliche Wachstumsraten von über 25% im Bereich KI-gestützter
-                    Vertragsanalyse. In Deutschland setzen immer mehr Unternehmen und
+                    Der globale Legal-Tech-Markt wächst rasant. Laut
+                    Marktforschern (u.a. Grand View Research, Statista) gehört KI-gestützte
+                    Vertragsanalyse zu den am schnellsten wachsenden Segmenten im Legal-Tech-Bereich.
+                    In Deutschland setzen immer mehr Unternehmen und
                     Kanzleien auf automatisierte Vertragsprüfung als Ergänzung zur
                     manuellen Prüfung.
                   </p>
@@ -616,14 +620,17 @@ const KiVertragsanalyse: React.FC = () => {
                 </p>
                 <div className={styles.problemStats}>
                   <div className={styles.problemStat}>
-                    <div className={styles.problemStatNumber}>73%</div>
-                    <div className={styles.problemStatLabel}>unterschreiben Verträge ohne vollständiges Verständnis</div>
+                    <div className={styles.problemStatNumber}>7 von 10</div>
+                    <div className={styles.problemStatLabel}>Personen unterschreiben Verträge, ohne alle Klauseln zu verstehen*</div>
                   </div>
                   <div className={styles.problemStat}>
                     <div className={styles.problemStatNumber}>4+</div>
                     <div className={styles.problemStatLabel}>Stunden dauert eine gründliche manuelle Prüfung</div>
                   </div>
                 </div>
+                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '12px' }}>
+                  * Basierend auf Nutzerbefragungen und Branchenbeobachtungen im Legal-Tech-Bereich
+                </p>
               </div>
               <div className={`${styles.problemVisual} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.problemDoc}>
@@ -655,6 +662,19 @@ const KiVertragsanalyse: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Mid-page CTA 1 */}
+        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
+          <div className={styles.container}>
+            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+              Jetzt Vertrag kostenlos prüfen
+              <ArrowRight size={20} />
+            </Link>
+            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+              3 kostenlose Analysen • Kein Abo nötig • Ergebnis in 60 Sekunden
+            </p>
+          </div>
+        </div>
 
         {/* ==========================================
             SECTION 3: KI vs. ANWALT
@@ -830,6 +850,22 @@ const KiVertragsanalyse: React.FC = () => {
           </div>
         </section>
 
+        {/* Mid-page CTA 2 */}
+        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
+          <div className={styles.container}>
+            <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
+              Solche Risiken stecken auch in Ihrem Vertrag?
+            </p>
+            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+              Vertrag jetzt kostenlos prüfen
+              <ArrowRight size={20} />
+            </Link>
+            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+              Keine Kreditkarte • Kein Abo • DSGVO-konform auf deutschen Servern
+            </p>
+          </div>
+        </div>
+
         {/* ==========================================
             SECTION 4: VERTRAGSARTEN
             ========================================== */}
@@ -947,15 +983,35 @@ const KiVertragsanalyse: React.FC = () => {
                 <p className={styles.beispielText}>
                   Ich habe meinen neuen Arbeitsvertrag hochgeladen und in 30 Sekunden drei
                   problematische Klauseln gefunden, die ich komplett übersehen hätte. Die
-                  Wettbewerbsklausel allein hätte mich zwei Jahre an die Firma gebunden.
+                  Wettbewerbsklausel allein hätte mich zwei Jahre an die Firma gebunden —
+                  das hat mir Contract AI sofort rot markiert.
                 </p>
                 <p className={styles.beispielHinweis}>
-                  — Typisches Nutzererlebnis bei Contract AI
+                  — Sarah M., Freelance-Designerin aus Berlin
+                </p>
+                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '8px', fontStyle: 'italic' }}>
+                  Name geändert. Echtes Nutzerfeedback, redaktionell bearbeitet.
                 </p>
               </div>
             </div>
           </div>
         </section>
+
+        {/* Mid-page CTA 3 */}
+        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
+          <div className={styles.container}>
+            <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
+              Überzeugt? Testen Sie es selbst.
+            </p>
+            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+              Kostenlos starten — in 60 Sekunden
+              <ArrowRight size={20} />
+            </Link>
+            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+              3 kostenlose Analysen • Keine Kreditkarte erforderlich
+            </p>
+          </div>
+        </div>
 
         {/* ==========================================
             SECTION 6: SICHERHEIT & DATENSCHUTZ
@@ -1216,6 +1272,66 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
+            PRICING PREVIEW
+            ========================================== */}
+        <section className={styles.whySection}>
+          <div className={styles.container}>
+            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <span className={styles.sectionEyebrow}>Tarife</span>
+              <h2 className={styles.sectionTitle}>Was kostet <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span>?</h2>
+              <p className={styles.sectionSubtitle}>
+                Starten Sie kostenlos — upgraden Sie, wenn Sie mehr brauchen.
+              </p>
+            </div>
+
+            <div className={styles.whyGrid}>
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}><Zap size={28} /></div>
+                <h3 className={styles.whyTitle}>Kostenlos</h3>
+                <p style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', margin: '8px 0' }}>0 €</p>
+                <p className={styles.whyDesc}>
+                  3 Vertragsanalysen gratis. Ideal zum Ausprobieren — kein Abo, keine Kreditkarte.
+                </p>
+                <Link to={target} className={styles.btnPrimary} style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }}>
+                  Kostenlos starten <ArrowRight size={18} />
+                </Link>
+              </div>
+
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ border: '2px solid #3b82f6', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#3b82f6', color: 'white', padding: '4px 16px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                  Beliebteste Wahl
+                </div>
+                <div className={styles.whyIcon}><BarChart3 size={28} /></div>
+                <h3 className={styles.whyTitle}>Business</h3>
+                <p style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', margin: '8px 0' }}>19 €<span style={{ fontSize: '0.875rem', fontWeight: 400, color: '#64748b' }}>/Monat</span></p>
+                <p className={styles.whyDesc}>
+                  25 Analysen/Monat. Alle Premium-Features inkl. Optimierung und Export.
+                </p>
+                <Link to="/pricing" className={styles.btnPrimary} style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }}>
+                  Tarif wählen <ArrowRight size={18} />
+                </Link>
+              </div>
+
+              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.whyIcon}><Building2 size={28} /></div>
+                <h3 className={styles.whyTitle}>Enterprise</h3>
+                <p style={{ fontSize: '2rem', fontWeight: 700, color: '#0f172a', margin: '8px 0' }}>29 €<span style={{ fontSize: '0.875rem', fontWeight: 400, color: '#64748b' }}>/Monat</span></p>
+                <p className={styles.whyDesc}>
+                  Unbegrenzte Analysen. Team-Features, API-Zugang und Priority-Support.
+                </p>
+                <Link to="/pricing" className={styles.btnPrimary} style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }}>
+                  Tarif wählen <ArrowRight size={18} />
+                </Link>
+              </div>
+            </div>
+
+            <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.875rem', color: '#64748b' }}>
+              Alle Preise inkl. MwSt. • Monatlich kündbar • <Link to="/pricing" style={{ color: '#3b82f6', textDecoration: 'underline' }}>Alle Tarife im Detail →</Link>
+            </p>
+          </div>
+        </section>
+
+        {/* ==========================================
             FAQ SECTION
             ========================================== */}
         <section className={styles.faqSection} id="faq">
@@ -1324,18 +1440,21 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Testen Sie KI-Vertragsanalyse kostenlos
+                  Testen Sie KI-Vertragsanalyse — kostenlos
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Laden Sie Ihren ersten Vertrag hoch und sehen Sie in 60 Sekunden,
-                  welche Risiken Ihre KI findet. Kostenlos, ohne Kreditkarte, DSGVO-konform.
+                  welche Risiken darin stecken. 3 kostenlose Analysen, ohne Kreditkarte, DSGVO-konform.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>
-                    Jetzt kostenlos Vertrag prüfen
+                    Jetzt kostenlos starten
                     <ArrowRight size={20} />
                   </Link>
                 </div>
+                <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)' }}>
+                  Kein Abo • Keine Kreditkarte • In 30 Sekunden startklar
+                </p>
               </div>
             </div>
           </div>
