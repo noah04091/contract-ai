@@ -3,7 +3,6 @@
 
 const { MongoClient, ObjectId } = require('mongodb');
 const sendEmailHtml = require('../utils/sendEmailHtml');
-const { generateUnsubscribeUrl } = require('../utils/unsubscribeToken');
 const {
   generateEmailTemplate,
   generateInfoBox,
@@ -362,9 +361,6 @@ class DigestProcessor {
     const period = isDaily ? 'heute' : 'diese Woche';
     const periodTitle = isDaily ? 'Tägliche' : 'Wöchentliche';
 
-    // 🆕 GDPR: Generate unsubscribe URL for this user
-    const unsubscribeUrl = generateUnsubscribeUrl(user._id.toString());
-
     // Separate regular alerts from weekly check alerts
     const regularAlerts = alerts.filter(a => a.type !== 'weekly_legal_check');
     const weeklyCheckAlerts = alerts.filter(a => a.type === 'weekly_legal_check');
@@ -421,7 +417,6 @@ class DigestProcessor {
     );
 
     // === Generate email with shared template ===
-    // 🆕 GDPR: Include unsubscribe link in footer
     const emailHtml = generateEmailTemplate({
       title: `${periodTitle} Legal Pulse Digest`,
       badge: `${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
@@ -430,17 +425,14 @@ class DigestProcessor {
       cta: {
         text: 'Legal Pulse öffnen',
         url: 'https://www.contract-ai.de/legal-pulse'
-      },
-      unsubscribeUrl // 🆕 GDPR: Unsubscribe link in footer
+      }
     });
 
-    // 🆕 GDPR: Send with List-Unsubscribe headers and logging
     await sendEmailHtml(
       user.email,
       `${periodTitle} Legal Pulse Digest – ${alerts.length} ${alerts.length === 1 ? 'Änderung' : 'Änderungen'}`,
       emailHtml,
       {
-        unsubscribeUrl,
         category: 'legal_pulse_digest',
         userId: user._id.toString()
       }
