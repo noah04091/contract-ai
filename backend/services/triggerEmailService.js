@@ -12,6 +12,7 @@ const {
   generateParagraph,
   generateDivider
 } = require('../utils/emailTemplate');
+const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
 
 // ============================================
 // 📊 COOLDOWN CONFIGURATION
@@ -68,7 +69,8 @@ function generateLimitReachedEmail(user, context = {}) {
     cta: {
       text: 'Jetzt upgraden',
       url: 'https://www.contract-ai.de/pricing'
-    }
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
   });
 }
 
@@ -145,7 +147,8 @@ function generateFeatureBlockedEmail(user, context = {}) {
     cta: {
       text: 'Feature freischalten',
       url: 'https://www.contract-ai.de/pricing'
-    }
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
   });
 }
 
@@ -190,7 +193,8 @@ function generateAlmostAtLimitEmail(user, context = {}) {
     cta: {
       text: 'Unbegrenzte Analysen',
       url: 'https://www.contract-ai.de/pricing'
-    }
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
   });
 }
 
@@ -238,7 +242,8 @@ function generateWinbackInactiveEmail(user, context = {}) {
     cta: {
       text: 'Zurück zu Contract AI',
       url: 'https://www.contract-ai.de/dashboard'
-    }
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
   });
 }
 
@@ -258,6 +263,10 @@ async function canSendTriggerEmail(db, userId, emailType) {
 
   // Check if email notifications are disabled
   if (user.emailNotifications === false) return false;
+
+  // Check marketing opt-out (DSGVO)
+  if (user.emailPreferences?.marketing === false) return false;
+  if (user.emailOptOut === true) return false;
 
   // Check cooldown
   const lastSent = user.triggerEmails?.[emailType];
@@ -422,6 +431,8 @@ async function processWinbackEmails(db) {
   const users = await usersCollection.find({
     lastLoginAt: { $lte: thirtyDaysAgo, $gte: sixtyDaysAgo },
     emailNotifications: { $ne: false },
+    'emailPreferences.marketing': { $ne: false },
+    emailOptOut: { $ne: true },
     subscriptionPlan: { $in: [null, 'free'] }
   }).toArray();
 
