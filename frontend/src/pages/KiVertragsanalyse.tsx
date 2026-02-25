@@ -1351,7 +1351,34 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
-            CTA + METHODIK SECTION
+            METHODIK & TRANSPARENZ (E-E-A-T)
+            ========================================== */}
+        <section className={styles.pillarContentSection}>
+          <div className={styles.container}>
+            <div className={`${styles.pillarMethodBox} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <h3 className={styles.pillarMethodTitle}>Methodik &amp; Transparenz</h3>
+              <p className={styles.pillarMethodText}>
+                Die KI-Vertragsanalyse von Contract AI basiert auf GPT-4 und wurde mit spezialisierten
+                Analysepipelines für den deutschen Rechtsraum optimiert. Die Ergebnisse stellen eine
+                automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
+              </p>
+              <p className={styles.pillarMethodText}>
+                <strong>Limitationen:</strong> Die KI-Analyse eignet sich hervorragend zur schnellen
+                Identifikation gängiger Vertragsrisiken und problematischer Klauseln. Bei besonders
+                komplexen Vertragskonstruktionen, individuellen Sonderfällen oder Verträgen mit hohem
+                Streitwert empfehlen wir ergänzend die Konsultation eines Fachanwalts. Die KI-Ergebnisse
+                können dabei als strukturierte Grundlage für das Anwaltsgespräch dienen.
+              </p>
+              <p className={styles.pillarMethodText}>
+                Dieser Guide wird regelmäßig aktualisiert und spiegelt den Stand der Technologie
+                sowie aktuelle Entwicklungen im Legal-Tech-Markt wider. Letzte Aktualisierung: Februar 2026.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ==========================================
+            CTA SECTION
             ========================================== */}
         <section className={styles.ctaSection}>
           <div className={styles.container}>
@@ -1374,24 +1401,6 @@ const KiVertragsanalyse: React.FC = () => {
                   Kein Abo • Keine Kreditkarte • In 30 Sekunden startklar
                 </p>
               </div>
-            </div>
-
-            {/* Methodik & Transparenz */}
-            <div style={{ marginTop: '48px', padding: '32px', background: 'rgba(255,255,255,0.08)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>Methodik &amp; Transparenz</h3>
-              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: '12px' }}>
-                Die KI-Vertragsanalyse von Contract AI basiert auf GPT-4 und wurde mit spezialisierten
-                Analysepipelines für den deutschen Rechtsraum optimiert. Die Ergebnisse stellen eine
-                automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
-              </p>
-              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, marginBottom: '12px' }}>
-                <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Limitationen:</strong> Bei besonders
-                komplexen Vertragskonstruktionen, individuellen Sonderfällen oder Verträgen mit hohem
-                Streitwert empfehlen wir ergänzend die Konsultation eines Fachanwalts.
-              </p>
-              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.7 }}>
-                Letzte Aktualisierung: Februar 2026.
-              </p>
             </div>
           </div>
         </section>
