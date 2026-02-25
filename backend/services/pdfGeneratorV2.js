@@ -528,7 +528,7 @@ const createExecutiveStyles = (theme) => {
     partyRole: { fontSize: 8, fontStyle: 'italic', color: c.textMuted, marginTop: 6 },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 45, lineHeight: 1.5 },
+    contentPage: { paddingBottom: 0, lineHeight: 1.5 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: c.border },
     preambleTitle: { fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 10, color: c.secondary },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'justify', marginBottom: 5 },
@@ -589,7 +589,7 @@ const createModernStyles = (theme) => {
     partyRole: { fontSize: 8, color: c.accent, marginTop: 8 },
     footer: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
-    contentPage: { flexDirection: 'row', paddingBottom: 45, lineHeight: 1.6 },
+    contentPage: { flexDirection: 'row', paddingBottom: 0, lineHeight: 1.6 },
     contentMain: { flex: 1, paddingLeft: 40, paddingRight: 40, paddingTop: 30, paddingBottom: 50 },
     preambleContainer: { marginBottom: 25, paddingLeft: 15, borderLeftWidth: 3, borderLeftColor: c.accent },
     preambleTitle: { fontSize: 11, fontWeight: 'bold', color: c.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
@@ -649,7 +649,7 @@ const createMinimalStyles = (theme) => {
     partyRole: { fontSize: 8, color: c.textMuted, marginTop: 10, fontStyle: 'italic' },
     footer: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 45, lineHeight: 1.7 },
+    contentPage: { paddingBottom: 0, lineHeight: 1.7 },
     preambleContainer: { marginBottom: 30, textAlign: 'center' },
     preambleTitle: { fontSize: 9, color: c.textMuted, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 15 },
     preambleText: { fontSize: 9, color: c.textLight, textAlign: 'center', lineHeight: 2 },
@@ -713,7 +713,7 @@ const createElegantStyles = (theme) => {
     footerOrnament: { width: 100, height: 1, backgroundColor: c.accent, marginBottom: 10 },
     footerText: { fontSize: 7, color: c.textMuted },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 45, lineHeight: 1.6 },
+    contentPage: { paddingBottom: 0, lineHeight: 1.6 },
     preambleContainer: { marginBottom: 25, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.accent, paddingVertical: 15 },
     preambleTitle: { fontSize: 11, color: c.accent, textAlign: 'center', fontStyle: 'italic', marginBottom: 10 },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'center' },
@@ -776,7 +776,7 @@ const createCorporateStyles = (theme) => {
     partyRole: { fontSize: 7, color: '#0066cc', fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 10 },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 45, lineHeight: 1.5 },
+    contentPage: { paddingBottom: 0, lineHeight: 1.5 },
     contentMain: { flex: 1 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#003366' },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 8 },
@@ -1257,17 +1257,18 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   const renderContent = (item, index, numberedCounter) => {
     switch (item.type) {
       case 'numbered':
-        return e(View, { key: index, style: styles.numberedParagraph },
+        // wrap: false hält Nummer und Text zusammen auf einer Seite
+        return e(View, { key: index, style: styles.numberedParagraph, wrap: false },
           e(Text, { style: styles.paragraphNumber }, `(${numberedCounter})`),
           e(Text, { style: styles.paragraphText }, item.text)
         );
       case 'letter':
-        return e(View, { key: index, style: styles.letterItem },
+        return e(View, { key: index, style: styles.letterItem, wrap: false },
           e(Text, { style: styles.letterLabel }, `${item.letter})`),
           e(Text, { style: styles.letterContent }, item.text)
         );
       case 'bullet':
-        return e(View, { key: index, style: styles.bulletItem },
+        return e(View, { key: index, style: styles.bulletItem, wrap: false },
           e(Text, { style: styles.bulletPoint }, '–'),
           e(Text, { style: styles.bulletText }, item.text)
         );
