@@ -1151,9 +1151,14 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
+            WRAPPER: Zukunft bis CTA — gemeinsamer Hintergrund
+            ========================================== */}
+        <div style={{ background: 'linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%)' }}>
+
+        {/* ==========================================
             SECTION: ZUKUNFT & MARKT
             ========================================== */}
-        <section className={styles.functionsSection} id="zukunft">
+        <section id="zukunft" style={{ padding: '100px 0', background: 'transparent' }}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ausblick</span>
@@ -1219,7 +1224,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             PRICING PREVIEW
             ========================================== */}
-        <section className={styles.whySection}>
+        <section className={styles.whySection} style={{ background: 'transparent' }}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Tarife</span>
@@ -1279,7 +1284,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             FAQ SECTION
             ========================================== */}
-        <section className={styles.faqSection} id="faq">
+        <section className={styles.faqSection} id="faq" style={{ background: 'transparent' }}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen &amp; Antworten</span>
@@ -1380,7 +1385,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             CTA SECTION
             ========================================== */}
-        <section className={styles.ctaSection}>
+        <section className={styles.ctaSection} style={{ background: 'transparent' }}>
           <div className={styles.container}>
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
@@ -1404,6 +1409,8 @@ const KiVertragsanalyse: React.FC = () => {
             </div>
           </div>
         </section>
+
+        </div>{/* Ende Wrapper: Zukunft bis CTA */}
 
       </div>
 
