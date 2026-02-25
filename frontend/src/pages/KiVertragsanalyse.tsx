@@ -612,21 +612,19 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Mid-page CTA 1 */}
+            <div style={{ textAlign: 'center', padding: '48px 0 0' }}>
+              <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+                Jetzt Vertrag kostenlos prüfen
+                <ArrowRight size={20} />
+              </Link>
+              <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+                3 kostenlose Analysen • Kein Abo nötig • Ergebnis in 60 Sekunden
+              </p>
+            </div>
           </div>
         </section>
-
-        {/* Mid-page CTA 1 */}
-        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
-          <div className={styles.container}>
-            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
-              Jetzt Vertrag kostenlos prüfen
-              <ArrowRight size={20} />
-            </Link>
-            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
-              3 kostenlose Analysen • Kein Abo nötig • Ergebnis in 60 Sekunden
-            </p>
-          </div>
-        </div>
 
         {/* ==========================================
             SECTION 3: KI vs. ANWALT
@@ -799,24 +797,22 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Mid-page CTA 2 */}
+            <div style={{ textAlign: 'center', padding: '48px 0 0' }}>
+              <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
+                Solche Risiken stecken auch in Ihrem Vertrag?
+              </p>
+              <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+                Vertrag jetzt kostenlos prüfen
+                <ArrowRight size={20} />
+              </Link>
+              <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+                Keine Kreditkarte • Kein Abo • DSGVO-konform auf deutschen Servern
+              </p>
+            </div>
           </div>
         </section>
-
-        {/* Mid-page CTA 2 */}
-        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
-          <div className={styles.container}>
-            <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
-              Solche Risiken stecken auch in Ihrem Vertrag?
-            </p>
-            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
-              Vertrag jetzt kostenlos prüfen
-              <ArrowRight size={20} />
-            </Link>
-            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
-              Keine Kreditkarte • Kein Abo • DSGVO-konform auf deutschen Servern
-            </p>
-          </div>
-        </div>
 
         {/* ==========================================
             SECTION 4: VERTRAGSARTEN
@@ -946,24 +942,21 @@ const KiVertragsanalyse: React.FC = () => {
                 </p>
               </div>
             </div>
+            {/* Mid-page CTA 3 */}
+            <div style={{ textAlign: 'center', padding: '48px 0 0' }}>
+              <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
+                Überzeugt? Testen Sie es selbst.
+              </p>
+              <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
+                Kostenlos starten — in 60 Sekunden
+                <ArrowRight size={20} />
+              </Link>
+              <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
+                3 kostenlose Analysen • Keine Kreditkarte erforderlich
+              </p>
+            </div>
           </div>
         </section>
-
-        {/* Mid-page CTA 3 */}
-        <div style={{ textAlign: 'center', padding: '48px 0 32px' }}>
-          <div className={styles.container}>
-            <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
-              Überzeugt? Testen Sie es selbst.
-            </p>
-            <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
-              Kostenlos starten — in 60 Sekunden
-              <ArrowRight size={20} />
-            </Link>
-            <p style={{ marginTop: '12px', fontSize: '0.875rem', color: '#64748b' }}>
-              3 kostenlose Analysen • Keine Kreditkarte erforderlich
-            </p>
-          </div>
-        </div>
 
         {/* ==========================================
             SECTION 6: SICHERHEIT & DATENSCHUTZ
@@ -1046,7 +1039,7 @@ const KiVertragsanalyse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -1057,7 +1050,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsoptimierung</div>
                   <div className={styles.relatedDescription}>
@@ -1068,7 +1061,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragserstellung</div>
                   <div className={styles.relatedDescription}>
@@ -1079,7 +1072,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Eye size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><Eye size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
@@ -1090,7 +1083,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Clock size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><Clock size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>
@@ -1101,7 +1094,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/digitalesignatur" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><CheckCircle size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#06b6d4' }}><CheckCircle size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
@@ -1119,35 +1112,35 @@ const KiVertragsanalyse: React.FC = () => {
 
             <div className={styles.solutionFeatures} style={{ maxWidth: '700px', margin: '0 auto' }}>
               <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Users size={20} /></div>
+                <div className={styles.solutionFeatureIcon} style={{ color: '#3b82f6' }}><Users size={20} /></div>
                 <div className={styles.solutionFeatureText}>
                   <h4>Privatpersonen</h4>
                   <p>Mietvertrag vor der Unterschrift prüfen, Arbeitsvertrag verstehen, Kaufvertrag absichern</p>
                 </div>
               </div>
               <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Globe size={20} /></div>
+                <div className={styles.solutionFeatureIcon} style={{ color: '#8b5cf6' }}><Globe size={20} /></div>
                 <div className={styles.solutionFeatureText}>
                   <h4>Freelancer & Selbstständige</h4>
                   <p>Kundenverträge schnell bewerten, NDAs prüfen, eigene Verträge erstellen</p>
                 </div>
               </div>
               <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Building2 size={20} /></div>
+                <div className={styles.solutionFeatureIcon} style={{ color: '#10b981' }}><Building2 size={20} /></div>
                 <div className={styles.solutionFeatureText}>
                   <h4>Kleine & mittlere Unternehmen</h4>
                   <p>Lieferantenverträge prüfen, Vertragsverwaltung digitalisieren, Compliance sicherstellen</p>
                 </div>
               </div>
               <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Zap size={20} /></div>
+                <div className={styles.solutionFeatureIcon} style={{ color: '#f59e0b' }}><Zap size={20} /></div>
                 <div className={styles.solutionFeatureText}>
                   <h4>Startups</h4>
                   <p>Investorenverträge verstehen, Kooperationsverträge bewerten, ohne teure Kanzlei</p>
                 </div>
               </div>
               <div className={`${styles.solutionFeature} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.solutionFeatureIcon}><Scale size={20} /></div>
+                <div className={styles.solutionFeatureIcon} style={{ color: '#06b6d4' }}><Scale size={20} /></div>
                 <div className={styles.solutionFeatureText}>
                   <h4>Rechtsabteilungen</h4>
                   <p>Massenprüfung von Verträgen, Qualitätssicherung, Effizienzsteigerung</p>
@@ -1313,7 +1306,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             CLUSTER ARTICLES / WEITERFÜHRENDE INHALTE
             ========================================== */}
-        <section className={styles.relatedSection}>
+        <section className={styles.pillarContentSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Weiterlesen</span>
@@ -1322,7 +1315,7 @@ const KiVertragsanalyse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertrag prüfen lassen</div>
                   <div className={styles.relatedDescription}>
@@ -1333,7 +1326,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/blog/legal-lens-vertragsklauseln-verstehen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><BookOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens: Klauseln verstehen</div>
                   <div className={styles.relatedDescription}>
@@ -1344,7 +1337,7 @@ const KiVertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/pricing" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><BarChart3 size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><BarChart3 size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Preise &amp; Tarife</div>
                   <div className={styles.relatedDescription}>
