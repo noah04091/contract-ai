@@ -4,16 +4,12 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../hooks/useAuth";
 import styles from "../styles/FeaturePage.module.css";
 import Footer from "../components/Footer";
-import AutoPlayVideo from "../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, ChevronDown, Brain,
   BarChart3, Sparkles, Scale, Users, Building2, GraduationCap,
   TrendingUp, Lock, Globe, Cpu, Eye, ListChecks
 } from "lucide-react";
-
-const analyseVideo = "/Videos/analyse.mp4";
-import analyseImg from "../assets/Analyse.webp";
 
 const KiVertragsanalyse: React.FC = () => {
   const { user } = useAuth();
@@ -486,27 +482,6 @@ const KiVertragsanalyse: React.FC = () => {
         </section>
 
         {/* ==========================================
-            VIDEO SECTION
-            ========================================== */}
-        <section className={styles.videoSection}>
-          <div className={styles.container}>
-            <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>KI-Vertragsanalyse <span style={{ color: '#3b82f6' }}>in Aktion</span></h2>
-              <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Contract AI einen Vertrag in unter 60 Sekunden analysiert
-                und versteckte Risiken aufdeckt.
-              </p>
-            </div>
-            <div className={`${styles.videoContainer} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <div className={styles.videoFrame}>
-                <AutoPlayVideo src={analyseVideo} poster={analyseImg} alt="KI-Vertragsanalyse Demo" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ==========================================
             SECTION 2: WIE FUNKTIONIERT ES?
             ========================================== */}
         <section className={styles.processSection} id="wie-funktioniert">
@@ -577,29 +552,6 @@ const KiVertragsanalyse: React.FC = () => {
               </p>
             </div>
 
-            <div style={{ marginTop: '48px' }}>
-              <div className={`${styles.solutionComparison} ${styles.comparisonHorizontal} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={`${styles.comparisonCard} ${styles.before}`}>
-                  <span className={styles.comparisonLabel}>Vorher</span>
-                  <div className={styles.comparisonIcon}><FileText size={32} /></div>
-                  <div className={styles.comparisonTitle}>Manuelle Prüfung</div>
-                  <div className={styles.comparisonDesc}>
-                    Juristisches Fachwissen nötig. Stunden bis Tage Zeitaufwand. Subjektive Bewertung je nach Erfahrung.
-                  </div>
-                  <div className={styles.comparisonTime}><Clock size={16} /> 2-4 Stunden pro Vertrag</div>
-                </div>
-                <div className={styles.comparisonArrow}><ArrowRight size={24} /></div>
-                <div className={`${styles.comparisonCard} ${styles.after}`}>
-                  <span className={styles.comparisonLabel}>Nachher</span>
-                  <div className={styles.comparisonIcon}><Zap size={32} /></div>
-                  <div className={styles.comparisonTitle}>KI-Analyse</div>
-                  <div className={styles.comparisonDesc}>
-                    Keine Vorkenntnisse nötig. Ergebnis in unter 60 Sekunden. Algorithmisch konsistent und objektiv.
-                  </div>
-                  <div className={styles.comparisonTime}><Zap size={16} /> Unter 60 Sekunden</div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
