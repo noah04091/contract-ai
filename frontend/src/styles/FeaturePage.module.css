@@ -4121,6 +4121,15 @@
 }
 
 @media (max-width: 480px) {
+  .pillarComparisonTable {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pillarComparisonTable > * {
+    min-width: 480px;
+  }
+
   .pillarComparisonHeader {
     grid-template-columns: 0.6fr 1fr 1fr;
   }
