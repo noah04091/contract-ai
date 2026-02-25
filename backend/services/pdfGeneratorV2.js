@@ -1289,28 +1289,17 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       );
     }
 
-    // Seitenumbruch-Schutz: Überschrift + erstes Element zusammenhalten
-    // wrap: true auf dem äußeren View erlaubt Umbrüche innerhalb langer Sektionen
-    // wrap: false auf dem inneren View hält Header + ersten Absatz auf einer Seite
+    // Seitenumbruch-Schutz: minPresenceAhead stellt sicher, dass nach dem Header
+    // mindestens 80pt Platz auf der Seite ist (≈ 2 Textzeilen). Falls nicht, rutscht
+    // nur der Header auf die nächste Seite — ohne große Blöcke mitzuschleppen.
     const contentItems = section.content.map((item, i) => {
       if (item.type === 'numbered') numberedCounter++;
       return renderContent(item, i, numberedCounter);
     });
 
-    if (contentItems.length > 0) {
-      const firstItem = contentItems[0];
-      const restItems = contentItems.slice(1);
-      return e(View, { key: sectionIndex, wrap: true },
-        e(View, { wrap: false },
-          e(Text, { style: styles.sectionHeader }, section.title),
-          firstItem
-        ),
-        ...restItems
-      );
-    }
-
     return e(View, { key: sectionIndex, wrap: true },
-      e(Text, { style: styles.sectionHeader }, section.title)
+      e(Text, { style: styles.sectionHeader, minPresenceAhead: 80 }, section.title),
+      ...contentItems
     );
   };
 
