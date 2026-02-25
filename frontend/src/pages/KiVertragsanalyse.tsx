@@ -654,26 +654,26 @@ const KiVertragsanalyse: React.FC = () => {
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Geschwindigkeit</div>
-                <div className={styles.pillarComparisonValue}>Sekunden bis Minuten</div>
+                <div className={styles.pillarComparisonValue}><CheckCircle size={16} className={styles.textGreen} /> Sekunden bis Minuten</div>
                 <div className={styles.pillarComparisonValue}>Tage bis Wochen</div>
               </div>
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Kosten</div>
-                <div className={styles.pillarComparisonValue}>Monatliche Pauschale</div>
-                <div className={styles.pillarComparisonValue}>Pro Vertrag (je nach Kanzlei)</div>
+                <div className={styles.pillarComparisonValue}><CheckCircle size={16} className={styles.textGreen} /> Günstige Pauschale</div>
+                <div className={styles.pillarComparisonValue}>Hohe Einzelkosten pro Vertrag</div>
               </div>
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Verfügbarkeit</div>
-                <div className={styles.pillarComparisonValue}>24/7, sofort nutzbar</div>
+                <div className={styles.pillarComparisonValue}><CheckCircle size={16} className={styles.textGreen} /> 24/7, sofort nutzbar</div>
                 <div className={styles.pillarComparisonValue}>Nach Terminvereinbarung</div>
               </div>
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Objektivität</div>
-                <div className={styles.pillarComparisonValue}>Algorithmisch konsistent</div>
-                <div className={styles.pillarComparisonValue}>Erfahrungsbasiert, individuell</div>
+                <div className={styles.pillarComparisonValue}><CheckCircle size={16} className={styles.textGreen} /> Algorithmisch konsistent</div>
+                <div className={styles.pillarComparisonValue}>Subjektiv, erfahrungsbasiert</div>
               </div>
 
               <div className={styles.pillarComparisonRow}>
@@ -690,7 +690,7 @@ const KiVertragsanalyse: React.FC = () => {
 
               <div className={styles.pillarComparisonRow}>
                 <div className={styles.pillarComparisonLabel}>Skalierbarkeit</div>
-                <div className={styles.pillarComparisonValue}>Hunderte Verträge parallel</div>
+                <div className={styles.pillarComparisonValue}><CheckCircle size={16} className={styles.textGreen} /> Hunderte Verträge parallel</div>
                 <div className={styles.pillarComparisonValue}>Begrenzt durch Kapazität</div>
               </div>
 
