@@ -11,7 +11,6 @@ const {
   generateParagraph,
   generateDivider
 } = require('../utils/emailTemplate');
-const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
 
 // Email sequence configuration
 const EMAIL_SEQUENCE = {
@@ -126,8 +125,7 @@ function generateFirstContractEmail(user) {
     cta: {
       text: 'Jetzt Vertrag hochladen',
       url: 'https://www.contract-ai.de/contracts'
-    },
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
+    }
   });
 }
 
@@ -191,8 +189,7 @@ function generateFeaturesEmail(user) {
     cta: {
       text: 'Features entdecken',
       url: 'https://www.contract-ai.de/dashboard'
-    },
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
+    }
   });
 }
 
@@ -239,8 +236,7 @@ function generateUpgradeNudgeEmail(user) {
     cta: {
       text: 'Jetzt upgraden',
       url: 'https://www.contract-ai.de/pricing'
-    },
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
+    }
   });
 }
 
@@ -293,8 +289,7 @@ function generateSocialProofEmail(user) {
     cta: {
       text: 'Jetzt Premium testen',
       url: 'https://www.contract-ai.de/pricing'
-    },
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
+    }
   });
 }
 
@@ -401,9 +396,7 @@ async function processOnboardingEmails(db) {
   const users = await usersCollection.find({
     createdAt: { $gte: fortyFiveDaysAgo },
     emailNotifications: { $ne: false },
-    'onboarding.emailSequence.unsubscribed': { $ne: true },
-    'emailPreferences.marketing': { $ne: false },
-    emailOptOut: { $ne: true }
+    'onboarding.emailSequence.unsubscribed': { $ne: true }
   }).toArray();
 
   console.log(`📧 Found ${users.length} users to check for onboarding emails`);
