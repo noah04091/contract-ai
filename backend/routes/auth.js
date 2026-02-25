@@ -1559,8 +1559,79 @@ router.get("/export-data", verifyToken, async (req, res) => {
  * POST /unsubscribe - Process the unsubscribe request
  *
  * GDPR-Compliant: No login required, token-based identification
+ * Supports two token formats:
+ *   - Legacy (unsubscribeToken.js): userId-based, no category (Legal Pulse)
+ *   - New (emailUnsubscribeService.js): email+category-based (marketing, calendar, etc.)
  */
 const { verifyUnsubscribeToken } = require('../utils/unsubscribeToken');
+const { validateUnsubscribeToken } = require('../services/emailUnsubscribeService');
+
+// Helper: Resolve token to { user, category } regardless of format
+async function resolveUnsubscribeToken(token) {
+  // Try new format first (email+category)
+  const newResult = validateUnsubscribeToken(token);
+  if (newResult) {
+    const user = await usersCollection.findOne({ email: newResult.email.toLowerCase() });
+    return user ? { user, category: newResult.category || 'all' } : null;
+  }
+
+  // Fallback: old format (userId-based, always Legal Pulse)
+  const userId = verifyUnsubscribeToken(token);
+  if (userId) {
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    return user ? { user, category: 'calendar' } : null;
+  }
+
+  return null;
+}
+
+// Helper: Check if user is currently subscribed for a category
+function isSubscribedForCategory(user, category) {
+  switch (category) {
+    case 'marketing':
+      return user.emailPreferences?.marketing !== false && user.emailOptOut !== true;
+    case 'calendar':
+      return user.legalPulseSettings?.emailNotifications !== false;
+    case 'product_updates':
+      return user.emailPreferences?.product_updates !== false && user.emailOptOut !== true;
+    case 'all':
+      return user.emailOptOut !== true;
+    default:
+      return true;
+  }
+}
+
+// Helper: Get DB update operations for unsubscribe per category
+function getUnsubscribeUpdate(category) {
+  switch (category) {
+    case 'marketing':
+      return { $set: { 'emailPreferences.marketing': false, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'calendar':
+      return { $set: { 'legalPulseSettings.emailNotifications': false, 'unsubscribedAt': new Date() } };
+    case 'product_updates':
+      return { $set: { 'emailPreferences.product_updates': false, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'all':
+      return { $set: { emailOptOut: true, emailOptOutAt: new Date(), 'emailPreferencesUpdatedAt': new Date() } };
+    default:
+      return { $set: { 'emailPreferences.marketing': false, 'emailPreferencesUpdatedAt': new Date() } };
+  }
+}
+
+// Helper: Get DB update operations for resubscribe per category
+function getResubscribeUpdate(category) {
+  switch (category) {
+    case 'marketing':
+      return { $set: { 'emailPreferences.marketing': true, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'calendar':
+      return { $set: { 'legalPulseSettings.emailNotifications': true }, $unset: { 'unsubscribedAt': '' } };
+    case 'product_updates':
+      return { $set: { 'emailPreferences.product_updates': true, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'all':
+      return { $set: { emailOptOut: false, 'emailPreferencesUpdatedAt': new Date() } };
+    default:
+      return { $set: { 'emailPreferences.marketing': true, 'emailPreferencesUpdatedAt': new Date() } };
+  }
+}
 
 // GET: Verify token (for frontend to check before showing form)
 router.get("/unsubscribe", async (req, res) => {
@@ -1574,30 +1645,23 @@ router.get("/unsubscribe", async (req, res) => {
       });
     }
 
-    const userId = verifyUnsubscribeToken(token);
+    const resolved = await resolveUnsubscribeToken(token);
 
-    if (!userId) {
+    if (!resolved) {
       return res.status(400).json({
         success: false,
         message: "Ungültiger oder abgelaufener Abmelde-Link"
       });
     }
 
-    // Find user to get current status
-    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    const { user, category } = resolved;
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Benutzer nicht gefunden"
-      });
-    }
-
-    // Return current notification status
+    // Return current notification status + category
     res.json({
       success: true,
-      email: user.email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Mask email: ab***@domain.com
-      currentStatus: user.legalPulseSettings?.emailNotifications !== false,
+      email: user.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
+      currentStatus: isSubscribedForCategory(user, category),
+      category,
       message: "Token gültig"
     });
 
@@ -1622,24 +1686,21 @@ router.post("/unsubscribe", async (req, res) => {
       });
     }
 
-    const userId = verifyUnsubscribeToken(token);
+    const resolved = await resolveUnsubscribeToken(token);
 
-    if (!userId) {
+    if (!resolved) {
       return res.status(400).json({
         success: false,
         message: "Ungültiger oder abgelaufener Abmelde-Link"
       });
     }
 
-    // Update user's notification settings
+    const { user, category } = resolved;
+    const update = getUnsubscribeUpdate(category);
+
     const result = await usersCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          'legalPulseSettings.emailNotifications': false,
-          'unsubscribedAt': new Date()
-        }
-      }
+      { _id: user._id },
+      update
     );
 
     if (result.matchedCount === 0) {
@@ -1654,13 +1715,14 @@ router.post("/unsubscribe", async (req, res) => {
     const db = await database.connect();
     await db.collection('audit_log').insertOne({
       action: 'email_unsubscribe',
-      userId: new ObjectId(userId),
+      userId: user._id,
       timestamp: new Date(),
       source: 'unsubscribe_link',
+      category,
       details: { previousStatus: true, newStatus: false }
     });
 
-    console.log(`🔕 User ${userId} has unsubscribed from email notifications`);
+    console.log(`🔕 User ${user._id} has unsubscribed from ${category} notifications`);
 
     res.json({
       success: true,
@@ -1688,26 +1750,21 @@ router.post("/resubscribe", async (req, res) => {
       });
     }
 
-    const userId = verifyUnsubscribeToken(token);
+    const resolved = await resolveUnsubscribeToken(token);
 
-    if (!userId) {
+    if (!resolved) {
       return res.status(400).json({
         success: false,
         message: "Ungültiger Token"
       });
     }
 
-    // Re-enable notifications
+    const { user, category } = resolved;
+    const update = getResubscribeUpdate(category);
+
     const result = await usersCollection.updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          'legalPulseSettings.emailNotifications': true
-        },
-        $unset: {
-          'unsubscribedAt': ''
-        }
-      }
+      { _id: user._id },
+      update
     );
 
     if (result.matchedCount === 0) {
@@ -1717,7 +1774,7 @@ router.post("/resubscribe", async (req, res) => {
       });
     }
 
-    console.log(`🔔 User ${userId} has resubscribed to email notifications`);
+    console.log(`🔔 User ${user._id} has resubscribed to ${category} notifications`);
 
     res.json({
       success: true,

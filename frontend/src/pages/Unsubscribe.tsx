@@ -12,6 +12,7 @@ export default function Unsubscribe() {
 
   const [status, setStatus] = useState<'verifying' | 'confirm' | 'processing' | 'success' | 'error' | 'already'>('verifying');
   const [email, setEmail] = useState<string>('');
+  const [category, setCategory] = useState<string>('all');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Step 1: Verify the token and get current status
@@ -32,6 +33,7 @@ export default function Unsubscribe() {
 
         if (response.ok && data.success) {
           setEmail(data.email || '');
+          setCategory(data.category || 'all');
 
           if (!data.currentStatus) {
             // Already unsubscribed
@@ -179,7 +181,13 @@ export default function Unsubscribe() {
               </p>
             )}
             <p style={{ color: '#666', fontSize: '15px', marginBottom: '24px' }}>
-              Du erhältst dann keine Legal Pulse Digest-E-Mails mehr zu Rechtsänderungen, die deine Verträge betreffen könnten.
+              {category === 'marketing'
+                ? 'Du erhältst dann keine Marketing- und Onboarding-E-Mails mehr von uns.'
+                : category === 'calendar'
+                  ? 'Du erhältst dann keine Legal Pulse Digest-E-Mails mehr zu Rechtsänderungen, die deine Verträge betreffen könnten.'
+                  : category === 'product_updates'
+                    ? 'Du erhältst dann keine Produkt-Update-E-Mails mehr von uns.'
+                    : 'Du erhältst dann keine E-Mail-Benachrichtigungen mehr von uns.'}
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
