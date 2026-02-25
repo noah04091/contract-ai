@@ -1353,7 +1353,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             METHODIK & TRANSPARENZ (E-E-A-T)
             ========================================== */}
-        <section className={styles.pillarContentSection}>
+        <section className={styles.pillarContentSection} style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%)', paddingBottom: 0 }}>
           <div className={styles.container}>
             <div className={`${styles.pillarMethodBox} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h3 className={styles.pillarMethodTitle}>Methodik &amp; Transparenz</h3>
@@ -1380,7 +1380,7 @@ const KiVertragsanalyse: React.FC = () => {
         {/* ==========================================
             CTA SECTION
             ========================================== */}
-        <section className={styles.ctaSection}>
+        <section className={styles.ctaSection} style={{ paddingTop: 0 }}>
           <div className={styles.container}>
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
