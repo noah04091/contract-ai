@@ -528,7 +528,7 @@ const createExecutiveStyles = (theme) => {
     partyRole: { fontSize: 8, fontStyle: 'italic', color: c.textMuted, marginTop: 6 },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 60, lineHeight: 1.5 },
+    contentPage: { paddingBottom: 45, lineHeight: 1.5 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: c.border },
     preambleTitle: { fontSize: 12, fontWeight: 'bold', textAlign: 'center', marginBottom: 10, color: c.secondary },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'justify', marginBottom: 5 },
@@ -589,7 +589,7 @@ const createModernStyles = (theme) => {
     partyRole: { fontSize: 8, color: c.accent, marginTop: 8 },
     footer: { position: 'absolute', bottom: 20, left: 48, right: 40, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: c.textMuted },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
-    contentPage: { flexDirection: 'row', paddingBottom: 60, lineHeight: 1.6 },
+    contentPage: { flexDirection: 'row', paddingBottom: 45, lineHeight: 1.6 },
     contentMain: { flex: 1, paddingLeft: 40, paddingRight: 40, paddingTop: 30, paddingBottom: 50 },
     preambleContainer: { marginBottom: 25, paddingLeft: 15, borderLeftWidth: 3, borderLeftColor: c.accent },
     preambleTitle: { fontSize: 11, fontWeight: 'bold', color: c.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
@@ -649,7 +649,7 @@ const createMinimalStyles = (theme) => {
     partyRole: { fontSize: 8, color: c.textMuted, marginTop: 10, fontStyle: 'italic' },
     footer: { position: 'absolute', bottom: 40, left: 60, right: 60, flexDirection: 'row', justifyContent: 'center', fontSize: 7, color: c.textMuted },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 60, lineHeight: 1.7 },
+    contentPage: { paddingBottom: 45, lineHeight: 1.7 },
     preambleContainer: { marginBottom: 30, textAlign: 'center' },
     preambleTitle: { fontSize: 9, color: c.textMuted, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 15 },
     preambleText: { fontSize: 9, color: c.textLight, textAlign: 'center', lineHeight: 2 },
@@ -713,7 +713,7 @@ const createElegantStyles = (theme) => {
     footerOrnament: { width: 100, height: 1, backgroundColor: c.accent, marginBottom: 10 },
     footerText: { fontSize: 7, color: c.textMuted },
     // Content Styles - KEIN flex: 1, das blockiert fixed elements! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 60, lineHeight: 1.6 },
+    contentPage: { paddingBottom: 45, lineHeight: 1.6 },
     preambleContainer: { marginBottom: 25, borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.accent, paddingVertical: 15 },
     preambleTitle: { fontSize: 11, color: c.accent, textAlign: 'center', fontStyle: 'italic', marginBottom: 10 },
     preambleText: { fontSize: 10, color: c.textLight, textAlign: 'center' },
@@ -776,7 +776,7 @@ const createCorporateStyles = (theme) => {
     partyRole: { fontSize: 7, color: '#0066cc', fontWeight: 'bold' },
     footer: { position: 'absolute', bottom: 30, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', fontSize: 8, color: '#666666', borderTopWidth: 1, borderTopColor: '#003366', paddingTop: 10 },
     // Content Styles - KEIN flex: 1 wegen fixed footer! (lineHeight hier statt auf page)
-    contentPage: { paddingBottom: 60, lineHeight: 1.5 },
+    contentPage: { paddingBottom: 45, lineHeight: 1.5 },
     contentMain: { flex: 1 },
     preambleContainer: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#003366' },
     preambleTitle: { fontSize: 10, fontWeight: 'bold', color: '#003366', textTransform: 'uppercase', marginBottom: 8 },
@@ -1288,14 +1288,28 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       );
     }
 
-    // 🔧 FIX: wrap: true erlaubt Seitenumbrüche innerhalb langer Sektionen
-    // Das verhindert Text-Überlappungen wenn ein Abschnitt zu groß für eine Seite ist
+    // Seitenumbruch-Schutz: Überschrift + erstes Element zusammenhalten
+    // wrap: true auf dem äußeren View erlaubt Umbrüche innerhalb langer Sektionen
+    // wrap: false auf dem inneren View hält Header + ersten Absatz auf einer Seite
+    const contentItems = section.content.map((item, i) => {
+      if (item.type === 'numbered') numberedCounter++;
+      return renderContent(item, i, numberedCounter);
+    });
+
+    if (contentItems.length > 0) {
+      const firstItem = contentItems[0];
+      const restItems = contentItems.slice(1);
+      return e(View, { key: sectionIndex, wrap: true },
+        e(View, { wrap: false },
+          e(Text, { style: styles.sectionHeader }, section.title),
+          firstItem
+        ),
+        ...restItems
+      );
+    }
+
     return e(View, { key: sectionIndex, wrap: true },
-      e(Text, { style: styles.sectionHeader }, section.title),
-      ...section.content.map((item, i) => {
-        if (item.type === 'numbered') numberedCounter++;
-        return renderContent(item, i, numberedCounter);
-      })
+      e(Text, { style: styles.sectionHeader }, section.title)
     );
   };
 
@@ -1335,13 +1349,15 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   };
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
+  // paddingTop: 50 auf der Page sorgt für oberen Rand auf ALLEN Seiten (auch Folgeseiten)
+  // Sidebar ist absolute-positioned (top: 0) und bleibt trotzdem am physischen Seitenrand
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: styles.page, wrap: true },
-      // Fixed Sidebar - auf allen Seiten
+    return e(Page, { size: 'A4', style: { ...styles.page, paddingTop: 50 }, wrap: true },
+      // Fixed Sidebar - auf allen Seiten (absolute: ignoriert page padding)
       e(View, { style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, backgroundColor: theme.colors.primary }, fixed: true }),
-      // Content ZUERST
+      // Content ZUERST (contentMain paddingTop auf 0, da page paddingTop das übernimmt)
       e(View, { style: { ...styles.contentPage, marginLeft: 8 } },
-        e(View, { style: styles.contentMain },
+        e(View, { style: { ...styles.contentMain, paddingTop: 0 } },
           ...sections.map(renderSection)
         )
       ),
