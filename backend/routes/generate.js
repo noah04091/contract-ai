@@ -2284,7 +2284,7 @@ router.post("/", verifyToken, async (req, res) => {
         console.log("🔄 [V2] Aktualisiere bestehenden Vertrag:", existingContractId);
 
         await contractsCollection.updateOne(
-          { _id: new ObjectId(existingContractId), userId: req.user.userId },
+          { _id: new ObjectId(existingContractId), $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }] },
           {
             $set: {
               content: result.contractText,
@@ -3291,7 +3291,7 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
       console.log("🔄 [V1] Aktualisiere bestehenden Vertrag:", existingContractId);
 
       await contractsCollection.updateOne(
-        { _id: new ObjectId(existingContractId), userId: req.user.userId },
+        { _id: new ObjectId(existingContractId), $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }] },
         {
           $set: {
             content: contractText,
@@ -4093,9 +4093,10 @@ router.post("/change-design", verifyToken, async (req, res) => {
     updateData.contractHTML = newHTML;
     console.log("✅ Neues HTML generiert, Länge:", newHTML.length);
 
-    // Design-Variante und HTML im Vertrag aktualisieren (userId als Sicherheits-Check)
+    // Design-Variante und HTML im Vertrag aktualisieren
+    // userId-Format muss mit DB übereinstimmen (kann String oder ObjectId sein)
     await contractsCollection.updateOne(
-      { _id: new ObjectId(contractId), userId: req.user.userId },
+      { _id: new ObjectId(contractId), $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }] },
       { $set: updateData }
     );
 
@@ -4123,15 +4124,15 @@ router.post("/toggle-draft", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
   try {
-    const contract = await contractsCollection.findOne({ 
+    const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: req.user.userId
+      $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }]
     });
-    
+
     if (!contract) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
-    
+
     const newStatus = contract.status === 'Entwurf' ? 'Aktiv' : 'Entwurf';
     const isDraft = newStatus === 'Entwurf';
     
@@ -4152,9 +4153,9 @@ router.post("/toggle-draft", verifyToken, async (req, res) => {
       isDraft
     );
     
-    // Vertrag aktualisieren (userId als Sicherheits-Check)
+    // Vertrag aktualisieren
     await contractsCollection.updateOne(
-      { _id: new ObjectId(contractId), userId: req.user.userId },
+      { _id: new ObjectId(contractId), $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }] },
       {
         $set: {
           status: newStatus,
