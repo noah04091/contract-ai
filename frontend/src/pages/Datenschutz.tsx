@@ -75,6 +75,9 @@ export default function Datenschutz() {
         <meta property="og:description" content="DSGVO-konforme Datenschutzerklärung. Erfahren Sie, wie Contract AI Ihre Daten schützt." />
         <meta property="og:url" content="https://www.contract-ai.de/datenschutz" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary" />
       </Helmet>
 

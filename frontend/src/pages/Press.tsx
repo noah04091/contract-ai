@@ -155,7 +155,12 @@ export default function Press() {
         <meta property="og:description" content="Pressemitteilungen und Medienressourcen für Journalisten." />
         <meta property="og:url" content="https://www.contract-ai.de/press" />
         <meta property="og:type" content="website" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Presse & Medien | Contract AI" />
+        <meta name="twitter:description" content="Pressemitteilungen und Medienressourcen für Journalisten." />
         <script type="application/ld+json">
           {JSON.stringify(pressSchema)}
         </script>

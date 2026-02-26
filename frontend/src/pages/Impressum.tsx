@@ -74,6 +74,9 @@ export default function Impressum() {
         <meta property="og:description" content="Rechtliche Informationen und Kontaktdaten zu Contract AI." />
         <meta property="og:url" content="https://www.contract-ai.de/impressum" />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Impressum | Contract AI" />
         <script type="application/ld+json">

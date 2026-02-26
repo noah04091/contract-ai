@@ -275,6 +275,13 @@ export default function Pricing() {
         <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€" />
         <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
         <meta property="og:url" content="https://www.contract-ai.de/pricing" />
+        <meta property="og:site_name" content="Contract AI" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€" />
+        <meta name="twitter:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
 
         <script type="application/ld+json">
           {JSON.stringify({

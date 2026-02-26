@@ -207,9 +207,21 @@ const Features: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Funktionen - KI-Vertragsmanagement der nächsten Generation | Contract AI</title>
-        <meta name="description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse bis zur Unterschrift - alles in einer Plattform." />
+        <title>Alle Funktionen | Contract AI — KI-Vertragsmanagement</title>
+        <meta name="description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
         <link rel="canonical" href="https://www.contract-ai.de/features" />
+        <meta property="og:locale" content="de_DE" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Alle Funktionen | Contract AI — KI-Vertragsmanagement" />
+        <meta property="og:description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
+        <meta property="og:url" content="https://www.contract-ai.de/features" />
+        <meta property="og:site_name" content="Contract AI" />
+        <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Alle Funktionen | Contract AI — KI-Vertragsmanagement" />
+        <meta name="twitter:description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
       </Helmet>
 
       <div className="features-page-v3">

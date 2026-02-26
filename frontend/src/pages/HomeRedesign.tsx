@@ -647,6 +647,28 @@ const HomeRedesign = () => {
             }
           })}
         </script>
+
+        {/* Schema.org JSON-LD: VideoObject */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "VideoObject",
+            "name": "KI-Vertragsanalyse Demo – Vertrag in 60 Sekunden analysieren",
+            "description": "Sehen Sie, wie Contract AI einen Vertrag in unter 60 Sekunden analysiert, Risiken erkennt und Handlungsempfehlungen gibt.",
+            "thumbnailUrl": "https://www.contract-ai.de/assets/Analyse.webp",
+            "uploadDate": "2025-06-01",
+            "contentUrl": "https://www.contract-ai.de/Videos/analyse.mp4",
+            "duration": "PT1M",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Contract AI",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.contract-ai.de/logo.webp"
+              }
+            }
+          })}
+        </script>
       </Helmet>
 
       <div className="landing-page">
