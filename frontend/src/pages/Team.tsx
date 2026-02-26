@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check, Info } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
@@ -432,6 +432,8 @@ export default function Team() {
     }
   };
 
+  const [showRoleInfo, setShowRoleInfo] = useState(false);
+
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "admin": return <Shield size={16} />;
@@ -609,7 +611,47 @@ export default function Team() {
                       Owner
                     </span>
                   )}
+                  <button
+                    className={styles.roleInfoToggle}
+                    onClick={() => setShowRoleInfo(!showRoleInfo)}
+                    title="Rollen-Übersicht"
+                  >
+                    <Info size={15} />
+                  </button>
                 </div>
+
+                <AnimatePresence>
+                  {showRoleInfo && (
+                    <motion.div
+                      className={styles.roleInfoBox}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className={styles.roleInfoHeader}>
+                        <span>Rollen-Übersicht</span>
+                        <button onClick={() => setShowRoleInfo(false)} className={styles.roleInfoClose}>
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <div className={styles.roleInfoGrid}>
+                        <div className={styles.roleInfoRow}>
+                          <span className={styles.roleInfoLabel} style={{ color: "#f59e0b" }}><Shield size={13} /> Admin</span>
+                          <span className={styles.roleInfoDesc}>Lesen, Bearbeiten, Löschen, Team verwalten</span>
+                        </div>
+                        <div className={styles.roleInfoRow}>
+                          <span className={styles.roleInfoLabel} style={{ color: "#3b82f6" }}><Users size={13} /> Mitglied</span>
+                          <span className={styles.roleInfoDesc}>Lesen, Bearbeiten — kein Löschen</span>
+                        </div>
+                        <div className={styles.roleInfoRow}>
+                          <span className={styles.roleInfoLabel} style={{ color: "#6b7280" }}><Eye size={13} /> Betrachter</span>
+                          <span className={styles.roleInfoDesc}>Nur Lesen — kein Bearbeiten oder Löschen</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Pending Invitations */}

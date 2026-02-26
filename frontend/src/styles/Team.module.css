@@ -302,6 +302,89 @@
   font-weight: 600;
 }
 
+/* Role Info Toggle */
+.roleInfoToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: color 0.15s, background 0.15s;
+}
+
+.roleInfoToggle:hover {
+  color: #6b7280;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Role Info Box */
+.roleInfoBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.roleInfoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.roleInfoClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.roleInfoClose:hover {
+  color: #475569;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.roleInfoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roleInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.roleInfoLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.roleInfoDesc {
+  color: #64748b;
+}
+
 /* Pending Invitations */
 .pendingInvites {
   background: #fffbeb;
