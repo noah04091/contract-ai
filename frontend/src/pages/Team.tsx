@@ -79,18 +79,15 @@ export default function Team() {
   const [inviteRole, setInviteRole] = useState<"admin" | "member" | "viewer">("member");
   const [isInviting, setIsInviting] = useState(false);
 
-  // ✅ Enterprise-Zugriff prüfen (kein Redirect mehr!)
-  const hasAccess = user ? ENTERPRISE_PLANS.includes(user.subscriptionPlan || "free") : false;
+  // ✅ Enterprise-Zugriff prüfen (Org-Mitglieder haben auch Zugang)
+  const isEnterprise = user ? ENTERPRISE_PLANS.includes(user.subscriptionPlan || "free") : false;
 
-  // Load Organization Data (nur für Enterprise+)
+  // Load Organization Data (immer versuchen für eingeloggte User)
   useEffect(() => {
-    if (user && hasAccess) {
+    if (user) {
       fetchOrganization();
-    } else if (user && !hasAccess) {
-      // Nicht-Enterprise User: Loading sofort beenden
-      setIsLoadingData(false);
     }
-  }, [user, hasAccess]);
+  }, [user]);
 
   const fetchOrganization = async () => {
     setIsLoadingData(true);
@@ -464,8 +461,8 @@ export default function Team() {
         <title>Team-Management - Contract AI</title>
       </Helmet>
 
-      {/* 🔒 Enterprise Banner - für nicht-Enterprise User */}
-      {!hasAccess && (
+      {/* 🔒 Enterprise Banner - nur wenn kein Enterprise UND kein Org-Mitglied */}
+      {!isEnterprise && !organization && !isLoadingData && (
         <UnifiedPremiumNotice
           featureName="Team-Management"
           variant="fullWidth"
@@ -517,7 +514,7 @@ export default function Team() {
           ) : !organization ? (
             /* Keine Organisation -> Create UI oder Enterprise-Hinweis */
             <div className={styles.emptyState}>
-              {hasAccess ? (
+              {isEnterprise ? (
                 <>
                   <Users size={64} className={styles.emptyIcon} />
                   <h3>Noch keine Organisation</h3>
