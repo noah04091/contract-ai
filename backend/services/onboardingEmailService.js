@@ -370,12 +370,14 @@ async function sendOnboardingEmail(user, emailType) {
       throw new Error(`Unknown email type: ${emailType}`);
   }
 
-  // Send the email
+  // Send the email (marketing emails get List-Unsubscribe header, welcome is transactional)
+  const isMarketing = emailType !== 'welcome';
   await sendEmail(
     user.email,
     subject,
-    '', // Plain text fallback (empty for now)
-    html
+    '',
+    html,
+    isMarketing ? { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') } : {}
   );
 
   console.log(`📧 Onboarding email sent: ${emailType} to ${user.email}`);

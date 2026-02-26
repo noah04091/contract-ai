@@ -17,8 +17,10 @@ const transporter = nodemailer.createTransport({
  * @param {string} subject - Email subject
  * @param {string} text - Plain text content
  * @param {string} [html] - Optional HTML content
+ * @param {Object} [options] - Optional settings
+ * @param {string} [options.unsubscribeUrl] - Adds List-Unsubscribe header (RFC 8058)
  */
-async function sendEmail(to, subject, text, html = null) {
+async function sendEmail(to, subject, text, html = null, options = {}) {
   const mailOptions = {
     from: process.env.EMAIL_FROM || `"Contract AI Signaturservice" <noreply@contract-ai.de>`,
     to,
@@ -29,6 +31,14 @@ async function sendEmail(to, subject, text, html = null) {
   // Add HTML if provided
   if (html) {
     mailOptions.html = html;
+  }
+
+  // Add List-Unsubscribe headers for marketing emails (RFC 8058)
+  if (options.unsubscribeUrl) {
+    mailOptions.headers = {
+      'List-Unsubscribe': `<${options.unsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click'
+    };
   }
 
   await transporter.sendMail(mailOptions);

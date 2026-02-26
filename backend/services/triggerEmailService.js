@@ -316,7 +316,7 @@ async function sendLimitReachedEmail(db, user, context = {}) {
     const html = generateLimitReachedEmail(user, context);
     const subject = 'Dein Analyse-Kontingent ist aufgebraucht';
 
-    await sendEmail(user.email, subject, '', html);
+    await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
     await markTriggerEmailSent(db, user._id, 'limitReached');
 
     console.log(`📧 [Trigger] Limit Reached email sent to ${user.email}`);
@@ -346,7 +346,7 @@ async function sendFeatureBlockedEmail(db, user, featureName, featureDescription
     const html = generateFeatureBlockedEmail(user, { featureName, featureDescription });
     const subject = `${featureName} freischalten - Contract AI`;
 
-    await sendEmail(user.email, subject, '', html);
+    await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
     await markTriggerEmailSent(db, user._id, 'featureBlocked');
 
     console.log(`📧 [Trigger] Feature Blocked email sent to ${user.email} (${featureName})`);
@@ -376,7 +376,7 @@ async function sendAlmostAtLimitEmail(db, user, context = {}) {
     const html = generateAlmostAtLimitEmail(user, context);
     const subject = 'Noch 1 kostenlose Analyse übrig';
 
-    await sendEmail(user.email, subject, '', html);
+    await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
     await markTriggerEmailSent(db, user._id, 'almostAtLimit');
 
     console.log(`📧 [Trigger] Almost at Limit email sent to ${user.email}`);
@@ -401,7 +401,7 @@ async function sendWinbackInactiveEmail(db, user, context = {}) {
     const html = generateWinbackInactiveEmail(user, context);
     const subject = 'Wir vermissen dich bei Contract AI';
 
-    await sendEmail(user.email, subject, '', html);
+    await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
     await markTriggerEmailSent(db, user._id, 'winbackInactive');
 
     console.log(`📧 [Trigger] Winback Inactive email sent to ${user.email}`);
