@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -7,7 +7,7 @@ import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
-  Image, File, X, Info, Palette, Wrench
+  Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -3057,6 +3057,10 @@ export default function Generate() {
   const [isDraggingAttachment, setIsDraggingAttachment] = useState<boolean>(false);
   const [isDownloadingAttachments, setIsDownloadingAttachments] = useState<boolean>(false);
 
+  // 📄 Manuelle Seitenumbrüche
+  const [pageBreaks, setPageBreaks] = useState<number[]>([]);
+  const [showPageBreaks, setShowPageBreaks] = useState(false);
+
   // Refs
   // const contractRef = useRef<HTMLDivElement>(null); // ❌ Not used anymore (replaced with textarea)
 
@@ -3077,6 +3081,29 @@ export default function Generate() {
 
   // Should show company profile tip?
   const shouldShowProfileTip = userPlan !== 'free' && !companyProfile && !tipDismissed;
+
+  // Sektionen aus contractText parsen (für Seitenumbruch-UI)
+  const parsedSections = useMemo(() => {
+    if (!contractText) return [];
+    const result: { index: number; title: string }[] = [];
+    let sectionIndex = 0;
+    let skipParties = false;
+    for (const line of contractText.split('\n')) {
+      const trimmed = line.trim().replace(/\*\*/g, '');
+      if (!trimmed) continue;
+      if (trimmed.toLowerCase() === 'zwischen') { skipParties = true; continue; }
+      if (skipParties && (trimmed.toUpperCase() === 'PRÄAMBEL' || trimmed.startsWith('§'))) { skipParties = false; }
+      if (skipParties) continue;
+      if (trimmed === trimmed.toUpperCase() && trimmed.length > 5 &&
+          !trimmed.startsWith('§') && !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(trimmed)) continue;
+      if (/^PRÄAMBEL$/i.test(trimmed)) {
+        result.push({ index: sectionIndex++, title: 'Präambel' });
+      } else if (trimmed.startsWith('§')) {
+        result.push({ index: sectionIndex++, title: trimmed });
+      }
+    }
+    return result;
+  }, [contractText]);
 
   // Prüft ob der Firmenname ein Platzhalter ist (z.B. "TEST")
   const isValidCompanyProfile = (profile: any): boolean => {
@@ -4191,7 +4218,7 @@ export default function Generate() {
           );
 
           let pdfUrl: string;
-          let requestBody: { design: string; attachments: typeof attachmentInfos; attachmentFiles?: { data: string; type: string; name: string }[] };
+          let requestBody: { design: string; attachments: typeof attachmentInfos; attachmentFiles?: { data: string; type: string; name: string }[]; pageBreaks?: number[] };
 
           if (hasPdfOrImageAttachments) {
             // Kombinierte Route mit Anlagen-Dateien
@@ -4236,7 +4263,8 @@ export default function Generate() {
             requestBody = {
               design: selectedDesignVariant,
               attachments: attachmentInfos,
-              attachmentFiles: attachmentFiles
+              attachmentFiles: attachmentFiles,
+              pageBreaks
             };
           } else {
             // Standard V2-Route (ohne Datei-Anhänge)
@@ -4244,7 +4272,8 @@ export default function Generate() {
             console.log("📊 V2 PDF URL:", pdfUrl);
             requestBody = {
               design: selectedDesignVariant,
-              attachments: attachmentInfos
+              attachments: attachmentInfos,
+              pageBreaks
             };
           }
 
@@ -5101,7 +5130,7 @@ export default function Generate() {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ design: selectedDesignVariant })
+          body: JSON.stringify({ design: selectedDesignVariant, pageBreaks })
         });
 
         if (response.ok) {
@@ -6001,6 +6030,75 @@ export default function Generate() {
                                 <ArrowRight size={16} />
                               </button>
                             </div>
+                          </div>
+                        )}
+
+                        {/* Seitenumbrüche Panel */}
+                        {isPremium && pdfPreviewUrl && parsedSections.length > 0 && (
+                          <div className={styles.step3PageBreaks}>
+                            <div
+                              className={styles.step3PageBreaksHeader}
+                              onClick={() => setShowPageBreaks(!showPageBreaks)}
+                            >
+                              <div className={styles.step3PageBreaksTitle}>
+                                <Scissors size={16} />
+                                <span>Seitenumbrüche</span>
+                                {pageBreaks.length > 0 && (
+                                  <span className={styles.step3PageBreaksBadge}>{pageBreaks.length}</span>
+                                )}
+                              </div>
+                              <ChevronDown
+                                size={16}
+                                style={{
+                                  transform: showPageBreaks ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease'
+                                }}
+                              />
+                            </div>
+                            <AnimatePresence>
+                              {showPageBreaks && (
+                                <motion.div
+                                  className={styles.step3PageBreaksList}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <p className={styles.step3PageBreaksHint}>
+                                    Klicke auf einen Abschnitt, um davor einen Seitenumbruch einzufügen
+                                  </p>
+                                  <div className={styles.step3PageBreaksChips}>
+                                    {parsedSections.map((sec) => (
+                                      <button
+                                        key={sec.index}
+                                        className={`${styles.pageBreakChip} ${pageBreaks.includes(sec.index) ? styles.active : ''}`}
+                                        onClick={() => {
+                                          setPageBreaks(prev =>
+                                            prev.includes(sec.index)
+                                              ? prev.filter(i => i !== sec.index)
+                                              : [...prev, sec.index]
+                                          );
+                                        }}
+                                      >
+                                        {sec.title.length > 40 ? sec.title.substring(0, 40) + '…' : sec.title}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <button
+                                    className={styles.pageBreaksApply}
+                                    onClick={generatePDFPreview}
+                                    disabled={isGeneratingPreview}
+                                  >
+                                    {isGeneratingPreview ? (
+                                      <div className={styles.tinySpinner}></div>
+                                    ) : (
+                                      <RefreshCw size={13} />
+                                    )}
+                                    PDF mit Umbrüchen aktualisieren
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
                           </div>
                         )}
 
