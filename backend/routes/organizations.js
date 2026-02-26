@@ -8,22 +8,11 @@ const Organization = require('../models/Organization');
 const OrganizationMember = require('../models/OrganizationMember');
 const OrganizationInvitation = require('../models/OrganizationInvitation');
 const verifyToken = require('../middleware/verifyToken');
-const nodemailer = require('nodemailer');
+const sendEmail = require('../utils/sendEmail');
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { isEnterpriseOrHigher } = require('../constants/subscriptionPlans'); // 📊 Zentrale Plan-Definitionen
-
-// Email Transporter (reuse existing from auth)
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 /**
  * POST /api/organizations
@@ -396,19 +385,12 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
       }
     }
 
-    // Check: Pending Invite?
-    const pendingInvite = await OrganizationInvitation.findOne({
+    // Check: Pending Invite? → Alte löschen und neu senden (ermöglicht Erneut-Senden)
+    await OrganizationInvitation.deleteMany({
       organizationId: new ObjectId(orgId),
       email: email.toLowerCase(),
       status: 'pending'
     });
-
-    if (pendingInvite) {
-      return res.status(400).json({
-        success: false,
-        message: 'Eine Einladung für diese E-Mail ist bereits ausstehend'
-      });
-    }
 
     // Erstelle Invitation
     const invitation = new OrganizationInvitation({
@@ -452,14 +434,14 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
       cta: { text: "Einladung annehmen", url: inviteLink }
     });
 
-    await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+    // Email über shared Queue senden (async, blockiert nicht)
+    sendEmail({
       to: email,
       subject: `Einladung zum Team von ${organization.name}`,
       html: emailHtml
     });
 
-    console.log(`✅ [ORGANIZATIONS] Invite sent: ${email} to Org ${orgId} as ${role}`);
+    console.log(`✅ [ORGANIZATIONS] Invite created & email queued: ${email} to Org ${orgId} as ${role}`);
 
     res.json({
       success: true,
@@ -476,7 +458,7 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
     console.error('❌ [ORGANIZATIONS] Invite Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Fehler beim Versenden der Einladung',
+      message: 'Fehler beim Erstellen der Einladung',
       details: error.message
     });
   }
