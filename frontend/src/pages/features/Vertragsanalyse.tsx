@@ -816,48 +816,44 @@ const Vertragsanalyse: React.FC = () => {
             </div>
 
             <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-              <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
+              <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6', fontSize: '28px' }}><Sparkles size={28} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsoptimierung</div>
                   <div className={styles.relatedDescription}>
-                    Nach der Analyse: KI-Vorschläge zur Verbesserung problematischer Klauseln
+                    KI-Vorschläge zur Verbesserung problematischer Klauseln
                   </div>
                 </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+              <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6', fontSize: '28px' }}><Search size={28} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
                     Klauseln anklicken und sofort verstehen – interaktive Vertragsansicht
                   </div>
                 </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/features/legalpulse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><Scale size={20} /></span>
+              <Link to="/features/legalpulse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <span className={styles.relatedIcon} style={{ color: '#10b981', fontSize: '28px' }}><Scale size={28} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Pulse</div>
                   <div className={styles.relatedDescription}>
                     Automatische Überwachung auf Gesetzesänderungen die Ihre Verträge betreffen
                   </div>
                 </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/ki-vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><BookOpen size={20} /></span>
+              <Link to="/ki-vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b', fontSize: '28px' }}><BookOpen size={28} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Vertragsanalyse Guide</div>
                   <div className={styles.relatedDescription}>
-                    Der komplette Guide: Wie KI-Vertragsanalyse funktioniert, KI vs. Anwalt, Kosten
+                    Der komplette Guide: KI-Vertragsanalyse, KI vs. Anwalt, Kosten
                   </div>
                 </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
             </div>
           </div>
