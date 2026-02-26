@@ -3128,9 +3128,15 @@ export default function Generate() {
 
   // Clean up localStorage on component mount
   useEffect(() => {
-    // Clean old contract IDs from localStorage to prevent conflicts
     localStorage.removeItem('lastGeneratedContractId');
   }, []);
+
+  // Blob-URL cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) window.URL.revokeObjectURL(pdfPreviewUrl);
+    };
+  }, [pdfPreviewUrl]);
 
   // 💾 AUTOSAVE: Check for saved draft on mount and show dialog
   useEffect(() => {
@@ -6330,6 +6336,8 @@ export default function Generate() {
                           setPdfPreviewUrl(null);
                           setIsGeneratingPreview(false);
                           setAttachments([]);
+                          setPageBreaks([]);
+                          setShowPageBreaks(false);
                         }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}

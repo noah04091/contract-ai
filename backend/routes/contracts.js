@@ -4131,11 +4131,13 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     const attachmentFiles = req.body.attachmentFiles || []; // Base64-kodierte Dateien
     const pageBreaks = req.body.pageBreaks || [];
 
-
-    // Vertrag laden
+    // Vertrag laden (mit $or für String/ObjectId userId wie in pdf-v2)
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: new ObjectId(req.user.userId)
+      $or: [
+        { userId: new ObjectId(req.user.userId) },
+        { userId: req.user.userId }
+      ]
     });
 
     if (!contract) {
