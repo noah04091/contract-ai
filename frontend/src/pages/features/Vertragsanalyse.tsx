@@ -305,7 +305,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Erkennung</h3>
@@ -315,7 +315,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <BarChart3 size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Fairness-Score</h3>
@@ -325,7 +325,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Instant-Analyse</h3>
@@ -335,7 +335,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Languages size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Klare Sprache</h3>
@@ -345,7 +345,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <ThumbsUp size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Chancen-Analyse</h3>
@@ -355,7 +355,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #a5f3fc 100%)', color: '#06b6d4' }}>
                   <Download size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>PDF-Export</h3>
@@ -539,7 +539,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Objektive Bewertung</h3>
@@ -550,7 +550,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO-konform</h3>
@@ -561,7 +561,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <FileText size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Klare Ergebnisse</h3>
@@ -572,7 +572,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Sofort verfügbar</h3>
@@ -817,7 +817,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsoptimierung</div>
                   <div className={styles.relatedDescription}>
@@ -828,7 +828,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
@@ -839,7 +839,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legalpulse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Scale size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><Scale size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Pulse</div>
                   <div className={styles.relatedDescription}>
@@ -850,7 +850,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/ki-vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><BookOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Vertragsanalyse Guide</div>
                   <div className={styles.relatedDescription}>
