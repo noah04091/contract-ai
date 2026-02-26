@@ -152,8 +152,9 @@ export default function AcceptInvite() {
         return;
       }
 
-      // Auto-Login: Token speichern
+      // Auto-Login: Token speichern (beide Keys wie Login.tsx)
       localStorage.setItem("token", data.token);
+      localStorage.setItem("authToken", data.token);
 
       setSuccess(true);
       await refetchUser();

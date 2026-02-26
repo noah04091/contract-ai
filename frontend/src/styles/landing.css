@@ -4074,10 +4074,6 @@ a {
   width: max-content;
 }
 
-.marquee-track.paused {
-  animation-play-state: paused;
-}
-
 .marquee-track.marquee-reverse {
   animation-direction: reverse;
 }
@@ -8198,11 +8194,6 @@ main,
   gap: 60px;
   animation: logoMarquee 35s linear infinite;
   width: max-content;
-}
-
-/* Pause Animation on Hover */
-.logo-marquee-wrapper:hover .logo-marquee-track {
-  animation-play-state: paused;
 }
 
 @keyframes logoMarquee {

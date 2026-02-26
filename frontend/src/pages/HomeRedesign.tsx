@@ -35,7 +35,6 @@ declare global {
 
 // Testimonials Marquee Component - Modern 2-Row Design
 const TestimonialsMarquee = () => {
-  const [isPaused, setIsPaused] = useState(false);
 
   // Testimonial-Daten - Mix aus Fotos und Initialen für Authentizität
   const testimonials = [
@@ -198,15 +197,11 @@ const TestimonialsMarquee = () => {
   );
 
   return (
-    <div
-      className="testimonials-marquee"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-    >
+    <div className="testimonials-marquee">
       {/* Row 1 - Scrolls Left */}
       <div className="marquee-row">
         <div className="marquee-fade marquee-fade-left"></div>
-        <div className={`marquee-track ${isPaused ? 'paused' : ''}`}>
+        <div className="marquee-track">
           {/* Duplicate cards for seamless loop */}
           {[...row1, ...row1].map((testimonial, index) => (
             <TestimonialCard key={`row1-${testimonial.id}-${index}`} testimonial={testimonial} />
@@ -218,7 +213,7 @@ const TestimonialsMarquee = () => {
       {/* Row 2 - Scrolls Right (reverse) */}
       <div className="marquee-row">
         <div className="marquee-fade marquee-fade-left"></div>
-        <div className={`marquee-track marquee-reverse ${isPaused ? 'paused' : ''}`}>
+        <div className="marquee-track marquee-reverse">
           {/* Duplicate cards for seamless loop */}
           {[...row2, ...row2].map((testimonial, index) => (
             <TestimonialCard key={`row2-${testimonial.id}-${index}`} testimonial={testimonial} />
