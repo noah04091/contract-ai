@@ -464,7 +464,7 @@ const Optimierung: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid}>
+            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />

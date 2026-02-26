@@ -445,7 +445,7 @@ const Generator: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid}>
+            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />

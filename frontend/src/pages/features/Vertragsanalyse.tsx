@@ -537,7 +537,7 @@ const Vertragsanalyse: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid}>
+            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />
@@ -815,7 +815,7 @@ const Vertragsanalyse: React.FC = () => {
               <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
             </div>
 
-            <div className={styles.relatedGrid}>
+            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
