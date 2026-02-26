@@ -6744,11 +6744,14 @@
 
 /* Right Column - PDF Preview */
 .step3RightColumn {
-  position: sticky;
-  top: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .step3PdfPanel {
+  position: sticky;
+  top: 100px;
   background: white;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);

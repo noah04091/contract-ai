@@ -6033,75 +6033,6 @@ export default function Generate() {
                           </div>
                         )}
 
-                        {/* Seitenumbrüche Panel */}
-                        {isPremium && pdfPreviewUrl && parsedSections.length > 0 && (
-                          <div className={styles.step3PageBreaks}>
-                            <div
-                              className={styles.step3PageBreaksHeader}
-                              onClick={() => setShowPageBreaks(!showPageBreaks)}
-                            >
-                              <div className={styles.step3PageBreaksTitle}>
-                                <Scissors size={16} />
-                                <span>Seitenumbrüche</span>
-                                {pageBreaks.length > 0 && (
-                                  <span className={styles.step3PageBreaksBadge}>{pageBreaks.length}</span>
-                                )}
-                              </div>
-                              <ChevronDown
-                                size={16}
-                                style={{
-                                  transform: showPageBreaks ? 'rotate(180deg)' : 'rotate(0deg)',
-                                  transition: 'transform 0.2s ease'
-                                }}
-                              />
-                            </div>
-                            <AnimatePresence>
-                              {showPageBreaks && (
-                                <motion.div
-                                  className={styles.step3PageBreaksList}
-                                  initial={{ height: 0, opacity: 0 }}
-                                  animate={{ height: 'auto', opacity: 1 }}
-                                  exit={{ height: 0, opacity: 0 }}
-                                  transition={{ duration: 0.2 }}
-                                >
-                                  <p className={styles.step3PageBreaksHint}>
-                                    Klicke auf einen Abschnitt, um davor einen Seitenumbruch einzufügen
-                                  </p>
-                                  <div className={styles.step3PageBreaksChips}>
-                                    {parsedSections.map((sec) => (
-                                      <button
-                                        key={sec.index}
-                                        className={`${styles.pageBreakChip} ${pageBreaks.includes(sec.index) ? styles.active : ''}`}
-                                        onClick={() => {
-                                          setPageBreaks(prev =>
-                                            prev.includes(sec.index)
-                                              ? prev.filter(i => i !== sec.index)
-                                              : [...prev, sec.index]
-                                          );
-                                        }}
-                                      >
-                                        {sec.title.length > 40 ? sec.title.substring(0, 40) + '…' : sec.title}
-                                      </button>
-                                    ))}
-                                  </div>
-                                  <button
-                                    className={styles.pageBreaksApply}
-                                    onClick={generatePDFPreview}
-                                    disabled={isGeneratingPreview}
-                                  >
-                                    {isGeneratingPreview ? (
-                                      <div className={styles.tinySpinner}></div>
-                                    ) : (
-                                      <RefreshCw size={13} />
-                                    )}
-                                    PDF mit Umbrüchen aktualisieren
-                                  </button>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        )}
-
                         {/* Text Editor Panel */}
                         <div className={styles.step3EditorPanel}>
                           <div className={styles.step3EditorHeader}>
@@ -6309,6 +6240,75 @@ export default function Generate() {
                             )}
                           </div>
                         </div>
+
+                        {/* Seitenumbrüche Panel — unter PDF-Vorschau */}
+                        {isPremium && pdfPreviewUrl && parsedSections.length > 0 && (
+                          <div className={styles.step3PageBreaks}>
+                            <div
+                              className={styles.step3PageBreaksHeader}
+                              onClick={() => setShowPageBreaks(!showPageBreaks)}
+                            >
+                              <div className={styles.step3PageBreaksTitle}>
+                                <Scissors size={16} />
+                                <span>Seitenumbrüche</span>
+                                {pageBreaks.length > 0 && (
+                                  <span className={styles.step3PageBreaksBadge}>{pageBreaks.length}</span>
+                                )}
+                              </div>
+                              <ChevronDown
+                                size={16}
+                                style={{
+                                  transform: showPageBreaks ? 'rotate(180deg)' : 'rotate(0deg)',
+                                  transition: 'transform 0.2s ease'
+                                }}
+                              />
+                            </div>
+                            <AnimatePresence>
+                              {showPageBreaks && (
+                                <motion.div
+                                  className={styles.step3PageBreaksList}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                >
+                                  <p className={styles.step3PageBreaksHint}>
+                                    Klicke auf einen Abschnitt, um davor einen Seitenumbruch einzufügen
+                                  </p>
+                                  <div className={styles.step3PageBreaksChips}>
+                                    {parsedSections.map((sec) => (
+                                      <button
+                                        key={sec.index}
+                                        className={`${styles.pageBreakChip} ${pageBreaks.includes(sec.index) ? styles.active : ''}`}
+                                        onClick={() => {
+                                          setPageBreaks(prev =>
+                                            prev.includes(sec.index)
+                                              ? prev.filter(i => i !== sec.index)
+                                              : [...prev, sec.index]
+                                          );
+                                        }}
+                                      >
+                                        {sec.title.length > 40 ? sec.title.substring(0, 40) + '…' : sec.title}
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <button
+                                    className={styles.pageBreaksApply}
+                                    onClick={generatePDFPreview}
+                                    disabled={isGeneratingPreview}
+                                  >
+                                    {isGeneratingPreview ? (
+                                      <div className={styles.tinySpinner}></div>
+                                    ) : (
+                                      <RefreshCw size={13} />
+                                    )}
+                                    PDF mit Umbrüchen aktualisieren
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
                       </div>
                     </div>
 
