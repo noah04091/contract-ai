@@ -460,7 +460,7 @@ const Vergleich: React.FC = () => {
 
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <BarChart3 size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Detailgenaue Diff-Ansicht</h3>
@@ -471,7 +471,7 @@ const Vergleich: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Präferenz-basierte Bewertung</h3>
@@ -482,7 +482,7 @@ const Vergleich: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO-konform</h3>
@@ -493,7 +493,7 @@ const Vergleich: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Sofort verfügbar</h3>
@@ -661,7 +661,7 @@ const Vergleich: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -672,7 +672,7 @@ const Vergleich: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>
@@ -683,7 +683,7 @@ const Vergleich: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Eye size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#06b6d4' }}><Eye size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>

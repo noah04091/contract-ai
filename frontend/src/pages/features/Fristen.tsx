@@ -485,7 +485,7 @@ const Fristen: React.FC = () => {
 
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Calendar size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Automatische Erkennung</h3>
@@ -496,7 +496,7 @@ const Fristen: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
                   <Bell size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Flexible Erinnerungen</h3>
@@ -507,7 +507,7 @@ const Fristen: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Mail size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Kalender-Sync</h3>
@@ -518,7 +518,7 @@ const Fristen: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Smart-Berechnung</h3>
@@ -690,7 +690,7 @@ const Fristen: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -701,7 +701,7 @@ const Fristen: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -712,7 +712,7 @@ const Fristen: React.FC = () => {
               </Link>
 
               <Link to="/features/email-upload" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Mail size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><Mail size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>E-Mail Upload</div>
                   <div className={styles.relatedDescription}>

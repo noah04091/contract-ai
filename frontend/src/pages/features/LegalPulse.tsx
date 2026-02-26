@@ -296,7 +296,7 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Activity size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Kontinuierliches Monitoring</h3>
@@ -306,7 +306,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <TrendingUp size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Intelligente Klassifikation</h3>
@@ -316,7 +316,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Priorisierung</h3>
@@ -326,7 +326,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
                   <Bell size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Proaktive Alerts</h3>
@@ -336,7 +336,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #a5f3fc 100%)', color: '#06b6d4' }}>
                   <FileText size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Handlungsempfehlungen</h3>
@@ -346,7 +346,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Compliance-Sicherheit</h3>
@@ -677,7 +677,7 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -688,7 +688,7 @@ const LegalPulse: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Calendar size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>
@@ -699,7 +699,7 @@ const LegalPulse: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>

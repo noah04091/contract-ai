@@ -290,7 +290,7 @@ const EmailUpload: React.FC = () => {
             </div>
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={24} />
                 </div>
                 <h3 className={styles.whyTitle}>Kein manueller Upload</h3>
@@ -300,7 +300,7 @@ const EmailUpload: React.FC = () => {
                 </p>
               </div>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={24} />
                 </div>
                 <h3 className={styles.whyTitle}>Maximale Privatsphäre</h3>
@@ -310,7 +310,7 @@ const EmailUpload: React.FC = () => {
                 </p>
               </div>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <CheckCircle size={24} />
                 </div>
                 <h3 className={styles.whyTitle}>Von überall</h3>
@@ -401,7 +401,7 @@ const EmailUpload: React.FC = () => {
             </div>
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Zentrale Verwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -411,7 +411,7 @@ const EmailUpload: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/features/fristen" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}><Calendar size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Automatische Erinnerungen</div>
                   <div className={styles.relatedDescription}>
@@ -421,7 +421,7 @@ const EmailUpload: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Analyse</div>
                   <div className={styles.relatedDescription}>

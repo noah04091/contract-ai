@@ -447,7 +447,7 @@ const Generator: React.FC = () => {
 
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Rechtssicher & aktuell</h3>
@@ -458,7 +458,7 @@ const Generator: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Target size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Modularer Aufbau</h3>
@@ -469,7 +469,7 @@ const Generator: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Zeit & Kostenersparnis</h3>
@@ -480,7 +480,7 @@ const Generator: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fff1f2 0%, #fecdd3 100%)', color: '#f43f5e' }}>
                   <PenTool size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Digitale Signatur</h3>
@@ -658,7 +658,7 @@ const Generator: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/contract-builder" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Wrench size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#06b6d4' }}><Wrench size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Contract Builder</div>
                   <div className={styles.relatedDescription}>
@@ -669,7 +669,7 @@ const Generator: React.FC = () => {
               </Link>
 
               <Link to="/features/digitalesignatur" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><PenTool size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f43f5e' }}><PenTool size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
@@ -680,7 +680,7 @@ const Generator: React.FC = () => {
               </Link>
 
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Sparkles size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>

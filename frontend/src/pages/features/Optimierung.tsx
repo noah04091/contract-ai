@@ -466,7 +466,7 @@ const Optimierung: React.FC = () => {
 
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Target size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Echte Individualoptimierung</h3>
@@ -477,7 +477,7 @@ const Optimierung: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO-konform</h3>
@@ -488,7 +488,7 @@ const Optimierung: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <FileText size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Transparente Änderungen</h3>
@@ -499,7 +499,7 @@ const Optimierung: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Sofort einsatzbereit</h3>
@@ -667,7 +667,7 @@ const Optimierung: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -678,7 +678,7 @@ const Optimierung: React.FC = () => {
               </Link>
 
               <Link to="/features/vergleich" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><BarChart3 size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><BarChart3 size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsvergleich</div>
                   <div className={styles.relatedDescription}>
@@ -689,7 +689,7 @@ const Optimierung: React.FC = () => {
               </Link>
 
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>

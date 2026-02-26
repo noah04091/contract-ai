@@ -286,7 +286,7 @@ const DigitaleSignatur: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Mail size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>E-Mail-Versand</h3>
@@ -296,7 +296,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Clock size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Echtzeit-Status</h3>
@@ -306,7 +306,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #a5f3fc 100%)', color: '#06b6d4' }}>
                   <FileText size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Audit Trail</h3>
@@ -316,7 +316,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Users size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Mehrere Unterzeichner</h3>
@@ -326,7 +326,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Versiegeltes PDF</h3>
@@ -336,7 +336,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
                   <Zap size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>EU-weit gültig</h3>
@@ -669,7 +669,7 @@ const DigitaleSignatur: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
@@ -680,7 +680,7 @@ const DigitaleSignatur: React.FC = () => {
               </Link>
 
               <Link to="/features/contract-builder" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><Wrench size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#06b6d4' }}><Wrench size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Contract Builder</div>
                   <div className={styles.relatedDescription}>
@@ -691,7 +691,7 @@ const DigitaleSignatur: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>
