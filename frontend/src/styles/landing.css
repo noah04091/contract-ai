@@ -3207,6 +3207,10 @@ a {
   transform: scale(1.05);
 }
 
+.cm-bullets li:hover .cm-bullet-icon svg {
+  stroke: white;
+}
+
 /* SVG Illustration Styles */
 .cm-illustration {
   width: 120%;
