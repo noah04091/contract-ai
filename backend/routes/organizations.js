@@ -254,6 +254,80 @@ router.get('/my-organization', verifyToken, async (req, res) => {
 });
 
 /**
+ * PATCH /api/organizations/:id
+ * Aktualisiert Organisationsdaten (z.B. Name) - nur Owner/Admin
+ */
+router.patch('/:id', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: orgId } = req.params;
+    const { name } = req.body;
+
+    // Validierung
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Organisationsname darf nicht leer sein'
+      });
+    }
+
+    if (name.trim().length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Organisationsname darf maximal 100 Zeichen haben'
+      });
+    }
+
+    // Check: User ist Admin der Org
+    const membership = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(userId),
+      isActive: true
+    });
+
+    if (!membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Nur Admins können die Organisation bearbeiten'
+      });
+    }
+
+    // Update Organisation
+    const organization = await Organization.findByIdAndUpdate(
+      orgId,
+      { $set: { name: name.trim(), updatedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organisation nicht gefunden'
+      });
+    }
+
+    console.log(`✅ [ORGANIZATIONS] Org renamed to "${organization.name}" by User ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Organisation erfolgreich aktualisiert',
+      organization: {
+        id: organization._id.toString(),
+        name: organization.name
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Update Org Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren der Organisation',
+      details: error.message
+    });
+  }
+});
+
+/**
  * POST /api/organizations/:id/invite
  * Lädt Member zur Organisation ein
  */

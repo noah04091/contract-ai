@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
@@ -67,6 +67,11 @@ export default function Team() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  // Rename Org
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Invite Modal
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -269,6 +274,46 @@ export default function Team() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleRenameOrganization = async () => {
+    if (!organization || !editName.trim()) return;
+
+    if (editName.trim() === organization.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/organizations/${organization.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ name: editName.trim() })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setOrganization({ ...organization, name: editName.trim() });
+        setIsEditingName(false);
+        setNotification({
+          message: "Organisationsname erfolgreich geändert",
+          type: "success"
+        });
+      } else {
+        throw new Error(data.message || "Fehler beim Umbenennen");
+      }
+    } catch (error: unknown) {
+      console.error("Fehler beim Umbenennen:", error);
+      const message = error instanceof Error ? error.message : "Fehler beim Umbenennen";
+      setNotification({ message, type: "error" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -504,7 +549,57 @@ export default function Team() {
               {/* Org Info Box */}
               <div className={styles.orgInfo}>
                 <div className={styles.orgHeader}>
-                  <h2>{organization.name}</h2>
+                  <div className={styles.orgNameRow}>
+                    {isEditingName ? (
+                      <div className={styles.editNameWrapper}>
+                        <input
+                          type="text"
+                          className={styles.editNameInput}
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          maxLength={100}
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleRenameOrganization();
+                            if (e.key === "Escape") setIsEditingName(false);
+                          }}
+                          disabled={isSaving}
+                        />
+                        <button
+                          className={styles.editNameSave}
+                          onClick={handleRenameOrganization}
+                          disabled={isSaving || !editName.trim()}
+                          title="Speichern"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          className={styles.editNameCancel}
+                          onClick={() => setIsEditingName(false)}
+                          disabled={isSaving}
+                          title="Abbrechen"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <h2>{organization.name}</h2>
+                        {membership?.role === "admin" && (
+                          <button
+                            className={styles.editNameButton}
+                            onClick={() => {
+                              setEditName(organization.name);
+                              setIsEditingName(true);
+                            }}
+                            title="Organisation umbenennen"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                   <span className={styles.memberCount}>
                     {organization.memberCount}/{organization.maxMembers} Mitglieder
                   </span>

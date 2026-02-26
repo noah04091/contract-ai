@@ -175,6 +175,100 @@
   margin: 0;
 }
 
+.orgNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.editNameButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.editNameButton:hover {
+  color: #3b82f6;
+  border-color: #e5e7eb;
+  background: #f9fafb;
+}
+
+.editNameWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.editNameInput {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  padding: 4px 12px;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.editNameSave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #10b981;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.editNameSave:hover:not(:disabled) {
+  background: #059669;
+}
+
+.editNameSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editNameCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.editNameCancel:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.editNameCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .memberCount {
   display: inline-flex;
   align-items: center;
