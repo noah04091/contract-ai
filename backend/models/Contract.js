@@ -98,6 +98,7 @@ const contractSchema = new mongoose.Schema({
 
   // User & Organization
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  organizationId: { type: mongoose.Schema.Types.ObjectId, ref: "Organization", default: null, index: true },
   reminder: { type: Boolean, default: false },
   reminderLastSentAt: { type: Date },
 

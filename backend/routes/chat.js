@@ -10,6 +10,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { findContractWithOrgAccess } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 // ✅ RAG: Law Embeddings für Gesetzesdatenbank-Integration
@@ -518,15 +519,14 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
       });
     }
 
-    // Verify contract ownership
-    const contract = await contracts.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Verify contract ownership or org access
+    const access = await findContractWithOrgAccess(contracts, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({ error: "Contract not found" });
     }
+
+    const contract = access.contract;
 
     // Extract PDF text with page numbers for precise citations
     let extractedText = "";
@@ -669,15 +669,14 @@ router.post("/:id/add-contract", verifyToken, async (req, res) => {
       });
     }
 
-    // Verify contract ownership
-    const contract = await contracts.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Verify contract ownership or org access
+    const access = await findContractWithOrgAccess(contracts, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({ error: "Contract not found" });
     }
+
+    const contract = access.contract;
 
     // Extract PDF text with page numbers
     let extractedText = "";

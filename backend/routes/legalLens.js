@@ -18,6 +18,7 @@ const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
+const { findContractWithOrgAccessMongoose, hasPermission } = require('../utils/orgContractAccess'); // 👥 Org-basierter Zugriff
 const pdfExtractor = require('../services/pdfExtractor');
 const { generateAnalysisReport, getAvailableDesigns, getAvailableSections } = require('../services/legalLens/analysisReportGenerator');
 const { generateChecklistPdf } = require('../services/legalLens/checklistPdfGenerator');
@@ -440,18 +441,17 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
       });
     }
 
-    // Vertrag aus Datenbank laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag aus Datenbank laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
+
+    const contract = access.contract;
 
     // Text extrahieren - mehrere Fallbacks
     let text = contract.content || contract.extractedText || contract.fullText || contract.analysisText;
@@ -629,17 +629,17 @@ router.get('/:contractId/smart-summary', verifyToken, async (req, res) => {
     const { contractId } = req.params;
     const userId = req.user.userId;
 
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
+
+    const contract = access.contract;
 
     // Prüfe ob bereits eine Summary existiert (im legalLens-Objekt)
     if (contract.legalLens?.smartSummary) {
@@ -694,18 +694,17 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Vertrag aus Datenbank laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag aus Datenbank laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
+
+    const contract = access.contract;
 
     // ⚡ FAST PATH: Prüfen ob Cache gültig ist (TTL + Version + Force-Refresh)
     const cacheCheck = isCacheValid(contract.legalLens, forceRefresh);
@@ -1795,19 +1794,17 @@ router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) 
       });
     }
 
-    // Vertragsdaten laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertragsdaten laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
 
+    const contract = access.contract;
     const industryContext = progress?.industryContext || 'general';
 
     // Vertragstext für Analyse vorbereiten
@@ -1939,18 +1936,17 @@ router.post('/:contractId/checklist-pdf', verifyToken, async (req, res) => {
 
     console.log(`📄 [Legal Lens] Checklist PDF export for contract: ${contractId}`);
 
-    // Vertrag laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
+
+    const contract = access.contract;
 
     // Progress mit gecachter Checklist laden
     const progress = await LegalLensProgress.findOne({
@@ -2215,18 +2211,17 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
     console.log(`📄 [Legal Lens] Export report request for contract: ${contractId}`);
     console.log(`📄 [Legal Lens] Design: ${design}, Sections: ${includeSections.join(', ')}`);
 
-    // Vertrag laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
     }
+
+    const contract = access.contract;
 
     // 🏢 Load Company Profile for Enterprise Branding
     let companyProfile = null;
@@ -2384,16 +2379,15 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   };
 
   try {
-    // Vertrag laden
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag laden
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       sendEvent('error', { error: 'Vertrag nicht gefunden' });
       return res.end();
     }
+
+    const contract = access.contract;
 
     // ⚡ CACHE VALIDATION (TTL + Version + Force-Refresh)
     const cacheCheck = isCacheValid(contract.legalLens, isForceRefresh);
@@ -2947,17 +2941,18 @@ router.post('/:contractId/clear-cache', verifyToken, async (req, res) => {
 
     console.log(`🗑️ [Legal Lens] Clear cache request for contract: ${contractId}`);
 
-    // Vertrag finden und prüfen ob User Zugriff hat
-    const contract = await Contract.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Vertrag finden und prüfen ob User Zugriff hat
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         error: 'Vertrag nicht gefunden'
       });
+    }
+
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, error: "Keine Berechtigung zum Cache löschen (Viewer-Rolle)" });
     }
 
     // Cache löschen

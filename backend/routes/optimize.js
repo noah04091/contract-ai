@@ -17,6 +17,7 @@ const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
 const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
 const { getFeatureLimit, isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { findContractWithOrgAccess, hasPermission } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
 // 🆕 S3 SDK für PDF-Upload
@@ -6017,18 +6018,20 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
       });
     }
 
-    // Verify contract exists and belongs to user
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(contractId),
-      userId: new ObjectId(userId)
-    });
+    // 👥 Org-Zugriff: Verify contract exists and user has access
+    const access = await findContractWithOrgAccess(contractsCollection, userId, contractId);
 
-    if (!contract) {
+    if (!access) {
       return res.status(404).json({
         success: false,
         message: "Vertrag nicht gefunden oder keine Berechtigung"
       });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Optimieren (Viewer-Rolle)" });
+    }
+
+    const contract = access.contract;
 
     console.log(`[LP-OPTIMIZER] Contract found:`, {
       hasS3Key: !!contract.s3Key,

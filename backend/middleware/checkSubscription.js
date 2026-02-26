@@ -3,6 +3,8 @@
 
 const { ObjectId } = require("mongodb");
 const { isBusinessOrHigher, PLANS } = require("../constants/subscriptionPlans");
+const OrganizationMember = require("../models/OrganizationMember");
+const Organization = require("../models/Organization");
 
 // Diese Funktion wird vom Server mit gegebenem DB-Handle aufgerufen
 module.exports = function createCheckSubscription(usersCollection) {
@@ -26,7 +28,26 @@ module.exports = function createCheckSubscription(usersCollection) {
         return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
       }
 
-      const plan = (user.subscriptionPlan || "free").toLowerCase();
+      let plan = (user.subscriptionPlan || "free").toLowerCase();
+
+      // 👥 Org-Plan-Vererbung: Free-User in einer Org erben den Org-Plan
+      if (plan === PLANS.FREE) {
+        try {
+          const membership = await OrganizationMember.findOne({
+            userId: new ObjectId(userId),
+            isActive: true
+          });
+          if (membership) {
+            const org = await Organization.findById(membership.organizationId);
+            if (org && org.subscriptionPlan && org.subscriptionPlan !== PLANS.FREE) {
+              console.log(`👥 Org-Plan-Vererbung: User free → Org ${org.subscriptionPlan}`);
+              plan = org.subscriptionPlan.toLowerCase();
+            }
+          }
+        } catch (orgErr) {
+          console.warn('⚠️ Org-Plan lookup failed (non-critical):', orgErr.message);
+        }
+      }
 
       // ✅ Routes die ein Business-Abo oder höher erfordern
       const premiumRequiredRoutes = [
