@@ -1289,13 +1289,24 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
       );
     }
 
-    // Seitenumbruch-Schutz: minPresenceAhead stellt sicher, dass nach dem Header
-    // mindestens 80pt Platz auf der Seite ist (≈ 2 Textzeilen). Falls nicht, rutscht
-    // nur der Header auf die nächste Seite — ohne große Blöcke mitzuschleppen.
+    // Seitenumbruch-Schutz:
+    // 1. minPresenceAhead auf Header: verhindert verwaiste Überschriften am Seitenende
+    // 2. Letzte 2 Items werden in wrap:false View gruppiert: verhindert einzelne Sätze
+    //    auf einer neuen Seite (Witwen-Schutz)
     const contentItems = section.content.map((item, i) => {
       if (item.type === 'numbered') numberedCounter++;
       return renderContent(item, i, numberedCounter);
     });
+
+    if (contentItems.length >= 2) {
+      const initItems = contentItems.slice(0, -2);
+      const lastTwo = contentItems.slice(-2);
+      return e(View, { key: sectionIndex, wrap: true },
+        e(Text, { style: styles.sectionHeader, minPresenceAhead: 80 }, section.title),
+        ...initItems,
+        e(View, { wrap: false }, ...lastTwo)
+      );
+    }
 
     return e(View, { key: sectionIndex, wrap: true },
       e(Text, { style: styles.sectionHeader, minPresenceAhead: 80 }, section.title),
@@ -1339,15 +1350,17 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
   };
 
   // Sidebar-Layout (Modern, Startup, Tech, Creative)
-  // paddingTop: 50 auf der Page sorgt für oberen Rand auf ALLEN Seiten (auch Folgeseiten)
+  // paddingTop/paddingBottom auf der Page sorgt für Ränder auf ALLEN Seiten (auch Folgeseiten)
   // Sidebar ist absolute-positioned (top: 0) und bleibt trotzdem am physischen Seitenrand
+  // WICHTIG: paddingBottom MUSS auf Page-Level sein (nicht auf View), damit es pro Seite gilt
+  // und keine Phantom-Leerseiten entstehen!
   if (layoutType === 'sidebar-accent') {
-    return e(Page, { size: 'A4', style: { ...styles.page, paddingTop: 50 }, wrap: true },
+    return e(Page, { size: 'A4', style: { ...styles.page, paddingTop: 50, paddingBottom: 50 }, wrap: true },
       // Fixed Sidebar - auf allen Seiten (absolute: ignoriert page padding)
       e(View, { style: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, backgroundColor: theme.colors.primary }, fixed: true }),
-      // Content ZUERST (contentMain paddingTop auf 0, da page paddingTop das übernimmt)
+      // Content ZUERST (paddingTop/paddingBottom auf 0, da Page-Padding das übernimmt)
       e(View, { style: { ...styles.contentPage, marginLeft: 8 } },
-        e(View, { style: { ...styles.contentMain, paddingTop: 0 } },
+        e(View, { style: { ...styles.contentMain, paddingTop: 0, paddingBottom: 0 } },
           ...sections.map(renderSection)
         )
       ),
