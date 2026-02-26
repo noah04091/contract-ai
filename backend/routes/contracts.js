@@ -17,6 +17,7 @@ const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Ris
 const { preprocessContract } = require("../services/legalLens/clausePreprocessor"); // 🧠 Legal Lens Vorverarbeitung
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
+const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
 const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
@@ -1297,22 +1298,20 @@ router.get('/debug-company-profile', verifyToken, async (req, res) => {
 router.get("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
 
-    if (!contract) {
-      return res.status(404).json({ 
+    // 👥 Org-Zugriff: eigene + Org-Verträge (alle Rollen dürfen lesen)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+
+    if (!access) {
+      return res.status(404).json({
         message: "Vertrag nicht gefunden",
-        error: "Contract not found" 
+        error: "Contract not found"
       });
     }
 
-    const enrichedContract = await enrichContractWithAnalysis(contract);
-    
-    
+    const enrichedContract = await enrichContractWithAnalysis(access.contract);
+
+
     res.json(enrichedContract);
 
   } catch (err) {
@@ -1489,8 +1488,18 @@ router.post("/", verifyToken, async (req, res) => {
 router.put("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
+    }
+
     const updateData = { ...req.body, updatedAt: new Date() };
-    
+
     delete updateData.userId;
     delete updateData._id;
 
@@ -1500,7 +1509,7 @@ router.put("/:id", verifyToken, async (req, res) => {
       if (detectedProvider) {
         updateData.provider = detectedProvider;
       }
-      
+
       // Re-extract contract details
       const extractedDetails = extractContractDetails(updateData.content);
       if (extractedDetails.contractNumber && !updateData.contractNumber) {
@@ -1512,10 +1521,7 @@ router.put("/:id", verifyToken, async (req, res) => {
     }
 
     const result = await contractsCollection.updateOne(
-      { 
-        _id: new ObjectId(id), 
-        userId: new ObjectId(req.user.userId) 
-      },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
@@ -1556,19 +1562,26 @@ router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
+    // 👥 Org-Zugriff + Rollen-Check (delete)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    if (!hasPermission(access.role, "contracts.delete")) {
+      return res.status(403).json({ message: "Keine Berechtigung zum Löschen" });
+    }
+
     // ✅ NEU: Zugehörige Events löschen
     try {
       await eventsCollection.deleteMany({
-        contractId: new ObjectId(id),
-        userId: new ObjectId(req.user.userId)
+        contractId: new ObjectId(id)
       });
     } catch (eventError) {
       console.warn('⚠️ [CALENDAR] Event deletion failed:', eventError.message);
     }
 
     const result = await contractsCollection.deleteOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
+      _id: new ObjectId(id)
     });
 
     if (result.deletedCount === 0) {
@@ -1610,24 +1623,22 @@ router.patch("/:id/reminder", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-
-    if (!contract) {
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
+    }
 
+    const contract = access.contract;
     const newReminderStatus = !contract.reminder;
 
     const result = await contractsCollection.updateOne(
-      { 
-        _id: new ObjectId(id), 
-        userId: new ObjectId(req.user.userId) 
-      },
-      { 
-        $set: { 
+      { _id: new ObjectId(id) },
+      {
+        $set: {
           reminder: newReminderStatus,
           updatedAt: new Date()
         }
@@ -1773,19 +1784,19 @@ router.patch("/:id/payment", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { paymentStatus, paymentDate, paymentDueDate, paymentAmount } = req.body;
 
-
-    // Validate contract ownership
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-
-    if (!contract) {
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
       return res.status(404).json({
         success: false,
         message: "Vertrag nicht gefunden"
       });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
+    }
+
+    const contract = access.contract;
 
     // Build update object (only update provided fields)
     const updateData = {
@@ -1807,10 +1818,7 @@ router.patch("/:id/payment", verifyToken, async (req, res) => {
 
     // Update contract
     const result = await contractsCollection.updateOne(
-      {
-        _id: new ObjectId(id),
-        userId: new ObjectId(req.user.userId)
-      },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
@@ -1841,19 +1849,19 @@ router.patch("/:id/costs", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { paymentFrequency, subscriptionStartDate, baseAmount } = req.body;
 
-
-    // Validate contract ownership
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-
-    if (!contract) {
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
       return res.status(404).json({
         success: false,
         message: "Vertrag nicht gefunden"
       });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
+    }
+
+    const contract = access.contract;
 
     // Build update object (only update provided fields)
     const updateData = {
@@ -1873,10 +1881,7 @@ router.patch("/:id/costs", verifyToken, async (req, res) => {
 
     // Update contract
     const result = await contractsCollection.updateOne(
-      {
-        _id: new ObjectId(id),
-        userId: new ObjectId(req.user.userId)
-      },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
@@ -1916,16 +1921,16 @@ router.patch("/:id/document-type", verifyToken, async (req, res) => {
       });
     }
 
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-
-    if (!contract) {
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
       return res.status(404).json({
         success: false,
         message: 'Vertrag nicht gefunden'
       });
+    }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
     }
 
     // Update Document Type
@@ -1942,14 +1947,13 @@ router.patch("/:id/document-type", verifyToken, async (req, res) => {
     }
 
     await contractsCollection.updateOne(
-      { _id: new ObjectId(id), userId: new ObjectId(req.user.userId) },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
     // Fetch updated contract
     const updatedContract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
+      _id: new ObjectId(id)
     });
 
     res.json({
@@ -1972,17 +1976,19 @@ router.patch("/:id/document-type", verifyToken, async (req, res) => {
 router.post("/:id/detect-provider", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-    
-    if (!contract) {
-      return res.status(404).json({ 
-        message: "Vertrag nicht gefunden" 
+
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
+      return res.status(404).json({
+        message: "Vertrag nicht gefunden"
       });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ message: "Keine Berechtigung zum Bearbeiten (Viewer-Rolle)" });
+    }
+
+    const contract = access.contract;
     
     // Detect provider from contract content
     const detectedProvider = detectProvider(
@@ -2031,18 +2037,19 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get contract from database
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
-      userId: new ObjectId(req.user.userId)
-    });
-
-    if (!contract) {
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const access = await findContractWithOrgAccess(contractsCollection, req.user.userId, id);
+    if (!access) {
       return res.status(404).json({
         success: false,
         message: 'Vertrag nicht gefunden'
       });
     }
+    if (!hasPermission(access.role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Analysieren (Viewer-Rolle)" });
+    }
+
+    const contract = access.contract;
 
     // Check if already analyzed
     if (contract.analyzed !== false) {
@@ -3625,6 +3632,14 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
       });
     }
 
+    // 👥 Org-Zugriff + Rollen-Check (delete)
+    const orgFilter = await buildOrgFilter(userId);
+    const membership = orgFilter._membership;
+    delete orgFilter._membership;
+    const role = membership ? membership.role : "owner";
+    if (!hasPermission(role, "contracts.delete")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Löschen" });
+    }
 
     // IDs zu ObjectId konvertieren
     const objectIds = contractIds.map(id => new ObjectId(id));
@@ -3632,18 +3647,18 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     // 1️⃣ Calendar Events löschen (für alle Verträge)
     try {
       const eventsResult = await eventsCollection.deleteMany({
-        contractId: { $in: objectIds },
-        userId: new ObjectId(userId)
+        contractId: { $in: objectIds }
       });
     } catch (eventError) {
       console.warn('⚠️ [CALENDAR] Bulk event deletion failed:', eventError.message);
     }
 
-    // 2️⃣ Verträge löschen (nur die vom User!)
-    const result = await contractsCollection.deleteMany({
+    // 2️⃣ Verträge löschen (nur eigene + Org-Verträge)
+    const deleteFilter = {
       _id: { $in: objectIds },
-      userId: new ObjectId(userId) // 🔒 Security: Nur eigene Verträge!
-    });
+      ...orgFilter
+    };
+    const result = await contractsCollection.deleteMany(deleteFilter);
 
 
     res.json({
@@ -3707,6 +3722,14 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
       });
     }
 
+    // 👥 Org-Zugriff + Rollen-Check (write)
+    const orgFilter = await buildOrgFilter(userId);
+    const membership = orgFilter._membership;
+    delete orgFilter._membership;
+    const role = membership ? membership.role : "owner";
+    if (!hasPermission(role, "contracts.write")) {
+      return res.status(403).json({ success: false, message: "Keine Berechtigung zum Verschieben (Viewer-Rolle)" });
+    }
 
     // IDs zu ObjectId konvertieren
     const objectIds = contractIds.map(id => new ObjectId(id));
@@ -3727,12 +3750,13 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
       }
     }
 
-    // Verträge verschieben (nur die vom User!)
+    // Verträge verschieben (eigene + Org-Verträge)
+    const moveFilter = {
+      _id: { $in: objectIds },
+      ...orgFilter
+    };
     const result = await contractsCollection.updateMany(
-      {
-        _id: { $in: objectIds },
-        userId: new ObjectId(userId) // 🔒 Security: Nur eigene Verträge!
-      },
+      moveFilter,
       {
         $set: {
           folderId: targetFolderId ? new ObjectId(targetFolderId) : null,
@@ -4105,6 +4129,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     const designVariant = req.query.design || req.body.design || 'executive';
     const attachmentInfos = req.body.attachments || [];
     const attachmentFiles = req.body.attachmentFiles || []; // Base64-kodierte Dateien
+    const pageBreaks = req.body.pageBreaks || [];
 
 
     // Vertrag laden
@@ -4224,7 +4249,8 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
       finalDesign,
       contractId,
       attachmentInfos,
-      customDesign
+      customDesign,
+      pageBreaks
     );
 
     // 2. Wenn keine Anlagen-Dateien, direkt zurückgeben
