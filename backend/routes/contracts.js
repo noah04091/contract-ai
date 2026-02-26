@@ -4054,6 +4054,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
 
     // Anlagen aus Request-Body extrahieren (falls vorhanden)
     const attachments = req.body.attachments || [];
+    const pageBreaks = req.body.pageBreaks || [];
 
     const pdfBuffer = await generatePDFv2(
       contractText,
@@ -4064,7 +4065,8 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       finalDesign,
       contractId,  // Contract-ID für QR-Code Verifizierung
       attachments, // Anlagen für letzte Seite
-      customDesign // Custom Design Konfiguration
+      customDesign, // Custom Design Konfiguration
+      pageBreaks   // Manuelle Seitenumbrüche
     );
 
     res.setHeader('Content-Type', 'application/pdf');

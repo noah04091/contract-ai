@@ -1250,7 +1250,7 @@ const CoverPage = ({ styles, theme, companyProfile, contractType, parties, party
  * WICHTIG: Der Footer muss als direktes Kind der Page mit fixed={true} sein,
  * damit er auf allen automatisch umgebrochenen Seiten erscheint!
  */
-const ContentPage = ({ styles, theme, sections, companyProfile, contractType, documentId, currentDate }) => {
+const ContentPage = ({ styles, theme, sections, companyProfile, contractType, documentId, currentDate, pageBreaks = [] }) => {
   const e = React.createElement;
   const layoutType = theme.layout;
 
@@ -1279,9 +1279,10 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
 
   const renderSection = (section, sectionIndex) => {
     let numberedCounter = 0;
+    const forceBreak = pageBreaks.includes(sectionIndex);
 
     if (section.type === 'preamble') {
-      return e(View, { key: sectionIndex, style: styles.preambleContainer },
+      return e(View, { key: sectionIndex, style: styles.preambleContainer, break: forceBreak || undefined },
         e(Text, { style: styles.preambleTitle }, 'Präambel'),
         ...section.content.map((item, i) =>
           e(Text, { key: i, style: styles.preambleText }, item.text)
@@ -1301,14 +1302,14 @@ const ContentPage = ({ styles, theme, sections, companyProfile, contractType, do
     if (contentItems.length >= 2) {
       const initItems = contentItems.slice(0, -2);
       const lastTwo = contentItems.slice(-2);
-      return e(View, { key: sectionIndex, wrap: true },
+      return e(View, { key: sectionIndex, wrap: true, break: forceBreak || undefined },
         e(Text, { style: styles.sectionHeader, minPresenceAhead: 80 }, section.title),
         ...initItems,
         e(View, { wrap: false }, ...lastTwo)
       );
     }
 
-    return e(View, { key: sectionIndex, wrap: true },
+    return e(View, { key: sectionIndex, wrap: true, break: forceBreak || undefined },
       e(Text, { style: styles.sectionHeader, minPresenceAhead: 80 }, section.title),
       ...contentItems
     );
@@ -1604,7 +1605,7 @@ const SignaturePage = ({ styles, theme, partyLabels, companyProfile, parties, re
 // HAUPT-EXPORT FUNKTION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null, attachments = [], customDesign = null) => {
+const generatePDFv2 = async (contractText, companyProfile, contractType, parties = {}, isDraft = false, designVariant = 'executive', contractId = null, attachments = [], customDesign = null, pageBreaks = []) => {
   console.log('🎨 [V2 React-PDF] Starte PDF-Generierung...');
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Firma:', companyProfile?.companyName);
@@ -1740,7 +1741,8 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
       companyProfile,
       contractType,
       documentId,
-      currentDate
+      currentDate,
+      pageBreaks
     }),
 
     // Letzte Seite: Unterschriften
