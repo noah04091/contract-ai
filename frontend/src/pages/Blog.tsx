@@ -1,5 +1,5 @@
 // 📁 src/pages/Blog.tsx - MODIFIZIERT für zentrale Artikel-Daten
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import { Search, Calendar, Clock, ArrowRight, Sparkles, Mail, TrendingUp } from 'lucide-react';
@@ -65,6 +65,17 @@ const Blog: React.FC = () => {
     return category ? category.label : categoryKey;
   };
 
+  const getCategoryColor = (categoryKey: string): { color: string; background: string } => {
+    const colors: Record<string, { color: string; background: string }> = {
+      tipps: { color: '#16a34a', background: '#f0fdf4' },
+      mietrecht: { color: '#d97706', background: '#fffbeb' },
+      arbeitsrecht: { color: '#2563eb', background: '#eff6ff' },
+      kaufvertraege: { color: '#9333ea', background: '#faf5ff' },
+      agb: { color: '#dc2626', background: '#fef2f2' },
+    };
+    return colors[categoryKey] || { color: '#0052cc', background: '#e6f3ff' };
+  };
+
   // Featured Article (neuester Artikel)
   const featuredArticle = articles[0];
 
@@ -79,6 +90,26 @@ const Blog: React.FC = () => {
   // Stats für Hero
   const totalArticles = articles.length;
   const totalCategories = categories.length - 1; // Minus "Alle"
+
+  // Scroll-reveal animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const elements = document.querySelectorAll(`.${styles.animateOnScroll}`);
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [remainingArticles]);
 
   return (
     <>
@@ -245,7 +276,7 @@ const Blog: React.FC = () => {
                   {remainingArticles.slice(0, 3).map((article: Article) => (
                     <article
                       key={article.id}
-                      className={styles.articleCard}
+                      className={`${styles.articleCard} ${styles.animateOnScroll}`}
                       onClick={() => handleArticleClick(article.slug)}
                     >
                       <div className={styles.articleImage}>
@@ -258,7 +289,13 @@ const Blog: React.FC = () => {
                       </div>
                       <div className={styles.articleContent}>
                         <div className={styles.articleMeta}>
-                          <span className={styles.articleCategory}>
+                          <span
+                            className={styles.articleCategory}
+                            style={{
+                              color: getCategoryColor(article.category).color,
+                              background: getCategoryColor(article.category).background,
+                            }}
+                          >
                             {getCategoryDisplayName(article.category)}
                           </span>
                           <span className={styles.metaSeparator}>•</span>
@@ -318,7 +355,7 @@ const Blog: React.FC = () => {
                     {remainingArticles.slice(3).map((article: Article) => (
                       <article
                         key={article.id}
-                        className={styles.articleCard}
+                        className={`${styles.articleCard} ${styles.animateOnScroll}`}
                         onClick={() => handleArticleClick(article.slug)}
                       >
                         <div className={styles.articleImage}>
@@ -331,7 +368,13 @@ const Blog: React.FC = () => {
                         </div>
                         <div className={styles.articleContent}>
                           <div className={styles.articleMeta}>
-                            <span className={styles.articleCategory}>
+                            <span
+                              className={styles.articleCategory}
+                              style={{
+                                color: getCategoryColor(article.category).color,
+                                background: getCategoryColor(article.category).background,
+                              }}
+                            >
                               {getCategoryDisplayName(article.category)}
                             </span>
                             <span className={styles.metaSeparator}>•</span>

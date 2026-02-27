@@ -102,6 +102,17 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   
   const dateISO = toISO(currentArticle.date);
 
+  const getCategoryColor = (categoryKey: string): { color: string; background: string } => {
+    const colors: Record<string, { color: string; background: string }> = {
+      tipps: { color: '#16a34a', background: 'rgba(22, 163, 74, 0.2)' },
+      mietrecht: { color: '#d97706', background: 'rgba(217, 119, 6, 0.2)' },
+      arbeitsrecht: { color: '#2563eb', background: 'rgba(37, 99, 235, 0.2)' },
+      kaufvertraege: { color: '#9333ea', background: 'rgba(147, 51, 234, 0.2)' },
+      agb: { color: '#dc2626', background: 'rgba(220, 38, 38, 0.2)' },
+    };
+    return colors[categoryKey] || { color: 'rgba(255,255,255,0.9)', background: 'rgba(255, 255, 255, 0.2)' };
+  };
+
   const handleBackClick = () => {
     navigate('/blog');
   };
@@ -302,7 +313,12 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
                   {currentArticle.author}
                 </span>
                 <span className={styles.metaSeparator}>•</span>
-                <span className={styles.category}>{currentArticle.category}</span>
+                <span
+                  className={styles.category}
+                  style={{
+                    background: getCategoryColor(currentArticle.category).background,
+                  }}
+                >{currentArticle.category}</span>
               </div>
             </div>
           </div>
@@ -395,6 +411,18 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
                   </div>
                   <div className={styles.relatedCardContent}>
                     <div className={styles.relatedCardMeta}>
+                      <span
+                        style={{
+                          color: getCategoryColor(relatedArticle.category).color,
+                          background: getCategoryColor(relatedArticle.category).background.replace('0.2', '0.15'),
+                          padding: '2px 10px',
+                          borderRadius: '10px',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {relatedArticle.category}
+                      </span>
                       <span><Clock size={14} /> {relatedArticle.readTime}</span>
                     </div>
                     <h3>{relatedArticle.title}</h3>
