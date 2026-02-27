@@ -656,7 +656,7 @@ const HomeRedesign = () => {
             "name": "KI-Vertragsanalyse Demo – Vertrag in 60 Sekunden analysieren",
             "description": "Sehen Sie, wie Contract AI einen Vertrag in unter 60 Sekunden analysiert, Risiken erkennt und Handlungsempfehlungen gibt.",
             "thumbnailUrl": "https://www.contract-ai.de/assets/Analyse.webp",
-            "uploadDate": "2025-06-01",
+            "uploadDate": "2025-06-01T00:00:00+02:00",
             "contentUrl": "https://www.contract-ai.de/Videos/analyse.mp4",
             "duration": "PT1M",
             "publisher": {
