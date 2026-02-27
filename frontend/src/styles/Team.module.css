@@ -759,6 +759,103 @@
   opacity: 1;
 }
 
+/* Activity Log */
+.activityLog {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 24px;
+}
+
+.activityLog h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.activityEntry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.activityEntry:last-child {
+  border-bottom: none;
+}
+
+.activityIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.activityIcon.invited {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.activityIcon.joined {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.activityIcon.roleChanged {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.activityIcon.removed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.activityIcon.cancelled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.activityContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.activityDescription {
+  font-size: 14px;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.activityTime {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.activityEmpty {
+  text-align: center;
+  padding: 24px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .header {

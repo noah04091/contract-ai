@@ -24,7 +24,13 @@ const ActivityTypes = {
   API_LIMIT_REACHED: 'api_limit_reached',
   ERROR_CRITICAL: 'error_critical',
   ADMIN_ACTION: 'admin_action',
-  SYSTEM_EVENT: 'system_event'
+  SYSTEM_EVENT: 'system_event',
+  // Team Management
+  TEAM_MEMBER_INVITED: 'team_member_invited',
+  TEAM_MEMBER_JOINED: 'team_member_joined',
+  TEAM_ROLE_CHANGED: 'team_role_changed',
+  TEAM_MEMBER_REMOVED: 'team_member_removed',
+  TEAM_INVITE_CANCELLED: 'team_invite_cancelled'
 };
 
 /**

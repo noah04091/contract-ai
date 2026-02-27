@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check, Info, RefreshCw } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check, Info, RefreshCw, UserPlus, UserCheck, UserMinus, ArrowRightLeft, Clock, FileText } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
@@ -52,6 +52,14 @@ interface Notification {
   type: "success" | "error" | "warning";
 }
 
+interface ActivityEntry {
+  id: string;
+  type: string;
+  description: string;
+  details: Record<string, string>;
+  createdAt: string;
+}
+
 export default function Team() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -60,6 +68,7 @@ export default function Team() {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [notification, setNotification] = useState<Notification | null>(null);
 
@@ -107,6 +116,9 @@ export default function Team() {
         if (data.organization) {
           await fetchMembers(data.organization.id);
           await fetchPendingInvites(data.organization.id);
+          if (data.membership?.role === "admin") {
+            await fetchActivityLog(data.organization.id);
+          }
         }
       } else {
         throw new Error(data.message || "Fehler beim Laden");
@@ -156,6 +168,24 @@ export default function Team() {
       }
     } catch (error: unknown) {
       console.error("Fehler beim Laden der Einladungen:", error);
+    }
+  };
+
+  const fetchActivityLog = async (orgId: string) => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}/activity-log`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setActivityLog(data.activities);
+      }
+    } catch (error: unknown) {
+      console.error("Fehler beim Laden des Aktivitätsprotokolls:", error);
     }
   };
 
@@ -472,6 +502,32 @@ export default function Team() {
   };
 
   const [showRoleInfo, setShowRoleInfo] = useState(false);
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "team_member_invited": return { icon: <UserPlus size={16} />, className: styles.invited };
+      case "team_member_joined": return { icon: <UserCheck size={16} />, className: styles.joined };
+      case "team_role_changed": return { icon: <ArrowRightLeft size={16} />, className: styles.roleChanged };
+      case "team_member_removed": return { icon: <UserMinus size={16} />, className: styles.removed };
+      case "team_invite_cancelled": return { icon: <X size={16} />, className: styles.cancelled };
+      default: return { icon: <FileText size={16} />, className: "" };
+    }
+  };
+
+  const formatActivityTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMin < 1) return "Gerade eben";
+    if (diffMin < 60) return `Vor ${diffMin} Min.`;
+    if (diffHours < 24) return `Vor ${diffHours} Std.`;
+    if (diffDays < 7) return `Vor ${diffDays} Tag${diffDays > 1 ? "en" : ""}`;
+    return date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -807,6 +863,39 @@ export default function Team() {
                 <div className={styles.warningBox}>
                   <AlertCircle size={18} />
                   Maximale Anzahl an Mitgliedern erreicht ({organization.maxMembers}/{organization.maxMembers})
+                </div>
+              )}
+
+              {/* Activity Log (nur für Admins) */}
+              {membership?.role === "admin" && (
+                <div className={styles.activityLog}>
+                  <h3><Clock size={18} /> Aktivitätsprotokoll</h3>
+                  {activityLog.length === 0 ? (
+                    <div className={styles.activityEmpty}>
+                      Noch keine Team-Aktivitäten vorhanden.
+                    </div>
+                  ) : (
+                    <div className={styles.activityList}>
+                      {activityLog.map((entry) => {
+                        const { icon, className } = getActivityIcon(entry.type);
+                        return (
+                          <div key={entry.id} className={styles.activityEntry}>
+                            <div className={`${styles.activityIcon} ${className}`}>
+                              {icon}
+                            </div>
+                            <div className={styles.activityContent}>
+                              <div className={styles.activityDescription}>
+                                {entry.description}
+                              </div>
+                              <div className={styles.activityTime}>
+                                {formatActivityTime(entry.createdAt)}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </>

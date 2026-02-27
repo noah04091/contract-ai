@@ -13,6 +13,7 @@ const { generateEmailTemplate } = require('../utils/emailTemplate');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { isEnterpriseOrHigher } = require('../constants/subscriptionPlans'); // 📊 Zentrale Plan-Definitionen
+const { logActivity, ActivityTypes } = require('../services/activityLogger');
 
 /**
  * POST /api/organizations
@@ -459,6 +460,16 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
 
     console.log(`✅ [ORGANIZATIONS] Invite created & email queued: ${email} to Org ${orgId} as ${role}`);
 
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_MEMBER_INVITED,
+      userId: userId,
+      userEmail: (await req.usersCollection.findOne({ _id: new ObjectId(userId) }))?.email,
+      description: `${email} als ${roleDisplay} zu ${organization.name} eingeladen`,
+      details: { organizationId: orgId, email: email.toLowerCase(), role, invitedBy: userId },
+      severity: 'info'
+    });
+
     res.json({
       success: true,
       message: 'Einladung erfolgreich versendet',
@@ -674,6 +685,16 @@ router.post('/register-with-invite/:token', async (req, res) => {
 
     console.log(`✅ [ORGANIZATIONS] New user ${newUser.email} registered & joined Org ${organization.name}`);
 
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_MEMBER_JOINED,
+      userId: userId.toString(),
+      userEmail: newUser.email,
+      description: `${newUser.email} ist ${organization.name} als ${invitation.role} beigetreten (Registrierung)`,
+      details: { organizationId: invitation.organizationId.toString(), email: newUser.email, role: invitation.role, orgName: organization.name },
+      severity: 'info'
+    });
+
     res.status(201).json({
       success: true,
       message: `Willkommen im Team von ${organization.name}!`,
@@ -773,6 +794,16 @@ router.post('/accept-invite/:token', verifyToken, async (req, res) => {
     const organization = await Organization.findById(invitation.organizationId);
 
     console.log(`✅ [ORGANIZATIONS] User ${userId} joined Org ${organization._id}`);
+
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_MEMBER_JOINED,
+      userId: userId,
+      userEmail: user.email,
+      description: `${user.email} ist ${organization.name} als ${invitation.role} beigetreten`,
+      details: { organizationId: invitation.organizationId.toString(), email: user.email, role: invitation.role, orgName: organization.name },
+      severity: 'info'
+    });
 
     res.json({
       success: true,
@@ -880,6 +911,16 @@ router.delete('/:id/invitations/:inviteId', verifyToken, async (req, res) => {
         message: 'Einladung nicht gefunden oder bereits verwendet'
       });
     }
+
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_INVITE_CANCELLED,
+      userId: userId,
+      userEmail: invitation.email,
+      description: `Einladung für ${invitation.email} storniert`,
+      details: { organizationId: orgId, email: invitation.email, cancelledBy: userId },
+      severity: 'info'
+    });
 
     console.log(`✅ [ORGANIZATIONS] Invitation cancelled: ${invitation.email}`);
 
@@ -1029,6 +1070,13 @@ router.patch('/:id/members/:userId/role', verifyToken, async (req, res) => {
       }
     }
 
+    // Alte Rolle vor dem Update speichern
+    const existingMember = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(targetUserId)
+    });
+    const oldRole = existingMember?.role || 'unknown';
+
     // Update Member
     const member = await OrganizationMember.findOneAndUpdate(
       {
@@ -1054,6 +1102,46 @@ router.patch('/:id/members/:userId/role', verifyToken, async (req, res) => {
         message: 'Mitglied nicht gefunden'
       });
     }
+
+    // E-Mail an betroffenes Mitglied senden
+    const targetUser = await req.usersCollection.findOne({ _id: new ObjectId(targetUserId) });
+    if (targetUser?.email) {
+      const roleDisplayOld = oldRole === 'admin' ? 'Administrator' : oldRole === 'member' ? 'Mitglied' : 'Betrachter';
+      const roleDisplayNew = role === 'admin' ? 'Administrator' : role === 'member' ? 'Mitglied' : 'Betrachter';
+
+      const emailHtml = generateEmailTemplate({
+        title: 'Deine Rolle wurde geändert',
+        preheader: `Deine Rolle bei ${organization.name} wurde geändert`,
+        body: `
+          <p>Hallo ${targetUser.firstName || ''},</p>
+          <p>deine Rolle im Team von <strong>${organization.name}</strong> wurde geändert.</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin: 20px 0;">
+            <tr><td style="padding: 20px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 14px; color: #555;"><strong>Vorher:</strong> ${roleDisplayOld}</p>
+              <p style="margin: 0; font-size: 14px; color: #555;"><strong>Jetzt:</strong> ${roleDisplayNew}</p>
+            </td></tr>
+          </table>
+          <p style="font-size: 13px; color: #888;">Bei Fragen wende dich an den Administrator deines Teams.</p>
+        `,
+        cta: { text: 'Zum Team', url: `${process.env.FRONTEND_URL || 'https://www.contract-ai.de'}/team` }
+      });
+
+      sendEmail({
+        to: targetUser.email,
+        subject: `Deine Rolle bei ${organization.name} wurde geändert`,
+        html: emailHtml
+      });
+    }
+
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_ROLE_CHANGED,
+      userId: currentUserId,
+      userEmail: targetUser?.email,
+      description: `Rolle von ${targetUser?.email || targetUserId} geändert: ${oldRole} → ${role}`,
+      details: { organizationId: orgId, email: targetUser?.email, oldRole, newRole: role, changedBy: currentUserId },
+      severity: 'info'
+    });
 
     console.log(`✅ [ORGANIZATIONS] Role updated: User ${targetUserId} → ${role}`);
 
@@ -1113,6 +1201,12 @@ router.delete('/:id/members/:userId', verifyToken, async (req, res) => {
       });
     }
 
+    // Hole Member-Daten vor dem Deaktivieren
+    const targetMember = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(targetUserId)
+    });
+
     // Deaktiviere Member
     await OrganizationMember.findOneAndUpdate(
       {
@@ -1123,6 +1217,46 @@ router.delete('/:id/members/:userId', verifyToken, async (req, res) => {
         $set: { isActive: false }
       }
     );
+
+    // E-Mail an entferntes Mitglied (NICHT bei Selbst-Entfernung)
+    const targetUser = await req.usersCollection.findOne({ _id: new ObjectId(targetUserId) });
+    if (!isSelf && targetUser?.email) {
+      const emailHtml = generateEmailTemplate({
+        title: 'Du wurdest aus dem Team entfernt',
+        preheader: `Du wurdest aus dem Team von ${organization.name} entfernt`,
+        body: `
+          <p>Hallo ${targetUser.firstName || ''},</p>
+          <p>du bist nicht mehr Mitglied des Teams von <strong>${organization.name}</strong>.</p>
+          <p style="font-size: 13px; color: #888; margin-top: 20px;">
+            Falls du denkst, dass dies ein Fehler ist, wende dich bitte an den Administrator des Teams.
+          </p>
+        `
+      });
+
+      sendEmail({
+        to: targetUser.email,
+        subject: `Du wurdest aus dem Team von ${organization.name} entfernt`,
+        html: emailHtml
+      });
+    }
+
+    // Audit-Log
+    logActivity(req.db, {
+      type: ActivityTypes.TEAM_MEMBER_REMOVED,
+      userId: currentUserId,
+      userEmail: targetUser?.email,
+      description: isSelf
+        ? `${targetUser?.email || targetUserId} hat ${organization.name} verlassen`
+        : `${targetUser?.email || targetUserId} wurde aus ${organization.name} entfernt`,
+      details: {
+        organizationId: orgId,
+        email: targetUser?.email,
+        role: targetMember?.role,
+        removedBy: currentUserId,
+        selfRemoval: isSelf
+      },
+      severity: 'info'
+    });
 
     console.log(`✅ [ORGANIZATIONS] Member removed: User ${targetUserId} from Org ${orgId}`);
 
@@ -1136,6 +1270,59 @@ router.delete('/:id/members/:userId', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Entfernen des Mitglieds',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/organizations/:id/activity-log
+ * Gibt die letzten 50 Team-Events für diese Organisation zurück (Admin-only)
+ */
+router.get('/:id/activity-log', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: orgId } = req.params;
+
+    // Check: User ist Admin der Org
+    const membership = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(userId),
+      isActive: true
+    });
+
+    if (!membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Nur Admins können das Aktivitätsprotokoll einsehen'
+      });
+    }
+
+    const activities = await req.db.collection('admin_activity_log')
+      .find({
+        type: { $regex: /^team_/ },
+        'details.organizationId': orgId
+      })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+
+    res.json({
+      success: true,
+      activities: activities.map(a => ({
+        id: a._id.toString(),
+        type: a.type,
+        description: a.description,
+        details: a.details,
+        createdAt: a.createdAt
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Activity Log Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden des Aktivitätsprotokolls',
       details: error.message
     });
   }
