@@ -369,6 +369,22 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
       });
     }
 
+    // Check: Max 1 zusätzlicher Admin (neben Owner)
+    if (role === 'admin') {
+      const adminCount = await OrganizationMember.countDocuments({
+        organizationId: new ObjectId(orgId),
+        role: 'admin',
+        isActive: true
+      });
+      const nonOwnerAdmins = adminCount - (organization.ownerId ? 1 : 0);
+      if (nonOwnerAdmins >= 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Es kann nur einen zusätzlichen Admin neben dem Owner geben'
+        });
+      }
+    }
+
     // Check: Email bereits Member?
     const user = await req.usersCollection.findOne({ email: email.toLowerCase() });
     if (user) {
@@ -993,6 +1009,24 @@ router.patch('/:id/members/:userId/role', verifyToken, async (req, res) => {
         success: false,
         message: 'Die Rolle des Owners kann nicht geändert werden'
       });
+    }
+
+    // Check: Max 1 zusätzlicher Admin (neben Owner)
+    if (role === 'admin') {
+      const adminCount = await OrganizationMember.countDocuments({
+        organizationId: new ObjectId(orgId),
+        role: 'admin',
+        userId: { $ne: new ObjectId(targetUserId) }, // Ziel-User nicht mitzählen
+        isActive: true
+      });
+      // Owner ist immer admin + max 1 weiterer
+      const nonOwnerAdmins = adminCount - (organization.ownerId ? 1 : 0);
+      if (nonOwnerAdmins >= 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Es kann nur einen zusätzlichen Admin neben dem Owner geben'
+        });
+      }
     }
 
     // Update Member
