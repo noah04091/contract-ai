@@ -6276,7 +6276,7 @@ export default function Generate() {
                                     Klicke auf einen Abschnitt, um davor einen Seitenumbruch einzufügen
                                   </p>
                                   <div className={styles.step3PageBreaksChips}>
-                                    {parsedSections.map((sec) => (
+                                    {parsedSections.filter(sec => sec.title !== 'Präambel').map((sec) => (
                                       <button
                                         key={sec.index}
                                         className={`${styles.pageBreakChip} ${pageBreaks.includes(sec.index) ? styles.active : ''}`}
