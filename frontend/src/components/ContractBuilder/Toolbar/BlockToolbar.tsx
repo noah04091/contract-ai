@@ -567,7 +567,7 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
       return {
         number: 'auto',
         clauseTitle: 'Vertragsgegenstand',
-        body: 'Der Auftraggeber {{kundenname}} beauftragt den Auftragnehmer mit der Erbringung der vereinbarten Leistungen zum Preis von {{preis}} Euro.\n\n💡 Tipp: Text in doppelten geschweiften Klammern {{so}} wird automatisch zur Variable!',
+        body: 'Der Auftraggeber {{kundenname}} beauftragt den Auftragnehmer mit der Erbringung der vereinbarten Leistungen zum Preis von {{preis}} Euro.',
         subclauses: [],
       };
     case 'table':

@@ -24,7 +24,11 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { number, clauseTitle, body, subclauses, clauseLayout = 'standard' } = content;
+  const { number, clauseTitle, body: rawBody, subclauses, clauseLayout = 'standard' } = content;
+  // Im Preview-Modus (PDF-Export) Tipp-Zeilen aus dem Body filtern
+  const body = isPreview && rawBody
+    ? rawBody.split('\n').filter(line => !line.trim().startsWith('💡')).join('\n').trimEnd()
+    : rawBody;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 

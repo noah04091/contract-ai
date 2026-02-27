@@ -1657,7 +1657,9 @@ router.post('/:id/export/pdf', auth, async (req, res) => {
 
         case 'clause': {
           const clauseTitle = block.content?.clauseTitle || '';
-          const body = block.content?.body || '';
+          // Tipp-Zeilen (💡) aus dem Body filtern — sind UI-Hinweise, nicht Vertragsinhalt
+          const rawBody = block.content?.body || '';
+          const body = rawBody.split('\n').filter(line => !line.trim().startsWith('💡')).join('\n').trimEnd();
 
           if (clauseTitle) {
             // Prüfen ob genug Platz für Titel + etwas Text
