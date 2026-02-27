@@ -2739,18 +2739,18 @@ const CONTRACT_TYPES: ContractType[] = [
     estimatedDuration: '10-15 Minuten',
     popularity: 40,
     fields: [
-      { name: 'partyAName', label: 'Partei A (Name)', type: 'text', placeholder: 'Name / Firma der ersten Vertragspartei', required: true, group: 'Vertragsparteien' },
-      { name: 'partyAAddress', label: 'Adresse Partei A', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: true, group: 'Vertragsparteien' },
+      { name: 'partyAName', label: 'Partei A (Name)', type: 'text', placeholder: 'Name / Firma der ersten Vertragspartei', required: false, group: 'Vertragsparteien' },
+      { name: 'partyAAddress', label: 'Adresse Partei A', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: false, group: 'Vertragsparteien' },
       { name: 'partyARole', label: 'Rolle Partei A', type: 'text', placeholder: 'z.B. Auftraggeber, Verkäufer, Vermieter...', required: false, group: 'Vertragsparteien', helpText: 'Wird im Vertrag als Bezeichnung verwendet' },
-      { name: 'partyBName', label: 'Partei B (Name)', type: 'text', placeholder: 'Name / Firma der zweiten Vertragspartei', required: true, group: 'Vertragsparteien' },
-      { name: 'partyBAddress', label: 'Adresse Partei B', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: true, group: 'Vertragsparteien' },
+      { name: 'partyBName', label: 'Partei B (Name)', type: 'text', placeholder: 'Name / Firma der zweiten Vertragspartei', required: false, group: 'Vertragsparteien' },
+      { name: 'partyBAddress', label: 'Adresse Partei B', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: false, group: 'Vertragsparteien' },
       { name: 'partyBRole', label: 'Rolle Partei B', type: 'text', placeholder: 'z.B. Auftragnehmer, Käufer, Mieter...', required: false, group: 'Vertragsparteien' },
-      { name: 'subject', label: 'Vertragsgegenstand', type: 'textarea', placeholder: 'Was regelt dieser Vertrag? Beschreiben Sie den Kern der Vereinbarung...', required: true, group: 'Vertragsgegenstand' },
-      { name: 'obligations', label: 'Leistungen und Pflichten', type: 'textarea', placeholder: 'Welche Leistungen werden erbracht? Welche Pflichten haben die Parteien?', required: true, group: 'Vertragsgegenstand' },
+      { name: 'subject', label: 'Vertragsgegenstand', type: 'textarea', placeholder: 'Was regelt dieser Vertrag? Beschreiben Sie den Kern der Vereinbarung...', required: false, group: 'Vertragsgegenstand' },
+      { name: 'obligations', label: 'Leistungen und Pflichten', type: 'textarea', placeholder: 'Welche Leistungen werden erbracht? Welche Pflichten haben die Parteien?', required: false, group: 'Vertragsgegenstand' },
       { name: 'compensation', label: 'Vergütung / Gegenleistung', type: 'text', placeholder: 'z.B. 10.000€, monatlich 500€, oder tauschbasiert', required: false, group: 'Konditionen', helpText: 'Leer lassen falls keine Vergütung vorgesehen ist' },
-      { name: 'duration', label: 'Laufzeit', type: 'select', placeholder: 'Wie lange gilt der Vertrag?', required: true, group: 'Konditionen',
+      { name: 'duration', label: 'Laufzeit', type: 'select', placeholder: 'Wie lange gilt der Vertrag?', required: false, group: 'Konditionen',
         options: ['Einmalige Leistung', '3 Monate', '6 Monate', '1 Jahr', '2 Jahre', 'Unbefristet', 'Projektbezogen'] },
-      { name: 'termination', label: 'Kündigungsfrist', type: 'select', placeholder: 'Wie kann gekündigt werden?', required: true, group: 'Konditionen',
+      { name: 'termination', label: 'Kündigungsfrist', type: 'select', placeholder: 'Wie kann gekündigt werden?', required: false, group: 'Konditionen',
         options: ['Nicht kündbar (einmalig)', '2 Wochen', '1 Monat zum Monatsende', '3 Monate zum Quartalsende', 'Nur aus wichtigem Grund'] },
       { name: 'confidentiality', label: 'Vertraulichkeit', type: 'select', placeholder: 'Geheimhaltung nötig?', required: false, group: 'Schutzklauseln',
         options: ['Keine besonderen Anforderungen', 'Standard-Vertraulichkeit', 'Erhöhte Vertraulichkeit (NDA-Level)', 'Streng vertraulich'] },
@@ -2760,7 +2760,7 @@ const CONTRACT_TYPES: ContractType[] = [
       { name: 'disputeResolution', label: 'Streitbeilegung', type: 'select', placeholder: 'Bei Konflikten?', required: false, group: 'Schutzklauseln',
         options: ['Ordentliches Gericht (Standard)', 'Mediation vor Klage', 'Schiedsverfahren', 'Schlichtungsstelle'] },
       { name: 'details', label: 'Weitere Details und Sonderwünsche', type: 'textarea', placeholder: 'Alle zusätzlichen Regelungen, Besonderheiten, Klauseln die der Vertrag enthalten soll...', required: false, group: 'Besonderes', helpText: 'Je detaillierter Ihre Angaben, desto besser das Ergebnis. Hier können Sie alles angeben, was in den obigen Feldern nicht abgedeckt wurde.' },
-      { name: 'governingLaw', label: 'Anwendbares Recht', type: 'select', placeholder: 'Welches Recht gilt?', required: true, group: 'Rechtliches',
+      { name: 'governingLaw', label: 'Anwendbares Recht', type: 'select', placeholder: 'Welches Recht gilt?', required: false, group: 'Rechtliches',
         options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht'] },
       { name: 'jurisdiction', label: 'Gerichtsstand', type: 'text', placeholder: 'z.B. Berlin, München, Hamburg', required: false, group: 'Rechtliches' }
     ]
@@ -3590,7 +3590,9 @@ export default function Generate() {
       filledOptional: filledOptional.length,
       total: fields.length,
       filled: filledRequired.length + filledOptional.length,
-      isComplete: filledRequired.length === requiredFields.length
+      isComplete: requiredFields.length > 0
+        ? filledRequired.length === requiredFields.length
+        : filledOptional.length > 0
     };
   };
 
@@ -3791,9 +3793,16 @@ export default function Generate() {
   const isStepComplete = (step: number): boolean => {
     switch (step) {
       case 1: return selectedType !== null;
-      case 2: 
+      case 2:
         if (!selectedType) return false;
-        return selectedType.fields.filter(f => f.required).every(field => 
+        const requiredFields = selectedType.fields.filter(f => f.required);
+        if (requiredFields.length === 0) {
+          // Individueller Vertrag: mindestens 1 Feld muss ausgefüllt sein
+          return selectedType.fields.some(field =>
+            formData[field.name] && formData[field.name]!.trim() !== ''
+          );
+        }
+        return requiredFields.every(field =>
           formData[field.name] && formData[field.name]!.trim() !== ''
         );
       case 3: return contractText !== "";
