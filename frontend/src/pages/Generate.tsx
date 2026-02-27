@@ -3793,11 +3793,10 @@ export default function Generate() {
   const isStepComplete = (step: number): boolean => {
     switch (step) {
       case 1: return selectedType !== null;
-      case 2:
+      case 2: {
         if (!selectedType) return false;
         const requiredFields = selectedType.fields.filter(f => f.required);
         if (requiredFields.length === 0) {
-          // Individueller Vertrag: mindestens 1 Feld muss ausgefüllt sein
           return selectedType.fields.some(field =>
             formData[field.name] && formData[field.name]!.trim() !== ''
           );
@@ -3805,6 +3804,7 @@ export default function Generate() {
         return requiredFields.every(field =>
           formData[field.name] && formData[field.name]!.trim() !== ''
         );
+      }
       case 3: return contractText !== "";
       default: return false;
     }
