@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check, Info } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X, Lock, Pencil, Check, Info, RefreshCw } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
@@ -191,6 +191,45 @@ export default function Team() {
       console.error("Cancel invite error:", error);
       setNotification({
         message: "Fehler beim Stornieren der Einladung",
+        type: "error"
+      });
+    }
+  };
+
+  const handleResendInvite = async (invite: PendingInvite) => {
+    if (!organization) return;
+
+    try {
+      const res = await fetch(`/api/organizations/${organization.id}/invite`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          email: invite.email,
+          role: invite.role
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setNotification({
+          message: `Einladung erneut an ${invite.email} gesendet`,
+          type: "success"
+        });
+        await fetchPendingInvites(organization.id);
+      } else {
+        setNotification({
+          message: data.message || "Fehler beim erneuten Senden",
+          type: "error"
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Resend invite error:", error);
+      setNotification({
+        message: "Fehler beim erneuten Senden der Einladung",
         type: "error"
       });
     }
@@ -677,13 +716,22 @@ export default function Team() {
                           </span>
                         </div>
                       </div>
-                      <button
-                        className={styles.cancelInviteButton}
-                        onClick={() => handleCancelInvite(invite.id, invite.email)}
-                        title="Einladung stornieren"
-                      >
-                        <X size={16} />
-                      </button>
+                      <div className={styles.inviteActions}>
+                        <button
+                          className={styles.resendInviteButton}
+                          onClick={() => handleResendInvite(invite)}
+                          title="Einladung erneut senden"
+                        >
+                          <RefreshCw size={14} />
+                        </button>
+                        <button
+                          className={styles.cancelInviteButton}
+                          onClick={() => handleCancelInvite(invite.id, invite.email)}
+                          title="Einladung stornieren"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
                     </motion.div>
                   ))}
                 </div>

@@ -33,6 +33,7 @@ import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔
 import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
 import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅 KI-extrahierte wichtige Termine
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
+import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -45,6 +46,7 @@ import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 interface Contract {
   _id: string;
+  userId?: string;
   name: string;
   kuendigung: string;
   expiryDate: string;
@@ -246,9 +248,23 @@ export default function Contracts() {
   // ✅ Navigation state handling
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth(); // 🏢 Org-Rolle für Rollen-Awareness
   const { celebrate } = useCelebrationContext(); // 🎉 Celebration System
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
   const { onboardingState } = useOnboarding(); // 🎓 Onboarding State für Celebration-Checks
+
+  // 🏢 Rollen-Awareness: Berechtigungen basierend auf Org-Rolle
+  const orgRole = user?.organization?.orgRole;
+  const canEditContract = (contract: Contract) => {
+    if (!orgRole) return true; // Kein Org → voller Zugriff auf eigene Verträge
+    if (contract.userId && user?._id && contract.userId.toString() === user._id.toString()) return true; // Eigener Vertrag
+    return orgRole === 'admin' || orgRole === 'member'; // Org-Vertrag: Admin/Member dürfen bearbeiten
+  };
+  const canDeleteContract = (contract: Contract) => {
+    if (!orgRole) return true; // Kein Org → voller Zugriff
+    if (contract.userId && user?._id && contract.userId.toString() === user._id.toString()) return true; // Eigener Vertrag
+    return orgRole === 'admin'; // Org-Vertrag: Nur Admin darf löschen
+  };
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   // 🚀 OPTIMIERT: contracts State entfernt - war redundant da Backend bereits filtert
@@ -3128,16 +3144,18 @@ export default function Contracts() {
                 : 'PDF'}
           </span>
         </button>
-        <button
-          className={styles.cardActionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleEditContract(contract);
-          }}
-        >
-          <Edit size={14} />
-          <span>Bearbeiten</span>
-        </button>
+        {canEditContract(contract) && (
+          <button
+            className={styles.cardActionButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditContract(contract);
+            }}
+          >
+            <Edit size={14} />
+            <span>Bearbeiten</span>
+          </button>
+        )}
 
         {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
         <button
@@ -3216,16 +3234,18 @@ export default function Contracts() {
         </div>
 
         {/* ✅ DESTRUKTIVE AKTION: Löschen (dezent, outline-only) */}
-        <button
-          className={`${styles.cardActionButton} ${styles.deleteAction}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-          }}
-        >
-          <Trash2 size={14} />
-          <span>Löschen</span>
-        </button>
+        {canDeleteContract(contract) && (
+          <button
+            className={`${styles.cardActionButton} ${styles.deleteAction}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteContract(contract._id, fixUtf8Display(contract.name));
+            }}
+          >
+            <Trash2 size={14} />
+            <span>Löschen</span>
+          </button>
+        )}
       </div>
     </motion.div>
     );
@@ -3429,18 +3449,20 @@ export default function Contracts() {
           >
             {pdfLoading[contract._id] ? <Loader size={14} className={styles.spinning} /> : <Eye size={14} />}
           </button>
-          <button
-            className={styles.gridActionBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditContract(contract);
-            }}
-            title="Bearbeiten"
-          >
-            <Edit size={14} />
-          </button>
+          {canEditContract(contract) && (
+            <button
+              className={styles.gridActionBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditContract(contract);
+              }}
+              title="Bearbeiten"
+            >
+              <Edit size={14} />
+            </button>
+          )}
           {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-          {isContractNotAnalyzed(contract) && (
+          {isContractNotAnalyzed(contract) && canEditContract(contract) && (
             <button
               className={`${styles.gridActionBtn} ${styles.analyzeBtn}`}
               onClick={(e) => {
@@ -3457,16 +3479,18 @@ export default function Contracts() {
               )}
             </button>
           )}
-          <button
-            className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-            }}
-            title="Löschen"
-          >
+          {canDeleteContract(contract) && (
+            <button
+              className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteContract(contract._id, fixUtf8Display(contract.name));
+              }}
+              title="Löschen"
+            >
             <Trash2 size={14} />
           </button>
+          )}
         </div>
 
         {/* Not Analyzed Badge - jetzt mit klickbarem Text */}
@@ -4950,18 +4974,20 @@ export default function Contracts() {
                                       <ExternalLink size={16} />
                                     )}
                                   </button>
-                                  <button
-                                    className={styles.actionButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditContract(contract); // ✅ BUG FIX 1: Echte Edit-Funktion!
-                                    }}
-                                    title="Bearbeiten"
-                                  >
-                                    <Edit size={16} />
-                                  </button>
+                                  {canEditContract(contract) && (
+                                    <button
+                                      className={styles.actionButton}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEditContract(contract);
+                                      }}
+                                      title="Bearbeiten"
+                                    >
+                                      <Edit size={16} />
+                                    </button>
+                                  )}
                                   {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-                                  {isContractNotAnalyzed(contract) && (
+                                  {isContractNotAnalyzed(contract) && canEditContract(contract) && (
                                     <button
                                       className={`${styles.actionButton} ${styles.analyzeButton}`}
                                       onClick={(e) => {
@@ -4979,16 +5005,18 @@ export default function Contracts() {
                                     </button>
                                   )}
                                   {/* 🔔 Reminder Settings Button */}
-                                  <button
-                                    className={styles.actionButton}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setReminderSettingsModal({ show: true, contract });
-                                    }}
-                                    title="Erinnerungen einrichten"
-                                  >
-                                    <Bell size={16} />
-                                  </button>
+                                  {canEditContract(contract) && (
+                                    <button
+                                      className={styles.actionButton}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReminderSettingsModal({ show: true, contract });
+                                      }}
+                                      title="Erinnerungen einrichten"
+                                    >
+                                      <Bell size={16} />
+                                    </button>
+                                  )}
                                   {/* 📁 Folder Dropdown Button */}
                                   <button
                                     className={`${styles.actionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
@@ -5029,16 +5057,18 @@ export default function Contracts() {
                                   >
                                     <Folder size={16} />
                                   </button>
-                                  <button
-                                    className={`${styles.actionButton} ${styles.deleteButton}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-                                    }}
-                                    title="Löschen"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
+                                  {canDeleteContract(contract) && (
+                                    <button
+                                      className={`${styles.actionButton} ${styles.deleteButton}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteContract(contract._id, fixUtf8Display(contract.name));
+                                      }}
+                                      title="Löschen"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </motion.tr>
@@ -5452,27 +5482,31 @@ export default function Contracts() {
                     {pdfLoading[previewContract._id] ? <Loader size={14} className={styles.spinning} /> : <ExternalLink size={14} />}
                     PDF
                   </button>
-                  <button
-                    className={styles.previewQuickAction}
-                    onClick={() => {
-                      setSelectedContract(previewContract);
-                      setOpenEditModalDirectly(true);
-                      setShowDetails(true);
-                    }}
-                  >
-                    <Edit3 size={14} />
-                    Bearbeiten
-                  </button>
-                  <button
-                    className={`${styles.previewQuickAction} ${styles.delete}`}
-                    onClick={() => {
-                      handleDeleteContract(previewContract._id, previewContract.name);
-                      setPreviewContract(null);
-                    }}
-                  >
-                    <Trash2 size={14} />
-                    Löschen
-                  </button>
+                  {canEditContract(previewContract) && (
+                    <button
+                      className={styles.previewQuickAction}
+                      onClick={() => {
+                        setSelectedContract(previewContract);
+                        setOpenEditModalDirectly(true);
+                        setShowDetails(true);
+                      }}
+                    >
+                      <Edit3 size={14} />
+                      Bearbeiten
+                    </button>
+                  )}
+                  {canDeleteContract(previewContract) && (
+                    <button
+                      className={`${styles.previewQuickAction} ${styles.delete}`}
+                      onClick={() => {
+                        handleDeleteContract(previewContract._id, previewContract.name);
+                        setPreviewContract(null);
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      Löschen
+                    </button>
+                  )}
                 </div>
               </div>
             </aside>
@@ -5831,18 +5865,20 @@ export default function Contracts() {
 
                 {/* Actions */}
                 <div className={styles.listRowDropdownActions}>
-                  <button
-                    className={styles.listRowDropdownItem}
-                    onClick={() => {
-                      handleEditContract(dropdownContract);
-                      setFolderDropdownOpen(null);
-                    }}
-                  >
-                    <Edit size={18} />
-                    <span>Bearbeiten</span>
-                  </button>
+                  {canEditContract(dropdownContract) && (
+                    <button
+                      className={styles.listRowDropdownItem}
+                      onClick={() => {
+                        handleEditContract(dropdownContract);
+                        setFolderDropdownOpen(null);
+                      }}
+                    >
+                      <Edit size={18} />
+                      <span>Bearbeiten</span>
+                    </button>
+                  )}
 
-                  {shouldShowAnalyzeButton(dropdownContract) && (
+                  {shouldShowAnalyzeButton(dropdownContract) && canEditContract(dropdownContract) && (
                     <button
                       className={`${styles.listRowDropdownItem} ${styles.highlight}`}
                       onClick={() => {
@@ -5901,17 +5937,21 @@ export default function Contracts() {
                   ))}
                 </div>
 
-                <div className={styles.listRowDropdownDivider} />
-                <button
-                  className={`${styles.listRowDropdownItem} ${styles.danger}`}
-                  onClick={() => {
-                    handleDeleteContract(dropdownContract._id, dropdownContract.name);
-                    setFolderDropdownOpen(null);
-                  }}
-                >
-                  <Trash2 size={18} />
-                  <span>Löschen</span>
-                </button>
+                {canDeleteContract(dropdownContract) && (
+                  <>
+                    <div className={styles.listRowDropdownDivider} />
+                    <button
+                      className={`${styles.listRowDropdownItem} ${styles.danger}`}
+                      onClick={() => {
+                        handleDeleteContract(dropdownContract._id, dropdownContract.name);
+                        setFolderDropdownOpen(null);
+                      }}
+                    >
+                      <Trash2 size={18} />
+                      <span>Löschen</span>
+                    </button>
+                  </>
+                )}
               </div>
             </>
           );

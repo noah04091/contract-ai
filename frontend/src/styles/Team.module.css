@@ -446,6 +446,27 @@
   color: #92400e;
 }
 
+.inviteActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resendInviteButton {
+  padding: 6px;
+  background: transparent;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  color: #3b82f6;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resendInviteButton:hover {
+  background: #3b82f6;
+  color: white;
+}
+
 .cancelInviteButton {
   padding: 6px;
   background: transparent;

@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
+import { useAuth } from "../hooks/useAuth";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -69,6 +70,7 @@ interface CalendarEvent {
 
 interface Contract {
   _id: string;
+  userId?: string;
   name: string;
   laufzeit: string;
   kuendigung: string;
@@ -151,7 +153,21 @@ type TabType = 'overview' | 'analysis' | 'document' | 'timeline';
 export default function ContractDetailsV2() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const documentRef = useRef<HTMLDivElement>(null);
+
+  // 🏢 Rollen-Awareness
+  const orgRole = user?.organization?.orgRole;
+  const canEdit = () => {
+    if (!orgRole || !contract) return true;
+    if (contract.userId && user?._id && contract.userId.toString() === user._id.toString()) return true;
+    return orgRole === 'admin' || orgRole === 'member';
+  };
+  const canDelete = () => {
+    if (!orgRole || !contract) return true;
+    if (contract.userId && user?._id && contract.userId.toString() === user._id.toString()) return true;
+    return orgRole === 'admin';
+  };
 
   // State
   const [contract, setContract] = useState<Contract | null>(null);
@@ -2349,9 +2365,11 @@ export default function ContractDetailsV2() {
                 </div>
                 <div className={styles.cardBody}>
                   <div className={styles.quickActions}>
-                    <button className={styles.quickActionBtn} onClick={() => setShowEditModal(true)}>
-                      <Edit3 size={18} /> Vertrag bearbeiten
-                    </button>
+                    {canEdit() && (
+                      <button className={styles.quickActionBtn} onClick={() => setShowEditModal(true)}>
+                        <Edit3 size={18} /> Vertrag bearbeiten
+                      </button>
+                    )}
                     <button className={styles.quickActionBtn} onClick={() => navigate(`/legal-lens/${id}`)}>
                       <FileSearch size={18} /> Legal Lens öffnen
                     </button>
@@ -2380,23 +2398,25 @@ export default function ContractDetailsV2() {
               </div>
 
               {/* Danger Zone */}
-              <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <h3 className={styles.cardTitle} style={{ color: 'var(--cd-danger)' }}>
-                    Gefahrenzone
-                  </h3>
+              {canDelete() && (
+                <div className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.cardTitle} style={{ color: 'var(--cd-danger)' }}>
+                      Gefahrenzone
+                    </h3>
+                  </div>
+                  <div className={styles.cardBody}>
+                    <button
+                      className={`${styles.btn} ${styles.btnDanger} ${styles.btnBlock}`}
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      <Trash2 size={16} />
+                      {deleting ? 'Lösche...' : 'Vertrag löschen'}
+                    </button>
+                  </div>
                 </div>
-                <div className={styles.cardBody}>
-                  <button
-                    className={`${styles.btn} ${styles.btnDanger} ${styles.btnBlock}`}
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
-                    <Trash2 size={16} />
-                    {deleting ? 'Lösche...' : 'Vertrag löschen'}
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

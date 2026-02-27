@@ -13,6 +13,8 @@ const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 const { validatePassword } = require("../utils/passwordValidator");
 const { getFeatureLimit, isBusinessOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const OrganizationMember = require("../models/OrganizationMember");
+const Organization = require("../models/Organization");
 require("dotenv").config();
 
 // 🔐 Konfiguration
@@ -461,6 +463,33 @@ router.get("/me", verifyToken, async (req, res) => {
       }
     }
 
+    // 🏢 Organization Info + Effektiver Plan
+    let orgInfo = null;
+    try {
+      const membership = await OrganizationMember.findOne({
+        userId: new ObjectId(req.user.userId),
+        isActive: true
+      });
+      if (membership) {
+        const org = await Organization.findById(membership.organizationId);
+        if (org) {
+          orgInfo = {
+            organizationId: membership.organizationId.toString(),
+            orgName: org.name || null,
+            orgRole: membership.role,
+            orgPermissions: membership.permissions || [],
+            isOrgOwner: org.ownerId?.toString() === req.user.userId
+          };
+          // Effektiver Plan: Org-Plan erben wenn höher als eigener
+          if (plan === "free" && org.subscriptionPlan && org.subscriptionPlan !== "free") {
+            plan = org.subscriptionPlan.toLowerCase();
+          }
+        }
+      }
+    } catch (orgErr) {
+      console.warn("⚠️ Org lookup in /me failed (non-critical):", orgErr.message);
+    }
+
     // 📊 ANALYSE LIMITS - aus zentraler Konfiguration (subscriptionPlans.js)
     // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
     const analysisLimit = getFeatureLimit(plan, 'analyze');
@@ -507,6 +536,8 @@ router.get("/me", verifyToken, async (req, res) => {
       completedTours: user.completedTours || [],
       // 📷 PROFILBILD
       profilePicture: user.profilePicture || null,
+      // 🏢 Organisation (für Team-Mitglieder)
+      organization: orgInfo,
       // 🎓 ONBOARDING v3.0 - Enterprise Onboarding System
       onboarding: user.onboarding || {
         status: 'not_started',

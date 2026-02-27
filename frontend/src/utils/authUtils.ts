@@ -38,6 +38,15 @@ export interface UserData {
   profilePicture?: string;
   updatedAt?: string;
 
+  // 🏢 Organisation (aus Backend - für Team-Mitglieder)
+  organization?: {
+    organizationId: string;
+    orgName: string | null;
+    orgRole: 'admin' | 'member' | 'viewer';
+    orgPermissions: string[];
+    isOrgOwner: boolean;
+  } | null;
+
   // 🎓 Onboarding (aus Backend)
   onboarding?: OnboardingState;
 }
