@@ -50,6 +50,7 @@ interface Contract {
   name: string;
   kuendigung: string;
   expiryDate: string;
+  startDate?: string;
   status: string;
   createdAt: string;
   content?: string;
@@ -5373,6 +5374,15 @@ export default function Contracts() {
                       </div>
                     );
                   })}
+                  {previewContract.startDate && (
+                    <div className={styles.previewInfoItem}>
+                      <span className={styles.previewLabel}>Vertragsbeginn</span>
+                      <span className={styles.previewValue}>
+                        <Calendar size={14} style={{ color: '#22c55e' }} />
+                        {formatDate(previewContract.startDate)}
+                      </span>
+                    </div>
+                  )}
                   <div className={styles.previewInfoItem}>
                     <span className={styles.previewLabel}>Hochgeladen</span>
                     <span className={styles.previewValue}>

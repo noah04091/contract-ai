@@ -9,7 +9,7 @@ import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
 
 // 📋 Alle verfügbaren Feldtypen mit ihren Optionen
-type FieldType = 'kuendigung' | 'laufzeit' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer';
+type FieldType = 'kuendigung' | 'laufzeit' | 'startDate' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer';
 
 interface FieldConfig {
   id: FieldType;
@@ -66,6 +66,12 @@ const AVAILABLE_FIELDS: FieldConfig[] = [
     ]
   },
   {
+    id: 'startDate',
+    label: 'Vertragsbeginn',
+    icon: Calendar,
+    type: 'date'
+  },
+  {
     id: 'expiryDate',
     label: 'Ablaufdatum',
     icon: Calendar,
@@ -110,6 +116,7 @@ interface Contract {
   kuendigung: string;
   laufzeit?: string;
   expiryDate?: string;
+  startDate?: string;
   gekuendigtZum?: string;
   anbieter?: string;
   kosten?: number;
@@ -239,6 +246,11 @@ export default function ContractEditModal({
         }
       }
 
+      if (contract.startDate) {
+        initialActiveFields.push('startDate');
+        initialValues.startDate = new Date(contract.startDate).toISOString().split('T')[0];
+      }
+
       if (contract.expiryDate) {
         initialActiveFields.push('expiryDate');
         initialValues.expiryDate = new Date(contract.expiryDate).toISOString().split('T')[0];
@@ -332,7 +344,7 @@ export default function ContractEditModal({
           // Spezielle Behandlung für bestimmte Felder
           if (fieldId === 'kosten') {
             updateData[fieldId] = parseFloat(value) || 0;
-          } else if (fieldId === 'expiryDate' || fieldId === 'gekuendigtZum') {
+          } else if (fieldId === 'startDate' || fieldId === 'expiryDate' || fieldId === 'gekuendigtZum') {
             updateData[fieldId] = value || null;
           } else {
             updateData[fieldId] = value;
@@ -344,7 +356,7 @@ export default function ContractEditModal({
       });
 
       // Felder die nicht mehr aktiv sind, auf null setzen
-      const allFieldIds: FieldType[] = ['kuendigung', 'laufzeit', 'expiryDate', 'gekuendigtZum', 'anbieter', 'kosten', 'vertragsnummer'];
+      const allFieldIds: FieldType[] = ['kuendigung', 'laufzeit', 'startDate', 'expiryDate', 'gekuendigtZum', 'anbieter', 'kosten', 'vertragsnummer'];
       allFieldIds.forEach(fieldId => {
         if (!activeFields.includes(fieldId)) {
           updateData[fieldId] = null;

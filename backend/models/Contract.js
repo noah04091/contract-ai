@@ -7,6 +7,7 @@ const contractSchema = new mongoose.Schema({
   laufzeit: String,
   kuendigung: String,
   expiryDate: String,
+  startDate: String,  // Vertragsbeginn
   status: String,
   content: String,
   extractedText: String,
