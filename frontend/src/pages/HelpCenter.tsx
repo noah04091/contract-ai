@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Search, FileText, BarChart3, Download,
   ChevronDown, Upload, Wand2, GitCompare, MessageSquare, Zap,
@@ -1144,6 +1144,26 @@ const HelpCenter: React.FC = () => {
     setExpandedGuide(expandedGuide === id ? null : id);
   };
 
+  // Scroll-reveal animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(styles.visible);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    const elements = document.querySelectorAll(`.${styles.animateOnScroll}`);
+    elements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [activeTab, filteredGuides, filteredFAQs]);
+
   return (
     <>
       <Helmet>
@@ -1261,7 +1281,7 @@ const HelpCenter: React.FC = () => {
                     <p className={styles.categoryDescription}>Erste Schritte und Basis-Funktionen</p>
                     <div className={styles.guidesContainer}>
                       {filteredGuides.filter(g => g.category === 'basics').map((guide) => (
-                        <div key={guide.id} className={styles.guideCard}>
+                        <div key={guide.id} className={`${styles.guideCard} ${styles.animateOnScroll}`}>
                           <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
                             <div className={styles.guideIcon}>
                               {guide.icon}
@@ -1319,7 +1339,7 @@ const HelpCenter: React.FC = () => {
                     <p className={styles.categoryDescription}>Kernfunktionen und Werkzeuge</p>
                     <div className={styles.guidesContainer}>
                       {filteredGuides.filter(g => g.category === 'features').map((guide) => (
-                        <div key={guide.id} className={styles.guideCard}>
+                        <div key={guide.id} className={`${styles.guideCard} ${styles.animateOnScroll}`}>
                           <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
                             <div className={styles.guideIcon}>
                               {guide.icon}
@@ -1377,7 +1397,7 @@ const HelpCenter: React.FC = () => {
                     <p className={styles.categoryDescription}>Erweiterte KI-Funktionen für Power-User</p>
                     <div className={styles.guidesContainer}>
                       {filteredGuides.filter(g => g.category === 'premium').map((guide) => (
-                        <div key={guide.id} className={styles.guideCard}>
+                        <div key={guide.id} className={`${styles.guideCard} ${styles.animateOnScroll}`}>
                           <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
                             <div className={styles.guideIcon}>
                               {guide.icon}
@@ -1439,7 +1459,7 @@ const HelpCenter: React.FC = () => {
                     <p className={styles.categoryDescription}>Konto und Abonnement verwalten</p>
                     <div className={styles.guidesContainer}>
                       {filteredGuides.filter(g => g.category === 'settings').map((guide) => (
-                        <div key={guide.id} className={styles.guideCard}>
+                        <div key={guide.id} className={`${styles.guideCard} ${styles.animateOnScroll}`}>
                           <div className={styles.guideHeader} onClick={() => handleGuideToggle(guide.id)}>
                             <div className={styles.guideIcon}>
                               {guide.icon}
@@ -1517,7 +1537,7 @@ const HelpCenter: React.FC = () => {
                       {filteredFAQs.filter(f => f.category === 'general').map((faq, index) => {
                         const globalIndex = filteredFAQs.indexOf(faq);
                         return (
-                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                          <div key={index} className={`${styles.faqItem} ${styles.animateOnScroll} ${openFAQ === globalIndex ? styles.open : ''}`}>
                             <button
                               className={styles.faqQuestion}
                               onClick={() => handleFAQToggle(globalIndex)}
@@ -1554,7 +1574,7 @@ const HelpCenter: React.FC = () => {
                       {filteredFAQs.filter(f => f.category === 'technical').map((faq, index) => {
                         const globalIndex = filteredFAQs.indexOf(faq);
                         return (
-                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                          <div key={index} className={`${styles.faqItem} ${styles.animateOnScroll} ${openFAQ === globalIndex ? styles.open : ''}`}>
                             <button
                               className={styles.faqQuestion}
                               onClick={() => handleFAQToggle(globalIndex)}
@@ -1591,7 +1611,7 @@ const HelpCenter: React.FC = () => {
                       {filteredFAQs.filter(f => f.category === 'security').map((faq, index) => {
                         const globalIndex = filteredFAQs.indexOf(faq);
                         return (
-                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                          <div key={index} className={`${styles.faqItem} ${styles.animateOnScroll} ${openFAQ === globalIndex ? styles.open : ''}`}>
                             <button
                               className={styles.faqQuestion}
                               onClick={() => handleFAQToggle(globalIndex)}
@@ -1628,7 +1648,7 @@ const HelpCenter: React.FC = () => {
                       {filteredFAQs.filter(f => f.category === 'billing').map((faq, index) => {
                         const globalIndex = filteredFAQs.indexOf(faq);
                         return (
-                          <div key={index} className={`${styles.faqItem} ${openFAQ === globalIndex ? styles.open : ''}`}>
+                          <div key={index} className={`${styles.faqItem} ${styles.animateOnScroll} ${openFAQ === globalIndex ? styles.open : ''}`}>
                             <button
                               className={styles.faqQuestion}
                               onClick={() => handleFAQToggle(globalIndex)}
