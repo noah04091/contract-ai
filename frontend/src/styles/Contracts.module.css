@@ -2127,6 +2127,16 @@
   color: #94a3b8;
 }
 
+.previewThumbnailError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
 .previewContent {
   flex: 1;
   overflow-y: auto;
@@ -2434,9 +2444,16 @@
 
 .previewMore {
   font-size: 0.75rem;
-  color: #64748b;
-  font-style: italic;
+  color: #3b82f6;
+  font-style: normal;
   padding-left: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.previewMore:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 /* Actions Section - Redesigned */

@@ -288,6 +288,7 @@ export default function Contracts() {
   
   // ✅ BUG FIX 1: Neuer State für Edit-Modal direkt öffnen
   const [openEditModalDirectly, setOpenEditModalDirectly] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'overview' | 'pdf' | 'analysis' | undefined>(undefined);
 
   // ✏️ NEU: Quick Edit Modal State (öffnet direkt ohne Detail-Ansicht)
   const [quickEditContract, setQuickEditContract] = useState<Contract | null>(null);
@@ -337,6 +338,7 @@ export default function Contracts() {
   const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
   const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
+  const [previewPdfError, setPreviewPdfError] = useState(false); // 📄 PDF Thumbnail Fehler
   const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
@@ -617,12 +619,12 @@ export default function Contracts() {
 
     const loadPreviewPdf = async () => {
       setPreviewPdfLoading(true);
-      setPreviewPdfUrl(prev => {
-        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
-        return null;
-      });
+      setPreviewPdfError(false);
+      // Altes Thumbnail bleibt sichtbar bis neues geladen ist (kein Flicker)
       try {
         const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        let newUrl: string | null = null;
+
         if (previewContract.s3Key) {
           const res = await fetch(`/api/s3/view?contractId=${previewContract._id}&type=original`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -630,7 +632,7 @@ export default function Contracts() {
           });
           if (res.ok && !cancelled) {
             const data = await res.json();
-            setPreviewPdfUrl(data.fileUrl || data.url || null);
+            newUrl = data.fileUrl || data.url || null;
           }
         } else if (previewContract.isGenerated) {
           const res = await fetch(`/api/contracts/${previewContract._id}/pdf-v2`, {
@@ -642,11 +644,21 @@ export default function Contracts() {
           if (res.ok && !cancelled) {
             const blob = await res.blob();
             blobUrl = URL.createObjectURL(blob);
-            setPreviewPdfUrl(blobUrl);
+            newUrl = blobUrl;
           }
+        }
+
+        if (!cancelled) {
+          setPreviewPdfUrl(prev => {
+            if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+            return newUrl;
+          });
+          // Kein PDF verfügbar (weder S3 noch generiert)
+          if (!newUrl) setPreviewPdfError(true);
         }
       } catch (e) {
         console.error('Preview PDF load error:', e);
+        if (!cancelled) setPreviewPdfError(true);
       } finally {
         if (!cancelled) setPreviewPdfLoading(false);
       }
@@ -2923,6 +2935,17 @@ export default function Contracts() {
     }
   };
 
+  // 📊 QuickFact Icon nach Label (semantisch statt positionell)
+  const getQuickFactIcon = (label: string): typeof Calendar => {
+    const lower = label.toLowerCase();
+    if (lower.includes('kündigung')) return Clock;
+    if (lower.includes('ablauf') || lower.includes('ende') || lower.includes('frist')) return Calendar;
+    if (lower.includes('laufzeit') || lower.includes('dauer') || lower.includes('verlängerung')) return RotateCcw;
+    if (lower.includes('kosten') || lower.includes('preis') || lower.includes('betrag') || lower.includes('gebühr')) return CreditCard;
+    if (lower.includes('beginn') || lower.includes('start')) return Calendar;
+    return Calendar;
+  };
+
   // 🆕 Smart Signature Badge Renderer
   const renderSignatureBadge = (contract: Contract) => {
     if (!contract.envelope && !contract.signatureStatus) return null;
@@ -3184,15 +3207,18 @@ export default function Contracts() {
 
       {/* Card Details Grid - 📊 Dynamische QuickFacts */}
       <div className={styles.cardDetails}>
-        {getQuickFacts(contract).slice(0, 2).map((fact, index) => (
-          <div key={index} className={styles.cardDetailItem}>
-            <span className={styles.cardDetailLabel}>{fact.label}</span>
-            <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
-              {index === 0 ? <Clock size={14} /> : <Calendar size={14} />}
-              <span>{fact.value}</span>
+        {getQuickFacts(contract).slice(0, 2).map((fact, index) => {
+          const IconComp = getQuickFactIcon(fact.label);
+          return (
+            <div key={index} className={styles.cardDetailItem}>
+              <span className={styles.cardDetailLabel}>{fact.label}</span>
+              <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
+                <IconComp size={14} />
+                <span>{fact.value}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div className={`${styles.cardDetailItem} ${styles.fullWidth}`}>
           <span className={styles.cardDetailLabel}>Upload-Datum</span>
@@ -5040,18 +5066,17 @@ export default function Contracts() {
                                 </div>
                               </td>
                               {/* 📊 Dynamische QuickFacts Spalten */}
-                              {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => (
-                                <td key={factIndex} title={fact.label}>
-                                  <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
-                                    {factIndex === 0 ? (
-                                      <Clock size={14} className={styles.detailIcon} />
-                                    ) : (
-                                      <Calendar size={14} className={styles.detailIcon} />
-                                    )}
-                                    <span>{fact.value}</span>
-                                  </div>
-                                </td>
-                              ))}
+                              {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => {
+                                const FactIcon = getQuickFactIcon(fact.label);
+                                return (
+                                  <td key={factIndex} title={fact.label}>
+                                    <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
+                                      <FactIcon size={14} className={styles.detailIcon} />
+                                      <span>{fact.value}</span>
+                                    </div>
+                                  </td>
+                                );
+                              })}
                               <td>
                                 <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
                                   {calculateSmartStatus(contract)}
@@ -5369,7 +5394,7 @@ export default function Contracts() {
               </div>
 
               {/* 📄 PDF Thumbnail — zuklappbar */}
-              {(previewPdfLoading || previewPdfUrl) && (
+              {(previewPdfLoading || previewPdfUrl || previewPdfError) && (
                 <div className={styles.previewThumbnailSection}>
                   <button
                     className={styles.previewThumbnailToggle}
@@ -5380,7 +5405,7 @@ export default function Contracts() {
                     {sidebarPdfCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
                   {!sidebarPdfCollapsed && (
-                    previewPdfLoading ? (
+                    previewPdfLoading && !previewPdfUrl ? (
                       <div className={styles.previewThumbnailLoading}>
                         <Loader size={24} className={styles.spinnerRotate} />
                       </div>
@@ -5389,12 +5414,27 @@ export default function Contracts() {
                         className={styles.previewThumbnail}
                         onClick={() => {
                           setSelectedContract(previewContract);
+                          setModalInitialTab('pdf');
                           setShowDetails(true);
                         }}
                       >
-                        <Document file={previewPdfUrl} loading={null} error={null}>
+                        <Document
+                          file={previewPdfUrl}
+                          loading={null}
+                          error={
+                            <div className={styles.previewThumbnailError}>
+                              <AlertCircle size={16} />
+                              <span>Vorschau nicht verfügbar</span>
+                            </div>
+                          }
+                        >
                           <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
                         </Document>
+                      </div>
+                    ) : previewPdfError ? (
+                      <div className={styles.previewThumbnailError}>
+                        <AlertCircle size={16} />
+                        <span>PDF-Vorschau nicht verfügbar</span>
                       </div>
                     ) : null
                   )}
@@ -5498,16 +5538,12 @@ export default function Contracts() {
                 {/* Info Grid - 2 Spalten - 📊 Dynamische QuickFacts */}
                 <div className={styles.previewInfo}>
                   {getQuickFacts(previewContract).map((fact, index) => {
-                    // Icons basierend auf Index oder Label
-                    const iconColors = ['#6366f1', '#f59e0b', '#10b981'];
-                    const icons = [Calendar, Clock, RotateCcw];
-                    const IconComponent = icons[index] || Calendar;
-
+                    const FactIcon = getQuickFactIcon(fact.label);
                     return (
                       <div key={index} className={styles.previewInfoItem}>
                         <span className={styles.previewLabel}>{fact.label}</span>
                         <span className={`${styles.previewValue} ${getRatingClass(fact.rating)}`}>
-                          <IconComponent size={14} style={{ color: iconColors[index] || '#64748b' }} />
+                          <FactIcon size={14} style={{ color: '#64748b' }} />
                           {fact.value}
                         </span>
                       </div>
@@ -5582,7 +5618,15 @@ export default function Contracts() {
                         </li>
                       ))}
                       {previewContract.risiken.length > 3 && (
-                        <li className={styles.previewMore}>+{previewContract.risiken.length - 3} weitere Risiken</li>
+                        <li
+                          className={styles.previewMore}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => {
+                            setSelectedContract(previewContract);
+                            setModalInitialTab('analysis');
+                            setShowDetails(true);
+                          }}
+                        >+{previewContract.risiken.length - 3} weitere Risiken anzeigen</li>
                       )}
                     </ul>
                   </div>
@@ -5625,10 +5669,13 @@ export default function Contracts() {
                 <div className={styles.previewQuickActions}>
                   <button
                     className={styles.previewQuickAction}
-                    onClick={() => openSmartPDF(previewContract, true)}
-                    disabled={pdfLoading[previewContract._id]}
+                    onClick={() => {
+                      setSelectedContract(previewContract);
+                      setModalInitialTab('pdf');
+                      setShowDetails(true);
+                    }}
                   >
-                    {pdfLoading[previewContract._id] ? <Loader size={14} className={styles.spinning} /> : <ExternalLink size={14} />}
+                    <Eye size={14} />
                     PDF
                   </button>
                   {canEditContract(previewContract) && (
@@ -5747,9 +5794,11 @@ export default function Contracts() {
           onClose={() => {
             setShowDetails(false);
             setOpenEditModalDirectly(false);
+            setModalInitialTab(undefined);
             navigate('/contracts', { replace: true });
           }}
           openEditModalDirectly={openEditModalDirectly}
+          initialTab={modalInitialTab}
           onEdit={async (contractId) => {
             console.log("Contract updated:", contractId);
             const updatedContracts = await fetchContracts();

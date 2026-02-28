@@ -204,6 +204,7 @@ interface NewContractDetailsModalProps {
   contract: Contract;
   onClose: () => void;
   openEditModalDirectly?: boolean;
+  initialTab?: TabType;
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
 }
@@ -267,10 +268,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
   onClose,
   openEditModalDirectly = false,
+  initialTab,
   onEdit,
   onDelete
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'overview');
   const [contract, setContract] = useState<Contract>(initialContract);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
