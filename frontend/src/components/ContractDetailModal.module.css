@@ -800,6 +800,48 @@
 }
 
 /* ========================================
+   ADD FIELD DROPDOWN
+   ======================================== */
+
+.addFieldWrapper {
+  position: relative;
+}
+
+.addFieldDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  padding: 4px;
+  z-index: 50;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.addFieldItem {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.addFieldItem:hover {
+  background: #f1f5f9;
+  color: #3b82f6;
+}
+
+/* ========================================
    INLINE EDITING STYLES
    ======================================== */
 

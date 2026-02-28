@@ -311,6 +311,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [showAddFieldMenu, setShowAddFieldMenu] = useState(false);
+  const addFieldMenuRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
   // QuickFacts editing state
@@ -331,6 +333,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [actionsMenuOpen]);
+
+  // Close add-field menu on click outside
+  useEffect(() => {
+    if (!showAddFieldMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (addFieldMenuRef.current && !addFieldMenuRef.current.contains(e.target as Node)) {
+        setShowAddFieldMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAddFieldMenu]);
 
   // Update contract when prop changes
   useEffect(() => {
@@ -410,11 +424,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (editingField || editingQuickFact !== null || addingQuickFact) {
+        if (editingField || editingQuickFact !== null || addingQuickFact || showAddFieldMenu) {
           setEditingField(null);
           setEditValue('');
           setEditingQuickFact(null);
           setAddingQuickFact(false);
+          setShowAddFieldMenu(false);
         } else {
           onClose();
         }
@@ -422,7 +437,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [onClose, editingField, editingQuickFact, addingQuickFact]);
+  }, [onClose, editingField, editingQuickFact, addingQuickFact, showAddFieldMenu]);
 
   // Load PDF URL when PDF tab is opened
   const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
@@ -897,32 +912,115 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     return `${years} ${years === 1 ? 'Jahr' : 'Jahre'}, ${remainingMonths} ${remainingMonths === 1 ? 'Monat' : 'Monate'}`;
   };
 
+  // Definiere alle editierbaren Felder mit ihren Konfigurationen
+  const EDITABLE_FIELDS: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'dropdown';
+    options?: { value: string; label: string }[];
+    hasValue: () => boolean;
+    displayValue: () => string;
+    rawValue: () => string;
+  }> = [
+    {
+      key: 'anbieter', label: 'Anbieter', type: 'text',
+      hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
+      displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
+      rawValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
+    },
+    {
+      key: 'vertragsnummer', label: 'Vertragsnummer', type: 'text',
+      hasValue: () => !!contract.vertragsnummer,
+      displayValue: () => contract.vertragsnummer || '',
+      rawValue: () => contract.vertragsnummer || '',
+    },
+    {
+      key: 'gekuendigtZum', label: 'Gekündigt zum', type: 'date',
+      hasValue: () => !!contract.gekuendigtZum,
+      displayValue: () => contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
+      rawValue: () => contract.gekuendigtZum || '',
+    },
+    {
+      key: 'kuendigung', label: 'Kündigungsfrist', type: 'dropdown', options: KUENDIGUNG_OPTIONS,
+      hasValue: () => !!contract.kuendigung,
+      displayValue: () => contract.kuendigung || '',
+      rawValue: () => contract.kuendigung || '',
+    },
+    {
+      key: 'laufzeit', label: 'Laufzeit', type: 'dropdown', options: LAUFZEIT_OPTIONS,
+      hasValue: () => !!contract.laufzeit,
+      displayValue: () => contract.laufzeit || '',
+      rawValue: () => contract.laufzeit || '',
+    },
+    {
+      key: 'startDate', label: 'Vertragsbeginn', type: 'date',
+      hasValue: () => !!contract.startDate,
+      displayValue: () => contract.startDate ? formatDate(contract.startDate) : '',
+      rawValue: () => contract.startDate || '',
+    },
+    {
+      key: 'expiryDate', label: 'Enddatum', type: 'date',
+      hasValue: () => !!contract.expiryDate,
+      displayValue: () => contract.expiryDate ? formatDate(contract.expiryDate) : '',
+      rawValue: () => contract.expiryDate || '',
+    },
+    {
+      key: 'kosten', label: 'Monatliche Kosten', type: 'number',
+      hasValue: () => contract.kosten != null && contract.kosten > 0,
+      displayValue: () => contract.kosten != null && contract.kosten > 0 ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '',
+      rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
+    },
+  ];
+
   // Render Overview Tab
-  const renderOverviewTab = () => (
+  const renderOverviewTab = () => {
+    // Felder ohne Wert → im + Menü anbieten
+    const fieldsMissing = EDITABLE_FIELDS.filter(f => !f.hasValue() && editingField !== f.key);
+
+    return (
     <div className={styles.tabContent}>
       <div className={styles.section}>
-        <h3>📋 Vertragsdetails</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>📋 Vertragsdetails</span>
+          {fieldsMissing.length > 0 && (
+            <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
+              <button
+                className={styles.quickFactAddBtn}
+                onClick={() => setShowAddFieldMenu(!showAddFieldMenu)}
+                title="Feld hinzufügen"
+              >
+                <Plus size={16} />
+              </button>
+              {showAddFieldMenu && (
+                <div className={styles.addFieldDropdown}>
+                  {fieldsMissing.map((field) => (
+                    <button
+                      key={field.key}
+                      className={styles.addFieldItem}
+                      onClick={() => {
+                        setShowAddFieldMenu(false);
+                        startEditing(field.key, '');
+                      }}
+                    >
+                      {field.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </h3>
         <div className={styles.detailsGrid}>
-          {/* Vertragsname — inline editable */}
+          {/* Vertragsname — immer sichtbar, inline editable */}
           {renderInlineField('name', 'Vertragsname', fixUtf8Display(contract.name), contract.name, 'text')}
 
-          {/* Status — read-only (komplexe Seiteneffekte) */}
+          {/* Status — read-only */}
           <div className={styles.detailItem}>
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
 
-          {/* Anbieter — inline editable, manuelle + KI-Werte zusammengeführt */}
-          {(() => {
-            const anbieterDisplay = contract.anbieter || contract.provider?.displayName || contract.provider?.name || '';
-            const anbieterRaw = contract.anbieter || contract.provider?.displayName || contract.provider?.name || '';
-            // Show if manually set, or KI-confidence is high enough, or empty (for user to fill in)
-            const confidence = contract.provider?.confidence ?? contract.providerConfidence;
-            const shouldShow = !!contract.anbieter || !anbieterDisplay || (!!anbieterDisplay && (confidence === undefined || confidence >= 90));
-            return shouldShow ? renderInlineField('anbieter', 'Anbieter', anbieterDisplay, anbieterRaw, 'text') : null;
-          })()}
-
-          {/* Vertragstyp — read-only (KI-klassifiziert) */}
+          {/* Vertragstyp — read-only (KI-klassifiziert), nur wenn vorhanden */}
           {contract.contractType && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Vertragstyp:</span>
@@ -930,43 +1028,16 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </div>
           )}
 
-          {/* Vertragsnummer — inline editable */}
-          {renderInlineField('vertragsnummer', 'Vertragsnummer', contract.vertragsnummer || '', contract.vertragsnummer || '', 'text')}
-
-          {/* Gekündigt zum — inline editable (date) */}
-          {renderInlineField(
-            'gekuendigtZum', 'Gekündigt zum',
-            contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
-            contract.gekuendigtZum || '', 'date'
-          )}
-
-          {/* Kündigungsfrist — inline editable (dropdown) */}
-          {renderInlineField(
-            'kuendigung', 'Kündigungsfrist',
-            contract.kuendigung || '', contract.kuendigung || '',
-            'dropdown', KUENDIGUNG_OPTIONS
-          )}
-
-          {/* Laufzeit — inline editable (dropdown) */}
-          {renderInlineField(
-            'laufzeit', 'Laufzeit',
-            contract.laufzeit || '', contract.laufzeit || '',
-            'dropdown', LAUFZEIT_OPTIONS
-          )}
-
-          {/* Vertragsbeginn — inline editable (date) */}
-          {renderInlineField(
-            'startDate', 'Vertragsbeginn',
-            contract.startDate ? formatDate(contract.startDate) : '',
-            contract.startDate || '', 'date'
-          )}
-
-          {/* Enddatum — inline editable (date) */}
-          {renderInlineField(
-            'expiryDate', 'Enddatum',
-            contract.expiryDate ? formatDate(contract.expiryDate) : '',
-            contract.expiryDate || '', 'date'
-          )}
+          {/* Editierbare Felder — nur anzeigen wenn Wert vorhanden ODER gerade editiert */}
+          {EDITABLE_FIELDS.map((field) => {
+            const isBeingEdited = editingField === field.key;
+            if (!field.hasValue() && !isBeingEdited) return null;
+            return (
+              <React.Fragment key={field.key}>
+                {renderInlineField(field.key, field.label, field.displayValue(), field.rawValue(), field.type, field.options)}
+              </React.Fragment>
+            );
+          })}
 
           {/* Restlaufzeit — read-only (berechneter Wert) */}
           {(contract.expiryDate || contract.gekuendigtZum) && (
@@ -979,15 +1050,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 {calculateRemainingTime(contract.gekuendigtZum || contract.expiryDate || '')}
               </span>
             </div>
-          )}
-
-          {/* Monatliche Kosten — inline editable (number) */}
-          {renderInlineField(
-            'kosten', 'Monatliche Kosten',
-            contract.kosten != null && contract.kosten > 0
-              ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-              : '',
-            contract.kosten != null ? String(contract.kosten) : '', 'number'
           )}
 
           {/* Hochgeladen am — read-only (Systemfeld) */}
@@ -1384,6 +1446,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       )}
     </div>
   );
+  };
 
   // Open PDF in new tab
   const handleOpenPdfInNewTab = () => {
