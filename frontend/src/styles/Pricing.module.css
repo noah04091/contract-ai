@@ -73,7 +73,6 @@
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  margin-bottom: -20px;
   position: relative;
   z-index: 10;
   overflow: hidden;
@@ -247,8 +246,6 @@
   padding: 3rem 2rem 2rem;
   text-align: center;
   background: linear-gradient(180deg, #fff5f0 0%, #fafbfc 100%);
-  position: relative;
-  z-index: 11;
 }
 
 .billingToggle {
