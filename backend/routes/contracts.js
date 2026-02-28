@@ -107,87 +107,92 @@ const extractEndDateFromImportantDates = (importantDates) => {
   return null;
 };
 
-// ===== PUPPETEER FÜR AUTO-PDF =====
-let puppeteer;
-let chromium;
+// ===== LAZY-LOAD PDF-GENERATOREN (für Auto-PDF bei Vertragserstellung) =====
+let generatePDFv2 = null;
+let generatePDFv3 = null;
 
-try {
-  chromium = require('@sparticuz/chromium');
-  puppeteer = require('puppeteer-core');
-} catch (error) {
-  try {
-    puppeteer = require('puppeteer');
-  } catch (puppeteerError) {
-    console.warn('⚠️ [PUPPETEER] Puppeteer not available:', puppeteerError.message);
+const loadPDFGenerators = async () => {
+  if (!generatePDFv2) {
+    try {
+      const v2Module = require('../services/pdfGeneratorV2');
+      generatePDFv2 = v2Module.generatePDFv2;
+    } catch (err) {
+      console.error('⚠️ PDF V2 Generator konnte nicht geladen werden:', err.message);
+    }
   }
-}
+  if (!generatePDFv3) {
+    try {
+      const v3Module = require('../services/pdfGeneratorV3');
+      generatePDFv3 = v3Module.generatePDFv3;
+    } catch (err) {
+      console.error('⚠️ PDF V3 Generator konnte nicht geladen werden:', err.message);
+    }
+  }
+};
 
 // ============================================
-// 🆕 AUTO-PDF FUNKTION FÜR GENERIERTE VERTRÄGE
+// 🆕 AUTO-PDF FUNKTION FÜR GENERIERTE VERTRÄGE (React-PDF / pdfGeneratorV2)
 // ============================================
-const generatePDFAndUploadToS3ForContract = async (contractId, userId, htmlContent, contractName) => {
-  if (!puppeteer || !S3_AVAILABLE) {
-    return { success: false, error: 'Puppeteer oder S3 nicht verfügbar' };
+const generatePDFAndUploadToS3ForContract = async (contractId, userId, contractText, contractName, designVariant) => {
+  if (!S3_AVAILABLE) {
+    return { success: false, error: 'S3 nicht verfügbar' };
   }
 
-  let browser = null;
-
   try {
-    if (chromium) {
-      browser = await puppeteer.launch({
-        args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--no-zygote', '--single-process'],
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless || 'new',
-        ignoreHTTPSErrors: true
-      });
-    } else {
-      browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-      });
+    await loadPDFGenerators();
+    if (!generatePDFv2) {
+      return { success: false, error: 'PDF Generator nicht verfügbar' };
     }
 
-    const page = await browser.newPage();
-    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
-    await page.setContent(htmlContent, { waitUntil: ['networkidle0', 'domcontentloaded'], timeout: 30000 });
-    await page.evaluateHandle('document.fonts.ready');
+    // Company Profile laden (optional)
+    let companyProfile = null;
+    try {
+      const rawProfile = await client.db("contract_ai").collection("company_profiles").findOne({
+        $or: [{ userId: new ObjectId(userId) }, { userId: userId }]
+      });
+      if (rawProfile) {
+        companyProfile = { ...rawProfile, zip: rawProfile.postalCode || rawProfile.zip || '' };
+      }
+    } catch (e) { /* optional */ }
 
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '25.4mm', bottom: '25.4mm', left: '25.4mm', right: '25.4mm' }
-    });
+    // Contract Daten für Parties
+    const contract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
+    const parties = contract?.formData || contract?.metadata?.parties || {};
+    const contractType = contract?.contractType || 'Vertrag';
 
-    await browser.close();
-    browser = null;
+    // PDF generieren mit React-PDF
+    const pdfBuffer = await generatePDFv2(
+      contractText,
+      companyProfile,
+      contractType,
+      parties,
+      false,  // isDraft
+      designVariant || contract?.designVariant || 'executive',
+      contractId.toString()
+    );
 
-
+    // S3 Upload
     const timestamp = Date.now();
     const sanitizedName = (contractName || 'vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß.-]/g, '-');
-    const fileName = `${sanitizedName}-${timestamp}.pdf`;
-    const s3Key = `contracts/${userId}/${fileName}`;
+    const s3Key = `contracts/${userId}/${sanitizedName}-${timestamp}.pdf`;
 
-    const uploadCommand = new PutObjectCommand({
+    await s3Instance.send(new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: pdfBuffer,
       ContentType: 'application/pdf',
       Metadata: { contractId: contractId.toString(), userId: userId.toString(), source: 'auto-generated' }
-    });
+    }));
 
-    await s3Instance.send(uploadCommand);
-
+    // DB aktualisieren
     await contractsCollection.updateOne(
       { _id: new ObjectId(contractId) },
-      { $set: { s3Key: s3Key, pdfUploaded: true, pdfUploadedAt: new Date(), pdfAutoGenerated: true } }
+      { $set: { s3Key, pdfUploaded: true, pdfUploadedAt: new Date(), pdfAutoGenerated: true } }
     );
 
     return { success: true, s3Key };
-
   } catch (error) {
-    console.error(`❌ [AUTO-PDF] Fehler:`, error.message);
-    if (browser) { try { await browser.close(); } catch (e) { console.warn('⚠️ [BROWSER] Close failed:', e.message); } }
+    console.error(`❌ [AUTO-PDF] React-PDF Generierung fehlgeschlagen:`, error.message);
     return { success: false, error: error.message };
   }
 };
@@ -1440,22 +1445,24 @@ router.post("/", verifyToken, async (req, res) => {
       console.error(`❌ [Legal Lens] Vorverarbeitung Exception für ${name}:`, err);
     });
 
-    // 🆕 AUTO-PDF: Für generierte Verträge mit HTML automatisch PDF erstellen und zu S3 hochladen
-    if (isGenerated && finalHTML && finalHTML.length > 100) {
-      generatePDFAndUploadToS3ForContract(
-        contractId.toString(),
-        req.user.userId,
-        finalHTML,
-        name
-      ).then(pdfResult => {
+    // 🆕 AUTO-PDF: Für generierte Verträge automatisch PDF erstellen (React-PDF) und zu S3 hochladen
+    if (isGenerated && content && content.length > 50) {
+      try {
+        const pdfResult = await generatePDFAndUploadToS3ForContract(
+          contractId.toString(),
+          req.user.userId,
+          content,
+          name,
+          designVariant
+        );
         if (pdfResult.success) {
+          contractDoc.s3Key = pdfResult.s3Key;
         } else {
           console.error(`❌ [AUTO-PDF] Fehlgeschlagen für ${name}:`, pdfResult.error);
         }
-      }).catch(err => {
+      } catch (err) {
         console.error(`❌ [AUTO-PDF] Exception für ${name}:`, err);
-      });
-    } else if (isGenerated) {
+      }
     }
 
     // 🔍 VECTOR EMBEDDING für Legal Pulse Monitoring (Background)
@@ -3788,28 +3795,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
 // 🆕 PDF V2 & V3 - Alternative PDF-Generierungsmethoden
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Lazy-load der PDF-Generatoren (vermeidet Startup-Probleme)
-let generatePDFv2 = null;
-let generatePDFv3 = null;
-
-const loadPDFGenerators = async () => {
-  if (!generatePDFv2) {
-    try {
-      const v2Module = require('../services/pdfGeneratorV2');
-      generatePDFv2 = v2Module.generatePDFv2;
-    } catch (err) {
-      console.error('⚠️ PDF V2 Generator konnte nicht geladen werden:', err.message);
-    }
-  }
-  if (!generatePDFv3) {
-    try {
-      const v3Module = require('../services/pdfGeneratorV3');
-      generatePDFv3 = v3Module.generatePDFv3;
-    } catch (err) {
-      console.error('⚠️ PDF V3 Generator konnte nicht geladen werden:', err.message);
-    }
-  }
-};
+// NOTE: generatePDFv2, generatePDFv3, loadPDFGenerators sind oben definiert (für Auto-PDF bei Vertragserstellung)
 
 /**
  * POST /api/contracts/:id/pdf

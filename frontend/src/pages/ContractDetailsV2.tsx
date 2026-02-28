@@ -81,6 +81,8 @@ interface Contract {
   s3Key?: string;
   content?: string;
   contentHTML?: string;
+  contractHTML?: string;
+  designVariant?: string;
   signature?: string;
   isGenerated?: boolean;
   createdAt?: string;
@@ -277,23 +279,41 @@ export default function ContractDetailsV2() {
   // Fetch PDF URL for inline viewer
   useEffect(() => {
     const fetchPdfUrl = async () => {
-      if (!contract?._id || !contract?.s3Key) return;
+      if (!contract?._id) return;
 
       setPdfLoading(true);
       try {
         const token = localStorage.getItem('token');
-        // Use the same API endpoint as NewContractDetailsModal
-        const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.fileUrl || data.url) {
-            setPdfUrl(data.fileUrl || data.url);
+
+        if (contract?.s3Key) {
+          // Normal: PDF von S3 laden
+          const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.fileUrl || data.url) {
+              setPdfUrl(data.fileUrl || data.url);
+            }
+          }
+        } else if (contract?.content || contract?.contractHTML) {
+          // Fallback: PDF on-demand generieren via React-PDF
+          const res = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ design: contract.designVariant || 'executive' })
+          });
+          if (res.ok) {
+            const blob = await res.blob();
+            setPdfUrl(window.URL.createObjectURL(blob));
           }
         }
       } catch (error) {
@@ -439,9 +459,10 @@ export default function ContractDetailsV2() {
     if (!contract) return;
 
     try {
-      // Use consistent API endpoint
+      const token = localStorage.getItem('token');
+
+      // S3 PDF laden
       if (contract._id && contract.s3Key) {
-        const token = localStorage.getItem('token');
         const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -455,6 +476,25 @@ export default function ContractDetailsV2() {
             window.open(data.fileUrl || data.url, '_blank');
             return;
           }
+        }
+      }
+
+      // Fallback: PDF on-demand generieren via React-PDF
+      if (contract._id && (contract.content || contract.contractHTML)) {
+        const res = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ design: contract.designVariant || 'executive' })
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
+          return;
         }
       }
 
