@@ -108,25 +108,6 @@ export default function Pricing() {
     return () => clearInterval(spotsTimer);
   }, []);
 
-  // P6: Scroll-Reveal für FAQ + Comparison
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add(styles.visible);
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
-    );
-
-    const elements = document.querySelectorAll(`.${styles.animateOnScroll}`);
-    elements.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
-
   // Open Stripe Portal for existing subscribers (upgrades/downgrades)
   const openStripePortal = async () => {
     setLoading(true);
@@ -677,7 +658,7 @@ export default function Pricing() {
           <div className={styles.scrollHint}>
             <span>← Wische um mehr zu sehen →</span>
           </div>
-          <div className={`${styles.tableWrapper} ${styles.animateOnScroll}`}>
+          <div className={styles.tableWrapper}>
             <table className={styles.featureTable}>
               <thead>
                 <tr>
@@ -741,7 +722,7 @@ export default function Pricing() {
             {faqs.map((faq, i) => (
               <motion.div
                 key={i}
-                className={`${styles.faqItem} ${openFaq === i ? styles.faqOpen : ''} ${styles.animateOnScroll}`}
+                className={`${styles.faqItem} ${openFaq === i ? styles.faqOpen : ''}`}
                 initial={false}
               >
                 <button
