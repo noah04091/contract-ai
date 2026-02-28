@@ -1694,19 +1694,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             title="Contract PDF"
             style={{ border: '1px solid #e5e7eb', borderRadius: '8px' }}
           />
-          {/* Download und Öffnen Buttons */}
-          <div className={styles.pdfActions}>
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.downloadButton}
-              style={{ textDecoration: 'none' }}
-            >
-              <ExternalLink size={18} />
-              PDF in neuem Tab öffnen
-            </a>
-          </div>
         </div>
       </div>
     );
