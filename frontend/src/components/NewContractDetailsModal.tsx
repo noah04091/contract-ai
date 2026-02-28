@@ -957,6 +957,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     rawValue: () => string;
   }> = [
     {
+      key: 'contractType', label: 'Vertragstyp', type: 'text',
+      hasValue: () => !!contract.contractType,
+      displayValue: () => contract.contractType || '',
+      rawValue: () => contract.contractType || '',
+    },
+    {
       key: 'anbieter', label: 'Anbieter', type: 'text',
       hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
       displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
@@ -1063,14 +1069,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
-
-          {/* Vertragstyp — read-only (KI-klassifiziert), nur wenn vorhanden */}
-          {contract.contractType && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Vertragstyp:</span>
-              <span className={styles.value} style={{ textTransform: 'capitalize' }}>{contract.contractType}</span>
-            </div>
-          )}
 
           {/* Editierbare Felder — nur anzeigen wenn Wert vorhanden ODER gerade editiert */}
           {EDITABLE_FIELDS.map((field) => {
