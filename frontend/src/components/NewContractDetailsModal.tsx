@@ -399,7 +399,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   }, [onClose]);
 
   // Load PDF URL when PDF tab is opened
-  const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML);
+  const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
   useEffect(() => {
     if (activeTab === 'pdf' && hasPdfSource && !pdfUrl && !pdfLoading) {
       loadPdfUrl();
@@ -518,8 +518,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         if (data.fileUrl || data.url) {
           setPdfUrl(data.fileUrl || data.url);
         }
-      } else if (contract.content || contract.contractHTML) {
-        // Fallback: PDF on-demand generieren via React-PDF
+      } else if (contract.content || contract.contractHTML || contract.isGenerated) {
+        // Fallback: PDF on-demand generieren via React-PDF (isGenerated als Fallback, da content nicht in der Liste geladen wird)
         const response = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
           method: 'POST',
           headers: {
@@ -1081,7 +1081,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     }
 
-    if (!contract.s3Key && !contract.content && !contract.contractHTML) {
+    if (!contract.s3Key && !contract.content && !contract.contractHTML && !contract.isGenerated) {
       return (
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>

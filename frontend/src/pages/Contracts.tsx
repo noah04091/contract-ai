@@ -711,29 +711,54 @@ export default function Contracts() {
 
       // Build URL with smart type parameter
       const typeParam = (hasSignedPDF && preferSigned) ? '&type=signed' : '';
-      const url = `/api/s3/view?contractId=${contract._id}${typeParam}`;
 
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
+      if (contract.s3Key) {
+        // Normal: PDF von S3 laden
+        const url = `/api/s3/view?contractId=${contract._id}${typeParam}`;
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok && (data.url || data.fileUrl)) {
-        const pdfUrl = data.url || data.fileUrl;
-        console.log(`✅ ${hasSignedPDF && preferSigned ? 'Signed' : 'Original'} PDF URL fetched:`, pdfUrl);
-
-        if (tempWindow && !tempWindow.closed) {
-          tempWindow.location.href = pdfUrl;
+        if (response.ok && (data.url || data.fileUrl)) {
+          const pdfUrl = data.url || data.fileUrl;
+          if (tempWindow && !tempWindow.closed) {
+            tempWindow.location.href = pdfUrl;
+          } else {
+            window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+          }
         } else {
-          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+          throw new Error(data.error || 'Failed to load PDF');
+        }
+      } else if (contract.isGenerated) {
+        // Fallback: PDF on-demand generieren via React-PDF
+        const response = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ design: 'executive' })
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          if (tempWindow && !tempWindow.closed) {
+            tempWindow.location.href = blobUrl;
+          } else {
+            window.open(blobUrl, '_blank', 'noopener,noreferrer');
+          }
+        } else {
+          throw new Error('PDF-Generierung fehlgeschlagen');
         }
       } else {
-        throw new Error(data.error || 'Failed to load PDF');
+        throw new Error('Keine PDF verfügbar');
       }
     } catch (error) {
       console.error('❌ Error opening PDF:', error);
