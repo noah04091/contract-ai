@@ -94,7 +94,7 @@ const About: React.FC = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const parallaxRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer für Timeline-Animation
+  // Intersection Observer für Timeline + Scroll-Reveal
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -107,8 +107,13 @@ const About: React.FC = () => {
       { threshold: 0.2, rootMargin: '0px 0px -50px 0px' }
     );
 
-    const timelineItems = document.querySelectorAll(`.${styles.timelineItem}`);
-    timelineItems.forEach((item) => observer.observe(item));
+    const selectors = [
+      `.${styles.timelineItem}`,
+      `.${styles.animateOnScroll}`
+    ];
+    selectors.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => observer.observe(el));
+    });
 
     return () => observer.disconnect();
   }, []);
@@ -203,11 +208,10 @@ const About: React.FC = () => {
             Unsere Werte
           </h2>
           <div className={styles.valuesGrid}>
-            {values.map((value, index) => (
+            {values.map((value) => (
               <div
                 key={value.title}
-                className={`${styles.valueCard} fadeInUp`}
-                style={{ animationDelay: `${0.4 + index * 0.1}s` }}
+                className={`${styles.valueCard} ${styles.animateOnScroll}`}
               >
                 <div className={`${styles.valueIcon} ${styles[value.colorClass]}`}>
                   {value.icon}
@@ -243,12 +247,12 @@ const About: React.FC = () => {
 
         {/* Testimonial Section */}
         <section className={styles.testimonialSection}>
-          <div className={styles.testimonialContent}>
+          <div className={`${styles.testimonialContent} ${styles.animateOnScroll}`}>
             <Quote className={styles.testimonialQuoteIcon} size={48} />
-            <blockquote className={`${styles.testimonialQuote} fadeInUp`}>
+            <blockquote className={styles.testimonialQuote}>
               "{testimonial.quote}"
             </blockquote>
-            <div className={`${styles.testimonialAuthor} fadeInUp`} style={{ animationDelay: '0.2s' }}>
+            <div className={styles.testimonialAuthor}>
               <span className={styles.authorName}>{testimonial.author}</span>
               <span className={styles.authorRole}>{testimonial.role}, {testimonial.company}</span>
             </div>
@@ -263,7 +267,7 @@ const About: React.FC = () => {
 
           <div className={styles.teamGrid}>
             {/* Team Member 1 */}
-            <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.6s' }}>
+            <div className={`${styles.teamMember} ${styles.animateOnScroll}`}>
               <div className={styles.memberImageWrapper}>
                 <img
                   src={noahImg}
@@ -276,7 +280,7 @@ const About: React.FC = () => {
             </div>
 
             {/* Team Member 2 */}
-            <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.7s' }}>
+            <div className={`${styles.teamMember} ${styles.animateOnScroll}`}>
               <div className={styles.memberImageWrapper}>
                 <img
                   src={michaelImg}
@@ -289,7 +293,7 @@ const About: React.FC = () => {
             </div>
 
             {/* Team Member 3 */}
-            <div className={`${styles.teamMember} fadeInUp`} style={{ animationDelay: '0.8s' }}>
+            <div className={`${styles.teamMember} ${styles.animateOnScroll}`}>
               <div className={styles.memberImageWrapper}>
                 <img
                   src={lauraImg}
