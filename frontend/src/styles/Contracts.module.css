@@ -2075,6 +2075,29 @@
   transform: scale(1.05);
 }
 
+/* 📄 PDF Thumbnail in Preview Panel */
+.previewThumbnail {
+  max-height: 240px;
+  overflow: hidden;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  position: relative;
+  transition: opacity 0.15s ease;
+}
+
+.previewThumbnail:hover {
+  opacity: 0.9;
+}
+
+.previewThumbnailLoading {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  color: #94a3b8;
+}
+
 .previewContent {
   flex: 1;
   overflow-y: auto;

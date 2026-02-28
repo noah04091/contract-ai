@@ -3965,6 +3965,9 @@ export default function Generate() {
 
       if (res.ok) {
         const contractId = data.contractId || savedContractId;
+        if (data.contract?.s3Key) {
+          setContractS3Key(data.contract.s3Key);
+        }
         console.log(isUpdate ? "✅ Vertrag aktualisiert:" : "✅ Vertrag gespeichert:", contractId);
 
         if (!savedContractId) {

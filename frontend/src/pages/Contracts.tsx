@@ -32,6 +32,9 @@ import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Up
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 Reminder Settings Modal
 import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
 import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅 KI-extrahierte wichtige Termine
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
@@ -43,6 +46,9 @@ import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverläss
 import { triggerOnboardingSync, useOnboarding } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
+
+// PDF.js Worker konfigurieren
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface Contract {
   _id: string;
@@ -329,6 +335,8 @@ export default function Contracts() {
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 🆕 Enterprise View Mode
   const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
+  const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
 
   // 📱 MOBILE UX: Filter-Bottom-Sheet und Upload-Tabs
   const [showMobileFilterSheet, setShowMobileFilterSheet] = useState(false);
@@ -590,6 +598,63 @@ export default function Contracts() {
       };
     }
   }, [showDetails, selectedContract]);
+
+  // 📄 PDF-Thumbnail für Preview Panel laden
+  useEffect(() => {
+    if (!previewContract) {
+      setPreviewPdfUrl(prev => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
+      return;
+    }
+
+    let cancelled = false;
+    let blobUrl: string | null = null;
+
+    const loadPreviewPdf = async () => {
+      setPreviewPdfLoading(true);
+      setPreviewPdfUrl(prev => {
+        if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+        return null;
+      });
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        if (previewContract.s3Key) {
+          const res = await fetch(`/api/s3/view?contractId=${previewContract._id}&type=original`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include'
+          });
+          if (res.ok && !cancelled) {
+            const data = await res.json();
+            setPreviewPdfUrl(data.fileUrl || data.url || null);
+          }
+        } else if (previewContract.isGenerated) {
+          const res = await fetch(`/api/contracts/${previewContract._id}/pdf-v2`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ design: 'executive' })
+          });
+          if (res.ok && !cancelled) {
+            const blob = await res.blob();
+            blobUrl = URL.createObjectURL(blob);
+            setPreviewPdfUrl(blobUrl);
+          }
+        }
+      } catch (e) {
+        console.error('Preview PDF load error:', e);
+      } finally {
+        if (!cancelled) setPreviewPdfLoading(false);
+      }
+    };
+
+    loadPreviewPdf();
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [previewContract?._id]);
 
   // 📁 Handle folder reorder (move up/down)
   const handleMoveFolderUp = async (folderId: string) => {
@@ -5286,6 +5351,25 @@ export default function Contracts() {
                   <X size={18} />
                 </button>
               </div>
+
+              {/* 📄 PDF Thumbnail */}
+              {previewPdfLoading ? (
+                <div className={styles.previewThumbnailLoading}>
+                  <Loader size={24} className={styles.spinnerRotate} />
+                </div>
+              ) : previewPdfUrl ? (
+                <div
+                  className={styles.previewThumbnail}
+                  onClick={() => {
+                    setSelectedContract(previewContract);
+                    setShowDetails(true);
+                  }}
+                >
+                  <Document file={previewPdfUrl} loading={null} error={null}>
+                    <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
+                  </Document>
+                </div>
+              ) : null}
 
               <div className={styles.previewContent}>
                 {/* Status Badge - kompakt unter Header */}
