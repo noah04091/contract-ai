@@ -25,6 +25,7 @@ export interface UserData {
   emailNotifications: boolean;
   contractReminders: boolean;
   onboarding?: OnboardingState;
+  uiPreferences?: Record<string, unknown>;
 }
 
 export const fetchUserData = async (): Promise<UserData> => {

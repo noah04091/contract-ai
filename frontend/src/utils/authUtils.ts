@@ -49,6 +49,12 @@ export interface UserData {
 
   // 🎓 Onboarding (aus Backend)
   onboarding?: OnboardingState;
+
+  // 🎨 UI-Preferences (geräteübergreifend gespeichert)
+  uiPreferences?: {
+    sidebarPdfCollapsed?: boolean;
+    [key: string]: unknown;
+  };
 }
 
 // ✅ DEINE HELPER-FUNKTIONEN (behalten!)

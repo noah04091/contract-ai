@@ -552,7 +552,9 @@ router.get("/me", verifyToken, async (req, res) => {
           companyProfileComplete: false,
           firstAnalysisComplete: false
         }
-      }
+      },
+      // 🎨 UI-Preferences (geräteübergreifend gespeichert)
+      uiPreferences: user.uiPreferences || {}
     };
 
     console.log("✅ User-Info erfolgreich geladen:", {
@@ -1244,6 +1246,26 @@ router.put("/update-profile", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Fehler beim Aktualisieren des Profils:", err);
     res.status(500).json({ message: "Serverfehler beim Aktualisieren" });
+  }
+});
+
+// 🎨 PATCH /api/auth/ui-preferences - UI-Einstellungen geräteübergreifend speichern
+router.patch("/ui-preferences", verifyToken, async (req, res) => {
+  try {
+    const updates = {};
+    for (const [key, value] of Object.entries(req.body)) {
+      updates[`uiPreferences.${key}`] = value;
+    }
+
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      { $set: { ...updates, updatedAt: new Date() } }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Fehler bei /ui-preferences:", err);
+    res.status(500).json({ message: "Serverfehler" });
   }
 });
 

@@ -337,6 +337,9 @@ export default function Contracts() {
   const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
   const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
+  const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
+    () => !!user?.uiPreferences?.sidebarPdfCollapsed
+  ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
 
   // 📱 MOBILE UX: Filter-Bottom-Sheet und Upload-Tabs
   const [showMobileFilterSheet, setShowMobileFilterSheet] = useState(false);
@@ -655,6 +658,19 @@ export default function Contracts() {
       if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
   }, [previewContract?._id]);
+
+  // 📄 PDF-Thumbnail Toggle — geräteübergreifend speichern
+  const toggleSidebarPdf = () => {
+    const newValue = !sidebarPdfCollapsed;
+    setSidebarPdfCollapsed(newValue);
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    fetch('/api/auth/ui-preferences', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ sidebarPdfCollapsed: newValue })
+    }).catch(e => console.error('UI-Preference save error:', e));
+  };
 
   // 📁 Handle folder reorder (move up/down)
   const handleMoveFolderUp = async (folderId: string) => {
@@ -5352,24 +5368,38 @@ export default function Contracts() {
                 </button>
               </div>
 
-              {/* 📄 PDF Thumbnail */}
-              {previewPdfLoading ? (
-                <div className={styles.previewThumbnailLoading}>
-                  <Loader size={24} className={styles.spinnerRotate} />
+              {/* 📄 PDF Thumbnail — zuklappbar */}
+              {(previewPdfLoading || previewPdfUrl) && (
+                <div className={styles.previewThumbnailSection}>
+                  <button
+                    className={styles.previewThumbnailToggle}
+                    onClick={toggleSidebarPdf}
+                    title={sidebarPdfCollapsed ? 'PDF-Vorschau einblenden' : 'PDF-Vorschau ausblenden'}
+                  >
+                    <span className={styles.previewThumbnailToggleLabel}>PDF-Vorschau</span>
+                    {sidebarPdfCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  </button>
+                  {!sidebarPdfCollapsed && (
+                    previewPdfLoading ? (
+                      <div className={styles.previewThumbnailLoading}>
+                        <Loader size={24} className={styles.spinnerRotate} />
+                      </div>
+                    ) : previewPdfUrl ? (
+                      <div
+                        className={styles.previewThumbnail}
+                        onClick={() => {
+                          setSelectedContract(previewContract);
+                          setShowDetails(true);
+                        }}
+                      >
+                        <Document file={previewPdfUrl} loading={null} error={null}>
+                          <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
+                        </Document>
+                      </div>
+                    ) : null
+                  )}
                 </div>
-              ) : previewPdfUrl ? (
-                <div
-                  className={styles.previewThumbnail}
-                  onClick={() => {
-                    setSelectedContract(previewContract);
-                    setShowDetails(true);
-                  }}
-                >
-                  <Document file={previewPdfUrl} loading={null} error={null}>
-                    <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
-                  </Document>
-                </div>
-              ) : null}
+              )}
 
               <div className={styles.previewContent}>
                 {/* Status Badge - kompakt unter Header */}
