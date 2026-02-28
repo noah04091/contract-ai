@@ -378,7 +378,7 @@ const providerPatterns = {
     email: 'kuendigung@ing.de',
     phone: '069 27 222 0',
     address: { street: 'Theodor-Heuss-Allee 2', zip: '60486', city: 'Frankfurt am Main' },
-    keywords: ['ing', 'ing-diba', 'ing diba', 'diba'],
+    keywords: ['ing-diba', 'ing diba', 'ing bank', 'diba'],
     category: 'Bank'
   }
 };
