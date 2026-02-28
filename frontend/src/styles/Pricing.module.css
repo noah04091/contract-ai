@@ -246,6 +246,9 @@
   padding: 3rem 2rem 2rem;
   text-align: center;
   background: linear-gradient(180deg, #fff5f0 0%, #fafbfc 100%);
+  margin-top: -15px;
+  position: relative;
+  z-index: 11;
 }
 
 .billingToggle {
