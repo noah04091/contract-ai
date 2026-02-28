@@ -188,6 +188,10 @@ interface Contract {
     calculated?: boolean;
     source?: string;
   }>;
+  startDate?: string;
+  anbieter?: string;
+  kosten?: number;
+  vertragsnummer?: string;
 }
 
 interface NewContractDetailsModalProps {
@@ -718,11 +722,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
-          {/* 🆕 Anbieter/Provider - NUR anzeigen wenn Konfidenz >= 90% oder keine Konfidenz-Info (Rückwärtskompatibilität) */}
+          {/* 🆕 Anbieter/Provider - Manuell gesetzter Wert hat Priorität vor KI-extrahiertem */}
           {(() => {
+            if (contract.anbieter) {
+              return (
+                <div className={styles.detailItem}>
+                  <span className={styles.label}>Anbieter:</span>
+                  <span className={styles.value}>{contract.anbieter}</span>
+                </div>
+              );
+            }
             const hasProvider = contract.provider?.displayName || contract.provider?.name;
             const confidence = contract.provider?.confidence ?? contract.providerConfidence;
-            // Anzeigen wenn: Provider existiert UND (keine Konfidenz-Info ODER Konfidenz >= 90)
             const shouldShow = hasProvider && (confidence === undefined || confidence >= 90);
             return shouldShow ? (
               <div className={styles.detailItem}>
@@ -736,6 +747,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <div className={styles.detailItem}>
               <span className={styles.label}>Vertragstyp:</span>
               <span className={styles.value} style={{ textTransform: 'capitalize' }}>{contract.contractType}</span>
+            </div>
+          )}
+          {/* 🆕 Vertragsnummer */}
+          {contract.vertragsnummer && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Vertragsnummer:</span>
+              <span className={styles.value}>{contract.vertragsnummer}</span>
             </div>
           )}
           {/* 🆕 Gekündigt zum (für Kündigungsbestätigungen) - 🔒 Mit Konfidenz-Check */}
@@ -771,6 +789,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <span className={styles.value}>{contract.laufzeit}</span>
             </div>
           )}
+          {/* 🆕 Vertragsbeginn */}
+          {contract.startDate && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Vertragsbeginn:</span>
+              <span className={styles.value}>{formatDate(contract.startDate)}</span>
+            </div>
+          )}
           {/* 🔒 Enddatum - Mit Konfidenz-Check */}
           {shouldDisplayWithConfidence(
             contract.endDateConfidence,
@@ -796,6 +821,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               }}>
                 {calculateRemainingTime(contract.gekuendigtZum || contract.expiryDate || '')}
               </span>
+            </div>
+          )}
+          {/* 🆕 Monatliche Kosten */}
+          {contract.kosten != null && contract.kosten > 0 && (
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Monatliche Kosten:</span>
+              <span className={styles.value}>{contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
             </div>
           )}
           <div className={styles.detailItem}>
