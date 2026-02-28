@@ -98,6 +98,8 @@ interface Contract {
   createdAt: string;
   uploadDate?: string;
   content?: string;
+  contractHTML?: string;
+  designVariant?: string;
   isGenerated?: boolean;
   notes?: string;
   fullText?: string;
@@ -393,11 +395,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   }, [onClose]);
 
   // Load PDF URL when PDF tab is opened
+  const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML);
   useEffect(() => {
-    if (activeTab === 'pdf' && contract.s3Key && !pdfUrl && !pdfLoading) {
+    if (activeTab === 'pdf' && hasPdfSource && !pdfUrl && !pdfLoading) {
       loadPdfUrl();
     }
-  }, [activeTab, contract.s3Key]);
+  }, [activeTab, contract.s3Key, hasPdfSource]);
 
   // Load envelope details when signature tab is opened
   useEffect(() => {
@@ -491,22 +494,41 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   };
 
   const loadPdfUrl = async () => {
-    if (!contract.s3Key || contract.needsReupload) return;
+    if (contract.needsReupload) return;
 
     setPdfLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
 
-      const data = await response.json();
-      if (data.fileUrl || data.url) {
-        setPdfUrl(data.fileUrl || data.url);
+      if (contract.s3Key) {
+        // Normal: PDF von S3 laden
+        const response = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+        if (data.fileUrl || data.url) {
+          setPdfUrl(data.fileUrl || data.url);
+        }
+      } else if (contract.content || contract.contractHTML) {
+        // Fallback: PDF on-demand generieren via React-PDF
+        const response = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ design: contract.designVariant || 'executive' })
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          setPdfUrl(window.URL.createObjectURL(blob));
+        }
       }
     } catch (error) {
       console.error('Error loading PDF:', error);
@@ -1027,13 +1049,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     }
 
-    if (!contract.s3Key) {
+    if (!contract.s3Key && !contract.content && !contract.contractHTML) {
       return (
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>
             <FileText size={64} />
             <p>Kein PDF verfügbar</p>
-            <span className={styles.hint}>Für generierte Verträge ist kein PDF verfügbar.</span>
+            <span className={styles.hint}>Für diesen Vertrag ist kein PDF verfügbar.</span>
           </div>
         </div>
       );
@@ -1940,11 +1962,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <button
                 className={`${styles.tabButton} ${activeTab === 'pdf' ? styles.tabActive : ''}`}
                 onClick={() => setActiveTab('pdf')}
-                disabled={!contract.s3Key}
+                disabled={!hasPdfSource}
               >
                 <Eye size={18} />
                 <span>PDF</span>
-                {!contract.s3Key && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
+                {!hasPdfSource && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
               </button>
               <button
                 className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
