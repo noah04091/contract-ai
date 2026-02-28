@@ -841,6 +841,12 @@
   color: #3b82f6;
 }
 
+.addFieldDivider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 8px;
+}
+
 /* ========================================
    INLINE EDITING STYLES
    ======================================== */

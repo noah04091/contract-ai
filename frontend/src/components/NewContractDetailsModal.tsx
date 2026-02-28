@@ -194,6 +194,10 @@ interface Contract {
   anbieter?: string;
   kosten?: number;
   vertragsnummer?: string;
+  customFields?: Array<{
+    label: string;
+    value: string;
+  }>;
 }
 
 interface NewContractDetailsModalProps {
@@ -322,6 +326,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [qfRating, setQfRating] = useState<'good' | 'neutral' | 'bad'>('neutral');
   const [addingQuickFact, setAddingQuickFact] = useState(false);
 
+  // Custom fields editing state
+  const [addingCustomField, setAddingCustomField] = useState(false);
+  const [customFieldLabel, setCustomFieldLabel] = useState('');
+  const [customFieldValue, setCustomFieldValue] = useState('');
+  const [editingCustomField, setEditingCustomField] = useState<number | null>(null);
+
   // Close actions menu on click outside
   useEffect(() => {
     if (!actionsMenuOpen) return;
@@ -424,12 +434,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (editingField || editingQuickFact !== null || addingQuickFact || showAddFieldMenu) {
+        if (editingField || editingQuickFact !== null || addingQuickFact || showAddFieldMenu || addingCustomField || editingCustomField !== null) {
           setEditingField(null);
           setEditValue('');
           setEditingQuickFact(null);
           setAddingQuickFact(false);
           setShowAddFieldMenu(false);
+          setAddingCustomField(false);
+          setEditingCustomField(null);
         } else {
           onClose();
         }
@@ -437,7 +449,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [onClose, editingField, editingQuickFact, addingQuickFact, showAddFieldMenu]);
+  }, [onClose, editingField, editingQuickFact, addingQuickFact, showAddFieldMenu, addingCustomField, editingCustomField]);
 
   // Load PDF URL when PDF tab is opened
   const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
@@ -788,6 +800,28 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   };
 
+  // Custom fields save handler
+  const handleCustomFieldsSave = async (updatedFields: Array<{ label: string; value: string }>) => {
+    setSaving(true);
+    try {
+      const response = await apiCall(`/contracts/${contract._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ customFields: updatedFields }),
+      }) as Record<string, unknown>;
+      if (response.success !== false) {
+        setContract(prev => ({ ...prev, customFields: updatedFields } as Contract));
+        toast.success('Gespeichert');
+        if (onEdit) onEdit(contract._id);
+      }
+    } catch {
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
+      setAddingCustomField(false);
+      setEditingCustomField(null);
+    }
+  };
+
   /**
    * Renders a field in read or edit mode depending on editingField state.
    */
@@ -982,33 +1016,43 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       <div className={styles.section}>
         <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>📋 Vertragsdetails</span>
-          {fieldsMissing.length > 0 && (
-            <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
-              <button
-                className={styles.quickFactAddBtn}
-                onClick={() => setShowAddFieldMenu(!showAddFieldMenu)}
-                title="Feld hinzufügen"
-              >
-                <Plus size={16} />
-              </button>
-              {showAddFieldMenu && (
-                <div className={styles.addFieldDropdown}>
-                  {fieldsMissing.map((field) => (
-                    <button
-                      key={field.key}
-                      className={styles.addFieldItem}
-                      onClick={() => {
-                        setShowAddFieldMenu(false);
-                        startEditing(field.key, '');
-                      }}
-                    >
-                      {field.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
+            <button
+              className={styles.quickFactAddBtn}
+              onClick={() => setShowAddFieldMenu(!showAddFieldMenu)}
+              title="Feld hinzufügen"
+            >
+              <Plus size={16} />
+            </button>
+            {showAddFieldMenu && (
+              <div className={styles.addFieldDropdown}>
+                {fieldsMissing.map((field) => (
+                  <button
+                    key={field.key}
+                    className={styles.addFieldItem}
+                    onClick={() => {
+                      setShowAddFieldMenu(false);
+                      startEditing(field.key, '');
+                    }}
+                  >
+                    {field.label}
+                  </button>
+                ))}
+                {fieldsMissing.length > 0 && <div className={styles.addFieldDivider} />}
+                <button
+                  className={styles.addFieldItem}
+                  onClick={() => {
+                    setShowAddFieldMenu(false);
+                    setAddingCustomField(true);
+                    setCustomFieldLabel('');
+                    setCustomFieldValue('');
+                  }}
+                >
+                  ✏️ Eigenes Feld hinzufügen
+                </button>
+              </div>
+            )}
+          </div>
         </h3>
         <div className={styles.detailsGrid}>
           {/* Vertragsname — immer sichtbar, inline editable */}
@@ -1063,6 +1107,140 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <div className={styles.detailItem}>
               <span className={styles.label}>Quelle:</span>
               <span className={styles.value}>✨ KI-generiert</span>
+            </div>
+          )}
+
+          {/* Eigene/Custom Felder */}
+          {(contract.customFields || []).map((cf, index) => {
+            if (editingCustomField === index) {
+              return (
+                <div key={`cf-${index}`} className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
+                  <div className={styles.quickFactEditRow}>
+                    <input
+                      className={styles.inlineInput}
+                      value={customFieldLabel}
+                      onChange={(e) => setCustomFieldLabel(e.target.value)}
+                      placeholder="Bezeichnung"
+                      style={{ flex: 1 }}
+                    />
+                    <input
+                      className={styles.inlineInput}
+                      value={customFieldValue}
+                      onChange={(e) => setCustomFieldValue(e.target.value)}
+                      placeholder="Wert"
+                      style={{ flex: 1 }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && customFieldLabel && customFieldValue) {
+                          const updated = [...(contract.customFields || [])];
+                          updated[index] = { label: customFieldLabel, value: customFieldValue };
+                          handleCustomFieldsSave(updated);
+                        }
+                        if (e.key === 'Escape') setEditingCustomField(null);
+                      }}
+                    />
+                    <button
+                      className={styles.inlineSaveBtn}
+                      onClick={() => {
+                        if (customFieldLabel && customFieldValue) {
+                          const updated = [...(contract.customFields || [])];
+                          updated[index] = { label: customFieldLabel, value: customFieldValue };
+                          handleCustomFieldsSave(updated);
+                        }
+                      }}
+                      disabled={!customFieldLabel || !customFieldValue || saving}
+                      title="Speichern"
+                    >
+                      <Check size={16} />
+                    </button>
+                    <button
+                      className={styles.inlineCancelBtn}
+                      onClick={() => setEditingCustomField(null)}
+                      title="Abbrechen"
+                    >
+                      <X size={16} />
+                    </button>
+                    <button
+                      className={styles.inlineCancelBtn}
+                      onClick={() => {
+                        const updated = (contract.customFields || []).filter((_, i) => i !== index);
+                        handleCustomFieldsSave(updated);
+                      }}
+                      title="Löschen"
+                      style={{ color: '#dc2626' }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={`cf-${index}`}
+                className={`${styles.detailItem} ${styles.editableField}`}
+                onClick={() => {
+                  setEditingCustomField(index);
+                  setCustomFieldLabel(cf.label);
+                  setCustomFieldValue(cf.value);
+                }}
+              >
+                <span className={styles.label}>{cf.label}:</span>
+                <span className={styles.value}>
+                  {cf.value}
+                  <Pencil size={14} className={styles.editPencil} />
+                </span>
+              </div>
+            );
+          })}
+
+          {/* Inline-Formular für neues eigenes Feld */}
+          {addingCustomField && (
+            <div className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
+              <div className={styles.quickFactEditRow}>
+                <input
+                  className={styles.inlineInput}
+                  value={customFieldLabel}
+                  onChange={(e) => setCustomFieldLabel(e.target.value)}
+                  placeholder="Bezeichnung (z.B. Kundennummer)"
+                  autoFocus
+                  style={{ flex: 1 }}
+                />
+                <input
+                  className={styles.inlineInput}
+                  value={customFieldValue}
+                  onChange={(e) => setCustomFieldValue(e.target.value)}
+                  placeholder="Wert"
+                  style={{ flex: 1 }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customFieldLabel && customFieldValue) {
+                      const updated = [...(contract.customFields || []), { label: customFieldLabel, value: customFieldValue }];
+                      handleCustomFieldsSave(updated);
+                    }
+                    if (e.key === 'Escape') setAddingCustomField(false);
+                  }}
+                />
+                <button
+                  className={styles.inlineSaveBtn}
+                  onClick={() => {
+                    if (customFieldLabel && customFieldValue) {
+                      const updated = [...(contract.customFields || []), { label: customFieldLabel, value: customFieldValue }];
+                      handleCustomFieldsSave(updated);
+                    }
+                  }}
+                  disabled={!customFieldLabel || !customFieldValue || saving}
+                  title="Hinzufügen"
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  className={styles.inlineCancelBtn}
+                  onClick={() => setAddingCustomField(false)}
+                  title="Abbrechen"
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>
