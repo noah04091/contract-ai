@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -8,6 +8,8 @@ import ContractEditModal from './ContractEditModal';
 import SignatureModal from './SignatureModal';
 import ImportantDatesSection from './ImportantDatesSection';
 import { fixUtf8Display } from "../utils/textUtils";
+import { apiCall } from "../utils/api";
+import { useToast } from "../context/ToastContext";
 
 // Signature-related interfaces
 interface Signer {
@@ -205,36 +207,6 @@ interface NewContractDetailsModalProps {
 type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'optimizedPdf' | 'signature';
 
 /**
- * 🔒 KONFIDENZ-SCHWELLENWERTE für Datenintegrität
- * Besser KEINE Daten als FALSCHE Daten!
- */
-const CONFIDENCE_THRESHOLDS = {
-  PROVIDER: 90,            // Anbieter - nur anzeigen wenn sehr sicher
-  DATE: 60,                // Daten - oft geschätzt, aber wichtig
-  CANCELLATION_PERIOD: 70, // Kündigungsfrist - wichtig für User
-  CONTRACT_DURATION: 60,   // Laufzeit - oft aus Vertragstyp abgeleitet
-  AUTO_RENEWAL: 70         // Auto-Verlängerung - wichtig für User
-} as const;
-
-/**
- * 🔒 Helper: Prüft ob ein Feld mit ausreichender Konfidenz angezeigt werden soll
- * @param confidence - Konfidenz-Wert (0-100) oder undefined
- * @param threshold - Schwellenwert aus CONFIDENCE_THRESHOLDS
- * @param hasValue - Ob der Wert überhaupt existiert
- * @returns true wenn angezeigt werden soll
- */
-const shouldDisplayWithConfidence = (
-  confidence: number | undefined,
-  threshold: number,
-  hasValue: boolean
-): boolean => {
-  if (!hasValue) return false;
-  // Rückwärtskompatibilität: Wenn keine Konfidenz-Info vorhanden, anzeigen
-  if (confidence === undefined) return true;
-  return confidence >= threshold;
-};
-
-/**
  * 🔍 Zentrale Helper-Funktion: Prüft ob Analyse-Daten vorhanden sind
  * Wird für Tab-Aktivierung und bedingte Anzeige verwendet.
  *
@@ -254,6 +226,38 @@ const hasAnalysisData = (contract: Contract): boolean => {
     contract.legalPulse
   );
 };
+
+// Dropdown-Optionen (gleich wie ContractEditModal)
+const KUENDIGUNG_OPTIONS = [
+  { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
+  { value: "2 Wochen", label: "2 Wochen" },
+  { value: "1 Monat", label: "1 Monat" },
+  { value: "4 Wochen", label: "4 Wochen" },
+  { value: "6 Wochen", label: "6 Wochen" },
+  { value: "2 Monate", label: "2 Monate" },
+  { value: "3 Monate", label: "3 Monate" },
+  { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
+  { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
+  { value: "6 Monate", label: "6 Monate" },
+  { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
+  { value: "12 Monate", label: "12 Monate" },
+  { value: "Unbefristet", label: "Unbefristet" },
+];
+
+const LAUFZEIT_OPTIONS = [
+  { value: "Unbefristet", label: "Unbefristet" },
+  { value: "1 Monat", label: "1 Monat" },
+  { value: "3 Monate", label: "3 Monate" },
+  { value: "6 Monate", label: "6 Monate" },
+  { value: "1 Jahr", label: "1 Jahr" },
+  { value: "2 Jahre", label: "2 Jahre" },
+  { value: "3 Jahre", label: "3 Jahre" },
+  { value: "5 Jahre", label: "5 Jahre" },
+  { value: "10 Jahre", label: "10 Jahre" },
+  { value: "24 Monate mit Verlängerung", label: "24 Monate + auto. Verlängerung" },
+  { value: "12 Monate mit Verlängerung", label: "12 Monate + auto. Verlängerung" },
+  { value: "Einmalig", label: "Einmalig (kein Abo)" },
+];
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
@@ -302,6 +306,19 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Inline editing state
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  // QuickFacts editing state
+  const [editingQuickFact, setEditingQuickFact] = useState<number | null>(null);
+  const [qfLabel, setQfLabel] = useState('');
+  const [qfValue, setQfValue] = useState('');
+  const [qfRating, setQfRating] = useState<'good' | 'neutral' | 'bad'>('neutral');
+  const [addingQuickFact, setAddingQuickFact] = useState(false);
 
   // Close actions menu on click outside
   useEffect(() => {
@@ -389,14 +406,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   }, [openEditModalDirectly]);
 
-  // ESC key to close
+  // ESC key - cancel inline editing first, then close modal
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (editingField || editingQuickFact !== null || addingQuickFact) {
+          setEditingField(null);
+          setEditValue('');
+          setEditingQuickFact(null);
+          setAddingQuickFact(false);
+        } else {
+          onClose();
+        }
+      }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
-  }, [onClose]);
+  }, [onClose, editingField, editingQuickFact, addingQuickFact]);
 
   // Load PDF URL when PDF tab is opened
   const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
@@ -687,6 +713,169 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Inline editing handlers
+  const handleInlineSave = async (fieldKey: string, value: string) => {
+    setSaving(true);
+    try {
+      const updateData: Record<string, unknown> = {};
+      if (fieldKey === 'kosten') {
+        updateData[fieldKey] = value ? parseFloat(value) : null;
+      } else {
+        updateData[fieldKey] = value || null;
+      }
+
+      const response = await apiCall(`/contracts/${contract._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData),
+      }) as Record<string, unknown>;
+      if (response.success !== false) {
+        setContract(prev => ({ ...prev, ...updateData } as Contract));
+        toast.success('Gespeichert');
+        if (onEdit) onEdit(contract._id);
+      }
+    } catch {
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
+      setEditingField(null);
+    }
+  };
+
+  const startEditing = (key: string, currentValue: string) => {
+    setEditingField(key);
+    setEditValue(currentValue);
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  // QuickFacts save handler
+  const handleQuickFactsSave = async (updatedFacts: Array<{ label: string; value: string; rating?: 'good' | 'neutral' | 'bad' }>) => {
+    setSaving(true);
+    try {
+      const response = await apiCall(`/contracts/${contract._id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ quickFacts: updatedFacts }),
+      }) as Record<string, unknown>;
+      if (response.success !== false) {
+        setContract(prev => ({ ...prev, quickFacts: updatedFacts } as Contract));
+        toast.success('Gespeichert');
+        if (onEdit) onEdit(contract._id);
+      }
+    } catch {
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSaving(false);
+      setEditingQuickFact(null);
+      setAddingQuickFact(false);
+    }
+  };
+
+  /**
+   * Renders a field in read or edit mode depending on editingField state.
+   */
+  const renderInlineField = (
+    key: string,
+    label: string,
+    displayValue: string,
+    rawValue: string,
+    type: 'text' | 'number' | 'date' | 'dropdown',
+    options?: { value: string; label: string }[]
+  ) => {
+    const isEmpty = !rawValue && !displayValue;
+    const isEditing = editingField === key;
+
+    if (isEditing) {
+      return (
+        <div className={styles.detailItem}>
+          <span className={styles.label}>{label}:</span>
+          <div className={styles.inlineEditRow}>
+            {type === 'dropdown' && options ? (
+              <select
+                className={styles.inlineSelect}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+              >
+                <option value="">— Auswählen —</option>
+                {options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : type === 'date' ? (
+              <input
+                type="date"
+                className={styles.inlineDateInput}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleInlineSave(key, editValue);
+                  if (e.key === 'Escape') cancelEditing();
+                }}
+              />
+            ) : (
+              <input
+                type={type === 'number' ? 'number' : 'text'}
+                className={styles.inlineInput}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                step={type === 'number' ? '0.01' : undefined}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleInlineSave(key, editValue);
+                  if (e.key === 'Escape') cancelEditing();
+                }}
+              />
+            )}
+            <button
+              className={styles.inlineSaveBtn}
+              onClick={() => handleInlineSave(key, editValue)}
+              disabled={saving}
+              title="Speichern"
+            >
+              <Check size={16} />
+            </button>
+            <button
+              className={styles.inlineCancelBtn}
+              onClick={cancelEditing}
+              title="Abbrechen"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Read mode
+    return (
+      <div
+        className={`${styles.detailItem} ${styles.editableField}`}
+        onClick={() => {
+          // For date fields, convert display date back to YYYY-MM-DD format
+          if (type === 'date' && rawValue) {
+            const d = new Date(rawValue);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            startEditing(key, `${yyyy}-${mm}-${dd}`);
+          } else {
+            startEditing(key, rawValue || '');
+          }
+        }}
+      >
+        <span className={styles.label}>{label}:</span>
+        <span className={isEmpty ? styles.notSetValue : styles.value}>
+          {isEmpty ? 'Nicht angegeben' : displayValue}
+          <Pencil size={14} className={styles.editPencil} />
+        </span>
+      </div>
+    );
+  };
+
   // Berechne Restlaufzeit
   const calculateRemainingTime = (endDate: string): string => {
     const end = new Date(endDate);
@@ -714,105 +903,73 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       <div className={styles.section}>
         <h3>📋 Vertragsdetails</h3>
         <div className={styles.detailsGrid}>
-          <div className={styles.detailItem}>
-            <span className={styles.label}>Vertragsname:</span>
-            <span className={styles.valueTruncate} title={fixUtf8Display(contract.name)}>{fixUtf8Display(contract.name)}</span>
-          </div>
+          {/* Vertragsname — inline editable */}
+          {renderInlineField('name', 'Vertragsname', fixUtf8Display(contract.name), contract.name, 'text')}
+
+          {/* Status — read-only (komplexe Seiteneffekte) */}
           <div className={styles.detailItem}>
             <span className={styles.label}>Status:</span>
             <span className={styles.value}>{renderStatusBadge()}</span>
           </div>
-          {/* 🆕 Anbieter/Provider - Manuell gesetzter Wert hat Priorität vor KI-extrahiertem */}
+
+          {/* Anbieter — inline editable, manuelle + KI-Werte zusammengeführt */}
           {(() => {
-            if (contract.anbieter) {
-              return (
-                <div className={styles.detailItem}>
-                  <span className={styles.label}>Anbieter:</span>
-                  <span className={styles.value}>{contract.anbieter}</span>
-                </div>
-              );
-            }
-            const hasProvider = contract.provider?.displayName || contract.provider?.name;
+            const anbieterDisplay = contract.anbieter || contract.provider?.displayName || contract.provider?.name || '';
+            const anbieterRaw = contract.anbieter || contract.provider?.displayName || contract.provider?.name || '';
+            // Show if manually set, or KI-confidence is high enough, or empty (for user to fill in)
             const confidence = contract.provider?.confidence ?? contract.providerConfidence;
-            const shouldShow = hasProvider && (confidence === undefined || confidence >= 90);
-            return shouldShow ? (
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Anbieter:</span>
-                <span className={styles.value}>{contract.provider?.displayName || contract.provider?.name}</span>
-              </div>
-            ) : null;
+            const shouldShow = !!contract.anbieter || !anbieterDisplay || (!!anbieterDisplay && (confidence === undefined || confidence >= 90));
+            return shouldShow ? renderInlineField('anbieter', 'Anbieter', anbieterDisplay, anbieterRaw, 'text') : null;
           })()}
-          {/* 🆕 Vertragstyp */}
+
+          {/* Vertragstyp — read-only (KI-klassifiziert) */}
           {contract.contractType && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Vertragstyp:</span>
               <span className={styles.value} style={{ textTransform: 'capitalize' }}>{contract.contractType}</span>
             </div>
           )}
-          {/* 🆕 Vertragsnummer */}
-          {contract.vertragsnummer && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Vertragsnummer:</span>
-              <span className={styles.value}>{contract.vertragsnummer}</span>
-            </div>
+
+          {/* Vertragsnummer — inline editable */}
+          {renderInlineField('vertragsnummer', 'Vertragsnummer', contract.vertragsnummer || '', contract.vertragsnummer || '', 'text')}
+
+          {/* Gekündigt zum — inline editable (date) */}
+          {renderInlineField(
+            'gekuendigtZum', 'Gekündigt zum',
+            contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
+            contract.gekuendigtZum || '', 'date'
           )}
-          {/* 🆕 Gekündigt zum (für Kündigungsbestätigungen) - 🔒 Mit Konfidenz-Check */}
-          {shouldDisplayWithConfidence(
-            contract.endDateConfidence,
-            CONFIDENCE_THRESHOLDS.DATE,
-            !!contract.gekuendigtZum
-          ) && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Gekündigt zum:</span>
-              <span className={styles.value} style={{ color: '#dc2626', fontWeight: 600 }}>{formatDate(contract.gekuendigtZum!)}</span>
-            </div>
+
+          {/* Kündigungsfrist — inline editable (dropdown) */}
+          {renderInlineField(
+            'kuendigung', 'Kündigungsfrist',
+            contract.kuendigung || '', contract.kuendigung || '',
+            'dropdown', KUENDIGUNG_OPTIONS
           )}
-          {/* 🔒 Kündigungsfrist - Mit Konfidenz-Check */}
-          {shouldDisplayWithConfidence(
-            contract.cancellationPeriodConfidence,
-            CONFIDENCE_THRESHOLDS.CANCELLATION_PERIOD,
-            !!contract.kuendigung
-          ) && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Kündigungsfrist:</span>
-              <span className={styles.value}>{contract.kuendigung}</span>
-            </div>
+
+          {/* Laufzeit — inline editable (dropdown) */}
+          {renderInlineField(
+            'laufzeit', 'Laufzeit',
+            contract.laufzeit || '', contract.laufzeit || '',
+            'dropdown', LAUFZEIT_OPTIONS
           )}
-          {/* 🔒 Laufzeit - Mit Konfidenz-Check */}
-          {shouldDisplayWithConfidence(
-            contract.contractDurationConfidence,
-            CONFIDENCE_THRESHOLDS.CONTRACT_DURATION,
-            !!contract.laufzeit
-          ) && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Laufzeit:</span>
-              <span className={styles.value}>{contract.laufzeit}</span>
-            </div>
+
+          {/* Vertragsbeginn — inline editable (date) */}
+          {renderInlineField(
+            'startDate', 'Vertragsbeginn',
+            contract.startDate ? formatDate(contract.startDate) : '',
+            contract.startDate || '', 'date'
           )}
-          {/* 🆕 Vertragsbeginn */}
-          {contract.startDate && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Vertragsbeginn:</span>
-              <span className={styles.value}>{formatDate(contract.startDate)}</span>
-            </div>
+
+          {/* Enddatum — inline editable (date) */}
+          {renderInlineField(
+            'expiryDate', 'Enddatum',
+            contract.expiryDate ? formatDate(contract.expiryDate) : '',
+            contract.expiryDate || '', 'date'
           )}
-          {/* 🔒 Enddatum - Mit Konfidenz-Check */}
-          {shouldDisplayWithConfidence(
-            contract.endDateConfidence,
-            CONFIDENCE_THRESHOLDS.DATE,
-            !!contract.expiryDate
-          ) && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Enddatum:</span>
-              <span className={styles.value}>{formatDate(contract.expiryDate!)}</span>
-            </div>
-          )}
-          {/* 🆕 Restlaufzeit - 🔒 Nur anzeigen wenn Enddatum mit ausreichender Konfidenz vorhanden */}
-          {shouldDisplayWithConfidence(
-            contract.endDateConfidence,
-            CONFIDENCE_THRESHOLDS.DATE,
-            !!(contract.expiryDate || contract.gekuendigtZum)
-          ) && (
+
+          {/* Restlaufzeit — read-only (berechneter Wert) */}
+          {(contract.expiryDate || contract.gekuendigtZum) && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Restlaufzeit:</span>
               <span className={styles.value} style={{
@@ -823,17 +980,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </span>
             </div>
           )}
-          {/* 🆕 Monatliche Kosten */}
-          {contract.kosten != null && contract.kosten > 0 && (
-            <div className={styles.detailItem}>
-              <span className={styles.label}>Monatliche Kosten:</span>
-              <span className={styles.value}>{contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-            </div>
+
+          {/* Monatliche Kosten — inline editable (number) */}
+          {renderInlineField(
+            'kosten', 'Monatliche Kosten',
+            contract.kosten != null && contract.kosten > 0
+              ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+              : '',
+            contract.kosten != null ? String(contract.kosten) : '', 'number'
           )}
+
+          {/* Hochgeladen am — read-only (Systemfeld) */}
           <div className={styles.detailItem}>
             <span className={styles.label}>Hochgeladen am:</span>
             <span className={styles.value}>{formatDate(contract.uploadDate || contract.createdAt)}</span>
           </div>
+
+          {/* Quelle — read-only (Systemfeld) */}
           {contract.isGenerated && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Quelle:</span>
@@ -927,25 +1090,187 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         )}
       </div>
 
-      {/* 📊 QuickFacts - Dynamische Eckdaten */}
-      {contract.quickFacts && contract.quickFacts.length > 0 && (
-        <div className={styles.section}>
-          <h3>📊 Eckdaten auf einen Blick</h3>
+      {/* 📊 QuickFacts - Dynamische Eckdaten (immer sichtbar) */}
+      <div className={styles.section}>
+        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span>📊 Eckdaten auf einen Blick</span>
+          <button
+            className={styles.quickFactAddBtn}
+            onClick={() => {
+              setAddingQuickFact(true);
+              setQfLabel('');
+              setQfValue('');
+              setQfRating('neutral');
+            }}
+            title="Eckdatum hinzufügen"
+          >
+            <Plus size={16} />
+          </button>
+        </h3>
+
+        {(!contract.quickFacts || contract.quickFacts.length === 0) && !addingQuickFact ? (
+          <p style={{ color: '#9ca3af', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
+            Keine Eckdaten vorhanden. Klicke + um welche hinzuzufügen.
+          </p>
+        ) : (
           <div className={styles.detailsGrid}>
-            {contract.quickFacts.map((fact, index) => (
-              <div key={index} className={styles.detailItem}>
-                <span className={styles.label}>{fact.label}:</span>
-                <span className={styles.value} style={{
-                  color: fact.rating === 'good' ? '#059669' : fact.rating === 'bad' ? '#dc2626' : '#6b7280',
-                  fontWeight: fact.rating ? 500 : 400
-                }}>
-                  {fact.value}
-                </span>
-              </div>
-            ))}
+            {(contract.quickFacts || []).map((fact, index) => {
+              if (editingQuickFact === index) {
+                return (
+                  <div key={index} className={styles.detailItem} style={{ gridColumn: '1 / -1' }}>
+                    <div className={styles.quickFactEditRow}>
+                      <input
+                        className={styles.inlineInput}
+                        value={qfLabel}
+                        onChange={(e) => setQfLabel(e.target.value)}
+                        placeholder="Label"
+                        style={{ flex: 1 }}
+                      />
+                      <input
+                        className={styles.inlineInput}
+                        value={qfValue}
+                        onChange={(e) => setQfValue(e.target.value)}
+                        placeholder="Wert"
+                        style={{ flex: 1 }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && qfLabel && qfValue) {
+                            const updated = [...(contract.quickFacts || [])];
+                            updated[index] = { label: qfLabel, value: qfValue, rating: qfRating };
+                            handleQuickFactsSave(updated);
+                          }
+                          if (e.key === 'Escape') setEditingQuickFact(null);
+                        }}
+                      />
+                      <select
+                        className={styles.inlineSelect}
+                        value={qfRating}
+                        onChange={(e) => setQfRating(e.target.value as 'good' | 'neutral' | 'bad')}
+                        style={{ width: 'auto' }}
+                      >
+                        <option value="good">Gut</option>
+                        <option value="neutral">Neutral</option>
+                        <option value="bad">Schlecht</option>
+                      </select>
+                      <button
+                        className={styles.inlineSaveBtn}
+                        onClick={() => {
+                          if (qfLabel && qfValue) {
+                            const updated = [...(contract.quickFacts || [])];
+                            updated[index] = { label: qfLabel, value: qfValue, rating: qfRating };
+                            handleQuickFactsSave(updated);
+                          }
+                        }}
+                        disabled={!qfLabel || !qfValue || saving}
+                        title="Speichern"
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button
+                        className={styles.inlineCancelBtn}
+                        onClick={() => setEditingQuickFact(null)}
+                        title="Abbrechen"
+                      >
+                        <X size={16} />
+                      </button>
+                      <button
+                        className={styles.inlineCancelBtn}
+                        onClick={() => {
+                          const updated = (contract.quickFacts || []).filter((_, i) => i !== index);
+                          handleQuickFactsSave(updated);
+                        }}
+                        title="Löschen"
+                        style={{ color: '#dc2626' }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={index}
+                  className={`${styles.detailItem} ${styles.editableField}`}
+                  onClick={() => {
+                    setEditingQuickFact(index);
+                    setQfLabel(fact.label);
+                    setQfValue(fact.value);
+                    setQfRating(fact.rating || 'neutral');
+                  }}
+                >
+                  <span className={styles.label}>{fact.label}:</span>
+                  <span className={styles.value} style={{
+                    color: fact.rating === 'good' ? '#059669' : fact.rating === 'bad' ? '#dc2626' : '#6b7280',
+                    fontWeight: fact.rating ? 500 : 400
+                  }}>
+                    {fact.value}
+                    <Pencil size={14} className={styles.editPencil} />
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Inline form for adding a new QuickFact */}
+        {addingQuickFact && (
+          <div className={styles.quickFactEditRow} style={{ marginTop: '12px' }}>
+            <input
+              className={styles.inlineInput}
+              value={qfLabel}
+              onChange={(e) => setQfLabel(e.target.value)}
+              placeholder="Label (z.B. Zahlungsintervall)"
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            <input
+              className={styles.inlineInput}
+              value={qfValue}
+              onChange={(e) => setQfValue(e.target.value)}
+              placeholder="Wert (z.B. Monatlich)"
+              style={{ flex: 1 }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && qfLabel && qfValue) {
+                  const updated = [...(contract.quickFacts || []), { label: qfLabel, value: qfValue, rating: qfRating }];
+                  handleQuickFactsSave(updated);
+                }
+                if (e.key === 'Escape') setAddingQuickFact(false);
+              }}
+            />
+            <select
+              className={styles.inlineSelect}
+              value={qfRating}
+              onChange={(e) => setQfRating(e.target.value as 'good' | 'neutral' | 'bad')}
+              style={{ width: 'auto' }}
+            >
+              <option value="good">Gut</option>
+              <option value="neutral">Neutral</option>
+              <option value="bad">Schlecht</option>
+            </select>
+            <button
+              className={styles.inlineSaveBtn}
+              onClick={() => {
+                if (qfLabel && qfValue) {
+                  const updated = [...(contract.quickFacts || []), { label: qfLabel, value: qfValue, rating: qfRating }];
+                  handleQuickFactsSave(updated);
+                }
+              }}
+              disabled={!qfLabel || !qfValue || saving}
+              title="Hinzufügen"
+            >
+              <Check size={16} />
+            </button>
+            <button
+              className={styles.inlineCancelBtn}
+              onClick={() => setAddingQuickFact(false)}
+              title="Abbrechen"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Smart Contract Info (Payment/Cost Tracking) */}
       {(contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
