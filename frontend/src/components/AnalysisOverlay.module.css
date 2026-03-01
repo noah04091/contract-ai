@@ -1,0 +1,386 @@
+/* 📁 AnalysisOverlay.module.css */
+/* Premium Analyse-Overlay mit PDF-Vorschau & Lupen-Animation */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.container {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 36px;
+  max-width: 420px;
+  width: 90vw;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.contractName {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* DIN A4 PDF Frame */
+.pdfFrame {
+  position: relative;
+  width: 280px;
+  height: 396px;
+  margin: 0 auto 24px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  background: #f9fafb;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.pdfContent {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pdfContent :global(.react-pdf__Document),
+.pdfContent :global(.react-pdf__Page) {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.pdfContent :global(.react-pdf__Page__canvas) {
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Semi-transparent overlay on PDF so magnifiers stay visible */
+.pdfOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+/* Placeholder (when no PDF file) */
+.placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+}
+
+.placeholderLine {
+  position: absolute;
+  left: 10%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Scan Line */
+.scanLine {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #3B82F6 30%, #60a5fa 50%, #3B82F6 70%, transparent 100%);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), 0 0 4px rgba(59, 130, 246, 0.3);
+  animation: scanLine 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 3;
+}
+
+@keyframes scanLine {
+  0% { top: 0%; }
+  50% { top: 98%; }
+  100% { top: 0%; }
+}
+
+/* Magnifying Glasses */
+.magnifier1,
+.magnifier2,
+.magnifier3 {
+  position: absolute;
+  color: #3B82F6;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.4));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.magnifier1 {
+  animation: scanPath1 8s ease-in-out infinite;
+}
+
+.magnifier2 {
+  animation: scanPath2 11s ease-in-out infinite;
+}
+
+.magnifier3 {
+  animation: scanPath3 14s ease-in-out infinite;
+}
+
+/* Lupe 1: Oben-links → Mitte-rechts → Unten-links */
+@keyframes scanPath1 {
+  0% {
+    top: 8%;
+    left: 10%;
+    transform: rotate(-5deg);
+  }
+  25% {
+    top: 25%;
+    left: 55%;
+    transform: rotate(8deg);
+  }
+  50% {
+    top: 50%;
+    left: 65%;
+    transform: rotate(-3deg);
+  }
+  75% {
+    top: 72%;
+    left: 20%;
+    transform: rotate(6deg);
+  }
+  100% {
+    top: 8%;
+    left: 10%;
+    transform: rotate(-5deg);
+  }
+}
+
+/* Lupe 2: Oben-rechts → Unten-mitte → Oben-mitte */
+@keyframes scanPath2 {
+  0% {
+    top: 5%;
+    left: 60%;
+    transform: rotate(3deg) scale(1);
+  }
+  20% {
+    top: 30%;
+    left: 40%;
+    transform: rotate(-6deg) scale(1.05);
+  }
+  45% {
+    top: 60%;
+    left: 35%;
+    transform: rotate(4deg) scale(0.95);
+  }
+  70% {
+    top: 80%;
+    left: 50%;
+    transform: rotate(-5deg) scale(1.02);
+  }
+  100% {
+    top: 5%;
+    left: 60%;
+    transform: rotate(3deg) scale(1);
+  }
+}
+
+/* Lupe 3: Mitte → diagonal sweep */
+@keyframes scanPath3 {
+  0% {
+    top: 40%;
+    left: 30%;
+    transform: rotate(0deg);
+  }
+  15% {
+    top: 15%;
+    left: 50%;
+    transform: rotate(10deg);
+  }
+  35% {
+    top: 35%;
+    left: 70%;
+    transform: rotate(-8deg);
+  }
+  55% {
+    top: 65%;
+    left: 45%;
+    transform: rotate(5deg);
+  }
+  75% {
+    top: 55%;
+    left: 15%;
+    transform: rotate(-12deg);
+  }
+  100% {
+    top: 40%;
+    left: 30%;
+    transform: rotate(0deg);
+  }
+}
+
+/* Progress Section */
+.progressSection {
+  text-align: center;
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #60a5fa);
+  border-radius: 2px;
+  transition: width 0.3s ease-out;
+}
+
+.progressPercent {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3B82F6;
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 6px 0;
+}
+
+.hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1f2937;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  }
+
+  .title {
+    color: #f9fafb;
+  }
+
+  .contractName {
+    color: #9ca3af;
+  }
+
+  .pdfFrame {
+    border-color: #374151;
+    background: #111827;
+  }
+
+  .placeholder {
+    background: #1f2937;
+  }
+
+  .placeholderLine {
+    background: #374151;
+  }
+
+  .pdfOverlay {
+    background: rgba(17, 24, 39, 0.35);
+  }
+
+  .progressBar {
+    background: #374151;
+  }
+
+  .stepLabel {
+    color: #d1d5db;
+  }
+
+  .hint {
+    color: #6b7280;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .container {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .pdfFrame {
+    width: 220px;
+    height: 311px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .magnifier1 svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .magnifier2 svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .magnifier3 svg {
+    width: 32px;
+    height: 32px;
+  }
+}

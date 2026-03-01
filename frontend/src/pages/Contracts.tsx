@@ -41,6 +41,7 @@ import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Enc
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
+import AnalysisOverlay from "../components/AnalysisOverlay"; // 🔍 Premium Analyse-Overlay
 import { useCelebrationContext } from "../components/Celebration"; // 🎉 Celebration System
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 import { triggerOnboardingSync, useOnboarding } from "../hooks/useOnboarding"; // 🎓 Onboarding Sync
@@ -106,8 +107,14 @@ interface Contract {
     completedAt: string | null;
     expiresAt: string | null;
   };
-  // 🔔 Reminder Settings (NEU)
+  // 🔔 Reminder Settings
   reminderDays?: number[];
+  reminderSettings?: Array<{
+    type: 'expiry' | 'cancellation' | 'custom';
+    days: number;
+    targetDate?: string;
+    label?: string;
+  }>;
   // 📊 Dynamic Quick Facts (NEU - kontextabhängige Eckdaten)
   quickFacts?: Array<{
     label: string;
@@ -355,7 +362,7 @@ export default function Contracts() {
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
-  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string }>({ show: false, contractName: '' }); // ✅ Full-Screen Analyse-Overlay
+  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -2096,6 +2103,14 @@ export default function Contracts() {
           continue;
         }
 
+        // 🔍 Overlay zeigen mit der aktuellen Datei
+        setAnalyzingOverlay({
+          show: true,
+          contractName: fixUtf8Display(contract.name),
+          pdfFile: uploadFileItem.file,
+          progress: 0
+        });
+
         // Update progress
         const progressPercent = Math.round(((i + 1) / contractsToAnalyze.length) * 100);
         setUploadFiles(prev => prev.map((item, idx) =>
@@ -2132,6 +2147,8 @@ export default function Contracts() {
               }
               return item;
             }));
+            // 🔍 Overlay-Progress synchron aktualisieren
+            setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress) } : prev);
           }, 200); // Update every 200ms for smooth animation
 
           const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
@@ -2231,6 +2248,7 @@ export default function Contracts() {
       setActiveSection('contracts');
     } finally {
       setIsAnalyzing(false);
+      setAnalyzingOverlay({ show: false, contractName: '', progress: 0 });
     }
   };
 
@@ -2266,7 +2284,20 @@ export default function Contracts() {
 
     // Setze Loading States - Button UND Full-Screen Overlay
     setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
-    setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name) });
+    setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name), progress: 0 });
+
+    // 🔍 Simulierter Progress für bestehendes Vertrag-Overlay
+    let currentProgress = 0;
+    const progressInterval = setInterval(() => {
+      let increment = 1;
+      if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
+      else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
+      else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
+      else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
+      else if (currentProgress >= 95) increment = 0.2;
+      currentProgress = Math.min(currentProgress + increment, 99);
+      setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress) } : prev);
+    }, 200);
 
     try {
       setError(null);
@@ -2387,8 +2418,9 @@ export default function Contracts() {
       alert(`❌ Analyse fehlgeschlagen\n\n${errorMsg}`);
     } finally {
       // Loading States zurücksetzen
+      clearInterval(progressInterval);
       setAnalyzingContract(prev => ({ ...prev, [contract._id]: false }));
-      setAnalyzingOverlay({ show: false, contractName: '' });
+      setAnalyzingOverlay({ show: false, contractName: '', progress: 0 });
     }
   };
 
@@ -5859,12 +5891,13 @@ export default function Contracts() {
         <ReminderSettingsModal
           contractId={reminderSettingsModal.contract._id}
           contractName={fixUtf8Display(reminderSettingsModal.contract.name)}
+          currentReminderSettings={reminderSettingsModal.contract.reminderSettings || []}
           currentReminderDays={reminderSettingsModal.contract.reminderDays || []}
           expiryDate={reminderSettingsModal.contract.expiryDate}
+          kuendigung={reminderSettingsModal.contract.kuendigung}
           onClose={() => setReminderSettingsModal({ show: false, contract: null })}
-          onSuccess={(reminderDays) => {
-            console.log('✅ Reminder settings saved:', reminderDays);
-            fetchContracts(); // Refresh contracts
+          onSuccess={() => {
+            fetchContracts();
           }}
         />
       )}
@@ -6157,20 +6190,13 @@ export default function Contracts() {
         document.body
       )}
 
-      {/* ✅ Full-Screen Analyse-Overlay (für besseres Mobile-Feedback) */}
-      {analyzingOverlay.show && createPortal(
-        <div className={styles.analyzingOverlay}>
-          <div className={styles.analyzingContent}>
-            <Loader size={48} className={styles.spinning} />
-            <h3>Vertrag wird analysiert...</h3>
-            <p>{analyzingOverlay.contractName}</p>
-            <span className={styles.analyzingHint}>
-              Die KI analysiert Ihren Vertrag. Dies kann bis zu 30 Sekunden dauern.
-            </span>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* 🔍 Premium Analyse-Overlay mit PDF-Vorschau & Lupen-Animation */}
+      <AnalysisOverlay
+        show={analyzingOverlay.show}
+        contractName={analyzingOverlay.contractName}
+        progress={analyzingOverlay.progress}
+        pdfFile={analyzingOverlay.pdfFile}
+      />
 
       {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}
       {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && !showMobileFolderSheet && (
