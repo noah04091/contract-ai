@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
@@ -14,7 +14,10 @@ import {
   CalendarX2,
   Scale,
   CalendarPlus,
-  ArrowLeft
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Zap
 } from 'lucide-react';
 
 interface ReminderSetting {
@@ -33,6 +36,14 @@ interface ReminderSettingsModalProps {
   kuendigung?: string;
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+interface AutoEvent {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+  severity: string;
 }
 
 interface PresetOption {
@@ -77,6 +88,38 @@ export default function ReminderSettingsModal({
   const [customDays, setCustomDays] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [autoEvents, setAutoEvents] = useState<AutoEvent[]>([]);
+  const [autoEventsLoading, setAutoEventsLoading] = useState(true);
+  const [autoEventsExpanded, setAutoEventsExpanded] = useState(false);
+
+  // Fetch automatic calendar events for this contract
+  useEffect(() => {
+    const fetchAutoEvents = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/calendar/events?contractId=${contractId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.events) {
+            const now = new Date();
+            const filtered = data.events
+              .filter((e: AutoEvent) => e.type !== 'CUSTOM_REMINDER' && new Date(e.date) > now)
+              .sort((a: AutoEvent, b: AutoEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            setAutoEvents(filtered);
+            // Auto-expand if 3 or fewer events
+            setAutoEventsExpanded(filtered.length <= 3);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching calendar events:', err);
+      } finally {
+        setAutoEventsLoading(false);
+      }
+    };
+    fetchAutoEvents();
+  }, [contractId]);
 
   const hasExpiry = !!expiryDate;
   const hasKuendigung = !!kuendigung;
@@ -233,6 +276,20 @@ export default function ReminderSettingsModal({
       return calculateDate(r.type, r.days);
     }
     return null;
+  };
+
+  // Get severity CSS class for auto events
+  const getSeverityClass = (severity: string): string => {
+    switch (severity) {
+      case 'critical': return styles.autoEventCritical;
+      case 'warning': return styles.autoEventWarning;
+      default: return styles.autoEventInfoSeverity;
+    }
+  };
+
+  // Format auto-event date for display
+  const formatAutoEventDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
   };
 
   // Check if a preset is already added for the current type
@@ -433,10 +490,54 @@ export default function ReminderSettingsModal({
               </div>
             )}
 
+            {/* Auto Events Section — shown in Step 1 */}
+            {step === 1 && !autoEventsLoading && autoEvents.length > 0 && (
+              <div className={styles.autoEventsSection}>
+                <div
+                  className={styles.autoEventsHeader}
+                  onClick={() => setAutoEventsExpanded(!autoEventsExpanded)}
+                >
+                  <div className={styles.autoEventsHeaderLeft}>
+                    <Zap size={16} />
+                    <h3>Automatische Erinnerungen ({autoEvents.length})</h3>
+                  </div>
+                  <button className={styles.autoEventsToggle}>
+                    {autoEventsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                </div>
+                {autoEventsExpanded && (
+                  <div className={styles.autoEventsList}>
+                    {autoEvents.map((event) => (
+                      <div key={event.id} className={`${styles.autoEventItem} ${getSeverityClass(event.severity)}`}>
+                        <div className={styles.autoEventInfo}>
+                          <span className={styles.autoEventTitle}>{event.title}</span>
+                          <span className={styles.autoBadge}>Automatisch</span>
+                        </div>
+                        <span className={styles.autoEventDate}>{formatAutoEventDate(event.date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!autoEventsExpanded && autoEvents.length > 3 && (
+                  <button
+                    className={styles.autoEventsShowMore}
+                    onClick={() => setAutoEventsExpanded(true)}
+                  >
+                    {autoEvents.length} Erinnerungen anzeigen
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Divider between auto and manual */}
+            {step === 1 && !autoEventsLoading && autoEvents.length > 0 && (
+              <div className={styles.sectionDivider} />
+            )}
+
             {/* Active Reminders — always visible */}
             {reminders.length > 0 && (
               <div className={styles.section}>
-                <h3>Aktive Erinnerungen ({reminders.length})</h3>
+                <h3>Eigene Erinnerungen ({reminders.length})</h3>
                 <div className={styles.activeReminders}>
                   {reminders.map((r, i) => {
                     const dateStr = getReminderDate(r);
@@ -469,12 +570,22 @@ export default function ReminderSettingsModal({
               </div>
             )}
 
-            {/* Empty State */}
+            {/* Empty State — only when no manual reminders */}
             {reminders.length === 0 && step === 1 && (
               <div className={styles.emptyState}>
-                <BellOff size={48} />
-                <p>Keine Erinnerungen eingerichtet</p>
-                <span>Wähle einen Anlass, um eine Erinnerung hinzuzufügen</span>
+                {autoEvents.length > 0 ? (
+                  <>
+                    <Bell size={48} />
+                    <p>Keine eigenen Erinnerungen</p>
+                    <span>Dieser Vertrag hat bereits automatische Erinnerungen. Du kannst zusätzlich eigene hinzufügen.</span>
+                  </>
+                ) : (
+                  <>
+                    <BellOff size={48} />
+                    <p>Keine Erinnerungen eingerichtet</p>
+                    <span>Wähle einen Anlass, um eine Erinnerung hinzuzufügen</span>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -644,6 +644,165 @@
   transform: none;
 }
 
+/* Auto Events Section */
+.autoEventsSection {
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.autoEventsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.autoEventsHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+}
+
+.autoEventsHeaderLeft h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.autoEventsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.autoEventsToggle:hover {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.autoEventsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.autoEventItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.15s ease;
+}
+
+.autoEventItem:hover {
+  border-color: #cbd5e1;
+}
+
+.autoEventInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.autoEventTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autoBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: #e2e8f0;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.autoEventDate {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* Auto Event Severity Variants */
+.autoEventCritical {
+  border-left: 3px solid #ef4444;
+}
+
+.autoEventCritical .autoEventTitle {
+  color: #dc2626;
+}
+
+.autoEventWarning {
+  border-left: 3px solid #f59e0b;
+}
+
+.autoEventWarning .autoEventTitle {
+  color: #d97706;
+}
+
+.autoEventInfoSeverity {
+  border-left: 3px solid #3b82f6;
+}
+
+.autoEventsShowMore {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  background: transparent;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.autoEventsShowMore:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #475569;
+}
+
+/* Section Divider */
+.sectionDivider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #e2e8f0 20%, #e2e8f0 80%, transparent 100%);
+  margin: 16px 0;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .overlay {
@@ -703,6 +862,18 @@
   .removeButton {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  .autoEventsSection {
+    padding: 12px;
+  }
+
+  .autoEventItem {
+    padding: 8px 10px;
+  }
+
+  .autoEventTitle {
+    font-size: 12px;
   }
 
   .footer {
