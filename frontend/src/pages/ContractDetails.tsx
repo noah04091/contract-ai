@@ -32,6 +32,13 @@ interface Contract {
   s3Key?: string;              // S3-Key für Original-PDF
   reminder?: boolean;
   reminderLastSentAt?: string;
+  reminderDays?: number[];
+  reminderSettings?: Array<{
+    type: 'expiry' | 'cancellation' | 'custom';
+    days: number;
+    targetDate?: string;
+    label?: string;
+  }>;
   content?: string;           // ✅ NEU: Für generierten Vertragsinhalt
   signature?: string;         // ✅ NEU: Für digitale Unterschrift
   isGenerated?: boolean;      // ✅ NEU: Kennzeichnung als generierter Vertrag
@@ -1170,8 +1177,8 @@ export default function ContractDetails() {
           <ReminderSettingsModal
             contractId={contract._id}
             contractName={contract.name}
-            currentReminderSettings={(contract as any).reminderSettings || []}
-            currentReminderDays={(contract as any).reminderDays || []}
+            currentReminderSettings={contract.reminderSettings || []}
+            currentReminderDays={contract.reminderDays || []}
             expiryDate={contract.expiryDate}
             kuendigung={contract.kuendigung}
             onClose={() => setShowReminderModal(false)}
