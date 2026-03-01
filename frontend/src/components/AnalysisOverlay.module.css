@@ -8,9 +8,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -25,7 +25,7 @@
   padding: 32px 36px;
   max-width: 420px;
   width: 90vw;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -71,8 +71,8 @@
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
-  background: #f9fafb;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 .pdfContent {
@@ -148,8 +148,8 @@
 .magnifier3 {
   position: absolute;
   color: #3B82F6;
-  opacity: 0.7;
-  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.4));
+  opacity: 0.8;
+  filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.6)) drop-shadow(0 0 6px rgba(59, 130, 246, 0.3));
   pointer-events: none;
   z-index: 2;
 }
@@ -308,50 +308,7 @@
   line-height: 1.4;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .container {
-    background: #1f2937;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
-  }
-
-  .title {
-    color: #f9fafb;
-  }
-
-  .contractName {
-    color: #9ca3af;
-  }
-
-  .pdfFrame {
-    border-color: #374151;
-    background: #111827;
-  }
-
-  .placeholder {
-    background: #1f2937;
-  }
-
-  .placeholderLine {
-    background: #374151;
-  }
-
-  .pdfOverlay {
-    background: rgba(17, 24, 39, 0.35);
-  }
-
-  .progressBar {
-    background: #374151;
-  }
-
-  .stepLabel {
-    color: #d1d5db;
-  }
-
-  .hint {
-    color: #6b7280;
-  }
-}
+/* No dark mode — Contract AI is always light-themed */
 
 /* Responsive */
 @media (max-width: 480px) {
