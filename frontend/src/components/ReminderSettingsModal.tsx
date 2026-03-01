@@ -8,6 +8,7 @@ import {
   BellOff,
   Check,
   AlertTriangle,
+  Calendar,
   Clock,
   Trash2,
   CalendarX2,
@@ -325,17 +326,33 @@ export default function ReminderSettingsModal({
             {step === 2 && selectedType && (
               <div className={styles.section}>
                 <div className={styles.stepHeader}>
-                  <button className={styles.backButton} onClick={handleBack}>
-                    <ArrowLeft size={16} />
-                    <span>Zurück</span>
-                  </button>
-                  <span className={styles.stepLabel}>Schritt 2 von 2</span>
+                  <div className={styles.stepHeaderTop}>
+                    <button className={styles.backButton} onClick={handleBack}>
+                      <ArrowLeft size={16} />
+                      <span>Zurück</span>
+                    </button>
+                    <span className={styles.stepLabel}>Schritt 2 von 2</span>
+                  </div>
                   <h3>
                     {selectedType === 'custom'
                       ? 'Datum und Bezeichnung wählen'
                       : `Vorlaufzeit wählen — ${TYPE_CONFIG[selectedType].label}`}
                   </h3>
                 </div>
+
+                {/* Context Info */}
+                {selectedType === 'expiry' && expiryDate && (
+                  <div className={`${styles.contextInfo} ${styles.contextInfoExpiry}`}>
+                    <Calendar size={14} />
+                    <span>Vertragsende: {formatDate(expiryDate)}</span>
+                  </div>
+                )}
+                {selectedType === 'cancellation' && expiryDate && kuendigung && (
+                  <div className={`${styles.contextInfo} ${styles.contextInfoCancellation}`}>
+                    <Scale size={14} />
+                    <span>Kündigungsfrist: {kuendigung} (Vertragsende: {formatDate(expiryDate)})</span>
+                  </div>
+                )}
 
                 {/* For expiry / cancellation: Preset grid + custom days */}
                 {(selectedType === 'expiry' || selectedType === 'cancellation') && (

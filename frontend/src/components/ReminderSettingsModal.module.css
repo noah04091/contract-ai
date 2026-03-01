@@ -138,6 +138,13 @@
   margin-bottom: 20px;
 }
 
+.stepHeaderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .stepLabel {
   display: inline-block;
   font-size: 12px;
@@ -145,11 +152,10 @@
   color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 4px;
 }
 
 .stepHeader h3 {
-  margin: 4px 0 0 0;
+  margin: 0;
 }
 
 .backButton {
@@ -165,12 +171,39 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 12px;
 }
 
 .backButton:hover {
   background: #e5e7eb;
   color: #374151;
+}
+
+/* Context Info Bar (Step 2) */
+.contextInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.contextInfo svg {
+  flex-shrink: 0;
+}
+
+.contextInfoExpiry {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.contextInfoCancellation {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 
 /* Occasion Grid (Step 1) */
