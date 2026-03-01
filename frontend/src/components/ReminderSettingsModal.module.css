@@ -94,23 +94,6 @@
   transform: rotate(90deg);
 }
 
-/* Expiry Info */
-.expiryInfo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1e40af;
-  font-size: 13px;
-  font-weight: 500;
-  border-bottom: 1px solid #bfdbfe;
-}
-
-.expiryInfo svg {
-  flex-shrink: 0;
-}
-
 /* Error Message */
 .errorMessage {
   display: flex;
@@ -150,7 +133,119 @@
   color: #374151;
 }
 
-/* Preset Grid */
+/* Step Header */
+.stepHeader {
+  margin-bottom: 20px;
+}
+
+.stepLabel {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.stepHeader h3 {
+  margin: 4px 0 0 0;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* Occasion Grid (Step 1) */
+.occasionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.occasionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.occasionCard:hover:not(.occasionCardDisabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.occasionCardDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.occasionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.occasionSubtitle {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.3;
+}
+
+/* Occasion Color Variants */
+.occasionCardExpiry {
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+.occasionCardExpiry:hover:not(.occasionCardDisabled) {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.occasionCardCancellation {
+  border-color: #fed7aa;
+  color: #ea580c;
+}
+.occasionCardCancellation:hover:not(.occasionCardDisabled) {
+  border-color: #f97316;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+}
+
+.occasionCardCustom {
+  border-color: #ddd6fe;
+  color: #7c3aed;
+}
+.occasionCardCustom:hover:not(.occasionCardDisabled) {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+/* Preset Grid (Step 2) */
 .presetGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -162,7 +257,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 16px;
   background: white;
   border: 2px solid #e5e7eb;
@@ -171,7 +266,7 @@
   transition: all 0.2s ease;
 }
 
-.presetButton:hover:not(.disabled) {
+.presetButton:hover:not(.selected):not(:disabled) {
   border-color: #3b82f6;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
@@ -181,16 +276,12 @@
   background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   border-color: #3b82f6;
   color: white;
+  cursor: default;
 }
 
-.presetButton.disabled {
+.presetButton:disabled:not(.selected) {
   opacity: 0.4;
   cursor: not-allowed;
-  background: #f9fafb;
-}
-
-.presetIcon {
-  font-size: 24px;
 }
 
 .presetLabel {
@@ -203,7 +294,13 @@
   opacity: 0.7;
 }
 
-.presetButton.selected .presetDays {
+.presetDate {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.presetButton.selected .presetDays,
+.presetButton.selected .presetDate {
   opacity: 0.9;
 }
 
@@ -221,42 +318,17 @@
   color: #3b82f6;
 }
 
-.popularBadge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  padding: 2px 8px;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Custom Days Input (Step 2 for expiry/cancellation) */
+.customDaysSection {
+  margin-top: 16px;
 }
 
-/* Custom Input */
-.addCustomButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
-  color: #6b7280;
-  font-size: 14px;
+.customDaysLabel {
+  display: block;
+  font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.addCustomButton:hover {
-  background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-  border-color: #9ca3af;
-  color: #374151;
+  color: #6b7280;
+  margin-bottom: 8px;
 }
 
 .customInputGroup {
@@ -279,8 +351,7 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.addButton,
-.cancelButton {
+.addButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -291,9 +362,6 @@
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
-}
-
-.addButton {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
 }
@@ -303,14 +371,44 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-.cancelButton {
-  background: #f3f4f6;
-  color: #6b7280;
+/* Custom Date Section (Step 2 for custom) */
+.customDateSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.cancelButton:hover {
-  background: #e5e7eb;
+.customDateField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
   color: #374151;
+}
+
+.addCustomDateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addCustomDateButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
 /* Active Reminders */
@@ -348,11 +446,32 @@
   flex-shrink: 0;
 }
 
+.reminderIconExpiry {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.reminderIconCancellation {
+  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+  color: #ea580c;
+}
+
+.reminderIconCustom {
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  color: #7c3aed;
+}
+
 .reminderInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.reminderTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .reminderDays {
@@ -364,6 +483,32 @@
 .reminderDate {
   font-size: 12px;
   color: #6b7280;
+}
+
+/* Type Badges */
+.typeBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.typeBadgeExpiry {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.typeBadgeCancellation {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.typeBadgeCustom {
+  background: #ede9fe;
+  color: #6d28d9;
 }
 
 .removeButton {
@@ -491,6 +636,18 @@
     padding: 20px;
   }
 
+  .occasionGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .occasionCard {
+    flex-direction: row;
+    padding: 16px;
+    gap: 14px;
+    text-align: left;
+  }
+
   .presetGrid {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 10px;
@@ -501,16 +658,11 @@
     min-height: 44px;
   }
 
-  .presetIcon {
-    font-size: 20px;
-  }
-
   .customInput {
     font-size: 16px; /* Prevents iOS zoom */
   }
 
-  .addButton,
-  .cancelButton {
+  .addButton {
     min-width: 44px;
     min-height: 44px;
   }
@@ -532,7 +684,7 @@
   }
 }
 
-/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+/* Extra Small Mobile */
 @media (max-width: 375px) {
   .overlay {
     padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));

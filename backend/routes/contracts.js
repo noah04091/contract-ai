@@ -3430,10 +3430,79 @@ router.get("/:id/status-history", verifyToken, async (req, res) => {
 router.patch("/:id/reminder-settings", async (req, res) => {
   try {
     const { id } = req.params;
-    const { reminderDays } = req.body;
+    const { reminderDays, reminderSettings } = req.body;
     const userId = new ObjectId(req.user.userId);
 
-    // Validate reminderDays
+    // New format: reminderSettings array
+    if (reminderSettings && Array.isArray(reminderSettings)) {
+      // Validate each setting
+      for (const setting of reminderSettings) {
+        if (!['expiry', 'cancellation', 'custom'].includes(setting.type)) {
+          return res.status(400).json({
+            success: false,
+            error: `Ungültiger Reminder-Typ: ${setting.type}. Erlaubt: expiry, cancellation, custom`
+          });
+        }
+        if (setting.type !== 'custom' && (!Number.isInteger(setting.days) || setting.days <= 0)) {
+          return res.status(400).json({
+            success: false,
+            error: "Für expiry/cancellation muss 'days' eine positive Ganzzahl sein"
+          });
+        }
+        if (setting.type === 'custom' && !setting.targetDate) {
+          return res.status(400).json({
+            success: false,
+            error: "Für custom-Reminder muss 'targetDate' angegeben werden"
+          });
+        }
+      }
+
+      // Extract expiry-type days for backward compatibility
+      const compatReminderDays = reminderSettings
+        .filter(s => s.type === 'expiry')
+        .map(s => s.days)
+        .sort((a, b) => a - b);
+
+      // Update contract
+      const result = await req.db.collection("contracts").findOneAndUpdate(
+        { _id: new ObjectId(id), userId },
+        {
+          $set: {
+            reminderSettings: reminderSettings,
+            reminderDays: compatReminderDays,
+            updatedAt: new Date()
+          }
+        },
+        { returnDocument: "after" }
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          error: "Vertrag nicht gefunden"
+        });
+      }
+
+      // Regenerate calendar events for this contract
+      const { generateEventsForContract } = require("../services/calendarEvents");
+
+      await req.db.collection("contract_events").deleteMany({
+        contractId: new ObjectId(id),
+        userId
+      });
+
+      const events = await generateEventsForContract(req.db, result);
+
+      return res.json({
+        success: true,
+        message: "Reminder-Einstellungen aktualisiert",
+        reminderSettings,
+        reminderDays: compatReminderDays,
+        eventsGenerated: events.length
+      });
+    }
+
+    // Legacy format: reminderDays array
     if (!Array.isArray(reminderDays)) {
       return res.status(400).json({
         success: false,
@@ -3455,7 +3524,7 @@ router.patch("/:id/reminder-settings", async (req, res) => {
       { _id: new ObjectId(id), userId },
       {
         $set: {
-          reminderDays: reminderDays.sort((a, b) => a - b), // Sort ascending
+          reminderDays: reminderDays.sort((a, b) => a - b),
           updatedAt: new Date()
         }
       },
@@ -3472,15 +3541,12 @@ router.patch("/:id/reminder-settings", async (req, res) => {
     // Regenerate calendar events for this contract
     const { generateEventsForContract } = require("../services/calendarEvents");
 
-    // Delete old events for this contract
     await req.db.collection("contract_events").deleteMany({
       contractId: new ObjectId(id),
       userId
     });
 
-    // Generate new events with updated reminder settings
     const events = await generateEventsForContract(req.db, result);
-
 
     res.json({
       success: true,

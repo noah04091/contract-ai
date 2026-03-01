@@ -376,26 +376,60 @@ async function generateEventsForContract(db, contract) {
         });
       }
 
-      // 🔔 7. Custom Reminder Events (User-defined)
-      if (contract.reminderDays && Array.isArray(contract.reminderDays) && contract.reminderDays.length > 0) {
-        console.log(`🔔 Generiere ${contract.reminderDays.length} Custom Reminders für "${contract.name}"`);
+      // 🔔 7. Custom Reminder Events (User-defined) — supports new reminderSettings format
+      const reminderSettingsArr = contract.reminderSettings && Array.isArray(contract.reminderSettings) && contract.reminderSettings.length > 0
+        ? contract.reminderSettings
+        : (contract.reminderDays && Array.isArray(contract.reminderDays) && contract.reminderDays.length > 0)
+          ? contract.reminderDays.map(d => ({ type: 'expiry', days: d }))
+          : [];
 
-        for (const days of contract.reminderDays) {
-          const tempReminderDate = new Date(expiryDate);
-          tempReminderDate.setDate(tempReminderDate.getDate() - days);
-          const customReminderDate = createLocalDate(tempReminderDate);
+      if (reminderSettingsArr.length > 0) {
+        console.log(`🔔 Generiere ${reminderSettingsArr.length} Custom Reminders für "${contract.name}"`);
+
+        // Calculate cancellation deadline for cancellation-type reminders
+        const cancellationDeadline = new Date(expiryDate);
+        cancellationDeadline.setDate(cancellationDeadline.getDate() - noticePeriodDays);
+
+        for (const setting of reminderSettingsArr) {
+          let reminderDate;
+          let title;
+          let description;
+
+          if (setting.type === 'expiry') {
+            const tempDate = new Date(expiryDate);
+            tempDate.setDate(tempDate.getDate() - setting.days);
+            reminderDate = createLocalDate(tempDate);
+            title = `🔔 Erinnerung: ${contract.name} läuft in ${setting.days} Tagen ab`;
+            description = `"${contract.name}" läuft in ${setting.days} Tagen ab (am ${expiryDate.toLocaleDateString('de-DE')}).${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch, falls nicht gekündigt!' : ' Jetzt handeln!'}`;
+          } else if (setting.type === 'cancellation') {
+            const tempDate = new Date(cancellationDeadline);
+            tempDate.setDate(tempDate.getDate() - setting.days);
+            reminderDate = createLocalDate(tempDate);
+            title = `🔔 Erinnerung: Kündigungsfrist für ${contract.name} endet in ${setting.days} Tagen`;
+            description = `Die Kündigungsfrist für "${contract.name}" endet in ${setting.days} Tagen (am ${cancellationDeadline.toLocaleDateString('de-DE')}). Vertrag läuft ab am ${expiryDate.toLocaleDateString('de-DE')}.`;
+          } else if (setting.type === 'custom' && setting.targetDate) {
+            reminderDate = createLocalDate(new Date(setting.targetDate));
+            const labelText = setting.label || 'Eigene Erinnerung';
+            title = `🔔 Erinnerung: ${labelText} für ${contract.name}`;
+            description = `Eigene Erinnerung "${labelText}" für "${contract.name}" am ${reminderDate.toLocaleDateString('de-DE')}.`;
+          } else {
+            continue; // Skip invalid settings
+          }
 
           // Nur zukünftige Reminders erstellen
-          if (customReminderDate > now) {
-            const severity = days <= 7 ? "critical" : days <= 30 ? "warning" : "info";
+          if (reminderDate > now) {
+            const daysUntil = setting.type === 'custom'
+              ? Math.ceil((reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              : setting.days;
+            const severity = daysUntil <= 7 ? "critical" : daysUntil <= 30 ? "warning" : "info";
 
             events.push({
               userId: contract.userId,
               contractId: contract._id,
               type: "CUSTOM_REMINDER",
-              title: `🔔 Erinnerung: ${contract.name} läuft in ${days} Tagen ab`,
-              description: `"${contract.name}" läuft in ${days} Tagen ab (am ${expiryDate.toLocaleDateString('de-DE')}).${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch, falls nicht gekündigt!' : ' Jetzt handeln!'}`,
-              date: customReminderDate,
+              title,
+              description,
+              date: reminderDate,
               severity: severity,
               status: "scheduled",
               confidence: confidence,
@@ -403,12 +437,14 @@ async function generateEventsForContract(db, contract) {
               isEstimated: isEstimated,
               metadata: {
                 provider: contract.provider,
-                daysUntilExpiry: days,
+                daysUntilExpiry: setting.days || 0,
                 expiryDate: expiryDate,
                 suggestedAction: "review",
                 contractName: contract.name,
                 isAutoRenewal,
-                customReminder: true
+                customReminder: true,
+                reminderType: setting.type,
+                reminderLabel: setting.label || null
               },
               createdAt: new Date(),
               updatedAt: new Date()

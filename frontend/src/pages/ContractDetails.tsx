@@ -1170,9 +1170,12 @@ export default function ContractDetails() {
           <ReminderSettingsModal
             contractId={contract._id}
             contractName={contract.name}
+            currentReminderSettings={(contract as any).reminderSettings || []}
+            currentReminderDays={(contract as any).reminderDays || []}
+            expiryDate={contract.expiryDate}
+            kuendigung={contract.kuendigung}
             onClose={() => setShowReminderModal(false)}
-            onSuccess={(reminderDays: number[]) => {
-              console.log('Custom reminders saved:', reminderDays);
+            onSuccess={() => {
               setNotification({ message: 'Custom Reminders erfolgreich gespeichert!', type: 'success' });
               setShowReminderModal(false);
             }}
