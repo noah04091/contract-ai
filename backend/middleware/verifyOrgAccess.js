@@ -2,6 +2,7 @@
 // Team-Management: Middleware für Organization-Zugriffskontrolle
 
 const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 const OrganizationMember = require('../models/OrganizationMember');
 
 /**
@@ -26,57 +27,44 @@ async function verifyOrgAccess(req, res, next) {
       return next();
     }
 
-    // Hol Contract aus DB
-    const { MongoClient } = require('mongodb');
-    const client = new MongoClient(process.env.MONGO_URI);
+    // Hol Contract aus DB (shared pool)
+    const db = await database.connect();
+    const contract = await db.collection('contracts').findOne({
+      _id: new ObjectId(contractId)
+    });
 
-    try {
-      await client.connect();
-      const db = client.db('contract_ai');
-      const contract = await db.collection('contracts').findOne({
-        _id: new ObjectId(contractId)
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contract nicht gefunden'
+      });
+    }
+
+    // Check 1: User owns contract
+    if (contract.userId && contract.userId.toString() === userId) {
+      return next();
+    }
+
+    // Check 2: Contract gehört zu Org && User ist Member
+    if (contract.organizationId) {
+      const member = await OrganizationMember.findOne({
+        organizationId: contract.organizationId,
+        userId: new ObjectId(userId),
+        isActive: true
       });
 
-      if (!contract) {
-        await client.close();
-        return res.status(404).json({
-          success: false,
-          message: 'Contract nicht gefunden'
-        });
-      }
-
-      // Check 1: User owns contract
-      if (contract.userId && contract.userId.toString() === userId) {
-        await client.close();
+      if (member) {
+        // User ist Member der Org → Zugriff erlaubt
+        req.orgMembership = member; // Für spätere Permissions-Checks
         return next();
       }
-
-      // Check 2: Contract gehört zu Org && User ist Member
-      if (contract.organizationId) {
-        const member = await OrganizationMember.findOne({
-          organizationId: contract.organizationId,
-          userId: new ObjectId(userId),
-          isActive: true
-        });
-
-        if (member) {
-          // User ist Member der Org → Zugriff erlaubt
-          await client.close();
-          req.orgMembership = member; // Für spätere Permissions-Checks
-          return next();
-        }
-      }
-
-      // Kein Zugriff
-      await client.close();
-      return res.status(403).json({
-        success: false,
-        message: 'Kein Zugriff auf diesen Vertrag'
-      });
-
-    } finally {
-      await client.close();
     }
+
+    // Kein Zugriff
+    return res.status(403).json({
+      success: false,
+      message: 'Kein Zugriff auf diesen Vertrag'
+    });
 
   } catch (error) {
     console.error('❌ [VERIFY-ORG-ACCESS] Error:', error);
