@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
@@ -17,7 +18,8 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
-  Zap
+  Zap,
+  ExternalLink
 } from 'lucide-react';
 
 interface ReminderSetting {
@@ -75,6 +77,8 @@ export default function ReminderSettingsModal({
   onClose,
   onSuccess
 }: ReminderSettingsModalProps) {
+  const navigate = useNavigate();
+
   // Initialize reminders from new format or legacy
   const initialReminders: ReminderSetting[] = currentReminderSettings.length > 0
     ? currentReminderSettings
@@ -522,12 +526,20 @@ export default function ReminderSettingsModal({
                 {autoEventsExpanded && (
                   <div className={styles.autoEventsList}>
                     {autoEvents.map((event) => (
-                      <div key={event.id} className={`${styles.autoEventItem} ${getSeverityClass(event.severity)}`}>
+                      <div
+                        key={event.id}
+                        className={`${styles.autoEventItem} ${styles.autoEventClickable} ${getSeverityClass(event.severity)}`}
+                        onClick={() => navigate(`/calendar?eventId=${event.id}`)}
+                        title="Im Kalender anzeigen"
+                      >
                         <div className={styles.autoEventInfo}>
                           <span className={styles.autoEventTitle}>{event.title}</span>
                           <span className={styles.autoBadge}>Automatisch</span>
                         </div>
-                        <span className={styles.autoEventDate}>{formatAutoEventDate(event.date)}</span>
+                        <div className={styles.autoEventRight}>
+                          <span className={styles.autoEventDate}>{formatAutoEventDate(event.date)}</span>
+                          <ExternalLink size={12} className={styles.autoEventLink} />
+                        </div>
                       </div>
                     ))}
                   </div>

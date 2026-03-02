@@ -735,8 +735,14 @@
   transition: all 0.15s ease;
 }
 
-.autoEventItem:hover {
-  border-color: #cbd5e1;
+.autoEventClickable {
+  cursor: pointer;
+}
+
+.autoEventClickable:hover {
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  transform: translateX(2px);
 }
 
 .autoEventInfo {
@@ -769,12 +775,31 @@
   flex-shrink: 0;
 }
 
+.autoEventRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
 .autoEventDate {
   font-size: 12px;
   font-weight: 600;
   color: #94a3b8;
-  flex-shrink: 0;
-  margin-left: 12px;
+}
+
+.autoEventLink {
+  color: #cbd5e1;
+  transition: color 0.2s ease;
+}
+
+.autoEventClickable:hover .autoEventLink {
+  color: #3b82f6;
+}
+
+.autoEventClickable:hover .autoEventDate {
+  color: #3b82f6;
 }
 
 /* Auto Event Severity Variants */
