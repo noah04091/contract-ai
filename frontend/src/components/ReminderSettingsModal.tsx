@@ -490,6 +490,20 @@ export default function ReminderSettingsModal({
               </div>
             )}
 
+            {/* Auto Events Loading State */}
+            {step === 1 && autoEventsLoading && (
+              <div className={styles.autoEventsLoading}>
+                <motion.div
+                  className={styles.autoEventsLoadingSpinner}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Clock size={16} />
+                </motion.div>
+                <span>Automatische Erinnerungen werden geladen...</span>
+              </div>
+            )}
+
             {/* Auto Events Section — shown in Step 1 */}
             {step === 1 && !autoEventsLoading && autoEvents.length > 0 && (
               <div className={styles.autoEventsSection}>
