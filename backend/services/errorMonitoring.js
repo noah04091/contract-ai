@@ -135,7 +135,7 @@ async function sendErrorNotification(errorData) {
 
     const html = generateEmailTemplate({
       title: 'Fehler erkannt',
-      content: `
+      body: `
         <p>Ein Fehler wurde in Contract AI erkannt:</p>
 
         <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">

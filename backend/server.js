@@ -372,7 +372,7 @@ const connectDB = async () => {
     const startTime = Date.now();
 
     client = new MongoClient(MONGO_URI, {
-      maxPoolSize: 10,
+      maxPoolSize: 30,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       connectTimeoutMS: 10000,
@@ -389,7 +389,7 @@ const connectDB = async () => {
     // 📁 Connect Mongoose for Folder Models
     await mongoose.connect(MONGO_URI, {
       dbName: "contract_ai",
-      maxPoolSize: 10,
+      maxPoolSize: 30,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
@@ -1601,9 +1601,10 @@ const connectDB = async () => {
         }
       });
 
-      // 📬 Legal Pulse: Täglicher Digest (täglich um 8 Uhr morgens)
+      // 📬 Legal Pulse: Täglicher Digest (täglich um 8:10 Uhr morgens)
       // Verarbeitet alle Legal-Pulse-Alerts aus der digest_queue und sendet Sammel-Emails
-      cron.schedule("0 8 * * *", async () => {
+      // Gestaffelt: 08:10 statt 08:00 um DB-Connection-Kollision mit reminder-calendar zu vermeiden
+      cron.schedule("10 8 * * *", async () => {
         console.log("📬 [LEGAL-PULSE] Starte Daily Digest Verarbeitung...");
         try {
           const DigestProcessor = require("./jobs/digestProcessor");
@@ -1617,9 +1618,10 @@ const connectDB = async () => {
         }
       });
 
-      // 📬 Legal Pulse: Wöchentlicher Digest (jeden Montag um 8 Uhr morgens)
-      // Weekly Check läuft Sonntag 02:00 → Digest versendet Montag 08:00
-      cron.schedule("0 8 * * 1", async () => {
+      // 📬 Legal Pulse: Wöchentlicher Digest (jeden Montag um 8:20 Uhr morgens)
+      // Weekly Check läuft Sonntag 02:00 → Digest versendet Montag 08:20
+      // Gestaffelt: 08:20 statt 08:00 um DB-Connection-Kollision zu vermeiden
+      cron.schedule("20 8 * * 1", async () => {
         console.log("📬 [LEGAL-PULSE] Starte Weekly Digest Verarbeitung...");
         try {
           const DigestProcessor = require("./jobs/digestProcessor");
@@ -1727,8 +1729,9 @@ const connectDB = async () => {
         }
       });
 
-      // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10 Uhr)
-      cron.schedule("0 10 * * *", async () => {
+      // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10:10 Uhr)
+      // Gestaffelt: 10:10 statt 10:00 um DB-Connection-Kollision mit Winback zu vermeiden
+      cron.schedule("10 10 * * *", async () => {
         console.log("🎁 [BETA] Starte Feedback-Erinnerungs-Check...");
         try {
           // Finde ALLE Beta-Tester, die sich vor MINDESTENS 2 Tagen registriert haben
@@ -1967,8 +1970,9 @@ const connectDB = async () => {
         }
       });
 
-      // 📧 VERIFICATION REMINDER: Erinnerung für nicht verifizierte Accounts (täglich um 10 Uhr)
-      cron.schedule("0 10 * * *", async () => {
+      // 📧 VERIFICATION REMINDER: Erinnerung für nicht verifizierte Accounts (täglich um 10:20 Uhr)
+      // Gestaffelt: 10:20 statt 10:00 um DB-Connection-Kollision zu vermeiden
+      cron.schedule("20 10 * * *", async () => {
         console.log("📧 [VERIFICATION] Starte Erinnerungs-E-Mails für nicht verifizierte Accounts...");
         try {
           const { sendVerificationReminders } = require("./services/verificationReminderService");
