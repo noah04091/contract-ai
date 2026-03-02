@@ -2,8 +2,9 @@
 // 🔐 Feature-spezifische Middleware für granulare Berechtigungsprüfung
 // Nutzt zentrale FEATURE_ACCESS Definitionen
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const { hasFeatureAccess, FEATURE_ACCESS } = require("../constants/subscriptionPlans");
+const database = require("../config/database");
 require('dotenv').config();
 
 /**
@@ -16,8 +17,6 @@ require('dotenv').config();
  */
 function requireFeature(featureName) {
   return async (req, res, next) => {
-    let client;
-
     try {
       // Prüfe ob Feature definiert ist
       if (!FEATURE_ACCESS[featureName]) {
@@ -29,11 +28,9 @@ function requireFeature(featureName) {
         });
       }
 
-      // MongoDB Verbindung
-      client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
-
-      const usersCollection = client.db("contract_ai").collection("users");
+      // MongoDB Verbindung (shared pool)
+      const db = await database.connect();
+      const usersCollection = db.collection("users");
 
       // User laden
       const user = await usersCollection.findOne({
@@ -41,7 +38,6 @@ function requireFeature(featureName) {
       });
 
       if (!user) {
-        await client.close();
         return res.status(404).json({
           success: false,
           message: "Benutzer nicht gefunden",
@@ -55,8 +51,6 @@ function requireFeature(featureName) {
       // Feature-Zugriff prüfen
       if (!hasFeatureAccess(userPlan, featureName)) {
         console.log(`⚠️ [FEATURE-CHECK] User ${user.email} (${userPlan}) hat keinen Zugriff auf: ${featureName}`);
-
-        await client.close();
 
         // Bestimme minimalen erforderlichen Plan
         const requiredPlan = allowedPlans[0]; // Niedrigster Plan der Zugriff hat
@@ -82,15 +76,10 @@ function requireFeature(featureName) {
       req.user.email = user.email;
       req.user.subscriptionActive = user.subscriptionActive;
 
-      await client.close();
       next();
 
     } catch (error) {
       console.error(`❌ [FEATURE-CHECK] Fehler bei Feature-Prüfung (${featureName}):`, error);
-
-      if (client) {
-        await client.close();
-      }
 
       return res.status(500).json({
         success: false,
