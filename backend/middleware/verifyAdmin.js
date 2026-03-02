@@ -1,7 +1,8 @@
 // 📁 backend/middleware/verifyAdmin.js
 // Admin Role Verification Middleware
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 
 /**
  * Middleware to verify that the authenticated user has admin role
@@ -20,19 +21,15 @@ const verifyAdmin = async (req, res, next) => {
       });
     }
 
-    // Connect to MongoDB
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db('contract_ai').collection('users');
+    // Connect to MongoDB (shared pool)
+    const db = await database.connect();
+    const usersCollection = db.collection('users');
 
     // Get user from database
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
       { projection: { role: 1, email: 1 } }
     );
-
-    await client.close();
 
     // Check if user exists
     if (!user) {
