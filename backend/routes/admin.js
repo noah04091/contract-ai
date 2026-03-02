@@ -4,6 +4,7 @@
 const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin");
 const { getInstance: getCostTrackingService } = require("../services/costTracking");
@@ -15,11 +16,7 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
   try {
     console.log('📊 [ADMIN] Fetching comprehensive statistics...');
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
     const costTrackingCollection = db.collection("cost_tracking");
@@ -162,8 +159,7 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
     ]).toArray();
 
     // ===== 🔥 SYSTEM HEALTH =====
-    // Check MongoDB connection
-    const mongoStatus = client.topology?.isConnected() ? 'Connected' : 'Disconnected';
+    const mongoStatus = database.getStatus().connected ? 'Connected' : 'Disconnected';
 
     // Average analyses per user
     const avgAnalysesPerUser = totalUsers > 0
@@ -183,8 +179,6 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
         limit: 10
       }
     ).toArray();
-
-    await client.close();
 
     // ===== 📦 RESPONSE =====
     const response = {
@@ -292,11 +286,7 @@ router.get("/beta-stats", verifyToken, verifyAdmin, async (req, res) => {
   try {
     console.log('🎁 [ADMIN] Fetching beta program statistics...');
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const betaFeedbackCollection = db.collection("betaFeedback");
 
@@ -394,8 +384,6 @@ router.get("/beta-stats", verifyToken, verifyAdmin, async (req, res) => {
       betaExpiresAt: { $lt: new Date() }
     });
 
-    await client.close();
-
     // ===== 📊 COMPILE RESPONSE =====
     const response = {
       // Overview
@@ -472,11 +460,7 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
 
     console.log(`🗑️ [ADMIN] Deleting user: ${userId}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
     const costTrackingCollection = db.collection("cost_tracking");
@@ -486,7 +470,6 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -495,7 +478,6 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
 
     // Don't allow deleting yourself or other admins
     if (user.role === 'admin') {
-      await client.close();
       return res.status(403).json({
         success: false,
         message: "Admin-Accounts können nicht gelöscht werden"
@@ -565,8 +547,6 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
       }
     }
 
-    await client.close();
-
     if (deleteResult.deletedCount === 1) {
       console.log(`✅ [ADMIN] Successfully deleted user: ${user.email}`);
       res.json({
@@ -621,11 +601,7 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
 
     console.log(`🗑️ [ADMIN] Bulk deleting ${validIds.length} users...`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
     const costTrackingCollection = db.collection("cost_tracking");
@@ -641,7 +617,6 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     const userIdsToDelete = usersToDelete.map(u => u._id.toString());
 
     if (userIdsToDelete.length === 0) {
-      await client.close();
       return res.status(400).json({
         success: false,
         message: "Keine löschbaren Benutzer gefunden (Admin-Accounts ausgenommen)"
@@ -662,8 +637,6 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     const deleteResult = await usersCollection.deleteMany({
       _id: { $in: usersToDelete.map(u => u._id) }
     });
-
-    await client.close();
 
     console.log(`✅ [ADMIN] Bulk delete complete: ${deleteResult.deletedCount} users`);
 
@@ -705,17 +678,13 @@ router.post("/reset-analysis-count", verifyToken, verifyAdmin, async (req, res) 
 
     console.log(`🔧 [ADMIN] Resetting analysis count for: ${email}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
 
     // Find user
     const user = await usersCollection.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: `User not found: ${email}`
@@ -729,8 +698,6 @@ router.post("/reset-analysis-count", verifyToken, verifyAdmin, async (req, res) 
       { _id: user._id },
       { $set: { analysisCount: 0 } }
     );
-
-    await client.close();
 
     console.log(`✅ [ADMIN] Reset ${email}: ${previousCount} -> 0`);
 
@@ -759,11 +726,8 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
   try {
     console.log('🗑️ [ADMIN] Fetching deleted accounts...');
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const deletedAccountsCollection = client.db("contract_ai").collection("deleted_accounts");
+    const db = await database.connect();
+    const deletedAccountsCollection = db.collection("deleted_accounts");
 
     // Get all deleted accounts, sorted by deletion date (newest first)
     const deletedAccounts = await deletedAccountsCollection.find()
@@ -818,8 +782,6 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
       },
       { $sort: { count: -1 } }
     ]).toArray();
-
-    await client.close();
 
     res.json({
       success: true,
@@ -897,15 +859,11 @@ router.put("/users/:userId/plan", verifyToken, verifyAdmin, async (req, res) => 
 
     console.log(`📝 [ADMIN] Updating plan for user ${userId} to ${plan}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -937,8 +895,6 @@ router.put("/users/:userId/plan", verifyToken, verifyAdmin, async (req, res) => 
       { _id: new ObjectId(userId) },
       { $set: updateFields }
     );
-
-    await client.close();
 
     console.log(`✅ [ADMIN] Plan updated: ${user.email} (${oldPlan} → ${plan})`);
 
@@ -977,15 +933,11 @@ router.put("/users/:userId/reset-analysis", verifyToken, verifyAdmin, async (req
 
     console.log(`🔄 [ADMIN] Resetting analysis count for user ${userId}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -1004,8 +956,6 @@ router.put("/users/:userId/reset-analysis", verifyToken, verifyAdmin, async (req
         }
       }
     );
-
-    await client.close();
 
     console.log(`✅ [ADMIN] Reset counts for ${user.email}: ${previousCount} → 0`);
 
@@ -1044,15 +994,11 @@ router.put("/users/:userId/verify", verifyToken, verifyAdmin, async (req, res) =
 
     console.log(`✅ [ADMIN] Verifying user ${userId}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -1060,7 +1006,6 @@ router.put("/users/:userId/verify", verifyToken, verifyAdmin, async (req, res) =
     }
 
     if (user.verified === true) {
-      await client.close();
       return res.json({
         success: true,
         message: `${user.email} ist bereits verifiziert`,
@@ -1083,8 +1028,6 @@ router.put("/users/:userId/verify", verifyToken, verifyAdmin, async (req, res) =
         }
       }
     );
-
-    await client.close();
 
     console.log(`✅ [ADMIN] User verified: ${user.email}`);
 
@@ -1131,15 +1074,11 @@ router.put("/users/:userId/suspend", verifyToken, verifyAdmin, async (req, res) 
 
     console.log(`🔒 [ADMIN] ${suspended ? 'Suspending' : 'Unsuspending'} user ${userId}`);
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -1148,7 +1087,6 @@ router.put("/users/:userId/suspend", verifyToken, verifyAdmin, async (req, res) 
 
     // Don't allow suspending admins
     if (user.role === 'admin') {
-      await client.close();
       return res.status(403).json({
         success: false,
         message: "Admin-Accounts können nicht gesperrt werden"
@@ -1177,7 +1115,7 @@ router.put("/users/:userId/suspend", verifyToken, verifyAdmin, async (req, res) 
     // 📋 Activity Log: User gesperrt/entsperrt
     try {
       const { logActivity, ActivityTypes } = require('../services/activityLogger');
-      await logActivity(client.db("contract_ai"), {
+      await logActivity(db, {
         type: suspended ? ActivityTypes.USER_SUSPENDED : ActivityTypes.USER_UNSUSPENDED,
         userId: userId,
         userEmail: user.email,
@@ -1192,8 +1130,6 @@ router.put("/users/:userId/suspend", verifyToken, verifyAdmin, async (req, res) 
     } catch (logErr) {
       console.error("Activity Log Error:", logErr);
     }
-
-    await client.close();
 
     console.log(`✅ [ADMIN] User ${suspended ? 'suspended' : 'unsuspended'}: ${user.email}`);
 
@@ -1232,16 +1168,12 @@ router.post("/users/:userId/send-reset", verifyToken, verifyAdmin, async (req, r
 
     console.log(`📧 [ADMIN] Sending password reset for user ${userId}`);
 
-    const { MongoClient } = require("mongodb");
     const crypto = require("crypto");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const usersCollection = client.db("contract_ai").collection("users");
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -1262,8 +1194,6 @@ router.post("/users/:userId/send-reset", verifyToken, verifyAdmin, async (req, r
         }
       }
     );
-
-    await client.close();
 
     // Send email
     const sendEmail = require("../utils/sendEmail");
@@ -1331,11 +1261,7 @@ router.get("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
       });
     }
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
     const costTrackingCollection = db.collection("cost_tracking");
@@ -1343,7 +1269,6 @@ router.get("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
-      await client.close();
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -1373,8 +1298,6 @@ router.get("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
         }
       }
     ]).toArray();
-
-    await client.close();
 
     // Build response (exclude password!)
     const userDetails = {
@@ -1425,10 +1348,7 @@ router.get('/activity-log', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { limit = 50, type, severity, userId, startDate, endDate } = req.query;
 
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
 
     const { getRecentActivities, getActivityStats } = require('../services/activityLogger');
 
@@ -1442,8 +1362,6 @@ router.get('/activity-log', verifyToken, verifyAdmin, async (req, res) => {
     });
 
     const stats = await getActivityStats(db, 24);
-
-    await client.close();
 
     res.json({
       success: true,
