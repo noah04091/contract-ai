@@ -4433,6 +4433,7 @@ export default function Contracts() {
                     )}
 
                     {/* 📱 UPLOAD TABS: Datei-Upload / E-Mail-Upload */}
+                    {!allAnalyzed && (
                     <div className={styles.uploadTabs}>
                       <button
                         className={`${styles.uploadTab} ${uploadTab === 'file' ? styles.active : ''}`}
@@ -4451,6 +4452,7 @@ export default function Contracts() {
                         </button>
                       )}
                     </div>
+                    )}
 
                     {/* TAB CONTENT: E-Mail-Upload */}
                     {uploadTab === 'email' && userInfo.emailInboxAddress ? (
