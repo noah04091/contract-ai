@@ -1,7 +1,7 @@
 // services/adminNotificationService.js
 // Admin Notification Service - Daily & Weekly Summary Emails
 
-const { MongoClient } = require("mongodb");
+const database = require("../config/database");
 const sendEmail = require("./mailer");
 require("dotenv").config();
 
@@ -12,11 +12,8 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
  * Generate and send daily admin summary email
  */
 async function sendDailyAdminSummary() {
-  const client = new MongoClient(process.env.MONGO_URI);
-
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
 
     console.log("📊 [ADMIN] Generiere Daily Summary...");
 
@@ -215,8 +212,6 @@ Dashboard: https://contract-ai.de/dashboard
   } catch (error) {
     console.error("❌ [ADMIN] Fehler beim Daily Summary:", error);
     throw error;
-  } finally {
-    await client.close();
   }
 }
 
@@ -224,11 +219,8 @@ Dashboard: https://contract-ai.de/dashboard
  * Generate and send weekly admin summary email (more detailed)
  */
 async function sendWeeklyAdminSummary() {
-  const client = new MongoClient(process.env.MONGO_URI);
-
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
 
     console.log("📊 [ADMIN] Generiere Weekly Summary...");
 
@@ -422,8 +414,6 @@ Dashboard: https://contract-ai.de/dashboard
   } catch (error) {
     console.error("❌ [ADMIN] Fehler beim Weekly Summary:", error);
     throw error;
-  } finally {
-    await client.close();
   }
 }
 
