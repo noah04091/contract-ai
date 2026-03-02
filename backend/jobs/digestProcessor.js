@@ -1,7 +1,8 @@
 // 📁 backend/jobs/digestProcessor.js
 // Process and send daily/weekly alert digests (GDPR-Compliant)
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 const sendEmailHtml = require('../utils/sendEmailHtml');
 const {
   generateEmailTemplate,
@@ -14,15 +15,12 @@ const {
 
 class DigestProcessor {
   constructor() {
-    this.mongoClient = null;
     this.db = null;
   }
 
   async connect() {
-    if (!this.mongoClient) {
-      this.mongoClient = new MongoClient(process.env.MONGO_URI);
-      await this.mongoClient.connect();
-      this.db = this.mongoClient.db('contract_ai');
+    if (!this.db) {
+      this.db = await database.connect();
     }
   }
 
@@ -587,9 +585,8 @@ class DigestProcessor {
   }
 
   async close() {
-    if (this.mongoClient) {
-      await this.mongoClient.close();
-    }
+    // No-op: shared pool manages its own lifecycle
+    this.db = null;
   }
 }
 
