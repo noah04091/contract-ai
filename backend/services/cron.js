@@ -1,18 +1,16 @@
 // services/cron.js
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 require("dotenv").config();
 const sendEmail = require("./mailer");
 const { checkAndSendNotifications } = require("./calendarNotifier");
 const { updateContractStatuses } = require("./smartStatusUpdater"); // 🧠 NEU
 const { deleteFiles } = require("./fileStorage"); // 🗑️ S3-Dateien löschen
 
-const client = new MongoClient(process.env.MONGO_URI);
-
 // DEINE BESTEHENDE FUNKTION - BEHALTEN!
 async function checkContractsAndSendReminders() {
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const contractsCollection = db.collection("contracts");
 
     const today = new Date();
@@ -44,16 +42,13 @@ async function checkContractsAndSendReminders() {
     }
   } catch (err) {
     console.error("❌ Fehler im Reminder-Cronjob:", err);
-  } finally {
-    await client.close();
   }
 }
 
 // NEU: Calendar Event Notifications
 async function checkCalendarEventsAndSendNotifications() {
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
 
     console.log("📅 Prüfe Calendar Events für Benachrichtigungen...");
     const sentCount = await checkAndSendNotifications(db);
@@ -61,16 +56,13 @@ async function checkCalendarEventsAndSendNotifications() {
 
   } catch (err) {
     console.error("❌ Fehler im Calendar-Cronjob:", err);
-  } finally {
-    await client.close();
   }
 }
 
 // 🧠 NEU: Smart Status Updater - Täglich ausführen
 async function updateAllContractStatuses() {
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
 
     console.log("🧠 Smart Status Update wird ausgeführt...");
     const result = await updateContractStatuses(db);
@@ -78,16 +70,13 @@ async function updateAllContractStatuses() {
 
   } catch (err) {
     console.error("❌ Fehler beim Smart Status Update:", err);
-  } finally {
-    await client.close();
   }
 }
 
 // 🗑️ Auto-Delete: Stornierte Envelopes nach 30 Tagen endgültig löschen
 async function autoDeleteOldVoidedEnvelopes() {
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const envelopesCollection = db.collection("envelopes");
 
     // Finde alle VOIDED Envelopes, die älter als 30 Tage sind
@@ -136,8 +125,6 @@ async function autoDeleteOldVoidedEnvelopes() {
   } catch (err) {
     console.error("❌ Fehler beim Auto-Delete von Envelopes:", err);
     return { deleted: 0, error: err.message };
-  } finally {
-    await client.close();
   }
 }
 
