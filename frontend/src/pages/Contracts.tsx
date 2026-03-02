@@ -3170,6 +3170,7 @@ export default function Contracts() {
   const canUpload = true; // Alle Pläne dürfen uploaden (Free: 3, Business: 25, Enterprise: ∞)
   const canMultiUpload = userInfo.subscriptionPlan === 'enterprise';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
+  const allAnalyzed = uploadFiles.length > 0 && uploadFiles.every(f => f.status === 'completed');
 
   // ✅ Infinite Scroll: Zeige alle geladenen Contracts (keine Frontend-Slice mehr)
   const displayedContracts = contracts;
@@ -4463,6 +4464,7 @@ export default function Contracts() {
                     ) : (
                     <>
                     {/* TAB CONTENT: Datei-Upload (bestehender Code) */}
+                    {!allAnalyzed && (
                     <div className={styles.sectionHeader}>
                       <h2>
                         {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
@@ -4473,7 +4475,7 @@ export default function Contracts() {
                           : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
                         }
                       </p>
-                      
+
                       {/* ✅ KORRIGIERT: Limit-Warnung für Business */}
                       {userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
                         <div className={styles.limitWarning}>
@@ -4488,7 +4490,9 @@ export default function Contracts() {
                       )}
 
                     </div>
+                    )}
                     
+                    {!allAnalyzed && (
                     <div
                       className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''} ${uploadFiles.length > 0 ? styles.hasFiles : ''}`}
                       onDragEnter={handleDrag}
@@ -4712,6 +4716,7 @@ export default function Contracts() {
                         </div>
                       )}
                     </div>
+                    )}
 
                     {/* 📸 Dokument scannen Button */}
                     {uploadFiles.length === 0 && (
