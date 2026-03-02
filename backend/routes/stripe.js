@@ -1,24 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
-const { MongoClient } = require("mongodb");
+const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 require("dotenv").config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const client = new MongoClient(process.env.MONGO_URI);
 
 let usersCollection;
 
-client.connect().then(() => {
-  const db = client.db("contract_ai");
+async function ensureDb() {
+  if (usersCollection) return;
+  const db = await database.connect();
   usersCollection = db.collection("users");
-  console.log("✅ Stripe-Route: MongoDB verbunden");
-}).catch((err) => {
-  console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err.message);
-});
+}
+
+ensureDb().catch(err => console.error("❌ Stripe-Route: MongoDB Fehler:", err.message));
 
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
+  await ensureDb();
   const { plan, billing = 'monthly' } = req.body; // billing: 'monthly' oder 'yearly'
   const email = req.user.email;
 
@@ -129,6 +129,7 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
 // ============================================
 router.post("/verify-subscription", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const email = req.user.email;
 
