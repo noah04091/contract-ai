@@ -3747,7 +3747,7 @@ export default function Contracts() {
 
               <button
                 className={`${styles.sidebarNavItem} ${activeSection === 'upload' ? styles.active : ''}`}
-                onClick={() => setActiveSection('upload')}
+                onClick={() => { if (allAnalyzed) clearAllUploadFiles(); setActiveSection('upload'); }}
               >
                 <Upload size={18} className={styles.sidebarNavIcon} />
                 <span>Hochladen</span>
@@ -3992,7 +3992,7 @@ export default function Contracts() {
               <div className={styles.toolbarSection}>
                 <button
                   className={`${styles.toolbarButton} ${styles.primary}`}
-                  onClick={() => setActiveSection('upload')}
+                  onClick={() => { if (allAnalyzed) clearAllUploadFiles(); setActiveSection('upload'); }}
                   data-tour="contracts-upload-btn"
                 >
                   <FileUp size={16} />
