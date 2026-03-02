@@ -1,26 +1,23 @@
 // 📁 backend/middleware/verifyApiKey.js
 // REST API-Zugang: API-Key Authentication Middleware
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const crypto = require("crypto");
+const database = require("../config/database");
 const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
-// MongoDB Connection
-const client = new MongoClient(process.env.MONGO_URI);
+// MongoDB Connection (shared pool)
 let apiKeysCollection;
 let usersCollection;
 
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    apiKeysCollection = db.collection("api_keys");
-    usersCollection = db.collection("users");
-    console.log("📦 API-Key Middleware: MongoDB verbunden");
-  } catch (error) {
-    console.error("❌ API-Key Middleware: MongoDB Connection Error:", error);
-  }
-})();
+async function ensureCollections() {
+  if (apiKeysCollection) return;
+  const db = await database.connect();
+  apiKeysCollection = db.collection("api_keys");
+  usersCollection = db.collection("users");
+}
+
+ensureCollections().catch(err => console.error("❌ API-Key Middleware: MongoDB Fehler:", err));
 
 /**
  * Hasht API-Key für Vergleich
@@ -39,6 +36,9 @@ function hashApiKey(key) {
  */
 async function verifyApiKey(req, res, next) {
   try {
+    // Sicherstellen, dass Collections initialisiert sind
+    await ensureCollections();
+
     // API-Key aus Header holen
     let apiKey = null;
 
