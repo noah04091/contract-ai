@@ -535,21 +535,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border: 1px solid #e5e5e7;
-  border-radius: 6px;
-  background: #f9f9fb;
-  color: #86868b;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #ef4444;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .removeFieldBtn:hover:not(:disabled) {
-  background: #fff0f0;
-  border-color: #ff453a;
-  color: #ff453a;
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #dc2626;
+  transform: scale(1.1);
 }
 
 .removeFieldBtn:disabled {
