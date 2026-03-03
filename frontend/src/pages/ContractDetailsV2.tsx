@@ -718,11 +718,13 @@ export default function ContractDetailsV2() {
 
   const getRelativeTime = (dateString: string): string => {
     const date = new Date(dateString);
+    date.setHours(0, 0, 0, 0);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    const diff = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diff < 0) return `vor ${Math.abs(diff)} Tagen`;
+    if (diff === -1) return "Gestern";
+    if (diff < -1) return `vor ${Math.abs(diff)} Tagen`;
     if (diff === 0) return "Heute";
     if (diff === 1) return "Morgen";
     return `in ${diff} Tagen`;
