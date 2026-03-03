@@ -2064,8 +2064,32 @@ router.post("/sign/:token/send-otp", otpSendLimiter, async (req, res) => {
     const code = generateOtpCode();
     const hashedCode = hashOtpCode(code);
 
-    // Update signer in DB
+    // Generate email FIRST, then send, then persist to DB
     const signerIndex = envelope.signers.findIndex(s => s.token === token);
+
+    const emailHTML = generateOtpEmailHTML({
+      code,
+      signer: { name: signer.name, email: signer.email },
+      envelope: { title: envelope.title },
+      expiresMinutes: 10
+    });
+
+    const emailText = generateOtpEmailText({
+      code,
+      signer: { name: signer.name, email: signer.email },
+      envelope: { title: envelope.title },
+      expiresMinutes: 10
+    });
+
+    // Send email first — only persist to DB if email was sent successfully
+    await sendEmail(
+      signer.email,
+      `Ihr Verifizierungscode - ${envelope.title}`,
+      emailText,
+      emailHTML
+    );
+
+    // Email sent successfully → now persist code + cooldown to DB
     await Envelope.updateOne(
       { _id: envelope._id },
       {
@@ -2087,28 +2111,6 @@ router.post("/sign/:token/send-otp", otpSendLimiter, async (req, res) => {
         }
       }
     );
-
-    // Send OTP email
-    const emailHTML = generateOtpEmailHTML({
-      code,
-      signer: { name: signer.name, email: signer.email },
-      envelope: { title: envelope.title },
-      expiresMinutes: 10
-    });
-
-    const emailText = generateOtpEmailText({
-      code,
-      signer: { name: signer.name, email: signer.email },
-      envelope: { title: envelope.title },
-      expiresMinutes: 10
-    });
-
-    await sendEmail({
-      to: signer.email,
-      subject: `Ihr Verifizierungscode - ${envelope.title}`,
-      html: emailHTML,
-      text: emailText
-    });
 
     console.log(`🔐 OTP sent to ${signer.email} for envelope ${envelope._id}`);
 
