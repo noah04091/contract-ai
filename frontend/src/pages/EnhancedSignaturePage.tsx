@@ -755,14 +755,30 @@ export default function EnhancedSignaturePage() {
             <p className={styles.successSubtext}>{successDetails}</p>
           )}
 
-          {sealedPdfUrl && (
+          {sealedPdfUrl ? (
             <a href={sealedPdfUrl} download className={styles.downloadBtn}>
               <Download size={20} />
               {allSigned
                 ? "Vollständig signiertes Dokument herunterladen"
                 : "Dokument mit Ihrer Signatur herunterladen"}
             </a>
-          )}
+          ) : !allSigned ? (
+            <div style={{
+              background: '#f0f9ff',
+              border: '1px solid #bae6fd',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginTop: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <Clock size={20} style={{ color: '#0284c7', flexShrink: 0 }} />
+              <p style={{ margin: 0, color: '#0369a1', fontSize: '0.9rem' }}>
+                Das vollständig signierte Dokument steht zum Download bereit, sobald alle Parteien unterschrieben haben. Sie erhalten eine E-Mail mit dem Download-Link.
+              </p>
+            </div>
+          ) : null}
         </motion.div>
       </div>
     );

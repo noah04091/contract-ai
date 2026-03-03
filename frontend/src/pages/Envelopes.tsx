@@ -1281,14 +1281,14 @@ export default function Envelopes() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/envelopes/${envelopeId}/remind-individual`, {
+      const response = await fetch(`/api/envelopes/${envelopeId}/resend`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         credentials: "include",
-        body: JSON.stringify({ email: signerEmail })
+        body: JSON.stringify({ signerEmail })
       });
 
       const data = await response.json();

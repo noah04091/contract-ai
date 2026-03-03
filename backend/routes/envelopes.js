@@ -920,10 +920,12 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, emailSendLimit
       });
     }
 
-    if (envelope.status !== 'SENT') {
+    // Allow reminders for SENT and AWAITING_SIGNER_* (Sequential mode)
+    const isActiveEnvelope = envelope.status === 'SENT' || envelope.status.startsWith('AWAITING_SIGNER_');
+    if (!isActiveEnvelope) {
       return res.status(400).json({
         success: false,
-        message: "Erinnerungen können nur für gesendete Envelopes verschickt werden"
+        message: "Erinnerungen können nur für aktive Envelopes verschickt werden"
       });
     }
 
@@ -1030,10 +1032,12 @@ router.post("/envelopes/:id/resend", verifyToken, requirePremium, emailSendLimit
       });
     }
 
-    if (envelope.status !== 'SENT') {
+    // Allow reminders for SENT and AWAITING_SIGNER_* (Sequential mode)
+    const isActiveEnvelope = envelope.status === 'SENT' || envelope.status.startsWith('AWAITING_SIGNER_');
+    if (!isActiveEnvelope) {
       return res.status(400).json({
         success: false,
-        message: "Erinnerungen können nur für gesendete Envelopes verschickt werden"
+        message: "Erinnerungen können nur für aktive Envelopes verschickt werden"
       });
     }
 
@@ -1960,8 +1964,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       });
     }
 
-    // Find envelope
-    const envelope = await Envelope.findBySignerToken(token);
+    // Find envelope (let: wird nach atomicResult re-assigned)
+    let envelope = await Envelope.findBySignerToken(token);
 
     if (!envelope) {
       return res.status(404).json({
