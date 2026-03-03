@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Save, AlertCircle, CheckCircle, Edit,
   FileText, Clock, Calendar, StickyNote,
-  Loader2, ChevronDown, RotateCcw, Plus, Trash2, Tag
+  Loader2, ChevronDown, RotateCcw, Plus, Minus, Tag
 } from "lucide-react";
 import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
@@ -541,15 +541,11 @@ export default function ContractEditModal({
                       <button
                         type="button"
                         className={styles.removeFieldBtn}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          removeField(fieldId);
-                        }}
+                        onClick={() => removeField(fieldId)}
                         disabled={loading}
                         title="Feld entfernen"
                       >
-                        <Trash2 size={13} />
+                        <Minus size={14} />
                       </button>
                     </div>
                   </label>
