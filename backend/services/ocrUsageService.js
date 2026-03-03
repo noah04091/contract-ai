@@ -7,11 +7,11 @@
  * @version 1.0.0
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 
-// MongoDB Connection
+// MongoDB Connection (shared pool)
 let usersCollection = null;
-let mongoClient = null;
 
 // ============================================
 // OCR LIMITS PER SUBSCRIPTION TIER
@@ -35,21 +35,10 @@ const OCR_LIMITS = {
 async function initMongo() {
   if (usersCollection) return usersCollection;
 
-  const mongoUri = process.env.MONGO_URI;
-  if (!mongoUri) {
-    throw new Error('MONGO_URI nicht konfiguriert');
-  }
-
-  mongoClient = new MongoClient(mongoUri, {
-    maxPoolSize: 5,
-    serverSelectionTimeoutMS: 5000
-  });
-
-  await mongoClient.connect();
-  const db = mongoClient.db('contract_ai');
+  const db = await database.connect();
   usersCollection = db.collection('users');
 
-  console.log('📊 [OCR Usage] MongoDB verbunden');
+  console.log('📊 [OCR Usage] MongoDB verbunden (shared pool)');
   return usersCollection;
 }
 

@@ -5,7 +5,8 @@ require('dotenv').config();
 const http = require('http');
 const { Buffer } = require('buffer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require('./config/database');
 // EMAIL über Main Server API (funktioniert!)
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   try {
@@ -49,63 +50,37 @@ const generateInvoiceNumber = require('./utils/generateInvoiceNumber');
 // ✨ White-Label PDF Export (Enterprise)
 const { getCompanyLogo } = require('./utils/getCompanyLogo');
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-
 // Event Idempotency Repository
 const eventsRepo = {
   async has(eventId) {
-    const client = new MongoClient(MONGO_URI);
-    try {
-      await client.connect();
-      const db = client.db("contract_ai");
-      const result = await db.collection("stripe_events").findOne({ _id: eventId });
-      return !!result;
-    } finally {
-      await client.close();
-    }
+    const db = await database.connect();
+    const result = await db.collection("stripe_events").findOne({ _id: eventId });
+    return !!result;
   },
   async mark(eventId) {
-    const client = new MongoClient(MONGO_URI);
-    try {
-      await client.connect();
-      const db = client.db("contract_ai");
-      await db.collection("stripe_events").updateOne(
-        { _id: eventId },
-        { $setOnInsert: { createdAt: new Date() } },
-        { upsert: true }
-      );
-    } finally {
-      await client.close();
-    }
+    const db = await database.connect();
+    await db.collection("stripe_events").updateOne(
+      { _id: eventId },
+      { $setOnInsert: { createdAt: new Date() } },
+      { upsert: true }
+    );
   }
 };
 
 // Payment Email Anti-Duplicate Repository
 const mailsRepo = {
   async hasInvoiceMail(invoiceId) {
-    const client = new MongoClient(MONGO_URI);
-    try {
-      await client.connect();
-      const db = client.db("contract_ai");
-      const result = await db.collection("sent_payment_emails").findOne({ _id: invoiceId });
-      return !!result;
-    } finally {
-      await client.close();
-    }
+    const db = await database.connect();
+    const result = await db.collection("sent_payment_emails").findOne({ _id: invoiceId });
+    return !!result;
   },
   async markInvoiceMail(invoiceId) {
-    const client = new MongoClient(MONGO_URI);
-    try {
-      await client.connect();
-      const db = client.db("contract_ai");
-      await db.collection("sent_payment_emails").updateOne(
-        { _id: invoiceId },
-        { $setOnInsert: { sentAt: new Date() } },
-        { upsert: true }
-      );
-    } finally {
-      await client.close();
-    }
+    const db = await database.connect();
+    await db.collection("sent_payment_emails").updateOne(
+      { _id: invoiceId },
+      { $setOnInsert: { sentAt: new Date() } },
+      { upsert: true }
+    );
   }
 };
 
@@ -277,10 +252,8 @@ async function handleStripeEvent(event) {
       }
 
       setImmediate(async () => {
-        const client = new MongoClient(MONGO_URI);
         try {
-          await client.connect();
-          const db = client.db("contract_ai");
+          const db = await database.connect();
           const invoicesCollection = db.collection("invoices");
           const usersCollection = db.collection("users");
 
@@ -399,8 +372,6 @@ async function handleStripeEvent(event) {
         } catch (err) {
           console.error(`❌ Fehler bei Invoice PDF (invoice.paid):`, err);
           // Kein Crash - Fallback: Kunde hat weiterhin Stripe's Standard-Rechnung
-        } finally {
-          await client.close();
         }
       });
 
@@ -409,17 +380,11 @@ async function handleStripeEvent(event) {
 
     case "checkout.session.completed": {
       // Weiterhin die bestehende Welcome + Invoice Logik nutzen
-      const client = new MongoClient(MONGO_URI);
-      try {
-        await client.connect();
-        const db = client.db("contract_ai");
-        const usersCollection = db.collection("users");
-        const invoicesCollection = db.collection("invoices");
+      const db = await database.connect();
+      const usersCollection = db.collection("users");
+      const invoicesCollection = db.collection("invoices");
 
-        await processStripeEvent(event, usersCollection, invoicesCollection);
-      } finally {
-        await client.close();
-      }
+      await processStripeEvent(event, usersCollection, invoicesCollection);
       return;
     }
 
@@ -436,70 +401,64 @@ async function handleStripeEvent(event) {
 
       console.log(`🔄 Subscription Update:`, { stripeCustomerId, status, cancelAtPeriodEnd });
 
-      const client = new MongoClient(MONGO_URI);
-      try {
-        await client.connect();
-        const db = client.db("contract_ai");
-        const usersCollection = db.collection("users");
+      const db = await database.connect();
+      const usersCollection = db.collection("users");
 
-        const user = await usersCollection.findOne({ stripeCustomerId });
-        if (!user) {
-          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
-          return;
-        }
-
-        // Plan aus aktueller Subscription ermitteln
-        const priceId = subscription.items.data[0]?.price?.id;
-        const priceMap = {
-          [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
-          [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
-          [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
-          [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
-          // Legacy: "premium" Price IDs → enterprise (29€ Plan!)
-          // WICHTIG: Premium war der alte Name für Enterprise (29€), nicht Business (19€)!
-          [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
-          [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
-          [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
-          [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
-        };
-        const plan = priceMap[priceId] || user.subscriptionPlan || "free";
-
-        // Update basierend auf Status
-        const updateData = {
-          subscriptionStatus: status,
-          subscriptionPlan: plan,
-          cancelAtPeriodEnd: cancelAtPeriodEnd || false,
-        };
-
-        // Wenn Subscription aktiv ist → Premium aktiv
-        if (status === "active" || status === "trialing") {
-          updateData.subscriptionActive = true;
-          updateData.isPremium = plan === "business" || plan === "enterprise";
-          updateData.isBusiness = plan === "business";
-          updateData.isEnterprise = plan === "enterprise";
-        }
-
-        // Wenn Subscription nicht mehr aktiv → Downgrade auf Free
-        if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") {
-          updateData.subscriptionActive = false;
-          updateData.subscriptionPlan = "free";
-          updateData.isPremium = false;
-          updateData.isBusiness = false;
-          updateData.isEnterprise = false;
-          updateData.canceledAt = new Date();
-          console.log(`⚠️ User ${user.email} Abo deaktiviert (Status: ${status})`);
-        }
-
-        await usersCollection.updateOne(
-          { _id: user._id },
-          { $set: updateData }
-        );
-
-        console.log(`✅ User ${user.email} Subscription aktualisiert:`, updateData);
-
-      } finally {
-        await client.close();
+      const user = await usersCollection.findOne({ stripeCustomerId });
+      if (!user) {
+        console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+        return;
       }
+
+      // Plan aus aktueller Subscription ermitteln
+      const priceId = subscription.items.data[0]?.price?.id;
+      const priceMap = {
+        [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+        [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+        [process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID]: "enterprise",
+        [process.env.STRIPE_ENTERPRISE_YEARLY_PRICE_ID]: "enterprise",
+        // Legacy: "premium" Price IDs → enterprise (29€ Plan!)
+        // WICHTIG: Premium war der alte Name für Enterprise (29€), nicht Business (19€)!
+        [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "enterprise",
+        [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "enterprise",
+        [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+        [process.env.STRIPE_PREMIUM_PRICE_ID]: "enterprise",
+      };
+      const plan = priceMap[priceId] || user.subscriptionPlan || "free";
+
+      // Update basierend auf Status
+      const updateData = {
+        subscriptionStatus: status,
+        subscriptionPlan: plan,
+        cancelAtPeriodEnd: cancelAtPeriodEnd || false,
+      };
+
+      // Wenn Subscription aktiv ist → Premium aktiv
+      if (status === "active" || status === "trialing") {
+        updateData.subscriptionActive = true;
+        updateData.isPremium = plan === "business" || plan === "enterprise";
+        updateData.isBusiness = plan === "business";
+        updateData.isEnterprise = plan === "enterprise";
+      }
+
+      // Wenn Subscription nicht mehr aktiv → Downgrade auf Free
+      if (status === "canceled" || status === "unpaid" || status === "incomplete_expired") {
+        updateData.subscriptionActive = false;
+        updateData.subscriptionPlan = "free";
+        updateData.isPremium = false;
+        updateData.isBusiness = false;
+        updateData.isEnterprise = false;
+        updateData.canceledAt = new Date();
+        console.log(`⚠️ User ${user.email} Abo deaktiviert (Status: ${status})`);
+      }
+
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $set: updateData }
+      );
+
+      console.log(`✅ User ${user.email} Subscription aktualisiert:`, updateData);
+
       return;
     }
 
@@ -510,58 +469,52 @@ async function handleStripeEvent(event) {
 
       console.log(`🗑️ Subscription gelöscht für Customer: ${stripeCustomerId}`);
 
-      const client = new MongoClient(MONGO_URI);
-      try {
-        await client.connect();
-        const db = client.db("contract_ai");
-        const usersCollection = db.collection("users");
+      const db = await database.connect();
+      const usersCollection = db.collection("users");
 
-        const user = await usersCollection.findOne({ stripeCustomerId });
-        if (!user) {
-          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
-          return;
-        }
-
-        // Downgrade auf Free
-        await usersCollection.updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              subscriptionActive: false,
-              subscriptionPlan: "free",
-              subscriptionStatus: "canceled",
-              isPremium: false,
-              isBusiness: false,
-              isEnterprise: false,
-              canceledAt: new Date(),
-              // Limits zurücksetzen auf Free-Level
-              analysisLimit: 3,
-              optimizationLimit: 0,
-            }
-          }
-        );
-
-        console.log(`✅ User ${user.email} auf Free downgraded (Subscription gelöscht)`);
-
-        // Optional: Kündigungs-Email senden
-        try {
-          await sendEmail({
-            to: user.email,
-            subject: "Contract AI - Dein Abo wurde beendet",
-            html: `
-              <h2>Schade, dass du gehst!</h2>
-              <p>Dein Contract AI Abo wurde beendet. Du kannst weiterhin die kostenlosen Features nutzen.</p>
-              <p>Falls du es dir anders überlegst, kannst du jederzeit wieder upgraden:</p>
-              <p><a href="https://contract-ai.de/pricing">Jetzt wieder upgraden</a></p>
-            `
-          });
-        } catch (emailErr) {
-          console.error(`❌ Kündigungs-Email Fehler:`, emailErr);
-        }
-
-      } finally {
-        await client.close();
+      const user = await usersCollection.findOne({ stripeCustomerId });
+      if (!user) {
+        console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+        return;
       }
+
+      // Downgrade auf Free
+      await usersCollection.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            subscriptionActive: false,
+            subscriptionPlan: "free",
+            subscriptionStatus: "canceled",
+            isPremium: false,
+            isBusiness: false,
+            isEnterprise: false,
+            canceledAt: new Date(),
+            // Limits zurücksetzen auf Free-Level
+            analysisLimit: 3,
+            optimizationLimit: 0,
+          }
+        }
+      );
+
+      console.log(`✅ User ${user.email} auf Free downgraded (Subscription gelöscht)`);
+
+      // Optional: Kündigungs-Email senden
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Contract AI - Dein Abo wurde beendet",
+          html: `
+            <h2>Schade, dass du gehst!</h2>
+            <p>Dein Contract AI Abo wurde beendet. Du kannst weiterhin die kostenlosen Features nutzen.</p>
+            <p>Falls du es dir anders überlegst, kannst du jederzeit wieder upgraden:</p>
+            <p><a href="https://contract-ai.de/pricing">Jetzt wieder upgraden</a></p>
+          `
+        });
+      } catch (emailErr) {
+        console.error(`❌ Kündigungs-Email Fehler:`, emailErr);
+      }
+
       return;
     }
 
@@ -574,52 +527,46 @@ async function handleStripeEvent(event) {
 
       console.log(`❌ Zahlung fehlgeschlagen für ${customerEmail} (Versuch ${attemptCount})`);
 
-      const client = new MongoClient(MONGO_URI);
-      try {
-        await client.connect();
-        const db = client.db("contract_ai");
-        const usersCollection = db.collection("users");
+      const db = await database.connect();
+      const usersCollection = db.collection("users");
 
-        const user = await usersCollection.findOne({ stripeCustomerId });
-        if (!user) {
-          console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
-          return;
-        }
-
-        // Bei erstem Fehlversuch: Warnung, Abo bleibt aktiv
-        // Bei mehreren Fehlversuchen: Stripe setzt subscription auf past_due/unpaid
-        await usersCollection.updateOne(
-          { _id: user._id },
-          {
-            $set: {
-              subscriptionStatus: "past_due",
-              lastPaymentFailed: new Date(),
-              paymentFailedCount: attemptCount,
-            }
-          }
-        );
-
-        // Zahlungserinnerung senden
-        try {
-          await sendEmail({
-            to: customerEmail,
-            subject: "Contract AI - Zahlung fehlgeschlagen",
-            html: `
-              <h2>Zahlungsproblem</h2>
-              <p>Leider konnte deine letzte Zahlung für Contract AI nicht verarbeitet werden.</p>
-              <p>Bitte aktualisiere deine Zahlungsmethode, um deinen Zugang zu behalten:</p>
-              <p><a href="https://contract-ai.de/profile">Zahlungsmethode aktualisieren</a></p>
-              <p>Falls du Fragen hast, kontaktiere uns unter support@contract-ai.de</p>
-            `
-          });
-          console.log(`📧 Zahlungserinnerung gesendet an ${customerEmail}`);
-        } catch (emailErr) {
-          console.error(`❌ Zahlungserinnerung Email Fehler:`, emailErr);
-        }
-
-      } finally {
-        await client.close();
+      const user = await usersCollection.findOne({ stripeCustomerId });
+      if (!user) {
+        console.warn(`⚠️ Kein User gefunden für stripeCustomerId: ${stripeCustomerId}`);
+        return;
       }
+
+      // Bei erstem Fehlversuch: Warnung, Abo bleibt aktiv
+      // Bei mehreren Fehlversuchen: Stripe setzt subscription auf past_due/unpaid
+      await usersCollection.updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            subscriptionStatus: "past_due",
+            lastPaymentFailed: new Date(),
+            paymentFailedCount: attemptCount,
+          }
+        }
+      );
+
+      // Zahlungserinnerung senden
+      try {
+        await sendEmail({
+          to: customerEmail,
+          subject: "Contract AI - Zahlung fehlgeschlagen",
+          html: `
+            <h2>Zahlungsproblem</h2>
+            <p>Leider konnte deine letzte Zahlung für Contract AI nicht verarbeitet werden.</p>
+            <p>Bitte aktualisiere deine Zahlungsmethode, um deinen Zugang zu behalten:</p>
+            <p><a href="https://contract-ai.de/profile">Zahlungsmethode aktualisieren</a></p>
+            <p>Falls du Fragen hast, kontaktiere uns unter support@contract-ai.de</p>
+          `
+        });
+        console.log(`📧 Zahlungserinnerung gesendet an ${customerEmail}`);
+      } catch (emailErr) {
+        console.error(`❌ Zahlungserinnerung Email Fehler:`, emailErr);
+      }
+
       return;
     }
 

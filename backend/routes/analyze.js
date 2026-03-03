@@ -8,7 +8,8 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const path = require("path");
 const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
@@ -1957,39 +1958,27 @@ const getOpenAI = () => {
   return openaiInstance;
 };
 
-// MongoDB Setup - UNCHANGED
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-let mongoClient = null;
+// MongoDB Setup (Singleton-Pool)
 let analysisCollection = null;
 let usersCollection = null;
 let contractsCollection = null;
 
+async function ensureDb() {
+  if (analysisCollection && usersCollection && contractsCollection) return;
+  const db = await database.connect();
+  analysisCollection = db.collection("analyses");
+  usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
+  console.log("📊 MongoDB collections initialized (analyze.js - Singleton-Pool)");
+}
+
 const getMongoCollections = async () => {
-  if (!mongoClient) {
-    mongoClient = new MongoClient(mongoUri, {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-    await mongoClient.connect();
-    const db = mongoClient.db("contract_ai");
-    analysisCollection = db.collection("analyses");
-    usersCollection = db.collection("users");
-    contractsCollection = db.collection("contracts");
-    console.log("📊 MongoDB collections initialized");
-  }
+  await ensureDb();
   return { analysisCollection, usersCollection, contractsCollection };
 };
 
 // Initialize on startup
-(async () => {
-  try {
-    await getMongoCollections();
-    console.log("📊 Connected to all collections");
-  } catch (err) {
-    console.error("❌ MongoDB error (analyze.js):", err);
-  }
-})();
+ensureDb().catch(err => console.error("❌ MongoDB error (analyze.js):", err));
 
 const calculateFileHash = (buffer) => {
   if (!crypto) {
@@ -3040,7 +3029,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🆕 CALENDAR EVENTS GENERIEREN FÜR UPDATE
         try {
-          const db = mongoClient.db("contract_ai");
+          const db = await database.connect();
           const updatedContract = await contractsCollection.findOne({ _id: existingContract._id });
           const events = await generateEventsForContract(db, updatedContract);
           console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${events.length} Events${updatedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
@@ -3337,7 +3326,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         
         // 🆕 CALENDAR EVENTS GENERIEREN FÜR NEUEN CONTRACT
         try {
-          const db = mongoClient.db("contract_ai");
+          const db = await database.connect();
           const events = await generateEventsForContract(db, savedContract);
           console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
           console.log(`📅 Events:`, events.map(e => ({
@@ -3641,7 +3630,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 📋 Activity Log: Vertrag analysiert
     try {
       const { logActivity, ActivityTypes } = require('../services/activityLogger');
-      await logActivity(mongoClient.db("contract_ai"), {
+      await logActivity(await database.connect(), {
         type: ActivityTypes.CONTRACT_ANALYZED,
         userId: req.user.userId,
         userEmail: user?.email,
@@ -3859,13 +3848,6 @@ router.get("/health", async (req, res) => {
     success: isHealthy,
     ...checks
   });
-});
-
-process.on('SIGTERM', async () => {
-  console.log('🛠️ FIXED Enhanced DEEP Lawyer-Level Analysis service with GPT-4-Turbo and Auto-Renewal shutting down...');
-  if (mongoClient) {
-    await mongoClient.close();
-  }
 });
 
 // ===== EXPORT FUNCTIONS FOR OTHER ROUTES =====

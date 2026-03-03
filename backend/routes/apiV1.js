@@ -4,7 +4,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs").promises;
@@ -97,22 +97,18 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
   }
 };
 
-// MongoDB Connection
-const client = new MongoClient(process.env.MONGO_URI);
+// MongoDB Connection (shared singleton pool)
+const database = require("../config/database");
 let contractsCollection;
 let analysisCollection;
 
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    contractsCollection = db.collection("contracts");
-    analysisCollection = db.collection("analyses");
-    console.log("📦 API v1: MongoDB verbunden");
-  } catch (error) {
-    console.error("❌ API v1: MongoDB Connection Error:", error);
-  }
-})();
+async function ensureDb() {
+  if (contractsCollection) return;
+  const db = await database.connect();
+  contractsCollection = db.collection("contracts");
+  analysisCollection = db.collection("analyses");
+}
+ensureDb().catch(err => console.error("❌ API v1: MongoDB Connection Error:", err));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -152,6 +148,7 @@ router.get("/health", (req, res) => {
  */
 router.get("/contracts", verifyApiKey, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
     const offset = parseInt(req.query.offset) || 0;
@@ -213,6 +210,7 @@ router.get("/contracts", verifyApiKey, async (req, res) => {
  */
 router.post("/contracts", verifyApiKey, upload.single("file"), async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { folderId, analyze = "true" } = req.body;
 
@@ -370,6 +368,7 @@ ${text.substring(0, 15000)}`;
  */
 router.get("/contracts/:id", verifyApiKey, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { id } = req.params;
 
@@ -422,6 +421,7 @@ router.get("/contracts/:id", verifyApiKey, async (req, res) => {
  */
 router.delete("/contracts/:id", verifyApiKey, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { id } = req.params;
 
@@ -470,6 +470,7 @@ router.delete("/contracts/:id", verifyApiKey, async (req, res) => {
  */
 router.get("/contracts/:id/analysis", verifyApiKey, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { id } = req.params;
 

@@ -2,7 +2,8 @@
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
@@ -2030,22 +2031,16 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// MongoDB Setup
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
+// MongoDB Setup (Singleton Pool)
 let usersCollection, contractsCollection, db;
 
-(async () => {
-  try {
-    await client.connect();
-    db = client.db("contract_ai");
-    usersCollection = db.collection("users");
-    contractsCollection = db.collection("contracts");
-    console.log("📄 Generate.js: MongoDB verbunden!");
-  } catch (err) {
-    console.error("❌ Generate.js MongoDB Fehler:", err);
-  }
-})();
+async function ensureDb() {
+  if (usersCollection) return;
+  db = await database.connect();
+  usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
+}
+ensureDb().catch(err => console.error("❌ Generate.js MongoDB Fehler:", err));
 
 // ℹ️ AUTO-PDF wurde zu contracts.js verschoben (verhindert Puppeteer Race Conditions)
 
@@ -2085,6 +2080,7 @@ router.post("/", verifyToken, async (req, res) => {
 
   // Server-seitige Usage-Limit-Prüfung
   try {
+    await ensureDb();
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {
       return res.status(401).json({ message: "Benutzer nicht gefunden." });
@@ -3422,20 +3418,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Contract ID fehlt" });
     }
     
-    // Stelle sicher, dass DB verbunden ist
-    if (!db || !contractsCollection) {
-      console.error("❌ Datenbank nicht verbunden! Versuche Reconnect...");
-      try {
-        await client.connect();
-        db = client.db("contract_ai");
-        contractsCollection = db.collection("contracts");
-        usersCollection = db.collection("users");
-        console.log("✅ Datenbank neu verbunden");
-      } catch (reconnectError) {
-        console.error("❌ Reconnect fehlgeschlagen:", reconnectError);
-        return res.status(500).json({ message: "Datenbankverbindung fehlgeschlagen" });
-      }
-    }
+    await ensureDb();
     
     // KRITISCHER FIX: Hole Vertrag mit flexiblem userId Vergleich
     let contract = null;
@@ -3929,8 +3912,9 @@ router.post("/preview", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
   console.log("👁️ HTML-Vorschau angefordert für Vertrag:", contractId);
-  
+
   try {
+    await ensureDb();
     if (!contractId) {
       return res.status(400).json({ message: "Contract ID fehlt" });
     }
@@ -4008,6 +3992,7 @@ router.post("/change-design", verifyToken, async (req, res) => {
   console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant, customDesign });
 
   try {
+    await ensureDb();
     if (!contractId || !newDesignVariant) {
       return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
     }
@@ -4124,8 +4109,9 @@ router.post("/change-design", verifyToken, async (req, res) => {
 // 🆕 NEUE ROUTE: Vertrag als Entwurf/Final markieren
 router.post("/toggle-draft", verifyToken, async (req, res) => {
   const { contractId } = req.body;
-  
+
   try {
+    await ensureDb();
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }]
@@ -4187,8 +4173,9 @@ router.post("/batch-export", verifyToken, async (req, res) => {
   const { contractIds } = req.body;
   
   console.log("📦 Batch-Export angefordert für", contractIds?.length, "Verträge");
-  
+
   try {
+    await ensureDb();
     if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
       return res.status(400).json({ message: "Keine Contract IDs angegeben" });
     }

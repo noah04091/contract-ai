@@ -10,7 +10,8 @@ const fs = require("fs");
 const fsPromises = require("fs").promises;
 const path = require("path");
 const PDFDocument = require("pdfkit");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
@@ -39,22 +40,14 @@ const upload = multer({
   }
 });
 
-// MongoDB connection
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
-
 let usersCollection, contractsCollection;
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    usersCollection = db.collection("users");
-    contractsCollection = db.collection("contracts");
-    console.log("🧠 MongoDB verbunden (compare)");
-  } catch (err) {
-    console.error("❌ MongoDB-Fehler:", err);
-  }
-})();
+async function ensureDb() {
+  if (usersCollection) return;
+  const db = await database.connect();
+  usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
+}
+ensureDb().catch(err => console.error("❌ MongoDB-Fehler (compare):", err));
 
 // ✅ FIXED: Inline saveContract function (replaces external dependency)
 const saveContract = async (contractData) => {
@@ -641,6 +634,7 @@ router.post("/", verifyToken, upload.fields([
   }
 
   try {
+    await ensureDb();
     console.log("🚀 Contract comparison started" + (wantsSSE ? " (SSE Mode)" : ""));
     sendProgress(res, 'init', 5, 'Vergleich wird gestartet...', wantsSSE);
 
@@ -921,6 +915,7 @@ router.post("/", verifyToken, upload.fields([
 // Get user's comparison history
 router.get("/history", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {
       return res.status(404).json({ message: "Nutzer nicht gefunden" });
@@ -974,6 +969,7 @@ router.get("/history", verifyToken, async (req, res) => {
 // Delete single history item
 router.delete("/history/:id", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // Verify ownership - only delete if it belongs to this user
@@ -997,6 +993,7 @@ router.delete("/history/:id", verifyToken, async (req, res) => {
 // Clear all history for user
 router.delete("/history", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const result = await contractsCollection.deleteMany({
       userId: new ObjectId(req.user.userId),
       action: "compare_contracts"
@@ -1016,6 +1013,7 @@ router.delete("/history", verifyToken, async (req, res) => {
 // Get usage statistics
 router.get("/stats", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {
       return res.status(404).json({ message: "Nutzer nicht gefunden" });
@@ -1082,6 +1080,7 @@ router.get("/stats", verifyToken, async (req, res) => {
 // 📄 PDF Export Endpoint
 router.post("/export-pdf", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     // Verify premium status
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {

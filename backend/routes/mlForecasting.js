@@ -5,6 +5,8 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const { getInstance: getMLForecast } = require('../services/mlForecastingService');
+const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 
 /**
  * POST /api/ml-forecast/train
@@ -39,15 +41,10 @@ router.post('/predict/:contractId', verifyToken, async (req, res) => {
     const { contractId } = req.params;
     const { months = 6 } = req.body;
 
-    const { MongoClient, ObjectId } = require('mongodb');
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
+    const db = await database.connect();
 
-    const contract = await client.db('contract_ai')
-      .collection('contracts')
+    const contract = await db.collection('contracts')
       .findOne({ _id: new ObjectId(contractId) });
-
-    await client.close();
 
     if (!contract) {
       return res.status(404).json({

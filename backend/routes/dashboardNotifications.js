@@ -3,7 +3,8 @@
 
 const express = require("express");
 const router = express.Router();
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
@@ -30,8 +31,6 @@ try {
   console.warn("⚠️ [DASHBOARD] S3 not available for profile pictures:", error.message);
 }
 
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
 let db;
 
 // Simple in-memory rate limiter for search
@@ -67,15 +66,12 @@ setInterval(() => {
   }
 }, 300000);
 
-// Connect to MongoDB
-async function connectDB() {
-  if (!db) {
-    await client.connect();
-    // ✅ FIX: Muss "contract_ai" sein (mit Underscore), nicht "contract-ai"!
-    db = client.db("contract_ai");
-  }
-  return db;
+// Connect to MongoDB via shared singleton pool
+async function ensureDb() {
+  if (db) return;
+  db = await database.connect();
 }
+ensureDb().catch(err => console.error("❌ MongoDB-Fehler (dashboardNotifications):", err));
 
 /**
  * GET /api/dashboard/notifications/summary
@@ -85,7 +81,7 @@ async function connectDB() {
 router.get("/summary", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const db = await connectDB();
+    await ensureDb();
     const contractsCollection = db.collection("contracts");
 
     // ✅ FIX: Unterstütze BEIDE Formate (ObjectId UND String)
@@ -254,7 +250,7 @@ router.get("/summary", verifyToken, async (req, res) => {
 router.get("/settings", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const db = await connectDB();
+    await ensureDb();
 
     const user = await db.collection("users").findOne(
       { _id: new ObjectId(userId) },
@@ -331,7 +327,7 @@ router.put("/settings", verifyToken, async (req, res) => {
       });
     }
 
-    const db = await connectDB();
+    await ensureDb();
 
     // Validierung der Einstellungen
     const validatedSettings = {
@@ -410,7 +406,7 @@ router.get("/", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { limit = 10 } = req.query;
-    const db = await connectDB();
+    await ensureDb();
 
     const now = new Date();
     const sevenDaysFromNow = new Date();
@@ -608,7 +604,7 @@ router.get("/", verifyToken, async (req, res) => {
 router.patch("/:id/read", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const db = await connectDB();
+    await ensureDb();
 
     // Versuche in verschiedenen Collections zu finden
     let result = await db.collection("pulsenotifications").updateOne(
@@ -645,7 +641,7 @@ router.patch("/:id/read", verifyToken, async (req, res) => {
 router.patch("/mark-all-read", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const db = await connectDB();
+    await ensureDb();
 
     await Promise.all([
       db.collection("pulsenotifications").updateMany(
@@ -692,7 +688,7 @@ router.get("/search", verifyToken, async (req, res) => {
     }
 
     const { q = '', limit = 6 } = req.query;
-    const db = await connectDB();
+    await ensureDb();
 
     if (!q.trim()) {
       return res.json({
@@ -779,7 +775,7 @@ router.post("/profile-picture", verifyToken, async (req, res) => {
       });
     }
 
-    const db = await connectDB();
+    await ensureDb();
     let profilePictureUrl = null;
 
     if (S3_AVAILABLE) {
@@ -838,7 +834,7 @@ router.post("/profile-picture", verifyToken, async (req, res) => {
 router.delete("/profile-picture", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const db = await connectDB();
+    await ensureDb();
 
     await db.collection("users").updateOne(
       { _id: new ObjectId(userId) },

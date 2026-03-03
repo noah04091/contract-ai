@@ -729,10 +729,7 @@ router.delete("/delete", verifyToken, async (req, res) => {
     const contractCount = await contractsCollection.countDocuments({ userId: req.user.userId });
 
     // 📦 Gelöschten Account archivieren (ohne Passwort!)
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-    const deletedAccountsCollection = client.db("contract_ai").collection("deleted_accounts");
+    const deletedAccountsCollection = dbInstance.collection("deleted_accounts");
 
     const deletedAccountRecord = {
       originalUserId: user._id.toString(),
@@ -770,8 +767,6 @@ router.delete("/delete", verifyToken, async (req, res) => {
 
     await deletedAccountsCollection.insertOne(deletedAccountRecord);
     console.log(`📦 Gelöschter Account archiviert: ${user.email}`);
-
-    await client.close();
 
     // Jetzt tatsächlich löschen
     await contractsCollection.deleteMany({ userId: req.user.userId });

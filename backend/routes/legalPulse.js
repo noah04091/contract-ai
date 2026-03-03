@@ -95,12 +95,11 @@ router.post("/scan-all", verifyToken, requirePremium, legalPulseRateLimiter, asy
 // Get Scan Statistics
 router.get("/stats", verifyToken, async (req, res) => {
   try {
-    // MongoDB connection (reuse from main app)
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-    
-    const scanStatsCollection = client.db("contract_ai").collection("scan_stats");
+    // MongoDB connection (shared pool)
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const scanStatsCollection = db.collection("scan_stats");
     
     // Letzte 10 Scans
     const recentScans = await scanStatsCollection
@@ -115,8 +114,6 @@ router.get("/stats", verifyToken, async (req, res) => {
       { $match: { scanType: 'legal_pulse_ai' } },
       { $group: { _id: null, total: { $sum: '$contractsProcessed' } } }
     ]).toArray();
-    
-    await client.close();
     
     res.json({
       success: true,
@@ -148,17 +145,14 @@ router.get("/stats", verifyToken, async (req, res) => {
 // Get user's Legal Pulse settings
 router.get("/settings", verifyToken, async (req, res) => {
   try {
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
+    const database = require("../config/database");
+    const db = await database.connect();
 
-    const usersCollection = client.db("contract_ai").collection("users");
+    const usersCollection = db.collection("users");
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
       { projection: { legalPulseSettings: 1 } }
     );
-
-    await client.close();
 
     if (!user) {
       return res.status(404).json({
@@ -274,11 +268,10 @@ router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) =>
     }
 
     // Update user settings
-    const { MongoClient } = require("mongodb");
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
+    const database = require("../config/database");
+    const db = await database.connect();
 
-    const usersCollection = client.db("contract_ai").collection("users");
+    const usersCollection = db.collection("users");
     const result = await usersCollection.updateOne(
       { _id: new ObjectId(req.user.userId) },
       {
@@ -288,8 +281,6 @@ router.put("/settings", verifyToken, validateLegalPulseBody, async (req, res) =>
         }
       }
     );
-
-    await client.close();
 
     if (result.matchedCount === 0) {
       return res.status(404).json({

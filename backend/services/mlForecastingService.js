@@ -2,7 +2,8 @@
 // Legal Pulse 2.0 Phase 3 - ML-based Forecasting with TensorFlow.js
 
 const tf = require('@tensorflow/tfjs-node');
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require("../config/database");
 
 class MLForecastingService {
   constructor() {
@@ -138,10 +139,9 @@ class MLForecastingService {
    * @returns {Promise<Array>} - Training data
    */
   async collectTrainingData() {
-    const client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
+    const db = await database.connect();
 
-    const contracts = await client.db('contract_ai')
+    const contracts = await db
       .collection('contracts')
       .find({
         'legalPulse.riskScore': { $exists: true },
@@ -149,8 +149,6 @@ class MLForecastingService {
       })
       .limit(1000)
       .toArray();
-
-    await client.close();
 
     return contracts;
   }

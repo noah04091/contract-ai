@@ -1,7 +1,8 @@
 // 📁 backend/services/automatedActionsService.js
 // Legal Pulse 2.0 Phase 2 - Automated Actions Orchestrator
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 
 class AutomatedActionsService {
   constructor() {
@@ -34,14 +35,11 @@ class AutomatedActionsService {
       }
 
       // Get contract
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      const contract = await client.db('contract_ai')
+      const contract = await db
         .collection('contracts')
         .findOne({ _id: new ObjectId(notification.contractId) });
-
-      await client.close();
 
       if (!contract) {
         throw new Error('Contract not found');
@@ -124,10 +122,9 @@ class AutomatedActionsService {
       const optimizationSuggestions = response.choices[0].message.content;
 
       // Store optimization result
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      await client.db('contract_ai')
+      await db
         .collection('contracts')
         .updateOne(
           { _id: contract._id },
@@ -138,8 +135,6 @@ class AutomatedActionsService {
             }
           }
         );
-
-      await client.close();
 
       return {
         status: 'completed',
@@ -199,8 +194,7 @@ class AutomatedActionsService {
       const improvedContract = response.choices[0].message.content;
 
       // Store as new version
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
       const newVersion = {
         originalContractId: contract._id,
@@ -217,11 +211,9 @@ class AutomatedActionsService {
         }
       };
 
-      const result = await client.db('contract_ai')
+      const result = await db
         .collection('contracts')
         .insertOne(newVersion);
-
-      await client.close();
 
       return {
         status: 'completed',
@@ -250,12 +242,10 @@ class AutomatedActionsService {
 
     try {
       // Create signature envelope (if signature module exists)
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
       // Check if contract already has signature envelope
       if (contract.signatureEnvelopeId) {
-        await client.close();
         return {
           status: 'already_signed',
           envelopeId: contract.signatureEnvelopeId,
@@ -272,12 +262,12 @@ class AutomatedActionsService {
         createdFrom: 'legal_pulse_automation'
       };
 
-      const result = await client.db('contract_ai')
+      const result = await db
         .collection('envelopes')
         .insertOne(envelope);
 
       // Update contract
-      await client.db('contract_ai')
+      await db
         .collection('contracts')
         .updateOne(
           { _id: contract._id },
@@ -288,8 +278,6 @@ class AutomatedActionsService {
             }
           }
         );
-
-      await client.close();
 
       return {
         status: 'completed',
@@ -318,10 +306,9 @@ class AutomatedActionsService {
     console.log(`[AUTOMATED-ACTIONS] Marking for review ${contract._id}`);
 
     try {
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      await client.db('contract_ai')
+      await db
         .collection('contracts')
         .updateOne(
           { _id: contract._id },
@@ -333,8 +320,6 @@ class AutomatedActionsService {
             }
           }
         );
-
-      await client.close();
 
       return {
         status: 'completed',

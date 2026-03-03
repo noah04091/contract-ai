@@ -5,28 +5,23 @@ const express = require("express");
 const router = express.Router();
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { MongoClient, ObjectId } = require("mongodb");
-const saveContract = require("../services/saveContract"); // 🆕 Import
-const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
+const saveContract = require("../services/saveContract");
+const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// MongoDB Setup
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
-
+// MongoDB Setup (Singleton-Pool)
 let usersCollection;
-(async () => {
-  try {
-    await client.connect();
-    usersCollection = client.db("contract_ai").collection("users");
-    console.log("🔗 Verbunden mit der Users-Collection (analyzeType)");
-  } catch (err) {
-    console.error("❌ MongoDB-Fehler (analyzeType):", err);
-  }
-})();
+async function ensureDb() {
+  if (usersCollection) return;
+  const db = await database.connect();
+  usersCollection = db.collection("users");
+}
+ensureDb().catch(err => console.error("❌ MongoDB-Fehler (analyzeType):", err));
 
 // 🔒 DEINE BESTEHENDE AUTHENTIFIZIERTE ROUTE (100% UNVERÄNDERT!)
 router.post("/", verifyToken, async (req, res) => {
@@ -35,6 +30,7 @@ router.post("/", verifyToken, async (req, res) => {
   if (!text) return res.status(400).json({ error: "❌ Kein Text übergeben." });
 
   try {
+    await ensureDb();
     // 📊 Nutzer + Plan + Limit prüfen
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
 

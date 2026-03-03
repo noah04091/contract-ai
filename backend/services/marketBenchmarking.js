@@ -2,7 +2,8 @@
 // Legal Pulse 2.0 Phase 3 - Market Benchmarking Service
 
 const Benchmark = require('../models/Benchmark');
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require("../config/database");
 
 class MarketBenchmarkingService {
   constructor() {
@@ -19,18 +20,15 @@ class MarketBenchmarkingService {
     console.log(`[MARKET-BENCHMARKING] Comparing contract ${contractId} with market`);
 
     try {
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      const contract = await client.db('contract_ai')
+      const contract = await db
         .collection('contracts')
         .findOne({ _id: new ObjectId(contractId) });
 
       if (!contract) {
         throw new Error('Contract not found');
       }
-
-      await client.close();
 
       const contractType = contract.contractType || 'Sonstiges';
       const industry = contract.industry || null;
@@ -418,10 +416,9 @@ class MarketBenchmarkingService {
     console.log(`[MARKET-BENCHMARKING] Opting in contract ${contractId}`);
 
     try {
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      const contract = await client.db('contract_ai')
+      const contract = await db
         .collection('contracts')
         .findOne({ _id: new ObjectId(contractId) });
 
@@ -430,7 +427,7 @@ class MarketBenchmarkingService {
       }
 
       // Update contract settings
-      await client.db('contract_ai')
+      await db
         .collection('contracts')
         .updateOne(
           { _id: new ObjectId(contractId) },
@@ -440,8 +437,6 @@ class MarketBenchmarkingService {
             }
           }
         );
-
-      await client.close();
 
       // Create benchmark
       const benchmark = await Benchmark.createFromContract(contract, analysis);

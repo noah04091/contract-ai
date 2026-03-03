@@ -2,18 +2,9 @@
 // Abstrakte Basis-Klasse für alle CRM/ERP/CPQ Integrationen
 // Definiert gemeinsame Methoden und Schnittstellen
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const EventEmitter = require('events');
-
-// MongoDB Connection (Singleton)
-let db = null;
-const getDb = async () => {
-  if (db) return db;
-  const client = new MongoClient(process.env.MONGO_URI);
-  await client.connect();
-  db = client.db("contract_ai");
-  return db;
-};
+const database = require("../../config/database");
 
 /**
  * Abstrakte Basis-Klasse für alle Integrationen
@@ -33,7 +24,7 @@ class BaseIntegrationService extends EventEmitter {
    * Initialisiert die Datenbankverbindung
    */
   async initialize() {
-    this.db = await getDb();
+    this.db = await database.connect();
     this.contractsCollection = this.db.collection("contracts");
     this.credentialsCollection = this.db.collection("integrationcredentials");
     this.eventsCollection = this.db.collection("integrationwebhookevents");

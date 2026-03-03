@@ -902,6 +902,103 @@ Impressum: ${FRONTEND_URL}/impressum
   `.trim();
 }
 
+/**
+ * Generate HTML email for OTP verification code
+ * @param {Object} data - Email data
+ * @param {string} data.code - 6-digit OTP code
+ * @param {Object} data.signer - Signer info (name, email)
+ * @param {Object} data.envelope - Envelope info (title)
+ * @param {number} data.expiresMinutes - Code validity in minutes (default 10)
+ * @returns {string} HTML email
+ */
+function generateOtpEmailHTML(data) {
+  const { code, signer, envelope, expiresMinutes = 10 } = data;
+
+  const body = `
+    <p style="margin: 0 0 20px 0; text-align: center;">
+      Bitte verwenden Sie den folgenden Code, um Ihre Identit&auml;t zu best&auml;tigen.
+    </p>
+
+    <!-- OTP Code Display -->
+    <div style="text-align: center; margin: 30px 0;">
+      <div style="display: inline-block; background-color: #f0f4ff; border: 2px solid #4f46e5; border-radius: 12px; padding: 20px 40px;">
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">
+          Ihr Verifizierungscode
+        </p>
+        <p style="margin: 0; font-size: 36px; font-weight: 700; color: #1a1a1a; letter-spacing: 8px; font-family: 'Courier New', Courier, monospace;">
+          ${escapeHtml(code)}
+        </p>
+      </div>
+    </div>
+
+    <!-- Document Info -->
+    <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 16px 20px; margin: 25px 0;">
+      <p style="margin: 0 0 4px 0; font-size: 14px; color: #666666;">Dokument:</p>
+      <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
+        ${escapeHtml(envelope.title)}
+      </p>
+    </div>
+
+    <!-- Security Info -->
+    <div style="background-color: #fff8e6; border: 1px solid #ffe066; border-radius: 12px; padding: 16px; margin: 25px 0;">
+      <p style="margin: 0 0 8px 0; font-weight: 600; color: #8a6d00; font-size: 14px;">
+        Sicherheitshinweise
+      </p>
+      <p style="margin: 0; font-size: 13px; color: #8a6d00; line-height: 1.6;">
+        &bull; Dieser Code ist <strong>${expiresMinutes} Minuten</strong> g&uuml;ltig<br>
+        &bull; Geben Sie diesen Code niemals an Dritte weiter<br>
+        &bull; Falls Sie diese E-Mail nicht angefordert haben, ignorieren Sie sie bitte
+      </p>
+    </div>
+  `;
+
+  return generateEmailTemplate({
+    title: `Verifizierungscode`,
+    preheader: `Ihr Code: ${code} - G\u00FCltig f\u00FCr ${expiresMinutes} Minuten`,
+    body: body
+  });
+}
+
+/**
+ * Generate plain text email for OTP verification code (fallback)
+ */
+function generateOtpEmailText(data) {
+  const { code, signer, envelope, expiresMinutes = 10 } = data;
+
+  return `
+Hallo ${signer.name},
+
+bitte verwenden Sie den folgenden Code, um Ihre Identitaet zu bestaetigen:
+
+=======================================
+
+    ${code}
+
+=======================================
+
+DOKUMENT: ${envelope.title}
+
+SICHERHEITSHINWEISE:
+
+- Dieser Code ist ${expiresMinutes} Minuten gueltig
+- Geben Sie diesen Code niemals an Dritte weiter
+- Falls Sie diese E-Mail nicht angefordert haben, ignorieren Sie sie bitte
+
+=======================================
+
+Mit freundlichen Gruessen
+Contract AI Signaturservice
+
+---
+Diese E-Mail wurde automatisch generiert.
+Bitte antworten Sie nicht auf diese E-Mail.
+
+Website: ${FRONTEND_URL}
+Datenschutz: ${FRONTEND_URL}/datenschutz
+Impressum: ${FRONTEND_URL}/impressum
+  `.trim();
+}
+
 module.exports = {
   generateSignatureInvitationHTML,
   generateSignatureInvitationText,
@@ -912,5 +1009,7 @@ module.exports = {
   generateVoidNotificationHTML,
   generateVoidNotificationText,
   generateDeclineNotificationHTML,
-  generateDeclineNotificationText
+  generateDeclineNotificationText,
+  generateOtpEmailHTML,
+  generateOtpEmailText
 };

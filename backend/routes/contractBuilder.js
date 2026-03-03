@@ -16,7 +16,8 @@ const OpenAI = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Subscription-Check für KI-Endpoints
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
+const database = require('../config/database');
 const { isBusinessOrHigher } = require('../constants/subscriptionPlans');
 
 // Input-Validierung für KI-Endpoints
@@ -37,12 +38,9 @@ function validateAiInput(fields, res) {
 
 // Subscription-Check: Nur Business+ darf KI-Funktionen nutzen
 async function checkAiAccess(req, res) {
-  let client;
   try {
-    client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
-    const user = await client.db('contract_ai').collection('users').findOne({ _id: new ObjectId(req.user.userId) });
-    await client.close();
+    const db = await database.connect();
+    const user = await db.collection('users').findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) {
       res.status(401).json({ success: false, error: 'Benutzer nicht gefunden.' });
       return false;
@@ -58,7 +56,6 @@ async function checkAiAccess(req, res) {
     }
     return true;
   } catch (err) {
-    if (client) await client.close().catch(() => {});
     console.error('[ContractBuilder] AI Access Check Error:', err);
     // Bei Fehler trotzdem durchlassen (fail-open) um UX nicht zu blockieren
     return true;

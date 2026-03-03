@@ -1,11 +1,10 @@
 // 📁 backend/services/costTracking.js
 // Cost Tracking Service für OpenAI API Calls
 
-const { MongoClient } = require('mongodb');
+const database = require('../config/database');
 
 class CostTrackingService {
   constructor() {
-    this.mongoClient = null;
     this.db = null;
     this.isInitialized = false;
 
@@ -44,9 +43,7 @@ class CostTrackingService {
     if (this.isInitialized) return;
 
     try {
-      this.mongoClient = new MongoClient(process.env.MONGO_URI);
-      await this.mongoClient.connect();
-      this.db = this.mongoClient.db('contract_ai');
+      this.db = await database.connect();
 
       // Create indexes for efficient queries
       await this.db.collection('cost_tracking').createIndex({ createdAt: 1 });
@@ -305,13 +302,11 @@ class CostTrackingService {
   }
 
   /**
-   * Close MongoDB connection
+   * Close — no-op (shared pool managed by database singleton)
    */
   async close() {
-    if (this.mongoClient) {
-      await this.mongoClient.close();
-      this.isInitialized = false;
-    }
+    this.db = null;
+    this.isInitialized = false;
   }
 }
 

@@ -3,8 +3,9 @@
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const database = require("../config/database");
 require("dotenv").config();
 
 // 📊 PriceId → Plan Mapping (gleich wie in stripe-webhook-server.js)
@@ -41,27 +42,24 @@ const getPlanDisplayName = (plan) => {
 };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-// 🛢️ MongoDB-Verbindung für User-Daten und Invoices
+// 🛢️ MongoDB-Verbindung für User-Daten und Invoices (Singleton-Pool)
 let usersCollection;
 let invoicesCollection;
-const client = new MongoClient(MONGO_URI);
-client.connect()
-  .then(() => {
-    const db = client.db("contract_ai");
-    usersCollection = db.collection("users");
-    invoicesCollection = db.collection("invoices");
-    console.log("✅ Invoices-Route: MongoDB verbunden (für User-Daten und Custom Invoices)");
-    console.log("📄 Invoices Collection erfolgreich initialisiert für Custom PDFs");
-  })
-  .catch(err => {
-    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err.message);
-  });
+
+async function ensureDb() {
+  if (usersCollection) return;
+  const db = await database.connect();
+  usersCollection = db.collection("users");
+  invoicesCollection = db.collection("invoices");
+  console.log("✅ Invoices-Route: MongoDB verbunden (Singleton-Pool)");
+}
+ensureDb().catch(err => console.error("❌ MongoDB-Fehler (invoices):", err));
 
 // 📋 GET /api/invoices/me - Alle Rechnungen des Users (EINFACHE VERSION)
 router.get("/me", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     console.log("🔍 Lade Stripe-Rechnungen für User:", req.user.email);
 
     // 1. User aus MongoDB laden (für stripeCustomerId)
@@ -153,6 +151,7 @@ router.get("/me", verifyToken, async (req, res) => {
 // 📥 GET /api/invoices/download/:invoiceNumber - Rechnung herunterladen (nach number suchen!)
 router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { invoiceNumber } = req.params;
     console.log(`📥 Download-Request für Rechnung ${invoiceNumber} von ${req.user.email}`);
 

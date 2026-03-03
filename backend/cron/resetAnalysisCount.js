@@ -8,7 +8,7 @@
 // - Premium/Legendary: Unbegrenzt (kein Reset nötig)
 
 const cron = require('node-cron');
-const { MongoClient } = require('mongodb');
+const database = require('../config/database');
 require('dotenv').config();
 
 // ⏰ Cron-Job: Läuft am 1. jeden Monats um 00:00 Uhr
@@ -19,14 +19,11 @@ cron.schedule('0 0 1 * *', async () => {
   console.log('🔄 [CRON] Monatlicher Reset: NUR Business-User werden zurückgesetzt...');
   console.log('🔄 ═══════════════════════════════════════════════════════\n');
 
-  let client;
-
   try {
-    // MongoDB Verbindung
-    client = new MongoClient(process.env.MONGO_URI);
-    await client.connect();
+    // MongoDB Verbindung (shared singleton pool)
+    const db = await database.connect();
 
-    const usersCollection = client.db("contract_ai").collection("users");
+    const usersCollection = db.collection("users");
 
     // Statistiken vor dem Reset sammeln - NUR Business!
     const statsBefore = await usersCollection.aggregate([
@@ -109,11 +106,6 @@ cron.schedule('0 0 1 * *', async () => {
     //   type: 'MONTHLY_RESET_FAILED',
     //   error: error.message
     // });
-  } finally {
-    // MongoDB Verbindung schließen
-    if (client) {
-      await client.close();
-    }
   }
 });
 

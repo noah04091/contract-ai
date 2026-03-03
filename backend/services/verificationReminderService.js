@@ -1,7 +1,7 @@
 // 📁 backend/services/verificationReminderService.js
 // Automatische Erinnerungs-E-Mails für nicht verifizierte Accounts
 
-const { MongoClient } = require("mongodb");
+const database = require("../config/database");
 const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 require("dotenv").config();
@@ -13,11 +13,8 @@ require("dotenv").config();
  * @param {number} daysAfterRegistration - Nach wie vielen Tagen erinnern (default: 2)
  */
 async function sendVerificationReminders(daysAfterRegistration = 2) {
-  const client = new MongoClient(process.env.MONGO_URI);
-
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const usersCollection = db.collection("users");
 
     console.log(`📧 [VERIFICATION REMINDER] Suche nicht verifizierte Accounts (${daysAfterRegistration} Tage alt)...`);
@@ -141,8 +138,6 @@ async function sendVerificationReminders(daysAfterRegistration = 2) {
       success: false,
       error: error.message
     };
-  } finally {
-    await client.close();
   }
 }
 
@@ -150,42 +145,34 @@ async function sendVerificationReminders(daysAfterRegistration = 2) {
  * Statistiken über nicht verifizierte Accounts
  */
 async function getUnverifiedStats() {
-  const client = new MongoClient(process.env.MONGO_URI);
+  const db = await database.connect();
+  const usersCollection = db.collection("users");
 
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    const usersCollection = db.collection("users");
+  const now = new Date();
+  const oneDayAgo = new Date(now); oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+  const twoDaysAgo = new Date(now); twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  const sevenDaysAgo = new Date(now); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const now = new Date();
-    const oneDayAgo = new Date(now); oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-    const twoDaysAgo = new Date(now); twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    const sevenDaysAgo = new Date(now); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const stats = {
+    total: await usersCollection.countDocuments({ verified: false }),
+    lastDay: await usersCollection.countDocuments({
+      verified: false,
+      createdAt: { $gte: oneDayAgo }
+    }),
+    lastTwoDays: await usersCollection.countDocuments({
+      verified: false,
+      createdAt: { $gte: twoDaysAgo }
+    }),
+    lastWeek: await usersCollection.countDocuments({
+      verified: false,
+      createdAt: { $gte: sevenDaysAgo }
+    }),
+    remindersSent: await usersCollection.countDocuments({
+      verificationReminderSent: true
+    })
+  };
 
-    const stats = {
-      total: await usersCollection.countDocuments({ verified: false }),
-      lastDay: await usersCollection.countDocuments({
-        verified: false,
-        createdAt: { $gte: oneDayAgo }
-      }),
-      lastTwoDays: await usersCollection.countDocuments({
-        verified: false,
-        createdAt: { $gte: twoDaysAgo }
-      }),
-      lastWeek: await usersCollection.countDocuments({
-        verified: false,
-        createdAt: { $gte: sevenDaysAgo }
-      }),
-      remindersSent: await usersCollection.countDocuments({
-        verificationReminderSent: true
-      })
-    };
-
-    return stats;
-
-  } finally {
-    await client.close();
-  }
+  return stats;
 }
 
 module.exports = {

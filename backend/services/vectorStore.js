@@ -1,13 +1,12 @@
 // backend/services/vectorStore.js
 // Hybrid Vector Store: MongoDB Atlas Vector Search with In-Memory Fallback
 
-const { MongoClient } = require("mongodb");
+const database = require("../config/database");
 
 class VectorStore {
   constructor() {
     this.contractVectors = new Map(); // In-memory fallback
     this.lawVectors = new Map();
-    this.mongoClient = null;
     this.db = null;
     this.atlasVectorSearchAvailable = false; // Detected at init
   }
@@ -17,14 +16,7 @@ class VectorStore {
    */
   async init() {
     try {
-      const mongoUri = process.env.MONGO_URI;
-      this.mongoClient = new MongoClient(mongoUri, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-      });
-
-      await this.mongoClient.connect();
-      this.db = this.mongoClient.db("contract_ai");
+      this.db = await database.connect();
 
       // Create standard indexes
       await this.db.collection("vector_contracts").createIndex({ contractId: 1 });
@@ -441,13 +433,11 @@ class VectorStore {
   }
 
   /**
-   * Close MongoDB connection
+   * Close — no-op (shared pool managed by database singleton)
    */
   async close() {
-    if (this.mongoClient) {
-      await this.mongoClient.close();
-      console.log("✅ [VECTOR-STORE] MongoDB connection closed");
-    }
+    this.db = null;
+    console.log("✅ [VECTOR-STORE] Reference released (shared pool)");
   }
 }
 

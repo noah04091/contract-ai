@@ -3,28 +3,26 @@
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
 
-// 🛢️ MongoDB-Verbindung vorbereiten
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let usersCollection;
 
-const client = new MongoClient(MONGO_URI);
-client.connect()
-  .then(() => {
-    const db = client.db("contract_ai");
-    usersCollection = db.collection("users");
-    console.log("✅ StripePortal: MongoDB verbunden");
-  })
-  .catch(err => {
-    console.error("❌ Fehler bei MongoDB-Verbindung:", err.message);
-  });
+async function ensureDb() {
+  if (usersCollection) return;
+  const db = await database.connect();
+  usersCollection = db.collection("users");
+}
+
+ensureDb().catch(err => console.error("❌ StripePortal: MongoDB Fehler:", err.message));
 
 // 📬 Stripe Customer Portal öffnen
 router.post("/", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
+
     if (!req.user?.userId) {
       return res.status(401).json({ message: "Nicht autorisiert – kein gültiger Benutzer-Token." });
     }

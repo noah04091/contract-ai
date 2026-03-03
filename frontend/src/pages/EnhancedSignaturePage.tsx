@@ -16,7 +16,8 @@ import {
   ZoomOut,
   RotateCcw,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Shield
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
 import SignatureFieldOverlay from "../components/SignatureFieldOverlay";
@@ -111,6 +112,17 @@ export default function EnhancedSignaturePage() {
   // 🔄 Sequential Signing: Waiting for other signers
   const [waitingForSigners, setWaitingForSigners] = useState<Array<{ name: string; order: number }> | null>(null);
 
+  // 🔐 OTP Verification
+  const [otpRequired, setOtpRequired] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpMaxAttempts, setOtpMaxAttempts] = useState(false);
+
   // Refs
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -181,6 +193,21 @@ export default function EnhancedSignaturePage() {
     restoreFromSessionStorage();
   }, [token, signatureFields]);
 
+  // 🔐 OTP: Cooldown timer
+  useEffect(() => {
+    if (otpCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setOtpCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [otpCooldown]);
+
   // Lock body scroll when modal is open (prevents background scrolling)
   useEffect(() => {
     if (showInputModal) {
@@ -193,6 +220,71 @@ export default function EnhancedSignaturePage() {
   }, [showInputModal]);
 
   // ===== FUNCTIONS =====
+
+  // 🔐 OTP: Send verification code
+  async function handleSendOtp() {
+    if (!token || otpSending || otpCooldown > 0) return;
+    setOtpSending(true);
+    setOtpError(null);
+    setOtpMaxAttempts(false);
+
+    try {
+      const response = await fetch(`/api/sign/${token}/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429 && data.retryAfter) {
+          setOtpCooldown(data.retryAfter);
+        }
+        throw new Error(data.message || data.error || "Fehler beim Senden des Codes");
+      }
+
+      setOtpSent(true);
+      setOtpCooldown(60);
+      setOtpCode("");
+      console.log("🔐 OTP sent successfully");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Fehler beim Senden";
+      setOtpError(msg);
+    } finally {
+      setOtpSending(false);
+    }
+  }
+
+  // 🔐 OTP: Verify code
+  async function handleVerifyOtp() {
+    if (!token || otpVerifying || !otpCode) return;
+    setOtpVerifying(true);
+    setOtpError(null);
+
+    try {
+      const response = await fetch(`/api/sign/${token}/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: otpCode })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.maxAttemptsReached) {
+          setOtpMaxAttempts(true);
+        }
+        throw new Error(data.message || data.error || "Verifizierung fehlgeschlagen");
+      }
+
+      setOtpVerified(true);
+      console.log("🔐 OTP verified successfully");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Verifizierung fehlgeschlagen";
+      setOtpError(msg);
+      setOtpCode("");
+    } finally {
+      setOtpVerifying(false);
+    }
+  }
 
   async function loadEnvelope() {
     try {
@@ -220,6 +312,13 @@ export default function EnhancedSignaturePage() {
       if (data.waitingForSigners && Array.isArray(data.waitingForSigners) && data.waitingForSigners.length > 0) {
         setWaitingForSigners(data.waitingForSigners);
         console.log(`⏳ Sequential mode: Waiting for ${data.waitingForSigners.length} signer(s)`);
+      }
+
+      // 🔐 OTP: Read verification state
+      if (data.otpRequired) {
+        setOtpRequired(true);
+        setOtpVerified(data.otpVerified || false);
+        console.log(`🔐 OTP required: verified=${data.otpVerified}`);
       }
 
       if (data.signatureFields && Array.isArray(data.signatureFields)) {
@@ -815,6 +914,165 @@ export default function EnhancedSignaturePage() {
           <h2>Bereits signiert</h2>
           <p>Sie haben dieses Dokument bereits signiert.</p>
         </div>
+      </div>
+    );
+  }
+
+  // 🔐 OTP VERIFICATION: Show verification screen before signature
+  if (otpRequired && !otpVerified) {
+    return (
+      <div className={styles.container}>
+        <motion.div
+          className={styles.infoCard}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          style={{ maxWidth: '440px', margin: '50px auto', padding: '2rem' }}
+        >
+          <Shield size={48} style={{ color: '#4f46e5', marginBottom: '1rem' }} />
+          <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.3rem' }}>Identität bestätigen</h2>
+          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+            Zur Sicherheit wird ein Verifizierungscode an Ihre E-Mail-Adresse gesendet.
+          </p>
+
+          {/* Email display */}
+          <div style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '0.75rem 1rem',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Code wird gesendet an:</span>
+            <br />
+            <strong style={{ fontSize: '1rem', color: '#1e293b' }}>{signer?.email}</strong>
+          </div>
+
+          {/* Step 1: Send Code */}
+          {!otpSent ? (
+            <button
+              onClick={handleSendOtp}
+              disabled={otpSending || otpCooldown > 0}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1.5rem',
+                background: otpSending || otpCooldown > 0 ? '#94a3b8' : '#4f46e5',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: otpSending || otpCooldown > 0 ? 'not-allowed' : 'pointer',
+                transition: 'background 0.2s'
+              }}
+            >
+              {otpSending ? 'Wird gesendet...' : otpCooldown > 0 ? `Erneut senden (${otpCooldown}s)` : 'Code senden'}
+            </button>
+          ) : (
+            <>
+              {/* Step 2: Enter Code */}
+              <div style={{ marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.9rem', color: '#16a34a', fontWeight: 500, marginBottom: '1rem' }}>
+                  Code wurde gesendet! Bitte prüfen Sie Ihr E-Mail-Postfach.
+                </p>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtpCode(val);
+                    setOtpError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && otpCode.length === 6) {
+                      handleVerifyOtp();
+                    }
+                  }}
+                  placeholder="000000"
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    textAlign: 'center',
+                    fontSize: '2rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.5rem',
+                    fontFamily: "'Courier New', Courier, monospace",
+                    padding: '0.75rem',
+                    border: otpError ? '2px solid #ef4444' : '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => {
+                    if (!otpError) e.target.style.borderColor = '#4f46e5';
+                  }}
+                  onBlur={(e) => {
+                    if (!otpError) e.target.style.borderColor = '#e2e8f0';
+                  }}
+                />
+              </div>
+
+              {/* Error message */}
+              {otpError && (
+                <p style={{ color: '#ef4444', fontSize: '0.875rem', margin: '0 0 1rem 0' }}>
+                  {otpError}
+                </p>
+              )}
+
+              {/* Verify button */}
+              <button
+                onClick={handleVerifyOtp}
+                disabled={otpVerifying || otpCode.length !== 6 || otpMaxAttempts}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1.5rem',
+                  background: (otpVerifying || otpCode.length !== 6 || otpMaxAttempts) ? '#94a3b8' : '#4f46e5',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: (otpVerifying || otpCode.length !== 6 || otpMaxAttempts) ? 'not-allowed' : 'pointer',
+                  marginBottom: '1rem',
+                  transition: 'background 0.2s'
+                }}
+              >
+                {otpVerifying ? 'Wird geprüft...' : 'Bestätigen'}
+              </button>
+
+              {/* Resend link */}
+              <button
+                onClick={() => {
+                  setOtpMaxAttempts(false);
+                  handleSendOtp();
+                }}
+                disabled={otpCooldown > 0 || otpSending}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: otpCooldown > 0 ? '#94a3b8' : '#4f46e5',
+                  cursor: otpCooldown > 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  textDecoration: 'underline',
+                  padding: 0
+                }}
+              >
+                {otpCooldown > 0 ? `Neuen Code senden (${otpCooldown}s)` : 'Neuen Code senden'}
+              </button>
+            </>
+          )}
+
+          {/* Error for initial send */}
+          {!otpSent && otpError && (
+            <p style={{ color: '#ef4444', fontSize: '0.875rem', marginTop: '0.75rem' }}>
+              {otpError}
+            </p>
+          )}
+        </motion.div>
       </div>
     );
   }

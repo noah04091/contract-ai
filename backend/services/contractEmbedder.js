@@ -2,7 +2,8 @@
 // Automatic Contract Embedding Service
 // Embeds contracts into the vector store for Legal Pulse monitoring
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const EmbeddingService = require("./embeddingService");
 const VectorStore = require("./vectorStore");
 
@@ -62,37 +63,31 @@ async function embedContract(contractId, textContent, metadata) {
 
     // If no text provided, load from MongoDB
     if (!text) {
-      const mongoClient = new MongoClient(process.env.MONGO_URI);
-      try {
-        await mongoClient.connect();
-        const db = mongoClient.db("contract_ai");
-        const contract = await db.collection("contracts").findOne(
-          { _id: new ObjectId(contractId) }
-        );
+      const db = await database.connect();
+      const contract = await db.collection("contracts").findOne(
+        { _id: new ObjectId(contractId) }
+      );
 
-        if (!contract) {
-          console.warn(`[CONTRACT-EMBEDDER] Contract ${contractId} not found`);
-          return { success: false, reason: "not_found" };
-        }
-
-        // Extract text from available fields (same priority as backfill script)
-        text = contract.fullText
-          || contract.content
-          || contract.analysis?.fullText
-          || contract.parsedText
-          || contract.extractedText
-          || "";
-
-        // Fill metadata from contract
-        contractMeta = {
-          userId: contract.userId?.toString(),
-          contractName: contract.name || "Unbekannt",
-          contractType: contract.type || contract.contractType || "unknown",
-          ...contractMeta
-        };
-      } finally {
-        await mongoClient.close();
+      if (!contract) {
+        console.warn(`[CONTRACT-EMBEDDER] Contract ${contractId} not found`);
+        return { success: false, reason: "not_found" };
       }
+
+      // Extract text from available fields (same priority as backfill script)
+      text = contract.fullText
+        || contract.content
+        || contract.analysis?.fullText
+        || contract.parsedText
+        || contract.extractedText
+        || "";
+
+      // Fill metadata from contract
+      contractMeta = {
+        userId: contract.userId?.toString(),
+        contractName: contract.name || "Unbekannt",
+        contractType: contract.type || contract.contractType || "unknown",
+        ...contractMeta
+      };
     }
 
     if (!text || text.trim().length < 50) {
@@ -134,17 +129,11 @@ async function embedContract(contractId, textContent, metadata) {
     await vectorStore.upsertContracts(contractDocs);
 
     // Mark contract as indexed
-    const mongoClient = new MongoClient(process.env.MONGO_URI);
-    try {
-      await mongoClient.connect();
-      const db = mongoClient.db("contract_ai");
-      await db.collection("contracts").updateOne(
-        { _id: new ObjectId(contractId) },
-        { $set: { lastIndexedAt: new Date() } }
-      );
-    } finally {
-      await mongoClient.close();
-    }
+    const db2 = await database.connect();
+    await db2.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId) },
+      { $set: { lastIndexedAt: new Date() } }
+    );
 
     const duration = Date.now() - startTime;
     console.log(`✅ [CONTRACT-EMBEDDER] Contract ${contractId} embedded: ${chunks.length} chunks in ${duration}ms`);

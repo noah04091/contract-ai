@@ -1,7 +1,8 @@
 // 📁 backend/services/predictiveAnalyticsService.js
 // Legal Pulse 2.0 Phase 2 + Phase 3 - Predictive Analytics & Forecast (Enhanced with ML)
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const { getInstance: getMLForecast } = require('./mlForecastingService');
 
 class PredictiveAnalyticsService {
@@ -61,19 +62,16 @@ class PredictiveAnalyticsService {
     console.log(`[PREDICTIVE-ANALYTICS] Generating ${months}-month forecast for ${contractId}`);
 
     try {
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
       // Get contract
-      const contract = await client.db('contract_ai')
+      const contract = await db
         .collection('contracts')
         .findOne({ _id: new ObjectId(contractId) });
 
       if (!contract) {
         throw new Error('Contract not found');
       }
-
-      await client.close();
 
       // Get recent law changes
       const Law = require('../models/Law');

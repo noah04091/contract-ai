@@ -1,6 +1,7 @@
 // 📁 backend/routes/contracts.js - ERWEITERT mit Calendar Integration und Provider Detection
 const express = require("express");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 const verifyEmailImportKey = require("../middleware/verifyEmailImportKey"); // 🔒 E-Mail-Import Security
 const { onContractChange } = require("../services/calendarEvents");
@@ -39,12 +40,23 @@ function fixUtf8Encoding(str) {
   }
   return fixed;
 }
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
 let contractsCollection;
 let analysisCollection;
 let eventsCollection; // ✅ NEU: Events Collection
 let usersCollection; // ✅ NEU: Users Collection für Bulk-Ops
+
+// 🔧 ensureDb(): Lazy-Init über Singleton-Pool (database.js)
+let _db = null;
+async function ensureDb() {
+  if (!_db) {
+    _db = await database.connect();
+    contractsCollection = _db.collection("contracts");
+    analysisCollection = _db.collection("analyses");
+    eventsCollection = _db.collection("contract_events");
+    usersCollection = _db.collection("users");
+  }
+  return _db;
+}
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
 let S3Client, GetObjectCommand, PutObjectCommand, s3Instance;
@@ -147,7 +159,8 @@ const generatePDFAndUploadToS3ForContract = async (contractId, userId, contractT
     // Company Profile laden (optional)
     let companyProfile = null;
     try {
-      const rawProfile = await client.db("contract_ai").collection("company_profiles").findOne({
+      const pdfDb = await database.connect();
+      const rawProfile = await pdfDb.collection("company_profiles").findOne({
         $or: [{ userId: new ObjectId(userId) }, { userId: userId }]
       });
       if (rawProfile) {
@@ -156,6 +169,7 @@ const generatePDFAndUploadToS3ForContract = async (contractId, userId, contractT
     } catch (e) { /* optional */ }
 
     // Contract Daten für Parties
+    await ensureDb();
     const contract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
     const parties = contract?.formData || contract?.metadata?.parties || {};
     const contractType = contract?.contractType || 'Vertrag';
@@ -503,54 +517,51 @@ async function updateOnboardingChecklist(userId, itemId) {
 // Export für andere Routes (z.B. analyze.js)
 router.updateOnboardingChecklist = updateOnboardingChecklist;
 
-(async () => {
+// 🚀 PERFORMANCE: MongoDB Indizes erstellen beim ersten ensureDb()-Aufruf
+let _indexesCreated = false;
+async function ensureIndexes() {
+  if (_indexesCreated) return;
+  _indexesCreated = true;
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    contractsCollection = db.collection("contracts");
-    analysisCollection = db.collection("analyses");
-    eventsCollection = db.collection("contract_events");
-    usersCollection = db.collection("users");
+    // Compound Index für häufigste Query: User's Contracts sortiert nach Datum
+    await contractsCollection.createIndex(
+      { userId: 1, createdAt: -1 },
+      { name: "idx_userId_createdAt", background: true }
+    );
 
-    // 🚀 PERFORMANCE: MongoDB Indizes erstellen (idempotent - existierende werden übersprungen)
-    try {
-      // Compound Index für häufigste Query: User's Contracts sortiert nach Datum
-      await contractsCollection.createIndex(
-        { userId: 1, createdAt: -1 },
-        { name: "idx_userId_createdAt", background: true }
-      );
+    // Index für Ablaufdatum-Filter (Status-Berechnung)
+    await contractsCollection.createIndex(
+      { userId: 1, expiryDate: 1 },
+      { name: "idx_userId_expiryDate", background: true }
+    );
 
-      // Index für Ablaufdatum-Filter (Status-Berechnung)
-      await contractsCollection.createIndex(
-        { userId: 1, expiryDate: 1 },
-        { name: "idx_userId_expiryDate", background: true }
-      );
+    // Index für Text-Suche auf Name
+    await contractsCollection.createIndex(
+      { userId: 1, name: 1 },
+      { name: "idx_userId_name", background: true }
+    );
 
-      // Index für Text-Suche auf Name
-      await contractsCollection.createIndex(
-        { userId: 1, name: 1 },
-        { name: "idx_userId_name", background: true }
-      );
+    // Index für Legal Pulse Risk Score Sortierung
+    await contractsCollection.createIndex(
+      { userId: 1, "legalPulse.riskScore": -1 },
+      { name: "idx_userId_riskScore", background: true }
+    );
 
-      // Index für Legal Pulse Risk Score Sortierung
-      await contractsCollection.createIndex(
-        { userId: 1, "legalPulse.riskScore": -1 },
-        { name: "idx_userId_riskScore", background: true }
-      );
+    // Index für Folder-Filter
+    await contractsCollection.createIndex(
+      { userId: 1, folderId: 1 },
+      { name: "idx_userId_folderId", background: true }
+    );
 
-      // Index für Folder-Filter
-      await contractsCollection.createIndex(
-        { userId: 1, folderId: 1 },
-        { name: "idx_userId_folderId", background: true }
-      );
-
-    } catch (indexErr) {
-      console.warn('⚠️ [INDEX] Index creation failed (non-critical):', indexErr.message);
-    }
-  } catch (err) {
-    console.error("❌ MongoDB-Fehler (contracts.js):", err);
+  } catch (indexErr) {
+    console.warn('⚠️ [INDEX] Index creation failed (non-critical):', indexErr.message);
   }
-})();
+}
+
+// Indexes werden beim ersten Request erstellt (lazy)
+ensureDb().then(() => ensureIndexes()).catch(err => {
+  console.error("❌ MongoDB-Fehler (contracts.js):", err);
+});
 
 // 🚀 OPTIMIERT: Batch-Enrichment mit $lookup statt N+1 Queries
 // Vorher: 394 Verträge = 1182 Queries (3 pro Vertrag)
@@ -558,7 +569,7 @@ router.updateOnboardingChecklist = updateOnboardingChecklist;
 // 🚀 V2: Gibt jetzt { contracts, totalCount } zurück - spart separaten countDocuments() Call!
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
   const Envelope = require("../models/Envelope");
-  const db = client.db("contract_ai");
+  const db = await database.connect();
 
   // 🚀 OPTIMIERT: Erst Count berechnen (schnell, nur $match + $count)
   const countResult = await contractsCollection.aggregate([
@@ -923,6 +934,7 @@ async function enrichContractWithAnalysis(contract) {
 // Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
 router.get("/", async (req, res) => {
   try {
+    await ensureDb();
     // ✅ Pagination: limit & skip aus Query-Parametern (optional, fallback auf ALLE)
     const limit = parseInt(req.query.limit) || 0; // 0 = keine Limitierung (Backward-Compatible!)
     const skip = parseInt(req.query.skip) || 0;
@@ -1188,6 +1200,7 @@ router.get("/", async (req, res) => {
  */
 router.get('/names', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = new ObjectId(req.user.userId);
 
     // Nur _id und name mit Projection - super schnell!
@@ -1222,8 +1235,9 @@ router.get('/names', verifyToken, async (req, res) => {
  */
 router.get('/debug-company-profile', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     // WICHTIG: req.db verwenden (gleiche Connection wie companyProfile.js)
-    const db = req.db || client.db("contract_ai");
+    const db = req.db || await database.connect();
     const userId = req.user.userId;
 
     // 0. DB-Name und alle Collections auflisten
@@ -1302,6 +1316,7 @@ router.get('/debug-company-profile', verifyToken, async (req, res) => {
 // GET /contracts/:id – Einzelvertrag mit Events
 router.get("/:id", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff: eigene + Org-Verträge (alle Rollen dürfen lesen)
@@ -1331,6 +1346,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 // POST /contracts – Neuen Vertrag mit Event-Generierung und Provider Detection
 router.post("/", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const {
       name,
       laufzeit,
@@ -1430,7 +1446,7 @@ router.post("/", verifyToken, async (req, res) => {
     // ✅ NEU: Calendar Events generieren
     try {
       const fullContract = { ...contractDoc, _id: contractId };
-      await onContractChange(client.db("contract_ai"), fullContract, "create");
+      await onContractChange(await database.connect(), fullContract, "create");
     } catch (eventError) {
       // Fehler nicht werfen - Contract wurde trotzdem gespeichert
     }
@@ -1494,6 +1510,7 @@ router.post("/", verifyToken, async (req, res) => {
 // PUT /contracts/:id – Vertrag mit Event-Update und Provider Re-Detection
 router.put("/:id", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff + Rollen-Check (write)
@@ -1544,7 +1561,7 @@ router.put("/:id", verifyToken, async (req, res) => {
         });
         
         if (updatedContract) {
-          await onContractChange(client.db("contract_ai"), updatedContract, "update");
+          await onContractChange(await database.connect(), updatedContract, "update");
         }
       } catch (eventError) {
         console.warn('⚠️ [CALENDAR] Event update failed:', eventError.message);
@@ -1567,6 +1584,7 @@ router.put("/:id", verifyToken, async (req, res) => {
 // DELETE /contracts/:id – Vertrag mit Event-Löschung
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff + Rollen-Check (delete)
@@ -1628,6 +1646,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 // PATCH /contracts/:id/reminder – Erinnerung mit Event-Update
 router.patch("/:id/reminder", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff + Rollen-Check (write)
@@ -1702,8 +1721,9 @@ router.patch("/:id/reminder", verifyToken, async (req, res) => {
 // ✅ NEU: GET /contracts/:id/events – Events für einen Vertrag
 router.get("/:id/events", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
-    
+
     // Verify contract ownership
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(id),
@@ -1741,8 +1761,9 @@ router.get("/:id/events", verifyToken, async (req, res) => {
 // ✅ NEU: POST /contracts/:id/regenerate-events – Events neu generieren
 router.post("/:id/regenerate-events", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
-    
+
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(id),
       userId: new ObjectId(req.user.userId)
@@ -1761,7 +1782,7 @@ router.post("/:id/regenerate-events", verifyToken, async (req, res) => {
     });
     
     // Generate new events
-    await onContractChange(client.db("contract_ai"), contract, "update");
+    await onContractChange(await database.connect(), contract, "update");
     
     // Get new events
     const newEvents = await eventsCollection
@@ -1788,6 +1809,7 @@ router.post("/:id/regenerate-events", verifyToken, async (req, res) => {
 // 💳 NEU: PATCH /contracts/:id/payment – Payment Status Update
 router.patch("/:id/payment", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
     const { paymentStatus, paymentDate, paymentDueDate, paymentAmount } = req.body;
 
@@ -1853,6 +1875,7 @@ router.patch("/:id/payment", verifyToken, async (req, res) => {
 // 💰 NEU: PATCH /contracts/:id/costs – Cost Tracking Update
 router.patch("/:id/costs", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
     const { paymentFrequency, subscriptionStartDate, baseAmount } = req.body;
 
@@ -1916,6 +1939,7 @@ router.patch("/:id/costs", verifyToken, async (req, res) => {
 // ✅ NEU: PATCH /contracts/:id/document-type – Manuelle Dokumenttyp-Überschreibung
 router.patch("/:id/document-type", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
     const { documentType, manualOverride } = req.body;
 
@@ -1982,6 +2006,7 @@ router.patch("/:id/document-type", verifyToken, async (req, res) => {
 // ✅ NEU: POST /contracts/:id/detect-provider – Provider für bestehenden Vertrag erkennen
 router.post("/:id/detect-provider", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff + Rollen-Check (write)
@@ -2042,6 +2067,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
   const requestId = `ANALYZE-${Date.now()}`;
 
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // 👥 Org-Zugriff + Rollen-Check (write)
@@ -2351,7 +2377,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       const updatedContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
       if (updatedContract) {
-        await onContractChange(client.db("contract_ai"), updatedContract, "update");
+        await onContractChange(await database.connect(), updatedContract, "update");
       } else {
       }
     } catch (calError) {
@@ -2565,6 +2591,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 // ⚠️ IMPORTANT: Must be BEFORE /:id/folder route to avoid "bulk" matching as :id
 router.patch("/bulk/folder", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { contractIds, folderId } = req.body;
 
     // 🔍 DEBUG LOGGING
@@ -2589,8 +2616,7 @@ router.patch("/bulk/folder", verifyToken, async (req, res) => {
       return res.status(400).json({ error: "Ungültige Ordner-ID" });
     }
 
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const contracts = db.collection("contracts");
     const folders = db.collection("folders");
 
@@ -2631,6 +2657,7 @@ router.patch("/bulk/folder", verifyToken, async (req, res) => {
 // ✅ 📁 PATCH /api/contracts/:id/folder - Move contract to folder
 router.patch("/:id/folder", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { folderId } = req.body; // Can be null to remove from folder
     const contractId = req.params.id;
 
@@ -2645,8 +2672,7 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
       return res.status(400).json({ error: "Ungültige Ordner-ID" });
     }
 
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     const contracts = db.collection("contracts");
     const folders = db.collection("folders");
 
@@ -2696,6 +2722,7 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
 // ✅ NEU: GET /contracts/:id/analysis-report – Analyse als PDF herunterladen
 router.get("/:id/analysis-report", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
 
     // Get contract from database
@@ -2938,6 +2965,7 @@ router.get("/:id/analysis-report", verifyToken, async (req, res) => {
  */
 router.post("/email-import", verifyEmailImportKey, async (req, res) => {
   try {
+    await ensureDb();
     const {
       recipientEmail,  // z.B. "u_123abc.def456@upload.contract-ai.de"
       senderEmail,     // Absender
@@ -2957,7 +2985,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     }
 
     // 1. User anhand E-Mail-Adresse finden
-    const db = client.db("contract_ai");  // ✅ FIX: Korrekter DB-Name (Unterstrich statt Bindestrich)
+    const db = await database.connect();
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
 
@@ -3349,6 +3377,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
 // 🧠 PATCH /api/contracts/:id/status - Manueller Status-Update
 router.patch("/:id/status", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const contractId = req.params.id;
     const userId = req.user.userId;
     const { status, notes } = req.body;
@@ -3399,6 +3428,7 @@ router.patch("/:id/status", verifyToken, async (req, res) => {
 // 📊 GET /api/contracts/:id/status-history - Status-Historie abrufen
 router.get("/:id/status-history", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const contractId = req.params.id;
     const userId = req.user.userId;
 
@@ -3429,6 +3459,7 @@ router.get("/:id/status-history", verifyToken, async (req, res) => {
 // 🔔 PATCH /api/contracts/:id/reminder-settings - Update reminder settings for a contract
 router.patch("/:id/reminder-settings", async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
     const { reminderDays, reminderSettings } = req.body;
     const userId = new ObjectId(req.user.userId);
@@ -3569,6 +3600,7 @@ router.patch("/:id/reminder-settings", async (req, res) => {
 // POST /contracts/:id/upload-pdf – Upload generated PDF to S3
 router.post("/:id/upload-pdf", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { id } = req.params;
     const { pdfBase64 } = req.body;
 
@@ -3668,6 +3700,7 @@ router.post("/:id/upload-pdf", verifyToken, async (req, res) => {
  */
 router.post("/bulk-delete", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { contractIds } = req.body;
 
@@ -3758,6 +3791,7 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
  */
 router.post("/bulk-move", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { contractIds, targetFolderId } = req.body;
 
@@ -3809,7 +3843,8 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
 
     // Optional: Folder-Existenz prüfen (wenn targetFolderId gesetzt)
     if (targetFolderId) {
-      const foldersCollection = client.db("contract_ai").collection("folders");
+      const foldersDb = await database.connect();
+      const foldersCollection = foldersDb.collection("folders");
       const folder = await foldersCollection.findOne({
         _id: new ObjectId(targetFolderId),
         userId: new ObjectId(userId)
@@ -3872,6 +3907,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
  */
 router.post('/:id/pdf', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     await loadPDFGenerators();
 
     const version = req.query.version || 'v2';
@@ -3892,8 +3928,8 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     // Company Profile laden (immer versuchen)
     let companyProfile = null;
     try {
-      const db = client.db("contract_ai");
-      companyProfile = await db.collection("company_profiles").findOne({
+      const profileDb = await database.connect();
+      companyProfile = await profileDb.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
     } catch (profileError) {
@@ -3982,6 +4018,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
  */
 router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     await loadPDFGenerators();
 
     if (!generatePDFv2) {
@@ -4017,7 +4054,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
       const db = req.db;
       if (!db) {
       }
-      const profileDb = db || client.db("contract_ai");
+      const profileDb = db || await database.connect();
 
       // Versuche zuerst mit ObjectId, dann mit String
       const rawProfile = await profileDb.collection("company_profiles").findOne({
@@ -4194,6 +4231,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
  */
 router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { PDFDocument } = require('pdf-lib');
     await loadPDFGenerators();
 
@@ -4224,7 +4262,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     // Company Profile laden
     let companyProfile = null;
     try {
-      const db = req.db || client.db("contract_ai");
+      const db = req.db || await database.connect();
       const rawProfile = await db.collection("company_profiles").findOne({
         $or: [
           { userId: new ObjectId(req.user.userId) },
@@ -4416,6 +4454,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
  */
 router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     await loadPDFGenerators();
 
     if (!generatePDFv3) {
@@ -4441,8 +4480,8 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     // Company Profile laden
     let companyProfile = null;
     if (contract.hasCompanyProfile) {
-      const db = client.db("contract_ai");
-      companyProfile = await db.collection("company_profiles").findOne({
+      const profileDb = await database.connect();
+      companyProfile = await profileDb.collection("company_profiles").findOne({
         userId: new ObjectId(req.user.userId)
       });
     }
@@ -4479,6 +4518,7 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
  */
 router.get('/verify/:id', async (req, res) => {
   try {
+    await ensureDb();
     const contractId = req.params.id;
 
     // Validiere ObjectId Format

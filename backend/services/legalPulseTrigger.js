@@ -1,7 +1,8 @@
 // 📁 backend/services/legalPulseTrigger.js
 // Legal Pulse 2.0 - Impact Evaluation & Alert Generation
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 
 // Graceful imports
 let getLawEmbeddings = null;
@@ -399,15 +400,11 @@ class LegalPulseTrigger {
   async deliverNotification(notification, contract) {
     try {
       // Get User (need email for delivery)
-      const { MongoClient } = require('mongodb');
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
-      const user = await client.db('contract_ai')
+      const user = await db
         .collection('users')
         .findOne({ _id: contract.userId });
-
-      await client.close();
 
       if (!user) {
         console.log(`[LEGAL-PULSE:TRIGGER] User not found for notification ${notification._id}`);

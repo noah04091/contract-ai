@@ -3,24 +3,19 @@
 // Unterstützt verschiedene Signature-Methoden je nach System
 
 const crypto = require("crypto");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 
-// MongoDB Connection
-const client = new MongoClient(process.env.MONGO_URI);
+// MongoDB Collections (lazy-initialized via shared pool)
 let integrationCredentialsCollection;
 let webhookEventsCollection;
 
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    integrationCredentialsCollection = db.collection("integrationcredentials");
-    webhookEventsCollection = db.collection("integrationwebhookevents");
-    console.log("📦 Integration Webhook Middleware: MongoDB verbunden");
-  } catch (error) {
-    console.error("❌ Integration Webhook Middleware: MongoDB Connection Error:", error);
-  }
-})();
+async function ensureDb() {
+  if (integrationCredentialsCollection && webhookEventsCollection) return;
+  const db = await database.connect();
+  integrationCredentialsCollection = db.collection("integrationcredentials");
+  webhookEventsCollection = db.collection("integrationwebhookevents");
+}
 
 /**
  * Salesforce Webhook Signature Verification
@@ -118,6 +113,7 @@ function verifyIntegrationWebhook(integrationType) {
     const startTime = Date.now();
 
     try {
+      await ensureDb();
       console.log(`🔐 [Webhook] Eingehender ${integrationType} Webhook`);
 
       // Raw Body für Signature Verification
@@ -397,6 +393,7 @@ function sanitizeHeaders(headers) {
  */
 async function updateWebhookEvent(eventId, updates) {
   try {
+    await ensureDb();
     await webhookEventsCollection.updateOne(
       { eventId },
       { $set: { ...updates, updatedAt: new Date() } }
@@ -411,6 +408,7 @@ async function updateWebhookEvent(eventId, updates) {
  */
 async function addWebhookAction(eventId, action) {
   try {
+    await ensureDb();
     await webhookEventsCollection.updateOne(
       { eventId },
       {
@@ -428,6 +426,7 @@ async function addWebhookAction(eventId, action) {
  */
 async function completeWebhookEvent(eventId, success = true, error = null) {
   try {
+    await ensureDb();
     const updates = {
       status: success ? 'completed' : 'failed',
       'processing.completedAt': new Date(),

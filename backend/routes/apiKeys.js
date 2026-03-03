@@ -3,7 +3,8 @@
 
 const express = require("express");
 const router = express.Router();
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
 const { apiKeysRateLimiter } = require("../middleware/apiRateLimit");
@@ -12,27 +13,19 @@ const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // �
 // Rate Limiting für API-Key Management
 router.use(apiKeysRateLimiter);
 
-// MongoDB Connection
-const client = new MongoClient(process.env.MONGO_URI);
+// MongoDB Connection (shared singleton pool)
 let apiKeysCollection;
 let usersCollection;
 
-(async () => {
-  try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    apiKeysCollection = db.collection("api_keys");
-    usersCollection = db.collection("users");
-
-    // Index für schnelle API-Key Lookup
-    await apiKeysCollection.createIndex({ keyHash: 1 });
-    await apiKeysCollection.createIndex({ userId: 1 });
-
-    console.log("📦 API-Keys Collection verbunden");
-  } catch (error) {
-    console.error("❌ MongoDB Connection Error (API-Keys):", error);
-  }
-})();
+async function ensureDb() {
+  if (apiKeysCollection) return;
+  const db = await database.connect();
+  apiKeysCollection = db.collection("api_keys");
+  usersCollection = db.collection("users");
+  await apiKeysCollection.createIndex({ keyHash: 1 });
+  await apiKeysCollection.createIndex({ userId: 1 });
+}
+ensureDb().catch(err => console.error("❌ MongoDB Connection Error (API-Keys):", err));
 
 /**
  * Generiert sicheren API-Key
@@ -58,6 +51,7 @@ function hashApiKey(key) {
  */
 router.post("/generate", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { name, permissions = ["read", "write"] } = req.body;
 
@@ -150,6 +144,7 @@ router.post("/generate", verifyToken, async (req, res) => {
  */
 router.get("/list", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
 
     // 🔒 ENTERPRISE-CHECK
@@ -215,6 +210,7 @@ router.get("/list", verifyToken, async (req, res) => {
  */
 router.delete("/:keyId", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const userId = req.user.userId;
     const { keyId } = req.params;
 
@@ -289,6 +285,7 @@ router.delete("/:keyId", verifyToken, async (req, res) => {
  */
 router.post("/verify", async (req, res) => {
   try {
+    await ensureDb();
     const { apiKey } = req.body;
 
     if (!apiKey || !apiKey.startsWith("sk_live_")) {

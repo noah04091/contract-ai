@@ -1,4 +1,5 @@
 // 📁 backend/config/database.js
+// ZENTRALE MongoDB-Verbindung — EINZIGE Stelle mit new MongoClient() im gesamten Projekt
 const { MongoClient } = require('mongodb');
 
 class Database {
@@ -13,6 +14,18 @@ class Database {
     this.baseReconnectDelayMs = 1000; // 1 Sekunde
     this.maxReconnectDelayMs = 30000; // 30 Sekunden
     this.isReconnecting = false;
+    // 📊 Pool-Monitoring (aggregiert, kein Event-Spam)
+    this._poolStats = {
+      created: 0,
+      closed: 0,
+      checkedOut: 0,
+      checkedIn: 0,
+      checkOutFailed: 0,
+      timeouts: 0,
+      totalOperations: 0,
+      lastReset: Date.now()
+    };
+    this._monitorInterval = null;
   }
 
   async connect() {
@@ -45,10 +58,13 @@ class Database {
       const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
       
       this.client = new MongoClient(MONGO_URI, {
-        maxPoolSize: 30, // Erhöht von 10 auf 30 für 26+ Cron-Jobs
-        serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        family: 4 // Use IPv4, skip trying IPv6
+        maxPoolSize: 30,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
+        maxIdleTimeMS: 30000,
+        family: 4,
+        monitorCommands: false
       });
 
       await this.client.connect();
@@ -56,12 +72,22 @@ class Database {
 
       // 🔄 Reset reconnect counter bei erfolgreichem Connect
       this.reconnectAttempts = 0;
-      console.log('✅ Database connected successfully');
-      
+      console.log('✅ Database (Singleton-Pool) connected — maxPoolSize: 30');
+
+      // 📊 Pool-Monitoring Events (nur zählen, nicht loggen)
+      this.client.on('connectionCreated', () => { this._poolStats.created++; });
+      this.client.on('connectionClosed', () => { this._poolStats.closed++; });
+      this.client.on('connectionCheckedOut', () => { this._poolStats.checkedOut++; this._poolStats.totalOperations++; });
+      this.client.on('connectionCheckedIn', () => { this._poolStats.checkedIn++; });
+      this.client.on('connectionCheckOutFailed', () => { this._poolStats.checkOutFailed++; });
+
+      // 📊 Aggregiertes Monitoring alle 60s (kein Event-Spam)
+      this._startMonitoring();
+
       // Handle connection events
       this.client.on('error', (error) => {
         console.error('❌ Database connection error:', error.message);
-        // 🔄 Automatischer Reconnect bei Verbindungsfehler
+        this._poolStats.timeouts++;
         this._scheduleReconnect();
       });
 
@@ -69,8 +95,6 @@ class Database {
         console.log('📴 Database connection closed unexpectedly');
         this.client = null;
         this.db = null;
-        // 🔄 Automatischer Reconnect bei unerwartetem Schließen
-        // (Nicht bei manuellem close() über die close()-Methode)
         if (!this.isReconnecting) {
           this._scheduleReconnect();
         }
@@ -142,15 +166,14 @@ class Database {
 
   async close() {
     if (this.client) {
-      // 🔐 Verhindere Reconnect bei manuellem Schließen
+      this._stopMonitoring();
       this.isReconnecting = true;
       await this.client.close();
       this.client = null;
       this.db = null;
       this.isReconnecting = false;
-      // Reset reconnect attempts für nächsten manuellen Connect
       this.reconnectAttempts = 0;
-      console.log('📴 Database connection closed manually');
+      console.log('📴 Database (Singleton-Pool) closed');
     }
   }
 
@@ -207,6 +230,34 @@ class Database {
     }, delay);
   }
 
+  // 📊 Pool-Monitoring: aggregierter Dump alle 60 Sekunden
+  _startMonitoring() {
+    if (this._monitorInterval) return;
+    this._monitorInterval = setInterval(() => {
+      const stats = this._poolStats;
+      const elapsed = Math.round((Date.now() - stats.lastReset) / 1000);
+      const active = stats.checkedOut - stats.checkedIn;
+      // Nur loggen wenn es Aktivität gab
+      if (stats.totalOperations > 0 || stats.checkOutFailed > 0 || stats.timeouts > 0) {
+        console.log(`[DB Pool] ${elapsed}s | ops: ${stats.totalOperations} | active: ${active} | created: ${stats.created} | closed: ${stats.closed} | failed: ${stats.checkOutFailed} | timeouts: ${stats.timeouts}`);
+      }
+      // Reset counters
+      this._poolStats = {
+        created: 0, closed: 0, checkedOut: 0, checkedIn: 0,
+        checkOutFailed: 0, timeouts: 0, totalOperations: 0,
+        lastReset: Date.now()
+      };
+    }, 60000);
+    this._monitorInterval.unref(); // Verhindert, dass der Timer den Prozess am Leben hält
+  }
+
+  _stopMonitoring() {
+    if (this._monitorInterval) {
+      clearInterval(this._monitorInterval);
+      this._monitorInterval = null;
+    }
+  }
+
   // Health check method
   async ping() {
     try {
@@ -219,12 +270,15 @@ class Database {
     }
   }
 
-  // Get connection status
+  // Get connection status (enhanced mit Pool-Info)
   getStatus() {
     return {
       connected: !!this.db && !!this.client,
       isConnecting: this.isConnecting,
-      hasClient: !!this.client
+      isReconnecting: this.isReconnecting,
+      reconnectAttempts: this.reconnectAttempts,
+      hasClient: !!this.client,
+      poolStats: { ...this._poolStats }
     };
   }
 }

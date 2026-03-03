@@ -11,7 +11,8 @@ const fsSync = require("fs");
 const path = require("path");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { ObjectId, MongoClient } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const { standardLimiter, uploadLimiter, analyzeLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
@@ -26,21 +27,15 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// 🔥 MongoDB Setup für Contract-Speicherung
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
+// 🔥 MongoDB Setup für Contract-Speicherung (Shared Singleton Pool)
 let contractsCollection, db;
 
-(async () => {
-  try {
-    await client.connect();
-    db = client.db("contract_ai");
+async function ensureDb() {
+  if (!db) {
+    db = await database.connect();
     contractsCollection = db.collection("contracts");
-    console.log("✅ Optimize.js: MongoDB verbunden für Contract-Speicherung!");
-  } catch (err) {
-    console.error("❌ Optimize.js MongoDB Fehler:", err);
   }
-})();
+}
 
 // 🆕 S3 Client Setup
 let s3Instance = null;
@@ -4826,6 +4821,7 @@ router.post("/", verifyToken, uploadLimiter, analyzeLimiter, upload.single("file
 
     // 🔥 NEU: Speichere Contract automatisch in Contracts-Verwaltung
     let savedContractId = null;
+    await ensureDb();
     if (contractsCollection && db && s3Instance) {
       try {
         // 🆕 Upload PDF to S3 first
@@ -6005,6 +6001,7 @@ router.get("/stats/summary", verifyToken, async (req, res) => {
  */
 router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { contractId, s3Key, s3Location, risks, recommendations } = req.body;
     const userId = req.user.userId;
 
@@ -6118,6 +6115,7 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
  */
 router.get("/job/:jobId", verifyToken, async (req, res) => {
   try {
+    await ensureDb();
     const { jobId } = req.params;
     const userId = req.user.userId;
 

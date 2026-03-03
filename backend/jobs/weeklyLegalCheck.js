@@ -9,7 +9,8 @@
 // Never use wording like "aktueller Rechtsstand" or "vollstaendige Rechtspruefung" -
 // the system checks RECOGNIZED changes from SPECIFIC sources, not all of German law.
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 const { OpenAI } = require("openai");
 const pdfParse = require("pdf-parse");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
@@ -25,7 +26,6 @@ class WeeklyLegalCheck {
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     this.embeddingService = EmbeddingService ? new EmbeddingService() : null;
     this.vectorStore = VectorStore ? new VectorStore() : null;
-    this.mongoClient = null;
     this.db = null;
     this.isRunning = false;
 
@@ -45,9 +45,8 @@ class WeeklyLegalCheck {
 
   async init() {
     try {
-      this.mongoClient = new MongoClient(process.env.MONGO_URI);
-      await this.mongoClient.connect();
-      this.db = this.mongoClient.db("contract_ai");
+      // Connect to MongoDB (shared singleton pool)
+      this.db = await database.connect();
 
       if (this.vectorStore) {
         await this.vectorStore.init();
@@ -894,7 +893,8 @@ ${error.stack || 'Nicht verfügbar'}
 
   async close() {
     if (this.vectorStore) await this.vectorStore.close();
-    if (this.mongoClient) await this.mongoClient.close();
+    // Don't close the shared database pool — just release the reference
+    this.db = null;
   }
 }
 

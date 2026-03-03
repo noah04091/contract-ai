@@ -12,7 +12,7 @@ const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const { generateSignedUrl, deleteFiles } = require("../services/fileStorage"); // 🆕 For S3 download links + 🗑️ For deletion
 const { generateEventsForEnvelope, markEnvelopeAsCompleted, deleteEnvelopeEvents } = require("../services/envelopeCalendarEvents"); // 📅 Calendar Integration
-const { generateVoidNotificationHTML, generateVoidNotificationText, generateDeclineNotificationHTML, generateDeclineNotificationText } = require("../templates/signatureInvitationEmail"); // 📧 Void + Decline Notification
+const { generateVoidNotificationHTML, generateVoidNotificationText, generateDeclineNotificationHTML, generateDeclineNotificationText, generateOtpEmailHTML, generateOtpEmailText } = require("../templates/signatureInvitationEmail"); // 📧 Void + Decline + OTP Notification
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
@@ -97,6 +97,60 @@ function getClientIP(req) {
          req.socket.remoteAddress ||
          'unknown';
 }
+
+/**
+ * Hash OTP code with SHA-256
+ */
+function hashOtpCode(code) {
+  return crypto.createHash('sha256').update(String(code)).digest('hex');
+}
+
+/**
+ * Generate cryptographically secure 6-digit OTP code
+ */
+function generateOtpCode() {
+  return crypto.randomInt(100000, 999999).toString();
+}
+
+// ===== OTP RATE LIMITERS =====
+
+/**
+ * Rate limiter for OTP sending (prevents email spam)
+ * 3 sends per 15 minutes per IP
+ */
+const otpSendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  message: { success: false, error: 'Zu viele Code-Anfragen. Bitte warten Sie 15 Minuten.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.headers['x-real-ip'] ||
+           req.connection.remoteAddress ||
+           req.socket.remoteAddress ||
+           'unknown';
+  }
+});
+
+/**
+ * Rate limiter for OTP verification (prevents brute-force)
+ * 5 attempts per 15 minutes per IP
+ */
+const otpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { success: false, error: 'Zu viele Verifizierungsversuche. Bitte warten Sie 15 Minuten.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.headers['x-real-ip'] ||
+           req.connection.remoteAddress ||
+           req.socket.remoteAddress ||
+           'unknown';
+  }
+});
 
 /**
  * ✅ Sanitize error messages for client responses
@@ -1934,7 +1988,10 @@ router.get("/sign/:token", async (req, res) => {
       },
       signatureFields: myFields,
       // 🔄 SEQUENTIAL: If waiting for other signers
-      waitingForSigners: waitingForSigners
+      waitingForSigners: waitingForSigners,
+      // 🔐 OTP: Whether OTP verification is required
+      otpRequired: signer.authMethod === 'OTP',
+      otpVerified: signer.otpVerified || false
     });
 
   } catch (error) {
@@ -1943,6 +2000,282 @@ router.get("/sign/:token", async (req, res) => {
       success: false,
       message: "Fehler beim Laden der Signature-Sitzung",
       error: sanitizeErrorMessage(error)
+    });
+  }
+});
+
+/**
+ * POST /api/sign/:token/send-otp - Send OTP code to signer's email (public)
+ */
+router.post("/sign/:token/send-otp", otpSendLimiter, async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Find envelope by signer token
+    const envelope = await Envelope.findBySignerToken(token);
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        message: "Signature-Link nicht gefunden"
+      });
+    }
+
+    // Find signer
+    const signer = envelope.getSignerByToken(token);
+
+    if (!signer) {
+      return res.status(404).json({
+        success: false,
+        message: "Unterzeichner nicht gefunden"
+      });
+    }
+
+    // Check token expiration
+    if (new Date() > new Date(signer.tokenExpires)) {
+      return res.status(410).json({
+        success: false,
+        message: "Signature-Link ist abgelaufen"
+      });
+    }
+
+    // Already verified? Return success
+    if (signer.otpVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "Bereits verifiziert"
+      });
+    }
+
+    // 60s cooldown between sends
+    if (signer.otpLastSentAt) {
+      const secondsSinceLastSend = (Date.now() - new Date(signer.otpLastSentAt).getTime()) / 1000;
+      if (secondsSinceLastSend < 60) {
+        const waitSeconds = Math.ceil(60 - secondsSinceLastSend);
+        return res.status(429).json({
+          success: false,
+          message: `Bitte warten Sie ${waitSeconds} Sekunden, bevor Sie einen neuen Code anfordern.`,
+          retryAfter: waitSeconds
+        });
+      }
+    }
+
+    // Generate 6-digit code
+    const code = generateOtpCode();
+    const hashedCode = hashOtpCode(code);
+
+    // Update signer in DB
+    const signerIndex = envelope.signers.findIndex(s => s.token === token);
+    await Envelope.updateOne(
+      { _id: envelope._id },
+      {
+        $set: {
+          [`signers.${signerIndex}.otpCode`]: hashedCode,
+          [`signers.${signerIndex}.otpExpires`]: new Date(Date.now() + 10 * 60 * 1000), // 10 min
+          [`signers.${signerIndex}.otpAttempts`]: 0,
+          [`signers.${signerIndex}.otpLastSentAt`]: new Date()
+        },
+        $push: {
+          audit: {
+            event: 'OTP_SENT',
+            timestamp: new Date(),
+            email: signer.email,
+            ip: getClientIP(req),
+            userAgent: req.headers['user-agent'] || 'unknown',
+            details: {}
+          }
+        }
+      }
+    );
+
+    // Send OTP email
+    const emailHTML = generateOtpEmailHTML({
+      code,
+      signer: { name: signer.name, email: signer.email },
+      envelope: { title: envelope.title },
+      expiresMinutes: 10
+    });
+
+    const emailText = generateOtpEmailText({
+      code,
+      signer: { name: signer.name, email: signer.email },
+      envelope: { title: envelope.title },
+      expiresMinutes: 10
+    });
+
+    await sendEmail({
+      to: signer.email,
+      subject: `Ihr Verifizierungscode - ${envelope.title}`,
+      html: emailHTML,
+      text: emailText
+    });
+
+    console.log(`🔐 OTP sent to ${signer.email} for envelope ${envelope._id}`);
+
+    res.json({
+      success: true,
+      message: "Verifizierungscode wurde gesendet"
+    });
+
+  } catch (error) {
+    console.error("❌ Error sending OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Senden des Verifizierungscodes"
+    });
+  }
+});
+
+/**
+ * POST /api/sign/:token/verify-otp - Verify OTP code (public)
+ */
+router.post("/sign/:token/verify-otp", otpVerifyLimiter, async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { code } = req.body;
+
+    // Validate input: exactly 6 digits
+    if (!code || !/^\d{6}$/.test(String(code))) {
+      return res.status(400).json({
+        success: false,
+        message: "Bitte geben Sie einen gültigen 6-stelligen Code ein."
+      });
+    }
+
+    // Find envelope by signer token
+    const envelope = await Envelope.findBySignerToken(token);
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        message: "Signature-Link nicht gefunden"
+      });
+    }
+
+    // Find signer
+    const signer = envelope.getSignerByToken(token);
+
+    if (!signer) {
+      return res.status(404).json({
+        success: false,
+        message: "Unterzeichner nicht gefunden"
+      });
+    }
+
+    // Check token expiration
+    if (new Date() > new Date(signer.tokenExpires)) {
+      return res.status(410).json({
+        success: false,
+        message: "Signature-Link ist abgelaufen"
+      });
+    }
+
+    // Already verified?
+    if (signer.otpVerified) {
+      return res.status(200).json({
+        success: true,
+        message: "Bereits verifiziert"
+      });
+    }
+
+    // Check if code was ever sent
+    if (!signer.otpCode || !signer.otpExpires) {
+      return res.status(400).json({
+        success: false,
+        message: "Bitte fordern Sie zuerst einen Verifizierungscode an."
+      });
+    }
+
+    // Max 3 attempts per code
+    if (signer.otpAttempts >= 3) {
+      return res.status(429).json({
+        success: false,
+        message: "Zu viele Fehlversuche. Bitte fordern Sie einen neuen Code an.",
+        maxAttemptsReached: true
+      });
+    }
+
+    // Check code expiration (10 min)
+    if (new Date() > new Date(signer.otpExpires)) {
+      return res.status(410).json({
+        success: false,
+        message: "Der Code ist abgelaufen. Bitte fordern Sie einen neuen Code an.",
+        codeExpired: true
+      });
+    }
+
+    // Compare hashes
+    const inputHash = hashOtpCode(code);
+    const signerIndex = envelope.signers.findIndex(s => s.token === token);
+
+    if (inputHash !== signer.otpCode) {
+      // Increment attempts
+      await Envelope.updateOne(
+        { _id: envelope._id },
+        {
+          $inc: { [`signers.${signerIndex}.otpAttempts`]: 1 },
+          $push: {
+            audit: {
+              event: 'OTP_FAILED',
+              timestamp: new Date(),
+              email: signer.email,
+              ip: getClientIP(req),
+              userAgent: req.headers['user-agent'] || 'unknown',
+              details: { attempt: signer.otpAttempts + 1 }
+            }
+          }
+        }
+      );
+
+      const remainingAttempts = 2 - signer.otpAttempts; // 3 max, 0-indexed
+      console.log(`❌ OTP failed for ${signer.email}, attempt ${signer.otpAttempts + 1}/3`);
+
+      return res.status(401).json({
+        success: false,
+        message: remainingAttempts > 0
+          ? `Falscher Code. Noch ${remainingAttempts} ${remainingAttempts === 1 ? 'Versuch' : 'Versuche'} übrig.`
+          : "Zu viele Fehlversuche. Bitte fordern Sie einen neuen Code an.",
+        maxAttemptsReached: remainingAttempts <= 0
+      });
+    }
+
+    // Success! Set verified and clear code
+    await Envelope.updateOne(
+      { _id: envelope._id },
+      {
+        $set: {
+          [`signers.${signerIndex}.otpVerified`]: true,
+          [`signers.${signerIndex}.otpVerifiedAt`]: new Date(),
+          [`signers.${signerIndex}.otpVerifiedIp`]: getClientIP(req),
+          [`signers.${signerIndex}.otpCode`]: null,
+          [`signers.${signerIndex}.otpExpires`]: null,
+          [`signers.${signerIndex}.otpAttempts`]: 0
+        },
+        $push: {
+          audit: {
+            event: 'OTP_VERIFIED',
+            timestamp: new Date(),
+            email: signer.email,
+            ip: getClientIP(req),
+            userAgent: req.headers['user-agent'] || 'unknown',
+            details: {}
+          }
+        }
+      }
+    );
+
+    console.log(`✅ OTP verified for ${signer.email} on envelope ${envelope._id}`);
+
+    res.json({
+      success: true,
+      message: "Identität erfolgreich bestätigt"
+    });
+
+  } catch (error) {
+    console.error("❌ Error verifying OTP:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler bei der Verifizierung"
     });
   }
 });
@@ -2017,6 +2350,14 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
           completedAt: envelope.completedAt,
           sealedPdfUrl
         }
+      });
+    }
+
+    // 🔐 OTP SECURITY GATE: Verify OTP before allowing signature
+    if (signer.authMethod === 'OTP' && !signer.otpVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "E-Mail-Verifizierung erforderlich. Bitte bestätigen Sie zuerst Ihre Identität mit dem Code."
       });
     }
 

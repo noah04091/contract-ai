@@ -14,8 +14,9 @@ const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer } = require("./services/textExtractor");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const mongoose = require("mongoose"); // 📁 Mongoose for Folder Models
+const database = require("./config/database"); // 📊 Singleton MongoDB Pool
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -362,38 +363,29 @@ async function extractContractMetadata(text) {
   return metadata;
 }
 
-// 🚀 MongoDB Connection (unchanged)
+// 🚀 MongoDB Connection — nutzt Singleton-Pool aus config/database.js
 let db = null;
-let client = null;
 
 const connectDB = async () => {
   try {
-    logger.info("Verbinde zentral zur MongoDB...");
+    logger.info("Verbinde zur MongoDB (Singleton-Pool)...");
     const startTime = Date.now();
 
-    client = new MongoClient(MONGO_URI, {
-      maxPoolSize: 30,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
-      maxIdleTimeMS: 30000,
-    });
-
-    await client.connect();
-    db = client.db("contract_ai");
+    // Pool D: Native MongoClient (Singleton aus database.js)
+    db = await database.connect();
 
     const connectTime = Date.now() - startTime;
     logger.db.connected();
-    logger.info("MongoDB zentral verbunden", { connectTime: `${connectTime}ms` });
+    logger.info("MongoDB Singleton-Pool verbunden", { connectTime: `${connectTime}ms` });
 
-    // 📁 Connect Mongoose for Folder Models
+    // Pool M: Mongoose für Models (Folder, Organization, Envelope, etc.)
     await mongoose.connect(MONGO_URI, {
       dbName: "contract_ai",
       maxPoolSize: 30,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     });
-    logger.info("Mongoose verbunden für Folder Models");
+    logger.info("Mongoose verbunden für Models");
 
     return db;
   } catch (error) {
@@ -1524,6 +1516,41 @@ const connectDB = async () => {
       });
     });
 
+    // 🔄 Cron Retry-Wrapper: Retry bei transienten MongoDB-Fehlern
+    const RETRYABLE_ERRORS = ['MongoNetworkTimeoutError', 'MongoServerSelectionError', 'ECONNRESET'];
+    async function withRetry(fn, retries = 2, delay = 2000) {
+      try {
+        return await fn();
+      } catch (err) {
+        const isRetryable = RETRYABLE_ERRORS.some(e =>
+          err.name === e || err.code === e || (err.message && err.message.includes(e))
+        );
+        if (isRetryable && retries > 0) {
+          console.warn(`🔄 Cron Retry (${retries} left) nach ${err.name}: ${err.message}`);
+          await new Promise(r => setTimeout(r, delay));
+          return withRetry(fn, retries - 1, delay * 1.5);
+        }
+        throw err;
+      }
+    }
+
+    // 🔒 Cron Overlap-Lock: verhindert parallele Ausführung desselben Jobs
+    const cronLocks = new Map();
+    function withCronLock(jobName, fn) {
+      return async () => {
+        if (cronLocks.get(jobName)) {
+          console.warn(`⏭️ Cron ${jobName} übersprungen — läuft noch`);
+          return;
+        }
+        cronLocks.set(jobName, true);
+        try {
+          await withRetry(fn);
+        } finally {
+          cronLocks.delete(jobName);
+        }
+      };
+    }
+
     // ⏰ ERWEITERTE Cron Jobs mit Calendar Integration
     try {
       // ✅ BESTEHENDER Reminder-Cronjob ERWEITERT mit Calendar Notifications
@@ -1665,11 +1692,11 @@ const connectDB = async () => {
       });
 
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
-      cron.schedule("0 2 * * *", async () => {
+      cron.schedule("0 2 * * *", withCronLock('event-generation', async () => {
         console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");
         try {
           const { regenerateAllEvents } = require("./services/calendarEvents");
-          
+
           // Finde Verträge ohne Events
           const contractsWithoutEvents = await db.collection("contracts")
             .aggregate([
@@ -1688,19 +1715,19 @@ const connectDB = async () => {
               }
             ])
             .toArray();
-          
+
           console.log(`📊 ${contractsWithoutEvents.length} Verträge ohne Events gefunden`);
-          
+
           for (const contract of contractsWithoutEvents) {
             await onContractChange(db, contract, "create");
           }
-          
+
           console.log("✅ Event-Generierung abgeschlossen");
         } catch (error) {
           console.error("❌ Event Generation Cron Error:", error);
           await captureError(error, { route: 'CRON:event-generation', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // ✅ CALENDAR: Abgelaufene Events aufräumen (täglich um 3 Uhr nachts)
       cron.schedule("0 3 * * *", async () => {
@@ -1714,8 +1741,8 @@ const connectDB = async () => {
         }
       });
 
-      // BESTEHENDER Legal Pulse Scan (unverändert)
-      cron.schedule("0 6 * * *", async () => {
+      // BESTEHENDER Legal Pulse Scan (mit Retry + Overlap-Lock)
+      cron.schedule("0 6 * * *", withCronLock('legal-pulse-scan', async () => {
         console.log("🧠 Starte täglichen AI-powered Legal Pulse Scan...");
         try {
           await withCronLogging('legal-pulse-scan', async () => {
@@ -1727,7 +1754,7 @@ const connectDB = async () => {
           console.error("❌ Legal Pulse Scan Error:", error);
           await captureError(error, { route: 'CRON:legal-pulse-scan', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10:10 Uhr)
       // Gestaffelt: 10:10 statt 10:00 um DB-Connection-Kollision mit Winback zu vermeiden
@@ -2251,20 +2278,18 @@ const connectDB = async () => {
 //   logger.error("Reset Business Limits konnte nicht geladen werden", { error: err.message });
 // }
 
-// Graceful Shutdown
+// Graceful Shutdown — beide Pools sauber schließen
 process.on('SIGTERM', async () => {
-  logger.warn("Received SIGTERM, closing database connection...");
-  if (client) {
-    await client.close();
-    logger.db.disconnected();
-  }
+  logger.warn("Received SIGTERM, closing database connections...");
+  await database.close();
+  await mongoose.disconnect();
+  logger.db.disconnected();
 });
 
 process.on('SIGINT', async () => {
   logger.warn("Received SIGINT, closing server...");
-  if (client) {
-    await client.close();
-    logger.db.disconnected();
-  }
+  await database.close();
+  await mongoose.disconnect();
+  logger.db.disconnected();
   process.exit(0);
 });

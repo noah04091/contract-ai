@@ -1,7 +1,7 @@
 // 📁 backend/services/autoTriggerService.js
 // Legal Pulse 2.0 Phase 2 - Auto-Trigger bei Law Changes
 
-const { MongoClient } = require("mongodb");
+const database = require("../config/database");
 const { getInstance: getLawChangeDetector } = require("./lawChangeDetector");
 const { getInstance: getLegalPulseTrigger } = require("./legalPulseTrigger");
 
@@ -46,11 +46,10 @@ class AutoTriggerService {
       }
 
       // 2. Get all active contracts (with cost optimization filters)
-      const client = new MongoClient(process.env.MONGO_URI);
-      await client.connect();
+      const db = await database.connect();
 
       // 🚫 COST OPTIMIZATION: Get excluded user IDs
-      const excludedUsers = await client.db('contract_ai')
+      const excludedUsers = await db
         .collection('users')
         .find({ email: { $in: ['noahboa13@web.de'] } })
         .project({ _id: 1 })
@@ -61,7 +60,7 @@ class AutoTriggerService {
       const fiveYearsAgo = new Date();
       fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
 
-      const contracts = await client.db('contract_ai')
+      const contracts = await db
         .collection('contracts')
         .find({
           // Only active contracts (exclude inactive statuses)
@@ -77,8 +76,6 @@ class AutoTriggerService {
         })
         .toArray();
 
-      await client.close();
-
       console.log(`[AUTO-TRIGGER] Checking ${contracts.length} contracts`);
 
       // 3. Evaluate impact for each contract
@@ -91,17 +88,14 @@ class AutoTriggerService {
 
       for (const result of results) {
         if (result.hasImpact && result.updates) {
-          const client2 = new MongoClient(process.env.MONGO_URI);
-          await client2.connect();
+          const db2 = await database.connect();
 
-          await client2.db('contract_ai')
+          await db2
             .collection('contracts')
             .updateOne(
               { _id: result.contractId },
               result.updates
             );
-
-          await client2.close();
 
           updatedContracts++;
           notificationsCreated += (result.alerts?.length || 0);

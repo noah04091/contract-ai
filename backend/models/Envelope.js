@@ -66,7 +66,36 @@ const signerSchema = new mongoose.Schema({
   authMethod: {
     type: String,
     enum: ["EMAIL_LINK", "OTP", "SSO"],
-    default: "EMAIL_LINK"
+    default: "OTP"
+  },
+  // 🔐 OTP Verification Fields
+  otpCode: {
+    type: String, // SHA-256 Hash
+    default: null
+  },
+  otpExpires: {
+    type: Date,
+    default: null
+  },
+  otpAttempts: {
+    type: Number,
+    default: 0
+  },
+  otpVerified: {
+    type: Boolean,
+    default: false
+  },
+  otpVerifiedAt: {
+    type: Date,
+    default: null
+  },
+  otpVerifiedIp: {
+    type: String,
+    default: null
+  },
+  otpLastSentAt: {
+    type: Date,
+    default: null
   }
 }, { _id: false });
 
@@ -172,7 +201,10 @@ const auditEventSchema = new mongoose.Schema({
       "DELIVERY_FAILED",
       "PDF_SEALED",
       "PDF_SEALING_FAILED",
-      "FIELDS_UPDATED"
+      "FIELDS_UPDATED",
+      "OTP_SENT",
+      "OTP_VERIFIED",
+      "OTP_FAILED"
     ]
   },
   timestamp: {

@@ -1,7 +1,8 @@
 // services/activityLogger.js
 // Admin Activity Logger - Logs important system events for admin monitoring
 
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 require("dotenv").config();
 
 /**
@@ -74,16 +75,12 @@ async function logActivity(db, activity) {
  * Use this when you don't have a db instance available
  */
 async function logActivityStandalone(activity) {
-  const client = new MongoClient(process.env.MONGO_URI);
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
+    const db = await database.connect();
     return await logActivity(db, activity);
   } catch (error) {
     console.error("❌ Activity Logger Standalone Error:", error);
     return false;
-  } finally {
-    await client.close();
   }
 }
 

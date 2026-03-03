@@ -2,7 +2,8 @@
 // Legal Pulse Automated Monitoring with Cron
 
 const cron = require("node-cron");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
+const database = require("../config/database");
 
 // Graceful imports - Services können fehlen
 let EmbeddingService = null;
@@ -19,7 +20,6 @@ class LegalPulseMonitor {
   constructor() {
     this.embeddingService = EmbeddingService ? new EmbeddingService() : null;
     this.vectorStore = VectorStore ? new VectorStore() : null;
-    this.mongoClient = null;
     this.db = null;
     this.isRunning = false;
 
@@ -33,10 +33,8 @@ class LegalPulseMonitor {
    */
   async init() {
     try {
-      // Connect to MongoDB
-      this.mongoClient = new MongoClient(process.env.MONGO_URI);
-      await this.mongoClient.connect();
-      this.db = this.mongoClient.db("contract_ai");
+      // Connect to MongoDB (shared singleton pool)
+      this.db = await database.connect();
 
       // Initialize vector store (if available)
       if (this.vectorStore) {
@@ -949,9 +947,8 @@ class LegalPulseMonitor {
     if (this.vectorStore) {
       await this.vectorStore.close();
     }
-    if (this.mongoClient) {
-      await this.mongoClient.close();
-    }
+    // Don't close the shared database pool — just release the reference
+    this.db = null;
   }
 }
 
