@@ -2756,8 +2756,14 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
           });
 
           if (owner && owner.email) {
-            await sendCompletionNotification(envelope, owner.email);
-            console.log(`✅ Completion email sent to owner: ${owner.email}`);
+            // notificationSettings prüfen (nur Owner, nicht Unterzeichner)
+            const ns = owner.notificationSettings;
+            if (ns?.email?.enabled === false || ns?.email?.signatureUpdates === false) {
+              console.log(`⏭️ Skipping completion email for owner ${owner.email} - signatureUpdates deaktiviert`);
+            } else {
+              await sendCompletionNotification(envelope, owner.email);
+              console.log(`✅ Completion email sent to owner: ${owner.email}`);
+            }
           } else {
             console.error(`⚠️ Owner not found for completion notification, ownerId: ${ownerIdStr}`);
           }
@@ -2963,28 +2969,34 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
       console.log(`📧 Owner lookup result: ${owner ? owner.email : 'NOT FOUND'}`);
 
       if (owner && owner.email) {
-        const declineNotificationData = {
-          signer: {
-            name: signer.name,
-            email: signer.email
-          },
-          envelope: {
-            title: envelope.title,
-            signers: envelope.signers
-          },
-          ownerEmail: owner.email,
-          declineReason: reason || null,
-          declinedAt: now
-        };
+        // notificationSettings prüfen
+        const ns = owner.notificationSettings;
+        if (ns?.email?.enabled === false || ns?.email?.signatureUpdates === false) {
+          console.log(`⏭️ Skipping decline email for owner ${owner.email} - signatureUpdates deaktiviert`);
+        } else {
+          const declineNotificationData = {
+            signer: {
+              name: signer.name,
+              email: signer.email
+            },
+            envelope: {
+              title: envelope.title,
+              signers: envelope.signers
+            },
+            ownerEmail: owner.email,
+            declineReason: reason || null,
+            declinedAt: now
+          };
 
-        await sendEmail(
-          owner.email,
-          `Signatur abgelehnt: ${envelope.title}`,
-          generateDeclineNotificationText(declineNotificationData),
-          generateDeclineNotificationHTML(declineNotificationData)
-        );
+          await sendEmail(
+            owner.email,
+            `Signatur abgelehnt: ${envelope.title}`,
+            generateDeclineNotificationText(declineNotificationData),
+            generateDeclineNotificationHTML(declineNotificationData)
+          );
 
-        console.log(`📧 Decline notification sent to owner: ${owner.email}`);
+          console.log(`📧 Decline notification sent to owner: ${owner.email}`);
+        }
       } else {
         console.error(`⚠️ Owner not found for envelope ${envelope._id}, ownerId: ${ownerIdStr}`);
       }

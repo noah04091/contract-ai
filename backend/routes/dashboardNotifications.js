@@ -602,7 +602,6 @@ router.get("/", verifyToken, async (req, res) => {
       switch (n.category) {
         case 'calendar': return inApp.contractDeadlines !== false;
         case 'pulse': return inApp.legalPulse !== false;
-        case 'analysis': return inApp.analysisComplete !== false;
         case 'signature': return inApp.signatureUpdates !== false;
         default: return true;
       }

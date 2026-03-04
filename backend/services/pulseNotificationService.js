@@ -144,6 +144,13 @@ class PulseNotificationService {
       return false;
     }
 
+    // notificationSettings prüfen
+    const ns = user.notificationSettings;
+    if (ns?.email?.enabled === false || ns?.email?.legalPulse === false) {
+      console.log(`[PULSE-NOTIFICATION] Skipping ${user.email} - legalPulse deaktiviert`);
+      return false;
+    }
+
     try {
       const emailHtml = this.generateEmailHTML(notification, user);
 

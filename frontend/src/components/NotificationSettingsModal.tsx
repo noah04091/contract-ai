@@ -11,7 +11,6 @@ import {
   Moon,
   Calendar,
   AlertTriangle,
-  CheckCircle,
   PenTool,
   Megaphone
 } from 'lucide-react';
@@ -356,27 +355,6 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                             onChange={e => {
                               updateSetting('inApp', 'legalPulse', e.target.checked);
                               updateSetting('email', 'legalPulse', e.target.checked);
-                            }}
-                          />
-                          <span className={styles.toggleSlider} />
-                        </label>
-                      </div>
-
-                      <div className={styles.typeItem}>
-                        <div className={`${styles.typeIcon} ${styles.typeIconSuccess}`}>
-                          <CheckCircle size={20} />
-                        </div>
-                        <div className={styles.typeContent}>
-                          <h4>Analyse abgeschlossen</h4>
-                          <p>Wenn KI-Analysen fertig sind</p>
-                        </div>
-                        <label className={styles.toggle}>
-                          <input
-                            type="checkbox"
-                            checked={notificationSettings.inApp.analysisComplete}
-                            onChange={e => {
-                              updateSetting('inApp', 'analysisComplete', e.target.checked);
-                              updateSetting('email', 'analysisComplete', e.target.checked);
                             }}
                           />
                           <span className={styles.toggleSlider} />
