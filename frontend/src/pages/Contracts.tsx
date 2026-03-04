@@ -449,6 +449,7 @@ export default function Contracts() {
   const [qfDropdownOpen, setQfDropdownOpen] = useState<{
     contractId: string;
     displayIndex: number;
+    position: { top: number; left: number };
   } | null>(null);
 
   // 🤖 Smart Folders Modal State
@@ -3361,27 +3362,19 @@ export default function Contracts() {
                       {allFacts.length > 2 && (
                         <button
                           className={styles.qfDropdownBtn}
-                          onClick={() => setQfDropdownOpen(isDropdownOpen ? null : { contractId: contract._id, displayIndex: index })}
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setQfDropdownOpen(isDropdownOpen ? null : {
+                              contractId: contract._id,
+                              displayIndex: index,
+                              position: { top: rect.bottom + 4, left: rect.left }
+                            });
+                          }}
                           title="Eckdaten wechseln"
                         >
                           <ChevronDown size={12} />
                         </button>
                       )}
-                    </div>
-                  )}
-                  {isDropdownOpen && (
-                    <div className={styles.qfDropdown} onClick={(e) => e.stopPropagation()}>
-                      {allFacts.map((f, i) => (
-                        <button
-                          key={i}
-                          className={`${styles.qfDropdownItem} ${i === index ? styles.qfDropdownItemActive : ''}`}
-                          onClick={() => swapQuickFact(contract._id, index, i)}
-                          disabled={i === index}
-                        >
-                          <span>{f.label}: {f.value}</span>
-                          {i === index && <Check size={12} />}
-                        </button>
-                      ))}
                     </div>
                   )}
                 </div>
@@ -5303,28 +5296,19 @@ export default function Contracts() {
                                             {allFacts.length > 2 && (
                                               <button
                                                 className={styles.qfDropdownBtn}
-                                                onClick={() => setQfDropdownOpen(isDropdownOpen ? null : { contractId: contract._id, displayIndex: factIndex })}
+                                                onClick={(e) => {
+                                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                  setQfDropdownOpen(isDropdownOpen ? null : {
+                                                    contractId: contract._id,
+                                                    displayIndex: factIndex,
+                                                    position: { top: rect.bottom + 4, left: rect.left }
+                                                  });
+                                                }}
                                                 title="Eckdaten wechseln"
                                               >
                                                 <ChevronDown size={12} />
                                               </button>
                                             )}
-                                          </div>
-                                        )}
-                                        {/* Dropdown-Menü */}
-                                        {isDropdownOpen && (
-                                          <div className={styles.qfDropdown} onClick={(e) => e.stopPropagation()}>
-                                            {allFacts.map((f, i) => (
-                                              <button
-                                                key={i}
-                                                className={`${styles.qfDropdownItem} ${i === factIndex ? styles.qfDropdownItemActive : ''}`}
-                                                onClick={() => swapQuickFact(contract._id, factIndex, i)}
-                                                disabled={i === factIndex}
-                                              >
-                                                <span>{f.label}: {f.value}</span>
-                                                {i === factIndex && <Check size={12} />}
-                                              </button>
-                                            ))}
                                           </div>
                                         )}
                                       </div>
@@ -6123,6 +6107,37 @@ export default function Contracts() {
             fetchContracts();
           }}
         />
+      )}
+
+      {/* ✏️ QuickFact Dropdown Portal - Rendert außerhalb der Tabellen-Hierarchie */}
+      {qfDropdownOpen && createPortal(
+        <div
+          className={styles.qfDropdown}
+          style={{
+            position: 'fixed',
+            top: `${qfDropdownOpen.position.top}px`,
+            left: `${qfDropdownOpen.position.left}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(() => {
+            const contract = contracts.find(c => c._id === qfDropdownOpen.contractId);
+            const allFacts = contract?.quickFacts || [];
+            const displayIndex = qfDropdownOpen.displayIndex;
+            return allFacts.map((f, i) => (
+              <button
+                key={i}
+                className={`${styles.qfDropdownItem} ${i === displayIndex ? styles.qfDropdownItemActive : ''}`}
+                onClick={() => swapQuickFact(qfDropdownOpen.contractId, displayIndex, i)}
+                disabled={i === displayIndex}
+              >
+                <span>{f.label}: {f.value}</span>
+                {i === displayIndex && <Check size={12} />}
+              </button>
+            ));
+          })()}
+        </div>,
+        document.body
       )}
 
       {/* 📁 Folder Dropdown Portal - Rendert außerhalb der Tabellen-Hierarchie */}
