@@ -360,15 +360,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // Update contract when prop changes
   useEffect(() => {
-    console.log('🔄 [Modal] initialContract changed:', {
-      id: initialContract._id,
-      name: initialContract.name,
-      analyzed: !!initialContract.analyzed,
-      contractScore: initialContract.contractScore,
-      hasSummary: !!initialContract.summary,
-      hasLegalAssessment: !!initialContract.legalAssessment,
-      hasLegalPulse: !!initialContract.legalPulse
-    });
     setContract(initialContract);
   }, [initialContract]);
 
@@ -382,10 +373,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         const res = await fetch(`/api/calendar/events?contractId=${contract._id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('📅 Calendar Events API Response Status:', res.status);
         if (res.ok) {
           const data = await res.json();
-          console.log('📅 Calendar Events für Vertrag:', data);
           if (data.success && data.events) {
             setCalendarEvents(data.events);
           }
@@ -415,7 +404,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           // API gibt { user: { subscriptionPlan: ... } } zurück
           const user = data.user || data;
           setUserPlan(user.subscriptionPlan || user.plan || 'free');
-          console.log('🔐 [Modal] User Plan:', user.subscriptionPlan || user.plan || 'free');
         }
       } catch (err) {
         console.error('Error fetching user plan:', err);
@@ -492,7 +480,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   }, [activeTab, contract.legalPulse, legalPulsePolling, canAccessLegalPulse]);
 
   const startLegalPulsePolling = () => {
-    console.log('⚡ [Modal] Starting Legal Pulse polling for contract:', contract._id);
     setLegalPulsePolling(true);
 
     // Clear any existing interval
@@ -506,8 +493,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     const pollLegalPulse = async () => {
       try {
         pollCount++;
-        console.log(`⚡ [Modal][${pollCount}/${maxPolls}] Polling Legal Pulse...`);
-
         const response = await fetch(`/api/contracts/${contract._id}`, {
           credentials: 'include'
         });
@@ -521,7 +506,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         // Check if Legal Pulse data is available
         if (contractData.legalPulse) {
-          console.log('✅ [Modal] Legal Pulse data found!', contractData.legalPulse);
           setContract(prev => ({ ...prev, legalPulse: contractData.legalPulse }));
           setLegalPulsePolling(false);
 
@@ -531,7 +515,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             pollingIntervalRef.current = null;
           }
         } else if (pollCount >= maxPolls) {
-          console.warn('⚠️ [Modal] Legal Pulse polling timeout');
           setLegalPulsePolling(false);
 
           // Stop polling
@@ -2556,7 +2539,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <button
                 className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
                 onClick={() => {
-                  console.log('🔍 [Modal] Analyse Tab clicked. hasAnalysisData:', hasAnalysisData(contract));
                   setActiveTab('analysis');
                 }}
                 disabled={!hasAnalysisData(contract)}

@@ -39,6 +39,7 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
+import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -267,6 +268,7 @@ export default function Contracts() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth(); // 🏢 Org-Rolle für Rollen-Awareness
+  const toast = useToast(); // 🔔 Toast-Benachrichtigungen
   const { celebrate } = useCelebrationContext(); // 🎉 Celebration System
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
   const { onboardingState } = useOnboarding(); // 🎓 Onboarding State für Celebration-Checks
@@ -491,7 +493,6 @@ export default function Contracts() {
     const shouldOpenUpload = params.get('upload') === 'true';
 
     if (shouldOpenUpload) {
-      console.log('📤 Opening upload section via URL parameter');
       setActiveSection('upload');
       // Clean up URL parameter
       window.history.replaceState({}, document.title, location.pathname);
@@ -515,19 +516,16 @@ export default function Contracts() {
           .replace(/\s/g, '')        // Any whitespace
       : null;
 
-    console.log('📋 View Parameter Check:', { contractIdToView, contractsCount: contracts.length, loading });
 
     if (contractIdToView && !loading) {
       // Erst in der aktuellen Liste suchen
       const contractToOpen = contracts.find(c => c._id === contractIdToView);
 
       if (contractToOpen) {
-        console.log('📋 Contract gefunden in Liste:', contractToOpen.name);
         setSelectedContract(contractToOpen);
         setShowDetails(true);
       } else if (contracts.length > 0) {
         // Vertrag nicht in der Liste (Pagination) → Direkt von API laden
-        console.log('📋 Contract nicht in Liste, lade von API...', contractIdToView);
 
         const fetchSingleContract = async () => {
           try {
@@ -537,11 +535,9 @@ export default function Contracts() {
             const contract = (response as { contract?: Contract })?.contract || (response as Contract);
 
             if (contract && contract._id) {
-              console.log('✅ Contract von API geladen:', contract.name);
               setSelectedContract(contract);
               setShowDetails(true);
             } else {
-              console.warn('⚠️ Vertrag nicht gefunden:', contractIdToView);
             }
           } catch (error) {
             console.error('❌ Fehler beim Laden des Vertrags:', error);
@@ -806,7 +802,6 @@ export default function Contracts() {
   // ✅ BUG FIX 1: NEUE Edit-Schnellaktion Handler-Funktion
   // ✏️ MOBILE FIX: Öffnet jetzt direkt das Quick-Edit-Modal statt Detail-Ansicht
   const handleEditContract = (contract: Contract) => {
-    console.log('✏️ Edit-Schnellaktion für Contract:', contract._id, contract.name);
     // Direkt Quick-Edit-Modal öffnen (ohne Detail-Ansicht!)
     setQuickEditContract(contract);
   };
@@ -1006,16 +1001,11 @@ export default function Contracts() {
   const handleMoveToFolder = async (contractId: string, folderId: string | null) => {
     try {
       await moveContractToFolder(contractId, folderId);
-      await fetchContracts(); // Refresh to show new folder assignment
-
-      // Success feedback
-      const folderName = folderId
-        ? folders.find(f => f._id === folderId)?.name || 'Ordner'
-        : 'Ohne Ordner';
-      console.log(`✅ Vertrag verschoben nach: ${folderName}`);
+      await fetchContracts();
+      toast.success('Vertrag verschoben');
     } catch (err) {
       console.error('Error moving contract:', err);
-      alert('Fehler beim Verschieben des Vertrags');
+      toast.error('Fehler beim Verschieben des Vertrags');
     }
   };
 
@@ -1072,14 +1062,10 @@ export default function Contracts() {
       await fetchContracts();
       setSelectedContracts([]);
       setBulkActionDropdownOpen(false);
-
-      const folderName = folderId
-        ? folders.find(f => f._id === folderId)?.name || 'Ordner'
-        : 'Ohne Ordner';
-      console.log(`✅ ${selectedContracts.length} Verträge verschoben nach: ${folderName}`);
+      toast.success(`${selectedContracts.length} Verträge verschoben`);
     } catch (err) {
       console.error('Error bulk moving contracts:', err);
-      alert('Fehler beim Verschieben der Verträge');
+      toast.error('Fehler beim Verschieben der Verträge');
     }
   };
 
@@ -1107,21 +1093,21 @@ export default function Contracts() {
 
         // Enterprise-Feature Check
         if (errorData.requiresUpgrade) {
-          alert(errorData.message || '⛔ Bulk-Operationen nur für Enterprise-Plan verfügbar!');
+          toast.warning(errorData.message || 'Bulk-Operationen nur für Enterprise-Plan verfügbar');
           return;
         }
 
         throw new Error(errorData.message || 'Fehler beim Löschen');
       }
 
-      const result = await response.json();
-      console.log(`✅ ${result.deleted}/${result.requested} Verträge gelöscht`);
+      await response.json();
 
       await fetchContracts();
       setSelectedContracts([]);
+      toast.success('Verträge gelöscht');
     } catch (err) {
       console.error('Error bulk deleting contracts:', err);
-      alert('Fehler beim Löschen der Verträge');
+      toast.error('Fehler beim Löschen der Verträge');
     }
   };
 
@@ -1130,18 +1116,17 @@ export default function Contracts() {
     // ✅ Enterprise-Check: Excel Export nur für Enterprise
     const isEnterprise = userInfo.subscriptionPlan === 'enterprise';
     if (!isEnterprise) {
-      alert('📊 Excel-Export ist ein Enterprise-Feature.\n\n🚀 Upgrade auf Enterprise für diese Funktion!');
+      toast.warning('Excel-Export ist ein Enterprise-Feature. Upgrade für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }
 
     if (contracts.length === 0) {
-      alert('Keine Verträge zum Exportieren vorhanden');
+      toast.info('Keine Verträge zum Exportieren vorhanden');
       return;
     }
 
     try {
-      console.log('📊 [Excel Export] Starte Download...');
 
       // Fetch Excel file from backend
       const response = await fetch('/api/contracts/export-excel', {
@@ -1188,10 +1173,9 @@ export default function Contracts() {
         document.body.removeChild(a);
       }, 100);
 
-      console.log(`✅ [Excel Export] ${contracts.length} Verträge exportiert als ${filename}`);
     } catch (error) {
       console.error('❌ [Excel Export] Error:', error);
-      alert('Excel-Export fehlgeschlagen. Bitte versuche es später erneut.');
+      toast.error('Excel-Export fehlgeschlagen. Bitte versuche es später erneut.');
     }
   };
 
@@ -1200,23 +1184,22 @@ export default function Contracts() {
     // ✅ Premium-Check: Bulk Download für Business/Enterprise
     const hasPaidPlan = userInfo.subscriptionPlan === 'business' || userInfo.subscriptionPlan === 'enterprise';
     if (!hasPaidPlan) {
-      alert('📦 Bulk-Download ist ein Enterprise-Feature.\n\n🚀 Upgrade auf Business oder Enterprise für diese Funktion!');
+      toast.warning('Bulk-Download ist ein Business/Enterprise-Feature. Upgrade für diese Funktion!');
       window.location.href = '/pricing';
       return;
     }
 
     if (selectedContracts.length === 0) {
-      alert('Keine Verträge ausgewählt');
+      toast.info('Keine Verträge ausgewählt');
       return;
     }
 
     if (selectedContracts.length > 100) {
-      alert('Maximal 100 Verträge gleichzeitig downloadbar');
+      toast.warning('Maximal 100 Verträge gleichzeitig downloadbar');
       return;
     }
 
     try {
-      console.log(`📦 [Bulk Download] Starte ZIP-Download für ${selectedContracts.length} Verträge...`);
 
       // Fetch ZIP file from backend
       const response = await fetch('/api/contracts/bulk-download', {
@@ -1265,13 +1248,12 @@ export default function Contracts() {
         document.body.removeChild(a);
       }, 100);
 
-      console.log(`✅ [Bulk Download] ${selectedContracts.length} Verträge als ZIP heruntergeladen: ${filename}`);
 
       // Selection zurücksetzen nach erfolgreichem Download
       setSelectedContracts([]);
     } catch (error) {
       console.error('❌ [Bulk Download] Error:', error);
-      alert('ZIP-Download fehlgeschlagen. Bitte versuche es später erneut.');
+      toast.error('ZIP-Download fehlgeschlagen. Bitte versuche es später erneut.');
     }
   };
 
@@ -1306,7 +1288,6 @@ export default function Contracts() {
 
       await fetchFolders(true); // ✅ Force refresh nach Smart Folder Erstellung
       await fetchContracts();
-      console.log(`✅ ${suggestions.length} Smart Folders erstellt`);
     } catch (err) {
       console.error('Error creating smart folders:', err);
       throw err;
@@ -1571,7 +1552,6 @@ export default function Contracts() {
       const CACHE_DURATION = 30000; // 30 Sekunden
 
       if (!force && userInfoCacheRef.current.data && cacheAge < CACHE_DURATION) {
-        console.log('📦 User-Info aus Cache geladen (Alter:', Math.round(cacheAge / 1000), 'Sekunden)');
         setUserInfo(userInfoCacheRef.current.data);
         return;
       }
@@ -1618,9 +1598,7 @@ export default function Contracts() {
 
       setUserInfo(newUserInfo);
 
-      console.log("✅ User-Info vom Server geladen:", newUserInfo);
     } catch (err) {
-      console.warn("⚠️ User-Info konnte nicht geladen werden:", err);
       setUserInfo({
         subscriptionPlan: 'free',
         isPremium: false,
@@ -1668,7 +1646,6 @@ export default function Contracts() {
 
       // 🚀 Race Condition Check: Ignoriere Response wenn neuerer Request gestartet wurde
       if (currentRequestId !== fetchRequestIdRef.current) {
-        console.log(`⚠️ Veraltete Response ignoriert (Request ${currentRequestId}, aktuell: ${fetchRequestIdRef.current})`);
         return null;
       }
 
@@ -1682,7 +1659,6 @@ export default function Contracts() {
         currentSkip: response.pagination.skip
       });
 
-      console.log(`✅ Verträge geladen: ${response.contracts.length} von ${response.pagination.total} (hasMore: ${response.pagination.hasMore})`);
       return response.contracts;
     } catch (err) {
       // 🚀 Nur Error setzen wenn dies noch der aktuelle Request ist
@@ -1741,7 +1717,6 @@ export default function Contracts() {
       if (previewIdToUpdate) {
         const updatedPreviewContract = response.contracts.find(c => c._id === previewIdToUpdate);
         if (updatedPreviewContract) {
-          console.log("🔄 Preview-Contract aktualisiert nach Analyse:", previewIdToUpdate);
           setPreviewContract(updatedPreviewContract);
         }
       }
@@ -1797,7 +1772,6 @@ export default function Contracts() {
 
       // 🚀 Race Condition Check: Ignoriere wenn Filter sich geändert hat (neuer fetchContracts lief)
       if (startRequestId !== fetchRequestIdRef.current) {
-        console.log(`⚠️ LoadMore ignoriert - Filter wurde geändert (Request ${startRequestId} → ${fetchRequestIdRef.current})`);
         return;
       }
 
@@ -1811,7 +1785,6 @@ export default function Contracts() {
         currentSkip: response.pagination.skip
       });
 
-      console.log(`✅ Weitere Verträge geladen: ${response.contracts.length} (insgesamt: ${contracts.length + response.contracts.length} von ${response.pagination.total})`);
     } catch (err) {
       console.error("❌ Fehler beim Nachladen der Verträge:", err);
       // Fehler nicht als kritisch behandeln - User kann manuell neu laden
@@ -1868,14 +1841,12 @@ export default function Contracts() {
     const handleContainerScroll = () => {
       if (!hasScrolledRef.current && scrollContainer && scrollContainer.scrollTop > 50) {
         hasScrolledRef.current = true;
-        console.log('📜 Infinite Scroll: Aktiviert nach Container-Scroll');
       }
     };
 
     const handleWindowScroll = () => {
       if (!hasScrolledRef.current && window.scrollY > 50) {
         hasScrolledRef.current = true;
-        console.log('📜 Infinite Scroll: Aktiviert nach Window-Scroll (Mobile)');
       }
     };
 
@@ -1894,7 +1865,6 @@ export default function Contracts() {
         const entry = entries[0];
         // ✅ FIX: Nur triggern wenn User gescrollt hat UND noch mehr vorhanden UND nicht bereits ladend
         if (entry.isIntersecting && paginationInfo.hasMore && !loadingMore && hasScrolledRef.current) {
-          console.log('📜 Infinite Scroll: Bottom erreicht, lade weitere Contracts...');
           loadMoreContracts();
         }
       },
@@ -1933,16 +1903,6 @@ export default function Contracts() {
           updatedContract.paymentFrequency !== selectedContract.paymentFrequency;
 
         if (hasChanges) {
-          console.log('🔄 Updating selectedContract with fresh payment data:', {
-            old: {
-              paymentMethod: selectedContract.paymentMethod,
-              paymentStatus: selectedContract.paymentStatus
-            },
-            new: {
-              paymentMethod: updatedContract.paymentMethod,
-              paymentStatus: updatedContract.paymentStatus
-            }
-          });
           setSelectedContract(updatedContract);
         }
       }
@@ -1963,14 +1923,14 @@ export default function Contracts() {
 
     // ✅ KORRIGIERT: Multi-Upload nur für Enterprise
     if (userInfo.subscriptionPlan !== 'enterprise' && files.length > 1) {
-      alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Enterprise-Nutzer verfügbar.\n\n🚀 Upgrade auf Enterprise für Batch-Upload!");
+      toast.warning('Batch-Upload ist nur für Enterprise-Nutzer verfügbar. Upgrade für diese Funktion!');
       e.target.value = ''; // ✅ Reset Input
       return;
     }
 
     // ✅ KORRIGIERT: Analyse-Limit Check
     if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
-      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
       e.target.value = ''; // ✅ Reset Input
       return;
     }
@@ -1988,12 +1948,10 @@ export default function Contracts() {
     // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen
     if (files.length === 1) {
       setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
-      console.log("✅ selectedFile gesetzt für Single-Upload:", files[0].name);
     }
 
     setActiveSection('upload');
 
-    console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
     // ✅ Input-Reset erfolgt jetzt in activateFileInput() VOR dem Klick
   };
 
@@ -2035,12 +1993,10 @@ export default function Contracts() {
 
   // ✅ NEU: Two-Step Upload Flow - Upload OHNE Analyse
   const handleUploadOnly = async () => {
-    console.log("📤 Starting Upload-Only flow (no analysis)...");
 
     const filesToUpload = uploadFiles.filter(f => f.status === 'pending');
 
     if (filesToUpload.length === 0) {
-      console.log("⚠️ No files to upload");
       return;
     }
 
@@ -2057,7 +2013,6 @@ export default function Contracts() {
               : item
           ));
 
-          console.log(`📤 Uploading (no analysis): ${fileItem.file.name}`);
 
           // Upload ohne Analyse
           const result = await uploadOnly(
@@ -2073,7 +2028,6 @@ export default function Contracts() {
 
           // ✅ Handle duplicate detection
           if (result?.duplicate && result?.existingContract) {
-            console.log(`📄 Duplicate detected: ${fileItem.file.name}`);
             const duplicateInfo: AnalysisResult = {
               success: false,
               duplicate: true,
@@ -2093,7 +2047,6 @@ export default function Contracts() {
             ));
 
             uploadedContracts.push(result.contract);
-            console.log(`✅ Upload successful (no analysis): ${fileItem.file.name}`);
           }
 
         } catch (error) {
@@ -2129,13 +2082,11 @@ export default function Contracts() {
 
   // ✅ FIXED: Analyse-Aktion aus Success Modal - NUTZT NEUE /api/analyze ROUTE!
   const handleAnalyzeFromModal = async () => {
-    console.log("🔍 User chose to analyze uploaded contracts");
 
     const contractsToAnalyze = uploadSuccessModal.uploadedContracts;
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
 
     if (contractsToAnalyze.length === 0) {
-      console.warn("⚠️ No contracts to analyze");
       return;
     }
 
@@ -2152,7 +2103,6 @@ export default function Contracts() {
       // Analysiere jeden hochgeladenen Vertrag MIT DER NEUEN ROUTE!
       for (let i = 0; i < contractsToAnalyze.length; i++) {
         const contract = contractsToAnalyze[i];
-        console.log(`📊 Analyzing contract ${i + 1}/${contractsToAnalyze.length}: ${contract.name}`);
 
         // Finde die entsprechende Datei im uploadFiles State
         const uploadFileItem = uploadFiles.find(item => item.file.name === contract.name);
@@ -2184,7 +2134,6 @@ export default function Contracts() {
 
         try {
           // ✅ NUTZE DIE NEUE /api/analyze ROUTE MIT forceReanalyze=true!
-          console.log(`🚀 Using NEW /api/analyze route for: ${contract.name}`);
 
           // Start smooth progress animation
           progressIntervalId = setInterval(() => {
@@ -2222,7 +2171,6 @@ export default function Contracts() {
             clearInterval(progressIntervalId);
           }
 
-          console.log(`✅ Analysis completed for ${contract.name} (NEW ROUTE)`, analysisResult);
 
           // ✅ SOFORT die Analyse-Ergebnisse in uploadFiles speichern!
           setUploadFiles(prev => prev.map((item, idx) =>
@@ -2260,21 +2208,11 @@ export default function Contracts() {
               : item
           ));
 
-          // Zeige Fehler-Alert mit Upgrade-Option
+          // Zeige Fehler-Toast mit Upgrade-Hinweis
           if (isLimitError) {
-            const userConfirmed = confirm(
-              `❌ ${errorMessage}\n\n` +
-              `💡 Aktuelle Plan: ${userInfo.subscriptionPlan}\n` +
-              `📊 Analysen: ${userInfo.analysisCount}/${userInfo.analysisLimit === Infinity ? '∞' : userInfo.analysisLimit}\n\n` +
-              `🚀 Möchtest du jetzt upgraden?`
-            );
-
-            if (userConfirmed) {
-              window.location.href = '/pricing';
-              return; // Stop further processing
-            }
+            toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit === Infinity ? '∞' : userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
           } else {
-            alert(`❌ Analyse fehlgeschlagen: ${errorMessage}`);
+            toast.error(`Analyse fehlgeschlagen: ${errorMessage}`);
           }
         }
       }
@@ -2284,7 +2222,6 @@ export default function Contracts() {
 
       // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
       clearCalendarCache();
-      console.log("📅 Calendar cache cleared after batch analysis");
 
       // ✅ WECHSEL zur Upload-Seite - zeigt SOFORT die Analyse-Ergebnisse!
       setActiveSection('upload');
@@ -2297,11 +2234,10 @@ export default function Contracts() {
       // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
       triggerOnboardingSync();
 
-      console.log(`✅ ${contractsToAnalyze.length} Vertrag${contractsToAnalyze.length > 1 ? 'e' : ''} erfolgreich analysiert und Ergebnisse werden angezeigt!`);
 
     } catch (error) {
       console.error("❌ Error during analysis:", error);
-      alert("❌ Fehler bei der Analyse. Bitte versuche es erneut.");
+      toast.error('Fehler bei der Analyse. Bitte versuche es erneut.');
 
       // On error: Stay on contracts view
       setActiveSection('contracts');
@@ -2313,7 +2249,6 @@ export default function Contracts() {
 
   // ✅ NEU: Skip-Aktion aus Success Modal
   const handleSkipAnalysis = async () => {
-    console.log("✓ User chose to skip analysis");
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
 
     // Clear upload files und refresh contracts list
@@ -2327,17 +2262,15 @@ export default function Contracts() {
 
   // ✅ NEU: Nachträgliche Analyse für bestehenden Vertrag
   const handleAnalyzeExistingContract = async (contract: Contract) => {
-    console.log("🔍 Analyzing existing contract:", contract._id, contract.name);
 
     // Prüfe ob bereits am Analysieren
     if (analyzingContract[contract._id]) {
-      console.log("⏳ Already analyzing this contract");
       return;
     }
 
     // Check subscription & limits - Free hat 3 Analysen, nicht 0!
     if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
-      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade für mehr Analysen!`);
+      toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
       return;
     }
 
@@ -2369,7 +2302,6 @@ export default function Contracts() {
         throw new Error('Nicht eingeloggt. Bitte melden Sie sich erneut an.');
       }
 
-      console.log(`📡 Calling API: ${apiUrl}/api/contracts/${contract._id}/analyze`);
 
       // Trigger Re-Analyse via Backend
       const response = await fetch(`${apiUrl}/api/contracts/${contract._id}/analyze`, {
@@ -2389,18 +2321,15 @@ export default function Contracts() {
       const data = await response.json();
 
       if (data.success) {
-        console.log("✅ Analysis successful for existing contract");
 
         // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
         clearCalendarCache();
-        console.log("📅 Calendar cache cleared - new events will be fetched");
 
         // ✅ Silent Refresh - ohne Loading-Skeleton (damit UI nicht springt)
         let refreshedContracts = await silentRefreshContracts();
 
         // 🚀 FIX: Wenn Silent Refresh fehlschlägt, mache regulären Refresh
         if (!refreshedContracts) {
-          console.warn("⚠️ Silent Refresh fehlgeschlagen, versuche regulären Refresh...");
           refreshedContracts = await fetchContracts();
         }
 
@@ -2412,31 +2341,17 @@ export default function Contracts() {
         if (data.contract) {
           // ✅ BESTE QUELLE: Backend-Response direkt nach Analyse - hat ALLE Felder
           updatedContract = data.contract;
-          console.log("📊 Contract aus Backend-Response geladen (vollständige Daten)");
           // 🔍 DEBUG: Prüfe ob analysis und legalPulse vorhanden sind
-          console.log("🔍 DEBUG: data.contract hat analysis:", !!data.contract.analysis);
-          console.log("🔍 DEBUG: data.contract hat legalPulse:", !!data.contract.legalPulse);
-          console.log("🔍 DEBUG: data.contract keys:", Object.keys(data.contract));
         } else {
           // Fallback: Aus der Liste oder alter Contract
           const foundContract = refreshedContracts?.find((c: Contract) => c._id === contract._id);
           if (foundContract) {
             updatedContract = foundContract;
-            console.log("📊 Contract aus frischer Liste geladen (Fallback)");
           } else {
             // Letzter Fallback - sollte nie passieren
-            console.warn("⚠️ Kein aktualisierter Contract gefunden, verwende alten mit analyzed: true");
             updatedContract = { ...contract, analyzed: true };
           }
         }
-
-        console.log("🔍 DEBUG: Setting quickAnalysisModal with:", {
-          id: updatedContract._id,
-          name: updatedContract.name,
-          hasAnalysis: !!updatedContract.analysis,
-          analysisKeys: updatedContract.analysis ? Object.keys(updatedContract.analysis) : 'N/A',
-          hasLegalPulse: !!updatedContract.legalPulse
-        });
 
         // ⚡ NEU: Öffne das ausführliche Analyse-Modal statt ContractDetailView
         setQuickAnalysisModal({
@@ -2462,7 +2377,6 @@ export default function Contracts() {
           }
         });
 
-        console.log("📊 Opening detailed analysis modal for contract:", contract._id);
 
         // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
         triggerOnboardingSync();
@@ -2474,7 +2388,7 @@ export default function Contracts() {
       console.error("❌ Error analyzing existing contract:", error);
       const errorMsg = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
       setError(errorMsg);
-      alert(`❌ Analyse fehlgeschlagen\n\n${errorMsg}`);
+      toast.error(`Analyse fehlgeschlagen: ${errorMsg}`);
     } finally {
       // Loading States zurücksetzen
       clearInterval(progressInterval);
@@ -2510,14 +2424,13 @@ export default function Contracts() {
         method: 'DELETE'
       });
       
-      console.log("✅ Alter Vertrag gelöscht für Ersetzung");
       
       // ✅ Starte neue Analyse
       handleAnalyzeAnywayFromDuplicate();
       
     } catch (error) {
       console.error("❌ Fehler beim Ersetzen:", error);
-      alert("Fehler beim Ersetzen der Datei. Bitte versuche es erneut.");
+      toast.error('Fehler beim Ersetzen der Datei. Bitte versuche es erneut.');
     }
   };
 
@@ -2541,14 +2454,7 @@ export default function Contracts() {
 
   // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion mit Debug
   const startBatchAnalysis = async () => {
-    console.log("🚀 startBatchAnalysis called!", { 
-      uploadFilesLength: uploadFiles.length,
-      isAnalyzing,
-      userInfo 
-    });
-
     if (uploadFiles.length === 0) {
-      console.warn("❌ Keine Dateien zum Analysieren");
       return;
     }
 
@@ -2558,19 +2464,18 @@ export default function Contracts() {
       : userInfo.analysisLimit - userInfo.analysisCount;
     
     if (remainingAnalyses === 0) {
-      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
       return;
     }
 
     if (uploadFiles.length > remainingAnalyses && remainingAnalyses !== Infinity) {
-      alert(`⚠️ Nur noch ${remainingAnalyses} Analyse${remainingAnalyses === 1 ? '' : 'n'} verfügbar.\n\nBitte reduziere die Anzahl der Dateien oder upgrade dein Paket.`);
+      toast.warning(`Nur noch ${remainingAnalyses} Analyse${remainingAnalyses === 1 ? '' : 'n'} verfügbar. Reduziere die Anzahl oder upgrade dein Paket.`);
       return;
     }
 
     setIsAnalyzing(true);
     const pendingFiles = uploadFiles.filter(item => item.status === 'pending');
 
-    console.log(`🚀 Starte Batch-Analyse für ${pendingFiles.length} Dateien (${userInfo.subscriptionPlan})`);
 
     // ✅ Analysiere jede Datei einzeln
     for (const fileItem of pendingFiles) {
@@ -2582,7 +2487,6 @@ export default function Contracts() {
             : item
         ));
 
-        console.log(`📊 Analysiere: ${fileItem.file.name}`);
 
         // ✅ Einzelne Analyse durchführen
         const result = await uploadAndAnalyze(
@@ -2603,7 +2507,6 @@ export default function Contracts() {
               ? { ...item, status: 'completed', progress: 100, analyzed: true, result }
               : item
           ));
-          console.log(`✅ Analyse erfolgreich: ${fileItem.file.name}`);
 
           // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
           clearCalendarCache();
@@ -2626,7 +2529,6 @@ export default function Contracts() {
               : item
           ));
           
-          console.log(`🔄 Duplikat erkannt: ${fileItem.file.name}`, existingContract);
           
           // ✅ Auto-öffne Duplikat-Modal für bessere UX (nur wenn existingContract vorhanden)
           if (existingContract) {
@@ -2674,7 +2576,6 @@ export default function Contracts() {
     // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
     triggerOnboardingSync();
 
-    console.log("🎉 Batch-Analyse abgeschlossen");
   };
 
   // ✅ KORRIGIERT: Normale retry Funktion
@@ -2688,7 +2589,7 @@ export default function Contracts() {
       : userInfo.analysisLimit - userInfo.analysisCount;
     
     if (remainingAnalyses === 0) {
-      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
       return;
     }
 
@@ -2764,7 +2665,7 @@ export default function Contracts() {
 
       // ✅ KORRIGIERT: Multi-Upload nur für Enterprise
       if (userInfo.subscriptionPlan !== 'enterprise' && files.length > 1) {
-        alert("📊 Mehrere Verträge gleichzeitig hochladen ist nur für Enterprise-Nutzer verfügbar.\n\n🚀 Upgrade auf Enterprise für Batch-Upload!");
+        toast.warning('Batch-Upload ist nur für Enterprise-Nutzer verfügbar. Upgrade für diese Funktion!');
         return;
       }
 
@@ -2780,7 +2681,6 @@ export default function Contracts() {
       // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen (auch bei Drag&Drop)
       if (files.length === 1) {
         setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
-        console.log("✅ selectedFile gesetzt für Single-Upload (Drag&Drop):", files[0].name);
       }
       
       setActiveSection('upload');
@@ -2837,14 +2737,13 @@ export default function Contracts() {
         method: 'DELETE'
       });
 
-      console.log("✅ Vertrag gelöscht:", contractName);
       // ✅ Kein fetchContracts() nötig - State ist bereits aktuell
     } catch (err) {
       // 🔄 ROLLBACK: Bei Fehler ursprünglichen State wiederherstellen
       console.error("❌ Fehler beim Löschen:", err);
       setContracts(previousContracts);
       setPaginationInfo(prev => ({ ...prev, total: prev.total + 1 }));
-      alert("Fehler beim Löschen des Vertrags. Bitte versuche es erneut.");
+      toast.error('Fehler beim Löschen des Vertrags. Bitte versuche es erneut.');
     }
   };
 
@@ -2910,7 +2809,6 @@ export default function Contracts() {
         // Wenn innerhalb der letzten 14 Tage hochgeladen UND expiryDate mehr als 60 Tage in der Vergangenheit
         // → Vertraue dem Datum nicht, zeige "Aktiv"
         if (daysSinceCreation <= 14 && daysUntilExpiry < -60) {
-          console.warn(`⚠️ [Status] Implausible expiryDate: Vertrag vor ${daysSinceCreation} Tagen hochgeladen, aber expiryDate ist ${Math.abs(daysUntilExpiry)} Tage in der Vergangenheit. Zeige "Aktiv" statt "Beendet".`);
           return 'Aktiv';
         }
 
@@ -5633,7 +5531,7 @@ export default function Contracts() {
                         <div className={styles.bulkActionInfo}>
                           <CheckCircle size={20} />
                           <span className={styles.bulkActionCount}>
-                            {selectedContracts.length} ausgewählt
+                            {selectedContracts.length} von {paginationInfo.total} ausgewählt
                           </span>
                         </div>
 
@@ -6144,7 +6042,6 @@ export default function Contracts() {
           openEditModalDirectly={openEditModalDirectly}
           initialTab={modalInitialTab}
           onEdit={async (contractId) => {
-            console.log("Contract updated:", contractId);
             const updatedContracts = await fetchContracts();
             if (updatedContracts) {
               const updatedContract = updatedContracts.find((c: Contract) => c._id === contractId);

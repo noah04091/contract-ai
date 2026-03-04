@@ -171,19 +171,16 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   // ✅ CRITICAL FIX: useEffect um initialResult zu setzen
   useEffect(() => {
     if (initialResult) {
-      console.log("📊 InitialResult gefunden - zeige vorhandene Analyse an:", initialResult);
       setResult(initialResult);
       setProgress(100);
       setAnalyzing(false);
       setError(null);
       
-      console.log("✅ Analyse bereits vorhanden - wird direkt angezeigt");
     }
   }, [initialResult]);
 
   // ✅ FIXED: Robustes State-Reset
   const resetAllStates = () => {
-    console.log("🔄 Resetting all states...");
     setAnalyzing(false);
     setProgress(0);
     setResult(null);
@@ -208,7 +205,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
 
   // 🆕 Legal Pulse Polling Function
   const startLegalPulsePolling = (contractId: string) => {
-    console.log('⚡ Starting Legal Pulse polling for contract:', contractId);
     setLegalPulseLoading(true);
 
     // Clear any existing interval
@@ -222,8 +218,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
     const pollLegalPulse = async () => {
       try {
         pollCount++;
-        console.log(`⚡ [${pollCount}/${maxPolls}] Polling Legal Pulse status...`);
-
         const response = await fetch(`/api/contracts/${contractId}`, {
           credentials: 'include'
         });
@@ -237,7 +231,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
 
         // Check if Legal Pulse data is available
         if (contractData.legalPulse) {
-          console.log('✅ Legal Pulse data found!', contractData.legalPulse);
           setLegalPulseData(contractData.legalPulse);
           setLegalPulseLoading(false);
 
@@ -247,7 +240,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
             pollingIntervalRef.current = null;
           }
         } else if (pollCount >= maxPolls) {
-          console.warn('⚠️ Legal Pulse polling timeout - max retries reached');
           setLegalPulseLoading(false);
 
           // Stop polling
@@ -281,12 +273,9 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   const handleAnalyze = async (forceReanalyze = false) => {
     // ✅ Wenn initialResult vorhanden und nicht forceReanalyze, nichts tun
     if (initialResult && !forceReanalyze) {
-      console.log("📊 InitialResult vorhanden - überspringe Analyse");
       return;
     }
 
-    console.log("🔄 Starte Analyse für:", displayName, forceReanalyze ? "(Re-Analyse)" : "");
-    
     // ✅ WICHTIG: States zurücksetzen VOR der Analyse
     setAnalyzing(true);
     setError(null);
@@ -306,8 +295,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
         setProgress(progress);
       }, forceReanalyze);
       
-      console.log("✅ Analyse-Response:", response);
-
       // ✅ FIXED: Null-Check für Response
       if (!response) {
         console.error("❌ Response ist null oder undefined");
@@ -320,8 +307,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
         
         // Prüfe auf Duplikat-Response
         if ('duplicate' in responseObj && responseObj.duplicate === true) {
-          console.log("🔄 Duplikat erkannt:", response);
-          
           // Validiere Duplikat-Response Struktur
           if ('contractId' in responseObj && 'contractName' in responseObj && 'actions' in responseObj) {
             setDuplicateInfo(response as DuplicateResponse);
@@ -339,22 +324,18 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
           const analysisResult = response as AnalysisResponse;
           setResult(analysisResult);
           setRetryCount(0);
-          console.log("🎉 Analyse erfolgreich abgeschlossen");
 
           // ✅ FIXED: Type-sichere Prüfung auf Re-Analyse
           if (analysisResult.isReanalysis && analysisResult.originalContractId) {
-            console.log("🔄 Re-Analyse erfolgreich für Vertrag:", analysisResult.originalContractId);
           }
 
           // 🆕 Start Legal Pulse Polling
           if (analysisResult.originalContractId) {
-            console.log("⚡ Starte Legal Pulse Polling für Contract:", analysisResult.originalContractId);
             startLegalPulsePolling(analysisResult.originalContractId);
           }
 
           // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
           clearCalendarCache();
-          console.log("📅 Calendar cache cleared - new events will be fetched");
 
           return;
         }
@@ -413,7 +394,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
 
   // ✅ FIXED: Duplikat-Modal-Handler mit State-Reset
   const handleDuplicateReanalyze = () => {
-    console.log("🔄 User wählt: Erneut analysieren");
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
     setTimeout(() => {
@@ -422,7 +402,6 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   };
 
   const handleDuplicateViewExisting = () => {
-    console.log("👁️ User wählt: Bestehenden Vertrag anzeigen");
     if (duplicateInfo && onNavigateToContract) {
       onNavigateToContract(duplicateInfo.contractId);
     } else {
@@ -432,22 +411,18 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   };
 
   const handleDuplicateClose = () => {
-    console.log("❌ User schließt Duplikat-Modal");
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
   };
 
   // ✅ FIXED: Reset-Handler mit vollständigem State-Reset
   const handleReset = () => {
-    console.log("🔄 User klickt Reset");
     resetAllStates();
     onReset();
   };
 
   const handleOptimize = () => {
     if (!result && !initialResult) return;
-
-    console.log("🔧 Navigiere zum Optimizer mit Analyse-Context");
 
     // Sammle alle Analyse-Daten für zusätzlichen Context
     const analysisData = result || initialResult;
