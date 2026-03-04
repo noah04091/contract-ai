@@ -952,6 +952,11 @@
   font-weight: 500;
   text-decoration: none;
   transition: color var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
 }
 
 .dropdownFooterLink:hover {

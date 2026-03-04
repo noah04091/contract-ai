@@ -418,7 +418,10 @@ router.put("/settings", verifyToken, async (req, res) => {
 router.get("/", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { limit = 10 } = req.query;
+    const { limit = 10, offset = 0, days = 7 } = req.query;
+    const parsedLimit = Math.min(parseInt(limit) || 10, 50);
+    const parsedOffset = parseInt(offset) || 0;
+    const parsedDays = Math.min(parseInt(days) || 7, 90);
     await ensureDb();
 
     // User-Settings für In-App-Filterung laden
@@ -433,23 +436,27 @@ router.get("/", verifyToken, async (req, res) => {
       return res.json({
         success: true,
         notifications: [],
-        stats: { total: 0, unread: 0, warnings: 0 }
+        stats: { total: 0, unread: 0, warnings: 0 },
+        pagination: { offset: parsedOffset, limit: parsedLimit, hasMore: false }
       });
     }
 
     const now = new Date();
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const daysFromNow = new Date();
+    daysFromNow.setDate(daysFromNow.getDate() + parsedDays);
+    const daysAgo = new Date();
+    daysAgo.setDate(daysAgo.getDate() - parsedDays);
 
-    // 1. Ablaufende Verträge / Kalender-Events (nächste 7 Tage)
+    // Höhere Limits pro Quelle wenn mehr Tage angefragt
+    const perSourceLimit = parsedDays > 7 ? 20 : 5;
+
+    // 1. Ablaufende Verträge / Kalender-Events (nächste X Tage)
     const calendarEvents = await db.collection("contract_events")
       .aggregate([
         {
           $match: {
             userId: new ObjectId(userId),
-            date: { $gte: now, $lte: sevenDaysFromNow },
+            date: { $gte: now, $lte: daysFromNow },
             status: { $in: ["scheduled", "notified"] }
           }
         },
@@ -463,43 +470,42 @@ router.get("/", verifyToken, async (req, res) => {
         },
         { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } },
         { $sort: { date: 1 } },
-        { $limit: 5 }
+        { $limit: perSourceLimit }
       ])
       .toArray();
 
-    // 2. Legal Pulse Notifications (ungelesen)
+    // 2. Legal Pulse Notifications (ungelesen oder aus dem Zeitraum)
+    const pulseQuery = parsedDays > 7
+      ? { userId: new ObjectId(userId), dismissed: false, createdAt: { $gte: daysAgo } }
+      : { userId: new ObjectId(userId), read: false, dismissed: false };
     const pulseNotifications = await db.collection("pulsenotifications")
-      .find({
-        userId: new ObjectId(userId),
-        read: false,
-        dismissed: false
-      })
+      .find(pulseQuery)
       .sort({ createdAt: -1 })
-      .limit(5)
+      .limit(perSourceLimit)
       .toArray();
 
-    // 3. Kürzlich hochgeladene/analysierte Verträge (letzte 24h)
+    // 3. Kürzlich hochgeladene/analysierte Verträge (letzte X Tage)
     const recentContracts = await db.collection("contracts")
       .find({
         userId: new ObjectId(userId),
         $or: [
-          { uploadedAt: { $gte: oneDayAgo } },
-          { analyzedAt: { $gte: oneDayAgo } }
+          { uploadedAt: { $gte: daysAgo } },
+          { analyzedAt: { $gte: daysAgo } }
         ]
       })
       .sort({ uploadedAt: -1 })
-      .limit(3)
+      .limit(perSourceLimit)
       .toArray();
 
-    // 4. Signatur-Status-Updates (letzte 24h)
+    // 4. Signatur-Status-Updates (letzte X Tage)
     const signatureUpdates = await db.collection("envelopes")
       .find({
         userId: new ObjectId(userId),
-        updatedAt: { $gte: oneDayAgo },
+        updatedAt: { $gte: daysAgo },
         status: { $in: ["signed", "completed", "declined"] }
       })
       .sort({ updatedAt: -1 })
-      .limit(3)
+      .limit(perSourceLimit)
       .toArray();
 
     // Alle Benachrichtigungen zusammenführen und normalisieren
@@ -610,20 +616,25 @@ router.get("/", verifyToken, async (req, res) => {
     // Nach Datum sortieren (neueste zuerst)
     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // Limit anwenden
-    const limitedNotifications = filtered.slice(0, parseInt(limit));
-
-    // Statistiken berechnen
+    // Statistiken berechnen (vor Pagination)
     const unreadCount = filtered.length;
     const warningCount = filtered.filter(n => n.type === 'warning').length;
 
+    // Pagination anwenden
+    const paginatedNotifications = filtered.slice(parsedOffset, parsedOffset + parsedLimit);
+
     res.json({
       success: true,
-      notifications: limitedNotifications,
+      notifications: paginatedNotifications,
       stats: {
         total: filtered.length,
         unread: unreadCount,
         warnings: warningCount
+      },
+      pagination: {
+        offset: parsedOffset,
+        limit: parsedLimit,
+        hasMore: parsedOffset + parsedLimit < filtered.length
       }
     });
 

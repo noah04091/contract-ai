@@ -24,6 +24,7 @@ import {
   Settings
 } from 'lucide-react';
 import NotificationSettingsModal from '../NotificationSettingsModal';
+import AllNotificationsModal from '../AllNotificationsModal';
 import styles from './DashboardLayout.module.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
@@ -71,6 +72,7 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(true);
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const navigate = useNavigate();
 
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -449,9 +451,12 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
                   )}
                 </div>
                 <div className={styles.dropdownFooter}>
-                  <Link to="/calendar" className={styles.dropdownFooterLink}>
+                  <button
+                    className={styles.dropdownFooterLink}
+                    onClick={() => { setShowNotifications(false); setShowAllNotifications(true); }}
+                  >
                     Alle Benachrichtigungen
-                  </Link>
+                  </button>
                 </div>
               </div>
             )}
@@ -596,6 +601,12 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
       <NotificationSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
+      />
+
+      {/* All Notifications Modal */}
+      <AllNotificationsModal
+        isOpen={showAllNotifications}
+        onClose={() => setShowAllNotifications(false)}
       />
     </>
   );
