@@ -204,7 +204,9 @@ interface UserInfo {
 // ✅ Erweiterte Filter-Typen
 type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
 type DateFilter = 'alle' | 'heute' | 'woche' | 'monat' | 'quartal' | 'jahr';
-type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
+type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za'
+  | 'status_asc' | 'status_desc'
+  | 'qf0_asc' | 'qf0_desc' | 'qf1_asc' | 'qf1_desc';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
@@ -351,6 +353,15 @@ export default function Contracts() {
   const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
+
+  // ✏️ Eckdaten-Header Umbenennung
+  const [editingHeader, setEditingHeader] = useState<number | null>(null);
+  const [editHeaderValue, setEditHeaderValue] = useState('');
+
+  const eckdatenLabels = [
+    (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['0'] || 'Eckdaten 1',
+    (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['1'] || 'Eckdaten 2',
+  ];
 
   // 📱 MOBILE UX: Filter-Bottom-Sheet und Upload-Tabs
   const [showMobileFilterSheet, setShowMobileFilterSheet] = useState(false);
@@ -706,6 +717,37 @@ export default function Contracts() {
       credentials: 'include',
       body: JSON.stringify({ sidebarPdfCollapsed: newValue })
     }).catch(e => console.error('UI-Preference save error:', e));
+  };
+
+  // 🔽 Klick-Sortierung auf Spaltenheadern
+  const handleColumnSort = (ascKey: SortOrder, descKey: SortOrder) => {
+    if (sortOrder === ascKey) setSortOrder(descKey);
+    else if (sortOrder === descKey) setSortOrder('neueste');
+    else setSortOrder(ascKey);
+  };
+
+  // ✏️ Eckdaten-Label speichern
+  const saveEckdatenLabel = (index: number, newLabel: string) => {
+    const trimmed = newLabel.trim();
+    const currentLabels: Record<string, string> = { ...((user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined) || {}) };
+    if (trimmed) {
+      currentLabels[String(index)] = trimmed;
+    } else {
+      delete currentLabels[String(index)];
+    }
+    const updated = currentLabels;
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    fetch('/api/auth/ui-preferences', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ eckdatenLabels: updated })
+    }).catch(e => console.error('UI-Preference save error:', e));
+    // Optimistisch im user-Objekt updaten
+    if (user) {
+      user.uiPreferences = { ...user.uiPreferences, eckdatenLabels: updated };
+    }
+    setEditingHeader(null);
   };
 
   // 📁 Handle folder reorder (move up/down)
@@ -4239,6 +4281,12 @@ export default function Contracts() {
                   <option value="älteste">Älteste zuerst</option>
                   <option value="name_az">Name A-Z</option>
                   <option value="name_za">Name Z-A</option>
+                  <option value="status_asc">Status A-Z</option>
+                  <option value="status_desc">Status Z-A</option>
+                  <option value="qf0_asc">{eckdatenLabels[0]} ↑</option>
+                  <option value="qf0_desc">{eckdatenLabels[0]} ↓</option>
+                  <option value="qf1_asc">{eckdatenLabels[1]} ↑</option>
+                  <option value="qf1_desc">{eckdatenLabels[1]} ↓</option>
                 </select>
               </div>
 
@@ -4341,6 +4389,12 @@ export default function Contracts() {
                           <option value="älteste">Älteste zuerst</option>
                           <option value="name_az">Name A-Z</option>
                           <option value="name_za">Name Z-A</option>
+                          <option value="status_asc">Status A-Z</option>
+                          <option value="status_desc">Status Z-A</option>
+                          <option value="qf0_asc">{eckdatenLabels[0]} ↑</option>
+                          <option value="qf0_desc">{eckdatenLabels[0]} ↓</option>
+                          <option value="qf1_asc">{eckdatenLabels[1]} ↑</option>
+                          <option value="qf1_desc">{eckdatenLabels[1]} ↓</option>
                         </select>
                       </div>
                     </div>
@@ -5119,11 +5173,62 @@ export default function Contracts() {
                                 />
                               </th>
                             )}
-                            <th>Vertragsname</th>
-                            <th>Eckdaten 1</th>
-                            <th>Eckdaten 2</th>
-                            <th>Status</th>
-                            <th>Upload-Datum</th>
+                            <th className={styles.sortableHeader} onClick={() => handleColumnSort('name_az', 'name_za')}>
+                              <span className={styles.sortableHeaderContent}>
+                                <span>Vertragsname</span>
+                                {sortOrder === 'name_az' && <ChevronUp size={14} className={styles.sortArrow} />}
+                                {sortOrder === 'name_za' && <ChevronDown size={14} className={styles.sortArrow} />}
+                              </span>
+                            </th>
+                            {([0, 1] as const).map((idx) => (
+                              <th key={idx} className={styles.sortableHeader}>
+                                {editingHeader === idx ? (
+                                  <input
+                                    className={styles.headerInlineEdit}
+                                    value={editHeaderValue}
+                                    onChange={(e) => setEditHeaderValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') saveEckdatenLabel(idx, editHeaderValue);
+                                      if (e.key === 'Escape') setEditingHeader(null);
+                                    }}
+                                    onBlur={() => saveEckdatenLabel(idx, editHeaderValue)}
+                                    autoFocus
+                                  />
+                                ) : (
+                                  <span className={styles.sortableHeaderContent}>
+                                    <span onClick={() => handleColumnSort(`qf${idx}_asc` as SortOrder, `qf${idx}_desc` as SortOrder)}>
+                                      {eckdatenLabels[idx]}
+                                    </span>
+                                    {sortOrder === `qf${idx}_asc` && <ChevronUp size={14} className={styles.sortArrow} />}
+                                    {sortOrder === `qf${idx}_desc` && <ChevronDown size={14} className={styles.sortArrow} />}
+                                    <button
+                                      className={styles.headerEditBtn}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingHeader(idx);
+                                        setEditHeaderValue(eckdatenLabels[idx] === `Eckdaten ${idx + 1}` ? '' : eckdatenLabels[idx]);
+                                      }}
+                                      title="Spalte umbenennen"
+                                    >
+                                      <Pencil size={12} />
+                                    </button>
+                                  </span>
+                                )}
+                              </th>
+                            ))}
+                            <th className={styles.sortableHeader} onClick={() => handleColumnSort('status_asc', 'status_desc')}>
+                              <span className={styles.sortableHeaderContent}>
+                                <span>Status</span>
+                                {sortOrder === 'status_asc' && <ChevronUp size={14} className={styles.sortArrow} />}
+                                {sortOrder === 'status_desc' && <ChevronDown size={14} className={styles.sortArrow} />}
+                              </span>
+                            </th>
+                            <th className={styles.sortableHeader} onClick={() => setSortOrder(sortOrder === 'älteste' ? 'neueste' : 'älteste')}>
+                              <span className={styles.sortableHeaderContent}>
+                                <span>Upload-Datum</span>
+                                {sortOrder === 'älteste' && <ChevronUp size={14} className={styles.sortArrow} />}
+                              </span>
+                            </th>
                             <th>Aktionen</th>
                           </tr>
                         </thead>

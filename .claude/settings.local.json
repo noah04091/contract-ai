@@ -325,7 +325,12 @@
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx tsc --noEmit; echo EXIT_CODE:$LASTEXITCODE\")",
       "Bash(powershell.exe -Command \"Set-Location ''C:\\\\Users\\\\liebo\\\\Documents\\\\contract-ai\\\\frontend''; npx vite build 2>&1; Write-Host EXITCODE:$LASTEXITCODE\")",
       "Bash(git hash-object:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(npm ls:*)",
+      "Bash(while read hash rest)",
+      "Bash(do git diff-tree --no-commit-id --name-only -r $hash)",
+      "Bash(python3:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

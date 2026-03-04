@@ -1155,6 +1155,24 @@ router.get("/", async (req, res) => {
       case 'name_za':
         sortOptions = { name: -1 };
         break;
+      case 'status_asc':
+        sortOptions = { status: 1 };
+        break;
+      case 'status_desc':
+        sortOptions = { status: -1 };
+        break;
+      case 'qf0_asc':
+        sortOptions = { 'quickFacts.0.value': 1 };
+        break;
+      case 'qf0_desc':
+        sortOptions = { 'quickFacts.0.value': -1 };
+        break;
+      case 'qf1_asc':
+        sortOptions = { 'quickFacts.1.value': 1 };
+        break;
+      case 'qf1_desc':
+        sortOptions = { 'quickFacts.1.value': -1 };
+        break;
       case 'risk':
         // Legal Pulse: Höchstes Risiko zuerst
         sortOptions = { 'legalPulse.riskScore': -1 };

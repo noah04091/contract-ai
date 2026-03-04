@@ -53,6 +53,7 @@ export interface UserData {
   // 🎨 UI-Preferences (geräteübergreifend gespeichert)
   uiPreferences?: {
     sidebarPdfCollapsed?: boolean;
+    eckdatenLabels?: Record<string, string>;
     [key: string]: unknown;
   };
 }
