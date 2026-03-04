@@ -2723,14 +2723,41 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         // Don't block completion if calendar update fails
       }
 
-      // 🆕 Send completion notification to ALL signers (not just owner)
+      // 📧 Send completion notification to owner + all signers
       try {
-        console.log('📧 Sending completion notifications to all signers...');
+        console.log('📧 Sending completion notifications...');
+
+        // 1. Owner notification (most important!)
+        try {
+          const ownerIdStr = envelope.ownerId?.toString() || envelope.ownerId;
+          const owner = await req.db.collection("users").findOne({
+            _id: new ObjectId(ownerIdStr)
+          });
+
+          if (owner && owner.email) {
+            await sendCompletionNotification(envelope, owner.email);
+            console.log(`✅ Completion email sent to owner: ${owner.email}`);
+          } else {
+            console.error(`⚠️ Owner not found for completion notification, ownerId: ${ownerIdStr}`);
+          }
+        } catch (ownerEmailError) {
+          console.error(`❌ Failed to send completion email to owner:`, ownerEmailError.message);
+        }
+
+        // 2. All signers (skip if signer email = owner email to avoid duplicate)
+        const ownerIdStr = envelope.ownerId?.toString() || envelope.ownerId;
+        const ownerDoc = await req.db.collection("users").findOne({ _id: new ObjectId(ownerIdStr) });
+        const ownerEmail = ownerDoc?.email?.toLowerCase();
 
         for (const envSigner of envelope.signers) {
+          // Skip if signer is the owner (already notified above)
+          if (ownerEmail && envSigner.email.toLowerCase() === ownerEmail) {
+            console.log(`⏭️ Skipping signer ${envSigner.email} (is owner, already notified)`);
+            continue;
+          }
           try {
             await sendCompletionNotification(envelope, envSigner.email);
-            console.log(`✅ Completion email sent to: ${envSigner.email}`);
+            console.log(`✅ Completion email sent to signer: ${envSigner.email}`);
           } catch (emailError) {
             console.error(`❌ Failed to send completion email to ${envSigner.email}:`, emailError.message);
           }
