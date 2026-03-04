@@ -3019,7 +3019,6 @@ export default function CalendarPage() {
                 title="Aktualisieren"
               >
                 <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
-                {!isMobile && <span className="btn-text">{refreshing ? 'Lädt...' : 'Aktualisieren'}</span>}
               </button>
             </div>
           </header>
