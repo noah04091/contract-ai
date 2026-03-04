@@ -537,7 +537,6 @@ export default function Contracts() {
             if (contract && contract._id) {
               setSelectedContract(contract);
               setShowDetails(true);
-            } else {
             }
           } catch (error) {
             console.error('❌ Fehler beim Laden des Vertrags:', error);
@@ -1598,7 +1597,7 @@ export default function Contracts() {
 
       setUserInfo(newUserInfo);
 
-    } catch (err) {
+    } catch {
       setUserInfo({
         subscriptionPlan: 'free',
         isPremium: false,

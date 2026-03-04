@@ -327,6 +327,7 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
 
           // ✅ FIXED: Type-sichere Prüfung auf Re-Analyse
           if (analysisResult.isReanalysis && analysisResult.originalContractId) {
+            // Re-Analyse erkannt — Polling startet unten
           }
 
           // 🆕 Start Legal Pulse Polling
