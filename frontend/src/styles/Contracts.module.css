@@ -3885,6 +3885,152 @@
   color: #9ca3af;
 }
 
+/* ✏️ QuickFact Inline-Edit Styles */
+.qfCell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qfEditable:hover .qfActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.qfActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.qfEditBtn,
+.qfDropdownBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 4px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.qfEditBtn:hover,
+.qfDropdownBtn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.qfInlineEdit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qfInlineInput {
+  width: 100%;
+  min-width: 80px;
+  max-width: 160px;
+  padding: 3px 8px;
+  border: 1.5px solid #3b82f6;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  color: #1e293b;
+  background: white;
+  outline: none;
+}
+
+.qfInlineInput:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.qfSaveBtn,
+.qfCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.qfSaveBtn {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.qfSaveBtn:hover {
+  background: #bbf7d0;
+}
+
+.qfCancelBtn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.qfCancelBtn:hover {
+  background: #fecaca;
+}
+
+.qfDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 50;
+  min-width: 200px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+  margin-top: 4px;
+}
+
+.qfDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.qfDropdownItem:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.qfDropdownItem:disabled {
+  cursor: default;
+}
+
+.qfDropdownItemActive {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 500;
+}
+
 .statusBadge {
   display: inline-flex;
   align-items: center;

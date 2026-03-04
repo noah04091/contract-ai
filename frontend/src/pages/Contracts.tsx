@@ -17,7 +17,9 @@ import {
   Star, // ⭐ Favoriten-Icon
   Scale, // ⚖️ Rechtsprüfung Icon
   Radar, // 📡 Legal Pulse Icon
-  Camera // 📸 Document Scanner Icon
+  Camera, // 📸 Document Scanner Icon
+  Check, // ✅ QuickFact Inline-Edit Save
+  Pencil // ✏️ QuickFact Inline-Edit Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -438,6 +440,17 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
   const [bulkActionDropdownOpen, setBulkActionDropdownOpen] = useState(false);
 
+  // ✏️ QuickFact Inline-Edit State
+  const [editingQuickFact, setEditingQuickFact] = useState<{
+    contractId: string;
+    factIndex: number;
+  } | null>(null);
+  const [editQfValue, setEditQfValue] = useState('');
+  const [qfDropdownOpen, setQfDropdownOpen] = useState<{
+    contractId: string;
+    displayIndex: number;
+  } | null>(null);
+
   // 🤖 Smart Folders Modal State
   const [smartFoldersModalOpen, setSmartFoldersModalOpen] = useState(false);
 
@@ -547,11 +560,14 @@ export default function Contracts() {
       if (folderContextMenu) {
         setFolderContextMenu(null);
       }
+      if (qfDropdownOpen) {
+        setQfDropdownOpen(null);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [folderDropdownOpen, folderContextMenu]);
+  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen]);
 
   // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
   useEffect(() => {
@@ -2987,6 +3003,50 @@ export default function Contracts() {
     return Calendar;
   };
 
+  // ✏️ QuickFact Inline-Edit: Wert speichern
+  const saveQuickFactValue = async (contractId: string, factIndex: number, newValue: string) => {
+    const contract = contracts.find(c => c._id === contractId);
+    if (!contract?.quickFacts) return;
+
+    const updated = [...contract.quickFacts];
+    updated[factIndex] = { ...updated[factIndex], value: newValue };
+
+    try {
+      await apiCall(`/contracts/${contractId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ quickFacts: updated })
+      });
+      setContracts(prev => prev.map(c =>
+        c._id === contractId ? { ...c, quickFacts: updated } : c
+      ));
+    } catch (err) {
+      console.error('QuickFact speichern fehlgeschlagen:', err);
+    }
+    setEditingQuickFact(null);
+  };
+
+  // ✏️ QuickFact Dropdown: Spalte wechseln (Array-Reihenfolge tauschen)
+  const swapQuickFact = async (contractId: string, displayIndex: number, targetFactIndex: number) => {
+    const contract = contracts.find(c => c._id === contractId);
+    if (!contract?.quickFacts || displayIndex === targetFactIndex) return;
+
+    const updated = [...contract.quickFacts];
+    [updated[displayIndex], updated[targetFactIndex]] = [updated[targetFactIndex], updated[displayIndex]];
+
+    try {
+      await apiCall(`/contracts/${contractId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ quickFacts: updated })
+      });
+      setContracts(prev => prev.map(c =>
+        c._id === contractId ? { ...c, quickFacts: updated } : c
+      ));
+    } catch (err) {
+      console.error('QuickFact wechseln fehlgeschlagen:', err);
+    }
+    setQfDropdownOpen(null);
+  };
+
   // 🆕 Smart Signature Badge Renderer
   const renderSignatureBadge = (contract: Contract) => {
     if (!contract.envelope && !contract.signatureStatus) return null;
@@ -3247,17 +3307,85 @@ export default function Contracts() {
           </div>
         </div>
 
-      {/* Card Details Grid - 📊 Dynamische QuickFacts */}
+      {/* Card Details Grid - 📊 Dynamische QuickFacts – Inline-Edit */}
       <div className={styles.cardDetails}>
         {getQuickFacts(contract).slice(0, 2).map((fact, index) => {
           const IconComp = getQuickFactIcon(fact.label, fact.value);
+          const isEditing = editingQuickFact?.contractId === contract._id && editingQuickFact?.factIndex === index;
+          const isDropdownOpen = qfDropdownOpen?.contractId === contract._id && qfDropdownOpen?.displayIndex === index;
+          const hasEditable = !!(contract.quickFacts && contract.quickFacts.length > 0);
+          const allFacts = contract.quickFacts || [];
+
           return (
             <div key={index} className={styles.cardDetailItem}>
               <span className={styles.cardDetailLabel}>{fact.label}</span>
-              <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
-                <IconComp size={14} />
-                <span>{fact.value}</span>
-              </div>
+              {isEditing ? (
+                <div className={styles.qfInlineEdit} onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="text"
+                    className={styles.qfInlineInput}
+                    value={editQfValue}
+                    onChange={(e) => setEditQfValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') saveQuickFactValue(contract._id, index, editQfValue);
+                      if (e.key === 'Escape') setEditingQuickFact(null);
+                    }}
+                    autoFocus
+                  />
+                  <button className={styles.qfSaveBtn} onClick={() => saveQuickFactValue(contract._id, index, editQfValue)} title="Speichern">
+                    <Check size={14} />
+                  </button>
+                  <button className={styles.qfCancelBtn} onClick={() => setEditingQuickFact(null)} title="Abbrechen">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className={`${styles.qfCell} ${hasEditable ? styles.qfEditable : ''}`}>
+                  <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
+                    <IconComp size={14} />
+                    <span>{fact.value}</span>
+                  </div>
+                  {hasEditable && (
+                    <div className={styles.qfActions} onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className={styles.qfEditBtn}
+                        onClick={() => {
+                          setEditingQuickFact({ contractId: contract._id, factIndex: index });
+                          setEditQfValue(fact.value);
+                          setQfDropdownOpen(null);
+                        }}
+                        title="Wert bearbeiten"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      {allFacts.length > 2 && (
+                        <button
+                          className={styles.qfDropdownBtn}
+                          onClick={() => setQfDropdownOpen(isDropdownOpen ? null : { contractId: contract._id, displayIndex: index })}
+                          title="Eckdaten wechseln"
+                        >
+                          <ChevronDown size={12} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {isDropdownOpen && (
+                    <div className={styles.qfDropdown} onClick={(e) => e.stopPropagation()}>
+                      {allFacts.map((f, i) => (
+                        <button
+                          key={i}
+                          className={`${styles.qfDropdownItem} ${i === index ? styles.qfDropdownItemActive : ''}`}
+                          onClick={() => swapQuickFact(contract._id, index, i)}
+                          disabled={i === index}
+                        >
+                          <span>{f.label}: {f.value}</span>
+                          {i === index && <Check size={12} />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -5113,15 +5241,94 @@ export default function Contracts() {
                                   </div>
                                 </div>
                               </td>
-                              {/* 📊 Dynamische QuickFacts Spalten */}
+                              {/* 📊 Dynamische QuickFacts Spalten – Inline-Edit */}
                               {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => {
                                 const FactIcon = getQuickFactIcon(fact.label, fact.value);
+                                const isEditing = editingQuickFact?.contractId === contract._id && editingQuickFact?.factIndex === factIndex;
+                                const isDropdownOpen = qfDropdownOpen?.contractId === contract._id && qfDropdownOpen?.displayIndex === factIndex;
+                                const hasEditable = !!(contract.quickFacts && contract.quickFacts.length > 0);
+                                const allFacts = contract.quickFacts || [];
+
                                 return (
                                   <td key={factIndex} title={fact.label}>
-                                    <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
-                                      <FactIcon size={14} className={styles.detailIcon} />
-                                      <span>{fact.value}</span>
-                                    </div>
+                                    {isEditing ? (
+                                      /* ✏️ Inline-Edit Modus */
+                                      <div className={styles.qfInlineEdit} onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                          type="text"
+                                          className={styles.qfInlineInput}
+                                          value={editQfValue}
+                                          onChange={(e) => setEditQfValue(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveQuickFactValue(contract._id, factIndex, editQfValue);
+                                            if (e.key === 'Escape') setEditingQuickFact(null);
+                                          }}
+                                          autoFocus
+                                        />
+                                        <button
+                                          className={styles.qfSaveBtn}
+                                          onClick={() => saveQuickFactValue(contract._id, factIndex, editQfValue)}
+                                          title="Speichern"
+                                        >
+                                          <Check size={14} />
+                                        </button>
+                                        <button
+                                          className={styles.qfCancelBtn}
+                                          onClick={() => setEditingQuickFact(null)}
+                                          title="Abbrechen"
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      /* 📊 Normaler Anzeige-Modus mit Hover-Aktionen */
+                                      <div className={`${styles.qfCell} ${hasEditable ? styles.qfEditable : ''}`}>
+                                        <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
+                                          <FactIcon size={14} className={styles.detailIcon} />
+                                          <span>{fact.value}</span>
+                                        </div>
+                                        {hasEditable && (
+                                          <div className={styles.qfActions} onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                              className={styles.qfEditBtn}
+                                              onClick={() => {
+                                                setEditingQuickFact({ contractId: contract._id, factIndex });
+                                                setEditQfValue(fact.value);
+                                                setQfDropdownOpen(null);
+                                              }}
+                                              title="Wert bearbeiten"
+                                            >
+                                              <Pencil size={12} />
+                                            </button>
+                                            {allFacts.length > 2 && (
+                                              <button
+                                                className={styles.qfDropdownBtn}
+                                                onClick={() => setQfDropdownOpen(isDropdownOpen ? null : { contractId: contract._id, displayIndex: factIndex })}
+                                                title="Eckdaten wechseln"
+                                              >
+                                                <ChevronDown size={12} />
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                        {/* Dropdown-Menü */}
+                                        {isDropdownOpen && (
+                                          <div className={styles.qfDropdown} onClick={(e) => e.stopPropagation()}>
+                                            {allFacts.map((f, i) => (
+                                              <button
+                                                key={i}
+                                                className={`${styles.qfDropdownItem} ${i === factIndex ? styles.qfDropdownItemActive : ''}`}
+                                                onClick={() => swapQuickFact(contract._id, factIndex, i)}
+                                                disabled={i === factIndex}
+                                              >
+                                                <span>{f.label}: {f.value}</span>
+                                                {i === factIndex && <Check size={12} />}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </td>
                                 );
                               })}
