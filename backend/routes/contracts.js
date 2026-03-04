@@ -596,60 +596,14 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     pipeline.push({ $limit: limit });
   }
 
-  // 🔗 $lookup 1: Primärer Pfad - direkter analysisId Match (nutzt _id Index, O(1))
+  // 🔗 $lookup für Analysen - direkter analysisId Match (nutzt _id Index, O(1))
+  // Fallback für Verträge ohne analysisId erfolgt NACH der Aggregation als Batch-Query
   pipeline.push({
     $lookup: {
       from: "analysis",
       localField: "analysisId",
       foreignField: "_id",
-      as: "analysisById"
-    }
-  });
-
-  // 🔗 $lookup 2: Fallback-Pfad - Name-Match (nur wenn Lookup 1 leer war)
-  // $and short-circuits: wenn $$hasAnalysis true → $toString wird NICHT ausgeführt
-  pipeline.push({
-    $lookup: {
-      from: "analysis",
-      let: {
-        contractName: "$name",
-        contractUserId: { $toString: "$userId" },
-        hasAnalysis: { $gt: [{ $size: "$analysisById" }, 0] }
-      },
-      pipeline: [
-        {
-          $match: {
-            $expr: {
-              $and: [
-                // Nur ausführen wenn Lookup 1 nichts gefunden hat
-                { $eq: ["$$hasAnalysis", false] },
-                { $eq: [{ $toString: "$userId" }, "$$contractUserId"] },
-                {
-                  $or: [
-                    { $eq: ["$contractName", "$$contractName"] },
-                    { $eq: ["$originalFileName", "$$contractName"] }
-                  ]
-                }
-              ]
-            }
-          }
-        },
-        { $limit: 1 }
-      ],
-      as: "analysisByName"
-    }
-  });
-
-  // 🔗 Merge: analysisById bevorzugen, sonst analysisByName
-  pipeline.push({
-    $addFields: {
-      analysisData: {
-        $cond: {
-          if: { $gt: [{ $size: "$analysisById" }, 0] },
-          then: "$analysisById",
-          else: "$analysisByName"
-        }
-      }
+      as: "analysisData"
     }
   });
 
@@ -814,8 +768,6 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   pipeline.push({
     $project: {
       analysisData: 0,
-      analysisById: 0,
-      analysisByName: 0,
       envelopeData: 0,
       // 🚫 Große Text-Felder ausschließen (werden nur bei Einzel-Abruf benötigt)
       fullText: 0,
@@ -829,6 +781,65 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
 
   // Query ausführen mit allowDiskUse für große Datensätze
   const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
+
+  // 🔗 Fallback: Für Verträge OHNE analysisId, Analysis per Name suchen (1 Batch-Query)
+  // Statt N× $lookup mit $expr/$toString (Collection-Scan pro Vertrag) → 1× find() mit Index
+  const contractsNeedingFallback = contracts.filter(c =>
+    !c.analysis && !c.summary && !c.contractScore
+  );
+
+  if (contractsNeedingFallback.length > 0) {
+    const analysisCol = db.collection("analysis");
+
+    // Eine einzige Query für alle Fallback-Contracts (nutzt userId+contractName Index)
+    const orConditions = [];
+    for (const c of contractsNeedingFallback) {
+      const uidStr = c.userId?.toString();
+      orConditions.push(
+        { userId: c.userId, contractName: c.name },
+        { userId: c.userId, originalFileName: c.name }
+      );
+      // Auch String-Format des userId prüfen (dual ObjectId/String)
+      if (uidStr !== c.userId) {
+        orConditions.push(
+          { userId: uidStr, contractName: c.name },
+          { userId: uidStr, originalFileName: c.name }
+        );
+      }
+    }
+
+    const fallbackAnalyses = await analysisCol.find({ $or: orConditions }).toArray();
+
+    // Match zurück zu Contracts (gleiche Feld-Zuordnung wie im $addFields)
+    for (const contract of contractsNeedingFallback) {
+      const userIdStr = contract.userId?.toString();
+      const analysis = fallbackAnalyses.find(a =>
+        a.userId?.toString() === userIdStr &&
+        (a.contractName === contract.name || a.originalFileName === contract.name)
+      );
+      if (analysis) {
+        contract.analysis = {
+          summary: analysis.summary,
+          legalAssessment: analysis.legalAssessment,
+          suggestions: analysis.suggestions,
+          comparison: analysis.comparison,
+          contractScore: analysis.contractScore,
+          analysisId: analysis._id,
+          lastAnalyzed: analysis.createdAt
+        };
+        if (!contract.summary) contract.summary = analysis.summary;
+        if (!contract.contractScore) contract.contractScore = analysis.contractScore;
+        if (!contract.legalAssessment) contract.legalAssessment = analysis.legalAssessment;
+        if (!contract.suggestions) contract.suggestions = analysis.suggestions;
+        if (!contract.risiken) contract.risiken = analysis.criticalIssues;
+        if (!contract.quickFacts) contract.quickFacts = analysis.quickFacts;
+        if (!contract.importantDates) contract.importantDates = analysis.importantDates;
+        if (!contract.positiveAspects) contract.positiveAspects = analysis.positiveAspects;
+        if (!contract.recommendations) contract.recommendations = analysis.recommendations;
+        if (!contract.laymanSummary) contract.laymanSummary = analysis.laymanSummary;
+      }
+    }
+  }
 
   // 🚀 V2: Gibt jetzt { contracts, totalCount } zurück
   return { contracts, totalCount };
