@@ -12,7 +12,8 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle,
-  PenTool
+  PenTool,
+  Megaphone
 } from 'lucide-react';
 import styles from './NotificationSettingsModal.module.css';
 
@@ -62,6 +63,7 @@ interface NotificationSettingsModalProps {
 
 export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: NotificationSettingsModalProps) {
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
+  const [marketingEnabled, setMarketingEnabled] = useState<boolean>(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'channels' | 'types' | 'schedule'>('channels');
@@ -93,6 +95,9 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: 
         const data = await response.json();
         if (data.success) {
           setNotificationSettings(data.settings);
+          if (data.marketing !== undefined) {
+            setMarketingEnabled(data.marketing.enabled);
+          }
         }
       }
     } catch (error) {
@@ -111,7 +116,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: 
         method: 'PUT',
         headers: getAuthHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ settings: notificationSettings })
+        body: JSON.stringify({ settings: notificationSettings, marketing: { enabled: marketingEnabled } })
       });
 
       if (response.ok) {
@@ -275,6 +280,28 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: 
                             type="checkbox"
                             checked={notificationSettings.inApp.enabled}
                             onChange={e => updateSetting('inApp', 'enabled', e.target.checked)}
+                          />
+                          <span className={styles.toggleSlider} />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Marketing — eigene Kategorie, visuell abgesetzt */}
+                    <div className={styles.marketingDivider}>
+                      <span>Marketing</span>
+                    </div>
+                    <div className={styles.group}>
+                      <div className={styles.groupHeader}>
+                        <Megaphone size={18} />
+                        <div>
+                          <h3>Marketing & Werbe-E-Mails</h3>
+                          <p>Onboarding-Tipps, Feature-Updates & Angebote</p>
+                        </div>
+                        <label className={styles.toggle}>
+                          <input
+                            type="checkbox"
+                            checked={marketingEnabled}
+                            onChange={e => setMarketingEnabled(e.target.checked)}
                           />
                           <span className={styles.toggleSlider} />
                         </label>

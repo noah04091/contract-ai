@@ -254,7 +254,7 @@ router.get("/settings", verifyToken, async (req, res) => {
 
     const user = await db.collection("users").findOne(
       { _id: new ObjectId(userId) },
-      { projection: { notificationSettings: 1 } }
+      { projection: { notificationSettings: 1, emailPreferences: 1, emailOptOut: 1 } }
     );
 
     // Default-Einstellungen wenn keine vorhanden
@@ -298,7 +298,10 @@ router.get("/settings", verifyToken, async (req, res) => {
 
     res.json({
       success: true,
-      settings
+      settings,
+      marketing: {
+        enabled: user?.emailPreferences?.marketing !== false && user?.emailOptOut !== true
+      }
     });
 
   } catch (error) {
@@ -366,14 +369,24 @@ router.put("/settings", verifyToken, async (req, res) => {
       }
     };
 
+    const updateFields = {
+      notificationSettings: validatedSettings,
+      updatedAt: new Date()
+    };
+
+    // Marketing-Präferenz separat aktualisieren (sync mit Abmelde-Link)
+    if (req.body.marketing !== undefined) {
+      updateFields['emailPreferences.marketing'] = Boolean(req.body.marketing.enabled);
+      updateFields['emailPreferencesUpdatedAt'] = new Date();
+      // emailOptOut zurücksetzen wenn User Marketing wieder aktiviert
+      if (req.body.marketing.enabled) {
+        updateFields['emailOptOut'] = false;
+      }
+    }
+
     await db.collection("users").updateOne(
       { _id: new ObjectId(userId) },
-      {
-        $set: {
-          notificationSettings: validatedSettings,
-          updatedAt: new Date()
-        }
-      }
+      { $set: updateFields }
     );
 
     console.log(`✅ [NOTIFICATION-SETTINGS] Updated for user ${userId}`);
