@@ -139,6 +139,7 @@ function generateSignatureInvitationHTML(data) {
     title: `Signaturanfrage`,
     preheader: `${escapeHtml(ownerEmail)} bittet Sie, "${escapeHtml(envelope.title)}" zu unterschreiben`,
     body: body,
+    centerContent: true,
     cta: {
       url: signUrl,
       text: 'Jetzt signieren →'
@@ -227,6 +228,7 @@ function generateCompletionNotificationHTML(data) {
     title: `Dokument vollständig signiert`,
     preheader: `"${escapeHtml(envelope.title)}" wurde von allen Parteien unterschrieben`,
     body: body,
+    centerContent: true,
     cta: {
       url: downloadLink,
       text: 'Dokument herunterladen →'
@@ -471,7 +473,8 @@ function generateVoidNotificationHTML(data) {
   return generateEmailTemplate({
     title: `Signaturanfrage storniert`,
     preheader: `Die Signaturanfrage für "${escapeHtml(envelope.title)}" wurde storniert`,
-    body: body
+    body: body,
+    centerContent: true
   });
 }
 
@@ -623,6 +626,7 @@ function generateDeclineNotificationHTML(data) {
     title: `Signaturanfrage abgelehnt`,
     preheader: `${escapeHtml(signer.name)} hat "${escapeHtml(envelope.title)}" abgelehnt`,
     body: body,
+    centerContent: true,
     cta: {
       url: `${FRONTEND_URL}/envelopes`,
       text: 'Zur Übersicht →'
@@ -806,6 +810,7 @@ function generateSignatureReminderHTML(data) {
     title: `Erinnerung: Signatur ausstehend`,
     preheader: `Bitte unterschreiben Sie "${escapeHtml(envelope.title)}" - ${urgencyText}`,
     body: body,
+    centerContent: true,
     cta: {
       url: signUrl,
       text: 'Jetzt signieren →'
@@ -955,7 +960,8 @@ function generateOtpEmailHTML(data) {
   return generateEmailTemplate({
     title: `Verifizierungscode`,
     preheader: `Ihr Code: ${code} - G\u00FCltig f\u00FCr ${expiresMinutes} Minuten`,
-    body: body
+    body: body,
+    centerContent: true
   });
 }
 
