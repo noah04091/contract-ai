@@ -50,6 +50,9 @@ export interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
+  confidence?: number;
+  dataSource?: string;
+  isEstimated?: boolean;
 }
 
 // Helper: Extract userId from JWT token

@@ -75,6 +75,9 @@ interface CalendarEvent {
   };
   amount?: number;
   isManual?: boolean;
+  confidence?: number;
+  dataSource?: string;
+  isEstimated?: boolean;
 }
 
 interface ApiResponse {
@@ -646,6 +649,30 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
           </div>
 
+          {/* Confidence Badge */}
+          {currentEvent.isEstimated && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 12px',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '12px',
+              color: '#92400e'
+            }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+              <span>
+                Geschätztes Datum
+                {currentEvent.confidence != null && currentEvent.confidence > 0 && (
+                  <> ({currentEvent.confidence}% Konfidenz)</>
+                )}
+                {currentEvent.dataSource === 'ai_extracted' && ' — KI-erkannt'}
+              </span>
+            </div>
+          )}
 
           <div className="modal-actions-grid">
             {/* Show "Vertrag anzeigen" if contract is associated */}
@@ -1291,7 +1318,7 @@ interface SimpleContractForCreate {
 function CreateEventModal({ date, onClose, onEventCreated, initialContractId, initialContractName }: CreateEventModalProps) {
   useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [showForm, setShowForm] = useState(!!initialContractId);
+  const [showForm, setShowForm] = useState(true);
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
@@ -3118,20 +3145,46 @@ export default function CalendarPage() {
                 />
               )}
 
-              {/* Legend */}
+              {/* Legend - klickbar als Filter */}
               <div className="calendar-legend">
-                <div className="legend-item">
-                  <div className="legend-dot critical"></div>
-                  <span>Kritisch</span>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-dot warning"></div>
-                  <span>Warnung</span>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-dot info"></div>
-                  <span>Info</span>
-                </div>
+                {([
+                  { severity: 'critical', label: 'Kritisch' },
+                  { severity: 'warning', label: 'Warnung' },
+                  { severity: 'info', label: 'Info' }
+                ] as const).map(({ severity, label }) => (
+                  <div
+                    key={severity}
+                    className="legend-item"
+                    onClick={() => setFilterSeverity(prev => prev === severity ? 'all' : severity)}
+                    style={{
+                      cursor: 'pointer',
+                      opacity: filterSeverity !== 'all' && filterSeverity !== severity ? 0.4 : 1,
+                      transition: 'opacity 0.2s',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      background: filterSeverity === severity ? 'rgba(59, 130, 246, 0.08)' : 'transparent'
+                    }}
+                    title={filterSeverity === severity ? 'Filter aufheben' : `Nur ${label} anzeigen`}
+                  >
+                    <div className={`legend-dot ${severity}`}></div>
+                    <span>{label}</span>
+                  </div>
+                ))}
+                {filterSeverity !== 'all' && (
+                  <div
+                    className="legend-item"
+                    onClick={() => setFilterSeverity('all')}
+                    style={{
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      color: '#3b82f6',
+                      fontWeight: 500,
+                      padding: '4px 8px'
+                    }}
+                  >
+                    Alle zeigen
+                  </div>
+                )}
               </div>
             </div>
 
@@ -3299,8 +3352,13 @@ export default function CalendarPage() {
                         <option value="all">Alle</option>
                         <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
                         <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                        <option value="PRICE_INCREASE">Preiserhöhung</option>
+                        <option value="CANCEL_REMINDER">Kündigungserinnerung</option>
+                        <option value="CONTRACT_EXPIRY">Vertragsablauf</option>
                         <option value="AUTO_RENEWAL">Auto-Verlängerung</option>
+                        <option value="PRICE_INCREASE">Preiserhöhung</option>
+                        <option value="RECURRING_PAYMENT">Zahlung</option>
+                        <option value="REVIEW">Jahres-Review</option>
+                        <option value="REMINDER">Erinnerung</option>
                       </select>
                     </div>
                   </div>
