@@ -33,8 +33,7 @@ import {
   Pencil,
   Trash2,
   Save,
-  Mail,
-  Settings2
+  Mail
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -3011,8 +3010,7 @@ export default function CalendarPage() {
                 onClick={() => setShowNotificationSettings(true)}
                 title="Erinnerungseinstellungen"
               >
-                <Settings2 size={18} />
-                {!isMobile && <span className="btn-text">Erinnerungen</span>}
+                <Bell size={18} />
               </button>
               <button
                 className="btn btn-secondary"
