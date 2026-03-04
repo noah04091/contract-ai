@@ -2039,6 +2039,14 @@ router.post("/sign/:token/send-otp", otpSendLimiter, async (req, res) => {
       });
     }
 
+    // Check authMethod — only OTP signers can request codes
+    if (signer.authMethod !== 'OTP') {
+      return res.status(400).json({
+        success: false,
+        message: "OTP-Verifizierung ist für diesen Unterzeichner nicht aktiviert"
+      });
+    }
+
     // Already verified? Return success
     if (signer.otpVerified) {
       return res.status(200).json({
@@ -2169,6 +2177,14 @@ router.post("/sign/:token/verify-otp", otpVerifyLimiter, async (req, res) => {
       return res.status(410).json({
         success: false,
         message: "Signature-Link ist abgelaufen"
+      });
+    }
+
+    // Check authMethod
+    if (signer.authMethod !== 'OTP') {
+      return res.status(400).json({
+        success: false,
+        message: "OTP-Verifizierung ist für diesen Unterzeichner nicht aktiviert"
       });
     }
 
@@ -2515,6 +2531,11 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
           [`signers.${signerIndex}.ip`]: getClientIP(req),
           [`signers.${signerIndex}.userAgent`]: req.headers['user-agent'] || 'unknown',
           [`signers.${signerIndex}.tokenInvalidated`]: true,
+          // 🧹 OTP cleanup — Hash + Attempts aus DB entfernen
+          [`signers.${signerIndex}.otpCode`]: null,
+          [`signers.${signerIndex}.otpExpires`]: null,
+          [`signers.${signerIndex}.otpAttempts`]: 0,
+          [`signers.${signerIndex}.otpLastSentAt`]: null,
           updatedAt: now
         }
       },
