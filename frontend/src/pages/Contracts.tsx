@@ -5188,10 +5188,10 @@ export default function Contracts() {
                                     value={editHeaderValue}
                                     onChange={(e) => setEditHeaderValue(e.target.value)}
                                     onKeyDown={(e) => {
-                                      if (e.key === 'Enter') saveEckdatenLabel(idx, editHeaderValue);
-                                      if (e.key === 'Escape') setEditingHeader(null);
+                                      if (e.key === 'Enter') e.currentTarget.blur();
+                                      if (e.key === 'Escape') { setEditingHeader(null); (e.currentTarget as HTMLInputElement).dataset.cancelled = '1'; e.currentTarget.blur(); }
                                     }}
-                                    onBlur={() => saveEckdatenLabel(idx, editHeaderValue)}
+                                    onBlur={(e) => { if (e.currentTarget.dataset.cancelled !== '1') saveEckdatenLabel(idx, editHeaderValue); }}
                                     autoFocus
                                   />
                                 ) : (
