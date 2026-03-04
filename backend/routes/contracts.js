@@ -596,32 +596,38 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     pipeline.push({ $limit: limit });
   }
 
-  // 🔗 $lookup für Analysen (mit analysisId)
+  // 🔗 $lookup 1: Primärer Pfad - direkter analysisId Match (nutzt _id Index, O(1))
+  pipeline.push({
+    $lookup: {
+      from: "analysis",
+      localField: "analysisId",
+      foreignField: "_id",
+      as: "analysisById"
+    }
+  });
+
+  // 🔗 $lookup 2: Fallback-Pfad - Name-Match (nur wenn Lookup 1 leer war)
+  // $and short-circuits: wenn $$hasAnalysis true → $toString wird NICHT ausgeführt
   pipeline.push({
     $lookup: {
       from: "analysis",
       let: {
-        analysisId: "$analysisId",
         contractName: "$name",
-        contractUserId: { $toString: "$userId" }
+        contractUserId: { $toString: "$userId" },
+        hasAnalysis: { $gt: [{ $size: "$analysisById" }, 0] }
       },
       pipeline: [
         {
           $match: {
             $expr: {
-              $or: [
-                // Primär: Match über analysisId
-                { $eq: ["$_id", "$$analysisId"] },
-                // Fallback: Match über contractName oder originalFileName
+              $and: [
+                // Nur ausführen wenn Lookup 1 nichts gefunden hat
+                { $eq: ["$$hasAnalysis", false] },
+                { $eq: [{ $toString: "$userId" }, "$$contractUserId"] },
                 {
-                  $and: [
-                    { $eq: [{ $toString: "$userId" }, "$$contractUserId"] },
-                    {
-                      $or: [
-                        { $eq: ["$contractName", "$$contractName"] },
-                        { $eq: ["$originalFileName", "$$contractName"] }
-                      ]
-                    }
+                  $or: [
+                    { $eq: ["$contractName", "$$contractName"] },
+                    { $eq: ["$originalFileName", "$$contractName"] }
                   ]
                 }
               ]
@@ -630,7 +636,20 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
         },
         { $limit: 1 }
       ],
-      as: "analysisData"
+      as: "analysisByName"
+    }
+  });
+
+  // 🔗 Merge: analysisById bevorzugen, sonst analysisByName
+  pipeline.push({
+    $addFields: {
+      analysisData: {
+        $cond: {
+          if: { $gt: [{ $size: "$analysisById" }, 0] },
+          then: "$analysisById",
+          else: "$analysisByName"
+        }
+      }
     }
   });
 
@@ -795,6 +814,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   pipeline.push({
     $project: {
       analysisData: 0,
+      analysisById: 0,
+      analysisByName: 0,
       envelopeData: 0,
       // 🚫 Große Text-Felder ausschließen (werden nur bei Einzel-Abruf benötigt)
       fullText: 0,

@@ -96,118 +96,121 @@ router.get("/summary", verifyToken, async (req, res) => {
     const in30Days = new Date();
     in30Days.setDate(in30Days.getDate() + 30);
 
-    // 1. Schnelle Stats mit aggregation - nutze $or für beide Formate
-    const statsResult = await contractsCollection.aggregate([
-      { $match: userIdFilter },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: 1 },
-          active: {
-            $sum: {
-              $cond: [
-                { $or: [
-                  { $gt: ["$expiryDate", in30Days] },
-                  { $eq: ["$expiryDate", null] }
-                ]},
-                1, 0
-              ]
-            }
-          },
-          expiringSoon: {
-            $sum: {
-              $cond: [
-                { $and: [
-                  { $ne: ["$expiryDate", null] },
-                  { $gt: ["$expiryDate", now] },
-                  { $lte: ["$expiryDate", in30Days] }
-                ]},
-                1, 0
-              ]
-            }
-          },
-          expired: {
-            $sum: {
-              $cond: [
-                { $and: [
-                  { $ne: ["$expiryDate", null] },
-                  { $lte: ["$expiryDate", now] }
-                ]},
-                1, 0
-              ]
-            }
-          },
-          generated: { $sum: { $cond: ["$isGenerated", 1, 0] } },
-          analyzed: { $sum: { $cond: [{ $ne: ["$legalPulse.riskScore", null] }, 1, 0] } }
+    // 🚀 OPTIMIERT: Alle 6 Queries parallel statt sequentiell (Promise.all)
+    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user] = await Promise.all([
+      // 1. Schnelle Stats mit aggregation
+      contractsCollection.aggregate([
+        { $match: userIdFilter },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            active: {
+              $sum: {
+                $cond: [
+                  { $or: [
+                    { $gt: ["$expiryDate", in30Days] },
+                    { $eq: ["$expiryDate", null] }
+                  ]},
+                  1, 0
+                ]
+              }
+            },
+            expiringSoon: {
+              $sum: {
+                $cond: [
+                  { $and: [
+                    { $ne: ["$expiryDate", null] },
+                    { $gt: ["$expiryDate", now] },
+                    { $lte: ["$expiryDate", in30Days] }
+                  ]},
+                  1, 0
+                ]
+              }
+            },
+            expired: {
+              $sum: {
+                $cond: [
+                  { $and: [
+                    { $ne: ["$expiryDate", null] },
+                    { $lte: ["$expiryDate", now] }
+                  ]},
+                  1, 0
+                ]
+              }
+            },
+            generated: { $sum: { $cond: ["$isGenerated", 1, 0] } },
+            analyzed: { $sum: { $cond: [{ $ne: ["$legalPulse.riskScore", null] }, 1, 0] } }
+          }
         }
-      }
-    ]).toArray();
+      ]).toArray(),
+
+      // 2. Letzte 5 Verträge (nur essentielle Felder)
+      contractsCollection
+        .find(userIdFilter)
+        .project({
+          _id: 1, name: 1, status: 1, expiryDate: 1, createdAt: 1,
+          uploadedAt: 1, isGenerated: 1, 'legalPulse.riskScore': 1
+        })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .toArray(),
+
+      // 3. Dringende Verträge (nächste 30 Tage, max 4)
+      contractsCollection
+        .find({
+          $and: [
+            userIdFilter,
+            { expiryDate: { $gt: now, $lte: in30Days } }
+          ]
+        })
+        .project({
+          _id: 1, name: 1, expiryDate: 1, 'legalPulse.riskScore': 1
+        })
+        .sort({ expiryDate: 1 })
+        .limit(4)
+        .toArray(),
+
+      // 4. KI-Generierte Verträge (max 3)
+      contractsCollection
+        .find({
+          $and: [
+            userIdFilter,
+            { isGenerated: true }
+          ]
+        })
+        .project({
+          _id: 1, name: 1, createdAt: 1, updatedAt: 1, isGenerated: 1
+        })
+        .sort({ createdAt: -1 })
+        .limit(3)
+        .toArray(),
+
+      // 5. Gemerkte Verträge mit Erinnerung (max 3)
+      contractsCollection
+        .find({
+          $and: [
+            userIdFilter,
+            { reminder: true }
+          ]
+        })
+        .project({
+          _id: 1, name: 1, expiryDate: 1, reminder: 1
+        })
+        .sort({ expiryDate: 1 })
+        .limit(3)
+        .toArray(),
+
+      // 6. User-Daten (Abo, Quota)
+      db.collection("users").findOne(
+        { _id: new ObjectId(userId) },
+        { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
+      )
+    ]);
 
     const stats = statsResult[0] || {
       total: 0, active: 0, expiringSoon: 0, expired: 0, generated: 0, analyzed: 0
     };
-
-    // 2. Letzte 5 Verträge (nur essentielle Felder)
-    const recentContracts = await contractsCollection
-      .find(userIdFilter)
-      .project({
-        _id: 1, name: 1, status: 1, expiryDate: 1, createdAt: 1,
-        uploadedAt: 1, isGenerated: 1, 'legalPulse.riskScore': 1
-      })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .toArray();
-
-    // 3. Dringende Verträge (nächste 30 Tage, max 4)
-    const urgentContracts = await contractsCollection
-      .find({
-        $and: [
-          userIdFilter,
-          { expiryDate: { $gt: now, $lte: in30Days } }
-        ]
-      })
-      .project({
-        _id: 1, name: 1, expiryDate: 1, 'legalPulse.riskScore': 1
-      })
-      .sort({ expiryDate: 1 })
-      .limit(4)
-      .toArray();
-
-    // 4. KI-Generierte Verträge (max 3)
-    const generatedContracts = await contractsCollection
-      .find({
-        $and: [
-          userIdFilter,
-          { isGenerated: true }
-        ]
-      })
-      .project({
-        _id: 1, name: 1, createdAt: 1, updatedAt: 1, isGenerated: 1
-      })
-      .sort({ createdAt: -1 })
-      .limit(3)
-      .toArray();
-
-    // 5. Gemerkte Verträge mit Erinnerung (max 3)
-    const reminderContracts = await contractsCollection
-      .find({
-        $and: [
-          userIdFilter,
-          { reminder: true }
-        ]
-      })
-      .project({
-        _id: 1, name: 1, expiryDate: 1, reminder: 1
-      })
-      .sort({ expiryDate: 1 })
-      .limit(3)
-      .toArray();
-
-    // 6. User-Daten (Abo, Quota)
-    const user = await db.collection("users").findOne(
-      { _id: new ObjectId(userId) },
-      { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
-    );
 
     // 📊 ANALYSE LIMITS - Aus zentraler Konfiguration (subscriptionPlans.js)
     // WICHTIG: Infinity wird in JSON zu null, daher -1 als "unbegrenzt" verwenden

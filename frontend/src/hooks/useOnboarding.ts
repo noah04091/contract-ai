@@ -31,6 +31,11 @@ const getToken = (): string | null => {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
 };
 
+// 🚀 Modul-Level Dedup: Verhindert 6-7 identische API-Calls bei mehreren Hook-Instanzen
+let _lastFetchTime = 0;
+let _lastFetchPromise: Promise<OnboardingStatusResponse | null> | null = null;
+const DEDUP_MS = 5000; // 5 Sekunden Cache
+
 interface UseOnboardingReturn {
   // State
   onboardingState: OnboardingState | null;
@@ -67,14 +72,37 @@ export function useOnboarding(): UseOnboardingReturn {
   const [checklistProgress, setChecklistProgress] = useState(0);
   const [checklistTotal, setChecklistTotal] = useState(5);
 
-  // Fetch current onboarding status
+  // Fetch current onboarding status (mit Modul-Level Dedup)
   const fetchStatus = useCallback(async () => {
     const token = getToken();
-    console.log('🎓 [Onboarding] fetchStatus called, token:', token ? 'present' : 'missing');
 
     if (!token) {
-      console.log('🎓 [Onboarding] No token, skipping fetch');
       setIsLoading(false);
+      return;
+    }
+
+    // 🚀 Dedup: Innerhalb von 5s das gleiche Promise wiederverwenden
+    const now = Date.now();
+    if (now - _lastFetchTime < DEDUP_MS && _lastFetchPromise) {
+      const data = await _lastFetchPromise;
+      if (data) {
+        setOnboardingState({
+          status: data.status,
+          startedAt: data.startedAt,
+          completedAt: data.completedAt,
+          skippedAt: data.skippedAt,
+          completedSteps: data.completedSteps,
+          profile: data.profile,
+          seenFeatures: data.seenFeatures,
+          showTooltips: data.showTooltips,
+          checklist: data.checklist
+        });
+        setShouldShowModal(data.shouldShowModal);
+        setShouldShowChecklist(data.shouldShowChecklist);
+        setChecklistProgress(data.checklistProgress);
+        setChecklistTotal(data.checklistTotal);
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -82,43 +110,45 @@ export function useOnboarding(): UseOnboardingReturn {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE}/api/onboarding/status`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      _lastFetchTime = now;
+      _lastFetchPromise = (async (): Promise<OnboardingStatusResponse | null> => {
+        const response = await fetch(`${API_BASE}/api/onboarding/status`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch onboarding status');
         }
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch onboarding status');
+        return await response.json();
+      })();
+
+      const data = await _lastFetchPromise;
+      if (data) {
+        setOnboardingState({
+          status: data.status,
+          startedAt: data.startedAt,
+          completedAt: data.completedAt,
+          skippedAt: data.skippedAt,
+          completedSteps: data.completedSteps,
+          profile: data.profile,
+          seenFeatures: data.seenFeatures,
+          showTooltips: data.showTooltips,
+          checklist: data.checklist
+        });
+
+        setShouldShowModal(data.shouldShowModal);
+        setShouldShowChecklist(data.shouldShowChecklist);
+        setChecklistProgress(data.checklistProgress);
+        setChecklistTotal(data.checklistTotal);
       }
-
-      const data: OnboardingStatusResponse = await response.json();
-      console.log('🎓 [Onboarding] API Response:', {
-        status: data.status,
-        shouldShowModal: data.shouldShowModal,
-        shouldShowChecklist: data.shouldShowChecklist
-      });
-
-      setOnboardingState({
-        status: data.status,
-        startedAt: data.startedAt,
-        completedAt: data.completedAt,
-        skippedAt: data.skippedAt,
-        completedSteps: data.completedSteps,
-        profile: data.profile,
-        seenFeatures: data.seenFeatures,
-        showTooltips: data.showTooltips,
-        checklist: data.checklist
-      });
-
-      setShouldShowModal(data.shouldShowModal);
-      setShouldShowChecklist(data.shouldShowChecklist);
-      setChecklistProgress(data.checklistProgress);
-      setChecklistTotal(data.checklistTotal);
     } catch (err) {
       console.error('🎓 [Onboarding] Error fetching status:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
+      _lastFetchPromise = null; // Reset bei Fehler, damit nächster Versuch neu fetcht
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +165,9 @@ export function useOnboarding(): UseOnboardingReturn {
   // laden wir unsere Daten neu um synchron zu bleiben.
   useEffect(() => {
     const handleSyncEvent = () => {
-      console.log('🔄 [Onboarding] Sync event received, refetching status...');
+      // Dedup-Cache zurücksetzen damit der Sync tatsächlich neu fetcht
+      _lastFetchTime = 0;
+      _lastFetchPromise = null;
       fetchStatus();
     };
 
