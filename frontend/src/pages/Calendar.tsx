@@ -33,11 +33,13 @@ import {
   Pencil,
   Trash2,
   Save,
-  Mail
+  Mail,
+  Settings2
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
+import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
@@ -2656,6 +2658,9 @@ export default function CalendarPage() {
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
+  // 🔔 NOTIFICATION SETTINGS MODAL
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+
   // 🔒 UPGRADE MODAL STATE
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeAction, setUpgradeAction] = useState<string>(''); // Welche Aktion wurde versucht
@@ -3000,6 +3005,14 @@ export default function CalendarPage() {
               >
                 <Link2 size={18} />
                 {!isMobile && <span className="btn-text">Kalender Sync</span>}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowNotificationSettings(true)}
+                title="Erinnerungseinstellungen"
+              >
+                <Settings2 size={18} />
+                {!isMobile && <span className="btn-text">Erinnerungen</span>}
               </button>
               <button
                 className="btn btn-secondary"
@@ -3527,6 +3540,13 @@ export default function CalendarPage() {
       <CalendarSyncModal
         isOpen={showSyncModal}
         onClose={() => setShowSyncModal(false)}
+      />
+
+      <NotificationSettingsModal
+        isOpen={showNotificationSettings}
+        onClose={() => setShowNotificationSettings(false)}
+        defaultTab="schedule"
+        onSaved={() => toast.success('Erinnerungseinstellungen gespeichert')}
       />
 
       {/* Stats Detail Modal - wrapped in AnimatePresence */}

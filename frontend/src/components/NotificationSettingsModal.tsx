@@ -59,14 +59,15 @@ interface NotificationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaved?: () => void;
+  defaultTab?: 'channels' | 'types' | 'schedule';
 }
 
-export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: NotificationSettingsModalProps) {
+export default function NotificationSettingsModal({ isOpen, onClose, onSaved, defaultTab = 'channels' }: NotificationSettingsModalProps) {
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null);
   const [marketingEnabled, setMarketingEnabled] = useState<boolean>(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<'channels' | 'types' | 'schedule'>('channels');
+  const [settingsTab, setSettingsTab] = useState<'channels' | 'types' | 'schedule'>(defaultTab);
 
   // Auth headers helper
   const getAuthHeaders = (): HeadersInit => {
@@ -79,6 +80,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved }: 
   // Load settings when modal opens
   useEffect(() => {
     if (isOpen) {
+      setSettingsTab(defaultTab);
       loadNotificationSettings();
     }
   }, [isOpen]);
