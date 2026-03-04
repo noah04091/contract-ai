@@ -1,6 +1,8 @@
 // 📤 services/notificationSender.js - Versendet Notifications aus Queue
 const { getPendingNotifications, markAsSent, markAsFailed } = require("./notificationQueue");
 const { notifyExpiringSoon, notifyExpired, notifyAutoRenewed } = require("./statusNotifier");
+const { isEmailActive } = require("./emailBounceService");
+const { isUnsubscribed, EMAIL_CATEGORIES } = require("./emailUnsubscribeService");
 
 /**
  * 📤 NOTIFICATION SENDER
@@ -94,6 +96,28 @@ async function sendSeparateNotifications(db, userId, notifications) {
         continue;
       }
 
+      // notificationSettings prüfen
+      const ns = user.notificationSettings;
+      if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
+        console.log(`   Skipping ${user.email} - Benachrichtigungen deaktiviert`);
+        await markAsSent(db, notification._id);
+        continue;
+      }
+
+      // Bounce + Unsubscribe prüfen
+      const emailActive = await isEmailActive(db, user.email);
+      if (!emailActive) {
+        console.log(`   Skipping bounced: ${user.email}`);
+        await markAsSent(db, notification._id);
+        continue;
+      }
+      const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL);
+      if (unsub) {
+        console.log(`   Skipping unsubscribed: ${user.email}`);
+        await markAsSent(db, notification._id);
+        continue;
+      }
+
       // Contract-Daten abrufen
       const contract = await db.collection("contracts").findOne({ _id: notification.contractId });
       if (!contract) {
@@ -142,6 +166,28 @@ async function sendGroupedNotification(db, userId, notifications) {
         await markAsFailed(db, n._id, new Error("User email not found"));
       }
       return { sent: 0, failed: notifications.length };
+    }
+
+    // notificationSettings prüfen
+    const ns = user.notificationSettings;
+    if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
+      console.log(`   Skipping ${user.email} - Benachrichtigungen deaktiviert`);
+      for (const n of notifications) await markAsSent(db, n._id);
+      return { sent: 0, failed: 0 };
+    }
+
+    // Bounce + Unsubscribe prüfen
+    const emailActive = await isEmailActive(db, user.email);
+    if (!emailActive) {
+      console.log(`   Skipping bounced: ${user.email}`);
+      for (const n of notifications) await markAsSent(db, n._id);
+      return { sent: 0, failed: 0 };
+    }
+    const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL);
+    if (unsub) {
+      console.log(`   Skipping unsubscribed: ${user.email}`);
+      for (const n of notifications) await markAsSent(db, n._id);
+      return { sent: 0, failed: 0 };
     }
 
     // Contract-Daten für alle Notifications sammeln

@@ -421,6 +421,22 @@ router.get("/", verifyToken, async (req, res) => {
     const { limit = 10 } = req.query;
     await ensureDb();
 
+    // User-Settings für In-App-Filterung laden
+    const settingsUser = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { notificationSettings: 1 } }
+    );
+    const inApp = settingsUser?.notificationSettings?.inApp;
+
+    // Master-Switch: wenn In-App komplett aus → leere Liste
+    if (inApp?.enabled === false) {
+      return res.json({
+        success: true,
+        notifications: [],
+        stats: { total: 0, unread: 0, warnings: 0 }
+      });
+    }
+
     const now = new Date();
     const sevenDaysFromNow = new Date();
     sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
@@ -580,21 +596,33 @@ router.get("/", verifyToken, async (req, res) => {
       });
     }
 
+    // Nach Typ-Präferenzen filtern
+    const filtered = notifications.filter(n => {
+      if (!inApp) return true;
+      switch (n.category) {
+        case 'calendar': return inApp.contractDeadlines !== false;
+        case 'pulse': return inApp.legalPulse !== false;
+        case 'analysis': return inApp.analysisComplete !== false;
+        case 'signature': return inApp.signatureUpdates !== false;
+        default: return true;
+      }
+    });
+
     // Nach Datum sortieren (neueste zuerst)
-    notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     // Limit anwenden
-    const limitedNotifications = notifications.slice(0, parseInt(limit));
+    const limitedNotifications = filtered.slice(0, parseInt(limit));
 
     // Statistiken berechnen
-    const unreadCount = notifications.length;
-    const warningCount = notifications.filter(n => n.type === 'warning').length;
+    const unreadCount = filtered.length;
+    const warningCount = filtered.filter(n => n.type === 'warning').length;
 
     res.json({
       success: true,
       notifications: limitedNotifications,
       stats: {
-        total: notifications.length,
+        total: filtered.length,
         unread: unreadCount,
         warnings: warningCount
       }

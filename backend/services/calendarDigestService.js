@@ -272,6 +272,13 @@ async function processDigests(db) {
 
   for (const group of eventsByUser) {
     try {
+      // notificationSettings prüfen (default: alles aktiv)
+      const ns = group.user?.notificationSettings;
+      if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
+        console.log(`Skipping Digest für ${group.user.email} - deaktiviert`);
+        continue;
+      }
+
       const result = await createDigestEmail(
         db,
         group._id.toString(),

@@ -113,7 +113,8 @@ async function processEmailQueue(db) {
       continue;
     }
 
-    const unsubscribed = await isUnsubscribed(db, email.to, email.emailType === "calendar_notification" ? EMAIL_CATEGORIES.CALENDAR : EMAIL_CATEGORIES.ALL);
+    const emailCategory = email.emailType?.startsWith("calendar_") ? EMAIL_CATEGORIES.CALENDAR : EMAIL_CATEGORIES.ALL;
+    const unsubscribed = await isUnsubscribed(db, email.to, emailCategory);
     if (unsubscribed) {
       console.log(`⏩ Ueberspringe abgemeldete E-Mail: ${email.to}`);
       await db.collection("email_queue").updateOne(
@@ -131,7 +132,7 @@ async function processEmailQueue(db) {
 
     try {
       // Hole Unsubscribe-Headers fuer RFC 8058 Compliance
-      const unsubHeaders = getUnsubscribeHeaders(email.to, EMAIL_CATEGORIES.CALENDAR);
+      const unsubHeaders = getUnsubscribeHeaders(email.to, emailCategory);
 
       // Versende E-Mail mit Unsubscribe-Headers
       await transporter.sendMail({

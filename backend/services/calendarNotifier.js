@@ -26,7 +26,7 @@ async function checkAndSendNotifications(db) {
           $match: {
             date: { $gte: now, $lte: lookaheadDate },
             status: "scheduled",
-            severity: { $in: ["warning", "critical"] }
+            severity: { $in: ["info", "warning", "critical"] }
           }
         },
         {
@@ -73,6 +73,32 @@ async function checkAndSendNotifications(db) {
       if (digestMode === "daily" || digestMode === "weekly") {
         // These users are handled by calendarDigestService
         continue;
+      }
+
+      // notificationSettings prüfen (default: alles aktiv)
+      const ns = event.user?.notificationSettings;
+      if (ns?.email?.enabled === false) {
+        console.log(`Skipping ${event.user.email} - E-Mail-Benachrichtigungen deaktiviert`);
+        continue;
+      }
+      if (ns?.email?.contractDeadlines === false) {
+        console.log(`Skipping ${event.user.email} - Vertragsfristen-Mails deaktiviert`);
+        continue;
+      }
+
+      // deadlineReminders-Timing prüfen
+      const daysUntilEvent = Math.ceil((new Date(event.date) - now) / (1000 * 60 * 60 * 24));
+      const dr = ns?.deadlineReminders;
+      if (dr) {
+        const skipTiming =
+          (daysUntilEvent >= 6 && dr.days7 === false) ||
+          (daysUntilEvent >= 2 && daysUntilEvent <= 3 && dr.days3 === false) ||
+          (daysUntilEvent === 1 && dr.days1 === false) ||
+          (daysUntilEvent <= 0 && dr.daysSame === false);
+        if (skipTiming) {
+          console.log(`Skipping ${event.user.email} - Erinnerung ${daysUntilEvent}d deaktiviert`);
+          continue;
+        }
       }
 
       try {
@@ -127,6 +153,15 @@ async function queueEventNotification(event, db) {
   let ctaButtons = [];
 
   switch (event.type) {
+    case "CANCEL_REMINDER":
+      subject = `${event.metadata.contractName} - Erinnerung: Kündigungsfrist naht`;
+      emailContent = generateCancelReminderEmail(event, actionToken, baseUrl);
+      ctaButtons = [
+        { text: "Vertrag ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" },
+        { text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?eventId=${event._id}`, style: "secondary" }
+      ];
+      break;
+
     case "CANCEL_WINDOW_OPEN":
       subject = `${event.metadata.contractName} - Vertragsinformation`;
       emailContent = generateCancelWindowEmail(event, actionToken, baseUrl);
@@ -233,6 +268,23 @@ async function generateActionToken(eventId, userId) {
 /**
  * Email-Content-Generatoren
  */
+function generateCancelReminderEmail(event, token, baseUrl) {
+  const daysUntilWindow = event.metadata?.daysUntilWindow || 30;
+  return `
+    <h2 style="color: #3b82f6;">Erinnerung: Kündigungsfrist naht</h2>
+    <p>In ca. <strong>${daysUntilWindow} Tagen</strong> öffnet sich das Kündigungsfenster für <strong>${event.metadata.contractName}</strong>.</p>
+    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
+      <h3>Details:</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li><strong>Vertrag:</strong> ${event.metadata.contractName}</li>
+        ${event.metadata?.provider ? `<li><strong>Anbieter:</strong> ${event.metadata.provider}</li>` : ''}
+        ${event.metadata?.isAutoRenewal ? '<li><strong>Hinweis:</strong> Dieser Vertrag verlängert sich automatisch!</li>' : ''}
+      </ul>
+    </div>
+    <p>Jetzt ist ein guter Zeitpunkt, Ihre Optionen zu prüfen.</p>
+  `;
+}
+
 function generateCancelWindowEmail(event, token, baseUrl) {
   const daysUntilExpiry = Math.ceil((new Date(event.metadata.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
   return `
