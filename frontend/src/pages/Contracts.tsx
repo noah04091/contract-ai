@@ -2967,14 +2967,23 @@ export default function Contracts() {
     }
   };
 
-  // 📊 QuickFact Icon nach Label (semantisch statt positionell)
-  const getQuickFactIcon = (label: string): typeof Calendar => {
+  // 📊 QuickFact Icon nach Label UND Wert (semantisch statt positionell)
+  const getQuickFactIcon = (label: string, value?: string): typeof Calendar => {
     const lower = label.toLowerCase();
+    const lowerValue = (value || '').toLowerCase();
+
+    // Kündigungsfrist → Uhr-Icon
     if (lower.includes('kündigung')) return Clock;
-    if (lower.includes('ablauf') || lower.includes('ende') || lower.includes('frist')) return Calendar;
-    if (lower.includes('laufzeit') || lower.includes('dauer') || lower.includes('verlängerung')) return RotateCcw;
-    if (lower.includes('kosten') || lower.includes('preis') || lower.includes('betrag') || lower.includes('gebühr')) return CreditCard;
-    if (lower.includes('beginn') || lower.includes('start')) return Calendar;
+    // Geldbeträge → Kreditkarten-Icon (Label ODER Wert)
+    if (lower.includes('kosten') || lower.includes('preis') || lower.includes('betrag') || lower.includes('gebühr') || lower.includes('miete') || lower.includes('gehalt') || lower.includes('honorar')) return CreditCard;
+    if (lowerValue.includes('€') || lowerValue.includes('eur') || lowerValue.includes('usd') || lowerValue.includes('netto') || lowerValue.includes('brutto')) return CreditCard;
+    // Datumsfelder → Kalender-Icon
+    if (lower.includes('ablauf') || lower.includes('ende') || lower.includes('frist') || lower.includes('fällig') || lower.includes('datum') || lower.includes('gekündigt')) return Calendar;
+    if (lower.includes('beginn') || lower.includes('start') || lower.includes('kaufdatum') || lower.includes('mietbeginn') || lower.includes('arbeitsbeginn')) return Calendar;
+    // Laufzeit/Dauer → Wiederholen-Icon
+    if (lower.includes('laufzeit') || lower.includes('dauer') || lower.includes('verlängerung') || lower.includes('gewährleistung') || lower.includes('befristung') || lower.includes('restlaufzeit')) return RotateCcw;
+    // Anbieter → Users-Icon
+    if (lower.includes('anbieter') || lower.includes('vertragspartner') || lower.includes('arbeitgeber')) return Users;
     return Calendar;
   };
 
@@ -3241,7 +3250,7 @@ export default function Contracts() {
       {/* Card Details Grid - 📊 Dynamische QuickFacts */}
       <div className={styles.cardDetails}>
         {getQuickFacts(contract).slice(0, 2).map((fact, index) => {
-          const IconComp = getQuickFactIcon(fact.label);
+          const IconComp = getQuickFactIcon(fact.label, fact.value);
           return (
             <div key={index} className={styles.cardDetailItem}>
               <span className={styles.cardDetailLabel}>{fact.label}</span>
@@ -5106,7 +5115,7 @@ export default function Contracts() {
                               </td>
                               {/* 📊 Dynamische QuickFacts Spalten */}
                               {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => {
-                                const FactIcon = getQuickFactIcon(fact.label);
+                                const FactIcon = getQuickFactIcon(fact.label, fact.value);
                                 return (
                                   <td key={factIndex} title={fact.label}>
                                     <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
@@ -5577,7 +5586,7 @@ export default function Contracts() {
                 {/* Info Grid - 2 Spalten - 📊 Dynamische QuickFacts */}
                 <div className={styles.previewInfo}>
                   {getQuickFacts(previewContract).map((fact, index) => {
-                    const FactIcon = getQuickFactIcon(fact.label);
+                    const FactIcon = getQuickFactIcon(fact.label, fact.value);
                     return (
                       <div key={index} className={styles.previewInfoItem}>
                         <span className={styles.previewLabel}>{fact.label}</span>
