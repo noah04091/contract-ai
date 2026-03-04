@@ -927,22 +927,22 @@ export default function EnhancedSignaturePage() {
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3 }}
-          style={{ maxWidth: '440px', margin: '50px auto', padding: '2rem' }}
         >
-          <Shield size={48} style={{ color: '#4f46e5', marginBottom: '1rem' }} />
-          <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.3rem' }}>Identität bestätigen</h2>
-          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
+          <Shield size={48} style={{ color: '#3B82F6', marginBottom: '1rem' }} />
+          <h2 style={{ margin: '0 0 0.5rem 0' }}>Identität bestätigen</h2>
+          <p style={{ marginBottom: '1.5rem' }}>
             Zur Sicherheit wird ein Verifizierungscode an Ihre E-Mail-Adresse gesendet.
           </p>
 
           {/* Email display */}
           <div style={{
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
+            background: '#f0f7ff',
+            border: '1px solid #bfdbfe',
             borderRadius: '8px',
             padding: '0.75rem 1rem',
             marginBottom: '1.5rem',
-            textAlign: 'center'
+            textAlign: 'center',
+            wordBreak: 'break-all'
           }}>
             <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Code wird gesendet an:</span>
             <br />
@@ -956,15 +956,15 @@ export default function EnhancedSignaturePage() {
               disabled={otpSending || otpCooldown > 0}
               style={{
                 width: '100%',
-                padding: '0.75rem 1.5rem',
-                background: otpSending || otpCooldown > 0 ? '#94a3b8' : '#4f46e5',
+                padding: '0.875rem 1.5rem',
+                background: otpSending || otpCooldown > 0 ? '#94a3b8' : 'linear-gradient(135deg, #3B82F6 0%, #2563eb 100%)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '1rem',
                 fontWeight: 600,
                 cursor: otpSending || otpCooldown > 0 ? 'not-allowed' : 'pointer',
-                transition: 'background 0.2s'
+                transition: 'opacity 0.2s'
               }}
             >
               {otpSending ? 'Wird gesendet...' : otpCooldown > 0 ? `Erneut senden (${otpCooldown}s)` : 'Code senden'}
@@ -996,9 +996,9 @@ export default function EnhancedSignaturePage() {
                   style={{
                     width: '100%',
                     textAlign: 'center',
-                    fontSize: '2rem',
+                    fontSize: 'clamp(1.5rem, 5vw, 2rem)',
                     fontWeight: 700,
-                    letterSpacing: '0.5rem',
+                    letterSpacing: 'clamp(0.25rem, 2vw, 0.5rem)',
                     fontFamily: "'Courier New', Courier, monospace",
                     padding: '0.75rem',
                     border: otpError ? '2px solid #ef4444' : '2px solid #e2e8f0',
@@ -1008,7 +1008,7 @@ export default function EnhancedSignaturePage() {
                     transition: 'border-color 0.2s'
                   }}
                   onFocus={(e) => {
-                    if (!otpError) e.target.style.borderColor = '#4f46e5';
+                    if (!otpError) e.target.style.borderColor = '#3B82F6';
                   }}
                   onBlur={(e) => {
                     if (!otpError) e.target.style.borderColor = '#e2e8f0';
@@ -1029,8 +1029,8 @@ export default function EnhancedSignaturePage() {
                 disabled={otpVerifying || otpCode.length !== 6 || otpMaxAttempts}
                 style={{
                   width: '100%',
-                  padding: '0.75rem 1.5rem',
-                  background: (otpVerifying || otpCode.length !== 6 || otpMaxAttempts) ? '#94a3b8' : '#4f46e5',
+                  padding: '0.875rem 1.5rem',
+                  background: (otpVerifying || otpCode.length !== 6 || otpMaxAttempts) ? '#94a3b8' : 'linear-gradient(135deg, #3B82F6 0%, #2563eb 100%)',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
@@ -1038,7 +1038,7 @@ export default function EnhancedSignaturePage() {
                   fontWeight: 600,
                   cursor: (otpVerifying || otpCode.length !== 6 || otpMaxAttempts) ? 'not-allowed' : 'pointer',
                   marginBottom: '1rem',
-                  transition: 'background 0.2s'
+                  transition: 'opacity 0.2s'
                 }}
               >
                 {otpVerifying ? 'Wird geprüft...' : 'Bestätigen'}
@@ -1054,7 +1054,7 @@ export default function EnhancedSignaturePage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: otpCooldown > 0 ? '#94a3b8' : '#4f46e5',
+                  color: otpCooldown > 0 ? '#94a3b8' : '#3B82F6',
                   cursor: otpCooldown > 0 ? 'not-allowed' : 'pointer',
                   fontSize: '0.875rem',
                   textDecoration: 'underline',

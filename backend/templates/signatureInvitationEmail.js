@@ -921,7 +921,7 @@ function generateOtpEmailHTML(data) {
 
     <!-- OTP Code Display -->
     <div style="text-align: center; margin: 30px 0;">
-      <div style="display: inline-block; background-color: #f0f4ff; border: 2px solid #4f46e5; border-radius: 12px; padding: 20px 40px;">
+      <div style="display: inline-block; background-color: #eff6ff; border: 2px solid #3B82F6; border-radius: 12px; padding: 20px 40px;">
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;">
           Ihr Verifizierungscode
         </p>
