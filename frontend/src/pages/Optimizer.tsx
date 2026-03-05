@@ -2525,7 +2525,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
         />
       )}
 
-      <div className={`${styles.optimizer} contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
+      <div className={`${styles.optimizer} ${highlightedText ? styles.splitViewActive : ''} contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
         <div
           className={`contract-container ${optimizations.length > 0 ? 'has-results' : ''}`}
           style={optimizations.length > 0 ? { maxWidth: '1200px' } : undefined}
