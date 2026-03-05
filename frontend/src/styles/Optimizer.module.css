@@ -1604,7 +1604,8 @@ html {
 /* ============================================================
    📄 SPLIT VIEW - PDF neben Optimierungen
    ============================================================ */
-.splitViewActive :global(.contract-container) {
+.splitViewContainer:global(.contract-container),
+.splitViewContainer:global(.contract-container.has-results) {
   max-width: none !important;
   margin: 0 !important;
 }
