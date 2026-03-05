@@ -2528,10 +2528,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
       <div className={`${styles.optimizer} contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
         <div
           className={`contract-container ${optimizations.length > 0 ? 'has-results' : ''}`}
-          style={highlightedText
-            ? { maxWidth: 'none', margin: '0', padding: '40px 24px' }
-            : optimizations.length > 0 ? { maxWidth: '1200px' } : undefined
-          }
+          style={optimizations.length > 0 ? { maxWidth: '1200px' } : undefined}
           onClick={(e) => {
             if (highlightedText && e.target === e.currentTarget) {
               setHighlightedText(null);
