@@ -857,6 +857,7 @@ export default function Optimizer() {
 
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hasManuallyReset = useRef(false);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
   const pdfViewerRef = useRef<HTMLDivElement>(null); // Ref für PDF-Vorschau Section
@@ -1004,8 +1005,8 @@ export default function Optimizer() {
     const state = location.state as { contractId?: string } | null;
     const stateContractId = state?.contractId;
 
-    // Only run if we have contractId in state but not in URL params
-    if (stateContractId && !contractId && isPremium && !file) {
+    // Only run if we have contractId in state but not in URL params (skip after manual reset)
+    if (stateContractId && !contractId && isPremium && !file && !hasManuallyReset.current) {
       const loadContractFromState = async () => {
         try {
           console.log('[LP-OPTIMIZER] Loading contract from state:', stateContractId);
@@ -1076,7 +1077,7 @@ export default function Optimizer() {
 
   // 🆕 NEW: Load job from Legal Pulse handoff
   useEffect(() => {
-    if (jobId && isPremium && !file) {
+    if (jobId && isPremium && !file && !hasManuallyReset.current) {
       const loadJobFromLegalPulse = async () => {
         try {
           console.log('[LP-OPTIMIZER] Loading job:', jobId);
@@ -1172,7 +1173,7 @@ export default function Optimizer() {
 
   // ✅ NEW: Load contract from URL parameter (with saved optimizations!)
   useEffect(() => {
-    if (contractId && isPremium && !file) {
+    if (contractId && isPremium && !file && !hasManuallyReset.current) {
       const loadContractFromUrl = async () => {
         try {
           // Step 1: Get contract metadata
@@ -1900,6 +1901,7 @@ export default function Optimizer() {
 
   // ✅ SIMPLIFIED: Handlers
   const handleReset = useCallback(() => {
+    hasManuallyReset.current = true;
     setFile(null);
     setOptimizations([]);
     setError(null);
@@ -1912,6 +1914,9 @@ export default function Optimizer() {
     setAnalysisData(null);
     setOptimizationResult(null);
     setSelectedOptimizations(new Set());
+    setPreloadedContractName(null);
+    setLegalPulseContext(null);
+    setHighlightedText(null);
     // 💾 Auto-Save leeren bei Reset
     localStorage.removeItem('optimizer_autosave');
   }, []);
@@ -1969,6 +1974,7 @@ export default function Optimizer() {
         return;
       }
 
+      hasManuallyReset.current = false;
       setFile(selectedFile);
       setError(null);
     }
