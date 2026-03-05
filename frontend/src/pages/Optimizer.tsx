@@ -3035,14 +3035,35 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             </div>
           )}
 
-          {/* 🎨 Premium Analysis Progress - Apple/Microsoft Level */}
+          {/* 🎨 Premium Analysis Progress - Modal Overlay */}
           {isAnalyzing && (
-            <AnalysisProgressComponent
-              progress={mapLegacyToProgress({
-                progress: analysisProgress,
-                stage: undefined // Will be auto-detected from progress percentage
-              })}
-            />
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              background: 'rgba(0, 0, 0, 0.3)'
+            }}>
+              <div style={{
+                width: '100%',
+                maxWidth: '520px',
+                padding: '0 24px'
+              }}>
+                <AnalysisProgressComponent
+                  progress={mapLegacyToProgress({
+                    progress: analysisProgress,
+                    stage: undefined // Will be auto-detected from progress percentage
+                  })}
+                />
+              </div>
+            </div>
           )}
 
           {/* Error Message */}
