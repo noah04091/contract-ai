@@ -2535,6 +2535,9 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
             }
           }}
         >
+          {/* Alles vor den Results: im Split-View ausblenden */}
+          <div style={highlightedText ? { display: 'none' } : undefined}>
+
           {/* Hero Section - Better Contracts Style */}
           <div className="contract-header">
             <div className="contract-hero-icon">
@@ -3128,6 +3131,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               </motion.div>
             )}
           </AnimatePresence>
+
+          </div>{/* Ende: Split-View Hide-Wrapper */}
 
           {/* Results Section - 🆕 v2.0: Auch bei 0 Optimierungen zeigen (Perfect Contract UI) */}
           <AnimatePresence>
