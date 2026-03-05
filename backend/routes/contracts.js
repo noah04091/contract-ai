@@ -910,8 +910,10 @@ async function enrichContractWithAnalysis(contract) {
 // GET /contracts – alle Verträge mit Events
 // Note: verifyToken wird bereits im Router-Mount (server.js) aufgerufen
 router.get("/", async (req, res) => {
+  const _t0 = Date.now();
   try {
     await ensureDb();
+    const _t1 = Date.now();
     // ✅ Pagination: limit & skip aus Query-Parametern (optional, fallback auf ALLE)
     const limit = parseInt(req.query.limit) || 0; // 0 = keine Limitierung (Backward-Compatible!)
     const skip = parseInt(req.query.skip) || 0;
@@ -926,10 +928,12 @@ router.get("/", async (req, res) => {
     const riskFilter = req.query.riskFilter || 'all'; // ✅ Legal Pulse: Risk Level Filter
 
     // 👥 Team-Management: Prüfe ob User zu einer Organisation gehört
+    const _t2 = Date.now();
     const membership = await OrganizationMember.findOne({
       userId: new ObjectId(req.user.userId),
       isActive: true
     });
+    const _t3 = Date.now();
 
     // ✅ MongoDB Filter-Objekt aufbauen
     let mongoFilter;
@@ -1166,13 +1170,20 @@ router.get("/", async (req, res) => {
         sortOptions = { createdAt: -1 };
     }
 
-    // 🚀 OPTIMIERT: Single Aggregation mit $lookup statt N+1 Queries
-    // Vorher: Bei 20 Verträgen = 60 Queries (3 pro Vertrag) + 1 countDocuments
-    // Jetzt: Bei 20 Verträgen = 1 Query mit $lookup JOINs + 1 schneller $count
+    // 🚀 OPTIMIERT: Batch-Queries statt Aggregation
+    const _t4 = Date.now();
     const { contracts: enrichedContracts, totalCount } = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
+    const _t5 = Date.now();
 
+    // ✅ Response mit Pagination-Info + Timing
+    const _timing = {
+      ensureDb: (_t1 - _t0) + 'ms',
+      orgCheck: (_t3 - _t2) + 'ms',
+      enrichment: (_t5 - _t4) + 'ms',
+      total: (_t5 - _t0) + 'ms'
+    };
+    console.log('[PERF] GET /contracts:', JSON.stringify(_timing));
 
-    // ✅ Response mit Pagination-Info
     res.json({
       contracts: enrichedContracts,
       pagination: {
@@ -1180,7 +1191,8 @@ router.get("/", async (req, res) => {
         limit: limit || totalCount,
         skip: skip,
         hasMore: skip + enrichedContracts.length < totalCount
-      }
+      },
+      _timing
     });
   } catch (err) {
     console.error("❌ Fehler beim Laden der Verträge:", err.message);
