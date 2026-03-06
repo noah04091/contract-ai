@@ -578,145 +578,85 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
   console.error("❌ MongoDB-Fehler (contracts.js):", err);
 });
 
-// 🔄 Aggregation Pipeline (Events + Envelopes) + Batch-Analysis-Query (indexed)
-// Analysis-Lookup ist SEPARAT weil: $expr mit $toString kann keine Indexes nutzen
-// Events + Envelopes bleiben im Pipeline (indexed, schnell, 1 Roundtrip)
+// 🚀 Keine $lookup-Aggregation mehr — ALLE Lookups als parallele Batch-Queries
+// $expr-basierte $lookups (auch für Events/Envelopes) können Indexes nicht nutzen
+// und verursachen pro Vertrag einen Collection-Scan → 34 Verträge × 3 Collections = ~100 Scans
+// Batch-Queries mit $in nutzen Indexes und laufen parallel → drastisch schneller
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
   const t0 = Date.now();
 
-  // Step 1: Count
-  const countResult = await contractsCollection.aggregate([
-    { $match: mongoFilter },
-    { $count: "total" }
-  ]).toArray();
+  // Step 1: Count + Contracts parallel laden (beide nutzen userId Index)
+  const [countResult, contracts] = await Promise.all([
+    contractsCollection.aggregate([{ $match: mongoFilter }, { $count: "total" }]).toArray(),
+    contractsCollection
+      .find(mongoFilter, {
+        projection: {
+          fullText: 0, content: 0, extractedText: 0,
+          detailedLegalOpinion: 0, rawHtmlContent: 0, optimizedContent: 0
+        }
+      })
+      .sort(sortOptions)
+      .skip(skip > 0 ? skip : 0)
+      .limit(limit > 0 ? limit : 0)
+      .toArray()
+  ]);
   const totalCount = countResult[0]?.total || 0;
-
-  if (totalCount === 0) {
-    return { contracts: [], totalCount: 0, _enrichTiming: { total: (Date.now()-t0)+'ms' } };
-  }
 
   const t1 = Date.now();
 
-  // Step 2: Aggregation — NUR Events + Envelopes (kein Analysis-$lookup mehr)
-  const pipeline = [
-    { $match: mongoFilter },
-    { $sort: sortOptions },
-  ];
-
-  if (skip > 0) {
-    pipeline.push({ $skip: skip });
-  }
-  if (limit > 0) {
-    pipeline.push({ $limit: limit });
+  if (contracts.length === 0) {
+    return { contracts: [], totalCount, _enrichTiming: { base: (t1-t0)+'ms', total: (t1-t0)+'ms' } };
   }
 
-  // $lookup Events (indexed: contractId + status + date)
-  pipeline.push({
-    $lookup: {
-      from: "contract_events",
-      let: { contractId: "$_id" },
-      pipeline: [
-        {
-          $match: {
-            $expr: { $eq: ["$contractId", "$$contractId"] },
-            status: { $ne: "dismissed" }
-          }
-        },
-        { $sort: { date: 1 } },
-        { $limit: 5 },
-        { $project: { _id: 1, type: 1, title: 1, date: 1, severity: 1, status: 1 } }
-      ],
-      as: "upcomingEvents"
-    }
-  });
+  // Step 2: Alle 3 Batch-Lookups PARALLEL (jeder nutzt Indexes)
+  const contractIds = contracts.map(c => c._id);
+  const analysisIds = contracts.map(c => c.analysisId).filter(id => id != null);
+  const idObjects = analysisIds.map(id => { try { return new ObjectId(id); } catch { return id; } });
 
-  // $lookup Envelopes (indexed: contractId + createdAt)
-  pipeline.push({
-    $lookup: {
-      from: "envelopes",
-      let: { contractId: "$_id" },
-      pipeline: [
-        { $match: { $expr: { $eq: ["$contractId", "$$contractId"] } } },
-        { $sort: { createdAt: -1 } },
-        { $limit: 1 },
-        { $project: { _id: 1, status: 1, signers: 1, s3KeySealed: 1, completedAt: 1, expiresAt: 1 } }
-      ],
-      as: "envelopeData"
-    }
-  });
+  const [analysesByIdArr, allEvents, allEnvelopes] = await Promise.all([
+    // Analysis: per _id (nutzt _id Index)
+    idObjects.length > 0
+      ? analysisCollection.find({ _id: { $in: idObjects } }).toArray()
+      : Promise.resolve([]),
 
-  // Transformation: Events + Envelopes
-  pipeline.push({
-    $addFields: {
-      upcomingEvents: {
-        $map: {
-          input: "$upcomingEvents",
-          as: "e",
-          in: {
-            id: "$$e._id", type: "$$e.type", title: "$$e.title",
-            date: "$$e.date", severity: "$$e.severity", status: "$$e.status"
-          }
-        }
-      },
-      envelope: {
-        $cond: {
-          if: { $gt: [{ $size: "$envelopeData" }, 0] },
-          then: {
-            _id: { $arrayElemAt: ["$envelopeData._id", 0] },
-            signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
-            signersTotal: { $size: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] } },
-            signersSigned: {
-              $size: {
-                $filter: {
-                  input: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] },
-                  as: "s",
-                  cond: { $eq: ["$$s.status", "SIGNED"] }
-                }
-              }
-            },
-            s3KeySealed: { $arrayElemAt: ["$envelopeData.s3KeySealed", 0] },
-            completedAt: { $arrayElemAt: ["$envelopeData.completedAt", 0] },
-            expiresAt: { $arrayElemAt: ["$envelopeData.expiresAt", 0] }
-          },
-          else: null
-        }
-      },
-      signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
-      signatureEnvelopeId: { $arrayElemAt: ["$envelopeData._id", 0] }
-    }
-  });
+    // Events: per contractId $in (nutzt idx_contractId_status_date)
+    eventsCollection
+      .find({ contractId: { $in: contractIds }, status: { $ne: "dismissed" } })
+      .sort({ date: 1 })
+      .toArray(),
 
-  // Große Felder entfernen
-  pipeline.push({
-    $project: {
-      envelopeData: 0,
-      fullText: 0, content: 0, extractedText: 0,
-      detailedLegalOpinion: 0, rawHtmlContent: 0, optimizedContent: 0
-    }
-  });
+    // Envelopes: per contractId $in (nutzt idx_contractId_createdAt)
+    _db.collection("envelopes")
+      .find({ contractId: { $in: contractIds } })
+      .sort({ createdAt: -1 })
+      .toArray()
+  ]);
 
-  const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
   const t2 = Date.now();
 
-  // Step 3: Analysis-Anreicherung als Batch-Query (gleiche Logik wie enrichContractWithAnalysis)
-  // Nutzt "analyses" Collection (korrekt!) + _id Index + userId/contractName Index
-  const analysisIds = contracts
-    .map(c => c.analysisId)
-    .filter(id => id != null);
-
-  // 3a: Alle Analysen per _id laden (nutzt _id Index, O(1))
+  // Step 3: Maps bauen für O(1) Zugriff
   const analysesByIdMap = new Map();
-  if (analysisIds.length > 0) {
-    const idObjects = analysisIds.map(id => {
-      try { return new ObjectId(id); } catch { return id; }
-    });
-    const byId = await analysisCollection.find({ _id: { $in: idObjects } }).toArray();
-    for (const a of byId) {
-      analysesByIdMap.set(a._id.toString(), a);
+  for (const a of analysesByIdArr) {
+    analysesByIdMap.set(a._id.toString(), a);
+  }
+
+  const eventsMap = new Map();
+  for (const e of allEvents) {
+    const key = e.contractId.toString();
+    if (!eventsMap.has(key)) eventsMap.set(key, []);
+    const arr = eventsMap.get(key);
+    if (arr.length < 5) {
+      arr.push({ id: e._id, type: e.type, title: e.title, date: e.date, severity: e.severity, status: e.status });
     }
   }
 
-  // 3b: Contracts ohne Analysis-Match identifizieren
+  const envelopeMap = new Map();
+  for (const env of allEnvelopes) {
+    const key = env.contractId.toString();
+    if (!envelopeMap.has(key)) envelopeMap.set(key, env);
+  }
+
+  // Step 4: Contracts ohne Analysis-Match → Fallback per Name (1 Batch-Query)
   const needFallback = contracts.filter(c => {
     const hasDirectAnalysis = c.analysis && typeof c.analysis === 'object' && Object.keys(c.analysis).length > 0;
     if (hasDirectAnalysis) return false;
@@ -724,7 +664,6 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     return true;
   });
 
-  // 3c: Fallback per userId + Name (1 Batch-Query, nutzt idx_userId_contractName)
   const fallbackMap = new Map();
   if (needFallback.length > 0) {
     const orConditions = [];
@@ -747,58 +686,78 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
 
   const t3 = Date.now();
 
-  // Step 4: Analysis-Daten auf Contracts mappen (identisch zu enrichContractWithAnalysis)
+  // Step 5: Alles zusammenführen (identische Logik wie enrichContractWithAnalysis)
   for (const contract of contracts) {
-    const hasDirectAnalysis = contract.analysis && typeof contract.analysis === 'object' && Object.keys(contract.analysis).length > 0;
-    if (hasDirectAnalysis) continue; // Contract hat schon Analysis direkt gespeichert
+    // --- Events ---
+    contract.upcomingEvents = eventsMap.get(contract._id.toString()) || [];
 
-    // Primär: per analysisId
-    let analysis = null;
-    if (contract.analysisId) {
-      analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
-    }
-
-    // Fallback: per userId + Name
-    if (!analysis && contract.name) {
-      const uid = contract.userId?.toString();
-      analysis = fallbackMap.get(uid + '::' + contract.name) || null;
-    }
-
-    if (analysis) {
-      contract.analysis = {
-        summary: analysis.summary,
-        legalAssessment: analysis.legalAssessment,
-        suggestions: analysis.suggestions,
-        comparison: analysis.comparison,
-        contractScore: analysis.contractScore,
-        analysisId: analysis._id,
-        lastAnalyzed: analysis.createdAt
+    // --- Envelope ---
+    const env = envelopeMap.get(contract._id.toString());
+    if (env) {
+      const signers = env.signers || [];
+      contract.envelope = {
+        _id: env._id,
+        signatureStatus: env.status,
+        signersTotal: signers.length,
+        signersSigned: signers.filter(s => s.status === 'SIGNED').length,
+        s3KeySealed: env.s3KeySealed,
+        completedAt: env.completedAt,
+        expiresAt: env.expiresAt
       };
+      contract.signatureStatus = env.status;
+      contract.signatureEnvelopeId = env._id;
+    } else {
+      contract.envelope = null;
     }
 
-    // Root-Level Felder (Priorität: Contract > Analysis)
-    contract.summary = contract.summary || analysis?.summary || null;
-    contract.contractScore = contract.contractScore || analysis?.contractScore || null;
-    contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
-    contract.suggestions = contract.suggestions || analysis?.suggestions || null;
-    contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
-    contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
-    contract.importantDates = contract.importantDates || analysis?.importantDates || null;
-    contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
-    contract.recommendations = contract.recommendations || analysis?.recommendations || null;
-    contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
+    // --- Analysis ---
+    const hasDirectAnalysis = contract.analysis && typeof contract.analysis === 'object' && Object.keys(contract.analysis).length > 0;
+    if (!hasDirectAnalysis) {
+      let analysis = null;
+      if (contract.analysisId) {
+        analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
+      }
+      if (!analysis && contract.name) {
+        analysis = fallbackMap.get(contract.userId?.toString() + '::' + contract.name) || null;
+      }
+
+      if (analysis) {
+        contract.analysis = {
+          summary: analysis.summary,
+          legalAssessment: analysis.legalAssessment,
+          suggestions: analysis.suggestions,
+          comparison: analysis.comparison,
+          contractScore: analysis.contractScore,
+          analysisId: analysis._id,
+          lastAnalyzed: analysis.createdAt
+        };
+      }
+
+      contract.summary = contract.summary || analysis?.summary || null;
+      contract.contractScore = contract.contractScore || analysis?.contractScore || null;
+      contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
+      contract.suggestions = contract.suggestions || analysis?.suggestions || null;
+      contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
+      contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
+      contract.importantDates = contract.importantDates || analysis?.importantDates || null;
+      contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
+      contract.recommendations = contract.recommendations || analysis?.recommendations || null;
+      contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
+    }
   }
 
   const t4 = Date.now();
 
   const _enrichTiming = {
-    count: (t1-t0) + 'ms',
-    aggregation: (t2-t1) + 'ms',
-    analysisLookup: (t3-t2) + 'ms',
+    base: (t1-t0) + 'ms',
+    lookups: (t2-t1) + 'ms',
+    fallback: (t3-t2) + 'ms',
     merge: (t4-t3) + 'ms',
     total: (t4-t0) + 'ms',
     contracts: contracts.length,
     analysisByIdCount: analysesByIdMap.size,
+    eventsCount: allEvents.length,
+    envelopesCount: allEnvelopes.length,
     fallbackCount: needFallback.length
   };
   console.log('[PERF] enrichContracts:', JSON.stringify(_enrichTiming));
