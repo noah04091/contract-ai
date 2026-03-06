@@ -398,52 +398,56 @@ const providerPatterns = {
 };
 
 // Provider Detection Function - NEU
+// Hilfsfunktion: Regex-Sonderzeichen escapen (für z.B. "R+V")
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function detectProvider(text, filename = '') {
   if (!text && !filename) return null;
-  
+
   const searchText = (text + ' ' + filename).toLowerCase();
   let bestMatch = null;
   let highestScore = 0;
-  
+
   for (const [key, provider] of Object.entries(providerPatterns)) {
     let score = 0;
-    
-    // Check keywords
+
+    // Check keywords - NUR Wortgrenzen-Match (verhindert "ing" in "Kündigung")
     for (const keyword of provider.keywords) {
-      if (searchText.includes(keyword.toLowerCase())) {
-        score += keyword.length * 2;
-        // Bonus for exact word match
-        const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-        if (regex.test(searchText)) {
-          score += 10;
-        }
+      const keywordRegex = new RegExp(`\\b${escapeRegex(keyword)}\\b`, 'i');
+      if (keywordRegex.test(searchText)) {
+        score += keyword.length * 2 + 10;
       }
     }
-    
-    // Check display name
-    if (searchText.includes(provider.displayName.toLowerCase())) {
+
+    // Check display name - NUR als eigenständiges Wort
+    const displayRegex = new RegExp(`\\b${escapeRegex(provider.displayName)}\\b`, 'i');
+    if (displayRegex.test(searchText)) {
       score += 20;
     }
-    
-    // Check full name
-    if (searchText.includes(provider.name.toLowerCase())) {
+
+    // Check full name - NUR als eigenständiges Wort
+    const nameRegex = new RegExp(`\\b${escapeRegex(provider.name)}\\b`, 'i');
+    if (nameRegex.test(searchText)) {
       score += 15;
     }
-    
+
     if (score > highestScore) {
       highestScore = score;
       bestMatch = provider;
     }
   }
-  
+
   // Return provider with confidence score
-  if (bestMatch && highestScore > 10) {
+  // Schwelle 20: Mindestens ein vollständiger Wort-Match nötig
+  if (bestMatch && highestScore >= 20) {
     return {
       ...bestMatch,
       confidence: Math.min(100, Math.round((highestScore / 50) * 100))
     };
   }
-  
+
   return null;
 }
 
