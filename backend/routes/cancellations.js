@@ -28,6 +28,14 @@ try {
 
 const router = express.Router();
 
+/** Provider kann String oder Objekt sein — immer als String normalisieren */
+function normalizeProvider(provider) {
+  if (!provider) return "";
+  if (typeof provider === "string") return provider;
+  if (typeof provider === "object") return provider.displayName || provider.name || "";
+  return String(provider);
+}
+
 /**
  * Upload PDF to S3
  * @returns {string|null} S3 key or null on failure
@@ -286,7 +294,7 @@ router.get("/", verifyToken, async (req, res) => {
         id: c._id,
         contractId: c.contractId,
         contractName: c.contractName,
-        provider: c.provider,
+        provider: normalizeProvider(c.provider),
         status: c.status,
         sendMethod: c.sendMethod,
         recipientEmail: c.recipientEmail,
@@ -382,9 +390,13 @@ router.get("/:id", verifyToken, async (req, res) => {
       });
     }
 
+    // Provider normalisieren bevor es zum Frontend geht
     res.json({
       success: true,
-      cancellation
+      cancellation: {
+        ...cancellation,
+        provider: normalizeProvider(cancellation.provider)
+      }
     });
 
   } catch (error) {
