@@ -12,10 +12,7 @@ import {
   Calendar,
   Loader,
   Mail,
-  ExternalLink,
-  CheckCircle,
-  AlertCircle,
-  Clock
+  ExternalLink
 } from "lucide-react";
 import styles from "../styles/CancellationArchive.module.css";
 
