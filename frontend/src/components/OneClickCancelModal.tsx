@@ -1,7 +1,8 @@
 // src/components/OneClickCancelModal.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   X,
   Send,
   Mail,
@@ -14,7 +15,10 @@ import {
   Calendar,
   Building2,
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Check,
+  Clock,
+  Scale
 } from "lucide-react";
 import styles from "../styles/OneClickCancelModal.module.css";
 import { fixUtf8Display } from "../utils/textUtils";
@@ -45,6 +49,15 @@ interface Contract {
   expiryDate?: string;
   amount?: number;
   address?: ProviderAddress;
+  kuendigung?: string;
+  cancellationPeriod?: {
+    value?: number;
+    unit?: string;
+    inDays?: number;
+    type?: string;
+  };
+  nextCancellationDate?: string;
+  isAutoRenewal?: boolean;
 }
 
 interface OneClickCancelModalProps {
@@ -92,6 +105,22 @@ export default function OneClickCancelModal({
   const [error, setError] = useState("");
   const [providerDetected, setProviderDetected] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const navigate = useNavigate();
+  const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Compute deadline warning
+  const deadlineWarning = (() => {
+    if (!contract.nextCancellationDate && !contract.kuendigung) return null;
+    if (contract.nextCancellationDate) {
+      const deadline = new Date(contract.nextCancellationDate);
+      const today = new Date();
+      const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays > 30) return { className: styles.green, text: `Kündigung rechtzeitig möglich — Frist: ${deadline.toLocaleDateString('de-DE')}` };
+      if (diffDays >= 7) return { className: styles.yellow, text: `Kündigungsfrist endet in ${diffDays} Tagen!` };
+      return { className: styles.red, text: 'Kündigungsfrist möglicherweise abgelaufen' };
+    }
+    return { className: styles.neutral, text: `Kündigungsfrist: ${contract.kuendigung}` };
+  })();
 
   useEffect(() => {
     if (show && contract) {
@@ -154,6 +183,7 @@ export default function OneClickCancelModal({
       dissatisfied: "Ich bin mit der Leistung nicht zufrieden.",
       no_longer_needed: "Ich benötige die Leistung nicht mehr.",
       price_increase: "Die angekündigte Preiserhöhung ist für mich nicht akzeptabel.",
+      service_change: "Die angekündigte Leistungsänderung ist für mich nicht akzeptabel.",
       other: formData.additionalNotes
     }[formData.cancellationReason];
 
@@ -186,7 +216,7 @@ ${formData.customerNumber ? `- Kundennummer: ${formData.customerNumber}` : ""}
 ${contract.amount ? `- Monatlicher Betrag: ${contract.amount}€` : ""}
 
 ${reasonText ? `**Kündigungsgrund:** ${reasonText}` : ""}
-
+${(formData.cancellationReason === "price_increase" || formData.cancellationReason === "service_change") ? "\nIch mache hiermit von meinem Sonderkündigungsrecht gemäß § 314 BGB Gebrauch." : ""}
 Ich bitte um eine schriftliche Bestätigung der Kündigung unter Angabe des Beendigungszeitpunktes.
 
 ${formData.additionalNotes && formData.cancellationReason !== "other" ? `\n**Zusätzliche Anmerkungen:**\n${formData.additionalNotes}` : ""}
@@ -269,10 +299,10 @@ ${formData.customerName}
         }));
         
         // Call success callback after delay
-        setTimeout(() => {
+        autoCloseRef.current = setTimeout(() => {
           if (onSuccess) onSuccess();
           onClose();
-        }, 3000);
+        }, 8000);
       } else {
         throw new Error(data.error || "Fehler beim Senden der Kündigung");
       }
@@ -363,6 +393,33 @@ ${formData.customerName}
             </button>
           </div>
 
+          {/* Step Indicator */}
+          <div className={styles.stepIndicator}>
+            {[
+              { id: "form", label: "Daten" },
+              { id: "preview", label: "Vorschau" },
+              { id: "sending", label: "Versand" },
+              { id: "success", label: "Fertig" }
+            ].map((s, index, arr) => {
+              const currentIndex = ["form", "preview", "sending", "success"].indexOf(step);
+              const isCompleted = index < currentIndex;
+              const isActive = index === currentIndex;
+              return (
+                <Fragment key={s.id}>
+                  <div className={`${styles.step} ${isCompleted ? styles.completed : ''} ${isActive ? styles.active : ''}`}>
+                    <div className={styles.stepNumber}>
+                      {isCompleted ? <Check size={16} /> : index + 1}
+                    </div>
+                    <span className={styles.stepLabel}>{s.label}</span>
+                  </div>
+                  {index < arr.length - 1 && (
+                    <div className={`${styles.stepLine} ${isCompleted ? styles.completed : ''}`} />
+                  )}
+                </Fragment>
+              );
+            })}
+          </div>
+
           <div className={styles.content}>
             {step === "form" && (
               <motion.div 
@@ -437,7 +494,21 @@ ${formData.customerName}
                       Vertrag ansehen
                     </button>
                   </div>
-                  
+
+                  {deadlineWarning && (
+                    <div className={`${styles.deadlineWarning} ${deadlineWarning.className}`}>
+                      <Clock size={16} />
+                      <div>
+                        <span>{deadlineWarning.text}</span>
+                        {contract.isAutoRenewal && (
+                          <div className={styles.autoRenewalHint}>
+                            Vertrag verlängert sich automatisch
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {(formData.contractNumber || formData.customerNumber) && (
                     <div className={styles.autoFilledNotice}>
                       <CheckCircle size={16} />
@@ -537,9 +608,23 @@ ${formData.customerName}
                       <option value="dissatisfied">Unzufrieden mit der Leistung</option>
                       <option value="no_longer_needed">Leistung nicht mehr benötigt</option>
                       <option value="price_increase">Preiserhöhung</option>
+                      <option value="service_change">Leistungsänderung</option>
                       <option value="other">Sonstiges</option>
                     </select>
                   </div>
+
+                  {(formData.cancellationReason === "price_increase" || formData.cancellationReason === "service_change") && (
+                    <div className={styles.specialRightNotice}>
+                      <Scale size={16} />
+                      <div>
+                        <strong>Sonderkündigungsrecht</strong>
+                        <p>
+                          Bei einer {formData.cancellationReason === "price_increase" ? "Preiserhöhung" : "Leistungsänderung"} haben Sie ein Sonderkündigungsrecht gem. § 314 BGB.
+                          Sie können den Vertrag außerordentlich kündigen.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className={styles.formGroup}>
                     <label>Zusätzliche Anmerkungen</label>
@@ -722,6 +807,19 @@ ${formData.customerName}
                 <p className={styles.successInfo}>
                   Eine Kopie wurde in Ihrem Archiv gespeichert.
                 </p>
+                {providerDetected && (
+                  <button
+                    className={styles.betterContractsBtn}
+                    onClick={() => {
+                      if (autoCloseRef.current) clearTimeout(autoCloseRef.current);
+                      onClose();
+                      navigate('/better-contracts');
+                    }}
+                  >
+                    <Sparkles size={16} />
+                    Günstigere Alternative finden
+                  </button>
+                )}
               </motion.div>
             )}
           </div>

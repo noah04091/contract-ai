@@ -2325,7 +2325,8 @@ export default function LegalPulse() {
             contractNumber: contractToCancel.contractNumber,
             customerNumber: contractToCancel.customerNumber,
             expiryDate: contractToCancel.expiryDate,
-            amount: contractToCancel.amount
+            amount: contractToCancel.amount,
+            kuendigung: contractToCancel.kuendigung
           }}
           show={showCancelModal}
           onClose={() => {

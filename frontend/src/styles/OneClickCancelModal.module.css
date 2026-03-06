@@ -727,6 +727,179 @@
   transform: none;
 }
 
+/* Step Indicator */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5ea;
+  background: #f9f9fb;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.stepNumber {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #9CA3AF;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.step.active .stepNumber {
+  background: linear-gradient(135deg, #007aff, #0051d5);
+  color: white;
+  border-color: rgba(0, 122, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.step.completed .stepNumber {
+  background: #34c759;
+  color: white;
+  border-color: rgba(52, 199, 89, 0.3);
+}
+
+.stepLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9CA3AF;
+  white-space: nowrap;
+}
+
+.step.active .stepLabel {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+.step.completed .stepLabel {
+  color: #34c759;
+}
+
+.stepLine {
+  flex: 1;
+  height: 2px;
+  background: #E5E7EB;
+  margin: 0 8px;
+  margin-top: -12px;
+  transition: background 0.3s ease;
+}
+
+.stepLine.completed {
+  background: #34c759;
+}
+
+/* Deadline Warning */
+.deadlineWarning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.deadlineWarning.green {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34c759;
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.deadlineWarning.yellow {
+  background: rgba(255, 204, 0, 0.1);
+  color: #CC8800;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+}
+
+.deadlineWarning.red {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.deadlineWarning.neutral {
+  background: rgba(0, 122, 255, 0.05);
+  color: #007aff;
+  border: 1px solid rgba(0, 122, 255, 0.15);
+}
+
+.autoRenewalHint {
+  font-size: 12px;
+  color: #86868b;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Special Cancellation Right Notice */
+.specialRightNotice {
+  display: flex;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 149, 0, 0.04));
+  border: 1px solid rgba(255, 149, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+
+.specialRightNotice strong {
+  font-size: 13px;
+  color: #CC8800;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.specialRightNotice p {
+  font-size: 12px;
+  color: #6e6e73;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.specialRightNotice svg {
+  flex-shrink: 0;
+  color: #FF9500;
+  margin-top: 2px;
+}
+
+/* BetterContracts CTA Button */
+.betterContractsBtn {
+  margin-top: 20px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 122, 255, 0.05));
+  color: #007aff;
+  border: 1px solid rgba(0, 122, 255, 0.3);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.betterContractsBtn:hover {
+  background: rgba(0, 122, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
   .overlay {
@@ -833,6 +1006,20 @@
   .editHint {
     font-size: 13px;
     padding: 10px 12px;
+  }
+
+  .stepIndicator {
+    padding: 12px 16px;
+  }
+
+  .stepNumber {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .stepLabel {
+    font-size: 10px;
   }
 }
 
@@ -970,5 +1157,9 @@
   .primaryBtn {
     padding: 10px 16px;
     font-size: 0.85rem;
+  }
+
+  .stepLabel {
+    display: none;
   }
 }

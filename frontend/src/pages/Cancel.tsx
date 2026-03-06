@@ -18,6 +18,10 @@ interface Contract {
     city?: string;
     zip?: string;
   };
+  kuendigung?: string;
+  cancellationPeriod?: { value?: number; unit?: string; inDays?: number; type?: string };
+  nextCancellationDate?: string;
+  isAutoRenewal?: boolean;
 }
 
 export default function Cancel() {
