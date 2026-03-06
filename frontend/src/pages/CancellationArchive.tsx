@@ -16,11 +16,22 @@ import {
 } from "lucide-react";
 import styles from "../styles/CancellationArchive.module.css";
 
+// Provider kann String oder Objekt sein (aus Contract-Analyse)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getProviderName(provider: any): string {
+  if (!provider) return "Unbekannter Anbieter";
+  if (typeof provider === "string") return provider;
+  if (typeof provider === "object") {
+    return provider.displayName || provider.name || "Unbekannter Anbieter";
+  }
+  return String(provider);
+}
+
 interface Cancellation {
   id: string;
   contractId?: string;
   contractName: string;
-  provider: string;
+  provider: string | Record<string, unknown>;
   status: string;
   sendMethod: string;
   recipientEmail?: string;
@@ -32,7 +43,7 @@ interface Cancellation {
 interface CancellationDetail {
   _id: string;
   contractName: string;
-  provider: string;
+  provider: string | Record<string, unknown>;
   status: string;
   sendMethod: string;
   recipientEmail?: string;
@@ -250,7 +261,7 @@ export default function CancellationArchive() {
                 <div className={styles.cardHeader}>
                   <div>
                     <h3 className={styles.contractName}>{c.contractName}</h3>
-                    <span className={styles.provider}>{c.provider || "Unbekannter Anbieter"}</span>
+                    <span className={styles.provider}>{getProviderName(c.provider)}</span>
                   </div>
                   {getStatusBadge(c.status)}
                 </div>
@@ -333,7 +344,7 @@ export default function CancellationArchive() {
                       </div>
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Anbieter</span>
-                        <span className={styles.detailValue}>{detail.provider || "–"}</span>
+                        <span className={styles.detailValue}>{getProviderName(detail.provider)}</span>
                       </div>
                       <div className={styles.detailRow}>
                         <span className={styles.detailLabel}>Status</span>
