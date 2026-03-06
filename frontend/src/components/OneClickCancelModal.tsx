@@ -305,12 +305,17 @@ ${formData.customerName}
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         credentials: 'include'
       });
-      const data = await res.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.fileUrl || data.url) {
+          window.open(data.fileUrl || data.url, '_blank');
+        }
       }
     } catch (err) {
       console.error('PDF konnte nicht geöffnet werden:', err);
