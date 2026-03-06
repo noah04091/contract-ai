@@ -586,15 +586,36 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   const t0 = Date.now();
 
   // Step 1: Count + Contracts parallel laden (beide nutzen userId Index)
+  // INCLUSION Projection: NUR die Felder laden die die Listenansicht braucht
+  // Spart ~80% Datentransfer (große Felder wie legalPulse, legalLens, embeddings werden NICHT geladen)
+  const LIST_PROJECTION = {
+    // Basis-Felder
+    name: 1, status: 1, userId: 1, createdAt: 1, updatedAt: 1,
+    // Vertrags-Details
+    expiryDate: 1, startDate: 1, kuendigung: 1, laufzeit: 1,
+    documentCategory: 1, uploadType: 1, s3Key: 1, folderId: 1,
+    // Analysis-Daten (direkt auf Contract)
+    analyzed: 1, analysis: 1, analysisId: 1,
+    contractScore: 1, summary: 1, risiken: 1, criticalIssues: 1,
+    suggestions: 1, legalAssessment: 1, quickFacts: 1,
+    importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+    // Status-Felder
+    isGenerated: 1, isOptimized: 1, gekuendigtZum: 1,
+    paymentStatus: 1, paymentAmount: 1, paymentFrequency: 1,
+    // Signatur
+    signatureStatus: 1, signatureEnvelopeId: 1,
+    // Reminder
+    reminderDays: 1, reminderSettings: 1,
+    // Org
+    organizationId: 1,
+    // Sort-Felder (auch wenn nicht angezeigt, für Sortierung nötig)
+    'legalPulse.riskScore': 1
+  };
+
   const [countResult, contracts] = await Promise.all([
     contractsCollection.aggregate([{ $match: mongoFilter }, { $count: "total" }]).toArray(),
     contractsCollection
-      .find(mongoFilter, {
-        projection: {
-          fullText: 0, content: 0, extractedText: 0,
-          detailedLegalOpinion: 0, rawHtmlContent: 0, optimizedContent: 0
-        }
-      })
+      .find(mongoFilter, { projection: LIST_PROJECTION })
       .sort(sortOptions)
       .skip(skip > 0 ? skip : 0)
       .limit(limit > 0 ? limit : 0)
@@ -614,9 +635,16 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   const idObjects = analysisIds.map(id => { try { return new ObjectId(id); } catch { return id; } });
 
   const [analysesByIdArr, allEvents, allEnvelopes] = await Promise.all([
-    // Analysis: per _id (nutzt _id Index)
+    // Analysis: per _id (nutzt _id Index) — NUR benötigte Felder laden (kein fullText!)
     idObjects.length > 0
-      ? analysisCollection.find({ _id: { $in: idObjects } }).toArray()
+      ? analysisCollection.find({ _id: { $in: idObjects } }, {
+          projection: {
+            summary: 1, legalAssessment: 1, suggestions: 1, comparison: 1,
+            contractScore: 1, createdAt: 1, criticalIssues: 1, quickFacts: 1,
+            importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+            userId: 1, contractName: 1, originalFileName: 1
+          }
+        }).toArray()
       : Promise.resolve([]),
 
     // Events: per contractId $in (nutzt idx_contractId_status_date)
@@ -676,7 +704,14 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
       );
     }
     if (orConditions.length > 0) {
-      const fallbackResults = await analysisCollection.find({ $or: orConditions }).toArray();
+      const fallbackResults = await analysisCollection.find({ $or: orConditions }, {
+          projection: {
+            summary: 1, legalAssessment: 1, suggestions: 1, comparison: 1,
+            contractScore: 1, createdAt: 1, criticalIssues: 1, quickFacts: 1,
+            importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+            userId: 1, contractName: 1, originalFileName: 1
+          }
+        }).toArray();
       for (const a of fallbackResults) {
         const key = a.userId?.toString() + '::' + (a.contractName || a.originalFileName);
         if (!fallbackMap.has(key)) fallbackMap.set(key, a);
