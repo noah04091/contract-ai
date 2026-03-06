@@ -97,9 +97,10 @@ const formatContractName = (name: string): string => {
 
 const getDaysRemaining = (date: string) => {
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
   const eventDate = new Date(date);
-  const diffTime = eventDate.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  eventDate.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return { text: "Heute", urgent: true };
   if (diffDays === 1) return { text: "Morgen", urgent: true };
   if (diffDays < 0) return { text: "Abgelaufen", urgent: true };
@@ -1602,7 +1603,10 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
                 {showForm ? 'Neues Ereignis' : 'Ereignis erstellen'}
               </h2>
               <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: '#6b7280' }}>
-                {date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                {(() => {
+                  const [y, m, d] = formData.date.split('-').map(Number);
+                  return new Date(y, m - 1, d).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                })()}
               </p>
             </div>
           </div>
@@ -1735,23 +1739,23 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
             </div>
 
             {/* Date & Time Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', maxWidth: '100%', overflow: 'hidden' }}>
-              <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                <label style={labelStyle}>Datum</label>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Datum *</label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  style={{ ...inputStyle, display: 'block' }}
+                  style={inputStyle}
                 />
               </div>
-              <div style={{ minWidth: 0, overflow: 'hidden' }}>
+              <div>
                 <label style={labelStyle}>Uhrzeit</label>
                 <input
                   type="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  style={{ ...inputStyle, display: 'block' }}
+                  style={inputStyle}
                 />
               </div>
             </div>

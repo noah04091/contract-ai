@@ -1258,9 +1258,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {calendarEvents.map((event) => {
               const eventDate = new Date(event.date);
+              eventDate.setHours(0, 0, 0, 0);
               const today = new Date();
               today.setHours(0, 0, 0, 0);
-              const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              const daysUntil = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
               const isPast = daysUntil < 0;
 
               const severityColors = {
