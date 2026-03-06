@@ -786,7 +786,21 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   console.log(perfMsg);
 
   // 🚀 V2: Gibt jetzt { contracts, totalCount } zurueck
-  return { contracts, totalCount };
+  const _enrichTiming = {
+    base: (t1-t0) + 'ms',
+    lookups: (t2-t1) + 'ms',
+    merge: (t3-t2) + 'ms',
+    fallback: (t4-t3) + 'ms',
+    total: (t4-t0) + 'ms',
+    counts: {
+      contracts: rawContracts.length,
+      analyses: analyses.length,
+      events: allEvents.length,
+      envelopes: allEnvelopes.length,
+      fallbackNeeded: contractsNeedingFallback.length
+    }
+  };
+  return { contracts, totalCount, _enrichTiming };
 }
 
 
@@ -1172,7 +1186,7 @@ router.get("/", async (req, res) => {
 
     // 🚀 OPTIMIERT: Batch-Queries statt Aggregation
     const _t4 = Date.now();
-    const { contracts: enrichedContracts, totalCount } = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
+    const { contracts: enrichedContracts, totalCount, _enrichTiming } = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
     const _t5 = Date.now();
 
     // ✅ Response mit Pagination-Info + Timing
@@ -1180,7 +1194,8 @@ router.get("/", async (req, res) => {
       ensureDb: (_t1 - _t0) + 'ms',
       orgCheck: (_t3 - _t2) + 'ms',
       enrichment: (_t5 - _t4) + 'ms',
-      total: (_t5 - _t0) + 'ms'
+      total: (_t5 - _t0) + 'ms',
+      enrichDetail: _enrichTiming
     };
     console.log('[PERF] GET /contracts:', JSON.stringify(_timing));
 
