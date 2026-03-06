@@ -2,18 +2,19 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  X, 
-  Send, 
-  Mail, 
-  FileText, 
-  CheckCircle, 
-  AlertCircle, 
+  X,
+  Send,
+  Mail,
+  FileText,
+  CheckCircle,
+  AlertCircle,
   Download,
   Loader,
   User,
   Calendar,
   Building2,
-  Sparkles
+  Sparkles,
+  ExternalLink
 } from "lucide-react";
 import styles from "../styles/OneClickCancelModal.module.css";
 import { fixUtf8Display } from "../utils/textUtils";
@@ -90,6 +91,7 @@ export default function OneClickCancelModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [providerDetected, setProviderDetected] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     if (show && contract) {
@@ -298,6 +300,25 @@ ${formData.customerName}
     window.URL.revokeObjectURL(url);
   };
 
+  const handleOpenPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err) {
+      console.error('PDF konnte nicht geöffnet werden:', err);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   if (!show) return null;
 
   return (
@@ -396,10 +417,21 @@ ${formData.customerName}
                 </div>
 
                 <div className={styles.formSection}>
-                  <h3>
-                    <FileText size={18} />
-                    Vertragsdaten
-                  </h3>
+                  <div className={styles.sectionHeader}>
+                    <h3>
+                      <FileText size={18} />
+                      Vertragsdaten
+                    </h3>
+                    <button
+                      className={styles.pdfButton}
+                      onClick={handleOpenPdf}
+                      disabled={pdfLoading}
+                      type="button"
+                    >
+                      {pdfLoading ? <Loader size={14} className={styles.spinner} /> : <ExternalLink size={14} />}
+                      Vertrag ansehen
+                    </button>
+                  </div>
                   
                   {(formData.contractNumber || formData.customerNumber) && (
                     <div className={styles.autoFilledNotice}>
