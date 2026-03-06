@@ -154,8 +154,8 @@ async function ensurePerformanceIndexes(db) {
     { collection: 'contracts', index: { userId: 1, createdAt: -1 }, name: 'idx_userId_createdAt' },
     { collection: 'contracts', index: { organizationId: 1, createdAt: -1 }, name: 'idx_orgId_createdAt', options: { sparse: true } },
     // Analysis Collection
-    { collection: 'analysis', index: { userId: 1, contractName: 1 }, name: 'idx_userId_contractName' },
-    { collection: 'analysis', index: { userId: 1, originalFileName: 1 }, name: 'idx_userId_originalFileName' },
+    { collection: 'analyses', index: { userId: 1, contractName: 1 }, name: 'idx_userId_contractName' },
+    { collection: 'analyses', index: { userId: 1, originalFileName: 1 }, name: 'idx_userId_originalFileName' },
     // Contract Events Collection
     { collection: 'contract_events', index: { contractId: 1, status: 1, date: 1 }, name: 'idx_contractId_status_date' },
     { collection: 'contract_events', index: { userId: 1, status: 1, date: 1 }, name: 'idx_userId_status_date' },
