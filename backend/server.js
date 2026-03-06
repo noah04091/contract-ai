@@ -1756,6 +1756,50 @@ const connectDB = async () => {
         }
       }));
 
+      // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
+      // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
+      cron.schedule("30 6 * * *", async () => {
+        console.log("🔥 [CACHE-WARM] Starte Cache-Warming für Contracts-Daten...");
+        try {
+          const warmDb = await database.connect();
+          const usersWithContracts = await warmDb.collection("contracts").aggregate([
+            { $group: { _id: "$userId" } },
+            { $limit: 50 }
+          ]).toArray();
+
+          let warmedUsers = 0;
+          for (const u of usersWithContracts) {
+            try {
+              // Lade die gleiche Aggregation die der User beim Öffnen der Contracts-Seite triggert
+              await warmDb.collection("contracts").aggregate([
+                { $match: { userId: u._id } },
+                { $sort: { createdAt: -1 } },
+                { $limit: 50 },
+                {
+                  $lookup: {
+                    from: "analysis",
+                    let: { analysisId: "$analysisId" },
+                    pipeline: [
+                      { $match: { $expr: { $eq: ["$_id", "$$analysisId"] } } },
+                      { $limit: 1 }
+                    ],
+                    as: "analysisData"
+                  }
+                },
+                { $project: { _id: 1, name: 1, contractScore: 1 } }
+              ]).toArray();
+              warmedUsers++;
+            } catch {
+              // Einzelnen User überspringen, nicht den ganzen Job abbrechen
+            }
+          }
+          console.log(`🔥 [CACHE-WARM] Fertig: ${warmedUsers}/${usersWithContracts.length} User-Caches gewärmt`);
+        } catch (error) {
+          console.error("❌ [CACHE-WARM] Error:", error.message);
+          // Nicht-kritisch, kein captureError nötig
+        }
+      });
+
       // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10:10 Uhr)
       // Gestaffelt: 10:10 statt 10:00 um DB-Connection-Kollision mit Winback zu vermeiden
       cron.schedule("10 10 * * *", async () => {

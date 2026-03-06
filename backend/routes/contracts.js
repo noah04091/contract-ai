@@ -578,232 +578,244 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
   console.error("❌ MongoDB-Fehler (contracts.js):", err);
 });
 
-// 🚀 OPTIMIERT V3: Batch-Queries statt $lookup Sub-Pipelines
-// Vorher: 3x $lookup mit $expr (Collection-Scan pro Vertrag bei Cold-Cache) = 150+ Scans
-// Jetzt: 1x find() + 3x Batch-find() mit $in (Index-backed) = 4 Queries total, alle parallel
-// 🚀 V2: Gibt jetzt { contracts, totalCount } zurueck - spart separaten countDocuments() Call!
+// 🔄 Original-Aggregation Pipeline (Single-Roundtrip, serverside execution)
+// Bewusst NICHT in Batch-Queries aufgeteilt — 1 Roundtrip ist bei Cold-Cache deutlich schneller
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
+  const Envelope = require("../models/Envelope");
   const db = await database.connect();
   const t0 = Date.now();
 
-  // 🚀 Step 1: Count + Basis-Contracts parallel laden
-  const [totalCount, rawContracts] = await Promise.all([
-    contractsCollection.countDocuments(mongoFilter),
-    contractsCollection
-      .find(mongoFilter)
-      .project({
-        // Grosse Felder ausschliessen (10-50KB pro Vertrag!)
-        fullText: 0, content: 0, extractedText: 0,
-        detailedLegalOpinion: 0, rawHtmlContent: 0, optimizedContent: 0
-      })
-      .sort(sortOptions)
-      .skip(skip > 0 ? skip : 0)
-      .limit(limit > 0 ? limit : 0)
-      .toArray()
-  ]);
+  // 🚀 OPTIMIERT: Erst Count berechnen (schnell, nur $match + $count)
+  const countResult = await contractsCollection.aggregate([
+    { $match: mongoFilter },
+    { $count: "total" }
+  ]).toArray();
+  const totalCount = countResult[0]?.total || 0;
+
+  // Wenn keine Contracts, früh returnen
+  if (totalCount === 0) {
+    return { contracts: [], totalCount: 0, _enrichTiming: { total: (Date.now()-t0)+'ms' } };
+  }
 
   const t1 = Date.now();
 
-  if (rawContracts.length === 0) {
-    return { contracts: [], totalCount };
+  const pipeline = [
+    { $match: mongoFilter },
+    { $sort: sortOptions },
+  ];
+
+  // Skip und Limit hinzufügen
+  if (skip > 0) {
+    pipeline.push({ $skip: skip });
+  }
+  if (limit > 0) {
+    pipeline.push({ $limit: limit });
   }
 
-  // 🚀 Step 2: Alle Batch-Lookups parallel (statt 3x $lookup Sub-Pipelines)
-  const contractIds = rawContracts.map(c => c._id);
-  const analysisIds = rawContracts
-    .map(c => c.analysisId)
-    .filter(id => id != null);
-
-  const [analyses, allEvents, allEnvelopes] = await Promise.all([
-    // Analysis: direkt per _id (nutzt _id Index)
-    analysisIds.length > 0
-      ? db.collection("analysis").find({ _id: { $in: analysisIds } }).toArray()
-      : Promise.resolve([]),
-
-    // Events: alle fuer diese Contracts, nicht-dismissed (nutzt contractId Index)
-    db.collection("contract_events")
-      .find({
-        contractId: { $in: contractIds },
-        status: { $ne: "dismissed" }
-      })
-      .sort({ date: 1 })
-      .toArray(),
-
-    // Envelopes: alle fuer diese Contracts, neueste zuerst (nutzt contractId Index)
-    db.collection("envelopes")
-      .find({ contractId: { $in: contractIds } })
-      .sort({ createdAt: -1 })
-      .toArray()
-  ]);
-
-  const t2 = Date.now();
-
-  // 🚀 Step 3: Lookup-Maps bauen (O(1) Zugriff statt O(n) Suche)
-  const analysisMap = new Map();
-  for (const a of analyses) {
-    analysisMap.set(a._id.toString(), a);
-  }
-
-  const eventsMap = new Map();
-  for (const e of allEvents) {
-    const key = e.contractId.toString();
-    if (!eventsMap.has(key)) eventsMap.set(key, []);
-    const arr = eventsMap.get(key);
-    if (arr.length < 5) {
-      arr.push({
-        id: e._id,
-        type: e.type,
-        title: e.title,
-        date: e.date,
-        severity: e.severity,
-        status: e.status
-      });
+  // 🔗 $lookup für Analysen (mit analysisId)
+  pipeline.push({
+    $lookup: {
+      from: "analysis",
+      let: {
+        analysisId: "$analysisId",
+        contractName: "$name",
+        contractUserId: { $toString: "$userId" }
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                // Primär: Match über analysisId
+                { $eq: ["$_id", "$$analysisId"] },
+                // Fallback: Match über contractName oder originalFileName
+                {
+                  $and: [
+                    { $eq: [{ $toString: "$userId" }, "$$contractUserId"] },
+                    {
+                      $or: [
+                        { $eq: ["$contractName", "$$contractName"] },
+                        { $eq: ["$originalFileName", "$$contractName"] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { $limit: 1 }
+      ],
+      as: "analysisData"
     }
-  }
-
-  const envelopeMap = new Map();
-  for (const env of allEnvelopes) {
-    const key = env.contractId.toString();
-    if (!envelopeMap.has(key)) {
-      envelopeMap.set(key, env); // Erste = neueste (sortiert desc)
-    }
-  }
-
-  // 🚀 Step 4: Contracts anreichern (gleiche Logik wie bisheriger $addFields)
-  const contracts = rawContracts.map(c => {
-    const cId = c._id.toString();
-    const analysisDoc = c.analysisId ? analysisMap.get(c.analysisId.toString()) : null;
-
-    // Analysis-Daten: Prioritaet Contract.analysis > Analysis Collection
-    const hasDirectAnalysis = c.analysis && typeof c.analysis === 'object' && Object.keys(c.analysis).length > 0;
-    if (!hasDirectAnalysis && analysisDoc) {
-      c.analysis = {
-        summary: analysisDoc.summary,
-        legalAssessment: analysisDoc.legalAssessment,
-        suggestions: analysisDoc.suggestions,
-        comparison: analysisDoc.comparison,
-        contractScore: analysisDoc.contractScore,
-        analysisId: analysisDoc._id,
-        lastAnalyzed: analysisDoc.createdAt
-      };
-    } else if (!hasDirectAnalysis) {
-      c.analysis = null;
-    }
-
-    // Root-Level Felder: Contract-Felder haben Prioritaet ueber Analysis
-    if (analysisDoc) {
-      if (!c.summary) c.summary = analysisDoc.summary;
-      if (!c.contractScore) c.contractScore = analysisDoc.contractScore;
-      if (!c.legalAssessment) c.legalAssessment = analysisDoc.legalAssessment;
-      if (!c.suggestions) c.suggestions = analysisDoc.suggestions;
-      if (!c.risiken) c.risiken = c.criticalIssues || analysisDoc.criticalIssues;
-      if (!c.quickFacts) c.quickFacts = analysisDoc.quickFacts;
-      if (!c.importantDates) c.importantDates = analysisDoc.importantDates;
-      if (!c.positiveAspects) c.positiveAspects = analysisDoc.positiveAspects;
-      if (!c.recommendations) c.recommendations = analysisDoc.recommendations;
-      if (!c.laymanSummary) c.laymanSummary = analysisDoc.laymanSummary;
-    }
-    if (!c.risiken && c.criticalIssues) c.risiken = c.criticalIssues;
-
-    // Events
-    c.upcomingEvents = eventsMap.get(cId) || [];
-
-    // Envelope
-    const env = envelopeMap.get(cId);
-    if (env) {
-      const signers = env.signers || [];
-      c.envelope = {
-        _id: env._id,
-        signatureStatus: env.status,
-        signersTotal: signers.length,
-        signersSigned: signers.filter(s => s.status === 'SIGNED').length,
-        s3KeySealed: env.s3KeySealed,
-        completedAt: env.completedAt,
-        expiresAt: env.expiresAt
-      };
-      c.signatureStatus = env.status;
-      c.signatureEnvelopeId = env._id;
-    } else {
-      c.envelope = null;
-    }
-
-    return c;
   });
 
-  const t3 = Date.now();
-
-  // 🔗 Fallback: Fuer Vertraege OHNE analysisId, Analysis per Name suchen (1 Batch-Query)
-  const contractsNeedingFallback = contracts.filter(c =>
-    !c.analysis && !c.summary && !c.contractScore
-  );
-
-  if (contractsNeedingFallback.length > 0) {
-    const orConditions = [];
-    for (const c of contractsNeedingFallback) {
-      const uidStr = c.userId?.toString();
-      orConditions.push(
-        { userId: c.userId, contractName: c.name },
-        { userId: c.userId, originalFileName: c.name }
-      );
-      if (uidStr !== c.userId) {
-        orConditions.push(
-          { userId: uidStr, contractName: c.name },
-          { userId: uidStr, originalFileName: c.name }
-        );
-      }
+  // 🔗 $lookup für Events
+  pipeline.push({
+    $lookup: {
+      from: "contract_events",
+      let: { contractId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ["$contractId", "$$contractId"] },
+            status: { $ne: "dismissed" }
+          }
+        },
+        { $sort: { date: 1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 1,
+            type: 1,
+            title: 1,
+            date: 1,
+            severity: 1,
+            status: 1
+          }
+        }
+      ],
+      as: "upcomingEvents"
     }
+  });
 
-    const fallbackAnalyses = await db.collection("analysis").find({ $or: orConditions }).toArray();
-
-    for (const contract of contractsNeedingFallback) {
-      const userIdStr = contract.userId?.toString();
-      const analysis = fallbackAnalyses.find(a =>
-        a.userId?.toString() === userIdStr &&
-        (a.contractName === contract.name || a.originalFileName === contract.name)
-      );
-      if (analysis) {
-        contract.analysis = {
-          summary: analysis.summary,
-          legalAssessment: analysis.legalAssessment,
-          suggestions: analysis.suggestions,
-          comparison: analysis.comparison,
-          contractScore: analysis.contractScore,
-          analysisId: analysis._id,
-          lastAnalyzed: analysis.createdAt
-        };
-        if (!contract.summary) contract.summary = analysis.summary;
-        if (!contract.contractScore) contract.contractScore = analysis.contractScore;
-        if (!contract.legalAssessment) contract.legalAssessment = analysis.legalAssessment;
-        if (!contract.suggestions) contract.suggestions = analysis.suggestions;
-        if (!contract.risiken) contract.risiken = analysis.criticalIssues;
-        if (!contract.quickFacts) contract.quickFacts = analysis.quickFacts;
-        if (!contract.importantDates) contract.importantDates = analysis.importantDates;
-        if (!contract.positiveAspects) contract.positiveAspects = analysis.positiveAspects;
-        if (!contract.recommendations) contract.recommendations = analysis.recommendations;
-        if (!contract.laymanSummary) contract.laymanSummary = analysis.laymanSummary;
-      }
+  // 🔗 $lookup für Envelopes (Signatur-Status)
+  pipeline.push({
+    $lookup: {
+      from: "envelopes",
+      let: { contractId: "$_id" },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ["$contractId", "$$contractId"] }
+          }
+        },
+        { $sort: { createdAt: -1 } },
+        { $limit: 1 },
+        {
+          $project: {
+            _id: 1,
+            status: 1,
+            signers: 1,
+            s3KeySealed: 1,
+            completedAt: 1,
+            expiresAt: 1
+          }
+        }
+      ],
+      as: "envelopeData"
     }
-  }
+  });
 
-  const t4 = Date.now();
-  const perfMsg = '[PERF] enrichContracts: base=' + (t1-t0) + 'ms, lookups=' + (t2-t1) + 'ms, merge=' + (t3-t2) + 'ms, fallback=' + (t4-t3) + 'ms, total=' + (t4-t0) + 'ms (' + rawContracts.length + ' contracts)';
-  console.log(perfMsg);
+  // 🔄 Transformation der Ergebnisse
+  pipeline.push({
+    $addFields: {
+      // 🔧 FIX: Analysis-Daten extrahieren - PRIORITÄT: Direkt auf Contract > Analysis Collection
+      analysis: {
+        $cond: {
+          if: { $and: [{ $ne: ["$analysis", null] }, { $ne: ["$analysis", {}] }] },
+          then: "$analysis",
+          else: {
+            $cond: {
+              if: { $gt: [{ $size: "$analysisData" }, 0] },
+              then: {
+                summary: { $arrayElemAt: ["$analysisData.summary", 0] },
+                legalAssessment: { $arrayElemAt: ["$analysisData.legalAssessment", 0] },
+                suggestions: { $arrayElemAt: ["$analysisData.suggestions", 0] },
+                comparison: { $arrayElemAt: ["$analysisData.comparison", 0] },
+                contractScore: { $arrayElemAt: ["$analysisData.contractScore", 0] },
+                analysisId: { $arrayElemAt: ["$analysisData._id", 0] },
+                lastAnalyzed: { $arrayElemAt: ["$analysisData.createdAt", 0] }
+              },
+              else: null
+            }
+          }
+        }
+      },
+      summary: { $ifNull: ["$summary", { $arrayElemAt: ["$analysisData.summary", 0] }] },
+      contractScore: { $ifNull: ["$contractScore", { $arrayElemAt: ["$analysisData.contractScore", 0] }] },
+      legalAssessment: { $ifNull: ["$legalAssessment", { $arrayElemAt: ["$analysisData.legalAssessment", 0] }] },
+      suggestions: { $ifNull: ["$suggestions", { $arrayElemAt: ["$analysisData.suggestions", 0] }] },
+      risiken: {
+        $ifNull: [
+          "$risiken",
+          { $ifNull: ["$criticalIssues", { $arrayElemAt: ["$analysisData.criticalIssues", 0] }] }
+        ]
+      },
+      quickFacts: { $ifNull: ["$quickFacts", { $arrayElemAt: ["$analysisData.quickFacts", 0] }] },
+      detailedLegalOpinion: { $ifNull: ["$detailedLegalOpinion", { $arrayElemAt: ["$analysisData.detailedLegalOpinion", 0] }] },
+      importantDates: { $ifNull: ["$importantDates", { $arrayElemAt: ["$analysisData.importantDates", 0] }] },
+      positiveAspects: { $ifNull: ["$positiveAspects", { $arrayElemAt: ["$analysisData.positiveAspects", 0] }] },
+      recommendations: { $ifNull: ["$recommendations", { $arrayElemAt: ["$analysisData.recommendations", 0] }] },
+      laymanSummary: { $ifNull: ["$laymanSummary", { $arrayElemAt: ["$analysisData.laymanSummary", 0] }] },
+      upcomingEvents: {
+        $map: {
+          input: "$upcomingEvents",
+          as: "e",
+          in: {
+            id: "$$e._id",
+            type: "$$e.type",
+            title: "$$e.title",
+            date: "$$e.date",
+            severity: "$$e.severity",
+            status: "$$e.status"
+          }
+        }
+      },
+      envelope: {
+        $cond: {
+          if: { $gt: [{ $size: "$envelopeData" }, 0] },
+          then: {
+            _id: { $arrayElemAt: ["$envelopeData._id", 0] },
+            signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
+            signersTotal: { $size: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] } },
+            signersSigned: {
+              $size: {
+                $filter: {
+                  input: { $ifNull: [{ $arrayElemAt: ["$envelopeData.signers", 0] }, []] },
+                  as: "s",
+                  cond: { $eq: ["$$s.status", "SIGNED"] }
+                }
+              }
+            },
+            s3KeySealed: { $arrayElemAt: ["$envelopeData.s3KeySealed", 0] },
+            completedAt: { $arrayElemAt: ["$envelopeData.completedAt", 0] },
+            expiresAt: { $arrayElemAt: ["$envelopeData.expiresAt", 0] }
+          },
+          else: null
+        }
+      },
+      signatureStatus: { $arrayElemAt: ["$envelopeData.status", 0] },
+      signatureEnvelopeId: { $arrayElemAt: ["$envelopeData._id", 0] }
+    }
+  });
 
-  // 🚀 V2: Gibt jetzt { contracts, totalCount } zurueck
+  // 🚀 PERFORMANCE: Große Felder entfernen
+  pipeline.push({
+    $project: {
+      analysisData: 0,
+      envelopeData: 0,
+      fullText: 0,
+      content: 0,
+      extractedText: 0,
+      detailedLegalOpinion: 0,
+      rawHtmlContent: 0,
+      optimizedContent: 0
+    }
+  });
+
+  // Query ausführen mit allowDiskUse für große Datensätze
+  const contracts = await contractsCollection.aggregate(pipeline, { allowDiskUse: true }).toArray();
+  const t2 = Date.now();
+
   const _enrichTiming = {
-    base: (t1-t0) + 'ms',
-    lookups: (t2-t1) + 'ms',
-    merge: (t3-t2) + 'ms',
-    fallback: (t4-t3) + 'ms',
-    total: (t4-t0) + 'ms',
-    counts: {
-      contracts: rawContracts.length,
-      analyses: analyses.length,
-      events: allEvents.length,
-      envelopes: allEnvelopes.length,
-      fallbackNeeded: contractsNeedingFallback.length
-    }
+    count: (t1-t0) + 'ms',
+    aggregation: (t2-t1) + 'ms',
+    total: (t2-t0) + 'ms',
+    contracts: contracts.length
   };
+  console.log('[PERF] enrichContracts:', JSON.stringify(_enrichTiming));
+
   return { contracts, totalCount, _enrichTiming };
 }
 
