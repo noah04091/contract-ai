@@ -259,7 +259,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                   {dayInfo.events.map((event) => (
                     <div
                       key={event.id}
-                      className={`week-event-card ${event.severity}`}
+                      className={`week-event-card ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick(event);
@@ -268,7 +268,10 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                       <div className="week-event-indicator"></div>
                       <div className="week-event-content">
                         <span className="week-event-title">{formatContractName(event.contractName)}</span>
-                        <span className="week-event-type">{event.title}</span>
+                        <span className="week-event-type">
+                          {event.title}
+                          {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -312,7 +315,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               {dayEvents.map((event) => (
                 <div
                   key={event.id}
-                  className={`day-event-card ${event.severity}`}
+                  className={`day-event-card ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
                   onClick={() => onEventClick(event)}
                 >
                   <div className="day-event-time">
@@ -321,7 +324,10 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                   <div className="day-event-indicator"></div>
                   <div className="day-event-details">
                     <span className="day-event-title">{formatContractName(event.contractName)}</span>
-                    <span className="day-event-type">{event.title}</span>
+                    <span className="day-event-type">
+                      {event.title}
+                      {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
+                    </span>
                     {event.description && (
                       <span className="day-event-description">{event.description}</span>
                     )}
@@ -373,7 +379,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               {dayInfo.events.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
-                  className={`event-pill ${event.severity}`}
+                  className={`event-pill ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEventClick(event);
@@ -381,6 +387,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                 >
                   <div className="event-indicator"></div>
                   <span className="event-text">{formatContractName(event.contractName)}</span>
+                  {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
                 </div>
               ))}
               {dayInfo.events.length > 3 && (

@@ -24,7 +24,8 @@ import {
   Link2,
   Star,
   X,
-  TrendingUp
+  TrendingUp,
+  XCircle
 } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
@@ -132,7 +133,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1387,6 +1388,12 @@ export default function Navbar() {
                       <Link to="/calendar" className={`${styles.navLinkNew} ${location.pathname === '/calendar' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Calendar size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>Kalender</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/cancellations" className={`${styles.navLinkNew} ${location.pathname === '/cancellations' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><XCircle size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Kündigungen</span>
                       </Link>
                     </li>
                   </ul>

@@ -105,6 +105,8 @@ export default function OneClickCancelModal({
   const [error, setError] = useState("");
   const [providerDetected, setProviderDetected] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [cancellationId, setCancellationId] = useState<string | null>(null);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
   const navigate = useNavigate();
   const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -289,7 +291,8 @@ ${formData.customerName}
 
       if (response.ok && data.success) {
         setStep("success");
-        
+        if (data.cancellationId) setCancellationId(data.cancellationId);
+
         // Save user data for future use
         localStorage.setItem("userData", JSON.stringify({
           name: formData.customerName,
@@ -328,6 +331,25 @@ ${formData.customerName}
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadCancellationPdf = async () => {
+    if (!cancellationId) return;
+    setPdfDownloading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/cancellations/${cancellationId}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.pdfUrl) {
+        window.open(data.pdfUrl, '_blank');
+      }
+    } catch (err) {
+      console.error('PDF-Download fehlgeschlagen:', err);
+    } finally {
+      setPdfDownloading(false);
+    }
   };
 
   const handleOpenPdf = async () => {
@@ -807,6 +829,29 @@ ${formData.customerName}
                 <p className={styles.successInfo}>
                   Eine Kopie wurde in Ihrem Archiv gespeichert.
                 </p>
+                <div className={styles.successActions}>
+                  {cancellationId && (
+                    <button
+                      className={styles.secondaryBtn}
+                      onClick={handleDownloadCancellationPdf}
+                      disabled={pdfDownloading}
+                    >
+                      {pdfDownloading ? <Loader size={16} className={styles.spinner} /> : <Download size={16} />}
+                      PDF herunterladen
+                    </button>
+                  )}
+                  <button
+                    className={styles.secondaryBtn}
+                    onClick={() => {
+                      if (autoCloseRef.current) clearTimeout(autoCloseRef.current);
+                      onClose();
+                      navigate('/cancellations');
+                    }}
+                  >
+                    <FileText size={16} />
+                    Kündigungsarchiv
+                  </button>
+                </div>
                 {providerDetected && (
                   <button
                     className={styles.betterContractsBtn}

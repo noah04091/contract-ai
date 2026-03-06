@@ -81,6 +81,7 @@ const ContractDetailsV2 = lazy(() => import("./pages/ContractDetailsV2")); // V2
 const EditContract = lazy(() => import("./pages/EditContract"));
 const CalendarView = lazy(() => import("./pages/Calendar"));
 const Cancel = lazy(() => import("./pages/Cancel"));
+const CancellationArchive = lazy(() => import("./pages/CancellationArchive"));
 const Optimizer = lazy(() => import("./pages/Optimizer"));
 const OptimizerFinalize = lazy(() => import("./pages/OptimizerFinalize")); // 🎯 Optimizer Post-Generation Seite
 const Compare = lazy(() => import("./pages/Compare"));
@@ -231,8 +232,9 @@ function AppWithLoader() {
             <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
             
-            {/* ✅ NEU: Cancel Route */}
+            {/* ✅ Kündigungs-Routes */}
             <Route path="/cancel/:contractId" element={<RequireAuth><Cancel /></RequireAuth>} />
+            <Route path="/cancellations" element={<RequireAuth><CancellationArchive /></RequireAuth>} />
             
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />

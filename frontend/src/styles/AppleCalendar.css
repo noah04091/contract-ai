@@ -426,6 +426,52 @@
   background: var(--success);
 }
 
+/* Completed/Gekündigt Events */
+.event-pill.completed {
+  opacity: 0.55;
+  position: relative;
+}
+.event-pill.completed .event-text {
+  text-decoration: line-through;
+}
+.event-pill.completed .event-indicator {
+  background: #9ca3af;
+}
+
+.week-event-card.completed {
+  opacity: 0.55;
+}
+.week-event-card.completed .week-event-title {
+  text-decoration: line-through;
+}
+.week-event-card.completed .week-event-indicator {
+  background: #9ca3af;
+}
+
+.day-event-card.completed {
+  opacity: 0.55;
+}
+.day-event-card.completed .day-event-title {
+  text-decoration: line-through;
+}
+.day-event-card.completed .day-event-indicator {
+  background: #9ca3af;
+}
+
+.cancelled-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
 .more-events {
   font-size: 11px;
   color: var(--text-muted);

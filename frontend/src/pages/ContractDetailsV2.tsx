@@ -95,6 +95,9 @@ interface Contract {
   kosten?: number;
   vertragsnummer?: string;
   notes?: string;
+  // Kündigungs-Tracking
+  cancellationId?: string;
+  cancellationDate?: string;
   // Root-Level Analyse-Felder (vom Backend)
   contractScore?: number;
   summary?: string;
@@ -2435,9 +2438,56 @@ export default function ContractDetailsV2() {
                     >
                       <MessageSquare size={18} /> {openingChat ? 'Wird geöffnet...' : 'Mit KI besprechen'}
                     </button>
+                    {contract.status?.toLowerCase() !== 'gekündigt' && (
+                      <button
+                        className={styles.quickActionBtn}
+                        onClick={() => navigate(`/cancel/${id}`)}
+                        style={{ color: 'var(--cd-danger, #ef4444)' }}
+                      >
+                        <XCircle size={18} /> Vertrag kündigen
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
+
+              {/* Kündigungsinfo */}
+              {contract.status?.toLowerCase() === 'gekündigt' && (
+                <div className={styles.card}>
+                  <div className={styles.cardHeader}>
+                    <h3 className={styles.cardTitle} style={{ color: 'var(--cd-danger, #ef4444)' }}>
+                      Vertrag gekündigt
+                    </h3>
+                  </div>
+                  <div className={styles.cardBody}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                      {contract.cancellationDate && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--cd-text-secondary, #6b7280)' }}>Gekündigt am</span>
+                          <span style={{ fontWeight: 600 }}>
+                            {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                          </span>
+                        </div>
+                      )}
+                      {contract.cancellationId && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--cd-text-secondary, #6b7280)' }}>Referenz-ID</span>
+                          <span style={{ fontWeight: 500, fontSize: '11px', fontFamily: 'monospace' }}>
+                            {String(contract.cancellationId).slice(-8)}
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        className={styles.quickActionBtn}
+                        onClick={() => navigate('/cancellations')}
+                        style={{ marginTop: '4px' }}
+                      >
+                        <FileText size={16} /> Kündigungsarchiv
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Danger Zone */}
               {canDelete() && (
