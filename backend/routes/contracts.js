@@ -26,6 +26,18 @@ const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
 
+// 🚀 Cache-Invalidierung: Bei jeder Schreiboperation (POST/PUT/PATCH/DELETE) Cache für den User leeren
+router.use((req, res, next) => {
+  if (req.method !== 'GET' && req.user?.userId) {
+    res.on('finish', () => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        invalidateContractsCache(req.user.userId);
+      }
+    });
+  }
+  next();
+});
+
 // 🔧 Fix UTF-8 encoding issues (mojibake: UTF-8 bytes interpreted as Latin-1)
 function fixUtf8Encoding(str) {
   if (!str || typeof str !== 'string') return str;
@@ -44,6 +56,22 @@ let contractsCollection;
 let analysisCollection;
 let eventsCollection; // ✅ NEU: Events Collection
 let usersCollection; // ✅ NEU: Users Collection für Bulk-Ops
+
+// 🚀 Server-seitiger Contracts-Cache (löst das Shared-Tier-Latenz-Problem)
+// Erster Aufruf: normal (8-10s auf Shared Tier), alle weiteren: sofort aus RAM
+const _contractsCache = new Map();
+const CACHE_TTL = 60000; // 60 Sekunden
+
+function getContractsCacheKey(filter, sort, skip, limit) {
+  return JSON.stringify({ f: filter, s: sort, sk: skip, l: limit });
+}
+
+function invalidateContractsCache(userId) {
+  const uidStr = userId?.toString();
+  for (const [key] of _contractsCache) {
+    if (key.includes(uidStr)) _contractsCache.delete(key);
+  }
+}
 
 // 🔧 ensureDb(): Lazy-Init über Singleton-Pool (database.js)
 let _db = null;
@@ -585,6 +613,17 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
 async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit) {
   const t0 = Date.now();
 
+  // 🚀 Cache-Check: Wenn gleiche Query kürzlich lief, sofort aus RAM liefern
+  const cacheKey = getContractsCacheKey(mongoFilter, sortOptions, skip, limit);
+  const cached = _contractsCache.get(cacheKey);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    const cacheTime = Date.now() - t0;
+    return {
+      ...cached.data,
+      _enrichTiming: { ...cached.data._enrichTiming, cached: true, cacheTime: cacheTime + 'ms' }
+    };
+  }
+
   // Step 1: Count + Contracts parallel laden (beide nutzen userId Index)
   // INCLUSION Projection: NUR die Felder laden die die Listenansicht braucht
   // Spart ~80% Datentransfer (große Felder wie legalPulse, legalLens, embeddings werden NICHT geladen)
@@ -797,7 +836,11 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   };
   console.log('[PERF] enrichContracts:', JSON.stringify(_enrichTiming));
 
-  return { contracts, totalCount, _enrichTiming };
+  // 🚀 Ergebnis cachen für nachfolgende Aufrufe
+  const result = { contracts, totalCount, _enrichTiming };
+  _contractsCache.set(cacheKey, { data: result, ts: Date.now() });
+
+  return result;
 }
 
 
