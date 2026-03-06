@@ -19,10 +19,28 @@ interface ApiResponse {
     relevantInfo: string;
     hasDetailedData: boolean;
   }>;
+  aiSuggestedAlternatives?: Array<{
+    title: string;
+    link: string;
+    snippet: string;
+    prices: string[];
+    relevantInfo: string;
+    hasDetailedData: boolean;
+    pricingModel?: string;
+    targetSegment?: string;
+    industryFocus?: string;
+    whyFit?: string;
+    confidence?: 'high' | 'medium' | 'low';
+    evidenceSource?: 'website' | 'search-result' | 'ai-knowledge';
+    isAiSuggested?: boolean;
+    b2bSummary?: string;
+  }>;
+  isB2B?: boolean;
   searchQuery: string;
   performance: {
     totalAlternatives: number;
     detailedExtractions: number;
+    aiSuggestedCount?: number;
     timestamp: string;
   };
   fromCache?: boolean;
@@ -143,10 +161,17 @@ const BetterContracts: React.FC = () => {
       "streaming": "streaming dienst vergleich",
       "bank": "girokonto vergleich kostenlos",
       "kredit": "kredit vergleich günstig",
-      "default": "anbieter vergleich günstig alternative"
     };
 
-    return searchQueries[detectedType.toLowerCase()] || searchQueries.default;
+    const knownQuery = searchQueries[detectedType.toLowerCase()];
+    if (knownQuery) return knownQuery;
+
+    // Für unbekannte/B2B-Typen: Sinnvollen Query aus dem Typ-Namen konstruieren
+    if (detectedType && detectedType !== 'unbekannt') {
+      return `${detectedType} anbieter vergleich deutschland`;
+    }
+
+    return "anbieter vergleich günstig alternative";
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -283,8 +308,9 @@ const BetterContracts: React.FC = () => {
       return;
     }
 
-    if (!currentPrice || currentPrice <= 0) {
-      setError("Bitte geben Sie einen gültigen Preis ein.");
+    // Preis ist jetzt optional — nur validieren wenn eingegeben
+    if (currentPrice !== null && currentPrice < 0) {
+      setError("Der Preis darf nicht negativ sein.");
       return;
     }
 
@@ -588,12 +614,12 @@ const BetterContracts: React.FC = () => {
                     </svg>
                   </div>
                   <div className="info-text">
-                    <p>Geben Sie den monatlichen Preis ein. Wir suchen dann automatisch nach günstigeren Alternativen.</p>
+                    <p>Geben Sie den monatlichen Preis ein, falls bekannt. Bei Verträgen ohne festen Monatspreis können Sie das Feld auch leer lassen.</p>
                   </div>
                 </div>
                 
                 <div className="price-input-container">
-                  <label htmlFor="price-input">Monatlicher Preis (€)</label>
+                  <label htmlFor="price-input">Geschätzte monatliche Kosten (€) — optional</label>
                   <div className="currency-input">
                     <input
                       id="price-input"
@@ -619,7 +645,7 @@ const BetterContracts: React.FC = () => {
                   <input
                     id="search-query"
                     type="text"
-                    placeholder={isPremium ? "z.B. 'günstige handytarife' (wird automatisch generiert)" : "Premium erforderlich"}
+                    placeholder={isPremium ? "z.B. 'factoring anbieter vergleich' (wird automatisch generiert)" : "Premium erforderlich"}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     disabled={!isPremium}
@@ -657,10 +683,10 @@ const BetterContracts: React.FC = () => {
                   <button 
                     className="contract-button"
                     onClick={handleAnalyze}
-                    disabled={!isPremium || !currentPrice || currentPrice <= 0 || loading}
+                    disabled={!isPremium || loading}
                     style={{
-                      opacity: isPremium && currentPrice && currentPrice > 0 && !loading ? 1 : 0.6,
-                      cursor: isPremium && currentPrice && currentPrice > 0 && !loading ? 'pointer' : 'not-allowed'
+                      opacity: isPremium && !loading ? 1 : 0.6,
+                      cursor: isPremium && !loading ? 'pointer' : 'not-allowed'
                     }}
                   >
                     {loading ? (
@@ -706,9 +732,11 @@ const BetterContracts: React.FC = () => {
                 analysis={results.analysis}
                 alternatives={results.alternatives}
                 searchQuery={results.searchQuery}
-                currentPrice={currentPrice!}
+                currentPrice={currentPrice ?? 0}
                 contractType={contractType}
                 fromCache={results.fromCache}
+                isB2B={results.isB2B || false}
+                aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
               />
               
               <div className="step-actions">

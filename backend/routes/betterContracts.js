@@ -118,12 +118,22 @@ function validateInput(contractText, searchQuery) {
     }
     
     // Prüfen ob es überhaupt wie ein Vertrag aussieht
-    const contractKeywords = ['vertrag', 'tarif', 'laufzeit', 'monatlich', 'kündig', 'bedingung', 'agb', 'preis', '€', 'euro', 'strom', 'gas', 'kwh'];
-    const hasContractKeywords = contractKeywords.some(keyword => 
+    const contractKeywords = [
+      // Consumer-Keywords (bestehend)
+      'vertrag', 'tarif', 'laufzeit', 'monatlich', 'kündig', 'bedingung', 'agb', 'preis', '€', 'euro', 'strom', 'gas', 'kwh',
+      // B2B-Keywords (neu)
+      'vereinbarung', 'rahmenvertrag', 'dienstleistung', 'leistung', 'vergütung', 'honorar', 'gebühr', 'provision',
+      'factoring', 'leasing', 'miete', 'lizenz', 'service', 'wartung', 'beratung', 'auftrag', 'angebot',
+      'rechnung', 'zahlung', 'frist', 'haftung', 'gmbh', 'ag', 'ug', 'geschäftsführer',
+      'auftraggeber', 'auftragnehmer', 'vertragspartner', 'laufzeit', 'gerichtsstand',
+      'nutzungsrecht', 'geheimhaltung', 'vertraulichkeit', 'sla', 'penalty', 'pönale'
+    ];
+    const hasContractKeywords = contractKeywords.some(keyword =>
       contractText.toLowerCase().includes(keyword)
     );
-    
-    if (!hasContractKeywords) {
+
+    // Length-Fallback: Texte ab 200 Zeichen passieren auch ohne Keywords (englisch/technisch)
+    if (!hasContractKeywords && contractText.length < 200) {
       errors.push("Der Text scheint kein Vertrag zu sein (keine relevanten Keywords gefunden)");
     }
   }
@@ -491,6 +501,242 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
   return {
     queries: uniqueQueries.slice(0, 6), // Limit to 6 best queries
     contractContext: contractContext
+  };
+}
+
+// 🆕 GPT-basierte Suchquery-Generierung für unbekannte/B2B-Vertragstypen
+const KNOWN_CONSUMER_TYPES = [
+  'handy', 'mobilfunk', 'internet', 'hosting', 'versicherung', 'rechtsschutz',
+  'haftpflicht', 'kfz', 'hausrat', 'wohngebäude', 'berufsunfähigkeit',
+  'krankenversicherung', 'lebensversicherung', 'unfallversicherung',
+  'strom', 'gas', 'ökostrom', 'dsl', 'fitness', 'streaming',
+  'software', 'ai', 'saas', 'solar', 'kredit', 'girokonto',
+  'kreditkarte', 'baufinanzierung', 'haftpflichtversicherung',
+  'rechtsschutzversicherung', 'hausratversicherung',
+  'berufsunfähigkeitsversicherung'
+];
+
+function isKnownConsumerType(detectedType) {
+  return KNOWN_CONSUMER_TYPES.includes(detectedType.toLowerCase());
+}
+
+async function generateGPTSearchQueries(detectedType, contractText, openaiClient) {
+  try {
+    console.log(`🤖 Generiere GPT-Suchqueries für B2B-Typ: ${detectedType}`);
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Du generierst Google-Suchanfragen auf Deutsch, die alternative Anbieter für einen bestimmten Vertragstyp finden.
+          Antworte NUR mit einem JSON-Array von 4 Strings. Keine Erklärungen.
+          Die Suchanfragen sollen ALTERNATIVE ANBIETER finden, keine Definitionen oder Wikipedia-Artikel.
+          Fokus auf: Anbieter-Vergleich, beste Konditionen, Marktübersicht Deutschland.`
+        },
+        {
+          role: "user",
+          content: `Vertragstyp: ${detectedType}\nVertragsauszug: ${contractText.slice(0, 500)}\n\nGeneriere 4 spezifische deutsche Suchanfragen um alternative Anbieter für diesen Vertragstyp zu finden.`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 200
+    });
+
+    const responseText = completion.choices[0].message.content.trim();
+    // Parse JSON array from response
+    const queries = JSON.parse(responseText);
+
+    if (Array.isArray(queries) && queries.length > 0) {
+      console.log(`✅ GPT generierte ${queries.length} Suchqueries:`, queries);
+      return queries.slice(0, 4);
+    }
+
+    throw new Error('Invalid GPT response format');
+  } catch (error) {
+    console.warn(`⚠️ GPT-Suchquery-Generierung fehlgeschlagen:`, error.message);
+    // Fallback: Konstruiere sinnvolle Queries aus dem Typ-Namen
+    return [
+      `${detectedType} anbieter vergleich deutschland`,
+      `${detectedType} dienstleister beste konditionen`,
+      `${detectedType} unternehmen deutschland marktvergleich`,
+      `beste ${detectedType} anbieter 2024`
+    ];
+  }
+}
+
+// 🆕 B2B GPT Structured Enrichment
+async function enrichB2BResultsWithGPT(searchResults, contractText, detectedType, openaiClient) {
+  try {
+    console.log(`🏢 Starte B2B GPT-Enrichment für ${searchResults.length} Ergebnisse...`);
+
+    const searchResultsSummary = searchResults.map((r, i) =>
+      `${i + 1}. ${r.title || 'Unbekannt'}\n   URL: ${r.link || ''}\n   Snippet: ${r.snippet || ''}\n   Preise: ${(r.prices || []).join(', ') || 'Keine'}\n   Info: ${r.relevantInfo || ''}`
+    ).join('\n\n');
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein professioneller B2B-Marktanalyst. Du erhältst Suchergebnisse und einen Geschäftsvertrag.
+
+AUFGABE:
+1. Analysiere jeden gefundenen Anbieter — reichere mit Marktwissen an
+2. Schlage bis zu 3 ZUSÄTZLICHE bekannte Anbieter vor (nicht in Suchergebnissen)
+3. Trenne KLAR zwischen verifizierten Infos und KI-Wissen
+
+ANTWORTE NUR mit validem JSON:
+{
+  "enrichedProviders": [{
+    "originalIndex": 0,
+    "providerName": "Name",
+    "pricingModel": "Individuell / Volumenabhängig / etc.",
+    "targetSegment": "KMU / Mittelstand / Enterprise",
+    "industryFocus": "Branche oder Branchenunabhängig",
+    "whyFit": "Warum passend zum Vertrag (2-3 Sätze)",
+    "confidence": "high",
+    "evidenceSource": "website",
+    "summary": "Kurzbeschreibung (2-3 Sätze)"
+  }],
+  "aiSuggestedProviders": [{
+    "providerName": "Name",
+    "website": "https://...",
+    "pricingModel": "...",
+    "targetSegment": "...",
+    "industryFocus": "...",
+    "whyFit": "...",
+    "confidence": "medium",
+    "evidenceSource": "ai-knowledge",
+    "summary": "..."
+  }],
+  "marketOverview": "2-3 Sätze Marktüberblick",
+  "negotiationTips": ["Tipp 1", "Tipp 2", "Tipp 3"]
+}
+
+REGELN:
+- confidence "high" = aus Website/Suchergebnis verifizierbar
+- confidence "medium" = bekannter Anbieter, Details aus KI-Wissen
+- confidence "low" = nur aus KI-Wissen, nicht verifiziert
+- NIEMALS konkrete Preise erfinden — Preismodell beschreiben
+- aiSuggestedProviders: NUR seriöse, bekannte Anbieter, max 3
+- aiSuggestedProviders confidence ist IMMER "medium" oder "low"
+- Nenne NUR Anbieter, bei denen du sicher bist, dass sie real existieren. Erfinde KEINE Anbieter.
+- website-URLs müssen echte, existierende Domains sein — keine Platzhalter oder erfundene URLs`
+        },
+        {
+          role: "user",
+          content: `**Vertragstyp:** ${detectedType}\n\n**Vertragsauszug (max 2000 Zeichen):**\n${contractText.slice(0, 2000)}\n\n**Suchergebnisse:**\n${searchResultsSummary}`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+      max_tokens: 2000
+    });
+
+    const responseText = completion.choices[0].message.content;
+    const parsed = JSON.parse(responseText);
+
+    // Validierung
+    if (!parsed.enrichedProviders || !Array.isArray(parsed.enrichedProviders)) {
+      console.warn(`⚠️ B2B Enrichment: enrichedProviders fehlt oder ungültig`);
+      return getDefaultB2BEnrichment(searchResults);
+    }
+
+    console.log(`✅ B2B Enrichment: ${parsed.enrichedProviders.length} angereichert, ${(parsed.aiSuggestedProviders || []).length} KI-Vorschläge`);
+    return parsed;
+
+  } catch (error) {
+    console.error(`❌ B2B GPT-Enrichment fehlgeschlagen:`, error.message);
+    return getDefaultB2BEnrichment(searchResults);
+  }
+}
+
+// Merge GPT-Enrichment auf bestehende Ergebnisse
+function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
+  const providers = b2bEnrichment.enrichedProviders || [];
+
+  return enrichedResults.map((result, index) => {
+    const enrichment = providers.find(p => Number(p.originalIndex) === index) || providers[index];
+    if (!enrichment) return result;
+
+    return {
+      ...result,
+      provider: result.provider && result.provider !== 'Unknown' ? result.provider : enrichment.providerName || result.provider,
+      pricingModel: enrichment.pricingModel || null,
+      targetSegment: enrichment.targetSegment || null,
+      industryFocus: enrichment.industryFocus || null,
+      whyFit: enrichment.whyFit || null,
+      confidence: enrichment.confidence || 'low',
+      evidenceSource: enrichment.evidenceSource || 'ai-knowledge',
+      isAiSuggested: false,
+      b2bSummary: enrichment.summary || null
+    };
+  });
+}
+
+// Konvertiere GPT aiSuggestedProviders in Alternative-Shape
+function createAiSuggestedAlternatives(aiSuggested) {
+  if (!aiSuggested || !Array.isArray(aiSuggested)) return [];
+
+  return aiSuggested.slice(0, 3).map((provider, index) => ({
+    title: provider.providerName || 'Unbekannter Anbieter',
+    link: provider.website || '#',
+    snippet: provider.summary || '',
+    prices: [],
+    features: [],
+    provider: provider.providerName || 'Unbekannt',
+    relevantInfo: provider.whyFit || '',
+    hasDetailedData: false,
+    source: 'ai-suggested',
+    pricingModel: provider.pricingModel || null,
+    targetSegment: provider.targetSegment || null,
+    industryFocus: provider.industryFocus || null,
+    whyFit: provider.whyFit || null,
+    confidence: provider.confidence || 'low',
+    evidenceSource: 'ai-knowledge',
+    isAiSuggested: true,
+    b2bSummary: provider.summary || null,
+    position: 100 + index
+  }));
+}
+
+// Baut Analyse-Text aus marketOverview + negotiationTips
+function formatB2BAnalysis(b2bEnrichment) {
+  const parts = [];
+
+  if (b2bEnrichment.marketOverview) {
+    parts.push(`## 📊 Marktüberblick\n${b2bEnrichment.marketOverview}`);
+  }
+
+  if (b2bEnrichment.negotiationTips && b2bEnrichment.negotiationTips.length > 0) {
+    parts.push(`## 💡 Verhandlungstipps\n${b2bEnrichment.negotiationTips.map((tip, i) => `${i + 1}. ${tip}`).join('\n')}`);
+  }
+
+  if (parts.length === 0) {
+    return '## 📊 Marktanalyse\nFür diesen Vertragstyp wurden alternative Anbieter recherchiert. Vergleichen Sie die Konditionen direkt bei den Anbietern.';
+  }
+
+  return parts.join('\n\n');
+}
+
+// Fallback wenn GPT fehlschlägt
+function getDefaultB2BEnrichment(searchResults) {
+  return {
+    enrichedProviders: (searchResults || []).map((r, i) => ({
+      originalIndex: i,
+      providerName: r.provider || r.title?.split(' ')[0] || 'Anbieter',
+      pricingModel: 'Auf Anfrage',
+      targetSegment: 'Unternehmen',
+      industryFocus: 'Branchenunabhängig',
+      whyFit: '',
+      confidence: 'low',
+      evidenceSource: 'search-result',
+      summary: r.snippet || ''
+    })),
+    aiSuggestedProviders: [],
+    marketOverview: '',
+    negotiationTips: []
   };
 }
 
@@ -949,7 +1195,17 @@ async function extractWebContent(url) {
 function integratePartnerResults(organicResults, detectedType, contractText) {
   console.log(`🔍 STRENGE Partner-Integration gestartet...`);
   console.log(`📋 Erkannter Typ: ${detectedType}`);
-  
+
+  // 🆕 EARLY EXIT für B2B/unbekannte Typen — KEIN Partner-Widget anzeigen
+  if (!isKnownConsumerType(detectedType)) {
+    console.log(`🏢 B2B/Unbekannter Typ "${detectedType}" - KEINE Partner-Widgets`);
+    return {
+      combinedResults: organicResults,
+      partnerCategory: null,
+      partnerOffers: []
+    };
+  }
+
   // 🚨 PRIORITÄT: Partner-Check für Energie-Verträge
   const textLower = contractText.toLowerCase();
   let partnerCategory = null;
@@ -1215,16 +1471,28 @@ router.post("/", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: `Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. 
-            Antworte nur mit einem der folgenden Begriffe: 
+            content: `Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags.
+            Antworte NUR mit EINEM passenden Begriff.
+
+            BEKANNTE CONSUMER-TYPEN:
             - Versicherungen: rechtsschutz, haftpflicht, kfz, hausrat, wohngebäude, berufsunfähigkeit, krankenversicherung, lebensversicherung, unfallversicherung
             - Energie: strom, gas, ökostrom
             - Telekom: dsl, internet, mobilfunk, handy
             - Finanzen: kredit, girokonto, kreditkarte, baufinanzierung
-            - Sonstige: fitness, streaming, hosting, software, ai, saas, solar, unbekannt
-            
-            WICHTIG: Bei Strom/Energie IMMER "strom" oder "gas" zurückgeben!
-            Besondere Aufmerksamkeit für: Anthropic/Claude = ai, OpenAI/ChatGPT = ai, Software-Abos = software, Web-Services = saas`
+            - Sonstige: fitness, streaming, hosting, software, ai, saas, solar
+
+            B2B-TYPEN (wenn keiner der obigen passt):
+            - factoring, leasing, consulting, beratung, wartung, logistik, spedition
+            - personalvermittlung, zeitarbeit, outsourcing, facility-management
+            - lizenz, franchise, kooperation, rahmenvertrag, dienstleistung
+            - catering, reinigung, sicherheitsdienst, marketing, werbung
+            - buchhaltung, steuerberatung, rechtsberatung, immobilienverwaltung
+
+            REGELN:
+            - Bei Strom/Energie IMMER "strom" oder "gas" zurückgeben!
+            - Anthropic/Claude = ai, OpenAI/ChatGPT = ai, Software-Abos = software
+            - Bei B2B-Verträgen den SPEZIFISCHSTEN passenden Begriff verwenden
+            - NUR "unbekannt" wenn wirklich kein Typ erkennbar ist`
           },
           {
             role: "user",
@@ -1247,10 +1515,25 @@ router.post("/", async (req, res) => {
 
     // 🆕 Step 2: Generate Enhanced Search Queries
     console.log(`🚀 POINT 5: Generating search queries`);
-    const queryResult = generateEnhancedSearchQueries(detectedType, cleanContractText);
-    const enhancedQueries = queryResult.queries;
-    const contractContext = queryResult.contractContext;
-    console.log(`🎯 Generated ${enhancedQueries.length} base queries`);
+
+    // Prüfe ob der erkannte Typ ein bekannter Consumer-Typ ist
+    const isConsumer = isKnownConsumerType(detectedType);
+    let enhancedQueries;
+    let contractContext;
+
+    if (isConsumer) {
+      // Bekannte Consumer-Typen: Bestehende hardcoded Queries verwenden
+      const queryResult = generateEnhancedSearchQueries(detectedType, cleanContractText);
+      enhancedQueries = queryResult.queries;
+      contractContext = queryResult.contractContext;
+      console.log(`🎯 Consumer-Typ erkannt - ${enhancedQueries.length} hardcoded Queries`);
+    } else {
+      // B2B/Unbekannte Typen: GPT-basierte Queries generieren
+      console.log(`🏢 B2B/Unbekannter Typ "${detectedType}" - generiere GPT-Queries`);
+      enhancedQueries = await generateGPTSearchQueries(detectedType, cleanContractText, openai);
+      contractContext = analyzeContractContext(cleanContractText);
+      console.log(`🎯 GPT generierte ${enhancedQueries.length} B2B-Queries`);
+    }
 
     // Benutzer-Query als erste Option hinzufügen
     if (cleanSearchQuery && cleanSearchQuery.length > 0) {
@@ -1458,10 +1741,15 @@ router.post("/", async (req, res) => {
         mustNotInclude: ['versicherung', 'kredit', 'dsl']
       },
       'universal': {
-        // Für unbekannte Verträge: Sehr lockere Regeln
+        // Für B2B/unbekannte Verträge: Lockere Regeln, aber irrelevante Consumer-Ergebnisse blockieren
         mustInclude: [],
-        canInclude: ['vergleich', 'anbieter', 'alternative', 'wechsel', 'günstig', 'sparen'],
-        mustNotInclude: ['porn', 'casino', 'betting', 'adult'] // Nur illegale/unerwünschte Inhalte blockieren
+        canInclude: ['vergleich', 'anbieter', 'alternative', 'wechsel', 'günstig', 'sparen',
+                     'dienstleister', 'unternehmen', 'konditionen', 'angebot', 'lösung',
+                     detectedType?.toLowerCase() || ''].filter(Boolean),
+        mustNotInclude: ['porn', 'casino', 'betting', 'adult',
+                         // Blockiere offensichtlich irrelevante Consumer-Kategorien bei B2B
+                         'handytarif', 'stromtarif', 'fitnessstudio', 'netflix', 'spotify',
+                         'disney+', 'dazn']
       },
       'default': {
         mustInclude: [],
@@ -1504,17 +1792,17 @@ router.post("/", async (req, res) => {
                                'wechselpiraten.de', 'stromvergleich.de'];
       const isEnergyException = energyExceptions.some(exception => url.includes(exception));
       
-      // Prüfe ob es eine Blog/News-Seite ist (aber erlaube Energie-Ausnahmen)
+      // Prüfe ob es eine Blog/News-Seite ist (aber erlaube Energie-Ausnahmen und universal/B2B)
       const isBlogOrNews = blogAndNewsBlocklist.some(domain => url.includes(domain));
-      if (isBlogOrNews && !isEnergyException) {
+      if (isBlogOrNews && !isEnergyException && filterType !== 'universal') {
         console.log(`   ❌ BLOCKIERT: Blog/News-Seite`);
         return false;
       }
       
       // Prüfe ob "blog", "artikel", "news", "test", "ratgeber" im URL-Pfad
-      if ((url.includes('/blog/') || url.includes('/artikel/') || 
+      if ((url.includes('/blog/') || url.includes('/artikel/') ||
           url.includes('/news/') || url.includes('/magazin/') ||
-          url.includes('/ratgeber/')) && !url.includes('finanztip') && !isEnergyException) {
+          url.includes('/ratgeber/')) && !url.includes('finanztip') && !isEnergyException && filterType !== 'universal') {
         console.log(`   ❌ BLOCKIERT: Blog/Artikel-Pfad erkannt`);
         return false;
       }
@@ -1924,6 +2212,41 @@ router.post("/", async (req, res) => {
         });
       }
 
+      // 🏢 B2B Zero-Results Fallback: GPT trotzdem für AI-Suggested Providers aufrufen
+      if (!isConsumer) {
+        console.log(`🏢 B2B Zero-Results: Rufe GPT für KI-Vorschläge auf...`);
+        try {
+          const b2bEnrichment = await enrichB2BResultsWithGPT([], cleanContractText, detectedType, openai);
+          const aiSuggested = createAiSuggestedAlternatives(b2bEnrichment.aiSuggestedProviders);
+          const b2bAnalysis = formatB2BAnalysis(b2bEnrichment);
+
+          if (aiSuggested.length > 0) {
+            const zeroResult = {
+              analysis: b2bAnalysis || '## 📊 Marktanalyse\nKeine Suchergebnisse gefunden, aber KI-basierte Anbietervorschläge verfügbar.',
+              alternatives: [],
+              aiSuggestedAlternatives: aiSuggested,
+              isB2B: true,
+              searchQuery: cleanSearchQuery,
+              partnerCategory: null,
+              partnerOffers: [],
+              performance: {
+                totalAlternatives: 0,
+                organicResults: 0,
+                partnerOffersCount: 0,
+                detailedExtractions: 0,
+                aiSuggestedCount: aiSuggested.length,
+                timestamp: new Date().toISOString()
+              },
+              fromCache: false
+            };
+            saveToCache(cacheKey, zeroResult);
+            return res.json(zeroResult);
+          }
+        } catch (b2bError) {
+          console.error(`❌ B2B Zero-Results Fallback fehlgeschlagen:`, b2bError.message);
+        }
+      }
+
       return res.status(404).json({
         error: "Keine Suchergebnisse gefunden",
         searchQuery: cleanSearchQuery,
@@ -1958,9 +2281,10 @@ router.post("/", async (req, res) => {
       }
     });
 
-    // Kombiniere Priority und Regular URLs (max 6)
-    const urlsToExtract = [...priorityUrls, ...regularUrls].slice(0, 6);
-    console.log(`📄 Extrahiere Inhalte von ${urlsToExtract.length} Websites (${priorityUrls.length} Priority)...`);
+    // Kombiniere Priority und Regular URLs (B2B: max 4, Consumer: max 6)
+    const maxUrlsToExtract = isConsumer ? 6 : 4;
+    const urlsToExtract = [...priorityUrls, ...regularUrls].slice(0, maxUrlsToExtract);
+    console.log(`📄 Extrahiere Inhalte von ${urlsToExtract.length} Websites (${priorityUrls.length} Priority, ${isConsumer ? 'Consumer' : 'B2B'})...`);
 
     // 🆕 Parallele Extraktion mit Error-Handling
     const extractionPromises = urlsToExtract.map(async (result, index) => {
@@ -2089,8 +2413,10 @@ router.post("/", async (req, res) => {
       }));
 
       return res.json({
-        analysis: "⚠️ Aufgrund technischer Beschränkungen konnten detaillierte Preise nicht extrahiert werden. Die folgenden Anbieter könnten jedoch relevante Alternativen sein. Besuchen Sie die Links für aktuelle Preise und Details.",
+        analysis: "Aufgrund technischer Beschränkungen konnten detaillierte Preise nicht extrahiert werden. Die folgenden Anbieter könnten jedoch relevante Alternativen sein. Besuchen Sie die Links für aktuelle Preise und Details.",
         alternatives: fallbackResults,
+        aiSuggestedAlternatives: [],
+        isB2B: !isConsumer,
         searchQuery: enhancedQueries[0],
         contractType: detectedType,
         partnerCategory: partnerCategory,
@@ -2099,6 +2425,7 @@ router.post("/", async (req, res) => {
           totalAlternatives: fallbackResults.length,
           detailedExtractions: 0,
           partnerOffersCount: 0,
+          aiSuggestedCount: 0,
           timestamp: new Date().toISOString(),
           warning: "Limited data extraction"
         },
@@ -2106,10 +2433,24 @@ router.post("/", async (req, res) => {
       });
     }
     
-    // GPT-Analyse (ERWEITERT UM PARTNER-HINWEISE)
-    const systemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
+    // GPT-Analyse (ERWEITERT UM PARTNER-HINWEISE + B2B-STRUCTURED-ENRICHMENT)
+    const isConsumerContract = isKnownConsumerType(detectedType);
+    let analysis;
+    let aiSuggestedAlternatives = [];
 
-WICHTIG: 
+    if (!isConsumerContract) {
+      // 🏢 B2B: Structured Enrichment statt Freitext-Analyse
+      console.log(`🏢 B2B-Modus: Starte Structured GPT-Enrichment...`);
+      const b2bEnrichment = await enrichB2BResultsWithGPT(enrichedResults, cleanContractText, detectedType, openai);
+      enrichedResults = mergeB2BEnrichment(enrichedResults, b2bEnrichment);
+      aiSuggestedAlternatives = createAiSuggestedAlternatives(b2bEnrichment.aiSuggestedProviders);
+      analysis = formatB2BAnalysis(b2bEnrichment);
+      console.log(`✅ B2B Enrichment abgeschlossen: ${enrichedResults.length} angereichert, ${aiSuggestedAlternatives.length} KI-Vorschläge`);
+    } else {
+      // 🛒 Consumer: bestehender Flow UNVERÄNDERT
+      const consumerSystemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
+
+WICHTIG:
 - Nutze die extrahierten Preise und Vertragsinformationen für eine genaue Analyse.
 - Die "prices" Arrays enthalten NUR echte Preise (was man zahlt).
 - Die "savings" Arrays enthalten Ersparnisse/Boni (was man sparen kann).
@@ -2123,7 +2464,7 @@ ANTWORTE IN DIESEM FORMAT:
 
 ## 🏆 Top 3 Alternativen
 1. **[Name]** - [Vorteile/Nachteile]
-2. **[Name]** - [Vorteile/Nachteile] 
+2. **[Name]** - [Vorteile/Nachteile]
 3. **[Name]** - [Vorteile/Nachteile]
 
 ## 💡 Empfehlung
@@ -2132,7 +2473,7 @@ ANTWORTE IN DIESEM FORMAT:
 ## 💰 Potenzielle Ersparnis
 [Geschätzte monatliche/jährliche Ersparnis basierend auf echten Preisen, nicht auf Ersparnisangaben]`;
 
-    const userPrompt = `**AKTUELLER VERTRAG:**
+      const userPrompt = `**AKTUELLER VERTRAG:**
 ${cleanContractText}
 
 **GEFUNDENE ALTERNATIVEN:**
@@ -2158,22 +2499,25 @@ Die Ersparnisse sind nur Marketingangaben darüber, was man maximal sparen könn
 
 Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksichtige besonders die Partner-Angebote, da diese oft die besten Vergleichsmöglichkeiten bieten.`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      temperature: 0.4,
-      max_tokens: 1200
-    });
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: consumerSystemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 1200
+      });
 
-    const analysis = completion.choices[0].message.content;
-    
-    // Ergebnis strukturieren (MIT PARTNER-INFO)
+      analysis = completion.choices[0].message.content;
+    }
+
+    // Ergebnis strukturieren (MIT PARTNER-INFO + B2B-FELDER)
     const result = {
       analysis,
       alternatives: enrichedResults,
+      aiSuggestedAlternatives: aiSuggestedAlternatives,
+      isB2B: !isConsumerContract,
       searchQuery: cleanSearchQuery,
       partnerCategory: partnerCategory,
       partnerOffers: partnerOffers,
@@ -2182,17 +2526,18 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         organicResults: organicResults.length,
         partnerOffersCount: partnerOffers.length,
         detailedExtractions: successfulExtractions.length,
+        aiSuggestedCount: aiSuggestedAlternatives.length,
         timestamp: new Date().toISOString(),
         processingTimeMs: Date.now() - Date.now() // Placeholder
       }
     };
-    
+
     // Cache speichern
     saveToCache(cacheKey, result);
     console.log(`💾 Ergebnis im Cache gespeichert (Key: ${cacheKey})`);
-    
-    console.log(`✅ Vertragsvergleich abgeschlossen - ${enrichedResults.length} Alternativen analysiert (inkl. ${partnerOffers.length} Partner)`);
-    
+
+    console.log(`✅ Vertragsvergleich abgeschlossen - ${enrichedResults.length} Alternativen analysiert (inkl. ${partnerOffers.length} Partner, ${aiSuggestedAlternatives.length} KI-Vorschläge)`);
+
     return res.json({
       ...result,
       fromCache: false,

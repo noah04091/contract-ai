@@ -22,13 +22,22 @@ interface Alternative {
   monthlyPrice?: number | null;
   provider?: string;
   features?: string[];
-  // 🆕 Partner-spezifische Felder
-  source?: 'serp' | 'partner';
+  // Partner-spezifische Felder
+  source?: 'serp' | 'partner' | 'ai-suggested';
   widget?: WidgetData;
   directLink?: string;
   isVerified?: boolean;
   category?: string;
   isPriorityPortal?: boolean;
+  // B2B-spezifische Felder
+  pricingModel?: string;
+  targetSegment?: string;
+  industryFocus?: string;
+  whyFit?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  evidenceSource?: 'website' | 'search-result' | 'ai-knowledge';
+  isAiSuggested?: boolean;
+  b2bSummary?: string;
 }
 
 // 🆕 Partner Category Interface
@@ -48,12 +57,15 @@ interface ResultsProps {
   contractType: string;
   loading?: boolean;
   fromCache?: boolean;
-  // 🆕 Partner-spezifische Props
+  // Partner-spezifische Props
   partnerCategory?: PartnerCategory | null;
   partnerOffers?: Alternative[];
+  // B2B-spezifische Props
+  isB2B?: boolean;
+  aiSuggestedAlternatives?: Alternative[];
 }
 
-type SortOption = 'price' | 'relevance' | 'features';
+type SortOption = 'price' | 'relevance' | 'features' | 'confidence';
 
 const BetterContractsResults: React.FC<ResultsProps> = ({
   analysis,
@@ -64,7 +76,9 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   loading = false,
   fromCache = false,
   partnerCategory = null,
-  partnerOffers = []
+  partnerOffers = [],
+  isB2B = false,
+  aiSuggestedAlternatives = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [showAllAlternatives, setShowAllAlternatives] = useState(false);
@@ -242,6 +256,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   });
 
   // Sort alternatives
+  const confidenceOrder = { high: 0, medium: 1, low: 2 };
   const sortedAlternatives = [...enhancedAlternatives].sort((a, b) => {
     switch (sortBy) {
       case 'price': {
@@ -252,8 +267,13 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       case 'features': {
         return (b.features?.length || 0) - (a.features?.length || 0);
       }
+      case 'confidence': {
+        const confA = confidenceOrder[a.confidence || 'low'];
+        const confB = confidenceOrder[b.confidence || 'low'];
+        return confA - confB;
+      }
       default: {
-        // 🆕 Partner results get priority in relevance sorting
+        // Partner results get priority in relevance sorting
         if (a.source === 'partner' && b.source !== 'partner') return -1;
         if (a.source !== 'partner' && b.source === 'partner') return 1;
         return b.hasDetailedData ? 1 : -1;
@@ -282,6 +302,168 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     setSortBy(event.target.value as SortOption);
   };
 
+  // B2B Confidence Label
+  const getConfidenceLabel = (confidence?: string) => {
+    switch (confidence) {
+      case 'high': return { text: 'Hoch', className: 'b2b-confidence-high' };
+      case 'medium': return { text: 'Mittel', className: 'b2b-confidence-medium' };
+      case 'low': return { text: 'Niedrig', className: 'b2b-confidence-low' };
+      default: return { text: 'Niedrig', className: 'b2b-confidence-low' };
+    }
+  };
+
+  const getEvidenceLabel = (source?: string) => {
+    switch (source) {
+      case 'website': return 'Website verifiziert';
+      case 'search-result': return 'Aus Suchergebnis';
+      case 'ai-knowledge': return 'KI-Einschätzung';
+      default: return 'KI-Einschätzung';
+    }
+  };
+
+  // B2B Card Renderer
+  const renderB2BCard = (alternative: Alternative & { monthlyPrice?: number | null; features?: string[] }, index: number) => {
+    const conf = getConfidenceLabel(alternative.confidence);
+    const isAiCard = alternative.isAiSuggested || alternative.source === 'ai-suggested';
+
+    return (
+      <div
+        key={`b2b-${index}`}
+        className={`alternative-card b2b-card ${isAiCard ? 'ai-suggested-card' : ''}`}
+      >
+        {/* AI-Suggested Badge */}
+        {isAiCard && (
+          <div className="ai-suggested-indicator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            KI-Vorschlag
+          </div>
+        )}
+
+        {/* Confidence Badge */}
+        <div className={`b2b-confidence-badge ${conf.className}`}>
+          {conf.text}
+        </div>
+
+        {/* Card Header */}
+        <div className="card-header">
+          <div className="provider-info">
+            <div className="provider-avatar b2b">
+              {alternative.provider?.charAt(0).toUpperCase() || '?'}
+            </div>
+            <div className="provider-details">
+              <h3 className="provider-name">{alternative.provider}</h3>
+              <p className="offer-title">{alternative.title.slice(0, 80)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* B2B Content Grid */}
+        <div className="b2b-content-grid">
+          {alternative.pricingModel && (
+            <div className="b2b-field">
+              <span className="b2b-field-label">Preismodell</span>
+              <span className="b2b-field-value">{alternative.pricingModel}</span>
+            </div>
+          )}
+          {alternative.targetSegment && (
+            <div className="b2b-field">
+              <span className="b2b-field-label">Zielgruppe</span>
+              <span className="b2b-field-value">{alternative.targetSegment}</span>
+            </div>
+          )}
+          {alternative.industryFocus && (
+            <div className="b2b-field">
+              <span className="b2b-field-label">Branchenfokus</span>
+              <span className="b2b-field-value">{alternative.industryFocus}</span>
+            </div>
+          )}
+        </div>
+
+        {/* B2B Summary */}
+        {alternative.b2bSummary && (
+          <div className="card-content">
+            <p className="offer-snippet">{alternative.b2bSummary}</p>
+          </div>
+        )}
+
+        {/* Why Fit Box */}
+        {alternative.whyFit && (
+          <div className="b2b-why-fit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4"/>
+              <path d="M12 8h.01"/>
+            </svg>
+            <span>{alternative.whyFit}</span>
+          </div>
+        )}
+
+        {/* Evidence Tag */}
+        <div className="b2b-evidence-tag">
+          {getEvidenceLabel(alternative.evidenceSource)}
+        </div>
+
+        {/* Card Actions */}
+        <div className="card-actions">
+          {alternative.link && alternative.link !== '#' ? (
+            <a
+              href={alternative.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-button primary"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15,3 21,3 21,9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Zum Anbieter
+            </a>
+          ) : (
+            <span className="action-button primary" style={{ opacity: 0.5, cursor: 'default' }}>
+              Keine Website
+            </span>
+          )}
+
+          <button
+            className={`action-button ${savedStates[alternative.link] ? 'saved' : 'secondary'}`}
+            onClick={() => handleSaveAlternative(alternative)}
+            disabled={savingStates[alternative.link]}
+          >
+            {savingStates[alternative.link] ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                  <path d="M12 2v4"/><path d="M12 18v4"/>
+                  <path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/>
+                  <path d="M2 12h4"/><path d="M18 12h4"/>
+                  <path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>
+                </svg>
+                Speichern...
+              </>
+            ) : savedStates[alternative.link] ? (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                Gespeichert
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"/>
+                </svg>
+                Merken
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="results-container loading">
@@ -306,21 +488,25 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           {fromCache ? 'Aus Cache geladen' : 'Neue Analyse'}
         </div>
         
-        <h2 className="results-title">🔍 Bessere Alternativen gefunden</h2>
+        <h2 className="results-title">{isB2B ? 'Alternative Anbieter gefunden' : 'Bessere Alternativen gefunden'}</h2>
         <div className="results-summary">
           <div className="summary-item">
             <span className="summary-label">Vertragstyp:</span>
             <span className="summary-value">{contractType}</span>
           </div>
-          <div className="summary-item">
-            <span className="summary-label">Aktueller Preis:</span>
-            <span className="summary-value">{currentPrice}€/Monat</span>
-          </div>
+          {!isB2B && currentPrice > 0 && (
+            <div className="summary-item">
+              <span className="summary-label">Aktueller Preis:</span>
+              <span className="summary-value">{currentPrice}€/Monat</span>
+            </div>
+          )}
           <div className="summary-item">
             <span className="summary-label">Gefundene Alternativen:</span>
-            <span className="summary-value">{alternatives.length}</span>
+            <span className="summary-value">
+              {alternatives.length}{isB2B && aiSuggestedAlternatives.length > 0 ? ` + ${aiSuggestedAlternatives.length} KI` : ''}
+            </span>
           </div>
-          {/* 🆕 Partner Category Badge */}
+          {/* Partner Category Badge */}
           {partnerCategory && (
             <div className="summary-item">
               <span className="summary-label">Vergleichsportal:</span>
@@ -336,229 +522,262 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       <div className="results-filters">
         <div className="filter-group">
           <label>Sortieren nach:</label>
-          <select 
-            value={sortBy} 
+          <select
+            value={sortBy}
             onChange={handleSortChange}
             className="filter-select"
           >
             <option value="relevance">Relevanz</option>
-            <option value="price">Preis (niedrig → hoch)</option>
+            {isB2B ? (
+              <option value="confidence">Vertrauen (hoch → niedrig)</option>
+            ) : (
+              <option value="price">Preis (niedrig → hoch)</option>
+            )}
             <option value="features">Umfang der Informationen</option>
           </select>
         </div>
       </div>
 
-      {/* Alternatives Grid */}
-      <div className="alternatives-grid">
-        {displayedAlternatives.map((alternative, index) => {
-          const savings = alternative.monthlyPrice && alternative.monthlyPrice < currentPrice 
-            ? currentPrice - alternative.monthlyPrice 
-            : null;
-          
-          // 🆕 Check if this is a partner result
-          const isPartner = alternative.source === 'partner';
-          const hasWidget = isPartner && alternative.widget;
-
-          return (
-            <div 
-              key={index} 
-              className={`alternative-card ${alternative.hasDetailedData ? 'detailed' : 'basic'} ${isPartner ? 'partner-card' : ''}`}
-            >
-              {/* 🆕 Partner Badge */}
-              {isPartner && (
-                <div className="partner-indicator">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                  {alternative.provider === 'check24' ? 'CHECK24' : 
-                   alternative.provider === 'tarifcheck' ? 'TarifCheck' : 'Partner'}
-                </div>
-              )}
-
-              {/* Recommendation Badge */}
-              {index === 0 && (
-                <div className="recommendation-badge best">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                  Beste Option
-                </div>
-              )}
-              
-              {savings && savings > 5 && (
-                <div className="savings-badge">
-                  -{savings.toFixed(0)}€/Monat
-                </div>
-              )}
-
-              {/* Card Header */}
-              <div className="card-header">
-                <div className="provider-info">
-                  <div className={`provider-avatar ${isPartner ? 'partner' : ''}`}>
-                    {alternative.provider?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                  <div className="provider-details">
-                    <h3 className="provider-name">
-                      {alternative.provider}
-                      {/* 🆕 Verified Badge for Partner Results */}
-                      {alternative.isVerified && (
-                        <span className="verified-badge">✓</span>
-                      )}
-                    </h3>
-                    <p className="offer-title">{alternative.title.slice(0, 60)}...</p>
-                  </div>
-                </div>
-                
-                {alternative.monthlyPrice && (
-                  <div className="price-display">
-                    <span className="price-amount">{alternative.monthlyPrice.toFixed(2)}€</span>
-                    <span className="price-period">/Monat</span>
-                  </div>
-                )}
+      {/* Alternatives Grid — B2B vs Consumer Branch */}
+      {isB2B ? (
+        <>
+          {/* B2B: Gefundene Anbieter */}
+          {displayedAlternatives.filter(a => !a.isAiSuggested).length > 0 && (
+            <>
+              <div className="b2b-section-header">
+                <h3>Gefundene Anbieter</h3>
+                <p>Basierend auf Marktrecherche und KI-Analyse</p>
               </div>
+              <div className="alternatives-grid">
+                {displayedAlternatives.filter(a => !a.isAiSuggested).map((alt, i) => renderB2BCard(alt, i))}
+              </div>
+            </>
+          )}
 
-              {/* Card Content */}
-              <div className="card-content">
-                <p className="offer-snippet">{alternative.snippet}</p>
-                
-                {alternative.prices.length > 0 && (
-                  <div className="price-details">
-                    <span className="price-label">Weitere Preise:</span>
-                    <div className="price-tags">
-                      {alternative.prices.slice(0, 3).map((price, i) => (
-                        <span key={i} className="price-tag">{price}</span>
-                      ))}
+          {/* B2B: AI-Suggested Providers */}
+          {aiSuggestedAlternatives.length > 0 && (
+            <>
+              <div className="b2b-section-header ai-suggested">
+                <h3>Weitere bekannte Anbieter (KI)</h3>
+                <p>Zusätzliche Anbieter aus KI-Marktwissen — nicht über Suche verifiziert</p>
+              </div>
+              <div className="alternatives-grid">
+                {aiSuggestedAlternatives.map((alt, i) => renderB2BCard(alt, i + 100))}
+              </div>
+            </>
+          )}
+
+          {/* Show More Button */}
+          {alternatives.length > 5 && (
+            <div className="show-more-section">
+              <button
+                className="show-more-button"
+                onClick={() => setShowAllAlternatives(!showAllAlternatives)}
+              >
+                {showAllAlternatives ? 'Weniger anzeigen' : `Alle ${alternatives.length} Alternativen anzeigen`}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  style={{ transform: showAllAlternatives ? 'rotate(180deg)' : 'none' }}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Consumer: BESTEHENDER CODE UNVERÄNDERT */}
+          <div className="alternatives-grid">
+            {displayedAlternatives.map((alternative, index) => {
+              const savings = currentPrice > 0 && alternative.monthlyPrice && alternative.monthlyPrice < currentPrice
+                ? currentPrice - alternative.monthlyPrice
+                : null;
+
+              const isPartner = alternative.source === 'partner';
+              const hasWidget = isPartner && alternative.widget;
+
+              return (
+                <div
+                  key={index}
+                  className={`alternative-card ${alternative.hasDetailedData ? 'detailed' : 'basic'} ${isPartner ? 'partner-card' : ''}`}
+                >
+                  {isPartner && (
+                    <div className="partner-indicator">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                      {alternative.provider === 'check24' ? 'CHECK24' :
+                       alternative.provider === 'tarifcheck' ? 'TarifCheck' : 'Partner'}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {alternative.features && alternative.features.length > 0 && (
-                  <div className="features-list">
-                    {alternative.features.map((feature, i) => (
-                      <div key={i} className="feature-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {index === 0 && (
+                    <div className="recommendation-badge best">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                      Beste Option
+                    </div>
+                  )}
+
+                  {savings && savings > 5 && (
+                    <div className="savings-badge">
+                      -{savings.toFixed(0)}€/Monat
+                    </div>
+                  )}
+
+                  <div className="card-header">
+                    <div className="provider-info">
+                      <div className={`provider-avatar ${isPartner ? 'partner' : ''}`}>
+                        {alternative.provider?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <div className="provider-details">
+                        <h3 className="provider-name">
+                          {alternative.provider}
+                          {alternative.isVerified && (
+                            <span className="verified-badge">✓</span>
+                          )}
+                        </h3>
+                        <p className="offer-title">{alternative.title.slice(0, 60)}...</p>
+                      </div>
+                    </div>
+
+                    {alternative.monthlyPrice && (
+                      <div className="price-display">
+                        <span className="price-amount">{alternative.monthlyPrice.toFixed(2)}€</span>
+                        <span className="price-period">/Monat</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="card-content">
+                    <p className="offer-snippet">{alternative.snippet}</p>
+
+                    {alternative.prices.length > 0 && (
+                      <div className="price-details">
+                        <span className="price-label">Weitere Preise:</span>
+                        <div className="price-tags">
+                          {alternative.prices.slice(0, 3).map((price, i) => (
+                            <span key={i} className="price-tag">{price}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {alternative.features && alternative.features.length > 0 && (
+                      <div className="features-list">
+                        {alternative.features.map((feature, i) => (
+                          <div key={i} className="feature-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                            {feature.trim()}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="card-actions">
+                    {hasWidget ? (
+                      <button
+                        onClick={() => openWidgetModal(alternative)}
+                        className="action-button primary partner"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="9" y1="9" x2="15" y2="15"/>
+                          <line x1="15" y1="9" x2="9" y2="15"/>
+                        </svg>
+                        Jetzt vergleichen
+                      </button>
+                    ) : (
+                      <a
+                        href={alternative.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-button primary"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15,3 21,3 21,9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Zum Anbieter
+                      </a>
+                    )}
+
+                    <button
+                      className={`action-button ${savedStates[alternative.link] ? 'saved' : 'secondary'}`}
+                      onClick={() => handleSaveAlternative(alternative)}
+                      disabled={savingStates[alternative.link]}
+                    >
+                      {savingStates[alternative.link] ? (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                            <path d="M12 2v4"/><path d="M12 18v4"/>
+                            <path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/>
+                            <path d="M2 12h4"/><path d="M18 12h4"/>
+                            <path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>
+                          </svg>
+                          Speichern...
+                        </>
+                      ) : savedStates[alternative.link] ? (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 6L9 17l-5-5"/>
+                          </svg>
+                          Gespeichert
+                        </>
+                      ) : (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"/>
+                          </svg>
+                          Merken
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="data-quality">
+                    {alternative.hasDetailedData ? (
+                      <div className="quality-indicator good">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M20 6L9 17l-5-5"/>
                         </svg>
-                        {feature.trim()}
+                        Detaillierte Daten verfügbar
                       </div>
-                    ))}
+                    ) : (
+                      <div className="quality-indicator basic">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 6v6l4 2"/>
+                        </svg>
+                        Basisdaten verfügbar
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              );
+            })}
+          </div>
 
-              {/* Card Actions */}
-              <div className="card-actions">
-                {/* 🆕 Widget Button for Partner Results */}
-                {hasWidget ? (
-                  <button 
-                    onClick={() => openWidgetModal(alternative)}
-                    className="action-button primary partner"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="9" y1="9" x2="15" y2="15"/>
-                      <line x1="15" y1="9" x2="9" y2="15"/>
-                    </svg>
-                    Jetzt vergleichen
-                  </button>
-                ) : (
-                  <a 
-                    href={alternative.link} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="action-button primary"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15,3 21,3 21,9"/>
-                      <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                    Zum Anbieter
-                  </a>
-                )}
-                
-                <button
-                  className={`action-button ${savedStates[alternative.link] ? 'saved' : 'secondary'}`}
-                  onClick={() => handleSaveAlternative(alternative)}
-                  disabled={savingStates[alternative.link]}
-                >
-                  {savingStates[alternative.link] ? (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
-                        <path d="M12 2v4"/>
-                        <path d="M12 18v4"/>
-                        <path d="M4.93 4.93l2.83 2.83"/>
-                        <path d="M16.24 16.24l2.83 2.83"/>
-                        <path d="M2 12h4"/>
-                        <path d="M18 12h4"/>
-                        <path d="M4.93 19.07l2.83-2.83"/>
-                        <path d="M16.24 7.76l2.83-2.83"/>
-                      </svg>
-                      Speichern...
-                    </>
-                  ) : savedStates[alternative.link] ? (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 6L9 17l-5-5"/>
-                      </svg>
-                      Gespeichert
-                    </>
-                  ) : (
-                    <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"/>
-                      </svg>
-                      Merken
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Data Quality Indicator */}
-              <div className="data-quality">
-                {alternative.hasDetailedData ? (
-                  <div className="quality-indicator good">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20 6L9 17l-5-5"/>
-                    </svg>
-                    Detaillierte Daten verfügbar
-                  </div>
-                ) : (
-                  <div className="quality-indicator basic">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 6v6l4 2"/>
-                    </svg>
-                    Basisdaten verfügbar
-                  </div>
-                )}
-              </div>
+          {/* Show More Button */}
+          {alternatives.length > 5 && (
+            <div className="show-more-section">
+              <button
+                className="show-more-button"
+                onClick={() => setShowAllAlternatives(!showAllAlternatives)}
+              >
+                {showAllAlternatives ? 'Weniger anzeigen' : `Alle ${alternatives.length} Alternativen anzeigen`}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  style={{ transform: showAllAlternatives ? 'rotate(180deg)' : 'none' }}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Show More Button */}
-      {alternatives.length > 5 && (
-        <div className="show-more-section">
-          <button 
-            className="show-more-button"
-            onClick={() => setShowAllAlternatives(!showAllAlternatives)}
-          >
-            {showAllAlternatives ? 'Weniger anzeigen' : `Alle ${alternatives.length} Alternativen anzeigen`}
-            <svg 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2"
-              style={{ transform: showAllAlternatives ? 'rotate(180deg)' : 'none' }}
-            >
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </button>
-        </div>
+          )}
+        </>
       )}
 
       {/* AI Analysis Section */}
