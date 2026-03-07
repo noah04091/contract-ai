@@ -789,39 +789,37 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     }
 
     // --- Analysis ---
-    const hasDirectAnalysis = contract.analysis && typeof contract.analysis === 'object' && Object.keys(contract.analysis).length > 0;
-    if (!hasDirectAnalysis) {
-      let analysis = null;
-      if (contract.analysisId) {
-        analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
-      }
-      if (!analysis && contract.name) {
-        analysis = fallbackMap.get(contract.userId?.toString() + '::' + contract.name) || null;
-      }
-
-      if (analysis) {
-        contract.analysis = {
-          summary: analysis.summary,
-          legalAssessment: analysis.legalAssessment,
-          suggestions: analysis.suggestions,
-          comparison: analysis.comparison,
-          contractScore: analysis.contractScore,
-          analysisId: analysis._id,
-          lastAnalyzed: analysis.createdAt
-        };
-      }
-
-      contract.summary = contract.summary || analysis?.summary || null;
-      contract.contractScore = contract.contractScore || analysis?.contractScore || null;
-      contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
-      contract.suggestions = contract.suggestions || analysis?.suggestions || null;
-      contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
-      contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
-      contract.importantDates = contract.importantDates || analysis?.importantDates || null;
-      contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
-      contract.recommendations = contract.recommendations || analysis?.recommendations || null;
-      contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
+    // Analysis-Daten aus Batch-Query mergen (nicht aus Contract-Projection, da analysis-Feld zu groß)
+    let analysis = null;
+    if (contract.analysisId) {
+      analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
     }
+    if (!analysis && contract.name) {
+      analysis = fallbackMap.get(contract.userId?.toString() + '::' + contract.name) || null;
+    }
+
+    if (analysis) {
+      contract.analysis = {
+        summary: analysis.summary,
+        legalAssessment: analysis.legalAssessment,
+        suggestions: analysis.suggestions,
+        comparison: analysis.comparison,
+        contractScore: analysis.contractScore,
+        analysisId: analysis._id,
+        lastAnalyzed: analysis.createdAt
+      };
+    }
+
+    contract.summary = contract.summary || analysis?.summary || null;
+    contract.contractScore = contract.contractScore || analysis?.contractScore || null;
+    contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
+    contract.suggestions = contract.suggestions || analysis?.suggestions || null;
+    contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
+    contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
+    contract.importantDates = contract.importantDates || analysis?.importantDates || null;
+    contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
+    contract.recommendations = contract.recommendations || analysis?.recommendations || null;
+    contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
   }
 
   const t4 = Date.now();
