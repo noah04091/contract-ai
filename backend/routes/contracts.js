@@ -648,18 +648,11 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // Vertrags-Details
     expiryDate: 1, startDate: 1, kuendigung: 1, laufzeit: 1,
     documentCategory: 1, uploadType: 1, s3Key: 1, folderId: 1,
-    // Analysis-Daten (Top-Level + Sub-Felder aus embedded analysis für alte Verträge)
-    analyzed: 1, analysisId: 1,
+    // Analysis-Daten
+    analyzed: 1, analysis: 1, analysisId: 1,
     contractScore: 1, summary: 1, risiken: 1, criticalIssues: 1,
     suggestions: 1, legalAssessment: 1, quickFacts: 1,
     importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
-    // Embedded analysis Sub-Felder (für alte Verträge die KEINE Top-Level-Felder haben)
-    // NICHT: analysis.fullText, analysis.extractedText etc. (zu groß!)
-    'analysis.summary': 1, 'analysis.contractScore': 1, 'analysis.legalAssessment': 1,
-    'analysis.suggestions': 1, 'analysis.criticalIssues': 1, 'analysis.quickFacts': 1,
-    'analysis.importantDates': 1, 'analysis.positiveAspects': 1, 'analysis.recommendations': 1,
-    'analysis.laymanSummary': 1, 'analysis.comparison': 1, 'analysis.analysisId': 1,
-    'analysis.createdAt': 1,
     // Status-Felder
     isGenerated: 1, isOptimized: 1, gekuendigtZum: 1,
     paymentStatus: 1, paymentAmount: 1, paymentFrequency: 1,
@@ -750,9 +743,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
 
   // Step 4: Contracts ohne Analysis-Match → Fallback per Name (1 Batch-Query)
   const needFallback = contracts.filter(c => {
-    // Prüfe ob Top-Level-Analyse-Felder vorhanden (summary, contractScore etc.)
-    const hasTopLevelAnalysis = !!(c.summary || c.contractScore);
-    if (hasTopLevelAnalysis) return false;
+    const hasDirectAnalysis = c.analysis && typeof c.analysis === 'object' && Object.keys(c.analysis).length > 0;
+    if (hasDirectAnalysis) return false;
     if (c.analysisId && analysesByIdMap.has(c.analysisId.toString())) return false;
     return true;
   });
@@ -811,42 +803,39 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     }
 
     // --- Analysis ---
-    // Priorität: 1) Batch-Query (analyses Collection) → 2) Embedded analysis (Sub-Felder) → 3) Top-Level-Felder
-    let analysis = null;
-    if (contract.analysisId) {
-      analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
-    }
-    if (!analysis && contract.name) {
-      analysis = fallbackMap.get(contract.userId?.toString() + '::' + contract.name) || null;
-    }
+    const hasDirectAnalysis = contract.analysis && typeof contract.analysis === 'object' && Object.keys(contract.analysis).length > 0;
+    if (!hasDirectAnalysis) {
+      let analysis = null;
+      if (contract.analysisId) {
+        analysis = analysesByIdMap.get(contract.analysisId.toString()) || null;
+      }
+      if (!analysis && contract.name) {
+        analysis = fallbackMap.get(contract.userId?.toString() + '::' + contract.name) || null;
+      }
 
-    // Embedded analysis als Fallback (für alte Verträge ohne Eintrag in analyses Collection)
-    const embedded = contract.analysis;
+      if (analysis) {
+        contract.analysis = {
+          summary: analysis.summary,
+          legalAssessment: analysis.legalAssessment,
+          suggestions: analysis.suggestions,
+          comparison: analysis.comparison,
+          contractScore: analysis.contractScore,
+          analysisId: analysis._id,
+          lastAnalyzed: analysis.createdAt
+        };
+      }
 
-    if (analysis) {
-      contract.analysis = {
-        summary: analysis.summary,
-        legalAssessment: analysis.legalAssessment,
-        suggestions: analysis.suggestions,
-        comparison: analysis.comparison,
-        contractScore: analysis.contractScore,
-        analysisId: analysis._id,
-        lastAnalyzed: analysis.createdAt
-      };
+      contract.summary = contract.summary || analysis?.summary || null;
+      contract.contractScore = contract.contractScore || analysis?.contractScore || null;
+      contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || null;
+      contract.suggestions = contract.suggestions || analysis?.suggestions || null;
+      contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || null;
+      contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
+      contract.importantDates = contract.importantDates || analysis?.importantDates || null;
+      contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
+      contract.recommendations = contract.recommendations || analysis?.recommendations || null;
+      contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;
     }
-    // Wenn weder Batch noch Fallback etwas gefunden haben, embedded behalten
-    // (contract.analysis bleibt dann das Sub-Feld-projizierte Objekt)
-
-    contract.summary = contract.summary || analysis?.summary || embedded?.summary || null;
-    contract.contractScore = contract.contractScore || analysis?.contractScore || embedded?.contractScore || null;
-    contract.legalAssessment = contract.legalAssessment || analysis?.legalAssessment || embedded?.legalAssessment || null;
-    contract.suggestions = contract.suggestions || analysis?.suggestions || embedded?.suggestions || null;
-    contract.risiken = contract.risiken || contract.criticalIssues || analysis?.criticalIssues || embedded?.criticalIssues || null;
-    contract.quickFacts = contract.quickFacts || analysis?.quickFacts || embedded?.quickFacts || null;
-    contract.importantDates = contract.importantDates || analysis?.importantDates || embedded?.importantDates || null;
-    contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || embedded?.positiveAspects || null;
-    contract.recommendations = contract.recommendations || analysis?.recommendations || embedded?.recommendations || null;
-    contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || embedded?.laymanSummary || null;
   }
 
   const t4 = Date.now();
