@@ -28,9 +28,10 @@ const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
 
 // 🚀 Cache-Invalidierung: Bei jeder Schreiboperation (POST/PUT/PATCH/DELETE) Cache für den User leeren
 router.use((req, res, next) => {
-  if (req.method !== 'GET' && req.user?.userId) {
+  if (req.method !== 'GET') {
     res.on('finish', () => {
-      if (res.statusCode >= 200 && res.statusCode < 300) {
+      // req.user wird erst von verifyToken gesetzt → daher hier prüfen, nicht oben
+      if (res.statusCode >= 200 && res.statusCode < 300 && req.user?.userId) {
         invalidateContractsCache(req.user.userId);
       }
     });
