@@ -133,49 +133,48 @@ const contractSchema = new mongoose.Schema({
   // ========================================
 
   // External System IDs (für Bidirektionale Sync)
-  // KEINE Indexes hier — werden erst bei tatsächlicher CRM-Nutzung erstellt
   externalIds: {
     // CRM Systems
     salesforce: {
-      opportunityId: { type: String },
-      accountId: { type: String },
-      contactId: { type: String },
-      recordType: { type: String }
+      opportunityId: { type: String, index: true, sparse: true },
+      accountId: { type: String, sparse: true },
+      contactId: { type: String, sparse: true },
+      recordType: { type: String } // Opportunity, Quote, Contract
     },
     hubspot: {
-      dealId: { type: String },
-      companyId: { type: String },
-      contactId: { type: String }
+      dealId: { type: String, index: true, sparse: true },
+      companyId: { type: String, sparse: true },
+      contactId: { type: String, sparse: true }
     },
     pipedrive: {
-      dealId: { type: String },
-      organizationId: { type: String },
-      personId: { type: String }
+      dealId: { type: String, index: true, sparse: true },
+      organizationId: { type: String, sparse: true },
+      personId: { type: String, sparse: true }
     },
     zoho: {
-      dealId: { type: String },
-      accountId: { type: String }
+      dealId: { type: String, index: true, sparse: true },
+      accountId: { type: String, sparse: true }
     },
     // ERP Systems
     sap: {
-      salesOrderId: { type: String },
-      customerId: { type: String },
-      contractId: { type: String },
-      documentNumber: { type: String }
+      salesOrderId: { type: String, index: true, sparse: true },
+      customerId: { type: String, sparse: true },
+      contractId: { type: String, sparse: true },
+      documentNumber: { type: String, sparse: true }
     },
     netsuite: {
-      transactionId: { type: String },
-      customerId: { type: String }
+      transactionId: { type: String, index: true, sparse: true },
+      customerId: { type: String, sparse: true }
     },
     odoo: {
-      saleOrderId: { type: String },
-      partnerId: { type: String }
+      saleOrderId: { type: String, index: true, sparse: true },
+      partnerId: { type: String, sparse: true }
     },
     // CPQ Systems
     cpq: {
-      quoteId: { type: String },
-      quoteNumber: { type: String },
-      configurationId: { type: String }
+      quoteId: { type: String, index: true, sparse: true },
+      quoteNumber: { type: String, sparse: true },
+      configurationId: { type: String, sparse: true }
     }
   },
 
