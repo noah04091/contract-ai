@@ -1726,6 +1726,13 @@ export default function Contracts() {
     }
   };
 
+  // ⚡ Schnellanalyse-Panel schließen (Helper für 3 Stellen)
+  const closeQuickAnalysis = async () => {
+    const analyzedContractId = quickAnalysisModal.contractId;
+    setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+    await silentRefreshContracts(analyzedContractId);
+  };
+
   // ✅ NEU: Load More Contracts für Infinite Scroll (mit Filtern)
   // 🚀 Mit Race Condition Prevention - ignoriert Response wenn Filter geändert wurde
   const loadMoreContracts = async () => {
@@ -5953,52 +5960,48 @@ export default function Contracts() {
 
         {/* 🎨 Contract Details Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
-          {/* ⚡ NEU: Schnellanalyse-Modal - zeigt ausführliche Analyse nach Schnellanalyse */}
+          {/* ⚡ Schnellanalyse — Slide-in Panel */}
           {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
-            <div className={styles.modalOverlay} onClick={async () => {
-              const analyzedContractId = quickAnalysisModal.contractId; // 🔧 FIX: ID vor dem Reset speichern
-              setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
-              // 🔄 Contracts-Liste UND Preview aktualisieren (mit expliziter ID)
-              await silentRefreshContracts(analyzedContractId);
-            }}>
-              <div className={styles.quickAnalysisModal} onClick={(e) => e.stopPropagation()}>
-                <button
-                  className={styles.closeButton}
-                  onClick={async () => {
-                    const analyzedContractId = quickAnalysisModal.contractId; // 🔧 FIX: ID vor dem Reset speichern
-                    setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
-                    // 🔄 Contracts-Liste UND Preview aktualisieren (mit expliziter ID)
-                    await silentRefreshContracts(analyzedContractId);
-                  }}
-                >
-                  <X size={24} />
-                </button>
-                <ContractAnalysis
-                  contractName={quickAnalysisModal.contractName}
-                  contractId={quickAnalysisModal.contractId}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  initialResult={quickAnalysisModal.analysisResult as any}
-                  onReset={async () => {
-                    const analyzedContractId = quickAnalysisModal.contractId; // 🔧 FIX: ID vor dem Reset speichern
-                    setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
-                    // 🔄 Contracts-Liste UND Preview aktualisieren (mit expliziter ID)
-                    await silentRefreshContracts(analyzedContractId);
-                  }}
-                  onNavigateToContract={async (navContractId) => {
-                    const analyzedContractId = quickAnalysisModal.contractId; // 🔧 FIX: ID vor dem Reset speichern
-                    setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
-                    // 🔄 Contracts-Liste aktualisieren und dann Contract Details öffnen
-                    const refreshedContracts = await silentRefreshContracts(analyzedContractId);
-                    const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);
-                    if (contract) {
-                      setSelectedContract(contract);
-                      setShowDetails(true);
-                      navigate(`/contracts?view=${navContractId}`, { replace: true });
-                    }
-                  }}
-                />
+            <>
+              {/* Overlay */}
+              <div className={styles.quickAnalysisOverlay} onClick={closeQuickAnalysis} />
+
+              {/* Slide-in Panel */}
+              <div className={styles.quickAnalysisPanel}>
+                {/* Header */}
+                <div className={styles.quickAnalysisPanelHeader}>
+                  <div className={styles.quickAnalysisPanelTitle}>
+                    <FileText size={20} />
+                    <h3>{quickAnalysisModal.contractName}</h3>
+                  </div>
+                  <button className={styles.quickAnalysisPanelClose} onClick={closeQuickAnalysis}>
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className={styles.quickAnalysisPanelContent}>
+                  <ContractAnalysis
+                    contractName={quickAnalysisModal.contractName}
+                    contractId={quickAnalysisModal.contractId}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    initialResult={quickAnalysisModal.analysisResult as any}
+                    onReset={closeQuickAnalysis}
+                    onNavigateToContract={async (navContractId) => {
+                      const analyzedContractId = quickAnalysisModal.contractId;
+                      setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+                      const refreshedContracts = await silentRefreshContracts(analyzedContractId);
+                      const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);
+                      if (contract) {
+                        setSelectedContract(contract);
+                        setShowDetails(true);
+                        navigate(`/contracts?view=${navContractId}`, { replace: true });
+                      }
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* ✅ NEU: Legacy-Modal für alte Verträge */}
@@ -6040,14 +6043,11 @@ export default function Contracts() {
           }}
           openEditModalDirectly={openEditModalDirectly}
           initialTab={modalInitialTab}
-          onEdit={async (contractId) => {
-            const updatedContracts = await fetchContracts();
-            if (updatedContracts) {
-              const updatedContract = updatedContracts.find((c: Contract) => c._id === contractId);
-              if (updatedContract) {
-                setSelectedContract(updatedContract);
-              }
-            }
+          onEdit={async () => {
+            // Nur die Vertragsliste im Hintergrund aktualisieren.
+            // selectedContract wird NICHT überschrieben — das Modal verwaltet seinen eigenen State.
+            // So bleiben inline-gespeicherte Felder (Vertragsnummer, Anbieter etc.) erhalten.
+            await fetchContracts();
           }}
           onDelete={handleDeleteContract}
         />,
