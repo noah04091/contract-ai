@@ -59,9 +59,9 @@ let eventsCollection; // ✅ NEU: Events Collection
 let usersCollection; // ✅ NEU: Users Collection für Bulk-Ops
 
 // 🚀 Server-seitiger Contracts-Cache (löst das Shared-Tier-Latenz-Problem)
-// Erster Aufruf: normal (8-10s auf Shared Tier), alle weiteren: sofort aus RAM
 const _contractsCache = new Map();
 const CACHE_TTL = 60000; // 60 Sekunden
+const CACHE_MAX_ENTRIES = 100; // Max Einträge um Memory Leak zu verhindern
 
 function getContractsCacheKey(filter, sort, skip, limit) {
   return JSON.stringify({ f: filter, s: sort, sk: skip, l: limit });
@@ -71,6 +71,20 @@ function invalidateContractsCache(userId) {
   const uidStr = userId?.toString();
   for (const [key] of _contractsCache) {
     if (key.includes(uidStr)) _contractsCache.delete(key);
+  }
+}
+
+// Abgelaufene Einträge entfernen + Size-Limit enforcer
+function cleanupContractsCache() {
+  const now = Date.now();
+  for (const [key, val] of _contractsCache) {
+    if (now - val.ts > CACHE_TTL) _contractsCache.delete(key);
+  }
+  // Wenn immer noch zu viele: älteste entfernen
+  if (_contractsCache.size > CACHE_MAX_ENTRIES) {
+    const entries = [..._contractsCache.entries()].sort((a, b) => a[1].ts - b[1].ts);
+    const toDelete = entries.slice(0, entries.length - CACHE_MAX_ENTRIES);
+    for (const [key] of toDelete) _contractsCache.delete(key);
   }
 }
 
@@ -755,7 +769,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
             importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
             userId: 1, contractName: 1, originalFileName: 1
           }
-        }).toArray();
+        }).sort({ createdAt: -1 }).toArray();
       for (const a of fallbackResults) {
         const key = a.userId?.toString() + '::' + (a.contractName || a.originalFileName);
         if (!fallbackMap.has(key)) fallbackMap.set(key, a);
@@ -840,6 +854,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
   console.log('[PERF] enrichContracts:', JSON.stringify(_enrichTiming));
 
   // 🚀 Ergebnis cachen für nachfolgende Aufrufe
+  cleanupContractsCache(); // Abgelaufene + überzählige Einträge entfernen
   const result = { contracts, totalCount, _enrichTiming };
   _contractsCache.set(cacheKey, { data: result, ts: Date.now() });
 
