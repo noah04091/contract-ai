@@ -5960,27 +5960,23 @@ export default function Contracts() {
 
         {/* 🎨 Contract Details Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
-          {/* ⚡ Schnellanalyse — Slide-in Panel */}
+          {/* ⚡ Schnellanalyse-Modal */}
           {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
-            <>
-              {/* Overlay */}
-              <div className={styles.quickAnalysisOverlay} onClick={closeQuickAnalysis} />
-
-              {/* Slide-in Panel */}
-              <div className={styles.quickAnalysisPanel}>
+            <div className={styles.quickAnalysisOverlay} onClick={closeQuickAnalysis}>
+              <div className={styles.quickAnalysisModal} onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
-                <div className={styles.quickAnalysisPanelHeader}>
-                  <div className={styles.quickAnalysisPanelTitle}>
-                    <FileText size={20} />
+                <div className={styles.quickAnalysisHeader}>
+                  <div className={styles.quickAnalysisHeaderTitle}>
+                    <FileText size={18} />
                     <h3>{quickAnalysisModal.contractName}</h3>
                   </div>
-                  <button className={styles.quickAnalysisPanelClose} onClick={closeQuickAnalysis}>
-                    <X size={20} />
+                  <button className={styles.quickAnalysisCloseBtn} onClick={closeQuickAnalysis}>
+                    <X size={18} />
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className={styles.quickAnalysisPanelContent}>
+                <div className={styles.quickAnalysisBody}>
                   <ContractAnalysis
                     contractName={quickAnalysisModal.contractName}
                     contractId={quickAnalysisModal.contractId}
@@ -6001,7 +5997,7 @@ export default function Contracts() {
                   />
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* ✅ NEU: Legacy-Modal für alte Verträge */}
