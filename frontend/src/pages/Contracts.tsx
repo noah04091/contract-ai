@@ -5967,8 +5967,10 @@ export default function Contracts() {
                 {/* Header */}
                 <div className={styles.quickAnalysisHeader}>
                   <div className={styles.quickAnalysisHeaderTitle}>
-                    <FileText size={18} />
-                    <h3>{quickAnalysisModal.contractName}</h3>
+                    <div className={styles.quickAnalysisHeaderIcon}>
+                      <Zap size={16} />
+                    </div>
+                    <h3>Schnellanalyse</h3>
                   </div>
                   <button className={styles.quickAnalysisCloseBtn} onClick={closeQuickAnalysis}>
                     <X size={18} />
