@@ -10,6 +10,7 @@ interface Contract {
   name: string;
   provider?: string;
   contractNumber?: string;
+  vertragsnummer?: string;
   customerNumber?: string;
   expiryDate?: string;
   amount?: number;

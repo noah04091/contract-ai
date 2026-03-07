@@ -45,6 +45,7 @@ interface Contract {
   name: string;
   provider?: string | ProviderInfo;
   contractNumber?: string;
+  vertragsnummer?: string;
   customerNumber?: string;
   expiryDate?: string;
   amount?: number;
@@ -162,7 +163,7 @@ export default function OneClickCancelModal({
         customerEmail: userData.email || "",
         customerPhone: userData.phone || "",
         // Contract data
-        contractNumber: contract.contractNumber || "",
+        contractNumber: contract.contractNumber || contract.vertragsnummer || "",
         customerNumber: contract.customerNumber || "",
         // Provider data
         ...providerInfo,

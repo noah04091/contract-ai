@@ -2323,6 +2323,7 @@ export default function LegalPulse() {
             name: contractToCancel.name,
             provider: contractToCancel.provider,
             contractNumber: contractToCancel.contractNumber,
+            vertragsnummer: contractToCancel.vertragsnummer,
             customerNumber: contractToCancel.customerNumber,
             expiryDate: contractToCancel.expiryDate,
             amount: contractToCancel.amount,

@@ -18,6 +18,7 @@ export interface Contract {
   createdAt?: string;
   provider?: string;
   contractNumber?: string;
+  vertragsnummer?: string;
   customerNumber?: string;
   amount?: number;
   lastAnalyzed?: string;
