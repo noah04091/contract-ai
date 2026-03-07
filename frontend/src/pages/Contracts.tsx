@@ -5960,8 +5960,8 @@ export default function Contracts() {
 
         {/* 🎨 Contract Details Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
-          {/* ⚡ Schnellanalyse-Modal */}
-          {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
+          {/* ⚡ Schnellanalyse-Modal (Portal → über Navbar) */}
+          {quickAnalysisModal.show && quickAnalysisModal.analysisResult && createPortal(
             <div className={styles.quickAnalysisOverlay} onClick={closeQuickAnalysis}>
               <div className={styles.quickAnalysisModal} onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
@@ -5997,7 +5997,8 @@ export default function Contracts() {
                   />
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* ✅ NEU: Legacy-Modal für alte Verträge */}
