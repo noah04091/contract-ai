@@ -163,7 +163,7 @@ export default function OneClickCancelModal({
         customerEmail: userData.email || "",
         customerPhone: userData.phone || "",
         // Contract data
-        contractNumber: contract.contractNumber || contract.vertragsnummer || "",
+        contractNumber: contract.vertragsnummer || contract.contractNumber || "",
         customerNumber: contract.customerNumber || "",
         // Provider data
         ...providerInfo,
