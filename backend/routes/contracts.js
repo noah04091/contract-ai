@@ -1256,6 +1256,88 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * GET /api/contracts/diagnostics
+ * 🔍 Diagnose-Endpoint: Misst exakte Ladezeiten für einzelne Schritte
+ */
+router.get('/diagnostics', verifyToken, async (req, res) => {
+  try {
+    await ensureDb();
+    const userId = new ObjectId(req.user.userId);
+    const results = {};
+
+    // Test 1: Ping (Netzwerk-Roundtrip zu MongoDB)
+    let t = Date.now();
+    await _db.command({ ping: 1 });
+    results.ping = (Date.now() - t) + 'ms';
+
+    // Test 2: Count (nur Index, keine Dokumente lesen)
+    t = Date.now();
+    const count = await contractsCollection.countDocuments({ userId });
+    results.count = { time: (Date.now() - t) + 'ms', total: count };
+
+    // Test 3: Nur _id + name laden (minimal, ~100 bytes pro Dokument)
+    t = Date.now();
+    const minimal = await contractsCollection.find({ userId }, { projection: { name: 1 } }).toArray();
+    results.findMinimal = { time: (Date.now() - t) + 'ms', docs: minimal.length };
+
+    // Test 4: 32 Felder laden (unsere Inclusion Projection)
+    t = Date.now();
+    const projected = await contractsCollection.find({ userId }, { projection: {
+      name: 1, status: 1, createdAt: 1, expiryDate: 1, contractScore: 1,
+      summary: 1, risiken: 1, quickFacts: 1, analyzed: 1, s3Key: 1,
+      analysisId: 1, analysis: 1, importantDates: 1, suggestions: 1
+    }}).toArray();
+    const projectedSize = JSON.stringify(projected).length;
+    results.findProjected = { time: (Date.now() - t) + 'ms', docs: projected.length, sizeKB: Math.round(projectedSize / 1024) };
+
+    // Test 5: ALLES laden (ohne Projection — zeigt echte Dokument-Größe)
+    t = Date.now();
+    const full = await contractsCollection.find({ userId }).toArray();
+    const fullSize = JSON.stringify(full).length;
+    results.findFull = { time: (Date.now() - t) + 'ms', docs: full.length, sizeKB: Math.round(fullSize / 1024) };
+
+    // Test 6: Collection-Stats
+    t = Date.now();
+    const stats = await _db.command({ collStats: "contracts" });
+    results.collectionStats = {
+      time: (Date.now() - t) + 'ms',
+      totalDocs: stats.count,
+      totalSizeMB: Math.round(stats.size / 1024 / 1024 * 10) / 10,
+      avgDocSizeKB: Math.round(stats.avgObjSize / 1024 * 10) / 10,
+      indexCount: Object.keys(stats.indexSizes || {}).length
+    };
+
+    // Test 7: Analysis Collection Stats
+    const analysisStats = await _db.command({ collStats: "analyses" });
+    results.analysisStats = {
+      totalDocs: analysisStats.count,
+      totalSizeMB: Math.round(analysisStats.size / 1024 / 1024 * 10) / 10,
+      avgDocSizeKB: Math.round(analysisStats.avgObjSize / 1024 * 10) / 10
+    };
+
+    // Test 8: Events Collection Stats
+    const eventsStats = await _db.command({ collStats: "contract_events" });
+    results.eventsStats = {
+      totalDocs: eventsStats.count,
+      totalSizeMB: Math.round(eventsStats.size / 1024 / 1024 * 10) / 10
+    };
+
+    // Zusammenfassung
+    results.summary = {
+      userContracts: count,
+      userDataSizeKB: Math.round(fullSize / 1024),
+      projectedDataSizeKB: Math.round(projectedSize / 1024),
+      reductionPercent: Math.round((1 - projectedSize / fullSize) * 100) + '%',
+      avgDocSizeKB: Math.round(fullSize / count / 1024)
+    };
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/contracts/names
  * 🚀 ULTRA-SCHNELL: Nur Vertrags-IDs und Namen laden (für Dropdowns)
  * Keine Enrichment, keine Pagination - nur das Nötigste!

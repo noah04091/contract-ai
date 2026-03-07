@@ -1048,9 +1048,9 @@ function findBestPartnerCategory(keywords, contractType) {
         }
       }
       
-      // 🔴 STRENGE VALIDIERUNG: Minimum Score 50
-      if (bestScore < 50) {
-        console.log(`❌ Score zu niedrig (${bestScore} < 50) - KEINE Partner-Widgets`);
+      // 🔴 STRENGE VALIDIERUNG: Minimum Score 80 (von 50 angehoben um versehentliche Matches zu verhindern)
+      if (bestScore < 80) {
+        console.log(`❌ Score zu niedrig (${bestScore} < 80) - KEINE Partner-Widgets`);
         return null;
       }
       

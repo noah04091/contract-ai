@@ -120,7 +120,7 @@ router.post("/public", async (req, res) => {
         {
           role: "system",
           content:
-            "Du bist Vertragsexperte. Analysiere den folgenden Vertragstext und gib NUR den passenden Vertragstyp als ein Wort zurück. Beispiele: handy, mobilfunk, internet, hosting, versicherung, kfz, haftpflicht, strom, gas, fitness, streaming, bank, kredit, unbekannt."
+            "Du bist Vertragsexperte. Analysiere den folgenden Vertragstext und gib NUR den passenden Vertragstyp als ein Wort zurück. Consumer-Typen: handy, mobilfunk, internet, hosting, versicherung, kfz, haftpflicht, strom, gas, fitness, streaming, bank, kredit. B2B-Typen: factoring, leasing, consulting, beratung, wartung, logistik, personalvermittlung, outsourcing, lizenz, franchise, dienstleistung, marketing, buchhaltung, steuerberatung, rechtsberatung, immobilienverwaltung. Nur 'unbekannt' wenn wirklich kein Typ erkennbar."
         },
         {
           role: "user", 
