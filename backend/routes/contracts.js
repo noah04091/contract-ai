@@ -633,8 +633,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // Vertrags-Details
     expiryDate: 1, startDate: 1, kuendigung: 1, laufzeit: 1,
     documentCategory: 1, uploadType: 1, s3Key: 1, folderId: 1,
-    // Analysis-Daten (direkt auf Contract)
-    analyzed: 1, analysis: 1, analysisId: 1,
+    // Analysis-Daten (Nur Flags + ID — die vollen Daten kommen aus der Batch-Query)
+    analyzed: 1, analysisId: 1,
     contractScore: 1, summary: 1, risiken: 1, criticalIssues: 1,
     suggestions: 1, legalAssessment: 1, quickFacts: 1,
     importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
@@ -647,6 +647,9 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     reminderDays: 1, reminderSettings: 1,
     // Org
     organizationId: 1,
+    // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
+    contractType: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
+    provider: 1, customFields: 1, notes: 1,
     // Sort-Felder (auch wenn nicht angezeigt, für Sortierung nötig)
     'legalPulse.riskScore': 1
   };
@@ -725,8 +728,9 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
 
   // Step 4: Contracts ohne Analysis-Match → Fallback per Name (1 Batch-Query)
   const needFallback = contracts.filter(c => {
-    const hasDirectAnalysis = c.analysis && typeof c.analysis === 'object' && Object.keys(c.analysis).length > 0;
-    if (hasDirectAnalysis) return false;
+    // Prüfe ob Top-Level-Analyse-Felder vorhanden (summary, contractScore etc.)
+    const hasTopLevelAnalysis = !!(c.summary || c.contractScore);
+    if (hasTopLevelAnalysis) return false;
     if (c.analysisId && analysesByIdMap.has(c.analysisId.toString())) return false;
     return true;
   });
