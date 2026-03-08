@@ -3804,7 +3804,7 @@ export default function Contracts() {
         <SimpleTour tourId="contracts" />
 
         {/* ========== ENTERPRISE LAYOUT ========== */}
-        <div className={styles.enterpriseLayout}>
+        <div className={`${styles.enterpriseLayout} ${previewContract ? styles.withPreview : ''}`}>
 
           {/* ===== SIDEBAR ===== */}
           <aside className={styles.sidebar}>
@@ -5063,7 +5063,7 @@ export default function Contracts() {
                     {/* ✅ ENTERPRISE LIST VIEW (Tabelle) */}
                     {viewMode === 'list' && (
                     <div className={styles.tableContainer}>
-                      <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''}`}>
+                      <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''} ${previewContract ? styles.withPreview : ''}`}>
                         <thead>
                           <tr>
                             {/* 📋 Checkbox Column - only visible in bulk select mode */}
@@ -5127,7 +5127,7 @@ export default function Contracts() {
                                 {sortOrder === 'status_desc' && <ChevronDown size={14} className={styles.sortArrow} />}
                               </span>
                             </th>
-                            <th className={styles.sortableHeader} onClick={() => setSortOrder(sortOrder === 'älteste' ? 'neueste' : 'älteste')}>
+                            <th className={`${styles.sortableHeader} ${styles.uploadDateColumn}`} onClick={() => setSortOrder(sortOrder === 'älteste' ? 'neueste' : 'älteste')}>
                               <span className={styles.sortableHeaderContent}>
                                 <span>Upload-Datum</span>
                                 {sortOrder === 'älteste' && <ChevronUp size={14} className={styles.sortArrow} />}
@@ -5332,7 +5332,7 @@ export default function Contracts() {
                                 {/* 🆕 Smart Signature Status Badge */}
                                 {renderSignatureBadge(contract)}
                               </td>
-                              <td>
+                              <td className={styles.uploadDateColumn}>
                                 <span className={styles.uploadDate}>
                                   {formatDate(contract.createdAt)}
                                 </span>
