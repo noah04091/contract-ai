@@ -121,6 +121,28 @@ const Vergleich: React.FC = () => {
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
         </script>
+
+        {/* Schema.org JSON-LD: VideoObject */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "VideoObject",
+            "name": "KI-Vertragsvergleich Demo",
+            "description": "Sehen Sie, wie Contract AI zwei Verträge in Sekunden vergleicht, Unterschiede erkennt und einen Fairness-Score berechnet.",
+            "thumbnailUrl": "https://www.contract-ai.de/og/og-vergleich.png",
+            "uploadDate": "2025-06-01T00:00:00+02:00",
+            "contentUrl": "https://www.contract-ai.de/Videos/vergleich.mp4",
+            "duration": "PT1M",
+            "publisher": {
+              "@type": "Organization",
+              "name": "Contract AI",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://www.contract-ai.de/logo.webp"
+              }
+            }
+          })}
+        </script>
       </Helmet>
 
       <div className={styles.pageBackground}>
