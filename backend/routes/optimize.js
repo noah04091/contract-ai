@@ -2348,17 +2348,75 @@ const analyzeContractGaps = (text, contractType, detectedClauses, isAmendment = 
         const legalFramework = typeConfig.legalFramework || [];
         let legalReason = `Diese Klausel ist nach gängiger Vertragspraxis und Rechtsprechung erforderlich.`;
 
-        // Füge spezifische rechtliche Begründung hinzu
-        if (clause === 'datenschutz') {
-          legalReason = `Nach Art. 13, 14 DSGVO besteht eine Informationspflicht bei Erhebung personenbezogener Daten. Fehlt eine Datenschutzklausel, drohen Bußgelder bis 20 Mio. EUR oder 4% des Jahresumsatzes.`;
-        } else if (clause === 'schriftform') {
-          legalReason = `Gemäß § 126 BGB i.V.m. § 127 BGB sollte die Schriftform vereinbart werden, um Rechtssicherheit zu gewährleisten. BGH, Urteil vom 23.01.2023 - II ZR 234/22.`;
-        } else if (clause === 'kuendigung') {
-          legalReason = `Kündigungsregelungen sind essentiell. Bei Fehlen gelten gesetzliche Fristen, die oft nachteilig sind. Siehe §§ 622 ff. BGB, § 626 BGB.`;
+        // Spezifische rechtliche Begründungen je Klausel
+        const clauseReasons = {
+          'datenschutz': 'Nach Art. 13, 14 DSGVO besteht eine Informationspflicht bei Erhebung personenbezogener Daten. Fehlt eine Datenschutzklausel, drohen Bußgelder bis 20 Mio. EUR oder 4% des Jahresumsatzes.',
+          'schriftform': 'Gemäß § 126 BGB i.V.m. § 127 BGB sollte die Schriftform vereinbart werden, um Rechtssicherheit zu gewährleisten. BGH, Urteil vom 23.01.2023 - II ZR 234/22.',
+          'kuendigung': 'Kündigungsregelungen sind essentiell. Bei Fehlen gelten gesetzliche Fristen, die oft nachteilig sind. Siehe §§ 622 ff. BGB, § 626 BGB.',
+          'kündigung': 'Kündigungsregelungen sind essentiell. Bei Fehlen gelten gesetzliche Fristen, die oft nachteilig sind. Siehe §§ 622 ff. BGB, § 626 BGB.',
+          'haftung': 'Ohne Haftungsregelung gilt unbeschränkte Haftung nach §§ 276 ff. BGB. Eine vertragliche Haftungsbegrenzung schützt beide Parteien vor unvorhersehbaren Risiken.',
+          'gewaehrleistung': 'Gewährleistungsregelungen sind nach §§ 434 ff. BGB bzw. §§ 633 ff. BGB zentral. Ohne vertragliche Regelung gelten gesetzliche Fristen, die nicht immer interessengerecht sind.',
+          'gewährleistung': 'Gewährleistungsregelungen sind nach §§ 434 ff. BGB bzw. §§ 633 ff. BGB zentral. Ohne vertragliche Regelung gelten gesetzliche Fristen, die nicht immer interessengerecht sind.',
+          'verguetung': 'Eine klare Vergütungsregelung ist nach § 612 BGB essentiell. Ohne sie entstehen Streitigkeiten über Höhe, Fälligkeit und Zahlungsmodalitäten.',
+          'vergütung': 'Eine klare Vergütungsregelung ist nach § 612 BGB essentiell. Ohne sie entstehen Streitigkeiten über Höhe, Fälligkeit und Zahlungsmodalitäten.',
+          'vertraulichkeit': 'Vertraulichkeitsklauseln schützen Geschäftsgeheimnisse gemäß GeschGehG. Ohne sie besteht kein vertraglicher Schutz sensibler Informationen.',
+          'geheimhaltung': 'Geheimhaltungsklauseln schützen Geschäftsgeheimnisse gemäß GeschGehG. Ohne sie besteht kein vertraglicher Schutz sensibler Informationen.',
+          'verschwiegenheit': 'Verschwiegenheitspflichten schützen sensible Geschäftsinformationen. Ohne vertragliche Regelung besteht nur eingeschränkter gesetzlicher Schutz nach dem GeschGehG.',
+          'laufzeit': 'Eine Laufzeitregelung schafft Planungssicherheit für beide Parteien. Ohne sie gelten gesetzliche Regelungen, die oft zu ungewollter Vertragsbindung führen.',
+          'salvatorisch': 'Die salvatorische Klausel sichert den Bestand des Vertrags bei Teilnichtigkeit gemäß § 139 BGB und verhindert die Gesamtunwirksamkeit.',
+          'gerichtsstand': 'Eine Gerichtsstandsvereinbarung nach §§ 38 ff. ZPO schafft Klarheit über den Prozessort und vermeidet kostspielige Zuständigkeitsstreitigkeiten.',
+          'wettbewerbsverbot': 'Nachvertragliche Wettbewerbsverbote bedürfen nach § 74 HGB einer Karenzentschädigung. Ohne klare Regelung sind sie unwirksam oder nicht durchsetzbar.',
+          'eigentumsvorbehalt': 'Der Eigentumsvorbehalt nach § 449 BGB sichert den Verkäufer bis zur vollständigen Zahlung ab. Ohne ihn geht das Eigentum mit Übergabe über.',
+          'force_majeure': 'Höhere-Gewalt-Klauseln regeln die Leistungspflichten bei unvorhersehbaren Ereignissen. Ohne sie gelten §§ 275, 313 BGB, die oft nicht interessengerecht sind.',
+          'abnahme': 'Die Abnahmeregelung ist nach § 640 BGB für Werkverträge zentral. Sie bestimmt Fälligkeit der Vergütung, Gefahrübergang und Beginn der Verjährung.',
+          'kaution': 'Kautionsregelungen sind nach § 551 BGB auf maximal drei Monatsmieten begrenzt. Ohne klare Vereinbarung entstehen Streitigkeiten bei Rückzahlung und Verwertung.',
+          'probezeit': 'Die Probezeit darf nach § 622 Abs. 3 BGB maximal 6 Monate betragen. Eine klare Regelung schützt beide Seiten und definiert verkürzte Kündigungsfristen.',
+          'arbeitszeit': 'Arbeitszeitregelungen sind nach dem ArbZG zwingend erforderlich. Ohne vertragliche Festlegung fehlt die Grundlage für Überstundenregelungen und Arbeitszeiterfassung.',
+          'urlaub': 'Der gesetzliche Mindesturlaub beträgt nach § 3 BUrlG 24 Werktage. Ohne vertragliche Regelung gelten nur die Mindestansprüche.',
+          'nebenkosten': 'Nebenkostenregelungen sind nach § 556 BGB und BetrkV entscheidend. Ohne sie können Nebenkosten nicht auf den Mieter umgelegt werden.',
+          'untervermietung': 'Ohne Regelung zur Untervermietung bedarf es nach § 540 BGB der Zustimmung des Vermieters. Eine klare Klausel schafft Rechtssicherheit für beide Parteien.',
+          'sicherheiten': 'Sicherheitsleistungen schützen den Gläubiger vor Zahlungsausfällen. Ohne vertragliche Regelung bestehen nur eingeschränkte gesetzliche Sicherungsrechte.',
+          'mietdauer': 'Eine klare Mietdauerregelung bestimmt ob ein befristetes oder unbefristetes Mietverhältnis vorliegt, was erhebliche Auswirkungen auf die Kündigungsmöglichkeiten hat.'
+        };
+        if (clauseReasons[clause]) {
+          legalReason = clauseReasons[clause];
         }
         
         // 🆕 Phase 3a: Neutrale Formulierung statt "Pflichtklausel fehlt"
-        const clauseLabel = clause.replace(/_/g, ' ').charAt(0).toUpperCase() + clause.replace(/_/g, ' ').slice(1);
+        // Umlaut-Mapping für Klausel-Keys die ASCII-Ersetzungen verwenden
+        const clauseUmlautMap = {
+          'kuendigung': 'Kündigung',
+          'verguetung': 'Vergütung',
+          'ausbildungsverguetung': 'Ausbildungsvergütung',
+          'gewaehrleistung': 'Gewährleistung',
+          'gueltigkeitsdatum': 'Gültigkeitsdatum',
+          'aenderungsgegenstand': 'Änderungsgegenstand',
+          'unveraenderte_bestandteile': 'Unveränderte Bestandteile',
+          'rueckgabe': 'Rückgabe',
+          'pruefungen': 'Prüfungen',
+          'uebernahme': 'Übernahme',
+          'uebertragbarkeit': 'Übertragbarkeit',
+          'gefahruebergang': 'Gefahrübergang',
+          'faelligkeit': 'Fälligkeit',
+          'uebergabe': 'Übergabe',
+          'bauliche_veraenderungen': 'Bauliche Veränderungen',
+          'uebertragungsbeschraenkungen': 'Übertragungsbeschränkungen',
+          'vorfaelligkeit': 'Vorfälligkeit',
+          'gebuehren': 'Gebühren',
+          'veritaetshaftung': 'Veritätshaftung',
+          'buergschaftshoehe': 'Bürgschaftshöhe',
+          'buergschaftsart': 'Bürgschaftsart',
+          'rueckgriff': 'Rückgriff',
+          'verjaehrung': 'Verjährung',
+          'praemie': 'Prämie',
+          'praesentation': 'Präsentation',
+          'beitraege': 'Beiträge',
+          'geschaeftsfuehrung': 'Geschäftsführung',
+          'exklusivitaet': 'Exklusivität',
+          'nachtraege': 'Nachträge',
+          'maengelansprueche': 'Mängelansprüche'
+        };
+        const clauseLabel = clauseUmlautMap[clause] || (clause.replace(/_/g, ' ').charAt(0).toUpperCase() + clause.replace(/_/g, ' ').slice(1));
         gaps.push({
           type: 'missing_clause',
           clause: clause,

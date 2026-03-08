@@ -1057,7 +1057,8 @@ export default function Optimizer() {
           if (pdfUrl) {
             const response = await fetch(pdfUrl);
             const blob = await response.blob();
-            const loadedFile = new File([blob], contract.fileName || `${contract.name}.pdf`, { type: 'application/pdf' });
+            const fileName = contract.fileName || (contract.name?.endsWith('.pdf') ? contract.name : `${contract.name}.pdf`);
+            const loadedFile = new File([blob], fileName, { type: 'application/pdf' });
             setFile(loadedFile);
             console.log('[LP-OPTIMIZER] Contract PDF loaded successfully');
           }

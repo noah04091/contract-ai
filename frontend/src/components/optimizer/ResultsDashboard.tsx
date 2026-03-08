@@ -1073,9 +1073,18 @@ export default function ResultsDashboard({
                                 {optimizationIsHint ? <Info size={14} /> : <AlertTriangle size={14} />}
                                 <span>{optimizationIsHint ? 'Aktueller Stand' : 'Aktuell (Problem)'}</span>
                               </div>
-                              <div className={`${styles.diffBox} ${optimizationIsHint ? styles.hintOriginal : styles.original}`}>
-                                {optimization.original || (optimizationIsHint ? 'Nicht vorhanden' : 'Klausel fehlt oder ist unvollständig')}
-                              </div>
+                              {(optimization.original?.includes('FEHLT') || optimization.original?.includes('nicht vorhanden')) && !optimizationIsHint ? (
+                                <div className={`${styles.diffBox} ${styles.original} ${styles.missingClauseBox}`}>
+                                  <div className={styles.missingClauseNotice}>
+                                    <XCircle size={18} />
+                                    <span>Diese Klausel fehlt im Vertrag</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className={`${styles.diffBox} ${optimizationIsHint ? styles.hintOriginal : styles.original}`}>
+                                  {optimization.original || (optimizationIsHint ? 'Nicht vorhanden' : 'Klausel fehlt oder ist unvollständig')}
+                                </div>
+                              )}
                             </div>
                             <div className={styles.diffColumn}>
                               <div className={`${styles.diffLabel} ${optimizationIsHint ? styles.hintImproved : styles.improved}`}>

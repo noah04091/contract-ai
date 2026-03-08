@@ -2595,6 +2595,22 @@ html {
   box-shadow: 0 4px 16px rgba(52, 199, 89, 0.08);
 }
 
+/* Fehlende Klausel - kompakte Anzeige */
+.missingClauseBox {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4) var(--space-5) !important;
+}
+
+.missingClauseNotice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--apple-red, #ff3b30);
+  font-weight: 500;
+  font-size: 14px;
+}
+
 /* ============================================================
    📋 ISSUE DETAILS - Expandable Section
    ============================================================ */
