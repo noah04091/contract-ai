@@ -528,7 +528,7 @@ async function sendCancellationEmail(recipientEmail, contractName, provider, let
   `;
 
   await transporter.sendMail({
-    from: `"${customerData.name}" <${process.env.EMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"Contract AI" <noreply@contract-ai.de>`,
     replyTo: customerData.email,
     to: recipientEmail,
     subject: subject,
@@ -593,7 +593,7 @@ async function sendCancellationCopy(customerEmail, contractName, provider, lette
   });
 
   await transporter.sendMail({
-    from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+    from: process.env.EMAIL_FROM || `"Contract AI" <noreply@contract-ai.de>`,
     to: customerEmail,
     subject: `${contractName} - Kuendigung bestaetigt`,
     html: htmlContent,
