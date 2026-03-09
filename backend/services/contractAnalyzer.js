@@ -1706,7 +1706,12 @@ class ContractAnalyzer {
 
       if (adjustedEndDate && cancellationPeriod && cancellationPeriod.inDays > 0) {
         const cancellationDeadline = new Date(adjustedEndDate);
-        cancellationDeadline.setDate(cancellationDeadline.getDate() - cancellationPeriod.inDays);
+        // Kalendermonatgenaue Berechnung wenn unit "months" ist
+        if (cancellationPeriod.unit === 'months' || cancellationPeriod.unit === 'month') {
+          cancellationDeadline.setMonth(cancellationDeadline.getMonth() - (cancellationPeriod.value || Math.round(cancellationPeriod.inDays / 30)));
+        } else {
+          cancellationDeadline.setDate(cancellationDeadline.getDate() - cancellationPeriod.inDays);
+        }
         nextCancellationDate = cancellationDeadline;
 
         autoRenewalDate = new Date(adjustedEndDate);

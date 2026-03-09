@@ -141,26 +141,42 @@ export default function ReminderSettingsModal({
       return date.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
     }
     if (type === 'cancellation' && expiryDate && kuendigung) {
-      // Parse kuendigung to get notice period in days
-      const noticeDays = parseNoticePeriod(kuendigung);
-      if (noticeDays > 0) {
-        const deadline = new Date(expiryDate);
-        deadline.setDate(deadline.getDate() - noticeDays);
-        deadline.setDate(deadline.getDate() - days);
-        return deadline.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+      // Kalendermonatgenaue Berechnung der Kündigungsfrist
+      const deadline = new Date(expiryDate);
+      const noticeMonths = parseNoticeMonths(kuendigung);
+      if (noticeMonths > 0) {
+        deadline.setMonth(deadline.getMonth() - noticeMonths);
+      } else {
+        const noticeDays = parseNoticePeriod(kuendigung);
+        if (noticeDays > 0) {
+          deadline.setDate(deadline.getDate() - noticeDays);
+        }
       }
+      deadline.setDate(deadline.getDate() - days);
+      return deadline.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
     }
     return null;
   };
 
-  // Parse kuendigung string to days (e.g. "3 Monate zum Vertragsende" → 90)
-  const parseNoticePeriod = (k: string): number => {
+  // Parse kuendigung to months (0 if not in months) for calendar-accurate subtraction
+  const parseNoticeMonths = (k: string): number => {
     if (!k) return 0;
     const lower = k.toLowerCase();
     const monthMatch = lower.match(/(\d+)\s*monat/);
+    if (monthMatch) return parseInt(monthMatch[1]);
+    if (lower.includes('quartal')) return 3;
+    if (lower.includes('halbjahr')) return 6;
+    const yearMatch = lower.match(/(\d+)\s*jahr/);
+    if (yearMatch) return parseInt(yearMatch[1]) * 12;
+    return 0;
+  };
+
+  // Parse kuendigung string to days — Fallback wenn nicht in Monaten
+  const parseNoticePeriod = (k: string): number => {
+    if (!k) return 0;
+    const lower = k.toLowerCase();
     const weekMatch = lower.match(/(\d+)\s*woche/);
     const dayMatch = lower.match(/(\d+)\s*tag/);
-    if (monthMatch) return parseInt(monthMatch[1]) * 30;
     if (weekMatch) return parseInt(weekMatch[1]) * 7;
     if (dayMatch) return parseInt(dayMatch[1]);
     return 90; // Default

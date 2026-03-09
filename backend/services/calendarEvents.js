@@ -367,9 +367,8 @@ async function generateEventsForContract(db, contract) {
       if (reminderSettingsArr.length > 0) {
         console.log(`🔔 Generiere ${reminderSettingsArr.length} Custom Reminders für "${contract.name}"`);
 
-        // Calculate cancellation deadline for cancellation-type reminders
-        const cancellationDeadline = new Date(expiryDate);
-        cancellationDeadline.setDate(cancellationDeadline.getDate() - noticePeriodDays);
+        // Calculate cancellation deadline for cancellation-type reminders (kalendermonatgenau)
+        const cancellationDeadline = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
 
         for (const setting of reminderSettingsArr) {
           let reminderDate;
