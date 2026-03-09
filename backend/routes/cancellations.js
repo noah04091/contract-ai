@@ -80,6 +80,28 @@ async function uploadPdfToS3(pdfBuffer, userId, cancellationId) {
 }
 
 /**
+ * Get PDF buffer from S3 for email attachment
+ */
+async function getPdfBufferFromS3(s3Key) {
+  if (!s3Client || !GetObjectCommand) return null;
+  try {
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+    });
+    const response = await s3Client.send(command);
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  } catch (err) {
+    console.error("❌ S3 PDF fetch error:", err.message);
+    return null;
+  }
+}
+
+/**
  * Get signed URL for PDF download
  */
 async function getSignedPdfUrl(s3Key) {
@@ -584,8 +606,26 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
       // === NEIN: Keine Bestätigung erhalten ===
       const contractName = cancellation.contractName || "Vertrag";
       const provider = normalizeProvider(cancellation.provider);
+      const reminderSubject = `Erinnerung: Kündigungsbestätigung — ${contractName}`;
 
-      // 1. Erinnerungs-Email an den Anbieter senden
+      // 1. Fetch PDF from S3 for attachment
+      let emailAttachments = [];
+      if (cancellation.pdfS3Key) {
+        try {
+          const pdfBuffer = await getPdfBufferFromS3(cancellation.pdfS3Key);
+          if (pdfBuffer) {
+            emailAttachments = [{
+              filename: `Kuendigung_${(contractName || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_')}.pdf`,
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }];
+          }
+        } catch (pdfErr) {
+          console.warn("⚠️ PDF-Anhang konnte nicht geladen werden:", pdfErr.message);
+        }
+      }
+
+      // 2. Erinnerungs-Email an den Anbieter senden (mit PDF-Anhang)
       if (cancellation.recipientEmail && cancellation.cancellationLetter) {
         try {
           const reminderLetter = `Sehr geehrte Damen und Herren,\n\nich beziehe mich auf meine Kündigung vom ${new Date(cancellation.createdAt).toLocaleDateString('de-DE')} bezüglich "${contractName}".\n\nBis heute habe ich leider keine Kündigungsbestätigung von Ihnen erhalten. Ich bitte Sie, mir die Bestätigung der Kündigung umgehend zuzusenden.\n\nSollte ich innerhalb von 14 Tagen keine Rückmeldung erhalten, behalte ich mir weitere Schritte vor.\n\nOriginal-Referenz: ${cancellation._id}\n\nMit freundlichen Grüßen\n${cancellation.customerData?.name || ""}`;
@@ -596,14 +636,15 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
             provider,
             reminderLetter,
             cancellation.customerData || {},
-            []
+            emailAttachments,
+            reminderSubject
           );
         } catch (emailErr) {
           console.warn("⚠️ Erinnerungs-Email fehlgeschlagen:", emailErr.message);
         }
       }
 
-      // 2. Status-Notiz auf dem Contract hinterlegen
+      // 3. Status-Notiz auf dem Contract hinterlegen
       if (cancellation.contractId) {
         const statusNote = `[${new Date().toLocaleDateString('de-DE')}] Keine Kündigungsbestätigung erhalten — Erinnerung an ${provider || 'Anbieter'} versendet.`;
         await req.db.collection("contracts").updateOne(
@@ -615,7 +656,7 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
         );
       }
 
-      // 3. Neue 14-Tage Erinnerung erstellen
+      // 4. Neue 14-Tage Erinnerung erstellen
       const nextReminderDate = new Date();
       nextReminderDate.setDate(nextReminderDate.getDate() + 14);
       await req.db.collection("contract_events").insertOne({
@@ -639,12 +680,14 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
         updatedAt: new Date()
       });
 
-      // 4. Cancellation-Record updaten
+      // 5. Cancellation-Record updaten mit reminderHistory
+      const now = new Date();
       await req.db.collection("cancellations").updateOne(
         { _id: new ObjectId(cancellationId) },
         {
-          $set: { lastReminderSentAt: new Date() },
-          $inc: { reminderCount: 1 }
+          $set: { lastReminderSentAt: now },
+          $inc: { reminderCount: 1 },
+          $push: { reminderHistory: { sentAt: now, recipientEmail: cancellation.recipientEmail, subject: reminderSubject } }
         }
       );
 
@@ -689,7 +732,24 @@ router.post("/send-reminder", verifyToken, async (req, res) => {
     const contractName = cancellation.contractName || "Vertrag";
     const provider = normalizeProvider(cancellation.provider);
 
-    // 1. Send custom reminder email
+    // 1. Fetch PDF from S3 for attachment
+    let emailAttachments = [];
+    if (cancellation.pdfS3Key) {
+      try {
+        const pdfBuffer = await getPdfBufferFromS3(cancellation.pdfS3Key);
+        if (pdfBuffer) {
+          emailAttachments = [{
+            filename: `Kuendigung_${(contractName || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_')}.pdf`,
+            content: pdfBuffer,
+            contentType: 'application/pdf'
+          }];
+        }
+      } catch (pdfErr) {
+        console.warn("⚠️ PDF-Anhang konnte nicht geladen werden:", pdfErr.message);
+      }
+    }
+
+    // 2. Send custom reminder email with PDF attachment
     try {
       await sendCancellationEmail(
         recipientEmail,
@@ -697,7 +757,7 @@ router.post("/send-reminder", verifyToken, async (req, res) => {
         provider,
         reminderText,
         cancellation.customerData || {},
-        [],
+        emailAttachments,
         subject // custom subject
       );
     } catch (emailErr) {
@@ -705,13 +765,15 @@ router.post("/send-reminder", verifyToken, async (req, res) => {
       return res.status(500).json({ success: false, error: "E-Mail konnte nicht gesendet werden: " + emailErr.message });
     }
 
-    // 2. Mark current event as completed
-    await req.db.collection("contract_events").updateOne(
-      { _id: new ObjectId(eventId) },
-      { $set: { status: "completed", completedAt: new Date(), completionNote: "Keine Bestätigung — Erinnerung manuell versendet" } }
-    );
+    // 3. Mark current event as completed (skip if manual/non-ObjectId)
+    if (ObjectId.isValid(eventId) && eventId !== 'manual') {
+      await req.db.collection("contract_events").updateOne(
+        { _id: new ObjectId(eventId) },
+        { $set: { status: "completed", completedAt: new Date(), completionNote: "Keine Bestätigung — Erinnerung manuell versendet" } }
+      );
+    }
 
-    // 3. Create new 14-day reminder event
+    // 4. Create new 14-day reminder event
     const nextReminderDate = new Date();
     nextReminderDate.setDate(nextReminderDate.getDate() + 14);
     await req.db.collection("contract_events").insertOne({
@@ -735,12 +797,14 @@ router.post("/send-reminder", verifyToken, async (req, res) => {
       updatedAt: new Date()
     });
 
-    // 4. Update cancellation record
+    // 4. Update cancellation record with reminderHistory
+    const now = new Date();
     await req.db.collection("cancellations").updateOne(
       { _id: new ObjectId(cancellationId) },
       {
-        $set: { lastReminderSentAt: new Date(), recipientEmail: recipientEmail },
-        $inc: { reminderCount: 1 }
+        $set: { lastReminderSentAt: now, recipientEmail: recipientEmail },
+        $inc: { reminderCount: 1 },
+        $push: { reminderHistory: { sentAt: now, recipientEmail, subject } }
       }
     );
 

@@ -14,8 +14,12 @@ import {
   Mail,
   ExternalLink,
   Upload,
-  CheckCircle
+  CheckCircle,
+  Bell,
+  RotateCcw,
+  Clock
 } from "lucide-react";
+import { useToast } from "../context/ToastContext";
 import styles from "../styles/CancellationArchive.module.css";
 
 // Provider kann String oder Objekt sein (aus Contract-Analyse)
@@ -46,6 +50,7 @@ interface Cancellation {
 
 interface CancellationDetail {
   _id: string;
+  contractId?: string;
   contractName: string;
   provider: string | Record<string, unknown>;
   status: string;
@@ -65,9 +70,12 @@ interface CancellationDetail {
     mimeType?: string;
     uploadedAt: string;
   };
+  reminderCount?: number;
+  lastReminderSentAt?: string;
+  reminderHistory?: Array<{ sentAt: string; recipientEmail: string; subject?: string }>;
 }
 
-type FilterStatus = "all" | "sent" | "downloaded" | "resent" | "failed" | "draft" | "confirmed";
+type FilterStatus = "all" | "sent" | "downloaded" | "resent" | "failed" | "draft" | "confirmed" | "revoked";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   sent: { label: "Gesendet", className: styles.badgeSent },
@@ -76,10 +84,12 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   failed: { label: "Fehlgeschlagen", className: styles.badgeFailed },
   draft: { label: "Entwurf", className: styles.badgeDraft },
   confirmed: { label: "Bestätigt", className: styles.badgeConfirmed },
+  revoked: { label: "Zurückgenommen", className: styles.badgeRevoked },
 };
 
 export default function CancellationArchive() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [cancellations, setCancellations] = useState<Cancellation[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>("all");
@@ -91,6 +101,7 @@ export default function CancellationArchive() {
   const [confirmationUploading, setConfirmationUploading] = useState(false);
   const [confirmationDownloading, setConfirmationDownloading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const token = localStorage.getItem("token");
 
@@ -248,6 +259,113 @@ export default function CancellationArchive() {
       console.error("Confirmation-Download-Fehler:", err);
     } finally {
       setConfirmationDownloading(false);
+    }
+  };
+
+  // === Action Handlers für Bestätigung/Erinnern/Zurücknehmen ===
+  const handleConfirmReceived = async () => {
+    if (!detail) return;
+    setActionLoading("confirm");
+    try {
+      const res = await fetch("/api/cancellations/confirmation-response", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          cancellationId: detail._id,
+          eventId: "manual",
+          confirmed: true
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDetail({ ...detail, status: "confirmed", confirmedAt: new Date().toISOString() });
+        fetchCancellations();
+        toast.success("Kündigungsbestätigung erfolgreich hinterlegt!");
+      } else {
+        toast.error(data.error || "Fehler bei der Bestätigung");
+      }
+    } catch (err) {
+      console.error("Confirm-Fehler:", err);
+      toast.error("Fehler bei der Bestätigung");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSendReminder = async () => {
+    if (!detail || !detail.recipientEmail) {
+      toast.error("Keine Empfänger-E-Mail vorhanden");
+      return;
+    }
+    setActionLoading("remind");
+    try {
+      const contractName = detail.contractName || "Vertrag";
+      const reminderText = `Sehr geehrte Damen und Herren,\n\nich beziehe mich auf meine Kündigung vom ${new Date(detail.createdAt).toLocaleDateString('de-DE')} bezüglich "${contractName}".\n\nBis heute habe ich leider keine Kündigungsbestätigung von Ihnen erhalten. Ich bitte Sie, mir die Bestätigung der Kündigung umgehend zuzusenden.\n\nSollte ich innerhalb von 14 Tagen keine Rückmeldung erhalten, behalte ich mir weitere Schritte vor.\n\nMit freundlichen Grüßen\n${detail.customerData?.name || ""}`;
+
+      const res = await fetch("/api/cancellations/send-reminder", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          cancellationId: detail._id,
+          eventId: "manual",
+          recipientEmail: detail.recipientEmail,
+          subject: `Erinnerung: Kündigungsbestätigung — ${contractName}`,
+          reminderText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Update detail with new reminder
+        const newReminder = {
+          sentAt: new Date().toISOString(),
+          recipientEmail: detail.recipientEmail,
+          subject: `Erinnerung: Kündigungsbestätigung — ${contractName}`
+        };
+        setDetail({
+          ...detail,
+          reminderCount: (detail.reminderCount || 0) + 1,
+          lastReminderSentAt: new Date().toISOString(),
+          reminderHistory: [...(detail.reminderHistory || []), newReminder]
+        });
+        toast.success("Erinnerung an Anbieter versendet!");
+      } else {
+        toast.error(data.error || "Fehler beim Senden der Erinnerung");
+      }
+    } catch (err) {
+      console.error("Reminder-Fehler:", err);
+      toast.error("Fehler beim Senden der Erinnerung");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!detail) return;
+    setActionLoading("reactivate");
+    try {
+      const res = await fetch(`/api/cancellations/${detail._id}/reactivate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDetail({ ...detail, status: "revoked" });
+        fetchCancellations();
+        toast.success("Kündigung zurückgenommen — Vertrag reaktiviert!");
+      } else {
+        toast.error(data.error || "Fehler bei der Reaktivierung");
+      }
+    } catch (err) {
+      console.error("Reactivate-Fehler:", err);
+      toast.error("Fehler bei der Reaktivierung");
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -468,6 +586,80 @@ export default function CancellationArchive() {
                       {detail.cancellationLetter && (
                         <div className={styles.letterPreview}>
                           {detail.cancellationLetter}
+                        </div>
+                      )}
+
+                      {/* Erinnerungsverlauf */}
+                      {detail.reminderHistory && detail.reminderHistory.length > 0 && (
+                        <div className={styles.reminderHistory}>
+                          <h4 className={styles.sectionTitle}>
+                            <Clock size={16} />
+                            Erinnerungen ({detail.reminderHistory.length})
+                          </h4>
+                          <div className={styles.reminderList}>
+                            {detail.reminderHistory.map((r, i) => (
+                              <div key={i} className={styles.reminderItem}>
+                                <div className={styles.reminderDot} />
+                                <div>
+                                  <span className={styles.reminderDate}>
+                                    {new Date(r.sentAt).toLocaleDateString("de-DE", {
+                                      day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
+                                    })}
+                                  </span>
+                                  <span className={styles.reminderEmail}>
+                                    an {r.recipientEmail}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Quick Actions */}
+                      {detail.status !== "confirmed" && detail.status !== "revoked" && detail.status !== "failed" && (
+                        <div className={styles.quickActions}>
+                          <h4 className={styles.sectionTitle}>
+                            <Bell size={16} />
+                            Aktionen
+                          </h4>
+                          <div className={styles.quickActionButtons}>
+                            <button
+                              className={`${styles.quickActionBtn} ${styles.quickActionConfirm}`}
+                              onClick={handleConfirmReceived}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === "confirm"
+                                ? <Loader size={14} className={styles.spinner} />
+                                : <CheckCircle size={14} />
+                              }
+                              Bestätigung erhalten
+                            </button>
+                            {detail.recipientEmail && (
+                              <button
+                                className={`${styles.quickActionBtn} ${styles.quickActionRemind}`}
+                                onClick={handleSendReminder}
+                                disabled={actionLoading !== null}
+                              >
+                                {actionLoading === "remind"
+                                  ? <Loader size={14} className={styles.spinner} />
+                                  : <Send size={14} />
+                                }
+                                Anbieter erinnern
+                              </button>
+                            )}
+                            <button
+                              className={`${styles.quickActionBtn} ${styles.quickActionReactivate}`}
+                              onClick={handleReactivate}
+                              disabled={actionLoading !== null}
+                            >
+                              {actionLoading === "reactivate"
+                                ? <Loader size={14} className={styles.spinner} />
+                                : <RotateCcw size={14} />
+                              }
+                              Kündigung zurücknehmen
+                            </button>
+                          </div>
                         </div>
                       )}
 
