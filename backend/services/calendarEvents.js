@@ -62,21 +62,20 @@ async function generateEventsForContract(db, contract) {
     
     // 🔧 FIX: Extrahiere Notice Period aus verschiedenen Quellen
     let noticePeriodDays = 90; // Default
-    
+    let noticePeriodMonths = 0; // Für kalendermonatsgenaue Berechnung
+
     if (contract.cancellationPeriod) {
       if (typeof contract.cancellationPeriod === 'object') {
-        // Neues Format vom contractAnalyzer
         noticePeriodDays = contract.cancellationPeriod.inDays || 90;
       } else if (typeof contract.cancellationPeriod === 'string') {
-        // String-Format
         noticePeriodDays = extractNoticePeriod(contract.cancellationPeriod);
+        noticePeriodMonths = extractNoticeMonths(contract.cancellationPeriod);
       } else if (typeof contract.cancellationPeriod === 'number') {
-        // Direkte Anzahl Tage
         noticePeriodDays = contract.cancellationPeriod;
       }
     } else if (contract.kuendigung) {
-      // Fallback auf altes Feld
       noticePeriodDays = extractNoticePeriod(contract.kuendigung);
+      noticePeriodMonths = extractNoticeMonths(contract.kuendigung);
     }
     
     const autoRenewMonths = contract.autoRenewMonths || 12;
@@ -110,11 +109,12 @@ async function generateEventsForContract(db, contract) {
     // 🆕 GENERIERE EVENTS AUCH FÜR "ALTE" AKTIVE VERTRÄGE
     if (expiryDate && shouldCreateCriticalEvents) { // 🔒 Mit Konfidenz-Check
       
-      // 1. Kündigungsfenster öffnet (30 Tage VOR der Deadline = noticePeriodDays + 30 vor Ablauf)
+      // 1. Kündigungsfenster öffnet (30 Tage VOR der Deadline)
       if (noticePeriodDays > 0) {
-        // Deadline = letzter Kündigungstag
-        const tempDeadline = new Date(expiryDate);
-        tempDeadline.setDate(tempDeadline.getDate() - noticePeriodDays);
+        // Deadline = letzter Kündigungstag (kalendermonatgenau)
+        const tempDeadline = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
+        const deadlineStr = tempDeadline.toLocaleDateString('de-DE');
+        const noticePeriodLabel = noticePeriodMonths > 0 ? `${noticePeriodMonths} Monat${noticePeriodMonths > 1 ? 'e' : ''}` : `${noticePeriodDays} Tage`;
 
         // Fenster öffnet 30 Tage vor Deadline
         const tempWindowDate = new Date(tempDeadline);
@@ -128,7 +128,7 @@ async function generateEventsForContract(db, contract) {
             contractId: contract._id,
             type: "CANCEL_WINDOW_OPEN",
             title: `🟢 Kündigungsfenster öffnet: ${contract.name}`,
-            description: `Ab jetzt sollten Sie sich um die Kündigung von "${contract.name}" kümmern. Letzte Möglichkeit: ${tempDeadline.toLocaleDateString('de-DE')}. Kündigungsfrist: ${noticePeriodDays} Tage.${isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`,
+            description: `Ab jetzt sollten Sie sich um die Kündigung von "${contract.name}" kümmern. Letzte Möglichkeit: ${deadlineStr}. Kündigungsfrist: ${noticePeriodLabel}.${isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`,
             date: cancelWindowDate,
             severity: "info",
             status: "scheduled",
@@ -148,11 +148,10 @@ async function generateEventsForContract(db, contract) {
           });
         }
       }
-      
-      // 2. Letzter Kündigungstag
+
+      // 2. Letzter Kündigungstag (kalendermonatgenau)
       if (noticePeriodDays > 0) {
-        const tempLastDate = new Date(expiryDate);
-        tempLastDate.setDate(tempLastDate.getDate() - noticePeriodDays); // Letzter Tag der Kündigungsfrist
+        const tempLastDate = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
         const lastCancelDate = createLocalDate(tempLastDate);
 
         if (lastCancelDate > now) {
@@ -1072,6 +1071,38 @@ function extractNoticePeriod(input) {
   if (text.includes("jahr")) return 365;
   
   return 90; // Default
+}
+
+/**
+ * Extrahiert die Kündigungsfrist in Monaten (0 wenn nicht in Monaten angegeben)
+ * z.B. "1 Monat" → 1, "3 Monate" → 3, "90 Tage" → 0
+ */
+function extractNoticeMonths(input) {
+  if (!input || typeof input !== 'string') return 0;
+  const text = input.toLowerCase().trim();
+  const match = text.match(/(\d+)\s*monat/i);
+  if (match) return parseInt(match[1]);
+  if (text.includes("quartal")) return 3;
+  if (text.includes("halbjahr")) return 6;
+  if (text.includes("jahr")) {
+    const yearMatch = text.match(/(\d+)\s*jahr/i);
+    return yearMatch ? parseInt(yearMatch[1]) * 12 : 12;
+  }
+  return 0;
+}
+
+/**
+ * Subtrahiert die Kündigungsfrist vom Ablaufdatum — kalendermonatgenau wenn möglich
+ * z.B. 01.06.2026 - 1 Monat = 01.05.2026 (nicht 02.05.2026)
+ */
+function subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths) {
+  const result = new Date(expiryDate);
+  if (noticePeriodMonths > 0) {
+    result.setMonth(result.getMonth() - noticePeriodMonths);
+  } else {
+    result.setDate(result.getDate() - noticePeriodDays);
+  }
+  return result;
 }
 
 /**
