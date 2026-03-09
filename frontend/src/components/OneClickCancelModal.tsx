@@ -236,27 +236,36 @@ Erstellt mit Contract AI - ${today}
 
   const handlePreview = () => {
     if (!formData.customerName || !formData.customerEmail) {
-      setError("Bitte füllen Sie alle Pflichtfelder aus.");
+      setError("Bitte füllen Sie Ihren Namen und Ihre E-Mail-Adresse aus.");
       return;
     }
-    
+    if (formData.sendMethod === "email" && !formData.recipientEmail && !formData.providerEmail) {
+      setError("Bitte geben Sie die E-Mail-Adresse des Anbieters ein.");
+      return;
+    }
+
     generateCancellationLetter();
     setStep("preview");
     setError("");
   };
 
   const handleSend = async () => {
+    // Final validation before sending
+    const finalRecipientEmail = formData.sendMethod === "email"
+      ? (formData.recipientEmail || formData.providerEmail || "")
+      : "";
+
+    if (formData.sendMethod === "email" && !finalRecipientEmail) {
+      setError("Keine Empfänger-E-Mail angegeben. Bitte gehen Sie zurück und geben Sie die E-Mail des Anbieters ein.");
+      return;
+    }
+
     setStep("sending");
     setLoading(true);
     setError("");
 
     try {
       const token = localStorage.getItem("token");
-      
-      // Use provider email if detected, otherwise use manually entered email
-      const finalRecipientEmail = formData.sendMethod === "email" 
-        ? (formData.recipientEmail || formData.providerEmail || "")
-        : "";
       
       const response = await fetch("/api/cancellations/send", {
         method: "POST",
