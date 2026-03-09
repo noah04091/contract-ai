@@ -1,6 +1,7 @@
 // src/components/OneClickCancelModal.tsx
 import { useState, useEffect, useRef, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -109,6 +110,7 @@ export default function OneClickCancelModal({
   const [cancellationId, setCancellationId] = useState<string | null>(null);
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const autoCloseRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Compute deadline warning
@@ -157,10 +159,10 @@ export default function OneClickCancelModal({
       // Set all form data
       setFormData(prev => ({
         ...prev,
-        // User data
-        customerName: userData.name || "",
+        // User data — Auth-User Email hat Priorität über localStorage
+        customerName: userData.name || authUser?.name || "",
         customerAddress: userData.address || "",
-        customerEmail: userData.email || "",
+        customerEmail: authUser?.email || userData.email || "",
         customerPhone: userData.phone || "",
         // Contract data
         contractNumber: contract.vertragsnummer || contract.contractNumber || "",
