@@ -883,29 +883,30 @@ async function sendCancellationEmail(recipientEmail, contractName, provider, let
 
   const subject = customSubject || `Kündigung: ${contractName}`;
 
+  // Brief-Text in HTML umwandeln: Zeilenumbrüche → <br>, Leerzeilen → Absatz
+  const letterHtml = letter
+    .split('\n\n')
+    .map(paragraph => `<p style="margin: 0 0 16px 0;">${paragraph.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .header { background: #f5f5f5; padding: 20px; margin-bottom: 20px; }
-        .content { padding: 20px; }
-        .footer { background: #f5f5f5; padding: 15px; margin-top: 30px; font-size: 12px; }
-        pre { white-space: pre-wrap; font-family: Arial, sans-serif; }
-      </style>
     </head>
-    <body>
-      <div class="header">
-        <h2>Kündigung</h2>
-      </div>
-      <div class="content">
-        <pre>${letter}</pre>
-      </div>
-      <div class="footer">
-        <p>Diese E-Mail wurde elektronisch erstellt und ist ohne Unterschrift gültig.</p>
-        <p>Absender: ${customerData.name} | ${customerData.email}</p>
+    <body style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 0 auto;">
+        <div style="border-bottom: 2px solid #2563eb; padding: 24px 0 16px 0; margin-bottom: 24px;">
+          <h2 style="margin: 0; color: #1f2937; font-size: 20px;">Kündigung</h2>
+        </div>
+        <div style="padding: 0 0 24px 0; font-size: 15px;">
+          ${letterHtml}
+        </div>
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px; font-size: 12px; color: #6b7280;">
+          <p>Diese E-Mail wurde elektronisch erstellt und ist ohne Unterschrift gültig.</p>
+          <p>Absender: ${customerData.name} | ${customerData.email}</p>
+        </div>
       </div>
     </body>
     </html>
