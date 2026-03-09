@@ -47,6 +47,8 @@ export interface CalendarEvent {
     autoRenewMonths?: number;
     suggestedAction?: string;
     daysLeft?: number;
+    cancellationId?: string;
+    isFollowUp?: boolean;
   };
   amount?: number;
   isManual?: boolean;
