@@ -35,7 +35,9 @@ import {
   Save,
   Mail,
   XCircle,
-  CheckCircle
+  CheckCircle,
+  RotateCcw,
+  Send
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -274,7 +276,8 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                         <span className="week-event-title">{formatContractName(event.contractName)}</span>
                         <span className="week-event-type">
                           {event.title}
-                          {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
+                          {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                          {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                         </span>
                       </div>
                     </div>
@@ -330,7 +333,8 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                     <span className="day-event-title">{formatContractName(event.contractName)}</span>
                     <span className="day-event-type">
                       {event.title}
-                      {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
+                      {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                      {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                     </span>
                     {event.description && (
                       <span className="day-event-description">{event.description}</span>
@@ -391,7 +395,8 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                 >
                   <div className="event-indicator"></div>
                   <span className="event-text">{formatContractName(event.contractName)}</span>
-                  {event.status === 'completed' && <span className="cancelled-badge">Gekündigt</span>}
+                  {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                  {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                 </div>
               ))}
               {dayInfo.events.length > 3 && (
@@ -411,6 +416,177 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
         );
       })}
     </div>
+  );
+}
+
+// ========== Reminder Email Modal ==========
+interface ReminderEmailModalProps {
+  event: CalendarEvent;
+  onClose: () => void;
+  onSent: () => void;
+}
+
+function ReminderEmailModal({ event, onClose, onSent }: ReminderEmailModalProps) {
+  useEscapeKey(onClose);
+  const toast = useToast();
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [reminderText, setReminderText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  // Load cancellation data to prefill fields
+  useEffect(() => {
+    const loadCancellation = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`/api/cancellations/${event.metadata?.cancellationId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success && data.cancellation) {
+          const c = data.cancellation;
+          setRecipientEmail(c.recipientEmail || '');
+          setSubject(`Erinnerung: Kündigungsbestätigung — ${c.contractName || event.contractName || 'Vertrag'}`);
+          const customerName = c.customerData?.name || '';
+          const cancellationDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString('de-DE') : '';
+          setReminderText(
+`Sehr geehrte Damen und Herren,
+
+ich beziehe mich auf meine Kündigung vom ${cancellationDate} bezüglich "${c.contractName || event.contractName || 'Vertrag'}".
+
+Bis heute habe ich leider keine Kündigungsbestätigung von Ihnen erhalten. Ich bitte Sie, mir die Bestätigung der Kündigung umgehend zuzusenden.
+
+Sollte ich innerhalb von 14 Tagen keine Rückmeldung erhalten, behalte ich mir weitere Schritte vor.
+
+Mit freundlichen Grüßen
+${customerName}`
+          );
+        }
+      } catch (err) {
+        console.error("Error loading cancellation:", err);
+        toast.error('Fehler beim Laden der Kündigungsdaten');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCancellation();
+  }, [event.metadata?.cancellationId]);
+
+  const handleSend = async () => {
+    if (!recipientEmail || !subject || !reminderText) {
+      toast.error('Bitte füllen Sie alle Felder aus');
+      return;
+    }
+    setSending(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/cancellations/send-reminder", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cancellationId: event.metadata?.cancellationId,
+          eventId: event.id,
+          recipientEmail,
+          subject,
+          reminderText
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Erinnerung erfolgreich versendet!');
+        onSent();
+      } else {
+        toast.error(data.error || 'Fehler beim Senden der Erinnerung');
+      }
+    } catch (err) {
+      console.error("Error sending reminder:", err);
+      toast.error('Fehler beim Senden der Erinnerung');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ zIndex: 10001 }}
+    >
+      <motion.div
+        className="reminder-modal"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="reminder-modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Mail size={20} style={{ color: '#3b82f6' }} />
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Erinnerung an Anbieter</h3>
+          </div>
+          <button className="reminder-modal-close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+            Lade Daten...
+          </div>
+        ) : (
+          <div className="reminder-modal-body">
+            <div className="reminder-field">
+              <label>Empfänger-E-Mail</label>
+              <input
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                placeholder="email@anbieter.de"
+              />
+            </div>
+            <div className="reminder-field">
+              <label>Betreff</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Betreff der E-Mail"
+              />
+            </div>
+            <div className="reminder-field">
+              <label>Nachricht</label>
+              <textarea
+                value={reminderText}
+                onChange={(e) => setReminderText(e.target.value)}
+                rows={10}
+                placeholder="Ihre Nachricht an den Anbieter..."
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="reminder-modal-footer">
+          <button className="reminder-btn-cancel" onClick={onClose}>
+            Abbrechen
+          </button>
+          <button
+            className="reminder-btn-send"
+            onClick={handleSend}
+            disabled={sending || loading}
+          >
+            {sending ? (
+              <>Wird gesendet...</>
+            ) : (
+              <><Send size={16} /> Erinnerung senden</>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -771,27 +947,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                     className="confirmation-btn confirmation-btn-yes"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem("token");
-                        const res = await fetch("/api/cancellations/confirmation-response", {
-                          method: "POST",
-                          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            cancellationId: currentEvent.metadata?.cancellationId,
-                            eventId: currentEvent.id,
-                            confirmed: true
-                          })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          onClose();
-                          window.location.reload();
-                        }
-                      } catch (err) {
-                        console.error("Confirmation error:", err);
-                      }
-                    }}
+                    onClick={() => onAction("confirm-yes", currentEvent.id)}
                   >
                     <CheckCircle size={18} />
                     Ja, erhalten
@@ -800,34 +956,23 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                     className="confirmation-btn confirmation-btn-no"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem("token");
-                        const res = await fetch("/api/cancellations/confirmation-response", {
-                          method: "POST",
-                          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            cancellationId: currentEvent.metadata?.cancellationId,
-                            eventId: currentEvent.id,
-                            confirmed: false
-                          })
-                        });
-                        const data = await res.json();
-                        if (data.success) {
-                          onClose();
-                          window.location.reload();
-                        }
-                      } catch (err) {
-                        console.error("Confirmation error:", err);
-                      }
-                    }}
+                    onClick={() => onAction("confirm-no", currentEvent.id)}
                   >
                     <Mail size={18} />
                     Nein, Anbieter erinnern
                   </motion.button>
+                  <motion.button
+                    className="confirmation-btn confirmation-btn-reactivate"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => onAction("reactivate", currentEvent.id)}
+                  >
+                    <RotateCcw size={18} />
+                    Vertrag läuft weiter
+                  </motion.button>
                 </div>
                 <p className="confirmation-check-hint">
-                  Bei "Nein" wird automatisch eine Erinnerung an den Anbieter gesendet und in 14 Tagen erneut geprüft.
+                  Bei "Nein" können Sie eine Erinnerung an den Anbieter bearbeiten und senden.
                 </p>
               </div>
             )}
@@ -1167,7 +1312,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                         color: event.status === 'completed' ? '#9ca3af' : getSeverityColor(event.severity || 'info'),
                         textTransform: 'uppercase'
                       }}>
-                        {event.status === 'completed' ? 'Gekündigt' : event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
+                        {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' ? 'Beantwortet' : event.status === 'completed' ? 'Gekündigt' : event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
                       </span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>
@@ -2785,6 +2930,10 @@ export default function CalendarPage() {
   const [snoozeEventId, setSnoozeEventId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
+  // 📧 REMINDER EMAIL MODAL
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderEvent, setReminderEvent] = useState<CalendarEvent | null>(null);
+
   // 🔔 NOTIFICATION SETTINGS MODAL
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
@@ -2895,6 +3044,68 @@ export default function CalendarPage() {
     if (action === "snooze" && !snoozeDays) {
       setSnoozeEventId(eventId);
       setShowSnoozeModal(true);
+      return;
+    }
+
+    // Confirmation actions — delegiert von QuickActionsModal
+    if (action === "confirm-yes") {
+      try {
+        const ev = events.find(e => e.id === eventId);
+        const token = localStorage.getItem("token");
+        const res = await fetch("/api/cancellations/confirmation-response", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cancellationId: ev?.metadata?.cancellationId,
+            eventId,
+            confirmed: true
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setShowQuickActions(false);
+          setSelectedEvent(null);
+          await fetchEvents(true);
+          toast.success('Kündigungsbestätigung erfolgreich hinterlegt!');
+        } else {
+          toast.error(data.error || 'Fehler bei der Bestätigung');
+        }
+      } catch (err) {
+        console.error("Confirmation error:", err);
+        toast.error('Fehler bei der Bestätigung. Bitte erneut versuchen.');
+      }
+      return;
+    }
+
+    if (action === "confirm-no") {
+      const ev = events.find(e => e.id === eventId);
+      setReminderEvent(ev || null);
+      setShowReminderModal(true);
+      setShowQuickActions(false);
+      return;
+    }
+
+    if (action === "reactivate") {
+      try {
+        const ev = events.find(e => e.id === eventId);
+        const token = localStorage.getItem("token");
+        const res = await fetch(`/api/cancellations/${ev?.metadata?.cancellationId}/reactivate`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          setShowQuickActions(false);
+          setSelectedEvent(null);
+          await fetchEvents(true);
+          toast.success('Vertrag wurde reaktiviert — Kündigung zurückgenommen');
+        } else {
+          toast.error(data.error || 'Fehler bei der Reaktivierung');
+        }
+      } catch (err) {
+        console.error("Reactivation error:", err);
+        toast.error('Fehler bei der Reaktivierung. Bitte erneut versuchen.');
+      }
       return;
     }
 
@@ -3645,6 +3856,20 @@ export default function CalendarPage() {
               setShowQuickActions(false);
               setSelectedEvent(null);
               setEditingEvent(event);
+            }}
+          />
+        )}
+        {showReminderModal && reminderEvent && (
+          <ReminderEmailModal
+            event={reminderEvent}
+            onClose={() => {
+              setShowReminderModal(false);
+              setReminderEvent(null);
+            }}
+            onSent={async () => {
+              setShowReminderModal(false);
+              setReminderEvent(null);
+              await fetchEvents(true);
             }}
           />
         )}

@@ -544,11 +544,23 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
     }
 
-    // Mark the reminder event as completed
-    await req.db.collection("contract_events").updateOne(
-      { _id: new ObjectId(eventId) },
-      { $set: { status: "completed", completedAt: new Date(), completionNote: confirmed ? "Bestätigung erhalten" : "Keine Bestätigung — Erinnerung versendet" } }
-    );
+    // Mark the reminder event as completed (skip if eventId is not a valid ObjectId, e.g. 'manual')
+    if (ObjectId.isValid(eventId) && eventId !== 'manual') {
+      await req.db.collection("contract_events").updateOne(
+        { _id: new ObjectId(eventId) },
+        { $set: { status: "completed", completedAt: new Date(), completionNote: confirmed ? "Bestätigung erhalten" : "Keine Bestätigung — Erinnerung versendet" } }
+      );
+    } else if (confirmed && cancellation.contractId) {
+      // When called from Contract Details Modal without specific eventId, mark all open confirmation events as completed
+      await req.db.collection("contract_events").updateMany(
+        {
+          contractId: new ObjectId(cancellation.contractId),
+          type: "CANCELLATION_CONFIRMATION_CHECK",
+          status: { $in: ["scheduled", "notified"] }
+        },
+        { $set: { status: "completed", completedAt: new Date(), completionNote: "Bestätigung erhalten (über Vertragsdetails)" } }
+      );
+    }
 
     if (confirmed) {
       // === JA: Bestätigung erhalten ===
@@ -651,8 +663,203 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
   }
 });
 
+// ============================================================
+// POST /api/cancellations/send-reminder
+// Custom Reminder-Email (User bearbeitet Empfänger/Betreff/Text)
+// ============================================================
+router.post("/send-reminder", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const { cancellationId, eventId, recipientEmail, subject, reminderText } = req.body;
+
+    if (!cancellationId || !eventId || !recipientEmail || !subject || !reminderText) {
+      return res.status(400).json({ success: false, error: "Alle Felder sind erforderlich (cancellationId, eventId, recipientEmail, subject, reminderText)" });
+    }
+
+    const cancellation = await req.db.collection("cancellations").findOne({
+      _id: new ObjectId(cancellationId),
+      userId: userId
+    });
+
+    if (!cancellation) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    const contractName = cancellation.contractName || "Vertrag";
+    const provider = normalizeProvider(cancellation.provider);
+
+    // 1. Send custom reminder email
+    try {
+      await sendCancellationEmail(
+        recipientEmail,
+        contractName,
+        provider,
+        reminderText,
+        cancellation.customerData || {},
+        [],
+        subject // custom subject
+      );
+    } catch (emailErr) {
+      console.error("❌ Reminder email failed:", emailErr.message);
+      return res.status(500).json({ success: false, error: "E-Mail konnte nicht gesendet werden: " + emailErr.message });
+    }
+
+    // 2. Mark current event as completed
+    await req.db.collection("contract_events").updateOne(
+      { _id: new ObjectId(eventId) },
+      { $set: { status: "completed", completedAt: new Date(), completionNote: "Keine Bestätigung — Erinnerung manuell versendet" } }
+    );
+
+    // 3. Create new 14-day reminder event
+    const nextReminderDate = new Date();
+    nextReminderDate.setDate(nextReminderDate.getDate() + 14);
+    await req.db.collection("contract_events").insertOne({
+      userId,
+      contractId: cancellation.contractId ? new ObjectId(cancellation.contractId) : null,
+      contractName: contractName,
+      title: `Kündigungsbestätigung prüfen: ${contractName}`,
+      description: `Erneute Prüfung: Haben Sie mittlerweile eine Bestätigung für die Kündigung von "${contractName}" erhalten? Eine Erinnerung wurde am ${new Date().toLocaleDateString('de-DE')} an ${recipientEmail} gesendet.`,
+      date: nextReminderDate,
+      type: "CANCELLATION_CONFIRMATION_CHECK",
+      severity: "warning",
+      status: "scheduled",
+      metadata: {
+        provider: provider,
+        cancellationId: cancellationId,
+        suggestedAction: "check_confirmation",
+        isFollowUp: true
+      },
+      isManual: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    // 4. Update cancellation record
+    await req.db.collection("cancellations").updateOne(
+      { _id: new ObjectId(cancellationId) },
+      {
+        $set: { lastReminderSentAt: new Date(), recipientEmail: recipientEmail },
+        $inc: { reminderCount: 1 }
+      }
+    );
+
+    // 5. Add note to contract
+    if (cancellation.contractId) {
+      const statusNote = `[${new Date().toLocaleDateString('de-DE')}] Erinnerung manuell an ${recipientEmail} gesendet: "${subject}"`;
+      await req.db.collection("contracts").updateOne(
+        { _id: new ObjectId(cancellation.contractId) },
+        {
+          $set: { updatedAt: new Date() },
+          $push: { cancellationNotes: statusNote }
+        }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: "Erinnerung versendet, neue Prüfung in 14 Tagen",
+      action: "reminder_sent"
+    });
+
+  } catch (error) {
+    console.error("❌ Error sending reminder:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Senden der Erinnerung" });
+  }
+});
+
+// ============================================================
+// POST /api/cancellations/:id/reactivate
+// Kündigung rückgängig machen — Vertrag reaktivieren
+// ============================================================
+router.post("/:id/reactivate", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const cancellationId = new ObjectId(req.params.id);
+
+    const cancellation = await req.db.collection("cancellations").findOne({
+      _id: cancellationId,
+      userId: userId
+    });
+
+    if (!cancellation) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    // 1. Set cancellation status to "revoked"
+    await req.db.collection("cancellations").updateOne(
+      { _id: cancellationId },
+      { $set: { status: "revoked", revokedAt: new Date() } }
+    );
+
+    // 2. Reactivate contract
+    if (cancellation.contractId) {
+      const contractId = new ObjectId(cancellation.contractId);
+      const statusNote = `[${new Date().toLocaleDateString('de-DE')}] Kündigung zurückgenommen — Vertrag reaktiviert.`;
+
+      await req.db.collection("contracts").updateOne(
+        { _id: contractId },
+        {
+          $set: {
+            status: "aktiv",
+            cancellationConfirmed: false,
+            updatedAt: new Date()
+          },
+          $unset: {
+            cancellationId: "",
+            cancellationDate: "",
+            cancellationConfirmedAt: ""
+          },
+          $push: { cancellationNotes: statusNote }
+        }
+      );
+
+      // 3. Reactivate completed calendar events (not CANCELLATION_CONFIRMATION_CHECK)
+      await req.db.collection("contract_events").updateMany(
+        {
+          contractId: contractId,
+          status: "completed",
+          type: { $ne: "CANCELLATION_CONFIRMATION_CHECK" },
+          completionNote: "Vertrag wurde gekündigt"
+        },
+        {
+          $set: { status: "scheduled", updatedAt: new Date() },
+          $unset: { completedAt: "", completionNote: "" }
+        }
+      );
+
+      // 4. Delete/dismiss any open CANCELLATION_CONFIRMATION_CHECK events
+      await req.db.collection("contract_events").updateMany(
+        {
+          contractId: contractId,
+          type: "CANCELLATION_CONFIRMATION_CHECK",
+          status: { $in: ["scheduled", "notified"] }
+        },
+        {
+          $set: { status: "dismissed", dismissedAt: new Date(), dismissNote: "Kündigung zurückgenommen" }
+        }
+      );
+
+      // 5. Log status change
+      try {
+        await logStatusChange(req.db, contractId.toString(), userId.toString(), "gekündigt", "aktiv", "Kündigung zurückgenommen durch Benutzer");
+      } catch (logErr) {
+        console.warn("⚠️ Status change log failed:", logErr.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Vertrag wurde reaktiviert — Kündigung zurückgenommen"
+    });
+
+  } catch (error) {
+    console.error("❌ Error reactivating contract:", error);
+    res.status(500).json({ success: false, error: "Fehler bei der Reaktivierung" });
+  }
+});
+
 // Helper: Send cancellation email to provider
-async function sendCancellationEmail(recipientEmail, contractName, provider, letter, customerData, attachments = []) {
+async function sendCancellationEmail(recipientEmail, contractName, provider, letter, customerData, attachments = [], customSubject = null) {
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: Number(process.env.EMAIL_PORT),
@@ -663,7 +870,7 @@ async function sendCancellationEmail(recipientEmail, contractName, provider, let
     },
   });
 
-  const subject = `Kündigung: ${contractName}`;
+  const subject = customSubject || `Kündigung: ${contractName}`;
 
   const htmlContent = `
     <!DOCTYPE html>

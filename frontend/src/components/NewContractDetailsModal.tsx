@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -163,6 +163,8 @@ interface Contract {
   // 🔴 Kündigungs-Tracking
   cancellationId?: string;
   cancellationDate?: string;
+  cancellationConfirmed?: boolean;
+  cancellationConfirmedAt?: string;
   // 📅 KI-extrahierte Eckdaten & Termine
   gekuendigtZum?: string;
   documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
@@ -1233,28 +1235,28 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       </div>
 
-      {/* 🔴 Kündigungsinfo-Banner */}
-      {(contract.status === 'gekündigt' || contract.cancellationId) && (
+      {/* 🔴/🟢 Kündigungsinfo-Banner — 3 States */}
+      {(contract.status === 'gekündigt' || contract.cancellationId) && contract.cancellationConfirmed && (
         <div className={styles.section}>
           <div style={{
             padding: '16px 20px',
-            background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
-            border: '1px solid #fca5a5',
+            background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+            border: '1px solid #86efac',
             borderRadius: '12px',
             display: 'flex', alignItems: 'center', gap: '12px'
           }}>
-            <XCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
+            <CheckCircle size={20} style={{ color: '#16a34a', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: '#991b1b' }}>
-                Vertrag wurde gekündigt
-                {contract.cancellationDate && (
+              <div style={{ fontWeight: 600, color: '#166534' }}>
+                Kündigung erfolgreich bestätigt
+                {contract.cancellationConfirmedAt && (
                   <span style={{ fontWeight: 400, marginLeft: '8px' }}>
-                    am {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                    am {new Date(contract.cancellationConfirmedAt).toLocaleDateString('de-DE')}
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '4px' }}>
-                Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
+              <div style={{ fontSize: '13px', color: '#15803d', marginTop: '4px' }}>
+                Die Kündigungsbestätigung liegt vor.
               </div>
             </div>
             <button
@@ -1262,9 +1264,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               style={{
                 padding: '6px 14px',
                 borderRadius: '6px',
-                border: '1px solid #fca5a5',
+                border: '1px solid #86efac',
                 background: 'white',
-                color: '#991b1b',
+                color: '#166534',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -1273,6 +1275,178 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             >
               Archiv →
             </button>
+          </div>
+        </div>
+      )}
+      {(contract.status === 'gekündigt' || contract.cancellationId) && !contract.cancellationConfirmed && (
+        <div className={styles.section}>
+          <div style={{
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
+            border: '1px solid #fca5a5',
+            borderRadius: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+              <XCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, color: '#991b1b' }}>
+                  Vertrag wurde gekündigt
+                  {contract.cancellationDate && (
+                    <span style={{ fontWeight: 400, marginLeft: '8px' }}>
+                      am {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '4px' }}>
+                  Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    const token = localStorage.getItem("token");
+                    // Find the cancellation's confirmation event to pass eventId
+                    const eventsRes = await fetch(`/api/calendar/events?contractId=${contract._id}`, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const eventsData = await eventsRes.json();
+                    const confirmEvent = eventsData.events?.find((e: { type: string; status: string }) =>
+                      e.type === 'CANCELLATION_CONFIRMATION_CHECK' && e.status === 'scheduled'
+                    );
+                    const res = await fetch("/api/cancellations/confirmation-response", {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        cancellationId: contract.cancellationId,
+                        eventId: confirmEvent?._id || confirmEvent?.id || 'manual',
+                        confirmed: true
+                      })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      setContract(prev => ({
+                        ...prev,
+                        cancellationConfirmed: true,
+                        cancellationConfirmedAt: new Date().toISOString()
+                      } as Contract));
+                      toast.success('Kündigungsbestätigung hinterlegt!');
+                      if (onEdit) onEdit(contract._id);
+                    } else {
+                      toast.error(data.error || 'Fehler bei der Bestätigung');
+                    }
+                  } catch (err) {
+                    console.error("Confirmation error:", err);
+                    toast.error('Fehler bei der Bestätigung');
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  color: 'white',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.6 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <CheckCircle size={14} />
+                Bestätigung erhalten
+              </button>
+              <button
+                onClick={() => window.location.href = '/calendar'}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  color: 'white',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Mail size={14} />
+                Anbieter erinnern
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    const token = localStorage.getItem("token");
+                    const res = await fetch(`/api/cancellations/${contract.cancellationId}/reactivate`, {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      setContract(prev => ({
+                        ...prev,
+                        status: 'aktiv',
+                        cancellationId: undefined,
+                        cancellationDate: undefined,
+                        cancellationConfirmed: undefined,
+                        cancellationConfirmedAt: undefined
+                      } as Contract));
+                      toast.success('Vertrag reaktiviert!');
+                      if (onEdit) onEdit(contract._id);
+                    } else {
+                      toast.error(data.error || 'Fehler bei der Reaktivierung');
+                    }
+                  } catch (err) {
+                    console.error("Reactivation error:", err);
+                    toast.error('Fehler bei der Reaktivierung');
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #d1d5db',
+                  background: 'white',
+                  color: '#374151',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.6 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <RotateCcw size={14} />
+                Kündigung zurücknehmen
+              </button>
+              <button
+                onClick={() => window.location.href = '/cancellations'}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #fca5a5',
+                  background: 'white',
+                  color: '#991b1b',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap' as const,
+                  transition: 'all 0.2s'
+                }}
+              >
+                Archiv →
+              </button>
+            </div>
           </div>
         </div>
       )}
