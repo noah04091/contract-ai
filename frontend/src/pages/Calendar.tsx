@@ -34,7 +34,8 @@ import {
   Trash2,
   Save,
   Mail,
-  XCircle
+  XCircle,
+  CheckCircle
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -73,6 +74,8 @@ interface CalendarEvent {
     autoRenewMonths?: number;
     suggestedAction?: string;
     daysLeft?: number;
+    cancellationId?: string;
+    isFollowUp?: boolean;
   };
   amount?: number;
   isManual?: boolean;
@@ -756,6 +759,79 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               </div>
             )}
 
+            {/* Bestätigungsprüfung für CANCELLATION_CONFIRMATION_CHECK Events */}
+            {currentEvent.type === "CANCELLATION_CONFIRMATION_CHECK" && currentEvent.status !== "completed" && (
+              <div className="confirmation-check-section" style={{ gridColumn: '1 / -1' }}>
+                <div className="confirmation-check-header">
+                  <AlertTriangle size={18} />
+                  <span>Kündigungsbestätigung erhalten?</span>
+                </div>
+                <div className="confirmation-check-buttons">
+                  <motion.button
+                    className="confirmation-btn confirmation-btn-yes"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem("token");
+                        const res = await fetch("/api/cancellations/confirmation-response", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            cancellationId: currentEvent.metadata?.cancellationId,
+                            eventId: currentEvent.id,
+                            confirmed: true
+                          })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          onClose();
+                          window.location.reload();
+                        }
+                      } catch (err) {
+                        console.error("Confirmation error:", err);
+                      }
+                    }}
+                  >
+                    <CheckCircle size={18} />
+                    Ja, erhalten
+                  </motion.button>
+                  <motion.button
+                    className="confirmation-btn confirmation-btn-no"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem("token");
+                        const res = await fetch("/api/cancellations/confirmation-response", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            cancellationId: currentEvent.metadata?.cancellationId,
+                            eventId: currentEvent.id,
+                            confirmed: false
+                          })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          onClose();
+                          window.location.reload();
+                        }
+                      } catch (err) {
+                        console.error("Confirmation error:", err);
+                      }
+                    }}
+                  >
+                    <Mail size={18} />
+                    Nein, Anbieter erinnern
+                  </motion.button>
+                </div>
+                <p className="confirmation-check-hint">
+                  Bei "Nein" wird automatisch eine Erinnerung an den Anbieter gesendet und in 14 Tagen erneut geprüft.
+                </p>
+              </div>
+            )}
+
             {/* Secondary Action Buttons - Different for manual vs contract events */}
             <div style={{
               gridColumn: '1 / -1',
@@ -1076,21 +1152,22 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                     style={{
                       background: '#ffffff',
                       border: '1px solid #e5e7eb',
-                      borderLeft: `4px solid ${getSeverityColor(event.severity || 'info')}`,
+                      borderLeft: `4px solid ${event.status === 'completed' ? '#9ca3af' : getSeverityColor(event.severity || 'info')}`,
                       borderRadius: '8px',
                       padding: '16px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      transition: 'all 0.2s ease',
+                      opacity: event.status === 'completed' ? 0.55 : 1
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <span style={{
                         fontSize: '12px',
                         fontWeight: 600,
-                        color: getSeverityColor(event.severity || 'info'),
+                        color: event.status === 'completed' ? '#9ca3af' : getSeverityColor(event.severity || 'info'),
                         textTransform: 'uppercase'
                       }}>
-                        {event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
+                        {event.status === 'completed' ? 'Gekündigt' : event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
                       </span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>
@@ -1103,7 +1180,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                         )}
                       </div>
                     </div>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: '#1f2937' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: event.status === 'completed' ? '#9ca3af' : '#1f2937', textDecoration: event.status === 'completed' ? 'line-through' : 'none' }}>
                       {event.contractName ? formatContractName(event.contractName) : 'Unbekannter Vertrag'}
                     </h4>
                     <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
@@ -3272,26 +3349,26 @@ export default function CalendarPage() {
                         return (
                           <div
                             key={event.id}
-                            className="urgent-event-item"
+                            className={`urgent-event-item ${event.status === 'completed' ? 'completed' : ''}`}
                             onClick={() => {
                               setSelectedEvent(event);
                               setShowQuickActions(true);
                             }}
                           >
-                            <div className={`urgent-event-indicator ${event.severity}`}></div>
+                            <div className={`urgent-event-indicator ${event.status === 'completed' ? '' : event.severity}`} style={event.status === 'completed' ? { background: '#9ca3af' } : {}}></div>
                             <div className="urgent-event-content">
-                              <div className="urgent-event-title">
+                              <div className="urgent-event-title" style={event.status === 'completed' ? { textDecoration: 'line-through', color: '#9ca3af' } : {}}>
                                 {formatContractName(event.contractName)}
                               </div>
-                              <div className="urgent-event-desc">{event.title}</div>
+                              <div className="urgent-event-desc">{event.status === 'completed' ? 'Vertrag gekündigt' : event.title}</div>
                               <div className="urgent-event-meta">
                                 <span className="urgent-event-date">
                                   {new Date(event.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
                                 </span>
                               </div>
                             </div>
-                            <div className={`urgent-event-badge ${event.severity}`}>
-                              {daysInfo.text}
+                            <div className={`urgent-event-badge ${event.status === 'completed' ? '' : event.severity}`} style={event.status === 'completed' ? { background: 'rgba(156, 163, 175, 0.15)', color: '#9ca3af' } : {}}>
+                              {event.status === 'completed' ? 'Erledigt' : daysInfo.text}
                             </div>
                           </div>
                         );
