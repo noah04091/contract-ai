@@ -110,11 +110,16 @@ async function generateEventsForContract(db, contract) {
     // 🆕 GENERIERE EVENTS AUCH FÜR "ALTE" AKTIVE VERTRÄGE
     if (expiryDate && shouldCreateCriticalEvents) { // 🔒 Mit Konfidenz-Check
       
-      // 1. Kündigungsfenster öffnet
+      // 1. Kündigungsfenster öffnet (30 Tage VOR der Deadline = noticePeriodDays + 30 vor Ablauf)
       if (noticePeriodDays > 0) {
-        const tempDate = new Date(expiryDate);
-        tempDate.setDate(tempDate.getDate() - noticePeriodDays);
-        const cancelWindowDate = createLocalDate(tempDate);
+        // Deadline = letzter Kündigungstag
+        const tempDeadline = new Date(expiryDate);
+        tempDeadline.setDate(tempDeadline.getDate() - noticePeriodDays);
+
+        // Fenster öffnet 30 Tage vor Deadline
+        const tempWindowDate = new Date(tempDeadline);
+        tempWindowDate.setDate(tempWindowDate.getDate() - 30);
+        const cancelWindowDate = createLocalDate(tempWindowDate);
 
         // Nur zukünftige Events erstellen
         if (cancelWindowDate > now) {
@@ -123,13 +128,13 @@ async function generateEventsForContract(db, contract) {
             contractId: contract._id,
             type: "CANCEL_WINDOW_OPEN",
             title: `🟢 Kündigungsfenster öffnet: ${contract.name}`,
-            description: `Ab heute können Sie "${contract.name}" kündigen. Die Kündigungsfrist beträgt ${noticePeriodDays} Tage.${isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`,
+            description: `Ab jetzt sollten Sie sich um die Kündigung von "${contract.name}" kümmern. Letzte Möglichkeit: ${tempDeadline.toLocaleDateString('de-DE')}. Kündigungsfrist: ${noticePeriodDays} Tage.${isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`,
             date: cancelWindowDate,
             severity: "info",
             status: "scheduled",
-            confidence: confidence, // ✅ Add confidence
-            dataSource: dataSource, // ✅ Add data source
-            isEstimated: isEstimated, // ✅ Add estimation flag
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
             metadata: {
               provider: contract.provider,
               noticePeriodDays,
@@ -141,36 +146,6 @@ async function generateEventsForContract(db, contract) {
             createdAt: new Date(),
             updatedAt: new Date()
           });
-          
-          // Reminder 30 Tage vorher
-          const tempReminderDate = new Date(cancelWindowDate);
-          tempReminderDate.setDate(tempReminderDate.getDate() - 30);
-          const reminderDate = createLocalDate(tempReminderDate);
-
-          if (reminderDate > now) {
-            events.push({
-              userId: contract.userId,
-              contractId: contract._id,
-              type: "CANCEL_REMINDER",
-              title: `📅 Kündigungsfrist naht: ${contract.name}`,
-              description: `In 30 Tagen öffnet sich das Kündigungsfenster für "${contract.name}".${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch!' : ''}`,
-              date: reminderDate,
-              severity: "info",
-              status: "scheduled",
-              confidence: confidence,
-              dataSource: dataSource,
-              isEstimated: isEstimated,
-              metadata: {
-                provider: contract.provider,
-                daysUntilWindow: 30,
-                suggestedAction: "prepare",
-                contractName: contract.name,
-                isAutoRenewal
-              },
-              createdAt: new Date(),
-              updatedAt: new Date()
-            });
-          }
         }
       }
       
