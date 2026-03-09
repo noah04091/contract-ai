@@ -28,10 +28,17 @@ async function generateEventsForContract(db, contract) {
   const now = new Date();
 
   try {
+    // 🔴 Gekündigte Verträge: Keine Kündigungs-Erinnerungen mehr erstellen
+    // (CANCELLATION_CONFIRMATION_CHECK wird separat in cancellations.js erstellt)
+    if (contract.status === 'gekündigt' || contract.cancellationId) {
+      console.log(`⏭️ Vertrag "${contract.name}" ist gekündigt — überspringe Event-Generierung`);
+      return events;
+    }
+
     // 🔧 FIX: Flexible Feldnamen-Unterstützung für verschiedene Datenquellen
-    let expiryDate = contract.expiryDate 
-      ? new Date(contract.expiryDate) 
-      : contract.endDate 
+    let expiryDate = contract.expiryDate
+      ? new Date(contract.expiryDate)
+      : contract.endDate
         ? new Date(contract.endDate)
         : null;
     

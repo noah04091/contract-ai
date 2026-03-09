@@ -7,6 +7,7 @@ const multer = require("multer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { logStatusChange } = require("../services/smartStatusUpdater");
 const { generateCancellationPdf } = require("../services/cancellationPdfGenerator");
+const { generateEventsForContract } = require("../services/calendarEvents");
 
 // Multer für Confirmation-Upload (Memory Storage → dann S3)
 const confirmationUpload = multer({
@@ -844,6 +845,16 @@ router.post("/:id/reactivate", verifyToken, async (req, res) => {
         await logStatusChange(req.db, contractId.toString(), userId.toString(), "gekündigt", "aktiv", "Kündigung zurückgenommen durch Benutzer");
       } catch (logErr) {
         console.warn("⚠️ Status change log failed:", logErr.message);
+      }
+
+      // 6. Regenerate calendar events for the reactivated contract
+      try {
+        const reactivatedContract = await req.db.collection("contracts").findOne({ _id: contractId });
+        if (reactivatedContract) {
+          await generateEventsForContract(req.db, reactivatedContract);
+        }
+      } catch (genErr) {
+        console.warn("⚠️ Event regeneration failed:", genErr.message);
       }
     }
 
