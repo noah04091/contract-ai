@@ -3,9 +3,24 @@ const express = require("express");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const nodemailer = require("nodemailer");
+const multer = require("multer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { logStatusChange } = require("../services/smartStatusUpdater");
 const { generateCancellationPdf } = require("../services/cancellationPdfGenerator");
+
+// Multer für Confirmation-Upload (Memory Storage → dann S3)
+const confirmationUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Nur PDF, JPG und PNG Dateien sind erlaubt'), false);
+    }
+  }
+});
 
 // S3 für PDF-Upload (lazy-loaded)
 let s3Client, PutObjectCommand, GetObjectCommand, getSignedUrl;
@@ -228,6 +243,29 @@ router.post("/send", verifyToken, async (req, res) => {
           }
         );
 
+        // 14-Tage Erinnerung — Kündigungsbestätigung prüfen
+        const reminderDate = new Date();
+        reminderDate.setDate(reminderDate.getDate() + 14);
+        await req.db.collection("contract_events").insertOne({
+          userId,
+          contractId: new ObjectId(contractId),
+          contractName,
+          title: `Kündigungsbestätigung prüfen: ${contractName}`,
+          description: `Bitte prüfen Sie, ob Sie eine Bestätigung für die Kündigung von "${contractName}" erhalten haben. Falls nicht, kontaktieren Sie den Anbieter.`,
+          date: reminderDate,
+          type: "CANCELLATION_CONFIRMATION_CHECK",
+          severity: "warning",
+          status: "scheduled",
+          metadata: {
+            provider: normalizeProvider(provider),
+            cancellationId: cancellationId.toString(),
+            suggestedAction: "check_confirmation"
+          },
+          isManual: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+
         res.json({
           success: true,
           message: "Kündigung erfolgreich versendet",
@@ -299,6 +337,8 @@ router.get("/", verifyToken, async (req, res) => {
         sendMethod: c.sendMethod,
         recipientEmail: c.recipientEmail,
         hasPdf: !!c.pdfS3Key,
+        hasConfirmation: !!c.confirmationFile,
+        confirmedAt: c.confirmedAt || null,
         createdAt: c.createdAt,
         sentAt: c.sentAt
       }))
@@ -600,5 +640,114 @@ async function sendCancellationCopy(customerEmail, contractName, provider, lette
     attachments
   });
 }
+
+// POST /api/cancellations/:id/confirm - Bestätigungsdokument hochladen
+router.post("/:id/confirm", verifyToken, confirmationUpload.single("file"), async (req, res) => {
+  try {
+    const cancellationId = new ObjectId(req.params.id);
+    const userId = new ObjectId(req.user.userId);
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "Keine Datei hochgeladen" });
+    }
+
+    const cancellation = await req.db.collection("cancellations").findOne({
+      _id: cancellationId,
+      userId: userId
+    });
+
+    if (!cancellation) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    // Upload to S3
+    const ext = req.file.originalname.split('.').pop() || 'pdf';
+    const s3Key = `cancellations/${req.user.userId}/${cancellationId}/confirmation_${Date.now()}.${ext}`;
+
+    if (!s3Client || !PutObjectCommand || !process.env.S3_BUCKET_NAME) {
+      return res.status(500).json({ success: false, error: "S3 nicht konfiguriert" });
+    }
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+    });
+    await s3Client.send(command);
+
+    // Update cancellation record
+    await req.db.collection("cancellations").updateOne(
+      { _id: cancellationId },
+      {
+        $set: {
+          status: "confirmed",
+          confirmedAt: new Date(),
+          confirmationFile: {
+            s3Key: s3Key,
+            fileName: req.file.originalname,
+            mimeType: req.file.mimetype,
+            uploadedAt: new Date()
+          }
+        }
+      }
+    );
+
+    console.log(`✅ Confirmation uploaded for cancellation ${cancellationId}: ${s3Key}`);
+
+    res.json({
+      success: true,
+      message: "Bestätigung erfolgreich hochgeladen",
+      confirmedAt: new Date()
+    });
+
+  } catch (error) {
+    console.error("❌ Error uploading confirmation:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Fehler beim Hochladen der Bestätigung"
+    });
+  }
+});
+
+// GET /api/cancellations/:id/confirmation - Bestätigungsdokument herunterladen (signierte URL)
+router.get("/:id/confirmation", verifyToken, async (req, res) => {
+  try {
+    const cancellationId = new ObjectId(req.params.id);
+    const userId = new ObjectId(req.user.userId);
+
+    const cancellation = await req.db.collection("cancellations").findOne({
+      _id: cancellationId,
+      userId: userId
+    });
+
+    if (!cancellation) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    if (!cancellation.confirmationFile?.s3Key) {
+      return res.status(404).json({ success: false, error: "Keine Bestätigung vorhanden" });
+    }
+
+    const signedUrl = await getSignedPdfUrl(cancellation.confirmationFile.s3Key);
+    if (!signedUrl) {
+      return res.status(500).json({ success: false, error: "Konnte Download-URL nicht erstellen" });
+    }
+
+    res.json({
+      success: true,
+      url: signedUrl,
+      fileName: cancellation.confirmationFile.fileName,
+      mimeType: cancellation.confirmationFile.mimeType
+    });
+
+  } catch (error) {
+    console.error("❌ Error getting confirmation:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Abrufen der Bestätigung"
+    });
+  }
+});
 
 module.exports = router;

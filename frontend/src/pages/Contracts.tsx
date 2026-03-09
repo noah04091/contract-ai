@@ -150,6 +150,9 @@ interface Contract {
   // 📡 Legal Pulse (für Analyse-Tab Verfügbarkeit)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   legalPulse?: Record<string, any>;
+  // 🔴 Kündigungs-Tracking (aus cancellations.js gesetzt)
+  cancellationId?: string;
+  cancellationDate?: string;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -2788,6 +2791,11 @@ export default function Contracts() {
         }
         return 'Gekündigt';
       }
+      return 'Gekündigt';
+    }
+
+    // 1.5 Contract wurde über Contract AI gekündigt (cancellationId vorhanden)
+    if (contract.status === 'gekündigt' || contract.cancellationId) {
       return 'Gekündigt';
     }
 

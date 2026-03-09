@@ -12,7 +12,9 @@ import {
   Calendar,
   Loader,
   Mail,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  CheckCircle
 } from "lucide-react";
 import styles from "../styles/CancellationArchive.module.css";
 
@@ -36,6 +38,8 @@ interface Cancellation {
   sendMethod: string;
   recipientEmail?: string;
   hasPdf: boolean;
+  hasConfirmation?: boolean;
+  confirmedAt?: string;
   createdAt: string;
   sentAt?: string;
 }
@@ -54,9 +58,16 @@ interface CancellationDetail {
   resentAt?: string;
   resentTo?: string;
   pdfS3Key?: string;
+  confirmedAt?: string;
+  confirmationFile?: {
+    s3Key: string;
+    fileName: string;
+    mimeType?: string;
+    uploadedAt: string;
+  };
 }
 
-type FilterStatus = "all" | "sent" | "downloaded" | "resent" | "failed" | "draft";
+type FilterStatus = "all" | "sent" | "downloaded" | "resent" | "failed" | "draft" | "confirmed";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   sent: { label: "Gesendet", className: styles.badgeSent },
@@ -64,6 +75,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   resent: { label: "Erneut gesendet", className: styles.badgeResent },
   failed: { label: "Fehlgeschlagen", className: styles.badgeFailed },
   draft: { label: "Entwurf", className: styles.badgeDraft },
+  confirmed: { label: "Bestätigt", className: styles.badgeConfirmed },
 };
 
 export default function CancellationArchive() {
@@ -76,6 +88,9 @@ export default function CancellationArchive() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [pdfDownloading, setPdfDownloading] = useState<string | null>(null);
+  const [confirmationUploading, setConfirmationUploading] = useState(false);
+  const [confirmationDownloading, setConfirmationDownloading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -176,6 +191,66 @@ export default function CancellationArchive() {
     }
   };
 
+  const handleConfirmationUpload = async (file: File) => {
+    if (!detail) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Datei ist zu groß (max. 10 MB)");
+      return;
+    }
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
+    if (!allowed.includes(file.type)) {
+      alert("Nur PDF, JPG und PNG Dateien sind erlaubt");
+      return;
+    }
+
+    setConfirmationUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/cancellations/${detail._id}/confirm`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDetail({
+          ...detail,
+          status: "confirmed",
+          confirmedAt: data.confirmedAt || new Date().toISOString(),
+          confirmationFile: { s3Key: "", fileName: file.name, uploadedAt: new Date().toISOString() }
+        });
+        fetchCancellations();
+      } else {
+        alert(data.error || "Upload fehlgeschlagen");
+      }
+    } catch (err) {
+      console.error("Confirmation-Upload-Fehler:", err);
+      alert("Fehler beim Hochladen der Bestätigung");
+    } finally {
+      setConfirmationUploading(false);
+    }
+  };
+
+  const handleConfirmationDownload = async () => {
+    if (!detail) return;
+    setConfirmationDownloading(true);
+    try {
+      const res = await fetch(`/api/cancellations/${detail._id}/confirmation`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err) {
+      console.error("Confirmation-Download-Fehler:", err);
+    } finally {
+      setConfirmationDownloading(false);
+    }
+  };
+
   const filtered = filter === "all"
     ? cancellations
     : cancellations.filter(c => c.status === filter);
@@ -214,7 +289,7 @@ export default function CancellationArchive() {
             </h1>
           </div>
           <div className={styles.filters}>
-            {(["all", "sent", "downloaded", "resent", "failed"] as FilterStatus[]).map(f => (
+            {(["all", "sent", "confirmed", "downloaded", "resent", "failed"] as FilterStatus[]).map(f => (
               <button
                 key={f}
                 className={`${styles.filterBtn} ${filter === f ? styles.filterBtnActive : ""}`}
@@ -395,6 +470,81 @@ export default function CancellationArchive() {
                           {detail.cancellationLetter}
                         </div>
                       )}
+
+                      {/* Bestätigung Upload/Download */}
+                      <div className={styles.confirmationSection}>
+                        <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <CheckCircle size={16} />
+                          Kündigungsbestätigung
+                        </h4>
+                        {detail.confirmationFile ? (
+                          <div className={styles.confirmationDone}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                              <span className={`${styles.badge} ${styles.badgeConfirmed}`}>
+                                <CheckCircle size={12} />
+                                Bestätigt
+                              </span>
+                              {detail.confirmedAt && (
+                                <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                                  am {new Date(detail.confirmedAt).toLocaleDateString("de-DE")}
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              className={styles.actionBtn}
+                              onClick={handleConfirmationDownload}
+                              disabled={confirmationDownloading}
+                            >
+                              {confirmationDownloading
+                                ? <Loader size={12} className={styles.spinner} />
+                                : <Download size={12} />
+                              }
+                              {detail.confirmationFile.fileName || "Bestätigung"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            className={`${styles.uploadZone} ${dragOver ? styles.uploadZoneDragOver : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              setDragOver(false);
+                              const file = e.dataTransfer.files[0];
+                              if (file) handleConfirmationUpload(file);
+                            }}
+                          >
+                            {confirmationUploading ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280' }}>
+                                <Loader size={16} className={styles.spinner} />
+                                <span>Wird hochgeladen...</span>
+                              </div>
+                            ) : (
+                              <>
+                                <Upload size={20} style={{ color: '#9ca3af' }} />
+                                <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                                  Bestätigung hier ablegen oder{' '}
+                                  <label style={{ color: '#0071e3', cursor: 'pointer', fontWeight: 500 }}>
+                                    Datei auswählen
+                                    <input
+                                      type="file"
+                                      accept=".pdf,.jpg,.jpeg,.png"
+                                      style={{ display: 'none' }}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleConfirmationUpload(file);
+                                      }}
+                                    />
+                                  </label>
+                                </span>
+                                <span style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                  PDF, JPG, PNG — max. 10 MB
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className={styles.modalActions}>

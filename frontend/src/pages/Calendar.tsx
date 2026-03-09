@@ -1,6 +1,6 @@
 // src/pages/Calendar.tsx - Custom Calendar Redesign
 import { useEffect, useState, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { fixUtf8Display } from "../utils/textUtils";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,7 +33,8 @@ import {
   Pencil,
   Trash2,
   Save,
-  Mail
+  Mail,
+  XCircle
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -422,6 +423,7 @@ interface QuickActionsModalProps {
 
 function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit }: QuickActionsModalProps) {
   useEscapeKey(onClose);
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (allEvents && allEvents.length > 1) {
@@ -713,8 +715,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               </motion.button>
             )}
 
-            {/* Cancel button for contract events with cancel suggestion */}
-            {hasContract && currentEvent.metadata?.suggestedAction === "cancel" && (
+            {/* Cancel button for contract events with cancel suggestion (nur wenn nicht bereits gekündigt) */}
+            {hasContract && currentEvent.metadata?.suggestedAction === "cancel" && currentEvent.status !== "completed" && (
               <motion.button
                 className="action-btn-premium primary"
                 onClick={() => onAction("cancel", currentEvent.id)}
@@ -741,6 +743,17 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Jetzt kündigen</span>
                 <ArrowRight size={16} className="action-arrow" style={{ flexShrink: 0 }} />
               </motion.button>
+            )}
+
+            {/* Info-Banner wenn Event completed (= Vertrag gekündigt) */}
+            {currentEvent.status === "completed" && (
+              <div className="cancelled-info-banner" style={{ gridColumn: '1 / -1' }}>
+                <XCircle size={16} />
+                <span>Vertrag wurde gekündigt</span>
+                <button onClick={() => navigate('/cancellations')}>
+                  Zum Archiv →
+                </button>
+              </div>
             )}
 
             {/* Secondary Action Buttons - Different for manual vs contract events */}

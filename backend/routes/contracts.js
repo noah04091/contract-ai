@@ -654,7 +654,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     suggestions: 1, legalAssessment: 1, quickFacts: 1,
     importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
     // Status-Felder
-    isGenerated: 1, isOptimized: 1, gekuendigtZum: 1,
+    isGenerated: 1, isOptimized: 1, gekuendigtZum: 1, cancellationId: 1, cancellationDate: 1,
     paymentStatus: 1, paymentAmount: 1, paymentFrequency: 1,
     // Signatur
     signatureStatus: 1, signatureEnvelopeId: 1,

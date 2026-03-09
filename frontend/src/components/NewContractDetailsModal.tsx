@@ -160,6 +160,9 @@ interface Contract {
   paymentStatus?: 'paid' | 'unpaid';
   paymentAmount?: number;
   paymentDate?: string;
+  // 🔴 Kündigungs-Tracking
+  cancellationId?: string;
+  cancellationDate?: string;
   // 📅 KI-extrahierte Eckdaten & Termine
   gekuendigtZum?: string;
   documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
@@ -687,6 +690,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     const statusMap: Record<string, { className: string; icon: React.ReactNode; text: string }> = {
       aktiv: { className: styles.statusCompleted, icon: <CheckCircle size={16} />, text: 'Aktiv' },
       gekuendigt: { className: styles.statusDeclined, icon: <AlertCircle size={16} />, text: 'Gekündigt' },
+      'gekündigt': { className: styles.statusDeclined, icon: <XCircle size={16} />, text: 'Gekündigt' },
       abgelaufen: { className: styles.statusExpired, icon: <Clock size={16} />, text: 'Abgelaufen' }
     };
 
@@ -1229,6 +1233,50 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       </div>
 
+      {/* 🔴 Kündigungsinfo-Banner */}
+      {(contract.status === 'gekündigt' || contract.cancellationId) && (
+        <div className={styles.section}>
+          <div style={{
+            padding: '16px 20px',
+            background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
+            border: '1px solid #fca5a5',
+            borderRadius: '12px',
+            display: 'flex', alignItems: 'center', gap: '12px'
+          }}>
+            <XCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, color: '#991b1b' }}>
+                Vertrag wurde gekündigt
+                {contract.cancellationDate && (
+                  <span style={{ fontWeight: 400, marginLeft: '8px' }}>
+                    am {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '4px' }}>
+                Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
+              </div>
+            </div>
+            <button
+              onClick={() => window.location.href = '/cancellations'}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '6px',
+                border: '1px solid #fca5a5',
+                background: 'white',
+                color: '#991b1b',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap' as const
+              }}
+            >
+              Archiv →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 📅 Wichtige Termine - KI-extrahierte Datums */}
       {contract.importantDates && contract.importantDates.length > 0 && (
         <div className={styles.section}>
@@ -1240,7 +1288,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       )}
 
       {/* 🔔 Kalendererinnerungen für diesen Vertrag */}
-      <div className={styles.section}>
+      <div className={styles.section} style={{
+        opacity: (contract.status === 'gekündigt' || contract.cancellationId) ? 0.5 : 1,
+        pointerEvents: (contract.status === 'gekündigt' || contract.cancellationId) ? 'none' : 'auto'
+      }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
         </h3>
