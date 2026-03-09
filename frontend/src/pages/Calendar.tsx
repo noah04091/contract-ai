@@ -2984,19 +2984,22 @@ export default function CalendarPage() {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
-    // Kommende Ereignisse (Zukunft)
-    const upcoming = events.filter(e => new Date(e.date) >= now);
+    // Aktive Events (nicht completed/dismissed) für korrekte Zählung
+    const activeEvents = events.filter(e => e.status !== 'completed' && e.status !== 'dismissed');
 
-    // Vergangene Ereignisse
+    // Kommende Ereignisse (Zukunft, nur aktive)
+    const upcoming = activeEvents.filter(e => new Date(e.date) >= now);
+
+    // Vergangene Ereignisse (alle, inkl. completed)
     const past = events.filter(e => new Date(e.date) < now);
 
-    // Kündbar (Kündigungsfenster offen oder Letzte Chance)
-    const cancelable = events.filter(e =>
+    // Kündbar (nur aktive)
+    const cancelable = activeEvents.filter(e =>
       e.type === 'CANCEL_WINDOW_OPEN' || e.type === 'LAST_CANCEL_DAY'
     );
 
-    // Auto-Verlängerung
-    const autoRenewal = events.filter(e => e.type === 'AUTO_RENEWAL');
+    // Auto-Verlängerung (nur aktive)
+    const autoRenewal = activeEvents.filter(e => e.type === 'AUTO_RENEWAL');
 
     const result = {
       upcoming: upcoming.length,
