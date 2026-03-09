@@ -153,6 +153,7 @@ interface Contract {
   // 🔴 Kündigungs-Tracking (aus cancellations.js gesetzt)
   cancellationId?: string;
   cancellationDate?: string;
+  cancellationConfirmed?: boolean;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -2796,7 +2797,10 @@ export default function Contracts() {
 
     // 1.5 Contract wurde über Contract AI gekündigt (cancellationId vorhanden)
     if (contract.status === 'gekündigt' || contract.cancellationId) {
-      return 'Gekündigt';
+      if (contract.cancellationConfirmed) {
+        return 'Gekündigt ✓';
+      }
+      return 'Gekündigt — offen';
     }
 
     // 2. Rechnung = "Bezahlt" oder "Offen"
@@ -2868,7 +2872,9 @@ export default function Contracts() {
       return styles.statusActive;
     } else if (status === "läuft ab" || status === "bald fällig") {
       return styles.statusWarning;
-    } else if (status === "gekündigt") {
+    } else if (status === "gekündigt — offen") {
+      return styles.statusCancelledOpen;
+    } else if (status === "gekündigt" || status === "gekündigt ✓") {
       return styles.statusCancelled;
     } else if (status === "beendet" || status === "abgelaufen") {
       return styles.statusExpired || styles.statusCancelled;
@@ -3512,7 +3518,8 @@ export default function Contracts() {
     // Status-Farbe für den linken Rand
     const smartStatus = calculateSmartStatus(contract);
     const getStatusIndicatorColor = () => {
-      if (smartStatus === 'Gekündigt') return '#ef4444';
+      if (smartStatus === 'Gekündigt ✓') return '#ef4444';
+      if (smartStatus === 'Gekündigt — offen') return '#f59e0b';
       if (smartStatus === 'Beendet' || smartStatus === 'Abgelaufen') return '#f97316';
       if (daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0) return '#eab308';
       if (smartStatus === 'Aktiv') return '#22c55e';

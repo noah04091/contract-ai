@@ -4109,6 +4109,11 @@
   color: #991b1b;
 }
 
+.statusCancelledOpen {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .statusNeutral {
   background: #f1f5f9;
   color: #475569;

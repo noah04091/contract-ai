@@ -1100,12 +1100,12 @@ router.get("/", async (req, res) => {
           ];
           break;
         case 'gekündigt':
-          // Gekündigt = documentCategory ist cancellation_confirmation ODER gekuendigtZum gesetzt (aber noch nicht vorbei)
+          // Gekündigt = documentCategory ist cancellation_confirmation ODER gekuendigtZum gesetzt ODER über Contract AI gekündigt
           mongoFilter.$or = [
             { documentCategory: 'cancellation_confirmation' },
-            {
-              gekuendigtZum: { $exists: true, $ne: null, $gte: today }
-            }
+            { gekuendigtZum: { $exists: true, $ne: null, $gte: today } },
+            { status: 'gekündigt' },
+            { cancellationId: { $exists: true, $ne: null } }
           ];
           break;
       }
