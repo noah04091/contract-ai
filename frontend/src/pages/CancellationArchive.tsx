@@ -116,6 +116,7 @@ export default function CancellationArchive() {
       }
     } catch (err) {
       console.error("Fehler beim Laden:", err);
+      toast.error("Fehler beim Laden der Kündigungen");
     } finally {
       setLoading(false);
     }
@@ -138,6 +139,7 @@ export default function CancellationArchive() {
       }
     } catch (err) {
       console.error("Detail-Fehler:", err);
+      toast.error("Fehler beim Laden der Details");
     } finally {
       setDetailLoading(false);
     }
@@ -197,6 +199,7 @@ export default function CancellationArchive() {
       }
     } catch (err) {
       console.error("PDF-Download-Fehler:", err);
+      toast.error("PDF konnte nicht heruntergeladen werden");
     } finally {
       setPdfDownloading(null);
     }
@@ -205,12 +208,12 @@ export default function CancellationArchive() {
   const handleConfirmationUpload = async (file: File) => {
     if (!detail) return;
     if (file.size > 10 * 1024 * 1024) {
-      alert("Datei ist zu groß (max. 10 MB)");
+      toast.error("Datei ist zu groß (max. 10 MB)");
       return;
     }
     const allowed = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!allowed.includes(file.type)) {
-      alert("Nur PDF, JPG und PNG Dateien sind erlaubt");
+      toast.error("Nur PDF, JPG und PNG Dateien sind erlaubt");
       return;
     }
 
@@ -234,11 +237,11 @@ export default function CancellationArchive() {
         });
         fetchCancellations();
       } else {
-        alert(data.error || "Upload fehlgeschlagen");
+        toast.error(data.error || "Upload fehlgeschlagen");
       }
     } catch (err) {
       console.error("Confirmation-Upload-Fehler:", err);
-      alert("Fehler beim Hochladen der Bestätigung");
+      toast.error("Fehler beim Hochladen der Bestätigung");
     } finally {
       setConfirmationUploading(false);
     }
@@ -347,6 +350,7 @@ export default function CancellationArchive() {
 
   const handleReactivate = async () => {
     if (!detail) return;
+    if (!window.confirm("Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?")) return;
     setActionLoading("reactivate");
     try {
       const res = await fetch(`/api/cancellations/${detail._id}/reactivate`, {
@@ -508,7 +512,7 @@ export default function CancellationArchive() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => { setSelectedId(null); setDetail(null); }}
+              onClick={() => { setSelectedId(null); setDetail(null); setActionLoading(null); setResending(false); setDragOver(false); }}
             >
               <motion.div
                 className={styles.modal}
@@ -519,7 +523,7 @@ export default function CancellationArchive() {
               >
                 <div className={styles.modalHeader}>
                   <h3 className={styles.modalTitle}>Kündigungsdetails</h3>
-                  <button className={styles.closeBtn} onClick={() => { setSelectedId(null); setDetail(null); }}>
+                  <button className={styles.closeBtn} onClick={() => { setSelectedId(null); setDetail(null); setActionLoading(null); setResending(false); setDragOver(false); }}>
                     <X size={16} />
                   </button>
                 </div>

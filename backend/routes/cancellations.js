@@ -906,7 +906,15 @@ router.post("/:id/reactivate", verifyToken, async (req, res) => {
 
       // 5. Log status change
       try {
-        await logStatusChange(req.db, contractId.toString(), userId.toString(), "gekündigt", "aktiv", "Kündigung zurückgenommen durch Benutzer");
+        await logStatusChange(
+          req.db.collection("contract_status_history"),
+          contractId,
+          userId,
+          "gekündigt",
+          "aktiv",
+          "reactivation",
+          "Kündigung zurückgenommen durch Benutzer"
+        );
       } catch (logErr) {
         console.warn("⚠️ Status change log failed:", logErr.message);
       }

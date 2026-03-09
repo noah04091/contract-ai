@@ -1325,6 +1325,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                         confirmed: true
                       })
                     });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     if (data.success) {
                       setContract(prev => ({
@@ -1382,6 +1383,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </button>
               <button
                 onClick={async () => {
+                  if (!window.confirm('Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
                   try {
                     setSaving(true);
                     const token = localStorage.getItem("token");
@@ -1389,6 +1391,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                       method: "POST",
                       headers: { Authorization: `Bearer ${token}` }
                     });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const data = await res.json();
                     if (data.success) {
                       setContract(prev => ({

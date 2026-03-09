@@ -438,11 +438,17 @@ function ReminderEmailModal({ event, onClose, onSent }: ReminderEmailModalProps)
   // Load cancellation data to prefill fields
   useEffect(() => {
     const loadCancellation = async () => {
+      if (!event.metadata?.cancellationId) {
+        toast.error('Kündigungsdaten nicht gefunden');
+        setLoading(false);
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`/api/cancellations/${event.metadata?.cancellationId}`, {
+        const res = await fetch(`/api/cancellations/${event.metadata.cancellationId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.success && data.cancellation) {
           const c = data.cancellation;
@@ -3049,18 +3055,23 @@ export default function CalendarPage() {
 
     // Confirmation actions — delegiert von QuickActionsModal
     if (action === "confirm-yes") {
+      const ev = events.find(e => e.id === eventId);
+      if (!ev?.metadata?.cancellationId) {
+        toast.error('Kündigungsdaten nicht gefunden');
+        return;
+      }
       try {
-        const ev = events.find(e => e.id === eventId);
         const token = localStorage.getItem("token");
         const res = await fetch("/api/cancellations/confirmation-response", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            cancellationId: ev?.metadata?.cancellationId,
+            cancellationId: ev.metadata.cancellationId,
             eventId,
             confirmed: true
           })
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.success) {
           setShowQuickActions(false);
@@ -3079,20 +3090,30 @@ export default function CalendarPage() {
 
     if (action === "confirm-no") {
       const ev = events.find(e => e.id === eventId);
-      setReminderEvent(ev || null);
+      if (!ev?.metadata?.cancellationId) {
+        toast.error('Kündigungsdaten nicht gefunden');
+        return;
+      }
+      setReminderEvent(ev);
       setShowReminderModal(true);
       setShowQuickActions(false);
       return;
     }
 
     if (action === "reactivate") {
+      const ev = events.find(e => e.id === eventId);
+      if (!ev?.metadata?.cancellationId) {
+        toast.error('Kündigungsdaten nicht gefunden');
+        return;
+      }
+      if (!window.confirm('Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
       try {
-        const ev = events.find(e => e.id === eventId);
         const token = localStorage.getItem("token");
-        const res = await fetch(`/api/cancellations/${ev?.metadata?.cancellationId}/reactivate`, {
+        const res = await fetch(`/api/cancellations/${ev.metadata.cancellationId}/reactivate`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.success) {
           setShowQuickActions(false);
