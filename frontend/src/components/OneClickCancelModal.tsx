@@ -206,30 +206,29 @@ ${providerAddress}
 
 ${today}
 
-**Kündigung meines Vertrags ${fixUtf8Display(contract.name)}**
+Kündigung meines Vertrags ${fixUtf8Display(contract.name)}
 
 Sehr geehrte Damen und Herren,
 
-hiermit kündige ich meinen Vertrag **${fixUtf8Display(contract.name)}** ${cancellationDateText}.
+hiermit kündige ich meinen Vertrag ${fixUtf8Display(contract.name)} ${cancellationDateText}.
 
-**Vertragsdaten:**
+Vertragsdaten:
 - Vertragsname: ${fixUtf8Display(contract.name)}
 ${formData.contractNumber ? `- Vertragsnummer: ${formData.contractNumber}` : ""}
 ${formData.customerNumber ? `- Kundennummer: ${formData.customerNumber}` : ""}
 ${contract.amount ? `- Monatlicher Betrag: ${contract.amount}€` : ""}
 
-${reasonText ? `**Kündigungsgrund:** ${reasonText}` : ""}
+${reasonText ? `Kündigungsgrund: ${reasonText}` : ""}
 ${(formData.cancellationReason === "price_increase" || formData.cancellationReason === "service_change") ? "\nIch mache hiermit von meinem Sonderkündigungsrecht gemäß § 314 BGB Gebrauch." : ""}
 Ich bitte um eine schriftliche Bestätigung der Kündigung unter Angabe des Beendigungszeitpunktes.
 
-${formData.additionalNotes && formData.cancellationReason !== "other" ? `\n**Zusätzliche Anmerkungen:**\n${formData.additionalNotes}` : ""}
+${formData.additionalNotes && formData.cancellationReason !== "other" ? `\nZusätzliche Anmerkungen:\n${formData.additionalNotes}` : ""}
 
 Mit freundlichen Grüßen
 
 ${formData.customerName}
 
----
-*Erstellt mit Contract AI - ${today}*
+Erstellt mit Contract AI - ${today}
 `;
 
     setCancellationLetter(letter);
