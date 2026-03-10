@@ -204,6 +204,7 @@ interface UserInfo {
   // 📧 E-Mail-Inbox Feature
   emailInboxAddress?: string | null;
   emailInboxEnabled?: boolean;
+  customEmailAlias?: string | null;
 }
 
 // ✅ Erweiterte Filter-Typen
@@ -1567,6 +1568,7 @@ export default function Contracts() {
           analysisLimit?: number; // Backend sendet jetzt Limit mit!
           emailInboxAddress?: string | null;
           emailInboxEnabled?: boolean;
+          customEmailAlias?: string | null;
         }
       };
 
@@ -1590,7 +1592,8 @@ export default function Contracts() {
         analysisLimit,
         // 📧 E-Mail-Inbox Feature
         emailInboxAddress: response.user?.emailInboxAddress || null,
-        emailInboxEnabled: response.user?.emailInboxEnabled ?? true
+        emailInboxEnabled: response.user?.emailInboxEnabled ?? true,
+        customEmailAlias: response.user?.customEmailAlias || null
       };
 
       // ✅ Cache aktualisieren
@@ -3845,7 +3848,7 @@ export default function Contracts() {
                 {canMultiUpload && <Crown size={14} className={styles.sidebarNavIcon} style={{ color: '#fbbf24' }} />}
               </button>
 
-              {userInfo.emailInboxAddress && (
+              {userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
                 <button
                   className={`${styles.sidebarNavItem} ${activeSection === 'email-upload' ? styles.active : ''}`}
                   onClick={() => setActiveSection('email-upload')}
@@ -4545,7 +4548,7 @@ export default function Contracts() {
                         <FileUp size={18} />
                         <span>Datei-Upload</span>
                       </button>
-                      {userInfo.emailInboxAddress && (
+                      {userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
                         <button
                           className={`${styles.uploadTab} ${uploadTab === 'email' ? styles.active : ''}`}
                           onClick={() => setUploadTab('email')}
@@ -4558,11 +4561,13 @@ export default function Contracts() {
                     )}
 
                     {/* TAB CONTENT: E-Mail-Upload */}
-                    {uploadTab === 'email' && userInfo.emailInboxAddress ? (
+                    {uploadTab === 'email' && userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' ? (
                       <div className={styles.emailUploadSection}>
                         <EmailInboxWidget
                           emailInboxAddress={userInfo.emailInboxAddress}
                           emailInboxEnabled={userInfo.emailInboxEnabled || false}
+                          subscriptionPlan={userInfo.subscriptionPlan}
+                          customEmailAlias={userInfo.customEmailAlias}
                           onUpdate={() => fetchUserInfo(true)}
                         />
                       </div>
@@ -4931,7 +4936,7 @@ export default function Contracts() {
             )}
 
             {/* 📧 Email-Upload Sektion */}
-            {activeSection === 'email-upload' && userInfo.emailInboxAddress && (
+            {activeSection === 'email-upload' && userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
               <motion.div
                 key="email-upload-section"
                 className={styles.section}
@@ -4943,6 +4948,8 @@ export default function Contracts() {
                 <EmailInboxWidget
                   emailInboxAddress={userInfo.emailInboxAddress}
                   emailInboxEnabled={userInfo.emailInboxEnabled ?? true}
+                  subscriptionPlan={userInfo.subscriptionPlan}
+                  customEmailAlias={userInfo.customEmailAlias}
                   onUpdate={() => fetchUserInfo(true)}
                 />
               </motion.div>

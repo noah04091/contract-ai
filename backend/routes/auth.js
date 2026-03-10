@@ -12,7 +12,7 @@ const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 const { validatePassword } = require("../utils/passwordValidator");
-const { getFeatureLimit, isBusinessOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { getFeatureLimit, isBusinessOrHigher, isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const OrganizationMember = require("../models/OrganizationMember");
 const Organization = require("../models/Organization");
 require("dotenv").config();
@@ -532,6 +532,7 @@ router.get("/me", verifyToken, async (req, res) => {
       emailInboxAddress: user.emailInboxAddress || null,
       emailInboxEnabled: user.emailInboxEnabled ?? true,
       emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null,
+      customEmailAlias: user.customEmailAlias || null,
       // 🎓 ONBOARDING TOURS (serverseitig gespeichert) - LEGACY
       completedTours: user.completedTours || [],
       // 📷 PROFILBILD
@@ -1061,6 +1062,187 @@ router.post("/email-inbox/regenerate", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Fehler beim Regenerieren der E-Mail Inbox Adresse:", err);
     res.status(500).json({ message: "Serverfehler beim Regenerieren" });
+  }
+});
+
+// 📧 Custom E-Mail Alias — Reservierte Namen (Blacklist)
+const RESERVED_EMAIL_ALIASES = [
+  'admin', 'administrator', 'support', 'help', 'info', 'contact', 'kontakt',
+  'noreply', 'no-reply', 'postmaster', 'webmaster', 'mailer-daemon',
+  'abuse', 'security', 'billing', 'sales', 'team', 'hello', 'office',
+  'root', 'system', 'test', 'mail', 'email', 'upload', 'api', 'www',
+  'ftp', 'smtp', 'imap', 'pop', 'dns', 'ns1', 'ns2', 'contract-ai',
+  'contractai', 'vertrag', 'vertraege', 'contracts', 'demo', 'beta'
+];
+
+// 📧 Custom E-Mail Alias Validierung
+function validateEmailAlias(alias) {
+  if (!alias || typeof alias !== 'string') {
+    return { valid: false, error: 'Alias darf nicht leer sein' };
+  }
+
+  const trimmed = alias.trim().toLowerCase();
+
+  if (trimmed.length < 3) {
+    return { valid: false, error: 'Alias muss mindestens 3 Zeichen haben' };
+  }
+
+  if (trimmed.length > 30) {
+    return { valid: false, error: 'Alias darf maximal 30 Zeichen haben' };
+  }
+
+  // Nur Kleinbuchstaben, Zahlen, Bindestriche — kein Bindestrich am Anfang/Ende
+  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(trimmed) && trimmed.length >= 3) {
+    return { valid: false, error: 'Nur Kleinbuchstaben, Zahlen und Bindestriche erlaubt (nicht am Anfang/Ende)' };
+  }
+
+  // Keine doppelten Bindestriche
+  if (trimmed.includes('--')) {
+    return { valid: false, error: 'Keine doppelten Bindestriche erlaubt' };
+  }
+
+  // Blacklist-Check
+  if (RESERVED_EMAIL_ALIASES.includes(trimmed)) {
+    return { valid: false, error: 'Dieser Name ist reserviert und nicht verfügbar' };
+  }
+
+  return { valid: true, alias: trimmed };
+}
+
+// 🔍 Custom E-Mail Alias Verfügbarkeit prüfen (Enterprise only)
+router.get("/email-inbox/check-alias/:alias", verifyToken, async (req, res) => {
+  try {
+    const { alias } = req.params;
+    const validation = validateEmailAlias(alias);
+
+    if (!validation.valid) {
+      return res.json({ available: false, error: validation.error });
+    }
+
+    const fullAddress = `${validation.alias}@upload.contract-ai.de`;
+
+    // Prüfe ob Adresse bereits vergeben ist (aktiv)
+    const existingUser = await usersCollection.findOne({
+      emailInboxAddress: fullAddress,
+      _id: { $ne: new ObjectId(req.user.userId) } // Eigene Adresse ausschließen
+    });
+
+    if (existingUser) {
+      return res.json({ available: false, error: 'Dieser Name ist bereits vergeben' });
+    }
+
+    // Prüfe auch archivierte Adressen (alte Aliases anderer User)
+    const archivedUser = await usersCollection.findOne({
+      'emailInboxAddressHistory.address': fullAddress,
+      _id: { $ne: new ObjectId(req.user.userId) }
+    });
+
+    if (archivedUser) {
+      return res.json({ available: false, error: 'Dieser Name ist bereits vergeben' });
+    }
+
+    res.json({ available: true, alias: validation.alias, fullAddress });
+  } catch (err) {
+    console.error("❌ Fehler beim Alias-Check:", err);
+    res.status(500).json({ available: false, error: 'Serverfehler beim Prüfen' });
+  }
+});
+
+// 📧 Custom E-Mail Alias setzen/ändern (Enterprise only)
+router.put("/email-inbox/custom-alias", verifyToken, async (req, res) => {
+  try {
+    const { alias } = req.body;
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    }
+
+    // Enterprise-Check
+    const userPlan = user.subscriptionPlan || 'free';
+    if (!isEnterpriseOrHigher(userPlan)) {
+      return res.status(403).json({
+        message: "Custom E-Mail-Adressen sind nur im Enterprise-Plan verfügbar"
+      });
+    }
+
+    // Alias validieren
+    const validation = validateEmailAlias(alias);
+    if (!validation.valid) {
+      return res.status(400).json({ message: validation.error });
+    }
+
+    const fullAddress = `${validation.alias}@upload.contract-ai.de`;
+
+    // Uniqueness-Check (aktive Adressen)
+    const existingUser = await usersCollection.findOne({
+      emailInboxAddress: fullAddress,
+      _id: { $ne: user._id }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ message: 'Dieser Name ist bereits vergeben' });
+    }
+
+    // Uniqueness-Check (archivierte Adressen anderer User)
+    const archivedUser = await usersCollection.findOne({
+      'emailInboxAddressHistory.address': fullAddress,
+      _id: { $ne: user._id }
+    });
+
+    if (archivedUser) {
+      return res.status(409).json({ message: 'Dieser Name ist bereits vergeben' });
+    }
+
+    // Rate-Limit: Max 3 Alias-Änderungen pro Tag
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentChanges = (user.emailInboxAddressHistory || []).filter(
+      (entry) => new Date(entry.disabledAt) > oneDayAgo
+    );
+    if (recentChanges.length >= 3) {
+      return res.status(429).json({
+        message: 'Maximal 3 Adress-Änderungen pro Tag. Bitte versuche es morgen erneut.'
+      });
+    }
+
+    // Alte Adresse archivieren + neue setzen
+    const oldAddress = user.emailInboxAddress;
+
+    const result = await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          emailInboxAddress: fullAddress,
+          customEmailAlias: validation.alias,
+          emailInboxAddressCreatedAt: new Date(),
+          updatedAt: new Date()
+        },
+        $push: {
+          emailInboxAddressHistory: {
+            address: oldAddress,
+            disabledAt: new Date()
+          }
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    }
+
+    console.log(`✅ Custom Alias gesetzt für User: ${req.user.userId}`);
+    console.log(`   Alt: ${oldAddress}`);
+    console.log(`   Neu: ${fullAddress}`);
+
+    res.json({
+      message: "Custom E-Mail-Adresse erfolgreich gesetzt",
+      emailInboxAddress: fullAddress,
+      customEmailAlias: validation.alias,
+      oldAddress
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Setzen des Custom Alias:", err);
+    res.status(500).json({ message: "Serverfehler beim Setzen des Alias" });
   }
 });
 

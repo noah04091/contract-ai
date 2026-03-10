@@ -41,11 +41,15 @@ const FEATURE_ACCESS = {
   envelopes: [PLANS.BUSINESS, PLANS.ENTERPRISE],
   betterContracts: [PLANS.BUSINESS, PLANS.ENTERPRISE],
 
+  // Business+ Features (E-Mail Upload)
+  emailUpload: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+
   // Enterprise+ Features
   apiKeys: [PLANS.ENTERPRISE],
   excelExport: [PLANS.ENTERPRISE],
   integrations: [PLANS.ENTERPRISE],
   calendarSync: [PLANS.ENTERPRISE],
+  customEmailAlias: [PLANS.ENTERPRISE],
 
   // Enterprise-only Features (Admin, etc.)
   adminPanel: [PLANS.ENTERPRISE]

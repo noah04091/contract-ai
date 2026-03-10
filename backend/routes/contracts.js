@@ -20,7 +20,7 @@ const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
-const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
+const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 
 const router = express.Router();
@@ -3173,15 +3173,22 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
       });
     }
 
-    // 2. Rate Limiting Check basierend auf Subscription Plan
+    // 2. Subscription-Check: E-Mail-Upload nur für Business+
+    const userPlan = user.subscriptionPlan || 'free';
+    if (!hasFeatureAccess(userPlan, 'emailUpload')) {
+      return res.status(403).json({
+        success: false,
+        message: "E-Mail-Upload ist nur im Business- oder Enterprise-Plan verfügbar"
+      });
+    }
+
+    // 3. Rate Limiting Check basierend auf Subscription Plan
     const rateLimits = {
-      free: { limit: 1, window: 3600000 },      // 1 Email pro Stunde
-      premium: { limit: 10, window: 3600000 },  // 10 Emails pro Stunde
-      business: { limit: 20, window: 3600000 }  // 20 Emails pro Stunde
+      business: { limit: 20, window: 3600000 },    // 20 Emails pro Stunde
+      enterprise: { limit: 100, window: 3600000 }   // 100 Emails pro Stunde
     };
 
-    const userPlan = user.subscriptionPlan || 'free';
-    const rateLimit = rateLimits[userPlan] || rateLimits.free;
+    const rateLimit = rateLimits[userPlan] || rateLimits.business;
 
     // Email-Import History initialisieren falls nicht vorhanden
     if (!user.emailImportHistory) {

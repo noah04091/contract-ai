@@ -1,8 +1,8 @@
-// 📁 frontend/src/components/EmailInboxWidget.tsx
+// frontend/src/components/EmailInboxWidget.tsx
 // Premium Enterprise Design - E-Mail Upload Widget
 
-import { useState } from "react";
-import { Copy, HelpCircle, RefreshCw, Power, Check, Mail, Zap, AlertTriangle } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Copy, HelpCircle, RefreshCw, Power, Check, Mail, Zap, AlertTriangle, Edit3, Crown, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./EmailInboxWidget.module.css";
 import EmailTutorialModal from "./EmailTutorialModal";
@@ -12,18 +12,32 @@ import { useToast } from "../context/ToastContext";
 interface EmailInboxWidgetProps {
   emailInboxAddress: string | null;
   emailInboxEnabled: boolean;
+  subscriptionPlan: 'free' | 'business' | 'enterprise';
+  customEmailAlias?: string | null;
   onUpdate: () => void;
 }
 
 export default function EmailInboxWidget({
   emailInboxAddress,
   emailInboxEnabled,
+  subscriptionPlan,
+  customEmailAlias,
   onUpdate
 }: EmailInboxWidgetProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
+
+  // Custom Alias State (Enterprise only)
+  const [showAliasEditor, setShowAliasEditor] = useState(false);
+  const [aliasInput, setAliasInput] = useState(customEmailAlias || '');
+  const [aliasChecking, setAliasChecking] = useState(false);
+  const [aliasAvailable, setAliasAvailable] = useState<boolean | null>(null);
+  const [aliasError, setAliasError] = useState<string | null>(null);
+  const [aliasSaving, setAliasSaving] = useState(false);
+
+  const isEnterprise = subscriptionPlan === 'enterprise';
 
   const handleCopy = () => {
     if (emailInboxAddress) {
@@ -35,20 +49,19 @@ export default function EmailInboxWidget({
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("Neue E-Mail-Adresse generieren? Die alte Adresse wird ungültig.")) {
+    if (!confirm("Neue E-Mail-Adresse generieren? Die alte Adresse wird ungueltig.")) {
       return;
     }
 
     setLoading(true);
     try {
-      const response = await apiCall("/auth/email-inbox/regenerate", {
+      await apiCall("/auth/email-inbox/regenerate", {
         method: "POST"
-      }) as { emailInboxAddress: string };
-      console.log("Neue Adresse generiert:", response.emailInboxAddress);
+      });
       onUpdate();
-    } catch (error) {
-      console.error("Fehler beim Regenerieren:", error);
-      alert("Fehler beim Generieren einer neuen Adresse");
+    } catch (err) {
+      console.error("Fehler beim Regenerieren:", err);
+      showError("Fehler beim Generieren einer neuen Adresse");
     } finally {
       setLoading(false);
     }
@@ -62,11 +75,73 @@ export default function EmailInboxWidget({
         body: JSON.stringify({ enabled })
       });
       onUpdate();
-    } catch (error) {
-      console.error("Fehler beim Toggle:", error);
-      alert("Fehler beim Aktivieren/Deaktivieren");
+    } catch (err) {
+      console.error("Fehler beim Toggle:", err);
+      showError("Fehler beim Aktivieren/Deaktivieren");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Debounced Alias Check
+  const checkAliasDebounceRef = { current: null as ReturnType<typeof setTimeout> | null };
+
+  const handleAliasInputChange = useCallback((value: string) => {
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setAliasInput(cleaned);
+    setAliasAvailable(null);
+    setAliasError(null);
+
+    if (checkAliasDebounceRef.current) {
+      clearTimeout(checkAliasDebounceRef.current);
+    }
+
+    if (cleaned.length < 3) {
+      setAliasError(cleaned.length > 0 ? 'Mindestens 3 Zeichen' : null);
+      return;
+    }
+
+    if (cleaned.length > 30) {
+      setAliasError('Maximal 30 Zeichen');
+      return;
+    }
+
+    setAliasChecking(true);
+    checkAliasDebounceRef.current = setTimeout(async () => {
+      try {
+        const response = await apiCall(`/auth/email-inbox/check-alias/${encodeURIComponent(cleaned)}`) as {
+          available: boolean;
+          error?: string;
+        };
+        setAliasAvailable(response.available);
+        if (!response.available) {
+          setAliasError(response.error || 'Nicht verfuegbar');
+        }
+      } catch {
+        setAliasError('Fehler beim Pruefen');
+      } finally {
+        setAliasChecking(false);
+      }
+    }, 500);
+  }, []);
+
+  const handleSaveAlias = async () => {
+    if (!aliasInput || aliasInput.length < 3 || !aliasAvailable) return;
+
+    setAliasSaving(true);
+    try {
+      await apiCall("/auth/email-inbox/custom-alias", {
+        method: "PUT",
+        body: JSON.stringify({ alias: aliasInput })
+      });
+      success("Custom E-Mail-Adresse gesetzt!", 3000);
+      setShowAliasEditor(false);
+      onUpdate();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Fehler beim Speichern';
+      showError(errorMsg);
+    } finally {
+      setAliasSaving(false);
     }
   };
 
@@ -96,7 +171,7 @@ export default function EmailInboxWidget({
             </span>
           </div>
           <p className={styles.subtitle}>
-            Leite E-Mails mit Verträgen an deine persönliche Adresse weiter
+            Leite E-Mails mit Vertraegen an deine persoenliche Adresse weiter
           </p>
         </div>
 
@@ -116,14 +191,31 @@ export default function EmailInboxWidget({
                 >
                   {copied ? <Check size={18} /> : <Copy size={18} />}
                 </button>
-                <button
-                  onClick={handleRegenerate}
-                  className={styles.controlButton}
-                  title="Neue Adresse"
-                  disabled={loading}
-                >
-                  <RefreshCw size={18} className={loading ? styles.spinning : ''} />
-                </button>
+                {!isEnterprise && (
+                  <button
+                    onClick={handleRegenerate}
+                    className={styles.controlButton}
+                    title="Neue Adresse"
+                    disabled={loading}
+                  >
+                    <RefreshCw size={18} className={loading ? styles.spinning : ''} />
+                  </button>
+                )}
+                {isEnterprise && (
+                  <button
+                    onClick={() => {
+                      setShowAliasEditor(!showAliasEditor);
+                      setAliasInput(customEmailAlias || '');
+                      setAliasAvailable(null);
+                      setAliasError(null);
+                    }}
+                    className={`${styles.controlButton} ${styles.enterpriseButton}`}
+                    title="Custom Adresse setzen"
+                    disabled={loading}
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                )}
                 <button
                   onClick={() => handleToggle(!emailInboxEnabled)}
                   className={`${styles.controlButton} ${emailInboxEnabled ? styles.active : styles.inactive}`}
@@ -144,6 +236,79 @@ export default function EmailInboxWidget({
             </div>
           </div>
 
+          {/* Enterprise: Custom Alias Editor */}
+          {isEnterprise && showAliasEditor && (
+            <motion.div
+              className={styles.aliasEditor}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={styles.aliasEditorHeader}>
+                <Crown size={16} className={styles.crownIcon} />
+                <span>Custom Upload-Adresse (Enterprise)</span>
+              </div>
+              <div className={styles.aliasInputRow}>
+                <div className={styles.aliasInputWrapper}>
+                  <input
+                    type="text"
+                    value={aliasInput}
+                    onChange={(e) => handleAliasInputChange(e.target.value)}
+                    placeholder="dein-firmenname"
+                    className={`${styles.aliasInput} ${
+                      aliasAvailable === true ? styles.aliasInputValid :
+                      aliasAvailable === false ? styles.aliasInputInvalid : ''
+                    }`}
+                    maxLength={30}
+                    disabled={aliasSaving}
+                  />
+                  <span className={styles.aliasDomain}>@upload.contract-ai.de</span>
+                </div>
+                {aliasChecking && (
+                  <Loader2 size={16} className={styles.spinning} />
+                )}
+                {!aliasChecking && aliasAvailable === true && (
+                  <Check size={16} className={styles.aliasCheckOk} />
+                )}
+              </div>
+              {aliasError && (
+                <p className={styles.aliasErrorText}>{aliasError}</p>
+              )}
+              {aliasAvailable === true && (
+                <p className={styles.aliasSuccessText}>Verfuegbar!</p>
+              )}
+              <div className={styles.aliasActions}>
+                <button
+                  onClick={handleSaveAlias}
+                  className={styles.aliasSaveButton}
+                  disabled={!aliasAvailable || aliasSaving || aliasChecking}
+                >
+                  {aliasSaving ? (
+                    <><Loader2 size={14} className={styles.spinning} /> Speichern...</>
+                  ) : (
+                    'Adresse setzen'
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowAliasEditor(false)}
+                  className={styles.aliasCancelButton}
+                  disabled={aliasSaving}
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Business User: Hinweis auf Enterprise Custom-Alias */}
+          {subscriptionPlan === 'business' && !showAliasEditor && (
+            <div className={styles.upgradeHint}>
+              <Crown size={14} className={styles.crownIcon} />
+              <span>Mit Enterprise kannst du eine individuelle Adresse wie <strong>deine-firma@upload.contract-ai.de</strong> erstellen</span>
+            </div>
+          )}
+
           {/* How it works */}
           <div className={styles.howItWorks}>
             <h4 className={styles.howItWorksTitle}>
@@ -154,19 +319,19 @@ export default function EmailInboxWidget({
               <div className={styles.step}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
-                  <p><strong>Adresse kopieren</strong> – Klicke auf das Kopier-Symbol</p>
+                  <p><strong>Adresse kopieren</strong> - Klicke auf das Kopier-Symbol</p>
                 </div>
               </div>
               <div className={styles.step}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
-                  <p><strong>E-Mail weiterleiten</strong> – Leite Vertrags-E-Mails an diese Adresse</p>
+                  <p><strong>E-Mail weiterleiten</strong> - Leite Vertrags-E-Mails an diese Adresse</p>
                 </div>
               </div>
               <div className={styles.step}>
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepContent}>
-                  <p><strong>Automatisch importiert</strong> – Anhänge werden als Verträge gespeichert</p>
+                  <p><strong>Automatisch importiert</strong> - Anhaenge werden als Vertraege gespeichert</p>
                 </div>
               </div>
             </div>
