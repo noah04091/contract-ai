@@ -155,6 +155,17 @@ export default function EmailTutorialModal({
               </ul>
             </div>
 
+            {/* Enterprise-Hinweis für Business-User */}
+            {showEnterpriseHint && (
+              <div className={styles.enterpriseHint}>
+                <span className={styles.enterpriseHintIcon}>✨</span>
+                <p>
+                  Du möchtest eine personalisierte Adresse wie <strong>deine-firma@upload.contract-ai.de</strong>?
+                  {' '}Mit dem Enterprise-Plan kannst du deine eigene Upload-Adresse wählen.
+                </p>
+              </div>
+            )}
+
             {/* Wichtige Hinweise */}
             <div className={styles.notes}>
               <h4>📌 Wichtig:</h4>
@@ -162,11 +173,6 @@ export default function EmailTutorialModal({
                 <li>PDF- und DOCX-Dateien werden verarbeitet (max. 15 MB)</li>
                 <li>E-Mails werden nicht gespeichert (nur Metadaten)</li>
                 <li>Du kannst deine Adresse jederzeit neu generieren</li>
-                {showEnterpriseHint && (
-                  <li style={{ marginTop: 8, color: '#6d28d9' }}>
-                    Du möchtest eine personalisierte Adresse wie <strong>deine-firma@upload.contract-ai.de</strong>? Diese Funktion ist im Enterprise-Plan verfügbar.
-                  </li>
-                )}
               </ul>
             </div>
 

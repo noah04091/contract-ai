@@ -240,6 +240,35 @@
   flex-shrink: 0;
 }
 
+/* Enterprise Hint (für Business-User) */
+.enterpriseHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f5f3ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.enterpriseHintIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.enterpriseHint p {
+  font-size: 13px;
+  color: #5b21b6;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.enterpriseHint strong {
+  color: #4c1d95;
+}
+
 /* Notes */
 .notes {
   background: #eff6ff;
