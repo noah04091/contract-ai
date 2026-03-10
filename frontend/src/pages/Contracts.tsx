@@ -451,7 +451,7 @@ export default function Contracts() {
   const [folderDropdownOpen, setFolderDropdownOpen] = useState<string | null>(null); // Track which contract's dropdown is open
   const [folderDropdownPosition, setFolderDropdownPosition] = useState<{ top: number; right: number } | null>(null); // Position für fixed Dropdown
   const [folderDropdownContractId, setFolderDropdownContractId] = useState<string | null>(null); // Contract ID für Portal
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null); // 🆕 Selected folder in sidebar
+  // selectedFolderId entfernt — Sidebar-Navigation nutzt jetzt activeFolder + statusFilter direkt
 
   // 📁 Folder Context Menu State
   const [folderContextMenu, setFolderContextMenu] = useState<{
@@ -3850,7 +3850,7 @@ export default function Contracts() {
 
               {/* Main Nav Items */}
               <button
-                className={`${styles.sidebarNavItem} ${activeSection === 'contracts' && !selectedFolderId ? styles.active : ''}`}
+                className={`${styles.sidebarNavItem} ${activeSection === 'contracts' && statusFilter === 'alle' && activeFolder === null ? styles.active : ''}`}
                 onClick={() => { setActiveSection('contracts'); clearAllFilters(); }}
               >
                 <FileText size={18} className={styles.sidebarNavIcon} />
