@@ -2,7 +2,7 @@
 // Premium Enterprise Design - E-Mail Upload Widget
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Copy, HelpCircle, RefreshCw, Power, Check, Mail, Zap, AlertTriangle, Edit3, Crown, Loader2 } from "lucide-react";
+import { Copy, HelpCircle, RefreshCw, Power, Check, Mail, Zap, AlertTriangle, Edit3, Crown, Loader2, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./EmailInboxWidget.module.css";
 import EmailTutorialModal from "./EmailTutorialModal";
@@ -37,9 +37,12 @@ export default function EmailInboxWidget({
   const [aliasError, setAliasError] = useState<string | null>(null);
   const [aliasSaving, setAliasSaving] = useState(false);
 
+  const isFree = subscriptionPlan === 'free';
   const isEnterprise = subscriptionPlan === 'enterprise';
+  const isBusiness = subscriptionPlan === 'business';
 
   const handleCopy = () => {
+    if (isFree) return;
     if (emailInboxAddress) {
       navigator.clipboard.writeText(emailInboxAddress);
       setCopied(true);
@@ -49,6 +52,7 @@ export default function EmailInboxWidget({
   };
 
   const handleRegenerate = async () => {
+    if (isFree) return;
     if (!confirm("Neue E-Mail-Adresse generieren? Die alte Adresse wird ungültig.")) {
       return;
     }
@@ -68,6 +72,7 @@ export default function EmailInboxWidget({
   };
 
   const handleToggle = async (enabled: boolean) => {
+    if (isFree) return;
     setLoading(true);
     try {
       await apiCall("/auth/email-inbox/toggle", {
@@ -156,14 +161,39 @@ export default function EmailInboxWidget({
     return null;
   }
 
+  // Maskierte Adresse für Free-User
+  const maskedAddress = '********@upload.contract-ai.de';
+
   return (
     <>
       <motion.div
-        className={`${styles.widget} ${!emailInboxEnabled ? styles.disabled : ''}`}
+        className={`${styles.widget} ${!emailInboxEnabled && !isFree ? styles.disabled : ''} ${isFree ? styles.lockedWidget : ''}`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
+        {/* Free-User: Locked Overlay */}
+        {isFree && (
+          <div className={styles.lockedOverlay}>
+            <div className={styles.lockedContent}>
+              <div className={styles.lockedIcon}>
+                <Lock size={28} />
+              </div>
+              <h3 className={styles.lockedTitle}>E-Mail-Upload freischalten</h3>
+              <p className={styles.lockedText}>
+                Importiere Verträge automatisch per E-Mail-Weiterleitung. Verfügbar ab dem Business-Paket.
+              </p>
+              <button
+                className={styles.lockedUpgradeButton}
+                onClick={() => window.location.href = '/pricing'}
+              >
+                <Crown size={16} />
+                Pakete ansehen
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerTop}>
@@ -173,8 +203,8 @@ export default function EmailInboxWidget({
               </div>
               <h3 className={styles.title}>E-Mail Upload</h3>
             </div>
-            <span className={`${styles.statusBadge} ${emailInboxEnabled ? styles.statusActive : styles.statusInactive}`}>
-              {emailInboxEnabled ? 'Aktiv' : 'Inaktiv'}
+            <span className={`${styles.statusBadge} ${isFree ? styles.statusLocked : emailInboxEnabled ? styles.statusActive : styles.statusInactive}`}>
+              {isFree ? 'Gesperrt' : emailInboxEnabled ? 'Aktiv' : 'Inaktiv'}
             </span>
           </div>
           <p className={styles.subtitle}>
@@ -188,13 +218,13 @@ export default function EmailInboxWidget({
           <div className={styles.addressSection}>
             <div className={styles.addressLabel}>Deine Upload-Adresse</div>
             <div className={styles.addressBox}>
-              <code className={styles.address}>{emailInboxAddress}</code>
+              <code className={styles.address}>{isFree ? maskedAddress : emailInboxAddress}</code>
               <div className={styles.controls}>
                 <button
                   onClick={handleCopy}
                   className={`${styles.controlButton} ${copied ? styles.success : ''}`}
                   title="Kopieren"
-                  disabled={loading || !emailInboxEnabled}
+                  disabled={isFree || loading || !emailInboxEnabled}
                 >
                   {copied ? <Check size={18} /> : <Copy size={18} />}
                 </button>
@@ -203,7 +233,7 @@ export default function EmailInboxWidget({
                     onClick={handleRegenerate}
                     className={styles.controlButton}
                     title="Neue Adresse"
-                    disabled={loading}
+                    disabled={isFree || loading}
                   >
                     <RefreshCw size={18} className={loading ? styles.spinning : ''} />
                   </button>
@@ -225,9 +255,9 @@ export default function EmailInboxWidget({
                 )}
                 <button
                   onClick={() => handleToggle(!emailInboxEnabled)}
-                  className={`${styles.controlButton} ${emailInboxEnabled ? styles.active : styles.inactive}`}
+                  className={`${styles.controlButton} ${isFree ? '' : emailInboxEnabled ? styles.active : styles.inactive}`}
                   title={emailInboxEnabled ? "Deaktivieren" : "Aktivieren"}
-                  disabled={loading}
+                  disabled={isFree || loading}
                 >
                   <Power size={18} />
                 </button>
@@ -235,7 +265,7 @@ export default function EmailInboxWidget({
                   onClick={() => setShowTutorial(true)}
                   className={styles.controlButton}
                   title="Hilfe"
-                  disabled={loading}
+                  disabled={isFree || loading}
                 >
                   <HelpCircle size={18} />
                 </button>
@@ -308,14 +338,6 @@ export default function EmailInboxWidget({
             </motion.div>
           )}
 
-          {/* Business User: Hinweis auf Enterprise Custom-Alias */}
-          {subscriptionPlan === 'business' && !showAliasEditor && (
-            <div className={styles.upgradeHint}>
-              <Crown size={14} className={styles.crownIcon} />
-              <span>Mit Enterprise kannst du eine individuelle Adresse wie <strong>deine-firma@upload.contract-ai.de</strong> erstellen</span>
-            </div>
-          )}
-
           {/* How it works */}
           <div className={styles.howItWorks}>
             <h4 className={styles.howItWorksTitle}>
@@ -344,8 +366,8 @@ export default function EmailInboxWidget({
             </div>
           </div>
 
-          {/* Warning when disabled */}
-          {!emailInboxEnabled && (
+          {/* Warning when disabled (nur für zahlende User) */}
+          {!emailInboxEnabled && !isFree && (
             <div className={styles.warningBox}>
               <AlertTriangle size={18} className={styles.warningIcon} />
               <p className={styles.warningText}>
@@ -356,16 +378,19 @@ export default function EmailInboxWidget({
         </div>
       </motion.div>
 
-      {/* Tutorial Modal */}
-      <EmailTutorialModal
-        show={showTutorial}
-        emailAddress={emailInboxAddress}
-        emailEnabled={emailInboxEnabled}
-        onClose={() => setShowTutorial(false)}
-        onCopy={handleCopy}
-        onRegenerate={handleRegenerate}
-        onToggle={handleToggle}
-      />
+      {/* Tutorial Modal (nur für zahlende User) */}
+      {!isFree && (
+        <EmailTutorialModal
+          show={showTutorial}
+          emailAddress={emailInboxAddress}
+          emailEnabled={emailInboxEnabled}
+          onClose={() => setShowTutorial(false)}
+          onCopy={handleCopy}
+          onRegenerate={handleRegenerate}
+          onToggle={handleToggle}
+          showEnterpriseHint={isBusiness}
+        />
+      )}
     </>
   );
 }

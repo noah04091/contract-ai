@@ -13,6 +13,7 @@ interface EmailTutorialModalProps {
   onCopy: () => void;
   onRegenerate: () => void;
   onToggle: (enabled: boolean) => void;
+  showEnterpriseHint?: boolean;
 }
 
 export default function EmailTutorialModal({
@@ -22,7 +23,8 @@ export default function EmailTutorialModal({
   onClose,
   onCopy,
   onRegenerate,
-  onToggle
+  onToggle,
+  showEnterpriseHint = false
 }: EmailTutorialModalProps) {
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
 
@@ -160,6 +162,11 @@ export default function EmailTutorialModal({
                 <li>PDF- und DOCX-Dateien werden verarbeitet (max. 15 MB)</li>
                 <li>E-Mails werden nicht gespeichert (nur Metadaten)</li>
                 <li>Du kannst deine Adresse jederzeit neu generieren</li>
+                {showEnterpriseHint && (
+                  <li style={{ marginTop: 8, color: '#6d28d9' }}>
+                    Du möchtest eine personalisierte Adresse wie <strong>deine-firma@upload.contract-ai.de</strong>? Diese Funktion ist im Enterprise-Plan verfügbar.
+                  </li>
+                )}
               </ul>
             </div>
 

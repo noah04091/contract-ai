@@ -3867,7 +3867,7 @@ export default function Contracts() {
                 {canMultiUpload && <Crown size={14} className={styles.sidebarNavIcon} style={{ color: '#fbbf24' }} />}
               </button>
 
-              {userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
+              {userInfo.emailInboxAddress && (
                 <button
                   className={`${styles.sidebarNavItem} ${activeSection === 'email-upload' ? styles.active : ''}`}
                   onClick={() => setActiveSection('email-upload')}
@@ -4570,7 +4570,7 @@ export default function Contracts() {
                         <FileUp size={18} />
                         <span>Datei-Upload</span>
                       </button>
-                      {userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
+                      {userInfo.emailInboxAddress && (
                         <button
                           className={`${styles.uploadTab} ${uploadTab === 'email' ? styles.active : ''}`}
                           onClick={() => setUploadTab('email')}
@@ -4583,7 +4583,7 @@ export default function Contracts() {
                     )}
 
                     {/* TAB CONTENT: E-Mail-Upload */}
-                    {uploadTab === 'email' && userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' ? (
+                    {uploadTab === 'email' && userInfo.emailInboxAddress ? (
                       <div className={styles.emailUploadSection}>
                         <EmailInboxWidget
                           emailInboxAddress={userInfo.emailInboxAddress}
@@ -4958,7 +4958,7 @@ export default function Contracts() {
             )}
 
             {/* 📧 Email-Upload Sektion */}
-            {activeSection === 'email-upload' && userInfo.emailInboxAddress && userInfo.subscriptionPlan !== 'free' && (
+            {activeSection === 'email-upload' && userInfo.emailInboxAddress && (
               <motion.div
                 key="email-upload-section"
                 className={styles.section}
