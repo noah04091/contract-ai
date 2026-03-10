@@ -215,6 +215,15 @@ async function queueEventNotification(event, db) {
       ];
       break;
 
+    case "CANCELLATION_CONFIRMATION_CHECK":
+      subject = `${event.metadata?.contractName || event.contractName} — Kündigungsbestätigung erhalten?`;
+      emailContent = generateCancellationConfirmationCheckEmail(event, actionToken, baseUrl);
+      ctaButtons = [
+        { text: "Im Kalender prüfen", url: `${baseUrl}/calendar`, style: "primary" },
+        { text: "Kündigungsarchiv", url: `${baseUrl}/cancellations`, style: "secondary" }
+      ];
+      break;
+
     default:
       subject = `${event.metadata?.contractName || event.title} - Vertragsinformation`;
       emailContent = generateGenericEmail(event, actionToken, baseUrl);
@@ -343,6 +352,26 @@ function generateReviewEmail(event, token, baseUrl) {
   return `
     <h2 style="color: #10b981;">Zeit fuer einen Vertrags-Check!</h2>
     <p>Ihr Vertrag "${event.metadata.contractName}" laeuft seit laengerer Zeit.</p>
+  `;
+}
+
+function generateCancellationConfirmationCheckEmail(event, token, baseUrl) {
+  const contractName = event.metadata?.contractName || event.contractName || "Vertrag";
+  const provider = event.metadata?.provider || "Anbieter";
+  const isFollowUp = event.metadata?.isFollowUp;
+  return `
+    <h2 style="color: #f59e0b;">Kündigungsbestätigung prüfen</h2>
+    <p>Haben Sie bereits eine <strong>Bestätigung</strong> für die Kündigung von <strong>${contractName}</strong> ${provider ? `bei ${provider}` : ''} erhalten?</p>
+    <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+      <h3 style="margin: 0 0 8px; font-size: 15px;">Was Sie jetzt tun sollten:</h3>
+      <ul style="padding-left: 18px; margin: 0;">
+        <li><strong>Bestätigung erhalten?</strong> — Im Kalender auf "Ja, erhalten" klicken</li>
+        <li><strong>Keine Bestätigung?</strong> — Erinnern Sie den Anbieter mit einem Klick</li>
+        <li><strong>Kündigung doch nicht gewünscht?</strong> — Vertrag reaktivieren</li>
+      </ul>
+    </div>
+    ${isFollowUp ? '<p style="color: #92400e; font-size: 13px;">Dies ist eine Folge-Erinnerung. Sie haben zuvor angegeben, keine Bestätigung erhalten zu haben.</p>' : ''}
+    <p>Öffnen Sie Ihren Kalender in Contract AI, um direkt zu reagieren.</p>
   `;
 }
 
