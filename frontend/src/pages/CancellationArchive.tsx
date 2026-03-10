@@ -23,6 +23,7 @@ import {
   BarChart3,
   Inbox,
   Archive,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import styles from "../styles/CancellationArchive.module.css";
@@ -175,12 +176,15 @@ export default function CancellationArchive() {
   const [confirmationDownloading, setConfirmationDownloading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
+  const [archivedCount, setArchivedCount] = useState(0);
 
   const token = localStorage.getItem("token");
 
-  const fetchCancellations = async () => {
+  const fetchCancellations = async (mode?: "active" | "archived") => {
+    const currentMode = mode ?? viewMode;
     try {
-      const res = await fetch("/api/cancellations", {
+      const res = await fetch(`/api/cancellations?archived=${currentMode === "archived"}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -195,8 +199,23 @@ export default function CancellationArchive() {
     }
   };
 
+  const fetchArchivedCount = async () => {
+    try {
+      const res = await fetch("/api/cancellations?archived=true", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setArchivedCount((data.cancellations || []).length);
+      }
+    } catch {
+      // silent
+    }
+  };
+
   useEffect(() => {
     fetchCancellations();
+    fetchArchivedCount();
   }, []);
 
   const fetchDetail = async (id: string) => {
@@ -423,6 +442,89 @@ export default function CancellationArchive() {
     }
   };
 
+  const handleArchive = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActionLoading(`archive-${id}`);
+    try {
+      const res = await fetch(`/api/cancellations/${id}/archive`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Kündigung archiviert");
+        fetchCancellations();
+        fetchArchivedCount();
+        if (selectedId === id) closeModal();
+      } else {
+        toast.error(data.error || "Fehler beim Archivieren");
+      }
+    } catch (err) {
+      console.error("Archive-Fehler:", err);
+      toast.error("Fehler beim Archivieren");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnarchive = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setActionLoading(`unarchive-${id}`);
+    try {
+      const res = await fetch(`/api/cancellations/${id}/unarchive`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Kündigung wiederhergestellt");
+        fetchCancellations("archived");
+        fetchArchivedCount();
+      } else {
+        toast.error(data.error || "Fehler beim Wiederherstellen");
+      }
+    } catch (err) {
+      console.error("Unarchive-Fehler:", err);
+      toast.error("Fehler beim Wiederherstellen");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePermanentDelete = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!window.confirm("Kündigung endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) return;
+    setActionLoading(`delete-${id}`);
+    try {
+      const res = await fetch(`/api/cancellations/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Kündigung endgültig gelöscht");
+        fetchCancellations("archived");
+        fetchArchivedCount();
+      } else {
+        toast.error(data.error || "Fehler beim Löschen");
+      }
+    } catch (err) {
+      console.error("Delete-Fehler:", err);
+      toast.error("Fehler beim Löschen");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const switchViewMode = (mode: "active" | "archived") => {
+    if (mode === viewMode) return;
+    setViewMode(mode);
+    setFilter("all");
+    setSearchQuery("");
+    setLoading(true);
+    fetchCancellations(mode);
+  };
+
   // --- Computed ---
   const stats = useMemo(() => {
     const total = cancellations.length;
@@ -507,7 +609,29 @@ export default function CancellationArchive() {
             </div>
           </div>
 
+          {/* View Toggle */}
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.viewToggleBtn} ${viewMode === "active" ? styles.viewToggleBtnActive : ""}`}
+              onClick={() => switchViewMode("active")}
+            >
+              <Inbox size={15} />
+              Aktiv
+            </button>
+            <button
+              className={`${styles.viewToggleBtn} ${viewMode === "archived" ? styles.viewToggleBtnActive : ""}`}
+              onClick={() => switchViewMode("archived")}
+            >
+              <Archive size={15} />
+              Archiviert
+              {archivedCount > 0 && (
+                <span className={styles.viewToggleCount}>{archivedCount}</span>
+              )}
+            </button>
+          </div>
+
           {/* Stats */}
+          {viewMode === "active" ? (
           <div className={styles.statsRow}>
             <div
               className={`${styles.statCard} ${filter === "all" ? styles.statCardActive : ""}`}
@@ -558,8 +682,22 @@ export default function CancellationArchive() {
               </div>
             </div>
           </div>
+          ) : (
+          <div className={styles.statsRow} style={{ gridTemplateColumns: "1fr" }}>
+            <div className={`${styles.statCard} ${styles.statCardActive}`}>
+              <div className={`${styles.statIconWrap} ${styles.statIconGray}`}>
+                <Archive size={18} />
+              </div>
+              <div className={styles.statInfo}>
+                <span className={styles.statNumber}>{cancellations.length}</span>
+                <span className={styles.statLabel}>Archiviert</span>
+              </div>
+            </div>
+          </div>
+          )}
 
-          {/* Filters */}
+          {/* Filters — nur in aktiver Ansicht */}
+          {viewMode === "active" && (
           <div className={styles.toolbar}>
             <div className={styles.filters}>
               {(["all", "sent", "confirmed", "downloaded", "resent", "failed"] as FilterStatus[]).map(f => (
@@ -579,6 +717,7 @@ export default function CancellationArchive() {
               {filtered.length} {filtered.length === 1 ? "Ergebnis" : "Ergebnisse"}
             </span>
           </div>
+          )}
         </div>
 
         {/* Content */}
@@ -596,22 +735,26 @@ export default function CancellationArchive() {
               </div>
             </div>
             <h3 className={styles.emptyTitle}>
-              {filter === "all" && !searchQuery
-                ? "Noch keine Kündigungen"
-                : searchQuery
-                  ? "Keine Ergebnisse"
-                  : "Keine Kündigungen in dieser Kategorie"
+              {viewMode === "archived"
+                ? "Keine archivierten Kündigungen"
+                : filter === "all" && !searchQuery
+                  ? "Noch keine Kündigungen"
+                  : searchQuery
+                    ? "Keine Ergebnisse"
+                    : "Keine Kündigungen in dieser Kategorie"
               }
             </h3>
             <p className={styles.emptyText}>
-              {filter === "all" && !searchQuery
-                ? "Sobald Sie einen Vertrag kündigen, erscheint er hier."
-                : searchQuery
-                  ? `Keine Treffer für "${searchQuery}".`
-                  : "Versuchen Sie einen anderen Filter."
+              {viewMode === "archived"
+                ? "Archivierte Kündigungen erscheinen hier."
+                : filter === "all" && !searchQuery
+                  ? "Sobald Sie einen Vertrag kündigen, erscheint er hier."
+                  : searchQuery
+                    ? `Keine Treffer für "${searchQuery}".`
+                    : "Versuchen Sie einen anderen Filter."
               }
             </p>
-            {filter === "all" && !searchQuery && (
+            {viewMode === "active" && filter === "all" && !searchQuery && (
               <button className={styles.emptyBtn} onClick={() => navigate("/contracts")}>
                 <FileText size={15} />
                 Zu den Verträgen
@@ -675,25 +818,65 @@ export default function CancellationArchive() {
 
                 {/* Actions */}
                 <div className={styles.rowActions}>
-                  <button
-                    className={styles.rowActionBtn}
-                    title="PDF herunterladen"
-                    onClick={(e) => handlePdfDownload(c.id, e)}
-                    disabled={pdfDownloading === c.id}
-                  >
-                    {pdfDownloading === c.id
-                      ? <Loader size={14} className={styles.spinner} />
-                      : <Download size={14} />
-                    }
-                  </button>
-                  {c.contractId && (
-                    <button
-                      className={styles.rowActionBtn}
-                      title="Vertrag öffnen"
-                      onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${c.contractId}`); }}
-                    >
-                      <ExternalLink size={14} />
-                    </button>
+                  {viewMode === "active" ? (
+                    <>
+                      <button
+                        className={styles.rowActionBtn}
+                        title="PDF herunterladen"
+                        onClick={(e) => handlePdfDownload(c.id, e)}
+                        disabled={pdfDownloading === c.id}
+                      >
+                        {pdfDownloading === c.id
+                          ? <Loader size={14} className={styles.spinner} />
+                          : <Download size={14} />
+                        }
+                      </button>
+                      {c.contractId && (
+                        <button
+                          className={styles.rowActionBtn}
+                          title="Vertrag öffnen"
+                          onClick={(e) => { e.stopPropagation(); navigate(`/contracts/${c.contractId}`); }}
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      )}
+                      <button
+                        className={styles.rowActionBtn}
+                        title="Archivieren"
+                        onClick={(e) => handleArchive(c.id, e)}
+                        disabled={actionLoading === `archive-${c.id}`}
+                      >
+                        {actionLoading === `archive-${c.id}`
+                          ? <Loader size={14} className={styles.spinner} />
+                          : <Archive size={14} />
+                        }
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className={`${styles.rowActionBtn} ${styles.rowActionRestore}`}
+                        title="Wiederherstellen"
+                        onClick={(e) => handleUnarchive(c.id, e)}
+                        disabled={actionLoading === `unarchive-${c.id}`}
+                      >
+                        {actionLoading === `unarchive-${c.id}`
+                          ? <Loader size={14} className={styles.spinner} />
+                          : <RotateCcw size={14} />
+                        }
+                      </button>
+                      <button
+                        className={`${styles.rowActionBtn} ${styles.rowActionDelete}`}
+                        title="Endgültig löschen"
+                        onClick={(e) => handlePermanentDelete(c.id, e)}
+                        disabled={actionLoading === `delete-${c.id}`}
+                      >
+                        {actionLoading === `delete-${c.id}`
+                          ? <Loader size={14} className={styles.spinner} />
+                          : <Trash2 size={14} />
+                        }
+                      </button>
+                    </>
                   )}
                 </div>
               </motion.div>
@@ -826,8 +1009,8 @@ export default function CancellationArchive() {
                         </div>
                       )}
 
-                      {/* Quick Actions */}
-                      {detail.status !== "confirmed" && detail.status !== "revoked" && detail.status !== "failed" && (
+                      {/* Quick Actions — nur in aktiver Ansicht */}
+                      {viewMode === "active" && detail.status !== "confirmed" && detail.status !== "revoked" && detail.status !== "failed" && (
                         <div className={styles.sectionBlock}>
                           <h4 className={styles.sectionTitle}>
                             <Bell size={13} />
@@ -948,6 +1131,20 @@ export default function CancellationArchive() {
                     </div>
 
                     <div className={styles.modalActions}>
+                      {viewMode === "active" && (
+                        <button
+                          className={`${styles.modalBtn} ${styles.modalBtnArchive}`}
+                          onClick={() => handleArchive(detail._id)}
+                          disabled={actionLoading === `archive-${detail._id}`}
+                        >
+                          {actionLoading === `archive-${detail._id}`
+                            ? <Loader size={14} className={styles.spinner} />
+                            : <Archive size={14} />
+                          }
+                          Archivieren
+                        </button>
+                      )}
+                      <div style={{ flex: 1 }} />
                       <button
                         className={styles.modalBtn}
                         onClick={() => handlePdfDownload(detail._id)}
@@ -959,7 +1156,7 @@ export default function CancellationArchive() {
                         }
                         PDF herunterladen
                       </button>
-                      {detail.recipientEmail && detail.status !== "failed" && (
+                      {viewMode === "active" && detail.recipientEmail && detail.status !== "failed" && (
                         <button
                           className={`${styles.modalBtn} ${styles.modalBtnPrimary}`}
                           onClick={handleResend}

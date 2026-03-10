@@ -150,6 +150,63 @@
   pointer-events: none;
 }
 
+/* ===== View Toggle ===== */
+.viewToggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 3px;
+  background: var(--ca-gray-100);
+  border-radius: var(--ca-radius-sm);
+  width: fit-content;
+}
+
+.viewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--ca-gray-500);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s var(--ca-ease);
+  font-family: var(--ca-font);
+}
+
+.viewToggleBtn:hover {
+  color: var(--ca-gray-700);
+}
+
+.viewToggleBtnActive {
+  background: var(--ca-surface);
+  color: var(--ca-gray-900);
+  font-weight: 600;
+  box-shadow: var(--ca-shadow-sm);
+}
+
+.viewToggleCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--ca-radius-full);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--ca-gray-300);
+  color: var(--ca-gray-700);
+}
+
+.viewToggleBtnActive .viewToggleCount {
+  background: var(--ca-primary);
+  color: white;
+}
+
 /* ===== Stats Row ===== */
 .statsRow {
   display: grid;
@@ -541,6 +598,16 @@
 .rowActionBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.rowActionRestore:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--ca-success);
+}
+
+.rowActionDelete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--ca-danger);
 }
 
 /* ===== Empty State ===== */
@@ -1039,6 +1106,17 @@
 .modalBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.modalBtnArchive {
+  color: var(--ca-gray-500);
+  border-color: var(--ca-gray-200);
+}
+
+.modalBtnArchive:hover {
+  color: var(--ca-warning-dark);
+  border-color: var(--ca-warning);
+  background: rgba(245, 158, 11, 0.04);
 }
 
 .modalBtnPrimary {

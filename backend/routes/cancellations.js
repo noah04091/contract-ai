@@ -25,9 +25,9 @@ const confirmationUpload = multer({
 });
 
 // S3 für PDF-Upload (lazy-loaded)
-let s3Client, PutObjectCommand, GetObjectCommand, getSignedUrl;
+let s3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, getSignedUrl;
 try {
-  const { S3Client, PutObjectCommand: _Put, GetObjectCommand: _Get } = require("@aws-sdk/client-s3");
+  const { S3Client, PutObjectCommand: _Put, GetObjectCommand: _Get, DeleteObjectCommand: _Del } = require("@aws-sdk/client-s3");
   const { getSignedUrl: _getSignedUrl } = require("@aws-sdk/s3-request-presigner");
   s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -38,6 +38,7 @@ try {
   });
   PutObjectCommand = _Put;
   GetObjectCommand = _Get;
+  DeleteObjectCommand = _Del;
   getSignedUrl = _getSignedUrl;
 } catch (err) {
   console.warn("⚠️ S3 SDK nicht verfügbar für Cancellations:", err.message);
@@ -362,8 +363,17 @@ router.get("/", verifyToken, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
 
+    // ?archived=true → nur archivierte, default: nur aktive (nicht-archivierte)
+    const showArchived = req.query.archived === "true";
+    const filter = { userId };
+    if (showArchived) {
+      filter.archived = true;
+    } else {
+      filter.$or = [{ archived: { $exists: false } }, { archived: false }];
+    }
+
     const cancellations = await req.db.collection("cancellations")
-      .find({ userId })
+      .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -1182,6 +1192,109 @@ router.get("/:id/confirmation", verifyToken, async (req, res) => {
       success: false,
       error: "Fehler beim Abrufen der Bestätigung"
     });
+  }
+});
+
+// ============================================================
+// PATCH /api/cancellations/:id/archive
+// Kündigung archivieren (Soft-Delete)
+// ============================================================
+router.patch("/:id/archive", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const cancellationId = new ObjectId(req.params.id);
+
+    const result = await req.db.collection("cancellations").updateOne(
+      { _id: cancellationId, userId },
+      { $set: { archived: true, archivedAt: new Date() } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    res.json({ success: true, message: "Kündigung archiviert" });
+  } catch (error) {
+    console.error("❌ Error archiving cancellation:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Archivieren" });
+  }
+});
+
+// ============================================================
+// PATCH /api/cancellations/:id/unarchive
+// Archivierte Kündigung wiederherstellen
+// ============================================================
+router.patch("/:id/unarchive", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const cancellationId = new ObjectId(req.params.id);
+
+    const result = await req.db.collection("cancellations").updateOne(
+      { _id: cancellationId, userId },
+      { $set: { archived: false, archivedAt: null } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    res.json({ success: true, message: "Kündigung wiederhergestellt" });
+  } catch (error) {
+    console.error("❌ Error unarchiving cancellation:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Wiederherstellen" });
+  }
+});
+
+// ============================================================
+// DELETE /api/cancellations/:id
+// Kündigung endgültig löschen (nur wenn archived: true)
+// ============================================================
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const cancellationId = new ObjectId(req.params.id);
+
+    const cancellation = await req.db.collection("cancellations").findOne({
+      _id: cancellationId,
+      userId
+    });
+
+    if (!cancellation) {
+      return res.status(404).json({ success: false, error: "Kündigung nicht gefunden" });
+    }
+
+    if (!cancellation.archived) {
+      return res.status(400).json({
+        success: false,
+        error: "Nur archivierte Kündigungen können endgültig gelöscht werden"
+      });
+    }
+
+    // S3-Dateien löschen falls vorhanden
+    if (s3Client && DeleteObjectCommand && process.env.S3_BUCKET_NAME) {
+      const keysToDelete = [];
+      if (cancellation.pdfS3Key) keysToDelete.push(cancellation.pdfS3Key);
+      if (cancellation.confirmationFile?.s3Key) keysToDelete.push(cancellation.confirmationFile.s3Key);
+
+      for (const key of keysToDelete) {
+        try {
+          await s3Client.send(new DeleteObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: key
+          }));
+          console.log(`🗑️ S3-Datei gelöscht: ${key}`);
+        } catch (s3Err) {
+          console.warn(`⚠️ S3-Löschung fehlgeschlagen für ${key}:`, s3Err.message);
+        }
+      }
+    }
+
+    await req.db.collection("cancellations").deleteOne({ _id: cancellationId });
+
+    res.json({ success: true, message: "Kündigung endgültig gelöscht" });
+  } catch (error) {
+    console.error("❌ Error deleting cancellation:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Löschen" });
   }
 });
 
