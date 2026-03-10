@@ -621,6 +621,74 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
   console.error("❌ MongoDB-Fehler (contracts.js):", err);
 });
 
+// 📊 Backend-seitige Status-Berechnung (spiegelt Frontend calculateSmartStatus 1:1)
+// Wird für stabile Sidebar-Counts verwendet, unabhängig von aktiven Filtern
+function calculateSmartStatusBackend(contract) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // 1. Kündigungsbestätigung
+  if (contract.documentCategory === 'cancellation_confirmation' || contract.gekuendigtZum) {
+    const gekuendigtDate = contract.gekuendigtZum ? new Date(contract.gekuendigtZum) : null;
+    if (gekuendigtDate) {
+      gekuendigtDate.setHours(0, 0, 0, 0);
+      if (gekuendigtDate < today) return 'Beendet';
+      return 'Gekündigt';
+    }
+    return 'Gekündigt';
+  }
+
+  // 1.5 Via Contract AI gekündigt
+  if (contract.status === 'gekündigt' || contract.cancellationId) {
+    return contract.cancellationConfirmed ? 'Gekündigt ✓' : 'Gekündigt — offen';
+  }
+
+  // 2. Rechnung
+  if (contract.documentCategory === 'invoice') {
+    return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
+  }
+
+  // 3. Ablaufdatum
+  const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
+  if (expiryDate && !isNaN(expiryDate.getTime())) {
+    expiryDate.setHours(0, 0, 0, 0);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilExpiry < 0) {
+      // Plausibility Check: Kürzlich hochgeladen mit altem Datum
+      const createdAt = contract.createdAt ? new Date(contract.createdAt) : null;
+      const daysSinceCreation = createdAt
+        ? Math.ceil((today.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+      if (daysSinceCreation <= 14 && daysUntilExpiry < -60) return 'Aktiv';
+      return 'Beendet';
+    }
+    if (daysUntilExpiry <= 30) return 'Läuft ab';
+    return 'Aktiv';
+  }
+
+  // 4. Manueller Status
+  if (contract.status) {
+    const status = contract.status.toLowerCase();
+    if (['aktiv', 'gültig', 'laufend'].includes(status)) return 'Aktiv';
+    if (status === 'gekündigt') return 'Gekündigt';
+    if (['beendet', 'abgelaufen', 'expired'].includes(status)) return 'Beendet';
+    if (['läuft ab', 'bald fällig'].includes(status)) return 'Läuft ab';
+    if (status === 'pausiert') return 'Pausiert';
+    if (['entwurf', 'draft'].includes(status)) return 'Entwurf';
+  }
+
+  // 5. Generierte/Optimierte Verträge
+  if (contract.isGenerated) return 'Entwurf';
+  if (contract.isOptimized) return 'Optimiert';
+
+  // 6. Nicht analysiert
+  if (!contract.analyzed && !contract.contractScore) return 'Neu';
+
+  // 7. Fallback
+  return 'Aktiv';
+}
+
 // 🚀 Keine $lookup-Aggregation mehr — ALLE Lookups als parallele Batch-Queries
 // $expr-basierte $lookups (auch für Events/Envelopes) können Indexes nicht nutzen
 // und verursachen pro Vertrag einen Collection-Scan → 34 Verträge × 3 Collections = ~100 Scans
@@ -1023,6 +1091,11 @@ router.get("/", async (req, res) => {
       mongoFilter = { userId: new ObjectId(req.user.userId) };
     }
 
+    // 📊 Sidebar: Base filter (user/org only) für stabile Sidebar-Counts
+    const userBaseFilter = membership
+      ? { $or: [{ userId: new ObjectId(req.user.userId) }, { organizationId: membership.organizationId }] }
+      : { userId: new ObjectId(req.user.userId) };
+
     // 🔍 Text-Suche (name, status, kuendigung)
     if (searchQuery.trim()) {
       // ✅ Escape special regex characters (., *, +, ?, ^, $, {, }, (, ), |, [, ], \)
@@ -1044,51 +1117,85 @@ router.get("/", async (req, res) => {
     if (statusFilter !== 'alle') {
       switch (statusFilter) {
         case 'aktiv':
-          // Aktiv = hat Ablaufdatum > 30 Tage in der Zukunft ODER kein Ablaufdatum (und nicht gekündigt)
+          // Aktiv = Ablaufdatum > 30 Tage ODER kein Ablaufdatum (und nicht gekündigt/beendet)
+          // ✅ FIX: $type-Checks für gemischte BSON-Typen (Date + String), Invoices/CancellationId ausschließen
           mongoFilter.$and = mongoFilter.$and || [];
           mongoFilter.$and.push({
             $or: [
-              // Ablaufdatum > 30 Tage in der Zukunft
-              { expiryDate: { $gt: in30Days } },
-              // Kein Ablaufdatum gesetzt (und nicht gekündigt/beendet)
-              {
-                expiryDate: { $exists: false },
-                gekuendigtZum: { $exists: false },
-                documentCategory: { $nin: ['cancellation_confirmation'] }
-              },
-              {
-                expiryDate: null,
-                gekuendigtZum: { $exists: false },
-                documentCategory: { $nin: ['cancellation_confirmation'] }
-              }
+              // Ablaufdatum > 30 Tage (BSON Date)
+              { expiryDate: { $type: 'date', $gt: in30Days } },
+              // Ablaufdatum > 30 Tage (BSON String/ISO)
+              { expiryDate: { $type: 'string', $gt: in30Days.toISOString() } },
+              // Kein Ablaufdatum gesetzt
+              { expiryDate: { $exists: false } },
+              { expiryDate: null }
             ]
           });
-          // Nicht gekündigt
+          // Nicht gekündigt (gekuendigtZum)
           mongoFilter.$and.push({
             $or: [
               { gekuendigtZum: { $exists: false } },
               { gekuendigtZum: null }
             ]
           });
+          // Keine Rechnungen oder Kündigungsbestätigungen
           mongoFilter.$and.push({
             $or: [
               { documentCategory: { $exists: false } },
-              { documentCategory: { $nin: ['cancellation_confirmation'] } }
+              { documentCategory: null },
+              { documentCategory: { $nin: ['cancellation_confirmation', 'invoice'] } }
+            ]
+          });
+          // Nicht über Contract AI gekündigt
+          mongoFilter.$and.push({
+            $or: [
+              { cancellationId: { $exists: false } },
+              { cancellationId: null }
+            ]
+          });
+          // Kein manueller Gekündigt-Status
+          mongoFilter.$and.push({
+            $or: [
+              { status: { $exists: false } },
+              { status: null },
+              { status: { $not: /^gekündigt$/i } }
             ]
           });
           break;
         case 'bald_ablaufend':
-          // Bald ablaufend = Ablaufdatum in den nächsten 30 Tagen (und > heute)
-          mongoFilter.expiryDate = {
-            $gt: today,
-            $lte: in30Days
-          };
-          // Nicht bereits gekündigt
+          // Bald ablaufend = Ablaufdatum in 0-30 Tagen (inkl. heute) — spiegelt Frontend calculateSmartStatus
+          // ✅ FIX: $type-Checks für gemischte BSON-Typen (Date + String), $gte statt $gt
           mongoFilter.$and = mongoFilter.$and || [];
+          mongoFilter.$and.push({
+            $or: [
+              // expiryDate in Range (BSON Date)
+              { expiryDate: { $type: 'date', $gte: today, $lte: in30Days } },
+              // expiryDate in Range (BSON String/ISO)
+              { expiryDate: { $type: 'string', $gte: today.toISOString(), $lte: in30Days.toISOString() } },
+              // Manueller Status
+              { status: { $in: ['läuft ab', 'Läuft ab', 'bald fällig', 'Bald fällig'] } }
+            ]
+          });
+          // Nicht bereits gekündigt
           mongoFilter.$and.push({
             $or: [
               { gekuendigtZum: { $exists: false } },
               { gekuendigtZum: null }
+            ]
+          });
+          // Keine Rechnungen oder Kündigungsbestätigungen
+          mongoFilter.$and.push({
+            $or: [
+              { documentCategory: { $exists: false } },
+              { documentCategory: null },
+              { documentCategory: { $nin: ['cancellation_confirmation', 'invoice'] } }
+            ]
+          });
+          // Nicht über Contract AI gekündigt
+          mongoFilter.$and.push({
+            $or: [
+              { cancellationId: { $exists: false } },
+              { cancellationId: null }
             ]
           });
           break;
@@ -1243,12 +1350,34 @@ router.get("/", async (req, res) => {
         sortOptions = { createdAt: -1 };
     }
 
-    // 🚀 OPTIMIERT: Batch-Queries statt Aggregation
+    // 🚀 OPTIMIERT: Batch-Queries statt Aggregation + Sidebar-Counts PARALLEL
     const _t4 = Date.now();
-    const { contracts: enrichedContracts, totalCount, _enrichTiming } = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
+    const SIDEBAR_PROJECTION = {
+      expiryDate: 1, status: 1, folderId: 1, documentCategory: 1,
+      gekuendigtZum: 1, cancellationId: 1, cancellationConfirmed: 1,
+      isGenerated: 1, isOptimized: 1, analyzed: 1, contractScore: 1,
+      paymentStatus: 1, createdAt: 1
+    };
+
+    const [enrichResult, allUserContracts] = await Promise.all([
+      enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit),
+      contractsCollection.find(userBaseFilter, { projection: SIDEBAR_PROJECTION }).toArray()
+    ]);
+
+    const { contracts: enrichedContracts, totalCount, _enrichTiming } = enrichResult;
+
+    // 📊 Sidebar-Counts: Aus ALLEN User-Verträgen berechnet (unabhängig von aktiven Filtern)
+    const sidebarCounts = { total: allUserContracts.length, baldAblaufend: 0, aktiv: 0, ohneOrdner: 0 };
+    for (const c of allUserContracts) {
+      const smartStatus = calculateSmartStatusBackend(c);
+      if (smartStatus === 'Läuft ab') sidebarCounts.baldAblaufend++;
+      if (smartStatus === 'Aktiv') sidebarCounts.aktiv++;
+      if (!c.folderId) sidebarCounts.ohneOrdner++;
+    }
+
     const _t5 = Date.now();
 
-    // ✅ Response mit Pagination-Info + Timing
+    // ✅ Response mit Pagination-Info + Sidebar-Counts + Timing
     const _timing = {
       ensureDb: (_t1 - _t0) + 'ms',
       orgCheck: (_t3 - _t2) + 'ms',
@@ -1266,6 +1395,7 @@ router.get("/", async (req, res) => {
         skip: skip,
         hasMore: skip + enrichedContracts.length < totalCount
       },
+      sidebarCounts,
       _timing
     });
   } catch (err) {

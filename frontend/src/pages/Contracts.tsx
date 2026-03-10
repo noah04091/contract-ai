@@ -380,6 +380,13 @@ export default function Contracts() {
     hasMore: false,
     currentSkip: 0
   });
+  // 📊 Sidebar-Counts: Vom Backend berechnet, unabhängig von aktiven Filtern
+  const [sidebarCounts, setSidebarCounts] = useState({
+    total: 0,
+    baldAblaufend: 0,
+    aktiv: 0,
+    ohneOrdner: 0
+  });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
   const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay
@@ -1013,8 +1020,8 @@ export default function Contracts() {
     }
   };
 
-  // Count unassigned contracts
-  const unassignedCount = contracts.filter(c => !c.folderId).length;
+  // Count unassigned contracts (aus Backend-sidebarCounts, stabil bei Filtern)
+  const unassignedCount = sidebarCounts.ohneOrdner;
 
   // Create virtual "Ohne Ordner" folder and merge with real folders
   const foldersWithUnassigned = [...folders];
@@ -1648,6 +1655,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number };
       };
 
       // 🚀 Race Condition Check: Ignoriere Response wenn neuerer Request gestartet wurde
@@ -1664,6 +1672,11 @@ export default function Contracts() {
         hasMore: response.pagination.hasMore,
         currentSkip: response.pagination.skip
       });
+
+      // 📊 Sidebar-Counts vom Backend (stabil, unabhängig von Filtern)
+      if (response.sidebarCounts) {
+        setSidebarCounts(response.sidebarCounts);
+      }
 
       return response.contracts;
     } catch (err) {
@@ -1709,6 +1722,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number };
       };
 
       setContracts(response.contracts);
@@ -1717,6 +1731,11 @@ export default function Contracts() {
         hasMore: response.pagination.hasMore,
         currentSkip: response.pagination.skip
       });
+
+      // 📊 Sidebar-Counts aktualisieren
+      if (response.sidebarCounts) {
+        setSidebarCounts(response.sidebarCounts);
+      }
 
       // 🔧 FIX: previewContract aktualisieren - nutze explizite ID oder aktuelle previewContract ID
       const previewIdToUpdate = forceUpdatePreviewId || previewContract?._id;
@@ -3836,7 +3855,7 @@ export default function Contracts() {
               >
                 <FileText size={18} className={styles.sidebarNavIcon} />
                 <span>Alle Verträge</span>
-                <span className={styles.sidebarNavBadge}>{paginationInfo.total}</span>
+                <span className={styles.sidebarNavBadge}>{sidebarCounts.total}</span>
               </button>
 
               <button
@@ -3870,7 +3889,7 @@ export default function Contracts() {
                 <AlertTriangle size={18} className={styles.sidebarNavIcon} style={{ color: '#f59e0b' }} />
                 <span>Bald ablaufend</span>
                 <span className={styles.sidebarNavBadge}>
-                  {contracts.filter(c => calculateSmartStatus(c) === 'Läuft ab').length}
+                  {sidebarCounts.baldAblaufend}
                 </span>
               </button>
 
@@ -3880,7 +3899,7 @@ export default function Contracts() {
               >
                 <CheckCircle size={18} className={styles.sidebarNavIcon} style={{ color: '#22c55e' }} />
                 <span>Aktive Verträge</span>
-                <span className={styles.sidebarNavBadge}>{contracts.filter(c => calculateSmartStatus(c) === 'Aktiv').length}</span>
+                <span className={styles.sidebarNavBadge}>{sidebarCounts.aktiv}</span>
               </button>
 
               <div className={styles.sidebarDivider} />
@@ -3895,7 +3914,7 @@ export default function Contracts() {
                 >
                   <FileText size={16} className={styles.sidebarFolderIcon} style={{ color: '#3b82f6' }} />
                   <span>Alle Verträge</span>
-                  <span className={styles.sidebarNavBadge}>{paginationInfo.total}</span>
+                  <span className={styles.sidebarNavBadge}>{sidebarCounts.total}</span>
                 </button>
                 {/* Ohne Ordner */}
                 <button
@@ -3905,7 +3924,7 @@ export default function Contracts() {
                   <Folder size={16} className={styles.sidebarFolderIcon} style={{ color: '#94a3b8' }} />
                   <span>Ohne Ordner</span>
                   <span className={styles.sidebarNavBadge}>
-                    {contracts.filter(c => !c.folderId).length}
+                    {sidebarCounts.ohneOrdner}
                   </span>
                 </button>
                 {/* User Folders */}
@@ -4387,7 +4406,7 @@ export default function Contracts() {
                           <FileText size={20} />
                         </span>
                         <span className={styles.mobileFolderName}>Alle Verträge</span>
-                        <span className={styles.mobileFolderBadge}>{paginationInfo.total}</span>
+                        <span className={styles.mobileFolderBadge}>{sidebarCounts.total}</span>
                         {activeFolder === null && <CheckCircle size={16} className={styles.mobileFolderCheck} />}
                       </button>
 
@@ -4403,7 +4422,7 @@ export default function Contracts() {
                           <Folder size={20} />
                         </span>
                         <span className={styles.mobileFolderName}>Ohne Ordner</span>
-                        <span className={styles.mobileFolderBadge}>{contracts.filter(c => !c.folderId).length}</span>
+                        <span className={styles.mobileFolderBadge}>{sidebarCounts.ohneOrdner}</span>
                         {activeFolder === 'unassigned' && <CheckCircle size={16} className={styles.mobileFolderCheck} />}
                       </button>
 
