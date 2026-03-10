@@ -245,6 +245,10 @@ Erstellt mit Contract AI - ${today}
       setError("Bitte geben Sie die E-Mail-Adresse des Anbieters ein.");
       return;
     }
+    if (formData.cancellationDate === "custom" && !formData.customDate) {
+      setError("Bitte geben Sie ein Kündigungsdatum ein.");
+      return;
+    }
 
     generateCancellationLetter();
     setStep("preview");

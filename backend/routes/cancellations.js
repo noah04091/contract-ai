@@ -2,6 +2,7 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const { sensitiveLimiter } = require("../middleware/rateLimiter");
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
@@ -119,7 +120,7 @@ async function getSignedPdfUrl(s3Key) {
 }
 
 // POST /api/cancellations/send - Kündigung senden
-router.post("/send", verifyToken, async (req, res) => {
+router.post("/send", verifyToken, sensitiveLimiter, async (req, res) => {
   try {
     const {
       contractId,
@@ -133,6 +134,19 @@ router.post("/send", verifyToken, async (req, res) => {
     } = req.body;
 
     const userId = new ObjectId(req.user.userId);
+
+    // Duplikat-Schutz: Prüfe ob bereits eine aktive Kündigung für diesen Vertrag existiert
+    const existingCancellation = await req.db.collection("cancellations").findOne({
+      contractId: new ObjectId(contractId),
+      userId,
+      status: { $nin: ["revoked", "failed"] }
+    });
+    if (existingCancellation) {
+      return res.status(409).json({
+        success: false,
+        error: "Für diesen Vertrag existiert bereits eine Kündigung. Sie können diese im Kündigungsarchiv einsehen."
+      });
+    }
 
     // Create cancellation record
     const cancellationRecord = {
@@ -202,15 +216,19 @@ router.post("/send", verifyToken, async (req, res) => {
           emailAttachments
         );
 
-        // Send copy to customer
-        await sendCancellationCopy(
-          customerData.email,
-          contractName,
-          provider,
-          cancellationLetter,
-          cancellationId,
-          emailAttachments
-        );
+        // Send copy to customer (eigener try-catch: Fehler hier soll den Versand nicht als "failed" markieren)
+        try {
+          await sendCancellationCopy(
+            customerData.email,
+            contractName,
+            provider,
+            cancellationLetter,
+            cancellationId,
+            emailAttachments
+          );
+        } catch (copyErr) {
+          console.warn("⚠️ Kunden-Kopie konnte nicht gesendet werden (Provider-Email war erfolgreich):", copyErr.message);
+        }
 
         // Update status
         await req.db.collection("cancellations").updateOne(
@@ -472,7 +490,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 });
 
 // POST /api/cancellations/:id/resend - Kündigung erneut senden
-router.post("/:id/resend", verifyToken, async (req, res) => {
+router.post("/:id/resend", verifyToken, sensitiveLimiter, async (req, res) => {
   try {
     const cancellationId = new ObjectId(req.params.id);
     const userId = new ObjectId(req.user.userId);
@@ -549,7 +567,7 @@ router.post("/:id/resend", verifyToken, async (req, res) => {
 });
 
 // POST /api/cancellations/confirmation-response - Bestätigungsprüfung: Ja/Nein
-router.post("/confirmation-response", verifyToken, async (req, res) => {
+router.post("/confirmation-response", verifyToken, sensitiveLimiter, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
     const { cancellationId, eventId, confirmed } = req.body;
@@ -711,7 +729,7 @@ router.post("/confirmation-response", verifyToken, async (req, res) => {
 // POST /api/cancellations/send-reminder
 // Custom Reminder-Email (User bearbeitet Empfänger/Betreff/Text)
 // ============================================================
-router.post("/send-reminder", verifyToken, async (req, res) => {
+router.post("/send-reminder", verifyToken, sensitiveLimiter, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
     const { cancellationId, eventId, recipientEmail, subject, reminderText } = req.body;
