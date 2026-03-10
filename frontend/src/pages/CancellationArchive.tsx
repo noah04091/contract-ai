@@ -1,5 +1,5 @@
 // src/pages/CancellationArchive.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,10 @@ import {
   CheckCircle,
   Bell,
   RotateCcw,
-  Clock
+  Clock,
+  Search,
+  AlertCircle,
+  Edit3,
 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import styles from "../styles/CancellationArchive.module.css";
@@ -31,6 +34,33 @@ function getProviderName(provider: any): string {
     return provider.displayName || provider.name || "Unbekannter Anbieter";
   }
   return String(provider);
+}
+
+function getRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHrs = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMin < 1) return "Gerade eben";
+  if (diffMin < 60) return `vor ${diffMin} Min.`;
+  if (diffHrs < 24) return `vor ${diffHrs} Std.`;
+  if (diffDays === 1) return "Gestern";
+  if (diffDays < 30) return `vor ${diffDays} Tagen`;
+  if (diffDays < 365) return `vor ${Math.floor(diffDays / 30)} Mon.`;
+  return `vor ${Math.floor(diffDays / 365)} J.`;
+}
+
+function getAbsoluteDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 interface Cancellation {
@@ -87,12 +117,75 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   revoked: { label: "Zurückgenommen", className: styles.badgeRevoked },
 };
 
+const cardBorderClass: Record<string, string> = {
+  sent: styles.cardBorderSent,
+  downloaded: styles.cardBorderDownloaded,
+  resent: styles.cardBorderResent,
+  failed: styles.cardBorderFailed,
+  draft: styles.cardBorderDraft,
+  confirmed: styles.cardBorderConfirmed,
+  revoked: styles.cardBorderRevoked,
+};
+
+const cardIconClass: Record<string, string> = {
+  sent: styles.cardStatusIconSent,
+  downloaded: styles.cardStatusIconDownloaded,
+  resent: styles.cardStatusIconResent,
+  failed: styles.cardStatusIconFailed,
+  draft: styles.cardStatusIconDraft,
+  confirmed: styles.cardStatusIconConfirmed,
+  revoked: styles.cardStatusIconRevoked,
+};
+
+function StatusIcon({ status, size = 16 }: { status: string; size?: number }) {
+  switch (status) {
+    case "sent": return <Send size={size} />;
+    case "confirmed": return <CheckCircle size={size} />;
+    case "downloaded": return <Download size={size} />;
+    case "resent": return <Send size={size} />;
+    case "failed": return <AlertCircle size={size} />;
+    case "draft": return <Edit3 size={size} />;
+    case "revoked": return <RotateCcw size={size} />;
+    default: return <FileText size={size} />;
+  }
+}
+
+function getStepperState(status: string) {
+  // Steps: Erstellt → Gesendet → Ausstehend → Bestätigt
+  const steps = [
+    { label: "Erstellt", key: "created" },
+    { label: "Gesendet", key: "sent" },
+    { label: "Bestätigt", key: "confirmed" },
+  ];
+
+  let activeIndex = 0;
+  if (status === "sent" || status === "downloaded" || status === "resent") activeIndex = 1;
+  if (status === "confirmed") activeIndex = 2;
+  if (status === "revoked") activeIndex = -1; // Special
+
+  return { steps, activeIndex };
+}
+
+// Stagger animation variants
+const cardContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.05 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
+};
+
 export default function CancellationArchive() {
   const navigate = useNavigate();
   const toast = useToast();
   const [cancellations, setCancellations] = useState<Cancellation[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterStatus>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CancellationDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -373,9 +466,38 @@ export default function CancellationArchive() {
     }
   };
 
-  const filtered = filter === "all"
-    ? cancellations
-    : cancellations.filter(c => c.status === filter);
+  // --- Computed data ---
+  const stats = useMemo(() => {
+    const total = cancellations.length;
+    const confirmed = cancellations.filter(c => c.status === "confirmed").length;
+    const pending = cancellations.filter(c => ["sent", "downloaded", "resent"].includes(c.status)).length;
+    const revoked = cancellations.filter(c => c.status === "revoked").length;
+    return { total, confirmed, pending, revoked };
+  }, [cancellations]);
+
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: cancellations.length };
+    cancellations.forEach(c => {
+      counts[c.status] = (counts[c.status] || 0) + 1;
+    });
+    return counts;
+  }, [cancellations]);
+
+  const filtered = useMemo(() => {
+    let result = filter === "all"
+      ? cancellations
+      : cancellations.filter(c => c.status === filter);
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(c =>
+        c.contractName.toLowerCase().includes(q) ||
+        getProviderName(c.provider).toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [cancellations, filter, searchQuery]);
 
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status, className: styles.badgeDraft };
@@ -401,15 +523,64 @@ export default function CancellationArchive() {
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>
-          <div className={styles.titleRow}>
-            <div className={styles.titleIcon}>
-              <XCircle size={24} />
+          <div className={styles.headerTop}>
+            <div className={styles.titleRow}>
+              <div className={styles.titleIcon}>
+                <XCircle size={24} />
+              </div>
+              <div className={styles.titleContent}>
+                <h1 className={styles.title}>
+                  Kündigungsarchiv
+                  <span className={styles.countBadge}>{cancellations.length}</span>
+                </h1>
+                <p className={styles.subtitle}>Alle Ihre Vertragskündigungen im Überblick</p>
+              </div>
             </div>
-            <h1 className={styles.title}>
-              Kündigungsarchiv
-              <span className={styles.countBadge}>{cancellations.length}</span>
-            </h1>
+            <div className={styles.searchField}>
+              <Search size={16} className={styles.searchIcon} />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Vertrag oder Anbieter suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
+
+          {/* Stats Summary Row */}
+          <div className={styles.statsRow}>
+            <div
+              className={`${styles.statCard} ${styles.statCardBlue} ${filter === "all" ? styles.statCardActive : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              <div className={`${styles.statNumber} ${styles.statNumberBlue}`}>{stats.total}</div>
+              <div className={styles.statLabel}>Gesamt</div>
+            </div>
+            <div
+              className={`${styles.statCard} ${styles.statCardGreen} ${filter === "confirmed" ? styles.statCardActive : ""}`}
+              onClick={() => setFilter("confirmed")}
+            >
+              <div className={`${styles.statNumber} ${styles.statNumberGreen}`}>{stats.confirmed}</div>
+              <div className={styles.statLabel}>Bestätigt</div>
+            </div>
+            <div
+              className={`${styles.statCard} ${styles.statCardAmber} ${filter === "sent" ? styles.statCardActive : ""}`}
+              onClick={() => setFilter("sent")}
+            >
+              <div className={`${styles.statNumber} ${styles.statNumberAmber}`}>{stats.pending}</div>
+              <div className={styles.statLabel}>Ausstehend</div>
+            </div>
+            <div
+              className={`${styles.statCard} ${styles.statCardGray} ${filter === "revoked" ? styles.statCardActive : ""}`}
+              onClick={() => setFilter("revoked")}
+            >
+              <div className={`${styles.statNumber} ${styles.statNumberGray}`}>{stats.revoked}</div>
+              <div className={styles.statLabel}>Zurückgenommen</div>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
           <div className={styles.filters}>
             {(["all", "sent", "confirmed", "downloaded", "resent", "failed"] as FilterStatus[]).map(f => (
               <button
@@ -418,6 +589,9 @@ export default function CancellationArchive() {
                 onClick={() => setFilter(f)}
               >
                 {f === "all" ? "Alle" : statusConfig[f]?.label || f}
+                {(filterCounts[f] ?? 0) > 0 && (
+                  <span className={styles.filterCount}>{filterCounts[f]}</span>
+                )}
               </button>
             ))}
           </div>
@@ -425,83 +599,133 @@ export default function CancellationArchive() {
 
         {/* Content */}
         {filtered.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>
-              <FileText size={36} />
+          <motion.div
+            className={styles.emptyState}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className={styles.emptyIconWrap}>
+              <div className={styles.emptyIconPulse} />
+              <div className={styles.emptyIcon}>
+                <FileText size={36} />
+              </div>
             </div>
             <h3 className={styles.emptyTitle}>
-              {filter === "all" ? "Noch keine Kündigungen" : "Keine Kündigungen in dieser Kategorie"}
+              {filter === "all" && !searchQuery
+                ? "Noch keine Kündigungen"
+                : searchQuery
+                  ? "Keine Ergebnisse"
+                  : "Keine Kündigungen in dieser Kategorie"
+              }
             </h3>
             <p className={styles.emptyText}>
-              {filter === "all"
+              {filter === "all" && !searchQuery
                 ? "Sobald Sie einen Vertrag kündigen, erscheint er hier."
-                : "Versuchen Sie einen anderen Filter."
+                : searchQuery
+                  ? `Keine Kündigungen für "${searchQuery}" gefunden.`
+                  : "Versuchen Sie einen anderen Filter."
               }
             </p>
-            {filter === "all" && (
+            {filter === "all" && !searchQuery && (
               <button className={styles.emptyBtn} onClick={() => navigate("/contracts")}>
                 <FileText size={16} />
                 Zu den Verträgen
               </button>
             )}
-          </div>
+          </motion.div>
         ) : (
-          <div className={styles.grid}>
-            {filtered.map(c => (
-              <motion.div
-                key={c.id}
-                className={styles.card}
-                onClick={() => fetchDetail(c.id)}
-                whileHover={{ y: -2 }}
-                layout
-              >
-                <div className={styles.cardHeader}>
-                  <div>
-                    <h3 className={styles.contractName}>{c.contractName}</h3>
-                    <span className={styles.provider}>{getProviderName(c.provider)}</span>
+          <motion.div
+            className={styles.grid}
+            variants={cardContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {filtered.map(c => {
+              const { steps, activeIndex } = getStepperState(c.status);
+              return (
+                <motion.div
+                  key={c.id}
+                  className={`${styles.card} ${cardBorderClass[c.status] || ""}`}
+                  onClick={() => fetchDetail(c.id)}
+                  variants={cardVariants}
+                  whileHover={{ y: -3 }}
+                  layout
+                >
+                  <div className={styles.cardInner}>
+                    <div className={`${styles.cardStatusIcon} ${cardIconClass[c.status] || styles.cardStatusIconDraft}`}>
+                      <StatusIcon status={c.status} />
+                    </div>
+                    <div className={styles.cardContent}>
+                      <div className={styles.cardHeader}>
+                        <div>
+                          <h3 className={styles.contractName}>{c.contractName}</h3>
+                          <span className={styles.provider}>{getProviderName(c.provider)}</span>
+                        </div>
+                        {getStatusBadge(c.status)}
+                      </div>
+                      <div className={styles.cardMeta}>
+                        <span>
+                          <Calendar size={12} />
+                          <time title={getAbsoluteDate(c.createdAt)}>
+                            {getRelativeTime(c.createdAt)}
+                          </time>
+                        </span>
+                        {c.sendMethod === "email" && c.recipientEmail && (
+                          <span>
+                            <Mail size={12} />
+                            {c.recipientEmail}
+                          </span>
+                        )}
+                      </div>
+                      {/* Mini Stepper */}
+                      {c.status !== "revoked" && c.status !== "failed" && c.status !== "draft" && (
+                        <div className={styles.stepper}>
+                          {steps.map((step, i) => (
+                            <span key={step.key} style={{ display: "contents" }}>
+                              {i > 0 && (
+                                <span className={`${styles.stepperLine} ${i <= activeIndex ? styles.stepperLineDone : ""}`} />
+                              )}
+                              <span className={`${styles.stepperStep} ${i < activeIndex ? styles.stepperStepDone : ""} ${i === activeIndex ? styles.stepperStepActive : ""}`}>
+                                <span className={`${styles.stepperDot} ${i < activeIndex ? styles.stepperDotDone : ""} ${i === activeIndex ? styles.stepperDotActive : ""}`} />
+                                {step.label}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Card Actions — visible on hover */}
+                      <div className={styles.cardActions}>
+                        <button
+                          className={styles.actionBtn}
+                          onClick={(e) => handlePdfDownload(c.id, e)}
+                          disabled={pdfDownloading === c.id}
+                        >
+                          {pdfDownloading === c.id
+                            ? <Loader size={12} className={styles.spinner} />
+                            : <Download size={12} />
+                          }
+                          PDF
+                        </button>
+                        {c.contractId && (
+                          <button
+                            className={styles.actionBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/contracts/${c.contractId}`);
+                            }}
+                          >
+                            <ExternalLink size={12} />
+                            Vertrag
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  {getStatusBadge(c.status)}
-                </div>
-                <div className={styles.cardMeta}>
-                  <span>
-                    <Calendar size={12} />
-                    {new Date(c.createdAt).toLocaleDateString("de-DE")}
-                  </span>
-                  {c.sendMethod === "email" && c.recipientEmail && (
-                    <span>
-                      <Mail size={12} />
-                      {c.recipientEmail}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.cardActions}>
-                  <button
-                    className={styles.actionBtn}
-                    onClick={(e) => handlePdfDownload(c.id, e)}
-                    disabled={pdfDownloading === c.id}
-                  >
-                    {pdfDownloading === c.id
-                      ? <Loader size={12} className={styles.spinner} />
-                      : <Download size={12} />
-                    }
-                    PDF
-                  </button>
-                  {c.contractId && (
-                    <button
-                      className={styles.actionBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/contracts/${c.contractId}`);
-                      }}
-                    >
-                      <ExternalLink size={12} />
-                      Vertrag
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         )}
 
         {/* Detail Modal */}
@@ -519,10 +743,14 @@ export default function CancellationArchive() {
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
                 onClick={e => e.stopPropagation()}
               >
                 <div className={styles.modalHeader}>
-                  <h3 className={styles.modalTitle}>Kündigungsdetails</h3>
+                  <div className={styles.modalHeaderLeft}>
+                    <h3 className={styles.modalTitle}>Kündigungsdetails</h3>
+                    {detail && getStatusBadge(detail.status)}
+                  </div>
                   <button className={styles.closeBtn} onClick={() => { setSelectedId(null); setDetail(null); setActionLoading(null); setResending(false); setDragOver(false); }}>
                     <X size={16} />
                   </button>
@@ -535,69 +763,76 @@ export default function CancellationArchive() {
                 ) : detail ? (
                   <>
                     <div className={styles.modalBody}>
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Vertrag</span>
-                        <span className={styles.detailValue}>{detail.contractName}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Anbieter</span>
-                        <span className={styles.detailValue}>{getProviderName(detail.provider)}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Status</span>
-                        <span className={styles.detailValue}>{getStatusBadge(detail.status)}</span>
-                      </div>
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Erstellt am</span>
-                        <span className={styles.detailValue}>
-                          {new Date(detail.createdAt).toLocaleDateString("de-DE", {
-                            day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
-                          })}
-                        </span>
-                      </div>
-                      {detail.sentAt && (
-                        <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Gesendet am</span>
-                          <span className={styles.detailValue}>
-                            {new Date(detail.sentAt).toLocaleDateString("de-DE", {
-                              day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
+                      {/* Info Grid */}
+                      <div className={styles.infoGrid}>
+                        <div className={styles.infoCell}>
+                          <div className={styles.infoLabel}>Vertrag</div>
+                          <div className={styles.infoValue}>{detail.contractName}</div>
+                        </div>
+                        <div className={styles.infoCell}>
+                          <div className={styles.infoLabel}>Anbieter</div>
+                          <div className={styles.infoValue}>{getProviderName(detail.provider)}</div>
+                        </div>
+                        <div className={styles.infoCell}>
+                          <div className={styles.infoLabel}>Erstellt am</div>
+                          <div className={styles.infoValue}>
+                            {new Date(detail.createdAt).toLocaleDateString("de-DE", {
+                              day: "2-digit", month: "long", year: "numeric"
                             })}
-                          </span>
+                          </div>
                         </div>
-                      )}
-                      {detail.recipientEmail && (
-                        <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Empfänger</span>
-                          <span className={styles.detailValue}>{detail.recipientEmail}</span>
+                        <div className={styles.infoCell}>
+                          <div className={styles.infoLabel}>
+                            {detail.sentAt ? "Gesendet am" : "Empfänger"}
+                          </div>
+                          <div className={styles.infoValue}>
+                            {detail.sentAt
+                              ? new Date(detail.sentAt).toLocaleDateString("de-DE", {
+                                  day: "2-digit", month: "long", year: "numeric"
+                                })
+                              : detail.recipientEmail || "—"
+                            }
+                          </div>
                         </div>
-                      )}
-                      {detail.resentAt && (
-                        <div className={styles.detailRow}>
-                          <span className={styles.detailLabel}>Erneut gesendet</span>
-                          <span className={styles.detailValue}>
-                            {new Date(detail.resentAt).toLocaleDateString("de-DE")}
-                            {detail.resentTo ? ` an ${detail.resentTo}` : ""}
-                          </span>
+                        {detail.recipientEmail && detail.sentAt && (
+                          <div className={`${styles.infoCell} ${styles.infoCellFull}`}>
+                            <div className={styles.infoLabel}>Empfänger</div>
+                            <div className={styles.infoValue}>{detail.recipientEmail}</div>
+                          </div>
+                        )}
+                        {detail.resentAt && (
+                          <div className={`${styles.infoCell} ${styles.infoCellFull}`}>
+                            <div className={styles.infoLabel}>Erneut gesendet</div>
+                            <div className={styles.infoValue}>
+                              {new Date(detail.resentAt).toLocaleDateString("de-DE")}
+                              {detail.resentTo ? ` an ${detail.resentTo}` : ""}
+                            </div>
+                          </div>
+                        )}
+                        <div className={`${styles.infoCell} ${styles.infoCellFull}`}>
+                          <div className={styles.infoLabel}>Referenz-ID</div>
+                          <div className={`${styles.infoValue} ${styles.infoValueMono}`}>
+                            {detail._id}
+                          </div>
                         </div>
-                      )}
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>Referenz-ID</span>
-                        <span className={styles.detailValue} style={{ fontFamily: "monospace", fontSize: "12px" }}>
-                          {detail._id}
-                        </span>
                       </div>
 
+                      {/* Letter Preview */}
                       {detail.cancellationLetter && (
                         <div className={styles.letterPreview}>
+                          <div className={styles.letterPreviewHeader}>
+                            <FileText size={14} />
+                            Kündigungsschreiben
+                          </div>
                           {detail.cancellationLetter}
                         </div>
                       )}
 
-                      {/* Erinnerungsverlauf */}
+                      {/* Erinnerungsverlauf — Timeline */}
                       {detail.reminderHistory && detail.reminderHistory.length > 0 && (
                         <div className={styles.reminderHistory}>
                           <h4 className={styles.sectionTitle}>
-                            <Clock size={16} />
+                            <Clock size={14} />
                             Erinnerungen ({detail.reminderHistory.length})
                           </h4>
                           <div className={styles.reminderList}>
@@ -624,7 +859,7 @@ export default function CancellationArchive() {
                       {detail.status !== "confirmed" && detail.status !== "revoked" && detail.status !== "failed" && (
                         <div className={styles.quickActions}>
                           <h4 className={styles.sectionTitle}>
-                            <Bell size={16} />
+                            <Bell size={14} />
                             Aktionen
                           </h4>
                           <div className={styles.quickActionButtons}>
@@ -669,19 +904,19 @@ export default function CancellationArchive() {
 
                       {/* Bestätigung Upload/Download */}
                       <div className={styles.confirmationSection}>
-                        <h4 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <CheckCircle size={16} />
+                        <h4 className={styles.confirmationHeader}>
+                          <CheckCircle size={14} />
                           Kündigungsbestätigung
                         </h4>
                         {detail.confirmationFile ? (
                           <div className={styles.confirmationDone}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                            <div className={styles.confirmationMeta}>
                               <span className={`${styles.badge} ${styles.badgeConfirmed}`}>
                                 <CheckCircle size={12} />
                                 Bestätigt
                               </span>
                               {detail.confirmedAt && (
-                                <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                                <span className={styles.confirmationDate}>
                                   am {new Date(detail.confirmedAt).toLocaleDateString("de-DE")}
                                 </span>
                               )}
@@ -711,16 +946,16 @@ export default function CancellationArchive() {
                             }}
                           >
                             {confirmationUploading ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6b7280' }}>
+                              <div className={styles.uploadingState}>
                                 <Loader size={16} className={styles.spinner} />
                                 <span>Wird hochgeladen...</span>
                               </div>
                             ) : (
                               <>
-                                <Upload size={20} style={{ color: '#9ca3af' }} />
-                                <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                                <Upload size={22} className={styles.uploadIcon} />
+                                <span className={styles.uploadText}>
                                   Bestätigung hier ablegen oder{' '}
-                                  <label style={{ color: '#0071e3', cursor: 'pointer', fontWeight: 500 }}>
+                                  <label className={styles.uploadLink}>
                                     Datei auswählen
                                     <input
                                       type="file"
@@ -733,7 +968,7 @@ export default function CancellationArchive() {
                                     />
                                   </label>
                                 </span>
-                                <span style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                <span className={styles.uploadHint}>
                                   PDF, JPG, PNG — max. 10 MB
                                 </span>
                               </>
