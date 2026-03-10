@@ -164,6 +164,8 @@ async function ensurePerformanceIndexes(db) {
     // Cancellations Collection
     { collection: 'cancellations', index: { userId: 1, createdAt: -1 }, name: 'idx_cancel_userId_createdAt' },
     { collection: 'cancellations', index: { contractId: 1 }, name: 'idx_cancel_contractId' },
+    // Email Inbox - Unique Index für Upload-Adressen (verhindert Duplikate bei Custom-Aliases)
+    { collection: 'users', index: { emailInboxAddress: 1 }, name: 'idx_emailInboxAddress_unique', options: { unique: true, sparse: true } },
   ];
 
   for (const { collection, index, name, options = {} } of indexes) {

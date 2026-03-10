@@ -1,7 +1,7 @@
 // frontend/src/components/EmailInboxWidget.tsx
 // Premium Enterprise Design - E-Mail Upload Widget
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Copy, HelpCircle, RefreshCw, Power, Check, Mail, Zap, AlertTriangle, Edit3, Crown, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import styles from "./EmailInboxWidget.module.css";
@@ -84,7 +84,14 @@ export default function EmailInboxWidget({
   };
 
   // Debounced Alias Check
-  const checkAliasDebounceRef = { current: null as ReturnType<typeof setTimeout> | null };
+  const checkAliasDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup bei Unmount
+  useEffect(() => {
+    return () => {
+      if (checkAliasDebounceRef.current) clearTimeout(checkAliasDebounceRef.current);
+    };
+  }, []);
 
   const handleAliasInputChange = useCallback((value: string) => {
     const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -250,16 +257,16 @@ export default function EmailInboxWidget({
                 <span>Custom Upload-Adresse (Enterprise)</span>
               </div>
               <div className={styles.aliasInputRow}>
-                <div className={styles.aliasInputWrapper}>
+                <div className={`${styles.aliasInputWrapper} ${
+                  aliasAvailable === true ? styles.aliasInputValid :
+                  aliasAvailable === false ? styles.aliasInputInvalid : ''
+                }`}>
                   <input
                     type="text"
                     value={aliasInput}
                     onChange={(e) => handleAliasInputChange(e.target.value)}
                     placeholder="dein-firmenname"
-                    className={`${styles.aliasInput} ${
-                      aliasAvailable === true ? styles.aliasInputValid :
-                      aliasAvailable === false ? styles.aliasInputInvalid : ''
-                    }`}
+                    className={styles.aliasInput}
                     maxLength={30}
                     disabled={aliasSaving}
                   />
