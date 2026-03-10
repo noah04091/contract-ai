@@ -161,6 +161,9 @@ async function ensurePerformanceIndexes(db) {
     { collection: 'contract_events', index: { userId: 1, status: 1, date: 1 }, name: 'idx_userId_status_date' },
     // Envelopes Collection
     { collection: 'envelopes', index: { contractId: 1, createdAt: -1 }, name: 'idx_contractId_createdAt' },
+    // Cancellations Collection
+    { collection: 'cancellations', index: { userId: 1, createdAt: -1 }, name: 'idx_cancel_userId_createdAt' },
+    { collection: 'cancellations', index: { contractId: 1 }, name: 'idx_cancel_contractId' },
   ];
 
   for (const { collection, index, name, options = {} } of indexes) {
