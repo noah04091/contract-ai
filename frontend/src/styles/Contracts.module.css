@@ -1214,6 +1214,8 @@
 /* Sidebar Navigation - Enterprise Design (wie Dashboard) */
 .sidebar {
   width: 272px;
+  min-width: 180px;
+  max-width: 400px;
   background: #FFFFFF;
   border-right: 1px solid #E5E7EB;
   display: flex;
@@ -1222,6 +1224,50 @@
   height: 100%;
   overflow: hidden;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+/* Resize Handle — rechter Rand der Sidebar */
+.sidebarResizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background 150ms ease;
+}
+
+.sidebarResizeHandle:hover,
+.sidebarResizeHandle.resizing {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+.sidebarResizeHandle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 32px;
+  border-radius: 2px;
+  background: transparent;
+  transition: background 150ms ease;
+}
+
+.sidebarResizeHandle:hover::after,
+.sidebarResizeHandle.resizing::after {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+/* Nav-Item Text: Ellipsis bei schmaler Sidebar */
+.sidebarNavItem > span:not(.sidebarNavBadge) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .sidebarHeader {

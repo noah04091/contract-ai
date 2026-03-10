@@ -429,6 +429,17 @@ export default function Contracts() {
   const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
   const fetchRequestIdRef = useRef(0); // 🚀 Request-ID um veraltete Responses zu ignorieren
 
+  // 📐 Resizable Sidebar
+  const SIDEBAR_MIN = 180;
+  const SIDEBAR_MAX = 400;
+  const SIDEBAR_STORAGE_KEY = 'contract-ai-sidebar-width';
+  const [sidebarWidth, setSidebarWidth] = useState<number | null>(() => {
+    const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    return saved ? Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, parseInt(saved, 10))) : null;
+  });
+  const isResizingRef = useRef(false);
+  const [isResizing, setIsResizing] = useState(false);
+
   // 📁 Folder Management Hook
   const {
     folders,
@@ -2789,6 +2800,46 @@ export default function Contracts() {
     return count;
   };
 
+  // 📐 Sidebar Resize Handlers
+  const handleSidebarResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizingRef.current = true;
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = sidebarWidth ?? 272;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const delta = moveEvent.clientX - startX;
+      const newWidth = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startWidth + delta));
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isResizingRef.current = false;
+      setIsResizing(false);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      // Speichern
+      const current = sidebarWidth;
+      if (current) localStorage.setItem(SIDEBAR_STORAGE_KEY, String(current));
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Sidebar-Breite in localStorage speichern wenn sich der Wert ändert
+  useEffect(() => {
+    if (sidebarWidth !== null) {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(sidebarWidth));
+    }
+  }, [sidebarWidth]);
+
   // ✅ Alle Filter zurücksetzen
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -3844,7 +3895,12 @@ export default function Contracts() {
         <div className={`${styles.enterpriseLayout} ${previewContract ? styles.withPreview : ''}`}>
 
           {/* ===== SIDEBAR ===== */}
-          <aside className={styles.sidebar}>
+          <aside className={styles.sidebar} style={sidebarWidth ? { width: sidebarWidth } : undefined}>
+            {/* Resize Handle */}
+            <div
+              className={`${styles.sidebarResizeHandle} ${isResizing ? styles.resizing : ''}`}
+              onMouseDown={handleSidebarResizeStart}
+            />
             <div className={styles.sidebarNav}>
               <p className={styles.sidebarTitle}>Navigation</p>
 
