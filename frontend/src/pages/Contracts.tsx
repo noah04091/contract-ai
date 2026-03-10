@@ -3851,7 +3851,7 @@ export default function Contracts() {
               {/* Main Nav Items */}
               <button
                 className={`${styles.sidebarNavItem} ${activeSection === 'contracts' && !selectedFolderId ? styles.active : ''}`}
-                onClick={() => { setActiveSection('contracts'); setSelectedFolderId(null); }}
+                onClick={() => { setActiveSection('contracts'); clearAllFilters(); }}
               >
                 <FileText size={18} className={styles.sidebarNavIcon} />
                 <span>Alle Verträge</span>
@@ -3884,7 +3884,7 @@ export default function Contracts() {
 
               <button
                 className={`${styles.sidebarNavItem} ${statusFilter === 'bald_ablaufend' ? styles.active : ''}`}
-                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'bald_ablaufend' ? 'alle' : 'bald_ablaufend'); }}
+                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'bald_ablaufend' ? 'alle' : 'bald_ablaufend'); setActiveFolder(null); }}
               >
                 <AlertTriangle size={18} className={styles.sidebarNavIcon} style={{ color: '#f59e0b' }} />
                 <span>Bald ablaufend</span>
@@ -3895,7 +3895,7 @@ export default function Contracts() {
 
               <button
                 className={`${styles.sidebarNavItem} ${statusFilter === 'aktiv' ? styles.active : ''}`}
-                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'aktiv' ? 'alle' : 'aktiv'); }}
+                onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'aktiv' ? 'alle' : 'aktiv'); setActiveFolder(null); }}
               >
                 <CheckCircle size={18} className={styles.sidebarNavIcon} style={{ color: '#22c55e' }} />
                 <span>Aktive Verträge</span>
@@ -3910,7 +3910,7 @@ export default function Contracts() {
                 {/* Alle Verträge */}
                 <button
                   className={`${styles.sidebarFolderItem} ${activeFolder === null ? styles.active : ''}`}
-                  onClick={() => { setActiveSection('contracts'); setActiveFolder(null); }}
+                  onClick={() => { setActiveSection('contracts'); setActiveFolder(null); setStatusFilter('alle'); }}
                 >
                   <FileText size={16} className={styles.sidebarFolderIcon} style={{ color: '#3b82f6' }} />
                   <span>Alle Verträge</span>
@@ -3919,7 +3919,7 @@ export default function Contracts() {
                 {/* Ohne Ordner */}
                 <button
                   className={`${styles.sidebarFolderItem} ${activeFolder === 'unassigned' ? styles.active : ''}`}
-                  onClick={() => { setActiveSection('contracts'); setActiveFolder('unassigned'); }}
+                  onClick={() => { setActiveSection('contracts'); setActiveFolder('unassigned'); setStatusFilter('alle'); }}
                 >
                   <Folder size={16} className={styles.sidebarFolderIcon} style={{ color: '#94a3b8' }} />
                   <span>Ohne Ordner</span>
@@ -3932,7 +3932,7 @@ export default function Contracts() {
                   <button
                     key={folder._id}
                     className={`${styles.sidebarFolderItem} ${styles.userFolder} ${activeFolder === folder._id ? styles.active : ''}`}
-                    onClick={() => { setActiveSection('contracts'); setActiveFolder(folder._id); }}
+                    onClick={() => { setActiveSection('contracts'); setActiveFolder(folder._id); setStatusFilter('alle'); }}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setFolderContextMenu({
@@ -4399,6 +4399,7 @@ export default function Contracts() {
                         className={`${styles.mobileFolderItem} ${activeFolder === null ? styles.active : ''}`}
                         onClick={() => {
                           setActiveFolder(null);
+                          setStatusFilter('alle');
                           setShowMobileFolderSheet(false);
                         }}
                       >
@@ -4415,6 +4416,7 @@ export default function Contracts() {
                         className={`${styles.mobileFolderItem} ${activeFolder === 'unassigned' ? styles.active : ''}`}
                         onClick={() => {
                           setActiveFolder('unassigned');
+                          setStatusFilter('alle');
                           setShowMobileFolderSheet(false);
                         }}
                       >
@@ -4433,6 +4435,7 @@ export default function Contracts() {
                           className={`${styles.mobileFolderItem} ${activeFolder === folder._id ? styles.active : ''}`}
                           onClick={() => {
                             setActiveFolder(folder._id);
+                            setStatusFilter('alle');
                             setShowMobileFolderSheet(false);
                           }}
                         >
@@ -4983,8 +4986,8 @@ export default function Contracts() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Results info when filters active */}
-                {(searchQuery || activeFiltersCount() > 0) && (
+                {/* Results info — nur bei echten Filtern (Suche/Datum/Quelle), nicht bei Sidebar-Navigation */}
+                {(searchQuery || dateFilter !== 'alle' || sourceFilter !== 'alle') && (
                   <div className={styles.resultsInfo}>
                     <div className={styles.resultsText}>
                       <strong>{contracts.length}</strong> Ergebnis
@@ -4993,15 +4996,13 @@ export default function Contracts() {
                         <span> für <em>"{searchQuery}"</em></span>
                       )}
                     </div>
-                    {activeFiltersCount() > 0 && (
-                      <button
-                        className={styles.clearAllFilters}
-                        onClick={clearAllFilters}
-                      >
-                        <X size={14} />
-                        <span>Filter zurücksetzen</span>
-                      </button>
-                    )}
+                    <button
+                      className={styles.clearAllFilters}
+                      onClick={clearAllFilters}
+                    >
+                      <X size={14} />
+                      <span>Filter zurücksetzen</span>
+                    </button>
                   </div>
                 )}
 
