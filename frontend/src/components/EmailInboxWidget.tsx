@@ -49,7 +49,7 @@ export default function EmailInboxWidget({
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("Neue E-Mail-Adresse generieren? Die alte Adresse wird ungueltig.")) {
+    if (!confirm("Neue E-Mail-Adresse generieren? Die alte Adresse wird ungültig.")) {
       return;
     }
 
@@ -122,10 +122,10 @@ export default function EmailInboxWidget({
         };
         setAliasAvailable(response.available);
         if (!response.available) {
-          setAliasError(response.error || 'Nicht verfuegbar');
+          setAliasError(response.error || 'Nicht verfügbar');
         }
       } catch {
-        setAliasError('Fehler beim Pruefen');
+        setAliasError('Fehler beim Prüfen');
       } finally {
         setAliasChecking(false);
       }
@@ -178,7 +178,7 @@ export default function EmailInboxWidget({
             </span>
           </div>
           <p className={styles.subtitle}>
-            Leite E-Mails mit Vertraegen an deine persoenliche Adresse weiter
+            Leite E-Mails mit Verträgen an deine persönliche Adresse weiter
           </p>
         </div>
 
@@ -283,7 +283,7 @@ export default function EmailInboxWidget({
                 <p className={styles.aliasErrorText}>{aliasError}</p>
               )}
               {aliasAvailable === true && (
-                <p className={styles.aliasSuccessText}>Verfuegbar!</p>
+                <p className={styles.aliasSuccessText}>Verfügbar!</p>
               )}
               <div className={styles.aliasActions}>
                 <button
@@ -326,19 +326,19 @@ export default function EmailInboxWidget({
               <div className={styles.step}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
-                  <p><strong>Adresse kopieren</strong> - Klicke auf das Kopier-Symbol</p>
+                  <p><strong>Adresse kopieren</strong> – Klicke auf das Kopier-Symbol</p>
                 </div>
               </div>
               <div className={styles.step}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
-                  <p><strong>E-Mail weiterleiten</strong> - Leite Vertrags-E-Mails an diese Adresse</p>
+                  <p><strong>E-Mail weiterleiten</strong> – Leite Vertrags-E-Mails an diese Adresse</p>
                 </div>
               </div>
               <div className={styles.step}>
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepContent}>
-                  <p><strong>Automatisch importiert</strong> - Anhaenge werden als Vertraege gespeichert</p>
+                  <p><strong>Automatisch importiert</strong> – Anhänge werden als Verträge gespeichert</p>
                 </div>
               </div>
             </div>
