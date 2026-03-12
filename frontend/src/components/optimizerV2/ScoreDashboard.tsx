@@ -1,5 +1,4 @@
-import React from 'react';
-import { TrendingUp, Shield, Eye, CheckSquare, BarChart3, AlertTriangle } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 

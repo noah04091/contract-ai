@@ -1,17 +1,15 @@
-import React from 'react';
 import { Check, Loader2, Circle, AlertCircle } from 'lucide-react';
 import type { StageInfo } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
   stages: StageInfo[];
-  currentStage: number;
   progress: number;
   message: string;
   onCancel: () => void;
 }
 
-export default function AnalysisPipeline({ stages, currentStage, progress, message, onCancel }: Props) {
+export default function AnalysisPipeline({ stages, progress, message, onCancel }: Props) {
   return (
     <div className={styles.pipelineContainer}>
       <div className={styles.pipelineHeader}>

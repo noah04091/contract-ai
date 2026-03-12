@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Check, Scale, Shield, UserCheck } from 'lucide-react';
 import type { ClauseOptimization, OptimizationMode, DiffOp } from '../../types/optimizerV2';
 import { MODE_LABELS } from '../../types/optimizerV2';

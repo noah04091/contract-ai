@@ -1,4 +1,3 @@
-import React from 'react';
 import { Shield, Scale, UserCheck } from 'lucide-react';
 import type { OptimizationMode } from '../../types/optimizerV2';
 import { MODE_LABELS } from '../../types/optimizerV2';

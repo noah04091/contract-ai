@@ -35,7 +35,7 @@ export default function OptimizerV2() {
   const {
     file, status, progress, progressMessage, stages,
     result, resultId, activeMode, activeTab, selectedClauseId,
-    userSelections, clauseChats, error
+    clauseChats, error
   } = state;
 
   return (
@@ -77,7 +77,6 @@ export default function OptimizerV2() {
         {status === 'analyzing' && (
           <AnalysisPipeline
             stages={stages}
-            currentStage={state.currentStage}
             progress={progress}
             message={progressMessage}
             onCancel={actions.cancelAnalysis}
@@ -177,8 +176,6 @@ export default function OptimizerV2() {
             {activeTab === 'export' && (
               <ExportPanel
                 result={result}
-                activeMode={activeMode}
-                resultId={resultId}
               />
             )}
           </div>

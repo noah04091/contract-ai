@@ -268,8 +268,8 @@ export function useOptimizerV2() {
   // ── Load Result ──
   const loadResult = useCallback(async (resultId: string) => {
     try {
-      const data = await apiCall(`/api/optimizer-v2/results/${resultId}`);
-      if (data.success && data.result) {
+      const data = await apiCall(`/api/optimizer-v2/results/${resultId}`) as any;
+      if (data?.success && data?.result) {
         dispatch({ type: 'LOAD_RESULT', result: data.result, resultId });
       }
     } catch (err: any) {
@@ -328,9 +328,9 @@ export function useOptimizerV2() {
         method: 'POST',
         body: JSON.stringify({ clauseId, message }),
         headers: { 'Content-Type': 'application/json' }
-      });
+      }) as any;
 
-      if (data.success) {
+      if (data?.success) {
         dispatch({
           type: 'ADD_CHAT_MESSAGE',
           clauseId,
@@ -341,7 +341,7 @@ export function useOptimizerV2() {
             generatedVersion: data.generatedVersion
           }]
         });
-        return data;
+        return data as ClauseChatResponse;
       }
       return null;
     } catch (err) {

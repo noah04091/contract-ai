@@ -1,15 +1,12 @@
-import React from 'react';
 import { Download, FileText, File } from 'lucide-react';
-import type { AnalysisResult, OptimizationMode } from '../../types/optimizerV2';
+import type { AnalysisResult } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
   result: AnalysisResult;
-  activeMode: OptimizationMode;
-  resultId: string;
 }
 
-export default function ExportPanel({ result, activeMode, resultId }: Props) {
+export default function ExportPanel({ result }: Props) {
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
 
   return (

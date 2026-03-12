@@ -1,8 +1,7 @@
-import React, { useRef, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import { FileText, Sparkles } from 'lucide-react';
 import NegotiationModeSelector from './NegotiationModeSelector';
 import type { Clause, ClauseOptimization, OptimizationMode, DiffOp } from '../../types/optimizerV2';
-import { CATEGORY_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {

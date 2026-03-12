@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle } from 'lucide-react';
 import type {
   Clause, ClauseAnalysis, ClauseOptimization, ClauseScore,
-  OptimizationMode, ChatMessage, DiffOp
+  OptimizationMode, ChatMessage
 } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, STRENGTH_CONFIG } from '../../types/optimizerV2';
 import ClauseAlternatives from './ClauseAlternatives';
@@ -17,7 +17,7 @@ interface Props {
   activeMode: OptimizationMode;
   isSelected: boolean;
   onSelect: (clauseId: string | null) => void;
-  onAcceptVersion: (clauseId: string, version: string) => void;
+  onAcceptVersion: (clauseId: string, version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', customText?: string) => void;
   chatMessages: ChatMessage[];
   onSendChat: (clauseId: string, message: string) => Promise<any>;
 }
