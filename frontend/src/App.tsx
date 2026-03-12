@@ -84,6 +84,7 @@ const Cancel = lazy(() => import("./pages/Cancel"));
 const CancellationArchive = lazy(() => import("./pages/CancellationArchive"));
 const Optimizer = lazy(() => import("./pages/Optimizer"));
 const OptimizerFinalize = lazy(() => import("./pages/OptimizerFinalize")); // 🎯 Optimizer Post-Generation Seite
+const OptimizerV2 = lazy(() => import("./pages/OptimizerV2"));
 const Compare = lazy(() => import("./pages/Compare"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Generate = lazy(() => import("./pages/Generate"));
@@ -237,6 +238,7 @@ function AppWithLoader() {
             <Route path="/cancellations" element={<RequireAuth><CancellationArchive /></RequireAuth>} />
             
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
+            <Route path="/optimizer-v2" element={<RequireAuth><OptimizerV2 /></RequireAuth>} />
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
             <Route path="/optimizer/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
             <Route path="/optimizer/finalize/:contractId" element={<RequireAuth><OptimizerFinalize /></RequireAuth>} />

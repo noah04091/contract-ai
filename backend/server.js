@@ -719,6 +719,14 @@ const connectDB = async () => {
       });
     }
     
+    // Optimizer V2 - Multi-Stage AI Pipeline
+    try {
+      app.use("/api/optimizer-v2", verifyToken, checkSubscription, require("./routes/optimizerV2"));
+      console.log("✅ Optimizer V2 Route geladen unter /api/optimizer-v2");
+    } catch (err) {
+      console.error("❌ Fehler bei Optimizer V2 Route:", err);
+    }
+
     // 🚀 Revolutionary: Optimized Contract Generation Route
     try {
       app.use("/api/optimized-contract", verifyToken, require("./routes/optimizedContract"));

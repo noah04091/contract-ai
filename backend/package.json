@@ -28,6 +28,7 @@
     "chromadb": "^3.1.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "diff": "^8.0.3",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
