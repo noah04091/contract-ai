@@ -164,11 +164,55 @@ DEIN KOMMUNIKATIONSSTIL:
 - Du vermeidest JEDE Form von generischem Fülltext
 - Wenn eine Klausel fehlt, erklärst du welche gesetzliche Regelung dann greift
 
+BEWERTUNGSLOGIK FÜR KLAUSELN (KRITISCH — befolge diese Regeln exakt):
+
+1. Fehlt eine rechtlich notwendige Klausel (z.B. Datenschutz, Haftung, Gerichtsstand),
+   ist dies IMMER ein Risiko — NIEMALS ein Vorteil. Fehlende Klauseln bedeuten
+   Rechtsunsicherheit, nicht Schutz.
+
+2. Ist eine Klausel vorhanden, prüfe ZWEI Ebenen:
+   - Ebene 1: Existenz (vorhanden = grundsätzlich gut)
+   - Ebene 2: Qualität (Klarheit, Zweckbindung, Umfang, Marktüblichkeit)
+   Eine vorhandene aber schwache Klausel ist BESSER als eine fehlende Klausel.
+
+3. Bewerte Klauseln kontextabhängig zum VERTRAGSTYP:
+   - Bei Finanzverträgen (Factoring, Leasing, Darlehen): Kosten, Gebühren, Zinsen,
+     Limits und Haftung für Ausfälle sind WICHTIGER als Standardklauseln
+   - Bei Dienstleistungsverträgen: SLAs, Haftung, Gewährleistung sind entscheidend
+   - Bei Kaufverträgen: Gewährleistung, Sachmängelhaftung, Lieferbedingungen
+   - Datenschutz, Gerichtsstand, Sprache sind selten entscheidend für die
+     WIRTSCHAFTLICHE Bewertung — überbewerte sie nicht
+
+4. FINANZIELLE AUSWIRKUNGEN (bei jedem relevanten Unterschied prüfen):
+   - Direkte Kosten (Gebühren, Zinsen, Provisionen)
+   - Wirtschaftliche Risiken (Haftung, Selbstbehalt, Forderungsausfälle)
+   - Liquiditätsauswirkungen (Zahlungsfristen, Ankauflimits, Kündigungsfristen)
+   - Opportunitätskosten (Wettbewerbsverbote, Exklusivität)
+   Nenne KONKRETE EUR-Beträge oder Prozentsätze wenn möglich.
+
+5. PRIORISIERUNG der Unterschiede (in dieser Reihenfolge):
+   1. Kosten & Gebühren
+   2. Haftung & Risiko
+   3. Kündigung & Flexibilität
+   4. Zahlungsbedingungen
+   5. Gewährleistung
+   6. Sonstige Klauseln (Datenschutz, Gerichtsstand etc.)
+
 Antworte ausschließlich mit validem JSON.`,
 
     user: `${modeBlock}
 
 ${perspectiveBlock}
+
+BRANCHENKONTEXT — WICHTIG:
+Erkenne zuerst den VERTRAGSTYP beider Verträge (z.B. Factoringvertrag, NDA, Mietvertrag, SaaS-Vertrag).
+Passe deine Analyse an den Vertragstyp an:
+- Factoringvertrag: Gebührenstruktur, Ankaufquote, Selbstbehalt, Bonitätsprüfung, Forderungsabtretung, Haftung für Forderungsausfälle, Ankauflimits sind wirtschaftlich ENTSCHEIDEND
+- Dienstleistungsvertrag: SLAs, Leistungsumfang, Haftungsbegrenzung, Abnahme
+- Kaufvertrag: Gewährleistung, Sachmängel, Lieferbedingungen, Rügepflicht
+- Mietvertrag: Mietanpassung, Nebenkosten, Instandhaltung, Kündigungsschutz
+- Software/SaaS: Lizenzumfang, Verfügbarkeit, Datenmigration, Vendor-Lock-in
+Die WIRTSCHAFTLICH relevanten Klauseln des jeweiligen Vertragstyps MÜSSEN bei Severity und Reihenfolge priorisiert werden.
 
 KONTEXT — Strukturierte Vertragskarten:
 VERTRAGSKARTE 1:
@@ -225,20 +269,30 @@ SCHRITT 6 — KATEGORIE-SCORES (0-100 pro Vertrag):
 - completeness: Vollständigkeit der Regelungen
 - clarity: Klarheit und Verständlichkeit
 
-SCHRITT 7 — RISIKO-ANALYSE:
-Für jedes gefundene Risiko:
+SCHRITT 7 — RISIKO-ANALYSE (Legal Reasoning Chain):
+Für jedes Risiko wende diese Denkschritte an:
+  a) FAKT: Was steht im Vertrag (oder fehlt)?
+  b) RECHTLICHE EINORDNUNG: Welche Norm/§§ ist relevant?
+  c) KONSEQUENZ: Was passiert im Streitfall konkret?
+  d) WIRTSCHAFTLICHE AUSWIRKUNG: Welcher EUR-Betrag / welches % ist betroffen?
+  e) BEWERTUNG: Wie schwer wiegt das im Kontext dieses VERTRAGSTYPS?
+
+WICHTIG: Standardmäßige Klauseln (z.B. Datenverarbeitung bei Factoring für Bonitätsprüfung)
+sind KEIN hohes Risiko — nur wenn Zweckbindung oder Umfang ungewöhnlich sind.
+Fehlende Klauseln sind IMMER ein Risiko (missing_protection).
+
 {
   "clauseArea": "area",
   "riskType": "unfair_clause|legal_risk|unusual_clause|hidden_obligation|missing_protection",
   "severity": "low|medium|high|critical",
   "contract": 1|2|"both",
   "title": "Kurztitel",
-  "description": "2-3 Sätze Beschreibung",
+  "description": "2-3 Sätze: FAKT → KONSEQUENZ → AUSWIRKUNG",
   "legalBasis": "§-Verweis oder null",
-  "financialExposure": "EUR-Betrag oder null"
+  "financialExposure": "Konkreter EUR-Betrag/% oder Beschreibung der finanziellen Auswirkung"
 }
 
-SCHRITT 8 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste):
+SCHRITT 8 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste, priorisiert nach wirtschaftlicher Relevanz):
 {
   "clauseArea": "area",
   "targetContract": 1|2,
