@@ -1,5 +1,6 @@
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle } from 'lucide-react';
-import type { Scores, AnalysisResult, ContractStructure } from '../../types/optimizerV2';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame } from 'lucide-react';
+import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel } from '../../types/optimizerV2';
+import { IMPORTANCE_CONFIG, INDUSTRY_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -34,6 +35,13 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const criticalCount = result.clauseAnalyses.filter(a => a.strength === 'critical').length;
   const weakCount = result.clauseAnalyses.filter(a => a.strength === 'weak').length;
+
+  // Importance distribution
+  const importanceCounts: Record<ImportanceLevel, number> = { critical: 0, high: 0, medium: 0, low: 0 };
+  for (const a of result.clauseAnalyses) {
+    const level = a.importanceLevel || 'medium';
+    if (level in importanceCounts) importanceCounts[level]++;
+  }
 
   return (
     <div className={styles.scoreDashboard}>
@@ -109,6 +117,33 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
         })}
       </div>
 
+      {/* Importance distribution */}
+      <div className={styles.importanceBar}>
+        <div className={styles.importanceBarHeader}>
+          <Flame size={14} style={{ color: '#FF3B30' }} />
+          <span className={styles.importanceBarTitle}>Klausel-Priorität</span>
+        </div>
+        <div className={styles.importanceItems}>
+          {(Object.entries(importanceCounts) as [ImportanceLevel, number][])
+            .filter(([, count]) => count > 0)
+            .map(([level, count]) => {
+              const config = IMPORTANCE_CONFIG[level];
+              return (
+                <button
+                  key={level}
+                  className={styles.importanceItem}
+                  onClick={() => onNavigate('clauses')}
+                  title={`${count} ${config.label}e Klausel${count > 1 ? 'n' : ''} anzeigen`}
+                >
+                  <span className={styles.importanceDot} style={{ background: config.color }} />
+                  <span className={styles.importanceCount} style={{ color: config.color }}>{count}</span>
+                  <span className={styles.importanceLabel}>{config.label}</span>
+                </button>
+              );
+            })}
+        </div>
+      </div>
+
       {/* Quick insights */}
       {(criticalCount > 0 || weakCount > 0) && (
         <div className={styles.quickInsights}>
@@ -136,6 +171,12 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           <div className={styles.metadataItem}>
             <span className={styles.metadataLabel}>Jurisdiktion</span>
             <span className={styles.metadataValue}>{structure.jurisdiction}</span>
+          </div>
+        )}
+        {structure.industry && structure.industry !== 'other' && (
+          <div className={styles.metadataItem}>
+            <span className={styles.metadataLabel}>Branche</span>
+            <span className={styles.metadataValue}>{INDUSTRY_LABELS[structure.industry] || structure.industry}</span>
           </div>
         )}
         {structure.duration && (

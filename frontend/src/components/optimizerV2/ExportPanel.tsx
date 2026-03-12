@@ -1,4 +1,5 @@
-import { Download, FileText, File } from 'lucide-react';
+import { useState } from 'react';
+import { Download, FileText, File, Loader2 } from 'lucide-react';
 import type { AnalysisResult } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
@@ -8,6 +9,35 @@ interface Props {
 
 export default function ExportPanel({ result }: Props) {
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
+  const [downloading, setDownloading] = useState(false);
+
+  const handlePdfExport = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiBase = import.meta.env?.VITE_API_URL || (window.location.hostname === 'localhost' ? '' : 'https://api.contract-ai.de');
+      const response = await fetch(`${apiBase}/api/optimizer-v2/results/${result.resultId}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Export fehlgeschlagen');
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(result.structure?.contractTypeLabel || 'Analyse').replace(/\s+/g, '_')}_Bericht.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // silent - could add toast here
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className={styles.exportPanel}>
@@ -25,8 +55,13 @@ export default function ExportPanel({ result }: Props) {
             <h4>Analyse-Bericht (PDF)</h4>
             <p>Vollständiger Bericht mit Scores, Risiken und Empfehlungen</p>
           </div>
-          <button className={styles.exportBtn} disabled>
-            <Download size={14} /> Bald verfügbar
+          <button
+            className={styles.exportBtnActive}
+            onClick={handlePdfExport}
+            disabled={downloading}
+          >
+            {downloading ? <Loader2 size={14} className={styles.spinIcon} /> : <Download size={14} />}
+            {downloading ? 'Erstelle PDF...' : 'Herunterladen'}
           </button>
         </div>
 

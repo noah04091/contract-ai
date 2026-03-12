@@ -82,7 +82,8 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
     const systemPrompt = OPTIMIZATION_GENERATION_PROMPT(
       structure.contractTypeLabel || structure.contractType,
       structure.jurisdiction,
-      structure.parties
+      structure.parties,
+      structure.industry
     );
 
     try {

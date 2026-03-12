@@ -4,7 +4,7 @@ import type {
   Clause, ClauseAnalysis, ClauseOptimization, ClauseScore,
   OptimizationMode, ChatMessage
 } from '../../types/optimizerV2';
-import { CATEGORY_LABELS, STRENGTH_CONFIG } from '../../types/optimizerV2';
+import { CATEGORY_LABELS, STRENGTH_CONFIG, IMPORTANCE_CONFIG } from '../../types/optimizerV2';
 import ClauseAlternatives from './ClauseAlternatives';
 import ClauseChat from './ClauseChat';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -46,6 +46,14 @@ export default function ClauseCard({
         </div>
 
         <div className={styles.clauseCardRight}>
+          {analysis?.importanceLevel && (analysis.importanceLevel === 'critical' || analysis.importanceLevel === 'high') && (
+            <span
+              className={styles.importanceBadge}
+              style={{ color: IMPORTANCE_CONFIG[analysis.importanceLevel].color }}
+            >
+              {IMPORTANCE_CONFIG[analysis.importanceLevel].icon}{' '}{IMPORTANCE_CONFIG[analysis.importanceLevel].label}
+            </span>
+          )}
           {analysis && strengthConfig && (
             <span className={styles.strengthBadge} style={{ color: strengthConfig.color, borderColor: strengthConfig.color }}>
               {analysis.strength === 'critical' || analysis.strength === 'weak'

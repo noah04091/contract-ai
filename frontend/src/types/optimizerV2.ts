@@ -6,6 +6,7 @@ export type OptimizationMode = 'neutral' | 'proCreator' | 'proRecipient';
 export type Perspective = 'neutral' | 'creator' | 'recipient';
 export type AnalysisStatus = 'idle' | 'uploading' | 'analyzing' | 'completed' | 'error';
 export type ClauseStrength = 'strong' | 'adequate' | 'weak' | 'critical';
+export type ImportanceLevel = 'critical' | 'high' | 'medium' | 'low';
 export type RiskType = 'legal' | 'financial' | 'compliance' | 'operational' | 'none';
 
 export type ClauseCategory =
@@ -36,6 +37,13 @@ export interface KeyDate {
   description: string;
 }
 
+export type IndustryType =
+  | 'technology' | 'saas' | 'consulting' | 'finance' | 'healthcare'
+  | 'real_estate' | 'construction' | 'manufacturing' | 'ecommerce'
+  | 'marketing' | 'media' | 'education' | 'legal' | 'logistics'
+  | 'energy' | 'insurance' | 'hr_staffing' | 'food_hospitality'
+  | 'public_sector' | 'other';
+
 export interface ContractStructure {
   contractType: string;
   contractTypeLabel: string;
@@ -44,6 +52,7 @@ export interface ContractStructure {
   language: string;
   isAmendment: boolean;
   recognizedAs: string;
+  industry: IndustryType;
   maturity: 'high' | 'medium' | 'low';
   parties: Party[];
   duration: string | null;
@@ -71,6 +80,7 @@ export interface ClauseAnalysis {
   plainLanguage: string;
   legalAssessment: string;
   strength: ClauseStrength;
+  importanceLevel: ImportanceLevel;
   concerns: string[];
   riskLevel: number;
   riskType: RiskType;
@@ -102,6 +112,7 @@ export interface ClauseOptimization {
 export interface ClauseScore {
   clauseId: string;
   score: number;
+  importanceLevel?: ImportanceLevel;
 }
 
 export interface Scores {
@@ -260,11 +271,41 @@ export const CATEGORY_LABELS: Record<ClauseCategory, string> = {
   other: 'Sonstiges'
 };
 
+export const IMPORTANCE_CONFIG: Record<ImportanceLevel, { label: string; color: string; icon: string }> = {
+  critical: { label: 'Kritisch', color: '#FF3B30', icon: '🔥' },
+  high: { label: 'Wichtig', color: '#FF9500', icon: '⚠️' },
+  medium: { label: 'Standard', color: '#007AFF', icon: 'ℹ️' },
+  low: { label: 'Formal', color: '#8E8E93', icon: '·' }
+};
+
 export const STRENGTH_CONFIG: Record<ClauseStrength, { label: string; color: string }> = {
   strong: { label: 'Stark', color: '#34C759' },
   adequate: { label: 'Ausreichend', color: '#FF9500' },
   weak: { label: 'Schwach', color: '#FF3B30' },
   critical: { label: 'Kritisch', color: '#AF52DE' }
+};
+
+export const INDUSTRY_LABELS: Record<IndustryType, string> = {
+  technology: 'Technologie',
+  saas: 'SaaS / Software',
+  consulting: 'Beratung',
+  finance: 'Finanzen / Banking',
+  healthcare: 'Gesundheitswesen',
+  real_estate: 'Immobilien',
+  construction: 'Bauwesen',
+  manufacturing: 'Fertigung / Industrie',
+  ecommerce: 'E-Commerce',
+  marketing: 'Marketing / Werbung',
+  media: 'Medien / Verlag',
+  education: 'Bildung',
+  legal: 'Recht / Kanzlei',
+  logistics: 'Logistik / Transport',
+  energy: 'Energie',
+  insurance: 'Versicherung',
+  hr_staffing: 'Personal / HR',
+  food_hospitality: 'Gastronomie / Hotel',
+  public_sector: 'Öffentlicher Sektor',
+  other: 'Sonstige'
 };
 
 export const MODE_LABELS: Record<OptimizationMode, { label: string; description: string; color: string }> = {

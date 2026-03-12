@@ -20,7 +20,15 @@ Regeln:
   - "high": Kanzlei-Qualität, durchdachte Formulierungen
   - "medium": Solide aber nicht perfekt
   - "low": Laienhaft, viele Lücken oder Template-Charakter
-- "recognizedAs" ist eine kurze Beschreibung in 3-5 Wörtern (z.B. "SaaS-Dienstleistungsvertrag für Softwareentwicklung")`;
+- "recognizedAs" ist eine kurze Beschreibung in 3-5 Wörtern (z.B. "SaaS-Dienstleistungsvertrag für Softwareentwicklung")
+- "industry" ist die Branche, in der der Vertrag angesiedelt ist. Leite sie aus dem Vertragsinhalt ab:
+  - Parteinamen, Leistungsbeschreibung, Fachbegriffe, Branchenstandards
+  - Bevorzuge SPEZIFISCHE Branchen über generische. Beispiele:
+    - SaaS-Vertrag / Software-as-a-Service → "saas", NICHT "technology"
+    - Webdesign/Agenturvertrag → "marketing", NICHT "technology"
+    - Beratungsleistungen → "consulting"
+    - Mietvertrag → "real_estate"
+  - Wähle die BESTE Kategorie. Wenn wirklich unklar, verwende "other".`;
 
 const STRUCTURE_RECOGNITION_SCHEMA = {
   type: "object",
@@ -38,6 +46,13 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
     language: { type: "string", enum: ["de", "en", "fr", "es", "it", "other"] },
     isAmendment: { type: "boolean" },
     recognizedAs: { type: "string" },
+    industry: {
+      type: "string",
+      enum: ["technology", "saas", "consulting", "finance", "healthcare", "real_estate",
+             "construction", "manufacturing", "ecommerce", "marketing", "media",
+             "education", "legal", "logistics", "energy", "insurance", "hr_staffing",
+             "food_hospitality", "public_sector", "other"]
+    },
     maturity: { type: "string", enum: ["high", "medium", "low"] },
     parties: {
       type: "array",
@@ -48,7 +63,7 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
           name: { type: ["string", "null"] },
           address: { type: ["string", "null"] }
         },
-        required: ["role", "name"],
+        required: ["role", "name", "address"],
         additionalProperties: false
       }
     },
@@ -74,7 +89,7 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
     }
   },
   required: ["contractType", "contractTypeLabel", "contractTypeConfidence", "jurisdiction",
-             "language", "isAmendment", "recognizedAs", "maturity", "parties",
+             "language", "isAmendment", "recognizedAs", "industry", "maturity", "parties",
              "duration", "legalFramework", "keyDates"],
   additionalProperties: false
 };
@@ -131,10 +146,11 @@ const CLAUSE_EXTRACTION_SCHEMA = {
 // ============================================================
 // STAGE 3: Clause Analysis (batched)
 // ============================================================
-const CLAUSE_ANALYSIS_PROMPT = (contractType, jurisdiction, parties) =>
+const CLAUSE_ANALYSIS_PROMPT = (contractType, jurisdiction, parties, industry) =>
 `Du bist ein Senior-Partner einer renommierten Kanzlei mit 25+ Jahren Erfahrung im Vertragsrecht.
 Vertragstyp: ${contractType}
 Jurisdiktion: ${jurisdiction || 'Deutschland'}
+Branche: ${industry || 'nicht spezifiziert'}
 Parteien: ${parties?.map(p => `${p.role}: ${p.name || 'nicht angegeben'}`).join(', ') || 'nicht angegeben'}
 
 Deine EINZIGE Aufgabe: Analysiere die folgenden Klauseln TIEFGEHEND.
@@ -152,11 +168,16 @@ Für JEDE Klausel:
    - "adequate": Funktional aber verbesserbar
    - "weak": Lückenhaft, unklar oder einseitig
    - "critical": Ernsthaftes rechtliches Risiko
-5. "concerns": Konkrete Bedenken (Array von Strings). NUR echte Probleme, keine generischen Hinweise.
-6. "riskLevel": 0 (kein Risiko) bis 10 (kritisches Risiko)
-7. "riskType": Art des Risikos - "legal" | "financial" | "compliance" | "operational" | "none"
-8. "keyTerms": Wichtige juristische Begriffe in der Klausel
-9. "legalReferences": Relevante Gesetze (z.B. "§ 622 BGB", "Art. 13 DSGVO")
+5. "importanceLevel": Wie wichtig ist diese Klausel für den Vertrag insgesamt?
+   - "critical": Kernklausel — bei Fehler massive rechtliche/finanzielle Folgen (z.B. Haftung, IP, Datenschutz, Wettbewerbsverbot)
+   - "high": Wichtige Klausel — regelt wesentliche Rechte/Pflichten (z.B. Zahlung, Kündigung, Gewährleistung, Laufzeit)
+   - "medium": Standard-Klausel — regulärer Vertragsbestandteil (z.B. Leistungsbeschreibung, Compliance)
+   - "low": Formale/administrative Klausel — geringe rechtliche Relevanz (z.B. Definitionen, Schlussbestimmungen, Änderungsklauseln)
+6. "concerns": Konkrete Bedenken (Array von Strings). NUR echte Probleme, keine generischen Hinweise.
+7. "riskLevel": 0 (kein Risiko) bis 10 (kritisches Risiko)
+8. "riskType": Art des Risikos - "legal" | "financial" | "compliance" | "operational" | "none"
+9. "keyTerms": Wichtige juristische Begriffe in der Klausel
+10. "legalReferences": Relevante Gesetze (z.B. "§ 622 BGB", "Art. 13 DSGVO")
 
 WICHTIGE REGELN:
 - Bewerte NUR was im Text steht. Erfinde keine Probleme.
@@ -177,6 +198,7 @@ const CLAUSE_ANALYSIS_SCHEMA = {
           plainLanguage: { type: "string" },
           legalAssessment: { type: "string" },
           strength: { type: "string", enum: ["strong", "adequate", "weak", "critical"] },
+          importanceLevel: { type: "string", enum: ["critical", "high", "medium", "low"] },
           concerns: { type: "array", items: { type: "string" } },
           riskLevel: { type: "number" },
           riskType: { type: "string", enum: ["legal", "financial", "compliance", "operational", "none"] },
@@ -184,7 +206,7 @@ const CLAUSE_ANALYSIS_SCHEMA = {
           legalReferences: { type: "array", items: { type: "string" } }
         },
         required: ["clauseId", "summary", "plainLanguage", "legalAssessment", "strength",
-                   "concerns", "riskLevel", "riskType", "keyTerms", "legalReferences"],
+                   "importanceLevel", "concerns", "riskLevel", "riskType", "keyTerms", "legalReferences"],
         additionalProperties: false
       }
     }
@@ -196,10 +218,11 @@ const CLAUSE_ANALYSIS_SCHEMA = {
 // ============================================================
 // STAGE 4: Optimization Generation (batched)
 // ============================================================
-const OPTIMIZATION_GENERATION_PROMPT = (contractType, jurisdiction, parties) =>
+const OPTIMIZATION_GENERATION_PROMPT = (contractType, jurisdiction, parties, industry) =>
 `Du bist ein Elite-Vertragsanwalt und Verhandlungsexperte.
 Vertragstyp: ${contractType}
 Jurisdiktion: ${jurisdiction || 'Deutschland'}
+Branche: ${industry || 'nicht spezifiziert'}
 Parteien: ${parties?.map(p => `${p.role}: ${p.name || 'N/A'}`).join(', ') || 'N/A'}
 
 Deine Aufgabe: Erstelle für jede Klausel, die Verbesserungspotenzial hat, DREI optimierte Versionen.

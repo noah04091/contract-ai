@@ -22,6 +22,7 @@ const clauseAnalysisSchema = new mongoose.Schema({
   keyTerms: [String],
   legalReferences: [String],
   strength: { type: String, enum: ['strong', 'adequate', 'weak', 'missing', 'critical'] },
+  importanceLevel: { type: String, enum: ['critical', 'high', 'medium', 'low'] },
   concerns: [String],
   riskLevel: { type: Number, min: 0, max: 10 },
   riskType: String,
@@ -108,6 +109,7 @@ const optimizerV2ResultSchema = new mongoose.Schema({
     language: String,
     isAmendment: Boolean,
     recognizedAs: String,
+    industry: String,
     maturity: String,
     parties: [{
       role: String,

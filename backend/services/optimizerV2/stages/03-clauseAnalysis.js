@@ -9,6 +9,47 @@ const { calculateCost } = require('./01-structureRecognition');
 
 const BATCH_SIZE = 4;
 
+// Heuristic importance overrides based on category
+const CATEGORY_IMPORTANCE_FLOOR = {
+  liability: 'critical',
+  ip_rights: 'critical',
+  data_protection: 'critical',
+  non_compete: 'critical',
+  payment: 'high',
+  termination: 'high',
+  warranty: 'high',
+  penalties: 'high',
+  duration: 'high',
+  confidentiality: 'high',
+  insurance: 'medium',
+  compliance: 'medium',
+  sla: 'medium',
+  deliverables: 'medium',
+  force_majeure: 'medium',
+  dispute_resolution: 'medium',
+  subject: 'medium',
+  parties: 'low',
+  general_provisions: 'low',
+  amendments: 'low',
+  other: 'low'
+};
+
+const IMPORTANCE_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
+
+/**
+ * Ensures GPT's importance isn't lower than the category-based floor.
+ * GPT can rate higher (e.g. "definitions" clause with unusual terms → medium),
+ * but can't rate a liability clause as "low".
+ */
+function reinforceImportance(analysis, clause) {
+  const floor = CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'low';
+  const gptLevel = analysis.importanceLevel || 'medium';
+  if (IMPORTANCE_RANK[gptLevel] < IMPORTANCE_RANK[floor]) {
+    return floor;
+  }
+  return gptLevel;
+}
+
 async function runClauseAnalysis(openai, clauses, structure, onProgress) {
   onProgress(22, 'Starte Tiefenanalyse der Klauseln...');
 
@@ -34,7 +75,8 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
     const systemPrompt = CLAUSE_ANALYSIS_PROMPT(
       structure.contractTypeLabel || structure.contractType,
       structure.jurisdiction,
-      structure.parties
+      structure.parties,
+      structure.industry
     );
 
     try {
@@ -60,6 +102,13 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
       });
 
       const result = JSON.parse(response.choices[0].message.content);
+      // Reinforce importance levels with category-based heuristics
+      for (const analysis of result.analyses) {
+        const clause = batch.find(c => c.id === analysis.clauseId);
+        if (clause) {
+          analysis.importanceLevel = reinforceImportance(analysis, clause);
+        }
+      }
       allAnalyses.push(...result.analyses);
 
       const batchCost = calculateCost('gpt-4o', response.usage?.prompt_tokens || 0, response.usage?.completion_tokens || 0);
@@ -77,6 +126,7 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
           plainLanguage: 'Diese Klausel konnte nicht analysiert werden.',
           legalAssessment: 'Fehler bei der Analyse. Bitte manuell prüfen.',
           strength: 'adequate',
+          importanceLevel: CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'medium',
           concerns: ['Automatische Analyse fehlgeschlagen'],
           riskLevel: 5,
           riskType: 'legal',

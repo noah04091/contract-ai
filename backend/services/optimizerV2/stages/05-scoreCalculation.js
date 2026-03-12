@@ -5,6 +5,16 @@
  * No GPT call needed - pure computation.
  */
 
+// Category-based importance fallback (mirrors Stage 3 heuristic)
+const CATEGORY_IMPORTANCE_FLOOR = {
+  liability: 'critical', ip_rights: 'critical', data_protection: 'critical', non_compete: 'critical',
+  payment: 'high', termination: 'high', warranty: 'high', penalties: 'high',
+  duration: 'high', confidentiality: 'high',
+  insurance: 'medium', compliance: 'medium', sla: 'medium', deliverables: 'medium',
+  force_majeure: 'medium', dispute_resolution: 'medium', subject: 'medium',
+  parties: 'low', general_provisions: 'low', amendments: 'low', other: 'low'
+};
+
 function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress) {
   onProgress(85, 'Berechne Vertrags-Scores...');
 
@@ -14,10 +24,13 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress)
   const optimizationMap = new Map();
   for (const o of optimizations) optimizationMap.set(o.clauseId, o);
 
+  // Importance weights for overall score calculation
+  const importanceWeights = { critical: 2.0, high: 1.5, medium: 1.0, low: 0.5 };
+
   // Per-clause scores
   const perClause = clauses.map(clause => {
     const analysis = analysisMap.get(clause.id);
-    if (!analysis) return { clauseId: clause.id, score: 50 };
+    if (!analysis) return { clauseId: clause.id, score: 50, importanceLevel: CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'medium' };
 
     let score = 50; // baseline
 
@@ -36,15 +49,20 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress)
 
     return {
       clauseId: clause.id,
-      score: Math.max(0, Math.min(100, Math.round(score)))
+      score: Math.max(0, Math.min(100, Math.round(score))),
+      importanceLevel: analysis.importanceLevel || CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'medium'
     };
   });
 
-  // Aggregate scores
-  const clauseScores = perClause.map(c => c.score);
-  const avgScore = clauseScores.length > 0
-    ? clauseScores.reduce((a, b) => a + b, 0) / clauseScores.length
-    : 50;
+  // Weighted average score (important clauses count more)
+  let weightedSum = 0;
+  let weightTotal = 0;
+  for (const pc of perClause) {
+    const w = importanceWeights[pc.importanceLevel] || 1.0;
+    weightedSum += pc.score * w;
+    weightTotal += w;
+  }
+  const avgScore = weightTotal > 0 ? weightedSum / weightTotal : 50;
 
   // Risk score (inverse of average risk)
   const risks = clauseAnalyses.map(a => a.riskLevel || 0);

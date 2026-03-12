@@ -9,6 +9,7 @@
  * GET    /results/:id/redline - Get redline data for a mode
  * POST   /results/:id/resume - Resume failed analysis
  * GET    /history          - User's analysis history
+ * GET    /results/:id/pdf  - Export analysis as PDF report
  * DELETE /results/:id      - Delete analysis
  */
 const express = require('express');
@@ -448,7 +449,7 @@ router.post('/results/:id/resume', async (req, res) => {
 router.get('/history', async (req, res) => {
   try {
     const results = await OptimizerV2Result.find({ userId: req.user.userId })
-      .select('requestId fileName status scores.overall structure.contractType structure.contractTypeLabel createdAt completedAt')
+      .select('requestId fileName status scores.overall structure.contractType structure.contractTypeLabel structure.recognizedAs structure.industry performance.clauseCount performance.optimizedCount createdAt completedAt')
       .sort({ createdAt: -1 })
       .limit(50);
 
@@ -475,6 +476,252 @@ router.delete('/results/:id', async (req, res) => {
     res.json({ success: true, message: 'Analyse gelöscht.' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Fehler beim Löschen.' });
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// GET /results/:id/pdf - Export analysis as PDF report
+// ════════════════════════════════════════════════════════
+router.get('/results/:id/pdf', async (req, res) => {
+  try {
+    const result = await OptimizerV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+      status: 'completed'
+    });
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      info: {
+        Title: `Vertragsanalyse - ${result.fileName || 'Vertrag'}`,
+        Author: 'Contract AI - Smart Optimizer',
+        Creator: 'Contract AI'
+      }
+    });
+
+    const fileName = (result.fileName || 'Analyse').replace(/\.[^/.]+$/, '');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Analyse.pdf"`);
+    doc.pipe(res);
+
+    const BLUE = '#007AFF';
+    const GREEN = '#34C759';
+    const RED = '#FF3B30';
+    const ORANGE = '#FF9500';
+    const GRAY = '#6B7280';
+    const DARK = '#111827';
+
+    const STRENGTH_LABELS = { strong: 'Stark', adequate: 'Ausreichend', weak: 'Schwach', critical: 'Kritisch' };
+    const IMPORTANCE_LABELS = { critical: 'Kritisch', high: 'Wichtig', medium: 'Standard', low: 'Formal' };
+    const INDUSTRY_LABELS = {
+      technology: 'Technologie', saas: 'SaaS / Software', consulting: 'Beratung',
+      finance: 'Finanzen', healthcare: 'Gesundheitswesen', real_estate: 'Immobilien',
+      construction: 'Bauwesen', manufacturing: 'Fertigung', ecommerce: 'E-Commerce',
+      marketing: 'Marketing', media: 'Medien', education: 'Bildung', legal: 'Recht',
+      logistics: 'Logistik', energy: 'Energie', insurance: 'Versicherung',
+      hr_staffing: 'Personal / HR', food_hospitality: 'Gastronomie',
+      public_sector: 'Öffentlicher Sektor', other: 'Sonstige'
+    };
+
+    function getScoreColor(score) {
+      if (score >= 80) return GREEN;
+      if (score >= 60) return ORANGE;
+      if (score >= 40) return RED;
+      return '#AF52DE';
+    }
+
+    function checkPage(needed = 80) {
+      if (doc.y + needed > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+      }
+    }
+
+    // ── Page 1: Header & Overview ──
+    doc.fontSize(24).fillColor(DARK).text('Vertragsanalyse', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(12).fillColor(GRAY).text('Contract AI - Smart Optimizer', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(10).fillColor(GRAY).text(new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }), { align: 'center' });
+    doc.moveDown(1.5);
+
+    // Divider
+    doc.strokeColor('#E5E7EB').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    doc.moveDown(1);
+
+    // Contract info
+    doc.fontSize(16).fillColor(DARK).text('Vertragsübersicht');
+    doc.moveDown(0.5);
+
+    const structure = result.structure || {};
+    const infoRows = [
+      ['Datei', result.fileName || '-'],
+      ['Vertragstyp', structure.recognizedAs || structure.contractTypeLabel || '-'],
+      ['Jurisdiktion', structure.jurisdiction || '-'],
+    ];
+    if (structure.industry && structure.industry !== 'other') {
+      infoRows.push(['Branche', INDUSTRY_LABELS[structure.industry] || structure.industry]);
+    }
+    if (structure.parties?.length > 0) {
+      infoRows.push(['Parteien', structure.parties.map(p => `${p.role}: ${p.name || '-'}`).join(', ')]);
+    }
+    if (structure.duration) infoRows.push(['Laufzeit', structure.duration]);
+    infoRows.push(['Qualität', structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis']);
+
+    for (const [label, value] of infoRows) {
+      doc.fontSize(10).fillColor(GRAY).text(`${label}:`, 50, doc.y, { continued: true, width: 100 });
+      doc.fillColor(DARK).text(`  ${value}`, { width: 380 });
+      doc.moveDown(0.2);
+    }
+    doc.moveDown(1);
+
+    // ── Scores ──
+    doc.fontSize(16).fillColor(DARK).text('Bewertung');
+    doc.moveDown(0.5);
+
+    const scores = result.scores || {};
+    const overallScore = scores.overall || 0;
+
+    doc.fontSize(32).fillColor(getScoreColor(overallScore)).text(`${overallScore}`, 50, doc.y, { continued: true });
+    doc.fontSize(14).fillColor(GRAY).text('/100  Gesamtscore');
+    doc.moveDown(0.8);
+
+    const scoreItems = [
+      ['Risiko', scores.risk],
+      ['Klarheit', scores.clarity],
+      ['Vollständigkeit', scores.completeness],
+      ['Marktstandard', scores.marketStandard]
+    ];
+    for (const [label, value] of scoreItems) {
+      const v = value || 0;
+      doc.fontSize(10).fillColor(GRAY).text(`${label}:`, 50, doc.y, { continued: true, width: 120 });
+      doc.fillColor(getScoreColor(v)).text(`  ${v}/100`);
+      doc.moveDown(0.1);
+    }
+    doc.moveDown(0.5);
+
+    // Stats
+    const clauses = result.clauses || [];
+    const analyses = result.clauseAnalyses || [];
+    const optimizations = result.optimizations || [];
+    const optimizedCount = optimizations.filter(o => o.needsOptimization).length;
+    const criticalCount = analyses.filter(a => a.strength === 'critical').length;
+    const weakCount = analyses.filter(a => a.strength === 'weak').length;
+
+    doc.fontSize(10).fillColor(DARK);
+    doc.text(`${clauses.length} Klauseln analysiert  |  ${optimizedCount} optimierbar  |  ${criticalCount} kritisch  |  ${weakCount} schwach`);
+    doc.moveDown(1.5);
+
+    // Divider
+    doc.strokeColor('#E5E7EB').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    doc.moveDown(1);
+
+    // ── Clause Details ──
+    doc.fontSize(16).fillColor(DARK).text('Klausel-Analyse');
+    doc.moveDown(0.8);
+
+    // Sort by importance: critical first
+    const importanceOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const analysisMap = new Map();
+    for (const a of analyses) analysisMap.set(a.clauseId, a);
+
+    const sortedClauses = [...clauses].sort((a, b) => {
+      const impA = importanceOrder[analysisMap.get(a.id)?.importanceLevel] ?? 2;
+      const impB = importanceOrder[analysisMap.get(b.id)?.importanceLevel] ?? 2;
+      return impA - impB;
+    });
+
+    for (const clause of sortedClauses) {
+      const analysis = analysisMap.get(clause.id);
+      const optimization = optimizations.find(o => o.clauseId === clause.id);
+
+      checkPage(120);
+
+      // Clause header
+      const sectionLabel = clause.sectionNumber ? `${clause.sectionNumber} ` : '';
+      doc.fontSize(12).fillColor(DARK).text(`${sectionLabel}${clause.title}`, { underline: true });
+
+      // Badges line
+      const badges = [];
+      if (analysis?.importanceLevel) badges.push(IMPORTANCE_LABELS[analysis.importanceLevel] || analysis.importanceLevel);
+      if (analysis?.strength) badges.push(STRENGTH_LABELS[analysis.strength] || analysis.strength);
+      if (analysis?.riskLevel > 0) badges.push(`Risiko: ${analysis.riskLevel}/10`);
+      doc.fontSize(9).fillColor(GRAY).text(badges.join('  |  '));
+      doc.moveDown(0.3);
+
+      // Plain language
+      if (analysis?.plainLanguage) {
+        doc.fontSize(10).fillColor(DARK).text(analysis.plainLanguage, { width: 495 });
+        doc.moveDown(0.3);
+      }
+
+      // Legal assessment
+      if (analysis?.legalAssessment) {
+        checkPage(60);
+        doc.fontSize(9).fillColor(GRAY).text('Juristische Bewertung:', { underline: false });
+        doc.fontSize(9).fillColor('#374151').text(analysis.legalAssessment, { width: 495 });
+        doc.moveDown(0.3);
+      }
+
+      // Concerns
+      if (analysis?.concerns?.length > 0) {
+        checkPage(40);
+        doc.fontSize(9).fillColor(ORANGE).text('Bedenken:');
+        for (const concern of analysis.concerns) {
+          doc.fontSize(9).fillColor('#374151').text(`  • ${concern}`, { width: 485 });
+        }
+        doc.moveDown(0.2);
+      }
+
+      // Legal references
+      if (analysis?.legalReferences?.length > 0) {
+        doc.fontSize(8).fillColor('#AF52DE').text(`Rechtsgrundlagen: ${analysis.legalReferences.join(', ')}`);
+        doc.moveDown(0.2);
+      }
+
+      // Optimization hint
+      if (optimization?.needsOptimization) {
+        checkPage(30);
+        doc.fontSize(9).fillColor(BLUE).text('→ Optimierung verfügbar (siehe Optimizer für Details)');
+        if (optimization.negotiationAdvice) {
+          doc.fontSize(8).fillColor(GREEN).text(`Verhandlungstipp: ${optimization.negotiationAdvice}`, { width: 495 });
+        }
+      }
+
+      doc.moveDown(0.8);
+
+      // Light separator between clauses
+      doc.strokeColor('#F3F4F6').lineWidth(0.5).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+      doc.moveDown(0.5);
+    }
+
+    // ── Footer ──
+    checkPage(60);
+    doc.moveDown(1);
+    doc.strokeColor('#E5E7EB').lineWidth(1).moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+    doc.moveDown(0.5);
+    doc.fontSize(8).fillColor(GRAY).text(
+      `Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr  |  Contract AI - Smart Optimizer  |  Analyse-ID: ${result.requestId || result._id}`,
+      { align: 'center' }
+    );
+    doc.moveDown(0.3);
+    doc.fontSize(7).fillColor('#9CA3AF').text(
+      'Dieser Bericht wurde KI-gestützt erstellt und ersetzt keine rechtliche Beratung.',
+      { align: 'center' }
+    );
+
+    doc.end();
+
+  } catch (err) {
+    console.error('[OptimizerV2] PDF export failed:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: 'PDF-Export fehlgeschlagen.' });
+    }
   }
 });
 
