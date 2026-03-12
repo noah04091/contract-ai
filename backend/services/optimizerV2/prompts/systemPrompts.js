@@ -83,14 +83,14 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
           date: { type: ["string", "null"] },
           description: { type: "string" }
         },
-        required: ["type", "description"],
+        required: ["type", "date", "description"],
         additionalProperties: false
       }
     }
   },
   required: ["contractType", "contractTypeLabel", "contractTypeConfidence", "jurisdiction",
              "language", "isAmendment", "recognizedAs", "industry", "maturity", "parties",
-             "duration", "legalFramework", "keyDates"],
+             "duration", "startDate", "endDate", "legalFramework", "keyDates"],
   additionalProperties: false
 };
 
@@ -134,7 +134,7 @@ const CLAUSE_EXTRACTION_SCHEMA = {
           },
           sectionNumber: { type: ["string", "null"] }
         },
-        required: ["id", "title", "originalText", "category"],
+        required: ["id", "title", "originalText", "category", "sectionNumber"],
         additionalProperties: false
       }
     }
