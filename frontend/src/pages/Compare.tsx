@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
@@ -15,39 +15,12 @@ import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
 import PDFDocumentViewer from "../components/PDFDocumentViewer";
+import CompareResults from "../components/compare/CompareResults";
+import {
+  ComparisonResult, ComparisonResultV2, isV2Result,
+  Perspective, ComparisonDifference, ContractAnalysis,
+} from "../types/compare";
 import "../styles/ContractPages.css";
-
-// Enhanced types for better comparison structure
-interface ComparisonDifference {
-  category: string;
-  section: string;
-  contract1: string;
-  contract2: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  explanation?: string;
-  impact: string;
-  recommendation: string;
-}
-
-interface ContractAnalysis {
-  strengths: string[];
-  weaknesses: string[];
-  riskLevel: 'low' | 'medium' | 'high';
-  score: number;
-}
-
-interface ComparisonResult {
-  differences: ComparisonDifference[];
-  contract1Analysis: ContractAnalysis;
-  contract2Analysis: ContractAnalysis;
-  overallRecommendation: {
-    recommended: 1 | 2;
-    reasoning: string;
-    confidence: number;
-  };
-  summary: string;
-  categories: string[];
-}
 
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
@@ -896,6 +869,7 @@ interface ComparisonHistoryItem {
   mode: string;
   result: ComparisonResult;
   recommended: 1 | 2;
+  version?: number;
 }
 
 // History is now stored in backend database (user-specific, device-independent)
@@ -903,6 +877,8 @@ interface ComparisonHistoryItem {
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const useV2 = location.pathname.includes('compare-v2');
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -920,6 +896,9 @@ export default function EnhancedCompare() {
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
   // 📊 SSE Progress State
   const [progress, setProgress] = useState<ProgressStep | null>(null);
+  // 🆕 V2: Perspective state
+  const [perspective, setPerspective] = useState<Perspective>('neutral');
+  const [reAnalyzing, setReAnalyzing] = useState(false);
 
   // 📜 History State (loaded from backend API)
   const [showHistory, setShowHistory] = useState(false);
@@ -1215,10 +1194,11 @@ export default function EnhancedCompare() {
     formData.append("file2", file2);
     formData.append("userProfile", userProfile);
     formData.append("comparisonMode", comparisonMode);
+    if (useV2) formData.append("perspective", perspective);
 
     try {
       // 📡 SSE Request with streaming progress
-      const res = await fetch("/api/compare?stream=true", {
+      const res = await fetch(`/api/compare?stream=true${useV2 ? '&version=2' : ''}`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -1293,6 +1273,71 @@ export default function EnhancedCompare() {
       setProgress(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 🆕 V2: Perspective change — re-analyze Phase B only
+  const handlePerspectiveChange = async (newPerspective: Perspective) => {
+    if (!result || !isV2Result(result)) return;
+    const v2 = result as ComparisonResultV2;
+    if (!v2.contractMap?.contract1 || !v2.contractMap?.contract2) return;
+
+    setPerspective(newPerspective);
+    setReAnalyzing(true);
+
+    try {
+      const res = await fetch("/api/compare/re-analyze?stream=true", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream'
+        },
+        body: JSON.stringify({
+          contractMap: v2.contractMap,
+          perspective: newPerspective,
+          comparisonMode,
+          userProfile,
+          contractTexts: {
+            text1: v2._contractTexts?.text1 || '',
+            text2: v2._contractTexts?.text2 || '',
+          },
+        }),
+      });
+
+      if (!res.ok && !res.body) throw new Error("Re-Analyse fehlgeschlagen");
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new Error("Stream nicht verfügbar");
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const eventData = JSON.parse(line.slice(6));
+              if (eventData.type === 'result') {
+                setResult(eventData.data);
+              } else if (eventData.type === 'error') {
+                setNotification({ message: eventData.message || "Re-Analyse fehlgeschlagen", type: "error" });
+              }
+            } catch { /* parse error */ }
+          }
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Fehler bei der Re-Analyse";
+      setNotification({ message, type: "error" });
+    } finally {
+      setReAnalyzing(false);
     }
   };
 
@@ -1988,24 +2033,16 @@ export default function EnhancedCompare() {
             </div>
           </motion.div>
 
+          {/* 🆕 V2 Results Container */}
           <AnimatePresence>
             {result && (
-              <motion.div 
+              <motion.div
                 ref={resultRef}
-                style={{
-                  background: 'white',
-                  borderRadius: '16px',
-                  border: '1px solid #e8e8ed',
-                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.08)',
-                  marginTop: '2rem',
-                  marginBottom: '3rem'
-                }}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem', borderBottom: '1px solid #e8e8ed' }}>
-                  <h2 style={{ fontSize: '1.3rem', fontWeight: 600, margin: 0, color: '#1d1d1f' }}>Vergleichsergebnis</h2>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem', marginTop: '1rem' }}>
                   <motion.button
                     onClick={exportToPDF}
                     disabled={pdfExporting}
@@ -2013,204 +2050,41 @@ export default function EnhancedCompare() {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      padding: '0.7rem 1.2rem',
+                      padding: '0.6rem 1rem',
                       borderRadius: '10px',
                       backgroundColor: pdfExporting ? '#e8e8ed' : '#f5f5f7',
                       color: '#1d1d1f',
                       border: 'none',
                       fontFamily: 'inherit',
-                      fontSize: '0.95rem',
+                      fontSize: '0.88rem',
                       fontWeight: 500,
                       cursor: pdfExporting ? 'wait' : 'pointer',
                       opacity: pdfExporting ? 0.7 : 1
                     }}
-                    whileHover={!pdfExporting ? { scale: 1.02, backgroundColor: '#e8e8ed' } : {}}
+                    whileHover={!pdfExporting ? { scale: 1.02 } : {}}
                     whileTap={!pdfExporting ? { scale: 0.98 } : {}}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                   >
                     {pdfExporting ? (
                       <>
-                        <div style={{ width: '16px', height: '16px', border: '2px solid rgba(0, 0, 0, 0.2)', borderTopColor: '#0071e3', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                        <div style={{ width: '14px', height: '14px', border: '2px solid rgba(0, 0, 0, 0.2)', borderTopColor: '#0071e3', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
                         <span>PDF wird erstellt...</span>
                       </>
                     ) : (
                       <>
-                        <Download size={16} />
+                        <Download size={14} />
                         <span>Als PDF speichern</span>
                       </>
                     )}
                   </motion.button>
                 </div>
 
-                {/* Contract Analysis Section */}
-                <motion.div 
-                  style={{ borderBottom: '1px solid #e8e8ed' }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.4 }}
-                >
-                  <div 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '1.2rem 2rem',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => toggleSection('analysis')}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        backgroundColor: '#f5f5f7',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#0071e3'
-                      }}>
-                        <Scale size={18} />
-                      </div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1d1d1f' }}>Vertragsbewertung</h3>
-                    </div>
-                    <button style={{ background: 'none', border: 'none', color: '#6e6e73', cursor: 'pointer' }}>
-                      {expandedSections.analysis ? <MinusCircle size={18} /> : <PlusCircle size={18} />}
-                    </button>
-                  </div>
-                  {expandedSections.analysis && (
-                    <div style={{ padding: '0 2rem 1.5rem' }}>
-                      <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem' }}>
-                        <ContractScore 
-                          title="Vertrag 1"
-                          analysis={result.contract1Analysis}
-                          isRecommended={result.overallRecommendation.recommended === 1}
-                        />
-                        <ContractScore 
-                          title="Vertrag 2"
-                          analysis={result.contract2Analysis}
-                          isRecommended={result.overallRecommendation.recommended === 2}
-                        />
-                      </div>
-                      
-                      <motion.div 
-                        style={{
-                          background: 'linear-gradient(135deg, #0071e3, #005bb5)',
-                          color: 'white',
-                          padding: '1.5rem',
-                          borderRadius: '12px',
-                          textAlign: 'center'
-                        }}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3, duration: 0.4 }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                          <Star size={20} />
-                          <h4 style={{ fontSize: '1.2rem', margin: 0 }}>Empfehlung: Vertrag {result.overallRecommendation.recommended}</h4>
-                        </div>
-                        <p style={{ margin: '0.5rem 0', opacity: 0.9 }}>{result.overallRecommendation.reasoning}</p>
-                        <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-                          Vertrauen: {result.overallRecommendation.confidence}%
-                        </div>
-                      </motion.div>
-                    </div>
-                  )}
-                </motion.div>
-
-                {/* Differences Section */}
-                <motion.div 
-                  style={{ borderBottom: '1px solid #e8e8ed' }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                >
-                  <div 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '1.2rem 2rem',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => toggleSection('differences')}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        backgroundColor: '#f5f5f7',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#0071e3'
-                      }}>
-                        <Info size={18} />
-                      </div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1d1d1f' }}>Unterschiede im Detail</h3>
-                    </div>
-                    <button style={{ background: 'none', border: 'none', color: '#6e6e73', cursor: 'pointer' }}>
-                      {expandedSections.differences ? <MinusCircle size={18} /> : <PlusCircle size={18} />}
-                    </button>
-                  </div>
-                  {expandedSections.differences && (
-                    <div style={{ padding: '0 2rem 1.5rem' }}>
-                      <DifferenceView
-                        differences={result.differences}
-                        selectedCategory={selectedCategory}
-                        onCategoryChange={setSelectedCategory}
-                        showSideBySide={showSideBySide}
-                        onToggleView={() => setShowSideBySide(!showSideBySide)}
-                        recommendedContract={result.overallRecommendation.recommended}
-                        file1={file1}
-                        file2={file2}
-                      />
-                    </div>
-                  )}
-                </motion.div>
-
-                {/* Summary Section */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.4 }}
-                >
-                  <div 
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '1.2rem 2rem',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => toggleSection('recommendation')}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '50%',
-                        backgroundColor: '#f5f5f7',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#0071e3'
-                      }}>
-                        <FileText size={18} />
-                      </div>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1d1d1f' }}>Zusammenfassung</h3>
-                    </div>
-                    <button style={{ background: 'none', border: 'none', color: '#6e6e73', cursor: 'pointer' }}>
-                      {expandedSections.recommendation ? <MinusCircle size={18} /> : <PlusCircle size={18} />}
-                    </button>
-                  </div>
-                  {expandedSections.recommendation && (
-                    <div style={{ padding: '0 2rem 1.5rem' }}>
-                      <p style={{ margin: 0, lineHeight: 1.6, color: '#6e6e73' }}>{result.summary}</p>
-                    </div>
-                  )}
-                </motion.div>
+                <CompareResults
+                  result={result}
+                  file1={file1}
+                  file2={file2}
+                  onPerspectiveChange={handlePerspectiveChange}
+                  reAnalyzing={reAnalyzing}
+                />
               </motion.div>
             )}
           </AnimatePresence>

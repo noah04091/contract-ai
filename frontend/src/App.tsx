@@ -260,6 +260,7 @@ function AppWithLoader() {
             <Route path="/contract-builder/:id" element={<RequireAuth><ContractBuilder /></RequireAuth>} />
 
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
+            <Route path="/compare-v2" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
             <Route path="/generate" element={<RequireAuth><Generate /></RequireAuth>} />
             <Route path="/Generate" element={<Navigate to="/generate" replace />} /> {/* SEO: Redirect uppercase */}

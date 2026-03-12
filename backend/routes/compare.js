@@ -15,6 +15,7 @@ const database = require("../config/database");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
+const { runCompareV2Pipeline } = require("../services/compareAnalyzer"); // 🆕 Compare V2
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -780,17 +781,58 @@ router.post("/", verifyToken, upload.fields([
     console.log(`📝 Text extracted: Contract 1 (${contract1Text.length} chars), Contract 2 (${contract2Text.length} chars)`);
     sendProgress(res, 'chunking', 35, 'Verträge werden vorbereitet...', wantsSSE);
 
-    // Perform AI analysis with progress updates
-    sendProgress(res, 'analyzing', 50, `KI-Analyse läuft (${COMPARISON_MODES[comparisonMode].name})...`, wantsSSE);
-    console.log("🤖 Starting AI analysis...");
-    const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile, comparisonMode);
+    // 🆕 V2 Pipeline: Check ?version=2 query parameter
+    const useV2 = req.query.version === '2';
+    const perspective = req.body.perspective || 'neutral';
 
-    // Add mode info to result
-    analysisResult.comparisonMode = {
-      id: comparisonMode,
-      name: COMPARISON_MODES[comparisonMode].name,
-      description: COMPARISON_MODES[comparisonMode].description
-    };
+    let analysisResult;
+
+    if (useV2) {
+      // === V2 PIPELINE ===
+      console.log(`🆕 Using Compare V2 Pipeline (Perspektive: ${perspective})`);
+
+      try {
+        analysisResult = await runCompareV2Pipeline(
+          contract1Text,
+          contract2Text,
+          perspective,
+          comparisonMode,
+          userProfile,
+          (step, pct, msg) => sendProgress(res, step, pct, msg, wantsSSE)
+        );
+
+        // Add mode info
+        analysisResult.comparisonMode = {
+          id: comparisonMode,
+          name: COMPARISON_MODES[comparisonMode].name,
+          description: COMPARISON_MODES[comparisonMode].description
+        };
+      } catch (v2Error) {
+        console.warn(`⚠️ V2 Pipeline fehlgeschlagen: ${v2Error.message} — Fallback auf V1`);
+        sendProgress(res, 'fallback', 50, 'Erweiterte Analyse nicht verfügbar, Standardvergleich wird durchgeführt...', wantsSSE);
+
+        // Fallback to V1
+        analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile, comparisonMode);
+        analysisResult.comparisonMode = {
+          id: comparisonMode,
+          name: COMPARISON_MODES[comparisonMode].name,
+          description: COMPARISON_MODES[comparisonMode].description
+        };
+        analysisResult._v2Fallback = true;
+      }
+    } else {
+      // === V1 PIPELINE (unchanged) ===
+      sendProgress(res, 'analyzing', 50, `KI-Analyse läuft (${COMPARISON_MODES[comparisonMode].name})...`, wantsSSE);
+      console.log("🤖 Starting AI analysis (V1)...");
+      analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile, comparisonMode);
+
+      // Add mode info to result
+      analysisResult.comparisonMode = {
+        id: comparisonMode,
+        name: COMPARISON_MODES[comparisonMode].name,
+        description: COMPARISON_MODES[comparisonMode].description
+      };
+    }
 
     sendProgress(res, 'saving', 85, 'Ergebnis wird gespeichert...', wantsSSE);
     // ✅ FIXED: Save contracts and analysis to database with proper error handling
@@ -833,7 +875,7 @@ router.post("/", verifyToken, upload.fields([
 
     // Log the comparison activity with full result for history feature
     try {
-      await contractsCollection.insertOne({
+      const historyDoc = {
         userId: new ObjectId(req.user.userId),
         action: "compare_contracts",
         tool: "contract_compare",
@@ -843,11 +885,14 @@ router.post("/", verifyToken, upload.fields([
         file2Name: fixUtf8Filename(file2.originalname),
         recommendedContract: analysisResult.overallRecommendation.recommended,
         confidence: analysisResult.overallRecommendation.confidence,
-        differencesCount: analysisResult.differences.length,
+        differencesCount: analysisResult.differences?.length || 0,
         // Store full result for history reload feature
         fullResult: analysisResult,
+        version: useV2 ? 2 : 1,
+        perspective: useV2 ? perspective : undefined,
         timestamp: new Date()
-      });
+      };
+      await contractsCollection.insertOne(historyDoc);
     } catch (logError) {
       console.error("⚠️ Warning: Could not log comparison activity:", logError.message);
     }
@@ -903,6 +948,90 @@ router.post("/", verifyToken, upload.fields([
       message: "Fehler beim Vertragsvergleich: " + (error.message || "Unbekannter Fehler")
     };
 
+    if (wantsSSE) {
+      res.write(`data: ${JSON.stringify({ type: 'error', ...errorResponse })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json(errorResponse);
+    }
+  }
+});
+
+// 🆕 V2: Re-analyze with different perspective (reuses Phase A maps)
+router.post("/re-analyze", verifyToken, async (req, res) => {
+  const wantsSSE = req.headers.accept?.includes('text/event-stream') || req.query.stream === 'true';
+
+  if (wantsSSE) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+  }
+
+  try {
+    await ensureDb();
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      const error = { message: "Nutzer nicht gefunden" };
+      if (wantsSSE) { res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`); return res.end(); }
+      return res.status(404).json(error);
+    }
+
+    const isPremium = user.subscriptionActive === true || user.isPremium === true;
+    if (!isPremium) {
+      const error = { message: "Premium-Funktion erforderlich" };
+      if (wantsSSE) { res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`); return res.end(); }
+      return res.status(403).json(error);
+    }
+
+    const { contractMap, perspective, comparisonMode, userProfile, contractTexts } = req.body;
+
+    if (!contractMap?.contract1 || !contractMap?.contract2) {
+      const error = { message: "Vertragskarten fehlen für die Re-Analyse" };
+      if (wantsSSE) { res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`); return res.end(); }
+      return res.status(400).json(error);
+    }
+
+    const validPerspectives = ['auftraggeber', 'auftragnehmer', 'neutral'];
+    const selectedPerspective = validPerspectives.includes(perspective) ? perspective : 'neutral';
+
+    console.log(`🔄 Re-Analyse: Perspektive → ${selectedPerspective}`);
+    sendProgress(res, 'comparing', 30, `Re-Analyse mit Perspektive: ${selectedPerspective}...`, wantsSSE);
+
+    const { compareContractsV2, buildV2Response } = require("../services/compareAnalyzer");
+
+    const phaseBResult = await compareContractsV2(
+      contractMap.contract1,
+      contractMap.contract2,
+      contractTexts?.text1 || '',
+      contractTexts?.text2 || '',
+      selectedPerspective,
+      comparisonMode || 'standard',
+      userProfile || 'individual'
+    );
+
+    sendProgress(res, 'finalizing', 90, 'Ergebnis wird zusammengestellt...', wantsSSE);
+
+    const result = buildV2Response(contractMap.contract1, contractMap.contract2, phaseBResult, selectedPerspective, contractTexts?.text1 || '', contractTexts?.text2 || '');
+    result.comparisonMode = {
+      id: comparisonMode || 'standard',
+      name: COMPARISON_MODES[comparisonMode]?.name || 'Standard-Vergleich',
+      description: COMPARISON_MODES[comparisonMode]?.description || ''
+    };
+
+    if (wantsSSE) {
+      sendProgress(res, 'complete', 100, 'Re-Analyse abgeschlossen!', true);
+      res.write(`data: ${JSON.stringify({ type: 'result', data: result })}\n\n`);
+      res.end();
+    } else {
+      res.json(result);
+    }
+
+  } catch (error) {
+    console.error("❌ Re-analyze error:", error);
+    const errorResponse = { message: "Fehler bei der Re-Analyse: " + (error.message || "Unbekannter Fehler") };
     if (wantsSSE) {
       res.write(`data: ${JSON.stringify({ type: 'error', ...errorResponse })}\n\n`);
       res.end();
@@ -1094,9 +1223,11 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
 
     const { result, file1Name, file2Name } = req.body;
 
-    if (!result || !result.differences || !result.contract1Analysis || !result.contract2Analysis) {
+    if (!result || !result.differences) {
       return res.status(400).json({ message: "Ungültige Vergleichsdaten" });
     }
+
+    const isV2 = result.version === 2;
 
     console.log("📄 Generating PDF export...");
 
@@ -1159,35 +1290,58 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
       doc.moveDown(1);
     }
 
-    // === RECOMMENDATION BOX ===
-    // Calculate text height first
-    const reasoningText = result.overallRecommendation.reasoning;
-    const confidenceText = `Konfidenz: ${result.overallRecommendation.confidence}%`;
+    // === V2: TL;DR BOX ===
+    if (isV2 && result.summary?.tldr) {
+      const tldrText = result.summary.tldr;
+      const tldrLines = Math.ceil(tldrText.length / 70);
+      const tldrBoxHeight = Math.max(60, 30 + (tldrLines * 14) + 15);
+      const tldrY = doc.y;
 
-    // Estimate box height based on text length (roughly 80 chars per line at fontSize 11)
+      doc.rect(50, tldrY, 495, tldrBoxHeight).fill('#f0fdf4');
+      doc.fontSize(12).fillColor('#166534').text('Kurzfassung', 70, tldrY + 10);
+      doc.fontSize(11).fillColor(textColor).text(tldrText, 70, tldrY + 28, { width: 455 });
+      doc.y = tldrY + tldrBoxHeight + 10;
+      doc.moveDown(0.3);
+    }
+
+    // === RECOMMENDATION BOX ===
+    const reasoningText = result.overallRecommendation?.reasoning || '';
+    const confidenceText = `Konfidenz: ${result.overallRecommendation?.confidence || 50}%`;
+
     const estimatedLines = Math.ceil(reasoningText.length / 70);
     const boxHeight = Math.max(90, 50 + (estimatedLines * 14) + 20);
 
+    // V2: Show conditions if available
+    const conditions = (isV2 && result.overallRecommendation?.conditions?.length)
+      ? result.overallRecommendation.conditions : [];
+    const conditionsHeight = conditions.length > 0 ? (conditions.length * 14 + 20) : 0;
+
     const recY = doc.y;
-    doc.rect(50, recY, 495, boxHeight)
+    doc.rect(50, recY, 495, boxHeight + conditionsHeight)
        .fill('#f0f7ff');
 
     doc.fontSize(16)
        .fillColor(primaryColor)
-       .text(`Empfehlung: Vertrag ${result.overallRecommendation.recommended}`, 70, recY + 15);
+       .text(`Empfehlung: Vertrag ${result.overallRecommendation?.recommended || '?'}`, 70, recY + 15);
 
     doc.fontSize(11)
        .fillColor(textColor)
        .text(reasoningText, 70, recY + 40, { width: 455 });
 
-    // Get actual Y position after reasoning text
     const afterReasoningY = doc.y;
+
+    if (conditions.length > 0) {
+      doc.fontSize(10).fillColor('#92400e').text('Bedingungen:', 70, afterReasoningY + 5);
+      conditions.forEach(c => {
+        doc.fontSize(9).fillColor(textColor).text(`  • ${c}`, 70);
+      });
+    }
 
     doc.fontSize(9)
        .fillColor(mutedColor)
-       .text(confidenceText, 70, afterReasoningY + 5);
+       .text(confidenceText, 70, doc.y + 5);
 
-    doc.y = recY + boxHeight + 10;
+    doc.y = recY + boxHeight + conditionsHeight + 10;
     doc.moveDown(0.5);
 
     // === SCORES COMPARISON ===
@@ -1196,69 +1350,98 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
        .text('Bewertung im Vergleich', { underline: true });
     doc.moveDown(0.5);
 
-    // Contract 1 Score
-    const score1Color = result.contract1Analysis.riskLevel === 'low' ? successColor :
-                        result.contract1Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
-    const risk1Text = result.contract1Analysis.riskLevel === 'low' ? 'Niedrig' :
-                      result.contract1Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+    if (isV2 && result.scores) {
+      // V2: Category scores
+      const scoreLabels = {
+        overall: 'Gesamt', fairness: 'Fairness', riskProtection: 'Risikoschutz',
+        flexibility: 'Flexibilität', completeness: 'Vollständigkeit', clarity: 'Klarheit'
+      };
+      const scoreKeys = ['overall', 'fairness', 'riskProtection', 'flexibility', 'completeness', 'clarity'];
 
-    doc.fontSize(14)
-       .fillColor(score1Color)
-       .text(`Vertrag 1: ${result.contract1Analysis.score}/100`, { continued: true })
-       .fillColor(mutedColor)
-       .text(` (Risiko: ${risk1Text})`, { continued: result.overallRecommendation.recommended === 1 });
+      ['contract1', 'contract2'].forEach((key, ci) => {
+        const scores = result.scores[key];
+        if (!scores) return;
 
-    if (result.overallRecommendation.recommended === 1) {
-      doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
-    }
-    doc.moveDown(0.3);
+        const label = ci === 0 ? (file1Name || 'Vertrag 1') : (file2Name || 'Vertrag 2');
+        const isRecommended = result.overallRecommendation?.recommended === (ci + 1);
 
-    // Contract 2 Score
-    const score2Color = result.contract2Analysis.riskLevel === 'low' ? successColor :
-                        result.contract2Analysis.riskLevel === 'medium' ? warningColor : dangerColor;
-    const risk2Text = result.contract2Analysis.riskLevel === 'low' ? 'Niedrig' :
-                      result.contract2Analysis.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+        doc.fontSize(13).fillColor(primaryColor).text(label, { continued: isRecommended });
+        if (isRecommended) {
+          doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
+        }
+        doc.moveDown(0.2);
 
-    doc.fontSize(14)
-       .fillColor(score2Color)
-       .text(`Vertrag 2: ${result.contract2Analysis.score}/100`, { continued: true })
-       .fillColor(mutedColor)
-       .text(` (Risiko: ${risk2Text})`, { continued: result.overallRecommendation.recommended === 2 });
+        scoreKeys.forEach(sk => {
+          const val = Math.min(100, Math.max(0, scores[sk] || 0));
+          const barColor = val >= 70 ? successColor : val >= 40 ? warningColor : dangerColor;
 
-    if (result.overallRecommendation.recommended === 2) {
-      doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
+          doc.fontSize(9).fillColor(mutedColor).text(`${scoreLabels[sk]}: `, { continued: true });
+          doc.fillColor(barColor).text(`${val}/100`);
+        });
+        doc.moveDown(0.5);
+      });
+    } else {
+      // V1: Simple scores
+      const score1Color = result.contract1Analysis?.riskLevel === 'low' ? successColor :
+                          result.contract1Analysis?.riskLevel === 'medium' ? warningColor : dangerColor;
+      const risk1Text = result.contract1Analysis?.riskLevel === 'low' ? 'Niedrig' :
+                        result.contract1Analysis?.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+
+      doc.fontSize(14)
+         .fillColor(score1Color)
+         .text(`Vertrag 1: ${result.contract1Analysis?.score || 0}/100`, { continued: true })
+         .fillColor(mutedColor)
+         .text(` (Risiko: ${risk1Text})`, { continued: result.overallRecommendation?.recommended === 1 });
+      if (result.overallRecommendation?.recommended === 1) {
+        doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
+      }
+      doc.moveDown(0.3);
+
+      const score2Color = result.contract2Analysis?.riskLevel === 'low' ? successColor :
+                          result.contract2Analysis?.riskLevel === 'medium' ? warningColor : dangerColor;
+      const risk2Text = result.contract2Analysis?.riskLevel === 'low' ? 'Niedrig' :
+                        result.contract2Analysis?.riskLevel === 'medium' ? 'Mittel' : 'Hoch';
+
+      doc.fontSize(14)
+         .fillColor(score2Color)
+         .text(`Vertrag 2: ${result.contract2Analysis?.score || 0}/100`, { continued: true })
+         .fillColor(mutedColor)
+         .text(` (Risiko: ${risk2Text})`, { continued: result.overallRecommendation?.recommended === 2 });
+      if (result.overallRecommendation?.recommended === 2) {
+        doc.fontSize(10).fillColor(successColor).text('  [EMPFOHLEN]');
+      }
     }
     doc.moveDown(1.5);
 
-    // === STRENGTHS & WEAKNESSES ===
-    doc.fontSize(16)
-       .fillColor(textColor)
-       .text('Stärken & Schwächen', { underline: true });
-    doc.moveDown(0.5);
+    // === STRENGTHS & WEAKNESSES (V1 or V1-compat fields) ===
+    if (result.contract1Analysis?.strengths?.length || result.contract2Analysis?.strengths?.length) {
+      doc.fontSize(16)
+         .fillColor(textColor)
+         .text('Stärken & Schwächen', { underline: true });
+      doc.moveDown(0.5);
 
-    // Vertrag 1
-    doc.fontSize(13).fillColor(primaryColor).text('Vertrag 1');
-    doc.fontSize(11).fillColor(successColor).text('Staerken:');
-    result.contract1Analysis.strengths.slice(0, 3).forEach(s => {
-      doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
-    });
-    doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
-    result.contract1Analysis.weaknesses.slice(0, 3).forEach(w => {
-      doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
-    });
-    doc.moveDown(0.5);
+      doc.fontSize(13).fillColor(primaryColor).text('Vertrag 1');
+      doc.fontSize(11).fillColor(successColor).text('Staerken:');
+      (result.contract1Analysis?.strengths || []).slice(0, 3).forEach(s => {
+        doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
+      });
+      doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
+      (result.contract1Analysis?.weaknesses || []).slice(0, 3).forEach(w => {
+        doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
+      });
+      doc.moveDown(0.5);
 
-    // Vertrag 2
-    doc.fontSize(13).fillColor(primaryColor).text('Vertrag 2');
-    doc.fontSize(11).fillColor(successColor).text('Staerken:');
-    result.contract2Analysis.strengths.slice(0, 3).forEach(s => {
-      doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
-    });
-    doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
-    result.contract2Analysis.weaknesses.slice(0, 3).forEach(w => {
-      doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
-    });
-    doc.moveDown(1.5);
+      doc.fontSize(13).fillColor(primaryColor).text('Vertrag 2');
+      doc.fontSize(11).fillColor(successColor).text('Staerken:');
+      (result.contract2Analysis?.strengths || []).slice(0, 3).forEach(s => {
+        doc.fontSize(10).fillColor(textColor).text(`  - ${s}`);
+      });
+      doc.fontSize(11).fillColor(dangerColor).text('Schwaechen:');
+      (result.contract2Analysis?.weaknesses || []).slice(0, 3).forEach(w => {
+        doc.fontSize(10).fillColor(textColor).text(`  - ${w}`);
+      });
+      doc.moveDown(1.5);
+    }
 
     // === NEW PAGE FOR DIFFERENCES ===
     doc.addPage();
@@ -1304,11 +1487,79 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
       doc.moveDown(0.8);
     });
 
+    // === V2: RISKS SECTION ===
+    if (isV2 && result.risks?.length > 0) {
+      if (doc.y > 650) doc.addPage();
+      doc.moveDown(1);
+      doc.fontSize(16).fillColor(textColor).text('Risiko-Analyse', { underline: true });
+      doc.moveDown(0.5);
+
+      const severityLabels = { critical: 'KRITISCH', high: 'HOCH', medium: 'MITTEL', low: 'NIEDRIG' };
+      result.risks.forEach((risk, i) => {
+        if (doc.y > 700) doc.addPage();
+        const riskColor = getSeverityColor(risk.severity);
+        const contractLabel = risk.contract === 'both' ? 'Beide' : `Vertrag ${risk.contract}`;
+
+        doc.fontSize(11).fillColor(riskColor)
+           .text(`${i + 1}. [${severityLabels[risk.severity] || risk.severity}] ${risk.title}`, { continued: true })
+           .fontSize(9).fillColor(mutedColor).text(`  (${contractLabel})`);
+
+        doc.fontSize(10).fillColor(textColor).text(risk.description, { width: 495 });
+
+        if (risk.legalBasis) {
+          doc.fontSize(9).fillColor(mutedColor).text(`Rechtsgrundlage: ${risk.legalBasis}`);
+        }
+        if (risk.financialExposure) {
+          doc.fontSize(9).fillColor(warningColor).text(`Finanzielle Exposition: ${risk.financialExposure}`);
+        }
+        doc.moveDown(0.6);
+      });
+    }
+
+    // === V2: RECOMMENDATIONS SECTION ===
+    if (isV2 && result.recommendations?.length > 0) {
+      if (doc.y > 650) doc.addPage();
+      doc.moveDown(1);
+      doc.fontSize(16).fillColor(textColor).text('Verbesserungsvorschläge', { underline: true });
+      doc.moveDown(0.5);
+
+      const priorityLabels = { critical: 'KRITISCH', high: 'HOCH', medium: 'MITTEL', low: 'NIEDRIG' };
+      result.recommendations.forEach((rec, i) => {
+        if (doc.y > 680) doc.addPage();
+        const pColor = getSeverityColor(rec.priority);
+
+        doc.fontSize(11).fillColor(pColor)
+           .text(`${i + 1}. [${priorityLabels[rec.priority] || rec.priority}] ${rec.title}`, { continued: true })
+           .fontSize(9).fillColor(mutedColor).text(`  (Vertrag ${rec.targetContract})`);
+
+        doc.fontSize(10).fillColor(textColor).text(rec.reason, { width: 495 });
+
+        if (rec.currentText) {
+          doc.fontSize(9).fillColor(mutedColor).text('Aktuell:', { continued: false });
+          doc.fontSize(9).fillColor(textColor).text(`  "${rec.currentText}"`, { width: 475 });
+        }
+        if (rec.suggestedText) {
+          doc.fontSize(9).fillColor(primaryColor).text('Vorschlag:', { continued: false });
+          doc.fontSize(9).fillColor(textColor).text(`  "${rec.suggestedText}"`, { width: 475 });
+        }
+        doc.moveDown(0.6);
+      });
+    }
+
     // === FOOTER ON LAST PAGE ===
     doc.moveDown(2);
 
     // Summary
-    if (result.summary) {
+    if (isV2 && result.summary?.detailedSummary) {
+      doc.fontSize(14).fillColor(textColor).text('Zusammenfassung', { underline: true });
+      doc.moveDown(0.3);
+      if (result.summary.verdict) {
+        doc.fontSize(11).fillColor(primaryColor).text(result.summary.verdict, { width: 495 });
+        doc.moveDown(0.3);
+      }
+      doc.fontSize(10).fillColor(mutedColor).text(result.summary.detailedSummary, { width: 495 });
+      doc.moveDown(1);
+    } else if (result.summary && typeof result.summary === 'string') {
       doc.fontSize(14)
          .fillColor(textColor)
          .text('Zusammenfassung', { underline: true });
