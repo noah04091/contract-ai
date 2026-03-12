@@ -9,7 +9,7 @@ interface Props {
   originalText: string;
   optimization: ClauseOptimization;
   activeMode: OptimizationMode;
-  onAcceptVersion: (clauseId: string, version: string) => void;
+  onAcceptVersion: (clauseId: string, version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', customText?: string) => void;
 }
 
 const MODE_ICONS = {
