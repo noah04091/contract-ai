@@ -6,7 +6,7 @@ import styles from '../../styles/OptimizerV2.module.css';
 interface Props {
   clauseId: string;
   messages: ChatMessage[];
-  onSend: (clauseId: string, message: string) => Promise<any>;
+  onSend: (clauseId: string, message: string) => Promise<unknown>;
 }
 
 const QUICK_PROMPTS = [

@@ -171,8 +171,8 @@ export function useOptimizerV2() {
 
   // API base URL
   const getApiBase = () => {
-    const custom = (import.meta as any).env?.VITE_API_URL;
-    if (custom) return custom;
+    const custom = import.meta.env?.VITE_API_URL;
+    if (custom) return custom as string;
     if (window.location.hostname === 'localhost') return '';
     return 'https://api.contract-ai.de';
   };
@@ -244,18 +244,19 @@ export function useOptimizerV2() {
             });
 
             // Stage complete events
-            if (event.stage && (event as any).complete) {
+            if (event.stage && event.complete) {
               dispatch({ type: 'STAGE_COMPLETE', stage: event.stage });
             }
 
-          } catch (e) {
+          } catch {
             // Skip malformed SSE lines
           }
         }
       }
-    } catch (err: any) {
-      if (err.name === 'AbortError') return;
-      dispatch({ type: 'ANALYSIS_ERROR', error: err.message || 'Analyse fehlgeschlagen' });
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      const message = err instanceof Error ? err.message : 'Analyse fehlgeschlagen';
+      dispatch({ type: 'ANALYSIS_ERROR', error: message });
     }
   }, []);
 
@@ -268,12 +269,13 @@ export function useOptimizerV2() {
   // ── Load Result ──
   const loadResult = useCallback(async (resultId: string) => {
     try {
-      const data = await apiCall(`/api/optimizer-v2/results/${resultId}`) as any;
+      const data = await apiCall(`/api/optimizer-v2/results/${resultId}`) as { success?: boolean; result?: AnalysisResult };
       if (data?.success && data?.result) {
         dispatch({ type: 'LOAD_RESULT', result: data.result, resultId });
       }
-    } catch (err: any) {
-      dispatch({ type: 'ANALYSIS_ERROR', error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Laden fehlgeschlagen';
+      dispatch({ type: 'ANALYSIS_ERROR', error: message });
     }
   }, []);
 
@@ -287,7 +289,7 @@ export function useOptimizerV2() {
           body: JSON.stringify({ mode }),
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (e) {
+      } catch {
         // Mode change is client-side first, server sync is best-effort
       }
     }
@@ -307,7 +309,7 @@ export function useOptimizerV2() {
           body: JSON.stringify({ selections: Array.from(allSelections.values()) }),
           headers: { 'Content-Type': 'application/json' }
         });
-      } catch (e) {
+      } catch {
         // Best-effort sync
       }
     }
@@ -328,7 +330,7 @@ export function useOptimizerV2() {
         method: 'POST',
         body: JSON.stringify({ clauseId, message }),
         headers: { 'Content-Type': 'application/json' }
-      }) as any;
+      }) as ClauseChatResponse;
 
       if (data?.success) {
         dispatch({
@@ -341,10 +343,10 @@ export function useOptimizerV2() {
             generatedVersion: data.generatedVersion
           }]
         });
-        return data as ClauseChatResponse;
+        return data;
       }
       return null;
-    } catch (err) {
+    } catch {
       return null;
     }
   }, [state.resultId]);

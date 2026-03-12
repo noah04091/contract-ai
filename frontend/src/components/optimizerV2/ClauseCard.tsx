@@ -19,7 +19,7 @@ interface Props {
   onSelect: (clauseId: string | null) => void;
   onAcceptVersion: (clauseId: string, version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', customText?: string) => void;
   chatMessages: ChatMessage[];
-  onSendChat: (clauseId: string, message: string) => Promise<any>;
+  onSendChat: (clauseId: string, message: string) => Promise<unknown>;
 }
 
 export default function ClauseCard({
