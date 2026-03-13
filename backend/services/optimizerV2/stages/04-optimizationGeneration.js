@@ -90,7 +90,7 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         temperature: 0.2,
-        max_tokens: 6000,
+        max_tokens: 12000,
         response_format: {
           type: 'json_schema',
           json_schema: {

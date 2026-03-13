@@ -27,7 +27,7 @@ async function runClauseExtraction(openai, contractText, structure, onProgress) 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.0,
-    max_tokens: 8000,
+    max_tokens: 16000,
     response_format: {
       type: 'json_schema',
       json_schema: {
@@ -46,6 +46,39 @@ async function runClauseExtraction(openai, contractText, structure, onProgress) 
       }
     ]
   });
+
+  // Check for truncation (finish_reason === 'length' means max_tokens hit)
+  const finishReason = response.choices[0].finish_reason;
+  if (finishReason === 'length') {
+    console.warn('[OptimizerV2] Stage 2: Response truncated, falling back to pre-split clauses');
+    onProgress(18, 'KI-Antwort unvollständig, verwende Voranalyse...');
+    // Fall back to regex-based pre-split
+    const fallbackClauses = preSplit.map((section, i) => {
+      // Extract title from first line of section text
+      const firstLine = (section.text || '').split('\n')[0].trim();
+      const title = firstLine.length > 5 && firstLine.length < 120
+        ? firstLine.replace(/^(§\s*\d+[a-z]?\s*[.:\-–]\s*)/i, '').trim() || `Abschnitt ${i + 1}`
+        : `Abschnitt ${i + 1}`;
+      return {
+        id: `clause_${String(i + 1).padStart(3, '0')}`,
+        title,
+        originalText: section.text,
+        category: 'other',
+        sectionNumber: section.sectionNumber || null,
+        startPosition: contractText.indexOf((section.text || '').substring(0, 50)),
+        endPosition: null
+      };
+    });
+    return {
+      result: fallbackClauses,
+      usage: {
+        model: 'gpt-4o-mini',
+        inputTokens: response.usage?.prompt_tokens || 0,
+        outputTokens: response.usage?.completion_tokens || 0,
+        costUSD: calculateCost('gpt-4o-mini', response.usage?.prompt_tokens || 0, response.usage?.completion_tokens || 0)
+      }
+    };
+  }
 
   const result = JSON.parse(response.choices[0].message.content);
 
