@@ -353,7 +353,12 @@ function SideBySideQuotes({
   recommended: 1 | 2;
   sevColor: string;
 }) {
-  const diffResult = showDiff && contract1 && contract2
+  // Guard: Skip expensive O(m*n) LCS diff for long texts to prevent browser freeze
+  const MAX_DIFF_WORDS = 400;
+  const tooLong = (contract1?.split(/\s+/).length || 0) > MAX_DIFF_WORDS
+    || (contract2?.split(/\s+/).length || 0) > MAX_DIFF_WORDS;
+
+  const diffResult = showDiff && contract1 && contract2 && !tooLong
     ? computeWordDiff(contract1, contract2)
     : null;
 
@@ -362,7 +367,7 @@ function SideBySideQuotes({
       <div className={`${styles.contractColumn} ${recommended === 1 ? styles.columnRecommended : ''}`}>
         <h5>Vertrag 1 {recommended === 1 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
-          {diffResult ? <DiffText segments={diffResult.segments1} variant="source" /> : contract1}
+          {diffResult ? <DiffText segments={diffResult.segments1} variant="source" /> : (contract1 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>)}
         </div>
       </div>
       <div className={styles.vsDivider} style={{ backgroundColor: sevColor }}>
@@ -371,7 +376,7 @@ function SideBySideQuotes({
       <div className={`${styles.contractColumn} ${recommended === 2 ? styles.columnRecommended : ''}`}>
         <h5>Vertrag 2 {recommended === 2 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
-          {diffResult ? <DiffText segments={diffResult.segments2} variant="target" /> : contract2}
+          {diffResult ? <DiffText segments={diffResult.segments2} variant="target" /> : (contract2 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>)}
         </div>
       </div>
     </div>
