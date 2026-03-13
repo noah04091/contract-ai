@@ -75,14 +75,8 @@ const navigation: NavSection[] = [
         href: '/generate',
       },
       {
-        id: 'optimizer-v2',
-        label: 'Smart Optimizer',
-        icon: Rocket,
-        href: '/optimizer-v2',
-      },
-      {
         id: 'optimizer',
-        label: 'Optimizer (Classic)',
+        label: 'Optimizer',
         icon: Rocket,
         href: '/optimizer',
       },
