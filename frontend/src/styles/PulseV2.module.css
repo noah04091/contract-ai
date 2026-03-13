@@ -1,0 +1,23 @@
+/* PulseV2 Styles — minimal, most styling is inline for colocation */
+
+.pageContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.contractGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .contractGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pageContainer {
+    padding: 16px 8px;
+  }
+}

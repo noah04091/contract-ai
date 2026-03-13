@@ -104,11 +104,11 @@ const navigation: NavSection[] = [
       {
         id: 'legalpulse',
         label: 'Legal Pulse',
-        subtitle: 'Laufende Überwachung',
+        subtitle: 'Tiefenanalyse & Monitoring',
         icon: Radar,
-        href: '/legalpulse',
-        badge: 'LIVE',
-        badgeColor: 'green',
+        href: '/pulse',
+        badge: 'V2',
+        badgeColor: 'purple',
       },
       {
         id: 'better-contracts',

@@ -1073,6 +1073,14 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
+    // ✅ 14.1 LEGAL PULSE V2 — Deep Contract Analysis Pipeline
+    try {
+      app.use("/api/legal-pulse-v2", verifyToken, checkSubscription, require("./routes/legalPulseV2"));
+      console.log("✅ Legal Pulse V2 Routen geladen unter /api/legal-pulse-v2");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal Pulse V2 Routen:", err);
+    }
+
     // ✅ 14.0.1 LEGAL PULSE HEALTH & MONITORING
     try {
       const legalPulseHealthRoutes = require("./routes/legalPulseHealth")(db);

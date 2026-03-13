@@ -98,6 +98,7 @@ const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
+const PulseV2 = lazy(() => import("./pages/PulseV2"));
 const LegalLens = lazy(() => import("./pages/LegalLens")); // 🔍 NEU: Interaktive Vertragsanalyse
 const LegalLensStart = lazy(() => import("./pages/LegalLensStart")); // 🔍 NEU: Legal Lens Startseite
 const ClauseLibraryPage = lazy(() => import("./pages/ClauseLibraryPage")); // 📚 NEU: Klausel-Bibliothek
@@ -249,6 +250,10 @@ function AppWithLoader() {
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
             <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
             <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+
+            {/* 🔍 Legal Pulse V2 - Deep Contract Analysis */}
+            <Route path="/pulse" element={<RequireAuth><PulseV2 /></RequireAuth>} />
+            <Route path="/pulse/:contractId" element={<RequireAuth><PulseV2 /></RequireAuth>} />
 
             {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
             <Route path="/legal-lens" element={<RequireAuth><LegalLensStart /></RequireAuth>} />
