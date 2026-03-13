@@ -1,6 +1,7 @@
 // backend/services/compareAnalyzer.js — Compare V2: Two-Phase AI Analysis
 const { OpenAI } = require("openai");
 const crypto = require("crypto");
+const { matchClauses, formatMatchesForPrompt } = require("./clauseMatcher");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -142,10 +143,11 @@ function buildModeAddition(comparisonMode) {
   return mode.promptAddition;
 }
 
-function buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile) {
+function buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult = null) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
   const perspectiveBlock = buildPerspectiveBlock(perspective);
   const modeBlock = buildModeAddition(comparisonMode);
+  const clauseMatchContext = clauseMatchResult ? formatMatchesForPrompt(clauseMatchResult) : '';
 
   // Truncate raw texts for context (keep them shorter since we have maps)
   const maxRawLen = 60000;
@@ -231,6 +233,7 @@ VOLLTEXT VERTRAG 2 (Referenz):
 ${rawText2}
 """
 
+${clauseMatchContext}
 DEINE AUFGABE — 8 SCHRITTE:
 
 SCHRITT 1 — UNTERSCHIEDE (maximal ${MAX_DIFFERENCES}, nach Severity priorisiert):
@@ -320,10 +323,10 @@ Antworte NUR mit diesem JSON:
   };
 }
 
-async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutral', comparisonMode = 'standard', userProfile = 'individual') {
+async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutral', comparisonMode = 'standard', userProfile = 'individual', clauseMatchResult = null) {
   console.log(`🔍 Phase B: Tiefenvergleich (Perspektive: ${perspective}, Modus: ${comparisonMode}, Profil: ${userProfile})`);
 
-  const prompt = buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile);
+  const prompt = buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult);
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -368,13 +371,27 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
     );
 
     const [map1, map2] = phaseAResult;
-    progress('mapping', 35, 'Beide Verträge strukturiert. Starte Tiefenvergleich...');
+    progress('mapping', 35, 'Beide Verträge strukturiert. Klauseln werden gematcht...');
 
-    // Phase B: Deep comparison
+    // Clause Matching: Find corresponding clauses between contracts
+    let clauseMatchResult = null;
+    try {
+      clauseMatchResult = await matchClauses(
+        map1.clauses || [],
+        map2.clauses || [],
+        { useEmbeddings: false } // Fast mode: token overlap only (no API cost)
+      );
+      progress('mapping', 42, `${clauseMatchResult.stats.matched} Klausel-Paare erkannt. Starte Tiefenvergleich...`);
+    } catch (matchError) {
+      console.warn(`⚠️ Clause Matching fehlgeschlagen (nicht-kritisch): ${matchError.message}`);
+      progress('mapping', 42, 'Starte Tiefenvergleich...');
+    }
+
+    // Phase B: Deep comparison (with clause matching context)
     progress('comparing', 45, 'KI-Tiefenanalyse läuft...');
 
     const phaseBResult = await withTimeout(
-      compareContractsV2(map1, map2, text1, text2, perspective, comparisonMode, userProfile),
+      compareContractsV2(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult),
       MAX_PHASE_B_TIME,
       'Phase B Timeout'
     );
@@ -383,6 +400,11 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
 
     // Build V2 response (include texts for re-analysis)
     const v2Result = buildV2Response(map1, map2, phaseBResult, perspective, text1, text2);
+
+    // Attach clause matching stats (for frontend display / debugging)
+    if (clauseMatchResult) {
+      v2Result._clauseMatching = clauseMatchResult.stats;
+    }
 
     progress('complete', 100, 'Analyse abgeschlossen!');
     return v2Result;
