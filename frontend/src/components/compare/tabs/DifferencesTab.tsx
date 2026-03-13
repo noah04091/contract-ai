@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle, AlertTriangle, AlertCircle, Info,
   ChevronUp, ChevronDown, Layers, Eye, EyeOff,
@@ -182,14 +181,11 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
           const v2Diff = v2 ? (diff as EnhancedDifference) : null;
 
           return (
-            <motion.div
+            <div
               key={index}
               ref={(el) => { diffRefs.current[index] = el; }}
               className={`${styles.diffItem} ${isActive ? styles.diffItemActive : ''}`}
               style={{ borderLeftColor: sevColor }}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
               onClick={() => setActiveDiffIndex(index)}
             >
               {/* Header */}
@@ -262,32 +258,24 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
                 Originaltext anzeigen
               </button>
 
-              <AnimatePresence>
-                {expandedQuoteIndex === index && (
-                  <motion.div
-                    className={styles.quotesPanel}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25 }}
-                  >
-                    {showSideBySide ? (
-                      <SideBySideQuotes
-                        contract1={diff.contract1}
-                        contract2={diff.contract2}
-                        showDiff={showInlineDiff}
-                        recommended={recommended}
-                        sevColor={sevColor}
-                      />
-                    ) : (
-                      <div className={styles.stackedQuotes}>
-                        <div className={styles.quoteBlock}><strong>Vertrag 1:</strong> {diff.contract1}</div>
-                        <div className={styles.quoteBlock}><strong>Vertrag 2:</strong> {diff.contract2}</div>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {expandedQuoteIndex === index && (
+                <div className={styles.quotesPanel}>
+                  {showSideBySide ? (
+                    <SideBySideQuotes
+                      contract1={diff.contract1}
+                      contract2={diff.contract2}
+                      showDiff={showInlineDiff}
+                      recommended={recommended}
+                      sevColor={sevColor}
+                    />
+                  ) : (
+                    <div className={styles.stackedQuotes}>
+                      <div className={styles.quoteBlock}><strong>Vertrag 1:</strong> {diff.contract1}</div>
+                      <div className={styles.quoteBlock}><strong>Vertrag 2:</strong> {diff.contract2}</div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Recommendation */}
               <div className={styles.diffRecommendation}>
@@ -296,40 +284,33 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
               </div>
 
               {/* PDF Preview */}
-              <AnimatePresence>
-                {expandedPdfIndex === index && (file1 || file2) && (
-                  <motion.div
-                    className={styles.pdfPreviewPanel}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <div className={styles.pdfPreviewTabs}>
-                      <button
-                        className={`${styles.pdfTab} ${activePdfTab === 1 ? styles.pdfTabActive : ''}`}
-                        onClick={(e) => { e.stopPropagation(); setActivePdfTab(1); }}
-                        disabled={!file1}
-                      >Vertrag 1</button>
-                      <button
-                        className={`${styles.pdfTab} ${activePdfTab === 2 ? styles.pdfTabActive : ''}`}
-                        onClick={(e) => { e.stopPropagation(); setActivePdfTab(2); }}
-                        disabled={!file2}
-                      >Vertrag 2</button>
-                      <button
-                        className={`${styles.pdfTab} ${styles.pdfTabClose}`}
-                        onClick={(e) => { e.stopPropagation(); setExpandedPdfIndex(null); }}
-                      ><X size={14} /></button>
-                    </div>
-                    <div className={styles.pdfPreviewViewer} onClick={(e) => e.stopPropagation()}>
-                      <PDFDocumentViewer
-                        file={activePdfTab === 1 ? file1 : file2}
-                        highlightText={activePdfTab === 1 ? diff.contract1 : diff.contract2}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              {expandedPdfIndex === index && (file1 || file2) && (
+                <div className={styles.pdfPreviewPanel}>
+                  <div className={styles.pdfPreviewTabs}>
+                    <button
+                      className={`${styles.pdfTab} ${activePdfTab === 1 ? styles.pdfTabActive : ''}`}
+                      onClick={(e) => { e.stopPropagation(); setActivePdfTab(1); }}
+                      disabled={!file1}
+                    >Vertrag 1</button>
+                    <button
+                      className={`${styles.pdfTab} ${activePdfTab === 2 ? styles.pdfTabActive : ''}`}
+                      onClick={(e) => { e.stopPropagation(); setActivePdfTab(2); }}
+                      disabled={!file2}
+                    >Vertrag 2</button>
+                    <button
+                      className={`${styles.pdfTab} ${styles.pdfTabClose}`}
+                      onClick={(e) => { e.stopPropagation(); setExpandedPdfIndex(null); }}
+                    ><X size={14} /></button>
+                  </div>
+                  <div className={styles.pdfPreviewViewer} onClick={(e) => e.stopPropagation()}>
+                    <PDFDocumentViewer
+                      file={activePdfTab === 1 ? file1 : file2}
+                      highlightText={activePdfTab === 1 ? diff.contract1 : diff.contract2}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
