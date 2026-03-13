@@ -229,7 +229,7 @@ export function useOptimizerV2() {
             if (event.complete && event.resultId) {
               // SSE complete event only contains resultId — fetch full result
               try {
-                const data = await apiCall(`/api/optimizer-v2/results/${event.resultId}`) as { success?: boolean; result?: AnalysisResult };
+                const data = await apiCall(`/optimizer-v2/results/${event.resultId}`) as { success?: boolean; result?: AnalysisResult };
                 if (data?.success && data?.result) {
                   dispatch({
                     type: 'ANALYSIS_COMPLETE',
@@ -279,7 +279,7 @@ export function useOptimizerV2() {
   // ── Load Result ──
   const loadResult = useCallback(async (resultId: string) => {
     try {
-      const data = await apiCall(`/api/optimizer-v2/results/${resultId}`) as { success?: boolean; result?: AnalysisResult };
+      const data = await apiCall(`/optimizer-v2/results/${resultId}`) as { success?: boolean; result?: AnalysisResult };
       if (data?.success && data?.result) {
         dispatch({ type: 'LOAD_RESULT', result: data.result, resultId });
       }
@@ -294,7 +294,7 @@ export function useOptimizerV2() {
     dispatch({ type: 'SET_MODE', mode });
     if (state.resultId) {
       try {
-        await apiCall(`/api/optimizer-v2/results/${state.resultId}/mode`, {
+        await apiCall(`/optimizer-v2/results/${state.resultId}/mode`, {
           method: 'PATCH',
           body: JSON.stringify({ mode }),
           headers: { 'Content-Type': 'application/json' }
@@ -314,7 +314,7 @@ export function useOptimizerV2() {
       const allSelections = new Map(state.userSelections);
       allSelections.set(clauseId, selection);
       try {
-        await apiCall(`/api/optimizer-v2/results/${state.resultId}/selections`, {
+        await apiCall(`/optimizer-v2/results/${state.resultId}/selections`, {
           method: 'PATCH',
           body: JSON.stringify({ selections: Array.from(allSelections.values()) }),
           headers: { 'Content-Type': 'application/json' }
@@ -336,7 +336,7 @@ export function useOptimizerV2() {
     });
 
     try {
-      const data = await apiCall(`/api/optimizer-v2/results/${state.resultId}/clause-chat`, {
+      const data = await apiCall(`/optimizer-v2/results/${state.resultId}/clause-chat`, {
         method: 'POST',
         body: JSON.stringify({ clauseId, message }),
         headers: { 'Content-Type': 'application/json' }
