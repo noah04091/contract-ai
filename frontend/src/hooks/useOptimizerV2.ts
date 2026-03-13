@@ -226,12 +226,22 @@ export function useOptimizerV2() {
               return;
             }
 
-            if (event.complete && event.result) {
-              dispatch({
-                type: 'ANALYSIS_COMPLETE',
-                result: event.result,
-                resultId: event.resultId || event.result.resultId
-              });
+            if (event.complete && event.resultId) {
+              // SSE complete event only contains resultId — fetch full result
+              try {
+                const data = await apiCall(`/api/optimizer-v2/results/${event.resultId}`) as { success?: boolean; result?: AnalysisResult };
+                if (data?.success && data?.result) {
+                  dispatch({
+                    type: 'ANALYSIS_COMPLETE',
+                    result: data.result,
+                    resultId: event.resultId
+                  });
+                } else {
+                  dispatch({ type: 'ANALYSIS_ERROR', error: 'Ergebnis konnte nicht geladen werden.' });
+                }
+              } catch {
+                dispatch({ type: 'ANALYSIS_ERROR', error: 'Ergebnis konnte nicht geladen werden.' });
+              }
               return;
             }
 
