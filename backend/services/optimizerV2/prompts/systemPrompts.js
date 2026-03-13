@@ -156,8 +156,11 @@ Parteien: ${parties?.map(p => `${p.role}: ${p.name || 'nicht angegeben'}`).join(
 Deine EINZIGE Aufgabe: Analysiere die folgenden Klauseln TIEFGEHEND.
 
 Für JEDE Klausel:
-1. "summary": Was regelt diese Klausel? (1-2 Sätze, verständlich für Nicht-Juristen)
-2. "plainLanguage": Erkläre in einfacher Sprache, was das für die Parteien KONKRET bedeutet.
+1. "summary": Was regelt diese Klausel? (1-2 Sätze, professionell und präzise)
+2. "plainLanguage": Erkläre präzise, was das für die Parteien KONKRET bedeutet.
+   WICHTIG: Formuliere professionell für die Zielgruppe Unternehmer, Manager, Juristen und Vertragsverhandler.
+   NICHT: "Diese Klausel sagt, wer die Firma ist."
+   SONDERN: "Diese Klausel definiert die Vertragsparteien und stellt deren juristische Identität eindeutig fest."
 3. "legalAssessment": Detaillierte juristische Bewertung. Ist die Klausel:
    - Rechtlich wirksam?
    - Marktüblich formuliert?
@@ -178,12 +181,40 @@ Für JEDE Klausel:
 8. "riskType": Art des Risikos - "legal" | "financial" | "compliance" | "operational" | "none"
 9. "keyTerms": Wichtige juristische Begriffe in der Klausel
 10. "legalReferences": Relevante Gesetze (z.B. "§ 622 BGB", "Art. 13 DSGVO")
+11. "economicRiskAssessment": Bewertung der WIRTSCHAFTLICHEN Risiken dieser Klausel:
+    - Wer trägt das wirtschaftliche Risiko?
+    - Gibt es versteckte Kosten oder Haftungsverschiebungen?
+    - Wie wirkt sich die Klausel auf die wirtschaftliche Abhängigkeit der Parteien aus?
+    - Werden Risiken einseitig auf eine Partei übertragen?
+12. "powerBalance": Bewertung der Machtverteilung in dieser Klausel:
+    - "balanced": Ausgewogene Rechte und Pflichten für beide Parteien
+    - "slightly_one_sided": Leicht einseitig, aber noch marktüblich
+    - "strongly_one_sided": Deutlich einseitig, benachteiligt eine Partei spürbar
+    - "extremely_one_sided": Extrem einseitig, möglicherweise rechtlich anfechtbar (z.B. § 307 BGB)
+13. "marketComparison": Vergleich mit Marktstandard für diesen Vertragstyp und diese Branche:
+    - "below_market": Unter dem üblichen Standard (ungewöhnlich günstig für den Empfänger)
+    - "market_standard": Entspricht dem Marktstandard
+    - "slightly_strict": Leicht strenger als marktüblich
+    - "significantly_strict": Deutlich strenger als bei vergleichbaren Verträgen
+    - "unusually_disadvantageous": Ungewöhnlich nachteilig für eine Partei
+
+WIRTSCHAFTLICHE ANALYSE (KRITISCH):
+- Bewerte NICHT NUR die juristische Struktur, sondern auch die wirtschaftliche Risikoübertragung.
+- Analysiere die Machtverteilung: Wer hat Kündigungsmacht? Wer kontrolliert die Bedingungen? Wer kann einseitig Rechte ausüben?
+- Eine Klausel kann juristisch korrekt sein, aber wirtschaftlich STARK EINSEITIG — markiere solche Klauseln klar.
+- Bei Bankverträgen, Factoring, SaaS, Plattformverträgen: Diese sind fast immer einseitig zugunsten des Anbieters. Bewerte das REALISTISCH, nicht wohlwollend.
+- Einseitige Kündigungsrechte, Haftungsbeschränkungen zugunsten nur einer Partei, und versteckte Kosten sind RED FLAGS.
+
+MARKTVERGLEICH:
+- Vergleiche jede Klausel mit typischen Marktstandards für ${contractType} in der Branche ${industry || 'allgemein'}.
+- Nutze konkrete, qualitative Einschätzungen. NICHT: "ist üblich." SONDERN: "Diese Haftungsklausel ist restriktiver als in vergleichbaren Verträgen der Branche üblich."
 
 WICHTIGE REGELN:
 - Bewerte NUR was im Text steht. Erfinde keine Probleme.
-- Wenn eine Klausel solide ist, sage das. Nicht jede Klausel muss Probleme haben.
+- Wenn eine Klausel solide UND ausgewogen ist, sage das. Nicht jede Klausel muss Probleme haben.
 - "concerns" darf leer sein wenn es keine gibt.
-- Beziehe dich auf KONKRETE Textstellen, nicht auf Hypothetisches.`;
+- Beziehe dich auf KONKRETE Textstellen, nicht auf Hypothetisches.
+- Formuliere ALLE Erklärungen professionell — Zielgruppe sind Geschäftsführer und Juristen, keine Verbraucher.`;
 
 const CLAUSE_ANALYSIS_SCHEMA = {
   type: "object",
@@ -203,10 +234,14 @@ const CLAUSE_ANALYSIS_SCHEMA = {
           riskLevel: { type: "number" },
           riskType: { type: "string", enum: ["legal", "financial", "compliance", "operational", "none"] },
           keyTerms: { type: "array", items: { type: "string" } },
-          legalReferences: { type: "array", items: { type: "string" } }
+          legalReferences: { type: "array", items: { type: "string" } },
+          economicRiskAssessment: { type: "string" },
+          powerBalance: { type: "string", enum: ["balanced", "slightly_one_sided", "strongly_one_sided", "extremely_one_sided"] },
+          marketComparison: { type: "string", enum: ["below_market", "market_standard", "slightly_strict", "significantly_strict", "unusually_disadvantageous"] }
         },
         required: ["clauseId", "summary", "plainLanguage", "legalAssessment", "strength",
-                   "importanceLevel", "concerns", "riskLevel", "riskType", "keyTerms", "legalReferences"],
+                   "importanceLevel", "concerns", "riskLevel", "riskType", "keyTerms", "legalReferences",
+                   "economicRiskAssessment", "powerBalance", "marketComparison"],
         additionalProperties: false
       }
     }
@@ -250,8 +285,13 @@ REGELN:
 - Orientiere dich am geltenden Recht (${jurisdiction || 'deutsches Recht'}).
 - Die optimierten Texte müssen sich SPÜRBAR vom Original unterscheiden.
   Keine kosmetischen Änderungen. Echter Mehrwert.
-- "marketBenchmark": Wie ist diese Klausel im Vergleich zu marktüblichen Verträgen?
-- "negotiationAdvice": Ein praktischer Tipp für die Vertragsverhandlung.`;
+- "marketBenchmark": KONKRETE qualitative Einschätzung im Marktvergleich. NICHT einfach "marktüblich", sondern:
+  - "Diese Haftungsklausel ist restriktiver als bei typischen ${contractType}-Verträgen in der Branche üblich."
+  - "Diese Kündigungsklausel erlaubt dem Anbieter eine sehr weitgehende Vertragsbeendigung — strenger als in den meisten vergleichbaren Verträgen."
+  - "Die Zahlungsbedingungen entsprechen dem Branchenstandard, sind aber für den Auftragnehmer ungünstiger als in modernen Verträgen üblich."
+  Nutze Formulierungen wie "strenger als üblich", "marktüblich", "günstiger als Branchendurchschnitt", "nachteiliger als in X% vergleichbarer Verträge".
+- "negotiationAdvice": Ein KONKRETER, umsetzbarer Tipp für die Vertragsverhandlung.
+  Nicht generisch ("Klausel anpassen"), sondern spezifisch ("Verhandeln Sie eine gegenseitige Kündigungsfrist von mindestens 3 Monaten, da einseitige Kündigungsrechte in ${contractType}-Verträgen zunehmend kritisch gesehen werden.").`;
 
 const OPTIMIZATION_GENERATION_SCHEMA = {
   type: "object",

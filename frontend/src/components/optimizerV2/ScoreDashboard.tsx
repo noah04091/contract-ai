@@ -1,4 +1,4 @@
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -12,6 +12,7 @@ interface Props {
 
 const SCORE_CONFIGS = [
   { key: 'risk', label: 'Risiko', icon: Shield, color: '#FF3B30' },
+  { key: 'fairness', label: 'Fairness', icon: Scale, color: '#AF52DE' },
   { key: 'clarity', label: 'Klarheit', icon: Eye, color: '#007AFF' },
   { key: 'completeness', label: 'Vollständigkeit', icon: CheckSquare, color: '#34C759' },
   { key: 'marketStandard', label: 'Marktstandard', icon: BarChart3, color: '#FF9500' }

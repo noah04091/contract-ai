@@ -622,6 +622,18 @@
   border-radius: 4px;
 }
 
+.clauseInsights { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.insightItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.04);
+}
+
 .clauseConcerns h4 { font-size: 12px; font-weight: 600; color: var(--ov2-gray-600); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .clauseConcerns ul { margin: 0; padding-left: 18px; }
 .clauseConcerns li { font-size: 13px; color: var(--ov2-gray-700); margin-bottom: 4px; }

@@ -74,6 +74,9 @@ export interface Clause {
 }
 
 // ── Clause Analysis (Stage 3) ──
+export type PowerBalance = 'balanced' | 'slightly_one_sided' | 'strongly_one_sided' | 'extremely_one_sided';
+export type MarketComparison = 'below_market' | 'market_standard' | 'slightly_strict' | 'significantly_strict' | 'unusually_disadvantageous';
+
 export interface ClauseAnalysis {
   clauseId: string;
   summary: string;
@@ -86,6 +89,9 @@ export interface ClauseAnalysis {
   riskType: RiskType;
   keyTerms: string[];
   legalReferences: string[];
+  economicRiskAssessment: string;
+  powerBalance: PowerBalance;
+  marketComparison: MarketComparison;
 }
 
 // ── Optimization Version ──
@@ -118,6 +124,7 @@ export interface ClauseScore {
 export interface Scores {
   overall: number;
   risk: number;
+  fairness: number;
   clarity: number;
   completeness: number;
   marketStandard: number;

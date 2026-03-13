@@ -94,18 +94,37 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress)
   const optimizable = optimizations.filter(o => o.needsOptimization).length;
   const marketStandardScore = Math.round(100 - (optimizable / Math.max(clauses.length, 1) * 60));
 
-  // Overall score (weighted average)
+  // ── NEW: Fairness score (based on power balance + market comparison) ──
+  const powerBalanceScores = { balanced: 100, slightly_one_sided: 70, strongly_one_sided: 35, extremely_one_sided: 10 };
+  const marketComparisonScores = { below_market: 90, market_standard: 80, slightly_strict: 55, significantly_strict: 30, unusually_disadvantageous: 10 };
+
+  let fairnessWeightedSum = 0;
+  let fairnessWeightTotal = 0;
+  for (const a of clauseAnalyses) {
+    const imp = importanceWeights[a.importanceLevel || 'medium'] || 1.0;
+    const pbScore = powerBalanceScores[a.powerBalance] || 70;
+    const mcScore = marketComparisonScores[a.marketComparison] || 80;
+    // Combine power balance (60%) and market comparison (40%)
+    const clauseFairness = pbScore * 0.6 + mcScore * 0.4;
+    fairnessWeightedSum += clauseFairness * imp;
+    fairnessWeightTotal += imp;
+  }
+  const fairnessScore = fairnessWeightTotal > 0 ? Math.round(fairnessWeightedSum / fairnessWeightTotal) : 70;
+
+  // Overall score (weighted average — fairness is now a major factor)
   const overall = Math.round(
-    avgScore * 0.30 +
-    riskScore * 0.25 +
-    clarityScore * 0.20 +
-    completenessScore * 0.15 +
+    avgScore * 0.25 +
+    riskScore * 0.20 +
+    fairnessScore * 0.20 +
+    clarityScore * 0.15 +
+    completenessScore * 0.10 +
     marketStandardScore * 0.10
   );
 
   const scores = {
     overall: Math.max(0, Math.min(100, overall)),
     risk: Math.max(0, Math.min(100, riskScore)),
+    fairness: Math.max(0, Math.min(100, fairnessScore)),
     clarity: Math.max(0, Math.min(100, clarityScore)),
     completeness: Math.max(0, Math.min(100, completenessScore)),
     marketStandard: Math.max(0, Math.min(100, marketStandardScore)),

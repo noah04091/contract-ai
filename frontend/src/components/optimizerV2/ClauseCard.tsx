@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle, Scale, TrendingUp } from 'lucide-react';
 import type {
   Clause, ClauseAnalysis, ClauseOptimization, ClauseScore,
   OptimizationMode, ChatMessage
@@ -93,6 +93,41 @@ export default function ClauseCard({
                   <span className={styles.riskIndicator}>
                     Risiko: {analysis.riskLevel}/10 ({analysis.riskType})
                   </span>
+                </div>
+              )}
+
+              {/* Power Balance & Market Comparison */}
+              {(analysis.powerBalance || analysis.marketComparison) && (
+                <div className={styles.clauseInsights}>
+                  {analysis.powerBalance && analysis.powerBalance !== 'balanced' && (
+                    <div className={styles.insightItem}>
+                      <Scale size={14} style={{ color: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' : analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93' }} />
+                      <span>{
+                        analysis.powerBalance === 'slightly_one_sided' ? 'Leicht einseitig' :
+                        analysis.powerBalance === 'strongly_one_sided' ? 'Deutlich einseitig' :
+                        'Extrem einseitig'
+                      }</span>
+                    </div>
+                  )}
+                  {analysis.marketComparison && analysis.marketComparison !== 'market_standard' && (
+                    <div className={styles.insightItem}>
+                      <TrendingUp size={14} style={{ color: analysis.marketComparison === 'unusually_disadvantageous' ? '#FF3B30' : analysis.marketComparison === 'significantly_strict' ? '#FF9500' : '#007AFF' }} />
+                      <span>{
+                        analysis.marketComparison === 'below_market' ? 'Unter Marktstandard' :
+                        analysis.marketComparison === 'slightly_strict' ? 'Strenger als üblich' :
+                        analysis.marketComparison === 'significantly_strict' ? 'Deutlich strenger als üblich' :
+                        'Ungewöhnlich nachteilig'
+                      }</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Economic Risk Assessment */}
+              {analysis.economicRiskAssessment && (
+                <div className={styles.clauseAssessment}>
+                  <h4>Wirtschaftliche Risikobewertung</h4>
+                  <p>{analysis.economicRiskAssessment}</p>
                 </div>
               )}
 
