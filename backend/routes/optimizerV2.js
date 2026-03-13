@@ -155,6 +155,16 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
   let clientDisconnected = false;
   req.on('close', () => { clientDisconnected = true; });
 
+  // Keepalive: send SSE comment every 15s to prevent proxy/Render idle timeout
+  const keepalive = setInterval(() => {
+    if (clientDisconnected) return;
+    try {
+      res.write(': keepalive\n\n');
+    } catch (e) {
+      clientDisconnected = true;
+    }
+  }, 15000);
+
   try {
     const result = await runPipeline(
       {
@@ -186,6 +196,7 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
       sendSSE({ error: true, message: err.message || 'Analyse fehlgeschlagen.' });
     }
   } finally {
+    clearInterval(keepalive);
     await cleanupFile(req.file.path);
     if (!clientDisconnected) res.end();
   }

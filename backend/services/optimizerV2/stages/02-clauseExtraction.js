@@ -24,6 +24,9 @@ async function runClauseExtraction(openai, contractText, structure, onProgress) 
 
   onProgress(16, 'KI extrahiert Klauseln...');
 
+  console.log(`[OptimizerV2] Stage 2: Starting OpenAI call (text: ${truncated.length} chars, max_tokens: 16000)`);
+  const stage2Start = Date.now();
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.0,
@@ -46,6 +49,8 @@ async function runClauseExtraction(openai, contractText, structure, onProgress) 
       }
     ]
   });
+
+  console.log(`[OptimizerV2] Stage 2: OpenAI responded in ${Date.now() - stage2Start}ms, finish_reason: ${response.choices[0].finish_reason}, tokens: ${response.usage?.completion_tokens || '?'}`);
 
   // Check for truncation (finish_reason === 'length' means max_tokens hit)
   const finishReason = response.choices[0].finish_reason;
