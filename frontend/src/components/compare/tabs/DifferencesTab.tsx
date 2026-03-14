@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle, AlertTriangle, AlertCircle, Info,
-  ChevronUp, ChevronDown, Layers, Eye, EyeOff,
+  ChevronUp, ChevronDown, Eye, EyeOff,
   Scale, Zap, X
 } from 'lucide-react';
 import {
@@ -19,12 +19,6 @@ interface DifferencesTabProps {
   file2: File | null;
 }
 
-// Word-diff types
-interface DiffSegment {
-  text: string;
-  type: 'same' | 'added' | 'removed';
-}
-
 export default function DifferencesTab({ result, file1, file2 }: DifferencesTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
@@ -33,7 +27,6 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
   const recommended = result.overallRecommendation.recommended;
 
   const [selectedArea, setSelectedArea] = useState<string>('all');
-  const [showInlineDiff, setShowInlineDiff] = useState(true);
   const [showSideBySide, setShowSideBySide] = useState(true);
   const [activeDiffIndex, setActiveDiffIndex] = useState(0);
   const [expandedQuoteIndex, setExpandedQuoteIndex] = useState<number | null>(null);
@@ -155,14 +148,6 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
 
         <div className={styles.viewToggles}>
           <button
-            className={`${styles.viewToggle} ${showInlineDiff ? styles.viewToggleActive : ''}`}
-            onClick={() => setShowInlineDiff(!showInlineDiff)}
-            title="Diff-Markierung"
-          >
-            <Layers size={14} />
-            <span>Diff</span>
-          </button>
-          <button
             className={styles.viewToggle}
             onClick={() => setShowSideBySide(!showSideBySide)}
           >
@@ -264,7 +249,7 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
                     <SideBySideQuotes
                       contract1={diff.contract1}
                       contract2={diff.contract2}
-                      showDiff={showInlineDiff}
+                      showDiff={false}
                       recommended={recommended}
                       sevColor={sevColor}
                     />
@@ -319,12 +304,11 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
 }
 
 // ============================================
-// Side-by-Side Quotes with Word Diff
+// Side-by-Side Quotes (plain text, no diff)
 // ============================================
 function SideBySideQuotes({
   contract1,
   contract2,
-  showDiff,
   recommended,
   sevColor,
 }: {
@@ -334,21 +318,12 @@ function SideBySideQuotes({
   recommended: 1 | 2;
   sevColor: string;
 }) {
-  // Guard: Skip expensive O(m*n) LCS diff for long texts to prevent browser freeze
-  const MAX_DIFF_WORDS = 400;
-  const tooLong = (contract1?.split(/\s+/).length || 0) > MAX_DIFF_WORDS
-    || (contract2?.split(/\s+/).length || 0) > MAX_DIFF_WORDS;
-
-  const diffResult = showDiff && contract1 && contract2 && !tooLong
-    ? computeWordDiff(contract1, contract2)
-    : null;
-
   return (
     <div className={styles.sideBySideContent}>
       <div className={`${styles.contractColumn} ${recommended === 1 ? styles.columnRecommended : ''}`}>
         <h5>Vertrag 1 {recommended === 1 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
-          {diffResult ? <DiffText segments={diffResult.segments1} variant="source" /> : (contract1 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>)}
+          {contract1 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>}
         </div>
       </div>
       <div className={styles.vsDivider} style={{ backgroundColor: sevColor }}>
@@ -357,77 +332,11 @@ function SideBySideQuotes({
       <div className={`${styles.contractColumn} ${recommended === 2 ? styles.columnRecommended : ''}`}>
         <h5>Vertrag 2 {recommended === 2 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
-          {diffResult ? <DiffText segments={diffResult.segments2} variant="target" /> : (contract2 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>)}
+          {contract2 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>}
         </div>
       </div>
     </div>
   );
-}
-
-function DiffText({ segments, variant }: { segments: DiffSegment[]; variant: 'source' | 'target' }) {
-  return (
-    <span>
-      {segments.map((seg, idx) => {
-        let className = '';
-        if (seg.type === 'removed' && variant === 'source') className = styles.diffRemoved;
-        else if (seg.type === 'added' && variant === 'target') className = styles.diffAdded;
-        return <span key={idx} className={className}>{seg.text}</span>;
-      })}
-    </span>
-  );
-}
-
-// ============================================
-// Word Diff Algorithm
-// ============================================
-function computeWordDiff(text1: string, text2: string): { segments1: DiffSegment[]; segments2: DiffSegment[] } {
-  const words1 = text1.trim().split(/\s+/).filter(w => w.length > 0);
-  const words2 = text2.trim().split(/\s+/).filter(w => w.length > 0);
-  const segments1: DiffSegment[] = [];
-  const segments2: DiffSegment[] = [];
-  const lcs = findLCS(words1, words2);
-
-  let i = 0, j = 0, k = 0;
-  while (k < lcs.length) {
-    while (i < words1.length && words1[i] !== lcs[k]) {
-      segments1.push({ text: words1[i] + ' ', type: 'removed' }); i++;
-    }
-    while (j < words2.length && words2[j] !== lcs[k]) {
-      segments2.push({ text: words2[j] + ' ', type: 'added' }); j++;
-    }
-    if (i < words1.length && j < words2.length) {
-      segments1.push({ text: words1[i] + ' ', type: 'same' });
-      segments2.push({ text: words2[j] + ' ', type: 'same' });
-      i++; j++; k++;
-    }
-  }
-  while (i < words1.length) { segments1.push({ text: words1[i] + ' ', type: 'removed' }); i++; }
-  while (j < words2.length) { segments2.push({ text: words2[j] + ' ', type: 'added' }); j++; }
-
-  return { segments1, segments2 };
-}
-
-function findLCS(arr1: string[], arr2: string[]): string[] {
-  const m = arr1.length, n = arr2.length;
-  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = arr1[i - 1].toLowerCase() === arr2[j - 1].toLowerCase()
-        ? dp[i - 1][j - 1] + 1
-        : Math.max(dp[i - 1][j], dp[i][j - 1]);
-    }
-  }
-
-  const lcs: string[] = [];
-  let i = m, j = n;
-  while (i > 0 && j > 0) {
-    if (arr1[i - 1].toLowerCase() === arr2[j - 1].toLowerCase()) {
-      lcs.unshift(arr1[i - 1]); i--; j--;
-    } else if (dp[i - 1][j] > dp[i][j - 1]) { i--; }
-    else { j--; }
-  }
-  return lcs;
 }
 
 function getSeverityColor(severity: string): string {
