@@ -234,12 +234,21 @@ ${rawText2}
 """
 
 ${clauseMatchContext}
-WICHTIG — QUANTITATIVE UNTERSCHIEDE SYSTEMATISCH ERFASSEN:
-Vergleiche ALLE konkreten Werte (Fristen, Beträge, Prozentsätze, Daten, Limits) aus den Vertragskarten.
-Jeder Zahlenunterschied (z.B. "3 Jahre" vs "5 Jahre", "25.000 EUR" vs "100.000 EUR", "14 Tage" vs "30 Tage")
-MUSS als EIGENER Unterschied erfasst werden, AUCH wenn er im selben Paragraphen liegt wie ein anderer Unterschied.
+WICHTIG — VOLLSTÄNDIGKEITSPRÜFUNG (KRITISCH!):
+Du MUSST JEDEN Paragraphen/Klausel BEIDER Verträge systematisch durchgehen.
+Gehe die Vertragskarten Zeile für Zeile durch und prüfe für JEDE Klausel:
+1. Gibt es eine entsprechende Klausel im anderen Vertrag?
+2. Wenn ja: Gibt es Unterschiede in Werten, Umfang, Formulierung?
+3. Wenn nein: → semanticType "missing"
+Überspringe KEINE Klausel. Prüfe insbesondere Bereiche, die GPT typischerweise übersieht:
+- Gewährleistung/Warranty (Fristen, Rügepflicht)
+- Wettbewerbsverbot/Non-Compete (vorhanden vs. fehlend)
+- Zahlungsbedingungen (Zahlungsziel, Verzugszinsen, Ratenzahlung)
+- Vertragsstrafen (vorhanden vs. fehlend, Höhe)
+
+QUANTITATIVE UNTERSCHIEDE — JEDEN Zahlenunterschied SEPARAT erfassen:
+"3 Jahre" vs "5 Jahre", "25.000 EUR" vs "100.000 EUR", "14 Tage" vs "30 Tage", "12 Monate" vs "6 Monate"
 Ein einzelner § kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
-Prüfe insbesondere: Laufzeiten, Fristen, Geldbeträge, Haftungsgrenzen, Kündigungsfristen, Gewährleistungsdauer, Geheimhaltungsdauer, Zahlungsziele.
 
 DEINE AUFGABE — 8 SCHRITTE:
 
@@ -263,15 +272,30 @@ Gehe BEIDE Verträge Klausel für Klausel durch. Für JEDEN echten Unterschied:
 
 REGEL: Identische/sinngemäß gleiche Klauseln NICHT aufnehmen. Nur ECHTE Abweichungen.
 
+VOLLSTÄNDIGKEITS-CHECK nach Schritt 1:
+Prüfe ob du ALLE diese Bereiche verglichen hast (sofern in den Verträgen vorhanden):
+☐ payment (Vergütung, Zahlungsziel, Verzugszinsen)
+☐ liability (Haftungsgrenzen, Haftungsumfang)
+☐ warranty (Gewährleistungsfrist, Mängelrüge)
+☐ termination (Kündigungsfrist, Mindestlaufzeit, Abfindung)
+☐ confidentiality (Dauer, Vertragsstrafe)
+☐ ip_rights (Nutzungsrechte, Portfolio)
+☐ non_compete (vorhanden/fehlend, Dauer)
+☐ duration (Vertragslaufzeit, Verlängerung)
+Wenn ein Bereich fehlt, gehe zurück und ergänze den Unterschied.
+
 SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
 MIT konkreten Zahlen und Fundstellen.
 
 SCHRITT 3 — RISIKO-LEVEL pro Vertrag: "low"|"medium"|"high"
 
 SCHRITT 4 — OVERALL SCORE pro Vertrag (0-100)
-SCORE-DIFFERENZIERUNG: Wenn ein Vertrag in Kernkategorien DEUTLICH besser ist,
-muss sich das im Score widerspiegeln. Vermeide zu enge Score-Bereiche (z.B. 72 vs 68).
-Ein echter qualitativer Vorsprung sollte mindestens 15-20 Punkte Differenz zeigen.
+SCORE-REGELN (STRENG BEFOLGEN):
+- Zähle die Unterschiede: Welcher Vertrag hat MEHR high/critical Severity-Punkte GEGEN sich?
+- Der Vertrag mit mehr schweren Schwächen MUSS einen deutlich niedrigeren Score haben.
+- MINIMUM 15 Punkte Differenz wenn ein Vertrag klar besser ist (z.B. 80 vs 60, NICHT 75 vs 70).
+- Nutze die volle Skala: 40-90. Ein Vertrag mit critical Risiken darf NICHT über 65 liegen.
+- Berechne den Score NACH den Unterschieden, nicht vorher.
 
 SCHRITT 5 — GESAMTURTEIL: 6-8 Sätze Fazit wie am Ende einer Erstberatung.
 
