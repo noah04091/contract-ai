@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
@@ -238,8 +238,8 @@ interface ComparisonHistoryItem {
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
   const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const useV2 = location.pathname.includes('compare-v2');
+  // V2 is now the default on all compare routes (V1 fallback in backend if V2 fails)
+  const useV2 = true;
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
