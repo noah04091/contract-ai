@@ -46,7 +46,7 @@ export default function OptimizerV2() {
 
   const {
     file, status, progress, progressMessage, stages,
-    result, resultId, activeMode, activeTab, selectedClauseId,
+    result, resultId, activeMode, activeTab,
     clauseChats, error
   } = state;
 
@@ -141,7 +141,6 @@ export default function OptimizerV2() {
               <ClausesTab
                 result={result}
                 activeMode={activeMode}
-                selectedClauseId={selectedClauseId}
                 clauseChats={clauseChats}
                 actions={actions}
                 sortByImportance={sortByImportance}
