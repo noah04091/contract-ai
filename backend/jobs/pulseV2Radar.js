@@ -53,8 +53,9 @@ async function runPulseV2Radar(db) {
   const startTime = Date.now();
 
   // Ensure unique index to prevent duplicate alerts (idempotent)
+  // Uses lawId (stable ObjectId) instead of lawTitle (can change with rewording)
   await db.collection("pulse_v2_legal_alerts").createIndex(
-    { userId: 1, lawTitle: 1, contractId: 1 },
+    { userId: 1, lawId: 1, contractId: 1 },
     { unique: true, background: true }
   );
 
@@ -304,6 +305,7 @@ async function storeAndNotify(db, userId, alerts) {
     userId,
     contractId: a.contractId,
     contractName: a.contractName,
+    lawId: a.lawChange._id.toString(),
     lawTitle: a.lawChange.title,
     lawArea: a.lawChange.area,
     lawSource: a.lawChange.source,

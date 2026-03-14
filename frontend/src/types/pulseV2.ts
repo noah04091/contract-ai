@@ -166,6 +166,7 @@ export interface PulseV2LegalAlert {
   userId: string;
   contractId: string;
   contractName: string;
+  lawId: string;
   lawTitle: string;
   lawArea: string;
   lawSource: string;
