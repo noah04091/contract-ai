@@ -781,9 +781,10 @@ router.post("/", verifyToken, upload.fields([
     console.log(`📝 Text extracted: Contract 1 (${contract1Text.length} chars), Contract 2 (${contract2Text.length} chars)`);
     sendProgress(res, 'chunking', 35, 'Verträge werden vorbereitet...', wantsSSE);
 
-    // 🆕 V2 Pipeline: Check ?version=2 query parameter
-    const useV2 = req.query.version === '2';
+    // 🆕 V2 Pipeline: Check query param OR body field
+    const useV2 = req.query.version === '2' || req.body?.version === '2';
     const perspective = req.body.perspective || 'neutral';
+    console.log(`🔍 V2 check: query=${req.query.version}, body=${req.body?.version}, useV2=${useV2}`);
 
     let analysisResult;
 

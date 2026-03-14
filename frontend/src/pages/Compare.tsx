@@ -541,7 +541,10 @@ export default function EnhancedCompare() {
     formData.append("file2", file2);
     formData.append("userProfile", userProfile);
     formData.append("comparisonMode", comparisonMode);
-    if (useV2) formData.append("perspective", perspective);
+    if (useV2) {
+      formData.append("perspective", perspective);
+      formData.append("version", "2");
+    }
 
     try {
       // 📡 SSE Request with streaming progress
