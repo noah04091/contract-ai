@@ -47,10 +47,14 @@ async function runClauseExtraction(openai, contractText, structure, onProgress) 
   const preSplit = preSplitClauses(contractText);
   onProgress(14, `${preSplit.length} vorläufige Abschnitte erkannt...`);
 
-  // Large contracts: use fast path (regex split + lightweight categorization)
-  if (contractText.length >= LARGE_CONTRACT_THRESHOLD) {
-    console.log(`[OptimizerV2] Stage 2: Large contract (${contractText.length} chars), using fast extraction`);
+  // Large contracts: use fast path ONLY if regex found multiple sections
+  // If preSplit returns <=1 section, fall back to GPT extraction (the regex missed the format)
+  if (contractText.length >= LARGE_CONTRACT_THRESHOLD && preSplit.length > 1) {
+    console.log(`[OptimizerV2] Stage 2: Large contract (${contractText.length} chars), ${preSplit.length} sections found, using fast extraction`);
     return extractLargeContract(openai, contractText, preSplit, structure, onProgress);
+  }
+  if (contractText.length >= LARGE_CONTRACT_THRESHOLD) {
+    console.log(`[OptimizerV2] Stage 2: Large contract (${contractText.length} chars) but regex found only ${preSplit.length} section(s), falling back to GPT extraction`);
   }
 
   // Small contracts: full GPT extraction
@@ -175,7 +179,7 @@ async function extractSmallContract(openai, contractText, preSplit, structure, o
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     temperature: 0.0,
-    max_tokens: 8000,
+    max_tokens: 16000,
     response_format: {
       type: 'json_schema',
       json_schema: {

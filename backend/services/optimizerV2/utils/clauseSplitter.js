@@ -12,14 +12,20 @@
 function preSplitClauses(text) {
   if (!text || text.length < 50) return [{ text, sectionNumber: null }];
 
-  // Common German contract section patterns
+  // Common German contract section patterns (order matters: most specific first)
   const sectionPatterns = [
-    /^(§\s*\d+[a-z]?)\s*[.:\-–]\s*/gm,                    // § 1, § 2a
+    /^(§\s*\d+[a-z]?)\s*[.:\-–\s]/gm,                      // § 1, § 2a, § 1 Vertragsgegenstand
     /^(Artikel\s+\d+)\s*[.:\-–]\s*/gim,                     // Artikel 1
+    /^(Ziffer\s+\d+)\s*[.:\-–]\s*/gim,                      // Ziffer 1
+    /^(Ziff\.\s*\d+)\s*[.:\-–]\s*/gim,                      // Ziff. 1
+    /^(Nr\.\s*\d+)\s*[.:\-–]\s*/gim,                        // Nr. 1
+    /^(Punkt\s+\d+)\s*[.:\-–]\s*/gim,                       // Punkt 1
     /^(\d+\.)\s+[A-ZÄÖÜ]/gm,                                // 1. Vertragsgegenstand
     /^(\d+\.\d+)\s+/gm,                                     // 1.1, 2.3
+    /^([IVXLC]+\.)\s+[A-ZÄÖÜ]/gm,                           // I. Allgemeines, II. Leistungen
     /^(Abschnitt\s+[IVX\d]+)\s*[.:\-–]\s*/gim,              // Abschnitt I
     /^(Teil\s+[IVX\d]+)\s*[.:\-–]\s*/gim,                   // Teil I
+    /^(Kapitel\s+\d+)\s*[.:\-–]\s*/gim,                     // Kapitel 1
   ];
 
   // Find all section starts

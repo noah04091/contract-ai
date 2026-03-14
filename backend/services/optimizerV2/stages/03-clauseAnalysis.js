@@ -83,7 +83,7 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         temperature: 0.1,
-        max_tokens: 8000,
+        max_tokens: 16000,
         response_format: {
           type: 'json_schema',
           json_schema: {
@@ -131,7 +131,13 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
           riskLevel: 5,
           riskType: 'legal',
           keyTerms: [],
-          legalReferences: []
+          legalReferences: [],
+          economicRiskAssessment: 'Analyse fehlgeschlagen — bitte manuell prüfen.',
+          powerBalance: 'balanced',
+          marketComparison: 'market_standard',
+          creatorView: '',
+          recipientView: '',
+          neutralRecommendation: ''
         });
       }
     }
