@@ -1,6 +1,7 @@
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale } from 'lucide-react';
-import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel } from '../../types/optimizerV2';
-import { IMPORTANCE_CONFIG, INDUSTRY_LABELS } from '../../types/optimizerV2';
+import { useMemo } from 'react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair } from 'lucide-react';
+import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance } from '../../types/optimizerV2';
+import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -158,6 +159,9 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
         </div>
       )}
 
+      {/* Top Risk Clauses */}
+      <TopRiskClauses result={result} onNavigate={onNavigate} />
+
       {/* Contract metadata */}
       <div className={styles.metadataGrid}>
         {structure.parties?.length > 0 && (
@@ -192,6 +196,101 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             {structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis'}
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Top Risk Clauses Panel ──
+const POWER_BALANCE_LABELS: Record<PowerBalance, string> = {
+  balanced: 'Ausgewogen',
+  slightly_one_sided: 'Leicht einseitig',
+  strongly_one_sided: 'Deutlich einseitig',
+  extremely_one_sided: 'Extrem einseitig'
+};
+
+const POWER_BALANCE_RANK: Record<PowerBalance, number> = {
+  balanced: 0, slightly_one_sided: 1, strongly_one_sided: 2, extremely_one_sided: 3
+};
+
+function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string) => void }) {
+  const topRisks = useMemo(() => {
+    const analysisMap = new Map(result.clauseAnalyses.map(a => [a.clauseId, a]));
+    const scoreMap = new Map(result.scores.perClause.map(s => [s.clauseId, s]));
+
+    return result.clauses
+      .map(clause => {
+        const analysis = analysisMap.get(clause.id);
+        const clauseScore = scoreMap.get(clause.id);
+        if (!analysis) return null;
+
+        // Composite risk: high importance + high risk + one-sided = higher rank
+        const importanceRank = analysis.importanceLevel === 'critical' ? 4 : analysis.importanceLevel === 'high' ? 3 : analysis.importanceLevel === 'medium' ? 1 : 0;
+        const pbRank = POWER_BALANCE_RANK[analysis.powerBalance] || 0;
+        const riskRank = importanceRank * 3 + analysis.riskLevel + pbRank * 2;
+
+        return { clause, analysis, score: clauseScore?.score, riskRank };
+      })
+      .filter((item): item is NonNullable<typeof item> => {
+        if (!item) return false;
+        const a = item.analysis;
+        return a.importanceLevel === 'critical'
+          || a.importanceLevel === 'high'
+          || a.powerBalance === 'strongly_one_sided'
+          || a.powerBalance === 'extremely_one_sided'
+          || a.riskLevel >= 7;
+      })
+      .sort((a, b) => b.riskRank - a.riskRank)
+      .slice(0, 5);
+  }, [result]);
+
+  if (topRisks.length === 0) return null;
+
+  return (
+    <div className={styles.topRisks}>
+      <div className={styles.topRisksHeader}>
+        <Crosshair size={15} style={{ color: '#FF3B30' }} />
+        <span className={styles.topRisksTitle}>Kritischste Klauseln</span>
+      </div>
+      <div className={styles.topRisksList}>
+        {topRisks.map(({ clause, analysis, score }, i) => (
+          <button
+            key={clause.id}
+            className={styles.topRiskItem}
+            onClick={() => onNavigate('clauses')}
+          >
+            <span className={styles.topRiskRank}>{i + 1}</span>
+            <div className={styles.topRiskInfo}>
+              <span className={styles.topRiskName}>
+                {clause.sectionNumber && `${clause.sectionNumber} `}{clause.title}
+              </span>
+              <span className={styles.topRiskCategory}>{CATEGORY_LABELS[clause.category]}</span>
+            </div>
+            <div className={styles.topRiskTags}>
+              {analysis.powerBalance !== 'balanced' && (
+                <span
+                  className={styles.topRiskTag}
+                  style={{
+                    color: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' :
+                           analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93',
+                    borderColor: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' :
+                                 analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93'
+                  }}
+                >
+                  {POWER_BALANCE_LABELS[analysis.powerBalance]}
+                </span>
+              )}
+              {analysis.riskLevel >= 6 && (
+                <span className={styles.topRiskTag} style={{ color: '#FF3B30', borderColor: '#FF3B30' }}>
+                  Risiko {analysis.riskLevel}/10
+                </span>
+              )}
+            </div>
+            {score !== undefined && (
+              <span className={styles.topRiskScore} style={{ color: getScoreColor(score) }}>{score}</span>
+            )}
+          </button>
+        ))}
       </div>
     </div>
   );
