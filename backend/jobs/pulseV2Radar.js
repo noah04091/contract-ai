@@ -204,8 +204,8 @@ async function assessImpact(lawChange, contracts) {
     .slice(0, 10)
     .map(
       (c, i) => {
-        const clauseList = c.clauses.map((cl) => `  - [${cl.id}] ${cl.title} (${cl.category})`).join("\n");
-        const findingList = c.findings.map((f) => `  - ${f.title} (${f.severity}, Klausel: ${f.clauseId})`).join("\n");
+        const clauseList = c.clauses.slice(0, 15).map((cl) => `  - [${cl.id}] ${cl.title} (${cl.category})`).join("\n");
+        const findingList = c.findings.slice(0, 10).map((f) => `  - ${f.title} (${f.severity}, Klausel: ${f.clauseId})`).join("\n");
         return `[${i + 1}] "${c.contractName}" (${c.contractType}, Score: ${c.scores?.overall || "?"})\n` +
           `  Klauseln:\n${clauseList || "  - keine"}\n` +
           `  Befunde:\n${findingList || "  - keine"}`;
@@ -306,6 +306,15 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
       const contract = contracts[impact.contractIndex - 1];
       if (!contract) continue;
 
+      // Validate clauseIds — filter out hallucinated IDs not in actual contract
+      const validClauseIds = new Set(contract.clauses.map((c) => c.id));
+      const validatedClauseImpacts = (impact.clauseImpacts || []).filter(
+        (ci) => validClauseIds.has(ci.clauseId)
+      );
+      const validatedClauseIds = (impact.affectedClauseIds || []).filter(
+        (id) => validClauseIds.has(id)
+      );
+
       confirmedImpacts.push({
         userId: contract.userId,
         contractId: contract.contractId,
@@ -314,8 +323,8 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         severity: impact.severity,
         recommendation: impact.recommendation,
         confidence: impact.confidence,
-        affectedClauseIds: impact.affectedClauseIds || [],
-        clauseImpacts: impact.clauseImpacts || [],
+        affectedClauseIds: validatedClauseIds,
+        clauseImpacts: validatedClauseImpacts,
       });
     }
 
