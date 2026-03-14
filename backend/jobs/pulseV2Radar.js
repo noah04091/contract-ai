@@ -323,8 +323,8 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         severity: impact.severity,
         recommendation: impact.recommendation,
         confidence: impact.confidence,
-        affectedClauseIds: validatedClauseIds,
-        clauseImpacts: validatedClauseImpacts,
+        affectedClauseIds: validatedClauseIds.slice(0, 5),
+        clauseImpacts: validatedClauseImpacts.slice(0, 5),
       });
     }
 
