@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle, Scale, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle, Scale, TrendingUp, Shield, ShieldAlert, Handshake } from 'lucide-react';
 import type {
   Clause, ClauseAnalysis, ClauseOptimization, ClauseScore,
   OptimizationMode, ChatMessage
@@ -128,6 +128,38 @@ export default function ClauseCard({
                 <div className={styles.clauseAssessment}>
                   <h4>Wirtschaftliche Risikobewertung</h4>
                   <p>{analysis.economicRiskAssessment}</p>
+                </div>
+              )}
+
+              {/* Adversarial Dual Review */}
+              {analysis.creatorView && analysis.recipientView && (
+                <div className={styles.dualReview}>
+                  <h4 className={styles.dualReviewTitle}>Verhandlungsperspektiven</h4>
+                  <div className={styles.perspectiveGrid}>
+                    <div className={`${styles.perspectiveCard} ${styles.perspectiveCreator}`}>
+                      <div className={styles.perspectiveHeader}>
+                        <Shield size={13} />
+                        <span>Pro Anbieter</span>
+                      </div>
+                      <p>{analysis.creatorView}</p>
+                    </div>
+                    <div className={`${styles.perspectiveCard} ${styles.perspectiveRecipient}`}>
+                      <div className={styles.perspectiveHeader}>
+                        <ShieldAlert size={13} />
+                        <span>Pro Empfänger</span>
+                      </div>
+                      <p>{analysis.recipientView}</p>
+                    </div>
+                    {analysis.neutralRecommendation && (
+                      <div className={`${styles.perspectiveCard} ${styles.perspectiveNeutral}`}>
+                        <div className={styles.perspectiveHeader}>
+                          <Handshake size={13} />
+                          <span>Realistischer Kompromiss</span>
+                        </div>
+                        <p>{analysis.neutralRecommendation}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

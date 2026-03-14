@@ -92,6 +92,9 @@ export interface ClauseAnalysis {
   economicRiskAssessment: string;
   powerBalance: PowerBalance;
   marketComparison: MarketComparison;
+  creatorView: string;
+  recipientView: string;
+  neutralRecommendation: string;
 }
 
 // ── Optimization Version ──

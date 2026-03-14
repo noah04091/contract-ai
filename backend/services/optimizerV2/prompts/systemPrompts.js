@@ -197,6 +197,30 @@ Für JEDE Klausel:
     - "slightly_strict": Leicht strenger als marktüblich
     - "significantly_strict": Deutlich strenger als bei vergleichbaren Verträgen
     - "unusually_disadvantageous": Ungewöhnlich nachteilig für eine Partei
+14. "creatorView": Analysiere als Anwalt des VERTRAGSERSTELLERS/ANBIETERS:
+    - Warum ist diese Klausel aus Sicht des Erstellers sinnvoll und schützenswert?
+    - Welches konkrete Risiko sichert sie ab?
+    - Welche Argumente würde der Anbieter in einer Verhandlung vorbringen?
+    Bei importanceLevel "medium" oder "low": Kurzer Einzeiler genügt.
+15. "recipientView": Analysiere als Anwalt des VERTRAGSEMPFÄNGERS/KUNDEN:
+    - Warum ist diese Klausel aus Sicht des Empfängers problematisch?
+    - Welche Risiken werden einseitig auf den Empfänger übertragen?
+    - Was sollte der Empfänger konkret fordern oder verhandeln?
+    Bei importanceLevel "medium" oder "low": Kurzer Einzeiler genügt.
+16. "neutralRecommendation": Als neutraler Verhandlungsmoderator/Mediator:
+    - Was wäre ein realistischer Kompromiss, den beide Seiten akzeptieren könnten?
+    - Welche konkrete Formulierung würde die Interessen beider Parteien wahren?
+    Bei importanceLevel "medium" oder "low": Kurzer Einzeiler genügt.
+
+ADVERSARIAL DUAL REVIEW (KRITISCH):
+- Analysiere JEDE Klausel aus DREI Perspektiven: Ersteller-Anwalt, Empfänger-Anwalt, und neutraler Mediator.
+- Bei KRITISCHEN und WICHTIGEN Klauseln (importanceLevel "critical" oder "high"):
+  Ausführliche adversarial Analyse (3-5 Sätze pro Perspektive) mit konkreten Argumenten und Verhandlungstaktiken.
+- Bei STANDARD und FORMALEN Klauseln (importanceLevel "medium" oder "low"):
+  Nur ein kurzer Einzeiler pro Perspektive.
+- Die Perspektiven von Ersteller und Empfänger MÜSSEN sich widersprechen — das ist der Sinn.
+  Der Ersteller verteidigt die Klausel, der Empfänger greift sie an, der Mediator findet den Mittelweg.
+- Beziehe dich auf KONKRETE Formulierungen aus der Klausel, nicht auf Allgemeinplätze.
 
 WIRTSCHAFTLICHE ANALYSE (KRITISCH):
 - Bewerte NICHT NUR die juristische Struktur, sondern auch die wirtschaftliche Risikoübertragung.
@@ -237,11 +261,15 @@ const CLAUSE_ANALYSIS_SCHEMA = {
           legalReferences: { type: "array", items: { type: "string" } },
           economicRiskAssessment: { type: "string" },
           powerBalance: { type: "string", enum: ["balanced", "slightly_one_sided", "strongly_one_sided", "extremely_one_sided"] },
-          marketComparison: { type: "string", enum: ["below_market", "market_standard", "slightly_strict", "significantly_strict", "unusually_disadvantageous"] }
+          marketComparison: { type: "string", enum: ["below_market", "market_standard", "slightly_strict", "significantly_strict", "unusually_disadvantageous"] },
+          creatorView: { type: "string" },
+          recipientView: { type: "string" },
+          neutralRecommendation: { type: "string" }
         },
         required: ["clauseId", "summary", "plainLanguage", "legalAssessment", "strength",
                    "importanceLevel", "concerns", "riskLevel", "riskType", "keyTerms", "legalReferences",
-                   "economicRiskAssessment", "powerBalance", "marketComparison"],
+                   "economicRiskAssessment", "powerBalance", "marketComparison",
+                   "creatorView", "recipientView", "neutralRecommendation"],
         additionalProperties: false
       }
     }

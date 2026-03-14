@@ -634,6 +634,24 @@
   background: rgba(0,0,0,0.04);
 }
 
+/* ── Adversarial Dual Review ── */
+.dualReview { margin-top: 14px; }
+.dualReviewTitle { font-size: 12px; font-weight: 600; color: var(--ov2-gray-600); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.perspectiveGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.perspectiveGrid:has(.perspectiveNeutral) { grid-template-columns: 1fr 1fr 1fr; }
+.perspectiveCard { padding: 12px 14px; border-radius: var(--ov2-radius-xs); border-left: 3px solid transparent; background: var(--ov2-gray-50); }
+.perspectiveCard p { font-size: 13px; line-height: 1.5; color: var(--ov2-gray-700); margin: 6px 0 0; }
+.perspectiveHeader { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.perspectiveCreator { border-left-color: var(--ov2-green); }
+.perspectiveCreator .perspectiveHeader { color: var(--ov2-green); }
+.perspectiveRecipient { border-left-color: var(--ov2-orange); }
+.perspectiveRecipient .perspectiveHeader { color: var(--ov2-orange); }
+.perspectiveNeutral { border-left-color: var(--ov2-blue); }
+.perspectiveNeutral .perspectiveHeader { color: var(--ov2-blue); }
+@media (max-width: 768px) {
+  .perspectiveGrid, .perspectiveGrid:has(.perspectiveNeutral) { grid-template-columns: 1fr; }
+}
+
 .clauseConcerns h4 { font-size: 12px; font-weight: 600; color: var(--ov2-gray-600); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
 .clauseConcerns ul { margin: 0; padding-left: 18px; }
 .clauseConcerns li { font-size: 13px; color: var(--ov2-gray-700); margin-bottom: 4px; }
