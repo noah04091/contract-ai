@@ -9,39 +9,69 @@ Vertragstyp: ${contractType || "unbekannt"}
 Jurisdiktion: ${jurisdiction || "Deutschland"}
 Parteien: ${parties?.join(", ") || "N/A"}
 
-Deine EINZIGE Aufgabe: Analysiere die folgenden Vertragsklauseln TIEFGEHEND und identifiziere Befunde.
+Deine EINZIGE Aufgabe: Analysiere die folgenden Vertragsklauseln TIEFGEHEND.
 
-Für JEDE Klausel, die einen Befund enthält, erstelle einen Eintrag mit:
+═══════════════════════════════════════════
+ANALYSE-VERFAHREN (Two-Pass Legal Reasoning)
+═══════════════════════════════════════════
+
+Du MUSST für jede Klausel exakt zwei Schritte durchlaufen:
+
+SCHRITT 1 — Juristische Interpretation (intern, nicht im Output)
+Beschreibe für dich selbst:
+- Was ist der Zweck dieser Klausel?
+- In welchem rechtlichen Kontext steht sie? (BGB, HGB, DSGVO, etc.)
+- Was ist der übliche Marktstandard für diese Art von Klausel?
+- Ist die Formulierung typisch oder ungewöhnlich?
+- Wer profitiert von dieser Klausel, und ist das ausgewogen?
+
+SCHRITT 2 — Risikoentscheidung (Decision Gate)
+Beantworte für jeden potenziellen Befund diese 3 Fragen:
+Q1: Ist das Risiko TATSÄCHLICH im Text vorhanden — mit konkretem Textbezug?
+Q2: Könnte die Formulierung ABSICHTLICH so gewählt sein (branchenüblich, verhandelt)?
+Q3: Würde ein deutsches Gericht dies problematisch finden, ODER liegt eine klare Abweichung von gesetzlichen Vorgaben (BGB, HGB, DSGVO), Compliance-Anforderungen oder branchenüblichen Vertragsstandards vor?
+
+GATE-REGEL:
+→ Q1 muss IMMER mit JA beantwortet werden. Ohne Textbezug → KEIN Finding.
+→ Q2 allein reicht NIE. Absichtlich restriktiv aber zulässig = kein Finding.
+→ Q3 oder ein klarer Compliance-/Marktstandard-Verstoß muss zusätzlich vorliegen.
+→ Kurzform: Finding NUR wenn Q1=JA UND (Q3=JA ODER klare Compliance-Abweichung).
+→ Sonst: KEIN Finding. Das ist korrekt und gewünscht.
+
+═══════════════════════════════════════════
+AUSGABE-FORMAT
+═══════════════════════════════════════════
+
+Für JEDEN Befund, der das Decision Gate passiert hat:
 - "clauseId": Die ID der Klausel
 - "category": Eine der Kategorien (vertragsbedingungen, haftung, kuendigung, datenschutz, geistiges_eigentum, zahlungen, geheimhaltung, wettbewerb, compliance, sonstiges)
 - "severity": "info" | "low" | "medium" | "high" | "critical"
 - "type": "risk" | "compliance" | "opportunity" | "information"
-- "title": Kurzer, präziser Titel des Befunds
+- "title": Kurzer, präziser Titel (KEIN "könnte" oder "eventuell" — sei definitiv)
 - "description": Detaillierte Beschreibung (2-4 Sätze)
 - "legalBasis": Konkrete Rechtsgrundlage (z.B. "§ 307 BGB", "Art. 28 DSGVO")
-- "affectedText": Der EXAKTE betroffene Textabschnitt aus der Klausel (max 200 Zeichen)
-- "confidence": 0-100, wie sicher du dir bist
-- "reasoning": WARUM dies ein Befund ist (3-5 Sätze mit juristischer Begründung)
-- "isIntentional": true wenn die Formulierung wahrscheinlich ABSICHTLICH so gewählt wurde
+- "affectedText": EXAKTES Zitat aus der Klausel, das den Befund belegt (max 200 Zeichen). PFLICHT — ohne konkreten Textbezug KEIN Befund.
+- "confidence": 0-100
+- "reasoning": Deine juristische Begründung aus Schritt 1+2 (3-5 Sätze: Interpretation → Marktvergleich → Entscheidung)
+- "isIntentional": true wenn die Formulierung wahrscheinlich absichtlich so gewählt wurde
 
-ENTSCHEIDUNGSLOGIK — BEVOR du ein Risiko meldest, beantworte 3 Fragen:
-1. Ist dieses Risiko TATSÄCHLICH im Text vorhanden, oder interpretiere ich es hinein?
-2. Wenn die Klausel restriktiv ist — könnte das ABSICHTLICH so sein?
-3. Würde ein deutsches Gericht dies tatsächlich als problematisch ansehen?
-Wenn eine Antwort "nein" oder "unsicher" ist → NICHT als Risiko melden.
+═══════════════════════════════════════════
+QUALITÄTSREGELN
+═══════════════════════════════════════════
 
 VERBOTEN:
 - Risiken erfinden, die nicht im Text stehen
 - Behaupten, etwas "fehlt", ohne den GESAMTEN Vertrag geprüft zu haben
-- "Könnte problematisch sein" — sei definitiv oder sage nichts
+- Vage Formulierungen: "könnte problematisch sein", "es sei angemerkt", "man sollte prüfen"
 - Dasselbe Risiko in anderen Worten wiederholen
-- Phrasen wie "es sei angemerkt" oder "man sollte prüfen"
-- Mehr als 3 Befunde pro Klausel (fokussiere auf die wichtigsten)
+- Findings OHNE konkretes Zitat aus dem Vertragstext
+- Mehr als 3 Findings pro Klausel-Batch
 
 ERLAUBT:
 - "information" Befunde für neutrale, aber wissenswerte Punkte
-- "opportunity" Befunde für Verbesserungspotential
-- Klauseln OHNE Befunde zu lassen (das ist KORREKT wenn sie solide sind)
+- "opportunity" Befunde für konkretes Verbesserungspotential
+- Klauseln OHNE Befunde zu lassen — das ist KORREKT wenn sie solide sind
+- Leeres findings-Array wenn keine Klausel das Decision Gate passiert
 
 Antworte NUR im angegebenen JSON-Format.`;
 

@@ -124,5 +124,6 @@ legalPulseV2ResultSchema.index({ userId: 1, createdAt: -1 });
 legalPulseV2ResultSchema.index({ contractId: 1, createdAt: -1 });
 legalPulseV2ResultSchema.index({ requestId: 1 }, { unique: true });
 legalPulseV2ResultSchema.index({ status: 1 });
+legalPulseV2ResultSchema.index({ contractId: 1, "clauseFindings.severity": 1 });
 
 module.exports = mongoose.model("LegalPulseV2Result", legalPulseV2ResultSchema);

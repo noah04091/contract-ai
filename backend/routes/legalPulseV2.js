@@ -172,6 +172,52 @@ router.get("/contract/:contractId/history", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// GET /contract/:contractId/timeline — Score timeline for trend chart
+// ══════════════════════════════════════════════════════════════
+router.get("/contract/:contractId/timeline", async (req, res) => {
+  try {
+    const results = await LegalPulseV2Result.find({
+      contractId: req.params.contractId,
+      userId: req.user.userId,
+      status: "completed",
+    })
+      .sort({ createdAt: 1 })
+      .select("scores.overall scores.risk scores.compliance createdAt clauseFindings")
+      .lean();
+
+    const timeline = results.map((r, idx) => {
+      const prev = idx > 0 ? results[idx - 1] : null;
+      const delta = prev ? r.scores.overall - prev.scores.overall : 0;
+
+      // Find new findings compared to previous analysis
+      const newFindings = [];
+      if (prev && r.clauseFindings) {
+        const prevTitles = new Set((prev.clauseFindings || []).map(f => f.title));
+        for (const f of r.clauseFindings) {
+          if (!prevTitles.has(f.title) && (f.severity === "critical" || f.severity === "high")) {
+            newFindings.push({ title: f.title, severity: f.severity });
+          }
+        }
+      }
+
+      return {
+        date: r.createdAt,
+        score: r.scores.overall,
+        risk: r.scores.risk,
+        compliance: r.scores.compliance,
+        delta,
+        newFindings: newFindings.slice(0, 3),
+      };
+    });
+
+    res.json({ timeline });
+  } catch (error) {
+    console.error("[PulseV2] Timeline error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Timeline" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // GET /dashboard — Portfolio overview (all contracts with latest scores)
 // ══════════════════════════════════════════════════════════════
 router.get("/dashboard", async (req, res) => {

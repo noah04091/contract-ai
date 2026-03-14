@@ -7,7 +7,11 @@ const OpenAI = require("openai");
 const { preSplitClauses } = require("../../optimizerV2/utils/clauseSplitter");
 const { DEEP_ANALYSIS_SYSTEM_PROMPT, DEEP_ANALYSIS_SCHEMA, getContractTypeHint } = require("../prompts/systemPrompts");
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 60000,
+  maxRetries: 1,
+});
 
 const BATCH_SIZE = 4; // clauses per AI call
 const MAX_TOTAL_INPUT_TOKENS = 120000; // safety budget

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { PulseV2Result } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
+import { ScoreTrend } from './ScoreTrend';
 
 interface ContractDetailProps {
   result: PulseV2Result;
@@ -95,6 +96,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
           </div>
         </div>
       </div>
+
+      {/* Score Timeline */}
+      <ScoreTrend contractId={result.contractId} />
 
       {/* Filters */}
       <div style={{
