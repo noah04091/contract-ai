@@ -234,6 +234,13 @@ ${rawText2}
 """
 
 ${clauseMatchContext}
+WICHTIG — QUANTITATIVE UNTERSCHIEDE SYSTEMATISCH ERFASSEN:
+Vergleiche ALLE konkreten Werte (Fristen, Beträge, Prozentsätze, Daten, Limits) aus den Vertragskarten.
+Jeder Zahlenunterschied (z.B. "3 Jahre" vs "5 Jahre", "25.000 EUR" vs "100.000 EUR", "14 Tage" vs "30 Tage")
+MUSS als EIGENER Unterschied erfasst werden, AUCH wenn er im selben Paragraphen liegt wie ein anderer Unterschied.
+Ein einzelner § kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
+Prüfe insbesondere: Laufzeiten, Fristen, Geldbeträge, Haftungsgrenzen, Kündigungsfristen, Gewährleistungsdauer, Geheimhaltungsdauer, Zahlungsziele.
+
 DEINE AUFGABE — 8 SCHRITTE:
 
 SCHRITT 1 — UNTERSCHIEDE (maximal ${MAX_DIFFERENCES}, nach Severity priorisiert):
@@ -262,6 +269,9 @@ MIT konkreten Zahlen und Fundstellen.
 SCHRITT 3 — RISIKO-LEVEL pro Vertrag: "low"|"medium"|"high"
 
 SCHRITT 4 — OVERALL SCORE pro Vertrag (0-100)
+SCORE-DIFFERENZIERUNG: Wenn ein Vertrag in Kernkategorien DEUTLICH besser ist,
+muss sich das im Score widerspiegeln. Vermeide zu enge Score-Bereiche (z.B. 72 vs 68).
+Ein echter qualitativer Vorsprung sollte mindestens 15-20 Punkte Differenz zeigen.
 
 SCHRITT 5 — GESAMTURTEIL: 6-8 Sätze Fazit wie am Ende einer Erstberatung.
 
@@ -340,9 +350,6 @@ async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutr
   });
 
   const raw = JSON.parse(completion.choices[0].message.content);
-  console.log(`🔍 Phase B RAW keys: ${Object.keys(raw).join(', ')}`);
-  console.log(`🔍 Phase B RAW risks: ${Array.isArray(raw.risks) ? raw.risks.length : typeof raw.risks}`);
-  console.log(`🔍 Phase B RAW recommendations: ${Array.isArray(raw.recommendations) ? raw.recommendations.length : typeof raw.recommendations}`);
   const validated = validatePhaseBResponse(raw);
   const stabilized = stabilizeScores(validated);
   const filtered = filterIdenticalClauses(stabilized);

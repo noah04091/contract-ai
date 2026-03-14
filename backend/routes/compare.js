@@ -784,7 +784,7 @@ router.post("/", verifyToken, upload.fields([
     // 🆕 V2 Pipeline: Check query param OR body field
     const useV2 = req.query.version === '2' || req.body?.version === '2';
     const perspective = req.body.perspective || 'neutral';
-    console.log(`🔍 V2 check: query=${req.query.version}, body=${req.body?.version}, useV2=${useV2}`);
+    console.log(`📊 Compare: V2=${useV2}, Perspektive=${perspective}`);
 
     let analysisResult;
 
