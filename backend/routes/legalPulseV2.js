@@ -305,4 +305,63 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// GET /portfolio-insights — Cross-contract insights (latest per user)
+// ══════════════════════════════════════════════════════════════
+router.get("/portfolio-insights", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get latest result that has portfolio insights
+    const result = await LegalPulseV2Result.findOne({
+      userId,
+      status: "completed",
+      "portfolioInsights.0": { $exists: true },
+    })
+      .sort({ createdAt: -1 })
+      .select("portfolioInsights actions createdAt")
+      .lean();
+
+    res.json({
+      insights: result?.portfolioInsights || [],
+      actions: result?.actions || [],
+      lastAnalysis: result?.createdAt || null,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Portfolio insights error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Portfolio-Insights" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// PATCH /results/:id/actions/:actionId — Update action status
+// ══════════════════════════════════════════════════════════════
+router.patch("/results/:id/actions/:actionId", async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["open", "done", "dismissed"].includes(status)) {
+      return res.status(400).json({ error: "Ungültiger Status" });
+    }
+
+    const result = await LegalPulseV2Result.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        userId: req.user.userId,
+        "actions.id": req.params.actionId,
+      },
+      { $set: { "actions.$.status": status } },
+      { new: true }
+    ).lean();
+
+    if (!result) {
+      return res.status(404).json({ error: "Aktion nicht gefunden" });
+    }
+
+    res.json({ success: true, actions: result.actions });
+  } catch (error) {
+    console.error("[PulseV2] Action update error:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren der Aktion" });
+  }
+});
+
 module.exports = router;

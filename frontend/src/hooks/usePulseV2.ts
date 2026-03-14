@@ -30,6 +30,8 @@ const INITIAL_STAGES: StageInfo[] = [
   { id: 1, name: 'Kontext sammeln', status: 'pending' },
   { id: 0, name: 'Dokument analysieren', status: 'pending' },
   { id: 2, name: 'Tiefenanalyse', status: 'pending' },
+  { id: 3, name: 'Portfolio Intelligence', status: 'pending' },
+  { id: 4, name: 'Handlungsempfehlungen', status: 'pending' },
   { id: 5, name: 'Score berechnen', status: 'pending' },
 ];
 

@@ -1,12 +1,14 @@
 /**
  * Legal Pulse V2 — Pipeline Orchestrator
- * 4-Stage pipeline (Phase 1: Stages 0,1,2,5) with SSE progress.
+ * 6-Stage pipeline (Stages 0,1,2,3,4,5) with SSE progress.
  */
 
 const LegalPulseV2Result = require("../../models/LegalPulseV2Result");
 const { runDocumentIntelligence } = require("./stages/00-documentIntelligence");
 const { runContextGathering } = require("./stages/01-contextGathering");
 const { runDeepAnalysis } = require("./stages/02-deepAnalysis");
+const { runCrossContractIntelligence } = require("./stages/03-crossContractIntelligence");
+const { runActionEngine } = require("./stages/04-actionEngine");
 const { runScoreCalculation } = require("./stages/05-scoreCalculation");
 
 const database = require("../../config/database");
@@ -190,9 +192,80 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     });
 
     // ═══════════════════════════════════════════
+    // STAGE 3: Cross-Contract Intelligence (GPT-4o-mini)
+    // ═══════════════════════════════════════════
+    let portfolioInsights = [];
+    try {
+      onProgress(71, "Starte Portfolio-Analyse...", { stage: 3, stageName: "Portfolio Intelligence" });
+      const crossResult = await runCrossContractIntelligence(userId, onProgress);
+      portfolioInsights = crossResult.portfolioInsights;
+
+      await LegalPulseV2Result.updateOne(
+        { _id: record._id },
+        {
+          $set: { portfolioInsights },
+          $push: { "costs.perStage": crossResult.costs },
+          $inc: {
+            "costs.totalTokensInput": crossResult.costs.inputTokens,
+            "costs.totalTokensOutput": crossResult.costs.outputTokens,
+            "costs.totalCostUSD": crossResult.costs.costUSD,
+          },
+        }
+      );
+
+      onProgress(78, `${portfolioInsights.length} Portfolio-Insights erkannt`, {
+        stage: 3,
+        stageName: "Portfolio Intelligence",
+        complete: true,
+        insightsCount: portfolioInsights.length,
+      });
+    } catch (err) {
+      console.error("[PulseV2] Stage 3 failed (non-critical):", err.message);
+      onProgress(78, "Portfolio-Analyse übersprungen", { stage: 3, stageName: "Portfolio Intelligence", complete: true });
+    }
+
+    // ═══════════════════════════════════════════
+    // STAGE 4: Action Engine (GPT-4o)
+    // ═══════════════════════════════════════════
+    let actions = [];
+    try {
+      onProgress(80, "Generiere Handlungsempfehlungen...", { stage: 4, stageName: "Action Engine" });
+      const actionResult = await runActionEngine(
+        analysisResult.clauseFindings,
+        portfolioInsights,
+        context,
+        onProgress
+      );
+      actions = actionResult.actions;
+
+      await LegalPulseV2Result.updateOne(
+        { _id: record._id },
+        {
+          $set: { actions },
+          $push: { "costs.perStage": actionResult.costs },
+          $inc: {
+            "costs.totalTokensInput": actionResult.costs.inputTokens,
+            "costs.totalTokensOutput": actionResult.costs.outputTokens,
+            "costs.totalCostUSD": actionResult.costs.costUSD,
+          },
+        }
+      );
+
+      onProgress(88, `${actions.length} Handlungsempfehlungen generiert`, {
+        stage: 4,
+        stageName: "Action Engine",
+        complete: true,
+        actionsCount: actions.length,
+      });
+    } catch (err) {
+      console.error("[PulseV2] Stage 4 failed (non-critical):", err.message);
+      onProgress(88, "Empfehlungen übersprungen", { stage: 4, stageName: "Action Engine", complete: true });
+    }
+
+    // ═══════════════════════════════════════════
     // STAGE 5: Score Calculation (deterministic)
     // ═══════════════════════════════════════════
-    onProgress(75, "Berechne Health Score...", { stage: 5, stageName: "Score Calculation" });
+    onProgress(90, "Berechne Health Score...", { stage: 5, stageName: "Score Calculation" });
 
     const scores = runScoreCalculation(
       analysisResult.clauses,

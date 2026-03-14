@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import type { PulseV2Result } from '../../types/pulseV2';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { PulseV2Result, PulseV2Action } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
 import { ScoreTrend } from './ScoreTrend';
+import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
+import { ActionItem } from './ActionItem';
 
 interface ContractDetailProps {
   result: PulseV2Result;
@@ -14,6 +16,43 @@ type FilterType = 'all' | 'risk' | 'compliance' | 'opportunity' | 'information';
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
   const [filterSeverity, setFilterSeverity] = useState<FilterSeverity>('all');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
+
+  // Build contract name map for portfolio insights
+  const [contractNames, setContractNames] = useState<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    setActions(result.actions || []);
+  }, [result]);
+
+  useEffect(() => {
+    // Build name map from related contracts in context
+    const names = new Map<string, string>();
+    names.set(result.contractId, result.context?.contractName || 'Aktueller Vertrag');
+    if (result.context?.relatedContracts) {
+      for (const rc of result.context.relatedContracts) {
+        if (rc.name) names.set(rc.name, rc.name);
+      }
+    }
+    setContractNames(names);
+  }, [result]);
+
+  const handleActionStatusChange = useCallback(async (actionId: string, status: 'open' | 'done' | 'dismissed') => {
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/actions/${actionId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (data.actions) {
+        setActions(data.actions);
+      }
+    } catch (err) {
+      console.error('[PulseV2] Action update failed:', err);
+    }
+  }, [result._id]);
 
   const findings = result.clauseFindings || [];
   const clauses = result.clauses || [];
@@ -99,6 +138,49 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
 
       {/* Score Timeline */}
       <ScoreTrend contractId={result.contractId} />
+
+      {/* Portfolio Insights */}
+      <PortfolioInsightsPanel
+        insights={result.portfolioInsights || []}
+        contractNames={contractNames}
+      />
+
+      {/* Action Recommendations */}
+      {actions.length > 0 && (
+        <div style={{
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
+            Handlungsempfehlungen
+            <span style={{
+              marginLeft: 8,
+              fontSize: 12,
+              color: '#6b7280',
+              fontWeight: 400,
+            }}>
+              {actions.filter(a => a.status === 'open').length} offen
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[...actions]
+              .sort((a, b) => {
+                const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
+                return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+              })
+              .map(action => (
+              <ActionItem
+                key={action.id}
+                action={action}
+                onStatusChange={handleActionStatusChange}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{

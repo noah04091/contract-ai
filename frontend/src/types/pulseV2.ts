@@ -66,6 +66,28 @@ export interface PulseV2Context {
   riskTrend: string;
 }
 
+export interface PulseV2PortfolioInsight {
+  type: 'concentration_risk' | 'conflict' | 'renewal_cluster' | 'opportunity' | 'benchmark_gap';
+  title: string;
+  description: string;
+  severity: 'info' | 'low' | 'medium' | 'high' | 'critical';
+  relatedContracts: string[];
+  confidence: number;
+  reasoning?: string;
+}
+
+export interface PulseV2Action {
+  id: string;
+  priority: 'now' | 'plan' | 'watch';
+  title: string;
+  description: string;
+  relatedContracts: string[];
+  estimatedImpact: string;
+  confidence: number;
+  nextStep: string;
+  status: 'open' | 'done' | 'dismissed';
+}
+
 export interface PulseV2Result {
   _id: string;
   userId: string;
@@ -78,6 +100,8 @@ export interface PulseV2Result {
   context: PulseV2Context;
   clauses: PulseV2Clause[];
   clauseFindings: PulseV2Finding[];
+  portfolioInsights: PulseV2PortfolioInsight[];
+  actions: PulseV2Action[];
   scores: PulseV2Scores;
   costs: {
     totalTokensInput: number;

@@ -88,6 +88,32 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
   clauses: [clauseSchema],
   clauseFindings: [clauseFindingSchema],
 
+  // Stage 3 — Cross-Contract Intelligence
+  portfolioInsights: [{
+    type: { type: String, enum: ["concentration_risk", "conflict", "renewal_cluster", "opportunity", "benchmark_gap"] },
+    title: String,
+    description: String,
+    severity: { type: String, enum: ["info", "low", "medium", "high", "critical"] },
+    relatedContracts: [String],
+    confidence: Number,
+    reasoning: String,
+    _id: false,
+  }],
+
+  // Stage 4 — Action Engine
+  actions: [{
+    id: String,
+    priority: { type: String, enum: ["now", "plan", "watch"] },
+    title: String,
+    description: String,
+    relatedContracts: [String],
+    estimatedImpact: String,
+    confidence: Number,
+    nextStep: String,
+    status: { type: String, enum: ["open", "done", "dismissed"], default: "open" },
+    _id: false,
+  }],
+
   // Stage 5 — Score Calculation
   scores: {
     overall: Number,
