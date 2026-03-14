@@ -52,6 +52,12 @@ async function runPulseV2Radar(db) {
   console.log("[PulseV2Radar] Starting legal source scan...");
   const startTime = Date.now();
 
+  // Ensure unique index to prevent duplicate alerts (idempotent)
+  await db.collection("pulse_v2_legal_alerts").createIndex(
+    { userId: 1, lawTitle: 1, contractId: 1 },
+    { unique: true, background: true }
+  );
+
   // 1. Find recent law changes (from V1 RSS sync)
   const lawChanges = await fetchRecentLawChanges(db);
   if (lawChanges.length === 0) {
@@ -308,7 +314,14 @@ async function storeAndNotify(db, userId, alerts) {
     createdAt: new Date(),
   }));
 
-  await db.collection("pulse_v2_legal_alerts").insertMany(alertDocs);
+  // Insert with ordered:false to skip duplicates (unique index prevents re-alerts)
+  try {
+    await db.collection("pulse_v2_legal_alerts").insertMany(alertDocs, { ordered: false });
+  } catch (err) {
+    // Ignore duplicate key errors (code 11000) — means alert already exists
+    if (err.code !== 11000) throw err;
+    console.log(`[PulseV2Radar] ${err.writeErrors?.length || 0} duplicate alerts skipped for user ${userId}`);
+  }
 
   // Load user for email
   const { ObjectId } = require("mongodb");
