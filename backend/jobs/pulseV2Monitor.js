@@ -32,6 +32,12 @@ async function runPulseV2Monitor(db) {
   console.log("[PulseV2Monitor] Starting automated scan...");
   const startTime = Date.now();
 
+  // Ensure index on alert cooldown log (idempotent)
+  await db.collection("pulse_v2_alert_log").createIndex(
+    { userId: 1, contractId: 1, fingerprint: 1, createdAt: -1 },
+    { background: true }
+  );
+
   // 1. Find users with analyzed contracts
   const users = await findUsersForMonitoring(db);
   console.log(`[PulseV2Monitor] ${users.length} users eligible for monitoring`);

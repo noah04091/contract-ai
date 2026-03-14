@@ -364,4 +364,53 @@ router.patch("/results/:id/actions/:actionId", async (req, res) => {
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// GET /legal-alerts — Recent legal change alerts for user
+// ══════════════════════════════════════════════════════════════
+router.get("/legal-alerts", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    const alerts = await db
+      .collection("pulse_v2_legal_alerts")
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    res.json({ alerts });
+  } catch (error) {
+    console.error("[PulseV2] Legal alerts error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Legal Alerts" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// PATCH /legal-alerts/:alertId — Mark alert as read/dismissed
+// ══════════════════════════════════════════════════════════════
+router.patch("/legal-alerts/:alertId", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const { ObjectId } = require("mongodb");
+    const db = await database.connect();
+    const { status } = req.body;
+
+    if (!["read", "dismissed"].includes(status)) {
+      return res.status(400).json({ error: "Ungültiger Status" });
+    }
+
+    await db.collection("pulse_v2_legal_alerts").updateOne(
+      { _id: new ObjectId(req.params.alertId), userId: req.user.userId },
+      { $set: { status } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[PulseV2] Alert update error:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren des Alerts" });
+  }
+});
+
 module.exports = router;

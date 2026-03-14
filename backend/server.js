@@ -1793,6 +1793,23 @@ const connectDB = async () => {
         }
       }));
 
+      // Legal Pulse V2 Radar — Wöchentlicher Legal Source Scan (Montags 05:30 UTC)
+      // Läuft NACH V1 RSS-Sync (03:15) und VOR Digest-Emails (08:10)
+      cron.schedule("30 5 * * 1", withCronLock('pulse-v2-radar', async () => {
+        console.log("[PulseV2Radar] Starte Legal Source Scan...");
+        try {
+          await withCronLogging('pulse-v2-radar', async () => {
+            const { runPulseV2Radar } = require("./jobs/pulseV2Radar");
+            const cronDb = await database.connect();
+            const result = await runPulseV2Radar(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("[PulseV2Radar] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-radar', method: 'SCHEDULED', severity: 'high' });
+        }
+      }));
+
       // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
       // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
       cron.schedule("30 6 * * *", async () => {

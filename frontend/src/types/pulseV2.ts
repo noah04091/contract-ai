@@ -161,6 +161,21 @@ export interface PulseV2ProgressEvent {
   batchProgress?: string;
 }
 
+export interface PulseV2LegalAlert {
+  _id: string;
+  userId: string;
+  contractId: string;
+  contractName: string;
+  lawTitle: string;
+  lawArea: string;
+  lawSource: string;
+  impactSummary: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  recommendation: string;
+  status: 'unread' | 'read' | 'dismissed';
+  createdAt: string;
+}
+
 export type PulseV2Status = 'idle' | 'analyzing' | 'completed' | 'error';
 
 export interface StageInfo {

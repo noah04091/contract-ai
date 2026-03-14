@@ -26,7 +26,13 @@ const clauseAnalysisSchema = new mongoose.Schema({
   concerns: [String],
   riskLevel: { type: Number, min: 0, max: 10 },
   riskType: String,
-  plainLanguage: String
+  plainLanguage: String,
+  economicRiskAssessment: String,
+  powerBalance: { type: String, enum: ['balanced', 'slightly_one_sided', 'strongly_one_sided', 'extremely_one_sided'] },
+  marketComparison: { type: String, enum: ['below_market', 'market_standard', 'slightly_strict', 'significantly_strict', 'unusually_disadvantageous'] },
+  creatorView: String,
+  recipientView: String,
+  neutralRecommendation: String
 }, { _id: false });
 
 const optimizationVersionSchema = new mongoose.Schema({
@@ -142,12 +148,14 @@ const optimizerV2ResultSchema = new mongoose.Schema({
   scores: {
     overall: Number,
     risk: Number,
+    fairness: Number,
     clarity: Number,
     completeness: Number,
     marketStandard: Number,
     perClause: [{
       clauseId: String,
       score: Number,
+      importanceLevel: String,
       _id: false
     }]
   },

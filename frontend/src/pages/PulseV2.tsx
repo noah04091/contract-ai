@@ -6,7 +6,8 @@ import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
 import { ContractDetail } from '../components/pulseV2/ContractDetail';
 import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsPanel';
 import { ActionItem } from '../components/pulseV2/ActionItem';
-import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action } from '../types/pulseV2';
+import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
+import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert } from '../types/pulseV2';
 
 const API_BASE = '/api';
 
@@ -196,14 +197,16 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [stats, setStats] = useState({ total: 0, analyzed: 0 });
   const [insights, setInsights] = useState<PulseV2PortfolioInsight[]>([]);
   const [actions, setActions] = useState<PulseV2Action[]>([]);
+  const [legalAlerts, setLegalAlerts] = useState<PulseV2LegalAlert[]>([]);
   const [filter, setFilter] = useState<DashboardFilter>('all');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [dashRes, insightsRes] = await Promise.all([
+        const [dashRes, insightsRes, alertsRes] = await Promise.all([
           fetch(`${API_BASE}/legal-pulse-v2/dashboard`, { credentials: 'include' }),
           fetch(`${API_BASE}/legal-pulse-v2/portfolio-insights`, { credentials: 'include' }),
+          fetch(`${API_BASE}/legal-pulse-v2/legal-alerts`, { credentials: 'include' }),
         ]);
         const dashData = await dashRes.json();
         setItems(dashData.items || []);
@@ -212,6 +215,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         const insightsData = await insightsRes.json();
         setInsights(insightsData.insights || []);
         setActions(insightsData.actions || []);
+
+        const alertsData = await alertsRes.json();
+        setLegalAlerts(alertsData.alerts || []);
       } catch (err) {
         console.error('[PulseV2] Dashboard load error:', err);
       } finally {
@@ -326,6 +332,25 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           />
         </div>
       )}
+
+      {/* Legal Radar Alerts */}
+      <LegalAlertsPanel
+        alerts={legalAlerts}
+        onDismiss={async (alertId) => {
+          try {
+            await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'dismissed' }),
+            });
+            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
+          } catch (err) {
+            console.error('[PulseV2] Alert dismiss failed:', err);
+          }
+        }}
+        onNavigate={(contractId) => onSelectContract(contractId)}
+      />
 
       {/* Portfolio Insights */}
       {insights.length > 0 && (
