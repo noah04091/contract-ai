@@ -22,6 +22,7 @@ const {
 const MAX_PER_USER = 5;
 const MAX_PER_RUN = 20;
 const MIN_DAYS_SINCE_ANALYSIS = 7;
+const ALERT_COOLDOWN_DAYS = 30;
 
 /**
  * Main monitoring entry point.
@@ -148,24 +149,21 @@ async function monitorUserContracts(db, user) {
       analyzed++;
 
       // Change detection: find NEW critical/high findings
-      const newFindings = detectNewFindings(previousResult, result.resultId, contractId);
-
-      if (newFindings.length > 0) {
-        // Load fresh result to get actual findings
-        const freshResult = await LegalPulseV2Result.findById(result.resultId).lean();
-        if (freshResult) {
-          const confirmed = confirmNewFindings(previousResult, freshResult);
-          if (confirmed.length > 0) {
-            const contractName = freshResult.context?.contractName || contractId;
-            newFindingsSummary.push({
-              contractId,
-              contractName,
-              findings: confirmed,
-              newScore: freshResult.scores?.overall,
-              oldScore: previousResult.scores?.overall,
-            });
-            alerts += confirmed.length;
-          }
+      const freshResult = await LegalPulseV2Result.findById(result.resultId).lean();
+      if (freshResult) {
+        const confirmed = confirmNewFindings(previousResult, freshResult);
+        // Apply cooldown: filter out findings already alerted within 30 days
+        const afterCooldown = await applyCooldown(db, user.userId, contractId, confirmed);
+        if (afterCooldown.length > 0) {
+          const contractName = freshResult.context?.contractName || contractId;
+          newFindingsSummary.push({
+            contractId,
+            contractName,
+            findings: afterCooldown,
+            newScore: freshResult.scores?.overall,
+            oldScore: previousResult.scores?.overall,
+          });
+          alerts += afterCooldown.length;
         }
       }
     } catch (err) {
@@ -182,26 +180,73 @@ async function monitorUserContracts(db, user) {
 }
 
 /**
- * Detect NEW findings by comparing previous and current result titles.
- * Only returns critical/high severity findings.
+ * Build a composite fingerprint for a finding.
+ * Uses clauseId + category + type as primary key (stable across title rewording).
+ * Falls back to title if clauseId is missing.
  */
-function detectNewFindings(previousResult, newResultId, contractId) {
-  // Placeholder — actual comparison happens in confirmNewFindings
-  // This just checks if it's worth loading the full new result
-  return [{ resultId: newResultId, contractId }];
+function findingFingerprint(finding) {
+  if (finding.clauseId && finding.category) {
+    return `${finding.clauseId}::${finding.category}::${finding.type}`;
+  }
+  return `title::${finding.title}`;
 }
 
+/**
+ * Detect NEW findings by comparing composite fingerprints.
+ * Only returns critical/high severity findings not present in previous result.
+ */
 function confirmNewFindings(previousResult, newResult) {
-  const prevTitles = new Set((previousResult.clauseFindings || []).map((f) => f.title));
+  const prevFingerprints = new Set(
+    (previousResult.clauseFindings || []).map(findingFingerprint)
+  );
   const newFindings = [];
 
   for (const finding of newResult.clauseFindings || []) {
-    if (!prevTitles.has(finding.title) && (finding.severity === "critical" || finding.severity === "high")) {
+    if (finding.severity !== "critical" && finding.severity !== "high") continue;
+    const fp = findingFingerprint(finding);
+    if (!prevFingerprints.has(fp)) {
       newFindings.push(finding);
     }
   }
 
   return newFindings;
+}
+
+/**
+ * Alert cooldown: skip findings already alerted in the last 30 days.
+ * Tracks sent alerts in `pulse_v2_alert_log` collection.
+ */
+async function applyCooldown(db, userId, contractId, findings) {
+  if (findings.length === 0) return findings;
+
+  const cooldownCutoff = new Date(Date.now() - ALERT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+  const recentAlerts = await db.collection("pulse_v2_alert_log").find({
+    userId,
+    contractId,
+    createdAt: { $gt: cooldownCutoff },
+  }).toArray();
+
+  const recentFingerprints = new Set(recentAlerts.map((a) => a.fingerprint));
+
+  const filtered = findings.filter((f) => {
+    const fp = findingFingerprint(f);
+    return !recentFingerprints.has(fp);
+  });
+
+  // Log the alerts we're about to send
+  if (filtered.length > 0) {
+    const logEntries = filtered.map((f) => ({
+      userId,
+      contractId,
+      fingerprint: findingFingerprint(f),
+      title: f.title,
+      severity: f.severity,
+      createdAt: new Date(),
+    }));
+    await db.collection("pulse_v2_alert_log").insertMany(logEntries);
+  }
+
+  return filtered;
 }
 
 /**
