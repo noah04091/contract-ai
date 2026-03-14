@@ -340,6 +340,9 @@ async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutr
   });
 
   const raw = JSON.parse(completion.choices[0].message.content);
+  console.log(`🔍 Phase B RAW keys: ${Object.keys(raw).join(', ')}`);
+  console.log(`🔍 Phase B RAW risks: ${Array.isArray(raw.risks) ? raw.risks.length : typeof raw.risks}`);
+  console.log(`🔍 Phase B RAW recommendations: ${Array.isArray(raw.recommendations) ? raw.recommendations.length : typeof raw.recommendations}`);
   const validated = validatePhaseBResponse(raw);
   const stabilized = stabilizeScores(validated);
   const filtered = filterIdenticalClauses(stabilized);
