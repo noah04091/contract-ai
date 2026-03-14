@@ -177,14 +177,13 @@ export default function OptimizerV2() {
 interface ClausesTabProps {
   result: AnalysisResult;
   activeMode: OptimizationMode;
-  selectedClauseId: string | null;
   clauseChats: Map<string, ChatMessage[]>;
   actions: ReturnType<typeof useOptimizerV2>['actions'];
   sortByImportance: boolean;
   onToggleSort: () => void;
 }
 
-function ClausesTab({ result, activeMode, selectedClauseId, clauseChats, actions, sortByImportance, onToggleSort }: ClausesTabProps) {
+function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort }: ClausesTabProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const allExpanded = expandedIds.size === result.clauses.length;
 
