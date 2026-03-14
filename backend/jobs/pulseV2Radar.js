@@ -94,6 +94,8 @@ async function runPulseV2Radar(db) {
         impactSummary: impact.summary,
         severity: impact.severity,
         recommendation: impact.recommendation,
+        affectedClauseIds: impact.affectedClauseIds,
+        clauseImpacts: impact.clauseImpacts,
       });
       totalAlerts++;
     }
@@ -175,7 +177,9 @@ async function matchLawToContracts(db, lawChange) {
     contractType: r.latestResult.document?.contractType || "unknown",
     findings: (r.latestResult.clauseFindings || [])
       .filter((f) => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
-      .map((f) => ({ title: f.title, category: f.category, severity: f.severity })),
+      .map((f) => ({ title: f.title, category: f.category, severity: f.severity, clauseId: f.clauseId })),
+    clauses: (r.latestResult.clauses || [])
+      .map((c) => ({ id: c.id, title: c.title, category: c.category })),
     scores: r.latestResult.scores,
   }));
 }
@@ -199,11 +203,15 @@ async function assessImpact(lawChange, contracts) {
   const contractSummaries = contracts
     .slice(0, 10)
     .map(
-      (c, i) =>
-        `[${i + 1}] "${c.contractName}" (${c.contractType}, Score: ${c.scores?.overall || "?"}, ` +
-        `Findings: ${c.findings.map((f) => f.title).join("; ") || "keine"})`
+      (c, i) => {
+        const clauseList = c.clauses.map((cl) => `  - [${cl.id}] ${cl.title} (${cl.category})`).join("\n");
+        const findingList = c.findings.map((f) => `  - ${f.title} (${f.severity}, Klausel: ${f.clauseId})`).join("\n");
+        return `[${i + 1}] "${c.contractName}" (${c.contractType}, Score: ${c.scores?.overall || "?"})\n` +
+          `  Klauseln:\n${clauseList || "  - keine"}\n` +
+          `  Befunde:\n${findingList || "  - keine"}`;
+      }
     )
-    .join("\n");
+    .join("\n\n");
 
   try {
     const response = await openai.chat.completions.create({
@@ -229,8 +237,26 @@ async function assessImpact(lawChange, contracts) {
                     severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
                     summary: { type: "string" },
                     recommendation: { type: "string" },
+                    affectedClauseIds: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                    clauseImpacts: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          clauseId: { type: "string" },
+                          clauseTitle: { type: "string" },
+                          impact: { type: "string" },
+                          suggestedChange: { type: "string" },
+                        },
+                        required: ["clauseId", "clauseTitle", "impact", "suggestedChange"],
+                        additionalProperties: false,
+                      },
+                    },
                   },
-                  required: ["contractIndex", "affected", "confidence", "severity", "summary", "recommendation"],
+                  required: ["contractIndex", "affected", "confidence", "severity", "summary", "recommendation", "affectedClauseIds", "clauseImpacts"],
                   additionalProperties: false,
                 },
               },
@@ -250,7 +276,9 @@ REGELN:
 - confidence 0-100: Wie sicher bist du, dass der Vertrag betroffen ist?
 - severity: critical (Vertrag potentiell unwirksam/illegal), high (Klausel muss angepasst werden), medium (Prüfung empfohlen), low (informativ)
 - recommendation: Konkreter nächster Schritt (z.B. "Klausel X in § Y anpassen", "AV-Vertrag aktualisieren")
-- Wenn ein Vertrag NICHT betroffen ist: affected=false`,
+- affectedClauseIds: Liste der Klausel-IDs die von der Änderung betroffen sind (aus der Klausel-Liste des Vertrags)
+- clauseImpacts: Für JEDE betroffene Klausel: clauseId, clauseTitle, impact (was genau das Problem ist), suggestedChange (konkreter Textvorschlag für die Änderung)
+- Wenn ein Vertrag NICHT betroffen ist: affected=false, affectedClauseIds=[], clauseImpacts=[]`,
         },
         {
           role: "user",
@@ -286,6 +314,8 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         severity: impact.severity,
         recommendation: impact.recommendation,
         confidence: impact.confidence,
+        affectedClauseIds: impact.affectedClauseIds || [],
+        clauseImpacts: impact.clauseImpacts || [],
       });
     }
 
@@ -312,6 +342,8 @@ async function storeAndNotify(db, userId, alerts) {
     impactSummary: a.impactSummary,
     severity: a.severity,
     recommendation: a.recommendation,
+    affectedClauseIds: a.affectedClauseIds || [],
+    clauseImpacts: a.clauseImpacts || [],
     status: "unread",
     createdAt: new Date(),
   }));

@@ -161,6 +161,13 @@ export interface PulseV2ProgressEvent {
   batchProgress?: string;
 }
 
+export interface PulseV2ClauseImpact {
+  clauseId: string;
+  clauseTitle: string;
+  impact: string;
+  suggestedChange: string;
+}
+
 export interface PulseV2LegalAlert {
   _id: string;
   userId: string;
@@ -173,6 +180,8 @@ export interface PulseV2LegalAlert {
   impactSummary: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   recommendation: string;
+  affectedClauseIds: string[];
+  clauseImpacts: PulseV2ClauseImpact[];
   status: 'unread' | 'read' | 'dismissed';
   createdAt: string;
 }
