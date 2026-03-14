@@ -23,9 +23,8 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE}/legal-pulse-v2/contract/${contractId}/timeline`, {
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: 'include',
         });
         const data = await res.json();
         setTimeline(data.timeline || []);

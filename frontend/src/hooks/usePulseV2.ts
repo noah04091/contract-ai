@@ -135,15 +135,12 @@ export function usePulseV2() {
     dispatch({ type: 'START_ANALYSIS' });
 
     abortControllerRef.current = new AbortController();
-    const token = localStorage.getItem('token');
 
     try {
       const response = await fetch(`${API_BASE}/legal-pulse-v2/analyze/${contractId}`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         signal: abortControllerRef.current.signal,
       });
 
@@ -179,7 +176,7 @@ export function usePulseV2() {
             if (event.complete && event.resultId) {
               // Fetch full result
               const res = await fetch(`${API_BASE}/legal-pulse-v2/results/${event.resultId}`, {
-                headers: { Authorization: `Bearer ${token}` },
+                credentials: 'include',
               });
               const data = await res.json();
               if (data.result) {
@@ -213,9 +210,8 @@ export function usePulseV2() {
   }, []);
 
   const loadResult = useCallback(async (resultId: string) => {
-    const token = localStorage.getItem('token');
     const res = await fetch(`${API_BASE}/legal-pulse-v2/results/${resultId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     const data = await res.json();
     if (data.result) {
@@ -224,9 +220,8 @@ export function usePulseV2() {
   }, []);
 
   const loadLatest = useCallback(async (contractId: string): Promise<PulseV2Result | null> => {
-    const token = localStorage.getItem('token');
     const res = await fetch(`${API_BASE}/legal-pulse-v2/contract/${contractId}/latest`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'include',
     });
     const data = await res.json();
     if (data.result) {
