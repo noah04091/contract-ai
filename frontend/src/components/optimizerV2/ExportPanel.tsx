@@ -87,8 +87,8 @@ export default function ExportPanel({ result }: Props) {
           <div><span>Klauseln:</span> {result.clauses.length}</div>
           <div><span>Optimiert:</span> {optimizedCount}</div>
           <div><span>Score:</span> {result.scores.overall}/100</div>
-          <div><span>Analysezeit:</span> {(result.performance.totalDurationMs / 1000).toFixed(1)}s</div>
-          <div><span>KI-Kosten:</span> ${result.costs.totalCostUSD.toFixed(3)}</div>
+          <div><span>Analysezeit:</span> {result.performance ? `${(result.performance.totalDurationMs / 1000).toFixed(1)}s` : '-'}</div>
+          <div><span>KI-Kosten:</span> {result.costs ? `$${result.costs.totalCostUSD.toFixed(3)}` : '-'}</div>
         </div>
       </div>
     </div>

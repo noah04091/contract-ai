@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -185,6 +185,27 @@ interface ClausesTabProps {
 }
 
 function ClausesTab({ result, activeMode, selectedClauseId, clauseChats, actions, sortByImportance, onToggleSort }: ClausesTabProps) {
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const allExpanded = expandedIds.size === result.clauses.length;
+
+  const toggleClause = (clauseId: string | null) => {
+    if (!clauseId) return;
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(clauseId)) next.delete(clauseId);
+      else next.add(clauseId);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (allExpanded) {
+      setExpandedIds(new Set());
+    } else {
+      setExpandedIds(new Set(result.clauses.map(c => c.id)));
+    }
+  };
+
   const sortedClauses = useMemo(() => {
     if (!sortByImportance) return result.clauses;
     const analysisMap = new Map(result.clauseAnalyses.map(a => [a.clauseId, a]));
@@ -205,6 +226,14 @@ function ClausesTab({ result, activeMode, selectedClauseId, clauseChats, actions
         >
           <ArrowUpDown size={13} />
           {sortByImportance ? 'Priorität' : 'Original'}
+        </button>
+        <button
+          className={styles.sortToggle}
+          onClick={toggleAll}
+          title={allExpanded ? 'Alle zuklappen' : 'Alle aufklappen'}
+        >
+          {allExpanded ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
+          {allExpanded ? 'Zuklappen' : 'Alle öffnen'}
         </button>
         <NegotiationModeSelector
           activeMode={activeMode}
@@ -228,8 +257,8 @@ function ClausesTab({ result, activeMode, selectedClauseId, clauseChats, actions
               optimization={optimization}
               score={score}
               activeMode={activeMode}
-              isSelected={selectedClauseId === clause.id}
-              onSelect={actions.selectClause}
+              isSelected={expandedIds.has(clause.id)}
+              onSelect={toggleClause}
               onAcceptVersion={actions.saveSelection}
               chatMessages={chatMsgs}
               onSendChat={actions.sendClauseChat}

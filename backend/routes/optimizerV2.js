@@ -216,7 +216,22 @@ router.get('/results/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
     }
 
-    res.json({ success: true, result });
+    // Map MongoDB document to expected frontend shape
+    const resultObj = result.toObject ? result.toObject() : result;
+    resultObj.resultId = result._id.toString();
+    // Compute performance if not stored
+    if (!resultObj.performance && resultObj.clauses) {
+      resultObj.performance = {
+        totalDurationMs: resultObj.completedAt && resultObj.startedAt
+          ? new Date(resultObj.completedAt) - new Date(resultObj.startedAt)
+          : 0,
+        clauseCount: resultObj.clauses?.length || 0,
+        optimizedCount: resultObj.optimizations?.filter(o => o.needsOptimization)?.length || 0,
+        textLength: resultObj.textLength || 0
+      };
+    }
+
+    res.json({ success: true, result: resultObj });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Fehler beim Laden der Analyse.' });
   }
