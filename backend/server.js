@@ -1777,6 +1777,22 @@ const connectDB = async () => {
         }
       }));
 
+      // Legal Pulse V2 — Wöchentlicher automatischer Re-Scan (Sonntags 05:00 UTC)
+      cron.schedule("0 5 * * 0", withCronLock('pulse-v2-monitor', async () => {
+        console.log("[PulseV2Monitor] Starte wöchentlichen Re-Scan...");
+        try {
+          await withCronLogging('pulse-v2-monitor', async () => {
+            const { runPulseV2Monitor } = require("./jobs/pulseV2Monitor");
+            const cronDb = await database.connect();
+            const result = await runPulseV2Monitor(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("[PulseV2Monitor] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-monitor', method: 'SCHEDULED', severity: 'high' });
+        }
+      }));
+
       // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
       // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
       cron.schedule("30 6 * * *", async () => {
