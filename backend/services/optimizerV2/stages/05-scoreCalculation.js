@@ -85,8 +85,46 @@ function getEssentialCategories(contractType) {
 }
 
 /**
- * Detect missing essential clauses.
- * Checks both assigned categories AND clause content via keyword patterns.
+ * Normalize text for robust keyword matching.
+ * Handles Umlaut encoding issues from PDF extraction.
+ */
+function normalizeText(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+}
+
+/**
+ * Count keyword hits for a category across all clause text.
+ * Returns { titleHits, bodyHits, totalScore }.
+ */
+function countKeywordHits(clauses, pattern) {
+  let titleHits = 0;
+  let bodyHits = 0;
+
+  for (const clause of clauses) {
+    const titleNorm = normalizeText(clause.title);
+    const bodyNorm = normalizeText(clause.originalText);
+
+    // Count distinct matches in title (each match = 1 hit)
+    const titleMatches = titleNorm.match(new RegExp(pattern.source, 'gi'));
+    if (titleMatches) titleHits += titleMatches.length;
+
+    const bodyMatches = bodyNorm.match(new RegExp(pattern.source, 'gi'));
+    if (bodyMatches) bodyHits += bodyMatches.length;
+  }
+
+  return { titleHits, bodyHits, totalScore: titleHits * 2 + bodyHits };
+}
+
+/**
+ * Detect missing essential clauses with three-tier detection.
+ *
+ * Results per category:
+ *   - present (category assigned)         → full credit (1.0)
+ *   - foundInContent, strong (score >= 3) → good credit (0.7)
+ *   - foundInContent, weak (score 1-2)    → partial credit (0.4)
+ *   - not found                           → no credit (0.0)
  */
 function detectMissingClauses(clauses, structure) {
   const contractType = structure?.contractType || '';
@@ -96,6 +134,16 @@ function detectMissingClauses(clauses, structure) {
   const missingClauses = [];
   let completenessHits = 0;
 
+  // Pre-normalize patterns with Umlaut-safe versions
+  const normalizedPatterns = {};
+  for (const [cat, pattern] of Object.entries(CATEGORY_KEYWORDS)) {
+    // Create Umlaut-safe version of pattern
+    const safeSource = pattern.source
+      .replace(/ä/g, '(?:ä|ae)').replace(/ö/g, '(?:ö|oe)')
+      .replace(/ü/g, '(?:ü|ue)').replace(/ß/g, '(?:ß|ss)');
+    normalizedPatterns[cat] = new RegExp(safeSource, 'i');
+  }
+
   for (const cat of essentialCategories) {
     // Direct category match
     if (presentCategories.has(cat)) {
@@ -103,38 +151,34 @@ function detectMissingClauses(clauses, structure) {
       continue;
     }
 
-    // Semantic presence detection: search ALL clause text for topic keywords
-    const pattern = CATEGORY_KEYWORDS[cat];
-    let foundInContent = false;
-
-    if (pattern) {
-      for (const clause of clauses) {
-        // Title match = strong signal (0.7)
-        if (pattern.test(clause.title || '')) {
-          foundInContent = true;
-          completenessHits += 0.7;
-          break;
-        }
-        // Full text match = medium signal (0.4) — no 500-char limit
-        if (pattern.test(clause.originalText || '')) {
-          foundInContent = true;
-          completenessHits += 0.4;
-          break;
-        }
-      }
-    }
+    // Semantic presence detection with hit counting
+    const pattern = normalizedPatterns[cat] || CATEGORY_KEYWORDS[cat];
+    const hits = pattern ? countKeywordHits(clauses, pattern) : { titleHits: 0, bodyHits: 0, totalScore: 0 };
 
     const severity = CATEGORY_IMPORTANCE_FLOOR[cat] || 'medium';
+    const label = CATEGORY_LABELS_DE[cat] || cat;
 
-    missingClauses.push({
-      category: cat,
-      categoryLabel: CATEGORY_LABELS_DE[cat] || cat,
-      severity,
-      foundInContent,
-      recommendation: foundInContent
-        ? `Inhalte zu "${CATEGORY_LABELS_DE[cat] || cat}" scheinen im Vertrag vorhanden, sind aber nicht als eigenständige Klausel ausgewiesen.`
-        : `Keine Regelung zu "${CATEGORY_LABELS_DE[cat] || cat}" erkannt. Eine explizite Klausel wird dringend empfohlen.`
-    });
+    if (hits.totalScore >= 3) {
+      // Strong presence — topic clearly exists but as part of another clause
+      completenessHits += 0.7;
+      missingClauses.push({
+        category: cat, categoryLabel: label, severity, foundInContent: true,
+        recommendation: `Inhalte zu "${label}" sind im Vertrag vorhanden, aber nicht als eigenständige Klausel ausgewiesen.`
+      });
+    } else if (hits.totalScore >= 1) {
+      // Weak presence — topic mentioned but not substantively addressed
+      completenessHits += 0.4;
+      missingClauses.push({
+        category: cat, categoryLabel: label, severity, foundInContent: true,
+        recommendation: `"${label}" wird im Vertrag nur am Rande erwähnt. Eine ausführliche Regelung wird empfohlen.`
+      });
+    } else {
+      // Not found at all
+      missingClauses.push({
+        category: cat, categoryLabel: label, severity, foundInContent: false,
+        recommendation: `Keine Regelung zu "${label}" erkannt. Eine explizite Klausel wird dringend empfohlen.`
+      });
+    }
   }
 
   const completenessScore = essentialCategories.length > 0
