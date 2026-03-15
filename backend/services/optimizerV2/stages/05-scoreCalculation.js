@@ -108,10 +108,15 @@ function detectMissingClauses(clauses, structure) {
 
     if (pattern) {
       for (const clause of clauses) {
-        const searchText = `${clause.title || ''} ${(clause.originalText || '').substring(0, 500)}`;
-        if (pattern.test(searchText)) {
+        // Title match = stronger signal (0.7), body match = weaker (0.4)
+        if (pattern.test(clause.title || '')) {
           foundInContent = true;
-          completenessHits += 0.5; // Partial credit — content exists but not as dedicated clause
+          completenessHits += 0.7;
+          break;
+        }
+        if (pattern.test((clause.originalText || '').substring(0, 500))) {
+          foundInContent = true;
+          completenessHits += 0.4;
           break;
         }
       }

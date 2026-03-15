@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search } from 'lucide-react';
+import { useMemo, useState, useCallback } from 'react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
+import { apiCall } from '../../utils/api';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -163,7 +164,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       <TopRiskClauses result={result} onNavigate={onNavigate} />
 
       {/* Missing Clauses Detection */}
-      <MissingClausesPanel missingClauses={scores.missingClauses} />
+      <MissingClausesPanel missingClauses={scores.missingClauses} resultId={result.resultId} />
 
       {/* Contract metadata */}
       <div className={styles.metadataGrid}>
@@ -212,37 +213,77 @@ const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
   low: { label: 'Optional', color: '#8E8E93' }
 };
 
-function MissingClausesPanel({ missingClauses }: { missingClauses?: MissingClause[] }) {
+function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: MissingClause[]; resultId: string }) {
+  const [generating, setGenerating] = useState<string | null>(null);
+  const [generatedClause, setGeneratedClause] = useState<{ category: string; label: string; text: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleGenerate = useCallback(async (category: string, label: string) => {
+    setGenerating(category);
+    try {
+      const res = await apiCall(`/optimizer-v2/results/${resultId}/generate-clause`, {
+        method: 'POST',
+        body: JSON.stringify({ category })
+      }) as { success: boolean; generatedClause: string };
+      if (res.success) {
+        setGeneratedClause({ category, label, text: res.generatedClause });
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setGenerating(null);
+    }
+  }, [resultId]);
+
+  const handleCopy = useCallback(() => {
+    if (generatedClause) {
+      navigator.clipboard.writeText(generatedClause.text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [generatedClause]);
+
   if (!missingClauses || missingClauses.length === 0) return null;
 
   const trulyMissing = missingClauses.filter(mc => !mc.foundInContent);
   const miscategorized = missingClauses.filter(mc => mc.foundInContent);
 
   return (
-    <div className={styles.missingClauses}>
-      <div className={styles.missingClausesHeader}>
-        <FileWarning size={15} style={{ color: '#FF9500' }} />
-        <span className={styles.missingClausesTitle}>
-          Fehlende Klauseln ({trulyMissing.length} fehlend{miscategorized.length > 0 ? `, ${miscategorized.length} unvollständig` : ''})
-        </span>
-      </div>
-      <div className={styles.missingClausesList}>
-        {trulyMissing.map(mc => {
-          const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
-          return (
-            <div key={mc.category} className={styles.missingClauseItem}>
-              <div className={styles.missingClauseDot} style={{ background: sev.color }} />
-              <div className={styles.missingClauseInfo}>
-                <span className={styles.missingClauseName}>{mc.categoryLabel}</span>
-                <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
+    <>
+      <div className={styles.missingClauses}>
+        <div className={styles.missingClausesHeader}>
+          <FileWarning size={15} style={{ color: '#FF9500' }} />
+          <span className={styles.missingClausesTitle}>
+            Fehlende Klauseln ({trulyMissing.length} fehlend{miscategorized.length > 0 ? `, ${miscategorized.length} unvollständig` : ''})
+          </span>
+        </div>
+        <div className={styles.missingClausesList}>
+          {trulyMissing.map(mc => {
+            const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
+            const isGenerating = generating === mc.category;
+            return (
+              <div key={mc.category} className={styles.missingClauseItem}>
+                <div className={styles.missingClauseDot} style={{ background: sev.color }} />
+                <div className={styles.missingClauseInfo}>
+                  <span className={styles.missingClauseName}>{mc.categoryLabel}</span>
+                  <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
+                </div>
+                <button
+                  className={styles.generateClauseBtn}
+                  onClick={() => handleGenerate(mc.category, mc.categoryLabel)}
+                  disabled={isGenerating || generating !== null}
+                  title="Klausel generieren"
+                >
+                  {isGenerating ? <Loader2 size={13} className={styles.spinning} /> : <Sparkles size={13} />}
+                  <span>{isGenerating ? 'Generiere...' : 'Generieren'}</span>
+                </button>
+                <span className={styles.missingClauseTag} style={{ color: sev.color, borderColor: sev.color }}>
+                  {sev.label}
+                </span>
               </div>
-              <span className={styles.missingClauseTag} style={{ color: sev.color, borderColor: sev.color }}>
-                {sev.label}
-              </span>
-            </div>
-          );
-        })}
-        {miscategorized.map(mc => (
+            );
+          })}
+          {miscategorized.map(mc => (
             <div key={mc.category} className={styles.missingClauseItem} style={{ opacity: 0.8 }}>
               <Search size={12} style={{ color: '#FF9500', flexShrink: 0, marginTop: 2 }} />
               <div className={styles.missingClauseInfo}>
@@ -254,8 +295,33 @@ function MissingClausesPanel({ missingClauses }: { missingClauses?: MissingClaus
               </span>
             </div>
           ))}
+        </div>
       </div>
-    </div>
+
+      {/* Generated Clause Modal */}
+      {generatedClause && (
+        <div className={styles.generatedClauseOverlay} onClick={() => setGeneratedClause(null)}>
+          <div className={styles.generatedClauseModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.generatedClauseHeader}>
+              <div className={styles.generatedClauseHeaderLeft}>
+                <Sparkles size={16} style={{ color: '#007AFF' }} />
+                <span className={styles.generatedClauseTitle}>{generatedClause.label}</span>
+              </div>
+              <button className={styles.generatedClauseClose} onClick={() => setGeneratedClause(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <pre className={styles.generatedClauseText}>{generatedClause.text}</pre>
+            <div className={styles.generatedClauseActions}>
+              <button className={styles.generatedClauseCopyBtn} onClick={handleCopy}>
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copied ? 'Kopiert!' : 'In Zwischenablage kopieren'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

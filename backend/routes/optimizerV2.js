@@ -8,6 +8,7 @@
  * POST   /results/:id/clause-chat - Iterative clause chat
  * GET    /results/:id/redline - Get redline data for a mode
  * POST   /results/:id/resume - Resume failed analysis
+ * POST   /results/:id/generate-clause - Generate a missing clause
  * GET    /history          - User's analysis history
  * GET    /results/:id/pdf  - Export analysis as PDF report
  * DELETE /results/:id      - Delete analysis
@@ -748,6 +749,105 @@ router.get('/results/:id/pdf', async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ success: false, message: 'PDF-Export fehlgeschlagen.' });
     }
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// POST /results/:id/generate-clause - Generate a missing clause
+// ════════════════════════════════════════════════════════
+router.post('/results/:id/generate-clause', async (req, res) => {
+  const { category } = req.body;
+  if (!category) {
+    return res.status(400).json({ success: false, message: 'category ist erforderlich.' });
+  }
+
+  try {
+    const result = await OptimizerV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId
+    }).select('structure clauses clauseAnalyses perspective');
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    const structure = result.structure || {};
+    const perspective = result.perspective || 'neutral';
+
+    const CATEGORY_LABELS = {
+      termination: 'Kündigung / Vertragsbeendigung',
+      liability: 'Haftung / Haftungsbeschränkung',
+      payment: 'Vergütung / Zahlungsbedingungen',
+      data_protection: 'Datenschutz / DSGVO',
+      confidentiality: 'Vertraulichkeit / Geheimhaltung',
+      warranty: 'Gewährleistung / Garantie',
+      ip_rights: 'Geistiges Eigentum / Urheberrecht',
+      non_compete: 'Wettbewerbsverbot',
+      force_majeure: 'Höhere Gewalt / Force Majeure',
+      dispute_resolution: 'Streitbeilegung / Gerichtsstand',
+      sla: 'Service Level Agreement',
+      deliverables: 'Leistungen / Lieferumfang',
+      duration: 'Laufzeit / Vertragsdauer'
+    };
+
+    const categoryLabel = CATEGORY_LABELS[category] || category;
+    const partiesText = (structure.parties || []).map(p => `${p.role}: ${p.name || 'unbekannt'}`).join(', ');
+    const perspectiveHint = perspective === 'creator'
+      ? 'Die Klausel soll den Ersteller/Anbieter schützen.'
+      : perspective === 'recipient'
+      ? 'Die Klausel soll den Empfänger/Kunden schützen.'
+      : 'Die Klausel soll für beide Seiten fair und ausgewogen sein.';
+
+    const systemPrompt = `Du bist ein erfahrener deutscher Vertragsanwalt.
+Erstelle eine professionelle Vertragsklausel zum Thema "${categoryLabel}".
+
+VERTRAGSKONTEXT:
+- Vertragstyp: ${structure.contractTypeLabel || structure.contractType || 'Vertrag'}
+- Jurisdiktion: ${structure.jurisdiction || 'Deutschland'}
+- Branche: ${structure.industry || 'unbekannt'}
+- Parteien: ${partiesText || 'nicht spezifiziert'}
+- Perspektive: ${perspectiveHint}
+
+ANFORDERUNGEN:
+1. Die Klausel muss rechtlich korrekt nach deutschem Recht sein
+2. Verwende professionelle juristische Sprache
+3. Berücksichtige aktuelle Rechtsprechung und gesetzliche Anforderungen
+4. Die Klausel soll direkt in den Vertrag einfügbar sein
+5. Nummeriere Absätze mit (1), (2), (3) etc.
+6. Verweise auf einschlägige Gesetze (BGB, DSGVO, HGB etc.) wo sinnvoll
+
+AUSGABEFORMAT:
+Antworte ausschließlich mit der Klausel selbst.
+Beginne mit "§ [Thema]" als Überschrift.
+Kein Erklärungstext davor oder danach.`;
+
+    const openai = getOpenAI();
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0.3,
+      max_tokens: 2000,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Erstelle eine ${categoryLabel}-Klausel für diesen ${structure.contractTypeLabel || 'Vertrag'}.` }
+      ]
+    });
+
+    const generatedText = response.choices[0].message.content.trim();
+
+    res.json({
+      success: true,
+      category,
+      categoryLabel,
+      generatedClause: generatedText,
+      usage: {
+        inputTokens: response.usage?.prompt_tokens || 0,
+        outputTokens: response.usage?.completion_tokens || 0
+      }
+    });
+
+  } catch (err) {
+    console.error('[OptimizerV2] Generate clause error:', err);
+    res.status(500).json({ success: false, message: 'Fehler bei der Klausel-Generierung.' });
   }
 });
 
