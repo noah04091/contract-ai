@@ -765,10 +765,23 @@ router.post('/results/:id/generate-clause', async (req, res) => {
     const result = await OptimizerV2Result.findOne({
       _id: req.params.id,
       userId: req.user.userId
-    }).select('structure clauses clauseAnalyses perspective');
+    }).select('structure clauses clauseAnalyses perspective generatedClauses');
 
     if (!result) {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    // ── Cache check: return cached clause if already generated ──
+    const cached = (result.generatedClauses || []).find(gc => gc.category === category);
+    if (cached) {
+      return res.json({
+        success: true,
+        category,
+        categoryLabel: cached.categoryLabel,
+        generatedClause: cached.text,
+        whyImportant: cached.whyImportant,
+        cached: true
+      });
     }
 
     const structure = result.structure || {};
@@ -815,30 +828,51 @@ ANFORDERUNGEN:
 4. Die Klausel soll direkt in den Vertrag einfügbar sein
 5. Nummeriere Absätze mit (1), (2), (3) etc.
 6. Verweise auf einschlägige Gesetze (BGB, DSGVO, HGB etc.) wo sinnvoll
+7. Maximal 4 Absätze — klar, branchenüblich, keine Redundanzen
+8. Keine übermäßig langen Formulierungen
 
-AUSGABEFORMAT:
-Antworte ausschließlich mit der Klausel selbst.
-Beginne mit "§ [Thema]" als Überschrift.
-Kein Erklärungstext davor oder danach.`;
+AUSGABEFORMAT (strikt einhalten):
+Zuerst die Klausel, beginnend mit "§ [Thema]" als Überschrift.
+Dann eine Leerzeile, dann exakt:
+[WARUM_WICHTIG]
+2-3 Sätze, warum diese Klausel für diesen Vertragstyp wichtig ist und welche Risiken ohne sie bestehen.
+[/WARUM_WICHTIG]`;
 
     const openai = getOpenAI();
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      temperature: 0.3,
-      max_tokens: 2000,
+      temperature: 0.2,
+      max_tokens: 1500,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Erstelle eine ${categoryLabel}-Klausel für diesen ${structure.contractTypeLabel || 'Vertrag'}.` }
       ]
     });
 
-    const generatedText = response.choices[0].message.content.trim();
+    const fullResponse = response.choices[0].message.content.trim();
+
+    // Extract "warum wichtig" section
+    let generatedText = fullResponse;
+    let whyImportant = '';
+    const whyMatch = fullResponse.match(/\[WARUM_WICHTIG\]([\s\S]*?)(?:\[\/WARUM_WICHTIG\]|$)/);
+    if (whyMatch) {
+      whyImportant = whyMatch[1].trim();
+      generatedText = fullResponse.substring(0, whyMatch.index).trim();
+    }
+
+    // ── Cache: persist generated clause ──
+    await OptimizerV2Result.updateOne(
+      { _id: result._id },
+      { $push: { generatedClauses: { category, categoryLabel, text: generatedText, whyImportant, createdAt: new Date() } } }
+    );
 
     res.json({
       success: true,
       category,
       categoryLabel,
       generatedClause: generatedText,
+      whyImportant,
+      cached: false,
       usage: {
         inputTokens: response.usage?.prompt_tokens || 0,
         outputTokens: response.usage?.completion_tokens || 0

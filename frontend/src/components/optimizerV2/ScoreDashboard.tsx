@@ -34,6 +34,14 @@ function getScoreLabel(score: number): string {
   return 'Kritisch';
 }
 
+// ── Power Balance Labels ──
+const PB_LABELS: Record<string, string> = {
+  balanced: 'Ausgewogen',
+  slightly_one_sided: 'Leicht einseitig',
+  strongly_one_sided: 'Deutlich einseitig',
+  extremely_one_sided: 'Extrem einseitig'
+};
+
 export default function ScoreDashboard({ scores, result, structure, onNavigate }: Props) {
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const criticalCount = result.clauseAnalyses.filter(a => a.strength === 'critical').length;
@@ -45,6 +53,35 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
     const level = a.importanceLevel || 'medium';
     if (level in importanceCounts) importanceCounts[level]++;
   }
+
+  // ── AI Contract Strategy: Top negotiation points ──
+  const strategyPoints = useMemo(() => {
+    return result.clauseAnalyses
+      .filter(a => {
+        const isRisky = a.riskLevel >= 6;
+        const isOneSided = a.powerBalance === 'strongly_one_sided' || a.powerBalance === 'extremely_one_sided';
+        const isImportant = a.importanceLevel === 'critical' || a.importanceLevel === 'high';
+        return (isRisky || isOneSided) && isImportant;
+      })
+      .sort((a, b) => {
+        const scoreA = a.riskLevel + (a.powerBalance === 'extremely_one_sided' ? 4 : a.powerBalance === 'strongly_one_sided' ? 2 : 0);
+        const scoreB = b.riskLevel + (b.powerBalance === 'extremely_one_sided' ? 4 : b.powerBalance === 'strongly_one_sided' ? 2 : 0);
+        return scoreB - scoreA;
+      })
+      .slice(0, 4)
+      .map(a => {
+        const clause = result.clauses.find(c => c.id === a.clauseId);
+        // Pick the most actionable one-liner
+        const insight = a.neutralRecommendation || a.recipientView || a.concerns?.[0] || a.summary;
+        return {
+          clauseId: a.clauseId,
+          title: clause ? `${clause.sectionNumber ? clause.sectionNumber + ' ' : ''}${clause.title}` : a.clauseId,
+          insight: insight.length > 120 ? insight.substring(0, 117) + '...' : insight,
+          powerBalance: a.powerBalance,
+          riskLevel: a.riskLevel
+        };
+      });
+  }, [result]);
 
   return (
     <div className={styles.scoreDashboard}>
@@ -119,6 +156,42 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           );
         })}
       </div>
+
+      {/* AI Contract Strategy */}
+      {strategyPoints.length > 0 && (
+        <div className={styles.contractStrategy}>
+          <div className={styles.contractStrategyHeader}>
+            <Sparkles size={15} style={{ color: '#5856D6' }} />
+            <span className={styles.contractStrategyTitle}>Verhandlungsstrategie</span>
+            <span className={styles.contractStrategySubtitle}>Wichtigste Verhandlungspunkte</span>
+          </div>
+          <div className={styles.contractStrategyList}>
+            {strategyPoints.map((point, i) => (
+              <button
+                key={point.clauseId}
+                className={styles.strategyItem}
+                onClick={() => onNavigate('clauses')}
+              >
+                <span className={styles.strategyRank}>{i + 1}</span>
+                <div className={styles.strategyInfo}>
+                  <span className={styles.strategyClause}>{point.title}</span>
+                  <span className={styles.strategyInsight}>{point.insight}</span>
+                </div>
+                <div className={styles.strategyMeta}>
+                  {point.powerBalance !== 'balanced' && (
+                    <span className={styles.strategyTag} style={{
+                      color: point.powerBalance === 'extremely_one_sided' ? '#FF3B30' : '#FF9500',
+                      borderColor: point.powerBalance === 'extremely_one_sided' ? '#FF3B30' : '#FF9500'
+                    }}>
+                      {PB_LABELS[point.powerBalance] || point.powerBalance}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Importance distribution */}
       <div className={styles.importanceBar}>
@@ -215,7 +288,7 @@ const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
 
 function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: MissingClause[]; resultId: string }) {
   const [generating, setGenerating] = useState<string | null>(null);
-  const [generatedClause, setGeneratedClause] = useState<{ category: string; label: string; text: string } | null>(null);
+  const [generatedClause, setGeneratedClause] = useState<{ category: string; label: string; text: string; whyImportant?: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = useCallback(async (category: string, label: string) => {
@@ -224,9 +297,9 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
       const res = await apiCall(`/optimizer-v2/results/${resultId}/generate-clause`, {
         method: 'POST',
         body: JSON.stringify({ category })
-      }) as { success: boolean; generatedClause: string };
+      }) as { success: boolean; generatedClause: string; whyImportant?: string };
       if (res.success) {
-        setGeneratedClause({ category, label, text: res.generatedClause });
+        setGeneratedClause({ category, label, text: res.generatedClause, whyImportant: res.whyImportant });
       }
     } catch {
       // silently fail
@@ -312,6 +385,15 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
               </button>
             </div>
             <pre className={styles.generatedClauseText}>{generatedClause.text}</pre>
+            {generatedClause.whyImportant && (
+              <div className={styles.whyImportant}>
+                <AlertTriangle size={14} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <span className={styles.whyImportantTitle}>Warum ist diese Klausel wichtig?</span>
+                  <span className={styles.whyImportantText}>{generatedClause.whyImportant}</span>
+                </div>
+              </div>
+            )}
             <div className={styles.generatedClauseActions}>
               <button className={styles.generatedClauseCopyBtn} onClick={handleCopy}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}

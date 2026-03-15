@@ -192,6 +192,16 @@ const optimizerV2ResultSchema = new mongoose.Schema({
     perStage: [costStageSchema]
   },
 
+  // Generated Missing Clauses (cached)
+  generatedClauses: [{
+    category: String,
+    categoryLabel: String,
+    text: String,
+    whyImportant: String,
+    createdAt: { type: Date, default: Date.now },
+    _id: false
+  }],
+
   // Generated Contract (after user finalizes)
   generatedContractId: mongoose.Schema.Types.ObjectId,
 

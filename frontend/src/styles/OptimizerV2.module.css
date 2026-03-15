@@ -506,6 +506,37 @@
 }
 .generatedClauseCopyBtn:hover { background: var(--ov2-gray-700); }
 
+/* Why Important Section in Modal */
+.whyImportant {
+  display: flex; gap: 10px; padding: 12px 20px; margin: 0;
+  background: #FFF8F0; border-top: 1px solid #FFE4C4;
+}
+.whyImportantTitle { display: block; font-size: 12px; font-weight: 600; color: #FF9500; margin-bottom: 3px; }
+.whyImportantText { display: block; font-size: 12px; color: var(--ov2-gray-700); line-height: 1.5; }
+
+/* ── AI Contract Strategy Panel ── */
+.contractStrategy {
+  background: linear-gradient(135deg, #FAFAFF 0%, #F3F0FF 100%);
+  border: 1px solid #E8E0FF; border-radius: var(--ov2-radius); padding: 16px;
+}
+.contractStrategyHeader { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.contractStrategyTitle { font-size: 14px; font-weight: 700; color: #5856D6; }
+.contractStrategySubtitle { font-size: 11px; color: var(--ov2-gray-500); margin-left: auto; }
+.contractStrategyList { display: flex; flex-direction: column; gap: 4px; }
+.strategyItem {
+  display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px;
+  background: white; border: 1px solid #F0ECFF; border-radius: var(--ov2-radius-xs);
+  cursor: pointer; text-align: left; width: 100%; transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--ov2-font);
+}
+.strategyItem:hover { border-color: #D4CCFF; box-shadow: 0 2px 8px rgba(88,86,214,0.08); }
+.strategyRank { font-size: 13px; font-weight: 700; color: #5856D6; min-width: 18px; margin-top: 1px; }
+.strategyInfo { flex: 1; min-width: 0; }
+.strategyClause { display: block; font-size: 13px; font-weight: 600; color: var(--ov2-gray-800); }
+.strategyInsight { display: block; font-size: 12px; color: var(--ov2-gray-500); margin-top: 2px; line-height: 1.4; }
+.strategyMeta { flex-shrink: 0; display: flex; gap: 6px; align-items: flex-start; margin-top: 2px; }
+.strategyTag { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 3px; border: 1px solid; background: transparent; white-space: nowrap; }
+
 .metadataGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
