@@ -234,20 +234,8 @@ ${rawText2}
 """
 
 ${clauseMatchContext}
-WICHTIG — VOLLSTÄNDIGKEITSPRÜFUNG (KRITISCH!):
-Du MUSST JEDEN Paragraphen/Klausel BEIDER Verträge systematisch durchgehen.
-Gehe die Vertragskarten Zeile für Zeile durch und prüfe für JEDE Klausel:
-1. Gibt es eine entsprechende Klausel im anderen Vertrag?
-2. Wenn ja: Gibt es Unterschiede in Werten, Umfang, Formulierung?
-3. Wenn nein: → semanticType "missing"
-Überspringe KEINE Klausel. Prüfe insbesondere Bereiche, die GPT typischerweise übersieht:
-- Gewährleistung/Warranty (Fristen, Rügepflicht)
-- Wettbewerbsverbot/Non-Compete (vorhanden vs. fehlend)
-- Zahlungsbedingungen (Zahlungsziel, Verzugszinsen, Ratenzahlung)
-- Vertragsstrafen (vorhanden vs. fehlend, Höhe)
-
-QUANTITATIVE UNTERSCHIEDE — JEDEN Zahlenunterschied SEPARAT erfassen:
-"3 Jahre" vs "5 Jahre", "25.000 EUR" vs "100.000 EUR", "14 Tage" vs "30 Tage", "12 Monate" vs "6 Monate"
+WICHTIG — Finde MÖGLICHST VIELE echte Unterschiede (typisch sind 6-10 bei ähnlichen Verträgen).
+Jeder Zahlenunterschied (Fristen, Beträge, Dauer) ist ein EIGENER Eintrag.
 Ein einzelner § kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
 
 DEINE AUFGABE — 8 SCHRITTE:
@@ -271,18 +259,6 @@ Gehe BEIDE Verträge Klausel für Klausel durch. Für JEDEN echten Unterschied:
 }
 
 REGEL: Identische/sinngemäß gleiche Klauseln NICHT aufnehmen. Nur ECHTE Abweichungen.
-
-VOLLSTÄNDIGKEITS-CHECK nach Schritt 1:
-Prüfe ob du ALLE diese Bereiche verglichen hast (sofern in den Verträgen vorhanden):
-☐ payment (Vergütung, Zahlungsziel, Verzugszinsen)
-☐ liability (Haftungsgrenzen, Haftungsumfang)
-☐ warranty (Gewährleistungsfrist, Mängelrüge)
-☐ termination (Kündigungsfrist, Mindestlaufzeit, Abfindung)
-☐ confidentiality (Dauer, Vertragsstrafe)
-☐ ip_rights (Nutzungsrechte, Portfolio)
-☐ non_compete (vorhanden/fehlend, Dauer)
-☐ duration (Vertragslaufzeit, Verlängerung)
-Wenn ein Bereich fehlt, gehe zurück und ergänze den Unterschied.
 
 SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
 MIT konkreten Zahlen und Fundstellen.
@@ -430,7 +406,15 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
       'Phase B Timeout'
     );
 
-    progress('finalizing', 90, 'Ergebnis wird zusammengestellt...');
+    // Gap Detection: Find differences Phase B missed using Phase A maps
+    progress('finalizing', 88, 'Vollständigkeitsprüfung...');
+    const gaps = detectGaps(map1, map2, phaseBResult.differences || []);
+    if (gaps.length > 0) {
+      phaseBResult.differences = [...(phaseBResult.differences || []), ...gaps];
+      console.log(`📊 Phase B + Gaps: ${phaseBResult.differences.length} Unterschiede total`);
+    }
+
+    progress('finalizing', 92, 'Ergebnis wird zusammengestellt...');
 
     // Build V2 response (include texts for re-analysis)
     const v2Result = buildV2Response(map1, map2, phaseBResult, perspective, text1, text2);
@@ -878,6 +862,185 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
+// ============================================
+// Gap Detection: Programmatic Post-Processing
+// ============================================
+// Detects differences that Phase B missed by comparing Phase A maps.
+// Two cases: (1) Clause area exists in one contract only → "missing"
+//            (2) Clause area in both but not in differences → compare keyValues
+
+const AREA_LABELS = {
+  payment: 'Vergütung/Zahlung', liability: 'Haftung', warranty: 'Gewährleistung',
+  termination: 'Kündigung', confidentiality: 'Geheimhaltung',
+  ip_rights: 'Nutzungsrechte/IP', non_compete: 'Wettbewerbsverbot',
+  duration: 'Vertragslaufzeit', data_protection: 'Datenschutz',
+  force_majeure: 'Höhere Gewalt',
+};
+
+const MISSING_SEVERITY = {
+  non_compete: 'medium', warranty: 'medium', liability: 'high',
+  data_protection: 'medium', force_majeure: 'low', payment: 'high',
+  confidentiality: 'medium', termination: 'medium', duration: 'medium',
+  ip_rights: 'medium',
+};
+
+// Areas that overlap conceptually — if one is covered, skip the other
+const RELATED_AREAS = {
+  duration: ['termination'],
+  termination: ['duration'],
+};
+
+function detectGaps(map1, map2, existingDifferences) {
+  const coveredAreas = new Set(existingDifferences.map(d => d.clauseArea));
+  // Also consider areas covered by related areas
+  const effectivelyCovered = new Set(coveredAreas);
+  for (const area of coveredAreas) {
+    const related = RELATED_AREAS[area] || [];
+    related.forEach(r => effectivelyCovered.add(r));
+  }
+
+  const gaps = [];
+  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+
+  // Build area → clauses maps
+  const areasMap1 = {};
+  const areasMap2 = {};
+  for (const c of (map1.clauses || [])) {
+    if (!areasMap1[c.area]) areasMap1[c.area] = [];
+    areasMap1[c.area].push(c);
+  }
+  for (const c of (map2.clauses || [])) {
+    if (!areasMap2[c.area]) areasMap2[c.area] = [];
+    areasMap2[c.area].push(c);
+  }
+
+  const allAreas = new Set([...Object.keys(areasMap1), ...Object.keys(areasMap2)]);
+
+  for (const area of allAreas) {
+    if (effectivelyCovered.has(area) || skipAreas.has(area)) continue;
+
+    const c1 = areasMap1[area] || [];
+    const c2 = areasMap2[area] || [];
+
+    // Case 1: Area only in one contract → missing clause
+    if (c1.length > 0 && c2.length === 0) {
+      gaps.push(buildMissingDiff(area, c1[0], 1));
+    } else if (c2.length > 0 && c1.length === 0) {
+      gaps.push(buildMissingDiff(area, c2[0], 2));
+    } else if (c1.length > 0 && c2.length > 0) {
+      // Case 2: Both have the area → compare keyValues
+      const kvGap = compareClauseKeyValues(c1, c2, area);
+      if (kvGap) gaps.push(kvGap);
+    }
+  }
+
+  if (gaps.length > 0) {
+    console.log(`🔍 Gap Detection: ${gaps.length} zusätzliche Unterschiede aus Phase-A-Maps erkannt`);
+    gaps.forEach(g => console.log(`   → ${g.clauseArea}: ${g.semanticType} (${g.severity})`));
+  }
+
+  return gaps;
+}
+
+function buildMissingDiff(area, existingClause, existsInContract) {
+  const label = AREA_LABELS[area] || area;
+  const section = existingClause.section || '';
+  const summary = existingClause.summary || existingClause.originalText || '';
+  const otherContract = existsInContract === 1 ? 2 : 1;
+
+  return {
+    category: label,
+    section,
+    contract1: existsInContract === 1 ? summary : 'Keine Regelung vorhanden',
+    contract2: existsInContract === 2 ? summary : 'Keine Regelung vorhanden',
+    severity: MISSING_SEVERITY[area] || 'medium',
+    explanation: `Vertrag ${existsInContract} enthält eine Regelung zu ${label} (${section}), die in Vertrag ${otherContract} vollständig fehlt. Für Sie bedeutet das, dass im Vertrag ${otherContract} keine vertragliche Absicherung in diesem Bereich besteht.`,
+    impact: `Fehlende ${label}-Klausel — es gelten nur gesetzliche Regelungen, die möglicherweise nicht ausreichend schützen.`,
+    recommendation: `Eine ${label}-Regelung sollte in Vertrag ${otherContract} ergänzt werden.`,
+    clauseArea: area,
+    semanticType: 'missing',
+    financialImpact: null,
+    marketContext: null,
+    _autoDetected: true,
+  };
+}
+
+function compareClauseKeyValues(clauses1, clauses2, area) {
+  // Collect all keyValues from both sides
+  const kv1 = {};
+  const kv2 = {};
+  for (const c of clauses1) {
+    if (c.keyValues && typeof c.keyValues === 'object') Object.assign(kv1, c.keyValues);
+  }
+  for (const c of clauses2) {
+    if (c.keyValues && typeof c.keyValues === 'object') Object.assign(kv2, c.keyValues);
+  }
+
+  // Normalize and match keys
+  const normalize = (k) => k.toLowerCase().replace(/[^a-zäöüß0-9]/g, '');
+  const keys1 = Object.entries(kv1).map(([k, v]) => ({ key: k, norm: normalize(k), value: v }));
+  const keys2 = Object.entries(kv2).map(([k, v]) => ({ key: k, norm: normalize(k), value: v }));
+
+  const diffs = [];
+  const matched2 = new Set();
+
+  for (const entry1 of keys1) {
+    // Find best matching key in contract 2
+    let bestMatch = null;
+    for (const entry2 of keys2) {
+      if (matched2.has(entry2.key)) continue;
+      if (entry1.norm === entry2.norm || entry1.norm.includes(entry2.norm) || entry2.norm.includes(entry1.norm)) {
+        bestMatch = entry2;
+        break;
+      }
+    }
+    if (!bestMatch) continue;
+    matched2.add(bestMatch.key);
+
+    // Compare values
+    const v1 = String(entry1.value).trim();
+    const v2 = String(bestMatch.value).trim();
+    if (v1 === v2) continue;
+
+    // Extract numbers for meaningful comparison
+    const num1 = extractNumber(v1);
+    const num2 = extractNumber(v2);
+    if (num1 !== null && num2 !== null && num1 !== num2) {
+      diffs.push({ key: entry1.key, v1, v2, numDiff: true });
+    } else if (v1.toLowerCase() !== v2.toLowerCase()) {
+      diffs.push({ key: entry1.key, v1, v2, numDiff: false });
+    }
+  }
+
+  if (diffs.length === 0) return null;
+
+  const label = AREA_LABELS[area] || area;
+  const diffTexts = diffs.map(d => `${d.key}: "${d.v1}" vs "${d.v2}"`);
+  const severity = diffs.some(d => d.numDiff) ? 'medium' : 'low';
+
+  return {
+    category: label,
+    section: clauses1[0]?.section || clauses2[0]?.section || '',
+    contract1: diffs.map(d => `${d.key}: ${d.v1}`).join('; '),
+    contract2: diffs.map(d => `${d.key}: ${d.v2}`).join('; '),
+    severity,
+    explanation: `Die ${label}-Regelungen unterscheiden sich in konkreten Werten: ${diffTexts.join(', ')}. Diese Unterschiede können wirtschaftliche Auswirkungen haben.`,
+    impact: `Unterschiedliche Werte bei ${label} beeinflussen Rechte und Pflichten beider Parteien.`,
+    recommendation: `Vergleichen Sie die ${label}-Werte und verhandeln Sie ggf. bessere Konditionen.`,
+    clauseArea: area,
+    semanticType: 'different_scope',
+    financialImpact: null,
+    marketContext: null,
+    _autoDetected: true,
+  };
+}
+
+function extractNumber(str) {
+  if (typeof str !== 'string') return null;
+  const match = str.match(/(\d+[\.,]?\d*)/);
+  return match ? parseFloat(match[1].replace(',', '.')) : null;
+}
+
 function withTimeout(promise, ms, label) {
   return Promise.race([
     promise,
@@ -901,6 +1064,7 @@ module.exports = {
   runCompareV2Pipeline,
   buildV2Response,
   filterIdenticalClauses,
+  detectGaps,
   validatePhaseAResponse,
   validatePhaseBResponse,
   COMPARISON_MODES,
