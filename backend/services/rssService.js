@@ -224,7 +224,7 @@ function getFeedHealth(feedId) {
  * Maps to the same area values used in user Legal Pulse settings
  */
 function detectLegalArea(title, summary = '') {
-  const text = `${title} ${summary}`.toLowerCase();
+  const text = `${title} ${summary}`.replace(/<[^>]*>/g, ' ').toLowerCase();
 
   // Arbeitsrecht
   if (/arbeit(s|nehmer|geber|srecht|svertrag|sverhältnis|szeit)|kündigungs(schutz|frist)|betriebsrat|tarifvertrag|mindestlohn|teilzeit|befristung|entgeltfortzahlung|mutterschutz|elternzeit|urlaubsanspruch|betriebsübergang|abfindung|arbeitszeugnis|probezeit|überstunden/i.test(text)) {
@@ -285,7 +285,8 @@ function detectLegalArea(title, summary = '') {
  * Returns: 'proposal' | 'passed' | 'effective' | 'court_decision' | 'guideline' | 'unknown'
  */
 function detectLawStatus(title, summary = '', feedCategory = '') {
-  const text = `${title} ${summary}`.toLowerCase();
+  // Strip HTML tags that RSS feeds sometimes include
+  const text = `${title} ${summary}`.replace(/<[^>]*>/g, ' ').toLowerCase();
   const cat = feedCategory.toLowerCase();
 
   // Court decisions (from Bundesgerichte feeds)
