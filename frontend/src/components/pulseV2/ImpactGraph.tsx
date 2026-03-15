@@ -1,10 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import type { PulseV2LegalAlert, PulseV2AutoFixResult } from '../../types/pulseV2';
+import type { PulseV2LegalAlert, PulseV2AutoFixResult, LawStatus } from '../../types/pulseV2';
 
 interface ImpactGraphProps {
   alert: PulseV2LegalAlert;
   onNavigate?: (contractId: string) => void;
 }
+
+const LAW_STATUS_CONFIG: Record<LawStatus, { label: string; color: string; bg: string }> = {
+  proposal: { label: 'Entwurf', color: '#6b7280', bg: '#f3f4f6' },
+  passed: { label: 'Verabschiedet', color: '#d97706', bg: '#fffbeb' },
+  effective: { label: 'In Kraft', color: '#dc2626', bg: '#fef2f2' },
+  court_decision: { label: 'Urteil', color: '#7c3aed', bg: '#f5f3ff' },
+  guideline: { label: 'Leitlinie', color: '#2563eb', bg: '#eff6ff' },
+  unknown: { label: '', color: '#9ca3af', bg: '#f9fafb' },
+};
 
 const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
   critical: { color: '#dc2626', bg: '#fef2f2' },
@@ -44,8 +53,21 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
         }} />
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
             {alert.lawTitle}
+            {alert.lawStatus && alert.lawStatus !== 'unknown' && (() => {
+              const st = LAW_STATUS_CONFIG[alert.lawStatus];
+              return (
+                <span style={{
+                  fontSize: 10, fontWeight: 600,
+                  color: st.color, background: st.bg,
+                  padding: '1px 6px', borderRadius: 4,
+                  flexShrink: 0,
+                }}>
+                  {st.label}
+                </span>
+              );
+            })()}
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
             {alert.lawArea} &middot; {alert.contractName}
@@ -71,10 +93,15 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
             {/* Step 1: Law Change */}
             <GraphNode
               icon="&#9878;&#65039;"
-              label="Gesetzesänderung"
+              label={alert.lawStatus === 'court_decision' ? 'Gerichtsentscheidung'
+                : alert.lawStatus === 'guideline' ? 'Behörden-Leitlinie'
+                : alert.lawStatus === 'proposal' ? 'Gesetzesentwurf'
+                : 'Gesetzesänderung'}
               title={alert.lawTitle}
               detail={alert.impactSummary}
-              color="#6366f1"
+              color={alert.lawStatus === 'court_decision' ? '#7c3aed'
+                : alert.lawStatus === 'guideline' ? '#2563eb'
+                : '#6366f1'}
             />
 
             <GraphConnector />

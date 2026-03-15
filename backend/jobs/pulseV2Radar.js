@@ -278,13 +278,22 @@ REGELN:
 - recommendation: Konkreter nächster Schritt (z.B. "Klausel X in § Y anpassen", "AV-Vertrag aktualisieren")
 - affectedClauseIds: Liste der Klausel-IDs die von der Änderung betroffen sind (aus der Klausel-Liste des Vertrags)
 - clauseImpacts: Für JEDE betroffene Klausel: clauseId, clauseTitle, impact (was genau das Problem ist), suggestedChange (konkreter Textvorschlag für die Änderung)
-- Wenn ein Vertrag NICHT betroffen ist: affected=false, affectedClauseIds=[], clauseImpacts=[]`,
+- Wenn ein Vertrag NICHT betroffen ist: affected=false, affectedClauseIds=[], clauseImpacts=[]
+
+STATUS-KONTEXT:
+- "proposal": Gesetzesentwurf — noch nicht verabschiedet, Handlung vorbereiten aber nicht dringend
+- "passed": Verabschiedet — Handlungsbedarf, da bald in Kraft
+- "effective": Bereits in Kraft — sofortiger Handlungsbedarf
+- "court_decision": Gerichtsentscheidung — Praxis könnte sich ändern, Klauseln prüfen
+- "guideline": Behörden-Leitlinie — empfohlene Anpassung
+- Passe severity und recommendation an den Status an (Entwurf = niedrigere severity als in Kraft)`,
         },
         {
           role: "user",
           content: `GESETZESÄNDERUNG:
 Titel: ${lawChange.title}
 Bereich: ${lawChange.area || "unbekannt"}
+Status: ${lawChange.lawStatus || "unknown"}
 Beschreibung: ${lawChange.description || lawChange.summary || ""}
 Quelle: ${lawChange.source || ""}
 
@@ -347,6 +356,7 @@ async function storeAndNotify(db, userId, alerts) {
     lawId: a.lawChange._id.toString(),
     lawTitle: a.lawChange.title,
     lawArea: a.lawChange.area,
+    lawStatus: a.lawChange.lawStatus || "unknown",
     lawSource: a.lawChange.source,
     impactSummary: a.impactSummary,
     severity: a.severity,

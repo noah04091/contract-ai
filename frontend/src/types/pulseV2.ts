@@ -182,6 +182,8 @@ export interface PulseV2ClauseImpact {
   suggestedChange: string;
 }
 
+export type LawStatus = 'proposal' | 'passed' | 'effective' | 'court_decision' | 'guideline' | 'unknown';
+
 export interface PulseV2LegalAlert {
   _id: string;
   userId: string;
@@ -190,6 +192,7 @@ export interface PulseV2LegalAlert {
   lawId: string;
   lawTitle: string;
   lawArea: string;
+  lawStatus?: LawStatus;
   lawSource: string;
   impactSummary: string;
   severity: 'critical' | 'high' | 'medium' | 'low';

@@ -281,6 +281,43 @@ function detectLegalArea(title, summary = '') {
 }
 
 /**
+ * Detect the legislative status of a law change from its title and content.
+ * Returns: 'proposal' | 'passed' | 'effective' | 'court_decision' | 'guideline' | 'unknown'
+ */
+function detectLawStatus(title, summary = '', feedCategory = '') {
+  const text = `${title} ${summary}`.toLowerCase();
+  const cat = feedCategory.toLowerCase();
+
+  // Court decisions (from Bundesgerichte feeds)
+  if (cat === 'rechtsprechung' || cat === 'verfassungsrecht' || cat === 'patentrecht' ||
+    /\b(urteil|beschluss|entscheidung|bgh|bag|bverfg|bfh|bsg|bverwg|bpatg|gericht|kammer|senat|revisionsurteil|leitsatz)\b/i.test(text)) {
+    return 'court_decision';
+  }
+
+  // Proposals & drafts
+  if (/\b(entwurf|gesetzentwurf|referentenentwurf|kabinettsentwurf|vorschlag|richtlinienvorschlag|anhörung|konsultation|stellungnahme|beratung|1\.\s*lesung|2\.\s*lesung|3\.\s*lesung|ausschuss.*empf|geplant|soll.*gelten)\b/i.test(text)) {
+    return 'proposal';
+  }
+
+  // Passed but not yet effective
+  if (/\b(beschlossen|verabschiedet|zugestimmt|gebilligt|angenommen|verkündet|tritt.*in\s*kraft\s*am|inkrafttreten|wird.*gelten\s*ab)\b/i.test(text)) {
+    return 'passed';
+  }
+
+  // Already in effect
+  if (/\b(in\s*kraft\s*getreten|gilt\s*seit|wirksam\s*seit|geltend|neuregelung|neue\s*fassung|geändert\s*durch|novelliert|aktualisiert)\b/i.test(text)) {
+    return 'effective';
+  }
+
+  // Guidelines & recommendations from authorities
+  if (/\b(leitlinie|leitfaden|empfehlung|orientierungshilfe|hinweis|handreichung|merkblatt|faq|rundschreiben|mitteilung|aufsichtsbehörd)\b/i.test(text)) {
+    return 'guideline';
+  }
+
+  return 'unknown';
+}
+
+/**
  * Map RSS feed category to Legal Pulse area
  */
 function mapFeedCategoryToArea(feedCategory) {
@@ -483,6 +520,9 @@ function normalizeForLegalPulse(items) {
     // Use detected area, fallback to feed area, fallback to 'Vertragsrecht'
     const area = detectedArea || feedArea || 'Vertragsrecht';
 
+    // Detect legislative status
+    const lawStatus = detectLawStatus(item.title, item.summary, item.category);
+
     return {
       source: 'rss',
       feedId: item.feedId,
@@ -493,6 +533,7 @@ function normalizeForLegalPulse(items) {
       description: item.summary,
       url: item.link,
       area,
+      lawStatus,
       updatedAt: item.date,
       createdAt: new Date(),
       metadata: {
