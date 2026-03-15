@@ -18,21 +18,22 @@ const CATEGORY_IMPORTANCE_FLOOR = {
 
 // ── Missing Clause Detection ──
 
-// Keyword patterns for content-based category detection
+// Semantic presence patterns — broader than extraction keywords.
+// Detect if a TOPIC exists anywhere in the contract, even in unusual wording.
 const CATEGORY_KEYWORDS = {
-  termination: /künd|beendig|auflös|rücktritt|ordentlich.*künd|außerordentlich.*künd|vertragsende/i,
-  liability: /haftung|schadenersatz|haftungsbeschr|freistellung|schadloshalt|haftet|haften/i,
-  payment: /vergütung|zahlung|entgelt|preis|honorar|gebühr|faktur|rechnung|fällig|bezahl/i,
-  data_protection: /datenschutz|dsgvo|personenbezog|privacy|daten.*verarbeit|datensicherheit/i,
-  confidentiality: /vertraulich|geheimhalt|verschwiegenheit|geheim|stillschweigen/i,
-  warranty: /gewährleist|garantie|mängel|nachbesser|sachmangel|rechtsmangel/i,
-  ip_rights: /eigentum|urheberrecht|nutzungsrecht|lizenz|patent|geist.*eigentum|markenrecht/i,
-  non_compete: /wettbewerb|konkurrenz|abwerbe|karenz|wettbewerbsverbot/i,
-  force_majeure: /höhere gewalt|force majeure|unvorhersehbar.*ereignis/i,
-  dispute_resolution: /streit|schlichtung|schiedsgericht|gerichtsstand|mediation|schiedsverfahren/i,
+  termination: /künd|beendig|auflös|rücktritt|vertragsende|laufzeitende|sonderkündig|abberuf|widerruf/i,
+  liability: /haftung|schadenersatz|haftungsbeschr|freistellung|schadloshalt|haftet|haften|haftungsausschluss|einstandspflicht/i,
+  payment: /vergütung|zahlung|entgelt|preis|honorar|gebühr|faktur|rechnung|fällig|bezahl|kostenübernahme|aufwandserstattung|verzugszins/i,
+  data_protection: /datenschutz|dsgvo|personenbezog|privacy|daten.*verarbeit|datensicherheit|auftragsverarbeit|betroffenenrecht/i,
+  confidentiality: /vertraulich|geheimhalt|verschwiegenheit|geheim|stillschweigen|betriebsgeheimnis|geschäftsgeheimnis|nda|secret/i,
+  warranty: /gewährleist|garantie|mängel|nachbesser|sachmangel|rechtsmangel|mängelansprüch|beschaffenheit/i,
+  ip_rights: /urheberrecht|nutzungsrecht|geist.*eigentum|lizenz|patent|markenrecht|verwertungsrecht|schutzrecht|werknutzung/i,
+  non_compete: /wettbewerb.*verbot|konkurrenz.*verbot|abwerbe.*verbot|karenz|wettbewerbsbeschränk|konkurrenzklausel/i,
+  force_majeure: /höhere gewalt|force majeure|unvorhersehbar.*ereignis|außerhalb.*kontrolle|nicht zu vertreten|unabwendbar|pandemie.*leistungspflicht/i,
+  dispute_resolution: /streit|schlichtung|schiedsgericht|gerichtsstand|mediation|schiedsverfahren|anwendbares recht|zuständiges gericht/i,
   sla: /service.level|verfügbarkeit|uptime|sla|reaktionszeit|erreichbarkeit/i,
-  deliverables: /lieferung|abnahme|leistungsumfang|deliverable|werkleistung/i,
-  duration: /laufzeit|vertragsdauer|vertragsbeginn|mindestlaufzeit|verlänger/i
+  deliverables: /lieferung|abnahme|leistungsumfang|deliverable|werkleistung|arbeitsergebnis/i,
+  duration: /laufzeit|vertragsdauer|vertragsbeginn|mindestlaufzeit|verlänger|befrist/i
 };
 
 // German labels for missing clause recommendations
@@ -102,19 +103,20 @@ function detectMissingClauses(clauses, structure) {
       continue;
     }
 
-    // Content-based detection: search clause titles + text for keywords
+    // Semantic presence detection: search ALL clause text for topic keywords
     const pattern = CATEGORY_KEYWORDS[cat];
     let foundInContent = false;
 
     if (pattern) {
       for (const clause of clauses) {
-        // Title match = stronger signal (0.7), body match = weaker (0.4)
+        // Title match = strong signal (0.7)
         if (pattern.test(clause.title || '')) {
           foundInContent = true;
           completenessHits += 0.7;
           break;
         }
-        if (pattern.test((clause.originalText || '').substring(0, 500))) {
+        // Full text match = medium signal (0.4) — no 500-char limit
+        if (pattern.test(clause.originalText || '')) {
           foundInContent = true;
           completenessHits += 0.4;
           break;
