@@ -242,9 +242,7 @@ function MissingClausesPanel({ missingClauses }: { missingClauses?: MissingClaus
             </div>
           );
         })}
-        {miscategorized.map(mc => {
-          const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
-          return (
+        {miscategorized.map(mc => (
             <div key={mc.category} className={styles.missingClauseItem} style={{ opacity: 0.8 }}>
               <Search size={12} style={{ color: '#FF9500', flexShrink: 0, marginTop: 2 }} />
               <div className={styles.missingClauseInfo}>
@@ -255,8 +253,7 @@ function MissingClausesPanel({ missingClauses }: { missingClauses?: MissingClaus
                 Im Text
               </span>
             </div>
-          );
-        })}
+          ))}
       </div>
     </div>
   );
