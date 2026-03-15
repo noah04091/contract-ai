@@ -124,6 +124,14 @@ export interface ClauseScore {
   importanceLevel?: ImportanceLevel;
 }
 
+export interface MissingClause {
+  category: ClauseCategory;
+  categoryLabel: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  foundInContent: boolean;
+  recommendation: string;
+}
+
 export interface Scores {
   overall: number;
   risk: number;
@@ -132,6 +140,7 @@ export interface Scores {
   completeness: number;
   marketStandard: number;
   perClause: ClauseScore[];
+  missingClauses?: MissingClause[];
 }
 
 // ── User Selection ──

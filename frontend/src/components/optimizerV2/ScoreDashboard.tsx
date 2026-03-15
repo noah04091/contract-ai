@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair } from 'lucide-react';
-import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance } from '../../types/optimizerV2';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search } from 'lucide-react';
+import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
@@ -162,6 +162,9 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       {/* Top Risk Clauses */}
       <TopRiskClauses result={result} onNavigate={onNavigate} />
 
+      {/* Missing Clauses Detection */}
+      <MissingClausesPanel missingClauses={scores.missingClauses} />
+
       {/* Contract metadata */}
       <div className={styles.metadataGrid}>
         {structure.parties?.length > 0 && (
@@ -196,6 +199,64 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             {structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis'}
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Missing Clauses Panel ──
+const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
+  critical: { label: 'Kritisch', color: '#FF3B30' },
+  high: { label: 'Wichtig', color: '#FF9500' },
+  medium: { label: 'Empfohlen', color: '#007AFF' },
+  low: { label: 'Optional', color: '#8E8E93' }
+};
+
+function MissingClausesPanel({ missingClauses }: { missingClauses?: MissingClause[] }) {
+  if (!missingClauses || missingClauses.length === 0) return null;
+
+  const trulyMissing = missingClauses.filter(mc => !mc.foundInContent);
+  const miscategorized = missingClauses.filter(mc => mc.foundInContent);
+
+  return (
+    <div className={styles.missingClauses}>
+      <div className={styles.missingClausesHeader}>
+        <FileWarning size={15} style={{ color: '#FF9500' }} />
+        <span className={styles.missingClausesTitle}>
+          Fehlende Klauseln ({trulyMissing.length} fehlend{miscategorized.length > 0 ? `, ${miscategorized.length} unvollständig` : ''})
+        </span>
+      </div>
+      <div className={styles.missingClausesList}>
+        {trulyMissing.map(mc => {
+          const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
+          return (
+            <div key={mc.category} className={styles.missingClauseItem}>
+              <div className={styles.missingClauseDot} style={{ background: sev.color }} />
+              <div className={styles.missingClauseInfo}>
+                <span className={styles.missingClauseName}>{mc.categoryLabel}</span>
+                <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
+              </div>
+              <span className={styles.missingClauseTag} style={{ color: sev.color, borderColor: sev.color }}>
+                {sev.label}
+              </span>
+            </div>
+          );
+        })}
+        {miscategorized.map(mc => {
+          const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
+          return (
+            <div key={mc.category} className={styles.missingClauseItem} style={{ opacity: 0.8 }}>
+              <Search size={12} style={{ color: '#FF9500', flexShrink: 0, marginTop: 2 }} />
+              <div className={styles.missingClauseInfo}>
+                <span className={styles.missingClauseName}>{mc.categoryLabel}</span>
+                <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
+              </div>
+              <span className={styles.missingClauseTag} style={{ color: '#FF9500', borderColor: '#FF9500' }}>
+                Im Text
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

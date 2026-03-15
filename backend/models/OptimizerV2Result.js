@@ -157,6 +157,14 @@ const optimizerV2ResultSchema = new mongoose.Schema({
       score: Number,
       importanceLevel: String,
       _id: false
+    }],
+    missingClauses: [{
+      category: String,
+      categoryLabel: String,
+      severity: String,
+      foundInContent: { type: Boolean, default: false },
+      recommendation: String,
+      _id: false
     }]
   },
 

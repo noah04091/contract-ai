@@ -3,6 +3,7 @@
  *
  * Deterministic scoring based on clause analyses and optimizations.
  * No GPT call needed - pure computation.
+ * Includes Missing Clause Detection for completeness analysis.
  */
 
 // Category-based importance fallback (mirrors Stage 3 heuristic)
@@ -15,7 +16,128 @@ const CATEGORY_IMPORTANCE_FLOOR = {
   parties: 'low', general_provisions: 'low', amendments: 'low', other: 'low'
 };
 
-function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress) {
+// ── Missing Clause Detection ──
+
+// Keyword patterns for content-based category detection
+const CATEGORY_KEYWORDS = {
+  termination: /künd|beendig|auflös|rücktritt|ordentlich.*künd|außerordentlich.*künd|vertragsende/i,
+  liability: /haftung|schadenersatz|haftungsbeschr|freistellung|schadloshalt|haftet|haften/i,
+  payment: /vergütung|zahlung|entgelt|preis|honorar|gebühr|faktur|rechnung|fällig|bezahl/i,
+  data_protection: /datenschutz|dsgvo|personenbezog|privacy|daten.*verarbeit|datensicherheit/i,
+  confidentiality: /vertraulich|geheimhalt|verschwiegenheit|geheim|stillschweigen/i,
+  warranty: /gewährleist|garantie|mängel|nachbesser|sachmangel|rechtsmangel/i,
+  ip_rights: /eigentum|urheberrecht|nutzungsrecht|lizenz|patent|geist.*eigentum|markenrecht/i,
+  non_compete: /wettbewerb|konkurrenz|abwerbe|karenz|wettbewerbsverbot/i,
+  force_majeure: /höhere gewalt|force majeure|unvorhersehbar.*ereignis/i,
+  dispute_resolution: /streit|schlichtung|schiedsgericht|gerichtsstand|mediation|schiedsverfahren/i,
+  sla: /service.level|verfügbarkeit|uptime|sla|reaktionszeit|erreichbarkeit/i,
+  deliverables: /lieferung|abnahme|leistungsumfang|deliverable|werkleistung/i,
+  duration: /laufzeit|vertragsdauer|vertragsbeginn|mindestlaufzeit|verlänger/i
+};
+
+// German labels for missing clause recommendations
+const CATEGORY_LABELS_DE = {
+  termination: 'Kündigung / Vertragsbeendigung',
+  liability: 'Haftung / Haftungsbeschränkung',
+  payment: 'Vergütung / Zahlungsbedingungen',
+  data_protection: 'Datenschutz / DSGVO',
+  confidentiality: 'Vertraulichkeit / Geheimhaltung',
+  warranty: 'Gewährleistung / Garantie',
+  ip_rights: 'Geistiges Eigentum / Urheberrecht',
+  non_compete: 'Wettbewerbsverbot',
+  force_majeure: 'Höhere Gewalt',
+  dispute_resolution: 'Streitbeilegung / Gerichtsstand',
+  sla: 'Service Level Agreement',
+  deliverables: 'Leistungen / Lieferumfang',
+  duration: 'Laufzeit / Vertragsdauer'
+};
+
+/**
+ * Determine essential categories based on contract type.
+ */
+function getEssentialCategories(contractType) {
+  const type = (contractType || '').toLowerCase();
+
+  if (type.includes('arbeit') || type.includes('employment') || type.includes('anstellung'))
+    return ['payment', 'termination', 'liability', 'non_compete', 'confidentiality', 'data_protection', 'duration'];
+  if (type.includes('nda') || type.includes('geheimhalt') || type.includes('vertraulich'))
+    return ['confidentiality', 'termination', 'liability', 'data_protection', 'duration'];
+  if (type.includes('lizenz') || type.includes('license') || type.includes('software'))
+    return ['ip_rights', 'payment', 'liability', 'termination', 'warranty', 'data_protection'];
+  if (type.includes('saas') || type.includes('cloud') || type.includes('hosting'))
+    return ['sla', 'payment', 'liability', 'termination', 'data_protection', 'warranty'];
+  if (type.includes('kauf') || type.includes('purchase'))
+    return ['payment', 'warranty', 'liability', 'termination', 'deliverables'];
+  if (type.includes('miet') || type.includes('pacht') || type.includes('lease'))
+    return ['payment', 'termination', 'liability', 'duration', 'warranty'];
+  if (type.includes('factor'))
+    return ['payment', 'liability', 'termination', 'data_protection', 'confidentiality', 'duration'];
+  if (type.includes('dienst') || type.includes('service') || type.includes('beratung') || type.includes('consult'))
+    return ['payment', 'termination', 'liability', 'confidentiality', 'data_protection', 'warranty'];
+  if (type.includes('werk') || type.includes('project'))
+    return ['payment', 'termination', 'liability', 'deliverables', 'warranty', 'data_protection'];
+  if (type.includes('kooperation') || type.includes('rahmen'))
+    return ['payment', 'termination', 'liability', 'confidentiality', 'data_protection', 'ip_rights', 'duration'];
+
+  // Default: common commercial contract essentials
+  return ['payment', 'termination', 'liability', 'confidentiality', 'data_protection'];
+}
+
+/**
+ * Detect missing essential clauses.
+ * Checks both assigned categories AND clause content via keyword patterns.
+ */
+function detectMissingClauses(clauses, structure) {
+  const contractType = structure?.contractType || '';
+  const essentialCategories = getEssentialCategories(contractType);
+  const presentCategories = new Set(clauses.map(c => c.category));
+
+  const missingClauses = [];
+  let completenessHits = 0;
+
+  for (const cat of essentialCategories) {
+    // Direct category match
+    if (presentCategories.has(cat)) {
+      completenessHits++;
+      continue;
+    }
+
+    // Content-based detection: search clause titles + text for keywords
+    const pattern = CATEGORY_KEYWORDS[cat];
+    let foundInContent = false;
+
+    if (pattern) {
+      for (const clause of clauses) {
+        const searchText = `${clause.title || ''} ${(clause.originalText || '').substring(0, 500)}`;
+        if (pattern.test(searchText)) {
+          foundInContent = true;
+          completenessHits += 0.5; // Partial credit — content exists but not as dedicated clause
+          break;
+        }
+      }
+    }
+
+    const severity = CATEGORY_IMPORTANCE_FLOOR[cat] || 'medium';
+
+    missingClauses.push({
+      category: cat,
+      categoryLabel: CATEGORY_LABELS_DE[cat] || cat,
+      severity,
+      foundInContent,
+      recommendation: foundInContent
+        ? `Inhalte zu "${CATEGORY_LABELS_DE[cat] || cat}" scheinen im Vertrag vorhanden, sind aber nicht als eigenständige Klausel ausgewiesen.`
+        : `Keine Regelung zu "${CATEGORY_LABELS_DE[cat] || cat}" erkannt. Eine explizite Klausel wird dringend empfohlen.`
+    });
+  }
+
+  const completenessScore = essentialCategories.length > 0
+    ? Math.round((completenessHits / essentialCategories.length) * 100)
+    : 100;
+
+  return { missingClauses, completenessScore, essentialCount: essentialCategories.length };
+}
+
+function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, onProgress) {
   onProgress(85, 'Berechne Vertrags-Scores...');
 
   const analysisMap = new Map();
@@ -84,11 +206,8 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress)
     (strengthCounts.critical / total * 10)
   );
 
-  // Completeness score (based on key categories present)
-  const essentialCategories = ['termination', 'liability', 'payment', 'data_protection', 'confidentiality'];
-  const presentCategories = new Set(clauses.map(c => c.category));
-  const completenessHits = essentialCategories.filter(cat => presentCategories.has(cat)).length;
-  const completenessScore = Math.round((completenessHits / essentialCategories.length) * 100);
+  // Completeness score + Missing Clause Detection
+  const { missingClauses, completenessScore } = detectMissingClauses(clauses, structure);
 
   // Market standard score (based on optimization needs)
   const optimizable = optimizations.filter(o => o.needsOptimization).length;
@@ -128,7 +247,8 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress)
     clarity: Math.max(0, Math.min(100, clarityScore)),
     completeness: Math.max(0, Math.min(100, completenessScore)),
     marketStandard: Math.max(0, Math.min(100, marketStandardScore)),
-    perClause
+    perClause,
+    missingClauses
   };
 
   onProgress(90, `Vertrags-Score: ${scores.overall}/100`);

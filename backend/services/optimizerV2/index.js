@@ -140,7 +140,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
     // ═══════════════════════════════════════════════
     onProgress(84, 'Stage 5: Scores werden berechnet...', { stage: 5, stageName: 'Scoring' });
 
-    const stage5 = runScoreCalculation(stage2.result, stage3.result, stage4.result, onProgress);
+    const stage5 = runScoreCalculation(stage2.result, stage3.result, stage4.result, stage1.result, onProgress);
 
     // Calculate total costs
     const totalCosts = {
@@ -253,7 +253,7 @@ async function resumePipeline(resultId, onProgress) {
       await OptimizerV2Result.updateOne({ _id: record._id }, { $set: { optimizations, currentStage: 5, 'costs.perStage': costs } });
     }
 
-    const stage5 = runScoreCalculation(clauses, clauseAnalyses, optimizations, onProgress);
+    const stage5 = runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, onProgress);
 
     const totalCosts = {
       totalTokensInput: costs.reduce((sum, c) => sum + (c.inputTokens || 0), 0),
