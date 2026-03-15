@@ -104,15 +104,40 @@ Deine EINZIGE Aufgabe: Zerlege diesen Vertrag in seine einzelnen Klauseln/Abschn
 Regeln:
 - Identifiziere JEDEN einzelnen Abschnitt/Paragraphen des Vertrags.
 - Behalte die exakte Reihenfolge bei.
-- Jede Klausel bekommt eine "category" aus der folgenden Liste:
-  "parties" | "subject" | "duration" | "termination" | "payment" | "liability" |
-  "warranty" | "confidentiality" | "ip_rights" | "data_protection" | "non_compete" |
-  "force_majeure" | "dispute_resolution" | "general_provisions" | "deliverables" |
-  "sla" | "penalties" | "insurance" | "compliance" | "amendments" | "other"
-- Wenn ein Abschnitt mehrere Themen abdeckt, wähle die HAUPTKATEGORIE.
 - Die "sectionNumber" ist die Originalnummerierung (z.B. "§ 1", "3.2", "Artikel 5").
 - Der "title" ist die Original-Überschrift der Klausel.
-- "originalText" muss den VOLLSTÄNDIGEN Text der Klausel enthalten - kürze NIEMALS.`;
+- "originalText" muss den VOLLSTÄNDIGEN Text der Klausel enthalten - kürze NIEMALS.
+- Wenn ein Abschnitt mehrere Themen abdeckt, wähle die HAUPTKATEGORIE.
+
+KATEGORIEN MIT BESCHREIBUNG — ordne jeder Klausel die passendste zu:
+- "parties": Vertragsparteien, Anschriften, Vertretungsbefugnisse, Definitionen der Parteien
+- "subject": Vertragsgegenstand, Leistungsbeschreibung, Umfang, Zweck des Vertrags
+- "duration": Vertragslaufzeit, Vertragsbeginn, Verlängerung, Mindestlaufzeit
+- "termination": Kündigung, Vertragsbeendigung, Rücktritt, Auflösung, Kündigungsfristen, außerordentliche Kündigung
+- "payment": Vergütung, Zahlungsbedingungen, Preise, Gebühren, Entgelt, Fälligkeit, Rechnungsstellung, Verzugszinsen, Kostenübernahme
+- "liability": Haftung, Haftungsbeschränkung, Schadenersatz, Freistellung, Haftungsausschluss
+- "warranty": Gewährleistung, Garantie, Mängelansprüche, Nachbesserung, Sachmängel
+- "confidentiality": Vertraulichkeit, Geheimhaltung, Verschwiegenheit, NDA, Betriebsgeheimnisse
+- "ip_rights": Geistiges Eigentum, Urheberrecht, Nutzungsrechte, Lizenzen, Patente, Markenrechte
+- "data_protection": Datenschutz, DSGVO, personenbezogene Daten, Datenverarbeitung, Auftragsverarbeitung
+- "non_compete": Wettbewerbsverbot, Konkurrenzverbot, Abwerbeverbot, Karenzentschädigung
+- "force_majeure": Höhere Gewalt, Force Majeure, unvorhersehbare Ereignisse
+- "dispute_resolution": Streitbeilegung, Gerichtsstand, Schiedsverfahren, Mediation, anwendbares Recht
+- "general_provisions": Salvatorische Klausel, Schriftform, Schlussbestimmungen, Gesamtvertrag, Rangfolge
+- "deliverables": Lieferung, Abnahme, Leistungsumfang, Werkleistung, Ergebnisse
+- "sla": Service Level, Verfügbarkeit, Reaktionszeiten, Uptime, Erreichbarkeit
+- "penalties": Vertragsstrafe, Pönale, Konventionalstrafe, Strafzahlung
+- "insurance": Versicherung, Versicherungspflicht, Deckungssumme
+- "compliance": Compliance, Regulierung, Einhaltung, Audit-Rechte
+- "amendments": Vertragsänderungen, Nachträge, Ergänzungen
+- "other": NUR wenn KEINE der obigen Kategorien auch nur annähernd passt
+
+WICHTIG zur Kategorisierung:
+- Verwende "other" NUR als LETZTE Option. Fast jede Klausel passt zu einer Kategorie.
+- Orientiere dich am INHALT, nicht nur an der Überschrift.
+  Beispiel: "§ 8 Sonstiges" könnte Haftung, Datenschutz oder Kündigung enthalten.
+- Wenn eine Klausel z.B. Zahlungsbedingungen UND Verzugszinsen regelt → "payment".
+- Wenn eine Klausel Pflichten UND Haftung regelt → "liability" (die wichtigere Kategorie).`;
 
 const CLAUSE_EXTRACTION_SCHEMA = {
   type: "object",

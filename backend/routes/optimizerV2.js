@@ -862,7 +862,7 @@ Dann eine Leerzeile, dann exakt:
 
     // ── Cache: persist generated clause ──
     await OptimizerV2Result.updateOne(
-      { _id: result._id },
+      { _id: result._id, userId: req.user.userId },
       { $push: { generatedClauses: { category, categoryLabel, text: generatedText, whyImportant, createdAt: new Date() } } }
     );
 

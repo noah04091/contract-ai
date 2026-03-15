@@ -72,7 +72,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       .map(a => {
         const clause = result.clauses.find(c => c.id === a.clauseId);
         // Pick the most actionable one-liner
-        const insight = a.neutralRecommendation || a.recipientView || a.concerns?.[0] || a.summary;
+        const insight = a.neutralRecommendation || a.recipientView || a.economicRiskAssessment || a.concerns?.[0] || a.summary;
         return {
           clauseId: a.clauseId,
           title: clause ? `${clause.sectionNumber ? clause.sectionNumber + ' ' : ''}${clause.title}` : a.clauseId,
@@ -172,7 +172,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
                 className={styles.strategyItem}
                 onClick={() => onNavigate('clauses')}
               >
-                <span className={styles.strategyRank}>{i + 1}</span>
+                <span className={styles.strategyRank}>#{i + 1}</span>
                 <div className={styles.strategyInfo}>
                   <span className={styles.strategyClause}>{point.title}</span>
                   <span className={styles.strategyInsight}>{point.insight}</span>

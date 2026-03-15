@@ -96,7 +96,7 @@ async function extractLargeContract(openai, contractText, preSplit, structure, o
 
   try {
     const titlesForGPT = clauses.map(c => {
-      const preview = c.originalText.substring(0, 150).replace(/\n/g, ' ').trim();
+      const preview = c.originalText.substring(0, 300).replace(/\n/g, ' ').trim();
       return `${c.id}: ${c.sectionNumber || '-'} | ${c.title} | "${preview}..."`;
     }).join('\n');
 
@@ -118,9 +118,34 @@ async function extractLargeContract(openai, contractText, preSplit, structure, o
       messages: [
         {
           role: 'system',
-          content: `Du bist ein Vertragsstruktur-Experte. Ordne jeder Klausel die passende Kategorie zu und korrigiere ggf. den Titel.\n` +
-                   `Vertragstyp: ${structure.contractTypeLabel || structure.contractType}\n` +
-                   `Jurisdiktion: ${structure.jurisdiction || 'Deutschland'}`
+          content: `Du bist ein Vertragsstruktur-Experte. Ordne jeder Klausel die passende Kategorie zu und korrigiere ggf. den Titel.
+Vertragstyp: ${structure.contractTypeLabel || structure.contractType}
+Jurisdiktion: ${structure.jurisdiction || 'Deutschland'}
+
+KATEGORIEN MIT BESCHREIBUNG:
+- "parties": Vertragsparteien, Anschriften, Definitionen
+- "subject": Vertragsgegenstand, Leistungsbeschreibung
+- "duration": Laufzeit, Vertragsbeginn, Verlängerung
+- "termination": Kündigung, Vertragsbeendigung, Rücktritt
+- "payment": Vergütung, Zahlung, Preise, Gebühren, Entgelt, Fälligkeit, Kosten
+- "liability": Haftung, Schadenersatz, Freistellung, Haftungsausschluss
+- "warranty": Gewährleistung, Garantie, Mängelansprüche
+- "confidentiality": Vertraulichkeit, Geheimhaltung, NDA
+- "ip_rights": Geistiges Eigentum, Urheberrecht, Nutzungsrechte
+- "data_protection": Datenschutz, DSGVO, Datenverarbeitung
+- "non_compete": Wettbewerbsverbot, Konkurrenzverbot
+- "force_majeure": Höhere Gewalt, Force Majeure
+- "dispute_resolution": Gerichtsstand, Streitbeilegung, Schiedsverfahren
+- "general_provisions": Salvatorische Klausel, Schriftform, Schlussbestimmungen
+- "deliverables": Lieferung, Abnahme, Werkleistung
+- "sla": Service Level, Verfügbarkeit
+- "penalties": Vertragsstrafe, Pönale
+- "insurance": Versicherung
+- "compliance": Compliance, Audit
+- "amendments": Vertragsänderungen, Nachträge
+- "other": NUR wenn KEINE andere Kategorie passt
+
+WICHTIG: Verwende "other" nur als letzte Option. Orientiere dich am INHALT, nicht nur am Titel.`
         },
         {
           role: 'user',
