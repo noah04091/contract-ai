@@ -135,9 +135,16 @@ KATEGORIEN MIT BESCHREIBUNG — ordne jeder Klausel die passendste zu:
 WICHTIG zur Kategorisierung:
 - Verwende "other" NUR als LETZTE Option. Fast jede Klausel passt zu einer Kategorie.
 - Orientiere dich am INHALT, nicht nur an der Überschrift.
-  Beispiel: "§ 8 Sonstiges" könnte Haftung, Datenschutz oder Kündigung enthalten.
-- Wenn eine Klausel z.B. Zahlungsbedingungen UND Verzugszinsen regelt → "payment".
-- Wenn eine Klausel Pflichten UND Haftung regelt → "liability" (die wichtigere Kategorie).`;
+- Wenn eine Klausel mehrere Themen enthält, priorisiere nach Wichtigkeit:
+  1. liability  2. payment  3. termination  4. data_protection
+  5. confidentiality  6. ip_rights  7. warranty  8. subject  9. general_provisions
+
+BEISPIEL:
+Eingabe: "§ 8 Sonstiges — Der Anbieter haftet nicht für mittelbare Schäden oder entgangenen Gewinn. Die Haftung ist auf den Vertragswert begrenzt."
+→ Kategorie: "liability" (NICHT "other", weil der Inhalt Haftung regelt)
+
+Eingabe: "§ 14 Schlussbestimmungen — Änderungen bedürfen der Schriftform. Gerichtsstand ist München."
+→ Kategorie: "dispute_resolution" (weil Gerichtsstand die wichtigere Regelung ist)`;
 
 const CLAUSE_EXTRACTION_SCHEMA = {
   type: "object",

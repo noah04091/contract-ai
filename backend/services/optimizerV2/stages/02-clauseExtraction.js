@@ -145,7 +145,9 @@ KATEGORIEN MIT BESCHREIBUNG:
 - "amendments": Vertragsänderungen, Nachträge
 - "other": NUR wenn KEINE andere Kategorie passt
 
-WICHTIG: Verwende "other" nur als letzte Option. Orientiere dich am INHALT, nicht nur am Titel.`
+WICHTIG: Verwende "other" nur als letzte Option. Orientiere dich am INHALT, nicht nur am Titel.
+Bei Multi-Topic-Klauseln priorisiere: liability > payment > termination > data_protection > confidentiality > subject > general_provisions.
+Beispiel: "§ 8 Sonstiges — Der Anbieter haftet nicht für mittelbare Schäden..." → "liability" (NICHT "other").`
         },
         {
           role: 'user',
