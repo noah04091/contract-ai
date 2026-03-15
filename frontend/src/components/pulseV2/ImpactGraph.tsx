@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { PulseV2LegalAlert } from '../../types/pulseV2';
+import React, { useState, useCallback } from 'react';
+import type { PulseV2LegalAlert, PulseV2AutoFixResult } from '../../types/pulseV2';
 
 interface ImpactGraphProps {
   alert: PulseV2LegalAlert;
@@ -94,7 +94,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
             {hasClauseImpacts && alert.clauseImpacts.map((ci, idx) => (
               <React.Fragment key={idx}>
                 <GraphConnector />
-                <ClauseImpactNode clauseImpact={ci} severity={alert.severity} />
+                <ClauseImpactNode clauseImpact={ci} severity={alert.severity} alertId={alert._id} />
               </React.Fragment>
             ))}
 
@@ -170,9 +170,86 @@ const GraphConnector: React.FC = () => (
 const ClauseImpactNode: React.FC<{
   clauseImpact: { clauseId: string; clauseTitle: string; impact: string; suggestedChange: string };
   severity: string;
-}> = ({ clauseImpact, severity }) => {
+  alertId: string;
+}> = ({ clauseImpact, severity, alertId }) => {
   const [showFix, setShowFix] = useState(false);
+  const [autoFix, setAutoFix] = useState<PulseV2AutoFixResult | null>(null);
+  const [fixLoading, setFixLoading] = useState(false);
+  const [fixError, setFixError] = useState<string | null>(null);
+  const [showDiff, setShowDiff] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [applied, setApplied] = useState(false);
+  const [applyLoading, setApplyLoading] = useState(false);
   const sev = SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
+
+  const handleAutoFix = useCallback(async () => {
+    setFixLoading(true);
+    setFixError(null);
+    try {
+      const res = await fetch('/api/legal-pulse-v2/auto-fix-clause', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alertId, clauseId: clauseImpact.clauseId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      const data: PulseV2AutoFixResult = await res.json();
+      setAutoFix(data);
+    } catch (err) {
+      console.error('[PulseV2] Auto-fix failed:', err);
+      setFixError(err instanceof Error ? err.message : 'Fehler beim Generieren');
+    } finally {
+      setFixLoading(false);
+    }
+  }, [alertId, clauseImpact.clauseId]);
+
+  const handleCopy = useCallback(() => {
+    if (!autoFix) return;
+    navigator.clipboard.writeText(autoFix.fixedText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [autoFix]);
+
+  const handleApply = useCallback(async () => {
+    if (!autoFix) return;
+    setApplyLoading(true);
+    try {
+      const res = await fetch('/api/legal-pulse-v2/apply-fix', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          alertId,
+          clauseId: clauseImpact.clauseId,
+          fixedText: autoFix.fixedText,
+          reasoning: autoFix.reasoning,
+          legalBasis: autoFix.legalBasis,
+          changeType: autoFix.changeType,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      setApplied(true);
+    } catch (err) {
+      console.error('[PulseV2] Apply fix failed:', err);
+      setFixError(err instanceof Error ? err.message : 'Fehler beim Übernehmen');
+    } finally {
+      setApplyLoading(false);
+    }
+  }, [autoFix, alertId, clauseImpact.clauseId]);
+
+  const CHANGE_TYPE_LABELS: Record<string, string> = {
+    major_rewrite: 'Umfassende Überarbeitung',
+    targeted_fix: 'Gezielte Anpassung',
+    addition: 'Ergänzung',
+    removal: 'Streichung',
+  };
 
   return (
     <div style={{
@@ -194,25 +271,83 @@ const ClauseImpactNode: React.FC<{
             {clauseImpact.impact}
           </div>
 
-          {clauseImpact.suggestedChange && (
-            <button
-              onClick={() => setShowFix(!showFix)}
-              style={{
-                marginTop: 8,
-                padding: '4px 12px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#2563eb',
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: 6,
-                cursor: 'pointer',
-              }}
-            >
-              {showFix ? 'Vorschlag ausblenden' : 'Änderungsvorschlag anzeigen'}
-            </button>
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+            {clauseImpact.suggestedChange && (
+              <button
+                onClick={() => setShowFix(!showFix)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#2563eb',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                {showFix ? 'Vorschlag ausblenden' : 'Änderungsvorschlag'}
+              </button>
+            )}
+
+            {!autoFix && (
+              <button
+                onClick={handleAutoFix}
+                disabled={fixLoading}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: fixLoading ? '#9ca3af' : '#059669',
+                  background: fixLoading ? '#f3f4f6' : '#ecfdf5',
+                  border: `1px solid ${fixLoading ? '#d1d5db' : '#a7f3d0'}`,
+                  borderRadius: 6,
+                  cursor: fixLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                {fixLoading ? (
+                  <>
+                    <span style={{
+                      width: 12, height: 12, border: '2px solid #d1d5db',
+                      borderTopColor: '#059669', borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                    }} />
+                    Wird generiert...
+                  </>
+                ) : (
+                  'Klausel automatisch anpassen'
+                )}
+              </button>
+            )}
+          </div>
+
+          {/* Fix error */}
+          {fixError && (
+            <div style={{
+              marginTop: 8, padding: '8px 12px',
+              background: '#fef2f2', border: '1px solid #fecaca',
+              borderRadius: 6, fontSize: 12, color: '#dc2626',
+            }}>
+              {fixError}
+            </div>
           )}
 
+          {/* Stale warning */}
+          {autoFix?.staleWarning && (
+            <div style={{
+              marginTop: 8, padding: '8px 12px',
+              background: '#fffbeb', border: '1px solid #fde68a',
+              borderRadius: 6, fontSize: 12, color: '#92400e',
+            }}>
+              {autoFix.staleWarning}
+            </div>
+          )}
+
+          {/* Simple suggested change (from radar) */}
           {showFix && clauseImpact.suggestedChange && (
             <div style={{
               marginTop: 8,
@@ -228,8 +363,138 @@ const ClauseImpactNode: React.FC<{
               {clauseImpact.suggestedChange}
             </div>
           )}
+
+          {/* Auto-fix result */}
+          {autoFix && (
+            <div style={{
+              marginTop: 12,
+              border: '1px solid #a7f3d0',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}>
+              {/* Header */}
+              <div style={{
+                padding: '10px 12px',
+                background: '#ecfdf5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 14 }}>&#9989;</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#065f46' }}>
+                    Auto-Fix generiert
+                  </span>
+                  <span style={{
+                    fontSize: 11, color: '#047857',
+                    background: '#d1fae5', padding: '1px 8px',
+                    borderRadius: 10, fontWeight: 500,
+                  }}>
+                    {CHANGE_TYPE_LABELS[autoFix.changeType] || autoFix.changeType}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={() => setShowDiff(!showDiff)}
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                      color: '#6b7280', background: '#fff',
+                      border: '1px solid #d1d5db', borderRadius: 4,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {showDiff ? 'Nur neuer Text' : 'Diff anzeigen'}
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    style={{
+                      padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                      color: copied ? '#059669' : '#2563eb',
+                      background: copied ? '#ecfdf5' : '#eff6ff',
+                      border: `1px solid ${copied ? '#a7f3d0' : '#bfdbfe'}`,
+                      borderRadius: 4, cursor: 'pointer',
+                    }}
+                  >
+                    {copied ? 'Kopiert!' : 'Kopieren'}
+                  </button>
+                  {!applied ? (
+                    <button
+                      onClick={handleApply}
+                      disabled={applyLoading}
+                      style={{
+                        padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                        color: '#fff',
+                        background: applyLoading ? '#9ca3af' : '#059669',
+                        border: 'none', borderRadius: 4,
+                        cursor: applyLoading ? 'not-allowed' : 'pointer',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                      }}
+                    >
+                      {applyLoading ? 'Wird gespeichert...' : 'Übernehmen'}
+                    </button>
+                  ) : (
+                    <span style={{
+                      padding: '3px 10px', fontSize: 11, fontWeight: 600,
+                      color: '#059669', background: '#ecfdf5',
+                      border: '1px solid #a7f3d0', borderRadius: 4,
+                      display: 'flex', alignItems: 'center', gap: 4,
+                    }}>
+                      &#10003; Übernommen
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Reasoning + Legal basis */}
+              <div style={{ padding: '10px 12px', background: '#f0fdf4', borderBottom: '1px solid #d1fae5' }}>
+                <div style={{ fontSize: 12, color: '#065f46', lineHeight: 1.5 }}>
+                  {autoFix.reasoning}
+                </div>
+                <div style={{ fontSize: 11, color: '#047857', marginTop: 4, fontStyle: 'italic' }}>
+                  Rechtsgrundlage: {autoFix.legalBasis}
+                </div>
+              </div>
+
+              {/* Diff or plain text */}
+              <div style={{
+                padding: '12px',
+                background: '#fff',
+                fontSize: 13,
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+              }}>
+                {showDiff ? (
+                  autoFix.diffs.map((d, i) => (
+                    <span
+                      key={i}
+                      style={{
+                        background: d.type === 'add' ? '#dcfce7'
+                          : d.type === 'remove' ? '#fee2e2' : 'transparent',
+                        textDecoration: d.type === 'remove' ? 'line-through' : 'none',
+                        color: d.type === 'add' ? '#166534'
+                          : d.type === 'remove' ? '#991b1b' : '#111827',
+                      }}
+                    >
+                      {d.text}
+                    </span>
+                  ))
+                ) : (
+                  <span style={{ color: '#166534' }}>{autoFix.fixedText}</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* CSS keyframe for spinner */}
+      {fixLoading && (
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
+      )}
     </div>
   );
 };

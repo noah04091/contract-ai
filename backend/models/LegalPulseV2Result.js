@@ -1,11 +1,25 @@
 const mongoose = require("mongoose");
 
+const clauseVersionSchema = new mongoose.Schema({
+  version: Number,
+  text: String,
+  source: { type: String, enum: ["original", "legal_pulse_fix", "user_edit"] },
+  reasoning: String,
+  legalBasis: String,
+  changeType: { type: String, enum: ["major_rewrite", "targeted_fix", "addition", "removal"] },
+  alertId: String,
+  lawTitle: String,
+  appliedAt: { type: Date, default: Date.now },
+}, { _id: false });
+
 const clauseSchema = new mongoose.Schema({
   id: String,
   title: String,
   originalText: String,
+  currentText: String,
   category: String,
   sectionNumber: String,
+  history: [clauseVersionSchema],
 }, { _id: false });
 
 const clauseFindingSchema = new mongoose.Schema({
@@ -138,6 +152,7 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
   },
 
   previousResultId: { type: mongoose.Schema.Types.ObjectId, ref: "LegalPulseV2Result" },
+  lastClauseFixAt: Date,
   version: { type: String, default: "2.0.0" },
   startedAt: Date,
   completedAt: Date,

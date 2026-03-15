@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
+import { ClauseHistory } from './ClauseHistory';
 
 interface FindingCardProps {
   finding: PulseV2Finding;
   clause?: PulseV2Clause;
+  contractId?: string;
 }
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -21,10 +23,12 @@ const TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
   information: { icon: '\u2139\ufe0f', label: 'Information' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const severity = SEVERITY_CONFIG[finding.severity] || SEVERITY_CONFIG.info;
   const typeInfo = TYPE_CONFIG[finding.type] || TYPE_CONFIG.information;
+  const hasHistory = clause?.history && clause.history.length > 1;
 
   return (
     <div
@@ -149,14 +153,40 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause }) => 
           {/* Clause Context */}
           {clause && (
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
                 Klausel: {clause.sectionNumber} — {clause.title}
+                {hasHistory && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowHistory(true); }}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#059669',
+                      background: '#ecfdf5',
+                      padding: '1px 6px',
+                      borderRadius: 4,
+                      border: '1px solid #a7f3d0',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    v{clause.history!.length} — Historie anzeigen
+                  </button>
+                )}
               </div>
               <div style={{ fontSize: 12, color: '#9ca3af' }}>
                 Kategorie: {finding.category}
-                {finding.isIntentional && ' • Vermutlich absichtlich so formuliert'}
+                {finding.isIntentional && ' \u2022 Vermutlich absichtlich so formuliert'}
               </div>
             </div>
+          )}
+
+          {/* Clause History Modal */}
+          {showHistory && contractId && clause && (
+            <ClauseHistory
+              contractId={contractId}
+              clauseId={clause.id}
+              onClose={() => setShowHistory(false)}
+            />
           )}
         </div>
       )}

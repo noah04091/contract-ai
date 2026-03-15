@@ -12,12 +12,26 @@ export interface PulseV2Finding {
   isIntentional: boolean;
 }
 
+export interface PulseV2ClauseVersion {
+  version: number;
+  text: string;
+  source: 'original' | 'legal_pulse_fix' | 'user_edit';
+  reasoning?: string;
+  legalBasis?: string;
+  changeType?: string;
+  alertId?: string;
+  lawTitle?: string;
+  appliedAt: string;
+}
+
 export interface PulseV2Clause {
   id: string;
   title: string;
   originalText: string;
+  currentText?: string;
   category: string;
   sectionNumber: string;
+  history?: PulseV2ClauseVersion[];
 }
 
 export interface PulseV2Scores {
@@ -182,8 +196,23 @@ export interface PulseV2LegalAlert {
   recommendation: string;
   affectedClauseIds: string[];
   clauseImpacts: PulseV2ClauseImpact[];
-  status: 'unread' | 'read' | 'dismissed';
+  status: 'unread' | 'read' | 'dismissed' | 'resolved';
+  resolvedClauseIds?: string[];
+  lastFixAppliedAt?: string;
   createdAt: string;
+}
+
+export interface PulseV2AutoFixResult {
+  clauseId: string;
+  clauseTitle: string;
+  originalText: string;
+  fixedText: string;
+  reasoning: string;
+  legalBasis: string;
+  changeType: 'major_rewrite' | 'targeted_fix' | 'addition' | 'removal';
+  diffs: { type: 'equal' | 'add' | 'remove'; text: string }[];
+  costUSD: number;
+  staleWarning?: string;
 }
 
 export type PulseV2Status = 'idle' | 'analyzing' | 'completed' | 'error';

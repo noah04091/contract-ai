@@ -231,6 +231,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
             key={`${finding.clauseId}-${idx}`}
             finding={finding}
             clause={clauseMap.get(finding.clauseId)}
+            contractId={result.contractId}
           />
         ))
       )}

@@ -23,6 +23,21 @@ const analyzeRateLimiter = rateLimit({
   },
 });
 
+// Rate limiting: 10 auto-fix calls per hour per user (GPT-4o cost protection)
+const autoFixRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: "Rate limit erreicht. Maximal 10 Auto-Fixes pro Stunde.",
+      retryAfter: "1 Stunde",
+    });
+  },
+});
+
 // ══════════════════════════════════════════════════════════════
 // POST /analyze/:contractId — Start analysis (SSE streaming)
 // ══════════════════════════════════════════════════════════════
@@ -388,6 +403,439 @@ router.get("/legal-alerts", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// POST /auto-fix-clause — Generate law-compliant clause text via GPT-4o
+// ══════════════════════════════════════════════════════════════
+router.post("/auto-fix-clause", requirePremium, autoFixRateLimiter, async (req, res) => {
+  try {
+    const { alertId, clauseId } = req.body;
+    if (!alertId || !clauseId) {
+      return res.status(400).json({ error: "alertId und clauseId erforderlich" });
+    }
+
+    const database = require("../config/database");
+    const { ObjectId } = require("mongodb");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    // 1. Load the alert
+    const alert = await db.collection("pulse_v2_legal_alerts").findOne({
+      _id: new ObjectId(alertId),
+      userId,
+    });
+    if (!alert) {
+      return res.status(404).json({ error: "Alert nicht gefunden" });
+    }
+
+    // 2. Find the latest V2 result for this contract
+    const v2Result = await LegalPulseV2Result.findOne({
+      contractId: alert.contractId,
+      userId,
+      status: "completed",
+    })
+      .sort({ createdAt: -1 })
+      .select("clauses clauseFindings createdAt")
+      .lean();
+
+    if (!v2Result) {
+      return res.status(404).json({ error: "Keine V2-Analyse für diesen Vertrag gefunden" });
+    }
+
+    // 3. Find the specific clause — use currentText if available (previous fix applied)
+    const clause = v2Result.clauses.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: `Klausel ${clauseId} nicht gefunden` });
+    }
+
+    // Stale-result check: warn if V2 analysis is much older than the alert
+    const resultAge = new Date(alert.createdAt) - new Date(v2Result.createdAt);
+    const isStale = resultAge > 90 * 24 * 60 * 60 * 1000; // >90 days older
+
+    // 4. Find clause impact info from the alert
+    const clauseImpact = (alert.clauseImpacts || []).find((ci) => ci.clauseId === clauseId);
+
+    // 5. Find existing findings for this clause
+    const findings = (v2Result.clauseFindings || [])
+      .filter((f) => f.clauseId === clauseId)
+      .slice(0, 5);
+
+    // 6. Call GPT-4o to generate fixed clause
+    const OpenAI = require("openai");
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenAI API Key nicht konfiguriert" });
+    }
+
+    const openai = new OpenAI({ apiKey, timeout: 60000, maxRetries: 1 });
+
+    const findingsContext = findings.length > 0
+      ? `\nBestehende Befunde zu dieser Klausel:\n${findings.map((f) => `- ${f.title} (${f.severity}): ${f.description}`).join("\n")}`
+      : "";
+
+    const impactContext = clauseImpact
+      ? `\nKonkrete Auswirkung auf diese Klausel: ${clauseImpact.impact}\nBisheriger Änderungsvorschlag: ${clauseImpact.suggestedChange}`
+      : "";
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      temperature: 0,
+      max_tokens: 4000,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "clause_fix",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              fixedText: {
+                type: "string",
+                description: "Vollständiger, überarbeiteter Klauseltext — direkt einsetzbar",
+              },
+              reasoning: {
+                type: "string",
+                description: "Erläuterung der Änderungen (2-3 Sätze)",
+              },
+              legalBasis: {
+                type: "string",
+                description: "Rechtsgrundlage für die Änderung (z.B. § 28 BDSG neu)",
+              },
+              changeType: {
+                type: "string",
+                enum: ["major_rewrite", "targeted_fix", "addition", "removal"],
+                description: "Art der Änderung",
+              },
+            },
+            required: ["fixedText", "reasoning", "legalBasis", "changeType"],
+            additionalProperties: false,
+          },
+        },
+      },
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein erfahrener deutscher Vertragsanwalt. Deine Aufgabe: Eine Vertragsklausel so überarbeiten, dass sie einer neuen Gesetzesänderung entspricht.
+
+REGELN:
+- Der überarbeitete Text muss VOLLSTÄNDIG und DIREKT EINSETZBAR sein (kein Platzhalter, kein "[...]")
+- Behalte den Stil und Ton des Originalvertrags bei
+- Ändere NUR was nötig ist — minimale Eingriffe, maximale Compliance
+- Wenn die Klausel bereits konform ist, verbessere trotzdem die Formulierung für mehr Klarheit
+- Begründe jede Änderung mit der konkreten Rechtsgrundlage
+- Deutsche Rechtssprache, professioneller Stil`,
+        },
+        {
+          role: "user",
+          content: `GESETZESÄNDERUNG:
+Titel: ${alert.lawTitle}
+Bereich: ${alert.lawArea || "unbekannt"}
+Auswirkung: ${alert.impactSummary}
+Empfehlung: ${alert.recommendation}
+${impactContext}
+
+AKTUELLE KLAUSEL:
+Titel: ${clause.title}
+Kategorie: ${clause.category}
+Text:
+${clause.currentText || clause.originalText}
+${findingsContext}
+
+Überarbeite diese Klausel so, dass sie der neuen Gesetzeslage entspricht.`,
+        },
+      ],
+    });
+
+    const parsed = JSON.parse(response.choices[0].message.content);
+
+    // 7. Generate word-level diffs (against current version, not necessarily original)
+    const baseText = clause.currentText || clause.originalText;
+    const diffs = generateWordDiffs(baseText, parsed.fixedText);
+
+    // 8. Track cost
+    const usage = response.usage || {};
+    const costUSD = ((usage.prompt_tokens || 0) * 2.5 + (usage.completion_tokens || 0) * 10) / 1_000_000;
+    console.log(`[PulseV2] Auto-fix clause: ${usage.prompt_tokens || 0}+${usage.completion_tokens || 0} tokens, $${costUSD.toFixed(4)}${isStale ? " [STALE]" : ""}`);
+
+    res.json({
+      clauseId,
+      clauseTitle: clause.title,
+      originalText: baseText,
+      fixedText: parsed.fixedText,
+      reasoning: parsed.reasoning,
+      legalBasis: parsed.legalBasis,
+      changeType: parsed.changeType,
+      diffs,
+      costUSD,
+      ...(isStale && { staleWarning: "Die Vertragsanalyse ist älter als 90 Tage. Eine erneute Analyse wird empfohlen." }),
+    });
+  } catch (error) {
+    console.error("[PulseV2] Auto-fix clause error:", error);
+    res.status(500).json({ error: "Fehler beim Generieren der Klausel-Anpassung" });
+  }
+});
+
+/**
+ * Generate word-level diffs between original and fixed text.
+ * Simple but effective: splits on whitespace, marks additions/removals.
+ */
+function generateWordDiffs(original, fixed) {
+  const origWords = original.split(/(\s+)/);
+  const fixedWords = fixed.split(/(\s+)/);
+  const diffs = [];
+
+  // Simple LCS-based diff
+  const m = origWords.length;
+  const n = fixedWords.length;
+
+  // For very long texts, fall back to sentence-level diff
+  if (m > 500 || n > 500) {
+    return [
+      { type: "remove", text: original },
+      { type: "add", text: fixed },
+    ];
+  }
+
+  // Build LCS table
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (origWords[i - 1] === fixedWords[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Backtrack to find diff
+  const result = [];
+  let i = m, j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && origWords[i - 1] === fixedWords[j - 1]) {
+      result.unshift({ type: "equal", text: origWords[i - 1] });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      result.unshift({ type: "add", text: fixedWords[j - 1] });
+      j--;
+    } else {
+      result.unshift({ type: "remove", text: origWords[i - 1] });
+      i--;
+    }
+  }
+
+  // Merge consecutive same-type entries
+  for (const entry of result) {
+    if (diffs.length > 0 && diffs[diffs.length - 1].type === entry.type) {
+      diffs[diffs.length - 1].text += entry.text;
+    } else {
+      diffs.push({ ...entry });
+    }
+  }
+
+  return diffs;
+}
+
+// ══════════════════════════════════════════════════════════════
+// POST /apply-fix — Save auto-fixed clause to V2 result (one-click apply)
+// ══════════════════════════════════════════════════════════════
+router.post("/apply-fix", requirePremium, async (req, res) => {
+  try {
+    const { alertId, clauseId, fixedText, reasoning, legalBasis, changeType } = req.body;
+    if (!alertId || !clauseId || !fixedText) {
+      return res.status(400).json({ error: "alertId, clauseId und fixedText erforderlich" });
+    }
+
+    // Security: validate fixedText
+    const trimmed = (fixedText || "").trim();
+    if (!trimmed) {
+      return res.status(400).json({ error: "fixedText darf nicht leer sein" });
+    }
+    if (trimmed.length > 20000) {
+      return res.status(400).json({ error: "fixedText zu lang (max. 20.000 Zeichen)" });
+    }
+
+    const database = require("../config/database");
+    const { ObjectId } = require("mongodb");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    // 1. Load the alert for context
+    const alert = await db.collection("pulse_v2_legal_alerts").findOne({
+      _id: new ObjectId(alertId),
+      userId,
+    });
+    if (!alert) {
+      return res.status(404).json({ error: "Alert nicht gefunden" });
+    }
+
+    // 2. Find latest V2 result
+    const v2Result = await LegalPulseV2Result.findOne({
+      contractId: alert.contractId,
+      userId,
+      status: "completed",
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!v2Result) {
+      return res.status(404).json({ error: "Keine V2-Analyse gefunden" });
+    }
+
+    // 3. Find the clause and determine next version number
+    const clause = v2Result.clauses.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: `Klausel ${clauseId} nicht gefunden` });
+    }
+
+    // 4. Clause lock: prevent duplicate applies with identical text
+    // Normalize whitespace for comparison (GPT may produce different spacing)
+    const normalize = (t) => t.replace(/\s+/g, " ").trim();
+    const currentText = clause.currentText || clause.originalText;
+    if (normalize(currentText) === normalize(trimmed)) {
+      return res.json({
+        success: true,
+        clauseId,
+        version: (clause.history || []).length > 0 ? clause.history.length + 1 : 1,
+        historyLength: (clause.history || []).length || 1,
+        skipped: true,
+        message: "Klausel ist bereits auf dem neuesten Stand",
+      });
+    }
+
+    const existingHistory = clause.history || [];
+    const nextVersion = existingHistory.length + 2; // v1 = original, v2+ = fixes
+
+    // 5. Build history entry
+    const historyEntry = {
+      version: nextVersion,
+      text: trimmed,
+      source: "legal_pulse_fix",
+      reasoning: reasoning || "",
+      legalBasis: legalBasis || "",
+      changeType: changeType || "targeted_fix",
+      alertId,
+      lawTitle: alert.lawTitle,
+      appliedAt: new Date(),
+    };
+
+    // 6. If no history exists yet, store v1 (original) first
+    const updates = {};
+    if (existingHistory.length === 0) {
+      // Push original as v1, then the fix as v2
+      updates.$push = {
+        "clauses.$.history": {
+          $each: [
+            {
+              version: 1,
+              text: clause.originalText,
+              source: "original",
+              reasoning: "Originalversion aus der Vertragsanalyse",
+              legalBasis: "",
+              changeType: "targeted_fix",
+              alertId: "",
+              lawTitle: "",
+              appliedAt: clause.createdAt || v2Result.createdAt || new Date(),
+            },
+            historyEntry,
+          ],
+        },
+      };
+    } else {
+      updates.$push = { "clauses.$.history": historyEntry };
+    }
+
+    // 7. Update currentText to the new version
+    updates.$set = { "clauses.$.currentText": trimmed };
+
+    await LegalPulseV2Result.updateOne(
+      { _id: v2Result._id, "clauses.id": clauseId },
+      updates
+    );
+
+    // 8. Mark alert: add resolvedClauseId + check if ALL clauses are now resolved
+    const affectedClauseIds = alert.affectedClauseIds || [];
+    const resolvedSoFar = new Set([...(alert.resolvedClauseIds || []), clauseId]);
+    const allResolved = affectedClauseIds.length > 0 &&
+      affectedClauseIds.every((id) => resolvedSoFar.has(id));
+
+    await db.collection("pulse_v2_legal_alerts").updateOne(
+      { _id: new ObjectId(alertId) },
+      {
+        $addToSet: { resolvedClauseIds: clauseId },
+        $set: {
+          status: allResolved ? "resolved" : "read",
+          lastFixAppliedAt: new Date(),
+        },
+      }
+    );
+
+    // 9. Track contract-level last update timestamp
+    await LegalPulseV2Result.updateOne(
+      { _id: v2Result._id },
+      { $set: { lastClauseFixAt: new Date() } }
+    );
+
+    console.log(`[PulseV2] Clause fix applied: ${clauseId} v${nextVersion} (alert ${alertId}${allResolved ? ", all clauses resolved" : ""})`);
+
+    res.json({
+      success: true,
+      clauseId,
+      version: nextVersion,
+      historyLength: existingHistory.length === 0 ? 2 : existingHistory.length + 1,
+      allResolved,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Apply fix error:", error);
+    res.status(500).json({ error: "Fehler beim Anwenden der Klausel-Anpassung" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// GET /clause-history/:contractId/:clauseId — Version history for a clause
+// ══════════════════════════════════════════════════════════════
+router.get("/clause-history/:contractId/:clauseId", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contractId, clauseId } = req.params;
+
+    const result = await LegalPulseV2Result.findOne({
+      contractId,
+      userId,
+      status: "completed",
+    })
+      .sort({ createdAt: -1 })
+      .select("clauses")
+      .lean();
+
+    if (!result) {
+      return res.status(404).json({ error: "Keine Analyse gefunden" });
+    }
+
+    const clause = result.clauses.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: "Klausel nicht gefunden" });
+    }
+
+    // If no history, return original as v1
+    const history = clause.history && clause.history.length > 0
+      ? clause.history
+      : [{ version: 1, text: clause.originalText, source: "original", appliedAt: result.createdAt }];
+
+    res.json({
+      clauseId,
+      clauseTitle: clause.title,
+      currentText: clause.currentText || clause.originalText,
+      originalText: clause.originalText,
+      history,
+      totalVersions: history.length,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Clause history error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Klausel-Historie" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // PATCH /legal-alerts/:alertId — Mark alert as read/dismissed
 // ══════════════════════════════════════════════════════════════
 router.patch("/legal-alerts/:alertId", async (req, res) => {
@@ -397,7 +845,7 @@ router.patch("/legal-alerts/:alertId", async (req, res) => {
     const db = await database.connect();
     const { status } = req.body;
 
-    if (!["read", "dismissed"].includes(status)) {
+    if (!["read", "dismissed", "resolved"].includes(status)) {
       return res.status(400).json({ error: "Ungültiger Status" });
     }
 
