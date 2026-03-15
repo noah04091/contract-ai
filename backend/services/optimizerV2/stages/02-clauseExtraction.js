@@ -182,6 +182,9 @@ Beispiel: "§ 8 Sonstiges — Der Anbieter haftet nicht für mittelbare Schäden
     }
   }
 
+  // Post-GPT rule-based correction
+  applyCategoryOverrides(clauses);
+
   onProgress(20, `${clauses.length} Klauseln extrahiert`);
 
   return {
@@ -243,6 +246,9 @@ async function extractSmallContract(openai, contractText, preSplit, structure, o
     endPosition: null
   }));
 
+  // Post-GPT rule-based correction
+  applyCategoryOverrides(result.clauses);
+
   onProgress(20, `${result.clauses.length} Klauseln extrahiert`);
 
   return {
@@ -256,37 +262,99 @@ async function extractSmallContract(openai, contractText, preSplit, structure, o
   };
 }
 
+// ════════════════════════════════════════════════════════
+// Rule-Based Category Classifier (Post-GPT Override Layer)
+// ════════════════════════════════════════════════════════
+
 /**
- * Keyword-based category guessing (fallback when GPT categorization fails)
+ * Keyword lists per category.
+ * Each keyword hit = 1 point in body, 2 points in title.
+ */
+const CATEGORY_KEYWORD_LISTS = {
+  liability: ['haftung', 'haftet', 'haften', 'schadenersatz', 'schadensersatz', 'freistellung', 'freihalten', 'haftungsbeschr', 'haftungsausschluss', 'schadloshalt'],
+  payment: ['vergütung', 'zahlung', 'entgelt', 'preis', 'honorar', 'gebühr', 'fälligkeit', 'fällig', 'rechnung', 'verzugszins', 'bezahl', 'faktur', 'kostenübernahme', 'aufwandserstattung'],
+  termination: ['kündigung', 'kündigungsfrist', 'beendigung', 'vertragsende', 'rücktritt', 'auflösung', 'außerordentlich', 'ordentliche kündigung', 'sonderkündigungsrecht'],
+  data_protection: ['datenschutz', 'dsgvo', 'personenbezogen', 'datenverarbeitung', 'auftragsverarbeitung', 'datensicherheit', 'betroffenenrechte'],
+  confidentiality: ['vertraulich', 'geheimhaltung', 'verschwiegenheit', 'geheimnis', 'stillschweigen', 'betriebsgeheimnis'],
+  warranty: ['gewährleist', 'garantie', 'mängel', 'nachbesser', 'sachmangel', 'rechtsmangel', 'mängelansprüche'],
+  ip_rights: ['urheberrecht', 'nutzungsrecht', 'geistiges eigentum', 'lizenz', 'patent', 'markenrecht', 'verwertungsrecht'],
+  non_compete: ['wettbewerbsverbot', 'konkurrenzverbot', 'abwerbeverbot', 'karenz', 'wettbewerbsbeschränkung'],
+  dispute_resolution: ['gerichtsstand', 'schiedsgericht', 'schiedsverfahren', 'mediation', 'schlichtung', 'streitbeilegung', 'anwendbares recht'],
+  force_majeure: ['höhere gewalt', 'force majeure'],
+  duration: ['vertragslaufzeit', 'vertragsdauer', 'mindestlaufzeit', 'verlängerung', 'vertragsbeginn'],
+  penalties: ['vertragsstrafe', 'pönale', 'konventionalstrafe', 'strafzahlung'],
+  insurance: ['versicherung', 'versicherungspflicht', 'deckungssumme', 'haftpflichtversicherung'],
+  compliance: ['compliance', 'audit-recht', 'auditrecht', 'regulierung'],
+  sla: ['service level', 'verfügbarkeit', 'uptime', 'reaktionszeit', 'erreichbarkeit'],
+  deliverables: ['lieferung', 'abnahme', 'leistungsumfang', 'werkleistung'],
+};
+
+/**
+ * Scored keyword classifier.
+ * Title matches count double. Returns category + score, or null if too weak.
+ */
+function classifyByKeywords(title, text) {
+  const titleLower = (title || '').toLowerCase();
+  const bodyLower = (text || '').substring(0, 500).toLowerCase();
+
+  let bestCategory = null;
+  let bestScore = 0;
+
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORD_LISTS)) {
+    let score = 0;
+    for (const kw of keywords) {
+      if (titleLower.includes(kw)) score += 2;  // Title = strong signal
+      if (bodyLower.includes(kw)) score += 1;   // Body = supporting signal
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestCategory = category;
+    }
+  }
+
+  // Require minimum confidence: score >= 2 (e.g. 1 title hit, or 2 body hits)
+  return bestScore >= 2 ? { category: bestCategory, score: bestScore } : null;
+}
+
+/**
+ * Post-GPT category override.
+ * Corrects "other" assignments and fixes obvious misclassifications.
+ *
+ * Strategy:
+ * - "other" + keyword match >= 2 → override (conservative)
+ * - Any category + keyword match >= 4 and different → override (aggressive, high confidence)
+ */
+function applyCategoryOverrides(clauses) {
+  let overrideCount = 0;
+
+  for (const clause of clauses) {
+    const detected = classifyByKeywords(clause.title, clause.originalText);
+    if (!detected) continue;
+
+    if (clause.category === 'other') {
+      // Conservative: override "other" when keyword classifier is confident
+      clause.category = detected.category;
+      overrideCount++;
+    } else if (detected.category !== clause.category && detected.score >= 4) {
+      // Aggressive: override GPT when keyword classifier is very confident
+      clause.category = detected.category;
+      overrideCount++;
+    }
+  }
+
+  if (overrideCount > 0) {
+    console.log(`[OptimizerV2] Stage 2: Rule-based override corrected ${overrideCount} clause categories`);
+  }
+
+  return clauses;
+}
+
+/**
+ * Simple fallback for when GPT categorization completely fails.
  */
 function guessCategoryFromText(title, text) {
-  const combined = `${title} ${text.substring(0, 300)}`.toLowerCase();
-  const rules = [
-    [/partei|vertragspartner|auftraggeber|auftragnehmer/, 'parties'],
-    [/gegenstand|leistung|umfang/, 'subject'],
-    [/laufzeit|vertragsdauer|beginn/, 'duration'],
-    [/künd|beendig/, 'termination'],
-    [/vergütung|zahlung|entgelt|preis|honorar/, 'payment'],
-    [/haftung|schadenersatz|haftungsbeschr/, 'liability'],
-    [/gewährleist|garantie|mängel/, 'warranty'],
-    [/vertraulich|geheimhalt|verschwiegenheit/, 'confidentiality'],
-    [/eigentum|urheberrecht|nutzungsrecht|lizenz|ip/, 'ip_rights'],
-    [/datenschutz|dsgvo|personenbezog/, 'data_protection'],
-    [/wettbewerb|konkurrenz|abwerbe/, 'non_compete'],
-    [/höhere gewalt|force majeure/, 'force_majeure'],
-    [/streit|schlichtung|schiedsgericht|gerichtsstand/, 'dispute_resolution'],
-    [/schlussbestimmung|salvatorisch|änderung|schriftform/, 'general_provisions'],
-    [/lieferung|abnahme|ergebnis/, 'deliverables'],
-    [/service.level|verfügbarkeit|sla/, 'sla'],
-    [/vertragsstrafe|pönale|konventionalstrafe/, 'penalties'],
-    [/versicherung/, 'insurance'],
-    [/compliance|einhaltung/, 'compliance'],
-    [/änderung|nachtrag|ergänzung/, 'amendments'],
-  ];
-  for (const [pattern, category] of rules) {
-    if (pattern.test(combined)) return category;
-  }
-  return 'other';
+  const result = classifyByKeywords(title, text);
+  return result ? result.category : 'other';
 }
 
 module.exports = { runClauseExtraction };
