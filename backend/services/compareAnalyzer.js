@@ -916,8 +916,12 @@ function detectGaps(map1, map2, existingDifferences) {
 
   const allAreas = new Set([...Object.keys(areasMap1), ...Object.keys(areasMap2)]);
 
+  console.log(`🔍 Gap Detection: Areas V1=[${Object.keys(areasMap1).join(', ')}], V2=[${Object.keys(areasMap2).join(', ')}]`);
+  console.log(`🔍 Gap Detection: Covered by Phase B=[${[...coveredAreas].join(', ')}]`);
+
   for (const area of allAreas) {
     if (effectivelyCovered.has(area) || skipAreas.has(area)) continue;
+    console.log(`🔍 Gap Detection: Prüfe "${area}" (V1: ${(areasMap1[area] || []).length} Klauseln, V2: ${(areasMap2[area] || []).length} Klauseln)`);
 
     const c1 = areasMap1[area] || [];
     const c2 = areasMap2[area] || [];
@@ -1012,23 +1016,82 @@ function compareClauseKeyValues(clauses1, clauses2, area) {
     }
   }
 
-  if (diffs.length === 0) return null;
+  if (diffs.length > 0) {
+    const label = AREA_LABELS[area] || area;
+    const diffTexts = diffs.map(d => `${d.key}: "${d.v1}" vs "${d.v2}"`);
+    const severity = diffs.some(d => d.numDiff) ? 'medium' : 'low';
+
+    return {
+      category: label,
+      section: clauses1[0]?.section || clauses2[0]?.section || '',
+      contract1: diffs.map(d => `${d.key}: ${d.v1}`).join('; '),
+      contract2: diffs.map(d => `${d.key}: ${d.v2}`).join('; '),
+      severity,
+      explanation: `Die ${label}-Regelungen unterscheiden sich in konkreten Werten: ${diffTexts.join(', ')}. Diese Unterschiede können wirtschaftliche Auswirkungen haben.`,
+      impact: `Unterschiedliche Werte bei ${label} beeinflussen Rechte und Pflichten beider Parteien.`,
+      recommendation: `Vergleichen Sie die ${label}-Werte und verhandeln Sie ggf. bessere Konditionen.`,
+      clauseArea: area,
+      semanticType: 'different_scope',
+      financialImpact: null,
+      marketContext: null,
+      _autoDetected: true,
+    };
+  }
+
+  // Fallback: Compare clause summaries/originalText for meaningful differences
+  return compareSummariesFallback(clauses1, clauses2, area);
+}
+
+// Summary-based fallback: detects negation differences and number differences in clause text
+function compareSummariesFallback(clauses1, clauses2, area) {
+  const text1 = clauses1.map(c => `${c.summary || ''} ${c.originalText || ''}`).join(' ').trim();
+  const text2 = clauses2.map(c => `${c.summary || ''} ${c.originalText || ''}`).join(' ').trim();
+
+  if (!text1 || !text2 || text1.length < 10 || text2.length < 10) return null;
+
+  // Check 1: Negation pattern — one clause says "nicht/kein" the other is affirmative
+  const negationPattern = /\b(nicht vereinbart|kein(?:e[rnsm]?)?\s+\w+|wird nicht|ohne\s+\w+|ausgeschlossen|untersagt|entfällt)\b/i;
+  const hasNegation1 = negationPattern.test(text1);
+  const hasNegation2 = negationPattern.test(text2);
+  const negationDiffers = hasNegation1 !== hasNegation2;
+
+  // Check 2: Different numbers in text (e.g., "12 Monate" vs "6 Monate")
+  const nums1 = extractAllNumbers(text1);
+  const nums2 = extractAllNumbers(text2);
+  const numsDiffer = !arraysEqual(nums1, nums2) && (nums1.length > 0 || nums2.length > 0);
+
+  if (!negationDiffers && !numsDiffer) return null;
 
   const label = AREA_LABELS[area] || area;
-  const diffTexts = diffs.map(d => `${d.key}: "${d.v1}" vs "${d.v2}"`);
-  const severity = diffs.some(d => d.numDiff) ? 'medium' : 'low';
+  const summary1 = clauses1[0]?.summary || text1.substring(0, 200);
+  const summary2 = clauses2[0]?.summary || text2.substring(0, 200);
+
+  let explanation, semanticType, severity;
+  if (negationDiffers) {
+    const hasIt = hasNegation1 ? 2 : 1;
+    explanation = `Vertrag ${hasIt} enthält eine aktive ${label}-Regelung, während der andere Vertrag dies ausdrücklich ausschließt oder nicht regelt. Das ist ein grundlegender Unterschied mit erheblichen Auswirkungen.`;
+    semanticType = 'conflicting';
+    severity = 'medium';
+  } else {
+    const numText = nums1.length > 0 && nums2.length > 0
+      ? ` (${nums1.join(', ')} vs ${nums2.join(', ')})`
+      : '';
+    explanation = `Die ${label}-Regelungen unterscheiden sich in konkreten Werten${numText}. Prüfen Sie, welche Variante für Sie günstiger ist.`;
+    semanticType = 'different_scope';
+    severity = 'medium';
+  }
 
   return {
     category: label,
     section: clauses1[0]?.section || clauses2[0]?.section || '',
-    contract1: diffs.map(d => `${d.key}: ${d.v1}`).join('; '),
-    contract2: diffs.map(d => `${d.key}: ${d.v2}`).join('; '),
+    contract1: summary1,
+    contract2: summary2,
     severity,
-    explanation: `Die ${label}-Regelungen unterscheiden sich in konkreten Werten: ${diffTexts.join(', ')}. Diese Unterschiede können wirtschaftliche Auswirkungen haben.`,
-    impact: `Unterschiedliche Werte bei ${label} beeinflussen Rechte und Pflichten beider Parteien.`,
-    recommendation: `Vergleichen Sie die ${label}-Werte und verhandeln Sie ggf. bessere Konditionen.`,
+    explanation,
+    impact: `Unterschiedliche ${label}-Regelungen können wirtschaftliche und rechtliche Auswirkungen haben.`,
+    recommendation: `Vergleichen Sie die ${label}-Bestimmungen beider Verträge sorgfältig.`,
     clauseArea: area,
-    semanticType: 'different_scope',
+    semanticType,
     financialImpact: null,
     marketContext: null,
     _autoDetected: true,
@@ -1039,6 +1102,19 @@ function extractNumber(str) {
   if (typeof str !== 'string') return null;
   const match = str.match(/(\d+[\.,]?\d*)/);
   return match ? parseFloat(match[1].replace(',', '.')) : null;
+}
+
+function extractAllNumbers(text) {
+  const matches = text.match(/\d+[\.,]?\d*/g) || [];
+  return matches.map(m => parseFloat(m.replace(',', '.'))).sort((a, b) => a - b);
+}
+
+function arraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 function withTimeout(promise, ms, label) {
