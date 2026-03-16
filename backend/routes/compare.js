@@ -809,7 +809,7 @@ router.post("/", verifyToken, upload.fields([
           description: COMPARISON_MODES[comparisonMode].description
         };
       } catch (v2Error) {
-        console.warn(`⚠️ V2 Pipeline fehlgeschlagen: ${v2Error.message} — Fallback auf V1`);
+        console.error(`❌ V2 Pipeline fehlgeschlagen:`, v2Error.message, v2Error.stack?.split('\n').slice(0, 3).join('\n'));
         sendProgress(res, 'fallback', 50, 'Erweiterte Analyse nicht verfügbar, Standardvergleich wird durchgeführt...', wantsSSE);
 
         // Fallback to V1

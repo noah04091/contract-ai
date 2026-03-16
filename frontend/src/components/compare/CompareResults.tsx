@@ -123,12 +123,12 @@ export default function CompareResults({
           />
         )}
 
-        {activeTab === 'risks' && v2Result && (
-          <RisksTab risks={v2Result.risks} />
+        {activeTab === 'risks' && (
+          <RisksTab risks={v2Result?.risks || []} />
         )}
 
-        {activeTab === 'recommendations' && v2Result && (
-          <RecommendationsTab recommendations={v2Result.recommendations} />
+        {activeTab === 'recommendations' && (
+          <RecommendationsTab recommendations={v2Result?.recommendations || []} />
         )}
 
         {activeTab === 'contractMap' && v2Result && (

@@ -639,6 +639,24 @@ function validatePhaseBResponse(raw) {
     financialExposure: typeof r.financialExposure === 'string' ? r.financialExposure : null,
   }));
 
+  // Fallback: Generate risks from high/critical differences if GPT returned none
+  if (result.risks.length === 0 && Array.isArray(result.differences)) {
+    const severeDiffs = result.differences.filter(d => d.severity === 'high' || d.severity === 'critical');
+    result.risks = severeDiffs.map(d => ({
+      clauseArea: VALID_CLAUSE_AREAS.includes(d.clauseArea) ? d.clauseArea : inferClauseAreaFromCategory(d.category),
+      riskType: d.semanticType === 'missing' ? 'missing_protection' : 'legal_risk',
+      severity: d.severity,
+      contract: 'both',
+      title: d.category || d.section || 'Risiko',
+      description: d.explanation || d.impact || '',
+      legalBasis: extractLegalBasis(d.impact) || null,
+      financialExposure: d.financialImpact || null,
+    }));
+    if (result.risks.length > 0) {
+      console.log(`⚠️ Risks Fallback: ${result.risks.length} Risiken aus Unterschieden generiert`);
+    }
+  }
+
   // recommendations
   if (!Array.isArray(result.recommendations)) result.recommendations = [];
   result.recommendations = result.recommendations.map(r => ({
@@ -650,6 +668,24 @@ function validatePhaseBResponse(raw) {
     currentText: typeof r.currentText === 'string' ? r.currentText : '',
     suggestedText: typeof r.suggestedText === 'string' ? r.suggestedText : '',
   }));
+
+  // Fallback: Generate recommendations from differences with recommendations if GPT returned none
+  if (result.recommendations.length === 0 && Array.isArray(result.differences)) {
+    const diffsWithRec = result.differences.filter(d => d.recommendation && d.recommendation.length > 10);
+    const notRecommended = result.overallRecommendation?.recommended === 1 ? 2 : 1;
+    result.recommendations = diffsWithRec.slice(0, 5).map(d => ({
+      clauseArea: VALID_CLAUSE_AREAS.includes(d.clauseArea) ? d.clauseArea : inferClauseAreaFromCategory(d.category),
+      targetContract: notRecommended,
+      priority: d.severity === 'critical' ? 'critical' : d.severity === 'high' ? 'high' : 'medium',
+      title: d.category || d.section || 'Verbesserungsvorschlag',
+      reason: d.explanation || d.impact || '',
+      currentText: d.contract1 || d.contract2 || '',
+      suggestedText: d.recommendation || '',
+    }));
+    if (result.recommendations.length > 0) {
+      console.log(`⚠️ Recommendations Fallback: ${result.recommendations.length} Empfehlungen aus Unterschieden generiert`);
+    }
+  }
 
   return result;
 }
@@ -833,6 +869,12 @@ function inferSemanticType(diff) {
     return 'stronger';
   }
   return 'different_scope';
+}
+
+function extractLegalBasis(text) {
+  if (!text || typeof text !== 'string') return null;
+  const match = text.match(/§§?\s*\d+[a-z]?\s*(?:(?:Abs\.?\s*\d+)?(?:\s*(?:S\.|Satz)\s*\d+)?)\s*(?:BGB|HGB|GewO|DSGVO|UWG|AGB|StGB|ZPO|InsO|UStG|EStG)/);
+  return match ? match[0].trim() : null;
 }
 
 function smartTruncate(text, maxLength) {
