@@ -432,6 +432,7 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
       v2Result._clauseMatching = clauseMatchResult.stats;
     }
 
+    console.log(`✅ V2 Pipeline komplett: ${v2Result.differences?.length || 0} Diffs, ${v2Result.risks?.length || 0} Risks, ${v2Result.recommendations?.length || 0} Recs, version=${v2Result.version}`);
     progress('complete', 100, 'Analyse abgeschlossen!');
     return v2Result;
 
@@ -639,22 +640,28 @@ function validatePhaseBResponse(raw) {
     financialExposure: typeof r.financialExposure === 'string' ? r.financialExposure : null,
   }));
 
-  // Fallback: Generate risks from high/critical differences if GPT returned none
-  if (result.risks.length === 0 && Array.isArray(result.differences)) {
-    const severeDiffs = result.differences.filter(d => d.severity === 'high' || d.severity === 'critical');
-    result.risks = severeDiffs.map(d => ({
+  // Fallback: Generate risks from differences if GPT returned none
+  if (result.risks.length === 0 && Array.isArray(result.differences) && result.differences.length > 0) {
+    // First try high/critical, then fall back to medium
+    let riskDiffs = result.differences.filter(d => d.severity === 'high' || d.severity === 'critical');
+    if (riskDiffs.length === 0) {
+      riskDiffs = result.differences.filter(d => d.severity === 'medium');
+    }
+    // Last resort: use ALL differences
+    if (riskDiffs.length === 0) {
+      riskDiffs = result.differences.slice(0, 3);
+    }
+    result.risks = riskDiffs.map(d => ({
       clauseArea: VALID_CLAUSE_AREAS.includes(d.clauseArea) ? d.clauseArea : inferClauseAreaFromCategory(d.category),
-      riskType: d.semanticType === 'missing' ? 'missing_protection' : 'legal_risk',
-      severity: d.severity,
+      riskType: d.semanticType === 'missing' ? 'missing_protection' : d.severity === 'critical' ? 'unfair_clause' : 'legal_risk',
+      severity: d.severity || 'medium',
       contract: 'both',
       title: d.category || d.section || 'Risiko',
-      description: d.explanation || d.impact || '',
+      description: d.explanation || d.impact || 'Unterschied zwischen den Verträgen erfordert Aufmerksamkeit.',
       legalBasis: extractLegalBasis(d.impact) || null,
       financialExposure: d.financialImpact || null,
     }));
-    if (result.risks.length > 0) {
-      console.log(`⚠️ Risks Fallback: ${result.risks.length} Risiken aus Unterschieden generiert`);
-    }
+    console.log(`⚠️ Risks Fallback: ${result.risks.length} Risiken aus Unterschieden generiert (aus ${result.differences.length} Diffs)`);
   }
 
   // recommendations
@@ -669,22 +676,29 @@ function validatePhaseBResponse(raw) {
     suggestedText: typeof r.suggestedText === 'string' ? r.suggestedText : '',
   }));
 
-  // Fallback: Generate recommendations from differences with recommendations if GPT returned none
-  if (result.recommendations.length === 0 && Array.isArray(result.differences)) {
-    const diffsWithRec = result.differences.filter(d => d.recommendation && d.recommendation.length > 10);
+  // Fallback: Generate recommendations from differences if GPT returned none
+  if (result.recommendations.length === 0 && Array.isArray(result.differences) && result.differences.length > 0) {
     const notRecommended = result.overallRecommendation?.recommended === 1 ? 2 : 1;
-    result.recommendations = diffsWithRec.slice(0, 5).map(d => ({
+    // Try differences with recommendation text first
+    let recDiffs = result.differences.filter(d => d.recommendation && d.recommendation.length > 5);
+    // Fall back to high/critical differences
+    if (recDiffs.length === 0) {
+      recDiffs = result.differences.filter(d => d.severity === 'high' || d.severity === 'critical');
+    }
+    // Last resort: use top differences
+    if (recDiffs.length === 0) {
+      recDiffs = result.differences.slice(0, 3);
+    }
+    result.recommendations = recDiffs.slice(0, 5).map(d => ({
       clauseArea: VALID_CLAUSE_AREAS.includes(d.clauseArea) ? d.clauseArea : inferClauseAreaFromCategory(d.category),
       targetContract: notRecommended,
       priority: d.severity === 'critical' ? 'critical' : d.severity === 'high' ? 'high' : 'medium',
       title: d.category || d.section || 'Verbesserungsvorschlag',
-      reason: d.explanation || d.impact || '',
+      reason: d.explanation || d.impact || 'Dieser Unterschied sollte bei Verhandlungen berücksichtigt werden.',
       currentText: d.contract1 || d.contract2 || '',
-      suggestedText: d.recommendation || '',
+      suggestedText: d.recommendation || d.impact || 'Klausel sollte nachverhandelt werden.',
     }));
-    if (result.recommendations.length > 0) {
-      console.log(`⚠️ Recommendations Fallback: ${result.recommendations.length} Empfehlungen aus Unterschieden generiert`);
-    }
+    console.log(`⚠️ Recommendations Fallback: ${result.recommendations.length} Empfehlungen aus Unterschieden generiert (aus ${result.differences.length} Diffs)`);
   }
 
   return result;

@@ -921,7 +921,7 @@ router.post("/", verifyToken, upload.fields([
       console.error("⚠️ File cleanup warning:", cleanupErr.message);
     }
 
-    console.log("✅ Comparison completed successfully");
+    console.log(`✅ Comparison completed: version=${analysisResult.version || 1}, v2Fallback=${analysisResult._v2Fallback || false}, risks=${analysisResult.risks?.length || 0}, recs=${analysisResult.recommendations?.length || 0}, diffs=${analysisResult.differences?.length || 0}`);
 
     // Send final result
     if (wantsSSE) {
