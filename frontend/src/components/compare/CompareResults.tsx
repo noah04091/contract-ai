@@ -11,6 +11,7 @@ import OverviewTab from './tabs/OverviewTab';
 import DifferencesTab from './tabs/DifferencesTab';
 import RisksTab from './tabs/RisksTab';
 import RecommendationsTab from './tabs/RecommendationsTab';
+import ContractMapTab from './tabs/ContractMapTab';
 import styles from '../../styles/Compare.module.css';
 
 interface CompareResultsProps {
@@ -131,12 +132,12 @@ export default function CompareResults({
           <RecommendationsTab recommendations={v2Result?.recommendations || []} />
         )}
 
-        {activeTab === 'contractMap' && v2Result && (
-          <div className={styles.placeholderTab}>
-            <Map size={48} strokeWidth={1} />
-            <h3>Vertragskarte — Phase 2</h3>
-            <p>Interaktive Vergleichstabelle kommt bald.</p>
-          </div>
+        {activeTab === 'contractMap' && v2Result && v2Result.contractMap && (
+          <ContractMapTab
+            contract1={v2Result.contractMap.contract1}
+            contract2={v2Result.contractMap.contract2}
+            differences={v2Result.differences}
+          />
         )}
       </div>
     </div>
