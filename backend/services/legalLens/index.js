@@ -6,8 +6,10 @@
 
 const clauseParser = require('./clauseParser');
 const clauseAnalyzer = require('./clauseAnalyzer');
+const batchAnalyzer = require('./batchAnalyzer');
 
 module.exports = {
   clauseParser,
-  clauseAnalyzer
+  clauseAnalyzer,
+  batchAnalyzer
 };

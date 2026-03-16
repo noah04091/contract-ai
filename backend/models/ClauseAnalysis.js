@@ -203,6 +203,33 @@ const clauseAnalysisSchema = new mongoose.Schema({
   // Marktvergleich (Top-Level)
   marketComparison: marketComparisonSchema,
 
+  // V2 Analyse — fokussierte Schnellanalyse für Legal Lens 2.0
+  v2Analysis: {
+    actionLevel: {
+      type: String,
+      enum: ["accept", "negotiate", "reject"]
+    },
+    explanation: String,
+    riskLevel: {
+      type: String,
+      enum: ["low", "medium", "high"]
+    },
+    riskScore: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    riskReasons: [String],
+    fairnessVerdict: String,
+    isMarketStandard: Boolean,
+    negotiationTip: String,
+    betterWording: String,
+    howToAsk: String,
+    realWorldImpact: String,
+    exampleScenario: String,
+    analyzedAt: Date
+  },
+
   // Chat-Verlauf für diese Klausel
   chatHistory: [{
     role: {
@@ -251,6 +278,7 @@ clauseAnalysisSchema.index({ contractId: 1, clauseId: 1 }, { unique: true });
 clauseAnalysisSchema.index({ contractId: 1, riskLevel: 1 });
 clauseAnalysisSchema.index({ clauseTextHash: 1 });
 clauseAnalysisSchema.index({ contractId: 1, actionLevel: 1 });
+clauseAnalysisSchema.index({ clauseTextHash: 1, "v2Analysis.analyzedAt": 1 });
 
 // Pre-save Hook für updatedAt
 clauseAnalysisSchema.pre("save", function(next) {
@@ -297,6 +325,13 @@ clauseAnalysisSchema.statics.findDealbreakers = function(contractId) {
     contractId,
     actionLevel: "reject"
   });
+};
+
+clauseAnalysisSchema.statics.findV2AnalysesByContract = function(contractId) {
+  return this.find(
+    { contractId, "v2Analysis.analyzedAt": { $exists: true } },
+    { clauseId: 1, v2Analysis: 1, clauseTextHash: 1 }
+  ).sort({ "position.start": 1 });
 };
 
 clauseAnalysisSchema.statics.getOrCreate = async function(contractId, userId, clauseId, clauseText) {

@@ -1169,6 +1169,193 @@ WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrli
       throw new Error(`Streaming Summary fehlgeschlagen: ${error.message}`);
     }
   }
+  /**
+   * V2 Analyse — Fokussierte Schnellanalyse für Legal Lens 2.0
+   *
+   * Analysiert eine Klausel aus neutraler Perspektive mit reduziertem Output.
+   * ~800 Tokens statt ~2000, für Batch-Verarbeitung optimiert.
+   *
+   * @param {string} clauseText - Der Text der Klausel
+   * @param {string} contractContext - Optionaler Kontext zum Vertrag
+   * @param {Object} options - { industry, model, temperature }
+   * @returns {Promise<Object>} Fokussierte V2-Analyse
+   */
+  async analyzeClauseV2(clauseText, contractContext = '', options = {}) {
+    const {
+      industry = 'general',
+      model = 'gpt-4o',
+      temperature = 0.3
+    } = options;
+
+    console.log(`🔍 Legal Lens V2: Analysiere Klausel (Branche: ${industry})...`);
+
+    const industryContext = this.getIndustryContext(industry);
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt der Laien und Gründer berät.
+Analysiere die folgende Vertragsklausel NEUTRAL und KONKRET.
+
+${industryContext}
+
+Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
+{
+  "actionLevel": "accept|negotiate|reject",
+  "explanation": "2-3 EINFACHE Sätze: Was bedeutet diese Klausel? Erkläre es wie einem Freund. Nenne KONKRETE Zahlen, Fristen, Beträge wo möglich.",
+  "riskLevel": "low|medium|high",
+  "riskScore": 0-100,
+  "riskReasons": ["Konkreter Grund 1 mit Zahlen/Fristen", "Konkreter Grund 2"],
+  "fairnessVerdict": "1 Satz: Ist das marktüblich und fair? Mit konkretem Vergleich.",
+  "isMarketStandard": true oder false,
+  "negotiationTip": "1 konkreter, actionabler Verhandlungstipp",
+  "betterWording": "Bessere Formulierung der Klausel ODER null wenn akzeptabel",
+  "howToAsk": "So sprichst du die Änderung diplomatisch an ODER null wenn akzeptabel",
+  "realWorldImpact": "1-2 Sätze: Was passiert KONKRET mit dem Nutzer? Nenne €-Beträge, Zeiträume, Konsequenzen. Z.B. 'Wenn du diesen Vertrag heute unterschreibst, bist du mindestens 24 Monate gebunden — bei 200€/Monat sind das 4.800€.'",
+  "exampleScenario": "1 konkretes Beispiel-Szenario mit Zahlen. Z.B. 'Bei einem Schaden von 50.000€ kannst du maximal 1.000€ zurückfordern.' ODER null wenn kein sinnvolles Szenario möglich."
+}
+
+REGELN:
+- "reject" NUR bei echten Dealbreakern (unfair, unüblich, hochriskant)
+- "negotiate" bei verbesserungswürdigen Klauseln
+- "accept" bei fairen, marktüblichen Klauseln
+- IMMER konkrete Zahlen nennen wo möglich (€, %, Tage, Monate)
+- KEINE vagen Aussagen - sei SPEZIFISCH
+- Sprich den Leser direkt an mit "du/dein"
+- betterWording und howToAsk: null setzen wenn actionLevel "accept" ist
+- realWorldImpact: IMMER ausfüllen - das ist die wichtigste Info für den Nutzer!
+- exampleScenario: Ein Rechenbeispiel mit konkreten €-Beträgen oder Fristen. null nur wenn unmöglich.
+- Halte dich KURZ und PRÄGNANT`;
+
+    try {
+      const startTime = Date.now();
+
+      const response = await this.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: contractContext
+              ? `Kontext zum Vertrag:\n${contractContext.substring(0, 1000)}\n\n---\n\nAnalysiere diese Klausel:\n"${clauseText}"`
+              : `Analysiere diese Vertragsklausel:\n"${clauseText}"`
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature,
+        max_tokens: 1000
+      });
+
+      const processingTime = Date.now() - startTime;
+      const result = JSON.parse(response.choices[0].message.content);
+
+      console.log(`✅ V2 Analyse abgeschlossen in ${processingTime}ms (${response.usage?.total_tokens || 0} Tokens)`);
+
+      return {
+        actionLevel: result.actionLevel || 'accept',
+        explanation: result.explanation || '',
+        riskLevel: result.riskLevel || 'low',
+        riskScore: typeof result.riskScore === 'number' ? result.riskScore : 0,
+        riskReasons: Array.isArray(result.riskReasons) ? result.riskReasons : [],
+        fairnessVerdict: result.fairnessVerdict || '',
+        isMarketStandard: result.isMarketStandard ?? true,
+        negotiationTip: result.negotiationTip || '',
+        betterWording: result.betterWording || null,
+        howToAsk: result.howToAsk || null,
+        realWorldImpact: result.realWorldImpact || '',
+        exampleScenario: result.exampleScenario || null,
+        analyzedAt: new Date(),
+        _metadata: {
+          model,
+          tokensUsed: response.usage?.total_tokens || 0,
+          processingTimeMs: processingTime
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ V2 Analyse-Fehler:', error.message);
+      throw new Error(`V2 Analyse fehlgeschlagen: ${error.message}`);
+    }
+  }
+
+  /**
+   * Clause Simulation — vergleicht Original- und modifizierte Klausel
+   *
+   * Zeigt dem Nutzer, wie sich eine Änderung auf Risiko, Fairness und
+   * praktische Konsequenzen auswirkt.
+   */
+  async simulateClause(originalClause, modifiedClause, contractContext = '', options = {}) {
+    const { industry = 'general' } = options;
+    const model = 'gpt-4o';
+    const temperature = 0.3;
+
+    const industryContext = this.getIndustryContext(industry);
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt. Ein Nutzer möchte eine Vertragsklausel ändern.
+Vergleiche die ORIGINALE Klausel mit der GEÄNDERTEN Version.
+${industryContext}
+
+Antworte auf Deutsch in diesem JSON-Format:
+{
+  "originalRiskScore": 0-100,
+  "modifiedRiskScore": 0-100,
+  "riskChange": "reduced|increased|unchanged",
+  "summary": "1-2 Sätze: Was ändert sich durch die Modifikation?",
+  "forYou": "1-2 Sätze: Was bedeutet die Änderung KONKRET für den Unterzeichner?",
+  "forCounterparty": "1-2 Sätze: Wie wirkt sich das auf die Gegenseite aus?",
+  "marketAssessment": "1 Satz: Welche Version entspricht eher dem Marktstandard?",
+  "recommendation": "accept_change|consider_change|keep_original",
+  "recommendationReason": "1 Satz: Warum diese Empfehlung?"
+}
+
+Regeln:
+- Sei KONKRET, nenne €-Beträge, Fristen, Konsequenzen wo möglich
+- Bewerte NEUTRAL — nicht automatisch pro Änderung
+- Wenn die Änderung das Risiko ERHÖHT, sage das klar`;
+
+    try {
+      const startTime = Date.now();
+
+      const response = await this.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: contractContext
+              ? `Kontext:\n${contractContext.substring(0, 800)}\n\n---\n\nORIGINAL:\n"${originalClause}"\n\nGEÄNDERT:\n"${modifiedClause}"`
+              : `ORIGINAL:\n"${originalClause}"\n\nGEÄNDERT:\n"${modifiedClause}"`
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature,
+        max_tokens: 600
+      });
+
+      const processingTime = Date.now() - startTime;
+      const result = JSON.parse(response.choices[0].message.content);
+
+      console.log(`✅ Clause Simulation abgeschlossen in ${processingTime}ms`);
+
+      return {
+        originalRiskScore: typeof result.originalRiskScore === 'number' ? result.originalRiskScore : 50,
+        modifiedRiskScore: typeof result.modifiedRiskScore === 'number' ? result.modifiedRiskScore : 50,
+        riskChange: result.riskChange || 'unchanged',
+        summary: result.summary || '',
+        forYou: result.forYou || '',
+        forCounterparty: result.forCounterparty || '',
+        marketAssessment: result.marketAssessment || '',
+        recommendation: result.recommendation || 'consider_change',
+        recommendationReason: result.recommendationReason || '',
+        _metadata: {
+          model,
+          tokensUsed: response.usage?.total_tokens || 0,
+          processingTimeMs: processingTime
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Clause Simulation Fehler:', error.message);
+      throw new Error(`Simulation fehlgeschlagen: ${error.message}`);
+    }
+  }
 }
 
 // Singleton-Export

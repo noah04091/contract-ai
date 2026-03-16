@@ -1,0 +1,1347 @@
+/* ============================================================
+   Legal Lens V2 — Interaktiver Vertrags-Explorer
+   ============================================================ */
+
+/* ---- CSS Variables ---- */
+:root {
+  --v2-risk-low: #10b981;
+  --v2-risk-medium: #f59e0b;
+  --v2-risk-high: #ef4444;
+  --v2-accent: #6366f1;
+  --v2-bg: #f8fafc;
+  --v2-surface: #ffffff;
+  --v2-border: #e2e8f0;
+  --v2-text: #1e293b;
+  --v2-text-muted: #64748b;
+  --v2-header-height: 60px;
+  --v2-nav-width: 240px;
+  --v2-panel-width: 400px;
+}
+
+/* ============================================================
+   Page Layout
+   ============================================================ */
+
+.v2Page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--v2-bg);
+  overflow: hidden;
+}
+
+.v2Main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.v2Content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  transition: margin-right 0.3s ease;
+}
+
+.v2Content_withPanel {
+  margin-right: var(--v2-panel-width);
+}
+
+.v2FullView {
+  flex: 1;
+  overflow: auto;
+}
+
+.v2SplitLeft {
+  flex: 1;
+  overflow: auto;
+  border-right: 1px solid var(--v2-border);
+}
+
+.v2SplitRight {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Loading & Error */
+.v2Loading, .v2Error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+  color: var(--v2-text-muted);
+}
+
+.v2LoadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--v2-border);
+  border-top-color: var(--v2-accent);
+  border-radius: 50%;
+  animation: v2spin 0.8s linear infinite;
+}
+
+@keyframes v2spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   V2 Header
+   ============================================================ */
+
+.v2Header {
+  display: flex;
+  align-items: center;
+  height: var(--v2-header-height);
+  padding: 0 20px;
+  background: var(--v2-surface);
+  border-bottom: 1px solid var(--v2-border);
+  gap: 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.v2HeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+}
+
+.v2HeaderBack {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  background: var(--v2-surface);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--v2-text-muted);
+  transition: background 0.15s;
+}
+
+.v2HeaderBack:hover {
+  background: var(--v2-bg);
+}
+
+.v2HeaderTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--v2-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 250px;
+  margin: 0;
+}
+
+.v2HeaderCenter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: center;
+}
+
+.v2HeaderStats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.statHigh { color: var(--v2-risk-high); }
+.statMedium { color: var(--v2-risk-medium); }
+.statLow { color: var(--v2-risk-low); }
+
+/* Worst Clause Indicator */
+.worstClauseIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+  color: var(--v2-risk-high);
+  font-weight: 500;
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.worstClauseIndicator:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+.worstClauseIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.worstClauseLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v2HeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.v2HeaderFilterBtn {
+  padding: 6px 12px;
+  border: 1px solid var(--v2-border);
+  border-radius: 6px;
+  background: var(--v2-surface);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--v2-text-muted);
+  transition: all 0.15s;
+}
+
+.v2HeaderFilterBtn_active {
+  background: var(--v2-accent);
+  color: white;
+  border-color: var(--v2-accent);
+}
+
+/* View Mode Switch */
+.viewModeSwitch {
+  display: flex;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.viewModeBtn {
+  padding: 6px 14px;
+  border: none;
+  background: var(--v2-surface);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--v2-text-muted);
+  transition: all 0.15s;
+}
+
+.viewModeBtn + .viewModeBtn {
+  border-left: 1px solid var(--v2-border);
+}
+
+.viewModeBtn_active {
+  background: var(--v2-accent);
+  color: white;
+}
+
+/* Progress Bar */
+.v2HeaderProgress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--v2-border);
+}
+
+.v2HeaderProgressBar {
+  height: 100%;
+  background: var(--v2-accent);
+  transition: width 0.3s ease;
+}
+
+.v2HeaderProgressText {
+  position: absolute;
+  right: 16px;
+  bottom: 6px;
+  font-size: 11px;
+  color: var(--v2-accent);
+  font-weight: 500;
+}
+
+/* ============================================================
+   Risk Score Gauge
+   ============================================================ */
+
+.riskGauge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.riskGaugeArc {
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.riskGaugeValue {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ============================================================
+   Risk Badge
+   ============================================================ */
+
+.riskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.riskBadge_accept { background: rgba(16, 185, 129, 0.1); color: var(--v2-risk-low); }
+.riskBadge_negotiate { background: rgba(245, 158, 11, 0.1); color: var(--v2-risk-medium); }
+.riskBadge_reject { background: rgba(239, 68, 68, 0.1); color: var(--v2-risk-high); }
+
+.riskBadge_small { font-size: 11px; padding: 1px 6px; }
+.riskBadge_medium { font-size: 13px; }
+.riskBadge_large { font-size: 16px; padding: 4px 12px; }
+
+.riskBadgeEmoji { line-height: 1; }
+.riskBadgeLabel { line-height: 1; }
+
+/* ============================================================
+   Clause Navigator (left sidebar)
+   ============================================================ */
+
+.clauseNav {
+  width: var(--v2-nav-width);
+  background: var(--v2-surface);
+  border-right: 1px solid var(--v2-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.clauseNavToggle {
+  position: absolute;
+  left: 8px;
+  top: calc(var(--v2-header-height) + 12px);
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  background: var(--v2-surface);
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clauseNavToggleIcon { font-size: 18px; }
+
+.clauseNavHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--v2-border);
+}
+
+.clauseNavTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--v2-text);
+}
+
+.clauseNavCloseBtn {
+  border: none;
+  background: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--v2-text-muted);
+  padding: 0;
+  line-height: 1;
+}
+
+.clauseNavList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.clauseNavItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: var(--v2-text);
+  transition: background 0.15s;
+}
+
+.clauseNavItem:hover {
+  background: var(--v2-bg);
+}
+
+.clauseNavItem_active {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--v2-accent);
+  font-weight: 500;
+}
+
+.clauseNavDot { font-size: 10px; flex-shrink: 0; }
+
+.clauseNavLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Text Explorer View
+   ============================================================ */
+
+.textExplorer {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.textExplorerContent {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 32px 80px;
+}
+
+.textExplorerEmpty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--v2-text-muted);
+  font-size: 14px;
+}
+
+/* ============================================================
+   Clause Block (in Text View)
+   ============================================================ */
+
+.clauseBlock {
+  position: relative;
+  padding: 16px 20px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  background: var(--v2-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clauseBlock:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.clauseBlock_low {
+  background: rgba(16, 185, 129, 0.04);
+  border-left-color: rgba(16, 185, 129, 0.3);
+}
+
+.clauseBlock_medium {
+  background: rgba(245, 158, 11, 0.04);
+  border-left-color: rgba(245, 158, 11, 0.4);
+}
+
+.clauseBlock_high {
+  background: rgba(239, 68, 68, 0.05);
+  border-left-color: rgba(239, 68, 68, 0.5);
+}
+
+.clauseBlock_none {
+  background: var(--v2-surface);
+  border-left-color: var(--v2-border);
+}
+
+.clauseBlock_selected {
+  box-shadow: 0 0 0 2px var(--v2-accent), 0 2px 12px rgba(99, 102, 241, 0.15);
+}
+
+.clauseBlock_hovered {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.clauseBlock_pending {
+  opacity: 0.7;
+  border-left-color: var(--v2-border);
+}
+
+.clauseBlock_nonAnalyzable {
+  opacity: 0.5;
+  cursor: default;
+  border-left-color: transparent;
+}
+
+.clauseBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.clauseBlockTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-text);
+  margin: 0;
+}
+
+.clauseBlockPendingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--v2-border);
+  animation: v2pulse 1.5s ease infinite;
+}
+
+@keyframes v2pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.clauseBlockText {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--v2-text);
+}
+
+.clauseBlockText p {
+  margin: 0 0 4px;
+}
+
+/* ============================================================
+   PDF Explorer View
+   ============================================================ */
+
+.pdfExplorer {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  background: #525659;
+}
+
+.pdfDocumentContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 80px;
+  gap: 16px;
+}
+
+.pdfPageWrapper {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  background: white;
+}
+
+.pdfExplorerEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.pdfLoading, .pdfError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Zoom Controls */
+.pdfZoomControls {
+  position: sticky;
+  top: 12px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.pdfZoomBtn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s;
+}
+
+.pdfZoomBtn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================================
+   PDF Clause Overlays
+   ============================================================ */
+
+.pdfOverlay {
+  border-radius: 3px;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.pdfOverlay_low {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 3px solid rgba(16, 185, 129, 0.5);
+}
+
+.pdfOverlay_medium {
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid rgba(245, 158, 11, 0.5);
+}
+
+.pdfOverlay_high {
+  background: rgba(239, 68, 68, 0.10);
+  border-left: 3px solid rgba(239, 68, 68, 0.6);
+}
+
+.pdfOverlay_none {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.pdfOverlay_hovered {
+  background: rgba(99, 102, 241, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.pdfOverlay_selected {
+  background: rgba(99, 102, 241, 0.15) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+}
+
+.pdfOverlayBadge {
+  position: absolute;
+  top: -12px;
+  left: 4px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pdfOverlay:hover .pdfOverlayBadge {
+  opacity: 1;
+}
+
+.pdfOverlayBadge[data-risk="low"] { color: var(--v2-risk-low); }
+.pdfOverlayBadge[data-risk="medium"] { color: var(--v2-risk-medium); }
+.pdfOverlayBadge[data-risk="high"] { color: var(--v2-risk-high); }
+
+/* ============================================================
+   Hover Tooltip
+   ============================================================ */
+
+.hoverTooltip {
+  max-width: 300px;
+  padding: 10px 14px;
+  background: var(--v2-surface);
+  border: 1px solid var(--v2-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  animation: v2tooltipIn 0.15s ease;
+}
+
+@keyframes v2tooltipIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hoverTooltipHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hoverTooltipTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text);
+}
+
+.hoverTooltipText {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--v2-text-muted);
+  margin: 0 0 6px;
+}
+
+.hoverTooltipHint {
+  font-size: 10px;
+  color: var(--v2-accent);
+  font-weight: 500;
+}
+
+/* ============================================================
+   Analysis Panel (right sidebar)
+   ============================================================ */
+
+.analysisPanel {
+  position: fixed;
+  top: var(--v2-header-height);
+  right: 0;
+  bottom: 0;
+  width: var(--v2-panel-width);
+  background: var(--v2-surface);
+  border-left: 1px solid var(--v2-border);
+  overflow-y: auto;
+  z-index: 20;
+  transition: transform 0.3s ease;
+}
+
+.analysisPanel_closed {
+  transform: translateX(100%);
+}
+
+.analysisPanel_open {
+  transform: translateX(0);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.06);
+}
+
+.analysisPanelClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--v2-border);
+  border-radius: 6px;
+  background: var(--v2-surface);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--v2-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analysisPanelClose:hover {
+  background: var(--v2-bg);
+}
+
+/* Pending State */
+.analysisPanelPending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 12px;
+  color: var(--v2-text-muted);
+}
+
+.analysisPanelSpinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--v2-border);
+  border-top-color: var(--v2-accent);
+  border-radius: 50%;
+  animation: v2spin 0.8s linear infinite;
+}
+
+/* Action Badge (Level 1) */
+.analysisPanelAction {
+  padding: 20px;
+  border-bottom: 1px solid var(--v2-border);
+}
+
+.analysisPanelAction_accept { background: rgba(16, 185, 129, 0.04); }
+.analysisPanelAction_negotiate { background: rgba(245, 158, 11, 0.04); }
+.analysisPanelAction_reject { background: rgba(239, 68, 68, 0.04); }
+
+.analysisPanelExplanation {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--v2-text);
+}
+
+/* Sections (Level 2) */
+.analysisPanelSections {
+  padding: 8px 0;
+}
+
+.analysisPanelSection {
+  border-bottom: 1px solid var(--v2-border);
+}
+
+.analysisPanelSectionHeader {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text);
+  text-align: left;
+}
+
+.analysisPanelSectionHeader:hover {
+  background: var(--v2-bg);
+}
+
+.analysisPanelSectionTitle { flex: 1; }
+
+.analysisPanelSectionChevron {
+  color: var(--v2-text-muted);
+  font-size: 11px;
+}
+
+.analysisPanelSectionContent {
+  padding: 0 20px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--v2-text);
+  animation: v2fadeIn 0.2s ease;
+}
+
+@keyframes v2fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Risk List */
+.analysisPanelList {
+  margin: 0;
+  padding: 0 0 0 20px;
+}
+
+.analysisPanelList li {
+  margin-bottom: 6px;
+  color: var(--v2-text);
+}
+
+/* Fairness */
+.analysisPanelFairness {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fairnessStandard {
+  color: var(--v2-risk-low);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.fairnessDeviation {
+  color: var(--v2-risk-high);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Impact / Auswirkungen */
+.analysisPanelImpact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.impactText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--v2-text);
+  font-weight: 500;
+}
+
+.impactScenario {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(239, 68, 68, 0.04));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.impactScenario strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--v2-risk-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.impactScenario p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--v2-text);
+}
+
+/* Negotiation */
+.analysisPanelNegotiation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.negotiationTip {
+  margin: 0;
+  font-style: italic;
+  color: var(--v2-text);
+}
+
+.negotiationWording {
+  background: var(--v2-bg);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.negotiationWordingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-muted);
+}
+
+.copyBtn {
+  padding: 3px 10px;
+  border: 1px solid var(--v2-border);
+  border-radius: 4px;
+  background: var(--v2-surface);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--v2-accent);
+  font-weight: 500;
+}
+
+.copyBtn:hover {
+  background: var(--v2-accent);
+  color: white;
+}
+
+.negotiationWordingText {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--v2-accent);
+  background: var(--v2-surface);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.negotiationHowToAsk {
+  font-size: 13px;
+}
+
+.negotiationHowToAsk strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--v2-text-muted);
+}
+
+/* Deep Dive & Chat (Level 3) */
+.analysisPanelDeepDive {
+  padding: 16px 20px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--v2-border);
+}
+
+.simulateBtn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--v2-accent);
+  border-radius: 8px;
+  background: var(--v2-accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: all 0.15s;
+}
+
+.simulateBtn:hover {
+  background: #4f46e5;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.deepDiveBtn, .chatBtn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  background: var(--v2-surface);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--v2-text);
+  transition: all 0.15s;
+}
+
+.deepDiveBtn:hover, .chatBtn:hover {
+  background: var(--v2-bg);
+  border-color: var(--v2-accent);
+  color: var(--v2-accent);
+}
+
+/* ============================================================
+   Clause Simulator Modal
+   ============================================================ */
+
+.simOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.simModal {
+  background: var(--v2-surface);
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: simSlideUp 0.25s ease;
+}
+
+@keyframes simSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.simClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--v2-text-muted);
+  line-height: 1;
+}
+
+.simTitle {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: var(--v2-text);
+}
+
+.simSubtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--v2-text-muted);
+}
+
+.simSection {
+  margin-bottom: 16px;
+}
+
+.simLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.simOriginalText {
+  padding: 12px;
+  background: var(--v2-bg);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--v2-text-muted);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.simTextarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--v2-border);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.simTextarea:focus {
+  outline: none;
+  border-color: var(--v2-accent);
+}
+
+.simRunBtn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--v2-accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 16px;
+}
+
+.simRunBtn:hover:not(:disabled) {
+  background: #4f46e5;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.simRunBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.simError {
+  color: var(--v2-risk-high);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+/* Simulation Results */
+.simResults {
+  animation: simSlideUp 0.3s ease;
+}
+
+.simRiskCompare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+  background: var(--v2-bg);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.simRiskBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.simRiskLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v2-text-muted);
+  text-transform: uppercase;
+}
+
+.simRiskScore {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.simRisk_low { color: var(--v2-risk-low); }
+.simRisk_medium { color: var(--v2-risk-medium); }
+.simRisk_high { color: var(--v2-risk-high); }
+
+.simRiskArrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.simArrowDown {
+  font-size: 24px;
+  color: var(--v2-risk-low);
+  font-weight: 700;
+}
+
+.simArrowUp {
+  font-size: 24px;
+  color: var(--v2-risk-high);
+  font-weight: 700;
+}
+
+.simArrowEqual {
+  font-size: 24px;
+  color: var(--v2-text-muted);
+  font-weight: 700;
+}
+
+.simRiskDiff {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-muted);
+}
+
+.simSummary {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--v2-text);
+  margin: 0 0 16px;
+}
+
+.simDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.simDetailItem {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.simDetailItem strong {
+  display: block;
+  font-size: 12px;
+  color: var(--v2-text-muted);
+  margin-bottom: 2px;
+}
+
+.simDetailItem p {
+  margin: 0;
+  color: var(--v2-text);
+}
+
+.simRecommendation {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.simRecAccept {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: var(--v2-risk-low);
+}
+
+.simRecConsider {
+  background: rgba(245, 158, 11, 0.06);
+  border-color: var(--v2-risk-medium);
+}
+
+.simRecKeep {
+  background: rgba(99, 102, 241, 0.06);
+  border-color: var(--v2-accent);
+}
+
+.simRecLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text);
+}
+
+.simRecReason {
+  font-size: 13px;
+  color: var(--v2-text-muted);
+}
+
+/* ============================================================
+   Mobile (< 768px)
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .v2Content_withPanel {
+    margin-right: 0;
+  }
+
+  .clauseNav {
+    display: none;
+  }
+
+  .analysisPanel {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    height: 60vh;
+    border-left: none;
+    border-top: 1px solid var(--v2-border);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .analysisPanel_closed {
+    transform: translateY(100%);
+  }
+
+  .analysisPanel_open {
+    transform: translateY(0);
+  }
+
+  .v2HeaderTitle {
+    max-width: 120px;
+    font-size: 13px;
+  }
+
+  .viewModeSwitch {
+    display: none;
+  }
+
+  .textExplorerContent {
+    padding: 16px;
+  }
+}
+
+/* ============================================================
+   Global: Pulse-Highlight für Scroll-to-Clause
+   ============================================================ */
+:global(.clauseHighlightPulse) {
+  animation: clausePulse 1.5s ease !important;
+}
+
+@keyframes clausePulse {
+  0% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4); background-color: rgba(239, 68, 68, 0.12); }
+  50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15); }
+  100% { box-shadow: none; background-color: transparent; }
+}

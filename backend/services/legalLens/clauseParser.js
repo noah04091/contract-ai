@@ -157,6 +157,21 @@ class ClauseParser {
         // Hash für Caching
         clause.textHash = this.generateHash(clause.text);
 
+        // V2: Erweiterte Position-Daten für PDF-Mapping
+        if (clause.position) {
+          clause.position.globalStart = clause.position.start;
+          clause.position.globalEnd = clause.position.end;
+          clause.position.estimatedPage = text.length > 0
+            ? Math.floor(clause.position.start / Math.max(text.length / Math.max(1, Math.ceil(text.length / 3000)), 1)) + 1
+            : 1;
+          clause.position.anchorText = clause.text.substring(0, 80).trim();
+        }
+        clause.matchingData = {
+          firstWords: this.extractSignificantWords(clause.text, 'first', 5),
+          lastWords: this.extractSignificantWords(clause.text, 'last', 5),
+          charLength: clause.text.length
+        };
+
         clauses.push(clause);
       }
     }
@@ -874,6 +889,35 @@ class ClauseParser {
   }
 
   /**
+   * Extrahiert signifikante Wörter für Fuzzy-Matching im Frontend.
+   * Filtert Stoppwörter und kurze Wörter heraus.
+   *
+   * @param {string} text - Klauseltext
+   * @param {string} position - 'first' oder 'last'
+   * @param {number} count - Anzahl der Wörter
+   * @returns {string[]} Array signifikanter Wörter
+   */
+  extractSignificantWords(text, position = 'first', count = 5) {
+    const stopWords = new Set([
+      'der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines',
+      'und', 'oder', 'aber', 'auch', 'als', 'auf', 'aus', 'bei', 'bis', 'für',
+      'mit', 'nach', 'über', 'von', 'vor', 'zum', 'zur', 'sich', 'ist', 'sind',
+      'wird', 'hat', 'wird', 'kann', 'soll', 'muss', 'darf', 'nicht', 'dass',
+      'wenn', 'wie', 'was', 'wer', 'wir', 'sie', 'ihr', 'ihm', 'uns', 'ich'
+    ]);
+
+    const words = text
+      .replace(/[§()[\]{}"'„"«»]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length >= 4 && !stopWords.has(w.toLowerCase()));
+
+    if (position === 'last') {
+      return words.slice(-count);
+    }
+    return words.slice(0, count);
+  }
+
+  /**
    * Konvertiert Text zu Title Case
    */
   toTitleCase(str) {
@@ -984,7 +1028,18 @@ class ClauseParser {
         },
         position: {
           start: clause.startPosition || 0,
-          end: clause.endPosition || clause.text.length
+          end: clause.endPosition || clause.text.length,
+          // V2: Erweiterte Position-Daten für PDF-Mapping
+          globalStart: clause.startPosition || 0,
+          globalEnd: (clause.startPosition || 0) + clause.text.length,
+          estimatedPage: text.length > 0 ? Math.floor((clause.startPosition || 0) / Math.max(text.length / Math.max(1, Math.ceil(text.length / 3000)), 1)) + 1 : 1,
+          anchorText: clause.text.substring(0, 80).trim()
+        },
+        // V2: Matching-Daten für Frontend PDF Text-Layer Sync
+        matchingData: {
+          firstWords: this.extractSignificantWords(clause.text, 'first', 5),
+          lastWords: this.extractSignificantWords(clause.text, 'last', 5),
+          charLength: clause.text.length
         },
         textHash: this.generateHash(clause.text),
         metadata: {
