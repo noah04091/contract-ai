@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle, AlertTriangle, AlertCircle, Info,
   ChevronUp, ChevronDown, Eye, EyeOff,
-  Scale, Zap, X
+  Scale, Zap, X, BarChart3
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -228,6 +228,14 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
               {v2Diff?.financialImpact && (
                 <div className={styles.diffFinancial}>
                   <span>Finanzieller Einfluss: {v2Diff.financialImpact}</span>
+                </div>
+              )}
+
+              {/* Market Context (Benchmark) */}
+              {v2Diff?.marketContext && (
+                <div className={styles.diffMarketContext}>
+                  <BarChart3 size={13} />
+                  <span>{v2Diff.marketContext}</span>
                 </div>
               )}
 

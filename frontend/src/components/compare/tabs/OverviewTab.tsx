@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import {
   Star, AlertTriangle, AlertCircle, CheckCircle,
-  ThumbsUp, ThumbsDown, Award, TrendingUp
+  ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
   CategoryScores, SCORE_LABELS,
+  BenchmarkMetric, BENCHMARK_RATING_COLORS,
 } from '../../../types/compare';
 import styles from '../../../styles/Compare.module.css';
 
@@ -83,6 +84,26 @@ export default function OverviewTab({ result }: OverviewTabProps) {
             <span className={styles.quickStatLabel}>Empfehlungen</span>
           </div>
         </div>
+      )}
+
+      {/* Market Benchmark (V2) */}
+      {v2Result?.benchmark && v2Result.benchmark.metrics.length > 0 && (
+        <motion.div
+          className={styles.benchmarkSection}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <div className={styles.benchmarkHeader}>
+            <BarChart3 size={18} />
+            <h4>Marktvergleich — {v2Result.benchmark.contractTypeLabel}</h4>
+          </div>
+          <div className={styles.benchmarkGrid}>
+            {v2Result.benchmark.metrics.map((metric) => (
+              <BenchmarkRow key={metric.metricId} metric={metric} />
+            ))}
+          </div>
+        </motion.div>
       )}
 
       {/* Verdict / Recommendation Box */}
@@ -303,6 +324,64 @@ function V1ScoreCard({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ============================================
+// Benchmark Row
+// ============================================
+function BenchmarkRow({ metric }: { metric: BenchmarkMetric }) {
+  const v1 = metric.contract1;
+  const v2 = metric.contract2;
+
+  return (
+    <div className={styles.benchmarkRow}>
+      <div className={styles.benchmarkLabel}>
+        <span className={styles.benchmarkMetricName}>{metric.label}</span>
+        <span className={styles.benchmarkMarket}>Markt: {metric.marketTypical} {metric.unit}</span>
+      </div>
+      <div className={styles.benchmarkValues}>
+        <BenchmarkValueCell value={v1} unit={metric.unit} label="V1" />
+        <BenchmarkValueCell value={v2} unit={metric.unit} label="V2" />
+      </div>
+    </div>
+  );
+}
+
+function BenchmarkValueCell({
+  value,
+  unit,
+  label,
+}: {
+  value: BenchmarkMetric['contract1'];
+  unit: string;
+  label: string;
+}) {
+  if (!value) {
+    return (
+      <div className={styles.benchmarkCell}>
+        <span className={styles.benchmarkCellLabel}>{label}</span>
+        <span className={styles.benchmarkCellValue} style={{ color: '#8e8e93' }}>—</span>
+      </div>
+    );
+  }
+
+  const color = value.assessment
+    ? BENCHMARK_RATING_COLORS[value.assessment.rating] || '#8e8e93'
+    : '#8e8e93';
+
+  return (
+    <div className={styles.benchmarkCell}>
+      <span className={styles.benchmarkCellLabel}>{label}</span>
+      <span className={styles.benchmarkCellValue} style={{ color }}>
+        {value.value} {unit}
+      </span>
+      {value.assessment && value.assessment.rating !== 'info' && (
+        <span className={styles.benchmarkRating} style={{ color, borderColor: `${color}30` }}>
+          {value.assessment.label}
+        </span>
+      )}
+    </div>
   );
 }
 

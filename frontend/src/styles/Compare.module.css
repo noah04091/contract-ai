@@ -1087,6 +1087,28 @@
 .quickStatCritical { color: #ff453a; }
 .quickStatLabel { font-size: 0.78rem; color: #6e6e73; margin-top: 4px; }
 
+/* Benchmark Section */
+.benchmarkSection { background: #fff; border: 1px solid #e8e8ed; border-radius: 14px; padding: 1.25rem; }
+.benchmarkHeader { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; color: #1d1d1f; }
+.benchmarkHeader h4 { font-size: 1rem; font-weight: 600; margin: 0; }
+.benchmarkHeader svg { color: #3B82F6; }
+.benchmarkGrid { display: flex; flex-direction: column; gap: 2px; }
+.benchmarkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f9f9fb; }
+.benchmarkRow:nth-child(even) { background: #fff; }
+.benchmarkLabel { display: flex; flex-direction: column; gap: 2px; }
+.benchmarkMetricName { font-size: 0.88rem; font-weight: 600; color: #1d1d1f; }
+.benchmarkMarket { font-size: 0.75rem; color: #8e8e93; }
+.benchmarkValues { display: flex; gap: 16px; align-items: center; justify-content: flex-end; }
+.benchmarkCell { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 80px; }
+.benchmarkCellLabel { font-size: 0.7rem; color: #8e8e93; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+.benchmarkCellValue { font-size: 0.92rem; font-weight: 600; }
+.benchmarkRating { font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .benchmarkRow { grid-template-columns: 1fr; gap: 6px; }
+  .benchmarkValues { justify-content: flex-start; }
+}
+
 .verdictBox { background: linear-gradient(135deg, #0071e3, #005bb5); color: white; padding: 1.5rem; border-radius: 14px; }
 .verdictHeader { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .verdictHeader h4 { font-size: 1.15rem; font-weight: 600; margin: 0; }
@@ -1151,6 +1173,7 @@
 .diffImpact { display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; background: #f5f5f7; border-radius: 8px; font-size: 0.82rem; color: #6e6e73; margin-bottom: 8px; }
 .diffImpact svg { flex-shrink: 0; margin-top: 2px; }
 .diffFinancial { padding: 6px 12px; background: rgba(255, 149, 0, 0.06); border-radius: 6px; font-size: 0.8rem; color: #ff9500; font-weight: 500; margin-bottom: 8px; }
+.diffMarketContext { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(59, 130, 246, 0.06); border-radius: 6px; font-size: 0.8rem; color: #3B82F6; font-weight: 500; margin-bottom: 8px; border: 1px solid rgba(59, 130, 246, 0.12); }
 
 .showQuotesBtn { display: flex; align-items: center; gap: 6px; padding: 6px 0; border: none; background: transparent; color: #0071e3; font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: inherit; }
 .showQuotesBtn:hover { text-decoration: underline; }

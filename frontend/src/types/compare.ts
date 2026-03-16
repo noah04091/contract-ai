@@ -203,6 +203,48 @@ export interface ComparisonResultV1 {
 }
 
 // ============================================
+// Market Benchmark
+// ============================================
+export interface BenchmarkAssessment {
+  rating: 'above' | 'standard' | 'below' | 'info';
+  label: string;
+  marketTypical: number | string;
+  marketRange?: string;
+}
+
+export interface BenchmarkMetric {
+  metricId: string;
+  label: string;
+  unit: string;
+  clauseArea: ClauseArea;
+  contract1: { value: number; source: string; assessment: BenchmarkAssessment } | null;
+  contract2: { value: number; source: string; assessment: BenchmarkAssessment } | null;
+  marketTypical: number | string;
+  marketRange: string;
+  direction: 'higher_better' | 'lower_better' | 'info_only';
+}
+
+export interface BenchmarkResult {
+  contractType: string | null;
+  contractTypeLabel: string | null;
+  metrics: BenchmarkMetric[];
+}
+
+export const BENCHMARK_RATING_COLORS: Record<string, string> = {
+  above: '#34c759',
+  standard: '#3B82F6',
+  below: '#ff9500',
+  info: '#8e8e93',
+};
+
+export const BENCHMARK_RATING_LABELS: Record<string, string> = {
+  above: 'Über Marktstandard',
+  standard: 'Marktüblich',
+  below: 'Unter Marktstandard',
+  info: 'Marktvergleich',
+};
+
+// ============================================
 // V2 Full Result
 // ============================================
 export interface ComparisonResultV2 {
@@ -237,6 +279,9 @@ export interface ComparisonResultV2 {
   };
 
   perspective: Perspective;
+
+  // Market Benchmark
+  benchmark: BenchmarkResult | null;
 
   // V1 compatibility
   contract1Analysis: ContractAnalysis;

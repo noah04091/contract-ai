@@ -2,6 +2,7 @@
 const { OpenAI } = require("openai");
 const crypto = require("crypto");
 const { matchClauses, formatMatchesForPrompt } = require("./clauseMatcher");
+const { runBenchmarkComparison } = require("./marketBenchmarks");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -414,10 +415,17 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
       console.log(`📊 Phase B + Gaps: ${phaseBResult.differences.length} Unterschiede total`);
     }
 
-    progress('finalizing', 92, 'Ergebnis wird zusammengestellt...');
+    // Market Benchmark: Deterministic comparison against market data
+    progress('finalizing', 90, 'Marktvergleich wird erstellt...');
+    const benchmarkResult = runBenchmarkComparison(map1, map2, phaseBResult.differences || []);
+    if (benchmarkResult.benchmarks.length > 0) {
+      phaseBResult.differences = benchmarkResult.enrichedDifferences;
+    }
+
+    progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
 
     // Build V2 response (include texts for re-analysis)
-    const v2Result = buildV2Response(map1, map2, phaseBResult, perspective, text1, text2);
+    const v2Result = buildV2Response(map1, map2, phaseBResult, perspective, text1, text2, benchmarkResult);
 
     // Attach clause matching stats (for frontend display / debugging)
     if (clauseMatchResult) {
@@ -435,7 +443,7 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
   }
 }
 
-function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2) {
+function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2, benchmarkResult) {
   return {
     version: 2,
 
@@ -470,6 +478,13 @@ function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2) {
     },
 
     perspective,
+
+    // Market Benchmark
+    benchmark: benchmarkResult ? {
+      contractType: benchmarkResult.contractType,
+      contractTypeLabel: benchmarkResult.contractTypeLabel || null,
+      metrics: benchmarkResult.benchmarks || [],
+    } : null,
 
     // V1 backward compat
     contract1Analysis: phaseBResult.contract1Analysis || { strengths: [], weaknesses: [], riskLevel: 'medium', score: 50 },
