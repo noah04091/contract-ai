@@ -301,7 +301,7 @@ function detectLawStatus(title, summary = '', feedCategory = '') {
   }
 
   // Passed but not yet effective
-  if (/\b(beschlossen|verabschiedet|zugestimmt|gebilligt|angenommen|verkündet|tritt.*in\s*kraft\s*am|inkrafttreten|wird.*gelten\s*ab)\b/i.test(text)) {
+  if (/\b(beschlossen|verabschiedet|zugestimmt|gebilligt|angenommen|verkündet|inkrafttreten|wird.*gelten\s*ab)\b/i.test(text) || /tritt.*in\s*kraft/i.test(text)) {
     return 'passed';
   }
 
@@ -574,6 +574,7 @@ module.exports = {
   toggleFeed,
   normalizeForLegalPulse,
   detectLegalArea,
+  detectLawStatus,
   getFeedHealthReport,
   LEGAL_RSS_FEEDS
 };

@@ -31,18 +31,22 @@ const MAX_LAW_CHANGES = 10;
 const MAX_CONTRACT_MATCHES = 50;
 const IMPACT_CONFIDENCE_THRESHOLD = 60;
 
-// Legal area → contract type mapping for fast pre-filtering
+// Legal area → contract type mapping for fast pre-filtering.
+// IMPORTANT: Areas NOT listed here will match ALL contracts (catch-all).
+// To reduce noise, always map new areas to specific contract types.
 const AREA_TO_CONTRACT_TYPES = {
-  datenschutz: ["saas", "hosting", "dienstleistung", "arbeitsvertrag", "freelancer"],
-  arbeitsrecht: ["arbeitsvertrag", "freelancer"],
+  datenschutz: ["saas", "hosting", "dienstleistung"],
+  arbeitsrecht: ["arbeitsvertrag"],
   mietrecht: ["mietvertrag"],
   handelsrecht: ["dienstleistung", "saas", "hosting", "liefervertrag"],
-  verbraucherschutz: ["saas", "hosting", "versicherung", "mietvertrag"],
-  steuerrecht: ["dienstleistung", "freelancer", "arbeitsvertrag"],
-  it_recht: ["saas", "hosting", "nda"],
-  wettbewerbsrecht: ["nda", "arbeitsvertrag", "freelancer"],
+  verbraucherschutz: ["saas", "hosting", "versicherung"],
+  steuerrecht: ["dienstleistung", "freelancer"],
+  it_recht: ["saas", "hosting"],
+  wettbewerbsrecht: ["nda", "freelancer"],
   versicherungsrecht: ["versicherung"],
   gesellschaftsrecht: ["dienstleistung"],
+  vertragsrecht: ["saas", "hosting", "dienstleistung", "freelancer"],
+  urheberrecht: ["freelancer", "nda"],
 };
 
 /**
