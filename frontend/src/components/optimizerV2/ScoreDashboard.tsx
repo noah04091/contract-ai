@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X } from 'lucide-react';
-import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause } from '../../types/optimizerV2';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info } from 'lucide-react';
+import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import { apiCall } from '../../utils/api';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -156,6 +156,12 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           );
         })}
       </div>
+
+      {/* Score Explanation */}
+      <ScoreExplanation scores={scores} result={result} />
+
+      {/* Risk Heatmap */}
+      <RiskHeatmap result={result} onNavigate={onNavigate} />
 
       {/* AI Contract Strategy */}
       {strategyPoints.length > 0 && (
@@ -404,6 +410,233 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
         </div>
       )}
     </>
+  );
+}
+
+// ── Score Explanation Panel ──
+const SCORE_WEIGHTS = [
+  { key: 'risk', label: 'Risiko-Score', weight: 0.20, icon: Shield, color: '#FF3B30' },
+  { key: 'fairness', label: 'Fairness-Score', weight: 0.20, icon: Scale, color: '#AF52DE' },
+  { key: 'clarity', label: 'Klarheits-Score', weight: 0.15, icon: Eye, color: '#007AFF' },
+  { key: 'completeness', label: 'Vollständigkeit', weight: 0.10, icon: CheckSquare, color: '#34C759' },
+  { key: 'marketStandard', label: 'Marktstandard', weight: 0.10, icon: BarChart3, color: '#FF9500' },
+] as const;
+
+function ScoreExplanation({ scores, result }: { scores: Scores; result: AnalysisResult }) {
+  const factors = useMemo(() => {
+    return SCORE_WEIGHTS.map(({ key, label, weight, icon, color }) => {
+      const value = scores[key] ?? 0;
+      const contribution = Math.round(value * weight);
+      const isPositive = value >= 70;
+      return { key, label, value, weight, contribution, icon, color, isPositive };
+    }).sort((a, b) => a.value - b.value); // worst first
+  }, [scores]);
+
+  // Find top negative and positive impacts
+  const topNegative = useMemo(() => {
+    const items: { label: string; impact: string; color: string }[] = [];
+
+    // Check for one-sided clauses
+    const oneSided = result.clauseAnalyses.filter(a =>
+      a.powerBalance === 'strongly_one_sided' || a.powerBalance === 'extremely_one_sided'
+    );
+    if (oneSided.length > 0) {
+      const clause = result.clauses.find(c => c.id === oneSided[0].clauseId);
+      items.push({
+        label: `${clause?.title || 'Klausel'} stark einseitig`,
+        impact: `−${Math.round(oneSided.length * 3)} Punkte`,
+        color: '#FF3B30'
+      });
+    }
+
+    // Check for missing clauses
+    const missing = (scores.missingClauses || []).filter(mc => !mc.foundInContent);
+    if (missing.length > 0) {
+      items.push({
+        label: `${missing.length} essentielle Klausel${missing.length > 1 ? 'n' : ''} fehlen`,
+        impact: `−${Math.round(missing.length * 6)} Punkte`,
+        color: '#FF9500'
+      });
+    }
+
+    // Check for high-risk clauses
+    const highRisk = result.clauseAnalyses.filter(a => a.riskLevel >= 7);
+    if (highRisk.length > 0) {
+      items.push({
+        label: `${highRisk.length} Klausel${highRisk.length > 1 ? 'n' : ''} mit hohem Risiko`,
+        impact: `−${Math.round(highRisk.length * 4)} Punkte`,
+        color: '#FF3B30'
+      });
+    }
+
+    return items.slice(0, 3);
+  }, [result, scores]);
+
+  const topPositive = useMemo(() => {
+    const items: { label: string; impact: string; color: string }[] = [];
+
+    const strongCount = result.clauseAnalyses.filter(a => a.strength === 'strong').length;
+    if (strongCount > 0) {
+      items.push({
+        label: `${strongCount} professionell formulierte Klauseln`,
+        impact: `+${Math.round(strongCount * 2)} Punkte`,
+        color: '#34C759'
+      });
+    }
+
+    const balancedCount = result.clauseAnalyses.filter(a => a.powerBalance === 'balanced').length;
+    if (balancedCount > 0) {
+      items.push({
+        label: `${balancedCount} ausgewogene Klauseln`,
+        impact: `+${Math.round(balancedCount * 1.5)} Punkte`,
+        color: '#34C759'
+      });
+    }
+
+    return items.slice(0, 2);
+  }, [result]);
+
+  return (
+    <div className={styles.scoreExplanation}>
+      <div className={styles.scoreExplanationHeader}>
+        <Info size={15} style={{ color: '#007AFF' }} />
+        <span className={styles.scoreExplanationTitle}>Warum {scores.overall}/100?</span>
+      </div>
+
+      {/* Score formula breakdown */}
+      <div className={styles.scoreFactors}>
+        {factors.map(f => {
+          const Icon = f.icon;
+          return (
+            <div key={f.key} className={styles.scoreFactor}>
+              <Icon size={14} style={{ color: f.color }} />
+              <span className={styles.scoreFactorLabel}>{f.label}</span>
+              <div className={styles.scoreFactorBar}>
+                <div
+                  className={styles.scoreFactorBarFill}
+                  style={{ width: `${f.value}%`, backgroundColor: getScoreColor(f.value) }}
+                />
+              </div>
+              <span className={styles.scoreFactorValue} style={{ color: getScoreColor(f.value) }}>
+                {f.value}
+              </span>
+              <span className={styles.scoreFactorImpact} style={{ color: 'var(--ov2-gray-400)' }}>
+                ×{(f.weight * 100).toFixed(0)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Positive & negative impacts */}
+      {(topNegative.length > 0 || topPositive.length > 0) && (
+        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {topNegative.map((item, i) => (
+            <div key={`neg-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+              <AlertTriangle size={12} style={{ color: item.color, flexShrink: 0 }} />
+              <span style={{ color: 'var(--ov2-gray-600)', flex: 1 }}>{item.label}</span>
+              <span style={{ color: item.color, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.impact}</span>
+            </div>
+          ))}
+          {topPositive.map((item, i) => (
+            <div key={`pos-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+              <Check size={12} style={{ color: item.color, flexShrink: 0 }} />
+              <span style={{ color: 'var(--ov2-gray-600)', flex: 1 }}>{item.label}</span>
+              <span style={{ color: item.color, fontWeight: 600, whiteSpace: 'nowrap' }}>{item.impact}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Risk Heatmap Panel ──
+const RISK_COLORS: Record<string, string> = {
+  low: '#34C759',
+  medium: '#FF9500',
+  high: '#FF3B30',
+  critical: '#AF52DE'
+};
+
+function getRiskLevel(avgRisk: number): { label: string; color: string } {
+  if (avgRisk >= 7) return { label: 'Kritisch', color: RISK_COLORS.critical };
+  if (avgRisk >= 5) return { label: 'Hoch', color: RISK_COLORS.high };
+  if (avgRisk >= 3) return { label: 'Mittel', color: RISK_COLORS.medium };
+  return { label: 'Gering', color: RISK_COLORS.low };
+}
+
+function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string) => void }) {
+  const categoryRisks = useMemo(() => {
+    const map = new Map<string, { risks: number[]; powerBalances: PowerBalance[]; count: number }>();
+
+    for (const clause of result.clauses) {
+      const analysis = result.clauseAnalyses.find(a => a.clauseId === clause.id);
+      if (!analysis || clause.category === 'other') continue;
+
+      const existing = map.get(clause.category) || { risks: [], powerBalances: [], count: 0 };
+      existing.risks.push(analysis.riskLevel);
+      existing.powerBalances.push(analysis.powerBalance);
+      existing.count++;
+      map.set(clause.category, existing);
+    }
+
+    return Array.from(map.entries())
+      .map(([category, data]) => {
+        const avgRisk = data.risks.reduce((a, b) => a + b, 0) / data.risks.length;
+        const maxRisk = Math.max(...data.risks);
+        const worstBalance = data.powerBalances.includes('extremely_one_sided') ? 'extremely_one_sided'
+          : data.powerBalances.includes('strongly_one_sided') ? 'strongly_one_sided'
+          : data.powerBalances.includes('slightly_one_sided') ? 'slightly_one_sided' : 'balanced';
+        const level = getRiskLevel(maxRisk);
+
+        return { category, avgRisk, maxRisk, count: data.count, worstBalance, ...level };
+      })
+      .sort((a, b) => b.maxRisk - a.maxRisk);
+  }, [result]);
+
+  if (categoryRisks.length === 0) return null;
+
+  return (
+    <div className={styles.riskHeatmap}>
+      <div className={styles.riskHeatmapHeader}>
+        <Activity size={15} style={{ color: '#FF3B30' }} />
+        <span className={styles.riskHeatmapTitle}>Risk Heatmap nach Kategorie</span>
+      </div>
+      <div className={styles.riskHeatmapGrid}>
+        {categoryRisks.map(cat => (
+          <div
+            key={cat.category}
+            className={styles.riskHeatmapCell}
+            style={{ borderColor: cat.color + '30', background: cat.color + '08' }}
+            onClick={() => onNavigate('clauses')}
+          >
+            <span className={styles.riskHeatmapCellName}>
+              {CATEGORY_LABELS[cat.category as ClauseCategory] || cat.category}
+            </span>
+            <div className={styles.riskHeatmapCellBar}>
+              <div
+                className={styles.riskHeatmapCellBarFill}
+                style={{ width: `${cat.maxRisk * 10}%`, backgroundColor: cat.color }}
+              />
+            </div>
+            <div className={styles.riskHeatmapCellMeta}>
+              <span className={styles.riskHeatmapCellRisk} style={{ color: cat.color }}>
+                {cat.label}
+              </span>
+              <span className={styles.riskHeatmapCellCount}>
+                {cat.count} Klausel{cat.count > 1 ? 'n' : ''}
+              </span>
+            </div>
+            {cat.worstBalance !== 'balanced' && (
+              <span className={styles.riskHeatmapCellTag} style={{ color: cat.color }}>
+                {PB_LABELS[cat.worstBalance] || cat.worstBalance}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
