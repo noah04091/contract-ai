@@ -97,10 +97,18 @@ export async function parseContractStream(contractId: string): Promise<{
         try {
           const data = JSON.parse(currentData);
 
-          if (currentEvent === 'clauses' && data.clauses) {
-            clauses = data.clauses;
-          } else if (currentEvent === 'error') {
-            console.warn('[LegalLensV2] Stream parse error:', data.error);
+          switch (currentEvent) {
+            case 'clauses':
+              // Cached results — all clauses at once
+              if (data.clauses) clauses = data.clauses;
+              break;
+            case 'clauses_batch':
+              // Fresh parsing — incremental batches
+              if (data.newClauses) clauses = [...clauses, ...data.newClauses];
+              break;
+            case 'error':
+              console.warn('[LegalLensV2] Stream parse error:', data.error);
+              break;
           }
         } catch (parseError) {
           console.warn('[LegalLensV2] SSE parse error:', parseError);
