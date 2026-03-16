@@ -330,7 +330,21 @@
       "Bash(while read hash rest)",
       "Bash(do git diff-tree --no-commit-id --name-only -r $hash)",
       "Bash(python3:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(npx vite build:*)",
+      "Bash(test:*)",
+      "Bash(npm info:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm view:*)",
+      "WebFetch(domain:advisories.gitlab.com)",
+      "WebFetch(domain:express-rate-limit.mintlify.app)",
+      "Bash(find /c/Users/liebo/Documents/contract-ai/frontend/src -type f \\\\\\( -name \"*optim*\" -o -name \"*Optim*\" \\\\\\) 2>/dev/null | head -50)",
+      "Bash(cd /c/Users/liebo/Documents/contract-ai/backend && mkdir -p services/optimizerV2/stages services/optimizerV2/prompts services/optimizerV2/utils && ls services/optimizerV2/)",
+      "Bash(cd C:/Users/liebo/Documents/contract-ai && OPENAI_API_KEY=test node -e \"\nconst { buildV2Response } = require\\('./backend/services/compareAnalyzer'\\);\n\n// Quick sanity — module loads fine\nconsole.log\\('✅ Module loaded'\\);\n\n// Check prompt structure via a proxy\nconst orig = require\\('./backend/services/compareAnalyzer'\\);\n// Just verify the module still exports everything\nconst exports = Object.keys\\(orig\\);\nconsole.log\\('Exports:', exports.length, 'functions'\\);\nconsole.log\\('All required exports present:', \n  ['structureContract', 'compareContractsV2', 'runCompareV2Pipeline', 'buildV2Response'].every\\(k => exports.includes\\(k\\)\\)\n\\);\n\")",
+      "Bash(cd /c/Users/liebo/Documents/contract-ai/frontend && rm -f tsconfig.tsbuildinfo && npx tsc -b 2>&1 | head -30)",
+      "Bash(cd /c/Users/liebo/Documents/contract-ai/frontend && rm -f tsconfig.tsbuildinfo && npx tsc -b 2>&1 | head -10)",
+      "Bash(find /c/Users/liebo/Documents/contract-ai -maxdepth 2 -type f \\\\\\( -name \"*regression*.js\" -o -name \"*test-optimizer*.js\" \\\\\\) 2>/dev/null | grep -v node_modules)",
+      "Bash(cp \"/c/Users/liebo/Downloads/1769518909236-240403_Adam_Reuter_Obst_&_GemÃ¼se_FRV_OF_SP_FR_2024.pdf\" test-contracts/real_factoring_adam_reuter.pdf && cp \"/c/Users/liebo/Downloads/1769518956232-211103_EisQueen_GmbH_FRV_SF_SP_FR_MW.pdf\" test-contracts/real_factoring_eisqueen.pdf && cp \"/c/Users/liebo/Downloads/Police_id_587569122.pdf.pdf\" test-contracts/real_versicherungspolice.pdf && ls -la test-contracts/real_*.pdf)"
     ],
     "deny": [],
     "ask": []
