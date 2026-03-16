@@ -128,7 +128,7 @@ const optimizerV2ResultSchema = new mongoose.Schema({
     endDate: String,
     legalFramework: [String],
     keyDates: [{
-      type: String,
+      type: { type: String },
       date: String,
       description: String,
       _id: false
