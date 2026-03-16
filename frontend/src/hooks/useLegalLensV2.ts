@@ -85,7 +85,7 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
 
         // Klauseln verarbeiten
         if (parseResult.status === 'fulfilled' && parseResult.value.success) {
-          setClauses(parseResult.value.clauses);
+          setClauses(parseResult.value.clauses || []);
         } else {
           const errMsg = parseResult.status === 'rejected' ? parseResult.reason?.message : 'Parse fehlgeschlagen';
           setError(errMsg);
@@ -94,7 +94,7 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
 
         // Analysen verarbeiten
         if (analysesResult.status === 'fulfilled' && analysesResult.value.success) {
-          setAnalysesMap(analysesResult.value.analyses);
+          setAnalysesMap(analysesResult.value.analyses || {});
           setIsComplete(analysesResult.value.isComplete);
 
           const stats = analysesResult.value.stats;
@@ -177,24 +177,24 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
 
   // Stats berechnen
   const stats = useMemo(() => {
-    const analyses = Object.values(analysesMap);
+    const analyses = Object.values(analysesMap || {});
     return {
-      high: analyses.filter(a => a.riskLevel === 'high').length,
-      medium: analyses.filter(a => a.riskLevel === 'medium').length,
-      low: analyses.filter(a => a.riskLevel === 'low').length,
+      high: analyses.filter(a => a?.riskLevel === 'high').length,
+      medium: analyses.filter(a => a?.riskLevel === 'medium').length,
+      low: analyses.filter(a => a?.riskLevel === 'low').length,
       total: analyses.length
     };
   }, [analysesMap]);
 
   const overallRiskScore = useMemo(() => {
-    const analyses = Object.values(analysesMap);
+    const analyses = Object.values(analysesMap || {});
     if (analyses.length === 0) return 0;
-    return Math.round(analyses.reduce((sum, a) => sum + (a.riskScore || 0), 0) / analyses.length);
+    return Math.round(analyses.reduce((sum, a) => sum + (a?.riskScore || 0), 0) / analyses.length);
   }, [analysesMap]);
 
   // Kritischste Klausel (höchster riskScore)
   const worstClause = useMemo(() => {
-    if (clauses.length === 0 || Object.keys(analysesMap).length === 0) return null;
+    if (!clauses || clauses.length === 0 || Object.keys(analysesMap || {}).length === 0) return null;
     let worst: { clauseId: string; title: string | null; riskScore: number; explanation: string } | null = null;
     for (const clause of clauses) {
       const analysis = analysesMap[clause.id];

@@ -31,7 +31,7 @@ export default function ClauseNavigator({
   searchQuery
 }: ClauseNavigatorProps) {
   const filteredClauses = useMemo(() => {
-    return clauses.filter(c => {
+    return (clauses || []).filter(c => {
       if (c.nonAnalyzable) return false;
 
       if (filterRiskOnly) {

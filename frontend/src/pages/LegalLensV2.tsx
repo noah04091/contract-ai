@@ -80,14 +80,14 @@ export default function LegalLensV2() {
 
   // Batch-Analyse automatisch starten wenn Klauseln geladen aber nicht analysiert
   useEffect(() => {
-    if (clauses.length > 0 && !isComplete && !isAnalyzing && Object.keys(analysesMap).length === 0) {
+    if (clauses?.length > 0 && !isComplete && !isAnalyzing && Object.keys(analysesMap || {}).length === 0) {
       startBatchAnalysis();
     }
   }, [clauses.length, isComplete, isAnalyzing, analysesMap, startBatchAnalysis]);
 
   // Ausgewählte Klausel + Analyse
   const selectedClause = useMemo(
-    () => clauses.find(c => c.id === selectedClauseId) || null,
+    () => clauses?.find(c => c.id === selectedClauseId) || null,
     [clauses, selectedClauseId]
   );
   const selectedAnalysis = selectedClauseId ? analysesMap[selectedClauseId] || null : null;
