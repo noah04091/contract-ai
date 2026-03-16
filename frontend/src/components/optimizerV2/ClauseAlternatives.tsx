@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Scale, Shield, UserCheck } from 'lucide-react';
+import { Check, Scale, Shield, UserCheck, ArrowRight, Lightbulb, BarChart3 } from 'lucide-react';
 import type { ClauseOptimization, OptimizationMode, DiffOp } from '../../types/optimizerV2';
 import { MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -33,15 +33,53 @@ function renderDiff(diffs: DiffOp[]) {
   );
 }
 
+/** Parse PROBLEM / ÄNDERUNG / WIRKUNG from reasoning text */
+function parseReasoning(reasoning: string | undefined): { problem?: string; change?: string; impact?: string; raw: string } {
+  if (!reasoning) return { raw: '' };
+
+  const problemMatch = reasoning.match(/(?:PROBLEM|Problem)[:\s]*(.+?)(?=(?:ÄNDERUNG|Änderung|WIRKUNG|Wirkung|$))/si);
+  const changeMatch = reasoning.match(/(?:ÄNDERUNG|Änderung)[:\s]*(.+?)(?=(?:WIRKUNG|Wirkung|$))/si);
+  const impactMatch = reasoning.match(/(?:WIRKUNG|Wirkung)[:\s]*(.+?)$/si);
+
+  if (problemMatch || changeMatch || impactMatch) {
+    return {
+      problem: problemMatch?.[1]?.trim(),
+      change: changeMatch?.[1]?.trim(),
+      impact: impactMatch?.[1]?.trim(),
+      raw: reasoning
+    };
+  }
+
+  return { raw: reasoning };
+}
+
 export default function ClauseAlternatives({ clauseId, originalText, optimization, activeMode, onAcceptVersion }: Props) {
   const [selectedTab, setSelectedTab] = useState<OptimizationMode>(activeMode);
+  const [viewMode, setViewMode] = useState<'sideBySide' | 'diff'>('sideBySide');
 
   const version = optimization.versions[selectedTab];
   const diffs = version?.diffs || [];
+  const reasoning = parseReasoning(version?.reasoning);
 
   return (
     <div className={styles.alternatives}>
-      <h4 className={styles.alternativesTitle}>Optimierte Versionen</h4>
+      <div className={styles.alternativesHeader}>
+        <h4 className={styles.alternativesTitle}>Klauselvergleich</h4>
+        <div className={styles.viewToggle}>
+          <button
+            className={`${styles.viewToggleBtn} ${viewMode === 'sideBySide' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewMode('sideBySide')}
+          >
+            Vergleich
+          </button>
+          <button
+            className={`${styles.viewToggleBtn} ${viewMode === 'diff' ? styles.viewToggleBtnActive : ''}`}
+            onClick={() => setViewMode('diff')}
+          >
+            Diff
+          </button>
+        </div>
+      </div>
 
       {/* Mode tabs */}
       <div className={styles.alternativesTabs}>
@@ -64,30 +102,88 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
         })}
       </div>
 
-      {/* Diff view */}
-      <div className={styles.alternativeContent}>
-        {diffs.length > 0 ? (
-          renderDiff(diffs)
-        ) : (
-          <p className={styles.alternativeText}>{version?.text || originalText}</p>
-        )}
-      </div>
-
-      {/* Reasoning */}
-      {version?.reasoning && (
-        <p className={styles.alternativeReasoning}>{version.reasoning}</p>
+      {/* Side-by-side comparison */}
+      {viewMode === 'sideBySide' ? (
+        <div className={styles.comparisonGrid}>
+          <div className={styles.comparisonCol}>
+            <div className={styles.comparisonLabel}>
+              <span className={styles.comparisonLabelDot} style={{ background: '#8E8E93' }} />
+              Original
+            </div>
+            <div className={styles.comparisonText}>
+              {originalText}
+            </div>
+          </div>
+          <div className={styles.comparisonArrow}>
+            <ArrowRight size={16} />
+          </div>
+          <div className={styles.comparisonCol}>
+            <div className={styles.comparisonLabel}>
+              <span className={styles.comparisonLabelDot} style={{ background: MODE_LABELS[selectedTab].color }} />
+              {MODE_LABELS[selectedTab].label}
+            </div>
+            <div className={`${styles.comparisonText} ${styles.comparisonTextOptimized}`}>
+              {version?.text || originalText}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Inline diff view */
+        <div className={styles.alternativeContent}>
+          {diffs.length > 0 ? (
+            renderDiff(diffs)
+          ) : (
+            <p className={styles.alternativeText}>{version?.text || originalText}</p>
+          )}
+        </div>
       )}
+
+      {/* Structured reasoning (PROBLEM → ÄNDERUNG → WIRKUNG) */}
+      {reasoning.problem || reasoning.change || reasoning.impact ? (
+        <div className={styles.reasoningStructured}>
+          {reasoning.problem && (
+            <div className={styles.reasoningStep}>
+              <span className={styles.reasoningStepIcon} style={{ color: '#FF3B30' }}>Problem</span>
+              <span className={styles.reasoningStepText}>{reasoning.problem}</span>
+            </div>
+          )}
+          {reasoning.change && (
+            <div className={styles.reasoningStep}>
+              <span className={styles.reasoningStepIcon} style={{ color: '#007AFF' }}>Änderung</span>
+              <span className={styles.reasoningStepText}>{reasoning.change}</span>
+            </div>
+          )}
+          {reasoning.impact && (
+            <div className={styles.reasoningStep}>
+              <span className={styles.reasoningStepIcon} style={{ color: '#34C759' }}>Wirkung</span>
+              <span className={styles.reasoningStepText}>{reasoning.impact}</span>
+            </div>
+          )}
+        </div>
+      ) : reasoning.raw ? (
+        <p className={styles.alternativeReasoning}>{reasoning.raw}</p>
+      ) : null}
 
       {/* Market benchmark */}
       {optimization.marketBenchmark && (
-        <p className={styles.alternativeBenchmark}>{optimization.marketBenchmark}</p>
+        <div className={styles.benchmarkCard}>
+          <BarChart3 size={13} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <span className={styles.benchmarkLabel}>Marktstandard</span>
+            <span className={styles.benchmarkText}>{optimization.marketBenchmark}</span>
+          </div>
+        </div>
       )}
 
       {/* Negotiation advice */}
       {optimization.negotiationAdvice && (
-        <p className={styles.alternativeAdvice}>
-          <strong>Verhandlungstipp:</strong> {optimization.negotiationAdvice}
-        </p>
+        <div className={styles.adviceCard}>
+          <Lightbulb size={13} style={{ color: '#34C759', flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <span className={styles.adviceLabel}>Verhandlungstipp</span>
+            <span className={styles.adviceText}>{optimization.negotiationAdvice}</span>
+          </div>
+        </div>
       )}
 
       {/* Accept button */}
