@@ -13,9 +13,17 @@ const clauseAnalyzer = require('./clauseAnalyzer');
 
 class BatchAnalyzer {
   constructor() {
-    this.concurrency = 3; // Max 3 parallele GPT-Calls
     this.maxRetries = 2;
     this.baseRetryDelay = 1000; // 1s
+  }
+
+  /**
+   * Adaptive Concurrency — kleine Verträge schneller, große Rate-Limit-safe
+   */
+  getConcurrency(clauseCount) {
+    if (clauseCount < 50) return 5;
+    if (clauseCount <= 150) return 4;
+    return 3;
   }
 
   /**
@@ -48,7 +56,8 @@ class BatchAnalyzer {
     let errors = 0;
     const startTime = Date.now();
 
-    console.log(`🚀 [BatchAnalyzer] Start: ${analyzable.length} Klauseln (von ${clauses.length} gesamt), Branche: ${industry}`);
+    const concurrency = this.getConcurrency(analyzable.length);
+    console.log(`🚀 [BatchAnalyzer] Start: ${analyzable.length} Klauseln (von ${clauses.length} gesamt), Concurrency: ${concurrency}, Branche: ${industry}`);
 
     // Lade bereits vorhandene V2-Analysen für diesen Vertrag
     const existingAnalyses = await ClauseAnalysis.find(
@@ -83,9 +92,9 @@ class BatchAnalyzer {
       };
     }
 
-    // In Batches à `this.concurrency` parallel verarbeiten
-    for (let i = 0; i < toAnalyze.length; i += this.concurrency) {
-      const batch = toAnalyze.slice(i, i + this.concurrency);
+    // In Batches à `concurrency` parallel verarbeiten
+    for (let i = 0; i < toAnalyze.length; i += concurrency) {
+      const batch = toAnalyze.slice(i, i + concurrency);
 
       const batchResults = await Promise.allSettled(
         batch.map(clause => this.analyzeOne({
