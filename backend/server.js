@@ -1114,6 +1114,11 @@ const connectDB = async () => {
       const legalLensRoutes = require("./routes/legalLens");
       app.use("/api/legal-lens", verifyToken, checkSubscription, legalLensRoutes);
       console.log("✅ Legal Lens API geladen unter /api/legal-lens");
+
+      // Legal Lens V2 — Interaktiver Vertrags-Explorer (Batch-Analyse)
+      const legalLensV2Routes = require("./routes/legalLensV2");
+      app.use("/api/legal-lens/v2", verifyToken, checkSubscription, legalLensV2Routes);
+      console.log("✅ Legal Lens V2 API geladen unter /api/legal-lens/v2");
     } catch (err) {
       console.error("❌ Fehler bei Legal Lens API:", err);
     }
@@ -1793,9 +1798,9 @@ const connectDB = async () => {
         }
       }));
 
-      // Legal Pulse V2 Radar — Wöchentlicher Legal Source Scan (Montags 05:30 UTC)
-      // Läuft NACH V1 RSS-Sync (03:15) und VOR Digest-Emails (08:10)
-      cron.schedule("30 5 * * 1", withCronLock('pulse-v2-radar', async () => {
+      // Legal Pulse V2 Radar — 2x täglich Legal Source Scan (07:00 + 19:00 UTC)
+      // Läuft NACH V1 Legal Pulse Scan (06:00, syncs RSS→laws) damit neue Laws verfügbar sind
+      cron.schedule("0 7,19 * * *", withCronLock('pulse-v2-radar', async () => {
         console.log("[PulseV2Radar] Starte Legal Source Scan...");
         try {
           await withCronLogging('pulse-v2-radar', async () => {
