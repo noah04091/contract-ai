@@ -5,7 +5,7 @@ import styles from '../../styles/LegalLensV2.module.css';
 
 const ClauseSimulator = lazy(() => import('./ClauseSimulator'));
 
-export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, contractId, clauseIndex, totalClauses }: AnalysisPanelProps) {
+export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, contractId, clauseIndex, totalClauses, onNavigate }: AnalysisPanelProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showSimulator, setShowSimulator] = useState(false);
@@ -43,15 +43,37 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
         &times;
       </button>
 
-      {/* Clause Title + Position */}
+      {/* Clause Title + Position + Navigation */}
       <div className={styles.analysisPanelHeader}>
         <h3 className={styles.analysisPanelClauseTitle}>
           {clause.title || `Klausel ${clause.number || clause.id.replace('clause_', '')}`}
         </h3>
         {clauseIndex != null && totalClauses != null && (
-          <span className={styles.analysisPanelPosition}>
-            Klausel {clauseIndex + 1} von {totalClauses}
-          </span>
+          <div className={styles.analysisPanelNav}>
+            <span className={styles.analysisPanelPosition}>
+              Klausel {clauseIndex + 1} von {totalClauses}
+            </span>
+            {onNavigate && (
+              <div className={styles.analysisPanelNavBtns}>
+                <button
+                  className={styles.analysisPanelNavBtn}
+                  onClick={() => onNavigate('prev')}
+                  disabled={clauseIndex <= 0}
+                  title="Vorherige Klausel"
+                >
+                  {'\u2039'}
+                </button>
+                <button
+                  className={styles.analysisPanelNavBtn}
+                  onClick={() => onNavigate('next')}
+                  disabled={clauseIndex >= totalClauses - 1}
+                  title="N\u00e4chste Klausel"
+                >
+                  {'\u203A'}
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

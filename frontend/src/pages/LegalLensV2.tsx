@@ -125,6 +125,14 @@ export default function LegalLensV2() {
     selectClause(clauseId, 'navigator');
   }, [selectClause]);
 
+  const handleNavigateClause = useCallback((direction: 'prev' | 'next') => {
+    if (!clauses || clauses.length === 0 || selectedClauseIndex < 0) return;
+    const newIndex = direction === 'prev' ? selectedClauseIndex - 1 : selectedClauseIndex + 1;
+    if (newIndex >= 0 && newIndex < clauses.length) {
+      selectClause(clauses[newIndex].id, 'navigator');
+    }
+  }, [clauses, selectedClauseIndex, selectClause]);
+
   // Loading State
   if (isLoadingContract || isLoadingClauses) {
     return (
@@ -225,6 +233,7 @@ export default function LegalLensV2() {
           contractId={contractId || ''}
           clauseIndex={selectedClauseIndex >= 0 ? selectedClauseIndex : undefined}
           totalClauses={analyzableClauses}
+          onNavigate={handleNavigateClause}
         />
       </div>
     </div>

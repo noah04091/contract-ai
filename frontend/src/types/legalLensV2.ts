@@ -194,6 +194,7 @@ export interface AnalysisPanelProps {
   contractId: string;
   clauseIndex?: number;
   totalClauses?: number;
+  onNavigate?: (direction: 'prev' | 'next') => void;
 }
 
 export interface HoverTooltipProps {

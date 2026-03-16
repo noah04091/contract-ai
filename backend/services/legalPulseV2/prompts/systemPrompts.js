@@ -38,6 +38,22 @@ GATE-REGEL:
 → Kurzform: Finding NUR wenn Q1=JA UND (Q3=JA ODER klare Compliance-Abweichung).
 → Sonst: KEIN Finding. Das ist korrekt und gewünscht.
 
+SCHRITT 3 — Durchsetzbarkeitsanalyse (Enforceability Gate)
+Für JEDEN Befund, der das Decision Gate passiert hat, beantworte zusätzlich:
+E1: Ist diese Klausel nach deutschem Recht WIRKSAM und DURCHSETZBAR?
+E2: Gibt es eine konkrete gesetzliche Grundlage, die diese Klausel einschränkt oder unwirksam macht?
+     (z.B. §§ 305-310 BGB bei AGB, § 309 Nr.7 BGB bei Haftungsausschlüssen, § 138 BGB bei Sittenwidrigkeit)
+E3: Würde ein deutsches Gericht diese Klausel bei einer Überprüfung aufrechterhalten?
+
+ENFORCEABILITY-BEWERTUNG:
+→ "valid" = Klausel ist rechtlich wirksam und durchsetzbar
+→ "questionable" = Wirksamkeit zweifelhaft, könnte angefochten werden
+→ "likely_invalid" = Nach aktueller Rechtsprechung sehr wahrscheinlich unwirksam (mit konkreter Norm)
+→ "unknown" = Keine sichere Einschätzung möglich
+
+WICHTIG: Sage "likely_invalid" NUR mit konkreter Rechtsgrundlage (z.B. "§ 307 Abs. 1 BGB", "§ 309 Nr. 7 BGB").
+Eine Klausel, die lediglich ungünstig ist, ist NICHT unwirksam.
+
 ═══════════════════════════════════════════
 AUSGABE-FORMAT
 ═══════════════════════════════════════════
@@ -54,6 +70,7 @@ Für JEDEN Befund, der das Decision Gate passiert hat:
 - "confidence": 0-100
 - "reasoning": Deine juristische Begründung aus Schritt 1+2 (3-5 Sätze: Interpretation → Marktvergleich → Entscheidung)
 - "isIntentional": true wenn die Formulierung wahrscheinlich absichtlich so gewählt wurde
+- "enforceability": "valid" | "questionable" | "likely_invalid" | "unknown" — Ist die Klausel nach deutschem Recht durchsetzbar? Bei "likely_invalid" MUSS die konkrete Norm in "legalBasis" stehen (z.B. "§ 309 Nr. 7 BGB"). Bei "questionable" die Begründung in "reasoning" erklären.
 
 ═══════════════════════════════════════════
 QUALITÄTSREGELN
@@ -101,11 +118,12 @@ const DEEP_ANALYSIS_SCHEMA = {
           confidence: { type: "number" },
           reasoning: { type: "string" },
           isIntentional: { type: "boolean" },
+          enforceability: { type: "string", enum: ["valid", "questionable", "likely_invalid", "unknown"] },
         },
         required: [
           "clauseId", "category", "severity", "type", "title",
           "description", "legalBasis", "affectedText", "confidence",
-          "reasoning", "isIntentional",
+          "reasoning", "isIntentional", "enforceability",
         ],
         additionalProperties: false,
       },

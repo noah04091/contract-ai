@@ -34,6 +34,7 @@ const clauseFindingSchema = new mongoose.Schema({
   confidence: { type: Number, min: 0, max: 100 },
   reasoning: String,
   isIntentional: Boolean,
+  enforceability: { type: String, enum: ["valid", "questionable", "likely_invalid", "unknown"] },
 }, { _id: false });
 
 const costStageSchema = new mongoose.Schema({

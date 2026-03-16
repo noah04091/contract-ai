@@ -24,6 +24,13 @@ const CATEGORY_IMPORTANCE = {
   sonstiges: 0.8,
 };
 
+const ENFORCEABILITY_PENALTY = {
+  likely_invalid: 15,
+  questionable: 7,
+  valid: 0,
+  unknown: 0,
+};
+
 /**
  * Calculate risk sub-score from findings
  */
@@ -36,7 +43,8 @@ function calculateRiskScore(findings) {
     const severityWeight = SEVERITY_WEIGHTS[f.severity] || 0;
     const categoryWeight = CATEGORY_IMPORTANCE[f.category] || 1.0;
     const confidenceFactor = (f.confidence || 70) / 100;
-    totalPenalty += severityWeight * categoryWeight * confidenceFactor;
+    const enforceabilityPenalty = ENFORCEABILITY_PENALTY[f.enforceability] || 0;
+    totalPenalty += severityWeight * categoryWeight * confidenceFactor + enforceabilityPenalty;
   }
 
   // Cap penalty at 90 (never go fully to 0)
