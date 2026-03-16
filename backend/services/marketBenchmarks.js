@@ -425,9 +425,9 @@ function isPlausibleValue(value, metric) {
   const { min, best } = metric.market;
   if (typeof min !== 'number') return true; // Can't validate non-numeric markets
 
-  // Allow values within a generous range: 0.01x to 100x of the market range
-  const lowerBound = Math.min(min, best) * 0.01;
-  const upperBound = Math.max(min, best) * 100;
+  // Allow values within a reasonable range: 0.1x to 10x of the market range
+  const lowerBound = Math.min(min, best) * 0.1;
+  const upperBound = Math.max(min, best) * 10;
 
   if (value < lowerBound || value > upperBound) {
     console.log(`📊 Benchmark: Wert ${value} für "${metric.label}" unplausibel (erwartet ${lowerBound}–${upperBound}) — übersprungen`);
@@ -524,8 +524,16 @@ function runBenchmarkComparison(contractMap1, contractMap2, differences) {
     const values1 = extractValuesForMetric(metric, clauses1);
     const values2 = extractValuesForMetric(metric, clauses2);
 
-    const v1 = values1.length > 0 ? values1[0] : null;
-    const v2 = values2.length > 0 ? values2[0] : null;
+    // Pick the value closest to market typical (most likely the correct one)
+    const pickBest = (values) => {
+      if (values.length === 0) return null;
+      if (values.length === 1) return values[0];
+      return values.reduce((best, curr) =>
+        Math.abs(curr.value - metric.market.typical) < Math.abs(best.value - metric.market.typical) ? curr : best
+      );
+    };
+    const v1 = pickBest(values1);
+    const v2 = pickBest(values2);
 
     // Debug: log what was extracted
     if (v1 || v2) {
