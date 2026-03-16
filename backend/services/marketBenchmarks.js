@@ -248,7 +248,7 @@ const BENCHMARKS = {
   // ---- Factoring-Vertrag ----
   factoring: {
     label: 'Factoring-Vertrag',
-    keywords: ['factoring', 'factor', 'forderungsankauf', 'forderungsabtretung', 'delkredere', 'ankauflimit', 'factoringkunde', 'debitor', 'forderungskauf', 'zession', 'grenke', 'inkasso'],
+    keywords: ['factoring', 'factor', 'forderungsankauf', 'forderungsabtretung', 'delkredere', 'ankauflimit', 'factoringkunde', 'debitor', 'forderungskauf', 'zession', 'grenke', 'inkasso', 'globalzession', 'echtes factoring', 'unechtes factoring'],
     metrics: [
       {
         id: 'factoring_fee',
@@ -266,6 +266,15 @@ const BENCHMARKS = {
         searchKeys: ['ankauflimit', 'limit', 'ankaufrahmen', 'rahmen'],
         unit: 'EUR',
         market: { min: 10000, typical: 50000, best: 200000 },
+        direction: 'higher_better',
+      },
+      {
+        id: 'debtor_limit',
+        label: 'Einzeldebitorlimit',
+        clauseArea: 'payment',
+        searchKeys: ['debitorenlimit', 'limit je debitor', 'einzellimit', 'einzeldebitor', 'debitorlimit'],
+        unit: 'EUR',
+        market: { min: 5000, typical: 20000, best: 100000 },
         direction: 'higher_better',
       },
       {
