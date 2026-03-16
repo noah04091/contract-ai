@@ -370,7 +370,9 @@ function extractValuesForMetric(metric, clauses) {
 
     const keywordMatch = metric.searchKeys.some(k => textToSearch.includes(k));
 
-    if (!areaMatch && !keywordMatch) continue;
+    // STRICT: Require keyword match — area match alone is too broad
+    // (e.g. "Inkasso-Gebühr" clause shouldn't provide values for "Ankauflimit" just because both are payment)
+    if (!keywordMatch) continue;
 
     // Extract numeric values from keyValues
     if (clause.keyValues && typeof clause.keyValues === 'object') {
@@ -383,9 +385,13 @@ function extractValuesForMetric(metric, clauses) {
           keyLower.includes(sk) || valueLower.includes(sk)
         );
 
-        if (isRelevant || areaMatch) {
+        // Also accept if clause-level keyword matched AND key broadly matches the metric label
+        const labelMatch = keyLower.includes(metric.label.toLowerCase().split(' ')[0]) ||
+          metric.label.toLowerCase().split(' ').some(w => w.length > 3 && keyLower.includes(w));
+
+        if (isRelevant || (keywordMatch && (labelMatch || areaMatch))) {
           const num = extractNumberFromText(String(value));
-          if (num !== null) {
+          if (num !== null && isPlausibleValue(num, metric)) {
             results.push({ value: num, source: `${clause.section}: ${key}`, rawText: String(value) });
           }
         }
@@ -397,7 +403,7 @@ function extractValuesForMetric(metric, clauses) {
       const textsToCheck = [clause.summary || '', clause.originalText || ''];
       for (const text of textsToCheck) {
         const num = extractNumberFromText(text);
-        if (num !== null) {
+        if (num !== null && isPlausibleValue(num, metric)) {
           results.push({ value: num, source: clause.section, rawText: text.substring(0, 100) });
           break;
         }
@@ -406,6 +412,29 @@ function extractValuesForMetric(metric, clauses) {
   }
 
   return results;
+}
+
+/**
+ * Sanity check: Is this value plausible for this metric?
+ * Prevents obviously wrong extractions (e.g., Ankauflimit = 0.7 EUR)
+ */
+function isPlausibleValue(value, metric) {
+  if (value === null || value === undefined) return false;
+  if (value < 0) return false;
+
+  const { min, best } = metric.market;
+  if (typeof min !== 'number') return true; // Can't validate non-numeric markets
+
+  // Allow values within a generous range: 0.01x to 100x of the market range
+  const lowerBound = Math.min(min, best) * 0.01;
+  const upperBound = Math.max(min, best) * 100;
+
+  if (value < lowerBound || value > upperBound) {
+    console.log(`📊 Benchmark: Wert ${value} für "${metric.label}" unplausibel (erwartet ${lowerBound}–${upperBound}) — übersprungen`);
+    return false;
+  }
+
+  return true;
 }
 
 function extractNumberFromText(text) {
@@ -454,14 +483,17 @@ function assessValue(value, metric) {
     };
   }
 
+  // higher_better: best > typical > min (e.g., Haftungsgrenze: min=5000, typical=30000, best=100000)
   if (metric.direction === 'higher_better') {
-    if (value >= typical) return { rating: 'above', label: 'Über Marktstandard', marketTypical: typical };
+    if (value >= typical * 1.1) return { rating: 'above', label: 'Über Marktstandard', marketTypical: typical };
     if (value >= min) return { rating: 'standard', label: 'Marktüblich', marketTypical: typical };
     return { rating: 'below', label: 'Unter Marktstandard', marketTypical: typical };
   }
 
+  // lower_better: best < typical < min (e.g., Flatrate-Gebühr: best=1.0, typical=2.5, min=1.5)
+  // Note: "min" here means worst common value, "best" is the optimal value
   if (metric.direction === 'lower_better') {
-    if (value <= typical) return { rating: 'above', label: 'Über Marktstandard', marketTypical: typical };
+    if (value <= typical * 0.9) return { rating: 'above', label: 'Über Marktstandard', marketTypical: typical };
     if (value <= min) return { rating: 'standard', label: 'Marktüblich', marketTypical: typical };
     return { rating: 'below', label: 'Unter Marktstandard', marketTypical: typical };
   }
@@ -494,6 +526,11 @@ function runBenchmarkComparison(contractMap1, contractMap2, differences) {
 
     const v1 = values1.length > 0 ? values1[0] : null;
     const v2 = values2.length > 0 ? values2[0] : null;
+
+    // Debug: log what was extracted
+    if (v1 || v2) {
+      console.log(`📊 ${metric.label}: V1=${v1 ? `${v1.value} (${v1.source})` : 'n/a'}, V2=${v2 ? `${v2.value} (${v2.source})` : 'n/a'}`);
+    }
 
     if (!v1 && !v2) continue; // No data for this metric
 
