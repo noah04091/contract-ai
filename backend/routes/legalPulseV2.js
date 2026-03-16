@@ -403,6 +403,86 @@ router.get("/legal-alerts", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// GET /alert-metrics — Action Rate funnel for Legal Pulse alerts
+// Measures: created → opened (read) → fix generated → fix applied → resolved
+// ══════════════════════════════════════════════════════════════
+router.get("/alert-metrics", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    const pipeline = [
+      { $match: { userId } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          read: { $sum: { $cond: [{ $ne: ["$status", "unread"] }, 1, 0] } },
+          dismissed: { $sum: { $cond: [{ $eq: ["$status", "dismissed"] }, 1, 0] } },
+          resolved: { $sum: { $cond: [{ $eq: ["$status", "resolved"] }, 1, 0] } },
+          withFixes: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$resolvedClauseIds", []] } }, 0] }, 1, 0],
+            },
+          },
+          totalAffectedClauses: { $sum: { $size: { $ifNull: ["$affectedClauseIds", []] } } },
+          totalResolvedClauses: { $sum: { $size: { $ifNull: ["$resolvedClauseIds", []] } } },
+          bySeverity: {
+            $push: "$severity",
+          },
+        },
+      },
+    ];
+
+    const [result] = await db.collection("pulse_v2_legal_alerts").aggregate(pipeline).toArray();
+
+    if (!result || result.total === 0) {
+      return res.json({
+        funnel: { total: 0, opened: 0, fixApplied: 0, resolved: 0, dismissed: 0 },
+        rates: { openRate: 0, actionRate: 0, resolveRate: 0 },
+        clauses: { affected: 0, resolved: 0, resolveRate: 0 },
+        severity: { critical: 0, high: 0, medium: 0, low: 0 },
+      });
+    }
+
+    // Count severities
+    const severity = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const s of result.bySeverity || []) {
+      if (severity[s] !== undefined) severity[s]++;
+    }
+
+    const funnel = {
+      total: result.total,
+      opened: result.read,
+      fixApplied: result.withFixes,
+      resolved: result.resolved,
+      dismissed: result.dismissed,
+    };
+
+    const rates = {
+      openRate: Math.round((result.read / result.total) * 100),
+      actionRate: Math.round((result.withFixes / result.total) * 100),
+      resolveRate: Math.round((result.resolved / result.total) * 100),
+    };
+
+    const clauses = {
+      affected: result.totalAffectedClauses,
+      resolved: result.totalResolvedClauses,
+      resolveRate:
+        result.totalAffectedClauses > 0
+          ? Math.round((result.totalResolvedClauses / result.totalAffectedClauses) * 100)
+          : 0,
+    };
+
+    res.json({ funnel, rates, clauses, severity });
+  } catch (error) {
+    console.error("[PulseV2] Alert metrics error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Alert-Metriken" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // POST /auto-fix-clause — Generate law-compliant clause text via GPT-4o
 // ══════════════════════════════════════════════════════════════
 router.post("/auto-fix-clause", requirePremium, autoFixRateLimiter, async (req, res) => {

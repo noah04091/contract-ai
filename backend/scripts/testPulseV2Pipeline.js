@@ -579,6 +579,57 @@ async function runIntegrationTests() {
     assert(freshAge < STALE_THRESHOLD_DAYS, `Frische Analyse ist NICHT stale (${Math.round(freshAge)} Tage < ${STALE_THRESHOLD_DAYS})`);
 
     // ─────────────────────────────────────────────────
+    // TEST 10: Action Rate Metrics (Aggregation)
+    // ─────────────────────────────────────────────────
+    section("Test 10 — Action Rate Metrics");
+
+    // Calculate metrics from our test data (same logic as /alert-metrics endpoint)
+    const metricsPipeline = [
+      { $match: { userId: TEST_USER_ID } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          read: { $sum: { $cond: [{ $ne: ["$status", "unread"] }, 1, 0] } },
+          resolved: { $sum: { $cond: [{ $eq: ["$status", "resolved"] }, 1, 0] } },
+          withFixes: {
+            $sum: {
+              $cond: [{ $gt: [{ $size: { $ifNull: ["$resolvedClauseIds", []] } }, 0] }, 1, 0],
+            },
+          },
+          totalAffectedClauses: { $sum: { $size: { $ifNull: ["$affectedClauseIds", []] } } },
+          totalResolvedClauses: { $sum: { $size: { $ifNull: ["$resolvedClauseIds", []] } } },
+        },
+      },
+    ];
+
+    const [metrics] = await db.collection("pulse_v2_legal_alerts").aggregate(metricsPipeline).toArray();
+
+    assert(metrics !== null && metrics !== undefined, "Metrics-Aggregation liefert Ergebnis");
+    assertEqual(metrics.total, 1, "1 Alert existiert");
+    assertEqual(metrics.read, 1, "1 Alert gelesen (status=resolved ≠ unread)");
+    assertEqual(metrics.resolved, 1, "1 Alert resolved");
+    assertEqual(metrics.withFixes, 1, "1 Alert mit Fixes");
+    assertEqual(metrics.totalAffectedClauses, 2, "2 affected Clauses gesamt");
+    assertEqual(metrics.totalResolvedClauses, 2, "2 resolved Clauses gesamt");
+
+    // Calculate rates
+    const openRate = Math.round((metrics.read / metrics.total) * 100);
+    const actionRate = Math.round((metrics.withFixes / metrics.total) * 100);
+    const resolveRate = Math.round((metrics.resolved / metrics.total) * 100);
+    const clauseResolveRate = Math.round((metrics.totalResolvedClauses / metrics.totalAffectedClauses) * 100);
+
+    assertEqual(openRate, 100, "Open Rate = 100% (alle Alerts gelesen)");
+    assertEqual(actionRate, 100, "Action Rate = 100% (alle Alerts mit Fix)");
+    assertEqual(resolveRate, 100, "Resolve Rate = 100% (alle Alerts resolved)");
+    assertEqual(clauseResolveRate, 100, "Clause Resolve Rate = 100% (alle Klauseln gefixt)");
+
+    console.log(`\n  📊 Action Rate Funnel (Testdaten):`);
+    console.log(`     Alerts: ${metrics.total} → Opened: ${metrics.read} → Fixed: ${metrics.withFixes} → Resolved: ${metrics.resolved}`);
+    console.log(`     Open Rate: ${openRate}% | Action Rate: ${actionRate}% | Resolve Rate: ${resolveRate}%`);
+    console.log(`     Klauseln: ${metrics.totalResolvedClauses}/${metrics.totalAffectedClauses} resolved (${clauseResolveRate}%)`);
+
+    // ─────────────────────────────────────────────────
     // CLEANUP
     // ─────────────────────────────────────────────────
     section("Cleanup — Testdaten entfernen");
