@@ -244,6 +244,68 @@ const BENCHMARKS = {
       },
     ],
   },
+
+  // ---- Factoring-Vertrag ----
+  factoring: {
+    label: 'Factoring-Vertrag',
+    keywords: ['factoring', 'factor', 'forderungsankauf', 'forderungsabtretung', 'delkredere', 'ankauflimit', 'factoringkunde', 'debitor', 'forderungskauf', 'zession', 'grenke', 'inkasso'],
+    metrics: [
+      {
+        id: 'factoring_fee',
+        label: 'Flatrate-Gebühr',
+        clauseArea: 'payment',
+        searchKeys: ['flatrate', 'gebühr', 'factoringgebühr', 'provision', 'prozent'],
+        unit: '%',
+        market: { min: 1.5, typical: 2.5, best: 1.0 },
+        direction: 'lower_better',
+      },
+      {
+        id: 'purchase_limit',
+        label: 'Ankauflimit',
+        clauseArea: 'payment',
+        searchKeys: ['ankauflimit', 'limit', 'ankaufrahmen', 'rahmen'],
+        unit: 'EUR',
+        market: { min: 10000, typical: 50000, best: 200000 },
+        direction: 'higher_better',
+      },
+      {
+        id: 'notice_period',
+        label: 'Kündigungsfrist',
+        clauseArea: 'termination',
+        searchKeys: ['kündigungsfrist', 'kündigung', 'frist'],
+        unit: 'Monate',
+        market: { min: 1, typical: 3, best: 1 },
+        direction: 'lower_better',
+      },
+      {
+        id: 'security_retention',
+        label: 'Sicherungseinbehalt',
+        clauseArea: 'payment',
+        searchKeys: ['sicherungseinbehalt', 'einbehalt', 'sicherheit', 'retention'],
+        unit: '%',
+        market: { min: 5, typical: 10, best: 5 },
+        direction: 'lower_better',
+      },
+      {
+        id: 'deductible',
+        label: 'Selbstbehalt (Delkredere)',
+        clauseArea: 'liability',
+        searchKeys: ['selbstbehalt', 'delkredere', 'eigenanteil', 'forderungsausfall'],
+        unit: 'EUR/Jahr',
+        market: { min: 500, typical: 1000, best: 0 },
+        direction: 'lower_better',
+      },
+      {
+        id: 'inkasso_fee',
+        label: 'Inkasso-Gebühr',
+        clauseArea: 'payment',
+        searchKeys: ['inkasso', 'mahnwesen', 'inkassogebühr', 'beitreibung'],
+        unit: '%',
+        market: { min: 0.5, typical: 0.7, best: 0.3 },
+        direction: 'lower_better',
+      },
+    ],
+  },
 };
 
 // ============================================
@@ -256,8 +318,8 @@ function detectContractType(contractMap1, contractMap2) {
     contractMap2.contractType || '',
     contractMap1.subject || '',
     contractMap2.subject || '',
-    ...(contractMap1.clauses || []).map(c => c.title || ''),
-    ...(contractMap2.clauses || []).map(c => c.title || ''),
+    ...(contractMap1.clauses || []).map(c => `${c.title || ''} ${c.summary || ''}`),
+    ...(contractMap2.clauses || []).map(c => `${c.title || ''} ${c.summary || ''}`),
   ].join(' ').toLowerCase();
 
   let bestMatch = null;
