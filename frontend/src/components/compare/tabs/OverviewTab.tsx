@@ -361,7 +361,9 @@ function BenchmarkValueCell({
     return (
       <div className={styles.benchmarkCell}>
         <span className={styles.benchmarkCellLabel}>{label}</span>
-        <span className={styles.benchmarkCellValue} style={{ color: '#8e8e93' }}>—</span>
+        <span className={styles.benchmarkCellValue} style={{ color: '#a1a1a6', fontSize: '0.78rem', fontStyle: 'italic' }}>
+          Nicht im Vertrag erkennbar
+        </span>
       </div>
     );
   }
@@ -376,6 +378,9 @@ function BenchmarkValueCell({
       <span className={styles.benchmarkCellValue} style={{ color }}>
         {value.value} {unit}
       </span>
+      {value.source && (
+        <span className={styles.benchmarkSource}>{value.source}</span>
+      )}
       {value.assessment && value.assessment.rating !== 'info' && (
         <span className={styles.benchmarkRating} style={{ color, borderColor: `${color}30` }}>
           {value.assessment.label}

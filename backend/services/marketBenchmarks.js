@@ -422,6 +422,13 @@ function isPlausibleValue(value, metric) {
   if (value === null || value === undefined) return false;
   if (value < 0) return false;
 
+  // Unit-based hard limits
+  if (metric.unit === '%' && value > 100) return false;
+  if (metric.unit === 'EUR' && value < 1) return false;
+  if (metric.unit === 'Monate' && value > 120) return false;
+  if (metric.unit === 'Jahre' && value > 50) return false;
+  if (metric.unit === 'Tage' && value > 365) return false;
+
   const { min, best } = metric.market;
   if (typeof min !== 'number') return true; // Can't validate non-numeric markets
 
