@@ -85,7 +85,26 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
 
         // Klauseln verarbeiten
         if (parseResult.status === 'fulfilled' && parseResult.value.success) {
-          setClauses(parseResult.value.clauses || []);
+          // Backend gibt useStreaming: true zurück wenn kein Cache vorhanden
+          if (parseResult.value.useStreaming) {
+            console.log('[LegalLensV2] Kein Cache — starte Streaming-Parse...');
+            try {
+              const streamResult = await api.parseContractStream(contractId);
+              if (mountedRef.current && streamResult.success) {
+                setClauses(streamResult.clauses || []);
+              } else if (mountedRef.current) {
+                setError('Streaming-Parse lieferte keine Klauseln');
+                return;
+              }
+            } catch (streamErr) {
+              if (mountedRef.current) {
+                setError(streamErr instanceof Error ? streamErr.message : 'Streaming-Parse fehlgeschlagen');
+                return;
+              }
+            }
+          } else {
+            setClauses(parseResult.value.clauses || []);
+          }
         } else {
           const errMsg = parseResult.status === 'rejected' ? parseResult.reason?.message : 'Parse fehlgeschlagen';
           setError(errMsg);
@@ -98,11 +117,13 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
           setIsComplete(analysesResult.value.isComplete);
 
           const stats = analysesResult.value.stats;
-          setAnalysisProgress({
-            completed: stats.completed,
-            total: stats.total,
-            percentage: stats.percentage
-          });
+          if (stats) {
+            setAnalysisProgress({
+              completed: stats.completed,
+              total: stats.total,
+              percentage: stats.percentage
+            });
+          }
         }
       } catch (err) {
         if (mountedRef.current) {
@@ -165,7 +186,14 @@ export function useLegalLensV2(contractId: string | undefined): UseLegalLensV2Re
 
     try {
       const result = await api.parseContract(contractId);
-      if (mountedRef.current && result.success) {
+      if (!mountedRef.current) return;
+
+      if (result.success && result.useStreaming) {
+        const streamResult = await api.parseContractStream(contractId);
+        if (mountedRef.current && streamResult.success) {
+          setClauses(streamResult.clauses || []);
+        }
+      } else if (result.success && result.clauses) {
         setClauses(result.clauses);
       }
     } catch (err) {

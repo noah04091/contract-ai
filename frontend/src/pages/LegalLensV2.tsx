@@ -38,7 +38,7 @@ export default function LegalLensV2() {
     clauses,
     analysesMap,
     isLoadingContract,
-    // isLoadingClauses available via hook but not used yet
+    isLoadingClauses,
     isAnalyzing,
     analysisProgress,
     isComplete,
@@ -59,9 +59,13 @@ export default function LegalLensV2() {
     textContainerRef
   } = useClauseSync();
 
-  // PDF-URL laden
+  // PDF-URL laden — auto-switch to text wenn PDF nicht verfügbar
   useEffect(() => {
-    if (!contract?.s3Key) return;
+    if (!contract?.s3Key) {
+      // Kein S3-Key → direkt auf Text-Ansicht wechseln
+      if (viewMode === 'pdf') setViewMode('text');
+      return;
+    }
 
     const loadPdfUrl = async () => {
       try {
@@ -69,13 +73,18 @@ export default function LegalLensV2() {
         if (response.ok) {
           const data = await response.json();
           setPdfUrl(data.url || data.downloadUrl);
+        } else {
+          console.warn('[LegalLensV2] PDF-URL nicht verfügbar (Status:', response.status, ') — wechsle zu Text-Ansicht');
+          if (viewMode === 'pdf') setViewMode('text');
         }
       } catch (err) {
         console.warn('[LegalLensV2] PDF-URL konnte nicht geladen werden:', err);
+        if (viewMode === 'pdf') setViewMode('text');
       }
     };
 
     loadPdfUrl();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract?.s3Key]);
 
   // Batch-Analyse automatisch starten wenn Klauseln geladen aber nicht analysiert
@@ -83,7 +92,7 @@ export default function LegalLensV2() {
     if (clauses?.length > 0 && !isComplete && !isAnalyzing && Object.keys(analysesMap || {}).length === 0) {
       startBatchAnalysis();
     }
-  }, [clauses.length, isComplete, isAnalyzing, analysesMap, startBatchAnalysis]);
+  }, [clauses?.length, isComplete, isAnalyzing, analysesMap, startBatchAnalysis]);
 
   // Ausgewählte Klausel + Analyse
   const selectedClause = useMemo(
@@ -109,11 +118,11 @@ export default function LegalLensV2() {
   }, [selectClause]);
 
   // Loading State
-  if (isLoadingContract) {
+  if (isLoadingContract || isLoadingClauses) {
     return (
       <div className={styles.v2Loading}>
         <div className={styles.v2LoadingSpinner} />
-        <p>Vertrag wird geladen...</p>
+        <p>{isLoadingClauses ? 'Klauseln werden analysiert...' : 'Vertrag wird geladen...'}</p>
       </div>
     );
   }

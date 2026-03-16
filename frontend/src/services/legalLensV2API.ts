@@ -25,12 +25,14 @@ const V1_BASE = `${API_BASE_URL}/legal-lens`;
 
 /**
  * Parst einen Vertrag in Klauseln (nutzt bestehende v1-API)
+ * Gibt ggf. useStreaming: true zurück wenn kein Cache vorhanden
  */
 export async function parseContract(contractId: string): Promise<{
   success: boolean;
-  clauses: ParsedClauseV2[];
-  totalClauses: number;
-  riskSummary: { high: number; medium: number; low: number };
+  clauses?: ParsedClauseV2[];
+  useStreaming?: boolean;
+  totalClauses?: number;
+  riskSummary?: { high: number; medium: number; low: number };
 }> {
   const response = await fetchWithAuth(`${V1_BASE}/parse`, {
     method: 'POST',
@@ -43,6 +45,74 @@ export async function parseContract(contractId: string): Promise<{
   }
 
   return response.json();
+}
+
+/**
+ * Parst einen Vertrag via SSE-Streaming (Fallback wenn kein Cache)
+ * Verbindet sich mit dem parse-stream Endpoint und sammelt Klauseln
+ */
+export async function parseContractStream(contractId: string): Promise<{
+  success: boolean;
+  clauses: ParsedClauseV2[];
+}> {
+  const token = localStorage.getItem('token');
+
+  const response = await fetch(`${V1_BASE}/${contractId}/parse-stream`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Streaming-Parse fehlgeschlagen: ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error('Stream nicht verfügbar');
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let clauses: ParsedClauseV2[] = [];
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    let currentEvent = '';
+    let currentData = '';
+
+    for (const line of lines) {
+      if (line.startsWith('event: ')) {
+        currentEvent = line.substring(7).trim();
+      } else if (line.startsWith('data: ')) {
+        currentData = line.substring(6);
+      } else if (line === '' && currentEvent && currentData) {
+        try {
+          const data = JSON.parse(currentData);
+
+          if (currentEvent === 'clauses' && data.clauses) {
+            clauses = data.clauses;
+          } else if (currentEvent === 'error') {
+            console.warn('[LegalLensV2] Stream parse error:', data.error);
+          }
+        } catch (parseError) {
+          console.warn('[LegalLensV2] SSE parse error:', parseError);
+        }
+
+        currentEvent = '';
+        currentData = '';
+      }
+    }
+  }
+
+  return { success: clauses.length > 0, clauses };
 }
 
 // ============================================================
