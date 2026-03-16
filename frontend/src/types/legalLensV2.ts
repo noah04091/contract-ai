@@ -192,6 +192,8 @@ export interface AnalysisPanelProps {
   isOpen: boolean;
   onClose: () => void;
   contractId: string;
+  clauseIndex?: number;
+  totalClauses?: number;
 }
 
 export interface HoverTooltipProps {

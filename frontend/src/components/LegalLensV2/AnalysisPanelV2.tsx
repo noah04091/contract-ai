@@ -5,7 +5,7 @@ import styles from '../../styles/LegalLensV2.module.css';
 
 const ClauseSimulator = lazy(() => import('./ClauseSimulator'));
 
-export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, contractId }: AnalysisPanelProps) {
+export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, contractId, clauseIndex, totalClauses }: AnalysisPanelProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showSimulator, setShowSimulator] = useState(false);
@@ -42,6 +42,18 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
       <button className={styles.analysisPanelClose} onClick={onClose} title="Schliessen">
         &times;
       </button>
+
+      {/* Clause Title + Position */}
+      <div className={styles.analysisPanelHeader}>
+        <h3 className={styles.analysisPanelClauseTitle}>
+          {clause.title || `Klausel ${clause.number || clause.id.replace('clause_', '')}`}
+        </h3>
+        {clauseIndex != null && totalClauses != null && (
+          <span className={styles.analysisPanelPosition}>
+            Klausel {clauseIndex + 1} von {totalClauses}
+          </span>
+        )}
+      </div>
 
       {!analysis ? (
         <div className={styles.analysisPanelPending}>

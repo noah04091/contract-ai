@@ -94,12 +94,20 @@ export default function LegalLensV2() {
     }
   }, [clauses?.length, isComplete, isAnalyzing, analysesMap, startBatchAnalysis]);
 
-  // Ausgewählte Klausel + Analyse
+  // Ausgewählte Klausel + Analyse + Position
   const selectedClause = useMemo(
     () => clauses?.find(c => c.id === selectedClauseId) || null,
     [clauses, selectedClauseId]
   );
+  const selectedClauseIndex = useMemo(
+    () => selectedClauseId ? clauses?.findIndex(c => c.id === selectedClauseId) ?? -1 : -1,
+    [clauses, selectedClauseId]
+  );
   const selectedAnalysis = selectedClauseId ? analysesMap[selectedClauseId] || null : null;
+  const analyzableClauses = useMemo(
+    () => (clauses || []).filter(c => !c.nonAnalyzable).length,
+    [clauses]
+  );
 
   const handleBack = useCallback(() => {
     navigate(-1);
@@ -215,6 +223,8 @@ export default function LegalLensV2() {
           isOpen={isPanelOpen}
           onClose={clearSelection}
           contractId={contractId || ''}
+          clauseIndex={selectedClauseIndex >= 0 ? selectedClauseIndex : undefined}
+          totalClauses={analyzableClauses}
         />
       </div>
     </div>

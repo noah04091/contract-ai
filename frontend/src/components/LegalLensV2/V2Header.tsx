@@ -44,9 +44,9 @@ export default function V2Header({
         <RiskScoreGauge score={overallRiskScore} size={40} strokeWidth={3} />
 
         <div className={styles.v2HeaderStats}>
-          {stats.high > 0 && <span className={styles.statHigh}>{stats.high} kritisch</span>}
-          {stats.medium > 0 && <span className={styles.statMedium}>{stats.medium} pr\u00fcfen</span>}
-          {stats.low > 0 && <span className={styles.statLow}>{stats.low} sicher</span>}
+          {stats.high > 0 && <span className={styles.statHigh}>{'\u{1F534}'} {stats.high} kritisch</span>}
+          {stats.medium > 0 && <span className={styles.statMedium}>{'\u{1F7E1}'} {stats.medium} verhandeln</span>}
+          {stats.low > 0 && <span className={styles.statLow}>{'\u{1F7E2}'} {stats.low} sicher</span>}
         </div>
 
         {/* Kritischste Klausel */}
