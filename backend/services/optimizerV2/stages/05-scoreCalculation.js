@@ -95,23 +95,17 @@ function normalizeText(text) {
 }
 
 /**
- * Count keyword hits for a category across all clause text.
+ * Count keyword hits for a category across pre-normalized clause texts.
+ * Counts how many clauses mention the topic (not raw keyword frequency).
  * Returns { titleHits, bodyHits, totalScore }.
  */
-function countKeywordHits(clauses, pattern) {
+function countKeywordHits(preparedClauses, regex) {
   let titleHits = 0;
   let bodyHits = 0;
 
-  for (const clause of clauses) {
-    const titleNorm = normalizeText(clause.title);
-    const bodyNorm = normalizeText(clause.originalText);
-
-    // Count distinct matches in title (each match = 1 hit)
-    const titleMatches = titleNorm.match(new RegExp(pattern.source, 'gi'));
-    if (titleMatches) titleHits += titleMatches.length;
-
-    const bodyMatches = bodyNorm.match(new RegExp(pattern.source, 'gi'));
-    if (bodyMatches) bodyHits += bodyMatches.length;
+  for (const { titleNorm, bodyNorm } of preparedClauses) {
+    if (regex.test(titleNorm)) titleHits++;
+    if (regex.test(bodyNorm)) bodyHits++;
   }
 
   return { titleHits, bodyHits, totalScore: titleHits * 2 + bodyHits };
@@ -122,9 +116,9 @@ function countKeywordHits(clauses, pattern) {
  *
  * Results per category:
  *   - present (category assigned)         → full credit (1.0)
- *   - foundInContent, strong (score >= 3) → good credit (0.7)
- *   - foundInContent, weak (score 1-2)    → partial credit (0.4)
- *   - not found                           → no credit (0.0)
+ *   - titleHit >= 1 OR totalScore >= 3    → strong  (0.7 credit)
+ *   - totalScore 1-2 (body only)          → weak    (0.4 credit)
+ *   - not found                           → missing (0.0 credit)
  */
 function detectMissingClauses(clauses, structure) {
   const contractType = structure?.contractType || '';
@@ -134,46 +128,48 @@ function detectMissingClauses(clauses, structure) {
   const missingClauses = [];
   let completenessHits = 0;
 
-  // Pre-normalize patterns with Umlaut-safe versions
-  const normalizedPatterns = {};
+  // Pre-normalize clause texts ONCE (not per category)
+  const preparedClauses = clauses.map(c => ({
+    titleNorm: normalizeText(c.title),
+    bodyNorm: normalizeText(c.originalText)
+  }));
+
+  // Pre-compile Umlaut-safe regex objects ONCE
+  const compiledPatterns = {};
   for (const [cat, pattern] of Object.entries(CATEGORY_KEYWORDS)) {
-    // Create Umlaut-safe version of pattern
     const safeSource = pattern.source
       .replace(/ä/g, '(?:ä|ae)').replace(/ö/g, '(?:ö|oe)')
       .replace(/ü/g, '(?:ü|ue)').replace(/ß/g, '(?:ß|ss)');
-    normalizedPatterns[cat] = new RegExp(safeSource, 'i');
+    compiledPatterns[cat] = new RegExp(safeSource, 'i');
   }
 
   for (const cat of essentialCategories) {
-    // Direct category match
     if (presentCategories.has(cat)) {
       completenessHits++;
       continue;
     }
 
-    // Semantic presence detection with hit counting
-    const pattern = normalizedPatterns[cat] || CATEGORY_KEYWORDS[cat];
-    const hits = pattern ? countKeywordHits(clauses, pattern) : { titleHits: 0, bodyHits: 0, totalScore: 0 };
+    // Semantic presence detection with pre-compiled regex
+    const regex = compiledPatterns[cat];
+    const hits = regex ? countKeywordHits(preparedClauses, regex) : { titleHits: 0, bodyHits: 0, totalScore: 0 };
 
     const severity = CATEGORY_IMPORTANCE_FLOOR[cat] || 'medium';
     const label = CATEGORY_LABELS_DE[cat] || cat;
 
-    if (hits.totalScore >= 3) {
-      // Strong presence — topic clearly exists but as part of another clause
+    // titleHit >= 1 → always strong (e.g. "§ 12 Haftung" is unambiguous)
+    if (hits.titleHits >= 1 || hits.totalScore >= 3) {
       completenessHits += 0.7;
       missingClauses.push({
         category: cat, categoryLabel: label, severity, foundInContent: true,
         recommendation: `Inhalte zu "${label}" sind im Vertrag vorhanden, aber nicht als eigenständige Klausel ausgewiesen.`
       });
     } else if (hits.totalScore >= 1) {
-      // Weak presence — topic mentioned but not substantively addressed
       completenessHits += 0.4;
       missingClauses.push({
         category: cat, categoryLabel: label, severity, foundInContent: true,
         recommendation: `"${label}" wird im Vertrag nur am Rande erwähnt. Eine ausführliche Regelung wird empfohlen.`
       });
     } else {
-      // Not found at all
       missingClauses.push({
         category: cat, categoryLabel: label, severity, foundInContent: false,
         recommendation: `Keine Regelung zu "${label}" erkannt. Eine explizite Klausel wird dringend empfohlen.`

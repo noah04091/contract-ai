@@ -314,22 +314,36 @@ const CLAUSE_ANALYSIS_SCHEMA = {
 // STAGE 4: Optimization Generation (batched)
 // ============================================================
 const OPTIMIZATION_GENERATION_PROMPT = (contractType, jurisdiction, parties, industry) =>
-`Du bist ein Elite-Vertragsanwalt und Verhandlungsexperte.
+`Du bist ein Elite-Vertragsanwalt und Verhandlungsexperte mit 25+ Jahren Erfahrung.
 Vertragstyp: ${contractType}
 Jurisdiktion: ${jurisdiction || 'Deutschland'}
 Branche: ${industry || 'nicht spezifiziert'}
 Parteien: ${parties?.map(p => `${p.role}: ${p.name || 'N/A'}`).join(', ') || 'N/A'}
 
-Deine Aufgabe: Erstelle für jede Klausel, die Verbesserungspotenzial hat, DREI optimierte Versionen.
+Deine Aufgabe: Optimiere Vertragsklauseln nach dem DIAGNOSE-FIRST-Prinzip.
 
 Für jede Klausel erhältst du:
 - Den Originaltext
-- Die Analyse (Stärken, Schwächen, Risiken)
+- Die juristische Diagnose (Stärken, Schwächen, Risiken, Machtverteilung, Perspektiven)
 
-Du erstellst DREI Versionen:
+DEIN VORGEHEN (für jede Klausel):
+
+Schritt 1 — DIAGNOSE VERSTEHEN:
+Lies die mitgelieferte Analyse. Identifiziere die KERNPROBLEME:
+- Was genau ist rechtlich schwach oder riskant?
+- Welche Partei wird benachteiligt und wodurch?
+- Was fehlt im Vergleich zum Marktstandard?
+
+Schritt 2 — ÄNDERUNGSBEDARF ABLEITEN:
+Bestimme die KONKRETEN Änderungen, die nötig sind:
+- Welche Formulierungen müssen gestrichen, ergänzt oder umformuliert werden?
+- Welche Rechtsgrundlagen (z.B. § 307 BGB, § 309 BGB) erfordern Anpassungen?
+
+Schritt 3 — DREI VERSIONEN SCHREIBEN:
+Erst jetzt formulierst du die optimierten Klauseln:
 
 1. "neutral": Fair und ausgewogen für BEIDE Parteien
-   → Behebe Schwächen, wahre die Balance, orientiere dich am Marktstandard
+   → Behebe die diagnostizierten Schwächen, wahre die Balance, orientiere dich am Marktstandard
 
 2. "proCreator": Optimiert zugunsten des ERSTELLERS/ANBIETERS
    → Maximaler Schutz für den Vertragsersteller, rechtlich noch vertretbar
@@ -337,19 +351,26 @@ Du erstellst DREI Versionen:
 3. "proRecipient": Optimiert zugunsten des EMPFÄNGERS/KUNDEN
    → Maximaler Schutz für die empfangende Partei, rechtlich noch vertretbar
 
+REASONING — DIAGNOSE FIRST:
+Das "reasoning"-Feld jeder Version MUSS diesem Schema folgen:
+1. PROBLEM: Was genau ist das Kernproblem der Original-Klausel? (1 Satz)
+2. ÄNDERUNG: Was wurde konkret geändert und warum? (1-2 Sätze)
+3. WIRKUNG: Welchen konkreten Vorteil bringt die Änderung? (1 Satz)
+
+BEISPIEL für gutes Reasoning:
+"PROBLEM: Die Original-Klausel schließt jegliche Haftung pauschal aus, was nach § 309 Nr. 7 BGB unwirksam ist. ÄNDERUNG: Haftung auf den typischen, vorhersehbaren Schaden begrenzt und Haftung für Vorsatz/grobe Fahrlässigkeit beibehalten. WIRKUNG: Klausel ist jetzt AGB-fest und schützt den Anbieter wirksam vor Bagatellansprüchen."
+
 REGELN:
 - Schreibe VOLLSTÄNDIGE, einsetzbare Klauseln. Keine Platzhalter wie [Name] oder [Datum].
-  Verwende stattdessen die konkreten Parteinamen oder allgemeine Bezeichnungen.
-- Jede Version braucht ein "reasoning" das erklärt WARUM diese Formulierung besser ist.
+  Verwende die konkreten Parteinamen oder allgemeine Bezeichnungen.
 - Wenn eine Klausel bereits STARK ist, setze "needsOptimization" auf false.
 - Orientiere dich am geltenden Recht (${jurisdiction || 'deutsches Recht'}).
 - Die optimierten Texte müssen sich SPÜRBAR vom Original unterscheiden.
   Keine kosmetischen Änderungen. Echter Mehrwert.
+- Nutze die mitgelieferten Perspektiven (Ersteller/Empfänger/Kompromiss) als Grundlage für die drei Versionen.
 - "marketBenchmark": KONKRETE qualitative Einschätzung im Marktvergleich. NICHT einfach "marktüblich", sondern:
-  - "Diese Haftungsklausel ist restriktiver als bei typischen ${contractType}-Verträgen in der Branche üblich."
-  - "Diese Kündigungsklausel erlaubt dem Anbieter eine sehr weitgehende Vertragsbeendigung — strenger als in den meisten vergleichbaren Verträgen."
-  - "Die Zahlungsbedingungen entsprechen dem Branchenstandard, sind aber für den Auftragnehmer ungünstiger als in modernen Verträgen üblich."
-  Nutze Formulierungen wie "strenger als üblich", "marktüblich", "günstiger als Branchendurchschnitt", "nachteiliger als in X% vergleichbarer Verträge".
+  "Diese Haftungsklausel ist restriktiver als bei typischen ${contractType}-Verträgen in der Branche üblich."
+  Nutze Formulierungen wie "strenger als üblich", "marktüblich", "günstiger als Branchendurchschnitt".
 - "negotiationAdvice": Ein KONKRETER, umsetzbarer Tipp für die Vertragsverhandlung.
   Nicht generisch ("Klausel anpassen"), sondern spezifisch ("Verhandeln Sie eine gegenseitige Kündigungsfrist von mindestens 3 Monaten, da einseitige Kündigungsrechte in ${contractType}-Verträgen zunehmend kritisch gesehen werden.").`;
 

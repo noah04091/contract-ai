@@ -60,7 +60,7 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
 
     onProgress(progressBase, `Optimiere Klauseln ${batchIdx * BATCH_SIZE + 1}-${Math.min((batchIdx + 1) * BATCH_SIZE, allToOptimize.length)}...`);
 
-    // Build rich context for each clause
+    // Build rich context for each clause — pass ALL Stage 3 analysis data
     const clauseContexts = batch.map(clause => {
       const analysis = analysisMap.get(clause.id);
       return [
@@ -70,12 +70,20 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
         `ORIGINALTEXT:`,
         clause.originalText,
         ``,
-        `ANALYSE:`,
+        `DIAGNOSE (aus juristischer Analyse):`,
         `- Stärke: ${analysis?.strength || 'unbekannt'}`,
         `- Risiko: ${analysis?.riskLevel || 0}/10 (${analysis?.riskType || 'unbekannt'})`,
+        `- Machtverteilung: ${analysis?.powerBalance || 'unbekannt'}`,
+        `- Marktvergleich: ${analysis?.marketComparison || 'unbekannt'}`,
         `- Bedenken: ${analysis?.concerns?.join('; ') || 'keine'}`,
         `- Juristische Bewertung: ${analysis?.legalAssessment || 'nicht verfügbar'}`,
+        `- Wirtschaftliches Risiko: ${analysis?.economicRiskAssessment || 'nicht verfügbar'}`,
         `- Rechtsgrundlagen: ${analysis?.legalReferences?.join(', ') || 'keine'}`,
+        ``,
+        `PERSPEKTIVEN:`,
+        `- Ersteller/Anbieter: ${analysis?.creatorView || '-'}`,
+        `- Empfänger/Kunde: ${analysis?.recipientView || '-'}`,
+        `- Neutraler Kompromiss: ${analysis?.neutralRecommendation || '-'}`,
       ].join('\n');
     }).join('\n\n---\n\n');
 
