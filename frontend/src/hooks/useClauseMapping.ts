@@ -79,7 +79,6 @@ function calculateBoundingBox(
 function findClauseInPage(
   clause: ParsedClauseV2,
   pageSpans: Element[],
-  pageText: string,
   pageTextNorm: string
 ): { startIdx: number; endIdx: number } | null {
   // Strategie 1: Anchor-Text aus matchingData verwenden
@@ -95,7 +94,7 @@ function findClauseInPage(
 
     if (match && match.index !== undefined) {
       // Finde Span-Bereich der zum Match gehört
-      return findSpanRange(pageSpans, match.index, clause.matchingData?.charLength || clause.text.length, pageText);
+      return findSpanRange(pageSpans, match.index, clause.matchingData?.charLength || clause.text.length);
     }
   }
 
@@ -105,7 +104,7 @@ function findClauseInPage(
     const idx = pageTextNorm.indexOf(normAnchor);
 
     if (idx !== -1) {
-      return findSpanRange(pageSpans, idx, clause.matchingData?.charLength || clause.text.length, pageText);
+      return findSpanRange(pageSpans, idx, clause.matchingData?.charLength || clause.text.length);
     }
   }
 
@@ -149,8 +148,7 @@ function findClauseInPage(
 function findSpanRange(
   spans: Element[],
   charOffset: number,
-  expectedLength: number,
-  _fullText: string
+  expectedLength: number
 ): { startIdx: number; endIdx: number } | null {
   let currentOffset = 0;
   let startIdx = -1;
@@ -219,7 +217,7 @@ export function useClauseMapping() {
     const regions: ClauseRegion[] = [];
 
     for (const clause of candidateClauses) {
-      const match = findClauseInPage(clause, spans, pageText, pageTextNorm);
+      const match = findClauseInPage(clause, spans, pageTextNorm);
       if (!match) continue;
 
       const matchedSpans = spans.slice(match.startIdx, match.endIdx + 1);

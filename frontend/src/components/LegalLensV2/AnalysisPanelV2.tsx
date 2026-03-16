@@ -64,7 +64,6 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
             {/* Was bedeutet das für DICH? */}
             {analysis.realWorldImpact && (
               <Section
-                id="impact"
                 title="Auswirkungen f\u00fcr dich"
                 icon="&#x1F3AF;"
                 isExpanded={expandedSections.has('impact') || isHighRisk}
@@ -84,7 +83,6 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
 
             {/* Risiko-Bewertung */}
             <Section
-              id="risk"
               title={`Risiko-Bewertung (${analysis.riskScore}/100)`}
               icon="&#x1F4CA;"
               isExpanded={expandedSections.has('risk') || isHighRisk}
@@ -99,7 +97,6 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
 
             {/* Fairness & Marktvergleich */}
             <Section
-              id="fairness"
               title="Fairness & Marktvergleich"
               icon="&#x2696;"
               isExpanded={expandedSections.has('fairness')}
@@ -115,7 +112,6 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
 
             {/* Verhandlungstipp */}
             <Section
-              id="negotiation"
               title="Verhandlungstipp"
               icon="&#x1F4A1;"
               isExpanded={expandedSections.has('negotiation') || isHighRisk}
@@ -189,14 +185,12 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
 // ============================================================
 
 function Section({
-  id: _id,
   title,
   icon,
   isExpanded,
   onToggle,
   children
 }: {
-  id: string;
   title: string;
   icon: string;
   isExpanded: boolean;

@@ -28,7 +28,7 @@ export default function LegalLensV2() {
   // State
   const [viewMode, setViewMode] = useState<ViewMode>('pdf');
   const [filterRiskOnly, setFilterRiskOnly] = useState(false);
-  const [searchQuery, _setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [navOpen, setNavOpen] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
@@ -38,7 +38,7 @@ export default function LegalLensV2() {
     clauses,
     analysesMap,
     isLoadingContract,
-    isLoadingClauses: _isLoadingClauses,
+    // isLoadingClauses available via hook but not used yet
     isAnalyzing,
     analysisProgress,
     isComplete,
