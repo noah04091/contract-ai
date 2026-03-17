@@ -370,7 +370,26 @@ function generateInsight(
   if (!typical || typical === 0) return null;
   if (metric.direction === 'info_only') return null;
 
-  // Pick the most interesting value (biggest deviation from typical)
+  // When both contracts have values: compare them directly
+  if (v1 && v2 && v1.value !== v2.value) {
+    const diff12 = Math.abs(v1.value - v2.value);
+    const pctDiff12 = Math.round((diff12 / Math.max(v1.value, v2.value)) * 100);
+
+    if (pctDiff12 >= 10) {
+      const isLowerBetter = metric.direction === 'lower_better';
+      const better = isLowerBetter
+        ? (v1.value < v2.value ? 'Vertrag 1' : 'Vertrag 2')
+        : (v1.value > v2.value ? 'Vertrag 1' : 'Vertrag 2');
+      const worse = better === 'Vertrag 1' ? 'Vertrag 2' : 'Vertrag 1';
+
+      if (pctDiff12 >= 30) {
+        return `${better} ist hier deutlich besser (+${pctDiff12}% Vorteil gegenüber ${worse}).`;
+      }
+      return `${better} ist hier besser (+${pctDiff12}% Vorteil bei ${metric.label}).`;
+    }
+  }
+
+  // Single value or small difference: compare against market
   const vals: { value: number; label: string }[] = [];
   if (v1) vals.push({ value: v1.value, label: 'Vertrag 1' });
   if (v2) vals.push({ value: v2.value, label: 'Vertrag 2' });
@@ -383,23 +402,18 @@ function generateInsight(
   const diff = mostDeviated.value - typical;
   const pctDiff = Math.round(Math.abs(diff / typical) * 100);
 
-  // Only show insight if deviation is meaningful (>= 10%)
   if (pctDiff < 10) return null;
 
   if (metric.direction === 'lower_better') {
-    if (diff > 0) {
-      return `${mostDeviated.label} liegt ${pctDiff}% über dem Marktdurchschnitt — das bedeutet höhere Kosten.`;
-    } else {
-      return `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktdurchschnitt — ein guter Wert.`;
-    }
+    return diff > 0
+      ? `${mostDeviated.label} liegt ${pctDiff}% über dem Marktdurchschnitt — das bedeutet höhere Kosten.`
+      : `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktdurchschnitt — ein guter Wert.`;
   }
 
   if (metric.direction === 'higher_better') {
-    if (diff > 0) {
-      return `${mostDeviated.label} bietet ${pctDiff}% mehr als marktüblich bei ${metric.label}.`;
-    } else {
-      return `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktstandard bei ${metric.label}.`;
-    }
+    return diff > 0
+      ? `${mostDeviated.label} bietet ${pctDiff}% mehr als marktüblich bei ${metric.label}.`
+      : `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktstandard bei ${metric.label}.`;
   }
 
   return null;
@@ -439,8 +453,16 @@ function BenchmarkBar({
     return '#8e8e93';
   };
 
+  const leftLabel = direction === 'lower_better' ? 'günstig' : 'niedrig';
+  const rightLabel = direction === 'lower_better' ? 'teuer' : 'hoch';
+
   return (
     <div className={styles.benchmarkBarContainer}>
+      <div className={styles.benchmarkBarLabels}>
+        <span>{leftLabel}</span>
+        <span>Markt</span>
+        <span>{rightLabel}</span>
+      </div>
       <div className={styles.benchmarkBarTrack}>
         {/* Market typical marker */}
         <div className={styles.benchmarkBarTypical} style={{ left: `${typicalPos}%` }} />

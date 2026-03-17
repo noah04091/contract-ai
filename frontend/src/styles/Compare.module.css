@@ -1107,6 +1107,7 @@
 
 /* Benchmark Bar */
 .benchmarkBarContainer { margin-top: 6px; width: 100%; }
+.benchmarkBarLabels { display: flex; justify-content: space-between; font-size: 0.62rem; color: #a1a1a6; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.03em; }
 .benchmarkBarTrack { position: relative; height: 6px; background: #e8e8ed; border-radius: 3px; }
 .benchmarkBarTypical { position: absolute; top: -2px; width: 2px; height: 10px; background: #86868b; border-radius: 1px; transform: translateX(-50%); }
 .benchmarkBarDot { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transform: translateX(-50%); }
