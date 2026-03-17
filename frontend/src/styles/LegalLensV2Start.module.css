@@ -1,0 +1,274 @@
+/* ============================================================
+   Legal Lens V2 — Start Page
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ---- Hero ---- */
+.hero {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.heroTitle {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+}
+
+.heroAccent {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroSub {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 20px;
+  line-height: 1.6;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(99, 102, 241, 0.08);
+  color: #6366f1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ---- Grid ---- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Card ---- */
+.card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 28px;
+}
+
+.cardTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px;
+}
+
+.cardSub {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 20px;
+}
+
+/* ---- Drop Zone ---- */
+.dropZone {
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbfc;
+}
+
+.dropZone:hover {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.dropZoneActive {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.dropZoneLocked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropZoneLocked:hover {
+  border-color: #e2e8f0;
+  background: #fafbfc;
+}
+
+.dropIcon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.dropText {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  margin: 0 0 4px;
+}
+
+.dropMeta {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.uploading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.uploadSpinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #ef4444;
+  font-size: 13px;
+}
+
+/* ---- Search ---- */
+.searchBox {
+  margin-bottom: 12px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fafbfc;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: #6366f1;
+}
+
+/* ---- Contract List ---- */
+.contractList {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contractRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.contractRow:hover {
+  background: #f1f5f9;
+}
+
+.contractRowLocked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.contractRowLocked:hover {
+  background: transparent;
+}
+
+.contractInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.contractName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contractMeta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.contractArrow {
+  font-size: 18px;
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  gap: 12px;
+}

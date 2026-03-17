@@ -101,6 +101,7 @@ const LegalPulse = lazy(() => import("./pages/LegalPulse"));
 const PulseV2 = lazy(() => import("./pages/PulseV2"));
 const LegalLens = lazy(() => import("./pages/LegalLens")); // 🔍 NEU: Interaktive Vertragsanalyse
 const LegalLensStart = lazy(() => import("./pages/LegalLensStart")); // 🔍 NEU: Legal Lens Startseite
+const LegalLensV2Start = lazy(() => import("./pages/LegalLensV2Start")); // 🔍 Legal Lens V2 — Startseite
 const LegalLensV2 = lazy(() => import("./pages/LegalLensV2")); // 🔍 Legal Lens V2 — Interaktiver Vertrags-Explorer
 const ClauseLibraryPage = lazy(() => import("./pages/ClauseLibraryPage")); // 📚 NEU: Klausel-Bibliothek
 const ContractBuilder = lazy(() => import("./pages/ContractBuilder")); // 🔧 NEU: ContractForge - Visueller Vertragsbaukasten
@@ -260,7 +261,8 @@ function AppWithLoader() {
             <Route path="/legal-lens" element={<RequireAuth><LegalLensStart /></RequireAuth>} />
             <Route path="/legal-lens/:contractId" element={<RequireAuth><LegalLens /></RequireAuth>} />
 
-            {/* 🔍 Legal Lens V2 — Eigenständig, nirgendwo verlinkt */}
+            {/* 🔍 Legal Lens V2 — Start + Explorer */}
+            <Route path="/legal-lens-v2" element={<RequireAuth><LegalLensV2Start /></RequireAuth>} />
             <Route path="/legal-lens-v2/:contractId" element={<RequireAuth><LegalLensV2 /></RequireAuth>} />
 
             {/* 📚 Klausel-Bibliothek */}
