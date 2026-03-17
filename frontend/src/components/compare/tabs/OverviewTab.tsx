@@ -386,8 +386,6 @@ function generateInsight(
   // Only show insight if deviation is meaningful (>= 10%)
   if (pctDiff < 10) return null;
 
-  const unit = metric.unit;
-
   if (metric.direction === 'lower_better') {
     if (diff > 0) {
       return `${mostDeviated.label} liegt ${pctDiff}% über dem Marktdurchschnitt — das bedeutet höhere Kosten.`;
