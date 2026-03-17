@@ -95,21 +95,18 @@ router.post('/:contractId/analyze-all', batchAnalysisLimiter, async (req, res) =
     })}\n\n`);
 
     // Strukturierten Vertragskontext aufbauen für bessere Analyse
-    const contextParts = [];
+    const meta = [];
+    if (contract.analysis?.contractType) meta.push(`Type: ${contract.analysis.contractType}`);
+    if (contract.analysis?.parties?.provider) meta.push(`Provider: ${contract.analysis.parties.provider}`);
+    if (contract.analysis?.parties?.customer) meta.push(`Customer: ${contract.analysis.parties.customer}`);
+    if (contract.analysis?.keyTerms?.duration || contract.laufzeit) meta.push(`Duration: ${contract.analysis?.keyTerms?.duration || contract.laufzeit}`);
+    if (contract.analysis?.keyTerms?.payment) meta.push(`Payment: ${contract.analysis.keyTerms.payment}`);
+    if (contract.analysis?.keyTerms?.cancellation || contract.kuendigung) meta.push(`Cancellation: ${contract.analysis?.keyTerms?.cancellation || contract.kuendigung}`);
+    if (contract.analysis?.keyTerms?.deliverables) meta.push(`Scope: ${contract.analysis.keyTerms.deliverables}`);
 
-    // Strukturierte Metadaten (falls aus vorheriger Analyse vorhanden)
-    if (contract.analysis?.contractType) contextParts.push(`Vertragstyp: ${contract.analysis.contractType}`);
-    if (contract.analysis?.parties?.provider) contextParts.push(`Anbieter: ${contract.analysis.parties.provider}`);
-    if (contract.analysis?.parties?.customer) contextParts.push(`Kunde: ${contract.analysis.parties.customer}`);
-    if (contract.analysis?.keyTerms?.duration) contextParts.push(`Laufzeit: ${contract.analysis.keyTerms.duration}`);
-    if (contract.analysis?.keyTerms?.payment) contextParts.push(`Zahlung: ${contract.analysis.keyTerms.payment}`);
-    if (contract.analysis?.keyTerms?.cancellation) contextParts.push(`Kündigung: ${contract.analysis.keyTerms.cancellation}`);
-    if (contract.laufzeit) contextParts.push(`Laufzeit: ${contract.laufzeit}`);
-
-    // Rohtext als Fallback (gekürzt)
     const rawText = (contract.content || contract.extractedText || contract.fullText || '').substring(0, 800);
-    const contractContext = contextParts.length > 0
-      ? contextParts.join('\n') + '\n---\n' + rawText
+    const contractContext = meta.length > 0
+      ? `[CONTRACT]\n${meta.join('\n')}\n\n[TEXT]\n${rawText}`
       : rawText;
 
     // Batch-Analyse starten
