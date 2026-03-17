@@ -335,6 +335,16 @@ function BenchmarkRow({ metric }: { metric: BenchmarkMetric }) {
   const v2 = metric.contract2;
   const typical = typeof metric.marketTypical === 'number' ? metric.marketTypical : null;
 
+  // Determine winner (which contract is better for this metric)
+  let winner: 'v1' | 'v2' | null = null;
+  if (v1 && v2 && v1.value !== v2.value && metric.direction !== 'info_only') {
+    if (metric.direction === 'lower_better') {
+      winner = v1.value < v2.value ? 'v1' : 'v2';
+    } else {
+      winner = v1.value > v2.value ? 'v1' : 'v2';
+    }
+  }
+
   // Generate insight text for the most notable value
   const insight = generateInsight(v1, v2, typical, metric);
 
@@ -348,8 +358,8 @@ function BenchmarkRow({ metric }: { metric: BenchmarkMetric }) {
         )}
       </div>
       <div className={styles.benchmarkValues}>
-        <BenchmarkValueCell value={v1} unit={metric.unit} label="V1" />
-        <BenchmarkValueCell value={v2} unit={metric.unit} label="V2" />
+        <BenchmarkValueCell value={v1} unit={metric.unit} label="V1" isWinner={winner === 'v1'} />
+        <BenchmarkValueCell value={v2} unit={metric.unit} label="V2" isWinner={winner === 'v2'} />
       </div>
       {insight && (
         <div className={styles.benchmarkInsight}>
@@ -373,7 +383,8 @@ function generateInsight(
   // When both contracts have values: compare them directly
   if (v1 && v2 && v1.value !== v2.value) {
     const diff12 = Math.abs(v1.value - v2.value);
-    const pctDiff12 = Math.round((diff12 / Math.max(v1.value, v2.value)) * 100);
+    const avg = (v1.value + v2.value) / 2;
+    const pctDiff12 = avg > 0 ? Math.round((diff12 / avg) * 100) : 0;
 
     if (pctDiff12 >= 10) {
       const isLowerBetter = metric.direction === 'lower_better';
@@ -483,10 +494,12 @@ function BenchmarkValueCell({
   value,
   unit,
   label,
+  isWinner = false,
 }: {
   value: BenchmarkMetric['contract1'];
   unit: string;
   label: string;
+  isWinner?: boolean;
 }) {
   if (!value) {
     return (
@@ -504,8 +517,8 @@ function BenchmarkValueCell({
     : '#8e8e93';
 
   return (
-    <div className={styles.benchmarkCell}>
-      <span className={styles.benchmarkCellLabel}>{label}</span>
+    <div className={`${styles.benchmarkCell} ${isWinner ? styles.benchmarkCellWinner : ''}`}>
+      <span className={styles.benchmarkCellLabel}>{label} {isWinner && '✓'}</span>
       <span className={styles.benchmarkCellValue} style={{ color }}>
         {value.value} {unit}
       </span>
