@@ -528,6 +528,20 @@
   margin: 0 0 4px;
 }
 
+/* Analyse-Vorschau im Block */
+.clauseBlockPreview {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--v2-border);
+}
+
+.clauseBlockPreviewText {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--v2-text-muted);
+  font-style: italic;
+}
+
 /* ============================================================
    PDF Explorer View
    ============================================================ */
@@ -732,6 +746,7 @@
 .analysisPanel_open {
   transform: translateX(0);
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.06);
+  padding: 20px 0 0;
 }
 
 .analysisPanelClose {

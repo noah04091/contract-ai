@@ -1,7 +1,14 @@
 import { useCallback, useRef } from 'react';
 import type { ClauseBlockProps } from '../../types/legalLensV2';
+import type { V2Analysis } from '../../types/legalLensV2';
 import RiskBadge from './RiskBadge';
 import styles from '../../styles/LegalLensV2.module.css';
+
+function truncateExplanation(analysis: V2Analysis): string {
+  const text = analysis.explanation || '';
+  if (text.length <= 90) return text;
+  return text.substring(0, 87) + '...';
+}
 
 export default function ClauseBlock({
   clause,
@@ -81,6 +88,15 @@ export default function ClauseBlock({
           <p key={i}>{line}</p>
         ))}
       </div>
+
+      {/* Analyse-Vorschau — eine Zeile */}
+      {isAnalyzed && (
+        <div className={styles.clauseBlockPreview}>
+          <span className={styles.clauseBlockPreviewText}>
+            {truncateExplanation(analysis as V2Analysis)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

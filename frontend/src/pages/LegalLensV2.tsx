@@ -133,6 +133,35 @@ export default function LegalLensV2() {
     }
   }, [clauses, selectedClauseIndex, selectClause]);
 
+  // Keyboard Navigation — J/K oder Arrow Keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Nicht in Input-Feldern triggern
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.key === 'j' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (selectedClauseIndex < 0 && clauses?.length) {
+          selectClause(clauses[0].id, 'navigator');
+        } else {
+          handleNavigateClause('next');
+        }
+      } else if (e.key === 'k' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (selectedClauseIndex < 0 && clauses?.length) {
+          selectClause(clauses[clauses.length - 1].id, 'navigator');
+        } else {
+          handleNavigateClause('prev');
+        }
+      } else if (e.key === 'Escape') {
+        clearSelection();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [clauses, selectedClauseIndex, selectClause, handleNavigateClause, clearSelection]);
+
   // Loading State
   if (isLoadingContract || isLoadingClauses) {
     return (
