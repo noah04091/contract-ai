@@ -187,8 +187,8 @@ class BatchAnalyzer {
           costTrackingService.trackAPICall({
             userId,
             model: _metadata.model || 'gpt-4o',
-            inputTokens: Math.round(_metadata.tokensUsed * 0.65),
-            outputTokens: Math.round(_metadata.tokensUsed * 0.35),
+            inputTokens: _metadata.promptTokens || Math.round(_metadata.tokensUsed * 0.65),
+            outputTokens: _metadata.completionTokens || Math.round(_metadata.tokensUsed * 0.35),
             feature: 'legal-lens-v2',
             contractId,
             metadata: { clauseId: clause.id, processingTimeMs: _metadata.processingTimeMs }

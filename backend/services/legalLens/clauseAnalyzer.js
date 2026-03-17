@@ -1238,6 +1238,8 @@ Regeln: reject=Dealbreaker. accept=fair+üblich. Immer €/%/Tage nennen. better
         _metadata: {
           model,
           tokensUsed: response.usage?.total_tokens || 0,
+          promptTokens: response.usage?.prompt_tokens || 0,
+          completionTokens: response.usage?.completion_tokens || 0,
           processingTimeMs: processingTime
         }
       };

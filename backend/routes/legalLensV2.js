@@ -94,9 +94,23 @@ router.post('/:contractId/analyze-all', batchAnalysisLimiter, async (req, res) =
       totalParsed: preParsedClauses.length
     })}\n\n`);
 
-    // Vertragskontext für bessere Analyse
-    const contractContext = (contract.content || contract.extractedText || contract.fullText || '')
-      .substring(0, 1000);
+    // Strukturierten Vertragskontext aufbauen für bessere Analyse
+    const contextParts = [];
+
+    // Strukturierte Metadaten (falls aus vorheriger Analyse vorhanden)
+    if (contract.analysis?.contractType) contextParts.push(`Vertragstyp: ${contract.analysis.contractType}`);
+    if (contract.analysis?.parties?.provider) contextParts.push(`Anbieter: ${contract.analysis.parties.provider}`);
+    if (contract.analysis?.parties?.customer) contextParts.push(`Kunde: ${contract.analysis.parties.customer}`);
+    if (contract.analysis?.keyTerms?.duration) contextParts.push(`Laufzeit: ${contract.analysis.keyTerms.duration}`);
+    if (contract.analysis?.keyTerms?.payment) contextParts.push(`Zahlung: ${contract.analysis.keyTerms.payment}`);
+    if (contract.analysis?.keyTerms?.cancellation) contextParts.push(`Kündigung: ${contract.analysis.keyTerms.cancellation}`);
+    if (contract.laufzeit) contextParts.push(`Laufzeit: ${contract.laufzeit}`);
+
+    // Rohtext als Fallback (gekürzt)
+    const rawText = (contract.content || contract.extractedText || contract.fullText || '').substring(0, 800);
+    const contractContext = contextParts.length > 0
+      ? contextParts.join('\n') + '\n---\n' + rawText
+      : rawText;
 
     // Batch-Analyse starten
     const { results, stats } = await batchAnalyzer.analyzeAll({
