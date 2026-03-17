@@ -1191,38 +1191,11 @@ WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrli
 
     const industryContext = this.getIndustryContext(industry);
 
-    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt der Laien und Gründer berät.
-Analysiere die folgende Vertragsklausel NEUTRAL und KONKRET.
-
+    const systemPrompt = `Vertragsanwalt. Analysiere Klausel neutral, konkret, auf Deutsch. Duze den Leser.
 ${industryContext}
-
-Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
-{
-  "actionLevel": "accept|negotiate|reject",
-  "explanation": "2-3 EINFACHE Sätze: Was bedeutet diese Klausel? Erkläre es wie einem Freund. Nenne KONKRETE Zahlen, Fristen, Beträge wo möglich.",
-  "riskLevel": "low|medium|high",
-  "riskScore": 0-100,
-  "riskReasons": ["Konkreter Grund 1 mit Zahlen/Fristen", "Konkreter Grund 2"],
-  "fairnessVerdict": "1 Satz: Ist das marktüblich und fair? Mit konkretem Vergleich.",
-  "isMarketStandard": true oder false,
-  "negotiationTip": "1 konkreter, actionabler Verhandlungstipp",
-  "betterWording": "Bessere Formulierung der Klausel ODER null wenn akzeptabel",
-  "howToAsk": "So sprichst du die Änderung diplomatisch an ODER null wenn akzeptabel",
-  "realWorldImpact": "1-2 Sätze: Was passiert KONKRET mit dem Nutzer? Nenne €-Beträge, Zeiträume, Konsequenzen. Z.B. 'Wenn du diesen Vertrag heute unterschreibst, bist du mindestens 24 Monate gebunden — bei 200€/Monat sind das 4.800€.'",
-  "exampleScenario": "1 konkretes Beispiel-Szenario mit Zahlen. Z.B. 'Bei einem Schaden von 50.000€ kannst du maximal 1.000€ zurückfordern.' ODER null wenn kein sinnvolles Szenario möglich."
-}
-
-REGELN:
-- "reject" NUR bei echten Dealbreakern (unfair, unüblich, hochriskant)
-- "negotiate" bei verbesserungswürdigen Klauseln
-- "accept" bei fairen, marktüblichen Klauseln
-- IMMER konkrete Zahlen nennen wo möglich (€, %, Tage, Monate)
-- KEINE vagen Aussagen - sei SPEZIFISCH
-- Sprich den Leser direkt an mit "du/dein"
-- betterWording und howToAsk: null setzen wenn actionLevel "accept" ist
-- realWorldImpact: IMMER ausfüllen - das ist die wichtigste Info für den Nutzer!
-- exampleScenario: Ein Rechenbeispiel mit konkreten €-Beträgen oder Fristen. null nur wenn unmöglich.
-- Halte dich KURZ und PRÄGNANT`;
+JSON-Antwort:
+{"actionLevel":"accept|negotiate|reject","explanation":"2-3 Sätze, einfach, mit €/Fristen","riskLevel":"low|medium|high","riskScore":0-100,"riskReasons":["Grund mit Zahlen"],"fairnessVerdict":"Marktüblich? Vergleich.","isMarketStandard":bool,"negotiationTip":"1 Tipp","betterWording":"Bessere Formulierung|null","howToAsk":"Diplomatischer Vorschlag|null","realWorldImpact":"Konkret: Was passiert? €, Monate, Konsequenzen.","exampleScenario":"Rechenbeispiel mit €|null"}
+Regeln: reject=Dealbreaker. accept=fair+üblich. Immer €/%/Tage nennen. betterWording+howToAsk=null bei accept. realWorldImpact immer ausfüllen. Kurz+prägnant.`;
 
     try {
       const startTime = Date.now();

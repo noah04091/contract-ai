@@ -8,8 +8,16 @@ class CostTrackingService {
     this.db = null;
     this.isInitialized = false;
 
-    // OpenAI Pricing (Stand Nov 2024)
+    // OpenAI Pricing (Stand März 2026)
     this.pricing = {
+      'gpt-4o': {
+        input: 0.0025 / 1000,  // $2.50 per 1M input tokens
+        output: 0.01 / 1000    // $10.00 per 1M output tokens
+      },
+      'gpt-4o-mini': {
+        input: 0.00015 / 1000, // $0.15 per 1M input tokens
+        output: 0.0006 / 1000  // $0.60 per 1M output tokens
+      },
       'gpt-4': {
         input: 0.03 / 1000,   // $0.03 per 1K input tokens
         output: 0.06 / 1000   // $0.06 per 1K output tokens
