@@ -56,6 +56,13 @@
   font-weight: 500;
 }
 
+.socialProof {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
 /* ---- Grid ---- */
 .grid {
   display: grid;

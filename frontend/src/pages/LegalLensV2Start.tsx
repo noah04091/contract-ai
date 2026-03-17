@@ -165,6 +165,11 @@ export default function LegalLensV2Start() {
             <span className={styles.valueProp}>{'\u2714'} Konkrete Verhandlungstipps</span>
             <span className={styles.valueProp}>{'\u2714'} Verständlich in Sekunden statt Juristendeutsch</span>
           </div>
+          {contracts.length > 0 && (
+            <p className={styles.socialProof}>
+              Bereits {contracts.length}+ Verträge in deinem Account analysierbar
+            </p>
+          )}
         </div>
 
         {/* Main Grid */}
