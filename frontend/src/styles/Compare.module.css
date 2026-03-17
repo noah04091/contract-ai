@@ -1093,7 +1093,7 @@
 .benchmarkHeader h4 { font-size: 1rem; font-weight: 600; margin: 0; }
 .benchmarkHeader svg { color: #3B82F6; }
 .benchmarkGrid { display: flex; flex-direction: column; gap: 2px; }
-.benchmarkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px 12px; border-radius: 8px; background: #f9f9fb; }
+.benchmarkRow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 10px 12px; border-radius: 8px; background: #f9f9fb; }
 .benchmarkRow:nth-child(even) { background: #fff; }
 .benchmarkLabel { display: flex; flex-direction: column; gap: 2px; }
 .benchmarkMetricName { font-size: 0.88rem; font-weight: 600; color: #1d1d1f; }
@@ -1104,6 +1104,28 @@
 .benchmarkCellValue { font-size: 0.92rem; font-weight: 600; }
 .benchmarkSource { font-size: 0.68rem; color: #a1a1a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .benchmarkRating { font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
+
+/* Benchmark Bar */
+.benchmarkBarContainer { margin-top: 6px; width: 100%; }
+.benchmarkBarTrack { position: relative; height: 6px; background: #e8e8ed; border-radius: 3px; }
+.benchmarkBarTypical { position: absolute; top: -2px; width: 2px; height: 10px; background: #86868b; border-radius: 1px; transform: translateX(-50%); }
+.benchmarkBarDot { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transform: translateX(-50%); }
+
+/* Benchmark Insight */
+.benchmarkInsight {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(0, 113, 227, 0.04);
+  border: 1px solid rgba(0, 113, 227, 0.08);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #1d1d1f;
+  margin-top: 2px;
+}
 
 @media (max-width: 640px) {
   .benchmarkRow { grid-template-columns: 1fr; gap: 6px; }

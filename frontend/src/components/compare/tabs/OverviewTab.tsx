@@ -333,16 +333,127 @@ function V1ScoreCard({
 function BenchmarkRow({ metric }: { metric: BenchmarkMetric }) {
   const v1 = metric.contract1;
   const v2 = metric.contract2;
+  const typical = typeof metric.marketTypical === 'number' ? metric.marketTypical : null;
+
+  // Generate insight text for the most notable value
+  const insight = generateInsight(v1, v2, typical, metric);
 
   return (
     <div className={styles.benchmarkRow}>
       <div className={styles.benchmarkLabel}>
         <span className={styles.benchmarkMetricName}>{metric.label}</span>
         <span className={styles.benchmarkMarket}>Markt: {metric.marketTypical} {metric.unit}</span>
+        {typical !== null && (v1 || v2) && (
+          <BenchmarkBar v1={v1?.value ?? null} v2={v2?.value ?? null} typical={typical} direction={metric.direction} />
+        )}
       </div>
       <div className={styles.benchmarkValues}>
         <BenchmarkValueCell value={v1} unit={metric.unit} label="V1" />
         <BenchmarkValueCell value={v2} unit={metric.unit} label="V2" />
+      </div>
+      {insight && (
+        <div className={styles.benchmarkInsight}>
+          <span>💡</span>
+          <span>{insight}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function generateInsight(
+  v1: BenchmarkMetric['contract1'],
+  v2: BenchmarkMetric['contract2'],
+  typical: number | null,
+  metric: BenchmarkMetric,
+): string | null {
+  if (!typical || typical === 0) return null;
+  if (metric.direction === 'info_only') return null;
+
+  // Pick the most interesting value (biggest deviation from typical)
+  const vals: { value: number; label: string }[] = [];
+  if (v1) vals.push({ value: v1.value, label: 'Vertrag 1' });
+  if (v2) vals.push({ value: v2.value, label: 'Vertrag 2' });
+  if (vals.length === 0) return null;
+
+  const mostDeviated = vals.reduce((best, curr) =>
+    Math.abs(curr.value - typical) > Math.abs(best.value - typical) ? curr : best
+  );
+
+  const diff = mostDeviated.value - typical;
+  const pctDiff = Math.round(Math.abs(diff / typical) * 100);
+
+  // Only show insight if deviation is meaningful (>= 10%)
+  if (pctDiff < 10) return null;
+
+  const unit = metric.unit;
+
+  if (metric.direction === 'lower_better') {
+    if (diff > 0) {
+      return `${mostDeviated.label} liegt ${pctDiff}% über dem Marktdurchschnitt — das bedeutet höhere Kosten.`;
+    } else {
+      return `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktdurchschnitt — ein guter Wert.`;
+    }
+  }
+
+  if (metric.direction === 'higher_better') {
+    if (diff > 0) {
+      return `${mostDeviated.label} bietet ${pctDiff}% mehr als marktüblich bei ${metric.label}.`;
+    } else {
+      return `${mostDeviated.label} liegt ${pctDiff}% unter dem Marktstandard bei ${metric.label}.`;
+    }
+  }
+
+  return null;
+}
+
+function BenchmarkBar({
+  v1,
+  v2,
+  typical,
+  direction,
+}: {
+  v1: number | null;
+  v2: number | null;
+  typical: number;
+  direction: string;
+}) {
+  if (typical === 0) return null;
+
+  // Calculate positions on a 0-100% bar where typical is at 50%
+  const scale = (val: number) => {
+    const ratio = val / typical;
+    // Map ratio to 0-100 where 1.0 = 50%
+    return Math.min(Math.max(ratio * 50, 2), 98);
+  };
+
+  const typicalPos = 50;
+  const v1Pos = v1 !== null ? scale(v1) : null;
+  const v2Pos = v2 !== null ? scale(v2) : null;
+
+  const getColor = (pos: number) => {
+    if (direction === 'lower_better') {
+      return pos < typicalPos ? '#34c759' : pos > typicalPos + 10 ? '#ff453a' : '#ff9500';
+    }
+    if (direction === 'higher_better') {
+      return pos > typicalPos ? '#34c759' : pos < typicalPos - 10 ? '#ff453a' : '#ff9500';
+    }
+    return '#8e8e93';
+  };
+
+  return (
+    <div className={styles.benchmarkBarContainer}>
+      <div className={styles.benchmarkBarTrack}>
+        {/* Market typical marker */}
+        <div className={styles.benchmarkBarTypical} style={{ left: `${typicalPos}%` }} />
+        {/* V1 dot */}
+        {v1Pos !== null && (
+          <div className={styles.benchmarkBarDot} style={{ left: `${v1Pos}%`, background: getColor(v1Pos) }} title={`V1: ${v1}`} />
+        )}
+        {/* V2 dot */}
+        {v2Pos !== null && (
+          <div className={styles.benchmarkBarDot} style={{ left: `${v2Pos}%`, background: getColor(v2Pos), borderColor: '#fff' }} title={`V2: ${v2}`} />
+        )}
       </div>
     </div>
   );
