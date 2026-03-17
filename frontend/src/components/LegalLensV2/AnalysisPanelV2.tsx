@@ -87,6 +87,13 @@ export default function AnalysisPanelV2({ clause, analysis, isOpen, onClose, con
           {/* Level 1 — Immer sichtbar */}
           <div className={`${styles.analysisPanelAction} ${styles[`analysisPanelAction_${analysis.actionLevel}`]}`}>
             <RiskBadge actionLevel={analysis.actionLevel} size="large" />
+            <p className={styles.analysisPanelActionHint}>
+              {analysis.actionLevel === 'reject'
+                ? 'Diese Klausel ist ein Dealbreaker — unbedingt ansprechen.'
+                : analysis.actionLevel === 'negotiate'
+                ? 'Du solltest diese Klausel vor der Unterschrift anpassen.'
+                : 'Diese Klausel ist fair und marktüblich.'}
+            </p>
             <p className={styles.analysisPanelExplanation}>
               {analysis.explanation}
             </p>

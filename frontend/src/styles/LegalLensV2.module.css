@@ -449,7 +449,8 @@
 }
 
 .clauseBlock:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
 .clauseBlock_low {
@@ -483,6 +484,12 @@
 .clauseBlock_pending {
   opacity: 0.7;
   border-left-color: var(--v2-border);
+  animation: v2pendingPulse 2s ease infinite;
+}
+
+@keyframes v2pendingPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.5; }
 }
 
 .clauseBlock_nonAnalyzable {
@@ -855,8 +862,20 @@
 .analysisPanelAction_negotiate { background: rgba(245, 158, 11, 0.04); }
 .analysisPanelAction_reject { background: rgba(239, 68, 68, 0.04); }
 
+.analysisPanelActionHint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-muted);
+  letter-spacing: 0.2px;
+}
+
+.analysisPanelAction_reject .analysisPanelActionHint { color: var(--v2-risk-high); }
+.analysisPanelAction_negotiate .analysisPanelActionHint { color: var(--v2-risk-medium); }
+.analysisPanelAction_accept .analysisPanelActionHint { color: var(--v2-risk-low); }
+
 .analysisPanelExplanation {
-  margin: 12px 0 0;
+  margin: 6px 0 0;
   font-size: 14px;
   line-height: 1.6;
   color: var(--v2-text);
