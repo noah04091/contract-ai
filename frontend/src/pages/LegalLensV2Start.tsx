@@ -158,13 +158,12 @@ export default function LegalLensV2Start() {
             Legal <span className={styles.heroAccent}>Lens</span>
           </h1>
           <p className={styles.heroSub}>
-            Interaktiver Vertrags-Explorer — jede Klausel verstehen, Risiken erkennen, Verhandlungstipps erhalten.
+            Finde Risiken, die dich tausende Euro kosten können — bevor du unterschreibst.
           </p>
-          <div className={styles.pills}>
-            <span className={styles.pill}>Risiko-Engine</span>
-            <span className={styles.pill}>Klausel-Navigation</span>
-            <span className={styles.pill}>Verhandlungstipps</span>
-            <span className={styles.pill}>Klausel-Simulation</span>
+          <div className={styles.valueProps}>
+            <span className={styles.valueProp}>{'\u2714'} Klausel für Klausel Analyse</span>
+            <span className={styles.valueProp}>{'\u2714'} Konkrete Verhandlungstipps</span>
+            <span className={styles.valueProp}>{'\u2714'} Verständlich in Sekunden statt Juristendeutsch</span>
           </div>
         </div>
 

@@ -43,19 +43,16 @@
   margin-right: auto;
 }
 
-.pills {
+.valueProps {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-.pill {
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(99, 102, 241, 0.08);
-  color: #6366f1;
-  font-size: 13px;
+.valueProp {
+  font-size: 15px;
+  color: #475569;
   font-weight: 500;
 }
 
