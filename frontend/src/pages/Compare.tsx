@@ -1399,7 +1399,7 @@ export default function EnhancedCompare() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
                   <motion.button
                     onClick={() => { setResult(null); }}
                     style={{
@@ -1422,8 +1422,6 @@ export default function EnhancedCompare() {
                     <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
                     <span>Neuer Vergleich</span>
                   </motion.button>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
                   <motion.button
                     onClick={exportToPDF}
                     disabled={pdfExporting}
