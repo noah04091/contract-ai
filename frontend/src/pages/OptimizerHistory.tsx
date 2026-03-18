@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { FileText, Clock, Trash2, Loader2, ExternalLink, AlertTriangle, Sparkles, History, Plus } from 'lucide-react';
+import { FileText, Clock, Trash2, Loader2, ExternalLink, AlertTriangle, Sparkles, Plus } from 'lucide-react';
 import { apiCall } from '../utils/api';
 import styles from '../styles/OptimizerHistory.module.css';
 
@@ -101,16 +101,15 @@ export default function OptimizerHistory() {
       <div className={styles.page}>
         {/* Header area */}
         <div className={styles.headerArea}>
-          <div className={styles.headerIcon}>
-            <History size={28} />
+          <div className={styles.headerLeft}>
+            <h1 className={styles.headerTitle}>Analyse-Historie</h1>
+            <p className={styles.headerDesc}>
+              Alle bisherigen Vertragsanalysen im Überblick
+            </p>
           </div>
-          <h1 className={styles.headerTitle}>Analyse-Historie</h1>
-          <p className={styles.headerDesc}>
-            Alle bisherigen Vertragsanalysen im Überblick — klicke auf eine Analyse, um sie erneut zu öffnen.
-          </p>
           <button className={styles.newAnalysisBtn} onClick={() => navigate('/optimizer-v2')}>
             <Plus size={16} />
-            Neue Analyse starten
+            Neue Analyse
           </button>
         </div>
 

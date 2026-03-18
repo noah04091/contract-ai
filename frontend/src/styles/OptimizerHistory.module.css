@@ -54,61 +54,53 @@
 
 /* ── Header Area ── */
 .headerArea {
-  text-align: center;
-  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto 24px;
   position: relative;
   z-index: 1;
 }
 
-.headerIcon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 20px;
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
-  color: white;
-}
+.headerLeft { }
 
 .headerTitle {
-  font-size: clamp(24px, 4vw, 36px);
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   color: #111827;
 }
 
 .headerDesc {
-  font-size: 15px;
+  font-size: 14px;
   color: #6B7280;
-  max-width: 500px;
-  margin: 0 auto 24px;
+  margin: 0;
   line-height: 1.5;
 }
 
 .newAnalysisBtn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 6px;
+  padding: 10px 20px;
   background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  white-space: nowrap;
 }
 
 .newAnalysisBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35);
 }
 
 /* ── Content Card (glassmorphism) ── */
