@@ -57,8 +57,20 @@ export default function OptimizerV2() {
         <title>Optimizer V2 - Contract AI</title>
       </Helmet>
 
-      <div className={styles.pageContainer}>
-        {/* Page header — hidden during upload state (V1 style) */}
+      <div className={`${styles.pageContainer} ${(status === 'idle' || status === 'uploading') ? styles.pageContainerUpload : ''}`}>
+        {/* Minimal header in upload state (just Historie link) */}
+        {(status === 'idle' || status === 'uploading') && (
+          <div className={styles.uploadNav}>
+            <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
+              <ArrowLeft size={16} /> Dashboard
+            </button>
+            <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
+              <History size={14} /> Historie
+            </button>
+          </div>
+        )}
+
+        {/* Full page header for non-upload states */}
         {status !== 'idle' && status !== 'uploading' && (
           <div className={styles.pageHeader}>
             <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
