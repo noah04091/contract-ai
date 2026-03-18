@@ -206,13 +206,39 @@ class ClauseParser {
     let processed = text
       // Normalisiere Zeilenumbrüche
       .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      // Entferne übermäßige Leerzeilen
-      .replace(/\n{4,}/g, '\n\n\n')
-      // Entferne führende/nachfolgende Leerzeichen pro Zeile
+      .replace(/\r/g, '\n');
+
+    // Silbentrennung reparieren: Wörter die am Zeilenende getrennt wurden
+    // z.B. "Vertrags-\npartner" → "Vertragspartner"
+    processed = processed.replace(/(\w)-\n(\w)/g, '$1$2');
+
+    // Zeilenumbrüche innerhalb von Absätzen zusammenfügen
+    // (einzelner Zeilenumbruch ohne Leerzeile = gleicher Absatz)
+    processed = processed.replace(/([^\n])\n([^\n\s])/g, '$1 $2');
+
+    // Übermäßige Leerzeilen reduzieren
+    processed = processed.replace(/\n{4,}/g, '\n\n\n');
+
+    // Mehrfache Leerzeichen zu einem zusammenfassen
+    processed = processed.replace(/ {2,}/g, ' ');
+
+    // Entferne führende/nachfolgende Leerzeichen pro Zeile
+    processed = processed
       .split('\n')
       .map(line => line.trim())
       .join('\n');
+
+    // Häufige Encoding-Artefakte bereinigen
+    processed = processed
+      .replace(/\u00AD/g, '')        // Soft-Hyphen entfernen
+      .replace(/\u200B/g, '')        // Zero-width space entfernen
+      .replace(/\u00A0/g, ' ')       // Non-breaking space → normales Leerzeichen
+      .replace(/\uFEFF/g, '')        // BOM entfernen
+      .replace(/\u2018|\u2019/g, "'")  // Smart quotes → normal
+      .replace(/\u201C|\u201D/g, '"')  // Smart double quotes → normal
+      .replace(/\u2013/g, '–')      // En-dash normalisieren
+      .replace(/\u2014/g, '—')      // Em-dash normalisieren
+      .replace(/\u2026/g, '...');    // Ellipsis normalisieren
 
     // OCR-Korrekturen NUR bei OCR-gescannten Texten anwenden
     // Diese Regexe beschädigen sauberen digitalen Text (z.B. "legal" -> "1ega1")

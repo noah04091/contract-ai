@@ -84,7 +84,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2394,13 +2394,15 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     const contractText = contract.content || contract.extractedText || contract.fullText || '';
 
     // Zusätzlicher Sanity-Check für verdächtig kleine Caches (alte buggy Daten)
+    // Proportional: erwarte mindestens 1 Klausel pro 1500 Zeichen Text
     const cachedClauses = contract.legalLens?.preParsedClauses;
+    const expectedMinClauses = Math.max(5, Math.floor(contractText.length / 1500));
     const cacheSeemsBuggy = cachedClauses?.length > 0 &&
-                           cachedClauses.length < 5 &&
+                           cachedClauses.length < expectedMinClauses &&
                            contractText.length > 2000;
 
     if (cacheSeemsBuggy) {
-      console.log(`⚠️ [Legal Lens] Verdächtiger Cache: ${cachedClauses.length} Klauseln für ${contractText.length} Zeichen Text - Cache wird ignoriert`);
+      console.log(`⚠️ [Legal Lens] Verdächtiger Cache: ${cachedClauses.length} Klauseln für ${contractText.length} Zeichen Text (erwarte min. ${expectedMinClauses}) - Cache wird ignoriert`);
       await Contract.updateOne(
         { _id: new ObjectId(contractId) },
         { $set: { 'legalLens.preprocessStatus': 'invalid' } }
