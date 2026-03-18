@@ -1113,6 +1113,16 @@
 .benchmarkBarTypical { position: absolute; top: -2px; width: 2px; height: 10px; background: #86868b; border-radius: 1px; transform: translateX(-50%); }
 .benchmarkBarDot { position: absolute; top: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transform: translateX(-50%); }
 
+/* Benchmark Summary */
+.benchmarkSummary { margin-top: 12px; padding: 12px 14px; background: #f5f5f7; border-radius: 10px; border: 1px solid #e8e8ed; }
+.benchmarkSummaryBars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.benchmarkSummaryRow { display: flex; align-items: center; gap: 8px; }
+.benchmarkSummaryLabel { font-size: 0.75rem; font-weight: 600; color: #6e6e73; width: 22px; }
+.benchmarkSummaryTrack { flex: 1; height: 8px; background: #e8e8ed; border-radius: 4px; overflow: hidden; }
+.benchmarkSummaryFill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.benchmarkSummaryCount { font-size: 0.82rem; font-weight: 700; color: #1d1d1f; width: 18px; text-align: right; }
+.benchmarkSummaryText { font-size: 0.8rem; color: #6e6e73; font-weight: 500; }
+
 /* Benchmark Insight */
 .benchmarkInsight {
   grid-column: 1 / -1;

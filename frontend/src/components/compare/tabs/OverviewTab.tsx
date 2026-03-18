@@ -103,6 +103,7 @@ export default function OverviewTab({ result }: OverviewTabProps) {
               <BenchmarkRow key={metric.metricId} metric={metric} />
             ))}
           </div>
+          <BenchmarkSummary metrics={v2Result.benchmark.metrics} />
         </motion.div>
       )}
 
@@ -336,12 +337,17 @@ function BenchmarkRow({ metric }: { metric: BenchmarkMetric }) {
   const typical = typeof metric.marketTypical === 'number' ? metric.marketTypical : null;
 
   // Determine winner (which contract is better for this metric)
+  // Require at least 5% difference to declare a winner
   let winner: 'v1' | 'v2' | null = null;
   if (v1 && v2 && v1.value !== v2.value && metric.direction !== 'info_only') {
-    if (metric.direction === 'lower_better') {
-      winner = v1.value < v2.value ? 'v1' : 'v2';
-    } else {
-      winner = v1.value > v2.value ? 'v1' : 'v2';
+    const avg = (v1.value + v2.value) / 2;
+    const diffRatio = avg > 0 ? Math.abs(v1.value - v2.value) / avg : 0;
+    if (diffRatio >= 0.05) {
+      if (metric.direction === 'lower_better') {
+        winner = v1.value < v2.value ? 'v1' : 'v2';
+      } else {
+        winner = v1.value > v2.value ? 'v1' : 'v2';
+      }
     }
   }
 
@@ -485,6 +491,74 @@ function BenchmarkBar({
         {v2Pos !== null && (
           <div className={styles.benchmarkBarDot} style={{ left: `${v2Pos}%`, background: getColor(v2Pos), borderColor: '#fff' }} title={`V2: ${v2}`} />
         )}
+      </div>
+    </div>
+  );
+}
+
+function BenchmarkSummary({ metrics }: { metrics: BenchmarkMetric[] }) {
+  let v1Wins = 0;
+  let v2Wins = 0;
+  let ties = 0;
+
+  for (const m of metrics) {
+    if (!m.contract1 || !m.contract2 || m.direction === 'info_only') {
+      continue;
+    }
+    const avg = (m.contract1.value + m.contract2.value) / 2;
+    const diffRatio = avg > 0 ? Math.abs(m.contract1.value - m.contract2.value) / avg : 0;
+    if (diffRatio < 0.05) {
+      ties++;
+      continue;
+    }
+    const isLB = m.direction === 'lower_better';
+    if (isLB ? m.contract1.value < m.contract2.value : m.contract1.value > m.contract2.value) {
+      v1Wins++;
+    } else {
+      v2Wins++;
+    }
+  }
+
+  const total = v1Wins + v2Wins + ties;
+  if (total === 0) return null;
+
+  const overallWinner = v1Wins > v2Wins ? 'Vertrag 1' : v2Wins > v1Wins ? 'Vertrag 2' : null;
+
+  return (
+    <div className={styles.benchmarkSummary}>
+      <div className={styles.benchmarkSummaryBars}>
+        <div className={styles.benchmarkSummaryRow}>
+          <span className={styles.benchmarkSummaryLabel}>V1</span>
+          <div className={styles.benchmarkSummaryTrack}>
+            <div
+              className={styles.benchmarkSummaryFill}
+              style={{
+                width: `${total > 0 ? (v1Wins / total) * 100 : 0}%`,
+                background: v1Wins >= v2Wins ? '#34c759' : '#e8e8ed',
+              }}
+            />
+          </div>
+          <span className={styles.benchmarkSummaryCount}>{v1Wins}</span>
+        </div>
+        <div className={styles.benchmarkSummaryRow}>
+          <span className={styles.benchmarkSummaryLabel}>V2</span>
+          <div className={styles.benchmarkSummaryTrack}>
+            <div
+              className={styles.benchmarkSummaryFill}
+              style={{
+                width: `${total > 0 ? (v2Wins / total) * 100 : 0}%`,
+                background: v2Wins >= v1Wins ? '#34c759' : '#e8e8ed',
+              }}
+            />
+          </div>
+          <span className={styles.benchmarkSummaryCount}>{v2Wins}</span>
+        </div>
+      </div>
+      <div className={styles.benchmarkSummaryText}>
+        {overallWinner
+          ? `${overallWinner} gewinnt ${Math.max(v1Wins, v2Wins)} von ${total} Markt-Metriken.`
+          : `Gleichstand: Beide Verträge gewinnen je ${v1Wins} von ${total} Metriken.`}
+        {ties > 0 && ` ${ties}× gleichwertig.`}
       </div>
     </div>
   );
