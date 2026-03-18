@@ -76,70 +76,318 @@
 }
 .newAnalysisBtn:hover { opacity: 0.9; }
 
-/* ── Upload Section ── */
-.uploadSection {
-  background: white;
-  border-radius: var(--ov2-radius);
-  border: 1px solid var(--ov2-gray-200);
-  padding: 32px;
-  box-shadow: var(--ov2-shadow);
+/* ── Upload Page (full-bleed gradient background like V1) ── */
+.uploadPage {
+  background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%);
+  margin: -24px;
+  padding: 40px 24px 60px;
+  min-height: calc(100vh - 120px);
+  position: relative;
 }
 
+/* Animated background blobs like V1 */
+.uploadPage::before {
+  content: '';
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+  filter: blur(100px);
+  animation: floatBlob1 25s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.uploadPage::after {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  bottom: -100px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  filter: blur(100px);
+  animation: floatBlob2 30s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes floatBlob1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 60px) scale(1.1); }
+  66% { transform: translate(30px, -30px) scale(0.95); }
+}
+
+@keyframes floatBlob2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, -40px) scale(1.1); }
+}
+
+/* ── Upload Hero (floats on gradient, NOT inside a card) ── */
+.uploadHero {
+  text-align: center;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.uploadHeroIcon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+  color: white;
+}
+
+.uploadHeroIcon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.uploadHeroTitle {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 12px;
+  color: var(--ov2-gray-900);
+}
+
+.uploadHeroGradient {
+  background: linear-gradient(135deg, #007AFF 0%, #AF52DE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.uploadHeroDesc {
+  font-size: 16px;
+  color: var(--ov2-gray-500);
+  max-width: 500px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+.uploadFeaturePills {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.uploadFeaturePill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ov2-gray-900);
+  transition: all 0.2s ease;
+}
+
+.uploadFeaturePill:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.uploadFeaturePill svg {
+  width: 16px;
+  height: 16px;
+  color: var(--ov2-blue);
+}
+
+/* ── Upload Card (glassmorphism card like V1) ── */
+.uploadCard {
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.02),
+    0 12px 40px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Drop Zone ── */
 .dropZone {
-  border: 2px dashed var(--ov2-gray-300);
-  border-radius: var(--ov2-radius);
+  border: 2px dashed #d1d5db;
+  border-radius: 20px;
   padding: 48px 32px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
 }
-.dropZone:hover { border-color: var(--ov2-blue); background: rgba(0,122,255,0.02); }
-.dropZoneActive { border-color: var(--ov2-blue); background: rgba(0,122,255,0.05); }
 
-.dropZoneIcon { color: var(--ov2-gray-400); margin-bottom: 12px; }
-.dropZoneTitle { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
-.dropZoneSubtitle { font-size: 13px; color: var(--ov2-gray-500); margin: 0; }
+.dropZone::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.06), transparent);
+  animation: shimmerUpload 3s infinite;
+  pointer-events: none;
+}
 
-.fileSelected { display: flex; flex-direction: column; gap: 20px; }
+@keyframes shimmerUpload {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
 
-.fileInfo {
+.dropZone:hover {
+  border-color: var(--ov2-blue);
+  background: linear-gradient(180deg, #f0f7ff 0%, #e8f4ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+}
+
+.dropZoneActive {
+  border-color: var(--ov2-blue);
+  border-style: solid;
+  background: linear-gradient(180deg, #e0f0ff 0%, #d0e8ff 100%);
+  transform: scale(1.01);
+  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.2);
+}
+
+.dropZoneIconWrapper {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--ov2-gray-50);
-  border-radius: var(--ov2-radius-sm);
+  justify-content: center;
+  border: 2px solid rgba(59, 130, 246, 0.15);
 }
-.fileIcon { color: var(--ov2-blue); }
-.fileName { font-weight: 500; font-size: 14px; margin: 0; }
-.fileSize { font-size: 12px; color: var(--ov2-gray-500); margin: 2px 0 0; }
-.fileRemove {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: var(--ov2-gray-400);
-  cursor: pointer;
-  padding: 4px;
+
+.dropZoneIconWrapper svg {
+  width: 32px;
+  height: 32px;
+  color: var(--ov2-blue);
 }
-.fileRemove:hover { color: var(--ov2-red); }
 
-.perspectiveSection { }
-.perspectiveLabel { font-size: 13px; font-weight: 500; color: var(--ov2-gray-600); margin: 0 0 8px; }
+.dropZoneTitle { font-size: 18px; font-weight: 700; margin: 0; color: var(--ov2-gray-900); }
+.dropZoneSubtitle { font-size: 14px; color: var(--ov2-gray-500); margin: 0; }
 
-.analyzeButton {
-  width: 100%;
-  padding: 14px 24px;
-  background: linear-gradient(135deg, #007AFF, #0055D4);
+.uploadFormats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.formatTag {
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--ov2-gray-500);
+  font-weight: 600;
+}
+
+/* ── File Selected State ── */
+.dropZoneFile {
+  border: 2px solid var(--ov2-green);
+  border-radius: 20px;
+  padding: 48px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #f0fdf4 0%, #f8fafc 100%);
+  margin-bottom: 20px;
+}
+
+.dropZoneIconWrapperSuccess {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  border: none;
-  border-radius: var(--ov2-radius-sm);
-  font-size: 15px;
+}
+
+.dropZoneIconWrapperSuccess svg {
+  width: 32px;
+  height: 32px;
+}
+
+.changeFileBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: 10px;
+  color: var(--ov2-gray-500);
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  letter-spacing: -0.2px;
+  transition: all 0.2s ease;
+  margin-top: 8px;
 }
-.analyzeButton:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--ov2-shadow-md); }
+
+.changeFileBtn:hover {
+  border-color: var(--ov2-blue);
+  color: var(--ov2-blue);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.perspectiveSection { margin-top: 4px; margin-bottom: 4px; }
+.perspectiveLabel { font-size: 13px; font-weight: 500; color: var(--ov2-gray-600); margin: 0 0 8px; }
+
+/* ── Analyze Button (gradient with glow like V1) ── */
+.analyzeButton {
+  width: 100%;
+  padding: 16px 28px;
+  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.analyzeButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+}
 .analyzeButton:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Mode Selector ── */

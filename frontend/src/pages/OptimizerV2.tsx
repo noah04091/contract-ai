@@ -58,26 +58,28 @@ export default function OptimizerV2() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        {/* Page header */}
-        <div className={styles.pageHeader}>
-          <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
-            <ArrowLeft size={16} /> Dashboard
-          </button>
-          <div className={styles.pageHeaderContent}>
-            <h1 className={styles.pageTitle}>Contract Optimizer</h1>
-            <p className={styles.pageSubtitle}>
-              KI-gestützte Vertragsanalyse und -optimierung
-            </p>
-          </div>
-          <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
-            <History size={14} /> Historie
-          </button>
-          {status === 'completed' && (
-            <button className={styles.newAnalysisBtn} onClick={actions.reset}>
-              Neue Analyse
+        {/* Page header — hidden during upload state (V1 style) */}
+        {status !== 'idle' && status !== 'uploading' && (
+          <div className={styles.pageHeader}>
+            <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
+              <ArrowLeft size={16} /> Dashboard
             </button>
-          )}
-        </div>
+            <div className={styles.pageHeaderContent}>
+              <h1 className={styles.pageTitle}>Contract Optimizer</h1>
+              <p className={styles.pageSubtitle}>
+                KI-gestützte Vertragsanalyse und -optimierung
+              </p>
+            </div>
+            <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
+              <History size={14} /> Historie
+            </button>
+            {status === 'completed' && (
+              <button className={styles.newAnalysisBtn} onClick={actions.reset}>
+                Neue Analyse
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Upload state */}
         {(status === 'idle' || status === 'uploading') && (

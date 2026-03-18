@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, FileText, X } from 'lucide-react';
+import { Upload, Shield, Lightbulb, Download, Sparkles, CheckCircle, RefreshCw } from 'lucide-react';
 import NegotiationModeSelector from './NegotiationModeSelector';
 import type { OptimizationMode } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -10,6 +10,12 @@ interface Props {
   onStartAnalysis: (file: File, perspective: string) => void;
   isAnalyzing: boolean;
 }
+
+const FEATURE_PILLS = [
+  { icon: Shield, label: 'Risiko-Erkennung' },
+  { icon: Lightbulb, label: 'Klausel-Vorschläge' },
+  { icon: Download, label: 'PDF-Export' },
+];
 
 export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing }: Props) {
   const [isDragging, setIsDragging] = useState(false);
@@ -37,59 +43,110 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
   };
 
   return (
-    <div className={styles.uploadSection}>
-      {!file ? (
-        <div
-          className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <Upload size={32} className={styles.dropZoneIcon} />
-          <p className={styles.dropZoneTitle}>Vertrag hochladen</p>
-          <p className={styles.dropZoneSubtitle}>PDF oder DOCX hierher ziehen oder klicken</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.docx"
-            onChange={handleFileInput}
-            style={{ display: 'none' }}
-          />
+    <div className={styles.uploadPage}>
+      {/* Hero Header — floats on gradient background, NOT inside a card */}
+      <div className={styles.uploadHero}>
+        <div className={styles.uploadHeroIcon}>
+          <Sparkles size={36} />
         </div>
-      ) : (
-        <div className={styles.fileSelected}>
-          <div className={styles.fileInfo}>
-            <FileText size={24} className={styles.fileIcon} />
-            <div>
-              <p className={styles.fileName}>{file.name}</p>
-              <p className={styles.fileSize}>{formatFileSize(file.size)}</p>
+        <h1 className={styles.uploadHeroTitle}>
+          KI-<span className={styles.uploadHeroGradient}>Vertragsoptimierung</span>
+        </h1>
+        <p className={styles.uploadHeroDesc}>
+          Lade deinen Vertrag hoch und erhalte automatisch Verbesserungsvorschläge mit rechtlicher Begründung.
+        </p>
+        <div className={styles.uploadFeaturePills}>
+          {FEATURE_PILLS.map(({ icon: Icon, label }) => (
+            <div key={label} className={styles.uploadFeaturePill}>
+              <Icon size={16} />
+              <span>{label}</span>
             </div>
-            {!isAnalyzing && (
-              <button className={styles.fileRemove} onClick={() => onFileSelect(null)}>
-                <X size={16} />
-              </button>
-            )}
-          </div>
-
-          <div className={styles.perspectiveSection}>
-            <p className={styles.perspectiveLabel}>Optimierungsperspektive:</p>
-            <NegotiationModeSelector
-              activeMode={perspective}
-              onModeChange={setPerspective}
-              compact
-            />
-          </div>
-
-          <button
-            className={styles.analyzeButton}
-            onClick={() => onStartAnalysis(file, perspective === 'proCreator' ? 'creator' : perspective === 'proRecipient' ? 'recipient' : 'neutral')}
-            disabled={isAnalyzing}
-          >
-            {isAnalyzing ? 'Analyse läuft...' : 'Vertrag analysieren'}
-          </button>
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Upload Card — separate glassmorphism card */}
+      <div className={styles.uploadCard}>
+        {!file ? (
+          <>
+            <div
+              className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className={styles.dropZoneIconWrapper}>
+                <Upload size={32} />
+              </div>
+              <p className={styles.dropZoneTitle}>Vertrag hochladen</p>
+              <p className={styles.dropZoneSubtitle}>Datei hierher ziehen oder klicken</p>
+              <div className={styles.uploadFormats}>
+                <span className={styles.formatTag}>PDF</span>
+                <span className={styles.formatTag}>DOCX</span>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx"
+                onChange={handleFileInput}
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            <button
+              className={styles.analyzeButton}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isAnalyzing}
+            >
+              Jetzt optimieren
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        ) : (
+          <>
+            <div className={styles.dropZoneFile}>
+              <div className={styles.dropZoneIconWrapperSuccess}>
+                <CheckCircle size={32} />
+              </div>
+              <p className={styles.dropZoneTitle}>{file.name}</p>
+              <p className={styles.dropZoneSubtitle}>
+                {formatFileSize(file.size)} &bull; Bereit zur Analyse
+              </p>
+              {!isAnalyzing && (
+                <button className={styles.changeFileBtn} onClick={() => onFileSelect(null)}>
+                  <RefreshCw size={14} />
+                  Andere Datei wählen
+                </button>
+              )}
+            </div>
+
+            <div className={styles.perspectiveSection}>
+              <p className={styles.perspectiveLabel}>Optimierungsperspektive:</p>
+              <NegotiationModeSelector
+                activeMode={perspective}
+                onModeChange={setPerspective}
+                compact
+              />
+            </div>
+
+            <button
+              className={styles.analyzeButton}
+              onClick={() => onStartAnalysis(file, perspective === 'proCreator' ? 'creator' : perspective === 'proRecipient' ? 'recipient' : 'neutral')}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? 'Analysiere...' : 'Jetzt optimieren'}
+              {!isAnalyzing && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              )}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
