@@ -518,7 +518,7 @@ export default function ContractDetailsV2() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/s3/download-url?key=${encodeURIComponent(contract.optimizedPdfS3Key)}`, {
+      const res = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.optimizedPdfS3Key)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

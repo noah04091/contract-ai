@@ -82,8 +82,8 @@ class PdfExtractor {
       const pdfData = await pdfParse(buffer, {
         // Maximale Seitenanzahl (Schutz vor riesigen PDFs)
         max: options.maxPages || 500,
-        // Version Info für Debugging
-        version: 'v2.0.0'
+        // Version muss mit installierter pdf.js Version übereinstimmen
+        version: 'v1.10.100'
       });
 
       result.text = pdfData.text || '';

@@ -69,10 +69,10 @@ export default function LegalLensV2() {
 
     const loadPdfUrl = async () => {
       try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/s3/download-url/${encodeURIComponent(contract.s3Key!)}`);
+        const response = await fetchWithAuth(`${API_BASE_URL}/s3/view?key=${encodeURIComponent(contract.s3Key!)}`);
         if (response.ok) {
           const data = await response.json();
-          setPdfUrl(data.url || data.downloadUrl);
+          setPdfUrl(data.url);
         } else {
           console.warn('[LegalLensV2] PDF-URL nicht verfügbar (Status:', response.status, ') — wechsle zu Text-Ansicht');
           if (viewMode === 'pdf') setViewMode('text');

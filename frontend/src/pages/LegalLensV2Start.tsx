@@ -1,16 +1,18 @@
-/**
- * Legal Lens V2 — Start-Seite
- *
- * Einstiegspunkt unter /legal-lens-v2
- * Upload + Vertragsauswahl → navigiert zu /legal-lens-v2/:contractId
- * Free-User sehen die Seite mit Premium-Banner, können aber nichts anklicken.
- */
+// Legal Lens V2 — Start-Seite (Stripe Style)
+// Einstiegspunkt unter /legal-lens-v2
+// Upload + Vertragsauswahl → navigiert zu /legal-lens-v2/:contractId
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchWithAuth, API_BASE_URL } from '../context/authUtils';
-import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
+import { Helmet } from 'react-helmet-async';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Search, Upload, FileText, ChevronRight, Loader, AlertCircle,
+  Eye, Scale, Lightbulb, Lock, Sparkles, X, Camera
+} from 'lucide-react';
 import styles from '../styles/LegalLensV2Start.module.css';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
+import { useDocumentScanner } from '../hooks/useDocumentScanner';
 
 const PREMIUM_PLANS = ['business', 'enterprise', 'legendary'];
 
@@ -20,12 +22,8 @@ interface ContractItem {
   uploadedAt?: string;
   createdAt?: string;
   status?: string;
-  contractScore?: number;
   analysis?: {
     contractType?: string;
-  };
-  legalLens?: {
-    preprocessStatus?: string;
   };
 }
 
@@ -34,6 +32,7 @@ export default function LegalLensV2Start() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [contracts, setContracts] = useState<ContractItem[]>([]);
+  const [filteredContracts, setFilteredContracts] = useState<ContractItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -41,16 +40,38 @@ export default function LegalLensV2Start() {
   const [dragActive, setDragActive] = useState(false);
   const [userPlan, setUserPlan] = useState('free');
   const [planLoading, setPlanLoading] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Document Scanner
+  const { openScanner, ScannerModal } = useDocumentScanner((file) => {
+    handleFileUpload(file);
+  });
 
   const hasAccess = PREMIUM_PLANS.includes(userPlan.toLowerCase());
 
+  const getApiUrl = () => {
+    if (import.meta.env.VITE_API_URL) {
+      return import.meta.env.VITE_API_URL;
+    }
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+    return 'https://api.contract-ai.de';
+  };
+
   // User Plan laden
   useEffect(() => {
-    const fetchPlan = async () => {
+    const fetchUserPlan = async () => {
       try {
-        const res = await fetchWithAuth(`${API_BASE_URL}/auth/me`);
-        if (res.ok) {
-          const data = await res.json();
+        const apiUrl = getApiUrl();
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${apiUrl}/api/auth/me`, {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (response.ok) {
+          const data = await response.json();
           const user = data.user || data;
           setUserPlan((user.subscriptionPlan || user.plan || 'free').toLowerCase());
         }
@@ -60,18 +81,22 @@ export default function LegalLensV2Start() {
         setPlanLoading(false);
       }
     };
-    fetchPlan();
+    fetchUserPlan();
   }, []);
 
   // Verträge laden
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const res = await fetchWithAuth(`${API_BASE_URL}/contracts`);
-        if (!res.ok) throw new Error('Fehler beim Laden');
-        const data = await res.json();
+        const apiUrl = getApiUrl();
+        const response = await fetch(`${apiUrl}/api/contracts`, {
+          credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Fehler beim Laden der Verträge');
+        const data = await response.json();
         const list = Array.isArray(data) ? data : (data.contracts || []);
         setContracts(list);
+        setFilteredContracts(list);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Fehler beim Laden');
       } finally {
@@ -81,18 +106,24 @@ export default function LegalLensV2Start() {
     fetchContracts();
   }, []);
 
-  // Gefilterte Verträge
-  const filtered = searchQuery.trim()
-    ? contracts.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.analysis?.contractType?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : contracts;
+  // Suche filtern
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredContracts(contracts);
+      return;
+    }
+    const query = searchQuery.toLowerCase();
+    const filtered = contracts.filter(c =>
+      c.name.toLowerCase().includes(query) ||
+      c.analysis?.contractType?.toLowerCase().includes(query)
+    );
+    setFilteredContracts(filtered);
+  }, [searchQuery, contracts]);
 
   // Upload Handler
   const handleFileUpload = async (file: File) => {
-    if (!file.type.includes('pdf') && !file.name.endsWith('.docx')) {
-      setError('Bitte eine PDF- oder DOCX-Datei hochladen');
+    if (!file.type.includes('pdf') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      setError('Bitte laden Sie eine PDF- oder DOCX-Datei hoch');
       return;
     }
 
@@ -100,24 +131,24 @@ export default function LegalLensV2Start() {
     setError(null);
 
     try {
+      const apiUrl = getApiUrl();
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch(`${API_BASE_URL}/upload`, {
+      const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include',
         body: formData
       });
 
-      if (!res.ok) {
-        const data = await res.json();
+      if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.message || 'Upload fehlgeschlagen');
       }
 
-      const data = await res.json();
-      const id = data.contractId || data._id;
-      if (id) {
-        navigate(`/legal-lens-v2/${id}`);
+      const data = await response.json();
+      if (data.contractId || data._id) {
+        navigate(`/legal-lens-v2/${data.contractId || data._id}`);
       } else {
         throw new Error('Keine Vertrags-ID erhalten');
       }
@@ -127,151 +158,412 @@ export default function LegalLensV2Start() {
     }
   };
 
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragActive(false);
-    if (!hasAccess) return;
     if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]);
   };
 
-  const handleSelect = (contractId: string) => {
-    if (!hasAccess) return;
-    navigate(`/legal-lens-v2/${contractId}`);
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) handleFileUpload(e.target.files[0]);
   };
 
   const formatDate = (d?: string) => {
-    if (!d) return '';
+    if (!d) return '-';
     return new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  const handleBlockedAction = () => {
+    if (!hasAccess) {
+      setShowUpgradeModal(true);
+      return true;
+    }
+    return false;
+  };
+
   return (
-    <div className={styles.page}>
-      {/* Premium Banner für Free User */}
-      {!planLoading && !hasAccess && (
-        <UnifiedPremiumNotice featureName="Legal Lens" variant="fullWidth" />
-      )}
+    <>
+      <Helmet>
+        <title>Legal Lens | Contract AI</title>
+        <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
+      </Helmet>
 
-      <div className={styles.container}>
-        {/* Hero */}
-        <div className={styles.hero}>
-          <h1 className={styles.heroTitle}>
-            Legal <span className={styles.heroAccent}>Lens</span>
-          </h1>
-          <p className={styles.heroSub}>
-            Finde Risiken, die dich tausende Euro kosten können — bevor du unterschreibst.
-          </p>
-          <div className={styles.valueProps}>
-            <span className={styles.valueProp}>{'\u2714'} Klausel für Klausel Analyse</span>
-            <span className={styles.valueProp}>{'\u2714'} Konkrete Verhandlungstipps</span>
-            <span className={styles.valueProp}>{'\u2714'} Verständlich in Sekunden statt Juristendeutsch</span>
-          </div>
-          {contracts.length > 0 && (
-            <p className={styles.socialProof}>
-              Bereits {contracts.length}+ Verträge in deinem Account analysierbar
+      <div className={styles.page}>
+        {/* Full-Width Premium Banner */}
+        {!planLoading && !hasAccess && (
+          <UnifiedPremiumNotice featureName="Legal Lens" variant="fullWidth" />
+        )}
+
+        <div className={styles.container}>
+          {/* Hero Section */}
+          <div className={styles.heroSection}>
+            <div className={styles.heroIcon}>
+              <Search size={36} />
+            </div>
+            {!hasAccess && !planLoading && (
+              <div className={styles.heroBadge}>Premium Feature</div>
+            )}
+            <h1 className={styles.heroTitle}>
+              Legal <span className={styles.gradientText}>Lens</span>
+            </h1>
+            <p className={styles.heroDescription}>
+              Finde Risiken, die dich tausende Euro kosten können — bevor du unterschreibst.
             </p>
-          )}
-        </div>
-
-        {/* Main Grid */}
-        <div className={styles.grid}>
-          {/* Upload Card */}
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>Neuen Vertrag analysieren</h2>
-            <p className={styles.cardSub}>PDF oder DOCX hochladen</p>
-
-            <div
-              className={`${styles.dropZone} ${dragActive ? styles.dropZoneActive : ''} ${!hasAccess ? styles.dropZoneLocked : ''}`}
-              onDragEnter={(e) => { e.preventDefault(); if (hasAccess) setDragActive(true); }}
-              onDragLeave={() => setDragActive(false)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              onClick={() => {
-                if (!hasAccess || isUploading) return;
-                fileInputRef.current?.click();
-              }}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx"
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-                style={{ display: 'none' }}
-                disabled={isUploading || !hasAccess}
-              />
-
-              {isUploading ? (
-                <div className={styles.uploading}>
-                  <div className={styles.uploadSpinner} />
-                  <span>Wird hochgeladen...</span>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.dropIcon}>
-                    {!hasAccess ? '\u{1F512}' : '\u{1F4C4}'}
-                  </div>
-                  <p className={styles.dropText}>
-                    {!hasAccess
-                      ? 'Business-Abo erforderlich'
-                      : 'Datei ablegen oder klicken'}
-                  </p>
-                  <p className={styles.dropMeta}>PDF, DOCX — max. 20 MB</p>
-                </>
-              )}
+            <div className={styles.featurePills}>
+              <div className={styles.featurePill}>
+                <Eye size={16} />
+                Klausel-Analyse
+              </div>
+              <div className={styles.featurePill}>
+                <Scale size={16} />
+                Risikobewertung
+              </div>
+              <div className={styles.featurePill}>
+                <Lightbulb size={16} />
+                Verhandlungstipps
+              </div>
             </div>
-
-            {error && <p className={styles.error}>{error}</p>}
           </div>
 
-          {/* Contract List Card */}
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>Bestehende Verträge</h2>
-            <p className={styles.cardSub}>{contracts.length} Verträge in deiner Verwaltung</p>
+          {/* Main Card */}
+          <div className={styles.mainCard}>
+            <div className={styles.mainCardInner}>
+              {/* Upload Section */}
+              <div className={`${styles.cardSection} ${styles.cardSectionUpload}`}>
+                <h2 className={styles.sectionTitle}>
+                  <Upload size={18} />
+                  Neuer Vertrag
+                  {!hasAccess && !planLoading && (
+                    <Lock size={14} style={{ marginLeft: '8px', color: '#9ca3af' }} />
+                  )}
+                </h2>
+                <p className={styles.sectionSubtitle}>PDF oder DOCX hochladen zur Analyse</p>
 
-            <div className={styles.searchBox}>
-              <input
-                type="text"
-                placeholder="Vertrag suchen..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-              />
-            </div>
+                <div
+                  className={`${styles.uploadZone} ${dragActive ? styles.uploadZoneActive : ''} ${isUploading ? styles.uploadZoneDisabled : ''}`}
+                  style={!hasAccess && !planLoading ? { opacity: 0.6, cursor: 'pointer' } : {}}
+                  onDragEnter={(e) => { if (hasAccess) handleDrag(e); }}
+                  onDragLeave={(e) => { if (hasAccess) handleDrag(e); }}
+                  onDragOver={(e) => { e.preventDefault(); if (hasAccess) handleDrag(e); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (handleBlockedAction()) return;
+                    handleDrop(e);
+                  }}
+                  onClick={() => {
+                    if (handleBlockedAction()) return;
+                    if (!isUploading) fileInputRef.current?.click();
+                  }}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    onChange={handleFileInput}
+                    style={{ display: 'none' }}
+                    disabled={isUploading || !hasAccess}
+                  />
 
-            <div className={styles.contractList}>
-              {isLoading ? (
-                <div className={styles.empty}>
-                  <div className={styles.uploadSpinner} />
-                  <span>Verträge laden...</span>
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className={styles.empty}>
-                  <span>{contracts.length === 0 ? 'Noch keine Verträge vorhanden' : `Keine Treffer für "${searchQuery}"`}</span>
-                </div>
-              ) : (
-                filtered.map(contract => (
-                  <button
-                    key={contract._id}
-                    className={`${styles.contractRow} ${!hasAccess ? styles.contractRowLocked : ''}`}
-                    onClick={() => handleSelect(contract._id)}
-                  >
-                    <div className={styles.contractInfo}>
-                      <span className={styles.contractName}>{contract.name}</span>
-                      <span className={styles.contractMeta}>
-                        {contract.analysis?.contractType || 'Vertrag'}
-                        {' \u00B7 '}
-                        {formatDate(contract.uploadedAt || contract.createdAt)}
-                      </span>
+                  {isUploading ? (
+                    <div className={styles.uploadLoading}>
+                      <Loader size={32} className={styles.spinning} />
+                      <span>Wird hochgeladen...</span>
                     </div>
-                    <span className={styles.contractArrow}>
-                      {!hasAccess ? '\u{1F512}' : '\u203A'}
-                    </span>
-                  </button>
-                ))
-              )}
+                  ) : (
+                    <>
+                      <div className={styles.uploadIcon}>
+                        <Upload size={32} />
+                      </div>
+                      <p className={styles.uploadTitle}>
+                        PDF oder DOCX ablegen oder <span className={styles.uploadLink}>auswählen</span>
+                      </p>
+                      <p className={styles.uploadMeta}>Max. 20 MB</p>
+                    </>
+                  )}
+                </div>
+
+                {/* Dokument scannen Button */}
+                {hasAccess && !isUploading && (
+                  <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openScanner();
+                      }}
+                      className={styles.scannerButton}
+                    >
+                      <Camera size={16} />
+                      Dokument scannen
+                    </button>
+                  </div>
+                )}
+
+                {error && (
+                  <div className={styles.error}>
+                    <AlertCircle size={16} />
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.divider} />
+
+              {/* Contracts Section */}
+              <div className={styles.cardSection}>
+                <h2 className={styles.sectionTitle}>
+                  <FileText size={18} />
+                  Bestehende Verträge
+                  {!hasAccess && !planLoading && (
+                    <Lock size={14} style={{ marginLeft: '8px', color: '#9ca3af' }} />
+                  )}
+                </h2>
+                <p className={styles.sectionSubtitle}>Bereits hochgeladene Dokumente</p>
+
+                <div className={styles.searchBox}>
+                  <Search size={18} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    placeholder="Suchen..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                </div>
+
+                <div className={styles.contractList}>
+                  {isLoading ? (
+                    <div className={styles.emptyState}>
+                      <Loader size={24} className={styles.spinning} />
+                      <p className={styles.emptyTitle}>Laden...</p>
+                    </div>
+                  ) : filteredContracts.length === 0 ? (
+                    <div className={styles.emptyState}>
+                      {contracts.length === 0 ? (
+                        <>
+                          <div className={styles.emptyIcon}>
+                            <FileText size={24} />
+                          </div>
+                          <p className={styles.emptyTitle}>Keine Verträge</p>
+                          <p className={styles.emptyText}>Laden Sie links einen Vertrag hoch</p>
+                        </>
+                      ) : (
+                        <>
+                          <div className={styles.emptyIcon}>
+                            <Search size={24} />
+                          </div>
+                          <p className={styles.emptyTitle}>Keine Treffer</p>
+                          <p className={styles.emptyText}>für &quot;{searchQuery}&quot;</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    filteredContracts.map((contract) => (
+                      <button
+                        key={contract._id}
+                        className={styles.contractRow}
+                        style={!hasAccess && !planLoading ? { opacity: 0.7 } : {}}
+                        onClick={() => {
+                          if (handleBlockedAction()) return;
+                          navigate(`/legal-lens-v2/${contract._id}`);
+                        }}
+                      >
+                        <div className={styles.contractRowIcon}>
+                          <FileText size={20} />
+                        </div>
+                        <div className={styles.contractRowContent}>
+                          <span className={styles.contractRowName}>{contract.name}</span>
+                          <span className={styles.contractRowMeta}>
+                            {contract.analysis?.contractType || 'Vertrag'} &middot; {formatDate(contract.uploadedAt || contract.createdAt)}
+                          </span>
+                        </div>
+                        {!hasAccess && !planLoading ? (
+                          <Lock size={16} style={{ color: '#9ca3af' }} />
+                        ) : (
+                          <ChevronRight size={18} className={styles.contractRowArrow} />
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Upgrade Modal */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowUpgradeModal(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999,
+              padding: '20px'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                background: 'white',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '420px',
+                width: '100%',
+                textAlign: 'center',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+              }}
+            >
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: '#f3f4f6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  cursor: 'pointer',
+                  color: '#6b7280'
+                }}
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px'
+              }}>
+                <Lock size={36} color="white" />
+              </div>
+
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: '700',
+                color: '#1f2937',
+                marginBottom: '12px'
+              }}>
+                Premium-Feature
+              </h2>
+
+              <p style={{
+                color: '#6b7280',
+                fontSize: '16px',
+                lineHeight: '1.6',
+                marginBottom: '24px'
+              }}>
+                <strong style={{ color: '#1f2937' }}>Legal Lens</strong> ist nur mit einem
+                <span style={{ color: '#3b82f6', fontWeight: '600' }}> Business</span> oder
+                <span style={{ color: '#2563eb', fontWeight: '600' }}> Enterprise</span> Abo verfügbar.
+              </p>
+
+              <div style={{
+                background: '#f8fafc',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '24px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <p style={{
+                  color: '#64748b',
+                  fontSize: '14px',
+                  margin: 0,
+                  marginBottom: '12px'
+                }}>
+                  Mit Legal Lens erhältst du:
+                </p>
+                <ul style={{
+                  color: '#475569',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  margin: 0,
+                  paddingLeft: '20px'
+                }}>
+                  <li>Klausel-für-Klausel Analyse mit Risikobewertung</li>
+                  <li>Konkrete Verhandlungstipps mit besseren Formulierungen</li>
+                  <li>Verständliche Erklärungen statt Juristendeutsch</li>
+                  <li>Interaktiver Vertrags-Explorer</li>
+                </ul>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '14px 20px',
+                    background: '#f3f4f6',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '12px',
+                    color: '#374151',
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Später
+                </button>
+                <button
+                  onClick={() => navigate('/pricing')}
+                  style={{
+                    flex: 1,
+                    padding: '14px 20px',
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Sparkles size={16} />
+                  Upgraden
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {ScannerModal}
+    </>
   );
 }
