@@ -11,6 +11,7 @@
  * POST   /results/:id/generate-clause - Generate a missing clause
  * GET    /history          - User's analysis history
  * GET    /results/:id/pdf  - Export analysis as PDF report
+ * POST   /results/:id/docx - Export optimized contract as DOCX
  * DELETE /results/:id      - Delete analysis
  */
 const express = require('express');
@@ -749,6 +750,214 @@ router.get('/results/:id/pdf', async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ success: false, message: 'PDF-Export fehlgeschlagen.' });
     }
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// POST /results/:id/docx - Export optimized contract as DOCX
+// ════════════════════════════════════════════════════════
+router.post('/results/:id/docx', async (req, res) => {
+  try {
+    const result = await OptimizerV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+      status: 'completed'
+    });
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    const { selections, mode } = req.body;
+    // selections: [{ clauseId, mode }] — which clauses to optimize and with which version
+    // mode: fallback mode if not specified per-clause
+
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, TableRow, TableCell, Table, WidthType, ShadingType } = require('docx');
+
+    const structure = result.structure || {};
+    const clauses = result.clauses || [];
+    const optimizations = result.optimizations || [];
+    const clauseAnalyses = result.clauseAnalyses || [];
+    const scores = result.scores || {};
+    const fallbackMode = mode || 'neutral';
+
+    // Build a map of selected clause optimizations
+    const selectionMap = new Map();
+    if (Array.isArray(selections)) {
+      for (const s of selections) {
+        selectionMap.set(s.clauseId, s.mode || fallbackMode);
+      }
+    }
+
+    // ── Build document sections ──
+    const docChildren = [];
+
+    // Title page header
+    docChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: 'OPTIMIERTER VERTRAG', bold: true, size: 36, font: 'Arial', color: '1F2937' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 100 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: structure.contractTypeLabel || structure.recognizedAs || 'Vertrag', size: 28, font: 'Arial', color: '6B7280' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200 }
+      })
+    );
+
+    // Metadata line
+    const metaParts = [];
+    if (structure.jurisdiction) metaParts.push(`Jurisdiktion: ${structure.jurisdiction}`);
+    if (structure.parties?.length) {
+      const partyNames = structure.parties.filter(p => p.name).map(p => `${p.role}: ${p.name}`).join(' | ');
+      if (partyNames) metaParts.push(partyNames);
+    }
+    if (scores.overall) metaParts.push(`Score: ${scores.overall}/100`);
+
+    if (metaParts.length) {
+      docChildren.push(
+        new Paragraph({
+          children: [new TextRun({ text: metaParts.join('  •  '), size: 18, font: 'Arial', color: '9CA3AF', italics: true })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 }
+        })
+      );
+    }
+
+    // Separator
+    docChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: '─'.repeat(80), size: 16, color: 'D1D5DB' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 200, after: 200 }
+      })
+    );
+
+    // Optimization summary
+    const appliedCount = selectionMap.size;
+    const totalOptimizable = optimizations.filter(o => o.needsOptimization).length;
+    docChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: `${appliedCount} von ${totalOptimizable} Optimierungen übernommen`, size: 20, font: 'Arial', color: '007AFF', bold: true })],
+        spacing: { after: 300 }
+      })
+    );
+
+    // ── Clause by clause ──
+    for (const clause of clauses) {
+      const optimization = optimizations.find(o => o.clauseId === clause.id);
+      const analysis = clauseAnalyses.find(a => a.clauseId === clause.id);
+      const selectedMode = selectionMap.get(clause.id);
+      const isOptimized = selectedMode && optimization?.needsOptimization;
+
+      // Section heading
+      const sectionPrefix = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber} ` : '';
+      docChildren.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `${sectionPrefix}${clause.title}`,
+              bold: true,
+              size: 24,
+              font: 'Arial',
+              color: '1F2937'
+            }),
+            ...(isOptimized ? [new TextRun({ text: '  ✓ optimiert', size: 18, font: 'Arial', color: '34C759', italics: true })] : [])
+          ],
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 300, after: 100 }
+        })
+      );
+
+      // Clause text (optimized or original)
+      let clauseText = clause.originalText;
+      if (isOptimized && optimization.versions?.[selectedMode]?.text) {
+        clauseText = optimization.versions[selectedMode].text;
+      }
+
+      // Split into paragraphs and add
+      const textParagraphs = clauseText.split('\n').filter(line => line.trim());
+      for (const line of textParagraphs) {
+        docChildren.push(
+          new Paragraph({
+            children: [new TextRun({ text: line.trim(), size: 22, font: 'Arial', color: '374151' })],
+            spacing: { after: 80 }
+          })
+        );
+      }
+
+      // If optimized, show reasoning as a note
+      if (isOptimized && optimization.versions?.[selectedMode]?.reasoning) {
+        docChildren.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: 'Änderungsgrund: ', bold: true, size: 18, font: 'Arial', color: '6B7280', italics: true }),
+              new TextRun({ text: optimization.versions[selectedMode].reasoning, size: 18, font: 'Arial', color: '6B7280', italics: true })
+            ],
+            spacing: { before: 80, after: 80 },
+            indent: { left: 400 }
+          })
+        );
+      }
+
+      // Separator between clauses
+      docChildren.push(
+        new Paragraph({
+          children: [new TextRun({ text: '', size: 10 })],
+          spacing: { after: 100 }
+        })
+      );
+    }
+
+    // ── Footer ──
+    docChildren.push(
+      new Paragraph({
+        children: [new TextRun({ text: '─'.repeat(80), size: 16, color: 'D1D5DB' })],
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 400, after: 200 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `Erstellt mit Contract AI — ${new Date().toLocaleDateString('de-DE')}`, size: 16, font: 'Arial', color: '9CA3AF', italics: true })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 50 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: 'Dieses Dokument wurde KI-gestützt optimiert. Eine juristische Prüfung wird empfohlen.', size: 16, font: 'Arial', color: '9CA3AF', italics: true })],
+        alignment: AlignmentType.CENTER
+      })
+    );
+
+    // Build document
+    const doc = new Document({
+      styles: {
+        default: {
+          document: {
+            run: { font: 'Arial', size: 22 }
+          }
+        }
+      },
+      sections: [{
+        properties: {
+          page: {
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+          }
+        },
+        children: docChildren
+      }]
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+
+    const fileName = `${(structure.contractTypeLabel || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, '').replace(/\s+/g, '_')}_optimiert.docx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
+
+  } catch (err) {
+    console.error('[OptimizerV2] DOCX export error:', err);
+    res.status(500).json({ success: false, message: 'DOCX-Export fehlgeschlagen.' });
   }
 });
 

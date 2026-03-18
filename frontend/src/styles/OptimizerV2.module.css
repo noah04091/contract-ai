@@ -1815,6 +1815,224 @@
   text-align: right;
 }
 
+/* ── DOCX Selection Panel ── */
+.exportOptionExpanded {
+  border-color: var(--ov2-blue) !important;
+  background: rgba(0, 122, 255, 0.02);
+}
+
+.docxSelection {
+  margin-top: 16px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius);
+  box-shadow: var(--ov2-shadow);
+}
+
+.docxSelectionHeader {
+  margin-bottom: 16px;
+}
+.docxSelectionHeader h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ov2-gray-800);
+  margin: 0 0 4px;
+}
+.docxSelectionHeader p {
+  font-size: 13px;
+  color: var(--ov2-gray-500);
+  margin: 0;
+}
+
+.docxModeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--ov2-gray-50);
+  border-radius: var(--ov2-radius-sm);
+}
+.docxModeLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ov2-gray-600);
+  white-space: nowrap;
+}
+.docxModeButtons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.docxModeBtn {
+  padding: 6px 14px;
+  border: 1.5px solid var(--ov2-gray-200);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ov2-gray-500);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--ov2-font);
+}
+.docxModeBtn:hover {
+  border-color: var(--ov2-gray-300);
+  color: var(--ov2-gray-700);
+}
+.docxModeBtnActive {
+  background: rgba(0, 122, 255, 0.04);
+  border-color: var(--ov2-blue);
+  color: var(--ov2-blue);
+}
+
+.docxSelectAll {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.docxSelectAllBtn {
+  padding: 5px 12px;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ov2-blue);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--ov2-font);
+}
+.docxSelectAllBtn:hover {
+  background: rgba(0, 122, 255, 0.04);
+  border-color: var(--ov2-blue);
+}
+.docxCount {
+  font-size: 12px;
+  color: var(--ov2-gray-400);
+  font-weight: 500;
+}
+
+.docxClauseList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+  padding-right: 4px;
+}
+.docxClauseList::-webkit-scrollbar { width: 4px; }
+.docxClauseList::-webkit-scrollbar-track { background: transparent; }
+.docxClauseList::-webkit-scrollbar-thumb { background: var(--ov2-gray-200); border-radius: 2px; }
+
+.docxClauseItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ov2-gray-100);
+  border-radius: var(--ov2-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fff;
+}
+.docxClauseItem:hover {
+  border-color: var(--ov2-gray-200);
+  background: var(--ov2-gray-50);
+}
+.docxClauseItemSelected {
+  border-color: rgba(0, 122, 255, 0.25);
+  background: rgba(0, 122, 255, 0.03);
+}
+.docxClauseItemSelected:hover {
+  border-color: rgba(0, 122, 255, 0.35);
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.docxCheckbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ov2-blue);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.docxClauseInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.docxClauseTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ov2-gray-800);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.docxClauseSection {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ov2-blue);
+  background: rgba(0, 122, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.docxClauseMeta {
+  font-size: 11px;
+  color: var(--ov2-gray-400);
+  font-weight: 500;
+}
+
+.docxClausePreview {
+  font-size: 11px;
+  color: var(--ov2-gray-400);
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.docxGenerateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: var(--ov2-radius-sm);
+  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  font-family: var(--ov2-font);
+}
+.docxGenerateBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35);
+}
+.docxGenerateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .pageContainer { padding: 16px; }
