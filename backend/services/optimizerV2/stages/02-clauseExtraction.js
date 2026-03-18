@@ -242,6 +242,7 @@ async function extractSmallContract(openai, contractText, preSplit, structure, o
   result.clauses = result.clauses.map((clause, i) => ({
     ...clause,
     id: clause.id || `clause_${String(i + 1).padStart(3, '0')}`,
+    sectionNumber: clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber : null,
     startPosition: contractText.indexOf(clause.originalText.substring(0, 50)),
     endPosition: null
   }));

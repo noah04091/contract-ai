@@ -100,7 +100,7 @@ export default function RedlineView({ clauses, optimizations, activeMode, onMode
                 onClick={() => onClauseClick(clause.id)}
               >
                 <div className={styles.redlineClauseHeader}>
-                  {clause.sectionNumber && <span className={styles.rlSection}>{clause.sectionNumber}</span>}
+                  {clause.sectionNumber && clause.sectionNumber !== 'null' && <span className={styles.rlSection}>{clause.sectionNumber}</span>}
                   <span className={styles.rlTitle}>{clause.title}</span>
                 </div>
                 <div className={styles.redlineClauseText}>
@@ -137,7 +137,7 @@ export default function RedlineView({ clauses, optimizations, activeMode, onMode
                   onClick={() => onClauseClick(clause.id)}
                 >
                   <div className={styles.redlineClauseHeader}>
-                    {clause.sectionNumber && <span className={styles.rlSection}>{clause.sectionNumber}</span>}
+                    {clause.sectionNumber && clause.sectionNumber !== 'null' && <span className={styles.rlSection}>{clause.sectionNumber}</span>}
                     <span className={styles.rlTitle}>{clause.title}</span>
                     {hasDiffs && <span className={styles.rlChangedBadge}>Optimiert</span>}
                   </div>

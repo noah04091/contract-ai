@@ -38,7 +38,7 @@ export default function ClauseCard({
       {/* Header - always visible */}
       <div className={styles.clauseCardHeader} onClick={() => onSelect(isSelected ? null : clause.id)}>
         <div className={styles.clauseCardLeft}>
-          {clause.sectionNumber && (
+          {clause.sectionNumber && clause.sectionNumber !== 'null' && (
             <span className={styles.clauseSectionNumber}>{clause.sectionNumber}</span>
           )}
           <span className={styles.clauseTitle}>{clause.title}</span>
