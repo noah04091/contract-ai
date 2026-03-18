@@ -538,15 +538,15 @@ router.get('/results/:id/pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Analyse.pdf"`);
     doc.pipe(res);
 
-    // ── Design tokens ──
+    // ── Design tokens (professional muted palette) ──
     const C = {
-      primary: '#007AFF', primaryDark: '#0056CC', accent: '#5856D6',
-      green: '#34C759', greenBg: '#F0FDF4', greenBorder: '#BBF7D0',
-      red: '#FF3B30', redBg: '#FEF2F2', redBorder: '#FECACA',
-      orange: '#FF9500', orangeBg: '#FFFBEB', orangeBorder: '#FDE68A',
-      purple: '#AF52DE',
-      dark: '#111827', text: '#374151', muted: '#6B7280', light: '#9CA3AF',
-      bg: '#F8FAFC', cardBg: '#FFFFFF', border: '#E5E7EB', borderLight: '#F3F4F6'
+      primary: '#1e40af', primaryDark: '#1e3a8a', accent: '#4338ca',
+      green: '#047857', greenBg: '#F0FDF4', greenBorder: '#A7F3D0',
+      red: '#b91c1c', redBg: '#FEF2F2', redBorder: '#FECACA',
+      orange: '#b45309', orangeBg: '#FFFBEB', orangeBorder: '#FDE68A',
+      purple: '#6d28d9',
+      dark: '#1f2937', text: '#374151', muted: '#6B7280', light: '#9CA3AF',
+      bg: '#F8FAFC', cardBg: '#FFFFFF', border: '#D1D5DB', borderLight: '#E5E7EB'
     };
     const L = 50, R = 545, W = R - L; // left, right, content width
     const STRENGTH_LABELS = { strong: 'Stark', adequate: 'Ausreichend', weak: 'Schwach', critical: 'Kritisch' };
@@ -685,6 +685,14 @@ router.get('/results/:id/pdf', async (req, res) => {
       return impA - impB;
     });
 
+    // Helper: draw a tag badge at a given position, returns the width used
+    function drawTag(x, y, label, color) {
+      const tw = doc.fontSize(6).widthOfString(label) + 8;
+      roundedRect(x, y, tw, 11, 2, color + '12', color + '30');
+      doc.fontSize(6).fillColor(color).text(label, x + 4, y + 2.5, { lineBreak: false });
+      return tw + 3;
+    }
+
     for (let ci = 0; ci < sortedClauses.length; ci++) {
       const clause = sortedClauses[ci];
       const analysis = analysisMap.get(clause.id);
@@ -692,159 +700,194 @@ router.get('/results/:id/pdf', async (req, res) => {
       const riskLevel = analysis?.riskLevel || 0;
       const riskColor = riskLevel >= 7 ? C.red : riskLevel >= 4 ? C.orange : C.green;
       const impLevel = analysis?.importanceLevel || 'medium';
-      const impColor = impLevel === 'critical' ? C.red : impLevel === 'high' ? C.orange : impLevel === 'medium' ? C.primary : C.light;
-      const isHighPriority = impLevel === 'critical' || impLevel === 'high';
+      const impColor = impLevel === 'critical' ? C.red : impLevel === 'high' ? '#b45309' : impLevel === 'medium' ? '#4b5563' : '#9ca3af';
+      const strColor = analysis?.strength === 'weak' || analysis?.strength === 'critical' ? C.red : analysis?.strength === 'adequate' ? '#b45309' : C.green;
+      const hasConcerns = analysis?.concerns?.length > 0;
+      const hasOptimization = optimization?.needsOptimization;
       const sectionLabel = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber}  ` : '';
 
-      // ── Compact mode for standard/low priority clauses ──
-      if (!isHighPriority && riskLevel < 5) {
-        // One-liner: section + title | badges | risk | one-line summary
-        let compactH = 28;
-        if (analysis?.plainLanguage) compactH += 11;
+      // ── TIER 3: Compact row — Standard/Formal with low risk, no concerns, no optimization ──
+      if ((impLevel === 'medium' || impLevel === 'low') && riskLevel < 5 && !hasConcerns && !hasOptimization) {
+        let compactH = 16;
+        if (analysis?.plainLanguage) compactH += 10;
         checkPage(compactH);
 
         const rowY = doc.y;
-
-        // Left color accent bar
-        doc.save();
-        doc.rect(L, rowY, 3, compactH - 4).fill(riskColor + '60');
-        doc.restore();
+        // Left accent dot
+        doc.save().circle(L + 4, rowY + 5, 2).fill(impLevel === 'low' ? '#d1d5db' : '#9ca3af').restore();
 
         // Title
-        doc.fontSize(8.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY + 2, { width: W - 120 });
+        doc.fontSize(8).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 12, rowY + 1, { width: W - 130 });
 
-        // Inline badges (right of title, same line)
-        const badgeY = rowY + 2;
-        let rbx = R - 90;
-        const impLabel = IMPORTANCE_LABELS[impLevel] || impLevel;
-        const impW = doc.fontSize(6).widthOfString(impLabel) + 8;
-        roundedRect(rbx, badgeY, impW, 11, 2, impColor + '15', impColor + '40');
-        doc.fontSize(6).fillColor(impColor).text(impLabel, rbx + 4, badgeY + 2.5, { lineBreak: false });
-        rbx += impW + 3;
+        // Badges (right-aligned)
+        let rx = R - 30;
+        if (analysis?.strength) { rx -= drawTag(rx - doc.fontSize(6).widthOfString(STRENGTH_LABELS[analysis.strength] || '') - 8, rowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor); }
+        rx -= drawTag(rx - doc.fontSize(6).widthOfString(IMPORTANCE_LABELS[impLevel] || '') - 8, rowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
 
-        if (analysis?.strength) {
-          const strLabel = STRENGTH_LABELS[analysis.strength] || analysis.strength;
-          const strColor = analysis.strength === 'weak' || analysis.strength === 'critical' ? C.red : analysis.strength === 'adequate' ? C.orange : C.green;
-          const strW = doc.fontSize(6).widthOfString(strLabel) + 8;
-          roundedRect(rbx, badgeY, strW, 11, 2, strColor + '15', strColor + '40');
-          doc.fontSize(6).fillColor(strColor).text(strLabel, rbx + 4, badgeY + 2.5, { lineBreak: false });
-        }
+        // Risk right
+        if (riskLevel > 0) doc.fontSize(6.5).fillColor(C.muted).text(`${riskLevel}/10`, R - 26, rowY + 1, { width: 26, align: 'right' });
 
-        // Risk score far right
-        if (riskLevel > 0) {
-          doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - 28, rowY + 2, { width: 28, align: 'right' });
-        }
-
-        // One-line summary below title
+        // One-line summary
         if (analysis?.plainLanguage) {
-          const summary = analysis.plainLanguage.length > 130 ? analysis.plainLanguage.substring(0, 127) + '...' : analysis.plainLanguage;
-          doc.fontSize(7).fillColor(C.muted).text(summary, L + 8, rowY + 15, { width: W - 16 });
+          const summary = analysis.plainLanguage.length > 140 ? analysis.plainLanguage.substring(0, 137) + '...' : analysis.plainLanguage;
+          doc.fontSize(6.5).fillColor(C.light).text(summary, L + 12, rowY + 12, { width: W - 20 });
         }
 
-        doc.y = rowY + compactH;
-
-        // Thin separator
+        doc.y = rowY + compactH + 2;
         if (ci < sortedClauses.length - 1) {
-          doc.strokeColor(C.borderLight).lineWidth(0.3).moveTo(L + 8, doc.y).lineTo(R, doc.y).stroke();
-          doc.y += 3;
+          doc.strokeColor('#f3f4f6').lineWidth(0.3).moveTo(L + 12, doc.y).lineTo(R, doc.y).stroke();
+          doc.y += 2;
         }
         continue;
       }
 
-      // ── Full detail mode for critical/high priority clauses ──
-      let estH = 50;
-      if (analysis?.plainLanguage) estH += Math.ceil(analysis.plainLanguage.length / 90) * 11 + 6;
-      if (analysis?.legalAssessment) estH += Math.ceil(analysis.legalAssessment.length / 95) * 10 + 16;
-      if (analysis?.concerns?.length) estH += analysis.concerns.length * 11 + 14;
-      if (analysis?.legalReferences?.length) estH += 12;
-      if (optimization?.needsOptimization) estH += optimization.negotiationAdvice ? 28 : 14;
-      checkPage(Math.min(estH, 180));
+      // ── TIER 2: Medium detail — "Wichtig" with no concerns + no optimization, OR medium with concerns ──
+      const isTier2 = (impLevel === 'high' && !hasConcerns && !hasOptimization && riskLevel < 5) ||
+                       ((impLevel === 'medium' || impLevel === 'low') && (hasConcerns || hasOptimization || riskLevel >= 5));
+
+      if (isTier2) {
+        let midH = 36;
+        if (analysis?.plainLanguage) midH += Math.ceil(Math.min(analysis.plainLanguage.length, 200) / 90) * 10 + 4;
+        if (hasConcerns) midH += analysis.concerns.length * 10 + 14;
+        if (hasOptimization) midH += 14;
+        checkPage(Math.min(midH, 120));
+
+        const rowY = doc.y;
+
+        // Left accent bar
+        doc.save().rect(L, rowY, 2.5, 13).fill(riskColor).restore();
+
+        // Title
+        doc.fontSize(9).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY, { width: W - 70 });
+
+        // Risk badge top right
+        if (riskLevel > 0) {
+          doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - 30, rowY + 1, { width: 30, align: 'right' });
+        }
+
+        // Badges row
+        const bRowY = rowY + 14;
+        let bx2 = L + 8;
+        bx2 += drawTag(bx2, bRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
+        if (analysis?.strength) bx2 += drawTag(bx2, bRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
+        if (analysis?.legalReferences?.length > 0) {
+          doc.fontSize(6).fillColor(C.purple).text(analysis.legalReferences.join(', '), bx2 + 2, bRowY + 2.5, { lineBreak: false });
+        }
+
+        doc.y = bRowY + 14;
+
+        // Summary (truncated for tier 2)
+        if (analysis?.plainLanguage) {
+          const text = analysis.plainLanguage.length > 200 ? analysis.plainLanguage.substring(0, 197) + '...' : analysis.plainLanguage;
+          doc.fontSize(7.5).fillColor(C.text).text(text, L + 8, doc.y, { width: W - 16 });
+          doc.moveDown(0.2);
+        }
+
+        // Concerns (compact)
+        if (hasConcerns) {
+          const conY = doc.y;
+          const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
+          const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 28 });
+          roundedRect(L + 8, conY, W - 16, conTextH + 14, 3, C.orangeBg, null);
+          doc.fontSize(6).fillColor(C.orange).text('Bedenken', L + 14, conY + 3);
+          doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 11, { width: W - 28 });
+          doc.y = conY + conTextH + 16;
+        }
+
+        // Optimization hint (inline)
+        if (hasOptimization) {
+          const adviceText = optimization.negotiationAdvice || 'Optimierung verfügbar';
+          doc.fontSize(6.5).fillColor(C.primary).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
+          doc.moveDown(0.15);
+        }
+
+        doc.moveDown(0.2);
+        if (ci < sortedClauses.length - 1) {
+          doc.strokeColor(C.borderLight).lineWidth(0.3).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
+          doc.moveDown(0.25);
+        }
+        continue;
+      }
+
+      // ── TIER 1: Full detail — Critical clauses, or high-risk with concerns/optimization ──
+      let estH = 44;
+      if (analysis?.plainLanguage) estH += Math.ceil(analysis.plainLanguage.length / 90) * 10 + 4;
+      if (analysis?.legalAssessment) estH += Math.ceil(analysis.legalAssessment.length / 95) * 9 + 14;
+      if (hasConcerns) estH += analysis.concerns.length * 10 + 14;
+      if (hasOptimization) estH += optimization.negotiationAdvice ? 24 : 14;
+      checkPage(Math.min(estH, 160));
 
       const cY = doc.y;
 
-      // Left color accent bar (3px wide)
-      doc.save();
-      doc.rect(L, cY, 3, 14).fill(riskColor);
-      doc.restore();
+      // Left accent bar
+      doc.save().rect(L, cY, 3, 13).fill(riskColor).restore();
 
-      // Clause title
-      doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 80 });
+      // Title
+      doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 70 });
 
-      // Risk badge (top right)
+      // Risk badge top right
       if (riskLevel > 0) {
-        const badgeW = 38, badgeH = 14, badgeX = R - badgeW;
-        roundedRect(badgeX, cY, badgeW, badgeH, 3, riskColor + '18', riskColor + '40');
-        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, badgeX, cY + 3, { width: badgeW, align: 'center' });
+        const rBW = 36, rBH = 13;
+        roundedRect(R - rBW, cY, rBW, rBH, 3, riskColor + '15', riskColor + '35');
+        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - rBW, cY + 2.5, { width: rBW, align: 'center' });
       }
 
-      // Badges row — explicit Y to prevent stacking
-      const badgeRowY = cY + 16;
-      const badges = [];
-      if (impLevel) badges.push({ label: IMPORTANCE_LABELS[impLevel] || impLevel, color: impColor });
-      if (analysis?.strength) badges.push({ label: STRENGTH_LABELS[analysis.strength] || analysis.strength, color: analysis.strength === 'weak' || analysis.strength === 'critical' ? C.red : analysis.strength === 'adequate' ? C.orange : C.green });
+      // Badges + legal refs
+      const badgeRowY = cY + 15;
       let bx = L + 8;
-      for (const badge of badges) {
-        const bw = doc.fontSize(6.5).widthOfString(badge.label) + 10;
-        roundedRect(bx, badgeRowY, bw, 12, 3, badge.color + '15', badge.color + '40');
-        doc.fontSize(6.5).fillColor(badge.color).text(badge.label, bx + 5, badgeRowY + 2.5, { lineBreak: false });
-        bx += bw + 4;
-      }
-
-      // Legal references inline with badges
+      bx += drawTag(bx, badgeRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
+      if (analysis?.strength) bx += drawTag(bx, badgeRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
       if (analysis?.legalReferences?.length > 0) {
-        doc.fontSize(6.5).fillColor(C.purple).text(`${analysis.legalReferences.join(', ')}`, bx + 4, badgeRowY + 2.5, { lineBreak: false });
+        doc.fontSize(6).fillColor(C.purple).text(analysis.legalReferences.join(', '), bx + 2, badgeRowY + 2.5, { lineBreak: false });
       }
 
-      doc.y = badgeRowY + 16;
+      doc.y = badgeRowY + 14;
 
-      // Plain language summary
+      // Summary
       if (analysis?.plainLanguage) {
-        doc.fontSize(8).fillColor(C.text).text(analysis.plainLanguage, L + 8, doc.y, { width: W - 16 });
-        doc.moveDown(0.25);
+        doc.fontSize(7.5).fillColor(C.text).text(analysis.plainLanguage, L + 8, doc.y, { width: W - 16 });
+        doc.moveDown(0.2);
       }
 
-      // Legal assessment in gray box
+      // Legal assessment box
       if (analysis?.legalAssessment) {
-        checkPage(40);
+        checkPage(30);
         const laY = doc.y;
-        const laH = doc.fontSize(7.5).heightOfString(analysis.legalAssessment, { width: W - 28 });
-        roundedRect(L + 8, laY, W - 16, laH + 16, 4, '#F9FAFB', null);
-        doc.fontSize(6.5).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 4);
-        doc.fontSize(7.5).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 13, { width: W - 28 });
-        doc.y = laY + laH + 20;
+        const laH = doc.fontSize(7).heightOfString(analysis.legalAssessment, { width: W - 30 });
+        roundedRect(L + 8, laY, W - 16, laH + 13, 3, '#f9fafb', null);
+        doc.fontSize(6).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 3);
+        doc.fontSize(7).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 11, { width: W - 30 });
+        doc.y = laY + laH + 16;
       }
 
-      // Concerns
-      if (analysis?.concerns?.length > 0) {
-        checkPage(24);
+      // Concerns box
+      if (hasConcerns) {
+        checkPage(20);
         const conY = doc.y;
         const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
-        const conTextH = doc.fontSize(7.5).heightOfString(conText, { width: W - 28 });
-        const conH = conTextH + 16;
-        roundedRect(L + 8, conY, W - 16, conH, 4, C.orangeBg, C.orangeBorder);
-        doc.fontSize(6.5).fillColor(C.orange).text('Bedenken', L + 14, conY + 4);
-        doc.fontSize(7.5).fillColor(C.text).text(conText, L + 14, conY + 13, { width: W - 28 });
-        doc.y = conY + conH + 4;
+        const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 30 });
+        roundedRect(L + 8, conY, W - 16, conTextH + 13, 3, C.orangeBg, C.orangeBorder);
+        doc.fontSize(6).fillColor(C.orange).text('Bedenken', L + 14, conY + 3);
+        doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 11, { width: W - 30 });
+        doc.y = conY + conTextH + 16;
       }
 
-      // Optimization hint
-      if (optimization?.needsOptimization) {
-        checkPage(22);
+      // Optimization box
+      if (hasOptimization) {
+        checkPage(18);
         const optY = doc.y;
         const adviceText = optimization.negotiationAdvice || '';
-        const adviceH = adviceText ? doc.fontSize(7).heightOfString(adviceText, { width: W - 28 }) : 0;
-        const optH = adviceH + 14;
-        roundedRect(L + 8, optY, W - 16, optH, 4, '#EFF6FF', '#BFDBFE');
-        doc.fontSize(7).fillColor(C.primary).text('Optimierung verfügbar' + (adviceText ? `:  ${adviceText}` : ''), L + 14, optY + 4, { width: W - 28 });
-        doc.y = optY + optH + 4;
+        const fullText = adviceText ? `Optimierung verfügbar: ${adviceText}` : 'Optimierung verfügbar';
+        const adviceH = doc.fontSize(6.5).heightOfString(fullText, { width: W - 30 });
+        roundedRect(L + 8, optY, W - 16, adviceH + 10, 3, '#eff6ff', '#bfdbfe');
+        doc.fontSize(6.5).fillColor(C.primary).text(fullText, L + 14, optY + 4, { width: W - 30 });
+        doc.y = optY + adviceH + 12;
       }
 
-      doc.moveDown(0.3);
-
-      // Separator
+      doc.moveDown(0.2);
       if (ci < sortedClauses.length - 1) {
         doc.strokeColor(C.borderLight).lineWidth(0.4).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-        doc.moveDown(0.4);
+        doc.moveDown(0.3);
       }
     }
 

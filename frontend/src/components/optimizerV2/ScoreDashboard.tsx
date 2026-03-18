@@ -369,9 +369,15 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
         setSavedToLibrary(true);
         toast.success('Klausel in Bibliothek gespeichert');
       }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Speichern fehlgeschlagen';
-      toast.error(msg.includes('409') || msg.includes('Duplikat') || msg.includes('duplicate') ? 'Klausel bereits in Bibliothek vorhanden' : `Speichern fehlgeschlagen: ${msg}`);
+    } catch (err: unknown) {
+      // 409 = duplicate → clause already exists in library, treat as success
+      if (err && typeof err === 'object' && ('duplicate' in err || ('status' in err && (err as { status: number }).status === 409))) {
+        setSavedToLibrary(true);
+        toast.info('Klausel bereits in Bibliothek vorhanden');
+        return;
+      }
+      const msg = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err ? String((err as { message: unknown }).message) : 'Speichern fehlgeschlagen');
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
