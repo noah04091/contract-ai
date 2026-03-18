@@ -571,6 +571,14 @@
 .pdfPageWrapper {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
   background: white;
+  position: relative;
+}
+
+/* Text-Layer soll keine Klicks abfangen — Overlays übernehmen */
+.pdfPageWrapper :global(.react-pdf__Page__textContent) {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .pdfExplorerEmpty {
@@ -627,7 +635,8 @@
   border-radius: 3px;
   transition: background-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  z-index: 2;
+  z-index: 10;
+  pointer-events: all;
 }
 
 .pdfOverlay_low {

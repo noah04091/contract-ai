@@ -333,6 +333,24 @@ class ClauseParser {
       };
     }
 
+    // Eigenständige Zeile mit Großbuchstabe am Anfang (1-6 Wörter, < 80 Zeichen)
+    // Erkennt: "Präambel", "Delkrederehaftung", "Angaben zum Unternehmen", "Ankauf von Inkassoforderungen"
+    if (line.length >= 3 && line.length < 80) {
+      const wordCount = line.split(/\s+/).length;
+      if (wordCount <= 6 && /^[A-ZÄÖÜ]/.test(line) && !/[.,:;!?]$/.test(line) && !/^\d/.test(line)) {
+        // Keine normalen Sätze (die enden mit Punkt/enthalten viele Kleinwörter)
+        const lowerWords = line.split(/\s+/).filter(w => /^[a-zäöüß]/.test(w) && w.length > 3);
+        const isLikelyHeader = lowerWords.length <= 2;
+        if (isLikelyHeader) {
+          return {
+            id: line.toLowerCase().replace(/\s+/g, '-'),
+            title: line,
+            type: 'header'
+          };
+        }
+      }
+    }
+
     return null;
   }
 
@@ -406,8 +424,8 @@ class ClauseParser {
         if (sentence.length < 10) {
           // Sehr kurzer Satz - anhängen
           currentClause += (currentClause ? ' ' : '') + sentence;
-        } else if (currentClause.length + sentence.length < maxClauseLength / 2) {
-          // Kann noch zusammengefasst werden
+        } else if (currentClause.length + sentence.length < maxClauseLength * 0.35) {
+          // Kann noch zusammengefasst werden (max ~700 Zeichen bevor neue Klausel)
           currentClause += (currentClause ? ' ' : '') + sentence;
         } else {
           // Speichere aktuelle Klausel und starte neue
