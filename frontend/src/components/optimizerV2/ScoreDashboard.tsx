@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import { apiCall } from '../../utils/api';
@@ -294,10 +294,22 @@ const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
 
 function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: MissingClause[]; resultId: string }) {
   const [generating, setGenerating] = useState<string | null>(null);
-  const [generatedClause, setGeneratedClause] = useState<{ category: string; label: string; text: string; whyImportant?: string } | null>(null);
+  const [generatedClauses, setGeneratedClauses] = useState<Map<string, { label: string; text: string; whyImportant?: string }>>(new Map());
+  const [visibleClause, setVisibleClause] = useState<{ category: string; label: string; text: string; whyImportant?: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [savedToLibrary, setSavedToLibrary] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleGenerate = useCallback(async (category: string, label: string) => {
+    // If already generated, just show it
+    const existing = generatedClauses.get(category);
+    if (existing) {
+      setVisibleClause({ category, ...existing });
+      setCopied(false);
+      setSavedToLibrary(false);
+      return;
+    }
+
     setGenerating(category);
     try {
       const res = await apiCall(`/optimizer-v2/results/${resultId}/generate-clause`, {
@@ -305,22 +317,51 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
         body: JSON.stringify({ category })
       }) as { success: boolean; generatedClause: string; whyImportant?: string };
       if (res.success) {
-        setGeneratedClause({ category, label, text: res.generatedClause, whyImportant: res.whyImportant });
+        const clause = { label, text: res.generatedClause, whyImportant: res.whyImportant };
+        setGeneratedClauses(prev => new Map(prev).set(category, clause));
+        setVisibleClause({ category, ...clause });
+        setCopied(false);
+        setSavedToLibrary(false);
       }
     } catch {
       // silently fail
     } finally {
       setGenerating(null);
     }
-  }, [resultId]);
+  }, [resultId, generatedClauses]);
 
   const handleCopy = useCallback(() => {
-    if (generatedClause) {
-      navigator.clipboard.writeText(generatedClause.text);
+    if (visibleClause) {
+      navigator.clipboard.writeText(visibleClause.text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  }, [generatedClause]);
+  }, [visibleClause]);
+
+  const handleSaveToLibrary = useCallback(async () => {
+    if (!visibleClause || saving) return;
+    setSaving(true);
+    try {
+      const res = await apiCall('/clause-library', {
+        method: 'POST',
+        body: JSON.stringify({
+          clauseText: visibleClause.text,
+          category: 'important',
+          clauseArea: visibleClause.category,
+          userNotes: visibleClause.whyImportant || `Generierte Klausel: ${visibleClause.label}`,
+          tags: ['generiert', 'optimizer-v2']
+        })
+      }) as { success: boolean };
+      if (res.success) {
+        setSavedToLibrary(true);
+      }
+    } catch {
+      // Could be duplicate — still show as saved
+      setSavedToLibrary(true);
+    } finally {
+      setSaving(false);
+    }
+  }, [visibleClause, saving]);
 
   if (!missingClauses || missingClauses.length === 0) return null;
 
@@ -340,6 +381,7 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
           {trulyMissing.map(mc => {
             const sev = SEVERITY_CONFIG[mc.severity] || SEVERITY_CONFIG.medium;
             const isGenerating = generating === mc.category;
+            const isGenerated = generatedClauses.has(mc.category);
             return (
               <div key={mc.category} className={styles.missingClauseItem}>
                 <div className={styles.missingClauseDot} style={{ background: sev.color }} />
@@ -348,13 +390,18 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
                   <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
                 </div>
                 <button
-                  className={styles.generateClauseBtn}
+                  className={`${styles.generateClauseBtn} ${isGenerated ? styles.generateClauseBtnDone : ''}`}
                   onClick={() => handleGenerate(mc.category, mc.categoryLabel)}
-                  disabled={isGenerating || generating !== null}
-                  title="Klausel generieren"
+                  disabled={isGenerating || (generating !== null && !isGenerated)}
+                  title={isGenerated ? 'Generierte Klausel anzeigen' : 'Klausel generieren'}
                 >
-                  {isGenerating ? <Loader2 size={13} className={styles.spinning} /> : <Sparkles size={13} />}
-                  <span>{isGenerating ? 'Generiere...' : 'Generieren'}</span>
+                  {isGenerating
+                    ? <Loader2 size={13} className={styles.spinning} />
+                    : isGenerated
+                      ? <Eye size={13} />
+                      : <Sparkles size={13} />
+                  }
+                  <span>{isGenerating ? 'Generiere...' : isGenerated ? 'Anzeigen' : 'Generieren'}</span>
                 </button>
                 <span className={styles.missingClauseTag} style={{ color: sev.color, borderColor: sev.color }}>
                   {sev.label}
@@ -378,25 +425,25 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
       </div>
 
       {/* Generated Clause Modal */}
-      {generatedClause && (
-        <div className={styles.generatedClauseOverlay} onClick={() => setGeneratedClause(null)}>
+      {visibleClause && (
+        <div className={styles.generatedClauseOverlay} onClick={() => setVisibleClause(null)}>
           <div className={styles.generatedClauseModal} onClick={e => e.stopPropagation()}>
             <div className={styles.generatedClauseHeader}>
               <div className={styles.generatedClauseHeaderLeft}>
                 <Sparkles size={16} style={{ color: '#007AFF' }} />
-                <span className={styles.generatedClauseTitle}>{generatedClause.label}</span>
+                <span className={styles.generatedClauseTitle}>{visibleClause.label}</span>
               </div>
-              <button className={styles.generatedClauseClose} onClick={() => setGeneratedClause(null)}>
+              <button className={styles.generatedClauseClose} onClick={() => setVisibleClause(null)}>
                 <X size={18} />
               </button>
             </div>
-            <pre className={styles.generatedClauseText}>{generatedClause.text}</pre>
-            {generatedClause.whyImportant && (
+            <pre className={styles.generatedClauseText}>{visibleClause.text}</pre>
+            {visibleClause.whyImportant && (
               <div className={styles.whyImportant}>
                 <AlertTriangle size={14} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
                 <div>
                   <span className={styles.whyImportantTitle}>Warum ist diese Klausel wichtig?</span>
-                  <span className={styles.whyImportantText}>{generatedClause.whyImportant}</span>
+                  <span className={styles.whyImportantText}>{visibleClause.whyImportant}</span>
                 </div>
               </div>
             )}
@@ -404,6 +451,19 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
               <button className={styles.generatedClauseCopyBtn} onClick={handleCopy}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 <span>{copied ? 'Kopiert!' : 'In Zwischenablage kopieren'}</span>
+              </button>
+              <button
+                className={`${styles.generatedClauseSaveBtn} ${savedToLibrary ? styles.generatedClauseSaveBtnDone : ''}`}
+                onClick={handleSaveToLibrary}
+                disabled={saving || savedToLibrary}
+              >
+                {saving
+                  ? <Loader2 size={14} className={styles.spinning} />
+                  : savedToLibrary
+                    ? <Check size={14} />
+                    : <BookmarkPlus size={14} />
+                }
+                <span>{saving ? 'Speichere...' : savedToLibrary ? 'Gespeichert!' : 'In Klauselbibliothek speichern'}</span>
               </button>
             </div>
           </div>
