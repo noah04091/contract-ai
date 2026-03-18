@@ -46,14 +46,10 @@
   position: relative;
 }
 
-.uploadNav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px 24px;
-  position: relative;
+.uploadHistoryBtn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
   z-index: 2;
 }
 

@@ -58,12 +58,9 @@ export default function OptimizerV2() {
       </Helmet>
 
       <div className={`${styles.pageContainer} ${(status === 'idle' || status === 'uploading') ? styles.pageContainerUpload : ''}`}>
-        {/* Minimal header in upload state (just Historie link) */}
+        {/* Historie button floating top-right in upload state */}
         {(status === 'idle' || status === 'uploading') && (
-          <div className={styles.uploadNav}>
-            <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
-              <ArrowLeft size={16} /> Dashboard
-            </button>
+          <div className={styles.uploadHistoryBtn}>
             <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
               <History size={14} /> Historie
             </button>
