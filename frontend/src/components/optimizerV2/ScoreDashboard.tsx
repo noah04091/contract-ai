@@ -342,12 +342,23 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
     if (!visibleClause || saving) return;
     setSaving(true);
     try {
+      // Map V2 categories to SavedClause enum values
+      const areaMap: Record<string, string> = {
+        parties: 'other', subject: 'other', duration: 'termination',
+        termination: 'termination', payment: 'payment', liability: 'liability',
+        warranty: 'warranty', confidentiality: 'confidentiality',
+        ip_rights: 'intellectual_property', data_protection: 'data_protection',
+        non_compete: 'non_compete', force_majeure: 'force_majeure',
+        dispute_resolution: 'dispute', general_provisions: 'other',
+        deliverables: 'other', sla: 'other', penalties: 'payment',
+        insurance: 'other', compliance: 'other', amendments: 'other', other: 'other'
+      };
       const res = await apiCall('/clause-library', {
         method: 'POST',
         body: JSON.stringify({
           clauseText: visibleClause.text,
           category: 'important',
-          clauseArea: visibleClause.category,
+          clauseArea: areaMap[visibleClause.category] || 'other',
           userNotes: visibleClause.whyImportant || `Generierte Klausel: ${visibleClause.label}`,
           tags: ['generiert', 'optimizer-v2']
         })
@@ -356,8 +367,7 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
         setSavedToLibrary(true);
       }
     } catch {
-      // Could be duplicate — still show as saved
-      setSavedToLibrary(true);
+      // Save failed — don't show as saved
     } finally {
       setSaving(false);
     }
