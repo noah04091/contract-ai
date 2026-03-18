@@ -80,7 +80,7 @@ Erstelle für JEDEN Paragraphen/Abschnitt einen Eintrag (maximal ${MAX_CLAUSES} 
 - area: parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other
 - section: Exakte Fundstelle ("§5 Abs. 2")
 - title: Kurzer Titel
-- originalText: Wörtliches Zitat (max 3 Sätze Kernaussage)
+- originalText: VOLLSTÄNDIGER wörtlicher Klauseltext (den kompletten Absatz/Paragraphen zitieren, nicht kürzen)
 - summary: 1 Satz in einfacher Sprache
 - keyValues: Alle konkreten Werte als Key-Value-Paare (Fristen, Beträge, %, Daten, Limits)
 
@@ -111,7 +111,7 @@ async function structureContract(contractText) {
       { role: "user", content: prompt.user }
     ],
     temperature: 0.1,
-    max_tokens: 8000,
+    max_tokens: 12000,
     response_format: { type: "json_object" },
   });
 
