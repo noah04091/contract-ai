@@ -9,7 +9,7 @@ interface Props {
   scores: Scores;
   result: AnalysisResult;
   structure: ContractStructure;
-  onNavigate: (tab: string) => void;
+  onNavigate: (tab: string, clauseId?: string) => void;
 }
 
 const SCORE_CONFIGS = [
@@ -176,7 +176,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
               <button
                 key={point.clauseId}
                 className={styles.strategyItem}
-                onClick={() => onNavigate('clauses')}
+                onClick={() => onNavigate('clauses', point.clauseId)}
               >
                 <span className={styles.strategyRank}>#{i + 1}</span>
                 <div className={styles.strategyInfo}>
@@ -626,7 +626,7 @@ function getRiskLevel(avgRisk: number): { label: string; color: string } {
   return { label: 'Gering', color: RISK_COLORS.low };
 }
 
-function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string) => void }) {
+function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {
   const categoryRisks = useMemo(() => {
     const map = new Map<string, { risks: number[]; powerBalances: PowerBalance[]; count: number }>();
 
@@ -712,7 +712,7 @@ const POWER_BALANCE_RANK: Record<PowerBalance, number> = {
   balanced: 0, slightly_one_sided: 1, strongly_one_sided: 2, extremely_one_sided: 3
 };
 
-function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string) => void }) {
+function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {
   const topRisks = useMemo(() => {
     const analysisMap = new Map(result.clauseAnalyses.map(a => [a.clauseId, a]));
     const scoreMap = new Map(result.scores.perClause.map(s => [s.clauseId, s]));
@@ -756,7 +756,7 @@ function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavi
           <button
             key={clause.id}
             className={styles.topRiskItem}
-            onClick={() => onNavigate('clauses')}
+            onClick={() => onNavigate('clauses', clause.id)}
           >
             <span className={styles.topRiskRank}>{i + 1}</span>
             <div className={styles.topRiskInfo}>

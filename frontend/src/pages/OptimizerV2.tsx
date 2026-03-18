@@ -29,6 +29,7 @@ export default function OptimizerV2() {
   const [searchParams] = useSearchParams();
   const { state, actions } = useOptimizerV2();
   const [sortByImportance, setSortByImportance] = useState(false);
+  const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
 
   // Check auth
   useEffect(() => {
@@ -132,7 +133,10 @@ export default function OptimizerV2() {
                 scores={result.scores}
                 result={result}
                 structure={result.structure}
-                onNavigate={(tab) => actions.setTab(tab as ActiveTab)}
+                onNavigate={(tab, clauseId) => {
+                  actions.setTab(tab as ActiveTab);
+                  if (clauseId) setFocusClauseId(clauseId);
+                }}
               />
             )}
 
@@ -145,6 +149,8 @@ export default function OptimizerV2() {
                 actions={actions}
                 sortByImportance={sortByImportance}
                 onToggleSort={() => setSortByImportance(s => !s)}
+                focusClauseId={focusClauseId}
+                onFocusHandled={() => setFocusClauseId(null)}
               />
             )}
 
@@ -180,11 +186,25 @@ interface ClausesTabProps {
   actions: ReturnType<typeof useOptimizerV2>['actions'];
   sortByImportance: boolean;
   onToggleSort: () => void;
+  focusClauseId?: string | null;
+  onFocusHandled?: () => void;
 }
 
-function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort }: ClausesTabProps) {
+function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort, focusClauseId, onFocusHandled }: ClausesTabProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const allExpanded = expandedIds.size === result.clauses.length;
+
+  // Auto-expand and scroll to focused clause
+  useEffect(() => {
+    if (!focusClauseId) return;
+    setExpandedIds(prev => new Set(prev).add(focusClauseId));
+    onFocusHandled?.();
+    // Small delay to let the card expand before scrolling
+    setTimeout(() => {
+      const el = document.getElementById(`clause-${focusClauseId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, [focusClauseId, onFocusHandled]);
 
   const toggleClause = (clauseId: string | null) => {
     if (!clauseId) return;
