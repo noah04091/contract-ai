@@ -1122,6 +1122,9 @@
 .benchmarkSummaryFill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .benchmarkSummaryCount { font-size: 0.82rem; font-weight: 700; color: #1d1d1f; width: 18px; text-align: right; }
 .benchmarkSummaryText { font-size: 0.8rem; color: #6e6e73; font-weight: 500; }
+.benchmarkSummaryWinner { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(52, 199, 89, 0.06); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 8px; font-size: 0.82rem; color: #1d1d1f; }
+.benchmarkSummaryWinner svg { color: #34c759; flex-shrink: 0; }
+.benchmarkSummaryWinner strong { color: #34c759; }
 
 /* Benchmark Insight */
 .benchmarkInsight {

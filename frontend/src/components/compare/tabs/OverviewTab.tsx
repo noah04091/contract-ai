@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import {
   Star, AlertTriangle, AlertCircle, CheckCircle,
-  ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3
+  ThumbsUp, ThumbsDown, Award, BarChart3
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -554,12 +554,16 @@ function BenchmarkSummary({ metrics }: { metrics: BenchmarkMetric[] }) {
           <span className={styles.benchmarkSummaryCount}>{v2Wins}</span>
         </div>
       </div>
-      <div className={styles.benchmarkSummaryText}>
-        {overallWinner
-          ? `${overallWinner} gewinnt ${Math.max(v1Wins, v2Wins)} von ${total} Markt-Metriken.`
-          : `Gleichstand: Beide Verträge gewinnen je ${v1Wins} von ${total} Metriken.`}
-        {ties > 0 && ` ${ties}× gleichwertig.`}
-      </div>
+      {overallWinner ? (
+        <div className={styles.benchmarkSummaryWinner}>
+          <Award size={15} />
+          <span>Marktvergleich-Empfehlung: <strong>{overallWinner}</strong> — gewinnt {Math.max(v1Wins, v2Wins)} von {total} Metriken{ties > 0 ? ` (${ties}× gleichwertig)` : ''}</span>
+        </div>
+      ) : (
+        <div className={styles.benchmarkSummaryText}>
+          Gleichstand: Beide Verträge gewinnen je {v1Wins} von {total} Metriken.{ties > 0 && ` ${ties}× gleichwertig.`}
+        </div>
+      )}
     </div>
   );
 }
