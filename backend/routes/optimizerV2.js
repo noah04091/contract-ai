@@ -583,23 +583,6 @@ router.get('/results/:id/pdf', async (req, res) => {
     // PAGE 1: COVER — Header band + Score + Info
     // ════════════════════════════════════════════
 
-    // Blue gradient header band
-    const bandH = 120;
-    doc.save();
-    doc.rect(0, 0, 595.28, bandH).fill(C.primary);
-    // Subtle accent overlay
-    doc.opacity(0.15).rect(0, 0, 595.28, bandH).fill(C.accent);
-    doc.opacity(1).restore();
-
-    // Header text on band
-    doc.fontSize(26).fillColor('#FFFFFF').text('Vertragsanalyse', L, 32, { width: W });
-    doc.fontSize(11).fillColor('rgba(255,255,255,0.8)').text('Contract AI  —  Smart Optimizer V2', L, 66);
-    const dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.fontSize(10).fillColor('rgba(255,255,255,0.6)').text(dateStr, L, 86);
-
-    doc.y = bandH + 24;
-
-    // ── Overall Score Card ──
     const structure = result.structure || {};
     const scores = result.scores || {};
     const clauses = result.clauses || [];
@@ -610,76 +593,88 @@ router.get('/results/:id/pdf', async (req, res) => {
     const criticalCount = analyses.filter(a => a.importanceLevel === 'critical').length;
     const weakCount = analyses.filter(a => a.strength === 'weak').length;
 
-    const cardY = doc.y;
-    roundedRect(L, cardY, W, 90, 10, C.cardBg, C.border);
-
-    // Score circle area
-    const circleX = L + 50, circleY = cardY + 45, circleR = 30;
+    // ── Compact header band ──
+    const bandH = 80;
     doc.save();
-    doc.circle(circleX, circleY, circleR).lineWidth(4).strokeColor(getScoreColor(overallScore)).stroke();
-    doc.circle(circleX, circleY, circleR - 3).fill(getScoreBg(overallScore));
-    doc.restore();
-    doc.fontSize(22).fillColor(getScoreColor(overallScore)).text(`${overallScore}`, circleX - 18, circleY - 13, { width: 36, align: 'center' });
+    doc.rect(0, 0, 595.28, bandH).fill(C.primary);
+    doc.opacity(0.12).rect(0, 0, 595.28, bandH).fill(C.accent);
+    doc.opacity(1).restore();
 
-    // Sub-scores right of circle
-    const ssX = L + 110;
+    doc.fontSize(20).fillColor('#FFFFFF').text('Vertragsanalyse', L, 20, { width: W });
+    const contractLabel = structure.recognizedAs || structure.contractTypeLabel || result.fileName || 'Vertrag';
+    doc.fontSize(9).fillColor('rgba(255,255,255,0.7)').text(`${contractLabel}  ·  Contract AI Smart Optimizer V2`, L, 46);
+    const dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+    doc.fontSize(8).fillColor('rgba(255,255,255,0.5)').text(dateStr, L, 62);
+
+    doc.y = bandH + 16;
+
+    // ── Score + Stats Row ──
+    const cardY = doc.y;
+    const cardH = 72;
+    roundedRect(L, cardY, W, cardH, 8, C.cardBg, C.border);
+
+    // Score circle (left)
+    const circleX = L + 40, circleY = cardY + 36, circleR = 24;
+    doc.save();
+    doc.circle(circleX, circleY, circleR).lineWidth(3).strokeColor(getScoreColor(overallScore)).stroke();
+    doc.circle(circleX, circleY, circleR - 2).fill(getScoreBg(overallScore));
+    doc.restore();
+    doc.fontSize(18).fillColor(getScoreColor(overallScore)).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: 'center' });
+    doc.fontSize(6).fillColor(C.muted).text('/100', circleX - 10, circleY + 10, { width: 20, align: 'center' });
+
+    // Sub-score bars (center)
+    const ssX = L + 85;
     const scoreItems = [
       ['Risiko', scores.risk || 0], ['Klarheit', scores.clarity || 0],
       ['Vollständigkeit', scores.completeness || 0], ['Marktstandard', scores.marketStandard || 0]
     ];
     scoreItems.forEach(([label, val], i) => {
-      const sy = cardY + 14 + i * 18;
-      doc.fontSize(8).fillColor(C.muted).text(label, ssX, sy, { width: 85 });
-      drawScoreBar(ssX + 88, sy + 2, 120, 7, val, getScoreColor(val));
-      doc.fontSize(8).fillColor(C.dark).text(`${val}`, ssX + 215, sy, { width: 30 });
+      const sy = cardY + 10 + i * 15;
+      doc.fontSize(7).fillColor(C.muted).text(label, ssX, sy, { width: 72 });
+      drawScoreBar(ssX + 72, sy + 1, 100, 6, val, getScoreColor(val));
+      doc.fontSize(7).fillColor(C.dark).text(`${val}`, ssX + 176, sy, { width: 20 });
     });
 
-    // Stats right side
+    // Stat numbers (right) — starts well after score bars end
     const stX = L + 310;
     const stats = [
-      [clauses.length, 'Klauseln'], [optimizedCount, 'Optimierbar'],
-      [criticalCount, 'Kritisch'], [weakCount, 'Schwach']
+      [clauses.length, 'Klauseln', C.dark], [optimizedCount, 'Optimierbar', C.primary],
+      [criticalCount, 'Kritisch', criticalCount > 0 ? C.red : C.muted], [weakCount, 'Schwach', weakCount > 0 ? C.orange : C.muted]
     ];
-    stats.forEach(([num, lbl], i) => {
-      const sx = stX + i * 55;
-      doc.fontSize(16).fillColor(i === 2 && num > 0 ? C.red : i === 3 && num > 0 ? C.orange : C.dark)
-        .text(`${num}`, sx, cardY + 22, { width: 50, align: 'center' });
-      doc.fontSize(7).fillColor(C.muted).text(lbl, sx, cardY + 44, { width: 50, align: 'center' });
+    stats.forEach(([num, lbl, col], i) => {
+      const sx = stX + i * 54;
+      doc.fontSize(15).fillColor(col).text(`${num}`, sx, cardY + 18, { width: 48, align: 'center' });
+      doc.fontSize(6.5).fillColor(C.muted).text(lbl, sx, cardY + 38, { width: 48, align: 'center' });
     });
 
-    doc.y = cardY + 104;
+    doc.y = cardY + cardH + 10;
 
-    // ── Contract Details Card ──
-    const infoY = doc.y;
-    const infoRows = [];
-    if (structure.recognizedAs || structure.contractTypeLabel) infoRows.push(['Vertragstyp', structure.recognizedAs || structure.contractTypeLabel]);
-    if (result.fileName) infoRows.push(['Datei', result.fileName]);
-    if (structure.jurisdiction) infoRows.push(['Jurisdiktion', structure.jurisdiction]);
-    if (structure.industry && structure.industry !== 'other') infoRows.push(['Branche', INDUSTRY_LABELS[structure.industry] || structure.industry]);
-    if (structure.parties?.length > 0) infoRows.push(['Parteien', structure.parties.map(p => `${p.role}: ${p.name || '-'}`).join(', ')]);
-    if (structure.duration) infoRows.push(['Laufzeit', structure.duration]);
-    infoRows.push(['Qualität', structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis']);
+    // ── Contract Details (compact inline) ──
+    const infoParts = [];
+    if (result.fileName) infoParts.push(`Datei: ${result.fileName}`);
+    if (structure.jurisdiction) infoParts.push(`Recht: ${structure.jurisdiction}`);
+    if (structure.industry && structure.industry !== 'other') infoParts.push(`Branche: ${INDUSTRY_LABELS[structure.industry] || structure.industry}`);
+    if (structure.parties?.length > 0) infoParts.push(`Parteien: ${structure.parties.map(p => p.name || p.role).join(' / ')}`);
+    if (structure.duration) infoParts.push(`Laufzeit: ${structure.duration}`);
+    infoParts.push(`Qualität: ${structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis'}`);
 
-    const infoH = 20 + infoRows.length * 18;
-    roundedRect(L, infoY, W, infoH, 8, '#F8FAFC', C.border);
-
-    doc.fontSize(10).fillColor(C.dark).text('Vertragsdetails', L + 14, infoY + 8);
-    infoRows.forEach(([label, value], i) => {
-      const iy = infoY + 24 + i * 18;
-      doc.fontSize(8.5).fillColor(C.muted).text(label, L + 14, iy, { width: 90 });
-      doc.fontSize(8.5).fillColor(C.dark).text(value, L + 110, iy, { width: W - 124 });
-    });
-
-    doc.y = infoY + infoH + 20;
+    if (infoParts.length > 0) {
+      const infoY = doc.y;
+      const infoText = infoParts.join('  ·  ');
+      const infoH = doc.fontSize(7.5).heightOfString(infoText, { width: W - 20 }) + 14;
+      roundedRect(L, infoY, W, infoH, 6, '#F8FAFC', C.border);
+      doc.fontSize(7.5).fillColor(C.text).text(infoText, L + 10, infoY + 7, { width: W - 20 });
+      doc.y = infoY + infoH + 14;
+    }
 
     // ════════════════════════════════════════════
     // CLAUSE ANALYSIS SECTION
     // ════════════════════════════════════════════
 
-    doc.fontSize(14).fillColor(C.dark).text('Klausel-Analyse', L);
-    doc.moveDown(0.3);
-    doc.fontSize(8.5).fillColor(C.muted).text('Sortiert nach Priorität — kritische Klauseln zuerst');
-    doc.moveDown(0.8);
+    doc.fontSize(12).fillColor(C.dark).text('Klausel-Analyse', L);
+    doc.moveDown(0.15);
+    doc.fontSize(7.5).fillColor(C.muted).text(`${clauses.length} Klauseln analysiert  ·  Sortiert nach Priorität`);
+    doc.moveDown(0.5);
 
     const importanceOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     const analysisMap = new Map();
@@ -694,124 +689,179 @@ router.get('/results/:id/pdf', async (req, res) => {
       const clause = sortedClauses[ci];
       const analysis = analysisMap.get(clause.id);
       const optimization = optimizations.find(o => o.clauseId === clause.id);
-
-      // Estimate card height
-      let estH = 70;
-      if (analysis?.plainLanguage) estH += Math.ceil(analysis.plainLanguage.length / 80) * 12 + 10;
-      if (analysis?.legalAssessment) estH += Math.ceil(analysis.legalAssessment.length / 85) * 11 + 18;
-      if (analysis?.concerns?.length) estH += analysis.concerns.length * 13 + 14;
-      if (analysis?.legalReferences?.length) estH += 16;
-      if (optimization?.needsOptimization) estH += optimization.negotiationAdvice ? 32 : 16;
-
-      checkPage(Math.min(estH, 200));
-
-      const cY = doc.y;
-
-      // Risk color left border
       const riskLevel = analysis?.riskLevel || 0;
       const riskColor = riskLevel >= 7 ? C.red : riskLevel >= 4 ? C.orange : C.green;
       const impLevel = analysis?.importanceLevel || 'medium';
       const impColor = impLevel === 'critical' ? C.red : impLevel === 'high' ? C.orange : impLevel === 'medium' ? C.primary : C.light;
-
-      // Clause number + title
+      const isHighPriority = impLevel === 'critical' || impLevel === 'high';
       const sectionLabel = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber}  ` : '';
-      doc.fontSize(11).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L, cY, { width: W - 60 });
+
+      // ── Compact mode for standard/low priority clauses ──
+      if (!isHighPriority && riskLevel < 5) {
+        // One-liner: section + title | badges | risk | one-line summary
+        let compactH = 28;
+        if (analysis?.plainLanguage) compactH += 11;
+        checkPage(compactH);
+
+        const rowY = doc.y;
+
+        // Left color accent bar
+        doc.save();
+        doc.rect(L, rowY, 3, compactH - 4).fill(riskColor + '60');
+        doc.restore();
+
+        // Title
+        doc.fontSize(8.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY + 2, { width: W - 120 });
+
+        // Inline badges (right of title, same line)
+        const badgeY = rowY + 2;
+        let rbx = R - 90;
+        const impLabel = IMPORTANCE_LABELS[impLevel] || impLevel;
+        const impW = doc.fontSize(6).widthOfString(impLabel) + 8;
+        roundedRect(rbx, badgeY, impW, 11, 2, impColor + '15', impColor + '40');
+        doc.fontSize(6).fillColor(impColor).text(impLabel, rbx + 4, badgeY + 2.5, { lineBreak: false });
+        rbx += impW + 3;
+
+        if (analysis?.strength) {
+          const strLabel = STRENGTH_LABELS[analysis.strength] || analysis.strength;
+          const strColor = analysis.strength === 'weak' || analysis.strength === 'critical' ? C.red : analysis.strength === 'adequate' ? C.orange : C.green;
+          const strW = doc.fontSize(6).widthOfString(strLabel) + 8;
+          roundedRect(rbx, badgeY, strW, 11, 2, strColor + '15', strColor + '40');
+          doc.fontSize(6).fillColor(strColor).text(strLabel, rbx + 4, badgeY + 2.5, { lineBreak: false });
+        }
+
+        // Risk score far right
+        if (riskLevel > 0) {
+          doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - 28, rowY + 2, { width: 28, align: 'right' });
+        }
+
+        // One-line summary below title
+        if (analysis?.plainLanguage) {
+          const summary = analysis.plainLanguage.length > 130 ? analysis.plainLanguage.substring(0, 127) + '...' : analysis.plainLanguage;
+          doc.fontSize(7).fillColor(C.muted).text(summary, L + 8, rowY + 15, { width: W - 16 });
+        }
+
+        doc.y = rowY + compactH;
+
+        // Thin separator
+        if (ci < sortedClauses.length - 1) {
+          doc.strokeColor(C.borderLight).lineWidth(0.3).moveTo(L + 8, doc.y).lineTo(R, doc.y).stroke();
+          doc.y += 3;
+        }
+        continue;
+      }
+
+      // ── Full detail mode for critical/high priority clauses ──
+      let estH = 50;
+      if (analysis?.plainLanguage) estH += Math.ceil(analysis.plainLanguage.length / 90) * 11 + 6;
+      if (analysis?.legalAssessment) estH += Math.ceil(analysis.legalAssessment.length / 95) * 10 + 16;
+      if (analysis?.concerns?.length) estH += analysis.concerns.length * 11 + 14;
+      if (analysis?.legalReferences?.length) estH += 12;
+      if (optimization?.needsOptimization) estH += optimization.negotiationAdvice ? 28 : 14;
+      checkPage(Math.min(estH, 180));
+
+      const cY = doc.y;
+
+      // Left color accent bar (3px wide)
+      doc.save();
+      doc.rect(L, cY, 3, 14).fill(riskColor);
+      doc.restore();
+
+      // Clause title
+      doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 80 });
 
       // Risk badge (top right)
       if (riskLevel > 0) {
-        const badgeW = 44, badgeH = 16, badgeX = R - badgeW, badgeY = cY;
-        roundedRect(badgeX, badgeY, badgeW, badgeH, 4, riskColor + '18', riskColor + '40');
-        doc.fontSize(7.5).fillColor(riskColor).text(`${riskLevel}/10`, badgeX, badgeY + 3.5, { width: badgeW, align: 'center' });
+        const badgeW = 38, badgeH = 14, badgeX = R - badgeW;
+        roundedRect(badgeX, cY, badgeW, badgeH, 3, riskColor + '18', riskColor + '40');
+        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, badgeX, cY + 3, { width: badgeW, align: 'center' });
       }
 
-      doc.moveDown(0.15);
-
-      // Badges row
+      // Badges row — explicit Y to prevent stacking
+      const badgeRowY = cY + 16;
       const badges = [];
       if (impLevel) badges.push({ label: IMPORTANCE_LABELS[impLevel] || impLevel, color: impColor });
       if (analysis?.strength) badges.push({ label: STRENGTH_LABELS[analysis.strength] || analysis.strength, color: analysis.strength === 'weak' || analysis.strength === 'critical' ? C.red : analysis.strength === 'adequate' ? C.orange : C.green });
-      let bx = L;
+      let bx = L + 8;
       for (const badge of badges) {
-        const bw = doc.fontSize(7).widthOfString(badge.label) + 12;
-        roundedRect(bx, doc.y, bw, 14, 3, badge.color + '15', badge.color + '40');
-        doc.fontSize(7).fillColor(badge.color).text(badge.label, bx + 6, doc.y + 3);
-        bx += bw + 6;
+        const bw = doc.fontSize(6.5).widthOfString(badge.label) + 10;
+        roundedRect(bx, badgeRowY, bw, 12, 3, badge.color + '15', badge.color + '40');
+        doc.fontSize(6.5).fillColor(badge.color).text(badge.label, bx + 5, badgeRowY + 2.5, { lineBreak: false });
+        bx += bw + 4;
       }
-      doc.y += 20;
+
+      // Legal references inline with badges
+      if (analysis?.legalReferences?.length > 0) {
+        doc.fontSize(6.5).fillColor(C.purple).text(`${analysis.legalReferences.join(', ')}`, bx + 4, badgeRowY + 2.5, { lineBreak: false });
+      }
+
+      doc.y = badgeRowY + 16;
 
       // Plain language summary
       if (analysis?.plainLanguage) {
-        doc.fontSize(9).fillColor(C.text).text(analysis.plainLanguage, L, doc.y, { width: W });
-        doc.moveDown(0.4);
+        doc.fontSize(8).fillColor(C.text).text(analysis.plainLanguage, L + 8, doc.y, { width: W - 16 });
+        doc.moveDown(0.25);
       }
 
       // Legal assessment in gray box
       if (analysis?.legalAssessment) {
-        checkPage(50);
+        checkPage(40);
         const laY = doc.y;
-        // Measure text height first
-        const laH = doc.fontSize(8).heightOfString(analysis.legalAssessment, { width: W - 24 });
-        roundedRect(L, laY, W, laH + 22, 5, '#F9FAFB', null);
-        doc.fontSize(7.5).fillColor(C.muted).text('Juristische Bewertung', L + 10, laY + 6);
-        doc.fontSize(8).fillColor(C.text).text(analysis.legalAssessment, L + 10, laY + 17, { width: W - 24 });
-        doc.y = laY + laH + 28;
+        const laH = doc.fontSize(7.5).heightOfString(analysis.legalAssessment, { width: W - 28 });
+        roundedRect(L + 8, laY, W - 16, laH + 16, 4, '#F9FAFB', null);
+        doc.fontSize(6.5).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 4);
+        doc.fontSize(7.5).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 13, { width: W - 28 });
+        doc.y = laY + laH + 20;
       }
 
       // Concerns
       if (analysis?.concerns?.length > 0) {
-        checkPage(30);
+        checkPage(24);
         const conY = doc.y;
-        const conH = 16 + analysis.concerns.length * 13;
-        roundedRect(L, conY, W, conH, 5, C.orangeBg, C.orangeBorder);
-        doc.fontSize(7.5).fillColor(C.orange).text('Bedenken', L + 10, conY + 5);
-        analysis.concerns.forEach((concern, i) => {
-          doc.fontSize(8).fillColor(C.text).text(`•  ${concern}`, L + 10, conY + 17 + i * 13, { width: W - 24 });
-        });
-        doc.y = conY + conH + 6;
+        const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
+        const conTextH = doc.fontSize(7.5).heightOfString(conText, { width: W - 28 });
+        const conH = conTextH + 16;
+        roundedRect(L + 8, conY, W - 16, conH, 4, C.orangeBg, C.orangeBorder);
+        doc.fontSize(6.5).fillColor(C.orange).text('Bedenken', L + 14, conY + 4);
+        doc.fontSize(7.5).fillColor(C.text).text(conText, L + 14, conY + 13, { width: W - 28 });
+        doc.y = conY + conH + 4;
       }
 
-      // Legal references
-      if (analysis?.legalReferences?.length > 0) {
-        doc.fontSize(7.5).fillColor(C.purple).text(`Rechtsgrundlagen: ${analysis.legalReferences.join(', ')}`, L);
-        doc.moveDown(0.2);
-      }
-
-      // Optimization available
+      // Optimization hint
       if (optimization?.needsOptimization) {
-        checkPage(28);
+        checkPage(22);
         const optY = doc.y;
-        const optH = optimization.negotiationAdvice ? 30 : 16;
-        roundedRect(L, optY, W, optH, 5, '#EFF6FF', '#BFDBFE');
-        doc.fontSize(8).fillColor(C.primary).text('Optimierung verfügbar', L + 10, optY + 4);
-        if (optimization.negotiationAdvice) {
-          doc.fontSize(7.5).fillColor(C.text).text(optimization.negotiationAdvice, L + 10, optY + 16, { width: W - 24 });
-        }
+        const adviceText = optimization.negotiationAdvice || '';
+        const adviceH = adviceText ? doc.fontSize(7).heightOfString(adviceText, { width: W - 28 }) : 0;
+        const optH = adviceH + 14;
+        roundedRect(L + 8, optY, W - 16, optH, 4, '#EFF6FF', '#BFDBFE');
+        doc.fontSize(7).fillColor(C.primary).text('Optimierung verfügbar' + (adviceText ? `:  ${adviceText}` : ''), L + 14, optY + 4, { width: W - 28 });
         doc.y = optY + optH + 4;
       }
 
-      doc.moveDown(0.6);
+      doc.moveDown(0.3);
 
-      // Separator between clauses
+      // Separator
       if (ci < sortedClauses.length - 1) {
-        doc.strokeColor(C.borderLight).lineWidth(0.5).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-        doc.moveDown(0.6);
+        doc.strokeColor(C.borderLight).lineWidth(0.4).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
+        doc.moveDown(0.4);
       }
     }
 
     // ════════════════════════════════════════════
     // FOOTER
     // ════════════════════════════════════════════
-    checkPage(50);
-    doc.moveDown(1);
-    doc.strokeColor(C.border).lineWidth(1).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-    doc.moveDown(0.6);
-    doc.fontSize(7.5).fillColor(C.muted).text(
-      `Contract AI  ·  Smart Optimizer V2  ·  Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr  ·  ID: ${result.requestId || result._id}`,
+    checkPage(40);
+    doc.moveDown(0.8);
+    doc.strokeColor(C.border).lineWidth(0.5).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
+    doc.moveDown(0.4);
+    doc.fontSize(7).fillColor(C.muted).text(
+      `Contract AI  ·  Smart Optimizer V2  ·  ${new Date().toLocaleDateString('de-DE')}  ·  ID: ${result.requestId || result._id}`,
       { align: 'center' }
     );
-    doc.moveDown(0.3);
-    doc.fontSize(7).fillColor(C.light).text(
-      'Dieser Bericht wurde KI-gestützt erstellt und ersetzt keine rechtliche Beratung.',
+    doc.moveDown(0.2);
+    doc.fontSize(6.5).fillColor(C.light).text(
+      'KI-gestützt erstellt — ersetzt keine rechtliche Beratung.',
       { align: 'center' }
     );
 

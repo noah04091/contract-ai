@@ -3,6 +3,7 @@ import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Cross
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import { apiCall } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -293,6 +294,7 @@ const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: MissingClause[]; resultId: string }) {
+  const toast = useToast();
   const [generating, setGenerating] = useState<string | null>(null);
   const [generatedClauses, setGeneratedClauses] = useState<Map<string, { label: string; text: string; whyImportant?: string }>>(new Map());
   const [visibleClause, setVisibleClause] = useState<{ category: string; label: string; text: string; whyImportant?: string } | null>(null);
@@ -365,9 +367,11 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
       }) as { success: boolean };
       if (res.success) {
         setSavedToLibrary(true);
+        toast.success('Klausel in Bibliothek gespeichert');
       }
-    } catch {
-      // Save failed — don't show as saved
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Speichern fehlgeschlagen';
+      toast.error(msg.includes('409') || msg.includes('Duplikat') || msg.includes('duplicate') ? 'Klausel bereits in Bibliothek vorhanden' : `Speichern fehlgeschlagen: ${msg}`);
     } finally {
       setSaving(false);
     }
