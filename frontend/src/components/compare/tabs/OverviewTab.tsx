@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import {
   Star, AlertTriangle, AlertCircle, CheckCircle,
-  ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3
+  ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3,
+  FileText
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -12,9 +13,11 @@ import styles from '../../../styles/Compare.module.css';
 
 interface OverviewTabProps {
   result: ComparisonResult;
+  file1?: File | null;
+  file2?: File | null;
 }
 
-export default function OverviewTab({ result }: OverviewTabProps) {
+export default function OverviewTab({ result, file1, file2 }: OverviewTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
 
@@ -37,12 +40,16 @@ export default function OverviewTab({ result }: OverviewTabProps) {
         <div className={styles.scoresGrid}>
           <ScoreCard
             title="Vertrag 1"
+            fileName={file1?.name}
+            file={file1}
             scores={v2Result.scores.contract1}
             isRecommended={v2Result.overallRecommendation.recommended === 1}
             analysis={v2Result.contract1Analysis}
           />
           <ScoreCard
             title="Vertrag 2"
+            fileName={file2?.name}
+            file={file2}
             scores={v2Result.scores.contract2}
             isRecommended={v2Result.overallRecommendation.recommended === 2}
             analysis={v2Result.contract2Analysis}
@@ -55,11 +62,15 @@ export default function OverviewTab({ result }: OverviewTabProps) {
         <div className={styles.scoresGrid}>
           <V1ScoreCard
             title="Vertrag 1"
+            fileName={file1?.name}
+            file={file1}
             analysis={result.contract1Analysis}
             isRecommended={result.overallRecommendation.recommended === 1}
           />
           <V1ScoreCard
             title="Vertrag 2"
+            fileName={file2?.name}
+            file={file2}
             analysis={result.contract2Analysis}
             isRecommended={result.overallRecommendation.recommended === 2}
           />
@@ -161,13 +172,28 @@ export default function OverviewTab({ result }: OverviewTabProps) {
 // ============================================
 // V2 Score Card
 // ============================================
+function openFilePreview(file: File) {
+  const url = URL.createObjectURL(file);
+  window.open(url, '_blank');
+}
+
+function formatFileName(name: string): string {
+  // Remove extension and truncate
+  const base = name.replace(/\.[^.]+$/, '');
+  return base.length > 30 ? base.slice(0, 27) + '...' : base;
+}
+
 function ScoreCard({
   title,
+  fileName,
+  file,
   scores,
   isRecommended,
   analysis,
 }: {
   title: string;
+  fileName?: string;
+  file?: File | null;
   scores: CategoryScores;
   isRecommended: boolean;
   analysis: { strengths: string[]; weaknesses: string[]; riskLevel: string };
@@ -181,7 +207,24 @@ function ScoreCard({
       animate={{ opacity: 1, y: 0 }}
     >
       <div className={styles.scoreCardHeader}>
-        <h4>{title}</h4>
+        <div>
+          <h4>{title}</h4>
+          {fileName && (
+            <div className={styles.contractFileName}>
+              <FileText size={12} />
+              <span title={fileName}>{formatFileName(fileName)}</span>
+              {file && (
+                <button
+                  className={styles.openPdfBtn}
+                  onClick={() => openFilePreview(file)}
+                  title="PDF öffnen"
+                >
+                  Öffnen
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         {isRecommended && (
           <span className={styles.recommendedBadge}>
             <Award size={14} />
@@ -258,10 +301,14 @@ function ScoreCard({
 // ============================================
 function V1ScoreCard({
   title,
+  fileName,
+  file,
   analysis,
   isRecommended,
 }: {
   title: string;
+  fileName?: string;
+  file?: File | null;
   analysis: { strengths: string[]; weaknesses: string[]; riskLevel: string; score: number };
   isRecommended: boolean;
 }) {
@@ -272,7 +319,24 @@ function V1ScoreCard({
       animate={{ opacity: 1, y: 0 }}
     >
       <div className={styles.scoreCardHeader}>
-        <h4>{title}</h4>
+        <div>
+          <h4>{title}</h4>
+          {fileName && (
+            <div className={styles.contractFileName}>
+              <FileText size={12} />
+              <span title={fileName}>{formatFileName(fileName)}</span>
+              {file && (
+                <button
+                  className={styles.openPdfBtn}
+                  onClick={() => openFilePreview(file)}
+                  title="PDF öffnen"
+                >
+                  Öffnen
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         {isRecommended && (
           <span className={styles.recommendedBadge}>
             <Award size={14} />

@@ -806,7 +806,7 @@ export default function EnhancedCompare() {
 
         <motion.div
           className="contract-container"
-          style={{ maxWidth: '1200px' }}
+          style={{ maxWidth: '1200px', ...(result ? { paddingTop: '8px' } : {}) }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -1399,7 +1399,7 @@ export default function EnhancedCompare() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <motion.button
                     onClick={() => { setResult(null); }}
                     style={{

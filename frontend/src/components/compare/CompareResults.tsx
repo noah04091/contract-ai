@@ -113,7 +113,7 @@ export default function CompareResults({
       {/* Tab Content */}
       <div className={styles.tabContent}>
         {activeTab === 'overview' && (
-          <OverviewTab result={result} />
+          <OverviewTab result={result} file1={file1} file2={file2} />
         )}
 
         {activeTab === 'differences' && (
