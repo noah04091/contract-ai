@@ -825,37 +825,7 @@ export default function EnhancedCompare() {
           </div>
           )}
 
-          {/* History Button - Compact Row */}
-          {!result && historyItems.length > 0 && (
-            <motion.div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                marginBottom: '0.5rem',
-                marginTop: '-1.5rem'
-              }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <motion.button
-                onClick={() => setShowHistory(!showHistory)}
-                className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <History size={16} />
-                <span>Historie ({historyItems.length})</span>
-                <ChevronDown
-                  size={14}
-                  style={{
-                    transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.3s ease'
-                  }}
-                />
-              </motion.button>
-            </motion.div>
-          )}
+          {/* History Button moved to upload section header */}
 
           {/* History Panel */}
           <AnimatePresence>
@@ -1096,14 +1066,35 @@ export default function EnhancedCompare() {
             transition={{ delay: 0.3, duration: 0.5 }}
           >
             {/* Section Header */}
-            <div className="upload-section-header">
-              <div className="upload-header-icon">
-                <Scale size={20} />
+            <div className="upload-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="upload-header-icon">
+                  <Scale size={20} />
+                </div>
+                <div className="upload-header-text">
+                  <h3>Verträge hochladen</h3>
+                  <p>Wählen Sie zwei PDF-Dateien für den Vergleich aus</p>
+                </div>
               </div>
-              <div className="upload-header-text">
-                <h3>Verträge hochladen</h3>
-                <p>Wählen Sie zwei PDF-Dateien für den Vergleich aus</p>
-              </div>
+              {historyItems.length > 0 && (
+                <motion.button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ flexShrink: 0 }}
+                >
+                  <History size={16} />
+                  <span>Historie ({historyItems.length})</span>
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.3s ease'
+                    }}
+                  />
+                </motion.button>
+              )}
             </div>
 
             {/* Upload Cards Container */}
