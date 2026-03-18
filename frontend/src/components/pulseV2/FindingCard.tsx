@@ -43,7 +43,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
   const typeInfo = TYPE_CONFIG[finding.type] || TYPE_CONFIG.information;
   const hasHistory = clause?.history && clause.history.length > 1;
   const isActionable = !disabled && contractId && (finding.severity === 'critical' || finding.severity === 'high' || finding.severity === 'medium');
-  const [quickFix, setQuickFix] = useState<{ fixedText: string; reasoning: string; legalBasis: string; diffs?: any[] } | null>(null);
+  const [quickFix, setQuickFix] = useState<{ fixedText: string; reasoning: string; legalBasis: string; diffs?: { type: string; value: string }[] } | null>(null);
   const [quickFixLoading, setQuickFixLoading] = useState(false);
   const [quickFixError, setQuickFixError] = useState<string | null>(null);
   const [fixApplied, setFixApplied] = useState(false);
@@ -76,7 +76,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
       }
       const data = await res.json();
       setQuickFix(data);
-    } catch (err) {
+    } catch {
       setQuickFixError('Netzwerkfehler');
     } finally {
       setQuickFixLoading(false);

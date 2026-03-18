@@ -318,8 +318,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [insights, setInsights] = useState<PulseV2PortfolioInsight[]>([]);
   const [actions, setActions] = useState<PulseV2Action[]>([]);
   const [legalAlerts, setLegalAlerts] = useState<PulseV2LegalAlert[]>([]);
-  const [portfolioSummary, setPortfolioSummary] = useState<any>(null);
-  const [monitoringStatus, setMonitoringStatus] = useState<any>(null);
+  const [portfolioSummary, setPortfolioSummary] = useState<{ hasData: boolean; avgScoreNow: number | null; avgScorePrevious: number | null; delta: number; contractsAnalyzed: number; contractsImproved: number; contractsWorsened: number; actionsTotal: number; actionsCompleted: number; criticalNow: number; criticalResolved: number; topImprovement: { contractId: string; name: string; delta: number; scoreNow: number } | null; topDecline: { contractId: string; name: string; delta: number; scoreNow: number } | null } | null>(null);
+  const [monitoringStatus, setMonitoringStatus] = useState<{ status: string; statusLabel: string; contractsMonitored: number; lastScan: string | null; lastScheduledScan: string | null; lastRadarScan: string | null; nextMonitorScan: string; nextRadarScan: string; alertsTotal: number; severityCounts: { critical: number; high: number; medium: number; low: number }; recentAlertsCount: number } | null>(null);
   const [filter, setFilter] = useState<DashboardFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
