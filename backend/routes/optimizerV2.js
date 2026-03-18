@@ -538,17 +538,17 @@ router.get('/results/:id/pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Analyse.pdf"`);
     doc.pipe(res);
 
-    // ── Design tokens (professional muted palette) ──
+    // ── Design tokens — classic professional (navy + grayscale) ──
     const C = {
-      primary: '#1e40af', primaryDark: '#1e3a8a', accent: '#4338ca',
-      green: '#047857', greenBg: '#F0FDF4', greenBorder: '#A7F3D0',
-      red: '#b91c1c', redBg: '#FEF2F2', redBorder: '#FECACA',
-      orange: '#b45309', orangeBg: '#FFFBEB', orangeBorder: '#FDE68A',
-      purple: '#6d28d9',
-      dark: '#1f2937', text: '#374151', muted: '#6B7280', light: '#9CA3AF',
-      bg: '#F8FAFC', cardBg: '#FFFFFF', border: '#D1D5DB', borderLight: '#E5E7EB'
+      navy: '#1a2b4a', navyLight: '#2c4a7c', accent: '#34507a',
+      danger: '#8b2020', dangerBg: '#fdf2f2', dangerBorder: '#e8c4c4',
+      warn: '#7a5a1e', warnBg: '#fdfaf2', warnBorder: '#e8dbb0',
+      ok: '#1a5c3a', okBg: '#f2fdf6',
+      ref: '#4a3880',
+      dark: '#1a1a2e', text: '#2d3748', muted: '#64748b', light: '#94a3b8',
+      bg: '#f8fafc', cardBg: '#ffffff', border: '#cbd5e1', borderLight: '#e2e8f0'
     };
-    const L = 50, R = 545, W = R - L; // left, right, content width
+    const L = 50, R = 545, W = R - L;
     const STRENGTH_LABELS = { strong: 'Stark', adequate: 'Ausreichend', weak: 'Schwach', critical: 'Kritisch' };
     const IMPORTANCE_LABELS = { critical: 'Kritisch', high: 'Wichtig', medium: 'Standard', low: 'Formal' };
     const INDUSTRY_LABELS = {
@@ -561,22 +561,25 @@ router.get('/results/:id/pdf', async (req, res) => {
       public_sector: 'Öffentlicher Sektor', other: 'Sonstige'
     };
 
-    function getScoreColor(s) { return s >= 80 ? C.green : s >= 60 ? C.orange : s >= 40 ? C.red : C.purple; }
-    function getScoreBg(s) { return s >= 80 ? C.greenBg : s >= 60 ? C.orangeBg : s >= 40 ? C.redBg : '#F5F3FF'; }
+    // All score bars use the same navy blue — the NUMBER conveys quality, not color
+    function getScoreColor() { return C.navyLight; }
+    function getScoreBg() { return '#eef2f7'; }
+    // Risk level color: only critical gets danger, rest are subtle
+    function getRiskColor(r) { return r >= 7 ? C.danger : r >= 4 ? C.warn : C.muted; }
     function checkPage(needed = 80) { if (doc.y + needed > doc.page.height - 60) doc.addPage(); }
     function roundedRect(x, y, w, h, r, fill, stroke) {
       doc.save();
       if (fill) doc.fillColor(fill);
-      if (stroke) doc.strokeColor(stroke).lineWidth(1);
+      if (stroke) doc.strokeColor(stroke).lineWidth(0.75);
       doc.roundedRect(x, y, w, h, r);
       if (fill && stroke) doc.fillAndStroke();
       else if (fill) doc.fill();
       else if (stroke) doc.stroke();
       doc.restore();
     }
-    function drawScoreBar(x, y, w, h, value, color) {
-      roundedRect(x, y, w, h, h / 2, '#E5E7EB', null);
-      if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, color, null);
+    function drawScoreBar(x, y, w, h, value) {
+      roundedRect(x, y, w, h, h / 2, '#e2e8f0', null);
+      if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, C.navyLight, null);
     }
 
     // ════════════════════════════════════════════
@@ -593,61 +596,62 @@ router.get('/results/:id/pdf', async (req, res) => {
     const criticalCount = analyses.filter(a => a.importanceLevel === 'critical').length;
     const weakCount = analyses.filter(a => a.strength === 'weak').length;
 
-    // ── Compact header band ──
-    const bandH = 80;
+    // ── Header band (dark navy) ──
+    const bandH = 76;
     doc.save();
-    doc.rect(0, 0, 595.28, bandH).fill(C.primary);
-    doc.opacity(0.12).rect(0, 0, 595.28, bandH).fill(C.accent);
-    doc.opacity(1).restore();
+    doc.rect(0, 0, 595.28, bandH).fill(C.navy);
+    doc.restore();
 
-    doc.fontSize(20).fillColor('#FFFFFF').text('Vertragsanalyse', L, 20, { width: W });
+    doc.fontSize(20).fillColor('#FFFFFF').text('Vertragsanalyse', L, 18, { width: W });
     const contractLabel = structure.recognizedAs || structure.contractTypeLabel || result.fileName || 'Vertrag';
-    doc.fontSize(9).fillColor('rgba(255,255,255,0.7)').text(`${contractLabel}  ·  Contract AI Smart Optimizer V2`, L, 46);
+    doc.fontSize(9).fillColor('#a0b4cc').text(`${contractLabel}  ·  Contract AI Smart Optimizer V2`, L, 44);
     const dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.fontSize(8).fillColor('rgba(255,255,255,0.5)').text(dateStr, L, 62);
+    doc.fontSize(8).fillColor('#7a90a8').text(dateStr, L, 58);
 
-    doc.y = bandH + 16;
+    doc.y = bandH + 14;
 
     // ── Score + Stats Row ──
     const cardY = doc.y;
-    const cardH = 72;
-    roundedRect(L, cardY, W, cardH, 8, C.cardBg, C.border);
+    const cardH = 70;
+    roundedRect(L, cardY, W, cardH, 6, C.cardBg, C.border);
 
-    // Score circle (left)
-    const circleX = L + 40, circleY = cardY + 36, circleR = 24;
+    // Score circle (left) — always navy
+    const circleX = L + 38, circleY = cardY + 35, circleR = 23;
     doc.save();
-    doc.circle(circleX, circleY, circleR).lineWidth(3).strokeColor(getScoreColor(overallScore)).stroke();
-    doc.circle(circleX, circleY, circleR - 2).fill(getScoreBg(overallScore));
+    doc.circle(circleX, circleY, circleR).lineWidth(2.5).strokeColor(C.navy).stroke();
+    doc.circle(circleX, circleY, circleR - 2).fill('#eef2f7');
     doc.restore();
-    doc.fontSize(18).fillColor(getScoreColor(overallScore)).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: 'center' });
+    doc.fontSize(18).fillColor(C.navy).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: 'center' });
     doc.fontSize(6).fillColor(C.muted).text('/100', circleX - 10, circleY + 10, { width: 20, align: 'center' });
 
-    // Sub-score bars (center)
-    const ssX = L + 85;
+    // Sub-score bars (center) — all navy blue
+    const ssX = L + 80;
     const scoreItems = [
       ['Risiko', scores.risk || 0], ['Klarheit', scores.clarity || 0],
       ['Vollständigkeit', scores.completeness || 0], ['Marktstandard', scores.marketStandard || 0]
     ];
     scoreItems.forEach(([label, val], i) => {
-      const sy = cardY + 10 + i * 15;
-      doc.fontSize(7).fillColor(C.muted).text(label, ssX, sy, { width: 72 });
-      drawScoreBar(ssX + 72, sy + 1, 100, 6, val, getScoreColor(val));
-      doc.fontSize(7).fillColor(C.dark).text(`${val}`, ssX + 176, sy, { width: 20 });
+      const sy = cardY + 10 + i * 14;
+      doc.fontSize(7).fillColor(C.muted).text(label, ssX, sy, { width: 70 });
+      drawScoreBar(ssX + 70, sy + 1, 100, 5, val);
+      doc.fontSize(7).fillColor(C.dark).text(`${val}`, ssX + 174, sy, { width: 20 });
     });
 
-    // Stat numbers (right) — starts well after score bars end
-    const stX = L + 310;
+    // Stat numbers (right) — within card bounds, all dark text
+    const stX = L + 300;
+    const statGap = 46;
     const stats = [
-      [clauses.length, 'Klauseln', C.dark], [optimizedCount, 'Optimierbar', C.primary],
-      [criticalCount, 'Kritisch', criticalCount > 0 ? C.red : C.muted], [weakCount, 'Schwach', weakCount > 0 ? C.orange : C.muted]
+      [clauses.length, 'Klauseln'], [optimizedCount, 'Optimierbar'],
+      [criticalCount, 'Kritisch'], [weakCount, 'Schwach']
     ];
-    stats.forEach(([num, lbl, col], i) => {
-      const sx = stX + i * 54;
-      doc.fontSize(15).fillColor(col).text(`${num}`, sx, cardY + 18, { width: 48, align: 'center' });
-      doc.fontSize(6.5).fillColor(C.muted).text(lbl, sx, cardY + 38, { width: 48, align: 'center' });
+    stats.forEach(([num, lbl], i) => {
+      const sx = stX + i * statGap;
+      const numColor = (i === 2 && num > 0) ? C.danger : (i === 3 && num > 0) ? C.warn : C.dark;
+      doc.fontSize(14).fillColor(numColor).text(`${num}`, sx, cardY + 18, { width: 42, align: 'center' });
+      doc.fontSize(6).fillColor(C.muted).text(lbl, sx, cardY + 36, { width: 42, align: 'center' });
     });
 
-    doc.y = cardY + cardH + 10;
+    doc.y = cardY + cardH + 8;
 
     // ── Contract Details (compact inline) ──
     const infoParts = [];
@@ -662,9 +666,9 @@ router.get('/results/:id/pdf', async (req, res) => {
       const infoY = doc.y;
       const infoText = infoParts.join('  ·  ');
       const infoH = doc.fontSize(7.5).heightOfString(infoText, { width: W - 20 }) + 14;
-      roundedRect(L, infoY, W, infoH, 6, '#F8FAFC', C.border);
-      doc.fontSize(7.5).fillColor(C.text).text(infoText, L + 10, infoY + 7, { width: W - 20 });
-      doc.y = infoY + infoH + 14;
+      roundedRect(L, infoY, W, infoH, 4, '#f8fafc', C.border);
+      doc.fontSize(7.5).fillColor(C.muted).text(infoText, L + 10, infoY + 7, { width: W - 20 });
+      doc.y = infoY + infoH + 12;
     }
 
     // ════════════════════════════════════════════
@@ -685,23 +689,27 @@ router.get('/results/:id/pdf', async (req, res) => {
       return impA - impB;
     });
 
-    // Helper: draw a tag badge at a given position, returns the width used
-    function drawTag(x, y, label, color) {
+    // Helper: draw a subtle gray tag with colored text
+    function drawTag(x, y, label, textColor) {
       const tw = doc.fontSize(6).widthOfString(label) + 8;
-      roundedRect(x, y, tw, 11, 2, color + '12', color + '30');
-      doc.fontSize(6).fillColor(color).text(label, x + 4, y + 2.5, { lineBreak: false });
+      roundedRect(x, y, tw, 11, 2, '#f1f5f9', '#e2e8f0');
+      doc.fontSize(6).fillColor(textColor).text(label, x + 4, y + 2.5, { lineBreak: false });
       return tw + 3;
     }
+
+    // Color map: professional, muted tones
+    const IMP_COLORS = { critical: C.danger, high: C.navy, medium: C.muted, low: C.light };
+    const STR_COLORS = { strong: C.ok, adequate: C.warn, weak: C.danger, critical: C.danger };
 
     for (let ci = 0; ci < sortedClauses.length; ci++) {
       const clause = sortedClauses[ci];
       const analysis = analysisMap.get(clause.id);
       const optimization = optimizations.find(o => o.clauseId === clause.id);
       const riskLevel = analysis?.riskLevel || 0;
-      const riskColor = riskLevel >= 7 ? C.red : riskLevel >= 4 ? C.orange : C.green;
+      const riskColor = getRiskColor(riskLevel);
       const impLevel = analysis?.importanceLevel || 'medium';
-      const impColor = impLevel === 'critical' ? C.red : impLevel === 'high' ? '#b45309' : impLevel === 'medium' ? '#4b5563' : '#9ca3af';
-      const strColor = analysis?.strength === 'weak' || analysis?.strength === 'critical' ? C.red : analysis?.strength === 'adequate' ? '#b45309' : C.green;
+      const impColor = IMP_COLORS[impLevel] || C.muted;
+      const strColor = STR_COLORS[analysis?.strength] || C.muted;
       const hasConcerns = analysis?.concerns?.length > 0;
       const hasOptimization = optimization?.needsOptimization;
       const sectionLabel = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber}  ` : '';
@@ -714,18 +722,28 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         const rowY = doc.y;
         // Left accent dot
-        doc.save().circle(L + 4, rowY + 5, 2).fill(impLevel === 'low' ? '#d1d5db' : '#9ca3af').restore();
+        doc.save().circle(L + 4, rowY + 5, 1.5).fill(impLevel === 'low' ? '#d1d5db' : '#94a3b8').restore();
 
         // Title
         doc.fontSize(8).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 12, rowY + 1, { width: W - 130 });
 
-        // Badges (right-aligned)
-        let rx = R - 30;
-        if (analysis?.strength) { rx -= drawTag(rx - doc.fontSize(6).widthOfString(STRENGTH_LABELS[analysis.strength] || '') - 8, rowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor); }
-        rx -= drawTag(rx - doc.fontSize(6).widthOfString(IMPORTANCE_LABELS[impLevel] || '') - 8, rowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
-
-        // Risk right
-        if (riskLevel > 0) doc.fontSize(6.5).fillColor(C.muted).text(`${riskLevel}/10`, R - 26, rowY + 1, { width: 26, align: 'right' });
+        // Badges (right-aligned) — calculate positions from right
+        let rx = R - 28;
+        // Risk score
+        if (riskLevel > 0) { doc.fontSize(6.5).fillColor(C.light).text(`${riskLevel}/10`, rx, rowY + 2, { width: 28, align: 'right' }); rx -= 4; }
+        // Strength tag
+        if (analysis?.strength) {
+          const sl = STRENGTH_LABELS[analysis.strength] || analysis.strength;
+          const sw = doc.fontSize(6).widthOfString(sl) + 8;
+          rx -= sw;
+          drawTag(rx, rowY, sl, strColor);
+          rx -= 2;
+        }
+        // Importance tag
+        const il = IMPORTANCE_LABELS[impLevel] || impLevel;
+        const iw = doc.fontSize(6).widthOfString(il) + 8;
+        rx -= iw;
+        drawTag(rx, rowY, il, impColor);
 
         // One-line summary
         if (analysis?.plainLanguage) {
@@ -735,13 +753,13 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         doc.y = rowY + compactH + 2;
         if (ci < sortedClauses.length - 1) {
-          doc.strokeColor('#f3f4f6').lineWidth(0.3).moveTo(L + 12, doc.y).lineTo(R, doc.y).stroke();
+          doc.strokeColor('#f1f5f9').lineWidth(0.3).moveTo(L + 12, doc.y).lineTo(R, doc.y).stroke();
           doc.y += 2;
         }
         continue;
       }
 
-      // ── TIER 2: Medium detail — "Wichtig" with no concerns + no optimization, OR medium with concerns ──
+      // ── TIER 2: Medium detail — "Wichtig" with no concerns/opt, OR medium with concerns ──
       const isTier2 = (impLevel === 'high' && !hasConcerns && !hasOptimization && riskLevel < 5) ||
                        ((impLevel === 'medium' || impLevel === 'low') && (hasConcerns || hasOptimization || riskLevel >= 5));
 
@@ -754,13 +772,13 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         const rowY = doc.y;
 
-        // Left accent bar
-        doc.save().rect(L, rowY, 2.5, 13).fill(riskColor).restore();
+        // Left accent bar (subtle)
+        doc.save().rect(L, rowY, 2, 12).fill(riskColor).restore();
 
         // Title
         doc.fontSize(9).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY, { width: W - 70 });
 
-        // Risk badge top right
+        // Risk score top right (plain text)
         if (riskLevel > 0) {
           doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - 30, rowY + 1, { width: 30, align: 'right' });
         }
@@ -771,12 +789,12 @@ router.get('/results/:id/pdf', async (req, res) => {
         bx2 += drawTag(bx2, bRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
         if (analysis?.strength) bx2 += drawTag(bx2, bRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
         if (analysis?.legalReferences?.length > 0) {
-          doc.fontSize(6).fillColor(C.purple).text(analysis.legalReferences.join(', '), bx2 + 2, bRowY + 2.5, { lineBreak: false });
+          doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx2 + 2, bRowY + 2.5, { lineBreak: false });
         }
 
         doc.y = bRowY + 14;
 
-        // Summary (truncated for tier 2)
+        // Summary (truncated)
         if (analysis?.plainLanguage) {
           const text = analysis.plainLanguage.length > 200 ? analysis.plainLanguage.substring(0, 197) + '...' : analysis.plainLanguage;
           doc.fontSize(7.5).fillColor(C.text).text(text, L + 8, doc.y, { width: W - 16 });
@@ -788,8 +806,8 @@ router.get('/results/:id/pdf', async (req, res) => {
           const conY = doc.y;
           const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
           const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 28 });
-          roundedRect(L + 8, conY, W - 16, conTextH + 14, 3, C.orangeBg, null);
-          doc.fontSize(6).fillColor(C.orange).text('Bedenken', L + 14, conY + 3);
+          roundedRect(L + 8, conY, W - 16, conTextH + 14, 3, C.warnBg, C.warnBorder);
+          doc.fontSize(6).fillColor(C.warn).text('Bedenken', L + 14, conY + 3);
           doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 11, { width: W - 28 });
           doc.y = conY + conTextH + 16;
         }
@@ -797,7 +815,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         // Optimization hint (inline)
         if (hasOptimization) {
           const adviceText = optimization.negotiationAdvice || 'Optimierung verfügbar';
-          doc.fontSize(6.5).fillColor(C.primary).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
+          doc.fontSize(6.5).fillColor(C.navyLight).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
           doc.moveDown(0.15);
         }
 
@@ -809,7 +827,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         continue;
       }
 
-      // ── TIER 1: Full detail — Critical clauses, or high-risk with concerns/optimization ──
+      // ── TIER 1: Full detail — Critical, or high-risk with concerns/optimization ──
       let estH = 44;
       if (analysis?.plainLanguage) estH += Math.ceil(analysis.plainLanguage.length / 90) * 10 + 4;
       if (analysis?.legalAssessment) estH += Math.ceil(analysis.legalAssessment.length / 95) * 9 + 14;
@@ -825,11 +843,11 @@ router.get('/results/:id/pdf', async (req, res) => {
       // Title
       doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 70 });
 
-      // Risk badge top right
+      // Risk badge top right (subtle pill)
       if (riskLevel > 0) {
-        const rBW = 36, rBH = 13;
-        roundedRect(R - rBW, cY, rBW, rBH, 3, riskColor + '15', riskColor + '35');
-        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - rBW, cY + 2.5, { width: rBW, align: 'center' });
+        const rBW = 34, rBH = 12;
+        roundedRect(R - rBW, cY + 1, rBW, rBH, 3, '#f1f5f9', C.border);
+        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - rBW, cY + 3, { width: rBW, align: 'center' });
       }
 
       // Badges + legal refs
@@ -838,7 +856,7 @@ router.get('/results/:id/pdf', async (req, res) => {
       bx += drawTag(bx, badgeRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
       if (analysis?.strength) bx += drawTag(bx, badgeRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
       if (analysis?.legalReferences?.length > 0) {
-        doc.fontSize(6).fillColor(C.purple).text(analysis.legalReferences.join(', '), bx + 2, badgeRowY + 2.5, { lineBreak: false });
+        doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx + 2, badgeRowY + 2.5, { lineBreak: false });
       }
 
       doc.y = badgeRowY + 14;
@@ -854,7 +872,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         checkPage(30);
         const laY = doc.y;
         const laH = doc.fontSize(7).heightOfString(analysis.legalAssessment, { width: W - 30 });
-        roundedRect(L + 8, laY, W - 16, laH + 13, 3, '#f9fafb', null);
+        roundedRect(L + 8, laY, W - 16, laH + 13, 3, '#f8fafc', '#e2e8f0');
         doc.fontSize(6).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 3);
         doc.fontSize(7).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 11, { width: W - 30 });
         doc.y = laY + laH + 16;
@@ -866,8 +884,8 @@ router.get('/results/:id/pdf', async (req, res) => {
         const conY = doc.y;
         const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
         const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 30 });
-        roundedRect(L + 8, conY, W - 16, conTextH + 13, 3, C.orangeBg, C.orangeBorder);
-        doc.fontSize(6).fillColor(C.orange).text('Bedenken', L + 14, conY + 3);
+        roundedRect(L + 8, conY, W - 16, conTextH + 13, 3, C.warnBg, C.warnBorder);
+        doc.fontSize(6).fillColor(C.warn).text('Bedenken', L + 14, conY + 3);
         doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 11, { width: W - 30 });
         doc.y = conY + conTextH + 16;
       }
@@ -879,8 +897,8 @@ router.get('/results/:id/pdf', async (req, res) => {
         const adviceText = optimization.negotiationAdvice || '';
         const fullText = adviceText ? `Optimierung verfügbar: ${adviceText}` : 'Optimierung verfügbar';
         const adviceH = doc.fontSize(6.5).heightOfString(fullText, { width: W - 30 });
-        roundedRect(L + 8, optY, W - 16, adviceH + 10, 3, '#eff6ff', '#bfdbfe');
-        doc.fontSize(6.5).fillColor(C.primary).text(fullText, L + 14, optY + 4, { width: W - 30 });
+        roundedRect(L + 8, optY, W - 16, adviceH + 10, 3, '#f0f4fa', '#d0dcea');
+        doc.fontSize(6.5).fillColor(C.navyLight).text(fullText, L + 14, optY + 4, { width: W - 30 });
         doc.y = optY + adviceH + 12;
       }
 
