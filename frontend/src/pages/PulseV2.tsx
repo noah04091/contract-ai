@@ -4,10 +4,14 @@ import DashboardLayout from '../components/DashboardV2/DashboardLayout';
 import { usePulseV2 } from '../hooks/usePulseV2';
 import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
 import { ContractDetail } from '../components/pulseV2/ContractDetail';
+import { FindingCard } from '../components/pulseV2/FindingCard';
 import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsPanel';
 import { ActionItem } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
-import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert } from '../types/pulseV2';
+import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
+import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard';
+import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
+import '../styles/PulseV2.module.css';
 
 const API_BASE = '/api';
 
@@ -37,6 +41,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   const {
     status, progress, progressMessage, stages,
     result, error,
+    partialFindings, partialClauses, contractMeta,
     startAnalysis, cancelAnalysis, loadLatest,
   } = usePulseV2();
   const navigate = useNavigate();
@@ -86,12 +91,126 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 
       {/* Analysis Running */}
       {status === 'analyzing' && (
-        <AnalysisPipeline
-          stages={stages}
-          progress={progress}
-          message={progressMessage}
-          onCancel={cancelAnalysis}
-        />
+        <>
+          <AnalysisPipeline
+            stages={stages}
+            progress={progress}
+            message={progressMessage}
+            onCancel={cancelAnalysis}
+          />
+
+          {/* Progressive Rendering: Show partial findings as they stream in */}
+          {(partialFindings.length > 0 || contractMeta) && (
+            <div style={{ marginTop: 20 }}>
+              {/* Contract header with meta */}
+              {contractMeta && (
+                <div style={{
+                  padding: '16px 24px',
+                  background: '#fff',
+                  borderRadius: 12,
+                  border: '1px solid #e5e7eb',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                }}>
+                  <div style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: '50%',
+                    border: '3px solid #d1d5db',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    background: '#f9fafb',
+                  }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#9ca3af' }}>...</span>
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: 0 }}>
+                      {contractMeta.name || 'Vertragsanalyse'}
+                    </h2>
+                    <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+                      {contractMeta.type && (
+                        <span style={{
+                          background: '#eff6ff',
+                          color: '#1e40af',
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          marginRight: 8,
+                          fontSize: 12,
+                        }}>
+                          {contractMeta.type}
+                        </span>
+                      )}
+                      <span>Score wird berechnet...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Streamed findings */}
+              {partialFindings.length > 0 && (
+                <div>
+                  <div style={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#374151',
+                    marginBottom: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}>
+                    Befunde ({partialFindings.length} bisher)
+                    <span style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#3b82f6',
+                      display: 'inline-block',
+                      animation: 'pulse 1.5s ease-in-out infinite',
+                    }} />
+                  </div>
+                  {[...(partialFindings as PulseV2Finding[])]
+                    .sort((a, b) => {
+                      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+                      return (order[a.severity] ?? 5) - (order[b.severity] ?? 5);
+                    })
+                    .map((finding, idx) => {
+                      const clause = partialClauses.find(c => c.id === finding.clauseId);
+                      return (
+                        <FindingCard
+                          key={`partial-${finding.clauseId}-${idx}`}
+                          finding={finding}
+                          clause={clause as PulseV2Clause | undefined}
+                          contractId={contractId}
+                          disabled
+                        />
+                      );
+                    })}
+
+                  {/* Skeleton placeholder for more findings loading */}
+                  <div style={{
+                    border: '1px solid #e5e7eb',
+                    borderLeft: '4px solid #d1d5db',
+                    borderRadius: 8,
+                    background: '#fff',
+                    padding: '16px 20px',
+                    marginBottom: 12,
+                  }}>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 60, height: 18, background: '#f3f4f6', borderRadius: 4 }} />
+                      <div style={{ width: 50, height: 18, background: '#f3f4f6', borderRadius: 4 }} />
+                    </div>
+                    <div style={{ width: '70%', height: 16, background: '#f3f4f6', borderRadius: 4, marginBottom: 6 }} />
+                    <div style={{ width: '90%', height: 14, background: '#f9fafb', borderRadius: 4 }} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Error */}
@@ -190,6 +309,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 // Dashboard View — Portfolio Dashboard
 // ═══════════════════════════════════════════════════════════
 type DashboardFilter = 'all' | 'critical' | 'action_needed' | 'unanalyzed';
+type SortBy = 'score_asc' | 'score_desc' | 'name' | 'recent';
 
 const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ onSelectContract }) => {
   const [items, setItems] = useState<PulseV2DashboardItem[]>([]);
@@ -198,15 +318,28 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [insights, setInsights] = useState<PulseV2PortfolioInsight[]>([]);
   const [actions, setActions] = useState<PulseV2Action[]>([]);
   const [legalAlerts, setLegalAlerts] = useState<PulseV2LegalAlert[]>([]);
+  const [portfolioSummary, setPortfolioSummary] = useState<any>(null);
+  const [monitoringStatus, setMonitoringStatus] = useState<any>(null);
   const [filter, setFilter] = useState<DashboardFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('score_asc');
+
+  // Debounce search to avoid excessive re-renders
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 150);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [dashRes, insightsRes, alertsRes] = await Promise.all([
+        const [dashRes, insightsRes, alertsRes, summaryRes, monitorRes] = await Promise.all([
           fetch(`${API_BASE}/legal-pulse-v2/dashboard`, { credentials: 'include' }),
           fetch(`${API_BASE}/legal-pulse-v2/portfolio-insights`, { credentials: 'include' }),
           fetch(`${API_BASE}/legal-pulse-v2/legal-alerts`, { credentials: 'include' }),
+          fetch(`${API_BASE}/legal-pulse-v2/portfolio-summary`, { credentials: 'include' }),
+          fetch(`${API_BASE}/legal-pulse-v2/monitoring-status`, { credentials: 'include' }),
         ]);
         const dashData = await dashRes.json();
         setItems(dashData.items || []);
@@ -218,6 +351,12 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
         const alertsData = await alertsRes.json();
         setLegalAlerts(alertsData.alerts || []);
+
+        const summaryData = await summaryRes.json();
+        setPortfolioSummary(summaryData);
+
+        const monitorData = await monitorRes.json();
+        setMonitoringStatus(monitorData);
       } catch (err) {
         console.error('[PulseV2] Dashboard load error:', err);
       } finally {
@@ -225,6 +364,16 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       }
     };
     load();
+  }, []);
+
+  const refreshMonitoringStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/legal-pulse-v2/monitoring-status`, { credentials: 'include' });
+      const data = await res.json();
+      setMonitoringStatus(data);
+    } catch (err) {
+      console.error('[PulseV2] Monitoring refresh error:', err);
+    }
   }, []);
 
   // Derived stats
@@ -247,19 +396,52 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     return { criticalContracts, renewalSoon, avgScore, openActions, unanalyzed };
   }, [items, actions]);
 
-  // Filtered items
+  // Filtered + searched + sorted items
   const filteredItems = useMemo(() => {
+    let result = items;
+
+    // Status filter
     switch (filter) {
       case 'critical':
-        return items.filter(i => i.v2CriticalCount > 0);
+        result = result.filter(i => i.v2CriticalCount > 0);
+        break;
       case 'action_needed':
-        return items.filter(i => i.hasV2Result && i.v2Score !== null && i.v2Score < 60);
+        result = result.filter(i => i.hasV2Result && i.v2Score !== null && i.v2Score < 60);
+        break;
       case 'unanalyzed':
-        return items.filter(i => !i.hasV2Result);
-      default:
-        return items;
+        result = result.filter(i => !i.hasV2Result);
+        break;
     }
-  }, [items, filter]);
+
+    // Search (debounced)
+    if (debouncedQuery.trim()) {
+      const q = debouncedQuery.toLowerCase().trim();
+      result = result.filter(i =>
+        i.name.toLowerCase().includes(q) ||
+        (i.contractType && i.contractType.toLowerCase().includes(q)) ||
+        (i.provider && i.provider.toLowerCase().includes(q))
+      );
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'score_asc':
+          return (a.v2Score ?? 999) - (b.v2Score ?? 999);
+        case 'score_desc':
+          return (b.v2Score ?? -1) - (a.v2Score ?? -1);
+        case 'name':
+          return a.name.localeCompare(b.name, 'de');
+        case 'recent':
+          return (b.v2LastAnalysis ? new Date(b.v2LastAnalysis).getTime() : 0)
+            - (a.v2LastAnalysis ? new Date(a.v2LastAnalysis).getTime() : 0);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [items, filter, debouncedQuery, sortBy]);
 
   // Contract name map for insights panel
   const contractNames = useMemo(() => {
@@ -273,6 +455,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
   }
+
+  // First-Use: no contracts analyzed yet
+  const isFirstUse = stats.analyzed === 0;
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
@@ -288,7 +473,161 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </div>
       </div>
 
-      {/* Alert Cards */}
+      {/* ══════════ Monitoring Status ══════════ */}
+      {monitoringStatus && (
+        <MonitoringStatusCard
+          monitoring={monitoringStatus}
+          onRefresh={refreshMonitoringStatus}
+          onNavigate={(id) => onSelectContract(id)}
+        />
+      )}
+
+      {/* ══════════ Hero: Portfolio Health Score ══════════ */}
+      <div style={{
+        background: '#fff',
+        borderRadius: 16,
+        border: '1px solid #e5e7eb',
+        padding: '32px 40px',
+        marginBottom: 24,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 32,
+      }}>
+        {/* Score Circle */}
+        {(() => {
+          const score = alertStats.avgScore;
+          const color = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
+          const label = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
+          return (
+            <>
+              <div style={{
+                width: 96,
+                height: 96,
+                borderRadius: '50%',
+                border: `5px solid ${color}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                background: score === null ? '#f9fafb' : undefined,
+              }}>
+                <span style={{ fontSize: 36, fontWeight: 800, color }}>
+                  {score ?? '—'}
+                </span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 4 }}>
+                  Contract Health
+                </div>
+                <div style={{ fontSize: 15, color: '#6b7280', marginBottom: 8 }}>
+                  {isFirstUse
+                    ? 'Noch kein Vertrag analysiert. Starten Sie Ihre erste Analyse.'
+                    : label
+                  }
+                </div>
+                {isFirstUse && items.length > 0 && (
+                  <button
+                    onClick={() => onSelectContract(items[0].contractId)}
+                    style={{
+                      padding: '10px 24px',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: '#fff',
+                      background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                      border: 'none',
+                      borderRadius: 10,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Erste Analyse starten
+                  </button>
+                )}
+              </div>
+            </>
+          );
+        })()}
+      </div>
+
+      {/* ══════════ First-Use: Demo Insight + Value Proposition ══════════ */}
+      {isFirstUse && (
+        <>
+          {/* Demo Insight — creates curiosity */}
+          <div style={{
+            padding: '16px 24px',
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderLeft: '4px solid #d97706',
+            borderRadius: 12,
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+          }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>
+                Wussten Sie?
+              </div>
+              <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.5 }}>
+                Haftungsklauseln in deutschen Verträgen enthalten häufig unwirksame Formulierungen (§307 BGB). Legal Pulse prüft jede Klausel auf Durchsetzbarkeit.
+              </div>
+            </div>
+            {items.length > 0 && (
+              <button
+                onClick={() => onSelectContract(items[0].contractId)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#92400e',
+                  background: '#fef3c7',
+                  border: '1px solid #fde68a',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                Jetzt prüfen
+              </button>
+            )}
+          </div>
+
+          {/* Value Props */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 16,
+            marginBottom: 24,
+          }}>
+            {[
+              { icon: '\u2696\ufe0f', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse prüft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
+              { icon: '\ud83d\udcb0', title: 'Kostenfallen vermeiden', desc: 'Erkennt automatische Verlängerungen, versteckte Gebühren und überhöhte Preise.' },
+              { icon: '\ud83d\udcca', title: 'Portfolio überwachen', desc: 'Alle Verträge auf einen Blick — mit Fristen, Scores und Handlungsempfehlungen.' },
+            ].map(card => (
+              <div key={card.title} style={{
+                padding: 24,
+                background: '#fff',
+                borderRadius: 12,
+                border: '1px solid #e5e7eb',
+              }}>
+                <div style={{ fontSize: 28, marginBottom: 12 }}>{card.icon}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>{card.title}</div>
+                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{card.desc}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Portfolio Improvement Tracking */}
+      {portfolioSummary && (
+        <PortfolioImprovementCard
+          summary={portfolioSummary}
+          onNavigate={(id) => onSelectContract(id)}
+        />
+      )}
+
+      {/* Alert Cards — only when we have data */}
       {stats.analyzed > 0 && (
         <div style={{
           display: 'grid',
@@ -392,38 +731,125 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </div>
       )}
 
-      {/* Contract Grid */}
-      <div style={{
-        display: 'flex',
-        gap: 8,
-        marginBottom: 16,
-        flexWrap: 'wrap',
-        alignItems: 'center',
-      }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>Verträge</span>
-        {([
-          ['all', 'Alle'],
-          ['critical', `Kritisch (${alertStats.criticalContracts.length})`],
-          ['action_needed', 'Handlungsbedarf'],
-          ['unanalyzed', `Nicht analysiert (${alertStats.unanalyzed.length})`],
-        ] as [DashboardFilter, string][]).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
+      {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}
+      <div style={{ marginBottom: 16 }}>
+        {/* Row 1: Title + Search + Sort */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          marginBottom: 10,
+        }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Vertr\u00e4ge</span>
+
+          {/* Search Input */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+            <span style={{
+              position: 'absolute',
+              left: 10,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: 14,
+              color: '#9ca3af',
+              pointerEvents: 'none',
+            }}>&#128269;</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Vertrag suchen..."
+              style={{
+                width: '100%',
+                padding: '7px 10px 7px 32px',
+                fontSize: 13,
+                border: '1px solid #e5e7eb',
+                borderRadius: 8,
+                outline: 'none',
+                color: '#111827',
+                background: '#fff',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: '#9ca3af',
+                  padding: 2,
+                }}
+              >&times;</button>
+            )}
+          </div>
+
+          {/* Sort */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
             style={{
-              padding: '4px 12px',
+              padding: '7px 10px',
               fontSize: 12,
-              borderRadius: 6,
-              border: filter === key ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-              background: filter === key ? '#eff6ff' : '#fff',
-              color: filter === key ? '#2563eb' : '#6b7280',
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              color: '#374151',
+              background: '#fff',
               cursor: 'pointer',
-              fontWeight: filter === key ? 600 : 400,
+              outline: 'none',
             }}
           >
-            {label}
-          </button>
-        ))}
+            <option value="score_asc">Schlechteste zuerst</option>
+            <option value="score_desc">Beste zuerst</option>
+            <option value="name">Name A\u2013Z</option>
+            <option value="recent">Zuletzt analysiert</option>
+          </select>
+        </div>
+
+        {/* Row 2: Filter buttons + count */}
+        <div style={{
+          display: 'flex',
+          gap: 8,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}>
+          {([
+            ['all', 'Alle'],
+            ['critical', `Kritisch (${alertStats.criticalContracts.length})`],
+            ['action_needed', 'Handlungsbedarf'],
+            ['unanalyzed', `Nicht analysiert (${alertStats.unanalyzed.length})`],
+          ] as [DashboardFilter, string][]).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                padding: '4px 12px',
+                fontSize: 12,
+                borderRadius: 6,
+                border: filter === key ? '1px solid #3b82f6' : '1px solid #e5e7eb',
+                background: filter === key ? '#eff6ff' : '#fff',
+                color: filter === key ? '#2563eb' : '#6b7280',
+                cursor: 'pointer',
+                fontWeight: filter === key ? 600 : 400,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+
+          {/* Count indicator */}
+          {(debouncedQuery || filter !== 'all') && (
+            <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>
+              {filteredItems.length} von {items.length} Vertr\u00e4gen
+            </span>
+          )}
+        </div>
       </div>
 
       {filteredItems.length === 0 ? (
@@ -434,7 +860,32 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           borderRadius: 12,
           color: '#6b7280',
         }}>
-          {items.length === 0 ? 'Keine Verträge vorhanden.' : 'Keine Verträge für diesen Filter.'}
+          {items.length === 0 ? (
+            'Keine Vertr\u00e4ge vorhanden.'
+          ) : (
+            <>
+              <div style={{ fontSize: 14, marginBottom: 8 }}>
+                {debouncedQuery
+                  ? `Keine Treffer f\u00fcr \u201e${debouncedQuery}\u201c`
+                  : 'Keine Vertr\u00e4ge f\u00fcr diesen Filter.'
+                }
+              </div>
+              <button
+                onClick={() => { setFilter('all'); setSearchQuery(''); }}
+                style={{
+                  padding: '6px 16px',
+                  fontSize: 13,
+                  color: '#3b82f6',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                Alle anzeigen
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div style={{

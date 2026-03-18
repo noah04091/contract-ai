@@ -30,16 +30,19 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
   if (context.autoRenewal) lines.push("AUTO-RENEWAL: JA");
   lines.push("");
 
-  // Critical and high findings
-  const urgentFindings = (clauseFindings || []).filter(f =>
-    f.severity === "critical" || f.severity === "high"
+  // Critical, high, and medium findings
+  const actionableFindings = (clauseFindings || []).filter(f =>
+    f.severity === "critical" || f.severity === "high" || f.severity === "medium"
   );
 
-  if (urgentFindings.length > 0) {
-    lines.push("DRINGENDE BEFUNDE:");
-    for (const f of urgentFindings) {
+  if (actionableFindings.length > 0) {
+    lines.push("BEFUNDE:");
+    for (const f of actionableFindings) {
       lines.push(`  [${f.severity}] ${f.title}: ${f.description}`);
       if (f.legalBasis) lines.push(`    Rechtsgrundlage: ${f.legalBasis}`);
+      if (f.enforceability && f.enforceability !== "valid" && f.enforceability !== "unknown") {
+        lines.push(`    Durchsetzbarkeit: ${f.enforceability}`);
+      }
     }
     lines.push("");
   }
@@ -57,6 +60,46 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
 }
 
 /**
+ * Generate deterministic fallback actions from findings when GPT returns none
+ */
+function generateFallbackActions(clauseFindings, context) {
+  const actions = [];
+  const severityOrder = { critical: 0, high: 1, medium: 2 };
+
+  // Sort findings by severity
+  const sorted = [...(clauseFindings || [])]
+    .filter(f => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
+    .sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+
+  for (const f of sorted.slice(0, 5)) {
+    const priority = f.severity === "critical" ? "now" : f.severity === "high" ? "plan" : "watch";
+    const isInvalid = f.enforceability === "likely_invalid" || f.enforceability === "questionable";
+
+    actions.push({
+      id: `fallback_${actions.length + 1}`,
+      priority,
+      title: isInvalid
+        ? `${f.title} — Klausel überarbeiten`
+        : `${f.title} — prüfen`,
+      description: f.description,
+      relatedContracts: [],
+      estimatedImpact: f.severity === "critical"
+        ? "Hohes Risiko bei Nichthandlung"
+        : f.severity === "high"
+          ? "Mittleres Risiko"
+          : "Verbesserungspotential",
+      confidence: f.confidence,
+      nextStep: isInvalid
+        ? `Klausel "${f.title}" mit Rechtsberater überarbeiten. Rechtsgrundlage: ${f.legalBasis || "prüfen"}`
+        : `Klausel "${f.title}" intern prüfen und ggf. nachverhandeln`,
+      status: "open",
+    });
+  }
+
+  return actions;
+}
+
+/**
  * Stage 4: Action Engine
  * @param {Array} clauseFindings - From Stage 2
  * @param {Array} portfolioInsights - From Stage 3
@@ -65,14 +108,15 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
  * @returns {object} { actions, costs }
  */
 async function runActionEngine(clauseFindings, portfolioInsights, context, onProgress) {
-  // Skip if no significant findings
-  const urgentCount = (clauseFindings || []).filter(f =>
-    f.severity === "critical" || f.severity === "high"
+  // Count actionable findings (critical + high + medium)
+  const actionableCount = (clauseFindings || []).filter(f =>
+    f.severity === "critical" || f.severity === "high" || f.severity === "medium"
   ).length;
 
   const insightCount = (portfolioInsights || []).length;
 
-  if (urgentCount === 0 && insightCount === 0) {
+  // Skip only if truly nothing to act on
+  if (actionableCount === 0 && insightCount === 0) {
     return {
       actions: [],
       costs: { stage: 4, stageName: "Action Engine", model: "none", inputTokens: 0, outputTokens: 0, costUSD: 0 },
@@ -106,7 +150,7 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
   const usage = response.usage || {};
 
   // Filter by confidence and add IDs
-  const actions = (result.actions || [])
+  let actions = (result.actions || [])
     .filter(a => a.confidence >= 70)
     .map((a, idx) => ({
       id: `action_${idx + 1}`,
@@ -114,6 +158,12 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
       relatedContracts: a.relatedContractIds || [],
       status: "open",
     }));
+
+  // Fallback: if GPT returned no actions but we have actionable findings, generate deterministic ones
+  if (actions.length === 0 && actionableCount > 0) {
+    console.log(`[PulseV2] Action Engine: GPT returned 0 actions, generating ${Math.min(actionableCount, 5)} fallback actions`);
+    actions = generateFallbackActions(clauseFindings, context);
+  }
 
   const costUSD = (usage.prompt_tokens / 1000) * PRICES["gpt-4o"].input +
     (usage.completion_tokens / 1000) * PRICES["gpt-4o"].output;

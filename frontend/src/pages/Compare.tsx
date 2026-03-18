@@ -811,7 +811,8 @@ export default function EnhancedCompare() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Hero Section - Better Contracts Style */}
+          {/* Hero Section - Hidden when results are shown */}
+          {!result && (
           <div className="contract-header">
             <div className="contract-hero-icon">
               <Scale size={36} />
@@ -822,9 +823,10 @@ export default function EnhancedCompare() {
               Vergleiche zwei Verträge und erhalte eine KI-Empfehlung
             </p>
           </div>
+          )}
 
           {/* History Button - Compact Row */}
-          {historyItems.length > 0 && (
+          {!result && historyItems.length > 0 && (
             <motion.div
               style={{
                 display: 'flex',
@@ -857,7 +859,7 @@ export default function EnhancedCompare() {
 
           {/* History Panel */}
           <AnimatePresence>
-            {showHistory && (
+            {!result && showHistory && (
               <motion.div
                 className="history-panel"
                 initial={{ opacity: 0, height: 0 }}
@@ -1047,17 +1049,21 @@ export default function EnhancedCompare() {
             )}
           </AnimatePresence>
 
-          <UserProfileSelector
-            selectedProfile={userProfile}
-            onProfileChange={setUserProfile}
-          />
+          {!result && (
+            <UserProfileSelector
+              selectedProfile={userProfile}
+              onProfileChange={setUserProfile}
+            />
+          )}
 
-          <ComparisonModeSelector
-            selectedMode={comparisonMode}
-            onModeChange={setComparisonMode}
-          />
+          {!result && (
+            <ComparisonModeSelector
+              selectedMode={comparisonMode}
+              onModeChange={setComparisonMode}
+            />
+          )}
 
-          {preloadedContractName && (
+          {!result && preloadedContractName && (
             <motion.div
               style={{
                 background: 'rgba(0, 113, 227, 0.1)',
@@ -1081,7 +1087,8 @@ export default function EnhancedCompare() {
             </motion.div>
           )}
 
-          {/* Premium Upload Section */}
+          {/* Premium Upload Section - Hidden when results are shown */}
+          {!result && (
           <motion.div
             className="premium-upload-section"
             initial={{ opacity: 0, y: 20 }}
@@ -1381,6 +1388,7 @@ export default function EnhancedCompare() {
               )}
             </div>
           </motion.div>
+          )}
 
           {/* 🆕 V2 Results Container */}
           <AnimatePresence>
@@ -1391,7 +1399,31 @@ export default function EnhancedCompare() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', marginTop: '1rem' }}>
+                  <motion.button
+                    onClick={() => { setResult(null); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.6rem 1rem',
+                      borderRadius: '10px',
+                      backgroundColor: '#f5f5f7',
+                      color: '#1d1d1f',
+                      border: 'none',
+                      fontFamily: 'inherit',
+                      fontSize: '0.88rem',
+                      fontWeight: 500,
+                      cursor: 'pointer'
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <ArrowRight size={14} style={{ transform: 'rotate(180deg)' }} />
+                    <span>Neuer Vergleich</span>
+                  </motion.button>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
                   <motion.button
                     onClick={exportToPDF}
                     disabled={pdfExporting}

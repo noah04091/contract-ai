@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { PulseV2Action } from '../../types/pulseV2';
 
 interface ActionItemProps {
   action: PulseV2Action;
+  contractId?: string;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed') => void;
 }
 
@@ -12,10 +14,29 @@ const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string
   watch: { color: '#6b7280', bg: '#f9fafb', label: 'Beobachten', icon: '\ud83d\udc41\ufe0f' },
 };
 
-export const ActionItem: React.FC<ActionItemProps> = ({ action, onStatusChange }) => {
+/**
+ * Detect impact type from text and return icon
+ */
+function getImpactIcon(impact: string): string {
+  const lower = impact.toLowerCase();
+  if (/kosten|geld|preis|gebühr|zahlung|finanziell|bußgeld/i.test(lower)) return '\ud83d\udcb0';
+  if (/risiko|haftung|schaden|klage/i.test(lower)) return '\u2696\ufe0f';
+  if (/frist|ablauf|termin|deadline|verlängerung/i.test(lower)) return '\u23f1\ufe0f';
+  if (/dsgvo|datenschutz|compliance/i.test(lower)) return '\ud83d\udee1\ufe0f';
+  if (/verbesser|optimier|potential|chance/i.test(lower)) return '\ud83d\udca1';
+  return '\ud83d\udccc';
+}
+
+export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, onStatusChange }) => {
+  const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
+
+  // Check if action relates to a fixable clause (for deep link)
+  const hasOptimizeLink = contractId && !isDone && (
+    action.priority === 'now' || action.priority === 'plan'
+  );
 
   return (
     <div style={{
@@ -29,7 +50,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, onStatusChange }
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
         <span style={{ fontSize: 18 }}>{priority.icon}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <span style={{
               fontSize: 11,
               fontWeight: 600,
@@ -41,9 +62,10 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, onStatusChange }
             }}>
               {priority.label}
             </span>
-            {action.confidence < 85 && (
-              <span style={{ fontSize: 11, color: '#9ca3af' }}>{action.confidence}%</span>
-            )}
+            {/* Micro-Trust: always show confidence */}
+            <span style={{ fontSize: 11, color: '#9ca3af' }}>
+              {action.confidence}% Konfidenz
+            </span>
             {isDone && <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>Erledigt</span>}
           </div>
 
@@ -76,11 +98,45 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, onStatusChange }
             </div>
           )}
 
-          {/* Impact */}
+          {/* Impact — with icon */}
           {action.estimatedImpact && (
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>
-              Impact: {action.estimatedImpact}
+            <div style={{
+              fontSize: 12,
+              color: '#6b7280',
+              marginTop: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>{getImpactIcon(action.estimatedImpact)}</span>
+              {action.estimatedImpact}
             </div>
+          )}
+
+          {/* Deep Link: optimize this clause */}
+          {hasOptimizeLink && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/optimize/${contractId}`);
+              }}
+              style={{
+                marginTop: 10,
+                padding: '6px 14px',
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#7c3aed',
+                background: '#f5f3ff',
+                border: '1px solid #ddd6fe',
+                borderRadius: 6,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              Klausel optimieren &#8594;
+            </button>
           )}
         </div>
 

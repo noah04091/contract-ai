@@ -8,6 +8,28 @@ import type {
 
 const API_BASE = '/api';
 
+interface PartialFinding {
+  clauseId: string;
+  category: string;
+  severity: string;
+  type: string;
+  title: string;
+  description: string;
+  legalBasis: string;
+  affectedText: string;
+  confidence: number;
+  reasoning: string;
+  isIntentional: boolean;
+  enforceability?: string;
+}
+
+interface PartialClause {
+  id: string;
+  title: string;
+  category: string;
+  sectionNumber: string;
+}
+
 interface PulseV2State {
   status: PulseV2Status;
   progress: number;
@@ -16,11 +38,16 @@ interface PulseV2State {
   resultId: string | null;
   result: PulseV2Result | null;
   error: string | null;
+  partialFindings: PartialFinding[];
+  partialClauses: PartialClause[];
+  contractMeta: { name?: string; type?: string } | null;
 }
 
 type PulseV2Action =
   | { type: 'START_ANALYSIS' }
   | { type: 'PROGRESS'; progress: number; message: string; stage?: number; stageName?: string; stageComplete?: boolean }
+  | { type: 'ADD_FINDINGS_BATCH'; findings: PartialFinding[]; clauses: PartialClause[] }
+  | { type: 'SET_CONTRACT_META'; name?: string; contractType?: string }
   | { type: 'ANALYSIS_COMPLETE'; result: PulseV2Result; resultId: string }
   | { type: 'ANALYSIS_ERROR'; error: string }
   | { type: 'SET_RESULT'; result: PulseV2Result }
@@ -47,6 +74,9 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         resultId: null,
         result: null,
         error: null,
+        partialFindings: [],
+        partialClauses: [],
+        contractMeta: null,
       };
 
     case 'PROGRESS': {
@@ -102,6 +132,23 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         resultId: action.result._id,
       };
 
+    case 'ADD_FINDINGS_BATCH':
+      return {
+        ...state,
+        partialFindings: [...state.partialFindings, ...action.findings],
+        partialClauses: [
+          ...state.partialClauses,
+          // Only add clauses we haven't seen yet
+          ...action.clauses.filter(c => !state.partialClauses.some(pc => pc.id === c.id)),
+        ],
+      };
+
+    case 'SET_CONTRACT_META':
+      return {
+        ...state,
+        contractMeta: { name: action.name, type: action.contractType },
+      };
+
     case 'RESET':
       return {
         status: 'idle',
@@ -111,6 +158,9 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         resultId: null,
         result: null,
         error: null,
+        partialFindings: [],
+        partialClauses: [],
+        contractMeta: null,
       };
 
     default:
@@ -127,6 +177,9 @@ export function usePulseV2() {
     resultId: null,
     result: null,
     error: null,
+    partialFindings: [],
+    partialClauses: [],
+    contractMeta: null,
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -154,6 +207,7 @@ export function usePulseV2() {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let contractMetaReceived = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -166,7 +220,9 @@ export function usePulseV2() {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           try {
-            const event: PulseV2ProgressEvent = JSON.parse(line.slice(6));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const raw: any = JSON.parse(line.slice(6));
+            const event = raw as PulseV2ProgressEvent;
 
             if (event.error) {
               dispatch({ type: 'ANALYSIS_ERROR', error: event.message });
@@ -183,6 +239,25 @@ export function usePulseV2() {
                 dispatch({ type: 'ANALYSIS_COMPLETE', result: data.result, resultId: event.resultId });
               }
               return;
+            }
+
+            // Progressive Rendering: stream findings per batch
+            if (raw.findingsBatch) {
+              dispatch({
+                type: 'ADD_FINDINGS_BATCH',
+                findings: raw.findingsBatch,
+                clauses: raw.clausesBatch || [],
+              });
+            }
+
+            // Contract meta from early Stage 2
+            if (raw.contractName && !contractMetaReceived) {
+              contractMetaReceived = true;
+              dispatch({
+                type: 'SET_CONTRACT_META',
+                name: raw.contractName,
+                contractType: raw.contractType,
+              });
             }
 
             dispatch({

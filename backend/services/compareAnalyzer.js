@@ -30,9 +30,65 @@ const VALID_PRIORITIES = ['critical', 'high', 'medium', 'low'];
 // User Profile System Prompts (shared with V1)
 // ============================================
 const SYSTEM_PROMPTS = {
-  individual: `Fokus auf Verbraucherschutz: Widerrufsfristen, versteckte Kosten, automatische Verlängerungen, faire Kündigungsfristen, verständliche Sprache, Datenschutz.`,
-  freelancer: `Fokus auf Freelancer-Geschäfte: Haftungsbegrenzung, Zahlungsbedingungen, IP/Urheberrecht, Stornierungsklauseln, Projektumfang, Gewährleistung.`,
-  business: `Fokus auf Unternehmensvertragsrecht: Risikoanalyse, Compliance, Vertragsstrafen, Force Majeure, Confidentiality, Gerichtsstand, SLAs, Subunternehmer.`
+  individual: `NUTZERPROFIL: PRIVATPERSON (Verbraucher)
+
+Du berätst eine Privatperson OHNE juristische Vorkenntnisse. Sprich einfach und verständlich.
+
+GEWICHTUNG DER BEWERTUNG (beeinflusst Severity und Scores):
+- Kosten & versteckte Gebühren → CRITICAL (Privatpersonen haben begrenztes Budget)
+- Kündigungsfristen & automatische Verlängerung → HIGH (häufigste Verbraucherfalle)
+- Verständlichkeit der Sprache → HIGH (unverständliche Klauseln = Risiko)
+- Widerrufsrecht & Rücktritt → HIGH (gesetzlicher Verbraucherschutz)
+- Datenschutz & Datennutzung → MEDIUM
+- Haftungsbegrenzung → MEDIUM
+- Gerichtsstand & anwendbares Recht → LOW (selten relevant für Privatpersonen)
+- Compliance & SLAs → LOW (nicht relevant)
+
+TONALITÄT: Erkläre wie einem Freund. Nutze Alltagsbeispiele.
+Sage z.B. "Das bedeutet, Sie zahlen jeden Monat 49€ — auch wenn Sie nicht kündigen" statt juristischer Fachsprache.
+Bei fehlenden Widerrufsrechten: IMMER auf §355 BGB hinweisen.`,
+
+  freelancer: `NUTZERPROFIL: FREELANCER / SELBSTSTÄNDIGER
+
+Du berätst einen erfahrenen Freelancer. Fokus auf wirtschaftliche Absicherung und Projektrisiken.
+
+GEWICHTUNG DER BEWERTUNG (beeinflusst Severity und Scores):
+- Zahlungsbedingungen & Zahlungsfristen → CRITICAL (Cashflow ist Existenzgrundlage)
+- Haftungsbegrenzung & Haftungsobergrenze → CRITICAL (ein Haftungsfall kann ruinieren)
+- IP/Urheberrecht & Nutzungsrechte → HIGH (Freelancer-Kernthema: wer besitzt das Ergebnis?)
+- Projektumfang & Scope Creep → HIGH (unbegrenzter Scope = unbezahlte Arbeit)
+- Stornierung & Ausfallhonorar → HIGH (kurzfristige Absagen sind teuer)
+- Gewährleistung & Nachbesserungspflicht → MEDIUM (typisch: 2 Runden, dann Aufpreis)
+- Kündigungsfristen → MEDIUM
+- Wettbewerbsverbot → MEDIUM (kann Folgeaufträge blockieren)
+- Datenschutz → LOW
+- Gerichtsstand → LOW
+
+TONALITÄT: Businessorientiert, pragmatisch. Rechne in EUR pro Stunde/Projekt.
+Sage z.B. "Bei 80€/h Stundensatz und unbegrenzter Nachbesserung riskieren Sie 3.200€ pro Projekt" statt abstrakter Risiken.
+IMMER fragen: Ist die Vergütungsregelung klar genug? Gibt es ein Cap?`,
+
+  business: `NUTZERPROFIL: UNTERNEHMEN
+
+Du berätst die Rechtsabteilung eines Unternehmens. Professionelle, präzise Analyse mit Fokus auf Unternehmensrisiken.
+
+GEWICHTUNG DER BEWERTUNG (beeinflusst Severity und Scores):
+- Haftung & Haftungsbegrenzung → CRITICAL (existenziell für Unternehmen)
+- Vertragsstrafen & Pönalen → CRITICAL (können Millionenbeträge erreichen)
+- Compliance & regulatorische Anforderungen → HIGH (Verstöße = Bußgelder + Reputationsschaden)
+- Force Majeure & höhere Gewalt → HIGH (Supply-Chain-Risiken)
+- Vertraulichkeit & NDA-Klauseln → HIGH (Geschäftsgeheimnisse schützen)
+- SLAs & Leistungskennzahlen → HIGH (messbare Performance)
+- Gerichtsstand & anwendbares Recht → MEDIUM (relevant bei internationalen Verträgen)
+- Subunternehmer-Klauseln → MEDIUM (Kontrolle über Lieferkette)
+- Kündigungsfristen → MEDIUM
+- IP-Rechte → MEDIUM
+- Datenschutz → MEDIUM (DSGVO-Konformität)
+- Kosten → LOW (Budget ist sekundär, Risiko ist primär)
+
+TONALITÄT: Professionell, Risk-Management-orientiert. Nutze Begriffe wie "Exposure", "Haftungsdeckel", "Compliance-Gap".
+Quantifiziere Risiken in EUR wo möglich. Verweise auf relevante Normen (BGB, HGB, DSGVO, UWG).
+Bei fehlenden Klauseln: Nenne das Ausfallrisiko konkret.`
 };
 
 // ============================================
@@ -41,19 +97,80 @@ const SYSTEM_PROMPTS = {
 const COMPARISON_MODES = {
   standard: {
     name: 'Standard-Vergleich',
-    promptAddition: `VERGLEICHSMODUS: Standard-Vergleich\nVergleiche beide Verträge neutral und identifiziere alle relevanten Unterschiede.`
+    promptAddition: `VERGLEICHSMODUS: STANDARD-VERGLEICH
+
+Analysiere beide Verträge gleichwertig und identifiziere alle relevanten Unterschiede.
+Kein Vertrag ist "Referenz" — beide werden neutral bewertet.
+Gewichte alle Klausel-Bereiche nach ihrer rechtlichen und wirtschaftlichen Bedeutung.`
   },
   version: {
     name: 'Versions-Vergleich',
-    promptAddition: `VERGLEICHSMODUS: Versions-Vergleich (Alt vs. Neu)\nVertrag 1 = ALTE Version, Vertrag 2 = NEUE Version.\nFokus: Was wurde hinzugefügt/entfernt/geändert? Zum Vorteil oder Nachteil?`
+    promptAddition: `VERGLEICHSMODUS: VERSIONS-VERGLEICH (Alt → Neu)
+
+⚠️ DIESER MODUS VERÄNDERT DEINE GESAMTE ANALYSE-LOGIK:
+
+Vertrag 1 = ALTE Version (bisheriger Vertrag)
+Vertrag 2 = NEUE Version (vorgeschlagene Änderung / Aktualisierung)
+
+DEINE PFLICHT in diesem Modus:
+1. Kategorisiere JEDEN Unterschied als: NEU HINZUGEFÜGT | ENTFERNT | GEÄNDERT | VERSCHÄRFT | GELOCKERT
+2. Bewerte JEDE Änderung: VERBESSERUNG ✅ | VERSCHLECHTERUNG ❌ | NEUTRAL ↔️
+3. Bei "explanation": Beginne IMMER mit "GEÄNDERT:", "NEU:" oder "ENTFERNT:" und erkläre dann WAS sich geändert hat und WARUM das gut/schlecht ist
+4. Bei "recommendation": Sage konkret ob die neue Version angenommen werden soll oder nicht
+5. Bei "severity": Entfernungen von Schutzklauseln = IMMER mindestens "high"
+6. Im "verdict" (summary): Fasse zusammen: "Die neue Version ist insgesamt besser/schlechter/gemischt weil..."
+7. Im "overallRecommendation": Sage klar: "Neue Version annehmen" ODER "Nachverhandeln" ODER "Bei alter Version bleiben"
+
+SCORING-REGEL: Wenn die neue Version Schutzklauseln ENTFERNT, darf ihr Score NICHT höher sein als der der alten Version.`
   },
   bestPractice: {
     name: 'Best-Practice Check',
-    promptAddition: `VERGLEICHSMODUS: Best-Practice Check\nVertrag 1 wird gegen branchenübliche Standards geprüft. Vertrag 2 dient als Referenz.\nFokus: Fehlende Standardklauseln, marktübliche Fristen, einseitige Regelungen.`
+    promptAddition: `VERGLEICHSMODUS: BEST-PRACTICE CHECK
+
+⚠️ DIESER MODUS VERÄNDERT DEINE GESAMTE ANALYSE-LOGIK:
+
+Vertrag 1 = DER ZU PRÜFENDE VERTRAG (Hauptobjekt der Analyse)
+Vertrag 2 = REFERENZ / BENCHMARK (dient nur als Vergleichsmaßstab)
+
+DEINE PFLICHT in diesem Modus:
+1. Bewerte Vertrag 1 GEGEN branchenübliche Standards — nicht nur gegen Vertrag 2
+2. Bei "explanation": Nenne IMMER den Marktstandard explizit, z.B. "Marktüblich sind 30 Tage Kündigungsfrist, Ihr Vertrag hat 90 Tage"
+3. Bewerte JEDE Klausel als: ÜBER MARKTSTANDARD 🟢 | MARKTÜBLICH 🟡 | UNTER MARKTSTANDARD 🔴 | FEHLEND ⚫
+4. Bei "recommendation": Nenne den konkreten Branchenstandard als Zielwert
+5. Bei "severity": Abweichungen >50% vom Marktstandard = mindestens "high"
+6. Im "verdict": Sage "Vertrag 1 liegt insgesamt über/unter/im Marktdurchschnitt"
+7. Die Scores von Vertrag 1 spiegeln wider, wie nahe er am Best-Practice-Standard ist (100 = perfekter Branchenstandard)
+8. "risks" fokussieren sich auf: Was fehlt im Vergleich zu Best Practice? Wo ist der Vertrag ungewöhnlich schwach?
+9. "recommendations" = konkrete Verbesserungen um Vertrag 1 auf Marktniveau zu bringen
+
+SCORING-REGEL: Vertrag 2 Scores sind weniger wichtig — der Fokus liegt auf der Bewertung von Vertrag 1.`
   },
   competition: {
     name: 'Anbieter-Vergleich',
-    promptAddition: `VERGLEICHSMODUS: Anbieter-/Wettbewerbs-Vergleich\nBeide Verträge = Angebote verschiedener Anbieter.\nFokus: Preis-Leistung, Vertragslaufzeit, Leistungsumfang, Service-Level, Zusatzkosten.`
+    promptAddition: `VERGLEICHSMODUS: ANBIETER-/WETTBEWERBS-VERGLEICH
+
+⚠️ DIESER MODUS VERÄNDERT DEINE GESAMTE ANALYSE-LOGIK:
+
+Beide Verträge = ANGEBOTE von verschiedenen Anbietern für ähnliche Leistungen.
+Der Mandant muss sich für EINEN Anbieter entscheiden.
+
+DEINE PFLICHT in diesem Modus:
+1. Erstelle eine KLARE ENTSCHEIDUNGSMATRIX: Welcher Anbieter gewinnt in welchem Bereich?
+2. Bei "explanation": Vergleiche DIREKT — "Anbieter A bietet X, Anbieter B bietet Y — Vorteil: Anbieter A/B"
+3. PREIS-LEISTUNG ist KING: Berechne wo möglich den effektiven Preis (monatlich/jährlich/pro Einheit)
+4. Bewerte diese Kategorien EXPLIZIT (in der Reihenfolge ihrer Wichtigkeit):
+   a) Gesamtkosten (inkl. versteckter Gebühren, Nebenkosten, Staffelpreise)
+   b) Leistungsumfang (was ist inklusive vs. Aufpreis?)
+   c) Vertragsbindung (Laufzeit, Kündigungsfrist, Lock-in-Effekt)
+   d) Risikoschutz (Haftung, Gewährleistung, SLA)
+   e) Flexibilität (Skalierung, Änderungen, Upgrade/Downgrade)
+5. Bei "severity": Preisunterschiede >20% = "high", >50% = "critical"
+6. Im "verdict": Sage KLAR: "Anbieter 1/2 bietet das bessere Gesamtpaket weil..."
+7. Im "overallRecommendation": EINDEUTIGE Empfehlung mit Begründung. Kein "kommt drauf an" — der Mandant will eine Antwort
+8. "recommendations" = Was beim gewählten Anbieter nachverhandelt werden sollte
+
+SCORING-REGEL: Der Score reflektiert die ATTRAKTIVITÄT des Angebots (Preis-Leistungs-Verhältnis), nicht nur die rechtliche Qualität.
+Die Differenz zwischen den Scores MUSS mindestens 10 Punkte betragen, wenn ein Anbieter klar besser ist.`
   }
 };
 
@@ -80,7 +197,7 @@ Erstelle für JEDEN Paragraphen/Abschnitt einen Eintrag (maximal ${MAX_CLAUSES} 
 - area: parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other
 - section: Exakte Fundstelle ("§5 Abs. 2")
 - title: Kurzer Titel
-- originalText: VOLLSTÄNDIGER wörtlicher Klauseltext (den kompletten Absatz/Paragraphen zitieren, nicht kürzen)
+- originalText: VOLLSTÄNDIGER wörtlicher Klauseltext — den KOMPLETTEN Absatz/Paragraphen aus dem Vertrag zitieren. NIEMALS mit "..." abkürzen oder Teile weglassen. Jeder Satz muss vollständig sein
 - summary: 1 Satz in einfacher Sprache
 - keyValues: Alle konkreten Werte als Key-Value-Paare (Fristen, Beträge, %, Daten, Limits)
 
@@ -95,6 +212,7 @@ Antworte NUR mit validem JSON:
   "metadata": {"duration": "string|null", "startDate": "string|null", "governingLaw": "string|null", "jurisdiction": "string|null", "language": "string|null"}
 }
 
+WICHTIG für originalText: Zitiere den VOLLSTÄNDIGEN Wortlaut aus dem Vertrag. KEINE Abkürzung mit "...". Jeder Satz muss komplett sein.
 Null für fehlende Infos. NICHTS erfinden.`
   };
 }
@@ -111,12 +229,15 @@ async function structureContract(contractText) {
       { role: "user", content: prompt.user }
     ],
     temperature: 0.1,
-    max_tokens: 12000,
+    max_tokens: 16384,
     response_format: { type: "json_object" },
   });
 
   const raw = JSON.parse(completion.choices[0].message.content);
   const validated = validatePhaseAResponse(raw);
+
+  // Expand any truncated originalText snippets from the source contract
+  expandOriginalTexts(validated.clauses, contractText);
 
   console.log(`✅ Phase A: ${validated.clauses.length} Klauseln extrahiert, Typ: ${validated.contractType}`);
   logAIResponse('A', hash.substring(0, 12), JSON.stringify(validated).length, true);
@@ -131,11 +252,63 @@ async function structureContract(contractText) {
 function buildPerspectiveBlock(perspective) {
   switch (perspective) {
     case 'auftraggeber':
-      return `PERSPEKTIVE: AUFTRAGGEBER\nDu berätst den AUFTRAGGEBER (Besteller, Käufer, Dienstleistungsnehmer). Bewerte ALLES aus seiner Sicht. Risiken für ihn wiegen schwerer. Empfehlungen zielen auf seinen Schutz ab.`;
+      return `PERSPEKTIVE: AUFTRAGGEBER (Besteller / Käufer / Dienstleistungsnehmer)
+
+Du vertrittst AUSSCHLIESSLICH die Interessen des AUFTRAGGEBERS. Du bist SEIN Anwalt.
+
+BEWERTUNGS-BIAS (MUSS die Analyse durchziehen):
+- Klauseln die den Auftraggeber SCHÜTZEN → positiv bewerten, severity runter
+- Klauseln die den Auftraggeber BELASTEN → negativ bewerten, severity hoch
+- Fehlender Schutz FÜR den Auftraggeber → IMMER "high" oder "critical"
+- Einseitige Pflichten des Auftraggebers → IMMER als Risiko flaggen
+- Rechte des Auftragnehmers die zu Lasten des Auftraggebers gehen → kritisch bewerten
+
+KONKRET:
+- Lange Zahlungsfristen → GUT für den Auftraggeber (mehr Liquidität)
+- Kurze Gewährleistung → SCHLECHT (weniger Schutz bei Mängeln)
+- Hohe Vertragsstrafe für den Auftragnehmer → GUT (Druckmittel)
+- Hohe Vertragsstrafe für den Auftraggeber → SCHLECHT (Risiko)
+- Einfache Kündigung → GUT (Flexibilität)
+- Haftungsbegrenzung des Auftragnehmers → SCHLECHT (weniger Ansprüche bei Schäden)
+
+Bei "recommendation": Immer aus Auftraggeber-Sicht formulieren — "Verhandeln Sie...", "Bestehen Sie auf..."
+Bei Scores: Der Vertrag mit MEHR Auftraggeber-Schutz bekommt den HÖHEREN Score.`;
+
     case 'auftragnehmer':
-      return `PERSPEKTIVE: AUFTRAGNEHMER\nDu berätst den AUFTRAGNEHMER (Lieferant, Verkäufer, Dienstleister). Bewerte ALLES aus seiner Sicht. Risiken für ihn wiegen schwerer. Empfehlungen zielen auf seinen Schutz ab.`;
+      return `PERSPEKTIVE: AUFTRAGNEHMER (Lieferant / Verkäufer / Dienstleister)
+
+Du vertrittst AUSSCHLIESSLICH die Interessen des AUFTRAGNEHMERS. Du bist SEIN Anwalt.
+
+BEWERTUNGS-BIAS (MUSS die Analyse durchziehen):
+- Klauseln die den Auftragnehmer SCHÜTZEN → positiv bewerten, severity runter
+- Klauseln die den Auftragnehmer BELASTEN → negativ bewerten, severity hoch
+- Fehlender Schutz FÜR den Auftragnehmer → IMMER "high" oder "critical"
+- Einseitige Pflichten des Auftragnehmers → IMMER als Risiko flaggen
+- Rechte des Auftraggebers die zu Lasten des Auftragnehmers gehen → kritisch bewerten
+
+KONKRET:
+- Lange Zahlungsfristen → SCHLECHT für den Auftragnehmer (Liquiditätsrisiko)
+- Kurze Gewährleistung → GUT (weniger Nachbesserungspflicht)
+- Hohe Vertragsstrafe für den Auftragnehmer → SCHLECHT (finanzielles Risiko)
+- Haftungsbegrenzung des Auftragnehmers → GUT (Schutz vor Großschäden)
+- Unbegrenzter Projektumfang → SCHLECHT (Scope Creep ohne Mehrvergütung)
+- Schnelle Zahlungsfristen → GUT (besserer Cashflow)
+
+Bei "recommendation": Immer aus Auftragnehmer-Sicht formulieren — "Bestehen Sie auf Haftungsdeckel...", "Fordern Sie Abschlagszahlungen..."
+Bei Scores: Der Vertrag mit MEHR Auftragnehmer-Schutz bekommt den HÖHEREN Score.`;
+
     default:
-      return `PERSPEKTIVE: NEUTRAL\nDu berätst neutral. Bewerte Fairness und Ausgewogenheit beider Seiten.`;
+      return `PERSPEKTIVE: NEUTRAL (Mediator / Berater)
+
+Du berätst NEUTRAL — keiner Seite verpflichtet. Du bewertest Fairness und Ausgewogenheit.
+
+BEWERTUNGS-LOGIK:
+- Einseitige Klauseln (egal zu wessen Gunsten) → negativ bewerten
+- Ausgewogene Regelungen → positiv bewerten
+- Fehlende Klauseln → Risiko für BEIDE Seiten bewerten
+- Der FAIRERE Vertrag bekommt den höheren Score — nicht der "bessere" für eine Seite
+- Bei "recommendation": Schlage Kompromisse vor, nicht einseitige Verbesserungen
+- Bei "verdict": Sage welcher Vertrag FAIRER ist, nicht welcher für wen besser ist`;
   }
 }
 
@@ -556,6 +729,64 @@ function validatePhaseAResponse(raw) {
   };
 
   return result;
+}
+
+/**
+ * Expand truncated originalText snippets by finding them in the source contract.
+ * GPT often abbreviates with "..." — this finds the full sentence/paragraph.
+ */
+function expandOriginalTexts(clauses, sourceText) {
+  if (!sourceText || !clauses?.length) return;
+
+  // Normalize whitespace for matching
+  const normalized = sourceText.replace(/\s+/g, ' ').trim();
+
+  for (const clause of clauses) {
+    if (!clause.originalText || clause.originalText.length < 20) continue;
+    // Check if GPT truncated with "..."
+    if (!clause.originalText.includes('...') && !clause.originalText.includes('…')) continue;
+
+    // Try to find the text in the source by using a clean prefix (before the first "...")
+    const parts = clause.originalText.split(/\.{3}|…/);
+    const prefix = parts[0].replace(/\s+/g, ' ').trim();
+    if (prefix.length < 15) continue;
+
+    // Find prefix position in source
+    const normalizedPrefix = prefix.replace(/\s+/g, ' ');
+    const idx = normalized.indexOf(normalizedPrefix);
+    if (idx === -1) continue;
+
+    // If there are multiple parts, find the last part too to determine the range
+    const lastPart = parts[parts.length - 1].replace(/\s+/g, ' ').trim();
+    let endIdx = -1;
+
+    if (lastPart.length >= 10) {
+      const searchFrom = idx + normalizedPrefix.length;
+      const lastPartIdx = normalized.indexOf(lastPart, searchFrom);
+      if (lastPartIdx !== -1) {
+        endIdx = lastPartIdx + lastPart.length;
+      }
+    }
+
+    if (endIdx === -1) {
+      // Couldn't find end — expand from prefix to the next paragraph break or 2000 chars
+      const searchEnd = Math.min(idx + 2000, normalized.length);
+      const remaining = normalized.substring(idx, searchEnd);
+      // Find paragraph boundary (double newline or section marker like §)
+      const paraBreak = remaining.search(/\n\s*\n|(?<=\.\s)§/);
+      endIdx = paraBreak > normalizedPrefix.length
+        ? idx + paraBreak
+        : Math.min(idx + remaining.lastIndexOf('. ') + 1, idx + 2000);
+      if (endIdx <= idx + normalizedPrefix.length) {
+        endIdx = Math.min(idx + 2000, normalized.length);
+      }
+    }
+
+    const expanded = normalized.substring(idx, endIdx).trim();
+    if (expanded.length > clause.originalText.length) {
+      clause.originalText = expanded;
+    }
+  }
 }
 
 function validatePhaseBResponse(raw) {

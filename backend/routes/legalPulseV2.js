@@ -653,6 +653,122 @@ ${findingsContext}
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// POST /quick-fix — Generate improved clause text from a Finding (no alert needed)
+// ══════════════════════════════════════════════════════════════
+const quickFixRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({ error: "Rate limit erreicht. Maximal 15 Quick-Fixes pro Stunde." });
+  },
+});
+
+router.post("/quick-fix", requirePremium, quickFixRateLimiter, async (req, res) => {
+  try {
+    const { affectedText, findingTitle, findingDescription, legalBasis, severity, contractType } = req.body;
+
+    if (!affectedText || !findingTitle) {
+      return res.status(400).json({ error: "affectedText und findingTitle erforderlich" });
+    }
+
+    if (affectedText.length > 5000) {
+      return res.status(400).json({ error: "affectedText zu lang (max. 5.000 Zeichen)" });
+    }
+
+    const OpenAI = require("openai");
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenAI API Key nicht konfiguriert" });
+    }
+
+    const openai = new OpenAI({ apiKey, timeout: 30000, maxRetries: 1 });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      temperature: 0,
+      max_tokens: 3000,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "quick_fix",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              fixedText: {
+                type: "string",
+                description: "Vollständiger, verbesserter Klauseltext — direkt einsetzbar",
+              },
+              reasoning: {
+                type: "string",
+                description: "Warum die neue Version besser ist (1-2 Sätze)",
+              },
+              legalBasis: {
+                type: "string",
+                description: "Rechtsgrundlage für die Verbesserung",
+              },
+            },
+            required: ["fixedText", "reasoning", "legalBasis"],
+            additionalProperties: false,
+          },
+        },
+      },
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein erfahrener deutscher Vertragsanwalt. Deine Aufgabe: Eine problematische Vertragsklausel so überarbeiten, dass sie rechtssicher, klar und ausgewogen ist.
+
+REGELN:
+- Der überarbeitete Text muss VOLLSTÄNDIG und DIREKT EINSETZBAR sein
+- Behalte den Stil und Ton des Originals bei
+- Ändere NUR was nötig ist — minimale Eingriffe, maximale Verbesserung
+- KEINE Platzhalter wie "[...]" oder "[Name]" — verwende die Begriffe aus dem Original
+- Begründe die Änderung mit der konkreten Rechtsgrundlage
+- Deutsche Rechtssprache, professioneller Stil`,
+        },
+        {
+          role: "user",
+          content: `PROBLEM ERKANNT:
+${findingTitle}
+${findingDescription}
+${legalBasis ? `Rechtsgrundlage: ${legalBasis}` : ""}
+${severity ? `Schweregrad: ${severity}` : ""}
+${contractType ? `Vertragstyp: ${contractType}` : ""}
+
+AKTUELLE KLAUSEL:
+${affectedText}
+
+Überarbeite diese Klausel so, dass das identifizierte Problem behoben wird.`,
+        },
+      ],
+    });
+
+    const parsed = JSON.parse(response.choices[0].message.content);
+
+    // Generate word-level diffs
+    const diffs = generateWordDiffs(affectedText, parsed.fixedText);
+
+    // Track cost
+    const usage = response.usage || {};
+    const costUSD = ((usage.prompt_tokens || 0) * 2.5 + (usage.completion_tokens || 0) * 10) / 1_000_000;
+    console.log(`[PulseV2] Quick-fix: ${usage.prompt_tokens || 0}+${usage.completion_tokens || 0} tokens, $${costUSD.toFixed(4)}`);
+
+    res.json({
+      originalText: affectedText,
+      fixedText: parsed.fixedText,
+      reasoning: parsed.reasoning,
+      legalBasis: parsed.legalBasis,
+      diffs,
+      costUSD,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Quick-fix error:", error);
+    res.status(500).json({ error: "Fehler beim Generieren der Verbesserung" });
+  }
+});
+
 /**
  * Generate word-level diffs between original and fixed text.
  * Simple but effective: splits on whitespace, marks additions/removals.
@@ -938,6 +1054,410 @@ router.patch("/legal-alerts/:alertId", async (req, res) => {
   } catch (error) {
     console.error("[PulseV2] Alert update error:", error);
     res.status(500).json({ error: "Fehler beim Aktualisieren des Alerts" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// GET /portfolio-summary — Aggregated portfolio health with improvement tracking
+// ══════════════════════════════════════════════════════════════
+router.get("/portfolio-summary", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get the 2 most recent completed results per contract
+    const results = await LegalPulseV2Result.aggregate([
+      { $match: { userId, status: "completed" } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$contractId",
+          latest: { $first: "$$ROOT" },
+          previous: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          latest: 1,
+          previous: { $arrayElemAt: ["$previous", 1] }, // second element = previous
+        },
+      },
+    ]);
+
+    if (results.length === 0) {
+      return res.json({
+        hasData: false,
+        avgScoreNow: null,
+        avgScorePrevious: null,
+        delta: 0,
+        contractsAnalyzed: 0,
+        contractsImproved: 0,
+        contractsWorsened: 0,
+        actionsTotal: 0,
+        actionsCompleted: 0,
+        criticalNow: 0,
+        criticalResolved: 0,
+        topImprovement: null,
+        topDecline: null,
+      });
+    }
+
+    let totalScoreNow = 0;
+    let totalScorePrevious = 0;
+    let contractsWithPrevious = 0;
+    let contractsImproved = 0;
+    let contractsWorsened = 0;
+    let actionsTotal = 0;
+    let actionsCompleted = 0;
+    let criticalNow = 0;
+    let criticalPrevious = 0;
+    let topImprovement = null;
+    let topDecline = null;
+
+    for (const r of results) {
+      const nowScore = r.latest?.scores?.overall ?? 0;
+      totalScoreNow += nowScore;
+
+      // Count current critical findings
+      const currentCritical = (r.latest?.clauseFindings || []).filter(f => f.severity === "critical").length;
+      criticalNow += currentCritical;
+
+      // Count actions
+      const latestActions = r.latest?.actions || [];
+      actionsTotal += latestActions.length;
+      actionsCompleted += latestActions.filter(a => a.status === "done").length;
+
+      // Compare with previous
+      if (r.previous && r.previous.scores) {
+        contractsWithPrevious++;
+        const prevScore = r.previous.scores.overall ?? 0;
+        totalScorePrevious += prevScore;
+
+        const prevCritical = (r.previous.clauseFindings || []).filter(f => f.severity === "critical").length;
+        criticalPrevious += prevCritical;
+
+        const delta = nowScore - prevScore;
+        if (delta > 0) {
+          contractsImproved++;
+          if (!topImprovement || delta > topImprovement.delta) {
+            topImprovement = {
+              contractId: r._id,
+              name: r.latest.context?.contractName || "Unbenannt",
+              delta,
+              scoreNow: nowScore,
+            };
+          }
+        } else if (delta < 0) {
+          contractsWorsened++;
+          if (!topDecline || delta < topDecline.delta) {
+            topDecline = {
+              contractId: r._id,
+              name: r.latest.context?.contractName || "Unbenannt",
+              delta,
+              scoreNow: nowScore,
+            };
+          }
+        }
+      }
+    }
+
+    const avgScoreNow = Math.round(totalScoreNow / results.length);
+    const avgScorePrevious = contractsWithPrevious > 0
+      ? Math.round(totalScorePrevious / contractsWithPrevious)
+      : null;
+    const criticalResolved = contractsWithPrevious > 0
+      ? Math.max(0, criticalPrevious - criticalNow)
+      : 0;
+
+    res.json({
+      hasData: true,
+      avgScoreNow,
+      avgScorePrevious,
+      delta: avgScorePrevious !== null ? avgScoreNow - avgScorePrevious : 0,
+      contractsAnalyzed: results.length,
+      contractsImproved,
+      contractsWorsened,
+      actionsTotal,
+      actionsCompleted,
+      criticalNow,
+      criticalResolved,
+      topImprovement,
+      topDecline,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Portfolio summary error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Portfolio-Zusammenfassung" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// GET /monitoring-status — System monitoring state for dashboard
+// ══════════════════════════════════════════════════════════════
+router.get("/monitoring-status", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Parallel queries
+    const [
+      contractsMonitored,
+      lastScheduledResult,
+      lastManualResult,
+      recentAlerts,
+      unreadAlertCounts,
+    ] = await Promise.all([
+      // Count distinct contracts with completed V2 results
+      LegalPulseV2Result.distinct("contractId", { userId, status: "completed" }),
+
+      // Last scheduled scan result
+      LegalPulseV2Result.findOne(
+        { userId, status: "completed", triggeredBy: "scheduled" },
+        { createdAt: 1 },
+        { sort: { createdAt: -1 } }
+      ).lean(),
+
+      // Last manual scan result
+      LegalPulseV2Result.findOne(
+        { userId, status: "completed" },
+        { createdAt: 1 },
+        { sort: { createdAt: -1 } }
+      ).lean(),
+
+      // Recent legal alerts (last 30 days)
+      db.collection("pulse_v2_legal_alerts")
+        .find({ userId, createdAt: { $gte: thirtyDaysAgo } })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .project({ severity: 1, status: 1, createdAt: 1 })
+        .toArray(),
+
+      // Unread/active alert counts by severity
+      db.collection("pulse_v2_legal_alerts").aggregate([
+        { $match: { userId, status: { $in: ["unread", "read"] } } },
+        { $group: { _id: "$severity", count: { $sum: 1 } } },
+      ]).toArray(),
+    ]);
+
+    // Calculate next scan times
+    const nextMonitorScan = getNextCronOccurrence("monitor", now);
+    const nextRadarScan = getNextCronOccurrence("radar", now);
+
+    // Last scan time (most recent of scheduled or radar alert)
+    const lastRadarAlert = recentAlerts.length > 0 ? recentAlerts[0].createdAt : null;
+    const lastScheduledScan = lastScheduledResult?.createdAt || null;
+    const lastAnyScan = lastManualResult?.createdAt || null;
+
+    // Build severity counts from unread alerts
+    const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const entry of unreadAlertCounts) {
+      if (severityCounts.hasOwnProperty(entry._id)) {
+        severityCounts[entry._id] = entry.count;
+      }
+    }
+
+    // Determine overall status: green / yellow / red
+    let status = "green";
+    let statusLabel = "Alles sicher";
+    if (severityCounts.critical > 0) {
+      status = "red";
+      statusLabel = "Handlungsbedarf";
+    } else if (severityCounts.high > 0 || severityCounts.medium > 0) {
+      status = "yellow";
+      statusLabel = "Beobachtung nötig";
+    } else if (contractsMonitored.length === 0) {
+      status = "neutral";
+      statusLabel = "Noch nicht aktiv";
+    }
+
+    // Check staleness: any contract not scanned in 14+ days?
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    if (status === "green" && lastAnyScan && new Date(lastAnyScan) < fourteenDaysAgo) {
+      status = "yellow";
+      statusLabel = "Scan überfällig";
+    }
+
+    res.json({
+      status,
+      statusLabel,
+      contractsMonitored: contractsMonitored.length,
+      lastScan: lastAnyScan,
+      lastScheduledScan,
+      lastRadarScan: lastRadarAlert,
+      nextMonitorScan: nextMonitorScan.toISOString(),
+      nextRadarScan: nextRadarScan.toISOString(),
+      alertsTotal: recentAlerts.length,
+      severityCounts,
+      recentAlertsCount: recentAlerts.filter(a => a.status === "unread").length,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Monitoring status error:", error);
+    res.status(500).json({ error: "Fehler beim Laden des Monitoring-Status" });
+  }
+});
+
+/**
+ * Calculate next cron occurrence
+ * Monitor: Sunday 05:00 UTC ("0 5 * * 0")
+ * Radar: Daily 07:00 and 19:00 UTC ("0 7,19 * * *")
+ */
+function getNextCronOccurrence(type, now) {
+  const next = new Date(now);
+
+  if (type === "monitor") {
+    // Next Sunday 05:00 UTC
+    const dayOfWeek = now.getUTCDay();
+    let daysUntilSunday = (7 - dayOfWeek) % 7;
+    if (daysUntilSunday === 0 && now.getUTCHours() >= 5) {
+      daysUntilSunday = 7;
+    }
+    next.setUTCDate(next.getUTCDate() + daysUntilSunday);
+    next.setUTCHours(5, 0, 0, 0);
+  } else {
+    // Next 07:00 or 19:00 UTC
+    const hour = now.getUTCHours();
+    if (hour < 7) {
+      next.setUTCHours(7, 0, 0, 0);
+    } else if (hour < 19) {
+      next.setUTCHours(19, 0, 0, 0);
+    } else {
+      next.setUTCDate(next.getUTCDate() + 1);
+      next.setUTCHours(7, 0, 0, 0);
+    }
+    next.setUTCMinutes(0, 0, 0);
+  }
+
+  return next;
+}
+
+// ══════════════════════════════════════════════════════════════
+// POST /scan-now — Manual quick scan trigger
+// ══════════════════════════════════════════════════════════════
+const scanNowRateLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 min
+  max: 3,
+  keyGenerator: (req) => req.user?.userId || req.ip,
+  handler: (req, res) => {
+    res.status(429).json({ error: "Maximal 3 Scans pro 10 Minuten." });
+  },
+});
+
+router.post("/scan-now", requirePremium, scanNowRateLimiter, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+    const now = new Date();
+
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // 1. Get all user contracts
+    const contracts = await db.collection("contracts")
+      .find(
+        { $or: [{ userId }, { userId: userId.toString() }] },
+        { projection: { _id: 1, name: 1, contractType: 1 } }
+      )
+      .toArray();
+
+    const contractIds = contracts.map(c => c._id.toString());
+
+    // 2. Get latest V2 result per contract
+    const latestResults = await LegalPulseV2Result.aggregate([
+      { $match: { userId, status: "completed", contractId: { $in: contractIds } } },
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: "$contractId", lastAnalysis: { $first: "$createdAt" }, score: { $first: "$scores.overall" } } },
+    ]);
+
+    const analyzedMap = new Map(latestResults.map(r => [r._id, r]));
+
+    // 3. Classify contracts
+    const staleContracts = [];
+    const unanalyzedContracts = [];
+    const freshContracts = [];
+
+    for (const c of contracts) {
+      const cid = c._id.toString();
+      const result = analyzedMap.get(cid);
+      if (!result) {
+        unanalyzedContracts.push({ contractId: cid, name: c.name || "Unbenannt" });
+      } else if (new Date(result.lastAnalysis) < sevenDaysAgo) {
+        staleContracts.push({
+          contractId: cid,
+          name: c.name || "Unbenannt",
+          lastAnalysis: result.lastAnalysis,
+          score: result.score,
+          daysAgo: Math.floor((now.getTime() - new Date(result.lastAnalysis).getTime()) / (1000 * 60 * 60 * 24)),
+        });
+      } else {
+        freshContracts.push({ contractId: cid, name: c.name || "Unbenannt", score: result.score });
+      }
+    }
+
+    // 4. Check for new law changes since last radar scan
+    const lastRadarAlert = await db.collection("pulse_v2_legal_alerts")
+      .findOne({ userId }, { sort: { createdAt: -1 }, projection: { createdAt: 1 } });
+
+    const checkSince = lastRadarAlert?.createdAt || sevenDaysAgo;
+    const newLawChanges = await db.collection("laws")
+      .countDocuments({ createdAt: { $gte: checkSince } });
+
+    // 5. Count unresolved alerts
+    const unresolvedAlerts = await db.collection("pulse_v2_legal_alerts")
+      .countDocuments({ userId, status: { $in: ["unread", "read"] } });
+
+    // 6. Record this scan in alert log for lastScan tracking
+    await db.collection("pulse_v2_alert_log").insertOne({
+      userId,
+      contractId: "manual_scan",
+      fingerprint: "manual_scan",
+      title: "Manueller Scan",
+      severity: "info",
+      createdAt: now,
+    });
+
+    // 7. Determine scan verdict
+    let verdict = "green";
+    let verdictMessage = "Keine neuen Risiken seit der letzten Prüfung erkannt.";
+
+    if (unresolvedAlerts > 0 || staleContracts.length > 0) {
+      const parts = [];
+      if (unresolvedAlerts > 0) {
+        parts.push(`${unresolvedAlerts} offene${unresolvedAlerts === 1 ? "r" : ""} Alert${unresolvedAlerts === 1 ? "" : "s"}`);
+      }
+      if (staleContracts.length > 0) {
+        parts.push(`${staleContracts.length} Vertrag${staleContracts.length === 1 ? " sollte" : "e sollten"} neu gescannt werden`);
+      }
+      verdict = "yellow";
+      verdictMessage = parts.join(" — ");
+    }
+
+    if (newLawChanges > 0 && verdict === "green") {
+      verdictMessage = `Keine neuen Risiken erkannt. ${newLawChanges} neue Rechtsänderung${newLawChanges === 1 ? "" : "en"} wird beim nächsten Radar-Scan geprüft.`;
+    }
+
+    if (unanalyzedContracts.length > 0 && unanalyzedContracts.length === contracts.length) {
+      verdict = "neutral";
+      verdictMessage = "Noch kein Vertrag analysiert. Starten Sie Ihre erste Analyse.";
+    }
+
+    res.json({
+      scannedAt: now.toISOString(),
+      verdict,
+      verdictMessage,
+      totalContracts: contracts.length,
+      freshCount: freshContracts.length,
+      staleContracts: staleContracts.slice(0, 5),
+      staleCount: staleContracts.length,
+      unanalyzedContracts: unanalyzedContracts.slice(0, 5),
+      unanalyzedCount: unanalyzedContracts.length,
+      unresolvedAlerts,
+      newLawChanges,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Scan now error:", error);
+    res.status(500).json({ error: "Scan fehlgeschlagen" });
   }
 });
 

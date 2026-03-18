@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
 
@@ -6,6 +7,7 @@ interface FindingCardProps {
   finding: PulseV2Finding;
   clause?: PulseV2Clause;
   contractId?: string;
+  disabled?: boolean;
 }
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -23,30 +25,118 @@ const TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
   information: { icon: '\u2139\ufe0f', label: 'Information' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId }) => {
+const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
+  valid: { color: '#059669', bg: '#ecfdf5', label: 'Wirksam' },
+  questionable: { color: '#d97706', bg: '#fffbeb', label: 'Fraglich' },
+  likely_invalid: { color: '#dc2626', bg: '#fef2f2', label: 'Wahrsch. unwirksam' },
+  unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
+};
+
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, disabled }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
+  const [reminderSent, setReminderSent] = useState(false);
+  const [reminderLoading, setReminderLoading] = useState(false);
+  const navigate = useNavigate();
   const severity = SEVERITY_CONFIG[finding.severity] || SEVERITY_CONFIG.info;
   const typeInfo = TYPE_CONFIG[finding.type] || TYPE_CONFIG.information;
   const hasHistory = clause?.history && clause.history.length > 1;
+  const isActionable = !disabled && contractId && (finding.severity === 'critical' || finding.severity === 'high' || finding.severity === 'medium');
+  const [quickFix, setQuickFix] = useState<{ fixedText: string; reasoning: string; legalBasis: string; diffs?: any[] } | null>(null);
+  const [quickFixLoading, setQuickFixLoading] = useState(false);
+  const [quickFixError, setQuickFixError] = useState<string | null>(null);
+  const [fixApplied, setFixApplied] = useState(false);
+
+  const handleQuickFix = useCallback(async () => {
+    if (!finding.affectedText) return;
+    setQuickFixLoading(true);
+    setQuickFixError(null);
+    try {
+      const res = await fetch('/api/legal-pulse-v2/quick-fix', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          affectedText: finding.affectedText,
+          findingTitle: finding.title,
+          findingDescription: finding.description,
+          legalBasis: finding.legalBasis || '',
+          severity: finding.severity,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        if (res.status === 429) {
+          setQuickFixError('Limit erreicht \u2014 maximal 15 Quick-Fixes pro Stunde. Sp\u00e4ter erneut versuchen.');
+        } else {
+          setQuickFixError(err.error || 'Fehler beim Generieren');
+        }
+        return;
+      }
+      const data = await res.json();
+      setQuickFix(data);
+    } catch (err) {
+      setQuickFixError('Netzwerkfehler');
+    } finally {
+      setQuickFixLoading(false);
+    }
+  }, [finding]);
+
+  const handleCreateReminder = useCallback(async (daysFromNow: number) => {
+    if (!contractId) return;
+    setReminderLoading(true);
+    try {
+      const reminderDate = new Date();
+      reminderDate.setDate(reminderDate.getDate() + daysFromNow);
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId,
+          title: `Legal Pulse: ${finding.title}`,
+          description: `${severity.label} \u2014 ${finding.description}${finding.legalBasis ? `\nRechtsgrundlage: ${finding.legalBasis}` : ''}`,
+          date: reminderDate.toISOString(),
+          type: 'LEGAL_PULSE_REMINDER',
+          severity: finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'warning' : 'info',
+        }),
+      });
+      if (res.ok) {
+        setReminderSent(true);
+        setReminderOpen(false);
+      }
+    } catch (err) {
+      console.error('[PulseV2] Reminder creation failed:', err);
+    } finally {
+      setReminderLoading(false);
+    }
+  }, [contractId, finding, severity.label]);
+
+  // Estimated score improvement for visual feedback
+  const scoreBoost = fixApplied
+    ? finding.severity === 'critical' ? 8 : finding.severity === 'high' ? 5 : 3
+    : 0;
 
   return (
     <div
       style={{
-        border: `1px solid ${severity.color}22`,
-        borderLeft: `4px solid ${severity.color}`,
+        border: fixApplied ? '1px solid #bbf7d0' : `1px solid ${severity.color}22`,
+        borderLeft: fixApplied ? '4px solid #22c55e' : `4px solid ${severity.color}`,
         borderRadius: 8,
-        background: '#fff',
+        background: fixApplied ? '#f0fdf4' : '#fff',
         marginBottom: 12,
         overflow: 'hidden',
+        opacity: fixApplied ? 0.75 : 1,
+        transition: 'all 0.3s ease',
       }}
     >
       {/* Header */}
       <div
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => !disabled && setExpanded(!expanded)}
         style={{
           padding: '12px 16px',
-          cursor: 'pointer',
+          cursor: disabled ? 'default' : 'pointer',
           display: 'flex',
           alignItems: 'flex-start',
           gap: 12,
@@ -58,13 +148,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
             <span style={{
               fontSize: 11,
               fontWeight: 600,
-              color: severity.color,
-              background: severity.bg,
+              color: fixApplied ? '#059669' : severity.color,
+              background: fixApplied ? '#ecfdf5' : severity.bg,
               padding: '2px 8px',
               borderRadius: 4,
               textTransform: 'uppercase',
             }}>
-              {severity.label}
+              {fixApplied ? '\u2714 Verbessert' : severity.label}
             </span>
             <span style={{
               fontSize: 11,
@@ -75,22 +165,58 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
             }}>
               {typeInfo.label}
             </span>
+            {finding.enforceability && finding.enforceability !== 'unknown' && (() => {
+              const enf = ENFORCEABILITY_CONFIG[finding.enforceability];
+              return (
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: enf.color,
+                  background: enf.bg,
+                  padding: '2px 8px',
+                  borderRadius: 4,
+                  border: `1px solid ${enf.color}22`,
+                }}>
+                  {enf.label}
+                </span>
+              );
+            })()}
             {finding.confidence < 80 && (
               <span style={{ fontSize: 11, color: '#9ca3af' }}>
                 {finding.confidence}% Konfidenz
               </span>
             )}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: '#111827' }}>
+          <div style={{
+            fontSize: 14,
+            fontWeight: 600,
+            marginTop: 4,
+            color: fixApplied ? '#6b7280' : '#111827',
+            textDecoration: fixApplied ? 'line-through' : 'none',
+          }}>
             {finding.title}
+            {fixApplied && scoreBoost > 0 && (
+              <span style={{
+                marginLeft: 8,
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#059669',
+                textDecoration: 'none',
+                display: 'inline-block',
+              }}>
+                +{scoreBoost} Score
+              </span>
+            )}
           </div>
           <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>
             {finding.description}
           </div>
         </div>
-        <span style={{ fontSize: 14, color: '#9ca3af', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-          &#9660;
-        </span>
+        {!disabled && (
+          <span style={{ fontSize: 14, color: '#9ca3af', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            &#9660;
+          </span>
+        )}
       </div>
 
       {/* Expanded Details */}
@@ -187,6 +313,322 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               clauseId={clause.id}
               onClose={() => setShowHistory(false)}
             />
+          )}
+
+          {/* ═══ Action Buttons ═══ */}
+          {isActionable && (
+            <div style={{
+              display: 'flex',
+              gap: 8,
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: '1px solid #f3f4f6',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}>
+              {/* Quick Fix */}
+              {finding.affectedText && !quickFix && !fixApplied && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleQuickFix();
+                  }}
+                  disabled={quickFixLoading}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: quickFixLoading ? '#9ca3af' : '#059669',
+                    background: quickFixLoading ? '#f9fafb' : '#ecfdf5',
+                    border: `1px solid ${quickFixLoading ? '#e5e7eb' : '#a7f3d0'}`,
+                    borderRadius: 6,
+                    cursor: quickFixLoading ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  {quickFixLoading ? (
+                    <><span style={{ animation: 'pulse 1s ease-in-out infinite' }}>&#9889;</span> Wird generiert...</>
+                  ) : (
+                    <>&#9889; Quick Fix</>
+                  )}
+                </button>
+              )}
+
+              {fixApplied && (
+                <span style={{ fontSize: 12, color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  &#10003; Klausel verbessert &middot; Risiko reduziert
+                </span>
+              )}
+
+              {/* Optimize (full) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/optimize/${contractId}`, {
+                    state: {
+                      source: 'legal_pulse',
+                      findingTitle: finding.title,
+                      findingDescription: finding.description,
+                      findingSeverity: finding.severity,
+                      findingType: finding.type,
+                      clauseId: clause?.id,
+                      clauseTitle: clause?.title,
+                      clauseSection: clause?.sectionNumber,
+                      affectedText: finding.affectedText,
+                      legalBasis: finding.legalBasis,
+                    },
+                  });
+                }}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#7c3aed',
+                  background: '#f5f3ff',
+                  border: '1px solid #ddd6fe',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                Ganzen Vertrag optimieren &#8594;
+              </button>
+
+              {/* Remind */}
+              {!reminderSent ? (
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReminderOpen(!reminderOpen);
+                    }}
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: '#0369a1',
+                      background: '#f0f9ff',
+                      border: '1px solid #bae6fd',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    &#128276; Erinnern
+                  </button>
+
+                  {/* Quick date picker */}
+                  {reminderOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: 4,
+                      background: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      padding: 6,
+                      zIndex: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
+                      minWidth: 160,
+                    }}>
+                      {[
+                        { days: 3, label: 'In 3 Tagen' },
+                        { days: 7, label: 'In 1 Woche' },
+                        { days: 14, label: 'In 2 Wochen' },
+                        { days: 30, label: 'In 1 Monat' },
+                      ].map(opt => (
+                        <button
+                          key={opt.days}
+                          disabled={reminderLoading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateReminder(opt.days);
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: 12,
+                            color: '#374151',
+                            background: reminderLoading ? '#f9fafb' : '#fff',
+                            border: 'none',
+                            borderRadius: 4,
+                            cursor: reminderLoading ? 'not-allowed' : 'pointer',
+                            textAlign: 'left',
+                          }}
+                          onMouseEnter={(e) => { if (!reminderLoading) (e.currentTarget as HTMLButtonElement).style.background = '#f0f9ff'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span style={{
+                  fontSize: 12,
+                  color: '#059669',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}>
+                  &#10003; Erinnerung erstellt
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Quick Fix Error */}
+          {quickFixError && (
+            <div style={{
+              marginTop: 12,
+              padding: '8px 12px',
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: 6,
+              fontSize: 13,
+              color: '#dc2626',
+            }}>
+              {quickFixError}
+            </div>
+          )}
+
+          {/* ═══ Quick Fix Result ═══ */}
+          {quickFix && !fixApplied && (
+            <div style={{
+              marginTop: 14,
+              padding: 16,
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 10,
+            }}>
+              <div style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: '#15803d',
+                marginBottom: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                &#10024; Verbesserungsvorschlag
+              </div>
+
+              {/* Original vs Fixed */}
+              <div style={{ display: 'grid', gap: 10, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#dc2626', marginBottom: 4, textTransform: 'uppercase' }}>
+                    Aktuell (problematisch)
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    color: '#7f1d1d',
+                    background: '#fef2f2',
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    borderLeft: '3px solid #fecaca',
+                    lineHeight: 1.5,
+                  }}>
+                    {finding.affectedText}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#059669', marginBottom: 4, textTransform: 'uppercase' }}>
+                    Verbessert (rechtssicher)
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    color: '#14532d',
+                    background: '#dcfce7',
+                    padding: '8px 12px',
+                    borderRadius: 6,
+                    borderLeft: '3px solid #86efac',
+                    lineHeight: 1.5,
+                  }}>
+                    {quickFix.fixedText}
+                  </div>
+                </div>
+              </div>
+
+              {/* Reasoning */}
+              <div style={{
+                fontSize: 12,
+                color: '#374151',
+                marginBottom: 8,
+                lineHeight: 1.5,
+              }}>
+                <span style={{ fontWeight: 600 }}>Warum besser: </span>
+                {quickFix.reasoning}
+              </div>
+
+              {/* Legal Basis */}
+              {quickFix.legalBasis && (
+                <div style={{
+                  fontSize: 12,
+                  color: '#1e40af',
+                  background: '#eff6ff',
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  display: 'inline-block',
+                  marginBottom: 12,
+                }}>
+                  {quickFix.legalBasis}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(quickFix.fixedText);
+                    setFixApplied(true);
+                  }}
+                  style={{
+                    padding: '8px 20px',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#fff',
+                    background: '#059669',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  &#10003; Kopieren &amp; \u00dcbernehmen
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQuickFix(null);
+                  }}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: 13,
+                    color: '#6b7280',
+                    background: '#fff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Verwerfen
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

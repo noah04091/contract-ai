@@ -10,6 +10,7 @@ export interface PulseV2Finding {
   confidence: number;
   reasoning: string;
   isIntentional: boolean;
+  enforceability?: 'valid' | 'questionable' | 'likely_invalid' | 'unknown';
 }
 
 export interface PulseV2ClauseVersion {

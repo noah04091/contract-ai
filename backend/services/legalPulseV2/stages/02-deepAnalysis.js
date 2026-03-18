@@ -163,9 +163,26 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
 
     try {
       const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length);
-      allFindings.push(...result.findings);
+      // Filter this batch's findings (confidence >= 50)
+      const batchFindings = (result.findings || []).filter(f => f.confidence >= 50);
+      allFindings.push(...batchFindings);
       totalInputTokens += result.inputTokens;
       totalOutputTokens += result.outputTokens;
+
+      // Stream findings to frontend after each batch (Progressive Rendering)
+      if (batchFindings.length > 0) {
+        const batchClauses = batches[i];
+        const progressAfter = 25 + Math.round(((i + 1) / batches.length) * 40);
+        onProgress(progressAfter, `${allFindings.length} Befunde bisher...`, {
+          stage: 2,
+          stageName: "Deep Analysis",
+          batchProgress: `${i + 1}/${batches.length}`,
+          // Progressive data
+          findingsBatch: batchFindings,
+          clausesBatch: batchClauses.map(c => ({ id: c.id, title: c.title, category: c.category, sectionNumber: c.sectionNumber })),
+          totalFindingsSoFar: allFindings.length,
+        });
+      }
     } catch (err) {
       console.error(`[PulseV2] Batch ${i + 1} failed:`, err.message);
       // Continue with remaining batches

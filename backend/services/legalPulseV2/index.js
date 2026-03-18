@@ -161,7 +161,13 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     // ═══════════════════════════════════════════
     // STAGE 2: Deep Analysis (GPT-4o)
     // ═══════════════════════════════════════════
-    onProgress(22, "Starte tiefgehende Klauselanalyse...", { stage: 2, stageName: "Deep Analysis" });
+    onProgress(22, "Starte tiefgehende Klauselanalyse...", {
+      stage: 2,
+      stageName: "Deep Analysis",
+      // Send context early so frontend can show header while analyzing
+      contractName: context.contractName,
+      contractType: context.contractType || docMeta.contractType,
+    });
 
     const analysisResult = await runDeepAnalysis(cleanedText, context, onProgress);
 

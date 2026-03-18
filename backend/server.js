@@ -1815,6 +1815,22 @@ const connectDB = async () => {
         }
       }));
 
+      // Staleness Reminder: Monday 08:00 UTC — remind users about unscanned contracts
+      cron.schedule("0 8 * * 1", withCronLock('pulse-v2-staleness', async () => {
+        console.log("[PulseV2Staleness] Starte Staleness-Reminder...");
+        try {
+          await withCronLogging('pulse-v2-staleness', async () => {
+            const { runStalenessReminder } = require("./jobs/pulseV2StalenessReminder");
+            const cronDb = await database.connect();
+            const result = await runStalenessReminder(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("[PulseV2Staleness] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-staleness', method: 'SCHEDULED', severity: 'medium' });
+        }
+      }));
+
       // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
       // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
       cron.schedule("30 6 * * *", async () => {

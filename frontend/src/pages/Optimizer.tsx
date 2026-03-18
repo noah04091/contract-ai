@@ -970,6 +970,8 @@ export default function Optimizer() {
   useEffect(() => {
     const state = location.state as {
       contractId?: string;
+      source?: string;
+      // V1 format
       legalPulseContext?: {
         risks: Array<string | { title?: string; description?: string; severity?: string; impact?: string; solution?: string }>;
         recommendations: Array<string | { title?: string; description?: string; priority?: string; effort?: string; impact?: string; steps?: string[] }>;
@@ -977,8 +979,45 @@ export default function Optimizer() {
         complianceScore: number | null;
       };
       focusRecommendation?: { title?: string; description?: string };
+      // V2 format (from FindingCard)
+      findingTitle?: string;
+      findingDescription?: string;
+      findingSeverity?: string;
+      findingType?: string;
+      clauseId?: string;
+      clauseTitle?: string;
+      clauseSection?: string;
+      affectedText?: string;
+      legalBasis?: string;
     } | null;
 
+    // V2 Pulse Finding → convert to legalPulseContext format
+    if (state?.source === 'legal_pulse' && state?.findingTitle) {
+      const riskEntry = {
+        title: state.findingTitle,
+        description: state.findingDescription || '',
+        severity: state.findingSeverity || 'medium',
+        impact: state.affectedText ? `Betroffener Text: "${state.affectedText}"` : '',
+        solution: state.legalBasis ? `Rechtsgrundlage: ${state.legalBasis}` : '',
+        affectedClauses: state.clauseSection ? [state.clauseSection] : [],
+      };
+
+      setLegalPulseContext({
+        risks: [riskEntry],
+        recommendations: [],
+        riskScore: null,
+        complianceScore: null,
+      });
+
+      setToast({
+        message: `Legal Pulse: "${state.findingTitle}" \u2014 Vertrag wird geladen`,
+        type: 'info',
+      });
+      setTimeout(() => setToast(null), 4000);
+      return;
+    }
+
+    // V1 Pulse Context (legacy)
     if (state?.legalPulseContext) {
       console.log('[LP-OPTIMIZER] Empfange Legal Pulse Context via Route:', state.legalPulseContext);
       setLegalPulseContext(state.legalPulseContext);
