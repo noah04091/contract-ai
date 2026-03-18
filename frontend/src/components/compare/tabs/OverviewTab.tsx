@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import {
   Star, AlertTriangle, AlertCircle, CheckCircle,
-  ThumbsUp, ThumbsDown, Award, BarChart3
+  ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
