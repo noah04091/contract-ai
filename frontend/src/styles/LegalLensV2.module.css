@@ -63,8 +63,101 @@
   overflow: auto;
 }
 
-/* Loading & Error */
-.v2Loading, .v2Error {
+/* Loading — Skeleton UI */
+.v2LoadingPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--v2-bg);
+}
+
+.v2LoadingHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--v2-border);
+  background: var(--v2-surface);
+}
+
+.v2LoadingContent {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.v2LoadingSidebar {
+  width: 240px;
+  padding: 16px;
+  border-right: 1px solid var(--v2-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.v2LoadingSkeletonItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.v2LoadingMain {
+  flex: 1;
+  padding: 32px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.v2LoadingProgressBar {
+  width: 280px;
+  height: 4px;
+  background: var(--v2-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.v2LoadingProgressFill {
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--v2-accent), #10b981);
+  border-radius: 4px;
+  animation: v2LoadingSlide 2s ease-in-out infinite;
+}
+
+@keyframes v2LoadingSlide {
+  0% { width: 20%; margin-left: 0; }
+  50% { width: 60%; margin-left: 20%; }
+  100% { width: 20%; margin-left: 80%; }
+}
+
+.v2LoadingText {
+  font-size: 14px;
+  color: var(--v2-text-muted);
+  margin-bottom: 32px;
+}
+
+.v2LoadingCard {
+  width: 100%;
+  max-width: 600px;
+  padding: 16px 20px;
+  border: 1px solid var(--v2-border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.v2LoadingSkeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: v2SkeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes v2SkeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Error */
+.v2Error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -574,11 +667,30 @@
   position: relative;
 }
 
-/* Text-Layer soll keine Klicks abfangen — Overlays übernehmen */
+/* Text-Layer: Klickbar für Interaktion (Satz/Paragraph/Frei-Modus) */
 .pdfPageWrapper :global(.react-pdf__Page__textContent) {
-  pointer-events: none !important;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* Satz & Paragraph: Text nicht selektierbar (nur Klick) */
+.pdfPageWrapper[data-selection-mode="sentence"] :global(.react-pdf__Page__textContent),
+.pdfPageWrapper[data-selection-mode="paragraph"] :global(.react-pdf__Page__textContent) {
   user-select: none !important;
   -webkit-user-select: none !important;
+}
+
+/* Frei-Modus: Text selektierbar (Drag-Markierung) */
+.pdfPageWrapper[data-selection-mode="custom"] :global(.react-pdf__Page__textContent) {
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  cursor: text;
+}
+
+/* Hover-Effekt auf PDF-Text Spans */
+.pdfPageWrapper :global(.react-pdf__Page__textContent span:hover) {
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: 2px;
 }
 
 .pdfExplorerEmpty {
@@ -599,32 +711,94 @@
   font-size: 14px;
 }
 
-/* Zoom Controls */
-.pdfZoomControls {
+/* ============================================================
+   PDF Toolbar (Mode Selector + Zoom)
+   ============================================================ */
+
+.pdfToolbar {
   position: sticky;
   top: 12px;
-  z-index: 10;
+  z-index: 20;
   display: flex;
   justify-content: center;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
 }
 
-.pdfZoomBtn {
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.4);
+.pdfModeGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 3px;
+  backdrop-filter: blur(8px);
+}
+
+.pdfModeBtn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.15s;
+}
+
+.pdfModeBtn:hover {
   color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pdfModeBtn_active {
+  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.pdfModeBtn_active:hover {
+  color: #3b82f6;
+  background: white;
+}
+
+.pdfToolbarDivider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 4px;
+}
+
+.pdfZoomGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 3px;
+  backdrop-filter: blur(8px);
+}
+
+.pdfZoomBtn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  transition: background 0.15s;
+  transition: all 0.15s;
 }
 
 .pdfZoomBtn:hover {
-  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ============================================================
@@ -635,7 +809,7 @@
   border-radius: 3px;
   transition: background-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  z-index: 10;
+  z-index: 5;
   pointer-events: all;
 }
 

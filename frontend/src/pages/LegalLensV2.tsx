@@ -162,12 +162,39 @@ export default function LegalLensV2() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [clauses, selectedClauseIndex, selectClause, handleNavigateClause, clearSelection]);
 
-  // Loading State
+  // Loading State — Skeleton UI (wie V1)
   if (isLoadingContract || isLoadingClauses) {
     return (
-      <div className={styles.v2Loading}>
-        <div className={styles.v2LoadingSpinner} />
-        <p>{isLoadingClauses ? 'Klauseln werden analysiert...' : 'Vertrag wird geladen...'}</p>
+      <div className={styles.v2LoadingPage}>
+        <div className={styles.v2LoadingHeader}>
+          <div className={styles.v2LoadingSkeleton} style={{ width: 200, height: 24 }} />
+          <div className={styles.v2LoadingSkeleton} style={{ width: 120, height: 16, marginTop: 8 }} />
+        </div>
+        <div className={styles.v2LoadingContent}>
+          <div className={styles.v2LoadingSidebar}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className={styles.v2LoadingSkeletonItem}>
+                <div className={styles.v2LoadingSkeleton} style={{ width: 12, height: 12, borderRadius: '50%' }} />
+                <div className={styles.v2LoadingSkeleton} style={{ flex: 1, height: 14 }} />
+              </div>
+            ))}
+          </div>
+          <div className={styles.v2LoadingMain}>
+            <div className={styles.v2LoadingProgressBar}>
+              <div className={styles.v2LoadingProgressFill} />
+            </div>
+            <p className={styles.v2LoadingText}>
+              {isLoadingClauses ? 'KI analysiert Ihren Vertrag...' : 'Vertrag wird geladen...'}
+            </p>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={styles.v2LoadingCard}>
+                <div className={styles.v2LoadingSkeleton} style={{ width: '40%', height: 16 }} />
+                <div className={styles.v2LoadingSkeleton} style={{ width: '100%', height: 12, marginTop: 8 }} />
+                <div className={styles.v2LoadingSkeleton} style={{ width: '80%', height: 12, marginTop: 4 }} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
