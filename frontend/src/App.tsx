@@ -156,8 +156,7 @@ function AppWithLoader() {
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) ||
     location.pathname.startsWith('/verify/') ||
     location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/contract-builder') ||
-    location.pathname.startsWith('/pulse');
+    location.pathname.startsWith('/contract-builder');
 
   return (
     <ErrorBoundary>

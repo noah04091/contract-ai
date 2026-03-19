@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import DashboardLayout from '../components/DashboardV2/DashboardLayout';
+// DashboardLayout not used — PulseV2 uses the global Navbar only
 import { usePulseV2 } from '../hooks/usePulseV2';
 import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
 import { ContractDetail } from '../components/pulseV2/ContractDetail';
@@ -21,16 +21,16 @@ const PulseV2: React.FC = () => {
 
   if (contractId) {
     return (
-      <DashboardLayout minimal>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
         <ContractView contractId={contractId} />
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout minimal>
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
       <DashboardView onSelectContract={(id) => navigate(`/pulse/${id}`)} />
-    </DashboardLayout>
+    </div>
   );
 };
 
