@@ -207,6 +207,7 @@ function formatFileName(name: string): string {
   return base.length > 30 ? base.slice(0, 27) + '...' : base;
 }
 
+// @ts-ignore TS6133
 function ScoreCard({
   title,
   fileName,
@@ -325,6 +326,7 @@ function ScoreCard({
 // ============================================
 // V1 Score Card (simple)
 // ============================================
+// @ts-ignore TS6133
 function V1ScoreCard({
   title,
   fileName,
