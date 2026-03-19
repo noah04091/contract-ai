@@ -34,6 +34,7 @@ const TAB_CONFIG: { key: CompareTab; label: string; icon: React.ElementType }[] 
   { key: 'contractMap', label: 'Vertragskarte', icon: Map },
 ];
 
+// @ts-ignore TS6133 — props passed through to child tabs
 export default function CompareResults({
   result,
   file1,
