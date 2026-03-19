@@ -20,6 +20,8 @@ interface CompareResultsProps {
   file2: File | null;
   file1Name?: string | null;
   file2Name?: string | null;
+  file1S3Key?: string | null;
+  file2S3Key?: string | null;
   onPerspectiveChange?: (perspective: Perspective) => void;
   reAnalyzing?: boolean;
 }
@@ -38,6 +40,8 @@ export default function CompareResults({
   file2,
   file1Name,
   file2Name,
+  file1S3Key: _f1s3,
+  file2S3Key: _f2s3,
   onPerspectiveChange,
   reAnalyzing,
 }: CompareResultsProps) {
@@ -123,6 +127,8 @@ export default function CompareResults({
             file2={file2}
             file1Name={file1Name || file1?.name}
             file2Name={file2Name || file2?.name}
+            file1S3Key={file1S3Key}
+            file2S3Key={file2S3Key}
           />
         )}
 
