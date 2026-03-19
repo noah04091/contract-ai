@@ -525,6 +525,7 @@ router.get('/results/:id/pdf', async (req, res) => {
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({
       size: 'A4',
+      bufferPages: true,
       margins: { top: 50, bottom: 50, left: 50, right: 50 },
       info: {
         Title: `Vertragsanalyse - ${result.fileName || 'Vertrag'}`,
@@ -538,14 +539,17 @@ router.get('/results/:id/pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Analyse.pdf"`);
     doc.pipe(res);
 
-    // ── Design tokens — classic professional (navy + grayscale) ──
+    // ── Design tokens — Firmenblau + Pastel accents ──
     const C = {
-      navy: '#1a2b4a', navyLight: '#2c4a7c', accent: '#34507a',
-      danger: '#8b2020', dangerBg: '#fdf2f2', dangerBorder: '#e8c4c4',
-      warn: '#7a5a1e', warnBg: '#fdfaf2', warnBorder: '#e8dbb0',
-      ok: '#1a5c3a', okBg: '#f2fdf6',
-      ref: '#4a3880',
-      dark: '#1a1a2e', text: '#2d3748', muted: '#64748b', light: '#94a3b8',
+      brand: '#007AFF', brandDark: '#005EC4', brandLight: '#3395FF',
+      danger: '#DC2626', dangerBg: '#fef2f2', dangerBorder: '#fecaca',
+      dangerPastel: '#fee2e2', dangerText: '#b91c1c',
+      warn: '#d97706', warnBg: '#fffbeb', warnBorder: '#fde68a',
+      warnPastel: '#fef3c7', warnText: '#92400e',
+      ok: '#16a34a', okBg: '#f0fdf4', okPastel: '#dcfce7', okText: '#166534',
+      ref: '#7c3aed', refPastel: '#ede9fe', refText: '#5b21b6',
+      bluePastel: '#dbeafe', blueText: '#1e40af',
+      dark: '#1e293b', text: '#334155', muted: '#64748b', light: '#94a3b8',
       bg: '#f8fafc', cardBg: '#ffffff', border: '#cbd5e1', borderLight: '#e2e8f0'
     };
     const L = 50, R = 545, W = R - L;
@@ -561,12 +565,21 @@ router.get('/results/:id/pdf', async (req, res) => {
       public_sector: 'Öffentlicher Sektor', other: 'Sonstige'
     };
 
-    // All score bars use the same navy blue — the NUMBER conveys quality, not color
-    function getScoreColor() { return C.navyLight; }
-    function getScoreBg() { return '#eef2f7'; }
-    // Risk level color: only critical gets danger, rest are subtle
+    // Score bar colors: green >= 75, blue >= 55, orange >= 35, red < 35
+    function getScoreColor(v) {
+      if (v >= 75) return C.ok;
+      if (v >= 55) return C.brand;
+      if (v >= 35) return C.warn;
+      return C.danger;
+    }
     function getRiskColor(r) { return r >= 7 ? C.danger : r >= 4 ? C.warn : C.muted; }
-    function checkPage(needed = 80) { if (doc.y + needed > doc.page.height - 60) doc.addPage(); }
+    function checkPage(needed = 80) { if (doc.y + needed > doc.page.height - 70) doc.addPage(); }
+
+    // Track pages for numbering
+    const pages = [doc.bufferedPageRange];
+    let totalPages = 1;
+    doc.on('pageAdded', () => { totalPages++; });
+
     function roundedRect(x, y, w, h, r, fill, stroke) {
       doc.save();
       if (fill) doc.fillColor(fill);
@@ -579,7 +592,7 @@ router.get('/results/:id/pdf', async (req, res) => {
     }
     function drawScoreBar(x, y, w, h, value) {
       roundedRect(x, y, w, h, h / 2, '#e2e8f0', null);
-      if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, C.navyLight, null);
+      if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, getScoreColor(value), null);
     }
 
     // ════════════════════════════════════════════
@@ -596,17 +609,17 @@ router.get('/results/:id/pdf', async (req, res) => {
     const criticalCount = analyses.filter(a => a.importanceLevel === 'critical').length;
     const weakCount = analyses.filter(a => a.strength === 'weak').length;
 
-    // ── Header band (dark navy) ──
+    // ── Header band (Firmenblau) ──
     const bandH = 76;
     doc.save();
-    doc.rect(0, 0, 595.28, bandH).fill(C.navy);
+    doc.rect(0, 0, 595.28, bandH).fill(C.brand);
     doc.restore();
 
     doc.fontSize(20).fillColor('#FFFFFF').text('Vertragsanalyse', L, 18, { width: W });
     const contractLabel = structure.recognizedAs || structure.contractTypeLabel || result.fileName || 'Vertrag';
-    doc.fontSize(9).fillColor('#a0b4cc').text(`${contractLabel}  ·  Contract AI Smart Optimizer V2`, L, 44);
+    doc.fontSize(9).fillColor('#b3d4ff').text(`${contractLabel}  ·  Contract AI Smart Optimizer V2`, L, 44);
     const dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-    doc.fontSize(8).fillColor('#7a90a8').text(dateStr, L, 58);
+    doc.fontSize(8).fillColor('#8cbcf5').text(dateStr, L, 58);
 
     doc.y = bandH + 14;
 
@@ -615,16 +628,17 @@ router.get('/results/:id/pdf', async (req, res) => {
     const cardH = 70;
     roundedRect(L, cardY, W, cardH, 6, C.cardBg, C.border);
 
-    // Score circle (left) — always navy
+    // Score circle (left) — colored by score value
     const circleX = L + 38, circleY = cardY + 35, circleR = 23;
+    const scoreClr = getScoreColor(overallScore);
     doc.save();
-    doc.circle(circleX, circleY, circleR).lineWidth(2.5).strokeColor(C.navy).stroke();
-    doc.circle(circleX, circleY, circleR - 2).fill('#eef2f7');
+    doc.circle(circleX, circleY, circleR).lineWidth(2.5).strokeColor(scoreClr).stroke();
+    doc.circle(circleX, circleY, circleR - 2).fill('#f0f4fa');
     doc.restore();
-    doc.fontSize(18).fillColor(C.navy).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: 'center' });
+    doc.fontSize(18).fillColor(scoreClr).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: 'center' });
     doc.fontSize(6).fillColor(C.muted).text('/100', circleX - 10, circleY + 10, { width: 20, align: 'center' });
 
-    // Sub-score bars (center) — all navy blue
+    // Sub-score bars (center) — colored by value
     const ssX = L + 80;
     const scoreItems = [
       ['Risiko', scores.risk || 0], ['Klarheit', scores.clarity || 0],
@@ -689,17 +703,28 @@ router.get('/results/:id/pdf', async (req, res) => {
       return impA - impB;
     });
 
-    // Helper: draw a subtle gray tag with colored text
-    function drawTag(x, y, label, textColor) {
-      const tw = doc.fontSize(6).widthOfString(label) + 8;
-      roundedRect(x, y, tw, 11, 2, '#f1f5f9', '#e2e8f0');
-      doc.fontSize(6).fillColor(textColor).text(label, x + 4, y + 2.5, { lineBreak: false });
+    // Helper: draw a pastel-colored tag
+    function drawTag(x, y, label, textColor, bgColor) {
+      const tw = doc.fontSize(6).widthOfString(label) + 10;
+      const bg = bgColor || '#f1f5f9';
+      roundedRect(x, y, tw, 12, 3, bg, null);
+      doc.fontSize(6).fillColor(textColor).text(label, x + 5, y + 3, { lineBreak: false });
       return tw + 3;
     }
 
-    // Color map: professional, muted tones
-    const IMP_COLORS = { critical: C.danger, high: C.navy, medium: C.muted, low: C.light };
-    const STR_COLORS = { strong: C.ok, adequate: C.warn, weak: C.danger, critical: C.danger };
+    // Color maps: pastel backgrounds + readable text
+    const IMP_COLORS = {
+      critical: { text: C.dangerText, bg: C.dangerPastel },
+      high:     { text: C.blueText, bg: C.bluePastel },
+      medium:   { text: C.muted, bg: '#f1f5f9' },
+      low:      { text: C.light, bg: '#f8fafc' }
+    };
+    const STR_COLORS = {
+      strong:   { text: C.okText, bg: C.okPastel },
+      adequate: { text: C.warnText, bg: C.warnPastel },
+      weak:     { text: C.dangerText, bg: C.dangerPastel },
+      critical: { text: C.dangerText, bg: C.dangerPastel }
+    };
 
     for (let ci = 0; ci < sortedClauses.length; ci++) {
       const clause = sortedClauses[ci];
@@ -708,8 +733,8 @@ router.get('/results/:id/pdf', async (req, res) => {
       const riskLevel = analysis?.riskLevel || 0;
       const riskColor = getRiskColor(riskLevel);
       const impLevel = analysis?.importanceLevel || 'medium';
-      const impColor = IMP_COLORS[impLevel] || C.muted;
-      const strColor = STR_COLORS[analysis?.strength] || C.muted;
+      const imp = IMP_COLORS[impLevel] || { text: C.muted, bg: '#f1f5f9' };
+      const str = STR_COLORS[analysis?.strength] || { text: C.muted, bg: '#f1f5f9' };
       const hasConcerns = analysis?.concerns?.length > 0;
       const hasOptimization = optimization?.needsOptimization;
       const sectionLabel = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber}  ` : '';
@@ -734,16 +759,16 @@ router.get('/results/:id/pdf', async (req, res) => {
         // Strength tag
         if (analysis?.strength) {
           const sl = STRENGTH_LABELS[analysis.strength] || analysis.strength;
-          const sw = doc.fontSize(6).widthOfString(sl) + 8;
+          const sw = doc.fontSize(6).widthOfString(sl) + 10;
           rx -= sw;
-          drawTag(rx, rowY, sl, strColor);
+          drawTag(rx, rowY, sl, str.text, str.bg);
           rx -= 2;
         }
         // Importance tag
         const il = IMPORTANCE_LABELS[impLevel] || impLevel;
-        const iw = doc.fontSize(6).widthOfString(il) + 8;
+        const iw = doc.fontSize(6).widthOfString(il) + 10;
         rx -= iw;
-        drawTag(rx, rowY, il, impColor);
+        drawTag(rx, rowY, il, imp.text, imp.bg);
 
         // One-line summary
         if (analysis?.plainLanguage) {
@@ -751,10 +776,10 @@ router.get('/results/:id/pdf', async (req, res) => {
           doc.fontSize(6.5).fillColor(C.light).text(summary, L + 12, rowY + 12, { width: W - 20 });
         }
 
-        doc.y = rowY + compactH + 2;
+        doc.y = rowY + compactH + 4;
         if (ci < sortedClauses.length - 1) {
           doc.strokeColor('#f1f5f9').lineWidth(0.3).moveTo(L + 12, doc.y).lineTo(R, doc.y).stroke();
-          doc.y += 2;
+          doc.y += 4;
         }
         continue;
       }
@@ -784,15 +809,15 @@ router.get('/results/:id/pdf', async (req, res) => {
         }
 
         // Badges row
-        const bRowY = rowY + 14;
+        const bRowY = rowY + 16;
         let bx2 = L + 8;
-        bx2 += drawTag(bx2, bRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
-        if (analysis?.strength) bx2 += drawTag(bx2, bRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
+        bx2 += drawTag(bx2, bRowY, IMPORTANCE_LABELS[impLevel] || impLevel, imp.text, imp.bg);
+        if (analysis?.strength) bx2 += drawTag(bx2, bRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, str.text, str.bg);
         if (analysis?.legalReferences?.length > 0) {
-          doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx2 + 2, bRowY + 2.5, { lineBreak: false });
+          doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx2 + 2, bRowY + 3, { lineBreak: false });
         }
 
-        doc.y = bRowY + 14;
+        doc.y = bRowY + 16;
 
         // Summary (truncated)
         if (analysis?.plainLanguage) {
@@ -815,14 +840,14 @@ router.get('/results/:id/pdf', async (req, res) => {
         // Optimization hint (inline)
         if (hasOptimization) {
           const adviceText = optimization.negotiationAdvice || 'Optimierung verfügbar';
-          doc.fontSize(6.5).fillColor(C.navyLight).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
-          doc.moveDown(0.15);
+          doc.fontSize(6.5).fillColor(C.brand).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
+          doc.moveDown(0.2);
         }
 
-        doc.moveDown(0.2);
+        doc.moveDown(0.4);
         if (ci < sortedClauses.length - 1) {
           doc.strokeColor(C.borderLight).lineWidth(0.3).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-          doc.moveDown(0.25);
+          doc.moveDown(0.5);
         }
         continue;
       }
@@ -851,20 +876,20 @@ router.get('/results/:id/pdf', async (req, res) => {
       }
 
       // Badges + legal refs
-      const badgeRowY = cY + 15;
+      const badgeRowY = cY + 17;
       let bx = L + 8;
-      bx += drawTag(bx, badgeRowY, IMPORTANCE_LABELS[impLevel] || impLevel, impColor);
-      if (analysis?.strength) bx += drawTag(bx, badgeRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, strColor);
+      bx += drawTag(bx, badgeRowY, IMPORTANCE_LABELS[impLevel] || impLevel, imp.text, imp.bg);
+      if (analysis?.strength) bx += drawTag(bx, badgeRowY, STRENGTH_LABELS[analysis.strength] || analysis.strength, str.text, str.bg);
       if (analysis?.legalReferences?.length > 0) {
-        doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx + 2, badgeRowY + 2.5, { lineBreak: false });
+        doc.fontSize(6).fillColor(C.ref).text(analysis.legalReferences.join(', '), bx + 2, badgeRowY + 3, { lineBreak: false });
       }
 
-      doc.y = badgeRowY + 14;
+      doc.y = badgeRowY + 18;
 
       // Summary
       if (analysis?.plainLanguage) {
         doc.fontSize(7.5).fillColor(C.text).text(analysis.plainLanguage, L + 8, doc.y, { width: W - 16 });
-        doc.moveDown(0.2);
+        doc.moveDown(0.35);
       }
 
       // Legal assessment box
@@ -872,10 +897,10 @@ router.get('/results/:id/pdf', async (req, res) => {
         checkPage(30);
         const laY = doc.y;
         const laH = doc.fontSize(7).heightOfString(analysis.legalAssessment, { width: W - 30 });
-        roundedRect(L + 8, laY, W - 16, laH + 13, 3, '#f8fafc', '#e2e8f0');
-        doc.fontSize(6).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 3);
-        doc.fontSize(7).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 11, { width: W - 30 });
-        doc.y = laY + laH + 16;
+        roundedRect(L + 8, laY, W - 16, laH + 16, 3, '#f8fafc', '#e2e8f0');
+        doc.fontSize(6).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 4);
+        doc.fontSize(7).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 13, { width: W - 30 });
+        doc.y = laY + laH + 20;
       }
 
       // Concerns box
@@ -884,10 +909,10 @@ router.get('/results/:id/pdf', async (req, res) => {
         const conY = doc.y;
         const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
         const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 30 });
-        roundedRect(L + 8, conY, W - 16, conTextH + 13, 3, C.warnBg, C.warnBorder);
-        doc.fontSize(6).fillColor(C.warn).text('Bedenken', L + 14, conY + 3);
-        doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 11, { width: W - 30 });
-        doc.y = conY + conTextH + 16;
+        roundedRect(L + 8, conY, W - 16, conTextH + 16, 3, C.dangerBg, C.dangerBorder);
+        doc.fontSize(6).fillColor(C.danger).text('Bedenken', L + 14, conY + 4);
+        doc.fontSize(7).fillColor(C.text).text(conText, L + 14, conY + 13, { width: W - 30 });
+        doc.y = conY + conTextH + 20;
       }
 
       // Optimization box
@@ -897,20 +922,20 @@ router.get('/results/:id/pdf', async (req, res) => {
         const adviceText = optimization.negotiationAdvice || '';
         const fullText = adviceText ? `Optimierung verfügbar: ${adviceText}` : 'Optimierung verfügbar';
         const adviceH = doc.fontSize(6.5).heightOfString(fullText, { width: W - 30 });
-        roundedRect(L + 8, optY, W - 16, adviceH + 10, 3, '#f0f4fa', '#d0dcea');
-        doc.fontSize(6.5).fillColor(C.navyLight).text(fullText, L + 14, optY + 4, { width: W - 30 });
-        doc.y = optY + adviceH + 12;
+        roundedRect(L + 8, optY, W - 16, adviceH + 12, 3, C.bluePastel, null);
+        doc.fontSize(6.5).fillColor(C.blueText).text(fullText, L + 14, optY + 5, { width: W - 30 });
+        doc.y = optY + adviceH + 16;
       }
 
-      doc.moveDown(0.2);
+      doc.moveDown(0.5);
       if (ci < sortedClauses.length - 1) {
         doc.strokeColor(C.borderLight).lineWidth(0.4).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-        doc.moveDown(0.3);
+        doc.moveDown(0.6);
       }
     }
 
     // ════════════════════════════════════════════
-    // FOOTER
+    // FOOTER (content)
     // ════════════════════════════════════════════
     checkPage(40);
     doc.moveDown(0.8);
@@ -925,6 +950,17 @@ router.get('/results/:id/pdf', async (req, res) => {
       'KI-gestützt erstellt — ersetzt keine rechtliche Beratung.',
       { align: 'center' }
     );
+
+    // ═══ Page numbers on every page ═══
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      doc.fontSize(7).fillColor(C.light).text(
+        `Seite ${i + 1} von ${range.count}`,
+        0, doc.page.height - 30,
+        { width: 595.28, align: 'center' }
+      );
+    }
 
     doc.end();
 

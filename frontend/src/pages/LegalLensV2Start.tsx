@@ -218,12 +218,12 @@ export default function LegalLensV2Start() {
               Legal <span className={styles.gradientText}>Lens</span>
             </h1>
             <p className={styles.heroDescription}>
-              Finde Risiken, die dich tausende Euro kosten können — bevor du unterschreibst.
+              Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen, Alternativen finden.
             </p>
             <div className={styles.featurePills}>
               <div className={styles.featurePill}>
                 <Eye size={16} />
-                Klausel-Analyse
+                4 Perspektiven
               </div>
               <div className={styles.featurePill}>
                 <Scale size={16} />
@@ -231,7 +231,7 @@ export default function LegalLensV2Start() {
               </div>
               <div className={styles.featurePill}>
                 <Lightbulb size={16} />
-                Verhandlungstipps
+                Alternativen
               </div>
             </div>
           </div>

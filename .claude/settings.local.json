@@ -344,7 +344,9 @@
       "Bash(cd /c/Users/liebo/Documents/contract-ai/frontend && rm -f tsconfig.tsbuildinfo && npx tsc -b 2>&1 | head -30)",
       "Bash(cd /c/Users/liebo/Documents/contract-ai/frontend && rm -f tsconfig.tsbuildinfo && npx tsc -b 2>&1 | head -10)",
       "Bash(find /c/Users/liebo/Documents/contract-ai -maxdepth 2 -type f \\\\\\( -name \"*regression*.js\" -o -name \"*test-optimizer*.js\" \\\\\\) 2>/dev/null | grep -v node_modules)",
-      "Bash(cp \"/c/Users/liebo/Downloads/1769518909236-240403_Adam_Reuter_Obst_&_GemÃ¼se_FRV_OF_SP_FR_2024.pdf\" test-contracts/real_factoring_adam_reuter.pdf && cp \"/c/Users/liebo/Downloads/1769518956232-211103_EisQueen_GmbH_FRV_SF_SP_FR_MW.pdf\" test-contracts/real_factoring_eisqueen.pdf && cp \"/c/Users/liebo/Downloads/Police_id_587569122.pdf.pdf\" test-contracts/real_versicherungspolice.pdf && ls -la test-contracts/real_*.pdf)"
+      "Bash(cp \"/c/Users/liebo/Downloads/1769518909236-240403_Adam_Reuter_Obst_&_GemÃ¼se_FRV_OF_SP_FR_2024.pdf\" test-contracts/real_factoring_adam_reuter.pdf && cp \"/c/Users/liebo/Downloads/1769518956232-211103_EisQueen_GmbH_FRV_SF_SP_FR_MW.pdf\" test-contracts/real_factoring_eisqueen.pdf && cp \"/c/Users/liebo/Downloads/Police_id_587569122.pdf.pdf\" test-contracts/real_versicherungspolice.pdf && ls -la test-contracts/real_*.pdf)",
+      "Bash(cd C:/Users/liebo/Documents/contract-ai/frontend && npx tsc --noEmit 2>&1; echo \"EXIT:$?\")",
+      "Bash(cd /c/Users/liebo/Documents/contract-ai && grep -B 5 -A 15 \"'/clause-library'\" frontend/src/components/optimizerV2/ScoreDashboard.tsx)"
     ],
     "deny": [],
     "ask": []
