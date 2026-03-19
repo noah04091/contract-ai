@@ -352,8 +352,14 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
             <Menu size={20} strokeWidth={2} />
           </button>
 
-          {/* Search Bar */}
-          {!minimal && (
+          {/* Logo in minimal mode, Search in normal mode */}
+          {minimal ? (
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', marginLeft: 8 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>
+                CONTRACT<span style={{ color: '#3b82f6' }}>AI</span>
+              </span>
+            </Link>
+          ) : (
             <div className={styles.searchContainer}>
               <button className={styles.searchButton} onClick={() => setShowSearch(true)}>
                 <Search size={18} strokeWidth={2} />
