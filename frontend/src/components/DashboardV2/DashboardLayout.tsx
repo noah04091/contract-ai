@@ -15,9 +15,10 @@ interface UserData {
 interface DashboardLayoutProps {
   children: React.ReactNode;
   user?: UserData | null;
+  minimal?: boolean;
 }
 
-export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, user, minimal }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -25,7 +26,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth >= 1024) {
+      if (window.innerWidth >= 1024 && !minimal) {
         setSidebarOpen(false);
       }
     };
@@ -33,27 +34,27 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [minimal]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const closeSidebar = () => {
-    if (isMobile) {
+    if (isMobile || minimal) {
       setSidebarOpen(false);
     }
   };
 
   return (
-    <div className={styles.dashboardLayout}>
+    <div className={`${styles.dashboardLayout} ${minimal ? styles.dashboardMinimal : ''}`}>
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} user={user} />
 
       {/* Main Content Area */}
       <div className={styles.mainArea}>
         {/* Top Bar */}
-        <TopBar onMenuClick={toggleSidebar} user={user} />
+        <TopBar onMenuClick={toggleSidebar} user={user} minimal={minimal} />
 
         {/* Page Content */}
         <main className={styles.mainContent}>

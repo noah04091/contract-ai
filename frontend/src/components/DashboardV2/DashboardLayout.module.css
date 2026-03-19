@@ -1425,6 +1425,36 @@
 }
 
 /* ============================================
+   MINIMAL MODE — Sidebar hidden, hamburger visible
+   ============================================ */
+
+.dashboardMinimal .mainArea {
+  margin-left: 0;
+}
+
+.dashboardMinimal .sidebar {
+  transform: translateX(-100%);
+}
+
+.dashboardMinimal .sidebarOpen {
+  transform: translateX(0);
+}
+
+.dashboardMinimal .sidebarOverlay {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 99;
+  animation: modalFade 0.2s ease;
+}
+
+.dashboardMinimal .menuButton {
+  display: flex;
+}
+
+/* ============================================
    RESPONSIVE DESIGN
    ============================================ */
 

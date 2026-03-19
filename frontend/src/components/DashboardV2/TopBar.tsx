@@ -57,9 +57,10 @@ interface Notification {
 interface TopBarProps {
   onMenuClick: () => void;
   user?: UserData | null;
+  minimal?: boolean;
 }
 
-export default function TopBar({ onMenuClick, user }: TopBarProps) {
+export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -352,12 +353,14 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
           </button>
 
           {/* Search Bar */}
-          <div className={styles.searchContainer}>
-            <button className={styles.searchButton} onClick={() => setShowSearch(true)}>
-              <Search size={18} strokeWidth={2} />
-              <span className={styles.searchPlaceholder}>Verträge suchen...</span>
-            </button>
-          </div>
+          {!minimal && (
+            <div className={styles.searchContainer}>
+              <button className={styles.searchButton} onClick={() => setShowSearch(true)}>
+                <Search size={18} strokeWidth={2} />
+                <span className={styles.searchPlaceholder}>Verträge suchen...</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right side */}
@@ -463,6 +466,7 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
           </div>
 
           {/* User Menu */}
+          {!minimal && (
           <div className={styles.topBarItem} ref={userMenuRef}>
             <button
               className={styles.userButton}
@@ -528,6 +532,7 @@ export default function TopBar({ onMenuClick, user }: TopBarProps) {
               </div>
             )}
           </div>
+          )}
         </div>
       </header>
 

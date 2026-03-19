@@ -21,14 +21,14 @@ const PulseV2: React.FC = () => {
 
   if (contractId) {
     return (
-      <DashboardLayout>
+      <DashboardLayout minimal>
         <ContractView contractId={contractId} />
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout minimal>
       <DashboardView onSelectContract={(id) => navigate(`/pulse/${id}`)} />
     </DashboardLayout>
   );
