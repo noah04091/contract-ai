@@ -112,9 +112,6 @@ export default function RedlineView({ clauses, optimizations, activeMode, onMode
           if (!changed && collapsedUnchanged) {
             // Show a compact separator for first unchanged clause in a group
             const prevChanged = idx > 0 && clauseGroups[idx - 1].changed;
-            const nextItem = clauseGroups[idx + 1];
-            const nextChanged = nextItem?.changed;
-            const isLastUnchanged = !nextItem || nextChanged;
             const isFirstUnchanged = idx === 0 || prevChanged;
 
             if (!isFirstUnchanged) return null;
