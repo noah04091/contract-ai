@@ -185,7 +185,7 @@ function openFilePreview(file: File) {
   window.open(url, '_blank');
 }
 
-// @ts-ignore TS6133 — function IS used in ScoreCard/V1ScoreCard below
+// @ts-expect-error TS6133 — function IS used in ScoreCard/V1ScoreCard below
 async function openS3Preview(s3Key: string) {
   try {
     const token = localStorage.getItem('token');
@@ -207,7 +207,7 @@ function formatFileName(name: string): string {
   return base.length > 30 ? base.slice(0, 27) + '...' : base;
 }
 
-// @ts-ignore TS6133
+// @ts-expect-error TS6133
 function ScoreCard({
   title,
   fileName,
@@ -326,7 +326,7 @@ function ScoreCard({
 // ============================================
 // V1 Score Card (simple)
 // ============================================
-// @ts-ignore TS6133
+// @ts-expect-error TS6133
 function V1ScoreCard({
   title,
   fileName,
