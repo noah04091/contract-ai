@@ -19,10 +19,10 @@ const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string
 };
 
 const TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
-  risk: { icon: '\u26a0\ufe0f', label: 'Risiko' },
+  risk: { icon: '⚠️', label: 'Risiko' },
   compliance: { icon: '\ud83d\udcdc', label: 'Compliance' },
   opportunity: { icon: '\ud83d\udca1', label: 'Chance' },
-  information: { icon: '\u2139\ufe0f', label: 'Information' },
+  information: { icon: 'ℹ️', label: 'Information' },
 };
 
 const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -68,7 +68,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
       if (!res.ok) {
         const err = await res.json();
         if (res.status === 429) {
-          setQuickFixError('Limit erreicht \u2014 maximal 15 Quick-Fixes pro Stunde. Sp\u00e4ter erneut versuchen.');
+          setQuickFixError('Limit erreicht — maximal 15 Quick-Fixes pro Stunde. Später erneut versuchen.');
         } else {
           setQuickFixError(err.error || 'Fehler beim Generieren');
         }
@@ -96,7 +96,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
         body: JSON.stringify({
           contractId,
           title: `Legal Pulse: ${finding.title}`,
-          description: `${severity.label} \u2014 ${finding.description}${finding.legalBasis ? `\nRechtsgrundlage: ${finding.legalBasis}` : ''}`,
+          description: `${severity.label} — ${finding.description}${finding.legalBasis ? `\nRechtsgrundlage: ${finding.legalBasis}` : ''}`,
           date: reminderDate.toISOString(),
           type: 'LEGAL_PULSE_REMINDER',
           severity: finding.severity === 'critical' ? 'critical' : finding.severity === 'high' ? 'warning' : 'info',
@@ -154,7 +154,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               borderRadius: 4,
               textTransform: 'uppercase',
             }}>
-              {fixApplied ? '\u2714 Verbessert' : severity.label}
+              {fixApplied ? '✔ Verbessert' : severity.label}
             </span>
             <span style={{
               fontSize: 11,
@@ -301,7 +301,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               </div>
               <div style={{ fontSize: 12, color: '#9ca3af' }}>
                 Kategorie: {finding.category}
-                {finding.isIntentional && ' \u2022 Vermutlich absichtlich so formuliert'}
+                {finding.isIntentional && ' • Vermutlich absichtlich so formuliert'}
               </div>
             </div>
           )}
@@ -608,7 +608,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
                     gap: 6,
                   }}
                 >
-                  &#10003; Kopieren &amp; \u00dcbernehmen
+                  &#10003; Kopieren &amp; Übernehmen
                 </button>
                 <button
                   onClick={(e) => {

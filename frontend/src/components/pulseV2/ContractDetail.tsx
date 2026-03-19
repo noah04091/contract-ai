@@ -186,7 +186,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
           marginBottom: 20,
         }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
-            Risiko-\u00dcbersicht
+            Risiko-Übersicht
           </div>
 
           {/* Severity bar */}
@@ -277,7 +277,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               }}>
                 <div style={{ fontSize: 24, marginBottom: 4 }}>&#127881;</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#15803d' }}>
-                  Alle Ma\u00dfnahmen erledigt
+                  Alle Maßnahmen erledigt
                 </div>
                 <div style={{ fontSize: 13, color: '#16a34a', marginTop: 2 }}>
                   Starten Sie eine neue Analyse, um den verbesserten Score zu sehen.
@@ -349,7 +349,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                 {total} {total === 1 ? 'Risiko erfordert' : 'Risiken erfordern'} Aufmerksamkeit
               </div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                {subParts.join(' \u00b7 ')}
+                {subParts.join(' · ')}
               </div>
             </div>
           </div>
@@ -404,9 +404,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               Alle {findings.length} Befunde anzeigen
               <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
                 {criticalCount > 0 && `${criticalCount} kritisch`}
-                {criticalCount > 0 && highCount > 0 && ' \u00b7 '}
+                {criticalCount > 0 && highCount > 0 && ' · '}
                 {highCount > 0 && `${highCount} hoch`}
-                {(criticalCount > 0 || highCount > 0) && mediumCount > 0 && ' \u00b7 '}
+                {(criticalCount > 0 || highCount > 0) && mediumCount > 0 && ' · '}
                 {mediumCount > 0 && `${mediumCount} mittel`}
               </span>
             </span>
@@ -461,7 +461,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                   borderRadius: 8,
                   fontSize: 13,
                 }}>
-                  Keine Befunde f\u00fcr den gew\u00e4hlten Filter.
+                  Keine Befunde für den gewählten Filter.
                 </div>
               ) : (
                 filteredFindings.map((finding, idx) => (
@@ -491,7 +491,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
           <div style={{ fontSize: 24, marginBottom: 8 }}>&#10003;</div>
           <div style={{ fontSize: 15, fontWeight: 600 }}>Keine Befunde</div>
           <div style={{ fontSize: 13, color: '#16a34a', marginTop: 4 }}>
-            Der Vertrag scheint solide zu sein. Legal Pulse \u00fcberwacht ihn weiterhin.
+            Der Vertrag scheint solide zu sein. Legal Pulse überwacht ihn weiterhin.
           </div>
         </div>
       )}

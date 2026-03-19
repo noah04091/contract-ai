@@ -82,7 +82,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           </div>
           <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
             Durchschnittlicher Health Score
-            {summary.contractsAnalyzed > 1 ? ` (${summary.contractsAnalyzed} Vertr\u00e4ge)` : ''}
+            {summary.contractsAnalyzed > 1 ? ` (${summary.contractsAnalyzed} Verträge)` : ''}
           </div>
         </div>
       </div>
@@ -115,7 +115,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
         {summary.criticalResolved > 0 && (
           <MiniStat
             icon="&#10003;"
-            label="Kritische gel\u00f6st"
+            label="Kritische gelöst"
             value={summary.criticalResolved}
             color="#0284c7"
             bg="#f0f9ff"
@@ -172,7 +172,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           )}
           {summary.topDecline && (
             <HighlightChip
-              label="Gr\u00f6\u00dfter R\u00fcckgang"
+              label="Größter Rückgang"
               name={summary.topDecline.name}
               delta={summary.topDecline.delta}
               positive={false}

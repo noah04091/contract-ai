@@ -59,7 +59,7 @@ function formatNextScan(dateStr: string): string {
   const diff = date.getTime() - now.getTime();
   const hours = Math.floor(diff / 3600000);
 
-  if (hours < 1) return 'In K\u00fcrze';
+  if (hours < 1) return 'In Kürze';
   if (hours < 24) return `In ${hours} Std.`;
 
   return date.toLocaleDateString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
@@ -101,29 +101,29 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
 
   if (monitoring.severityCounts.critical > 0) {
     summaryLines.push({
-      icon: '\u26a0\ufe0f',
+      icon: '⚠️',
       text: `${monitoring.severityCounts.critical} kritische${monitoring.severityCounts.critical === 1 ? 's' : ''} Risiko${monitoring.severityCounts.critical === 1 ? '' : 'en'} erkannt`,
       color: '#dc2626',
     });
   }
   if (monitoring.severityCounts.high > 0) {
     summaryLines.push({
-      icon: '\u26a0',
+      icon: '⚠',
       text: `${monitoring.severityCounts.high} hohe${monitoring.severityCounts.high === 1 ? 's' : ''} Risiko${monitoring.severityCounts.high === 1 ? '' : 'en'} erkannt`,
       color: '#ea580c',
     });
   }
   if (monitoring.severityCounts.medium > 0) {
     summaryLines.push({
-      icon: '\u2139\ufe0f',
+      icon: 'ℹ️',
       text: `${monitoring.severityCounts.medium} mittlere${monitoring.severityCounts.medium === 1 ? 's' : ''} Risiko${monitoring.severityCounts.medium === 1 ? '' : 'en'}`,
       color: '#d97706',
     });
   }
   if (summaryLines.length === 0 && monitoring.contractsMonitored > 0) {
     summaryLines.push({
-      icon: '\u2714',
-      text: 'Keine neuen Risiken seit der letzten Pr\u00fcfung erkannt',
+      icon: '✔',
+      text: 'Keine neuen Risiken seit der letzten Prüfung erkannt',
       color: '#15803d',
     });
   }
@@ -169,7 +169,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
           fontWeight: 700,
           color: scanning ? '#1d4ed8' : config.color,
         }}>
-          {scanning ? 'Pr\u00fcfung l\u00e4uft...' : monitoring.status === 'neutral' ? 'Legal Pulse' : 'Legal Pulse aktiv'}
+          {scanning ? 'Prüfung läuft...' : monitoring.status === 'neutral' ? 'Legal Pulse' : 'Legal Pulse aktiv'}
         </span>
 
         {/* Right side: badge + scan button */}
@@ -207,11 +207,11 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
               {scanning ? (
                 <>
                   <span style={{ animation: 'pulse 1s ease-in-out infinite' }}>&#8987;</span>
-                  Pr\u00fcfe...
+                  Prüfe...
                 </>
               ) : (
                 <>
-                  &#128269; Jetzt pr\u00fcfen
+                  &#128269; Jetzt prüfen
                 </>
               )}
             </button>
@@ -230,19 +230,19 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
           flexWrap: 'wrap',
         }}>
           <div>
-            <span style={{ color: '#9ca3af' }}>Letzte Pr\u00fcfung: </span>
+            <span style={{ color: '#9ca3af' }}>Letzte Prüfung: </span>
             <span style={{ fontWeight: 500 }}>
               {scanResult ? 'Gerade eben' : formatRelativeTime(monitoring.lastScan)}
             </span>
           </div>
           <div>
-            <span style={{ color: '#9ca3af' }}>N\u00e4chste: </span>
+            <span style={{ color: '#9ca3af' }}>Nächste: </span>
             <span style={{ fontWeight: 500 }}>{formatNextScan(nextScanDate)}</span>
             <span style={{ color: '#9ca3af', fontSize: 11, marginLeft: 4 }}>({nextScanType})</span>
           </div>
           <div>
-            <span style={{ color: '#9ca3af' }}>\u00dcberwacht: </span>
-            <span style={{ fontWeight: 500 }}>{monitoring.contractsMonitored} Vertr\u00e4ge</span>
+            <span style={{ color: '#9ca3af' }}>Überwacht: </span>
+            <span style={{ fontWeight: 500 }}>{monitoring.contractsMonitored} Verträge</span>
           </div>
         </div>
       )}
@@ -271,7 +271,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
             gap: 8,
           }}>
             <span style={{ fontSize: 16 }}>
-              {scanResult.verdict === 'green' ? '\u2714\ufe0f' : scanResult.verdict === 'yellow' ? '\u26a0\ufe0f' : '\u2139\ufe0f'}
+              {scanResult.verdict === 'green' ? '✔️' : scanResult.verdict === 'yellow' ? '⚠️' : 'ℹ️'}
             </span>
             {scanResult.verdictMessage}
           </div>
@@ -292,7 +292,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
               gap: 8,
             }}>
               <span style={{ fontSize: 15 }}>&#9878;&#65039;</span>
-              {scanResult.newLawChanges} neue rechtliche {scanResult.newLawChanges === 1 ? '\u00c4nderung erkannt' : '\u00c4nderungen erkannt'}
+              {scanResult.newLawChanges} neue rechtliche {scanResult.newLawChanges === 1 ? 'Änderung erkannt' : 'Änderungen erkannt'}
             </div>
           )}
 
@@ -372,7 +372,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
             marginBottom: 12,
           }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['Vertr\u00e4ge pr\u00fcfen...', 'Gesetzes\u00e4nderungen scannen...', 'Alerts auswerten...'].map((step, idx) => (
+            {['Verträge prüfen...', 'Gesetzesänderungen scannen...', 'Alerts auswerten...'].map((step, idx) => (
               <div key={idx} style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -400,8 +400,8 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
       {/* Neutral state: no contracts monitored */}
       {!scanning && !scanResult && monitoring.contractsMonitored === 0 && (
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
-          Analysieren Sie einen Vertrag, um die automatische \u00dcberwachung zu aktivieren.
-          Legal Pulse pr\u00fcft dann regelm\u00e4\u00dfig auf neue Risiken und Gesetzes\u00e4nderungen.
+          Analysieren Sie einen Vertrag, um die automatische Überwachung zu aktivieren.
+          Legal Pulse prüft dann regelmäßig auf neue Risiken und Gesetzesänderungen.
         </div>
       )}
     </div>

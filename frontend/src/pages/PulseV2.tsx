@@ -600,7 +600,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             marginBottom: 24,
           }}>
             {[
-              { icon: '\u2696\ufe0f', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse prüft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
+              { icon: '\u2696️', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse prüft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
               { icon: '\ud83d\udcb0', title: 'Kostenfallen vermeiden', desc: 'Erkennt automatische Verlängerungen, versteckte Gebühren und überhöhte Preise.' },
               { icon: '\ud83d\udcca', title: 'Portfolio überwachen', desc: 'Alle Verträge auf einen Blick — mit Fristen, Scores und Handlungsempfehlungen.' },
             ].map(card => (
@@ -740,7 +740,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           gap: 12,
           marginBottom: 10,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Vertr\u00e4ge</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Verträge</span>
 
           {/* Search Input */}
           <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
@@ -807,7 +807,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           >
             <option value="score_asc">Schlechteste zuerst</option>
             <option value="score_desc">Beste zuerst</option>
-            <option value="name">Name A\u2013Z</option>
+            <option value="name">Name A–Z</option>
             <option value="recent">Zuletzt analysiert</option>
           </select>
         </div>
@@ -846,7 +846,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           {/* Count indicator */}
           {(debouncedQuery || filter !== 'all') && (
             <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>
-              {filteredItems.length} von {items.length} Vertr\u00e4gen
+              {filteredItems.length} von {items.length} Verträgen
             </span>
           )}
         </div>
@@ -861,13 +861,13 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           color: '#6b7280',
         }}>
           {items.length === 0 ? (
-            'Keine Vertr\u00e4ge vorhanden.'
+            'Keine Verträge vorhanden.'
           ) : (
             <>
               <div style={{ fontSize: 14, marginBottom: 8 }}>
                 {debouncedQuery
-                  ? `Keine Treffer f\u00fcr \u201e${debouncedQuery}\u201c`
-                  : 'Keine Vertr\u00e4ge f\u00fcr diesen Filter.'
+                  ? `Keine Treffer für „${debouncedQuery}“`
+                  : 'Keine Verträge für diesen Filter.'
                 }
               </div>
               <button

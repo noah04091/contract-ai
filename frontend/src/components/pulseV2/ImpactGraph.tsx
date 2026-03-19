@@ -71,7 +71,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
           </div>
           <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
             {alert.lawArea} &middot; {alert.contractName}
-            {hasClauseImpacts && ` \u00b7 ${alert.clauseImpacts.length} Klausel(n) betroffen`}
+            {hasClauseImpacts && ` · ${alert.clauseImpacts.length} Klausel(n) betroffen`}
           </div>
         </div>
 
