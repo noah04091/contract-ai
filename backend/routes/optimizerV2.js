@@ -590,6 +590,9 @@ router.get('/results/:id/pdf', async (req, res) => {
       else if (stroke) doc.stroke();
       doc.restore();
     }
+    // Strip AI artifacts like !' from any displayed text
+    function clean(text) { return text ? text.replace(/^[!']+\s*/g, '').replace(/\n[!']+\s*/g, '\n') : ''; }
+
     function drawScoreBar(x, y, w, h, value) {
       roundedRect(x, y, w, h, h / 2, '#e2e8f0', null);
       if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, getScoreColor(value), null);
@@ -669,7 +672,9 @@ router.get('/results/:id/pdf', async (req, res) => {
 
     // ── Contract Details (compact inline) ──
     const infoParts = [];
-    if (result.fileName) infoParts.push(`Datei: ${result.fileName}`);
+    // Clean up file name: strip leading timestamp prefix like "1769518956232-"
+    const displayFileName = result.fileName ? result.fileName.replace(/^\d{10,}-/, '') : null;
+    if (displayFileName) infoParts.push(`Datei: ${displayFileName}`);
     if (structure.jurisdiction) infoParts.push(`Recht: ${structure.jurisdiction}`);
     if (structure.industry && structure.industry !== 'other') infoParts.push(`Branche: ${INDUSTRY_LABELS[structure.industry] || structure.industry}`);
     if (structure.parties?.length > 0) infoParts.push(`Parteien: ${structure.parties.map(p => p.name || p.role).join(' / ')}`);
@@ -770,7 +775,8 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         // One-line summary
         if (analysis?.plainLanguage) {
-          const summary = analysis.plainLanguage.length > 140 ? analysis.plainLanguage.substring(0, 137) + '...' : analysis.plainLanguage;
+          const pl = clean(analysis.plainLanguage);
+          const summary = pl.length > 140 ? pl.substring(0, 137) + '...' : pl;
           doc.fontSize(6.5).fillColor(C.light).text(summary, L + 12, rowY + 12, { width: W - 20 });
         }
 
@@ -814,7 +820,8 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         // Summary (truncated)
         if (analysis?.plainLanguage) {
-          const text = analysis.plainLanguage.length > 200 ? analysis.plainLanguage.substring(0, 197) + '...' : analysis.plainLanguage;
+          const pl = clean(analysis.plainLanguage);
+          const text = pl.length > 200 ? pl.substring(0, 197) + '...' : pl;
           doc.fontSize(7.5).fillColor(C.text).text(text, L + 8, doc.y, { width: W - 16 });
           doc.moveDown(0.2);
         }
@@ -822,7 +829,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         // Concerns (compact)
         if (hasConcerns) {
           const conY = doc.y;
-          const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
+          const conText = analysis.concerns.map(c => `•  ${clean(c)}`).join('\n');
           const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 28 });
           roundedRect(L + 8, conY, W - 16, conTextH + 14, 3, C.warnBg, C.warnBorder);
           doc.fontSize(6).fillColor(C.warn).text('Bedenken', L + 14, conY + 3);
@@ -832,7 +839,7 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         // Optimization hint (inline)
         if (hasOptimization) {
-          const adviceText = (optimization.negotiationAdvice || 'Optimierung verfügbar').replace(/^[!']+ */, '');
+          const adviceText = clean(optimization.negotiationAdvice || 'Optimierung verfügbar');
           doc.fontSize(6.5).fillColor(C.brand).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
           doc.moveDown(0.2);
         }
@@ -874,7 +881,7 @@ router.get('/results/:id/pdf', async (req, res) => {
 
       // Summary
       if (analysis?.plainLanguage) {
-        doc.fontSize(7.5).fillColor(C.text).text(analysis.plainLanguage, L + 8, doc.y, { width: W - 16 });
+        doc.fontSize(7.5).fillColor(C.text).text(clean(analysis.plainLanguage), L + 8, doc.y, { width: W - 16 });
         doc.moveDown(0.35);
       }
 
@@ -882,10 +889,11 @@ router.get('/results/:id/pdf', async (req, res) => {
       if (analysis?.legalAssessment) {
         checkPage(30);
         const laY = doc.y;
-        const laH = doc.fontSize(7).heightOfString(analysis.legalAssessment, { width: W - 30 });
+        const laText = clean(analysis.legalAssessment);
+        const laH = doc.fontSize(7).heightOfString(laText, { width: W - 30 });
         roundedRect(L + 8, laY, W - 16, laH + 16, 3, '#f8fafc', '#e2e8f0');
         doc.fontSize(6).fillColor(C.muted).text('Juristische Bewertung', L + 14, laY + 4);
-        doc.fontSize(7).fillColor(C.text).text(analysis.legalAssessment, L + 14, laY + 13, { width: W - 30 });
+        doc.fontSize(7).fillColor(C.text).text(laText, L + 14, laY + 13, { width: W - 30 });
         doc.y = laY + laH + 20;
       }
 
@@ -893,7 +901,7 @@ router.get('/results/:id/pdf', async (req, res) => {
       if (hasConcerns) {
         checkPage(20);
         const conY = doc.y;
-        const conText = analysis.concerns.map(c => `•  ${c}`).join('\n');
+        const conText = analysis.concerns.map(c => `•  ${clean(c)}`).join('\n');
         const conTextH = doc.fontSize(7).heightOfString(conText, { width: W - 30 });
         roundedRect(L + 8, conY, W - 16, conTextH + 16, 3, C.dangerBg, C.dangerBorder);
         doc.fontSize(6).fillColor(C.danger).text('Bedenken', L + 14, conY + 4);
@@ -905,7 +913,7 @@ router.get('/results/:id/pdf', async (req, res) => {
       if (hasOptimization) {
         checkPage(18);
         const optY = doc.y;
-        const adviceText = (optimization.negotiationAdvice || '').replace(/^[!']+ */, '');
+        const adviceText = clean(optimization.negotiationAdvice || '');
         const fullText = adviceText ? `Optimierung verfügbar: ${adviceText}` : 'Optimierung verfügbar';
         const adviceH = doc.fontSize(6.5).heightOfString(fullText, { width: W - 30 });
         roundedRect(L + 8, optY, W - 16, adviceH + 12, 3, C.bluePastel, null);
