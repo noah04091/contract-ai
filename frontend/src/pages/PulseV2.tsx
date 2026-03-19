@@ -959,12 +959,12 @@ const AlertCard: React.FC<{
   color: string;
   bg: string;
   onClick?: () => void;
-}> = ({ icon, label, value, color, bg: _bg, onClick }) => (
+}> = ({ icon, label, value, color, bg, onClick }) => (
   <div
     onClick={onClick}
     style={{
       padding: '20px 24px',
-      background: '#fff',
+      background: bg || '#fff',
       borderRadius: 16,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
       cursor: onClick ? 'pointer' : 'default',
