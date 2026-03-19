@@ -15,9 +15,11 @@ interface OverviewTabProps {
   result: ComparisonResult;
   file1?: File | null;
   file2?: File | null;
+  file1Name?: string;
+  file2Name?: string;
 }
 
-export default function OverviewTab({ result, file1, file2 }: OverviewTabProps) {
+export default function OverviewTab({ result, file1, file2, file1Name, file2Name }: OverviewTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
 
@@ -40,7 +42,7 @@ export default function OverviewTab({ result, file1, file2 }: OverviewTabProps) 
         <div className={styles.scoresGrid}>
           <ScoreCard
             title="Vertrag 1"
-            fileName={file1?.name}
+            fileName={file1Name || file1?.name}
             file={file1}
             scores={v2Result.scores.contract1}
             isRecommended={v2Result.overallRecommendation.recommended === 1}
@@ -48,7 +50,7 @@ export default function OverviewTab({ result, file1, file2 }: OverviewTabProps) 
           />
           <ScoreCard
             title="Vertrag 2"
-            fileName={file2?.name}
+            fileName={file2Name || file2?.name}
             file={file2}
             scores={v2Result.scores.contract2}
             isRecommended={v2Result.overallRecommendation.recommended === 2}
@@ -62,14 +64,14 @@ export default function OverviewTab({ result, file1, file2 }: OverviewTabProps) 
         <div className={styles.scoresGrid}>
           <V1ScoreCard
             title="Vertrag 1"
-            fileName={file1?.name}
+            fileName={file1Name || file1?.name}
             file={file1}
             analysis={result.contract1Analysis}
             isRecommended={result.overallRecommendation.recommended === 1}
           />
           <V1ScoreCard
             title="Vertrag 2"
-            fileName={file2?.name}
+            fileName={file2Name || file2?.name}
             file={file2}
             analysis={result.contract2Analysis}
             isRecommended={result.overallRecommendation.recommended === 2}

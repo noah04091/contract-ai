@@ -242,6 +242,8 @@ export default function EnhancedCompare() {
   const useV2 = true;
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
+  const [file1Name, setFile1Name] = useState<string | null>(null);
+  const [file2Name, setFile2Name] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -462,6 +464,10 @@ export default function EnhancedCompare() {
   // 📜 Load comparison from history (display result)
   const loadFromHistory = (item: ComparisonHistoryItem) => {
     setResult(item.result);
+    setFile1Name(item.file1Name || null);
+    setFile2Name(item.file2Name || null);
+    setFile1(null);
+    setFile2(null);
     setComparisonMode(item.mode);
     setShowHistory(false);
     setNotification({
@@ -591,6 +597,8 @@ export default function EnhancedCompare() {
                 });
               } else if (eventData.type === 'result') {
                 setResult(eventData.data);
+                setFile1Name(file1?.name || null);
+                setFile2Name(file2?.name || null);
                 setProgress(null);
                 // Backend automatically saves to history - reload to get latest
                 loadHistoryFromBackend();
@@ -1452,6 +1460,8 @@ export default function EnhancedCompare() {
                   result={result}
                   file1={file1}
                   file2={file2}
+                  file1Name={file1Name}
+                  file2Name={file2Name}
                   onPerspectiveChange={handlePerspectiveChange}
                   reAnalyzing={reAnalyzing}
                 />

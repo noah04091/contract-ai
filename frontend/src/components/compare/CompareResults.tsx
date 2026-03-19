@@ -18,6 +18,8 @@ interface CompareResultsProps {
   result: ComparisonResult;
   file1: File | null;
   file2: File | null;
+  file1Name?: string | null;
+  file2Name?: string | null;
   onPerspectiveChange?: (perspective: Perspective) => void;
   reAnalyzing?: boolean;
 }
@@ -34,6 +36,8 @@ export default function CompareResults({
   result,
   file1,
   file2,
+  file1Name,
+  file2Name,
   onPerspectiveChange,
   reAnalyzing,
 }: CompareResultsProps) {
@@ -113,7 +117,13 @@ export default function CompareResults({
       {/* Tab Content */}
       <div className={styles.tabContent}>
         {activeTab === 'overview' && (
-          <OverviewTab result={result} file1={file1} file2={file2} />
+          <OverviewTab
+            result={result}
+            file1={file1}
+            file2={file2}
+            file1Name={file1Name || file1?.name}
+            file2Name={file2Name || file2?.name}
+          />
         )}
 
         {activeTab === 'differences' && (
