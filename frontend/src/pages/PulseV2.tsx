@@ -21,15 +21,19 @@ const PulseV2: React.FC = () => {
 
   if (contractId) {
     return (
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
-        <ContractView contractId={contractId} />
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 32px' }}>
+          <ContractView contractId={contractId} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 24px' }}>
-      <DashboardView onSelectContract={(id) => navigate(`/pulse/${id}`)} />
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%)' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 32px' }}>
+        <DashboardView onSelectContract={(id) => navigate(`/pulse/${id}`)} />
+      </div>
     </div>
   );
 };
@@ -460,16 +464,27 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const isFirstUse = stats.analyzed === 0;
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+    <div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 4 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
             Legal Pulse
           </h1>
-          <div style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>
-            {stats.analyzed} von {stats.total} Verträgen analysiert
-          </div>
+          <span style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#3b82f6',
+            background: '#eff6ff',
+            padding: '3px 10px',
+            borderRadius: 20,
+            letterSpacing: '0.5px',
+          }}>
+            V2
+          </span>
+        </div>
+        <div style={{ fontSize: 14, color: '#64748b', marginTop: 6 }}>
+          {stats.analyzed} von {stats.total} Verträgen analysiert
         </div>
       </div>
 
@@ -485,58 +500,82 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       {/* ══════════ Hero: Portfolio Health Score ══════════ */}
       <div style={{
         background: '#fff',
-        borderRadius: 16,
-        border: '1px solid #e5e7eb',
-        padding: '32px 40px',
-        marginBottom: 24,
+        borderRadius: 20,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+        padding: '36px 44px',
+        marginBottom: 28,
         display: 'flex',
         alignItems: 'center',
-        gap: 32,
+        gap: 40,
       }}>
-        {/* Score Circle */}
+        {/* SVG Score Ring */}
         {(() => {
           const score = alertStats.avgScore;
           const color = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
           const label = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
+          const pct = score !== null ? score / 100 : 0;
+          const radius = 52;
+          const circumference = 2 * Math.PI * radius;
+          const offset = circumference * (1 - pct);
           return (
             <>
-              <div style={{
-                width: 96,
-                height: 96,
-                borderRadius: '50%',
-                border: `5px solid ${color}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                background: score === null ? '#f9fafb' : undefined,
-              }}>
-                <span style={{ fontSize: 36, fontWeight: 800, color }}>
-                  {score ?? '—'}
-                </span>
+              <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+                <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                  {score !== null && (
+                    <circle
+                      cx="60" cy="60" r={radius}
+                      fill="none" stroke={color} strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      style={{ transition: 'stroke-dashoffset 1s ease' }}
+                    />
+                  )}
+                </svg>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: 36, fontWeight: 800, color: score !== null ? color : '#cbd5e1', lineHeight: 1 }}>
+                    {score ?? '—'}
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
+                    Score
+                  </span>
+                </div>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#111827', marginBottom: 4 }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
                   Contract Health
                 </div>
-                <div style={{ fontSize: 15, color: '#6b7280', marginBottom: 8 }}>
+                <div style={{ fontSize: 15, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>
                   {isFirstUse
                     ? 'Noch kein Vertrag analysiert. Starten Sie Ihre erste Analyse.'
                     : label
                   }
                 </div>
+                {!isFirstUse && stats.analyzed > 0 && (
+                  <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b' }}>
+                    <span><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
+                    <span><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+                    <span><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
+                  </div>
+                )}
                 {isFirstUse && items.length > 0 && (
                   <button
                     onClick={() => onSelectContract(items[0].contractId)}
                     style={{
-                      padding: '10px 24px',
+                      padding: '10px 28px',
                       fontSize: 14,
                       fontWeight: 600,
                       color: '#fff',
-                      background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                      background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
                       border: 'none',
                       borderRadius: 10,
                       cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
                     }}
                   >
                     Erste Analyse starten
@@ -632,8 +671,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 12,
-          marginBottom: 24,
+          gap: 16,
+          marginBottom: 28,
         }}>
           <AlertCard
             icon="&#9888;"
@@ -700,14 +739,14 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       {alertStats.openActions.length > 0 && (
         <div style={{
           background: '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 20,
+          borderRadius: 20,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+          padding: 24,
+          marginBottom: 24,
         }}>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
+          <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px' }}>
             Handlungsbedarf
-            <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>
+            <span style={{ marginLeft: 10, fontSize: 12, color: '#64748b', fontWeight: 500 }}>
               {alertStats.openActions.length} offen
             </span>
           </div>
@@ -732,15 +771,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       )}
 
       {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 20 }}>
         {/* Row 1: Title + Search + Sort */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          marginBottom: 10,
+          marginBottom: 12,
         }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Verträge</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>Verträge</span>
 
           {/* Search Input */}
           <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
@@ -760,16 +799,18 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               placeholder="Vertrag suchen..."
               style={{
                 width: '100%',
-                padding: '7px 10px 7px 32px',
+                padding: '8px 12px 8px 34px',
                 fontSize: 13,
-                border: '1px solid #e5e7eb',
-                borderRadius: 8,
+                border: '1px solid #e2e8f0',
+                borderRadius: 10,
                 outline: 'none',
-                color: '#111827',
+                color: '#0f172a',
                 background: '#fff',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e5e7eb'; }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
             />
             {searchQuery && (
               <button
@@ -795,14 +836,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortBy)}
             style={{
-              padding: '7px 10px',
+              padding: '8px 12px',
               fontSize: 12,
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              color: '#374151',
+              border: '1px solid #e2e8f0',
+              borderRadius: 10,
+              color: '#334155',
               background: '#fff',
               cursor: 'pointer',
               outline: 'none',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
             }}
           >
             <option value="score_asc">Schlechteste zuerst</option>
@@ -829,14 +871,16 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               key={key}
               onClick={() => setFilter(key)}
               style={{
-                padding: '4px 12px',
+                padding: '5px 14px',
                 fontSize: 12,
-                borderRadius: 6,
-                border: filter === key ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-                background: filter === key ? '#eff6ff' : '#fff',
-                color: filter === key ? '#2563eb' : '#6b7280',
+                borderRadius: 20,
+                border: filter === key ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+                background: filter === key ? '#3b82f6' : '#fff',
+                color: filter === key ? '#fff' : '#64748b',
                 cursor: 'pointer',
-                fontWeight: filter === key ? 600 : 400,
+                fontWeight: filter === key ? 600 : 500,
+                transition: 'all 0.15s ease',
+                boxShadow: filter === key ? '0 2px 4px rgba(59,130,246,0.2)' : 'none',
               }}
             >
               {label}
@@ -855,10 +899,11 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       {filteredItems.length === 0 ? (
         <div style={{
           textAlign: 'center',
-          padding: 60,
-          background: '#f9fafb',
-          borderRadius: 12,
-          color: '#6b7280',
+          padding: 72,
+          background: '#fff',
+          borderRadius: 20,
+          color: '#64748b',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
           {items.length === 0 ? (
             'Keine Verträge vorhanden.'
@@ -873,13 +918,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               <button
                 onClick={() => { setFilter('all'); setSearchQuery(''); }}
                 style={{
-                  padding: '6px 16px',
+                  padding: '8px 20px',
                   fontSize: 13,
-                  color: '#3b82f6',
-                  background: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  borderRadius: 6,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: '#3b82f6',
+                  border: 'none',
+                  borderRadius: 20,
                   cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(59,130,246,0.2)',
                 }}
               >
                 Alle anzeigen
@@ -890,8 +937,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: 12,
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gap: 14,
         }}>
           {filteredItems.map(item => (
             <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} />
@@ -916,18 +963,30 @@ const AlertCard: React.FC<{
   <div
     onClick={onClick}
     style={{
-      padding: '16px 20px',
-      background: bg,
-      borderRadius: 10,
-      border: '1px solid #e5e7eb',
+      padding: '20px 24px',
+      background: '#fff',
+      borderRadius: 16,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
       cursor: onClick ? 'pointer' : 'default',
+      borderLeft: `4px solid ${color}`,
+      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+    }}
+    onMouseEnter={(e) => {
+      if (onClick) {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+      }
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'none';
+      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)';
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
       <span style={{ fontSize: 16 }} dangerouslySetInnerHTML={{ __html: icon }} />
-      <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: '0.2px' }}>{label}</span>
     </div>
-    <div style={{ fontSize: 28, fontWeight: 700, color }}>{value}</div>
+    <div style={{ fontSize: 32, fontWeight: 800, color, letterSpacing: '-0.5px' }}>{value}</div>
   </div>
 );
 
@@ -936,71 +995,93 @@ const AlertCard: React.FC<{
 // ═══════════════════════════════════════════════════════════
 const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }> = ({ item, onClick }) => {
   const score = item.v2Score;
-  const scoreColor = score === null ? '#9ca3af' : score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444';
+  const scoreColor = score === null ? '#cbd5e1' : score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444';
   const now = Date.now();
   const daysUntilExpiry = item.endDate ? Math.ceil((new Date(item.endDate).getTime() - now) / (1000 * 60 * 60 * 24)) : null;
+  const pct = score !== null ? score / 100 : 0;
+  const r = 22;
+  const circ = 2 * Math.PI * r;
 
   return (
     <div
       onClick={onClick}
       style={{
-        padding: 16,
+        padding: '18px 20px',
         background: '#fff',
-        border: `1px solid ${item.v2CriticalCount > 0 ? '#fecaca' : '#e5e7eb'}`,
-        borderRadius: 12,
+        borderRadius: 16,
         cursor: 'pointer',
-        transition: 'box-shadow 0.2s',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         display: 'flex',
         gap: 16,
         alignItems: 'center',
+        boxShadow: item.v2CriticalCount > 0
+          ? '0 0 0 1px #fecaca, 0 1px 3px rgba(0,0,0,0.04)'
+          : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.boxShadow = item.v2CriticalCount > 0
+          ? '0 0 0 1px #fecaca, 0 1px 3px rgba(0,0,0,0.04)'
+          : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)';
+      }}
     >
-      {/* Score Circle */}
-      <div style={{
-        width: 52,
-        height: 52,
-        borderRadius: '50%',
-        border: `3px solid ${scoreColor}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 18, fontWeight: 700, color: scoreColor }}>
-          {score ?? '—'}
-        </span>
+      {/* Mini SVG Score Ring */}
+      <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+        <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="26" cy="26" r={r} fill="none" stroke="#f1f5f9" strokeWidth="4" />
+          {score !== null && (
+            <circle
+              cx="26" cy="26" r={r}
+              fill="none" stroke={scoreColor} strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray={circ}
+              strokeDashoffset={circ * (1 - pct)}
+            />
+          )}
+        </svg>
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: score !== null ? scoreColor : '#cbd5e1' }}>
+            {score ?? '—'}
+          </span>
+        </div>
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 14,
           fontWeight: 600,
-          color: '#111827',
+          color: '#0f172a',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           display: 'flex',
           alignItems: 'center',
-          gap: 6,
+          gap: 8,
         }}>
           {item.name}
           {item.v2CriticalCount > 0 && (
             <span style={{
               fontSize: 10,
-              fontWeight: 600,
+              fontWeight: 700,
               color: '#dc2626',
               background: '#fef2f2',
-              padding: '1px 6px',
-              borderRadius: 4,
+              padding: '2px 8px',
+              borderRadius: 20,
               flexShrink: 0,
+              letterSpacing: '0.3px',
             }}>
               {item.v2CriticalCount} KRITISCH
             </span>
           )}
         </div>
-        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
           {item.contractType && <span>{item.contractType} · </span>}
           {item.provider && <span>{item.provider} · </span>}
           {item.hasV2Result
@@ -1011,8 +1092,8 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
         {daysUntilExpiry !== null && (
           <div style={{
             fontSize: 11,
-            marginTop: 2,
-            color: daysUntilExpiry < 0 ? '#dc2626' : daysUntilExpiry < 30 ? '#d97706' : '#9ca3af',
+            marginTop: 3,
+            color: daysUntilExpiry < 0 ? '#dc2626' : daysUntilExpiry < 30 ? '#d97706' : '#94a3b8',
             fontWeight: daysUntilExpiry < 30 ? 600 : 400,
           }}>
             {daysUntilExpiry < 0 ? 'Abgelaufen' : daysUntilExpiry === 0 ? 'Läuft heute ab' : `${daysUntilExpiry} Tage bis Ablauf`}
@@ -1020,7 +1101,9 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
         )}
       </div>
 
-      <span style={{ fontSize: 16, color: '#d1d5db' }}>&#8250;</span>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M7 5l5 5-5 5" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 };
