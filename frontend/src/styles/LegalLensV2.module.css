@@ -598,11 +598,33 @@
   margin-bottom: 8px;
 }
 
+.clauseBlockTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.clauseBlockLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--v2-accent);
+  white-space: nowrap;
+  padding: 2px 8px;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
 .clauseBlockTitle {
   font-size: 14px;
   font-weight: 600;
   color: var(--v2-text);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .clauseBlockPendingDot {
@@ -1624,4 +1646,122 @@
   0% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4); background-color: rgba(239, 68, 68, 0.12); }
   50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15); }
   100% { box-shadow: none; background-color: transparent; }
+}
+
+/* ============================================================
+   On-Demand Analysis Panel — Streaming & Results
+   ============================================================ */
+
+.analysisPanelSelectedText {
+  padding: 12px 20px;
+  background: rgba(99, 102, 241, 0.04);
+  border-bottom: 1px solid var(--v2-border);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--v2-text-muted);
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.analysisPanelSelectedText p {
+  margin: 0;
+}
+
+.analysisPanelStreaming {
+  padding: 20px;
+  min-height: 100px;
+}
+
+.streamingContent {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--v2-text);
+  white-space: pre-wrap;
+}
+
+.streamingContent p {
+  margin: 0;
+}
+
+.streamingCursor {
+  display: inline;
+  animation: blink 1s infinite;
+  color: var(--v2-accent);
+  font-weight: 700;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.analysisPanelOnDemandResult {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.analysisPanelOnDemandResult p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--v2-text);
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* V1 Analysis Result Styles */
+.v1AnalysisResult {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.v1RiskBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.v1RiskBadge_high {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--v2-risk-high);
+}
+
+.v1RiskBadge_medium {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--v2-risk-medium);
+}
+
+.v1RiskBadge_low {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--v2-risk-low);
+}
+
+.v1Section {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--v2-border);
+}
+
+.v1Section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.v1Section h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--v2-text-muted);
+}
+
+.v1Section p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--v2-text);
 }

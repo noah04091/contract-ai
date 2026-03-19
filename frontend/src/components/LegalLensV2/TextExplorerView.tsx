@@ -9,7 +9,7 @@ interface TextExplorerViewProps {
   analysesMap: AnalysesMap;
   selectedClauseId: string | null;
   hoveredClauseId: string | null;
-  onSelectClause: (clauseId: string, source: 'text') => void;
+  onSelectClause: (clauseId: string) => void;
   onHoverClause: (clauseId: string | null) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   filterRiskOnly: boolean;
@@ -71,7 +71,7 @@ export default function TextExplorerView({
   }, [onHoverClause]);
 
   const handleSelect = useCallback((clauseId: string) => {
-    onSelectClause(clauseId, 'text');
+    onSelectClause(clauseId);
     setTooltipData(null);
   }, [onSelectClause]);
 
@@ -98,7 +98,7 @@ export default function TextExplorerView({
           </div>
         )}
 
-        {filteredClauses.map(clause => (
+        {filteredClauses.map((clause, idx) => (
           <ClauseBlock
             key={clause.id}
             clause={clause}
@@ -108,6 +108,7 @@ export default function TextExplorerView({
             onSelect={handleSelect}
             onHoverStart={handleHoverStart}
             onHoverEnd={handleHoverEnd}
+            index={idx}
           />
         ))}
       </div>

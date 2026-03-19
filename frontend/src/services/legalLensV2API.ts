@@ -312,6 +312,80 @@ export async function analyzeClauseDeep(
 }
 
 /**
+ * On-demand Streaming-Analyse einer Klausel (v1-API mit stream: true)
+ *
+ * Gibt eine Abort-Funktion zurück. Ruft onChunk für Streaming-Text
+ * und onComplete mit dem finalen Analyse-Objekt auf.
+ */
+export function analyzeClauseStreaming(
+  contractId: string,
+  clauseId: string,
+  clauseText: string,
+  perspective: string = 'neutral',
+  onChunk: (chunk: string) => void,
+  onComplete: (analysis: Record<string, unknown>) => void,
+  onError: (error: Error) => void
+): () => void {
+  const controller = new AbortController();
+  const token = localStorage.getItem('token');
+
+  fetch(`${V1_BASE}/${contractId}/clause/${clauseId}/analyze`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` })
+    },
+    body: JSON.stringify({ clauseText, perspective, stream: true }),
+    signal: controller.signal
+  })
+    .then(async response => {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Analyse-Fehler' }));
+        throw new Error(error.error || `Analyse fehlgeschlagen: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Kein Reader verfügbar');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.chunk) {
+                onChunk(parsed.chunk);
+              } else if (parsed.analysis) {
+                onComplete(parsed.analysis);
+              }
+            } catch {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+    })
+    .catch(error => {
+      if (error.name !== 'AbortError') {
+        onError(error);
+      }
+    });
+
+  return () => controller.abort();
+}
+
+/**
  * Chat über eine bestimmte Klausel (v1-API)
  */
 export async function chatAboutClause(

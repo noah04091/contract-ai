@@ -1,12 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Type, AlignJustify, MousePointer2 } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import type { ParsedClauseV2, AnalysesMap, V2Analysis } from '../../types/legalLensV2';
-import { useClauseMapping } from '../../hooks/useClauseMapping';
-import PdfClauseOverlay from './PdfClauseOverlay';
-import HoverTooltip from './HoverTooltip';
 import styles from '../../styles/LegalLensV2.module.css';
 
 // PDF.js Worker
@@ -19,30 +15,17 @@ type SelectionMode = 'sentence' | 'paragraph' | 'custom';
 
 interface PdfExplorerViewProps {
   pdfUrl: string | null;
-  clauses: ParsedClauseV2[];
-  analysesMap: AnalysesMap;
-  selectedClauseId: string | null;
-  hoveredClauseId: string | null;
-  onSelectClause: (clauseId: string) => void;
-  onHoverClause: (clauseId: string | null) => void;
+  onTextSelected: (text: string, mode: SelectionMode) => void;
   containerRef: React.RefObject<HTMLDivElement>;
 }
 
 export default function PdfExplorerView({
   pdfUrl,
-  clauses,
-  analysesMap,
-  selectedClauseId,
-  hoveredClauseId,
-  onSelectClause,
-  onHoverClause,
+  onTextSelected,
   containerRef
 }: PdfExplorerViewProps) {
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.2);
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const [tooltipData, setTooltipData] = useState<{ analysis: V2Analysis; title: string | null } | null>(null);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   // Selection mode (persisted in localStorage)
@@ -54,32 +37,9 @@ export default function PdfExplorerView({
   // Highlight refs
   const highlightContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const { regionsByPage, mapPageClauses, updateRegionRiskLevels, resetMappings } = useClauseMapping();
-
-  // Risk levels updaten wenn neue Analysen eintreffen
-  useEffect(() => {
-    if (Object.keys(analysesMap).length > 0) {
-      updateRegionRiskLevels(analysesMap);
-    }
-  }, [analysesMap, updateRegionRiskLevels]);
-
-  // Bei Zoom-Änderung: Mappings zurücksetzen
-  useEffect(() => {
-    resetMappings();
-  }, [scale, resetMappings]);
-
   const handleDocumentLoad = useCallback(({ numPages: n }: { numPages: number }) => {
     setNumPages(n);
   }, []);
-
-  const handlePageRender = useCallback((pageNumber: number) => {
-    const pageEl = pageRefs.current.get(pageNumber);
-    if (pageEl && clauses.length > 0) {
-      setTimeout(() => {
-        mapPageClauses(pageNumber, pageEl, clauses);
-      }, 200);
-    }
-  }, [clauses, mapPageClauses]);
 
   // ============================================================
   // Mode Change
@@ -152,46 +112,6 @@ export default function PdfExplorerView({
   }, []);
 
   // ============================================================
-  // Clause Matching — find pre-parsed clause from selected text
-  // ============================================================
-
-  const findMatchingClause = useCallback((text: string): ParsedClauseV2 | null => {
-    if (!text || text.length < 10 || !clauses.length) return null;
-
-    const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
-    const normalized = normalize(text);
-
-    // 1. Containment check (selected text inside clause or vice versa)
-    for (const clause of clauses) {
-      if (clause.nonAnalyzable) continue;
-      const clauseNorm = normalize(clause.text);
-      if (clauseNorm.includes(normalized) || normalized.includes(clauseNorm)) {
-        return clause;
-      }
-    }
-
-    // 2. Word overlap score
-    const selectedWords = new Set(normalized.split(/\s+/).filter(w => w.length > 3));
-    if (selectedWords.size === 0) return null;
-
-    let best: ParsedClauseV2 | null = null;
-    let bestScore = 0;
-
-    for (const clause of clauses) {
-      if (clause.nonAnalyzable) continue;
-      const clauseWords = normalize(clause.text).split(/\s+/).filter(w => w.length > 3);
-      const overlap = clauseWords.filter(w => selectedWords.has(w)).length;
-      const score = overlap / Math.max(selectedWords.size, clauseWords.length, 1);
-      if (score > bestScore && score > 0.25) {
-        bestScore = score;
-        best = clause;
-      }
-    }
-
-    return best;
-  }, [clauses]);
-
-  // ============================================================
   // PDF Text Click Handler — 3 Selection Modes
   // ============================================================
 
@@ -215,10 +135,8 @@ export default function PdfExplorerView({
           createHighlightOverlays(selectedSpans);
         }
 
-        const match = findMatchingClause(selectedText);
-        if (match) {
-          onSelectClause(match.id);
-        }
+        // Send selected text to parent for on-demand analysis
+        onTextSelected(selectedText, 'custom');
 
         setTimeout(() => selection?.removeAllRanges(), 100);
       }
@@ -340,44 +258,9 @@ export default function PdfExplorerView({
     // Create yellow highlight
     createHighlightOverlays(selectedSpans);
 
-    // Match to pre-parsed clause
-    const match = findMatchingClause(selectedText);
-    if (match) {
-      onSelectClause(match.id);
-    }
-  }, [selectionMode, clauses, onSelectClause, clearHighlight, createHighlightOverlays, findMatchingClause]);
-
-  // ============================================================
-  // Overlay Handlers (existing)
-  // ============================================================
-
-  const handleOverlaySelect = useCallback((clauseId: string) => {
-    clearHighlight();
-    onSelectClause(clauseId);
-    setTooltipData(null);
-  }, [onSelectClause, clearHighlight]);
-
-  const handleOverlayHoverStart = useCallback((clauseId: string) => {
-    onHoverClause(clauseId);
-    clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => {
-      const analysis = analysesMap[clauseId];
-      const clause = clauses.find(c => c.id === clauseId);
-      if (analysis) {
-        setTooltipData({ analysis, title: clause?.title || null });
-      }
-    }, 300);
-  }, [onHoverClause, analysesMap, clauses]);
-
-  const handleOverlayHoverEnd = useCallback(() => {
-    onHoverClause(null);
-    clearTimeout(hoverTimeoutRef.current);
-    setTooltipData(null);
-  }, [onHoverClause]);
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    setTooltipPos({ x: e.clientX, y: e.clientY });
-  }, []);
+    // Send selected text to parent for on-demand analysis
+    onTextSelected(selectedText, selectionMode);
+  }, [selectionMode, onTextSelected, clearHighlight, createHighlightOverlays]);
 
   const zoomIn = useCallback(() => setScale(s => Math.min(s + 0.2, 3)), []);
   const zoomOut = useCallback(() => setScale(s => Math.max(s - 0.2, 0.5)), []);
@@ -397,7 +280,6 @@ export default function PdfExplorerView({
     <div
       ref={containerRef}
       className={styles.pdfExplorer}
-      onMouseMove={handleMouseMove}
     >
       {/* Toolbar: Mode Selector + Zoom */}
       <div className={styles.pdfToolbar}>
@@ -462,40 +344,12 @@ export default function PdfExplorerView({
                 scale={scale}
                 renderTextLayer={true}
                 renderAnnotationLayer={true}
-                onRenderSuccess={() => handlePageRender(pageNum)}
               />
-
-              {/* Clause Overlays — only visible in sentence/paragraph modes */}
-              {selectionMode !== 'custom' && (regionsByPage[pageNum] || []).map(region => {
-                const clause = clauses.find(c => c.id === region.clauseId);
-                return (
-                  <PdfClauseOverlay
-                    key={region.clauseId}
-                    region={region}
-                    analysis={analysesMap[region.clauseId] || null}
-                    isSelected={selectedClauseId === region.clauseId}
-                    isHovered={hoveredClauseId === region.clauseId}
-                    clauseTitle={clause?.title || null}
-                    onSelect={handleOverlaySelect}
-                    onHoverStart={handleOverlayHoverStart}
-                    onHoverEnd={handleOverlayHoverEnd}
-                  />
-                );
-              })}
             </div>
           ))}
         </Document>
       </div>
 
-      {/* Hover Tooltip */}
-      {tooltipData && (
-        <HoverTooltip
-          analysis={tooltipData.analysis}
-          clauseTitle={tooltipData.title}
-          position={tooltipPos}
-          visible={!!tooltipData}
-        />
-      )}
     </div>
   );
 }
