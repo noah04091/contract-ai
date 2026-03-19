@@ -753,9 +753,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         doc.fontSize(8).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 12, rowY + 1, { width: W - 130 });
 
         // Badges (right-aligned) — calculate positions from right
-        let rx = R - 28;
-        // Risk score
-        if (riskLevel > 0) { doc.fontSize(6.5).fillColor(C.light).text(`${riskLevel}/10`, rx, rowY + 2, { width: 28, align: 'right' }); rx -= 4; }
+        let rx = R;
         // Strength tag
         if (analysis?.strength) {
           const sl = STRENGTH_LABELS[analysis.strength] || analysis.strength;
@@ -776,10 +774,10 @@ router.get('/results/:id/pdf', async (req, res) => {
           doc.fontSize(6.5).fillColor(C.light).text(summary, L + 12, rowY + 12, { width: W - 20 });
         }
 
-        doc.y = rowY + compactH + 4;
+        doc.y = rowY + compactH + 6;
         if (ci < sortedClauses.length - 1) {
           doc.strokeColor('#f1f5f9').lineWidth(0.3).moveTo(L + 12, doc.y).lineTo(R, doc.y).stroke();
-          doc.y += 4;
+          doc.y += 6;
         }
         continue;
       }
@@ -801,12 +799,7 @@ router.get('/results/:id/pdf', async (req, res) => {
         doc.save().rect(L, rowY, 2, 12).fill(riskColor).restore();
 
         // Title
-        doc.fontSize(9).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY, { width: W - 70 });
-
-        // Risk score top right (plain text)
-        if (riskLevel > 0) {
-          doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - 30, rowY + 1, { width: 30, align: 'right' });
-        }
+        doc.fontSize(9).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, rowY, { width: W - 16 });
 
         // Badges row
         const bRowY = rowY + 16;
@@ -839,15 +832,15 @@ router.get('/results/:id/pdf', async (req, res) => {
 
         // Optimization hint (inline)
         if (hasOptimization) {
-          const adviceText = optimization.negotiationAdvice || 'Optimierung verfügbar';
+          const adviceText = (optimization.negotiationAdvice || 'Optimierung verfügbar').replace(/^[!']+ */, '');
           doc.fontSize(6.5).fillColor(C.brand).text(`→ ${adviceText}`, L + 8, doc.y, { width: W - 16 });
           doc.moveDown(0.2);
         }
 
-        doc.moveDown(0.4);
+        doc.moveDown(0.6);
         if (ci < sortedClauses.length - 1) {
           doc.strokeColor(C.borderLight).lineWidth(0.3).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-          doc.moveDown(0.5);
+          doc.moveDown(0.7);
         }
         continue;
       }
@@ -866,14 +859,7 @@ router.get('/results/:id/pdf', async (req, res) => {
       doc.save().rect(L, cY, 3, 13).fill(riskColor).restore();
 
       // Title
-      doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 70 });
-
-      // Risk badge top right (subtle pill)
-      if (riskLevel > 0) {
-        const rBW = 34, rBH = 12;
-        roundedRect(R - rBW, cY + 1, rBW, rBH, 3, '#f1f5f9', C.border);
-        doc.fontSize(7).fillColor(riskColor).text(`${riskLevel}/10`, R - rBW, cY + 3, { width: rBW, align: 'center' });
-      }
+      doc.fontSize(9.5).fillColor(C.dark).text(`${sectionLabel}${clause.title}`, L + 8, cY, { width: W - 16 });
 
       // Badges + legal refs
       const badgeRowY = cY + 17;
@@ -919,7 +905,7 @@ router.get('/results/:id/pdf', async (req, res) => {
       if (hasOptimization) {
         checkPage(18);
         const optY = doc.y;
-        const adviceText = optimization.negotiationAdvice || '';
+        const adviceText = (optimization.negotiationAdvice || '').replace(/^[!']+ */, '');
         const fullText = adviceText ? `Optimierung verfügbar: ${adviceText}` : 'Optimierung verfügbar';
         const adviceH = doc.fontSize(6.5).heightOfString(fullText, { width: W - 30 });
         roundedRect(L + 8, optY, W - 16, adviceH + 12, 3, C.bluePastel, null);
@@ -927,10 +913,10 @@ router.get('/results/:id/pdf', async (req, res) => {
         doc.y = optY + adviceH + 16;
       }
 
-      doc.moveDown(0.5);
+      doc.moveDown(0.7);
       if (ci < sortedClauses.length - 1) {
         doc.strokeColor(C.borderLight).lineWidth(0.4).moveTo(L, doc.y).lineTo(R, doc.y).stroke();
-        doc.moveDown(0.6);
+        doc.moveDown(0.8);
       }
     }
 
@@ -953,13 +939,19 @@ router.get('/results/:id/pdf', async (req, res) => {
 
     // ═══ Page numbers on every page ═══
     const range = doc.bufferedPageRange();
-    for (let i = range.start; i < range.start + range.count; i++) {
+    const totalP = range.count;
+    for (let i = range.start; i < range.start + totalP; i++) {
       doc.switchToPage(i);
+      const pageLabel = `Seite ${i + 1} von ${totalP}`;
+      const labelW = doc.fontSize(7).widthOfString(pageLabel);
+      doc.save();
       doc.fontSize(7).fillColor(C.light).text(
-        `Seite ${i + 1} von ${range.count}`,
-        0, doc.page.height - 30,
-        { width: 595.28, align: 'center' }
+        pageLabel,
+        (595.28 - labelW) / 2,
+        doc.page.height - 30,
+        { lineBreak: false }
       );
+      doc.restore();
     }
 
     doc.end();
