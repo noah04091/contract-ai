@@ -40,8 +40,8 @@ export default function CompareResults({
   file2,
   file1Name,
   file2Name,
-  file1S3Key: _f1s3,
-  file2S3Key: _f2s3,
+  file1S3Key,
+  file2S3Key,
   onPerspectiveChange,
   reAnalyzing,
 }: CompareResultsProps) {

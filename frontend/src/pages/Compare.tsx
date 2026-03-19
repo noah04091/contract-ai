@@ -227,6 +227,8 @@ interface ComparisonHistoryItem {
   timestamp: number;
   file1Name: string;
   file2Name: string;
+  file1S3Key?: string | null;
+  file2S3Key?: string | null;
   mode: string;
   result: ComparisonResult;
   recommended: 1 | 2;
@@ -244,6 +246,8 @@ export default function EnhancedCompare() {
   const [file2, setFile2] = useState<File | null>(null);
   const [file1Name, setFile1Name] = useState<string | null>(null);
   const [file2Name, setFile2Name] = useState<string | null>(null);
+  const [file1S3Key, setFile1S3Key] = useState<string | null>(null);
+  const [file2S3Key, setFile2S3Key] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -427,6 +431,8 @@ export default function EnhancedCompare() {
         timestamp: string;
         file1Name: string;
         file2Name: string;
+        file1S3Key?: string | null;
+        file2S3Key?: string | null;
         comparisonMode?: string;
         result: ComparisonResult | null;
         recommendedContract: 1 | 2;
@@ -439,6 +445,8 @@ export default function EnhancedCompare() {
           timestamp: new Date(h.timestamp).getTime(),
           file1Name: h.file1Name,
           file2Name: h.file2Name,
+          file1S3Key: h.file1S3Key || null,
+          file2S3Key: h.file2S3Key || null,
           mode: h.comparisonMode || 'standard',
           result: h.result as ComparisonResult,
           recommended: h.recommendedContract
@@ -466,6 +474,8 @@ export default function EnhancedCompare() {
     setResult(item.result);
     setFile1Name(item.file1Name || null);
     setFile2Name(item.file2Name || null);
+    setFile1S3Key(item.file1S3Key || null);
+    setFile2S3Key(item.file2S3Key || null);
     setFile1(null);
     setFile2(null);
     setComparisonMode(item.mode);
@@ -1462,6 +1472,8 @@ export default function EnhancedCompare() {
                   file2={file2}
                   file1Name={file1Name}
                   file2Name={file2Name}
+                  file1S3Key={file1S3Key}
+                  file2S3Key={file2S3Key}
                   onPerspectiveChange={handlePerspectiveChange}
                   reAnalyzing={reAnalyzing}
                 />

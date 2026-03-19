@@ -16,6 +16,17 @@ const database = require("../config/database");
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 const { runCompareV2Pipeline } = require("../services/compareAnalyzer"); // 🆕 Compare V2
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -898,6 +909,41 @@ router.post("/", verifyToken, upload.fields([
       // Continue with the comparison even if saving fails
     }
 
+    // Upload PDFs to S3 for history access
+    let file1S3Key = null;
+    let file2S3Key = null;
+    try {
+      const userId = req.user.userId;
+      const ts = Date.now();
+      file1S3Key = `compare/${userId}/${ts}_1_${fixUtf8Filename(file1.originalname)}`;
+      file2S3Key = `compare/${userId}/${ts}_2_${fixUtf8Filename(file2.originalname)}`;
+
+      const [buf1, buf2] = await Promise.all([
+        fsPromises.readFile(file1.path),
+        fsPromises.readFile(file2.path)
+      ]);
+
+      await Promise.all([
+        s3.send(new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: file1S3Key,
+          Body: buf1,
+          ContentType: file1.mimetype || 'application/pdf',
+        })),
+        s3.send(new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: file2S3Key,
+          Body: buf2,
+          ContentType: file2.mimetype || 'application/pdf',
+        }))
+      ]);
+      console.log(`📦 Compare PDFs saved to S3: ${file1S3Key}, ${file2S3Key}`);
+    } catch (s3Err) {
+      console.error("⚠️ Warning: Could not save compare PDFs to S3:", s3Err.message);
+      file1S3Key = null;
+      file2S3Key = null;
+    }
+
     // Log the comparison activity with full result for history feature
     try {
       const historyDoc = {
@@ -908,6 +954,8 @@ router.post("/", verifyToken, upload.fields([
         comparisonMode,
         file1Name: fixUtf8Filename(file1.originalname),
         file2Name: fixUtf8Filename(file2.originalname),
+        file1S3Key,
+        file2S3Key,
         recommendedContract: analysisResult.overallRecommendation.recommended,
         confidence: analysisResult.overallRecommendation.confidence,
         differencesCount: analysisResult.differences?.length || 0,
@@ -1095,6 +1143,8 @@ router.get("/history", verifyToken, async (req, res) => {
         id: h._id,
         file1Name: h.file1Name,
         file2Name: h.file2Name,
+        file1S3Key: h.file1S3Key || null,
+        file2S3Key: h.file2S3Key || null,
         userProfile: h.userProfile,
         comparisonMode: h.comparisonMode || 'standard',
         recommendedContract: h.recommendedContract,
@@ -1117,6 +1167,32 @@ router.get("/history", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("❌ History fetch error:", error);
     res.status(500).json({ message: "Fehler beim Laden der Historie" });
+  }
+});
+
+// Get signed URL for compare PDF from history
+router.get("/history/pdf/:s3Key(*)", verifyToken, async (req, res) => {
+  try {
+    const s3Key = req.params.s3Key;
+    if (!s3Key || !s3Key.startsWith('compare/')) {
+      return res.status(400).json({ message: "Ungültiger S3-Key" });
+    }
+
+    // Verify that this file belongs to the requesting user
+    const userId = req.user.userId;
+    if (!s3Key.startsWith(`compare/${userId}/`)) {
+      return res.status(403).json({ message: "Kein Zugriff" });
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+    });
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    res.json({ url });
+  } catch (error) {
+    console.error("❌ PDF signed URL error:", error);
+    res.status(500).json({ message: "Fehler beim Generieren der URL" });
   }
 });
 

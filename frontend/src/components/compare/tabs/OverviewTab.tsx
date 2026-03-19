@@ -17,9 +17,11 @@ interface OverviewTabProps {
   file2?: File | null;
   file1Name?: string;
   file2Name?: string;
+  file1S3Key?: string | null;
+  file2S3Key?: string | null;
 }
 
-export default function OverviewTab({ result, file1, file2, file1Name, file2Name }: OverviewTabProps) {
+export default function OverviewTab({ result, file1, file2, file1Name, file2Name, file1S3Key, file2S3Key }: OverviewTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
 
@@ -44,6 +46,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
             title="Vertrag 1"
             fileName={file1Name || file1?.name}
             file={file1}
+            s3Key={file1S3Key}
             scores={v2Result.scores.contract1}
             isRecommended={v2Result.overallRecommendation.recommended === 1}
             analysis={v2Result.contract1Analysis}
@@ -52,6 +55,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
             title="Vertrag 2"
             fileName={file2Name || file2?.name}
             file={file2}
+            s3Key={file2S3Key}
             scores={v2Result.scores.contract2}
             isRecommended={v2Result.overallRecommendation.recommended === 2}
             analysis={v2Result.contract2Analysis}
@@ -66,6 +70,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
             title="Vertrag 1"
             fileName={file1Name || file1?.name}
             file={file1}
+            s3Key={file1S3Key}
             analysis={result.contract1Analysis}
             isRecommended={result.overallRecommendation.recommended === 1}
           />
@@ -73,6 +78,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
             title="Vertrag 2"
             fileName={file2Name || file2?.name}
             file={file2}
+            s3Key={file2S3Key}
             analysis={result.contract2Analysis}
             isRecommended={result.overallRecommendation.recommended === 2}
           />
@@ -179,6 +185,22 @@ function openFilePreview(file: File) {
   window.open(url, '_blank');
 }
 
+// @ts-ignore TS6133 — function IS used in ScoreCard/V1ScoreCard below
+async function openS3Preview(s3Key: string) {
+  try {
+    const token = localStorage.getItem('token');
+    const API = import.meta.env.VITE_API_URL || '';
+    const res = await fetch(`${API}/api/compare/history/pdf/${encodeURIComponent(s3Key)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Fehler beim Laden');
+    const { url } = await res.json();
+    window.open(url, '_blank');
+  } catch (err) {
+    console.error('S3 preview error:', err);
+  }
+}
+
 function formatFileName(name: string): string {
   // Remove extension and truncate
   const base = name.replace(/\.[^.]+$/, '');
@@ -189,6 +211,7 @@ function ScoreCard({
   title,
   fileName,
   file,
+  s3Key,
   scores,
   isRecommended,
   analysis,
@@ -196,6 +219,7 @@ function ScoreCard({
   title: string;
   fileName?: string;
   file?: File | null;
+  s3Key?: string | null;
   scores: CategoryScores;
   isRecommended: boolean;
   analysis: { strengths: string[]; weaknesses: string[]; riskLevel: string };
@@ -215,10 +239,10 @@ function ScoreCard({
             <div className={styles.contractFileName}>
               <FileText size={12} />
               <span title={fileName}>{formatFileName(fileName)}</span>
-              {file && (
+              {(file || s3Key) && (
                 <button
                   className={styles.openPdfBtn}
-                  onClick={() => openFilePreview(file)}
+                  onClick={() => file ? openFilePreview(file) : s3Key && openS3Preview(s3Key)}
                   title="PDF öffnen"
                 >
                   Öffnen
@@ -305,12 +329,14 @@ function V1ScoreCard({
   title,
   fileName,
   file,
+  s3Key,
   analysis,
   isRecommended,
 }: {
   title: string;
   fileName?: string;
   file?: File | null;
+  s3Key?: string | null;
   analysis: { strengths: string[]; weaknesses: string[]; riskLevel: string; score: number };
   isRecommended: boolean;
 }) {
@@ -327,10 +353,10 @@ function V1ScoreCard({
             <div className={styles.contractFileName}>
               <FileText size={12} />
               <span title={fileName}>{formatFileName(fileName)}</span>
-              {file && (
+              {(file || s3Key) && (
                 <button
                   className={styles.openPdfBtn}
-                  onClick={() => openFilePreview(file)}
+                  onClick={() => file ? openFilePreview(file) : s3Key && openS3Preview(s3Key)}
                   title="PDF öffnen"
                 >
                   Öffnen
