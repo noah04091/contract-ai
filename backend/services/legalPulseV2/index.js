@@ -209,6 +209,17 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     const analysisResult = await runDeepAnalysis(cleanedText, context, onProgress);
 
+    // Soft-logic: when contract type is uncertain, be more conservative
+    // Downgrade medium/high findings to low when we can't reliably assess branchenstandard
+    if (docMeta.contractTypeConfidence < 50) {
+      console.log(`[PulseV2] Low contractType confidence (${docMeta.contractTypeConfidence}) — downgrading uncertain findings`);
+      for (const f of analysisResult.clauseFindings) {
+        if (f.severity === 'medium' && f.confidence < 80) {
+          f.severity = 'low';
+        }
+      }
+    }
+
     await LegalPulseV2Result.updateOne(
       { _id: record._id },
       {
