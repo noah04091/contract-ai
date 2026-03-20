@@ -170,9 +170,11 @@ export default function OptimizerV2() {
               <RedlineView
                 clauses={result.clauses}
                 optimizations={result.optimizations}
+                clauseAnalyses={result.clauseAnalyses}
                 activeMode={activeMode}
                 onModeChange={actions.switchMode}
                 onClauseClick={(id) => { actions.selectClause(id); actions.setTab('clauses'); }}
+                resultId={result.resultId}
               />
             )}
 

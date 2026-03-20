@@ -973,6 +973,231 @@ router.get('/results/:id/pdf', async (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════
+// GET /results/:id/redline-pdf - Export redline comparison as PDF
+// ════════════════════════════════════════════════════════
+router.get('/results/:id/redline-pdf', async (req, res) => {
+  try {
+    const result = await OptimizerV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+      status: 'completed'
+    });
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    const mode = req.query.mode || 'neutral';
+    const MODE_NAMES = { neutral: 'Neutral', proCreator: 'Pro Ersteller', proRecipient: 'Pro Empfänger' };
+    const modeName = MODE_NAMES[mode] || 'Neutral';
+
+    const PDFDocument = require('pdfkit');
+    const doc = new PDFDocument({
+      size: 'A4',
+      bufferPages: true,
+      margins: { top: 50, bottom: 50, left: 45, right: 45 },
+      info: {
+        Title: `Redline-Vergleich - ${result.fileName || 'Vertrag'}`,
+        Author: 'Contract AI - Smart Optimizer',
+        Creator: 'Contract AI'
+      }
+    });
+
+    const fileName = (result.fileName || 'Redline').replace(/\.[^/.]+$/, '').replace(/^\d{10,}-/, '');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Redline.pdf"`);
+    doc.pipe(res);
+
+    function clean(text) { return text ? text.replace(/^[!']+\s*/g, '').replace(/\n[!']+\s*/g, '\n') : ''; }
+
+    const C = {
+      brand: '#007AFF', brandDark: '#005EC4',
+      danger: '#DC2626', dangerPastel: '#fecaca', dangerText: '#991b1b',
+      ok: '#16a34a', okPastel: '#bbf7d0', okText: '#166534',
+      orange: '#c2410c', orangePastel: '#fff7ed', orangeBorder: '#fed7aa',
+      dark: '#1e293b', text: '#334155', muted: '#64748b', light: '#94a3b8',
+      bg: '#f8fafc', border: '#e2e8f0', borderLight: '#f1f5f9'
+    };
+
+    const L = 45, R = 550, W = R - L;
+    const MID = L + W / 2;
+    const COL_W = (W - 16) / 2; // 16px gap between columns
+    let totalPages = 1;
+    doc.on('pageAdded', () => { totalPages++; });
+
+    function checkPage(needed = 80) {
+      if (doc.y + needed > doc.page.height - 60) { doc.addPage(); return true; }
+      return false;
+    }
+
+    // ── COVER HEADER ──
+    doc.rect(0, 0, doc.page.width, 70).fill(C.brand);
+    doc.font('Helvetica-Bold').fontSize(18).fillColor('#ffffff')
+       .text('Redline-Vergleich', L, 22, { width: W });
+    doc.fontSize(10).font('Helvetica').fillColor('rgba(255,255,255,0.85)')
+       .text(`Perspektive: ${modeName}  |  ${new Date().toLocaleDateString('de-DE')}`, L, 46, { width: W });
+
+    doc.y = 90;
+
+    // ── LEGEND ──
+    doc.rect(L, doc.y, W, 28).fill(C.bg);
+    const ly = doc.y + 8;
+    doc.rect(L + 12, ly, 10, 10).fill(C.dangerPastel);
+    doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Entfernt', L + 26, ly + 1, { lineBreak: false });
+    doc.rect(L + 80, ly, 10, 10).fill(C.okPastel);
+    doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Hinzugefügt', L + 94, ly + 1, { lineBreak: false });
+
+    // Stats on right
+    const changedCount = (result.optimizations || []).filter(o => o.needsOptimization).length;
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.orange)
+       .text(`${changedCount} Optimierungen`, R - 120, ly + 1, { width: 120, align: 'right', lineBreak: false });
+
+    doc.y += 36;
+
+    // ── COLUMN HEADERS ──
+    doc.rect(L, doc.y, W, 22).fill(C.bg);
+    const chy = doc.y + 6;
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted)
+       .text('ORIGINAL', L + 8, chy, { lineBreak: false });
+    doc.text('OPTIMIERT', MID + 16, chy, { lineBreak: false });
+    doc.moveTo(MID + 4, doc.y).lineTo(MID + 4, doc.y + 22).strokeColor(C.border).lineWidth(0.5).stroke();
+
+    doc.y += 28;
+
+    // ── CLAUSE ROWS ──
+    const clauses = result.clauses || [];
+    const optMap = new Map();
+    for (const o of (result.optimizations || [])) optMap.set(o.clauseId, o);
+    const CATEGORY_LABELS = {
+      parties: 'Parteien', subject: 'Gegenstand', duration: 'Laufzeit',
+      compensation: 'Vergütung', termination: 'Kündigung', liability: 'Haftung',
+      ip: 'Geistiges Eigentum', confidentiality: 'Vertraulichkeit', warranty: 'Gewährleistung',
+      dataprivacy: 'Datenschutz', compliance: 'Compliance', indemnification: 'Freistellung',
+      forcemajeure: 'Höhere Gewalt', dispute: 'Streitbeilegung', general: 'Allgemeines',
+      insurance: 'Versicherung', noncompete: 'Wettbewerbsverbot', governing_law: 'Anwendbares Recht',
+      preamble: 'Präambel', definitions: 'Definitionen', other: 'Sonstige'
+    };
+
+    for (const clause of clauses) {
+      const opt = optMap.get(clause.id);
+      const changed = opt && opt.needsOptimization;
+      const version = changed ? opt.versions?.[mode] : null;
+      const diffs = version?.diffs || [];
+      const sectionNum = clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber : '';
+      const catLabel = CATEGORY_LABELS[clause.category] || clause.category || '';
+      const origText = clean(clause.originalText || '');
+
+      // Estimate height needed
+      const textHeight = doc.heightOfString(origText, { width: COL_W - 16, fontSize: 8.5 });
+      const rowHeight = Math.max(textHeight + 40, 60);
+      checkPage(rowHeight);
+
+      const rowY = doc.y;
+
+      // Left border for changed clauses
+      if (changed) {
+        doc.rect(L, rowY, 3, rowHeight).fill('#FF9500');
+      }
+
+      // Row header
+      const headerX = changed ? L + 8 : L + 4;
+      let hx = headerX;
+      if (sectionNum) {
+        doc.save();
+        const snW = doc.widthOfString(sectionNum, { fontSize: 7 }) + 8;
+        doc.roundedRect(hx, rowY + 4, snW, 14, 2).fill('rgba(0,122,255,0.08)');
+        doc.font('Helvetica-Bold').fontSize(7).fillColor(C.brand).text(sectionNum, hx + 4, rowY + 7, { lineBreak: false });
+        doc.restore();
+        hx += snW + 4;
+      }
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(C.dark)
+         .text(clean(clause.title || ''), hx, rowY + 5, { lineBreak: false, width: MID - hx - 8 });
+
+      // Category tag
+      if (catLabel) {
+        const tagW = doc.widthOfString(catLabel, { fontSize: 7 }) + 8;
+        const tagX = MID - tagW - 8;
+        doc.save();
+        doc.roundedRect(tagX, rowY + 4, tagW, 14, 2).fill(C.borderLight);
+        doc.font('Helvetica').fontSize(7).fillColor(C.muted).text(catLabel, tagX + 4, rowY + 7, { lineBreak: false });
+        doc.restore();
+      }
+
+      // "Optimiert" badge for changed
+      if (changed) {
+        const bText = 'Optimiert';
+        const bW = doc.widthOfString(bText, { fontSize: 7 }) + 8;
+        const bX = R - bW;
+        doc.save();
+        doc.roundedRect(bX, rowY + 4, bW, 14, 2).fill(C.orangePastel);
+        doc.font('Helvetica-Bold').fontSize(7).fillColor(C.orange).text(bText, bX + 4, rowY + 7, { lineBreak: false });
+        doc.restore();
+      }
+
+      // Divider line between columns
+      doc.moveTo(MID + 4, rowY + 22).lineTo(MID + 4, rowY + rowHeight - 4)
+         .strokeColor(C.border).lineWidth(0.3).stroke();
+
+      // Original text (left column)
+      const textY = rowY + 24;
+      doc.font('Helvetica').fontSize(8.5).fillColor(C.text)
+         .text(origText, L + 8, textY, { width: COL_W - 16, lineGap: 2 });
+
+      // Optimized text (right column) — with diff highlighting
+      if (changed && diffs.length > 0) {
+        let cx = MID + 16;
+        let cy = textY;
+        const maxW = COL_W - 16;
+        // Render diffs as inline spans
+        for (const op of diffs) {
+          const t = clean(op.text || '');
+          if (!t) continue;
+          // Split text into words for wrapping
+          if (op.type === 'equal') {
+            doc.font('Helvetica').fontSize(8.5).fillColor(C.text);
+          } else if (op.type === 'remove') {
+            doc.font('Helvetica').fontSize(8.5).fillColor(C.dangerText);
+          } else if (op.type === 'add') {
+            doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.okText);
+          }
+          doc.text(t, MID + 16, cy, { width: maxW, lineGap: 2, continued: false });
+          // Use last position
+          cy = doc.y;
+        }
+      } else {
+        doc.font('Helvetica').fontSize(8.5).fillColor(changed ? C.text : C.light)
+           .text(origText, MID + 16, textY, { width: COL_W - 16, lineGap: 2 });
+      }
+
+      // Bottom separator
+      const actualBottom = Math.max(doc.y + 8, rowY + rowHeight);
+      doc.moveTo(L, actualBottom).lineTo(R, actualBottom)
+         .strokeColor(C.border).lineWidth(0.3).stroke();
+      doc.y = actualBottom + 4;
+    }
+
+    // ── PAGE NUMBERS ──
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      if (i === 0) continue; // Skip cover header page number
+      doc.save();
+      doc.font('Helvetica').fontSize(8).fillColor(C.light)
+         .text(`${i + 1} / ${totalPages}`, 0, doc.page.height - 35, {
+            width: doc.page.width, align: 'center', lineBreak: false
+         });
+      doc.restore();
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error('[OptimizerV2] Redline PDF error:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: 'Redline-PDF-Export fehlgeschlagen.' });
+    }
+  }
+});
+
+// ════════════════════════════════════════════════════════
 // POST /results/:id/docx - Export optimized contract as DOCX
 // ════════════════════════════════════════════════════════
 router.post('/results/:id/docx', async (req, res) => {
