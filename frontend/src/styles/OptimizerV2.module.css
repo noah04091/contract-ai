@@ -1869,21 +1869,24 @@
 /* ── Feature 3: Detail Side Panel ── */
 .rlPanelBackdrop {
   position: fixed;
-  inset: 0;
+  top: 64px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0,0,0,0.15);
-  z-index: 100;
+  z-index: 98;
   animation: rlFadeIn 0.15s ease;
 }
 .rlPanel {
   position: fixed;
-  top: 0;
+  top: 64px;
   right: 0;
   bottom: 0;
   width: 440px;
   max-width: 90vw;
   background: white;
   box-shadow: -8px 0 30px rgba(0,0,0,0.1);
-  z-index: 101;
+  z-index: 99;
   display: flex;
   flex-direction: column;
   animation: rlSlideIn 0.2s ease-out;

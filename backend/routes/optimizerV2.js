@@ -1077,102 +1077,128 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
       preamble: 'Präambel', definitions: 'Definitionen', other: 'Sonstige'
     };
 
-    for (const clause of clauses) {
+    // Only render changed clauses in redline PDF (unchanged are skipped for clarity)
+    const changedClauses = clauses.filter(c => {
+      const o = optMap.get(c.id);
+      return o && o.needsOptimization;
+    });
+
+    for (let ci = 0; ci < changedClauses.length; ci++) {
+      const clause = changedClauses[ci];
       const opt = optMap.get(clause.id);
-      const changed = opt && opt.needsOptimization;
-      const version = changed ? opt.versions?.[mode] : null;
+      const version = opt.versions?.[mode];
       const diffs = version?.diffs || [];
       const sectionNum = clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber : '';
       const catLabel = CATEGORY_LABELS[clause.category] || clause.category || '';
       const origText = clean(clause.originalText || '');
 
-      // Estimate height needed
-      const textHeight = doc.heightOfString(origText, { width: COL_W - 16, fontSize: 8.5 });
-      const rowHeight = Math.max(textHeight + 40, 60);
-      checkPage(rowHeight);
+      // Build optimized plain text for height estimation
+      const optText = version?.text ? clean(version.text) : origText;
 
+      // Estimate heights for both columns
+      const leftH = doc.font('Helvetica').fontSize(8.5).heightOfString(origText, { width: COL_W - 20, lineGap: 2 });
+      const rightH = doc.font('Helvetica').fontSize(8.5).heightOfString(optText, { width: COL_W - 20, lineGap: 2 });
+      const textH = Math.max(leftH, rightH);
+      const rowHeight = textH + 44; // 24 header + 12 bottom padding + 8 margin
+
+      checkPage(rowHeight);
       const rowY = doc.y;
 
-      // Left border for changed clauses
-      if (changed) {
-        doc.rect(L, rowY, 3, rowHeight).fill('#FF9500');
-      }
+      // ── Clause header bar ──
+      doc.save();
+      doc.rect(L, rowY, W, 22).fill('#f8fafc');
+      // Orange left border
+      doc.rect(L, rowY, 3, 22).fill('#FF9500');
 
-      // Row header
-      const headerX = changed ? L + 8 : L + 4;
-      let hx = headerX;
+      let hx = L + 10;
       if (sectionNum) {
-        doc.save();
-        const snW = doc.widthOfString(sectionNum, { fontSize: 7 }) + 8;
+        const snW = doc.font('Helvetica-Bold').fontSize(7.5).widthOfString(sectionNum) + 8;
         doc.roundedRect(hx, rowY + 4, snW, 14, 2).fill('rgba(0,122,255,0.08)');
-        doc.font('Helvetica-Bold').fontSize(7).fillColor(C.brand).text(sectionNum, hx + 4, rowY + 7, { lineBreak: false });
-        doc.restore();
-        hx += snW + 4;
+        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.brand).text(sectionNum, hx + 4, rowY + 7, { lineBreak: false });
+        hx += snW + 5;
       }
-      doc.font('Helvetica-Bold').fontSize(9).fillColor(C.dark)
-         .text(clean(clause.title || ''), hx, rowY + 5, { lineBreak: false, width: MID - hx - 8 });
+      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.dark)
+         .text(clean(clause.title || ''), hx, rowY + 6, { lineBreak: false, width: MID - hx - 10 });
 
-      // Category tag
       if (catLabel) {
-        const tagW = doc.widthOfString(catLabel, { fontSize: 7 }) + 8;
-        const tagX = MID - tagW - 8;
-        doc.save();
-        doc.roundedRect(tagX, rowY + 4, tagW, 14, 2).fill(C.borderLight);
-        doc.font('Helvetica').fontSize(7).fillColor(C.muted).text(catLabel, tagX + 4, rowY + 7, { lineBreak: false });
-        doc.restore();
+        const tw = doc.font('Helvetica').fontSize(6.5).widthOfString(catLabel) + 6;
+        doc.roundedRect(MID + 12, rowY + 5, tw, 12, 2).fill('#f1f5f9');
+        doc.font('Helvetica').fontSize(6.5).fillColor(C.muted).text(catLabel, MID + 15, rowY + 7, { lineBreak: false });
       }
 
-      // "Optimiert" badge for changed
-      if (changed) {
-        const bText = 'Optimiert';
-        const bW = doc.widthOfString(bText, { fontSize: 7 }) + 8;
-        const bX = R - bW;
-        doc.save();
-        doc.roundedRect(bX, rowY + 4, bW, 14, 2).fill(C.orangePastel);
-        doc.font('Helvetica-Bold').fontSize(7).fillColor(C.orange).text(bText, bX + 4, rowY + 7, { lineBreak: false });
-        doc.restore();
-      }
+      // "Optimiert" badge
+      const bText = `${ci + 1}/${changedClauses.length}  Optimiert`;
+      const bW = doc.font('Helvetica-Bold').fontSize(6.5).widthOfString(bText) + 10;
+      doc.roundedRect(R - bW, rowY + 5, bW, 12, 2).fill(C.orangePastel);
+      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(C.orange).text(bText, R - bW + 5, rowY + 7, { lineBreak: false });
+      doc.restore();
 
-      // Divider line between columns
-      doc.moveTo(MID + 4, rowY + 22).lineTo(MID + 4, rowY + rowHeight - 4)
-         .strokeColor(C.border).lineWidth(0.3).stroke();
+      // ── Text area ──
+      const textY = rowY + 26;
+      const leftX = L + 8;
+      const rightX = MID + 12;
+      const colW = COL_W - 20;
 
-      // Original text (left column)
-      const textY = rowY + 24;
+      // Column labels
+      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(C.light)
+         .text('ORIGINAL', leftX, textY, { lineBreak: false });
+      doc.text('OPTIMIERT', rightX, textY, { lineBreak: false });
+
+      const bodyY = textY + 12;
+
+      // Left column: original text
       doc.font('Helvetica').fontSize(8.5).fillColor(C.text)
-         .text(origText, L + 8, textY, { width: COL_W - 16, lineGap: 2 });
+         .text(origText, leftX, bodyY, { width: colW, lineGap: 2 });
+      const leftBottom = doc.y;
 
-      // Optimized text (right column) — with diff highlighting
-      if (changed && diffs.length > 0) {
-        let cx = MID + 16;
-        let cy = textY;
-        const maxW = COL_W - 16;
-        // Render diffs as inline spans
-        for (const op of diffs) {
-          const t = clean(op.text || '');
-          if (!t) continue;
-          // Split text into words for wrapping
-          if (op.type === 'equal') {
-            doc.font('Helvetica').fontSize(8.5).fillColor(C.text);
-          } else if (op.type === 'remove') {
-            doc.font('Helvetica').fontSize(8.5).fillColor(C.dangerText);
-          } else if (op.type === 'add') {
-            doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.okText);
+      // Right column: diff rendering with inline continued text
+      if (diffs.length > 0) {
+        // Filter out empty diffs
+        const validDiffs = diffs.filter(d => clean(d.text || ''));
+
+        if (validDiffs.length > 0) {
+          for (let di = 0; di < validDiffs.length; di++) {
+            const op = validDiffs[di];
+            const t = clean(op.text);
+            const isLast = di === validDiffs.length - 1;
+
+            if (op.type === 'equal') {
+              doc.font('Helvetica').fontSize(8.5).fillColor(C.text);
+            } else if (op.type === 'remove') {
+              doc.font('Helvetica').fontSize(8.5).fillColor(C.dangerText);
+            } else if (op.type === 'add') {
+              doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.okText);
+            }
+
+            if (di === 0) {
+              // First diff: set position explicitly
+              doc.text(t, rightX, bodyY, { width: colW, lineGap: 2, continued: !isLast });
+            } else {
+              doc.text(t, { continued: !isLast });
+            }
           }
-          doc.text(t, MID + 16, cy, { width: maxW, lineGap: 2, continued: false });
-          // Use last position
-          cy = doc.y;
         }
       } else {
-        doc.font('Helvetica').fontSize(8.5).fillColor(changed ? C.text : C.light)
-           .text(origText, MID + 16, textY, { width: COL_W - 16, lineGap: 2 });
+        doc.font('Helvetica').fontSize(8.5).fillColor(C.light)
+           .text(origText, rightX, bodyY, { width: colW, lineGap: 2 });
       }
+      const rightBottom = doc.y;
+
+      // Draw divider line between columns
+      const colBottom = Math.max(leftBottom, rightBottom);
+      doc.save();
+      doc.moveTo(MID + 4, rowY + 22).lineTo(MID + 4, colBottom)
+         .strokeColor(C.border).lineWidth(0.4).stroke();
+
+      // Orange left border for full row height
+      doc.rect(L, rowY + 22, 3, colBottom - rowY - 22).fill('#FF9500');
 
       // Bottom separator
-      const actualBottom = Math.max(doc.y + 8, rowY + rowHeight);
-      doc.moveTo(L, actualBottom).lineTo(R, actualBottom)
+      doc.moveTo(L, colBottom + 6).lineTo(R, colBottom + 6)
          .strokeColor(C.border).lineWidth(0.3).stroke();
-      doc.y = actualBottom + 4;
+      doc.restore();
+
+      doc.y = colBottom + 12;
     }
 
     // ── PAGE NUMBERS ──
