@@ -161,9 +161,6 @@ export default function RedlineView({ clauses, optimizations, activeMode, onMode
               {/* Two-column content */}
               <div className={styles.rlRowContent}>
                 <div className={styles.rlCol}>
-                  <div className={styles.rlColLabel}>
-                    <FileText size={12} /> Original
-                  </div>
                   <div className={styles.rlText}>
                     {clause.originalText}
                   </div>
@@ -172,9 +169,6 @@ export default function RedlineView({ clauses, optimizations, activeMode, onMode
                 <div className={styles.rlColDivider} />
 
                 <div className={styles.rlCol}>
-                  <div className={styles.rlColLabel}>
-                    <Sparkles size={12} /> Optimiert
-                  </div>
                   <div className={styles.rlText}>
                     {hasDiffs && version?.diffs ? (
                       <DiffRenderer diffs={version.diffs} />
