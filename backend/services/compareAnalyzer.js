@@ -185,23 +185,38 @@ function buildPhaseAPrompt(contractText) {
     : contractText;
 
   return {
-    system: `Du bist ein Vertragsstruktur-Analyst mit 20 Jahren Erfahrung im deutschen Vertragsrecht.
-Deine EINZIGE Aufgabe: Einen Vertrag in seine Bestandteile zerlegen und eine maschinenlesbare Vertragskarte erstellen. Du extrahierst — du bewertest NICHT.`,
-    user: `VERTRAG:
+    system: `Du bist ein Dokumenten-Analyst mit 20 Jahren Erfahrung in der Analyse geschäftlicher Dokumente (Verträge, Rechnungen, Angebote, AGBs, Vereinbarungen etc.).
+Deine EINZIGE Aufgabe: Ein Dokument in seine Bestandteile zerlegen und eine maschinenlesbare Dokumentenkarte erstellen. Du extrahierst — du bewertest NICHT.
+
+KRITISCHE REGEL: Erkenne zuerst den DOKUMENTTYP (Vertrag, Rechnung, Angebot, AGB, etc.) und passe deine Extraktion an:
+- Bei RECHNUNGEN: Absender/Empfänger = "parties", jede Leistungsposition = eigene Klausel, Zahlungsinformationen = "payment"
+- Bei VERTRÄGEN: Parteien = "parties", Paragraphen = Klauseln
+- Bei ANGEBOTEN: Anbieter/Empfänger = "parties", Leistungen/Preise = Klauseln
+- Bei ALLEN Dokumenttypen: Extrahiere JEDE Information die im Dokument steht. Schreibe NIEMALS "Keine Regelung vorhanden" wenn die Information im Dokument steht — egal in welchem Format sie vorliegt.
+
+WICHTIG: Auch wenn ein Dokument keine §§-Paragraphen hat, hat es IMMER Abschnitte/Bereiche die du extrahieren kannst (Header, Positionen, Summen, Zahlungsdaten, Kontaktdaten etc.).`,
+    user: `DOKUMENT:
 """
 ${text}
 """
 
-Erstelle für JEDEN Paragraphen/Abschnitt einen Eintrag (maximal ${MAX_CLAUSES} Klauseln — bei >40 Abschnitten thematisch zusammenfassen):
-- id: "{area}_{nummer}" (z.B. "termination_1")
-- area: parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other
-- section: Exakte Fundstelle ("§5 Abs. 2")
-- title: Kurzer Titel
-- originalText: VOLLSTÄNDIGER wörtlicher Klauseltext — den KOMPLETTEN Absatz/Paragraphen aus dem Vertrag zitieren. NIEMALS mit "..." abkürzen oder Teile weglassen. Jeder Satz muss vollständig sein
-- summary: 1 Satz in einfacher Sprache
-- keyValues: Alle konkreten Werte als Key-Value-Paare (Fristen, Beträge, %, Daten, Limits)
+SCHRITT 1 — Erkenne den Dokumenttyp (Vertrag, Rechnung, Angebot, AGB, Vereinbarung, etc.)
 
-Plus: parties[], subject, contractType, metadata {duration, startDate, governingLaw, jurisdiction, language}
+SCHRITT 2 — Erstelle für JEDEN Abschnitt/Bereich/Position einen Eintrag (maximal ${MAX_CLAUSES} Einträge — bei >40 thematisch zusammenfassen):
+- id: "{area}_{nummer}" (z.B. "payment_1", "parties_1")
+- area: parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other
+  Bei Rechnungen/Angeboten: Nutze "parties" für Absender/Empfänger, "payment" für Beträge/Positionen/Zahlungsdaten, "subject" für Leistungsbeschreibungen, "other" für alles Weitere
+- section: Exakte Fundstelle (§-Verweis, Positionsnummer, Abschnittsname, oder "Header"/"Summenblock"/"Leistungsposition X")
+- title: Kurzer Titel
+- originalText: VOLLSTÄNDIGER wörtlicher Text — den KOMPLETTEN Abschnitt aus dem Dokument zitieren. NIEMALS mit "..." abkürzen oder Teile weglassen. Jeder Satz muss vollständig sein
+- summary: 1 Satz in einfacher Sprache
+- keyValues: Alle konkreten Werte als Key-Value-Paare (Fristen, Beträge, %, Daten, Limits, Nummern)
+
+SCHRITT 3 — Extrahiere Parteien und Metadaten:
+- parties[]: ALLE genannten Personen/Firmen mit Rolle. Bei Rechnungen: "Rechnungssteller" und "Rechnungsempfänger". Bei Verträgen: "Auftraggeber"/"Auftragnehmer". NIEMALS leer lassen wenn Namen im Dokument stehen!
+- subject: Worum geht es (Steuerberatungsleistungen, Softwareentwicklung, Miete, etc.)
+- contractType: Der erkannte Dokumenttyp (z.B. "Rechnung", "Dienstleistungsvertrag", "Angebot", "AGB")
+- metadata: Ergänzende Infos
 
 Antworte NUR mit validem JSON:
 {
@@ -212,7 +227,8 @@ Antworte NUR mit validem JSON:
   "metadata": {"duration": "string|null", "startDate": "string|null", "governingLaw": "string|null", "jurisdiction": "string|null", "language": "string|null"}
 }
 
-WICHTIG für originalText: Zitiere den VOLLSTÄNDIGEN Wortlaut aus dem Vertrag. KEINE Abkürzung mit "...". Jeder Satz muss komplett sein.
+WICHTIG für originalText: Zitiere den VOLLSTÄNDIGEN Wortlaut aus dem Dokument. KEINE Abkürzung mit "...". Jeder Satz muss komplett sein.
+WICHTIG für parties: Extrahiere IMMER alle Parteien/Personen/Firmen die im Dokument genannt werden — mit korrekten Rollen.
 Null für fehlende Infos. NICHTS erfinden.`
   };
 }
@@ -329,50 +345,62 @@ function buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode
   const rawText2 = text2.length > maxRawLen ? smartTruncate(text2, maxRawLen) : text2;
 
   return {
-    system: `Du bist ein erfahrener Vertragsanwalt mit 20+ Jahren Praxis im deutschen Vertragsrecht. Dein Mandant bezahlt dich 400 EUR/Stunde für eine gründliche Erstberatung.
+    system: `Du bist ein erfahrener Dokumenten- und Vertragsanalyst mit 20+ Jahren Praxis. Dein Mandant bezahlt dich 400 EUR/Stunde für eine gründliche Erstberatung.
 
 ${profileHint}
+
+DOKUMENTTYP-ERKENNUNG (KRITISCH — als ERSTES durchführen):
+Erkenne den Dokumenttyp aus den Vertragskarten (contractType-Feld). Passe deine GESAMTE Analyse an:
+
+- VERTRÄGE: Analysiere Klauseln, Rechte, Pflichten, Risiken wie ein Anwalt.
+- RECHNUNGEN: Vergleiche Leistungspositionen, Beträge, Gebühren, Steuersätze, Zahlungsbedingungen. KEINE "fehlenden Klauseln" bemängeln die in Rechnungen nicht üblich sind (z.B. Haftung, Kündigung, Datenschutz). Fokus auf: Sind die Leistungen korrekt berechnet? Stimmen die Beträge? Welche Rechnung ist günstiger?
+- ANGEBOTE: Vergleiche Preise, Leistungsumfang, Konditionen, Gültigkeitsdauer.
+- AGBs: Analysiere wie Verträge, aber mit Fokus auf Verbraucherrechte (§§305-310 BGB).
+
+WICHTIG: Wenn BEIDE Dokumente Rechnungen/Angebote sind, bewerte NICHT nach Vertragslogik.
+Sage NICHT "Keine Regelung vorhanden" für Bereiche die in diesem Dokumenttyp nicht relevant sind.
+Vergleiche stattdessen das was tatsächlich in den Dokumenten steht.
+
+KRITISCHE REGEL FÜR DATENGENAUIGKEIT:
+- Wenn eine Information in BEIDEN Dokumenten vorhanden ist, sage NIEMALS dass sie in einem fehlt.
+- Lies die Vertragskarten UND den Volltext sorgfältig. Wenn die Vertragskarte "Keine Regelung" sagt, aber der Volltext die Info enthält, nutze den VOLLTEXT als Quelle der Wahrheit.
+- Vertragsparteien/Absender/Empfänger stehen IMMER im Header — prüfe beide Dokumente sorgfältig.
 
 DEIN KOMMUNIKATIONSSTIL:
 - Du sprichst direkt mit deinem Mandanten: "Für Sie bedeutet das...", "Sie müssen hier aufpassen..."
 - Du nennst konkrete Zahlen, Szenarien und Beispiele aus der Praxis
-- Du bist ehrlich und klar — wenn ein Vertrag schlecht ist, sagst du das deutlich
+- Du bist ehrlich und klar — wenn ein Dokument schlechter ist, sagst du das deutlich
 - Du vermeidest JEDE Form von generischem Fülltext
-- Wenn eine Klausel fehlt, erklärst du welche gesetzliche Regelung dann greift
+- Bei Verträgen: Wenn eine Klausel fehlt, erklärst du welche gesetzliche Regelung dann greift
+- Bei Rechnungen: Fokussiere auf Preisunterschiede, Leistungsumfang, und korrekte Berechnung
 
-BEWERTUNGSLOGIK FÜR KLAUSELN (KRITISCH — befolge diese Regeln exakt):
+BEWERTUNGSLOGIK (KRITISCH — befolge diese Regeln exakt):
 
-1. Fehlt eine rechtlich notwendige Klausel (z.B. Datenschutz, Haftung, Gerichtsstand),
-   ist dies IMMER ein Risiko — NIEMALS ein Vorteil. Fehlende Klauseln bedeuten
-   Rechtsunsicherheit, nicht Schutz.
+1. Bei VERTRÄGEN: Fehlt eine rechtlich notwendige Klausel, ist dies ein Risiko.
+   Bei RECHNUNGEN/ANGEBOTEN: "Fehlende Klauseln" (Haftung, Kündigung etc.) sind KEIN Risiko — das gehört nicht in eine Rechnung.
 
-2. Ist eine Klausel vorhanden, prüfe ZWEI Ebenen:
+2. Ist eine Information vorhanden, prüfe ZWEI Ebenen:
    - Ebene 1: Existenz (vorhanden = grundsätzlich gut)
-   - Ebene 2: Qualität (Klarheit, Zweckbindung, Umfang, Marktüblichkeit)
-   Eine vorhandene aber schwache Klausel ist BESSER als eine fehlende Klausel.
+   - Ebene 2: Qualität (Klarheit, Vollständigkeit, Marktüblichkeit)
 
-3. Bewerte Klauseln kontextabhängig zum VERTRAGSTYP:
-   - Bei Finanzverträgen (Factoring, Leasing, Darlehen): Kosten, Gebühren, Zinsen,
-     Limits und Haftung für Ausfälle sind WICHTIGER als Standardklauseln
-   - Bei Dienstleistungsverträgen: SLAs, Haftung, Gewährleistung sind entscheidend
+3. Bewerte kontextabhängig zum DOKUMENTTYP:
+   - Bei Rechnungen: Leistungspositionen, Berechnungsgrundlagen (StBVV, HOAI etc.), Steuersätze, Zahlungsfristen
+   - Bei Finanzverträgen: Kosten, Gebühren, Zinsen, Limits, Haftung
+   - Bei Dienstleistungsverträgen: SLAs, Haftung, Gewährleistung
    - Bei Kaufverträgen: Gewährleistung, Sachmängelhaftung, Lieferbedingungen
-   - Datenschutz, Gerichtsstand, Sprache sind selten entscheidend für die
-     WIRTSCHAFTLICHE Bewertung — überbewerte sie nicht
 
 4. FINANZIELLE AUSWIRKUNGEN (bei jedem relevanten Unterschied prüfen):
-   - Direkte Kosten (Gebühren, Zinsen, Provisionen)
+   - Direkte Kosten (Gebühren, Zinsen, Provisionen, Rechnungsbeträge)
    - Wirtschaftliche Risiken (Haftung, Selbstbehalt, Forderungsausfälle)
-   - Liquiditätsauswirkungen (Zahlungsfristen, Ankauflimits, Kündigungsfristen)
-   - Opportunitätskosten (Wettbewerbsverbote, Exklusivität)
+   - Liquiditätsauswirkungen (Zahlungsfristen, Fälligkeiten)
    Nenne KONKRETE EUR-Beträge oder Prozentsätze wenn möglich.
 
 5. PRIORISIERUNG der Unterschiede (in dieser Reihenfolge):
-   1. Kosten & Gebühren
-   2. Haftung & Risiko
-   3. Kündigung & Flexibilität
-   4. Zahlungsbedingungen
-   5. Gewährleistung
-   6. Sonstige Klauseln (Datenschutz, Gerichtsstand etc.)
+   1. Kosten & Gebühren & Beträge
+   2. Leistungsumfang & Positionen
+   3. Haftung & Risiko (nur bei Verträgen)
+   4. Zahlungsbedingungen & Fristen
+   5. Sonstige Unterschiede
 
 Antworte ausschließlich mit validem JSON.`,
 
@@ -380,51 +408,70 @@ Antworte ausschließlich mit validem JSON.`,
 
 ${perspectiveBlock}
 
-BRANCHENKONTEXT — WICHTIG:
-Erkenne zuerst den VERTRAGSTYP beider Verträge (z.B. Factoringvertrag, NDA, Mietvertrag, SaaS-Vertrag).
-Passe deine Analyse an den Vertragstyp an:
-- Factoringvertrag: Gebührenstruktur, Ankaufquote, Selbstbehalt, Bonitätsprüfung, Forderungsabtretung, Haftung für Forderungsausfälle, Ankauflimits sind wirtschaftlich ENTSCHEIDEND
+DOKUMENTTYP-ERKENNUNG — WICHTIG:
+Erkenne zuerst den DOKUMENTTYP beider Dokumente aus den Dokumentenkarten (contractType-Feld).
+
+Bei VERTRÄGEN — passe Analyse an den Vertragstyp an:
+- Factoringvertrag: Gebührenstruktur, Ankaufquote, Selbstbehalt, Bonitätsprüfung, Forderungsabtretung
 - Dienstleistungsvertrag: SLAs, Leistungsumfang, Haftungsbegrenzung, Abnahme
-- Kaufvertrag: Gewährleistung, Sachmängel, Lieferbedingungen, Rügepflicht
+- Kaufvertrag: Gewährleistung, Sachmängelhaftung, Lieferbedingungen, Rügepflicht
 - Mietvertrag: Mietanpassung, Nebenkosten, Instandhaltung, Kündigungsschutz
 - Software/SaaS: Lizenzumfang, Verfügbarkeit, Datenmigration, Vendor-Lock-in
-Die WIRTSCHAFTLICH relevanten Klauseln des jeweiligen Vertragstyps MÜSSEN bei Severity und Reihenfolge priorisiert werden.
 
-KONTEXT — Strukturierte Vertragskarten:
-VERTRAGSKARTE 1:
+Bei RECHNUNGEN — völlig andere Analyse-Logik:
+- Vergleiche Leistungspositionen: Welche Leistungen tauchen in beiden auf? Welche nur in einer?
+- Vergleiche Beträge: Preise pro Position, Nettobetrag, Umsatzsteuer, Bruttobetrag
+- Berechnungsgrundlagen: StBVV-Sätze, Gegenstandswerte, Multiplikatoren
+- Zahlungsbedingungen: Fälligkeitsdaten, Zahlungsart, Bankverbindung
+- KEINE Bewertung nach Vertragslogik (Haftung, Kündigung, Datenschutz sind irrelevant)
+- Beide Rechnungen haben Parteien (Absender + Empfänger) — sage NIEMALS "Keine Regelung" wenn die Info im Dokument steht
+
+Bei ANGEBOTEN — Fokus auf Preis-Leistungs-Vergleich:
+- Leistungsumfang, Konditionen, Preise, Gültigkeit
+
+Die WIRTSCHAFTLICH relevanten Aspekte des jeweiligen Dokumenttyps MÜSSEN bei Severity und Reihenfolge priorisiert werden.
+
+KONTEXT — Strukturierte Dokumentenkarten:
+DOKUMENTENKARTE 1:
 ${JSON.stringify(map1, null, 1)}
 
-VERTRAGSKARTE 2:
+DOKUMENTENKARTE 2:
 ${JSON.stringify(map2, null, 1)}
 
-VOLLTEXT VERTRAG 1 (Referenz):
+VOLLTEXT DOKUMENT 1 (Referenz — bei Widersprüchen zur Dokumentenkarte hat der VOLLTEXT Vorrang):
 """
 ${rawText1}
 """
 
-VOLLTEXT VERTRAG 2 (Referenz):
+VOLLTEXT DOKUMENT 2 (Referenz — bei Widersprüchen zur Dokumentenkarte hat der VOLLTEXT Vorrang):
 """
 ${rawText2}
 """
 
 ${clauseMatchContext}
-WICHTIG — Finde MÖGLICHST VIELE echte Unterschiede (typisch sind 6-10 bei ähnlichen Verträgen).
+DATENGENAUIGKEITS-CHECK (VOR der Analyse durchführen):
+1. Lies BEIDE Volltexte komplett durch
+2. Prüfe: Stehen in BEIDEN Dokumenten Parteien/Absender/Empfänger? → Wenn ja, sage NIEMALS "Keine Regelung" für Parteien
+3. Prüfe: Stehen in BEIDEN Dokumenten Leistungsbeschreibungen? → Wenn ja, sage NIEMALS "Keine Regelung" für Leistungen
+4. Nur wenn eine Information TATSÄCHLICH in einem Dokument fehlt (nicht im Volltext vorkommt), darfst du "Keine Regelung vorhanden" schreiben
+
+WICHTIG — Finde MÖGLICHST VIELE echte Unterschiede (typisch sind 6-10 bei ähnlichen Dokumenten).
 Jeder Zahlenunterschied (Fristen, Beträge, Dauer) ist ein EIGENER Eintrag.
-Ein einzelner § kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
+Ein einzelner Abschnitt kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
 
 DEINE AUFGABE — 8 SCHRITTE:
 
 SCHRITT 1 — UNTERSCHIEDE (maximal ${MAX_DIFFERENCES}, nach Severity priorisiert):
-Gehe BEIDE Verträge Klausel für Klausel durch. Für JEDEN echten Unterschied:
+Gehe BEIDE Dokumente Abschnitt für Abschnitt durch. Für JEDEN echten Unterschied:
 
 {
-  "category": "Rechtskategorie",
-  "section": "§-Fundstelle",
-  "contract1": "Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: 'Keine Regelung vorhanden'",
-  "contract2": "Wörtliches Zitat (max 2 Sätze). Bei fehlender Klausel: 'Keine Regelung vorhanden'",
+  "category": "Kategorie (z.B. Vergütung, Leistungsumfang, Parteien, Zahlungsbedingungen, etc.)",
+  "section": "Fundstelle (§-Verweis, Positionsnummer, oder Abschnittsname)",
+  "contract1": "Wörtliches Zitat (max 2 Sätze). NUR 'Keine Regelung vorhanden' wenn die Info TATSÄCHLICH im gesamten Dokument-Volltext NICHT vorkommt",
+  "contract2": "Wörtliches Zitat (max 2 Sätze). NUR 'Keine Regelung vorhanden' wenn die Info TATSÄCHLICH im gesamten Dokument-Volltext NICHT vorkommt",
   "severity": "low|medium|high|critical",
   "explanation": "4-6 Sätze. Sprich Mandanten DIREKT an. KONKRETE Zahlen, EUR-Beträge, Szenarien.",
-  "impact": "1 Satz juristische Einordnung MIT §§-Verweisen",
+  "impact": "1 Satz Einordnung (bei Verträgen: juristische §§-Verweise; bei Rechnungen: wirtschaftliche Auswirkung)",
   "recommendation": "KONKRETE Aktion — nicht 'Erwägen Sie'",
   "clauseArea": "parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other",
   "semanticType": "missing|conflicting|weaker|stronger|different_scope",
@@ -432,41 +479,44 @@ Gehe BEIDE Verträge Klausel für Klausel durch. Für JEDEN echten Unterschied:
   "marketContext": "Über/Unter/Entspricht Marktstandard oder null"
 }
 
-REGEL: Identische/sinngemäß gleiche Klauseln NICHT aufnehmen. Nur ECHTE Abweichungen.
+REGEL: Identische/sinngemäß gleiche Inhalte NICHT aufnehmen. Nur ECHTE Abweichungen.
+REGEL: "Keine Regelung vorhanden" nur bei TATSÄCHLICH fehlenden Informationen — NIEMALS wenn die Info im Volltext steht.
 
-SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
+SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Dokument):
 MIT konkreten Zahlen und Fundstellen.
+Bei Rechnungen: z.B. "Detaillierte Auflistung aller Positionen", "Günstigerer Gesamtpreis", "Klare Berechnungsgrundlage nach StBVV"
 
-SCHRITT 3 — RISIKO-LEVEL pro Vertrag: "low"|"medium"|"high"
+SCHRITT 3 — RISIKO-LEVEL pro Dokument: "low"|"medium"|"high"
+Bei Rechnungen: "low" wenn korrekt berechnet, "medium" bei unklaren Positionen, "high" bei Berechnungsfehlern oder fehlenden Pflichtangaben.
 
-SCHRITT 4 — OVERALL SCORE pro Vertrag (0-100)
+SCHRITT 4 — OVERALL SCORE pro Dokument (0-100)
 SCORE-REGELN (STRENG BEFOLGEN):
-- Zähle die Unterschiede: Welcher Vertrag hat MEHR high/critical Severity-Punkte GEGEN sich?
-- Der Vertrag mit mehr schweren Schwächen MUSS einen deutlich niedrigeren Score haben.
-- MINIMUM 15 Punkte Differenz wenn ein Vertrag klar besser ist (z.B. 80 vs 60, NICHT 75 vs 70).
-- Nutze die volle Skala: 40-90. Ein Vertrag mit critical Risiken darf NICHT über 65 liegen.
-- Berechne den Score NACH den Unterschieden, nicht vorher.
+- Zähle die Unterschiede: Welches Dokument hat MEHR high/critical Severity-Punkte GEGEN sich?
+- Das Dokument mit mehr schweren Schwächen MUSS einen deutlich niedrigeren Score haben.
+- MINIMUM 15 Punkte Differenz wenn ein Dokument klar besser ist (z.B. 80 vs 60, NICHT 75 vs 70).
+- Nutze die volle Skala: 40-90. Ein Dokument mit critical Problemen darf NICHT über 65 liegen.
+- Bei Rechnungen: Score = Kombination aus Preis-Leistung, Transparenz, Vollständigkeit.
 
 SCHRITT 5 — GESAMTURTEIL: 6-8 Sätze Fazit wie am Ende einer Erstberatung.
 
-SCHRITT 6 — KATEGORIE-SCORES (0-100 pro Vertrag):
-- fairness: Ausgewogenheit der Regelungen
-- riskProtection: Schutz vor Risiken
-- flexibility: Flexibilität und Anpassungsmöglichkeiten
-- completeness: Vollständigkeit der Regelungen
-- clarity: Klarheit und Verständlichkeit
+SCHRITT 6 — KATEGORIE-SCORES (0-100 pro Dokument):
+- fairness: Bei Verträgen: Ausgewogenheit. Bei Rechnungen: Preis-Leistungs-Verhältnis
+- riskProtection: Bei Verträgen: Risikoschutz. Bei Rechnungen: Korrekte Berechnung, keine versteckten Kosten
+- flexibility: Bei Verträgen: Anpassungsmöglichkeiten. Bei Rechnungen: Zahlungskonditionen
+- completeness: Vollständigkeit der Angaben (Positionen, Berechnungen, Pflichtangaben)
+- clarity: Klarheit und Verständlichkeit der Darstellung
 
-SCHRITT 7 — RISIKO-ANALYSE (Legal Reasoning Chain):
-Für jedes Risiko wende diese Denkschritte an:
-  a) FAKT: Was steht im Vertrag (oder fehlt)?
-  b) RECHTLICHE EINORDNUNG: Welche Norm/§§ ist relevant?
-  c) KONSEQUENZ: Was passiert im Streitfall konkret?
+SCHRITT 7 — RISIKO-/PROBLEM-ANALYSE (Reasoning Chain):
+Für jedes Risiko/Problem wende diese Denkschritte an:
+  a) FAKT: Was steht im Dokument (oder fehlt)?
+  b) EINORDNUNG: Bei Verträgen: relevante Norm/§§. Bei Rechnungen: Berechnungsgrundlage (StBVV, HOAI etc.)
+  c) KONSEQUENZ: Was bedeutet das konkret?
   d) WIRTSCHAFTLICHE AUSWIRKUNG: Welcher EUR-Betrag / welches % ist betroffen?
-  e) BEWERTUNG: Wie schwer wiegt das im Kontext dieses VERTRAGSTYPS?
+  e) BEWERTUNG: Wie schwer wiegt das im Kontext dieses DOKUMENTTYPS?
 
-WICHTIG: Standardmäßige Klauseln (z.B. Datenverarbeitung bei Factoring für Bonitätsprüfung)
-sind KEIN hohes Risiko — nur wenn Zweckbindung oder Umfang ungewöhnlich sind.
-Fehlende Klauseln sind IMMER ein Risiko (missing_protection).
+Bei VERTRÄGEN: Fehlende Klauseln sind ein Risiko (missing_protection).
+Bei RECHNUNGEN: Fehlende Pflichtangaben (§14 UStG) sind ein Problem. Fehlende Vertragsklauseln (Haftung, Kündigung) sind KEIN Problem — das gehört nicht in eine Rechnung.
+Standardmäßige Angaben sind KEIN Risiko — nur wenn etwas ungewöhnlich oder falsch ist.
 
 {
   "clauseArea": "area",
