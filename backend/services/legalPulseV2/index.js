@@ -214,6 +214,9 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     if (docMeta.contractTypeConfidence < 50) {
       console.log(`[PulseV2] Low contractType confidence (${docMeta.contractTypeConfidence}) — downgrading uncertain findings`);
       for (const f of analysisResult.clauseFindings) {
+        if (f.severity === 'high' && f.confidence < 85) {
+          f.severity = 'medium';
+        }
         if (f.severity === 'medium' && f.confidence < 80) {
           f.severity = 'low';
         }

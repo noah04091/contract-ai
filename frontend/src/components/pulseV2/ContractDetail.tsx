@@ -75,10 +75,17 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
   // Secondary findings: low + info, collapsed by default
   const secondaryFindings = findings.filter(f => f.severity === 'low' || f.severity === 'info');
 
-  // Score label
+  // Score label + context description
   const score = result.scores?.overall ?? 0;
   const scoreLabel = score >= 80 ? 'Gut' : score >= 60 ? 'Akzeptabel' : score >= 40 ? 'Bedenklich' : 'Kritisch';
   const scoreLabelColor = score >= 80 ? '#15803d' : score >= 60 ? '#d97706' : score >= 40 ? '#ea580c' : '#dc2626';
+  const scoreDescription = score >= 80
+    ? 'Solider Vertrag ohne wesentliche Risiken.'
+    : score >= 60
+      ? `Solider Vertrag mit ${criticalCount + highCount > 0 ? 'einigen wichtigen Punkten' : 'einseitigen Klauseln'}. Keine akuten Risiken.`
+      : score >= 40
+        ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt' : 'wichtigen Punkten'}, die gepr\u00fcft werden sollten.`
+        : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend pr\u00fcfen.'}`;
 
   return (
     <div>
@@ -213,6 +220,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                 )}
               </span>
             )}
+          </div>
+
+          {/* Score context */}
+          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+            {scoreDescription}
           </div>
 
           {/* Meta */}
