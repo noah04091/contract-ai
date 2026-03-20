@@ -1,10 +1,10 @@
 // 📁 components/LegalLens/LegalLensViewer.tsx
 // Haupt-Komponente für Legal Lens Feature
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw } from 'lucide-react';
-import { useLegalLensV12 as useLegalLens } from '../../hooks/useLegalLensV12';
+import { useLegalLensV12 as useLegalLens, generateContentHash } from '../../hooks/useLegalLensV12';
 import ClauseList from './ClauseList';
 import ClauseSkeleton from './ClauseSkeleton';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
@@ -14,6 +14,7 @@ import ContractOverview from './ContractOverview';
 import IndustrySelector from './IndustrySelector';
 import NegotiationChecklist from './NegotiationChecklist';
 import ExportAnalysisModal from './ExportAnalysisModal';
+import RiskScoreGauge from './RiskScoreGauge';
 import * as legalLensAPI from '../../services/legalLensAPI';
 import type { IndustryType } from '../../types/legalLens';
 import styles from '../../styles/LegalLensV12.module.css';
@@ -208,9 +209,40 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     isStreaming,
     streamingProgress,
     streamingStatus,
+    deselectClause,
     // ✅ Phase 1 Schritt 4: Queue-Priorisierung
     bumpClauseInQueue
   } = useLegalLens();
+
+  // ============================================
+  // RISK SCORE GAUGE — Gesamtrisiko aus Cache berechnen
+  // ============================================
+  const overallRiskScore = useMemo(() => {
+    const cacheEntries = Object.entries(analysisCache);
+    if (cacheEntries.length === 0) return null;
+
+    // Nur Einträge der aktuellen Perspektive zählen
+    const perspectiveEntries = cacheEntries.filter(([key]) =>
+      key.endsWith(`-${currentPerspective}`)
+    );
+    if (perspectiveEntries.length === 0) return null;
+
+    let totalScore = 0;
+    let count = 0;
+    for (const [, analysis] of perspectiveEntries) {
+      const a = analysis as { riskAssessment?: { score: number }; actionLevel?: string };
+      if (a.riskAssessment?.score != null) {
+        totalScore += a.riskAssessment.score;
+        count++;
+      } else if (a.actionLevel) {
+        // Fallback: actionLevel → Score
+        const fallback = a.actionLevel === 'reject' ? 80 : a.actionLevel === 'negotiate' ? 50 : 20;
+        totalScore += fallback;
+        count++;
+      }
+    }
+    return count > 0 ? Math.round(totalScore / count) : null;
+  }, [analysisCache, currentPerspective]);
 
   // ============================================
   // KEYBOARD NAVIGATION (Opt 2: Wow-Effect)
@@ -260,6 +292,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           e.preventDefault();
           newIndex = analyzableClauses.length - 1;
           break;
+
+        case 'Escape':
+          e.preventDefault();
+          if (selectedClause) {
+            deselectClause();
+          }
+          return;
 
         default:
           return;
@@ -387,19 +426,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // Bereits eine Analyse läuft → abwarten
     if (isAnalyzing) return;
 
-    // ✅ FIX Issue #1: Content-basierter Cache-Key (gleicher Hash für gleichen Text)
-    const generateContentHash = (text: string): string => {
-      const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 200);
-      let hash = 0;
-      for (let i = 0; i < normalized.length; i++) {
-        const char = normalized.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      return Math.abs(hash).toString(16);
-    };
-
-    const cacheKey = `content-${generateContentHash(selectedClause.text)}-${currentPerspective}`;
+    // ✅ FIX Issue #1: Content-basierter Cache-Key (gleicher Hash wie im Hook)
+    const cacheKey = `v2-${generateContentHash(selectedClause.text)}-${currentPerspective}`;
 
     // Direkter Cache-Check
     const isAlreadyCached = cacheKey in analysisCache;
@@ -1241,6 +1269,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <Eye size={20} />
           </div>
           <h1 className={styles.title}>Legal Lens: {contractName}</h1>
+          {overallRiskScore !== null && (
+            <RiskScoreGauge score={overallRiskScore} size={40} strokeWidth={3} />
+          )}
         </div>
 
         <div className={styles.headerRight}>
@@ -1418,6 +1449,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
                 isStreaming={isStreaming}
                 streamingProgress={streamingProgress}
+                analysisCache={analysisCache as Record<string, unknown>}
+                currentPerspective={currentPerspective}
               />
             </div>
           ) : (
@@ -1518,6 +1551,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               cachedClauseIds={Object.keys(analysisCache).map(key => key.split('-')[0])}
               isStreaming={isStreaming}
               streamingProgress={streamingProgress}
+              analysisCache={analysisCache as Record<string, unknown>}
+              currentPerspective={currentPerspective}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
