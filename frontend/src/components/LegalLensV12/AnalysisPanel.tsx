@@ -90,6 +90,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     }
   }, [chatHistory, isChatting]);
 
+  // ✅ Feature 4: Auto-Expand bei High-Risk Klauseln
+  const analysisActionLevel = analysis?.actionLevel ||
+    analysis?.perspectives?.[currentPerspective]?.actionLevel;
+  useEffect(() => {
+    if (analysisActionLevel === 'reject') {
+      setExpandedSections(new Set(['explanation', 'worstCase', 'risks']));
+    } else {
+      setExpandedSections(new Set(['explanation']));
+    }
+  }, [analysisActionLevel, analysis]);
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {
       const newSet = new Set(prev);
@@ -241,15 +252,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const riskAssessment = perspectiveData?.riskAssessment || analysisWithExtras.riskAssessment;
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
-
-  // ✅ Feature 4: Auto-Expand bei High-Risk Klauseln
-  useEffect(() => {
-    if (actionLevel === 'reject') {
-      setExpandedSections(new Set(['explanation', 'worstCase', 'risks']));
-    } else {
-      setExpandedSections(new Set(['explanation']));
-    }
-  }, [actionLevel, analysis]);
 
   // ✅ FIX Issue #2: "Auf einen Blick" zeigt NUR actionReason, NICHT die Erklärung
   // Die detaillierte Erklärung kommt in "Was bedeutet das?" - KEINE DUPLIZIERUNG!
