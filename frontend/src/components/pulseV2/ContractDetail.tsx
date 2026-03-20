@@ -10,14 +10,9 @@ interface ContractDetailProps {
   result: PulseV2Result;
 }
 
-type FilterSeverity = 'all' | 'critical' | 'high' | 'medium' | 'low' | 'info';
-type FilterType = 'all' | 'risk' | 'compliance' | 'opportunity' | 'information';
-
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
-  const [filterSeverity, setFilterSeverity] = useState<FilterSeverity>('all');
-  const [filterType, setFilterType] = useState<FilterType>('all');
 
   // Build contract name map for portfolio insights
   const [contractNames, setContractNames] = useState<Map<string, string>>(new Map());
@@ -77,12 +72,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
   // Medium findings: visible but secondary
   const mediumFindings = findings.filter(f => f.severity === 'medium');
 
-  // Filtered findings for expanded view
-  const filteredFindings = findings.filter(f => {
-    if (filterSeverity !== 'all' && f.severity !== filterSeverity) return false;
-    if (filterType !== 'all' && f.type !== filterType) return false;
-    return true;
-  });
+  // Secondary findings: low + info, collapsed by default
+  const secondaryFindings = findings.filter(f => f.severity === 'low' || f.severity === 'info');
 
   // Score label
   const score = result.scores?.overall ?? 0;
@@ -539,22 +530,4 @@ const SeverityDot: React.FC<{ color: string; label: string; count: number }> = (
     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
     <span style={{ color: '#4b5563' }}>{count} {label}</span>
   </div>
-);
-
-const FilterBtn: React.FC<{ active: boolean; onClick: () => void; label: string }> = ({ active, onClick, label }) => (
-  <button
-    onClick={onClick}
-    style={{
-      padding: '3px 8px',
-      fontSize: 11,
-      borderRadius: 4,
-      border: active ? '1px solid #3b82f6' : '1px solid #e5e7eb',
-      background: active ? '#eff6ff' : '#fff',
-      color: active ? '#2563eb' : '#6b7280',
-      cursor: 'pointer',
-      fontWeight: active ? 600 : 400,
-    }}
-  >
-    {label}
-  </button>
 );
