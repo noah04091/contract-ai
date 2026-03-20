@@ -29,7 +29,7 @@ const {
 
 const MAX_LAW_CHANGES = 10;
 const MAX_CONTRACT_MATCHES = 50;
-const IMPACT_CONFIDENCE_THRESHOLD = 60;
+const IMPACT_CONFIDENCE_THRESHOLD = 75;
 
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).

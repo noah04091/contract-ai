@@ -67,8 +67,8 @@ export const AnalysisPipeline: React.FC<AnalysisPipelineProps> = ({
               gap: 10,
               padding: '8px 12px',
               borderRadius: 8,
-              background: stage.status === 'running' ? '#eff6ff' : stage.status === 'completed' ? '#f0fdf4' : '#f9fafb',
-              border: stage.status === 'running' ? '1px solid #bfdbfe' : '1px solid transparent',
+              background: stage.status === 'running' ? '#eff6ff' : stage.status === 'completed' ? '#f0fdf4' : stage.status === 'error' ? '#fef2f2' : '#f9fafb',
+              border: stage.status === 'running' ? '1px solid #bfdbfe' : stage.status === 'error' ? '1px solid #fecaca' : '1px solid transparent',
             }}
           >
             <span style={{ fontSize: 16 }}>{STATUS_ICONS[stage.status]}</span>
@@ -76,12 +76,17 @@ export const AnalysisPipeline: React.FC<AnalysisPipelineProps> = ({
               <div style={{
                 fontSize: 13,
                 fontWeight: stage.status === 'running' ? 600 : 400,
-                color: stage.status === 'completed' ? '#16a34a' : stage.status === 'running' ? '#2563eb' : '#6b7280',
+                color: stage.status === 'completed' ? '#16a34a' : stage.status === 'running' ? '#2563eb' : stage.status === 'error' ? '#dc2626' : '#6b7280',
               }}>
                 {stage.name}
               </div>
               {stage.status === 'running' && stage.detail && (
                 <div style={{ fontSize: 11, color: '#93c5fd', marginTop: 2 }}>
+                  {stage.detail}
+                </div>
+              )}
+              {stage.status === 'error' && stage.detail && (
+                <div style={{ fontSize: 11, color: '#f87171', marginTop: 2 }}>
                   {stage.detail}
                 </div>
               )}

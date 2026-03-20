@@ -219,8 +219,16 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
       // Mark clauses as successfully analyzed
       for (const c of batches[i]) analyzedClauseIds.add(c.id);
 
-      // Filter this batch's findings (confidence >= 50)
-      const batchFindings = (result.findings || []).filter(f => f.confidence >= 50);
+      // Decision Gate validation + confidence filter (>= 60)
+      const batchFindings = (result.findings || []).filter(f => {
+        // Gate: reject if risk is not grounded in text
+        if (f.riskGroundedInText === false) return false;
+        // Gate: reject if legal relevance is not clear (except info/opportunity types)
+        if (f.legalRelevanceClear === false && f.type !== 'information' && f.type !== 'opportunity') return false;
+        // Confidence threshold
+        if (f.confidence < 60) return false;
+        return true;
+      });
       allFindings.push(...batchFindings);
 
       // Stream findings to frontend after each batch (Progressive Rendering)
@@ -243,8 +251,8 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
     }
   }
 
-  // Filter findings with confidence < 50
-  const filteredFindings = allFindings.filter(f => f.confidence >= 50);
+  // Final filter (redundant safety — already filtered per batch, but ensures consistency)
+  const filteredFindings = allFindings.filter(f => f.confidence >= 60);
 
   // Validate affectedText against actual clause text (prevent hallucinated quotes)
   const clauseOriginalTexts = {};

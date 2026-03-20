@@ -13,6 +13,9 @@ export interface PulseV2Finding {
   enforceability?: 'valid' | 'questionable' | 'likely_invalid' | 'unknown';
   affectedTextVerified?: boolean;
   affectedTextApproximate?: boolean;
+  riskGroundedInText?: boolean;
+  legalRelevanceClear?: boolean;
+  actionNeeded?: boolean;
 }
 
 export interface PulseV2ClauseVersion {

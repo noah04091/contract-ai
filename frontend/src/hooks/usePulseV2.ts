@@ -45,7 +45,7 @@ interface PulseV2State {
 
 type PulseV2Action =
   | { type: 'START_ANALYSIS' }
-  | { type: 'PROGRESS'; progress: number; message: string; stage?: number; stageName?: string; stageComplete?: boolean }
+  | { type: 'PROGRESS'; progress: number; message: string; stage?: number; stageName?: string; stageComplete?: boolean; stageError?: boolean }
   | { type: 'ADD_FINDINGS_BATCH'; findings: PartialFinding[]; clauses: PartialClause[] }
   | { type: 'SET_CONTRACT_META'; name?: string; contractType?: string }
   | { type: 'ANALYSIS_COMPLETE'; result: PulseV2Result; resultId: string }
@@ -83,7 +83,10 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
       const stages = state.stages.map(s => {
         if (action.stage === undefined) return s;
         if (s.id === action.stage) {
-          return { ...s, status: action.stageComplete ? 'completed' as const : 'running' as const, detail: action.message };
+          const status = action.stageError ? 'error' as const
+            : action.stageComplete ? 'completed' as const
+            : 'running' as const;
+          return { ...s, status, detail: action.message };
         }
         // Mark earlier stages as completed
         const stageOrder = [1, 0, 2, 5];
@@ -267,6 +270,7 @@ export function usePulseV2() {
               stage: event.stage,
               stageName: event.stageName,
               stageComplete: event.complete,
+              stageError: raw.stageError,
             });
           } catch {
             // Skip malformed lines

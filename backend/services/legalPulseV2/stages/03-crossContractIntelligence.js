@@ -139,7 +139,7 @@ async function runCrossContractIntelligence(userId, onProgress) {
   const existingTitles = new Set(allInsights.map(p => p.title.toLowerCase()));
 
   for (const insight of (result.insights || [])) {
-    if (insight.confidence >= 60 && !existingTitles.has(insight.title.toLowerCase())) {
+    if (insight.confidence >= 70 && !existingTitles.has(insight.title.toLowerCase())) {
       allInsights.push({
         type: insight.type,
         title: insight.title,

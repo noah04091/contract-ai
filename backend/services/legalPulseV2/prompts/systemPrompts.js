@@ -25,18 +25,19 @@ Beschreibe für dich selbst:
 - Ist die Formulierung typisch oder ungewöhnlich?
 - Wer profitiert von dieser Klausel, und ist das ausgewogen?
 
-SCHRITT 2 — Risikoentscheidung (Decision Gate)
-Beantworte für jeden potenziellen Befund diese 3 Fragen:
-Q1: Ist das Risiko TATSÄCHLICH im Text vorhanden — mit konkretem Textbezug?
-Q2: Könnte die Formulierung ABSICHTLICH so gewählt sein (branchenüblich, verhandelt)?
-Q3: Würde ein deutsches Gericht dies problematisch finden, ODER liegt eine klare Abweichung von gesetzlichen Vorgaben (BGB, HGB, DSGVO), Compliance-Anforderungen oder branchenüblichen Vertragsstandards vor?
+SCHRITT 2 — Risikoentscheidung (Decision Gate — STRUKTURIERT)
+Beantworte für jeden potenziellen Befund diese 3 Fragen und gib die Antworten als STRUKTURIERTE FELDER zurück:
+
+"riskGroundedInText" (boolean): Ist das Risiko TATSÄCHLICH im Text vorhanden — mit konkretem, zitierbarem Textbezug?
+"legalRelevanceClear" (boolean): Würde ein deutsches Gericht dies problematisch finden, ODER liegt eine klare Abweichung von gesetzlichen Vorgaben (BGB, HGB, DSGVO), Compliance-Anforderungen oder branchenüblichen Vertragsstandards vor?
+"actionNeeded" (boolean): Erfordert dieser Befund eine konkrete Handlung oder Anpassung?
 
 GATE-REGEL:
-→ Q1 muss IMMER mit JA beantwortet werden. Ohne Textbezug → KEIN Finding.
-→ Q2 allein reicht NIE. Absichtlich restriktiv aber zulässig = kein Finding.
-→ Q3 oder ein klarer Compliance-/Marktstandard-Verstoß muss zusätzlich vorliegen.
-→ Kurzform: Finding NUR wenn Q1=JA UND (Q3=JA ODER klare Compliance-Abweichung).
+→ "riskGroundedInText" MUSS true sein. Ohne Textbezug → KEIN Finding.
+→ "legalRelevanceClear" oder ein klarer Compliance-Verstoß muss vorliegen.
+→ Finding NUR wenn riskGroundedInText=true UND legalRelevanceClear=true.
 → Sonst: KEIN Finding. Das ist korrekt und gewünscht.
+→ Das System validiert diese Felder automatisch — Findings mit riskGroundedInText=false werden VERWORFEN.
 
 SCHRITT 3 — Durchsetzbarkeitsanalyse (Enforceability Gate)
 Für JEDEN Befund, der das Decision Gate passiert hat, beantworte zusätzlich:
@@ -67,14 +68,23 @@ Für JEDEN Befund, der das Decision Gate passiert hat:
 - "description": Detaillierte Beschreibung (2-4 Sätze)
 - "legalBasis": Konkrete Rechtsgrundlage (z.B. "§ 307 BGB", "Art. 28 DSGVO")
 - "affectedText": EXAKTES Zitat aus der Klausel, das den Befund belegt (max 200 Zeichen). PFLICHT — ohne konkreten Textbezug KEIN Befund.
-- "confidence": 0-100
+- "confidence": 0-100 (siehe CONFIDENCE-SKALA unten)
 - "reasoning": Deine juristische Begründung aus Schritt 1+2 (3-5 Sätze: Interpretation → Marktvergleich → Entscheidung)
+- "riskGroundedInText": true/false — Hat das Risiko einen KONKRETEN Textbezug? (Decision Gate Q1)
+- "legalRelevanceClear": true/false — Ist die juristische Relevanz klar? (Decision Gate Q2/Q3)
+- "actionNeeded": true/false — Ist eine Handlung erforderlich?
 - "isIntentional": true wenn die Formulierung wahrscheinlich absichtlich so gewählt wurde
 - "enforceability": "valid" | "questionable" | "likely_invalid" | "unknown" — Ist die Klausel nach deutschem Recht durchsetzbar? Bei "likely_invalid" MUSS die konkrete Norm in "legalBasis" stehen (z.B. "§ 309 Nr. 7 BGB"). Bei "questionable" die Begründung in "reasoning" erklären.
 
 ═══════════════════════════════════════════
 QUALITÄTSREGELN
 ═══════════════════════════════════════════
+
+CONFIDENCE-SKALA:
+- 90-100: Juristisch eindeutig, konkrete Norm, klarer Textbezug, kein Interpretationsspielraum
+- 70-89: Hohe Sicherheit, plausible Rechtsgrundlage, konkreter Textbezug
+- 60-69: Begründete Einschätzung, Textbezug vorhanden, aber Interpretationsspielraum
+- <60: Zu unsicher — wird automatisch ausgefiltert. NICHT verwenden.
 
 VERBOTEN:
 - Risiken erfinden, die nicht im Text stehen
@@ -119,11 +129,15 @@ const DEEP_ANALYSIS_SCHEMA = {
           reasoning: { type: "string" },
           isIntentional: { type: "boolean" },
           enforceability: { type: "string", enum: ["valid", "questionable", "likely_invalid", "unknown"] },
+          riskGroundedInText: { type: "boolean" },
+          legalRelevanceClear: { type: "boolean" },
+          actionNeeded: { type: "boolean" },
         },
         required: [
           "clauseId", "category", "severity", "type", "title",
           "description", "legalBasis", "affectedText", "confidence",
           "reasoning", "isIntentional", "enforceability",
+          "riskGroundedInText", "legalRelevanceClear", "actionNeeded",
         ],
         additionalProperties: false,
       },
