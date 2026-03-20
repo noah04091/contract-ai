@@ -229,6 +229,13 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
         if (f.confidence < 60) return false;
         return true;
       });
+
+      // Confidence-based severity downgrade: 60-69 confidence → cap at "low"
+      for (const f of batchFindings) {
+        if (f.confidence < 70 && (f.severity === 'medium' || f.severity === 'high')) {
+          f.severity = 'low';
+        }
+      }
       allFindings.push(...batchFindings);
 
       // Stream findings to frontend after each batch (Progressive Rendering)
