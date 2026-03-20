@@ -1185,6 +1185,9 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     const pageCount = range.count;
     for (let i = range.start; i < range.start + pageCount; i++) {
       doc.switchToPage(i);
+      // Temporarily remove bottom margin to prevent PDFKit from creating new pages
+      const savedBottom = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
       doc.save();
       const fy = doc.page.height - 36;
       doc.moveTo(M, fy).lineTo(doc.page.width - M, fy).strokeColor('#F3F4F6').lineWidth(0.5).stroke();
@@ -1195,6 +1198,7 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
             width: doc.page.width - M, align: 'right', lineBreak: false
          });
       doc.restore();
+      doc.page.margins.bottom = savedBottom;
     }
 
     doc.end();
