@@ -3,8 +3,9 @@
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { FileText, Eye, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
-import type { ParsedClause, LegalLensProgress, RiskLevel } from '../../types/legalLens';
+import type { ParsedClause, LegalLensProgress, RiskLevel, ActionLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
+import HoverTooltip from './HoverTooltip';
 import styles from '../../styles/LegalLensV12.module.css';
 
 /**
@@ -65,6 +66,8 @@ interface ClauseListProps {
   cachedClauseIds?: string[];
   isStreaming?: boolean;
   streamingProgress?: number;
+  analysisCache?: { [key: string]: unknown };
+  currentPerspective?: string;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -76,7 +79,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
   onViewModeChange,
   cachedClauseIds = [],
   isStreaming = false,
-  streamingProgress = 0
+  streamingProgress = 0,
+  analysisCache = {},
+  currentPerspective = 'contractor'
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -94,6 +99,40 @@ const ClauseList: React.FC<ClauseListProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ Feature 3: Hover-Tooltip
+  const [tooltipClauseId, setTooltipClauseId] = useState<string | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getTooltipData = useCallback((clauseId: string) => {
+    const cacheKey = `${clauseId}-${currentPerspective}`;
+    const cached = analysisCache[cacheKey] as {
+      actionLevel?: ActionLevel;
+      actionReason?: string;
+      explanation?: { simple?: string; summary?: string };
+      perspectives?: Record<string, { actionLevel?: ActionLevel; actionReason?: string; explanation?: { simple?: string; summary?: string } }>;
+    } | undefined;
+    if (!cached) return null;
+    const perspective = cached.perspectives?.[currentPerspective] || cached;
+    return {
+      actionLevel: (perspective.actionLevel || 'negotiate') as ActionLevel,
+      explanation: perspective.explanation?.simple || perspective.explanation?.summary || perspective.actionReason || ''
+    };
+  }, [analysisCache, currentPerspective]);
+
+  const handleClauseMouseEnter = useCallback((clauseId: string, e: React.MouseEvent) => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    tooltipTimerRef.current = setTimeout(() => {
+      setTooltipClauseId(clauseId);
+      setTooltipPosition({ x: e.clientX, y: e.clientY });
+    }, 300);
+  }, []);
+
+  const handleClauseMouseLeave = useCallback(() => {
+    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    setTooltipClauseId(null);
+  }, []);
 
   // Gefilterte Klauseln basierend auf Suchanfrage
   const filteredClauses = useMemo(() => {
@@ -339,6 +378,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
               }}
               className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''}`}
               onClick={() => onSelectClause(clause)}
+              onMouseEnter={(e) => handleClauseMouseEnter(clause.id, e)}
+              onMouseLeave={handleClauseMouseLeave}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && onSelectClause(clause)}
@@ -477,6 +518,22 @@ const ClauseList: React.FC<ClauseListProps> = ({
           </div>
         )}
       </div>
+
+      {/* Hover Tooltip */}
+      {tooltipClauseId && (() => {
+        const data = getTooltipData(tooltipClauseId);
+        if (!data) return null;
+        const clause = safeClauses.find(c => c.id === tooltipClauseId);
+        return (
+          <HoverTooltip
+            actionLevel={data.actionLevel}
+            explanation={data.explanation}
+            clauseTitle={clause?.title || clause?.number}
+            position={tooltipPosition}
+            visible={true}
+          />
+        );
+      })()}
     </div>
   );
 };

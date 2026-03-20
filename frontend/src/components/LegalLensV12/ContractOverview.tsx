@@ -20,6 +20,7 @@ import {
   Loader2
 } from 'lucide-react';
 import type { ParsedClause, ActionLevel, RiskLevel, ClauseAnalysis, PerspectiveType } from '../../types/legalLens';
+import { generateContentHash } from '../../hooks/useLegalLensV12';
 import PerspectiveSwitcher from './PerspectiveSwitcher';
 import AnalysisPanel from './AnalysisPanel';
 import styles from '../../styles/ContractOverview.module.css';
@@ -125,26 +126,7 @@ const formatClauseTextForModal = (text: string): React.ReactNode => {
   );
 };
 
-/**
- * ✅ FIX Issue #1 & #5: Content-basierter Hash für konsistenten Cache
- * Muss dieselbe Logik verwenden wie useLegalLens.ts
- */
-const generateContentHash = (text: string): string => {
-  const normalized = text
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
-    .substring(0, 200);
-
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i++) {
-    const char = normalized.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-
-  return Math.abs(hash).toString(16);
-};
+// ✅ Feature 5: generateContentHash importiert aus useLegalLensV12
 
 // Hilfsfunktion um actionLevel aus Cache oder preAnalysis zu ermitteln
 const getClauseActionLevel = (
@@ -154,7 +136,7 @@ const getClauseActionLevel = (
 ): ActionLevel => {
   // ✅ FIX Issue #5: Content-basierter Cache-Key statt ID
   const contentHash = generateContentHash(clause.text);
-  const cacheKey = `content-${contentHash}-${perspective}`;
+  const cacheKey = `v2-${contentHash}-${perspective}`;
   const cached = analysisCache[cacheKey];
   if (cached?.actionLevel) {
     return cached.actionLevel;
@@ -225,7 +207,7 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
 
     // Prüfe ob im Cache
     const contentHash = generateContentHash(clause.text);
-    const cacheKey = `content-${contentHash}-${inlinePerspective}`;
+    const cacheKey = `v2-${contentHash}-${inlinePerspective}`;
     const cached = analysisCache[cacheKey];
 
     if (cached) {
@@ -256,7 +238,7 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
 
     // Prüfe ob im Cache
     const contentHash = generateContentHash(inlineSelectedClause.text);
-    const cacheKey = `content-${contentHash}-${perspective}`;
+    const cacheKey = `v2-${contentHash}-${perspective}`;
     const cached = analysisCache[cacheKey];
 
     if (cached) {

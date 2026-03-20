@@ -158,6 +158,7 @@ interface UseLegalLensReturn {
   // Aktionen
   parseContract: (contractId: string, forceRefresh?: boolean) => Promise<void>;
   selectClause: (clause: ParsedClause) => void;
+  deselectClause: () => void;
   analyzeClause: (streaming?: boolean) => Promise<void>;
   changePerspective: (perspective: PerspectiveType) => void;
   loadAlternatives: () => Promise<void>;
@@ -186,7 +187,7 @@ interface AnalysisCache {
  * Erzeugt einen stabilen Hash aus dem Klauseltext (unabhängig von der clause.id)
  * So matchen PDF-Klicks und Text-Klauseln mit demselben Inhalt
  */
-const generateContentHash = (text: string): string => {
+export const generateContentHash = (text: string): string => {
   // Normalisiere Text: lowercase, whitespace reduzieren, erste 500 Zeichen für weniger Kollisionen
   const normalized = text
     .toLowerCase()
@@ -565,6 +566,26 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setAlternatives([]);
     setNegotiation(null);
   }, [currentPerspective, analysisCache]);
+
+  /**
+   * Klausel-Auswahl aufheben (z.B. bei Escape-Taste)
+   */
+  const deselectClause = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current();
+      abortControllerRef.current = null;
+    }
+    lastClauseIdRef.current = null;
+    setSelectedClause(null);
+    setCurrentAnalysis(null);
+    setAlternatives([]);
+    setNegotiation(null);
+    setChatHistory([]);
+    setStreamingText('');
+    setIsAnalyzing(false);
+    setError(null);
+    setErrorInfo(null);
+  }, []);
 
   /**
    * Klausel analysieren - mit Caching
@@ -1411,6 +1432,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     analyzeAllClauses,
     cancelBatchAnalysis,
     reset,
+    deselectClause,
     // ✅ Phase 1 Schritt 4: Queue-Priorisierung
     bumpClauseInQueue
   };
