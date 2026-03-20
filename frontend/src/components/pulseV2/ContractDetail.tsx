@@ -72,8 +72,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
 
   // Top findings: only critical + high, max 3
   const topFindings = findings
-    .filter(f => f.severity === 'critical' || f.severity === 'high')
-    .slice(0, 3);
+    .filter(f => f.severity === 'critical' || f.severity === 'high');
+
+  // Medium findings: visible but secondary
+  const mediumFindings = findings.filter(f => f.severity === 'medium');
 
   // Filtered findings for expanded view
   const filteredFindings = findings.filter(f => {
@@ -418,6 +420,32 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
         );
       })()}
 
+      {/* ═══ Weitere Hinweise (Medium) ═══ */}
+      {mediumFindings.length > 0 && (
+        <div style={{
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 14 }}>
+            Weitere Hinweise
+            <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12, marginLeft: 8 }}>
+              {mediumFindings.length} {mediumFindings.length === 1 ? 'Punkt' : 'Punkte'}
+            </span>
+          </div>
+          {mediumFindings.map((finding, idx) => (
+            <FindingCard
+              key={`med-${finding.clauseId}-${idx}`}
+              finding={finding}
+              clause={clauseMap.get(finding.clauseId)}
+              contractId={result.contractId}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ═══ Score Timeline ═══ */}
       <ScoreTrend contractId={result.contractId} />
 
@@ -427,8 +455,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
         contractNames={contractNames}
       />
 
-      {/* ═══ Alle Befunde — collapsed by default ═══ */}
-      {findings.length > 0 && (
+      {/* ═══ Weitere Details — low + info, collapsed ═══ */}
+      {secondaryFindings.length > 0 && (
         <div style={{
           background: '#fff',
           border: '1px solid #e5e7eb',
@@ -436,7 +464,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
           overflow: 'hidden',
           marginTop: 20,
         }}>
-          {/* Toggle header */}
           <button
             onClick={() => setShowAllFindings(!showAllFindings)}
             style={{
@@ -454,13 +481,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
             }}
           >
             <span>
-              Alle {findings.length} Befunde anzeigen
+              {secondaryFindings.length} {secondaryFindings.length === 1 ? 'weiteren Punkt' : 'weitere Punkte'} anzeigen
               <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
-                {criticalCount > 0 && `${criticalCount} kritisch`}
-                {criticalCount > 0 && highCount > 0 && ' · '}
-                {highCount > 0 && `${highCount} hoch`}
-                {(criticalCount > 0 || highCount > 0) && mediumCount > 0 && ' · '}
-                {mediumCount > 0 && `${mediumCount} mittel`}
+                {lowCount > 0 && `${lowCount} niedrig`}
+                {lowCount > 0 && infoCount > 0 && ' \u00b7 '}
+                {infoCount > 0 && `${infoCount} branchenüblich`}
               </span>
             </span>
             <span style={{
@@ -473,59 +498,16 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
             </span>
           </button>
 
-          {/* Expanded findings list */}
           {showAllFindings && (
             <div style={{ padding: '0 20px 20px' }}>
-              {/* Filters */}
-              <div style={{
-                display: 'flex',
-                gap: 8,
-                marginBottom: 16,
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                paddingTop: 8,
-              }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Filter:</span>
-                {(['all', 'critical', 'high', 'medium', 'low', 'info'] as FilterSeverity[]).map(s => (
-                  <FilterBtn
-                    key={s}
-                    active={filterSeverity === s}
-                    onClick={() => setFilterSeverity(s)}
-                    label={s === 'all' ? 'Alle' : s === 'critical' ? 'Kritisch' : s === 'high' ? 'Hoch' : s === 'medium' ? 'Mittel' : s === 'low' ? 'Niedrig' : 'Info'}
-                  />
-                ))}
-                <span style={{ color: '#d1d5db' }}>|</span>
-                {(['all', 'risk', 'compliance', 'opportunity', 'information'] as FilterType[]).map(t => (
-                  <FilterBtn
-                    key={t}
-                    active={filterType === t}
-                    onClick={() => setFilterType(t)}
-                    label={t === 'all' ? 'Alle' : t === 'risk' ? 'Risiken' : t === 'compliance' ? 'Compliance' : t === 'opportunity' ? 'Chancen' : 'Infos'}
-                  />
-                ))}
-              </div>
-
-              {filteredFindings.length === 0 ? (
-                <div style={{
-                  textAlign: 'center',
-                  padding: 24,
-                  color: '#9ca3af',
-                  background: '#f9fafb',
-                  borderRadius: 8,
-                  fontSize: 13,
-                }}>
-                  Keine Befunde für den gewählten Filter.
-                </div>
-              ) : (
-                filteredFindings.map((finding, idx) => (
-                  <FindingCard
-                    key={`${finding.clauseId}-${idx}`}
-                    finding={finding}
-                    clause={clauseMap.get(finding.clauseId)}
-                    contractId={result.contractId}
-                  />
-                ))
-              )}
+              {secondaryFindings.map((finding, idx) => (
+                <FindingCard
+                  key={`sec-${finding.clauseId}-${idx}`}
+                  finding={finding}
+                  clause={clauseMap.get(finding.clauseId)}
+                  contractId={result.contractId}
+                />
+              ))}
             </div>
           )}
         </div>
