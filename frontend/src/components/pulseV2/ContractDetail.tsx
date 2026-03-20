@@ -89,6 +89,56 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
 
   return (
     <div>
+      {/* ═══ Quality Warning Banner ═══ */}
+      {result.qualityWarning && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '12px 16px',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: 10,
+          marginBottom: 16,
+          fontSize: 13,
+          color: '#92400e',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>&#9888;</span>
+          <div>
+            <div style={{ fontWeight: 600 }}>Eingeschränkte Dokumentqualität (Score: {result.qualityWarning.score}/100)</div>
+            <div style={{ fontSize: 12, color: '#a16207', marginTop: 2 }}>
+              {result.qualityWarning.message}. Für bessere Ergebnisse laden Sie eine höher aufgelöste PDF hoch.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Coverage Warning Banner ═══ */}
+      {result.coverage && result.coverage.percentage < 100 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '12px 16px',
+          background: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          borderRadius: 10,
+          marginBottom: 16,
+          fontSize: 13,
+          color: '#1e40af',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>&#9432;</span>
+          <div>
+            <div style={{ fontWeight: 600 }}>
+              {result.coverage.analyzed} von {result.coverage.total} Klauseln analysiert ({result.coverage.percentage}%)
+            </div>
+            <div style={{ fontSize: 12, color: '#3b82f6', marginTop: 2 }}>
+              {result.coverage.notAnalyzed} Klauseln konnten nicht vollständig ausgewertet werden.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Header: Score + Contract Overview ═══ */}
       <div style={{
         display: 'grid',
@@ -164,7 +214,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
             {scoreLabel}
             {findings.length > 0 && (
               <span style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8 }}>
-                &mdash; {findings.length} Befunde in {clauses.length} Klauseln
+                &mdash; {findings.length} Befunde in {result.coverage ? `${result.coverage.analyzed}/${result.coverage.total}` : String(clauses.length)} Klauseln
+                {result.coverage && result.coverage.percentage < 100 && (
+                  <span style={{ color: '#d97706', marginLeft: 4 }}>({result.coverage.percentage}%)</span>
+                )}
               </span>
             )}
           </div>

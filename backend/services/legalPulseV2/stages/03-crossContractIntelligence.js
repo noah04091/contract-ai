@@ -111,8 +111,28 @@ async function runCrossContractIntelligence(userId, onProgress) {
     ],
   });
 
-  const result = JSON.parse(response.choices[0].message.content);
   const usage = response.usage || {};
+
+  let result;
+  try {
+    result = JSON.parse(response.choices[0].message.content);
+  } catch (parseErr) {
+    console.error("[PulseV2] Stage 3 JSON parse failed:", parseErr.message);
+    // Return only deterministic patterns (AI insights lost but system remains functional)
+    return {
+      portfolioInsights: deterministicPatterns.slice(0, 10),
+      parseError: true,
+      costs: {
+        stage: 3,
+        stageName: "Portfolio Intelligence",
+        model: "gpt-4o-mini",
+        inputTokens: usage.prompt_tokens || 0,
+        outputTokens: usage.completion_tokens || 0,
+        costUSD: ((usage.prompt_tokens || 0) / 1000) * PRICES["gpt-4o-mini"].input +
+          ((usage.completion_tokens || 0) / 1000) * PRICES["gpt-4o-mini"].output,
+      },
+    };
+  }
 
   // Merge deterministic patterns + AI insights, dedup by title
   const allInsights = [...deterministicPatterns];

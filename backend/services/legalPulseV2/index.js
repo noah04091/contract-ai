@@ -140,17 +140,55 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     const { cleanedText, document: docMeta } = runDocumentIntelligence(rawText);
 
+    // ── OCR Quality Gate (tiered) ──
+    // < 25: Block — too poor for reliable analysis
+    // 25-40: Warn — limited quality, results may be incomplete
+    // > 40: Normal
+    if (docMeta.qualityScore < 25) {
+      await LegalPulseV2Result.updateOne(
+        { _id: record._id },
+        {
+          $set: {
+            status: "failed",
+            document: docMeta,
+            error: `Dokumentqualität zu niedrig für eine zuverlässige Analyse (Score: ${docMeta.qualityScore}/100). Bitte laden Sie eine bessere PDF-Version hoch.`,
+            qualityGate: { blocked: true, score: docMeta.qualityScore, reason: "quality_too_low" },
+          },
+        }
+      );
+      onProgress(100, "Analyse abgebrochen: Dokumentqualität zu niedrig", {
+        stage: 0,
+        stageName: "Document Intelligence",
+        error: true,
+        qualityScore: docMeta.qualityScore,
+        qualityGate: "blocked",
+      });
+      return {
+        resultId: record._id.toString(),
+        blocked: true,
+        reason: "quality_too_low",
+        qualityScore: docMeta.qualityScore,
+      };
+    }
+
+    const qualityWarning = docMeta.qualityScore < 40 ? {
+      limited: true,
+      score: docMeta.qualityScore,
+      message: "Eingeschränkte Dokumentqualität — Ergebnisse können unvollständig sein",
+    } : null;
+
     await LegalPulseV2Result.updateOne(
       { _id: record._id },
-      { $set: { currentStage: 2, document: docMeta } }
+      { $set: { currentStage: 2, document: docMeta, ...(qualityWarning && { qualityWarning }) } }
     );
 
-    onProgress(20, `Dokument bereinigt (${docMeta.cleanedTextLength} Zeichen, Typ: ${docMeta.contractType})`, {
+    onProgress(20, `Dokument bereinigt (${docMeta.cleanedTextLength} Zeichen, Typ: ${docMeta.contractType})${qualityWarning ? ' — Eingeschränkte Qualität' : ''}`, {
       stage: 0,
       stageName: "Document Intelligence",
       complete: true,
       contractType: docMeta.contractType,
       qualityScore: docMeta.qualityScore,
+      qualityWarning,
     });
 
     // Use detected type if not in context
@@ -178,6 +216,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
           currentStage: 5,
           clauses: analysisResult.clauses,
           clauseFindings: analysisResult.clauseFindings,
+          coverage: analysisResult.coverage,
         },
         $push: {
           "costs.perStage": analysisResult.costs,
@@ -190,11 +229,16 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       }
     );
 
-    onProgress(70, `${analysisResult.clauseFindings.length} Befunde identifiziert`, {
+    const coverageMsg = analysisResult.coverage.percentage < 100
+      ? ` (${analysisResult.coverage.analyzed}/${analysisResult.coverage.total} Klauseln analysiert)`
+      : "";
+
+    onProgress(70, `${analysisResult.clauseFindings.length} Befunde identifiziert${coverageMsg}`, {
       stage: 2,
       stageName: "Deep Analysis",
       complete: true,
       findingsCount: analysisResult.clauseFindings.length,
+      coverage: analysisResult.coverage,
     });
 
     // ═══════════════════════════════════════════
@@ -227,7 +271,10 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       });
     } catch (err) {
       console.error("[PulseV2] Stage 3 failed (non-critical):", err.message);
-      onProgress(78, "Portfolio-Analyse übersprungen", { stage: 3, stageName: "Portfolio Intelligence", complete: true });
+      onProgress(78, "Portfolio-Analyse nicht verfügbar", {
+        stage: 3, stageName: "Portfolio Intelligence", complete: true,
+        stageError: true, errorMessage: "Portfolio-Analyse konnte nicht durchgeführt werden",
+      });
     }
 
     // ═══════════════════════════════════════════
@@ -265,7 +312,10 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       });
     } catch (err) {
       console.error("[PulseV2] Stage 4 failed (non-critical):", err.message);
-      onProgress(88, "Empfehlungen übersprungen", { stage: 4, stageName: "Action Engine", complete: true });
+      onProgress(88, "Empfehlungen nicht verfügbar", {
+        stage: 4, stageName: "Action Engine", complete: true,
+        stageError: true, errorMessage: "Handlungsempfehlungen konnten nicht generiert werden",
+      });
     }
 
     // ═══════════════════════════════════════════
@@ -336,13 +386,15 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       // Cost tracking is not critical
     }
 
-    console.log(`[PulseV2] Pipeline completed for contract ${contractId}: Score ${scores.overall}, ${analysisResult.clauseFindings.length} findings, $${analysisResult.costs.costUSD.toFixed(4)}`);
+    console.log(`[PulseV2] Pipeline completed for contract ${contractId}: Score ${scores.overall}, ${analysisResult.clauseFindings.length} findings, coverage ${analysisResult.coverage.percentage}%, $${analysisResult.costs.costUSD.toFixed(4)}`);
 
     return {
       resultId: record._id.toString(),
       scores,
       findingsCount: analysisResult.clauseFindings.length,
       clauseCount: analysisResult.clauses.length,
+      coverage: analysisResult.coverage,
+      qualityWarning,
     };
 
   } catch (error) {

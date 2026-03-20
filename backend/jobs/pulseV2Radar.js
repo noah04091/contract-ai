@@ -32,8 +32,9 @@ const MAX_CONTRACT_MATCHES = 50;
 const IMPACT_CONFIDENCE_THRESHOLD = 60;
 
 // Legal area → contract type mapping for fast pre-filtering.
-// IMPORTANT: Areas NOT listed here will match ALL contracts (catch-all).
-// To reduce noise, always map new areas to specific contract types.
+// IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
+// This prevents mass false alerts from unmapped legal areas.
+// To add coverage for new areas, add them here with specific contract types.
 const AREA_TO_CONTRACT_TYPES = {
   datenschutz: ["saas", "hosting", "dienstleistung"],
   arbeitsrecht: ["arbeitsvertrag"],
@@ -150,17 +151,19 @@ async function matchLawToContracts(db, lawChange) {
   const area = (lawChange.area || "").toLowerCase();
   const relevantTypes = AREA_TO_CONTRACT_TYPES[area] || [];
 
+  // FIX: Unknown legal area = no automatic matching (prevents mass false alerts)
+  if (relevantTypes.length === 0) {
+    console.log(`[PulseV2Radar] No contract type mapping for area "${area}" — skipping (no broad match)`);
+    return [];
+  }
+
   // Build query: contracts with V2 results matching relevant types
   const query = {
     status: "completed",
-  };
-
-  // If we know relevant types, filter by them
-  if (relevantTypes.length > 0) {
-    query["document.contractType"] = {
+    "document.contractType": {
       $in: relevantTypes.map((t) => new RegExp(t, "i")),
-    };
-  }
+    },
+  };
 
   const results = await LegalPulseV2Result.aggregate([
     { $match: query },

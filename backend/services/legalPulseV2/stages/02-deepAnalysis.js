@@ -73,6 +73,36 @@ function categorizeClause(text, sectionNumber) {
 }
 
 /**
+ * Validate that affectedText actually appears in the clause text.
+ * Prevents hallucinated quotes from reaching the user.
+ */
+function validateAffectedText(finding, clauseOriginalTexts) {
+  if (!finding.affectedText || !finding.clauseId) return finding;
+
+  const clauseText = clauseOriginalTexts[finding.clauseId];
+  if (!clauseText) return { ...finding, affectedTextVerified: false };
+
+  const affected = finding.affectedText.trim().toLowerCase();
+  const clause = clauseText.toLowerCase();
+
+  // Exact substring match
+  if (clause.includes(affected)) {
+    return { ...finding, affectedTextVerified: true };
+  }
+
+  // Fuzzy: check if 60%+ of significant words (length > 3) match
+  const words = affected.split(/\s+/).filter(w => w.length > 3);
+  if (words.length === 0) return { ...finding, affectedTextVerified: true };
+  const matched = words.filter(w => clause.includes(w));
+  if (matched.length / words.length >= 0.6) {
+    return { ...finding, affectedTextVerified: true, affectedTextApproximate: true };
+  }
+
+  // Failed validation — mark as unverified (still included, but flagged)
+  return { ...finding, affectedTextVerified: false };
+}
+
+/**
  * Run deep analysis on a batch of clauses
  */
 async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, totalBatches) {
@@ -102,8 +132,21 @@ async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, to
     ],
   });
 
-  const result = JSON.parse(response.choices[0].message.content);
   const usage = response.usage || {};
+
+  let result;
+  try {
+    result = JSON.parse(response.choices[0].message.content);
+  } catch (parseErr) {
+    console.error(`[PulseV2] JSON parse failed for batch ${batchIndex + 1}/${totalBatches}:`, parseErr.message);
+    return {
+      findings: [],
+      inputTokens: usage.prompt_tokens || 0,
+      outputTokens: usage.completion_tokens || 0,
+      parseError: true,
+      failedClauseIds: clauses.map(c => c.id),
+    };
+  }
 
   return {
     findings: result.findings || [],
@@ -145,12 +188,13 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
   const allFindings = [];
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
+  const analyzedClauseIds = new Set();
 
   // Process batches sequentially (to respect rate limits and track progress)
   for (let i = 0; i < batches.length; i++) {
     // Token budget safety check
     if (totalInputTokens > MAX_TOTAL_INPUT_TOKENS) {
-      console.log(`[PulseV2] Token budget exceeded at batch ${i + 1}/${batches.length}, stopping`);
+      console.log(`[PulseV2] Token budget exceeded at batch ${i + 1}/${batches.length}, ${clauses.length - analyzedClauseIds.size} clauses skipped`);
       break;
     }
 
@@ -163,11 +207,21 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
 
     try {
       const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length);
+      totalInputTokens += result.inputTokens;
+      totalOutputTokens += result.outputTokens;
+
+      // Handle parse errors from batch (JSON parsing failed)
+      if (result.parseError) {
+        console.warn(`[PulseV2] Batch ${i + 1}: JSON parse failed, ${result.failedClauseIds.length} clauses not analyzed`);
+        continue;
+      }
+
+      // Mark clauses as successfully analyzed
+      for (const c of batches[i]) analyzedClauseIds.add(c.id);
+
       // Filter this batch's findings (confidence >= 50)
       const batchFindings = (result.findings || []).filter(f => f.confidence >= 50);
       allFindings.push(...batchFindings);
-      totalInputTokens += result.inputTokens;
-      totalOutputTokens += result.outputTokens;
 
       // Stream findings to frontend after each batch (Progressive Rendering)
       if (batchFindings.length > 0) {
@@ -192,15 +246,39 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
   // Filter findings with confidence < 50
   const filteredFindings = allFindings.filter(f => f.confidence >= 50);
 
+  // Validate affectedText against actual clause text (prevent hallucinated quotes)
+  const clauseOriginalTexts = {};
+  for (const c of clauses) clauseOriginalTexts[c.id] = c.originalText;
+  const validatedFindings = filteredFindings.map(f => validateAffectedText(f, clauseOriginalTexts));
+
+  // Log unverified quotes for monitoring
+  const unverifiedCount = validatedFindings.filter(f => f.affectedTextVerified === false).length;
+  if (unverifiedCount > 0) {
+    console.warn(`[PulseV2] ${unverifiedCount}/${validatedFindings.length} findings have unverified affectedText`);
+  }
+
   // Sort by severity (critical first)
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-  filteredFindings.sort((a, b) => (severityOrder[a.severity] || 5) - (severityOrder[b.severity] || 5));
+  validatedFindings.sort((a, b) => (severityOrder[a.severity] || 5) - (severityOrder[b.severity] || 5));
+
+  // Coverage tracking — transparent reporting of analysis completeness
+  const coverage = {
+    total: clauses.length,
+    analyzed: analyzedClauseIds.size,
+    notAnalyzed: clauses.length - analyzedClauseIds.size,
+    percentage: clauses.length > 0 ? Math.round((analyzedClauseIds.size / clauses.length) * 100) : 100,
+  };
+
+  if (coverage.percentage < 100) {
+    console.warn(`[PulseV2] Incomplete coverage: ${coverage.analyzed}/${coverage.total} clauses analyzed (${coverage.percentage}%)`);
+  }
 
   const costUSD = calculateCost("gpt-4o", totalInputTokens, totalOutputTokens);
 
   return {
     clauses,
-    clauseFindings: filteredFindings,
+    clauseFindings: validatedFindings,
+    coverage,
     costs: {
       stage: 2,
       stageName: "Deep Analysis",

@@ -146,8 +146,29 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
     ],
   });
 
-  const result = JSON.parse(response.choices[0].message.content);
   const usage = response.usage || {};
+
+  let result;
+  try {
+    result = JSON.parse(response.choices[0].message.content);
+  } catch (parseErr) {
+    console.error("[PulseV2] Stage 4 JSON parse failed:", parseErr.message);
+    // Fallback to deterministic actions instead of crashing
+    const costUSD = ((usage.prompt_tokens || 0) / 1000) * PRICES["gpt-4o"].input +
+      ((usage.completion_tokens || 0) / 1000) * PRICES["gpt-4o"].output;
+    return {
+      actions: generateFallbackActions(clauseFindings, context),
+      parseError: true,
+      costs: {
+        stage: 4,
+        stageName: "Action Engine",
+        model: "gpt-4o",
+        inputTokens: usage.prompt_tokens || 0,
+        outputTokens: usage.completion_tokens || 0,
+        costUSD,
+      },
+    };
+  }
 
   // Filter by confidence and add IDs
   let actions = (result.actions || [])

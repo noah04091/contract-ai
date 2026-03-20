@@ -11,6 +11,8 @@ export interface PulseV2Finding {
   reasoning: string;
   isIntentional: boolean;
   enforceability?: 'valid' | 'questionable' | 'likely_invalid' | 'unknown';
+  affectedTextVerified?: boolean;
+  affectedTextApproximate?: boolean;
 }
 
 export interface PulseV2ClauseVersion {
@@ -129,6 +131,17 @@ export interface PulseV2Result {
   createdAt: string;
   completedAt: string;
   error?: string;
+  coverage?: {
+    total: number;
+    analyzed: number;
+    notAnalyzed: number;
+    percentage: number;
+  };
+  qualityWarning?: {
+    limited: boolean;
+    score: number;
+    message: string;
+  };
 }
 
 export interface PulseV2DashboardItem {

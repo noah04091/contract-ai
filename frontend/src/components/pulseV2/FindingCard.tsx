@@ -240,19 +240,45 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
           {/* Affected Text */}
           {finding.affectedText && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
                 Betroffener Text
+                {finding.affectedTextVerified === true && (
+                  <span style={{
+                    fontSize: 10,
+                    color: '#15803d',
+                    background: '#f0fdf4',
+                    border: '1px solid #bbf7d0',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 500,
+                  }}>
+                    {finding.affectedTextApproximate ? 'sinngemäß verifiziert' : 'verifiziert'}
+                  </span>
+                )}
+                {finding.affectedTextVerified === false && (
+                  <span style={{
+                    fontSize: 10,
+                    color: '#92400e',
+                    background: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    fontWeight: 500,
+                  }}>
+                    sinngemäß erkannt
+                  </span>
+                )}
               </div>
               <div style={{
                 fontSize: 13,
                 color: '#6b7280',
-                background: '#f9fafb',
+                background: finding.affectedTextVerified === false ? '#fffbeb' : '#f9fafb',
                 padding: '8px 12px',
                 borderRadius: 6,
-                borderLeft: '3px solid #d1d5db',
+                borderLeft: `3px solid ${finding.affectedTextVerified === false ? '#fde68a' : '#d1d5db'}`,
                 fontStyle: 'italic',
               }}>
-                "{finding.affectedText}"
+                &ldquo;{finding.affectedText}&rdquo;
               </div>
             </div>
           )}
