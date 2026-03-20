@@ -994,11 +994,11 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     const doc = new PDFDocument({
       size: 'A4',
       bufferPages: true,
-      margins: { top: 50, bottom: 50, left: 45, right: 45 },
+      margins: { top: 56, bottom: 56, left: 56, right: 56 },
       info: {
-        Title: `Redline-Vergleich - ${result.fileName || 'Vertrag'}`,
-        Author: 'Contract AI - Smart Optimizer',
-        Creator: 'Contract AI'
+        Title: `Redline – ${result.fileName || 'Vertrag'}`,
+        Author: 'Contract AI',
+        Creator: 'Contract AI – Smart Optimizer'
       }
     });
 
@@ -1007,66 +1007,39 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}_Redline.pdf"`);
     doc.pipe(res);
 
-    function clean(text) { return text ? text.replace(/^[!']+\s*/g, '').replace(/\n[!']+\s*/g, '\n') : ''; }
+    function clean(text) { return text ? text.replace(/^[!']+\s*/g, '').replace(/\n[!']+\s*/g, '\n').trim() : ''; }
 
+    // ── Design tokens ──
     const C = {
-      brand: '#007AFF', brandDark: '#005EC4',
-      danger: '#DC2626', dangerPastel: '#fecaca', dangerText: '#991b1b',
-      ok: '#16a34a', okPastel: '#bbf7d0', okText: '#166534',
-      orange: '#c2410c', orangePastel: '#fff7ed', orangeBorder: '#fed7aa',
-      dark: '#1e293b', text: '#334155', muted: '#64748b', light: '#94a3b8',
-      bg: '#f8fafc', border: '#e2e8f0', borderLight: '#f1f5f9'
+      brand: '#0066FF', brandLight: '#EBF2FF', brandDark: '#004ACC',
+      rm: '#DC2626', rmBg: '#FEF2F2', rmBorder: '#FECACA',
+      add: '#059669', addBg: '#F0FDF4', addBorder: '#BBF7D0',
+      dark: '#111827', text: '#374151', muted: '#6B7280', light: '#9CA3AF',
+      bg: '#F9FAFB', card: '#FFFFFF', border: '#E5E7EB', borderLight: '#F3F4F6',
+      accent: '#F59E0B', accentBg: '#FFFBEB'
     };
 
-    const L = 45, R = 550, W = R - L;
-    const MID = L + W / 2;
-    const COL_W = (W - 16) / 2; // 16px gap between columns
+    const M = 56; // margin
+    const PW = doc.page.width - 2 * M; // printable width
+    const PL = M; // page left
+    const PR = M + PW; // page right
     let totalPages = 1;
     doc.on('pageAdded', () => { totalPages++; });
 
     function checkPage(needed = 80) {
-      if (doc.y + needed > doc.page.height - 60) { doc.addPage(); return true; }
+      if (doc.y + needed > doc.page.height - 70) { doc.addPage(); return true; }
       return false;
     }
 
-    // ── COVER HEADER ──
-    doc.rect(0, 0, doc.page.width, 70).fill(C.brand);
-    doc.font('Helvetica-Bold').fontSize(18).fillColor('#ffffff')
-       .text('Redline-Vergleich', L, 22, { width: W });
-    doc.fontSize(10).font('Helvetica').fillColor('rgba(255,255,255,0.85)')
-       .text(`Perspektive: ${modeName}  |  ${new Date().toLocaleDateString('de-DE')}`, L, 46, { width: W });
-
-    doc.y = 90;
-
-    // ── LEGEND ──
-    doc.rect(L, doc.y, W, 28).fill(C.bg);
-    const ly = doc.y + 8;
-    doc.rect(L + 12, ly, 10, 10).fill(C.dangerPastel);
-    doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Entfernt', L + 26, ly + 1, { lineBreak: false });
-    doc.rect(L + 80, ly, 10, 10).fill(C.okPastel);
-    doc.font('Helvetica').fontSize(9).fillColor(C.muted).text('Hinzugefügt', L + 94, ly + 1, { lineBreak: false });
-
-    // Stats on right
-    const changedCount = (result.optimizations || []).filter(o => o.needsOptimization).length;
-    doc.font('Helvetica-Bold').fontSize(9).fillColor(C.orange)
-       .text(`${changedCount} Optimierungen`, R - 120, ly + 1, { width: 120, align: 'right', lineBreak: false });
-
-    doc.y += 36;
-
-    // ── COLUMN HEADERS ──
-    doc.rect(L, doc.y, W, 22).fill(C.bg);
-    const chy = doc.y + 6;
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.muted)
-       .text('ORIGINAL', L + 8, chy, { lineBreak: false });
-    doc.text('OPTIMIERT', MID + 16, chy, { lineBreak: false });
-    doc.moveTo(MID + 4, doc.y).lineTo(MID + 4, doc.y + 22).strokeColor(C.border).lineWidth(0.5).stroke();
-
-    doc.y += 28;
-
-    // ── CLAUSE ROWS ──
+    // Data prep
     const clauses = result.clauses || [];
     const optMap = new Map();
     for (const o of (result.optimizations || [])) optMap.set(o.clauseId, o);
+    const analysisMap = new Map();
+    for (const a of (result.clauseAnalyses || [])) analysisMap.set(a.clauseId, a);
+    const changedClauses = clauses.filter(c => optMap.get(c.id)?.needsOptimization);
+    const unchangedCount = clauses.length - changedClauses.length;
+
     const CATEGORY_LABELS = {
       parties: 'Parteien', subject: 'Gegenstand', duration: 'Laufzeit',
       compensation: 'Vergütung', termination: 'Kündigung', liability: 'Haftung',
@@ -1077,139 +1050,233 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
       preamble: 'Präambel', definitions: 'Definitionen', other: 'Sonstige'
     };
 
-    // Only render changed clauses in redline PDF (unchanged are skipped for clarity)
-    const changedClauses = clauses.filter(c => {
-      const o = optMap.get(c.id);
-      return o && o.needsOptimization;
+    // ══════════════════════════════════════════════
+    // ── COVER PAGE ──
+    // ══════════════════════════════════════════════
+
+    // Blue header band
+    doc.rect(0, 0, doc.page.width, 90).fill(C.brand);
+    doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF')
+       .text('Redline-Vergleich', M, 28, { width: PW });
+    doc.font('Helvetica').fontSize(11).fillColor('rgba(255,255,255,0.8)')
+       .text(`${modeName}-Perspektive  ·  ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}`, M, 56, { width: PW });
+
+    doc.y = 110;
+
+    // ── Stats cards row ──
+    const cardW = (PW - 24) / 3;
+    const cardH = 56;
+    const cardY = doc.y;
+    const stats = [
+      { label: 'Klauseln gesamt', value: `${clauses.length}`, color: C.brand, bg: C.brandLight },
+      { label: 'Optimierungen', value: `${changedClauses.length}`, color: C.accent, bg: C.accentBg },
+      { label: 'Unverändert', value: `${unchangedCount}`, color: C.muted, bg: C.bg }
+    ];
+
+    stats.forEach((s, i) => {
+      const cx = PL + i * (cardW + 12);
+      doc.save();
+      doc.roundedRect(cx, cardY, cardW, cardH, 4).fill(s.bg);
+      doc.font('Helvetica-Bold').fontSize(20).fillColor(s.color)
+         .text(s.value, cx + 16, cardY + 10, { lineBreak: false });
+      doc.font('Helvetica').fontSize(9).fillColor(C.muted)
+         .text(s.label, cx + 16, cardY + 34, { lineBreak: false });
+      doc.restore();
     });
+
+    doc.y = cardY + cardH + 24;
+
+    // ── Contract info ──
+    const structure = result.structure || {};
+    const infoLines = [];
+    if (result.fileName) infoLines.push(`Datei: ${clean(result.fileName)}`);
+    if (structure.contractTypeLabel || structure.recognizedAs)
+      infoLines.push(`Typ: ${structure.contractTypeLabel || structure.recognizedAs}`);
+    if (structure.jurisdiction) infoLines.push(`Jurisdiktion: ${structure.jurisdiction}`);
+    if (structure.parties?.length) {
+      structure.parties.filter(p => p.name).forEach(p => infoLines.push(`${p.role || 'Partei'}: ${p.name}`));
+    }
+    if (result.scores?.overall) infoLines.push(`Gesamt-Score: ${result.scores.overall}/100`);
+
+    if (infoLines.length > 0) {
+      doc.roundedRect(PL, doc.y, PW, 12 + infoLines.length * 16, 4).fill(C.bg);
+      let iy = doc.y + 8;
+      for (const line of infoLines) {
+        doc.font('Helvetica').fontSize(9).fillColor(C.text).text(line, PL + 14, iy, { width: PW - 28 });
+        iy += 16;
+      }
+      doc.y += 12 + infoLines.length * 16 + 16;
+    }
+
+    // ── Legend ──
+    doc.roundedRect(PL, doc.y, PW, 48, 4).fill(C.bg);
+    const legY = doc.y + 10;
+    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.dark).text('LEGENDE', PL + 14, legY, { lineBreak: false });
+
+    const legY2 = legY + 18;
+    // Removed example
+    doc.roundedRect(PL + 14, legY2, 80, 16, 2).fill(C.rmBg);
+    doc.font('Helvetica-Oblique').fontSize(8).fillColor(C.rm)
+       .text('entfernter Text', PL + 20, legY2 + 3, { lineBreak: false });
+    // Added example
+    doc.roundedRect(PL + 110, legY2, 86, 16, 2).fill(C.addBg);
+    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.add)
+       .text('hinzugefügter Text', PL + 116, legY2 + 3, { lineBreak: false });
+    // Equal example
+    doc.font('Helvetica').fontSize(8).fillColor(C.light)
+       .text('normaler Text = unverändert', PL + 212, legY2 + 3, { lineBreak: false });
+
+    doc.y += 48 + 12;
+
+    // Disclaimer
+    doc.font('Helvetica').fontSize(7.5).fillColor(C.light)
+       .text('Dieses Dokument wurde automatisch durch Contract AI erstellt und dient als Verhandlungsgrundlage. Es ersetzt keine Rechtsberatung.', PL, doc.y, { width: PW, align: 'center' });
+
+    // ══════════════════════════════════════════════
+    // ── CLAUSE PAGES ──
+    // ══════════════════════════════════════════════
+    doc.addPage();
 
     for (let ci = 0; ci < changedClauses.length; ci++) {
       const clause = changedClauses[ci];
       const opt = optMap.get(clause.id);
+      const analysis = analysisMap.get(clause.id);
       const version = opt.versions?.[mode];
       const diffs = version?.diffs || [];
       const sectionNum = clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber : '';
       const catLabel = CATEGORY_LABELS[clause.category] || clause.category || '';
-      const origText = clean(clause.originalText || '');
 
-      // Build optimized plain text for height estimation
-      const optText = version?.text ? clean(version.text) : origText;
+      // Estimate height needed
+      const optText = version?.text ? clean(version.text) : clean(clause.originalText || '');
+      const textH = doc.font('Helvetica').fontSize(9).heightOfString(optText, { width: PW - 32, lineGap: 3 });
+      const reasonText = clean(version?.reasoning || '');
+      const reasonH = reasonText ? doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: PW - 52, lineGap: 2 }) + 36 : 0;
+      const neededH = 40 + textH + reasonH + 30;
 
-      // Estimate heights for both columns
-      const leftH = doc.font('Helvetica').fontSize(8.5).heightOfString(origText, { width: COL_W - 20, lineGap: 2 });
-      const rightH = doc.font('Helvetica').fontSize(8.5).heightOfString(optText, { width: COL_W - 20, lineGap: 2 });
-      const textH = Math.max(leftH, rightH);
-      const rowHeight = textH + 44; // 24 header + 12 bottom padding + 8 margin
-
-      checkPage(rowHeight);
-      const rowY = doc.y;
+      checkPage(Math.min(neededH, 200));
+      const startY = doc.y;
 
       // ── Clause header bar ──
       doc.save();
-      doc.rect(L, rowY, W, 22).fill('#f8fafc');
-      // Orange left border
-      doc.rect(L, rowY, 3, 22).fill('#FF9500');
+      doc.roundedRect(PL, startY, PW, 28, 4).fill(C.bg);
+      // Left accent bar
+      doc.rect(PL, startY, 4, 28).fill(C.brand);
 
-      let hx = L + 10;
+      let hx = PL + 14;
+      // Section number badge
       if (sectionNum) {
-        const snW = doc.font('Helvetica-Bold').fontSize(7.5).widthOfString(sectionNum) + 8;
-        doc.roundedRect(hx, rowY + 4, snW, 14, 2).fill('rgba(0,122,255,0.08)');
-        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.brand).text(sectionNum, hx + 4, rowY + 7, { lineBreak: false });
-        hx += snW + 5;
+        const snW = doc.font('Helvetica-Bold').fontSize(8).widthOfString(sectionNum) + 10;
+        doc.roundedRect(hx, startY + 6, snW, 16, 3).fill(C.brandLight);
+        doc.font('Helvetica-Bold').fontSize(8).fillColor(C.brand).text(sectionNum, hx + 5, startY + 10, { lineBreak: false });
+        hx += snW + 6;
       }
-      doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.dark)
-         .text(clean(clause.title || ''), hx, rowY + 6, { lineBreak: false, width: MID - hx - 10 });
+      // Title
+      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(C.dark)
+         .text(clean(clause.title || 'Klausel'), hx, startY + 8, { lineBreak: false, width: PW * 0.5 });
 
+      // Category badge (right side)
       if (catLabel) {
-        const tw = doc.font('Helvetica').fontSize(6.5).widthOfString(catLabel) + 6;
-        doc.roundedRect(MID + 12, rowY + 5, tw, 12, 2).fill('#f1f5f9');
-        doc.font('Helvetica').fontSize(6.5).fillColor(C.muted).text(catLabel, MID + 15, rowY + 7, { lineBreak: false });
+        const tw = doc.font('Helvetica').fontSize(7).widthOfString(catLabel) + 10;
+        doc.roundedRect(PR - tw - 70, startY + 7, tw, 14, 3).fill(C.borderLight);
+        doc.font('Helvetica').fontSize(7).fillColor(C.muted).text(catLabel, PR - tw - 65, startY + 10, { lineBreak: false });
       }
-
-      // "Optimiert" badge
-      const bText = `${ci + 1}/${changedClauses.length}  Optimiert`;
-      const bW = doc.font('Helvetica-Bold').fontSize(6.5).widthOfString(bText) + 10;
-      doc.roundedRect(R - bW, rowY + 5, bW, 12, 2).fill(C.orangePastel);
-      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(C.orange).text(bText, R - bW + 5, rowY + 7, { lineBreak: false });
+      // Counter badge
+      const cntText = `${ci + 1} / ${changedClauses.length}`;
+      const cntW = doc.font('Helvetica-Bold').fontSize(7).widthOfString(cntText) + 10;
+      doc.roundedRect(PR - cntW, startY + 7, cntW, 14, 3).fill(C.accentBg);
+      doc.font('Helvetica-Bold').fontSize(7).fillColor(C.accent).text(cntText, PR - cntW + 5, startY + 10, { lineBreak: false });
       doc.restore();
 
-      // ── Text area ──
-      const textY = rowY + 26;
-      const leftX = L + 8;
-      const rightX = MID + 12;
-      const colW = COL_W - 20;
+      // ── Unified diff text ──
+      doc.y = startY + 34;
+      const diffX = PL + 16;
+      const diffW = PW - 32;
 
-      // Column labels
-      doc.font('Helvetica-Bold').fontSize(6.5).fillColor(C.light)
-         .text('ORIGINAL', leftX, textY, { lineBreak: false });
-      doc.text('OPTIMIERT', rightX, textY, { lineBreak: false });
-
-      const bodyY = textY + 12;
-
-      // Left column: original text
-      doc.font('Helvetica').fontSize(8.5).fillColor(C.text)
-         .text(origText, leftX, bodyY, { width: colW, lineGap: 2 });
-      const leftBottom = doc.y;
-
-      // Right column: diff rendering with inline continued text
       if (diffs.length > 0) {
-        // Filter out empty diffs
         const validDiffs = diffs.filter(d => clean(d.text || ''));
-
         if (validDiffs.length > 0) {
           for (let di = 0; di < validDiffs.length; di++) {
             const op = validDiffs[di];
             const t = clean(op.text);
+            if (!t) continue;
             const isLast = di === validDiffs.length - 1;
 
             if (op.type === 'equal') {
-              doc.font('Helvetica').fontSize(8.5).fillColor(C.text);
+              doc.font('Helvetica').fontSize(9).fillColor(C.text);
             } else if (op.type === 'remove') {
-              doc.font('Helvetica').fontSize(8.5).fillColor(C.dangerText);
+              doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.rm);
             } else if (op.type === 'add') {
-              doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.okText);
+              doc.font('Helvetica-Bold').fontSize(9).fillColor(C.add);
             }
 
             if (di === 0) {
-              // First diff: set position explicitly
-              doc.text(t, rightX, bodyY, { width: colW, lineGap: 2, continued: !isLast });
+              doc.text(t, diffX, doc.y, { width: diffW, lineGap: 3, continued: !isLast });
             } else {
               doc.text(t, { continued: !isLast });
             }
           }
+        } else {
+          doc.font('Helvetica').fontSize(9).fillColor(C.text)
+             .text(clean(clause.originalText || ''), diffX, doc.y, { width: diffW, lineGap: 3 });
         }
       } else {
-        doc.font('Helvetica').fontSize(8.5).fillColor(C.light)
-           .text(origText, rightX, bodyY, { width: colW, lineGap: 2 });
+        doc.font('Helvetica').fontSize(9).fillColor(C.text)
+           .text(clean(clause.originalText || ''), diffX, doc.y, { width: diffW, lineGap: 3 });
       }
-      const rightBottom = doc.y;
 
-      // Draw divider line between columns
-      const colBottom = Math.max(leftBottom, rightBottom);
+      doc.y += 8;
+
+      // ── Reasoning box ──
+      if (reasonText) {
+        checkPage(60);
+        const boxY = doc.y;
+        const rH = doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: diffW - 24, lineGap: 2 }) + 28;
+        doc.save();
+        doc.roundedRect(diffX, boxY, diffW, rH, 4).fill(C.brandLight);
+        doc.rect(diffX, boxY, 3, rH).fill(C.brand);
+        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.brand)
+           .text('BEGRÜNDUNG', diffX + 12, boxY + 8, { lineBreak: false });
+        doc.font('Helvetica').fontSize(8).fillColor(C.text)
+           .text(reasonText, diffX + 12, boxY + 20, { width: diffW - 24, lineGap: 2 });
+        doc.restore();
+        doc.y = boxY + rH + 6;
+      }
+
+      // ── Negotiation advice (compact) ──
+      const advice = clean(opt.negotiationAdvice || '');
+      if (advice) {
+        checkPage(40);
+        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(C.muted)
+           .text(`Verhandlungshinweis: ${advice}`, diffX, doc.y, { width: diffW });
+        doc.y += 4;
+      }
+
+      // Separator line
+      doc.y += 4;
       doc.save();
-      doc.moveTo(MID + 4, rowY + 22).lineTo(MID + 4, colBottom)
-         .strokeColor(C.border).lineWidth(0.4).stroke();
-
-      // Orange left border for full row height
-      doc.rect(L, rowY + 22, 3, colBottom - rowY - 22).fill('#FF9500');
-
-      // Bottom separator
-      doc.moveTo(L, colBottom + 6).lineTo(R, colBottom + 6)
-         .strokeColor(C.border).lineWidth(0.3).stroke();
+      doc.moveTo(PL, doc.y).lineTo(PR, doc.y).strokeColor(C.border).lineWidth(0.5).stroke();
       doc.restore();
-
-      doc.y = colBottom + 12;
+      doc.y += 14;
     }
 
-    // ── PAGE NUMBERS ──
+    // ══════════════════════════════════════════════
+    // ── FOOTER & PAGE NUMBERS ──
+    // ══════════════════════════════════════════════
     const range = doc.bufferedPageRange();
     for (let i = range.start; i < range.start + range.count; i++) {
       doc.switchToPage(i);
-      if (i === 0) continue; // Skip cover header page number
       doc.save();
-      doc.font('Helvetica').fontSize(8).fillColor(C.light)
-         .text(`${i + 1} / ${totalPages}`, 0, doc.page.height - 35, {
-            width: doc.page.width, align: 'center', lineBreak: false
+      const footerY = doc.page.height - 40;
+      // Separator line
+      doc.moveTo(M, footerY).lineTo(doc.page.width - M, footerY)
+         .strokeColor(C.borderLight).lineWidth(0.5).stroke();
+      // Branding left
+      doc.font('Helvetica').fontSize(7).fillColor(C.light)
+         .text('Contract AI – Smart Optimizer', M, footerY + 8, { lineBreak: false });
+      // Page number right
+      doc.font('Helvetica').fontSize(7).fillColor(C.light)
+         .text(`Seite ${i + 1} von ${totalPages}`, 0, footerY + 8, {
+            width: doc.page.width - M, align: 'right', lineBreak: false
          });
       doc.restore();
     }
