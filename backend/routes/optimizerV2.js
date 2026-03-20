@@ -994,11 +994,11 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     const doc = new PDFDocument({
       size: 'A4',
       bufferPages: true,
-      margins: { top: 56, bottom: 56, left: 56, right: 56 },
+      margins: { top: 50, bottom: 60, left: 50, right: 50 },
       info: {
         Title: `Redline – ${result.fileName || 'Vertrag'}`,
         Author: 'Contract AI',
-        Creator: 'Contract AI – Smart Optimizer'
+        Creator: 'Contract AI'
       }
     });
 
@@ -1009,25 +1009,14 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
 
     function clean(text) { return text ? text.replace(/^[!']+\s*/g, '').replace(/\n[!']+\s*/g, '\n').trim() : ''; }
 
-    // ── Design tokens ──
-    const C = {
-      brand: '#0066FF', brandLight: '#EBF2FF', brandDark: '#004ACC',
-      rm: '#DC2626', rmBg: '#FEF2F2', rmBorder: '#FECACA',
-      add: '#059669', addBg: '#F0FDF4', addBorder: '#BBF7D0',
-      dark: '#111827', text: '#374151', muted: '#6B7280', light: '#9CA3AF',
-      bg: '#F9FAFB', card: '#FFFFFF', border: '#E5E7EB', borderLight: '#F3F4F6',
-      accent: '#F59E0B', accentBg: '#FFFBEB'
-    };
+    const M = 50;
+    const PW = doc.page.width - 2 * M;
+    const PL = M;
+    const PR = M + PW;
+    const BOTTOM = doc.page.height - 60;
 
-    const M = 56; // margin
-    const PW = doc.page.width - 2 * M; // printable width
-    const PL = M; // page left
-    const PR = M + PW; // page right
-    let totalPages = 1;
-    doc.on('pageAdded', () => { totalPages++; });
-
-    function checkPage(needed = 80) {
-      if (doc.y + needed > doc.page.height - 70) { doc.addPage(); return true; }
+    function checkPage(needed = 60) {
+      if (doc.y + needed > BOTTOM) { doc.addPage(); return true; }
       return false;
     }
 
@@ -1035,8 +1024,6 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     const clauses = result.clauses || [];
     const optMap = new Map();
     for (const o of (result.optimizations || [])) optMap.set(o.clauseId, o);
-    const analysisMap = new Map();
-    for (const a of (result.clauseAnalyses || [])) analysisMap.set(a.clauseId, a);
     const changedClauses = clauses.filter(c => optMap.get(c.id)?.needsOptimization);
     const unchangedCount = clauses.length - changedClauses.length;
 
@@ -1053,84 +1040,50 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     // ══════════════════════════════════════════════
     // ── COVER PAGE ──
     // ══════════════════════════════════════════════
+    doc.rect(0, 0, doc.page.width, 80).fill('#0066FF');
+    doc.font('Helvetica-Bold').fontSize(20).fillColor('#FFFFFF')
+       .text('Redline-Vergleich', M, 24, { width: PW });
+    doc.font('Helvetica').fontSize(10).fillColor('rgba(255,255,255,0.8)')
+       .text(`${modeName}-Perspektive  ·  ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}`, M, 50, { width: PW });
 
-    // Blue header band
-    doc.rect(0, 0, doc.page.width, 90).fill(C.brand);
-    doc.font('Helvetica-Bold').fontSize(22).fillColor('#FFFFFF')
-       .text('Redline-Vergleich', M, 28, { width: PW });
-    doc.font('Helvetica').fontSize(11).fillColor('rgba(255,255,255,0.8)')
-       .text(`${modeName}-Perspektive  ·  ${new Date().toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}`, M, 56, { width: PW });
+    doc.y = 100;
 
-    doc.y = 110;
+    // Stats line
+    doc.font('Helvetica').fontSize(10).fillColor('#374151')
+       .text(`${clauses.length} Klauseln  ·  ${changedClauses.length} Optimierungen  ·  ${unchangedCount} unverändert`, PL, doc.y, { width: PW });
+    doc.y += 24;
 
-    // ── Stats cards row ──
-    const cardW = (PW - 24) / 3;
-    const cardH = 56;
-    const cardY = doc.y;
-    const stats = [
-      { label: 'Klauseln gesamt', value: `${clauses.length}`, color: C.brand, bg: C.brandLight },
-      { label: 'Optimierungen', value: `${changedClauses.length}`, color: C.accent, bg: C.accentBg },
-      { label: 'Unverändert', value: `${unchangedCount}`, color: C.muted, bg: C.bg }
-    ];
-
-    stats.forEach((s, i) => {
-      const cx = PL + i * (cardW + 12);
-      doc.save();
-      doc.roundedRect(cx, cardY, cardW, cardH, 4).fill(s.bg);
-      doc.font('Helvetica-Bold').fontSize(20).fillColor(s.color)
-         .text(s.value, cx + 16, cardY + 10, { lineBreak: false });
-      doc.font('Helvetica').fontSize(9).fillColor(C.muted)
-         .text(s.label, cx + 16, cardY + 34, { lineBreak: false });
-      doc.restore();
-    });
-
-    doc.y = cardY + cardH + 24;
-
-    // ── Contract info ──
+    // Contract info
     const structure = result.structure || {};
     const infoLines = [];
-    if (result.fileName) infoLines.push(`Datei: ${clean(result.fileName)}`);
+    const cleanFileName = clean(result.fileName || '').replace(/^\d{10,}-/, '');
+    if (cleanFileName) infoLines.push(`Datei: ${cleanFileName}`);
     if (structure.contractTypeLabel || structure.recognizedAs)
       infoLines.push(`Typ: ${structure.contractTypeLabel || structure.recognizedAs}`);
     if (structure.jurisdiction) infoLines.push(`Jurisdiktion: ${structure.jurisdiction}`);
     if (structure.parties?.length) {
-      structure.parties.filter(p => p.name).forEach(p => infoLines.push(`${p.role || 'Partei'}: ${p.name}`));
+      structure.parties.filter(p => p.name).forEach(p => {
+        const role = (p.role || 'Partei').charAt(0).toUpperCase() + (p.role || 'Partei').slice(1);
+        infoLines.push(`${role}: ${p.name}`);
+      });
     }
     if (result.scores?.overall) infoLines.push(`Gesamt-Score: ${result.scores.overall}/100`);
 
     if (infoLines.length > 0) {
-      doc.roundedRect(PL, doc.y, PW, 12 + infoLines.length * 16, 4).fill(C.bg);
-      let iy = doc.y + 8;
       for (const line of infoLines) {
-        doc.font('Helvetica').fontSize(9).fillColor(C.text).text(line, PL + 14, iy, { width: PW - 28 });
-        iy += 16;
+        doc.font('Helvetica').fontSize(9).fillColor('#6B7280').text(line, PL, doc.y, { width: PW });
+        doc.y += 14;
       }
-      doc.y += 12 + infoLines.length * 16 + 16;
+      doc.y += 8;
     }
 
-    // ── Legend ──
-    doc.roundedRect(PL, doc.y, PW, 48, 4).fill(C.bg);
-    const legY = doc.y + 10;
-    doc.font('Helvetica-Bold').fontSize(8.5).fillColor(C.dark).text('LEGENDE', PL + 14, legY, { lineBreak: false });
-
-    const legY2 = legY + 18;
-    // Removed example
-    doc.roundedRect(PL + 14, legY2, 80, 16, 2).fill(C.rmBg);
-    doc.font('Helvetica-Oblique').fontSize(8).fillColor(C.rm)
-       .text('entfernter Text', PL + 20, legY2 + 3, { lineBreak: false });
-    // Added example
-    doc.roundedRect(PL + 110, legY2, 86, 16, 2).fill(C.addBg);
-    doc.font('Helvetica-Bold').fontSize(8).fillColor(C.add)
-       .text('hinzugefügter Text', PL + 116, legY2 + 3, { lineBreak: false });
-    // Equal example
-    doc.font('Helvetica').fontSize(8).fillColor(C.light)
-       .text('normaler Text = unverändert', PL + 212, legY2 + 3, { lineBreak: false });
-
-    doc.y += 48 + 12;
+    // Separator
+    doc.moveTo(PL, doc.y).lineTo(PR, doc.y).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+    doc.y += 16;
 
     // Disclaimer
-    doc.font('Helvetica').fontSize(7.5).fillColor(C.light)
-       .text('Dieses Dokument wurde automatisch durch Contract AI erstellt und dient als Verhandlungsgrundlage. Es ersetzt keine Rechtsberatung.', PL, doc.y, { width: PW, align: 'center' });
+    doc.font('Helvetica').fontSize(7.5).fillColor('#9CA3AF')
+       .text('Dieses Dokument wurde automatisch erstellt und dient als Verhandlungsgrundlage. Es ersetzt keine Rechtsberatung.', PL, doc.y, { width: PW });
 
     // ══════════════════════════════════════════════
     // ── CLAUSE PAGES ──
@@ -1140,142 +1093,105 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
     for (let ci = 0; ci < changedClauses.length; ci++) {
       const clause = changedClauses[ci];
       const opt = optMap.get(clause.id);
-      const analysis = analysisMap.get(clause.id);
       const version = opt.versions?.[mode];
-      const diffs = version?.diffs || [];
       const sectionNum = clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber : '';
       const catLabel = CATEGORY_LABELS[clause.category] || clause.category || '';
-
-      // Estimate height needed
-      const optText = version?.text ? clean(version.text) : clean(clause.originalText || '');
-      const textH = doc.font('Helvetica').fontSize(9).heightOfString(optText, { width: PW - 32, lineGap: 3 });
+      const origText = clean(clause.originalText || '');
+      const optText = version?.text ? clean(version.text) : origText;
       const reasonText = clean(version?.reasoning || '');
-      const reasonH = reasonText ? doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: PW - 52, lineGap: 2 }) + 36 : 0;
-      const neededH = 40 + textH + reasonH + 30;
 
-      checkPage(Math.min(neededH, 200));
-      const startY = doc.y;
+      // Start new page for each clause if not enough space for header + some text
+      checkPage(120);
 
-      // ── Clause header bar ──
-      doc.save();
-      doc.roundedRect(PL, startY, PW, 28, 4).fill(C.bg);
-      // Left accent bar
-      doc.rect(PL, startY, 4, 28).fill(C.brand);
+      // ── Header bar ──
+      const headerY = doc.y;
+      doc.rect(PL, headerY, PW, 26).fill('#F9FAFB');
+      doc.rect(PL, headerY, 3, 26).fill('#0066FF');
 
-      let hx = PL + 14;
-      // Section number badge
+      let hx = PL + 12;
       if (sectionNum) {
-        const snW = doc.font('Helvetica-Bold').fontSize(8).widthOfString(sectionNum) + 10;
-        doc.roundedRect(hx, startY + 6, snW, 16, 3).fill(C.brandLight);
-        doc.font('Helvetica-Bold').fontSize(8).fillColor(C.brand).text(sectionNum, hx + 5, startY + 10, { lineBreak: false });
-        hx += snW + 6;
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#0066FF')
+           .text(sectionNum, hx, headerY + 8, { lineBreak: false });
+        hx += doc.widthOfString(sectionNum) + 8;
       }
-      // Title
-      doc.font('Helvetica-Bold').fontSize(9.5).fillColor(C.dark)
-         .text(clean(clause.title || 'Klausel'), hx, startY + 8, { lineBreak: false, width: PW * 0.5 });
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#111827')
+         .text(clean(clause.title || 'Klausel'), hx, headerY + 8, { lineBreak: false, width: PW * 0.55 });
 
-      // Category badge (right side)
-      if (catLabel) {
-        const tw = doc.font('Helvetica').fontSize(7).widthOfString(catLabel) + 10;
-        doc.roundedRect(PR - tw - 70, startY + 7, tw, 14, 3).fill(C.borderLight);
-        doc.font('Helvetica').fontSize(7).fillColor(C.muted).text(catLabel, PR - tw - 65, startY + 10, { lineBreak: false });
-      }
-      // Counter badge
+      // Right side: category + counter
       const cntText = `${ci + 1} / ${changedClauses.length}`;
-      const cntW = doc.font('Helvetica-Bold').fontSize(7).widthOfString(cntText) + 10;
-      doc.roundedRect(PR - cntW, startY + 7, cntW, 14, 3).fill(C.accentBg);
-      doc.font('Helvetica-Bold').fontSize(7).fillColor(C.accent).text(cntText, PR - cntW + 5, startY + 10, { lineBreak: false });
-      doc.restore();
+      doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
+         .text(`${catLabel}  ·  ${cntText}`, PL, headerY + 9, { width: PW - 10, align: 'right', lineBreak: false });
 
-      // ── Unified diff text ──
-      doc.y = startY + 34;
-      const diffX = PL + 16;
-      const diffW = PW - 32;
+      doc.y = headerY + 32;
 
-      if (diffs.length > 0) {
-        const validDiffs = diffs.filter(d => clean(d.text || ''));
-        if (validDiffs.length > 0) {
-          for (let di = 0; di < validDiffs.length; di++) {
-            const op = validDiffs[di];
-            const t = clean(op.text);
-            if (!t) continue;
-            const isLast = di === validDiffs.length - 1;
+      // ── ORIGINAL section ──
+      doc.font('Helvetica-Bold').fontSize(7).fillColor('#DC2626')
+         .text('ORIGINAL', PL + 8, doc.y, { lineBreak: false });
+      doc.y += 12;
 
-            if (op.type === 'equal') {
-              doc.font('Helvetica').fontSize(9).fillColor(C.text);
-            } else if (op.type === 'remove') {
-              doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.rm);
-            } else if (op.type === 'add') {
-              doc.font('Helvetica-Bold').fontSize(9).fillColor(C.add);
-            }
+      doc.font('Helvetica').fontSize(8.5).fillColor('#9CA3AF')
+         .text(origText, PL + 8, doc.y, { width: PW - 16, lineGap: 2 });
+      doc.y += 10;
 
-            if (di === 0) {
-              doc.text(t, diffX, doc.y, { width: diffW, lineGap: 3, continued: !isLast });
-            } else {
-              doc.text(t, { continued: !isLast });
-            }
-          }
-        } else {
-          doc.font('Helvetica').fontSize(9).fillColor(C.text)
-             .text(clean(clause.originalText || ''), diffX, doc.y, { width: diffW, lineGap: 3 });
-        }
-      } else {
-        doc.font('Helvetica').fontSize(9).fillColor(C.text)
-           .text(clean(clause.originalText || ''), diffX, doc.y, { width: diffW, lineGap: 3 });
-      }
+      // Separator
+      doc.moveTo(PL + 8, doc.y).lineTo(PR - 8, doc.y).strokeColor('#E5E7EB').lineWidth(0.3).stroke();
+      doc.y += 10;
 
-      doc.y += 8;
+      // ── OPTIMIERT section ──
+      checkPage(60);
+      doc.font('Helvetica-Bold').fontSize(7).fillColor('#059669')
+         .text('OPTIMIERT', PL + 8, doc.y, { lineBreak: false });
+      doc.y += 12;
 
-      // ── Reasoning box ──
+      doc.font('Helvetica').fontSize(8.5).fillColor('#374151')
+         .text(optText, PL + 8, doc.y, { width: PW - 16, lineGap: 2 });
+      doc.y += 12;
+
+      // ── Reasoning ──
       if (reasonText) {
-        checkPage(60);
+        checkPage(50);
+        const boxX = PL + 8;
+        const boxW = PW - 16;
+        const rH = doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: boxW - 20, lineGap: 2 }) + 22;
         const boxY = doc.y;
-        const rH = doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: diffW - 24, lineGap: 2 }) + 28;
-        doc.save();
-        doc.roundedRect(diffX, boxY, diffW, rH, 4).fill(C.brandLight);
-        doc.rect(diffX, boxY, 3, rH).fill(C.brand);
-        doc.font('Helvetica-Bold').fontSize(7.5).fillColor(C.brand)
-           .text('BEGRÜNDUNG', diffX + 12, boxY + 8, { lineBreak: false });
-        doc.font('Helvetica').fontSize(8).fillColor(C.text)
-           .text(reasonText, diffX + 12, boxY + 20, { width: diffW - 24, lineGap: 2 });
-        doc.restore();
+        doc.rect(boxX, boxY, boxW, rH).fill('#F9FAFB');
+        doc.rect(boxX, boxY, 3, rH).fill('#0066FF');
+        doc.font('Helvetica-Bold').fontSize(7).fillColor('#0066FF')
+           .text('BEGRÜNDUNG', boxX + 10, boxY + 6, { lineBreak: false });
+        doc.font('Helvetica').fontSize(8).fillColor('#374151')
+           .text(reasonText, boxX + 10, boxY + 16, { width: boxW - 20, lineGap: 2 });
         doc.y = boxY + rH + 6;
       }
 
-      // ── Negotiation advice (compact) ──
+      // ── Negotiation advice ──
       const advice = clean(opt.negotiationAdvice || '');
       if (advice) {
-        checkPage(40);
-        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(C.muted)
-           .text(`Verhandlungshinweis: ${advice}`, diffX, doc.y, { width: diffW });
+        checkPage(30);
+        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor('#9CA3AF')
+           .text(`Verhandlungshinweis: ${advice}`, PL + 8, doc.y, { width: PW - 16 });
         doc.y += 4;
       }
 
-      // Separator line
-      doc.y += 4;
-      doc.save();
-      doc.moveTo(PL, doc.y).lineTo(PR, doc.y).strokeColor(C.border).lineWidth(0.5).stroke();
-      doc.restore();
-      doc.y += 14;
+      // Clause separator
+      doc.y += 6;
+      doc.moveTo(PL, doc.y).lineTo(PR, doc.y).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+      doc.y += 16;
     }
 
     // ══════════════════════════════════════════════
     // ── FOOTER & PAGE NUMBERS ──
     // ══════════════════════════════════════════════
     const range = doc.bufferedPageRange();
-    for (let i = range.start; i < range.start + range.count; i++) {
+    const pageCount = range.count;
+    for (let i = range.start; i < range.start + pageCount; i++) {
       doc.switchToPage(i);
       doc.save();
-      const footerY = doc.page.height - 40;
-      // Separator line
-      doc.moveTo(M, footerY).lineTo(doc.page.width - M, footerY)
-         .strokeColor(C.borderLight).lineWidth(0.5).stroke();
-      // Branding left
-      doc.font('Helvetica').fontSize(7).fillColor(C.light)
-         .text('Contract AI – Smart Optimizer', M, footerY + 8, { lineBreak: false });
-      // Page number right
-      doc.font('Helvetica').fontSize(7).fillColor(C.light)
-         .text(`Seite ${i + 1} von ${totalPages}`, 0, footerY + 8, {
+      const fy = doc.page.height - 36;
+      doc.moveTo(M, fy).lineTo(doc.page.width - M, fy).strokeColor('#F3F4F6').lineWidth(0.5).stroke();
+      doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
+         .text('Contract AI', M, fy + 6, { lineBreak: false });
+      doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
+         .text(`Seite ${i + 1} von ${pageCount}`, 0, fy + 6, {
             width: doc.page.width - M, align: 'right', lineBreak: false
          });
       doc.restore();
