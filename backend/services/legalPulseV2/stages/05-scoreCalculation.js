@@ -37,14 +37,25 @@ const ENFORCEABILITY_PENALTY = {
 function calculateRiskScore(findings) {
   if (!findings || findings.length === 0) return 100;
 
+  // Track occurrence count per severity for diminishing returns
+  const severityCounts = {};
+
   let totalPenalty = 0;
   for (const f of findings) {
     if (f.type !== "risk" && f.type !== "compliance") continue;
-    const severityWeight = SEVERITY_WEIGHTS[f.severity] || 0;
+    const severity = f.severity || "medium";
+    severityCounts[severity] = (severityCounts[severity] || 0) + 1;
+
+    const severityWeight = SEVERITY_WEIGHTS[severity] || 0;
     const categoryWeight = CATEGORY_IMPORTANCE[f.category] || 1.0;
     const confidenceFactor = (f.confidence || 70) / 100;
     const enforceabilityPenalty = ENFORCEABILITY_PENALTY[f.enforceability] || 0;
-    totalPenalty += severityWeight * categoryWeight * confidenceFactor + enforceabilityPenalty;
+
+    // Diminishing returns: each additional finding of same severity has less impact
+    // 1st = 100%, 2nd = 71%, 3rd = 58%, 4th = 50%, 5th = 45%...
+    const diminishingFactor = 1 / Math.sqrt(severityCounts[severity]);
+
+    totalPenalty += (severityWeight * categoryWeight * confidenceFactor * diminishingFactor) + enforceabilityPenalty;
   }
 
   // Cap penalty at 90 (never go fully to 0)

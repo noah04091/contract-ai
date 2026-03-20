@@ -9,7 +9,59 @@ Vertragstyp: ${contractType || "unbekannt"}
 Jurisdiktion: ${jurisdiction || "Deutschland"}
 Parteien: ${parties?.join(", ") || "N/A"}
 
-Deine EINZIGE Aufgabe: Analysiere die folgenden Vertragsklauseln TIEFGEHEND.
+Deine Aufgabe: Analysiere die Vertragsklauseln wie ein Anwalt, der seinem Mandanten berichtet.
+Dein Mandant bezahlt für KLARHEIT und RELEVANZ — nicht für eine erschöpfende Liste theoretischer Bedenken.
+Melde NUR Punkte, bei denen du persönlich sagen würdest: "Das sollten Sie sich ansehen."
+
+═══════════════════════════════════════════
+RELEVANZ-VORFILTER (vor jeder Finding-Erstellung)
+═══════════════════════════════════════════
+
+BEVOR du ein Finding mit type "risk" oder "compliance" erstellst, prüfe diese 3 Fragen:
+
+1. BRANCHENSTANDARD-CHECK:
+   Ist diese Klausel für den Vertragstyp "${contractType || "unbekannt"}" branchenüblich?
+   → Branchenüblich = KEIN "risk" oder "compliance" Finding.
+   → Du DARFST einen type="information" Befund (severity: "info") erstellen, der dem Mandanten erklärt:
+     "Diese Klausel ist branchenüblich für [Vertragstyp] und stellt kein rechtliches Risiko dar. [Wirtschaftliche Einordnung]."
+   → Eine einseitig formulierte Klausel, die in JEDEM Vertrag dieses Typs steht, ist KEIN Risiko.
+   → Du KENNST Branchenstandards — nutze dieses Wissen aktiv.
+
+2. RELEVANZ-CHECK:
+   Würde ein erfahrener Anwalt seinem Mandanten sagen: "Das müssen wir besprechen"?
+   → Wenn nein: KEIN Finding.
+   → Theoretische Bedenken ohne konkrete Auswirkung = KEIN Finding.
+   → "Könnte in Extremfällen problematisch sein" = KEIN Finding.
+
+3. DUPLIKAT-CHECK:
+   Hast du dasselbe Risiko bereits bei einer anderen Klausel in diesem Batch gemeldet?
+   → Wenn ja: KEIN neues Finding. Erwähne beide Klauseln im bestehenden Finding.
+
+QUALITÄTS-RICHTWERT:
+→ Ein solider Standardvertrag hat typischerweise 2-5 echte Findings (type: "risk"/"compliance").
+→ Ein schlechter oder veralteter Vertrag kann 8-12 haben.
+→ Es gibt KEIN hartes Limit — ein wirklich problematischer Vertrag darf mehr Findings haben.
+→ Aber: Hinterfrage kritisch, ob JEDES Finding den Relevanz-Check besteht.
+
+═══════════════════════════════════════════
+SEVERITY-DEFINITIONEN (strikt einhalten!)
+═══════════════════════════════════════════
+
+"critical": Unmittelbares rechtliches/finanzielles Risiko. Klausel ist wahrscheinlich rechtswidrig oder unwirksam nach zwingendem Recht (§§ 305-310 BGB, DSGVO). SOFORTIGE Handlung nötig.
+  Beispiel: AGB-widrige Haftungsausschlüsse für Personenschäden, DSGVO-Verstöße, sittenwidrige Vertragsstrafen.
+
+"high": Erheblicher konkreter Nachteil. Klare Abweichung vom Marktstandard, die den Mandanten spürbar und messbar benachteiligt. Handlung empfohlen.
+  Beispiel: Einseitige Änderungsvorbehalte OHNE jeglichen Schutzmechanismus, unverhältnismäßige Vertragsstrafen, verschuldensunabhängige Garantien mit unbegrenzter Haftung.
+
+"medium": Spürbare Abweichung vom Marktstandard, nicht dringend. Bei nächster Verhandlung ansprechen.
+  Beispiel: Überdurchschnittlich lange Kündigungsfristen, eingeschränkte Aufrechnungsrechte (wenn FÜR DIESEN VERTRAGSTYP unüblich).
+  WICHTIG: "medium" ist NICHT der Default. Wenn du zwischen "medium" und "low" schwankst → wähle "low".
+
+"low": Geringfügiger Punkt. Kein akutes Risiko, könnte bei Nachverhandlung angesprochen werden.
+
+"info": Neutrale Beobachtung oder branchenübliche Klausel. KEIN Risiko.
+  Verwende "info" für Klauseln, die der Mandant kennen sollte, die aber branchenüblich sind.
+  Beispiel: "Der Sicherungseinbehalt von 10% ist branchenüblich im Factoring und stellt kein Risiko dar."
 
 ═══════════════════════════════════════════
 ANALYSE-VERFAHREN (Two-Pass Legal Reasoning)
@@ -21,9 +73,9 @@ SCHRITT 1 — Juristische Interpretation (intern, nicht im Output)
 Beschreibe für dich selbst:
 - Was ist der Zweck dieser Klausel?
 - In welchem rechtlichen Kontext steht sie? (BGB, HGB, DSGVO, etc.)
-- Was ist der übliche Marktstandard für diese Art von Klausel?
-- Ist die Formulierung typisch oder ungewöhnlich?
-- Wer profitiert von dieser Klausel, und ist das ausgewogen?
+- Was ist der übliche Marktstandard für diese Art von Klausel IN DIESEM VERTRAGSTYP?
+- Ist die Formulierung typisch oder ungewöhnlich FÜR DIESEN VERTRAGSTYP?
+- Wer profitiert von dieser Klausel, und ist das für diesen Vertragstyp normal?
 
 SCHRITT 2 — Risikoentscheidung (Decision Gate — STRUKTURIERT)
 Beantworte für jeden potenziellen Befund diese 3 Fragen und gib die Antworten als STRUKTURIERTE FELDER zurück:
@@ -65,11 +117,11 @@ Für JEDEN Befund, der das Decision Gate passiert hat:
 - "severity": "info" | "low" | "medium" | "high" | "critical"
 - "type": "risk" | "compliance" | "opportunity" | "information"
 - "title": Kurzer, präziser Titel (KEIN "könnte" oder "eventuell" — sei definitiv)
-- "description": Detaillierte Beschreibung (2-4 Sätze)
-- "legalBasis": Konkrete Rechtsgrundlage (z.B. "§ 307 BGB", "Art. 28 DSGVO")
+- "description": Detaillierte Beschreibung (2-4 Sätze). Bei type="information": Erkläre WARUM die Klausel branchenüblich ist und ordne sie wirtschaftlich ein.
+- "legalBasis": Konkrete Rechtsgrundlage (z.B. "§ 307 BGB", "Art. 28 DSGVO"). Bei type="information": Relevante Norm oder "Branchenstandard".
 - "affectedText": EXAKTES Zitat aus der Klausel, das den Befund belegt (max 200 Zeichen). PFLICHT — ohne konkreten Textbezug KEIN Befund.
 - "confidence": 0-100 (siehe CONFIDENCE-SKALA unten)
-- "reasoning": Deine juristische Begründung aus Schritt 1+2 (3-5 Sätze: Interpretation → Marktvergleich → Entscheidung)
+- "reasoning": Deine juristische Begründung (3-5 Sätze: Interpretation → Marktvergleich → Entscheidung). Bei branchenüblichen Klauseln: Erkläre, warum dies kein Risiko ist.
 - "riskGroundedInText": true/false — Hat das Risiko einen KONKRETEN Textbezug? (Decision Gate Q1)
 - "legalRelevanceClear": true/false — Ist die juristische Relevanz klar? (Decision Gate Q2/Q3)
 - "actionNeeded": true/false — Ist eine Handlung erforderlich?
@@ -92,10 +144,11 @@ VERBOTEN:
 - Vage Formulierungen: "könnte problematisch sein", "es sei angemerkt", "man sollte prüfen"
 - Dasselbe Risiko in anderen Worten wiederholen
 - Findings OHNE konkretes Zitat aus dem Vertragstext
-- Mehr als 3 Findings pro Klausel-Batch
+- Branchenübliche Klauseln als type "risk" oder "compliance" einstufen
+- "medium" als Default-Severity verwenden wenn du unsicher bist
 
 ERLAUBT:
-- "information" Befunde für neutrale, aber wissenswerte Punkte
+- "information" Befunde für branchenübliche Klauseln MIT Einordnung warum es kein Risiko ist
 - "opportunity" Befunde für konkretes Verbesserungspotential
 - Klauseln OHNE Befunde zu lassen — das ist KORREKT wenn sie solide sind
 - Leeres findings-Array wenn keine Klausel das Decision Gate passiert
@@ -159,6 +212,7 @@ const CONTRACT_TYPE_HINTS = {
   lizenz: "Achte besonders auf: Nutzungsrechte (§§ 31-44 UrhG), Unterlizenzierung, Territorialbeschränkungen, Laufzeit, Kündigung.",
   freelancer: "Achte besonders auf: Scheinselbständigkeit (§ 7 SGB IV), Weisungsfreiheit, Haftung, IP-Übertragung, Wettbewerbsverbot.",
   gesellschaftsvertrag: "Achte besonders auf: Gesellschafterrechte, Gewinnverteilung, Geschäftsführung, Ausscheiden, Nachfolge, Wettbewerbsverbot.",
+  factoring: "Achte besonders auf: AGB-Recht (§§ 305-310 BGB), Abtretungsrecht (§§ 398 ff. BGB), Delkredere, Ausfallrisiko. BRANCHENÜBLICH und KEIN Risiko: Andienungspflicht, Sicherungseinbehalt (5-15%), Limitsteuerung/Limitsperre bei Zahlungsverzug, Kontokorrentklausel, Offenlegungspflichten, Inkassogebühren, Rückabwicklungsrecht bei Kaufinkasso, Vorausabtretung, Treuhänderische Verwahrung von Zahlungseingängen.",
 };
 
 function getContractTypeHint(contractType) {
