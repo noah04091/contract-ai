@@ -3405,3 +3405,201 @@
   background: #fef2f2;
   color: #dc2626;
 }
+
+/* ===== HEADER STATS (Quick Stats + Worst Clause) ===== */
+.headerStats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.quickStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.statBadgeHigh,
+.statBadgeMedium,
+.statBadgeLow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.statBadgeHigh {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.statBadgeMedium {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.statBadgeLow {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.statCount {
+  color: #94a3b8;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.worstClauseBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.worstClauseBtn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+}
+
+/* ===== PULSE ANIMATION (unanalysierte Klauseln) ===== */
+@keyframes pendingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.clauseItem.pending {
+  animation: pendingPulse 2s ease-in-out infinite;
+  border-left-color: #cbd5e1;
+}
+
+.clauseItem.pending::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: pendingPulse 1.5s ease-in-out infinite;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+  }
+
+  .headerStats {
+    order: 3;
+    width: 100%;
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .headerRight {
+    gap: 6px;
+  }
+
+  .headerRight span {
+    display: none;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    height: 100dvh;
+  }
+
+  .mainContent {
+    flex-direction: column;
+  }
+
+  .analysisPanel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: 60vh;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .contractPanel {
+    min-width: 0 !important;
+    flex: 1;
+  }
+
+  .clauseList {
+    max-height: none;
+  }
+
+  .worstClauseBtn span {
+    display: none;
+  }
+
+  .quickStats .statCount {
+    display: none;
+  }
+}
+
+/* ===== KEYBOARD SHORTCUT HINT ===== */
+.keyboardHint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.keyboardHint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  box-shadow: 0 1px 0 #cbd5e1;
+}

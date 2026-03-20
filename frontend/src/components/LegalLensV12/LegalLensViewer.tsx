@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useLegalLensV12 as useLegalLens, generateContentHash } from '../../hooks/useLegalLensV12';
 import ClauseList from './ClauseList';
 import ClauseSkeleton from './ClauseSkeleton';
@@ -215,13 +215,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   } = useLegalLens();
 
   // ============================================
-  // RISK SCORE GAUGE — Gesamtrisiko aus Cache berechnen
+  // RISK STATS — Gesamtrisiko, Quick Stats, Worst Clause
   // ============================================
-  const overallRiskScore = useMemo(() => {
+  const riskStats = useMemo(() => {
     const cacheEntries = Object.entries(analysisCache);
     if (cacheEntries.length === 0) return null;
 
-    // Nur Einträge der aktuellen Perspektive zählen
     const perspectiveEntries = cacheEntries.filter(([key]) =>
       key.endsWith(`-${currentPerspective}`)
     );
@@ -229,20 +228,57 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     let totalScore = 0;
     let count = 0;
-    for (const [, analysis] of perspectiveEntries) {
-      const a = analysis as { riskAssessment?: { score: number }; actionLevel?: string };
+    let high = 0;
+    let medium = 0;
+    let low = 0;
+    let worstScore = 0;
+    let worstClauseId: string | null = null;
+
+    for (const [key, analysis] of perspectiveEntries) {
+      const a = analysis as { riskAssessment?: { score: number }; actionLevel?: string; clauseId?: string };
+      let score = 0;
+
       if (a.riskAssessment?.score != null) {
-        totalScore += a.riskAssessment.score;
-        count++;
+        score = a.riskAssessment.score;
       } else if (a.actionLevel) {
-        // Fallback: actionLevel → Score
-        const fallback = a.actionLevel === 'reject' ? 80 : a.actionLevel === 'negotiate' ? 50 : 20;
-        totalScore += fallback;
+        score = a.actionLevel === 'reject' ? 80 : a.actionLevel === 'negotiate' ? 50 : 20;
+      }
+
+      if (score > 0) {
+        totalScore += score;
         count++;
+        if (score >= 60) high++;
+        else if (score >= 30) medium++;
+        else low++;
+
+        if (score > worstScore) {
+          worstScore = score;
+          // Extract clauseId from cache key: "v2-{hash}-{perspective}"
+          worstClauseId = a.clauseId || key.split('-').slice(1, -1).join('-');
+        }
       }
     }
-    return count > 0 ? Math.round(totalScore / count) : null;
-  }, [analysisCache, currentPerspective]);
+
+    if (count === 0) return null;
+
+    const worstClause = worstClauseId && clauses
+      ? clauses.find(c => c.id === worstClauseId) ||
+        clauses.find(c => {
+          const hash = generateContentHash(c.text);
+          return worstClauseId === hash;
+        })
+      : null;
+
+    return {
+      overallScore: Math.round(totalScore / count),
+      analyzed: count,
+      high,
+      medium,
+      low,
+      worstClause,
+      worstScore
+    };
+  }, [analysisCache, currentPerspective, clauses]);
 
   // ============================================
   // KEYBOARD NAVIGATION (Opt 2: Wow-Effect)
@@ -459,7 +495,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Klausel nicht in Queue → normal analysieren (z.B. nicht-high-risk Klausel)
     }
 
-    analyzeClause(false);
+    analyzeClause(true);
   }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
 
   // Klausel als gelesen markieren
@@ -1269,8 +1305,28 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <Eye size={20} />
           </div>
           <h1 className={styles.title}>Legal Lens: {contractName}</h1>
-          {overallRiskScore !== null && (
-            <RiskScoreGauge score={overallRiskScore} size={40} strokeWidth={3} />
+
+          {/* Risk Stats — erscheint sobald Analysen gecacht sind */}
+          {riskStats && (
+            <div className={styles.headerStats}>
+              <RiskScoreGauge score={riskStats.overallScore} size={40} strokeWidth={3} />
+              <div className={styles.quickStats}>
+                {riskStats.high > 0 && <span className={styles.statBadgeHigh}>{riskStats.high}</span>}
+                {riskStats.medium > 0 && <span className={styles.statBadgeMedium}>{riskStats.medium}</span>}
+                {riskStats.low > 0 && <span className={styles.statBadgeLow}>{riskStats.low}</span>}
+                <span className={styles.statCount}>{riskStats.analyzed} analysiert</span>
+              </div>
+              {riskStats.worstClause && riskStats.worstScore >= 50 && (
+                <button
+                  className={styles.worstClauseBtn}
+                  onClick={() => selectClause(riskStats.worstClause!)}
+                  title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
+                >
+                  <AlertTriangle size={14} />
+                  <span>Riskanteste: {riskStats.worstScore}</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 

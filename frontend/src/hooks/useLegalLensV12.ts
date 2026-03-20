@@ -860,10 +860,11 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         setCurrentAnalysis(cachedAnalysis);
         setChatHistory(cachedAnalysis.chatHistory || []);
       } else {
-        // Keine gecachte Analyse für diese Perspektive - wird neu geladen
+        // Keine gecachte Analyse für diese Perspektive → automatisch neu analysieren
         setCurrentAnalysis(null);
         setChatHistory([]);
         setStreamingText('');
+        // Trigger wird über useEffect in LegalLensViewer via currentPerspective-Dependency ausgelöst
       }
     }
   }, [contractId, selectedClause, analysisCache]);

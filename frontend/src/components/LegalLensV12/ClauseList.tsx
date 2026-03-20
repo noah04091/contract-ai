@@ -328,6 +328,13 @@ const ClauseList: React.FC<ClauseListProps> = ({
         )}
       </div>
 
+      {/* Keyboard Shortcut Hint */}
+      <div className={styles.keyboardHint}>
+        <kbd>↑</kbd><kbd>↓</kbd> Navigation
+        <kbd>Esc</kbd> Schließen
+        <kbd>j</kbd><kbd>k</kbd> Vim
+      </div>
+
       <div className={styles.clauseList}>
         {filteredClauses.map((clause) => {
           const isSelected = selectedClause?.id === clause.id;
@@ -376,7 +383,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 // ✅ FIX Issue #5: Ref für Auto-Scroll speichern
                 if (el) clauseRefs.current.set(clause.id, el);
               }}
-              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''}`}
+              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''} ${!isCached && !isSelected ? styles.pending : ''}`}
               onClick={() => onSelectClause(clause)}
               onMouseEnter={(e) => handleClauseMouseEnter(clause.id, e)}
               onMouseLeave={handleClauseMouseLeave}
