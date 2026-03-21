@@ -182,6 +182,35 @@ interface AnalysisCache {
   [key: CacheKey]: ClauseAnalysis;
 }
 
+// LRU eviction: max entries before oldest are dropped
+const MAX_CACHE_ENTRIES = 100;
+
+// Track insertion order for LRU eviction
+const cacheInsertionOrder: CacheKey[] = [];
+
+/**
+ * LRU Cache Helper: Adds entry and evicts oldest if over limit.
+ * Returns the new cache object.
+ */
+function addToCacheWithEviction(prev: AnalysisCache, key: CacheKey, analysis: ClauseAnalysis): AnalysisCache {
+  // Move key to end of insertion order (most recently used)
+  const idx = cacheInsertionOrder.indexOf(key);
+  if (idx !== -1) cacheInsertionOrder.splice(idx, 1);
+  cacheInsertionOrder.push(key);
+
+  const next: AnalysisCache = { ...prev, [key]: analysis };
+
+  // Evict oldest entries if over limit
+  while (cacheInsertionOrder.length > MAX_CACHE_ENTRIES) {
+    const oldest = cacheInsertionOrder.shift();
+    if (oldest && oldest in next) {
+      delete next[oldest];
+    }
+  }
+
+  return next;
+}
+
 /**
  * ✅ FIX Issue #1: Content-basierter Hash für konsistenten Cache
  * Erzeugt einen stabilen Hash aus dem Klauseltext (unabhängig von der clause.id)
@@ -630,12 +659,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       return isStale;
     };
 
-    // ✅ Helper: Analyse in Cache speichern
+    // ✅ Helper: Analyse in Cache speichern (mit LRU Eviction)
     const cacheAnalysis = (analysis: ClauseAnalysis) => {
-      setAnalysisCache(prev => ({
-        ...prev,
-        [cacheKey]: analysis
-      }));
+      setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, analysis));
     };
 
     try {
@@ -792,11 +818,8 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         false // JSON mode (kein Streaming)
       ).then(response => {
         if (response.success) {
-          // In Cache speichern
-          setAnalysisCache(prev => ({
-            ...prev,
-            [cacheKey]: response.analysis
-          }));
+          // In Cache speichern (mit LRU Eviction)
+          setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
           console.log(`✅ [Legal Lens] Pre-fetched: ${clause.id.slice(-8)}`);
         }
       }).catch(err => {
@@ -1144,11 +1167,8 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         );
 
         if (response.success) {
-          // In Cache speichern
-          setAnalysisCache(prev => ({
-            ...prev,
-            [cacheKey]: response.analysis
-          }));
+          // In Cache speichern (mit LRU Eviction)
+          setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
         }
       } catch (err) {
         console.error(`[Legal Lens] Error analyzing clause ${clause.id}:`, err);
@@ -1250,7 +1270,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     // ✅ SCHRITT 4: Queue-basierte Verarbeitung mit Priorität
     while (preloadQueueRef.current.size > 0 && !batchAbortRef.current) {
       // Prüfe ob es eine priorisierte Klausel gibt
-      let nextCacheKey: string;
+      let nextCacheKey: CacheKey;
       let clause: ParsedClause;
 
       if (priorityClauseRef.current && preloadQueueRef.current.has(priorityClauseRef.current)) {
@@ -1262,7 +1282,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         // Nächste Klausel aus der Queue (erste in der Map)
         const firstEntry = preloadQueueRef.current.entries().next().value;
         if (!firstEntry) break;
-        [nextCacheKey, clause] = firstEntry;
+        [nextCacheKey, clause] = firstEntry as [CacheKey, ParsedClause];
       }
 
       // Entferne aus Queue
@@ -1284,10 +1304,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         );
 
         if (response.success) {
-          setAnalysisCache(prev => ({
-            ...prev,
-            [nextCacheKey]: response.analysis
-          }));
+          setAnalysisCache(prev => addToCacheWithEviction(prev, nextCacheKey, response.analysis));
           completedCount++;
         }
       } catch (err) {

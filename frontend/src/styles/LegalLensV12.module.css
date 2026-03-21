@@ -3004,6 +3004,13 @@
   color: #64748b;
 }
 
+.elapsedTime {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
 /* 4. Explanation Section */
 .explanationMainText {
   font-size: 1rem;

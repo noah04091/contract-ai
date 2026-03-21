@@ -84,6 +84,18 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [elapsedSec, setElapsedSec] = useState(0);
+
+  // Live elapsed timer during analysis
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setElapsedSec(0);
+      return;
+    }
+    setElapsedSec(0);
+    const timer = setInterval(() => setElapsedSec(s => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, [isAnalyzing]);
 
   // Ref für Auto-Scroll im Chat
   const chatMessagesRef = useRef<HTMLDivElement>(null);
@@ -199,14 +211,16 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   // Loading State (Streaming)
   if (isAnalyzing) {
+    const perspInfo = getCurrentPerspectiveInfo();
     return (
       <div className={styles.analysisContent}>
         <div className={styles.analysisSection}>
           <div className={styles.sectionHeader}>
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>🔍</span>
+              <span className={styles.sectionIcon}>{perspInfo.icon || '🔍'}</span>
               Analyse läuft...
             </h4>
+            <span className={styles.elapsedTime}>{elapsedSec}s</span>
           </div>
           {streamingText ? (
             <div className={styles.streamingTextContent}>
@@ -217,7 +231,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingSpinner} />
               <span className={styles.loadingText}>
-                Analysiere aus Perspektive: {getCurrentPerspectiveInfo().name}
+                {perspInfo.name}
               </span>
             </div>
           )}
