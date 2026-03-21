@@ -1086,9 +1086,32 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
        .text('Dieses Dokument wurde automatisch erstellt und dient als Verhandlungsgrundlage. Es ersetzt keine Rechtsberatung.', PL, doc.y, { width: PW });
 
     // ══════════════════════════════════════════════
-    // ── CLAUSE PAGES ──
+    // ── CLAUSE PAGES (Two-Column Layout) ──
     // ══════════════════════════════════════════════
     doc.addPage();
+
+    const GAP = 16;                           // gap between columns
+    const COL_W = (PW - GAP) / 2;            // each column width (~240pt)
+    const COL_LEFT_X = PL;                    // left column start
+    const COL_RIGHT_X = PL + COL_W + GAP;    // right column start
+    const TEXT_PAD = 8;                       // padding inside columns
+    const TEXT_W = COL_W - TEXT_PAD * 2;      // text width inside column
+
+    // Column headers (repeated on each new page)
+    function drawColumnHeaders() {
+      const chy = doc.y;
+      // Left header: "ORIGINAL"
+      doc.rect(COL_LEFT_X, chy, COL_W, 20).fill('#FEF2F2');
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#DC2626')
+         .text('ORIGINAL', COL_LEFT_X + TEXT_PAD, chy + 6, { width: TEXT_W, lineBreak: false });
+      // Right header: "OPTIMIERT"
+      doc.rect(COL_RIGHT_X, chy, COL_W, 20).fill('#F0FDF4');
+      doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#059669')
+         .text('OPTIMIERT', COL_RIGHT_X + TEXT_PAD, chy + 6, { width: TEXT_W, lineBreak: false });
+      doc.y = chy + 24;
+    }
+
+    drawColumnHeaders();
 
     for (let ci = 0; ci < changedClauses.length; ci++) {
       const clause = changedClauses[ci];
@@ -1100,82 +1123,93 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
       const optText = version?.text ? clean(version.text) : origText;
       const reasonText = clean(version?.reasoning || '');
 
-      // Start new page for each clause if not enough space for header + some text
-      checkPage(120);
+      // Pre-calculate heights
+      doc.font('Helvetica').fontSize(8.5);
+      const origH = doc.heightOfString(origText, { width: TEXT_W, lineGap: 2 });
+      const optH = doc.heightOfString(optText, { width: TEXT_W, lineGap: 2 });
+      const colContentH = Math.max(origH, optH);
+      const headerH = 28;
+      const totalClauseH = headerH + colContentH + 10; // header + content + padding
 
-      // ── Header bar ──
+      // Check if we need a new page (header bar + at least some text)
+      if (doc.y + Math.min(totalClauseH, 120) > BOTTOM) {
+        doc.addPage();
+        drawColumnHeaders();
+      }
+
+      // ── Header bar (full width) ──
       const headerY = doc.y;
-      doc.rect(PL, headerY, PW, 26).fill('#F9FAFB');
-      doc.rect(PL, headerY, 3, 26).fill('#0066FF');
+      doc.rect(PL, headerY, PW, 24).fill('#F9FAFB');
+      doc.rect(PL, headerY, 3, 24).fill('#0066FF');
 
       let hx = PL + 12;
       if (sectionNum) {
         doc.font('Helvetica-Bold').fontSize(8).fillColor('#0066FF')
-           .text(sectionNum, hx, headerY + 8, { lineBreak: false });
+           .text(sectionNum, hx, headerY + 7, { lineBreak: false });
         hx += doc.widthOfString(sectionNum) + 8;
       }
       doc.font('Helvetica-Bold').fontSize(9).fillColor('#111827')
-         .text(clean(clause.title || 'Klausel'), hx, headerY + 8, { lineBreak: false, width: PW * 0.55 });
+         .text(clean(clause.title || 'Klausel'), hx, headerY + 7, { lineBreak: false, width: PW * 0.5 });
 
-      // Right side: category + counter
       const cntText = `${ci + 1} / ${changedClauses.length}`;
       doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
-         .text(`${catLabel}  ·  ${cntText}`, PL, headerY + 9, { width: PW - 10, align: 'right', lineBreak: false });
+         .text(`${catLabel}  ·  ${cntText}`, PL, headerY + 8, { width: PW - 10, align: 'right', lineBreak: false });
 
-      doc.y = headerY + 32;
+      doc.y = headerY + 28;
 
-      // ── ORIGINAL section ──
-      doc.font('Helvetica-Bold').fontSize(7).fillColor('#DC2626')
-         .text('ORIGINAL', PL + 8, doc.y, { lineBreak: false });
-      doc.y += 12;
+      // ── Two-column content ──
+      const colStartY = doc.y;
 
-      doc.font('Helvetica').fontSize(8.5).fillColor('#9CA3AF')
-         .text(origText, PL + 8, doc.y, { width: PW - 16, lineGap: 2 });
-      doc.y += 10;
+      // Left column: Original (lighter color)
+      doc.font('Helvetica').fontSize(8.5).fillColor('#6B7280')
+         .text(origText, COL_LEFT_X + TEXT_PAD, colStartY, { width: TEXT_W, lineGap: 2 });
+      const leftEndY = doc.y;
 
-      // Separator
-      doc.moveTo(PL + 8, doc.y).lineTo(PR - 8, doc.y).strokeColor('#E5E7EB').lineWidth(0.3).stroke();
-      doc.y += 10;
+      // Right column: Optimized (darker color)
+      doc.font('Helvetica').fontSize(8.5).fillColor('#111827')
+         .text(optText, COL_RIGHT_X + TEXT_PAD, colStartY, { width: TEXT_W, lineGap: 2 });
+      const rightEndY = doc.y;
 
-      // ── OPTIMIERT section ──
-      checkPage(60);
-      doc.font('Helvetica-Bold').fontSize(7).fillColor('#059669')
-         .text('OPTIMIERT', PL + 8, doc.y, { lineBreak: false });
-      doc.y += 12;
+      // Divider line between columns
+      const dividerX = PL + COL_W + GAP / 2;
+      const divBottom = Math.max(leftEndY, rightEndY);
+      doc.save();
+      doc.moveTo(dividerX, colStartY).lineTo(dividerX, divBottom)
+         .strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+      doc.restore();
 
-      doc.font('Helvetica').fontSize(8.5).fillColor('#374151')
-         .text(optText, PL + 8, doc.y, { width: PW - 16, lineGap: 2 });
-      doc.y += 12;
+      // Move Y to bottom of tallest column
+      doc.y = divBottom + 8;
 
-      // ── Reasoning ──
+      // ── Reasoning (full width below columns) ──
       if (reasonText) {
-        checkPage(50);
-        const boxX = PL + 8;
-        const boxW = PW - 16;
-        const rH = doc.font('Helvetica').fontSize(8).heightOfString(reasonText, { width: boxW - 20, lineGap: 2 }) + 22;
+        checkPage(40);
+        const boxX = PL + 4;
+        const boxW = PW - 8;
+        const rH = doc.font('Helvetica').fontSize(7.5).heightOfString(reasonText, { width: boxW - 20, lineGap: 2 }) + 20;
         const boxY = doc.y;
         doc.rect(boxX, boxY, boxW, rH).fill('#F9FAFB');
-        doc.rect(boxX, boxY, 3, rH).fill('#0066FF');
-        doc.font('Helvetica-Bold').fontSize(7).fillColor('#0066FF')
-           .text('BEGRÜNDUNG', boxX + 10, boxY + 6, { lineBreak: false });
-        doc.font('Helvetica').fontSize(8).fillColor('#374151')
-           .text(reasonText, boxX + 10, boxY + 16, { width: boxW - 20, lineGap: 2 });
-        doc.y = boxY + rH + 6;
+        doc.rect(boxX, boxY, 2.5, rH).fill('#0066FF');
+        doc.font('Helvetica-Bold').fontSize(6.5).fillColor('#0066FF')
+           .text('BEGRÜNDUNG', boxX + 10, boxY + 5, { lineBreak: false });
+        doc.font('Helvetica').fontSize(7.5).fillColor('#374151')
+           .text(reasonText, boxX + 10, boxY + 14, { width: boxW - 20, lineGap: 2 });
+        doc.y = boxY + rH + 4;
       }
 
       // ── Negotiation advice ──
       const advice = clean(opt.negotiationAdvice || '');
       if (advice) {
-        checkPage(30);
-        doc.font('Helvetica-Oblique').fontSize(7.5).fillColor('#9CA3AF')
+        checkPage(24);
+        doc.font('Helvetica-Oblique').fontSize(7).fillColor('#9CA3AF')
            .text(`Verhandlungshinweis: ${advice}`, PL + 8, doc.y, { width: PW - 16 });
         doc.y += 4;
       }
 
       // Clause separator
-      doc.y += 6;
+      doc.y += 4;
       doc.moveTo(PL, doc.y).lineTo(PR, doc.y).strokeColor('#E5E7EB').lineWidth(0.5).stroke();
-      doc.y += 16;
+      doc.y += 12;
     }
 
     // ══════════════════════════════════════════════
