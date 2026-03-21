@@ -1194,6 +1194,25 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
              .text(rText, COL_RIGHT_X + TEXT_PAD, chunkY, { width: TEXT_W, lineGap: 2 });
         }
 
+        // Show placeholder when right column is done but left continues
+        if (lText.trim() && !rText.trim() && ri >= optParas.length) {
+          const placeholderY = chunkY + 4;
+          doc.save();
+          doc.roundedRect(COL_RIGHT_X + TEXT_PAD, placeholderY, TEXT_W, 22, 3).fill('#F9FAFB');
+          doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
+             .text('Optimierung siehe oben', COL_RIGHT_X + TEXT_PAD + 8, placeholderY + 7, { width: TEXT_W - 16, lineBreak: false });
+          doc.restore();
+        }
+        // Show placeholder when left column is done but right continues
+        if (rText.trim() && !lText.trim() && oi >= origParas.length) {
+          const placeholderY = chunkY + 4;
+          doc.save();
+          doc.roundedRect(COL_LEFT_X + TEXT_PAD, placeholderY, TEXT_W, 22, 3).fill('#F9FAFB');
+          doc.font('Helvetica').fontSize(7).fillColor('#9CA3AF')
+             .text('Original siehe oben', COL_LEFT_X + TEXT_PAD + 8, placeholderY + 7, { width: TEXT_W - 16, lineBreak: false });
+          doc.restore();
+        }
+
         // Vertical divider between columns
         const divX = PL + COL_W + GAP / 2;
         doc.save();
