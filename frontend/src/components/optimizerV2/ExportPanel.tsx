@@ -1,24 +1,36 @@
 import { useState, useMemo } from 'react';
-import { Download, FileText, File, Loader2 } from 'lucide-react';
-import type { AnalysisResult, OptimizationMode } from '../../types/optimizerV2';
+import { Download, FileText, File, Loader2, CheckCircle2 } from 'lucide-react';
+import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
   result: AnalysisResult;
+  userSelections?: Map<string, UserSelection>;
 }
 
 type DocxStep = 'idle' | 'selecting' | 'generating';
 
-export default function ExportPanel({ result }: Props) {
+export default function ExportPanel({ result, userSelections }: Props) {
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const [downloading, setDownloading] = useState(false);
+
+  // Count accepted clauses (user explicitly selected a version in Clauses tab)
+  const acceptedCount = userSelections ? Array.from(userSelections.values()).filter(s => s.selectedVersion !== 'original').length : 0;
 
   // DOCX flow state
   const [docxStep, setDocxStep] = useState<DocxStep>('idle');
   const [docxMode, setDocxMode] = useState<OptimizationMode>('neutral');
   const [selectedClauses, setSelectedClauses] = useState<Set<string>>(() => {
-    // Pre-select all clauses that need optimization
+    // If user has accepted clauses in the Clauses tab, use those
+    if (userSelections && userSelections.size > 0) {
+      return new Set(
+        Array.from(userSelections.entries())
+          .filter(([, sel]) => sel.selectedVersion !== 'original')
+          .map(([clauseId]) => clauseId)
+      );
+    }
+    // Fallback: pre-select all optimizable clauses
     return new Set(result.optimizations.filter(o => o.needsOptimization).map(o => o.clauseId));
   });
   const [generating, setGenerating] = useState(false);
@@ -67,7 +79,14 @@ export default function ExportPanel({ result }: Props) {
     try {
       const token = localStorage.getItem('token');
       const apiBase = import.meta.env?.VITE_API_URL || (window.location.hostname === 'localhost' ? '' : 'https://api.contract-ai.de');
-      const selections = Array.from(selectedClauses).map(clauseId => ({ clauseId, mode: docxMode }));
+      const selections = Array.from(selectedClauses).map(clauseId => {
+        // Use per-clause accepted mode if available, otherwise fall back to global docxMode
+        const userSel = userSelections?.get(clauseId);
+        const mode = (userSel?.selectedVersion && userSel.selectedVersion !== 'original' && userSel.selectedVersion !== 'custom')
+          ? userSel.selectedVersion as OptimizationMode
+          : docxMode;
+        return { clauseId, mode };
+      });
 
       const response = await fetch(`${apiBase}/api/optimizer-v2/results/${result.resultId}/docx`, {
         method: 'POST',
@@ -175,7 +194,11 @@ export default function ExportPanel({ result }: Props) {
         <div className={styles.docxSelection}>
           <div className={styles.docxSelectionHeader}>
             <h4>Welche Optimierungen übernehmen?</h4>
-            <p>Wähle die Klauseln aus, die im DOCX optimiert werden sollen.</p>
+            <p>
+              {acceptedCount > 0
+                ? `${acceptedCount} Klausel${acceptedCount !== 1 ? 'n' : ''} bereits in der Klauselansicht akzeptiert.`
+                : 'Wähle die Klauseln aus, die im DOCX optimiert werden sollen.'}
+            </p>
           </div>
 
           {/* Mode selector */}
@@ -211,6 +234,11 @@ export default function ExportPanel({ result }: Props) {
               const isSelected = selectedClauses.has(opt.clauseId);
               const sectionNum = clause!.sectionNumber && clause!.sectionNumber !== 'null' ? clause!.sectionNumber : '';
               const categoryLabel = CATEGORY_LABELS[clause!.category] || clause!.category;
+              const userSel = userSelections?.get(opt.clauseId);
+              const acceptedMode = userSel?.selectedVersion && userSel.selectedVersion !== 'original'
+                ? userSel.selectedVersion : null;
+              // Show preview: use accepted mode text if available, otherwise global docxMode
+              const previewMode = (acceptedMode && acceptedMode !== 'custom' ? acceptedMode : docxMode) as OptimizationMode;
 
               return (
                 <label
@@ -227,6 +255,12 @@ export default function ExportPanel({ result }: Props) {
                     <span className={styles.docxClauseTitle}>
                       {sectionNum && <span className={styles.docxClauseSection}>{sectionNum}</span>}
                       {clause!.title}
+                      {acceptedMode && (
+                        <span className={styles.docxAcceptedBadge} title="In Klauselansicht akzeptiert">
+                          <CheckCircle2 size={11} />
+                          {MODE_LABELS[previewMode]?.label || acceptedMode}
+                        </span>
+                      )}
                     </span>
                     <span className={styles.docxClauseMeta}>
                       {categoryLabel}
@@ -235,8 +269,8 @@ export default function ExportPanel({ result }: Props) {
                     </span>
                   </div>
                   <div className={styles.docxClausePreview}>
-                    {opt.versions?.[docxMode]?.text
-                      ? opt.versions[docxMode].text.substring(0, 80) + '...'
+                    {opt.versions?.[previewMode]?.text
+                      ? opt.versions[previewMode].text.substring(0, 80) + '...'
                       : '–'}
                   </div>
                 </label>

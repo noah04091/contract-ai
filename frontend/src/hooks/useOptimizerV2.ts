@@ -145,7 +145,14 @@ function reducer(state: OptimizerV2State, action: Action): OptimizerV2State {
       return { ...state, clauseChats: newChats };
     }
 
-    case 'LOAD_RESULT':
+    case 'LOAD_RESULT': {
+      // Restore userSelections from backend result if available
+      const loadedSelections = new Map<string, UserSelection>();
+      if (action.result.userSelections) {
+        for (const sel of action.result.userSelections) {
+          loadedSelections.set(sel.clauseId, sel);
+        }
+      }
       return {
         ...state,
         status: 'completed',
@@ -153,8 +160,10 @@ function reducer(state: OptimizerV2State, action: Action): OptimizerV2State {
         result: action.result,
         resultId: action.resultId,
         stages: PIPELINE_STAGES.map(s => ({ ...s, status: 'completed' as const })),
-        activeTab: 'overview'
+        activeTab: 'overview',
+        userSelections: loadedSelections
       };
+    }
 
     case 'RESET':
       return { ...initialState, stages: PIPELINE_STAGES.map(s => ({ ...s })) };

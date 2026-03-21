@@ -2428,6 +2428,21 @@
   font-weight: 500;
 }
 
+.docxAcceptedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .docxClausePreview {
   font-size: 11px;
   color: var(--ov2-gray-400);

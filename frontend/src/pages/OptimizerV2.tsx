@@ -182,6 +182,7 @@ export default function OptimizerV2() {
             {activeTab === 'export' && (
               <ExportPanel
                 result={result}
+                userSelections={state.userSelections}
               />
             )}
           </div>

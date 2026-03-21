@@ -228,6 +228,9 @@ export interface AnalysisResult {
     optimizedCount: number;
     textLength: number;
   };
+  userSelections?: UserSelection[];
+  fileName?: string;
+  ocrApplied?: boolean;
 }
 
 // ── Pipeline Stage Info ──
