@@ -156,7 +156,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
                           marginRight: 8,
                           fontSize: 12,
                         }}>
-                          {contractMeta.type}
+                          {safeContractType(contractMeta.type)}
                         </span>
                       )}
                       <span>Score wird berechnet...</span>

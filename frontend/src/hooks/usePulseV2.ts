@@ -8,6 +8,17 @@ import type {
 
 const API_BASE = '/api';
 
+/** Safely extract string from contractType (may be string or object from DB) */
+function safeStr(val: unknown): string | undefined {
+  if (!val) return undefined;
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && val !== null) {
+    const obj = val as Record<string, unknown>;
+    return (obj.displayName || obj.name || undefined) as string | undefined;
+  }
+  return undefined;
+}
+
 interface PartialFinding {
   clauseId: string;
   category: string;
@@ -149,7 +160,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
     case 'SET_CONTRACT_META':
       return {
         ...state,
-        contractMeta: { name: action.name, type: action.contractType },
+        contractMeta: { name: action.name, type: safeStr(action.contractType) },
       };
 
     case 'RESET':
