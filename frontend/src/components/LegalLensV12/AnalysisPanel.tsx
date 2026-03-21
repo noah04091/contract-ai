@@ -11,11 +11,11 @@ import type {
   ChatMessage,
   ActionLevel
 } from '../../types/legalLens';
-import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
+import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS, type PerspectiveInfo } from '../../types/legalLens';
 import ClauseCompareModal from './ClauseCompareModal';
 import ClauseSimulatorModal from './ClauseSimulatorModal';
 import SaveClauseModal from './SaveClauseModal';
-import { ErrorInfo } from '../../hooks/useLegalLensV12';
+import { ErrorInfo, generateContentHash } from '../../hooks/useLegalLensV12';
 import styles from '../../styles/LegalLensV12.module.css';
 
 interface AnalysisPanelProps {
@@ -38,6 +38,7 @@ interface AnalysisPanelProps {
   sourceContractName?: string;
   sourceClauseId?: string;
   currentIndustry?: string;
+  analysisCache?: Record<string, unknown>;
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
   onSendChatMessage: (message: string) => void;
@@ -65,6 +66,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   sourceContractName,
   sourceClauseId,
   currentIndustry,
+  analysisCache = {},
   onLoadAlternatives,
   onLoadNegotiation,
   onSendChatMessage,
@@ -607,6 +609,72 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           )}
         </div>
       )}
+
+      {/* 🔄 Perspektiv-Vergleich — Wie sehen andere Perspektiven diese Klausel? */}
+      {originalClauseText && (() => {
+        const contentHash = generateContentHash(originalClauseText);
+        const otherPerspectives = PERSPECTIVES.filter(p => p.id !== currentPerspective);
+        const perspectiveResults: Array<{ info: PerspectiveInfo; actionLevel: ActionLevel; score?: number }> = [];
+
+        for (const p of otherPerspectives) {
+          const key = `v2-${contentHash}-${p.id}`;
+          const cached = analysisCache[key] as {
+            actionLevel?: ActionLevel;
+            riskAssessment?: { score: number };
+            perspectives?: Record<string, { actionLevel?: ActionLevel; riskAssessment?: { score: number } }>;
+          } | undefined;
+          if (cached) {
+            const pd = cached.perspectives?.[p.id] || cached;
+            perspectiveResults.push({
+              info: p,
+              actionLevel: (pd.actionLevel || 'negotiate') as ActionLevel,
+              score: pd.riskAssessment?.score ?? cached.riskAssessment?.score
+            });
+          }
+        }
+
+        if (perspectiveResults.length === 0) return null;
+
+        return (
+          <div className={styles.analysisSection}>
+            <div
+              className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
+              onClick={() => toggleSection('perspectives')}
+            >
+              <h4 className={styles.sectionTitle}>
+                <span className={styles.sectionIcon}>🔄</span>
+                Andere Perspektiven
+              </h4>
+              <span className={styles.sectionToggle}>
+                {expandedSections.has('perspectives') ? '▼' : '▶'}
+              </span>
+            </div>
+            {expandedSections.has('perspectives') && (
+              <div className={styles.perspectiveGrid}>
+                {perspectiveResults.map(({ info, actionLevel: pAction, score: pScore }) => {
+                  const pInfo = ACTION_LABELS[pAction] || ACTION_LABELS.negotiate;
+                  return (
+                    <div key={info.id} className={styles.perspectiveCard}>
+                      <div className={styles.perspectiveCardHeader}>
+                        <span>{info.icon}</span>
+                        <span className={styles.perspectiveCardName}>{info.name}</span>
+                      </div>
+                      <div className={styles.perspectiveCardAction} style={{ color: pInfo.color }}>
+                        {pInfo.emoji} {pInfo.text}
+                      </div>
+                      {pScore != null && (
+                        <div className={styles.perspectiveCardScore}>
+                          Risiko: {pScore}/100
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* 💡 Weitere Alternativen (generiert) */}
       <div className={styles.analysisSection}>

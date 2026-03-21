@@ -3676,6 +3676,175 @@
   box-shadow: 0 1px 0 #cbd5e1;
 }
 
+/* ===== QUICK-FILTER TABS ===== */
+.filterTabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.filterTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: white;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.filterTab:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.filterTabActive {
+  background: #1e293b !important;
+  border-color: #1e293b !important;
+  color: white !important;
+}
+
+.filterTabHigh.filterTabActive {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.filterTabMedium.filterTabActive {
+  background: #d97706 !important;
+  border-color: #d97706 !important;
+}
+
+.filterTabLow.filterTabActive {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.filterCount {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* ===== CLAUSE DECISION BUTTONS ===== */
+.clauseFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.decisionBtns {
+  display: flex;
+  gap: 4px;
+}
+
+.decisionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #94a3b8;
+}
+
+.decisionBtn:hover {
+  transform: scale(1.1);
+}
+
+.decisionAccept:hover {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.decisionNegotiate:hover {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.decisionReject:hover {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.decisionAccept.decisionActive {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: white;
+}
+
+.decisionNegotiate.decisionActive {
+  border-color: #d97706;
+  background: #d97706;
+  color: white;
+}
+
+.decisionReject.decisionActive {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: white;
+}
+
+/* ===== PERSPECTIVE GRID ===== */
+.perspectiveGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.perspectiveCard {
+  padding: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.perspectiveCard:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.perspectiveCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.perspectiveCardName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.perspectiveCardAction {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.perspectiveCardScore {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
 /* ===== RISK MINIMAP ===== */
 .riskMinimap {
   position: absolute;

@@ -2002,6 +2002,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 sourceContractName={contractName}
                 sourceClauseId={selectedClause?.id}
                 currentIndustry={currentIndustry}
+                analysisCache={analysisCache as Record<string, unknown>}
                 onLoadAlternatives={loadAlternatives}
                 onLoadNegotiation={loadNegotiationTips}
                 onSendChatMessage={sendChatMessage}

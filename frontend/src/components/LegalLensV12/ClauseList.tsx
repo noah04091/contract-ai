@@ -2,7 +2,7 @@
 // Komponente für die Klausel-Liste (linke Seite)
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { FileText, Eye, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel, ActionLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import HoverTooltip from './HoverTooltip';
@@ -100,6 +100,32 @@ const ClauseList: React.FC<ClauseListProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Quick-Filter Tabs
+  type RiskFilter = 'all' | 'high' | 'medium' | 'low';
+  const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
+
+  // Clause Decision Tracking (localStorage-persisted)
+  type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
+  const [clauseDecisions, setClauseDecisions] = useState<Record<string, ClauseDecision>>(() => {
+    try {
+      const stored = localStorage.getItem('legalLens_decisions');
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
+  const setDecision = useCallback((clauseId: string, decision: ClauseDecision) => {
+    setClauseDecisions(prev => {
+      const next = { ...prev };
+      if (next[clauseId] === decision) {
+        delete next[clauseId]; // Toggle off
+      } else {
+        next[clauseId] = decision;
+      }
+      localStorage.setItem('legalLens_decisions', JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
   // ✅ Feature 3: Hover-Tooltip
   const [tooltipClauseId, setTooltipClauseId] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -134,36 +160,55 @@ const ClauseList: React.FC<ClauseListProps> = ({
     setTooltipClauseId(null);
   }, []);
 
-  // Gefilterte Klauseln basierend auf Suchanfrage
+  // Gefilterte Klauseln basierend auf Suchanfrage + Risiko-Filter
   const filteredClauses = useMemo(() => {
-    if (!searchQuery.trim()) return safeClauses;
+    let result = safeClauses;
 
-    const query = searchQuery.toLowerCase().trim();
+    // Risk filter
+    if (riskFilter !== 'all') {
+      result = result.filter(clause => {
+        if (clause.nonAnalyzable) return false;
+        const level = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level || 'low';
+        return level === riskFilter;
+      });
+    }
 
-    return safeClauses.filter(clause => {
-      // Suche in Text
-      if (clause.text.toLowerCase().includes(query)) return true;
-      // Suche in Titel
-      if (clause.title?.toLowerCase().includes(query)) return true;
-      // Suche in Nummer
-      if (clause.number?.toLowerCase().includes(query)) return true;
-      // Suche in PreAnalysis Summary
-      if (clause.preAnalysis?.summary?.toLowerCase().includes(query)) return true;
-      // Suche in Risk-Level (z.B. "hoch" oder "niedrig")
-      const riskLevel = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level;
-      if (riskLevel) {
-        const riskLabels: Record<string, string[]> = {
-          high: ['hoch', 'high', 'rot', 'kritisch', 'gefährlich'],
-          medium: ['mittel', 'medium', 'gelb', 'moderat'],
-          low: ['niedrig', 'low', 'grün', 'unbedenklich', 'sicher']
-        };
-        if (riskLabels[riskLevel]?.some(label => label.includes(query) || query.includes(label))) {
-          return true;
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(clause => {
+        if (clause.text.toLowerCase().includes(query)) return true;
+        if (clause.title?.toLowerCase().includes(query)) return true;
+        if (clause.number?.toLowerCase().includes(query)) return true;
+        if (clause.preAnalysis?.summary?.toLowerCase().includes(query)) return true;
+        const riskLevel = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level;
+        if (riskLevel) {
+          const riskLabels: Record<string, string[]> = {
+            high: ['hoch', 'high', 'rot', 'kritisch', 'gefährlich'],
+            medium: ['mittel', 'medium', 'gelb', 'moderat'],
+            low: ['niedrig', 'low', 'grün', 'unbedenklich', 'sicher']
+          };
+          if (riskLabels[riskLevel]?.some(label => label.includes(query) || query.includes(label))) {
+            return true;
+          }
         }
-      }
-      return false;
-    });
-  }, [safeClauses, searchQuery]);
+        return false;
+      });
+    }
+
+    return result;
+  }, [safeClauses, searchQuery, riskFilter]);
+
+  // Filter counts for badges
+  const filterCounts = useMemo(() => {
+    const analyzable = safeClauses.filter(c => !c.nonAnalyzable);
+    return {
+      all: analyzable.length,
+      high: analyzable.filter(c => (c.preAnalysis?.riskLevel || c.riskIndicators?.level) === 'high').length,
+      medium: analyzable.filter(c => (c.preAnalysis?.riskLevel || c.riskIndicators?.level) === 'medium').length,
+      low: analyzable.filter(c => (c.preAnalysis?.riskLevel || c.riskIndicators?.level) === 'low').length
+    };
+  }, [safeClauses]);
 
   // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
   useEffect(() => {
@@ -341,6 +386,40 @@ const ClauseList: React.FC<ClauseListProps> = ({
         )}
       </div>
 
+      {/* Quick-Filter Tabs */}
+      <div className={styles.filterTabs}>
+        <button
+          className={`${styles.filterTab} ${riskFilter === 'all' ? styles.filterTabActive : ''}`}
+          onClick={() => setRiskFilter('all')}
+        >
+          Alle <span className={styles.filterCount}>{filterCounts.all}</span>
+        </button>
+        {filterCounts.high > 0 && (
+          <button
+            className={`${styles.filterTab} ${styles.filterTabHigh} ${riskFilter === 'high' ? styles.filterTabActive : ''}`}
+            onClick={() => setRiskFilter(riskFilter === 'high' ? 'all' : 'high')}
+          >
+            🔴 {filterCounts.high}
+          </button>
+        )}
+        {filterCounts.medium > 0 && (
+          <button
+            className={`${styles.filterTab} ${styles.filterTabMedium} ${riskFilter === 'medium' ? styles.filterTabActive : ''}`}
+            onClick={() => setRiskFilter(riskFilter === 'medium' ? 'all' : 'medium')}
+          >
+            🟡 {filterCounts.medium}
+          </button>
+        )}
+        {filterCounts.low > 0 && (
+          <button
+            className={`${styles.filterTab} ${styles.filterTabLow} ${riskFilter === 'low' ? styles.filterTabActive : ''}`}
+            onClick={() => setRiskFilter(riskFilter === 'low' ? 'all' : 'low')}
+          >
+            🟢 {filterCounts.low}
+          </button>
+        )}
+      </div>
+
       {/* Keyboard Shortcut Hint */}
       <div className={styles.keyboardHint}>
         <kbd>↑</kbd><kbd>↓</kbd> Navigation
@@ -462,7 +541,34 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 </div>
               )}
 
-              {(isBookmarked || notesCount > 0 || isReviewed || isCached) && (
+              {/* Decision + Status Row */}
+              <div className={styles.clauseFooter}>
+                {/* Decision Buttons */}
+                <div className={styles.decisionBtns}>
+                  <button
+                    className={`${styles.decisionBtn} ${styles.decisionAccept} ${clauseDecisions[clause.id] === 'accepted' ? styles.decisionActive : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setDecision(clause.id, 'accepted'); }}
+                    title="Akzeptieren"
+                  >
+                    <Check size={12} />
+                  </button>
+                  <button
+                    className={`${styles.decisionBtn} ${styles.decisionNegotiate} ${clauseDecisions[clause.id] === 'negotiate' ? styles.decisionActive : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setDecision(clause.id, 'negotiate'); }}
+                    title="Verhandeln"
+                  >
+                    <MessageSquare size={12} />
+                  </button>
+                  <button
+                    className={`${styles.decisionBtn} ${styles.decisionReject} ${clauseDecisions[clause.id] === 'rejected' ? styles.decisionActive : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setDecision(clause.id, 'rejected'); }}
+                    title="Ablehnen"
+                  >
+                    <Ban size={12} />
+                  </button>
+                </div>
+
+                {/* Status Icons */}
                 <div className={styles.clauseIcons}>
                   {isCached && (
                     <span className={`${styles.clauseIcon} ${styles.cachedIcon}`} title="Bereits geladen - Sofort verfügbar">⚡</span>
@@ -479,7 +585,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                     <span className={styles.clauseIcon} title="Durchgesehen">✓</span>
                   )}
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
