@@ -349,6 +349,52 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [clauses, selectedClause, selectClause, isParsing, isStreaming]);
 
+  // Auto-mark clause as reviewed when analysis is displayed
+  useEffect(() => {
+    if (selectedClause && currentAnalysis && !isAnalyzing) {
+      markClauseReviewed(selectedClause.id);
+    }
+  }, [selectedClause?.id, currentAnalysis, isAnalyzing, markClauseReviewed]);
+
+  // Navigate to next high-risk clause (skips already-reviewed if possible)
+  const goToNextRisk = useCallback(() => {
+    if (!clauses || clauses.length === 0) return;
+
+    const analyzable = clauses.filter(c => !c.nonAnalyzable);
+    const currentIdx = selectedClause
+      ? analyzable.findIndex(c => c.id === selectedClause.id)
+      : -1;
+
+    // Find unreviewed high-risk clauses first
+    const reviewed = new Set(progress?.reviewedClauses || []);
+    const candidates = analyzable.filter((c, idx) => {
+      if (idx === currentIdx) return false;
+      const riskLevel = c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low';
+      return riskLevel === 'high' || riskLevel === 'medium';
+    });
+
+    // Prefer unreviewed, then any risk clause
+    const unreviewed = candidates.filter(c => !reviewed.has(c.id));
+    const target = unreviewed.length > 0 ? unreviewed[0] : candidates[0];
+
+    if (target) {
+      selectClause(target);
+    }
+  }, [clauses, selectedClause, progress, selectClause]);
+
+  // Review progress stats
+  const reviewStats = useMemo(() => {
+    if (!clauses || clauses.length === 0) return null;
+    const analyzable = clauses.filter(c => !c.nonAnalyzable);
+    const reviewed = progress?.reviewedClauses?.length || 0;
+    const total = analyzable.length;
+    return {
+      reviewed,
+      total,
+      percent: total > 0 ? Math.round((reviewed / total) * 100) : 0
+    };
+  }, [clauses, progress?.reviewedClauses]);
+
   // Auto-switch to analysis tab when clause is selected on mobile
   useEffect(() => {
     if (isMobile && selectedClause && currentAnalysis) {
@@ -1326,6 +1372,24 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   <span>Riskanteste: {riskStats.worstScore}</span>
                 </button>
               )}
+              {(riskStats.high > 0 || riskStats.medium > 0) && (
+                <button
+                  className={styles.nextRiskBtn}
+                  onClick={goToNextRisk}
+                  title="Zur nächsten Risiko-Klausel springen"
+                >
+                  <ChevronRight size={14} />
+                  <span>Nächstes Risiko</span>
+                </button>
+              )}
+            </div>
+          )}
+          {reviewStats && reviewStats.reviewed > 0 && (
+            <div className={styles.reviewProgress}>
+              <div className={styles.reviewBar}>
+                <div className={styles.reviewFill} style={{ width: `${reviewStats.percent}%` }} />
+              </div>
+              <span className={styles.reviewLabel}>{reviewStats.reviewed}/{reviewStats.total} geprüft</span>
             </div>
           )}
         </div>

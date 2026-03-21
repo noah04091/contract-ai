@@ -340,6 +340,7 @@
 
 /* Contract Panel (Left) */
 .contractPanel {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -3489,6 +3490,59 @@
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
 }
 
+/* ===== "NÄCHSTES RISIKO" BUTTON ===== */
+.nextRiskBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.nextRiskBtn:hover {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+/* ===== REVIEW PROGRESS ===== */
+.reviewProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.reviewBar {
+  width: 60px;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.reviewFill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.reviewLabel {
+  font-size: 10px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
 /* ===== PULSE ANIMATION (unanalysierte Klauseln) ===== */
 @keyframes pendingPulse {
   0%, 100% { opacity: 1; }
@@ -3579,6 +3633,14 @@
     display: none;
   }
 
+  .nextRiskBtn span {
+    display: none;
+  }
+
+  .reviewProgress {
+    display: none;
+  }
+
   .quickStats .statCount {
     display: none;
   }
@@ -3612,6 +3674,45 @@
   font-weight: 600;
   color: #334155;
   box-shadow: 0 1px 0 #cbd5e1;
+}
+
+/* ===== RISK MINIMAP ===== */
+.riskMinimap {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 5;
+  background: #f1f5f9;
+  border-left: 1px solid #e2e8f0;
+}
+
+.minimapSegment {
+  cursor: pointer;
+  transition: opacity 0.15s, width 0.15s;
+  border-radius: 0;
+  min-height: 2px;
+}
+
+.minimapSegment:hover {
+  width: 10px;
+  opacity: 0.8;
+}
+
+.minimapSegment.minimapActive {
+  width: 10px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .riskMinimap {
+    display: none;
+  }
 }
 
 /* ===== CLAUSE SIMULATOR MODAL ===== */

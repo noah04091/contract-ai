@@ -266,6 +266,19 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }
   };
 
+  // Risk Minimap data
+  const minimapSegments = useMemo(() => {
+    const analyzable = safeClauses.filter(c => !c.nonAnalyzable);
+    return analyzable.map(clause => {
+      const riskLevel = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level || 'low';
+      return {
+        id: clause.id,
+        risk: riskLevel as RiskLevel,
+        color: riskLevel === 'high' ? '#ef4444' : riskLevel === 'medium' ? '#f59e0b' : '#10b981'
+      };
+    });
+  }, [safeClauses]);
+
   return (
     <div className={styles.contractPanel}>
       <div className={styles.contractHeader}>
@@ -525,6 +538,23 @@ const ClauseList: React.FC<ClauseListProps> = ({
           </div>
         )}
       </div>
+
+      {/* Risk Minimap — vertikale Übersicht */}
+      {minimapSegments.length > 3 && (
+        <div className={styles.riskMinimap} title="Risiko-Übersicht">
+          {minimapSegments.map((seg) => (
+            <div
+              key={seg.id}
+              className={`${styles.minimapSegment} ${selectedClause?.id === seg.id ? styles.minimapActive : ''}`}
+              style={{ backgroundColor: seg.color, flex: 1 }}
+              onClick={() => {
+                const clause = safeClauses.find(c => c.id === seg.id);
+                if (clause && !clause.nonAnalyzable) onSelectClause(clause);
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Hover Tooltip */}
       {tooltipClauseId && (() => {
