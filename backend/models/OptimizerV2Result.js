@@ -94,6 +94,7 @@ const optimizerV2ResultSchema = new mongoose.Schema({
   textLength: Number,
   s3Key: String,
   originalText: String,
+  ocrApplied: { type: Boolean, default: false },
 
   // Pipeline State
   status: {
