@@ -201,7 +201,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               </span>
             )}
             {result.context?.provider && (
-              <span style={{ marginRight: 12 }}>Anbieter: {result.context.provider}</span>
+              <span style={{ marginRight: 12 }}>Anbieter: {safeContractType(result.context.provider)}</span>
             )}
             {result.context?.daysUntilExpiry !== null && result.context?.daysUntilExpiry !== undefined && (
               <span style={{

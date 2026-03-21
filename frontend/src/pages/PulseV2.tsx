@@ -15,12 +15,12 @@ import '../styles/PulseV2.module.css';
 
 const API_BASE = '/api';
 
-/** Safely extract string from contractType (may be string or object) */
-function safeContractType(ct: unknown): string {
-  if (!ct) return '';
-  if (typeof ct === 'string') return ct;
-  if (typeof ct === 'object' && ct !== null) {
-    const obj = ct as Record<string, unknown>;
+/** Safely extract string from DB fields that may be stored as object {name, displayName, ...} */
+function safeStr(val: unknown): string {
+  if (!val) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'object' && val !== null) {
+    const obj = val as Record<string, unknown>;
     return String(obj.displayName || obj.name || '');
   }
   return '';
@@ -156,7 +156,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
                           marginRight: 8,
                           fontSize: 12,
                         }}>
-                          {safeContractType(contractMeta.type)}
+                          {safeStr(contractMeta.type)}
                         </span>
                       )}
                       <span>Score wird berechnet...</span>
@@ -433,8 +433,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       const q = debouncedQuery.toLowerCase().trim();
       result = result.filter(i =>
         i.name.toLowerCase().includes(q) ||
-        (i.contractType && safeContractType(i.contractType).toLowerCase().includes(q)) ||
-        (i.provider && i.provider.toLowerCase().includes(q))
+        (i.contractType && safeStr(i.contractType).toLowerCase().includes(q)) ||
+        (i.provider && safeStr(i.provider).toLowerCase().includes(q))
       );
     }
 
@@ -1093,8 +1093,8 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
           )}
         </div>
         <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-          {item.contractType && <span>{safeContractType(item.contractType)} · </span>}
-          {item.provider && <span>{item.provider} · </span>}
+          {item.contractType && <span>{safeStr(item.contractType)} · </span>}
+          {item.provider && <span>{safeStr(item.provider)} · </span>}
           {item.hasV2Result
             ? `${item.v2FindingsCount} Befunde`
             : 'Noch nicht analysiert'
