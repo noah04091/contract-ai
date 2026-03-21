@@ -106,13 +106,43 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     return res.status(415).json({ success: false, error: 'INVALID_TYPE', message: 'Nur PDF und DOCX Dateien werden unterstützt.' });
   }
 
-  // Extract text
+  // Extract text (with OCR fallback for scanned PDFs)
   let contractText;
+  let ocrApplied = false;
   try {
     const buffer = await fs.readFile(req.file.path);
     if (req.file.mimetype.includes('pdf')) {
       const parsed = await pdfParse(buffer, { max: 0, version: 'v2.0.550' });
       contractText = parsed.text;
+
+      // OCR fallback: if pdf-parse yields too little text, try AWS Textract
+      if (!contractText || contractText.trim().length < 100) {
+        console.log(`[OptimizerV2] pdf-parse lieferte nur ${(contractText || '').trim().length} Zeichen, versuche OCR...`);
+        try {
+          const { checkOcrUsage, incrementOcrUsage } = require('../services/ocrUsageService');
+          const usage = await checkOcrUsage(req.user.userId);
+          if (!usage.allowed) {
+            await cleanupFile(req.file.path);
+            return res.status(429).json({
+              success: false,
+              error: 'OCR_LIMIT_REACHED',
+              message: `OCR-Limit erreicht (${usage.pagesUsed}/${usage.pagesLimit} Seiten diesen Monat). Upgrade für mehr OCR-Seiten.`
+            });
+          }
+
+          const { extractTextWithOCR } = require('../services/textractService');
+          const ocrResult = await extractTextWithOCR(buffer);
+          if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 100) {
+            contractText = ocrResult.text;
+            ocrApplied = true;
+            await incrementOcrUsage(req.user.userId, ocrResult.pages || 1);
+            console.log(`[OptimizerV2] OCR erfolgreich: ${contractText.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence}%`);
+          }
+        } catch (ocrErr) {
+          console.warn(`[OptimizerV2] OCR-Fallback fehlgeschlagen:`, ocrErr.message);
+          // Continue with whatever pdf-parse gave us
+        }
+      }
     } else {
       const { extractTextFromBuffer } = require('../services/textExtractor');
       const result = await extractTextFromBuffer(buffer, req.file.mimetype);
@@ -132,7 +162,9 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     return res.status(422).json({
       success: false,
       error: 'INSUFFICIENT_TEXT',
-      message: 'Der Vertrag enthält zu wenig Text für eine Analyse.'
+      message: ocrApplied
+        ? 'Auch nach OCR-Erkennung enthält das Dokument zu wenig lesbaren Text.'
+        : 'Der Vertrag enthält zu wenig Text für eine Analyse. Bei gescannten PDFs wird automatisch OCR versucht.'
     });
   }
 
@@ -175,7 +207,8 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         userId,
         requestId,
         perspective,
-        fileSize: req.file.size
+        fileSize: req.file.size,
+        ocrApplied
       },
       (progress, message, stageData) => {
         if (clientDisconnected) return;
