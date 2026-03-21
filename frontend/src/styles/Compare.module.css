@@ -909,6 +909,30 @@
   font-weight: 500;
 }
 
+.fallbackBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 1.75rem;
+  background: rgba(255, 149, 0, 0.08);
+  border-bottom: 1px solid rgba(255, 149, 0, 0.2);
+  color: #cc7700;
+}
+
+.fallbackBanner strong {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.fallbackBanner p {
+  font-size: 0.8rem;
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
 .spinner {
   width: 16px;
   height: 16px;

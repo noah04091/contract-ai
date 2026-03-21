@@ -12,8 +12,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MAX_CLAUSES = 40;
 const MAX_CONTRACT_CHARS = 100000; // ~25K tokens
 const MAX_DIFFERENCES = 30;
-const MAX_PHASE_A_TIME = 30000; // 30s
-const MAX_PHASE_B_TIME = 45000; // 45s
+const MAX_PHASE_A_TIME = 90000; // 90s (complex contracts need more time)
+const MAX_PHASE_B_TIME = 120000; // 120s (deep comparison of long contracts)
 
 const VALID_CLAUSE_AREAS = [
   'parties', 'subject', 'duration', 'termination', 'payment',

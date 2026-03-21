@@ -844,8 +844,13 @@ router.post("/", verifyToken, upload.fields([
           description: COMPARISON_MODES[comparisonMode].description
         };
       } catch (v2Error) {
-        console.error(`❌ V2 Pipeline fehlgeschlagen:`, v2Error.message, v2Error.stack?.split('\n').slice(0, 3).join('\n'));
-        sendProgress(res, 'fallback', 50, 'Erweiterte Analyse nicht verfügbar, Standardvergleich wird durchgeführt...', wantsSSE);
+        const isTimeout = v2Error.message?.includes('Timeout');
+        console.error(`❌ V2 Pipeline fehlgeschlagen (${isTimeout ? 'TIMEOUT' : 'ERROR'}):`, v2Error.message);
+        console.error(`   Textlängen: V1=${contract1Text.length} Zeichen, V2=${contract2Text.length} Zeichen`);
+        if (!isTimeout) {
+          console.error(v2Error.stack?.split('\n').slice(0, 3).join('\n'));
+        }
+        sendProgress(res, 'fallback', 50, `Erweiterte Analyse nicht verfügbar (${isTimeout ? 'Timeout' : 'Fehler'}), Standardvergleich wird durchgeführt...`, wantsSSE);
 
         // Fallback to V1
         analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile, comparisonMode);
@@ -855,6 +860,7 @@ router.post("/", verifyToken, upload.fields([
           description: COMPARISON_MODES[comparisonMode].description
         };
         analysisResult._v2Fallback = true;
+        analysisResult._v2FallbackReason = isTimeout ? 'timeout' : v2Error.message;
       }
     } else {
       // === V1 PIPELINE (unchanged) ===

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   LayoutGrid, GitCompareArrows, Shield, Lightbulb, Map,
-  Users, Briefcase, Scale
+  Users, Briefcase, Scale, AlertTriangle
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -91,6 +91,17 @@ export default function CompareResults({
         <div className={styles.reAnalyzingBar}>
           <div className={styles.spinner} />
           <span>Perspektive wird gewechselt...</span>
+        </div>
+      )}
+
+      {/* V2 Fallback Warning */}
+      {!v2 && (result as unknown as { _v2Fallback?: boolean })?._v2Fallback && (
+        <div className={styles.fallbackBanner}>
+          <AlertTriangle size={18} />
+          <div>
+            <strong>Eingeschränkter Vergleich</strong>
+            <p>Die erweiterte Analyse (Vertragskarte, Risiken, Empfehlungen) konnte nicht durchgeführt werden{(result as unknown as { _v2FallbackReason?: string })?._v2FallbackReason === 'timeout' ? ' (Zeitüberschreitung bei langen Verträgen)' : ''}. Es wird der Standardvergleich angezeigt. Bitte versuchen Sie es erneut.</p>
+          </div>
         </div>
       )}
 
