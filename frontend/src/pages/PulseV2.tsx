@@ -422,7 +422,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       const q = debouncedQuery.toLowerCase().trim();
       result = result.filter(i =>
         i.name.toLowerCase().includes(q) ||
-        (i.contractType && i.contractType.toLowerCase().includes(q)) ||
+        (i.contractType && (typeof i.contractType === 'string' ? i.contractType : (i.contractType as any)?.displayName || '').toLowerCase().includes(q)) ||
         (i.provider && i.provider.toLowerCase().includes(q))
       );
     }
@@ -1082,7 +1082,7 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
           )}
         </div>
         <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-          {item.contractType && <span>{item.contractType} · </span>}
+          {item.contractType && <span>{typeof item.contractType === 'string' ? item.contractType : (item.contractType as any)?.displayName || (item.contractType as any)?.name} · </span>}
           {item.provider && <span>{item.provider} · </span>}
           {item.hasV2Result
             ? `${item.v2FindingsCount} Befunde`

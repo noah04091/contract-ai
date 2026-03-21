@@ -186,7 +186,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                 marginRight: 8,
                 fontSize: 12,
               }}>
-                {result.document.contractType}
+                {typeof result.document.contractType === 'string' ? result.document.contractType : (result.document.contractType as any)?.displayName || (result.document.contractType as any)?.name}
               </span>
             )}
             {result.context?.provider && (

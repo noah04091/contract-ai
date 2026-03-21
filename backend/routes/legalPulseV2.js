@@ -10,6 +10,13 @@ const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
 
+// Normalize contractType: may be stored as object {name, displayName, ...} or string
+function normalizeContractType(ct) {
+  if (!ct) return null;
+  if (typeof ct === "string") return ct;
+  return ct.displayName || ct.name || null;
+}
+
 // Rate limiting: 5 analyses per hour per user
 const analyzeRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
@@ -170,7 +177,7 @@ router.get("/contract/:contractId/history", async (req, res) => {
       requestId: r.requestId,
       scores: r.scores,
       triggeredBy: r.triggeredBy,
-      contractType: r.document?.contractType,
+      contractType: normalizeContractType(r.document?.contractType),
       findingsCount: r.clauseFindings?.length || 0,
       criticalCount: r.clauseFindings?.filter(f => f.severity === "critical").length || 0,
       highCount: r.clauseFindings?.filter(f => f.severity === "high").length || 0,
@@ -288,7 +295,7 @@ router.get("/dashboard", async (req, res) => {
       return {
         contractId: c._id.toString(),
         name: c.name || c.title || c.filename || "Unbenannt",
-        contractType: c.contractType || c.type || null,
+        contractType: normalizeContractType(c.contractType || c.type),
         provider: c.provider || c.partner || c.company || null,
         endDate: c.endDate || c.expiryDate || null,
         // V2 result
