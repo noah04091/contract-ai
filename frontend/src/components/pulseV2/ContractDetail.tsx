@@ -6,6 +6,17 @@ import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
 import { ActionItem } from './ActionItem';
 
+/** Safely extract string from contractType (may be string or object) */
+function safeContractType(ct: unknown): string {
+  if (!ct) return '';
+  if (typeof ct === 'string') return ct;
+  if (typeof ct === 'object' && ct !== null) {
+    const obj = ct as Record<string, unknown>;
+    return String(obj.displayName || obj.name || '');
+  }
+  return '';
+}
+
 interface ContractDetailProps {
   result: PulseV2Result;
 }
@@ -186,7 +197,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                 marginRight: 8,
                 fontSize: 12,
               }}>
-                {typeof result.document.contractType === 'string' ? result.document.contractType : (result.document.contractType as any)?.displayName || (result.document.contractType as any)?.name}
+                {safeContractType(result.document.contractType)}
               </span>
             )}
             {result.context?.provider && (
