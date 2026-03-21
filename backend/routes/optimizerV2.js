@@ -1123,16 +1123,8 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
       const optText = version?.text ? clean(version.text) : origText;
       const reasonText = clean(version?.reasoning || '');
 
-      // Pre-calculate heights
-      doc.font('Helvetica').fontSize(8.5);
-      const origH = doc.heightOfString(origText, { width: TEXT_W, lineGap: 2 });
-      const optH = doc.heightOfString(optText, { width: TEXT_W, lineGap: 2 });
-      const colContentH = Math.max(origH, optH);
-      const headerH = 28;
-      const totalClauseH = headerH + colContentH + 10; // header + content + padding
-
-      // Check if we need a new page (header bar + at least some text)
-      if (doc.y + Math.min(totalClauseH, 120) > BOTTOM) {
+      // Check if we need a new page for header
+      if (doc.y + 60 > BOTTOM) {
         doc.addPage();
         drawColumnHeaders();
       }
@@ -1157,29 +1149,68 @@ router.get('/results/:id/redline-pdf', async (req, res) => {
 
       doc.y = headerY + 28;
 
-      // ── Two-column content ──
-      const colStartY = doc.y;
+      // ── Two-column content (chunked page-by-page for long texts) ──
+      const origParas = origText.split('\n').filter(l => l.trim());
+      const optParas = optText.split('\n').filter(l => l.trim());
+      let oi = 0, ri = 0;
 
-      // Left column: Original (lighter color)
-      doc.font('Helvetica').fontSize(8.5).fillColor('#6B7280')
-         .text(origText, COL_LEFT_X + TEXT_PAD, colStartY, { width: TEXT_W, lineGap: 2 });
-      const leftEndY = doc.y;
+      while (oi < origParas.length || ri < optParas.length) {
+        const avail = BOTTOM - doc.y;
+        if (avail < 30) { doc.addPage(); drawColumnHeaders(); continue; }
 
-      // Right column: Optimized (darker color)
-      doc.font('Helvetica').fontSize(8.5).fillColor('#111827')
-         .text(optText, COL_RIGHT_X + TEXT_PAD, colStartY, { width: TEXT_W, lineGap: 2 });
-      const rightEndY = doc.y;
+        // Accumulate left-column paragraphs that fit in available space
+        let lText = '', lH = 0;
+        while (oi < origParas.length) {
+          const t = lText ? lText + '\n' + origParas[oi] : origParas[oi];
+          doc.font('Helvetica').fontSize(8.5);
+          const h = doc.heightOfString(t, { width: TEXT_W, lineGap: 2 });
+          if (h > avail && lText) break;
+          lText = t; lH = h; oi++;
+          if (h >= avail) break;
+        }
 
-      // Divider line between columns
-      const dividerX = PL + COL_W + GAP / 2;
-      const divBottom = Math.max(leftEndY, rightEndY);
-      doc.save();
-      doc.moveTo(dividerX, colStartY).lineTo(dividerX, divBottom)
-         .strokeColor('#E5E7EB').lineWidth(0.5).stroke();
-      doc.restore();
+        // Accumulate right-column paragraphs that fit in available space
+        let rText = '', rH = 0;
+        while (ri < optParas.length) {
+          const t = rText ? rText + '\n' + optParas[ri] : optParas[ri];
+          doc.font('Helvetica').fontSize(8.5);
+          const h = doc.heightOfString(t, { width: TEXT_W, lineGap: 2 });
+          if (h > avail && rText) break;
+          rText = t; rH = h; ri++;
+          if (h >= avail) break;
+        }
 
-      // Move Y to bottom of tallest column
-      doc.y = divBottom + 8;
+        if (!lText.trim() && !rText.trim()) break;
+
+        const chunkY = doc.y;
+        const chunkH = Math.max(lH, rH, 10);
+
+        if (lText.trim()) {
+          doc.font('Helvetica').fontSize(8.5).fillColor('#6B7280')
+             .text(lText, COL_LEFT_X + TEXT_PAD, chunkY, { width: TEXT_W, lineGap: 2 });
+        }
+        if (rText.trim()) {
+          doc.font('Helvetica').fontSize(8.5).fillColor('#111827')
+             .text(rText, COL_RIGHT_X + TEXT_PAD, chunkY, { width: TEXT_W, lineGap: 2 });
+        }
+
+        // Vertical divider between columns
+        const divX = PL + COL_W + GAP / 2;
+        doc.save();
+        doc.moveTo(divX, chunkY).lineTo(divX, chunkY + chunkH)
+           .strokeColor('#E5E7EB').lineWidth(0.5).stroke();
+        doc.restore();
+
+        doc.y = chunkY + chunkH;
+
+        // More content remaining? Continue on next page
+        if (oi < origParas.length || ri < optParas.length) {
+          doc.addPage();
+          drawColumnHeaders();
+        }
+      }
+
+      doc.y += 8;
 
       // ── Reasoning (full width below columns) ──
       if (reasonText) {
