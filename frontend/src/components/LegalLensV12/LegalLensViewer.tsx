@@ -62,6 +62,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const pdfTextIndexRef = useRef<Map<number, string>>(new Map());
   const [pdfIndexReady, setPdfIndexReady] = useState<boolean>(false);
 
+  // Analysis Panel ref for scroll-to-top
+  const analysisPanelRef = useRef<HTMLDivElement>(null);
+
   // Smart Summary State
   const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
   const [summaryDismissed, setSummaryDismissed] = useState<boolean>(false);
@@ -81,6 +84,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [decisionsCopied, setDecisionsCopied] = useState<boolean>(false);
 
   // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
   const [hasPdfClicked, setHasPdfClicked] = useState<boolean>(() => {
@@ -109,6 +113,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ✅ Frei-Modus Hinweis-Toast
   const [showFreeModeTip, setShowFreeModeTip] = useState<boolean>(false);
+
+  // Focus Mode — dims everything except selected clause
+  const [focusMode, setFocusMode] = useState<boolean>(false);
 
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
@@ -214,6 +221,73 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     bumpClauseInQueue
   } = useLegalLens();
 
+  // Decision Summary — reads from same localStorage as ClauseList
+  const decisionSummary = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('legalLens_decisions');
+      if (!stored) return null;
+      const decisions: Record<string, string> = JSON.parse(stored);
+      const values = Object.values(decisions);
+      if (values.length === 0) return null;
+      return {
+        accepted: values.filter(v => v === 'accepted').length,
+        negotiate: values.filter(v => v === 'negotiate').length,
+        rejected: values.filter(v => v === 'rejected').length,
+        total: values.length
+      };
+    } catch { return null; }
+  }, [selectedClause]); // Re-compute when clause changes (proxy for decision changes)
+
+  // Copy all decisions summary to clipboard
+  const copyDecisionsSummary = useCallback(() => {
+    if (!clauses) return;
+    try {
+      const stored = localStorage.getItem('legalLens_decisions');
+      if (!stored) return;
+      const decisions: Record<string, string> = JSON.parse(stored);
+      const labels: Record<string, string> = { accepted: 'Akzeptiert', negotiate: 'Verhandeln', rejected: 'Abgelehnt' };
+      const lines = Object.entries(decisions).map(([clauseId, decision]) => {
+        const clause = clauses.find(c => c.id === clauseId);
+        const name = clause?.number || clause?.title || clauseId.slice(-6);
+        return `${labels[decision] || decision}: ${name}${clause?.title ? ' – ' + clause.title : ''}`;
+      });
+      const summary = `Klausel-Entscheidungen (${contractName}):\n\n${lines.join('\n')}`;
+      navigator.clipboard.writeText(summary);
+      setDecisionsCopied(true);
+      setTimeout(() => setDecisionsCopied(false), 2000);
+    } catch { /* ignore */ }
+  }, [clauses, contractName]);
+
+  // ============================================
+  // URL ANCHORING — #clause=<id> for deep-linking
+  // ============================================
+  // Read clause from hash on initial load
+  useEffect(() => {
+    if (!clauses || clauses.length === 0) return;
+    const hash = window.location.hash;
+    const match = hash.match(/clause=([^&]+)/);
+    if (match) {
+      const targetId = match[1];
+      const target = clauses.find(c => c.id === targetId);
+      if (target && !target.nonAnalyzable) {
+        selectClause(target);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clauses?.length]); // Only on first load when clauses arrive
+
+  // Update hash when clause selection changes
+  useEffect(() => {
+    if (selectedClause) {
+      const newHash = `#clause=${selectedClause.id}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    } else if (window.location.hash.includes('clause=')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [selectedClause?.id]);
+
   // ============================================
   // RISK STATS — Gesamtrisiko, Quick Stats, Worst Clause
   // ============================================
@@ -280,6 +354,32 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     };
   }, [analysisCache, currentPerspective, clauses]);
 
+  // Navigate to next high-risk clause (skips already-reviewed if possible)
+  const goToNextRisk = useCallback(() => {
+    if (!clauses || clauses.length === 0) return;
+
+    const analyzable = clauses.filter(c => !c.nonAnalyzable);
+    const currentIdx = selectedClause
+      ? analyzable.findIndex(c => c.id === selectedClause.id)
+      : -1;
+
+    // Find unreviewed high-risk clauses first
+    const reviewed = new Set(progress?.reviewedClauses || []);
+    const candidates = analyzable.filter((c, idx) => {
+      if (idx === currentIdx) return false;
+      const riskLevel = c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low';
+      return riskLevel === 'high' || riskLevel === 'medium';
+    });
+
+    // Prefer unreviewed, then any risk clause
+    const unreviewed = candidates.filter(c => !reviewed.has(c.id));
+    const target = unreviewed.length > 0 ? unreviewed[0] : candidates[0];
+
+    if (target) {
+      selectClause(target);
+    }
+  }, [clauses, selectedClause, progress, selectClause]);
+
   // ============================================
   // KEYBOARD NAVIGATION (Opt 2: Wow-Effect)
   // ============================================
@@ -329,9 +429,21 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           newIndex = analyzableClauses.length - 1;
           break;
 
+        case 'n': // Next risk clause
+          e.preventDefault();
+          goToNextRisk();
+          return;
+
+        case 'f': // Focus mode toggle
+          e.preventDefault();
+          setFocusMode(prev => !prev);
+          return;
+
         case 'Escape':
           e.preventDefault();
-          if (selectedClause) {
+          if (focusMode) {
+            setFocusMode(false);
+          } else if (selectedClause) {
             deselectClause();
           }
           return;
@@ -347,7 +459,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [clauses, selectedClause, selectClause, isParsing, isStreaming]);
+  }, [clauses, selectedClause, selectClause, deselectClause, goToNextRisk, focusMode, isParsing, isStreaming]);
 
   // Auto-mark clause as reviewed when analysis is displayed
   useEffect(() => {
@@ -355,32 +467,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       markClauseReviewed(selectedClause.id);
     }
   }, [selectedClause?.id, currentAnalysis, isAnalyzing, markClauseReviewed]);
-
-  // Navigate to next high-risk clause (skips already-reviewed if possible)
-  const goToNextRisk = useCallback(() => {
-    if (!clauses || clauses.length === 0) return;
-
-    const analyzable = clauses.filter(c => !c.nonAnalyzable);
-    const currentIdx = selectedClause
-      ? analyzable.findIndex(c => c.id === selectedClause.id)
-      : -1;
-
-    // Find unreviewed high-risk clauses first
-    const reviewed = new Set(progress?.reviewedClauses || []);
-    const candidates = analyzable.filter((c, idx) => {
-      if (idx === currentIdx) return false;
-      const riskLevel = c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low';
-      return riskLevel === 'high' || riskLevel === 'medium';
-    });
-
-    // Prefer unreviewed, then any risk clause
-    const unreviewed = candidates.filter(c => !reviewed.has(c.id));
-    const target = unreviewed.length > 0 ? unreviewed[0] : candidates[0];
-
-    if (target) {
-      selectClause(target);
-    }
-  }, [clauses, selectedClause, progress, selectClause]);
 
   // Review progress stats
   const reviewStats = useMemo(() => {
@@ -394,6 +480,37 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       percent: total > 0 ? Math.round((reviewed / total) * 100) : 0
     };
   }, [clauses, progress?.reviewedClauses]);
+
+  // Prev/Next clause navigation for Analysis Panel
+  const clauseNavInfo = useMemo(() => {
+    if (!clauses || clauses.length === 0 || !selectedClause) return null;
+    const analyzable = clauses.filter(c => !c.nonAnalyzable);
+    const idx = analyzable.findIndex(c => c.id === selectedClause.id);
+    if (idx === -1) return null;
+    return {
+      current: idx + 1,
+      total: analyzable.length,
+      hasPrev: idx > 0,
+      hasNext: idx < analyzable.length - 1,
+      prevClause: idx > 0 ? analyzable[idx - 1] : null,
+      nextClause: idx < analyzable.length - 1 ? analyzable[idx + 1] : null
+    };
+  }, [clauses, selectedClause]);
+
+  const goToPrevClause = useCallback(() => {
+    if (clauseNavInfo?.prevClause) selectClause(clauseNavInfo.prevClause);
+  }, [clauseNavInfo, selectClause]);
+
+  const goToNextClause = useCallback(() => {
+    if (clauseNavInfo?.nextClause) selectClause(clauseNavInfo.nextClause);
+  }, [clauseNavInfo, selectClause]);
+
+  // Scroll analysis panel to top when clause changes
+  useEffect(() => {
+    if (selectedClause && analysisPanelRef.current) {
+      analysisPanelRef.current.scrollTop = 0;
+    }
+  }, [selectedClause?.id]);
 
   // Auto-switch to analysis tab when clause is selected on mobile
   useEffect(() => {
@@ -1392,9 +1509,45 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               <span className={styles.reviewLabel}>{reviewStats.reviewed}/{reviewStats.total} geprüft</span>
             </div>
           )}
+          {decisionSummary && decisionSummary.total > 0 && (
+            <div className={styles.decisionSummaryBanner}>
+              {decisionSummary.accepted > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="accepted">
+                  ✅ {decisionSummary.accepted}
+                </span>
+              )}
+              {decisionSummary.negotiate > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="negotiate">
+                  💬 {decisionSummary.negotiate}
+                </span>
+              )}
+              {decisionSummary.rejected > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="rejected">
+                  ❌ {decisionSummary.rejected}
+                </span>
+              )}
+              <button
+                className={styles.decisionCopyBtn}
+                onClick={copyDecisionsSummary}
+                title="Alle Entscheidungen kopieren"
+              >
+                {decisionsCopied ? '✓' : '📋'}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className={styles.headerRight}>
+          {/* Focus Mode Toggle */}
+          <button
+            className={`${styles.focusModeBtn} ${focusMode ? styles.focusModeActive : ''}`}
+            onClick={() => setFocusMode(prev => !prev)}
+            title={focusMode ? 'Fokus-Modus deaktivieren (F)' : 'Fokus-Modus aktivieren (F)'}
+          >
+            <Eye size={16} />
+            <span>{focusMode ? 'Fokus an' : 'Fokus'}</span>
+          </button>
+
           {/* Industry Selector */}
           <IndustrySelector
             currentIndustry={currentIndustry}
@@ -1571,6 +1724,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 streamingProgress={streamingProgress}
                 analysisCache={analysisCache as Record<string, unknown>}
                 currentPerspective={currentPerspective}
+                focusMode={focusMode}
               />
             </div>
           ) : (
@@ -1674,6 +1828,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               streamingProgress={streamingProgress}
               analysisCache={analysisCache as Record<string, unknown>}
               currentPerspective={currentPerspective}
+              focusMode={focusMode}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1971,9 +2126,35 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         />
 
         {/* Right: Analysis Panel */}
-        <div className={styles.analysisPanel} style={{ width: analysisPanelWidth }}>
+        <div ref={analysisPanelRef} className={styles.analysisPanel} style={{ width: analysisPanelWidth }}>
           {selectedClause ? (
             <>
+              {/* Clause Navigation Bar */}
+              {clauseNavInfo && (
+                <div className={styles.clauseNavBar}>
+                  <button
+                    className={styles.clauseNavBtn}
+                    onClick={goToPrevClause}
+                    disabled={!clauseNavInfo.hasPrev}
+                    title="Vorherige Klausel (↑)"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className={styles.clauseNavLabel}>
+                    {selectedClause.number || selectedClause.title || `Klausel ${clauseNavInfo.current}`}
+                    <span className={styles.clauseNavCount}>{clauseNavInfo.current}/{clauseNavInfo.total}</span>
+                  </span>
+                  <button
+                    className={styles.clauseNavBtn}
+                    onClick={goToNextClause}
+                    disabled={!clauseNavInfo.hasNext}
+                    title="Nächste Klausel (↓)"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+
               {/* Perspective Switcher */}
               <PerspectiveSwitcher
                 currentPerspective={currentPerspective}
