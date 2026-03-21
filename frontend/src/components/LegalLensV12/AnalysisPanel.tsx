@@ -2,7 +2,7 @@
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle } from 'lucide-react';
+import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle, Copy, Check } from 'lucide-react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -13,6 +13,7 @@ import type {
 } from '../../types/legalLens';
 import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS } from '../../types/legalLens';
 import ClauseCompareModal from './ClauseCompareModal';
+import ClauseSimulatorModal from './ClauseSimulatorModal';
 import SaveClauseModal from './SaveClauseModal';
 import { ErrorInfo } from '../../hooks/useLegalLensV12';
 import styles from '../../styles/LegalLensV12.module.css';
@@ -36,6 +37,7 @@ interface AnalysisPanelProps {
   sourceContractId?: string;
   sourceContractName?: string;
   sourceClauseId?: string;
+  currentIndustry?: string;
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
   onSendChatMessage: (message: string) => void;
@@ -62,6 +64,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   sourceContractId,
   sourceContractName,
   sourceClauseId,
+  currentIndustry,
   onLoadAlternatives,
   onLoadNegotiation,
   onSendChatMessage,
@@ -79,6 +82,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [compareWhyBetter, setCompareWhyBetter] = useState('');
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Ref für Auto-Scroll im Chat
   const chatMessagesRef = useRef<HTMLDivElement>(null);
@@ -135,8 +140,12 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     }
   };
 
-  const copyText = (text: string) => {
+  const copyText = (text: string, fieldId?: string) => {
     navigator.clipboard.writeText(text);
+    if (fieldId) {
+      setCopiedField(fieldId);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
   };
 
   const getCurrentPerspectiveInfo = () => {
@@ -494,10 +503,10 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </p>
                 <div className={styles.alternativeActions}>
                   <button
-                    onClick={() => copyText(betterAlternative.text)}
-                    className={styles.copyButtonGreen}
+                    onClick={() => copyText(betterAlternative.text, 'betterAlt')}
+                    className={`${styles.copyButtonGreen} ${copiedField === 'betterAlt' ? styles.copied : ''}`}
                   >
-                    📋 Kopieren
+                    {copiedField === 'betterAlt' ? <><Check size={12} /> Kopiert!</> : <><Copy size={12} /> Kopieren</>}
                   </button>
                   {originalClauseText && (
                     <button
@@ -524,7 +533,13 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               {betterAlternative.howToAsk && (
                 <div className={styles.howToAskBox}>
                   <div className={styles.howToAskLabel}>
-                    🗣️ So fragst du danach:
+                    <span>🗣️ So fragst du danach:</span>
+                    <button
+                      onClick={() => copyText(betterAlternative.howToAsk!, 'howToAsk')}
+                      className={`${styles.copyBtnInline} ${copiedField === 'howToAsk' ? styles.copied : ''}`}
+                    >
+                      {copiedField === 'howToAsk' ? <><Check size={10} /> Kopiert</> : <><Copy size={10} /> Kopieren</>}
+                    </button>
                   </div>
                   <p className={styles.howToAskText}>
                     "{betterAlternative.howToAsk}"
@@ -688,6 +703,18 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         )}
       </div>
 
+      {/* 🧪 Klausel-Simulator */}
+      {originalClauseText && sourceContractId && (
+        <div className={styles.analysisSection}>
+          <button
+            className={styles.simulatorTriggerBtn}
+            onClick={() => setShowSimulator(true)}
+          >
+            🧪 Klausel-Simulator — Was wäre wenn...?
+          </button>
+        </div>
+      )}
+
       {/* 💬 Chat Section */}
       <div className={styles.chatSection}>
         <div className={styles.chatHeader}>
@@ -792,6 +819,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             onClauseSaved?.(clauseId);
             setShowSaveModal(false);
           }}
+        />
+      )}
+
+      {/* Clause Simulator Modal */}
+      {originalClauseText && sourceContractId && (
+        <ClauseSimulatorModal
+          isOpen={showSimulator}
+          onClose={() => setShowSimulator(false)}
+          originalText={originalClauseText}
+          contractId={sourceContractId}
+          industry={currentIndustry}
         />
       )}
     </div>

@@ -3209,6 +3209,9 @@
 }
 
 .howToAskLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.7rem;
   font-weight: 600;
   color: #3b82f6;
@@ -3602,4 +3605,502 @@
   font-weight: 600;
   color: #334155;
   box-shadow: 0 1px 0 #cbd5e1;
+}
+
+/* ===== CLAUSE SIMULATOR MODAL ===== */
+.simulatorOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.simulatorModal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.simulatorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.simulatorHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.simulatorIcon {
+  font-size: 1.5rem;
+}
+
+.simulatorTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.simulatorSubtitle {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0.15rem 0 0;
+}
+
+.simulatorCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.simulatorCloseBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.simulatorBody {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.simulatorColumns {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.simulatorColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.simulatorColumnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.simulatorColumnLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.simulatorScore {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--score-color, #64748b);
+}
+
+.simulatorOriginalText {
+  padding: 0.875rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #475569;
+  min-height: 140px;
+  white-space: pre-wrap;
+}
+
+.simulatorTextarea {
+  padding: 0.875rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #1e293b;
+  resize: vertical;
+  min-height: 140px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.simulatorTextarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.simulatorArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 2.5rem;
+  color: #94a3b8;
+}
+
+.simulatorActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.simulatorResetBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.simulatorResetBtn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.simulatorResetBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.simulatorRunBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.simulatorRunBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.simulatorRunBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.simulatorSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.simulatorError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+}
+
+/* Simulation Results */
+.simulatorResults {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.simulatorDelta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.simulatorDeltaGood {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+.simulatorDeltaBad {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.simulatorDeltaNeutral {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+.simulatorDeltaIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.simulatorDeltaInfo {
+  flex: 1;
+}
+
+.simulatorDeltaValue {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.simulatorDeltaLabel {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.simulatorScoreCompare {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.simulatorResultSection {
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.simulatorResultText {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.simulatorResultGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.simulatorResultCard {
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.simulatorResultCard p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.simulatorResultCardLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.simulatorMarket {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #eff6ff;
+  border-radius: 8px;
+  border: 1px solid #bfdbfe;
+}
+
+.simulatorMarket p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #1e40af;
+}
+
+.simulatorRecommendation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--rec-bg, #f8fafc);
+  border-radius: 10px;
+  border: 1px solid currentColor;
+  border-color: color-mix(in srgb, var(--rec-color, #64748b), transparent 70%);
+  color: var(--rec-color, #334155);
+}
+
+.simulatorRecIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.simulatorRecommendation strong {
+  display: block;
+  font-size: 0.9rem;
+}
+
+.simulatorRecReason {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.simulatorCopyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #16a34a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.simulatorCopyBtn:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+/* Simulator Button in AnalysisPanel */
+.simulatorTriggerBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+  border: 1px solid #c4b5fd;
+  border-radius: 8px;
+  color: #6d28d9;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+
+.simulatorTriggerBtn:hover {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  border-color: #a78bfa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(109, 40, 217, 0.15);
+}
+
+/* Copy Button with checkmark toast */
+.copyBtnInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.copyBtnInline:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+.copyBtnInline.copied {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+/* Mobile responsive for simulator */
+@media (max-width: 768px) {
+  .simulatorColumns {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .simulatorArrow {
+    padding-top: 0;
+    transform: rotate(90deg);
+  }
+
+  .simulatorResultGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .simulatorModal {
+    max-height: 95vh;
+    margin: 0.5rem;
+  }
 }
