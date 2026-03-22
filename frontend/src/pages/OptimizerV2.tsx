@@ -310,6 +310,12 @@ function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance
       </div>
 
       <div className={styles.clauseList}>
+        {filteredClauses.length === 0 && searchTerm.trim() && (
+          <div className={styles.clauseEmptyState}>
+            <Search size={20} />
+            <p>Keine Klauseln für &bdquo;{searchTerm}&ldquo; gefunden</p>
+          </div>
+        )}
         {filteredClauses.map(clause => {
           const analysis = result.clauseAnalyses.find(a => a.clauseId === clause.id);
           const optimization = result.optimizations.find(o => o.clauseId === clause.id);
