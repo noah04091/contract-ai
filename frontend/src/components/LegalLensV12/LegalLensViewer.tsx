@@ -117,6 +117,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Focus Mode — dims everything except selected clause
   const [focusMode, setFocusMode] = useState<boolean>(false);
 
+  // Keyboard Shortcuts Modal
+  const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
+
+  // Celebration when all clauses reviewed
+  const [showCelebration, setShowCelebration] = useState<boolean>(false);
+  const celebrationShownRef = useRef<boolean>(false);
+
   // Resizable Panel State
   const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -439,9 +446,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           setFocusMode(prev => !prev);
           return;
 
+        case '?': // Keyboard shortcuts help
+          e.preventDefault();
+          setShowShortcutsModal(prev => !prev);
+          return;
+
         case 'Escape':
           e.preventDefault();
-          if (focusMode) {
+          if (showShortcutsModal) {
+            setShowShortcutsModal(false);
+          } else if (focusMode) {
             setFocusMode(false);
           } else if (selectedClause) {
             deselectClause();
@@ -459,7 +473,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [clauses, selectedClause, selectClause, deselectClause, goToNextRisk, focusMode, isParsing, isStreaming]);
+  }, [clauses, selectedClause, selectClause, deselectClause, goToNextRisk, focusMode, showShortcutsModal, isParsing, isStreaming]);
 
   // Auto-mark clause as reviewed when analysis is displayed
   useEffect(() => {
@@ -480,6 +494,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       percent: total > 0 ? Math.round((reviewed / total) * 100) : 0
     };
   }, [clauses, progress?.reviewedClauses]);
+
+  // Celebration trigger
+  useEffect(() => {
+    if (reviewStats && reviewStats.percent === 100 && reviewStats.total > 2 && !celebrationShownRef.current) {
+      celebrationShownRef.current = true;
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 4000);
+    }
+  }, [reviewStats]);
 
   // Prev/Next clause navigation for Analysis Panel
   const clauseNavInfo = useMemo(() => {
@@ -2220,6 +2243,65 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         contractId={contractId}
         contractName={contractName}
       />
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className={styles.celebrationOverlay}>
+          <div className={styles.celebrationContent}>
+            <span className={styles.celebrationEmoji}>🎉</span>
+            <h3 className={styles.celebrationTitle}>Alle Klauseln geprüft!</h3>
+            <p className={styles.celebrationText}>
+              Sie haben {reviewStats?.total} Klauseln durchgesehen. Gut gemacht!
+            </p>
+          </div>
+          {/* CSS confetti particles */}
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className={styles.confettiParticle}
+              style={{
+                '--x': `${Math.random() * 100}vw`,
+                '--delay': `${Math.random() * 0.5}s`,
+                '--color': ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'][i % 6]
+              } as React.CSSProperties}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Modal */}
+      {showShortcutsModal && (
+        <div className={styles.shortcutsOverlay} onClick={() => setShowShortcutsModal(false)}>
+          <div className={styles.shortcutsModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.shortcutsHeader}>
+              <h3>Tastenkürzel</h3>
+              <button onClick={() => setShowShortcutsModal(false)} className={styles.shortcutsCloseBtn}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.shortcutsGrid}>
+              <div className={styles.shortcutsGroup}>
+                <h4 className={styles.shortcutsGroupTitle}>Navigation</h4>
+                <div className={styles.shortcutRow}><kbd>↑</kbd> <kbd>k</kbd><span>Vorherige Klausel</span></div>
+                <div className={styles.shortcutRow}><kbd>↓</kbd> <kbd>j</kbd><span>Nächste Klausel</span></div>
+                <div className={styles.shortcutRow}><kbd>n</kbd><span>Nächstes Risiko</span></div>
+                <div className={styles.shortcutRow}><kbd>Home</kbd><span>Erste Klausel</span></div>
+                <div className={styles.shortcutRow}><kbd>End</kbd><span>Letzte Klausel</span></div>
+              </div>
+              <div className={styles.shortcutsGroup}>
+                <h4 className={styles.shortcutsGroupTitle}>Ansicht</h4>
+                <div className={styles.shortcutRow}><kbd>f</kbd><span>Fokus-Modus</span></div>
+                <div className={styles.shortcutRow}><kbd>Esc</kbd><span>Schließen / Zurück</span></div>
+                <div className={styles.shortcutRow}><kbd>?</kbd><span>Diese Hilfe</span></div>
+              </div>
+              <div className={styles.shortcutsGroup}>
+                <h4 className={styles.shortcutsGroupTitle}>Suche</h4>
+                <div className={styles.shortcutRow}><kbd>Ctrl</kbd>+<kbd>F</kbd><span>Klauseln durchsuchen</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

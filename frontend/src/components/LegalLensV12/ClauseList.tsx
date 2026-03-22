@@ -2,7 +2,7 @@
 // Komponente für die Klausel-Liste (linke Seite)
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban } from 'lucide-react';
+import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban, StickyNote } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel, ActionLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import HoverTooltip from './HoverTooltip';
@@ -68,6 +68,7 @@ interface ClauseListProps {
   streamingProgress?: number;
   analysisCache?: { [key: string]: unknown };
   currentPerspective?: string;
+  focusMode?: boolean;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -81,7 +82,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   isStreaming = false,
   streamingProgress = 0,
   analysisCache = {},
-  currentPerspective = 'contractor'
+  currentPerspective = 'contractor',
+  focusMode = false
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -125,6 +127,39 @@ const ClauseList: React.FC<ClauseListProps> = ({
       return next;
     });
   }, []);
+
+  // Clause Annotations (localStorage-persisted)
+  const [clauseAnnotations, setClauseAnnotations] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem('legalLens_annotations');
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+  const [editingAnnotation, setEditingAnnotation] = useState<string | null>(null);
+  const [annotationDraft, setAnnotationDraft] = useState('');
+  const annotationInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const saveAnnotation = useCallback((clauseId: string) => {
+    setClauseAnnotations(prev => {
+      const next = { ...prev };
+      if (annotationDraft.trim()) {
+        next[clauseId] = annotationDraft.trim();
+      } else {
+        delete next[clauseId];
+      }
+      localStorage.setItem('legalLens_annotations', JSON.stringify(next));
+      return next;
+    });
+    setEditingAnnotation(null);
+    setAnnotationDraft('');
+  }, [annotationDraft]);
+
+  const startAnnotation = useCallback((clauseId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAnnotation(clauseId);
+    setAnnotationDraft(clauseAnnotations[clauseId] || '');
+    setTimeout(() => annotationInputRef.current?.focus(), 50);
+  }, [clauseAnnotations]);
 
   // ✅ Feature 3: Hover-Tooltip
   const [tooltipClauseId, setTooltipClauseId] = useState<string | null>(null);
@@ -209,6 +244,44 @@ const ClauseList: React.FC<ClauseListProps> = ({
       low: analyzable.filter(c => (c.preAnalysis?.riskLevel || c.riskIndicators?.level) === 'low').length
     };
   }, [safeClauses]);
+
+  // Clause Grouping — detect topic from title/number/text
+  const clauseGroups = useMemo(() => {
+    if (filteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
+
+    const TOPIC_PATTERNS: [RegExp, string][] = [
+      [/vertragsgegenstand|leistung|gegenstand|umfang|scope/i, 'Leistung & Gegenstand'],
+      [/vergütung|zahlung|preis|entgelt|gebühr|kosten|honorar/i, 'Vergütung & Zahlung'],
+      [/laufzeit|dauer|beginn|vertragsbeginn|kündigung|beendigung/i, 'Laufzeit & Kündigung'],
+      [/haftung|gewährleistung|garantie|schadenersatz|schadensersatz/i, 'Haftung & Gewährleistung'],
+      [/geheimhaltung|vertraulich|datenschutz|daten|privacy/i, 'Vertraulichkeit & Daten'],
+      [/schlussbestimmung|sonstig|allgemein|salvator|schriftform|gerichtsstand/i, 'Schlussbestimmungen'],
+    ];
+
+    const groups: { label: string; clauses: typeof filteredClauses }[] = [];
+    const assigned = new Set<string>();
+
+    for (const [pattern, label] of TOPIC_PATTERNS) {
+      const matches = filteredClauses.filter(c => {
+        if (assigned.has(c.id)) return false;
+        const searchText = `${c.title || ''} ${c.number || ''} ${c.text.slice(0, 200)}`;
+        return pattern.test(searchText);
+      });
+      if (matches.length > 0) {
+        groups.push({ label, clauses: matches });
+        matches.forEach(c => assigned.add(c.id));
+      }
+    }
+
+    // Remaining clauses
+    const remaining = filteredClauses.filter(c => !assigned.has(c.id));
+    if (remaining.length > 0) {
+      groups.push({ label: 'Weitere Klauseln', clauses: remaining });
+    }
+
+    // Only use grouping if we have at least 2 groups
+    return groups.length >= 2 ? groups : null;
+  }, [filteredClauses, searchQuery, riskFilter]);
 
   // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
   useEffect(() => {
@@ -420,15 +493,53 @@ const ClauseList: React.FC<ClauseListProps> = ({
         )}
       </div>
 
+      {/* Batch Actions */}
+      {filterCounts.low > 0 && Object.keys(clauseDecisions).length < filterCounts.all && (
+        <div className={styles.batchActions}>
+          <button
+            className={styles.batchBtn}
+            onClick={() => {
+              const lowRisk = safeClauses.filter(c =>
+                !c.nonAnalyzable &&
+                (c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low') === 'low' &&
+                !clauseDecisions[c.id]
+              );
+              if (lowRisk.length === 0) return;
+              setClauseDecisions(prev => {
+                const next = { ...prev };
+                lowRisk.forEach(c => { next[c.id] = 'accepted'; });
+                localStorage.setItem('legalLens_decisions', JSON.stringify(next));
+                return next;
+              });
+            }}
+          >
+            <Check size={11} />
+            Alle 🟢 akzeptieren
+          </button>
+        </div>
+      )}
+
       {/* Keyboard Shortcut Hint */}
       <div className={styles.keyboardHint}>
         <kbd>↑</kbd><kbd>↓</kbd> Navigation
-        <kbd>Esc</kbd> Schließen
-        <kbd>j</kbd><kbd>k</kbd> Vim
+        <kbd>n</kbd> Risiko
+        <kbd>f</kbd> Fokus
+        <kbd>?</kbd> Hilfe
       </div>
 
       <div className={styles.clauseList}>
         {filteredClauses.map((clause) => {
+          // Group headers
+          const groupLabel = (() => {
+            if (!clauseGroups) return null;
+            for (const group of clauseGroups) {
+              if (group.clauses.length > 0 && group.clauses[0].id === clause.id) {
+                return group.label;
+              }
+            }
+            return null;
+          })();
+
           const isSelected = selectedClause?.id === clause.id;
           const isReviewed = isClauseReviewed(clause.id);
           const isCached = isClauseCached(clause.id);
@@ -441,41 +552,52 @@ const ClauseList: React.FC<ClauseListProps> = ({
           const effectiveRiskLevel = isNonAnalyzable ? 'none' : (clause.preAnalysis?.riskLevel || riskLevel);
 
           // Nicht-analysierbare Klauseln: ausgegraut, nicht klickbar
+          const groupHeaderEl = groupLabel ? (
+            <div key={`group-${clause.id}`} className={styles.clauseGroupHeader}>
+              <span className={styles.clauseGroupLine} />
+              <span className={styles.clauseGroupLabel}>{groupLabel}</span>
+              <span className={styles.clauseGroupLine} />
+            </div>
+          ) : null;
+
           if (isNonAnalyzable) {
             return (
-              <div
-                key={clause.id}
-                ref={(el) => {
-                  if (el) clauseRefs.current.set(clause.id, el);
-                }}
-                className={`${styles.clauseItem} ${styles.nonAnalyzable}`}
-              >
-                <div className={styles.clauseHeader}>
-                  <span className={styles.clauseNumber}>
-                    {clause.number || `#${clause.id.slice(-4)}`}
-                    {clause.title && ` - ${clause.title}`}
-                  </span>
-                  <span className={`${styles.clauseRisk} ${styles.none}`}>
-                    {clause.nonAnalyzableReason && NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
-                      ? NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
-                      : 'Info'}
-                  </span>
+              <React.Fragment key={clause.id}>
+                {groupHeaderEl}
+                <div
+                  ref={(el) => {
+                    if (el) clauseRefs.current.set(clause.id, el);
+                  }}
+                  className={`${styles.clauseItem} ${styles.nonAnalyzable}`}
+                >
+                  <div className={styles.clauseHeader}>
+                    <span className={styles.clauseNumber}>
+                      {clause.number || `#${clause.id.slice(-4)}`}
+                      {clause.title && ` - ${clause.title}`}
+                    </span>
+                    <span className={`${styles.clauseRisk} ${styles.none}`}>
+                      {clause.nonAnalyzableReason && NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
+                        ? NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
+                        : 'Info'}
+                    </span>
+                  </div>
+                  <p className={`${styles.clauseText} ${styles.nonAnalyzableText}`}>
+                    {clause.text}
+                  </p>
                 </div>
-                <p className={`${styles.clauseText} ${styles.nonAnalyzableText}`}>
-                  {clause.text}
-                </p>
-              </div>
+              </React.Fragment>
             );
           }
 
           return (
+            <React.Fragment key={clause.id}>
+            {groupHeaderEl}
             <div
-              key={clause.id}
               ref={(el) => {
                 // ✅ FIX Issue #5: Ref für Auto-Scroll speichern
                 if (el) clauseRefs.current.set(clause.id, el);
               }}
-              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''} ${!isCached && !isSelected ? styles.pending : ''}`}
+              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''} ${!isCached && !isSelected ? styles.pending : ''} ${focusMode && !isSelected && selectedClause ? styles.focusDimmed : ''}`}
               onClick={() => onSelectClause(clause)}
               onMouseEnter={(e) => handleClauseMouseEnter(clause.id, e)}
               onMouseLeave={handleClauseMouseLeave}
@@ -568,6 +690,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   </button>
                 </div>
 
+                {/* Annotation Button */}
+                <button
+                  className={`${styles.decisionBtn} ${styles.annotationBtn} ${clauseAnnotations[clause.id] ? styles.annotationActive : ''}`}
+                  onClick={(e) => startAnnotation(clause.id, e)}
+                  title={clauseAnnotations[clause.id] ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}
+                >
+                  <StickyNote size={12} />
+                </button>
+
                 {/* Status Icons */}
                 <div className={styles.clauseIcons}>
                   {isCached && (
@@ -586,7 +717,43 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Annotation Display / Editor */}
+              {clauseAnnotations[clause.id] && editingAnnotation !== clause.id && (
+                <div
+                  className={styles.annotationDisplay}
+                  onClick={(e) => startAnnotation(clause.id, e)}
+                >
+                  <StickyNote size={10} />
+                  <span>{clauseAnnotations[clause.id]}</span>
+                </div>
+              )}
+              {editingAnnotation === clause.id && (
+                <div className={styles.annotationEditor} onClick={(e) => e.stopPropagation()}>
+                  <textarea
+                    ref={annotationInputRef}
+                    className={styles.annotationInput}
+                    value={annotationDraft}
+                    onChange={(e) => setAnnotationDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveAnnotation(clause.id); }
+                      if (e.key === 'Escape') { setEditingAnnotation(null); }
+                    }}
+                    placeholder="Notiz hinzufügen..."
+                    rows={2}
+                  />
+                  <div className={styles.annotationActions}>
+                    <button className={styles.annotationSaveBtn} onClick={() => saveAnnotation(clause.id)}>
+                      <Check size={12} /> Speichern
+                    </button>
+                    <button className={styles.annotationCancelBtn} onClick={() => setEditingAnnotation(null)}>
+                      Abbrechen
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+            </React.Fragment>
           );
         })}
 

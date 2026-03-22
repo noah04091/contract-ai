@@ -1,7 +1,7 @@
 // 📁 components/LegalLens/AnalysisPanel.tsx
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle, Copy, Check } from 'lucide-react';
 import type {
   ClauseAnalysis,
@@ -145,6 +145,31 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       handleSendMessage();
     }
   };
+
+  // Smart Quick Questions based on clause risk and type
+  const quickQuestions = useMemo(() => {
+    const questions: string[] = [];
+    if (!analysis) return questions;
+
+    const action = analysisActionLevel;
+    if (action === 'reject') {
+      questions.push('Welche rechtlichen Konsequenzen hat diese Klausel?');
+      questions.push('Kann ich diese Klausel streichen lassen?');
+      questions.push('Gibt es Urteile zu ähnlichen Klauseln?');
+    } else if (action === 'negotiate') {
+      questions.push('Was ist hier marktüblich?');
+      questions.push('Wie verhandle ich diese Klausel am besten?');
+      questions.push('Welche Kompromisse wären sinnvoll?');
+    } else {
+      questions.push('Gibt es versteckte Risiken?');
+      questions.push('Ist diese Klausel AGB-konform?');
+    }
+
+    // Always offer these
+    questions.push('Erkläre in einem Satz');
+
+    return questions.slice(0, 4);
+  }, [analysis, analysisActionLevel]);
 
   const copyEmailTemplate = () => {
     if (negotiation?.emailTemplate) {
@@ -328,10 +353,32 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <div className={styles.actionBadgeInfo}>
             {riskAssessment && (() => {
               const scoreInfo = getRiskScoreInfo(riskAssessment.score);
+              const radius = 28;
+              const circumference = 2 * Math.PI * radius;
+              const arcLength = (riskAssessment.score / 100) * circumference * 0.75; // 270° arc
               return (
                 <div className={styles.scoreCard} style={{ '--score-color': scoreInfo.color } as React.CSSProperties}>
-                  <div className={styles.scoreValue}>
-                    {riskAssessment.score}/100
+                  <div className={styles.riskArcWrapper}>
+                    <svg width="68" height="68" viewBox="0 0 68 68" className={styles.riskArcSvg}>
+                      {/* Background arc */}
+                      <circle
+                        cx="34" cy="34" r={radius}
+                        fill="none" stroke="#e2e8f0" strokeWidth="5"
+                        strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
+                        strokeLinecap="round"
+                        transform="rotate(135 34 34)"
+                      />
+                      {/* Score arc */}
+                      <circle
+                        cx="34" cy="34" r={radius}
+                        fill="none" stroke={scoreInfo.color} strokeWidth="5"
+                        strokeDasharray={`${arcLength} ${circumference}`}
+                        strokeLinecap="round"
+                        transform="rotate(135 34 34)"
+                        className={styles.riskArcFill}
+                      />
+                    </svg>
+                    <span className={styles.riskArcValue}>{riskAssessment.score}</span>
                   </div>
                   <div className={styles.scoreLabel}>
                     {scoreInfo.label}
@@ -825,6 +872,21 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Smart Quick Questions */}
+        {chatHistory.length === 0 && quickQuestions.length > 0 && !isChatting && (
+          <div className={styles.quickQuestions}>
+            {quickQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                className={styles.quickQuestionChip}
+                onClick={() => onSendChatMessage(q)}
+              >
+                {q}
+              </button>
+            ))}
           </div>
         )}
 
