@@ -364,8 +364,18 @@ export function useOptimizerV2() {
         });
         return data;
       }
+      dispatch({
+        type: 'ADD_CHAT_MESSAGE',
+        clauseId,
+        messages: [{ role: 'assistant', content: 'Entschuldigung, die Antwort konnte nicht generiert werden. Bitte versuche es erneut.', timestamp: new Date().toISOString() }]
+      });
       return null;
     } catch {
+      dispatch({
+        type: 'ADD_CHAT_MESSAGE',
+        clauseId,
+        messages: [{ role: 'assistant', content: 'Verbindungsfehler — bitte versuche es erneut.', timestamp: new Date().toISOString() }]
+      });
       return null;
     }
   }, [state.resultId]);
