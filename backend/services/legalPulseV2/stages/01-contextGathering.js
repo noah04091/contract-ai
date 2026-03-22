@@ -6,6 +6,15 @@
 const database = require("../../../config/database");
 const { ObjectId } = require("mongodb");
 
+// contractAnalyzer stores provider/contractType as objects {name, displayName, ...}
+// This helper always returns a string or null
+function toStr(val) {
+  if (!val) return null;
+  if (typeof val === "string") return val;
+  if (typeof val === "object") return val.displayName || val.name || null;
+  return null;
+}
+
 /**
  * Stage 1: Gather contract context from DB
  * @param {string} userId
@@ -74,30 +83,30 @@ async function runContextGathering(userId, contractId) {
   }
 
   // Find related contracts (same provider/partner)
-  const contractProvider = contract.provider || contract.partner || contract.company;
+  const contractProvider = toStr(contract.provider) || toStr(contract.partner) || toStr(contract.company);
   const relatedContracts = contractProvider
     ? portfolioContracts
         .filter(c => {
-          const p = c.provider || c.partner || c.company;
+          const p = toStr(c.provider) || toStr(c.partner) || toStr(c.company);
           return p && p.toLowerCase() === contractProvider.toLowerCase();
         })
         .map(c => ({
           name: c.name || c.title || "Unbenannt",
-          type: c.contractType || c.type || "unbekannt",
+          type: toStr(c.contractType) || toStr(c.type) || "unbekannt",
           endDate: c.endDate || c.expiryDate,
         }))
     : [];
 
   return {
     contractName: contract.name || contract.title || contract.filename || "Unbenannt",
-    contractType: contract.contractType || contract.type || null,
-    parties: contract.parties || [],
+    contractType: toStr(contract.contractType) || toStr(contract.type) || null,
+    parties: (contract.parties || []).map(p => typeof p === "string" ? p : (p?.name || p?.displayName || String(p))),
     duration: contract.duration || null,
     startDate: contract.startDate || contract.createdAt,
     endDate: endDate || null,
     daysUntilExpiry,
     autoRenewal: contract.autoRenewal || false,
-    provider: contractProvider || null,
+    provider: contractProvider || null,  // already normalized via toStr()
     portfolioSize: portfolioContracts.length + 1,
     relatedContracts,
     previousAnalysisCount: previousResults.length,

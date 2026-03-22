@@ -18,14 +18,14 @@ function normalizeToString(val) {
   return null;
 }
 
-// Rate limiting: 5 analyses per hour per user
+// Rate limiting: 10 analyses per hour per user
 const analyzeRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 10,
   keyGenerator: (req) => req.user?.userId || req.ip,
   handler: (req, res) => {
     res.status(429).json({
-      error: "Rate limit erreicht. Maximal 5 Analysen pro Stunde.",
+      error: "Rate limit erreicht. Maximal 10 Analysen pro Stunde.",
       retryAfter: "1 Stunde",
     });
   },
