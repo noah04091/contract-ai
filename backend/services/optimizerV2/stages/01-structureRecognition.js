@@ -36,7 +36,23 @@ async function runStructureRecognition(openai, contractText, fileName, onProgres
     ]
   });
 
-  const result = JSON.parse(response.choices[0].message.content);
+  let result;
+  try {
+    result = JSON.parse(response.choices[0].message.content);
+  } catch (parseErr) {
+    console.error('[OptimizerV2] Stage 1: JSON.parse failed:', parseErr.message, '| Raw content:', (response.choices[0].message.content || '').substring(0, 200));
+    result = {
+      contractType: 'unknown',
+      contractTypeLabel: 'Unbekannter Vertragstyp',
+      contractTypeConfidence: 0,
+      jurisdiction: 'Deutschland',
+      parties: { party1: 'Unbekannt', party2: 'Unbekannt' },
+      industry: 'Unbekannt',
+      maturityLevel: 'amateur',
+      dates: {},
+      specialFeatures: []
+    };
+  }
 
   onProgress(10, `${result.contractTypeLabel || result.contractType} erkannt (${result.contractTypeConfidence}% Sicherheit)`);
 

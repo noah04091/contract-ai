@@ -237,7 +237,41 @@ async function extractSmallContract(openai, contractText, preSplit, structure, o
     return extractLargeContract(openai, contractText, preSplit, structure, onProgress);
   }
 
-  const result = JSON.parse(response.choices[0].message.content);
+  let result;
+  try {
+    result = JSON.parse(response.choices[0].message.content);
+  } catch (parseErr) {
+    console.error('[OptimizerV2] Stage 2: JSON.parse failed, falling back to regex pre-split:', parseErr.message, '| Raw content:', (response.choices[0].message.content || '').substring(0, 200));
+    // Use the regex pre-split as fallback
+    const fallbackClauses = preSplit.map((section, i) => {
+      const lines = (section.text || '').split('\n');
+      const firstLine = lines[0].trim();
+      const rawTitle = firstLine.replace(/^(§\s*\d+[a-z]?\s*[.:\-–]\s*)/i, '').trim();
+      const title = rawTitle.length > 3 && rawTitle.length < 150 ? rawTitle : `Abschnitt ${i + 1}`;
+      return {
+        id: `clause_${String(i + 1).padStart(3, '0')}`,
+        title,
+        originalText: section.text,
+        category: guessCategoryFromText(title, section.text),
+        sectionNumber: section.sectionNumber || null,
+        startPosition: contractText.indexOf((section.text || '').substring(0, 50)),
+        endPosition: null
+      };
+    });
+
+    applyCategoryOverrides(fallbackClauses);
+    onProgress(20, `${fallbackClauses.length} Klauseln extrahiert (Fallback)`);
+
+    return {
+      result: fallbackClauses,
+      usage: {
+        model: 'gpt-4o-mini',
+        inputTokens: response.usage?.prompt_tokens || 0,
+        outputTokens: response.usage?.completion_tokens || 0,
+        costUSD: calculateCost('gpt-4o-mini', response.usage?.prompt_tokens || 0, response.usage?.completion_tokens || 0)
+      }
+    };
+  }
 
   result.clauses = result.clauses.map((clause, i) => ({
     ...clause,
