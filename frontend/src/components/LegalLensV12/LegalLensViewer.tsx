@@ -125,7 +125,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const celebrationShownRef = useRef<boolean>(false);
 
   // Resizable Panel State
-  const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(480);
+  const [analysisPanelWidth, setAnalysisPanelWidth] = useState<number>(() => {
+    const vw = window.innerWidth;
+    if (vw <= 1280) return Math.max(300, vw * 0.3);
+    if (vw <= 1440) return Math.max(320, vw * 0.32);
+    return 480;
+  });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -164,7 +169,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const newWidth = containerRect.right - e.clientX;
 
       // Beschränke auf min/max Werte
-      const clampedWidth = Math.max(350, Math.min(800, newWidth));
+      const clampedWidth = Math.max(280, Math.min(800, newWidth));
       setAnalysisPanelWidth(clampedWidth);
     };
 

@@ -359,7 +359,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               return (
                 <div className={styles.scoreCard} style={{ '--score-color': scoreInfo.color } as React.CSSProperties}>
                   <div className={styles.riskArcWrapper}>
-                    <svg width="68" height="68" viewBox="0 0 68 68" className={styles.riskArcSvg}>
+                    <svg viewBox="0 0 68 68" className={styles.riskArcSvg}>
                       {/* Background arc */}
                       <circle
                         cx="34" cy="34" r={radius}

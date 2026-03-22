@@ -16,10 +16,12 @@ const HoverTooltip: React.FC<HoverTooltipProps> = ({ actionLevel, explanation, c
 
   const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
 
+  const tooltipWidth = Math.min(320, window.innerWidth * 0.85);
   const tooltipStyle: React.CSSProperties = {
     position: 'fixed',
-    left: Math.min(position.x, window.innerWidth - 320),
+    left: Math.min(position.x, window.innerWidth - tooltipWidth - 16),
     top: position.y - 80,
+    maxWidth: tooltipWidth,
     zIndex: 9999
   };
 
