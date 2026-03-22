@@ -2,7 +2,7 @@
 // Komponente für die Klausel-Liste (linke Seite)
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban, StickyNote } from 'lucide-react';
+import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban, StickyNote, Keyboard } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel, ActionLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
 import HoverTooltip from './HoverTooltip';
@@ -100,6 +100,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
   // ✅ Opt 4: Klausel-Suche
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
+  const [showKeyHints, setShowKeyHints] = useState<boolean>(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Quick-Filter Tabs
@@ -521,12 +522,19 @@ const ClauseList: React.FC<ClauseListProps> = ({
         </div>
       </div>
 
-      {/* Keyboard Shortcut Hint */}
-      <div className={styles.keyboardHint}>
-        <kbd>↑</kbd><kbd>↓</kbd> Nav
-        <kbd>n</kbd> Risiko
-        <kbd>f</kbd> Fokus
-        <kbd>?</kbd> Hilfe
+      {/* Keyboard Shortcut Hint — collapsible */}
+      <div className={`${styles.keyboardHint} ${showKeyHints ? styles.keyboardHintOpen : ''}`}>
+        <button className={styles.keyHintToggle} onClick={() => setShowKeyHints(p => !p)} title="Tastenkürzel">
+          <Keyboard size={12} />
+        </button>
+        {showKeyHints && (
+          <>
+            <kbd>↑</kbd><kbd>↓</kbd> Nav
+            <kbd>n</kbd> Risiko
+            <kbd>f</kbd> Fokus
+            <kbd>?</kbd> Hilfe
+          </>
+        )}
       </div>
 
       <div className={styles.clauseList}>
