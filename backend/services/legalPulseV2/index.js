@@ -209,8 +209,24 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     const analysisResult = await runDeepAnalysis(cleanedText, context, onProgress);
 
+    // Use AI-detected contract type if available (more reliable than keyword classifier)
+    if (analysisResult.aiDetectedContractType) {
+      const aiType = analysisResult.aiDetectedContractType;
+      const stage0Type = docMeta.contractType;
+      if (aiType.toLowerCase().replace(/[-\s]/g, "") !== stage0Type.toLowerCase().replace(/[-\s]/g, "")) {
+        console.log(`[PulseV2] AI corrected contract type: "${stage0Type}" → "${aiType}" (${analysisResult.aiContractTypeReasoning})`);
+      }
+      // Update for downstream stages (3, 4, 5) and DB storage
+      context.contractType = aiType;
+      docMeta.contractType = aiType;
+      docMeta.contractTypeSource = "ai";
+      docMeta.contractTypeReasoning = analysisResult.aiContractTypeReasoning;
+      docMeta.contractTypeConfidence = 95; // AI-confirmed = high confidence
+    }
+
     // Soft-logic: when contract type is uncertain, be more conservative
     // Downgrade medium/high findings to low when we can't reliably assess branchenstandard
+    // (Skipped when AI has confirmed/corrected the type — confidence is already 95)
     if (docMeta.contractTypeConfidence < 50) {
       console.log(`[PulseV2] Low contractType confidence (${docMeta.contractTypeConfidence}) — downgrading uncertain findings`);
       for (const f of analysisResult.clauseFindings) {
@@ -231,6 +247,8 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
           clauses: analysisResult.clauses,
           clauseFindings: analysisResult.clauseFindings,
           coverage: analysisResult.coverage,
+          // Store AI-corrected document metadata (contract type, source, reasoning)
+          document: docMeta,
         },
         $push: {
           "costs.perStage": analysisResult.costs,

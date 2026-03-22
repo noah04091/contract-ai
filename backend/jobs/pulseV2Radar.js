@@ -36,18 +36,28 @@ const IMPACT_CONFIDENCE_THRESHOLD = 75;
 // This prevents mass false alerts from unmapped legal areas.
 // To add coverage for new areas, add them here with specific contract types.
 const AREA_TO_CONTRACT_TYPES = {
-  datenschutz: ["saas", "hosting", "dienstleistung"],
+  // Core legal areas → contract types
+  datenschutz: ["saas", "hosting", "dienstleistung", "arbeitsvertrag", "freelancer"],
+  dsgvo: ["saas", "hosting", "dienstleistung", "arbeitsvertrag", "freelancer"],
   arbeitsrecht: ["arbeitsvertrag"],
-  mietrecht: ["mietvertrag"],
-  handelsrecht: ["dienstleistung", "saas", "hosting", "liefervertrag"],
-  verbraucherschutz: ["saas", "hosting", "versicherung"],
-  steuerrecht: ["dienstleistung", "freelancer"],
-  it_recht: ["saas", "hosting"],
-  wettbewerbsrecht: ["nda", "freelancer"],
+  mietrecht: ["mietvertrag", "pachtvertrag"],
+  kaufrecht: ["kaufvertrag", "factoring", "leasing"],
+  handelsrecht: ["dienstleistung", "saas", "hosting", "factoring", "handelsvertreter", "franchisevertrag", "rahmenvertrag"],
+  verbraucherschutz: ["saas", "hosting", "versicherung", "leasing", "darlehen", "maklervertrag"],
+  steuerrecht: ["dienstleistung", "freelancer", "gesellschaftsvertrag"],
+  it_recht: ["saas", "hosting", "lizenz"],
+  wettbewerbsrecht: ["nda", "freelancer", "handelsvertreter", "franchisevertrag"],
   versicherungsrecht: ["versicherung"],
-  gesellschaftsrecht: ["dienstleistung"],
-  vertragsrecht: ["saas", "hosting", "dienstleistung", "freelancer"],
-  urheberrecht: ["freelancer", "nda"],
+  gesellschaftsrecht: ["gesellschaftsvertrag", "dienstleistung"],
+  vertragsrecht: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag"],
+  urheberrecht: ["freelancer", "nda", "lizenz"],
+  // Financial law areas
+  bankrecht: ["darlehen", "factoring", "buergschaft", "leasing"],
+  bgb: ["mietvertrag", "kaufvertrag", "dienstleistung", "darlehen", "buergschaft", "pachtvertrag", "maklervertrag"],
+  hgb: ["handelsvertreter", "kaufvertrag", "factoring", "gesellschaftsvertrag", "franchisevertrag"],
+  baurecht: ["bauvertrag"],
+  // Catch broader areas
+  sonstiges: ["dienstleistung", "kaufvertrag", "rahmenvertrag"],
 };
 
 /**
@@ -145,25 +155,35 @@ async function fetchRecentLawChanges(db) {
 
 /**
  * Find V2-analyzed contracts potentially affected by a law change.
- * Uses deterministic pre-filtering by legal area → contract type mapping.
+ *
+ * Strategy:
+ *   1. KNOWN area → fast pre-filter by contract type (cheap, no AI)
+ *   2. UNKNOWN area → take a small sample of recent contracts and let AI decide
+ *      (ensures no legal area is silently ignored)
  */
 async function matchLawToContracts(db, lawChange) {
   const area = (lawChange.area || "").toLowerCase();
   const relevantTypes = AREA_TO_CONTRACT_TYPES[area] || [];
 
-  // FIX: Unknown legal area = no automatic matching (prevents mass false alerts)
-  if (relevantTypes.length === 0) {
-    console.log(`[PulseV2Radar] No contract type mapping for area "${area}" — skipping (no broad match)`);
-    return [];
-  }
+  let query;
+  let limit;
 
-  // Build query: contracts with V2 results matching relevant types
-  const query = {
-    status: "completed",
-    "document.contractType": {
-      $in: relevantTypes.map((t) => new RegExp(t, "i")),
-    },
-  };
+  if (relevantTypes.length > 0) {
+    // KNOWN area → fast pre-filter by contract type
+    query = {
+      status: "completed",
+      "document.contractType": {
+        $in: relevantTypes.map((t) => new RegExp(t, "i")),
+      },
+    };
+    limit = 30;
+  } else {
+    // UNKNOWN area → don't skip! Take a small sample of recent contracts
+    // and let the AI decide if they're affected. Conservative limit to control cost.
+    console.log(`[PulseV2Radar] No pre-filter mapping for area "${area}" — using AI-based matching (sample of recent contracts)`);
+    query = { status: "completed" };
+    limit = 10; // Smaller sample for unknown areas to control AI cost
+  }
 
   const results = await LegalPulseV2Result.aggregate([
     { $match: query },
@@ -174,7 +194,7 @@ async function matchLawToContracts(db, lawChange) {
         latestResult: { $first: "$$ROOT" },
       },
     },
-    { $limit: 30 },
+    { $limit: limit },
   ]);
 
   return results.map((r) => ({

@@ -1782,6 +1782,22 @@ const connectDB = async () => {
         }
       }));
 
+      // Legal Pulse V2 — Täglicher RSS→Laws Sync (03:15 UTC, VOR Radar um 07:00)
+      cron.schedule("15 3 * * *", withCronLock('pulse-v2-rss-sync', async () => {
+        console.log("[PulseV2RssSync] Starte täglichen RSS-Sync...");
+        try {
+          await withCronLogging('pulse-v2-rss-sync', async () => {
+            const { runPulseV2RssSync } = require("./jobs/pulseV2RssSync");
+            const cronDb = await database.connect();
+            const result = await runPulseV2RssSync(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("[PulseV2RssSync] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-rss-sync', method: 'SCHEDULED', severity: 'high' });
+        }
+      }));
+
       // Legal Pulse V2 — Wöchentlicher automatischer Re-Scan (Sonntags 05:00 UTC)
       cron.schedule("0 5 * * 0", withCronLock('pulse-v2-monitor', async () => {
         console.log("[PulseV2Monitor] Starte wöchentlichen Re-Scan...");
@@ -1799,7 +1815,7 @@ const connectDB = async () => {
       }));
 
       // Legal Pulse V2 Radar — 2x täglich Legal Source Scan (07:00 + 19:00 UTC)
-      // Läuft NACH V1 Legal Pulse Scan (06:00, syncs RSS→laws) damit neue Laws verfügbar sind
+      // Läuft NACH RSS-Sync (03:15) damit neue Laws in der DB verfügbar sind
       cron.schedule("0 7,19 * * *", withCronLock('pulse-v2-radar', async () => {
         console.log("[PulseV2Radar] Starte Legal Source Scan...");
         try {

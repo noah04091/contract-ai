@@ -56,15 +56,17 @@ function extractClauseTitle(text) {
 }
 
 /**
- * Basic clause categorization based on keywords
+ * Clause categorization based on keywords
+ * Recognizes legal AND commercial/financial content
  */
 function categorizeClause(text, sectionNumber) {
   const lower = text.toLowerCase();
-  if (/haftung|schadenersatz|gewährleistung/i.test(lower)) return "haftung";
+  if (/haftung|schadenersatz|gewährleistung|garantie|freistellung/i.test(lower)) return "haftung";
   if (/kündigung|beendigung|laufzeit|vertragsdauer/i.test(lower)) return "kuendigung";
   if (/datenschutz|dsgvo|personenbezogen|daten/i.test(lower)) return "datenschutz";
   if (/geistiges eigentum|urheberrecht|lizenz|patent|marke/i.test(lower)) return "geistiges_eigentum";
-  if (/vergütung|zahlung|preis|gebühr|entgelt|honorar/i.test(lower)) return "zahlungen";
+  // Financial/commercial terms — catches Konditionenblatt, fee structures, pricing
+  if (/kondition|gebühr|provision|zinssatz|euribor|basiszins|mindestgebühr|entgelt|factoringgebühr|ankaufsfaktor|leasingrate|prämie|courtage|honorar|vergütung|zahlung|preis/i.test(lower)) return "zahlungen";
   if (/geheimhaltung|vertraulich|verschwiegenheit/i.test(lower)) return "geheimhaltung";
   if (/wettbewerb|konkurrenz|wettbewerbsverbot/i.test(lower)) return "wettbewerb";
   if (/compliance|gesetz|vorschrift|regulierung/i.test(lower)) return "compliance";
@@ -150,6 +152,8 @@ async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, to
 
   return {
     findings: result.findings || [],
+    detectedContractType: result.detectedContractType || null,
+    contractTypeReasoning: result.contractTypeReasoning || null,
     inputTokens: usage.prompt_tokens || 0,
     outputTokens: usage.completion_tokens || 0,
   };
@@ -189,6 +193,8 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   const analyzedClauseIds = new Set();
+  let aiDetectedContractType = null;
+  let aiContractTypeReasoning = null;
 
   // Process batches sequentially (to respect rate limits and track progress)
   for (let i = 0; i < batches.length; i++) {
@@ -214,6 +220,12 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
       if (result.parseError) {
         console.warn(`[PulseV2] Batch ${i + 1}: JSON parse failed, ${result.failedClauseIds.length} clauses not analyzed`);
         continue;
+      }
+
+      // Capture AI-detected contract type from first successful batch
+      if (!aiDetectedContractType && result.detectedContractType) {
+        aiDetectedContractType = result.detectedContractType;
+        aiContractTypeReasoning = result.contractTypeReasoning;
       }
 
       // Mark clauses as successfully analyzed
@@ -294,6 +306,8 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
     clauses,
     clauseFindings: validatedFindings,
     coverage,
+    aiDetectedContractType,
+    aiContractTypeReasoning,
     costs: {
       stage: 2,
       stageName: "Deep Analysis",

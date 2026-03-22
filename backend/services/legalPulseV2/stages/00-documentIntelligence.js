@@ -6,7 +6,18 @@
 const { smartTruncate } = require("../../optimizerV2/utils/clauseSplitter");
 
 // Contract type keywords for classifier
+// NOTE: More specific types must come first or have higher keyword density
+// to beat generic types like "kaufvertrag" that share vocabulary.
 const CONTRACT_TYPE_PATTERNS = {
+  // --- Financial / specialized (high-priority, check first) ---
+  factoring: ["factoring", "forderungskauf", "forderungsabtretung", "ankaufsfaktor", "delkredere", "andienungspflicht", "forderungsankauf", "debitor", "factoringgebühr", "factoringnehmer", "factoringgesellschaft", "sicherungseinbehalt", "kaufinkasso", "stillesFactoring", "offenes factoring", "rahmenvertrag", "ankaufsabschlag", "limitsteuerung", "bonitätsprüfung", "forderungsbestand"],
+  leasing: ["leasing", "leasinggeber", "leasingnehmer", "leasingrate", "leasingvertrag", "leasinggegenstand", "restwert", "leasingdauer", "kilometer", "leasingsonderzahlung"],
+  darlehen: ["darlehen", "darlehensgeber", "darlehensnehmer", "zinssatz", "tilgung", "annuität", "kreditvertrag", "zinsbindung", "sondertilgung", "euribor", "basiszins", "effektivzins", "sollzins", "darlehensvertrag"],
+  buergschaft: ["bürgschaft", "bürge", "bürgschaftsgeber", "ausfallbürgschaft", "selbstschuldnerisch", "höchstbetragsbürgschaft", "bürgschaftsurkunde"],
+  // --- Construction / Real Estate ---
+  bauvertrag: ["bauvertrag", "bauherr", "bauunternehmer", "bauleistung", "abnahme", "mängelansprüche", "gewährleistungsfrist", "vob", "nachunternehmer", "bauzeit"],
+  pachtvertrag: ["pachtvertrag", "pächter", "verpächter", "pachtgegenstand", "pachtzins", "landpachtvertrag"],
+  // --- Services & Trade ---
   mietvertrag: ["mietvertrag", "mieter", "vermieter", "mietzins", "mietobjekt", "mietdauer", "nebenkosten", "kaution", "schönheitsreparatur"],
   arbeitsvertrag: ["arbeitsvertrag", "arbeitnehmer", "arbeitgeber", "gehalt", "vergütung", "arbeitszeit", "urlaub", "kündigungsfrist", "probezeit", "sozialversicherung"],
   nda: ["geheimhaltung", "vertraulich", "non-disclosure", "nda", "geheimhaltungsvereinbarung", "vertraulichkeitsvereinbarung", "offenlegende partei", "empfangende partei"],
@@ -17,13 +28,57 @@ const CONTRACT_TYPE_PATTERNS = {
   lizenz: ["lizenz", "lizenzgeber", "lizenznehmer", "nutzungsrecht", "lizenzgebühr", "urheberrecht", "unterlizenz"],
   freelancer: ["freiberuf", "freelancer", "selbständig", "honorar", "werkvertrag", "auftragnehmer", "projekt"],
   gesellschaftsvertrag: ["gesellschaftsvertrag", "gesellschafter", "stammkapital", "geschäftsführ", "gewinnverteilung", "gmbh", "ohg", "kg"],
+  // --- Agent / Distribution / Franchise ---
+  handelsvertreter: ["handelsvertreter", "handelsvertretervertrag", "provision", "provisionsanspruch", "ausgleichsanspruch", "vertriebsgebiet", "alleinvertretung"],
+  franchisevertrag: ["franchise", "franchisenehmer", "franchisegeber", "franchisegebühr", "systemvorgaben", "franchisevertrag", "handbuch"],
+  rahmenvertrag: ["rahmenvertrag", "einzelauftrag", "abrufauftrag", "rahmenvereinbarung", "abrufvertrag"],
+  maklervertrag: ["makler", "maklerprovision", "maklervertrag", "courtage", "alleinauftrag", "nachweispflicht"],
 };
 
+// Title/header patterns that give high-confidence type detection
+// These match the contract title (first 500 chars) and override keyword frequency
+const TITLE_PATTERNS = [
+  { pattern: /factoring[\s-]*(rahmen)?vertrag/i, type: "factoring" },
+  { pattern: /rahmenvertrag.*factoring/i, type: "factoring" },
+  { pattern: /forderungskauf/i, type: "factoring" },
+  { pattern: /forderungsabtretung/i, type: "factoring" },
+  { pattern: /forderungsankauf/i, type: "factoring" },
+  { pattern: /leasing[\s-]?vertrag/i, type: "leasing" },
+  { pattern: /darlehens?vertrag/i, type: "darlehen" },
+  { pattern: /kredit[\s-]?vertrag/i, type: "darlehen" },
+  { pattern: /bürgschaft/i, type: "buergschaft" },
+  { pattern: /bauvertrag/i, type: "bauvertrag" },
+  { pattern: /pachtvertrag/i, type: "pachtvertrag" },
+  { pattern: /mietvertrag/i, type: "mietvertrag" },
+  { pattern: /arbeitsvertrag|anstellungsvertrag/i, type: "arbeitsvertrag" },
+  { pattern: /geheimhaltungsvereinbarung|non[\s-]?disclosure|nda/i, type: "nda" },
+  { pattern: /dienstleistungsvertrag|dienstvertrag/i, type: "dienstleistung" },
+  { pattern: /versicherungsvertrag|versicherungsschein|police/i, type: "versicherung" },
+  { pattern: /lizenzvertrag/i, type: "lizenz" },
+  { pattern: /gesellschaftsvertrag/i, type: "gesellschaftsvertrag" },
+  { pattern: /handelsvertretervertrag/i, type: "handelsvertreter" },
+  { pattern: /franchise[\s-]?vertrag/i, type: "franchisevertrag" },
+  { pattern: /rahmenvertrag|rahmenvereinbarung/i, type: "rahmenvertrag" },
+  { pattern: /maklervertrag/i, type: "maklervertrag" },
+];
+
 /**
- * Classify contract type based on keyword frequency
+ * Classify contract type based on:
+ * 1. Title/header pattern match (high confidence)
+ * 2. Keyword frequency (fallback)
  */
 function classifyContractType(text) {
   const lowerText = text.toLowerCase();
+
+  // PASS 1: Check document title (first 500 chars) for explicit type
+  const header = text.substring(0, 500);
+  for (const { pattern, type } of TITLE_PATTERNS) {
+    if (pattern.test(header)) {
+      return { type, confidence: 95 };
+    }
+  }
+
+  // PASS 2: Keyword frequency scoring
   const scores = {};
 
   for (const [type, keywords] of Object.entries(CONTRACT_TYPE_PATTERNS)) {
@@ -33,7 +88,8 @@ function classifyContractType(text) {
       const matches = lowerText.match(regex);
       if (matches) count += matches.length;
     }
-    if (count > 0) scores[type] = count;
+    // Normalize by keyword list size to prevent types with more keywords from always winning
+    if (count > 0) scores[type] = count / Math.sqrt(keywords.length);
   }
 
   const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);

@@ -16,7 +16,7 @@ const CATEGORY_IMPORTANCE = {
   kuendigung: 1.8,
   datenschutz: 1.7,
   compliance: 1.6,
-  zahlungen: 1.5,
+  zahlungen: 1.6,
   geheimhaltung: 1.3,
   wettbewerb: 1.3,
   geistiges_eigentum: 1.2,
@@ -79,21 +79,38 @@ function calculateComplianceScore(findings) {
 
 /**
  * Calculate terms sub-score (how favorable are the terms)
+ * A contract with standard terms but no opportunities is still "okay" (65-70),
+ * not punished to 40 just because there are no explicit opportunities.
  */
 function calculateTermsScore(findings) {
   const opportunities = (findings || []).filter(f => f.type === "opportunity").length;
   const risks = (findings || []).filter(f => f.type === "risk").length;
+  const infos = (findings || []).filter(f => f.type === "information").length;
 
-  if (risks === 0 && opportunities === 0) return 80;
-  const ratio = opportunities / Math.max(1, risks + opportunities);
-  return Math.round(40 + ratio * 60);
+  // Base: 75 (a standard contract with no notable issues starts here)
+  let score = 75;
+
+  // Each risk finding penalizes (weighted by severity)
+  for (const f of (findings || [])) {
+    if (f.type !== "risk") continue;
+    const penalty = { critical: 15, high: 10, medium: 5, low: 2, info: 0 }[f.severity] || 3;
+    score -= penalty;
+  }
+
+  // Opportunities improve the score
+  score += opportunities * 5;
+
+  // Info findings about branchenstandard are slightly positive (contract is well-documented)
+  score += Math.min(infos * 1, 10);
+
+  return Math.max(20, Math.min(100, Math.round(score)));
 }
 
 /**
  * Calculate completeness sub-score (are all important categories covered?)
  */
 function calculateCompletenessScore(clauses) {
-  const essentialCategories = ["haftung", "kuendigung", "zahlungen", "vertragsbedingungen"];
+  const essentialCategories = ["haftung", "kuendigung", "zahlungen", "vertragsbedingungen", "datenschutz"];
   const presentCategories = new Set((clauses || []).map(c => c.category));
 
   let covered = 0;

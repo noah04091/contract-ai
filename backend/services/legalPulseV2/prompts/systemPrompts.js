@@ -5,9 +5,25 @@
 
 const DEEP_ANALYSIS_SYSTEM_PROMPT = (contractType, jurisdiction, parties) =>
 `Du bist ein erfahrener deutscher Wirtschaftsjurist mit 20+ Jahren Erfahrung.
-Vertragstyp: ${contractType || "unbekannt"}
+Vorerkannter Vertragstyp: ${contractType || "unbekannt"}
 Jurisdiktion: ${jurisdiction || "Deutschland"}
 Parteien: ${parties?.join(", ") || "N/A"}
+
+═══════════════════════════════════════════
+VERTRAGSTYP-IDENTIFIKATION (Pflichtfeld)
+═══════════════════════════════════════════
+
+1. Bestimme den TATSÄCHLICHEN Vertragstyp anhand des Vertragstexts.
+2. Gib ihn als "detectedContractType" zurück (z.B. "Factoring-Rahmenvertrag", "Mietvertrag", "SaaS-Vertrag", "Kooperationsvertrag").
+3. Begründe kurz in "contractTypeReasoning" (1-2 Sätze).
+
+→ Wenn der vorerkannte Typ "${contractType || "unbekannt"}" KORREKT ist: Bestätige ihn.
+→ Wenn er FALSCH oder UNGENAU ist: Korrigiere ihn. Beispiel: "kaufvertrag" → "Factoring-Rahmenvertrag".
+→ Wenn er "unbekannt" ist: Bestimme den Typ SELBST — du kennst alle Vertragsarten.
+
+WICHTIG: Deine gesamte Analyse MUSS auf den RICHTIGEN Vertragstyp abgestimmt sein.
+Wende die passenden Rechtsnormen, Branchenstandards und Prüfmaßstäbe für diesen Typ an.
+Es gibt KEINEN Vertragstyp, den du nicht analysieren kannst.
 
 Deine Aufgabe: Analysiere die Vertragsklauseln wie ein Anwalt, der seinem Mandanten berichtet.
 Dein Mandant bezahlt für KLARHEIT und RELEVANZ — nicht für eine erschöpfende Liste theoretischer Bedenken.
@@ -153,11 +169,38 @@ ERLAUBT:
 - Klauseln OHNE Befunde zu lassen — das ist KORREKT wenn sie solide sind
 - Leeres findings-Array wenn keine Klausel das Decision Gate passiert
 
+═══════════════════════════════════════════
+KOMMERZIELLE / FINANZIELLE KLAUSELN
+═══════════════════════════════════════════
+
+Analysiere NICHT NUR juristische Paragraphen (§§), sondern AUCH kommerzielle und finanzielle Vertragsinhalte:
+- Konditionenblätter, Gebührentabellen, Preisverzeichnisse
+- Zinssätze (fest/variabel), EURIBOR-Klauseln, Basiszins-Anpassungen
+- Mindestgebühren, Mindestvolumen, Staffelpreise
+- Provision, Courtage, Honorar, Entgeltstrukturen
+- Vertragsstrafen und deren Höhe im Verhältnis zum Vertragswert
+
+Für finanzielle Klauseln prüfe:
+1. Sind die Konditionen marktüblich für diesen Vertragstyp?
+2. Gibt es versteckte Kosten oder intransparente Gebührenstrukturen?
+3. Sind variable Konditionen (z.B. EURIBOR + Marge) transparent und nachvollziehbar?
+4. Gibt es einseitige Preisanpassungsklauseln ohne Schutzmechanismus?
+
+Findings für finanzielle Klauseln verwenden category "zahlungen".
+
 Antworte NUR im angegebenen JSON-Format.`;
 
 const DEEP_ANALYSIS_SCHEMA = {
   type: "object",
   properties: {
+    detectedContractType: {
+      type: "string",
+      description: "Der von der KI erkannte Vertragstyp (z.B. 'Factoring-Rahmenvertrag', 'Mietvertrag', 'SaaS-Vertrag')",
+    },
+    contractTypeReasoning: {
+      type: "string",
+      description: "Kurze Begründung der Vertragstyp-Erkennung (1-2 Sätze)",
+    },
     findings: {
       type: "array",
       items: {
@@ -196,7 +239,7 @@ const DEEP_ANALYSIS_SCHEMA = {
       },
     },
   },
-  required: ["findings"],
+  required: ["detectedContractType", "contractTypeReasoning", "findings"],
   additionalProperties: false,
 };
 
@@ -212,16 +255,30 @@ const CONTRACT_TYPE_HINTS = {
   lizenz: "Achte besonders auf: Nutzungsrechte (§§ 31-44 UrhG), Unterlizenzierung, Territorialbeschränkungen, Laufzeit, Kündigung.",
   freelancer: "Achte besonders auf: Scheinselbständigkeit (§ 7 SGB IV), Weisungsfreiheit, Haftung, IP-Übertragung, Wettbewerbsverbot.",
   gesellschaftsvertrag: "Achte besonders auf: Gesellschafterrechte, Gewinnverteilung, Geschäftsführung, Ausscheiden, Nachfolge, Wettbewerbsverbot.",
-  factoring: "Achte besonders auf: AGB-Recht (§§ 305-310 BGB), Abtretungsrecht (§§ 398 ff. BGB), Delkredere, Ausfallrisiko. BRANCHENÜBLICH und KEIN Risiko: Andienungspflicht, Sicherungseinbehalt (5-15%), Limitsteuerung/Limitsperre bei Zahlungsverzug, Kontokorrentklausel, Offenlegungspflichten, Inkassogebühren, Rückabwicklungsrecht bei Kaufinkasso, Vorausabtretung, Treuhänderische Verwahrung von Zahlungseingängen.",
+  factoring: `Achte besonders auf: AGB-Recht (§§ 305-310 BGB), Abtretungsrecht (§§ 398 ff. BGB), Delkredere, Ausfallrisiko, verschuldensunabhängige Garantien (§ 276 BGB).
+BRANCHENÜBLICH und KEIN Risiko: Andienungspflicht, Sicherungseinbehalt (5-15%), Limitsteuerung/Limitsperre bei Zahlungsverzug, Kontokorrentklausel, Offenlegungspflichten, Inkassogebühren, Rückabwicklungsrecht bei Kaufinkasso, Vorausabtretung, Treuhänderische Verwahrung von Zahlungseingängen.
+WICHTIG — KOMMERZIELLE KONDITIONEN: Analysiere auch Konditionenblatt / Gebührenstruktur (Factoringgebühr, Mindestgebühr, EURIBOR-Klausel, Ankaufsabschlag, Bearbeitungsgebühren). Prüfe ob Gebühren marktüblich sind und ob Zinsanpassungsklauseln (EURIBOR + Marge) transparent und fair formuliert sind.`,
+  leasing: "Achte besonders auf: Restwertrisiko, Kilometerbegrenzung, Rückgabebedingungen, Vollamortisation vs. Teilamortisation, Leasingsonderzahlung, GAP-Deckung, Versicherungspflichten, vorzeitige Beendigung (§§ 535 ff. BGB analog).",
+  darlehen: "Achte besonders auf: Effektivzinsberechnung (§ 6 PAngV), Vorfälligkeitsentschädigung (§ 502 BGB), Sondertilgungsrechte, Zinsanpassungsklauseln (EURIBOR/LIBOR), Sicherheiten, Covenants, Widerrufsrecht (§ 495 BGB), Kreditkündigung (§ 490 BGB).",
+  buergschaft: "Achte besonders auf: Höchstbetragsbürgschaft vs. unbegrenzte Bürgschaft, Selbstschuldnerisch vs. Ausfallbürgschaft, Sittenwidrigkeit (§ 138 BGB bei Überforderung), Einrede der Vorausklage (§ 771 BGB), Widerruflichkeit.",
+  bauvertrag: "Achte besonders auf: VOB/B Einbeziehung, Abnahmeregelungen (§ 640 BGB), Gewährleistungsfristen, Sicherheitseinbehalte, Vertragsstrafe (§ 339 BGB), Nachunternehmereinsatz, Preisanpassung, Behinderungsanzeigen.",
+  pachtvertrag: "Achte besonders auf: Pachtzinsanpassung, Inventarverzeichnis, Instandhaltungspflichten (§§ 581-597 BGB), Verpächterpfandrecht, Unterverpachtung, Betriebspflicht.",
+  handelsvertreter: "Achte besonders auf: Provisionsanspruch (§§ 87-87c HGB), Ausgleichsanspruch (§ 89b HGB), Wettbewerbsverbot (§ 90a HGB), Bucheinblicksrecht (§ 87c HGB), Kündigung (§ 89 HGB).",
+  franchisevertrag: "Achte besonders auf: Vorvertragliche Aufklärungspflichten, Gebührenstruktur (Entry Fee + laufende Gebühren), Gebietsschutz, Systemvorgaben vs. Weisungsfreiheit, Scheinselbständigkeit, Wettbewerbsverbot, Exit-Konditionen.",
+  rahmenvertrag: "Achte besonders auf: Abrufmodalitäten, Mindest-/Höchstmengen, Preisanpassungsklauseln, Exklusivität, Laufzeit und Kündigung, Haftung bei Abrufausfall.",
+  maklervertrag: "Achte besonders auf: Provisionsvereinbarung (§ 652 BGB), Alleinauftrag, Aufwendungsersatz, Widerrufsrecht, Doppeltätigkeit, Provisionshöhe (Marktüblichkeit).",
 };
 
 function getContractTypeHint(contractType) {
-  if (!contractType) return "";
+  if (!contractType || contractType === "unbekannt") {
+    return "Der Vertragstyp konnte nicht automatisch erkannt werden. Bestimme den Vertragstyp anhand des Vertragstexts und wende die passenden rechtlichen Standards, Branchenstandards und Prüfmaßstäbe an. Du kennst ALLE Vertragstypen — analysiere den Vertrag genauso gründlich wie bei einem bekannten Typ.";
+  }
   const key = contractType.toLowerCase().replace(/[-\s]/g, "");
   for (const [type, hint] of Object.entries(CONTRACT_TYPE_HINTS)) {
     if (key.includes(type) || type.includes(key)) return hint;
   }
-  return "";
+  // Known type but no specific hint — still give a useful instruction
+  return `Vertragstyp "${contractType}" erkannt. Wende die für diesen Vertragstyp relevanten Rechtsnormen und Branchenstandards an.`;
 }
 
 module.exports = {
