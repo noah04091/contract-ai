@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Check, Scale, Shield, UserCheck, ArrowRight, Lightbulb, BarChart3 } from 'lucide-react';
+import { Check, Scale, Shield, UserCheck, ArrowRight, Lightbulb, BarChart3, Pencil } from 'lucide-react';
 import type { ClauseOptimization, OptimizationMode, DiffOp } from '../../types/optimizerV2';
 import { MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
+
+type TabMode = OptimizationMode | 'custom';
 
 interface Props {
   clauseId: string;
@@ -54,10 +56,15 @@ function parseReasoning(reasoning: string | undefined): { problem?: string; chan
 }
 
 export default function ClauseAlternatives({ clauseId, originalText, optimization, activeMode, onAcceptVersion }: Props) {
-  const [selectedTab, setSelectedTab] = useState<OptimizationMode>(activeMode);
+  const [selectedTab, setSelectedTab] = useState<TabMode>(activeMode);
   const [viewMode, setViewMode] = useState<'sideBySide' | 'diff'>('sideBySide');
+  const [customText, setCustomText] = useState(() => {
+    // Pre-fill with the active mode's optimized text
+    return optimization.versions[activeMode]?.text || originalText;
+  });
 
-  const version = optimization.versions[selectedTab];
+  const isCustomTab = selectedTab === 'custom';
+  const version = isCustomTab ? null : optimization.versions[selectedTab as OptimizationMode];
   const diffs = version?.diffs || [];
   const reasoning = parseReasoning(version?.reasoning);
 
@@ -100,10 +107,49 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
             </button>
           );
         })}
+        <button
+          className={`${styles.altTab} ${isCustomTab ? styles.altTabActive : ''}`}
+          style={isCustomTab ? { borderBottomColor: '#8B5CF6' } : undefined}
+          onClick={() => setSelectedTab('custom')}
+        >
+          <Pencil size={13} />
+          Eigener Text
+        </button>
       </div>
 
-      {/* Side-by-side comparison */}
-      {viewMode === 'sideBySide' ? (
+      {/* Custom text editor */}
+      {isCustomTab ? (
+        <div className={styles.customEditor}>
+          <div className={styles.customEditorHeader}>
+            <span>Klauseltext bearbeiten</span>
+            <div className={styles.customEditorActions}>
+              {(Object.keys(MODE_LABELS) as OptimizationMode[]).map(mode => (
+                <button
+                  key={mode}
+                  className={styles.customPresetBtn}
+                  onClick={() => setCustomText(optimization.versions[mode]?.text || originalText)}
+                  title={`${MODE_LABELS[mode].label}-Version als Basis verwenden`}
+                >
+                  {MODE_LABELS[mode].label}
+                </button>
+              ))}
+              <button
+                className={styles.customPresetBtn}
+                onClick={() => setCustomText(originalText)}
+                title="Original wiederherstellen"
+              >
+                Original
+              </button>
+            </div>
+          </div>
+          <textarea
+            className={styles.customTextarea}
+            value={customText}
+            onChange={e => setCustomText(e.target.value)}
+            rows={Math.max(6, customText.split('\n').length + 2)}
+          />
+        </div>
+      ) : viewMode === 'sideBySide' ? (
         <div className={styles.comparisonGrid}>
           <div className={styles.comparisonCol}>
             <div className={styles.comparisonLabel}>
@@ -119,8 +165,8 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
           </div>
           <div className={styles.comparisonCol}>
             <div className={styles.comparisonLabel}>
-              <span className={styles.comparisonLabelDot} style={{ background: MODE_LABELS[selectedTab].color }} />
-              {MODE_LABELS[selectedTab].label}
+              <span className={styles.comparisonLabelDot} style={{ background: MODE_LABELS[selectedTab as OptimizationMode].color }} />
+              {MODE_LABELS[selectedTab as OptimizationMode].label}
             </div>
             <div className={`${styles.comparisonText} ${styles.comparisonTextOptimized}`}>
               {version?.text || originalText}
@@ -189,10 +235,13 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
       {/* Accept button */}
       <button
         className={styles.acceptButton}
-        onClick={() => onAcceptVersion(clauseId, selectedTab)}
+        onClick={() => isCustomTab
+          ? onAcceptVersion(clauseId, 'custom', customText)
+          : onAcceptVersion(clauseId, selectedTab as OptimizationMode)
+        }
       >
         <Check size={14} />
-        Version übernehmen
+        {isCustomTab ? 'Eigenen Text übernehmen' : 'Version übernehmen'}
       </button>
     </div>
   );

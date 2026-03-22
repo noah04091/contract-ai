@@ -88,6 +88,9 @@ export default function ExportPanel({ result, userSelections }: Props) {
       const selections = Array.from(selectedClauses).map(clauseId => {
         // Use per-clause accepted mode if available, otherwise fall back to global docxMode
         const userSel = userSelections?.get(clauseId);
+        if (userSel?.selectedVersion === 'custom' && userSel.customText) {
+          return { clauseId, mode: 'custom', customText: userSel.customText };
+        }
         const mode = (userSel?.selectedVersion && userSel.selectedVersion !== 'original' && userSel.selectedVersion !== 'custom')
           ? userSel.selectedVersion as OptimizationMode
           : docxMode;
@@ -267,7 +270,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
                       {acceptedMode && (
                         <span className={styles.docxAcceptedBadge} title="In Klauselansicht akzeptiert">
                           <CheckCircle2 size={11} />
-                          {MODE_LABELS[previewMode]?.label || acceptedMode}
+                          {acceptedMode === 'custom' ? 'Eigener Text' : (MODE_LABELS[previewMode]?.label || acceptedMode)}
                         </span>
                       )}
                     </span>
@@ -278,9 +281,11 @@ export default function ExportPanel({ result, userSelections }: Props) {
                     </span>
                   </div>
                   <div className={styles.docxClausePreview}>
-                    {opt.versions?.[previewMode]?.text
-                      ? opt.versions[previewMode].text.substring(0, 80) + '...'
-                      : '–'}
+                    {acceptedMode === 'custom' && userSel?.customText
+                      ? userSel.customText.substring(0, 80) + '...'
+                      : opt.versions?.[previewMode]?.text
+                        ? opt.versions[previewMode].text.substring(0, 80) + '...'
+                        : '–'}
                   </div>
                 </label>
               );

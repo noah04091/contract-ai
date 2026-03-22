@@ -1380,6 +1380,63 @@
 }
 .acceptButton:hover { opacity: 0.9; }
 
+/* ── Custom Text Editor ── */
+.customEditor {
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-sm);
+  overflow: hidden;
+}
+.customEditorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--ov2-gray-50);
+  border-bottom: 1px solid var(--ov2-gray-200);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ov2-gray-600);
+  font-family: var(--ov2-font);
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.customEditorActions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.customPresetBtn {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: var(--ov2-font);
+  background: white;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-xs);
+  color: var(--ov2-gray-500);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.customPresetBtn:hover {
+  border-color: var(--ov2-blue);
+  color: var(--ov2-blue);
+}
+.customTextarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 13px;
+  font-family: var(--ov2-font);
+  line-height: 1.7;
+  border: none;
+  outline: none;
+  resize: vertical;
+  color: var(--ov2-gray-800);
+  background: white;
+  min-height: 120px;
+}
+.customTextarea:focus {
+  box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
 /* ── Diff Rendering ── */
 .diffContent {
   line-height: 1.7;

@@ -1359,10 +1359,14 @@ router.post('/results/:id/docx', async (req, res) => {
     const fallbackMode = mode || 'neutral';
 
     // Build a map of selected clause optimizations
+    // Each entry: { mode, customText? }
     const selectionMap = new Map();
     if (Array.isArray(selections)) {
       for (const s of selections) {
-        selectionMap.set(s.clauseId, s.mode || fallbackMode);
+        selectionMap.set(s.clauseId, {
+          mode: s.mode || fallbackMode,
+          customText: s.customText || null
+        });
       }
     }
 
@@ -1425,8 +1429,9 @@ router.post('/results/:id/docx', async (req, res) => {
     for (const clause of clauses) {
       const optimization = optimizations.find(o => o.clauseId === clause.id);
       const analysis = clauseAnalyses.find(a => a.clauseId === clause.id);
-      const selectedMode = selectionMap.get(clause.id);
-      const isOptimized = selectedMode && optimization?.needsOptimization;
+      const selection = selectionMap.get(clause.id);
+      const selectedMode = selection?.mode;
+      const isOptimized = selectedMode && (selectedMode === 'custom' || optimization?.needsOptimization);
 
       // Section heading
       const sectionPrefix = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber} ` : '';
@@ -1447,9 +1452,11 @@ router.post('/results/:id/docx', async (req, res) => {
         })
       );
 
-      // Clause text (optimized or original)
+      // Clause text (custom > optimized > original)
       let clauseText = clause.originalText;
-      if (isOptimized && optimization.versions?.[selectedMode]?.text) {
+      if (isOptimized && selectedMode === 'custom' && selection.customText) {
+        clauseText = selection.customText;
+      } else if (isOptimized && optimization?.versions?.[selectedMode]?.text) {
         clauseText = optimization.versions[selectedMode].text;
       }
 
@@ -1465,12 +1472,15 @@ router.post('/results/:id/docx', async (req, res) => {
       }
 
       // If optimized, show reasoning as a note
-      if (isOptimized && optimization.versions?.[selectedMode]?.reasoning) {
+      const reasoningText = selectedMode === 'custom'
+        ? 'Vom Benutzer individuell angepasste Formulierung.'
+        : optimization?.versions?.[selectedMode]?.reasoning;
+      if (isOptimized && reasoningText) {
         docChildren.push(
           new Paragraph({
             children: [
               new TextRun({ text: 'Änderungsgrund: ', bold: true, size: 18, font: 'Arial', color: '6B7280', italics: true }),
-              new TextRun({ text: optimization.versions[selectedMode].reasoning, size: 18, font: 'Arial', color: '6B7280', italics: true })
+              new TextRun({ text: reasoningText, size: 18, font: 'Arial', color: '6B7280', italics: true })
             ],
             spacing: { before: 80, after: 80 },
             indent: { left: 400 }
