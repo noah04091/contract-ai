@@ -427,101 +427,103 @@ const ClauseList: React.FC<ClauseListProps> = ({
         </span>
       </div>
 
-      {/* ✅ Opt 4: Suchfeld */}
-      <div className={`${styles.clauseSearchWrapper} ${isSearchFocused ? styles.focused : ''}`}>
-        <Search size={16} className={styles.clauseSearchIcon} />
-        <input
-          ref={searchInputRef}
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={() => setIsSearchFocused(false)}
-          placeholder="Klauseln durchsuchen... (Ctrl+F)"
-          className={styles.clauseSearchInput}
-        />
-        {searchQuery && (
-          <button
-            className={styles.clauseSearchClear}
-            onClick={() => {
-              setSearchQuery('');
-              searchInputRef.current?.focus();
-            }}
-            title="Suche leeren"
-          >
-            <X size={14} />
-          </button>
-        )}
-        {searchQuery && (
-          <span className={styles.clauseSearchCount}>
-            {filteredClauses.length} / {safeClauses.length}
-          </span>
-        )}
-      </div>
-
-      {/* Quick-Filter Tabs */}
-      <div className={styles.filterTabs}>
-        <button
-          className={`${styles.filterTab} ${riskFilter === 'all' ? styles.filterTabActive : ''}`}
-          onClick={() => setRiskFilter('all')}
-        >
-          Alle <span className={styles.filterCount}>{filterCounts.all}</span>
-        </button>
-        {filterCounts.high > 0 && (
-          <button
-            className={`${styles.filterTab} ${styles.filterTabHigh} ${riskFilter === 'high' ? styles.filterTabActive : ''}`}
-            onClick={() => setRiskFilter(riskFilter === 'high' ? 'all' : 'high')}
-          >
-            🔴 {filterCounts.high}
-          </button>
-        )}
-        {filterCounts.medium > 0 && (
-          <button
-            className={`${styles.filterTab} ${styles.filterTabMedium} ${riskFilter === 'medium' ? styles.filterTabActive : ''}`}
-            onClick={() => setRiskFilter(riskFilter === 'medium' ? 'all' : 'medium')}
-          >
-            🟡 {filterCounts.medium}
-          </button>
-        )}
-        {filterCounts.low > 0 && (
-          <button
-            className={`${styles.filterTab} ${styles.filterTabLow} ${riskFilter === 'low' ? styles.filterTabActive : ''}`}
-            onClick={() => setRiskFilter(riskFilter === 'low' ? 'all' : 'low')}
-          >
-            🟢 {filterCounts.low}
-          </button>
-        )}
-      </div>
-
-      {/* Batch Actions */}
-      {filterCounts.low > 0 && Object.keys(clauseDecisions).length < filterCounts.all && (
-        <div className={styles.batchActions}>
-          <button
-            className={styles.batchBtn}
-            onClick={() => {
-              const lowRisk = safeClauses.filter(c =>
-                !c.nonAnalyzable &&
-                (c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low') === 'low' &&
-                !clauseDecisions[c.id]
-              );
-              if (lowRisk.length === 0) return;
-              setClauseDecisions(prev => {
-                const next = { ...prev };
-                lowRisk.forEach(c => { next[c.id] = 'accepted'; });
-                localStorage.setItem('legalLens_decisions', JSON.stringify(next));
-                return next;
-              });
-            }}
-          >
-            <Check size={11} />
-            Alle 🟢 akzeptieren
-          </button>
+      {/* ✅ Search + Filter Row */}
+      <div className={styles.searchFilterRow}>
+        <div className={`${styles.clauseSearchWrapper} ${isSearchFocused ? styles.focused : ''}`}>
+          <Search size={14} className={styles.clauseSearchIcon} />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            placeholder="Suchen... (Ctrl+F)"
+            className={styles.clauseSearchInput}
+          />
+          {searchQuery && (
+            <button
+              className={styles.clauseSearchClear}
+              onClick={() => {
+                setSearchQuery('');
+                searchInputRef.current?.focus();
+              }}
+              title="Suche leeren"
+            >
+              <X size={14} />
+            </button>
+          )}
+          {searchQuery && (
+            <span className={styles.clauseSearchCount}>
+              {filteredClauses.length}/{safeClauses.length}
+            </span>
+          )}
         </div>
-      )}
+
+        {/* Quick-Filter Tabs */}
+        <div className={styles.filterTabs}>
+          <button
+            className={`${styles.filterTab} ${riskFilter === 'all' ? styles.filterTabActive : ''}`}
+            onClick={() => setRiskFilter('all')}
+          >
+            {filterCounts.all}
+          </button>
+          {filterCounts.high > 0 && (
+            <button
+              className={`${styles.filterTab} ${styles.filterTabHigh} ${riskFilter === 'high' ? styles.filterTabActive : ''}`}
+              onClick={() => setRiskFilter(riskFilter === 'high' ? 'all' : 'high')}
+              title="Hohes Risiko"
+            >
+              🔴 {filterCounts.high}
+            </button>
+          )}
+          {filterCounts.medium > 0 && (
+            <button
+              className={`${styles.filterTab} ${styles.filterTabMedium} ${riskFilter === 'medium' ? styles.filterTabActive : ''}`}
+              onClick={() => setRiskFilter(riskFilter === 'medium' ? 'all' : 'medium')}
+              title="Mittleres Risiko"
+            >
+              🟡 {filterCounts.medium}
+            </button>
+          )}
+          {filterCounts.low > 0 && (
+            <button
+              className={`${styles.filterTab} ${styles.filterTabLow} ${riskFilter === 'low' ? styles.filterTabActive : ''}`}
+              onClick={() => setRiskFilter(riskFilter === 'low' ? 'all' : 'low')}
+              title="Niedriges Risiko"
+            >
+              🟢 {filterCounts.low}
+            </button>
+          )}
+          {/* Inline batch accept */}
+          {filterCounts.low > 0 && Object.keys(clauseDecisions).length < filterCounts.all && (
+            <button
+              className={styles.batchAcceptInline}
+              onClick={() => {
+                const lowRisk = safeClauses.filter(c =>
+                  !c.nonAnalyzable &&
+                  (c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low') === 'low' &&
+                  !clauseDecisions[c.id]
+                );
+                if (lowRisk.length === 0) return;
+                setClauseDecisions(prev => {
+                  const next = { ...prev };
+                  lowRisk.forEach(c => { next[c.id] = 'accepted'; });
+                  localStorage.setItem('legalLens_decisions', JSON.stringify(next));
+                  return next;
+                });
+              }}
+              title="Alle grünen Klauseln akzeptieren"
+            >
+              <Check size={10} /> Alle 🟢
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Keyboard Shortcut Hint */}
       <div className={styles.keyboardHint}>
-        <kbd>↑</kbd><kbd>↓</kbd> Navigation
+        <kbd>↑</kbd><kbd>↓</kbd> Nav
         <kbd>n</kbd> Risiko
         <kbd>f</kbd> Fokus
         <kbd>?</kbd> Hilfe
