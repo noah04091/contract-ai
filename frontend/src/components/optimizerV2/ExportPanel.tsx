@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Download, FileText, File, Loader2, CheckCircle2 } from 'lucide-react';
 import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
@@ -14,6 +14,12 @@ type DocxStep = 'idle' | 'selecting' | 'generating';
 export default function ExportPanel({ result, userSelections }: Props) {
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const [downloading, setDownloading] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  const showExportError = useCallback((msg: string) => {
+    setExportError(msg);
+    setTimeout(() => setExportError(null), 5000);
+  }, []);
 
   // Count accepted clauses (user explicitly selected a version in Clauses tab)
   const acceptedCount = userSelections ? Array.from(userSelections.values()).filter(s => s.selectedVersion !== 'original').length : 0;
@@ -67,7 +73,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // silent
+      showExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
       setDownloading(false);
     }
@@ -110,7 +116,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
       URL.revokeObjectURL(url);
       setDocxStep('idle');
     } catch {
-      // silent
+      showExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
       setGenerating(false);
     }
@@ -158,6 +164,9 @@ export default function ExportPanel({ result, userSelections }: Props) {
             {downloading ? <Loader2 size={14} className={styles.spinIcon} /> : <Download size={14} />}
             {downloading ? 'Erstelle...' : 'Herunterladen'}
           </button>
+          {exportError && !downloading && (
+            <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '4px 0 0', width: '100%', textAlign: 'right' }}>{exportError}</p>
+          )}
         </div>
 
         {/* DOCX Export */}
@@ -290,6 +299,9 @@ export default function ExportPanel({ result, userSelections }: Props) {
               <><Download size={16} /> DOCX generieren ({selectedClauses.size} Optimierungen)</>
             )}
           </button>
+          {exportError && !generating && (
+            <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '4px 0 0', textAlign: 'center' }}>{exportError}</p>
+          )}
         </div>
       )}
 

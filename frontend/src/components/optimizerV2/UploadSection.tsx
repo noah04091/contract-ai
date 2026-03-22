@@ -17,24 +17,51 @@ const FEATURE_PILLS = [
   { icon: Download, label: 'PDF-Export' },
 ];
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
 export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [perspective, setPerspective] = useState<OptimizationMode>('neutral');
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const validateFile = useCallback((f: File): string | null => {
+    if (!ALLOWED_TYPES.includes(f.type) && !f.name.endsWith('.docx')) {
+      return 'Nur PDF und DOCX Dateien werden unterstützt';
+    }
+    if (f.size > MAX_FILE_SIZE) {
+      return 'Datei ist zu groß (max. 10 MB)';
+    }
+    return null;
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && (droppedFile.type === 'application/pdf' || droppedFile.name.endsWith('.docx'))) {
-      onFileSelect(droppedFile);
+    if (!droppedFile) return;
+    const error = validateFile(droppedFile);
+    if (error) {
+      setFileError(error);
+      return;
     }
-  }, [onFileSelect]);
+    setFileError(null);
+    onFileSelect(droppedFile);
+  }, [onFileSelect, validateFile]);
 
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
-    if (selected) onFileSelect(selected);
-  }, [onFileSelect]);
+    if (!selected) return;
+    const error = validateFile(selected);
+    if (error) {
+      setFileError(error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+    setFileError(null);
+    onFileSelect(selected);
+  }, [onFileSelect, validateFile]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -93,6 +120,10 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
                 style={{ display: 'none' }}
               />
             </div>
+
+            {fileError && (
+              <p style={{ color: '#ef4444', fontSize: '0.875rem', margin: '0.5rem 0 0' }}>{fileError}</p>
+            )}
 
             <button
               className={styles.analyzeButton}

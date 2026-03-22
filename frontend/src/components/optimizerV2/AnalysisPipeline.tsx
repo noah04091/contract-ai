@@ -14,7 +14,7 @@ export default function AnalysisPipeline({ stages, progress, message, onCancel }
     <div className={styles.pipelineContainer}>
       <div className={styles.pipelineHeader}>
         <h2 className={styles.pipelineTitle}>KI-Analyse läuft</h2>
-        <button className={styles.cancelButton} onClick={onCancel}>Abbrechen</button>
+        <button className={styles.cancelButton} onClick={() => { if (window.confirm('Analyse abbrechen? Der Fortschritt wird verworfen.')) { onCancel(); } }}>Abbrechen</button>
       </div>
 
       {/* Progress bar */}

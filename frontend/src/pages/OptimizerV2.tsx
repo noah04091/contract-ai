@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -13,6 +13,7 @@ import {
   ExportPanel
 } from '../components/optimizerV2';
 import type { ActiveTab, ImportanceLevel, AnalysisResult, OptimizationMode, ChatMessage } from '../types/optimizerV2';
+import { CATEGORY_LABELS } from '../types/optimizerV2';
 import styles from '../styles/OptimizerV2.module.css';
 
 const TAB_CONFIG: { key: ActiveTab; label: string; icon: React.ElementType }[] = [
@@ -206,6 +207,7 @@ interface ClausesTabProps {
 
 function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort, focusClauseId, onFocusHandled }: ClausesTabProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
   const allExpanded = expandedIds.size === result.clauses.length;
 
   // Auto-expand and scroll to focused clause
@@ -248,9 +250,42 @@ function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance
     });
   }, [result.clauses, result.clauseAnalyses, sortByImportance]);
 
+  const filteredClauses = useMemo(() => {
+    if (!searchTerm.trim()) return sortedClauses;
+    const term = searchTerm.toLowerCase().trim();
+    return sortedClauses.filter(clause => {
+      const titleMatch = clause.title?.toLowerCase().includes(term);
+      const sectionMatch = clause.sectionNumber?.toLowerCase().includes(term);
+      const categoryMatch = clause.category?.toLowerCase().includes(term);
+      const categoryLabel = CATEGORY_LABELS[clause.category]?.toLowerCase();
+      const labelMatch = categoryLabel?.includes(term);
+      return titleMatch || sectionMatch || categoryMatch || labelMatch;
+    });
+  }, [sortedClauses, searchTerm]);
+
   return (
     <div className={styles.clausesContainer}>
       <div className={styles.clausesModeRow}>
+        <div className={styles.clauseSearchWrap}>
+          <Search size={13} className={styles.clauseSearchIcon} />
+          <input
+            type="text"
+            className={styles.clauseSearch}
+            placeholder="Klausel suchen..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className={styles.clauseSearchClear} onClick={() => setSearchTerm('')} title="Suche zurücksetzen">
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        {searchTerm.trim() && (
+          <span className={styles.clauseSearchCount}>
+            {filteredClauses.length} von {sortedClauses.length} Klauseln
+          </span>
+        )}
         <button
           className={`${styles.sortToggle} ${sortByImportance ? styles.sortToggleActive : ''}`}
           onClick={onToggleSort}
@@ -275,7 +310,7 @@ function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance
       </div>
 
       <div className={styles.clauseList}>
-        {sortedClauses.map(clause => {
+        {filteredClauses.map(clause => {
           const analysis = result.clauseAnalyses.find(a => a.clauseId === clause.id);
           const optimization = result.optimizations.find(o => o.clauseId === clause.id);
           const score = result.scores.perClause.find(s => s.clauseId === clause.id);

@@ -42,6 +42,7 @@ export default function RedlineView({
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(null);
   const [modeTransition, setModeTransition] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const changeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -132,7 +133,8 @@ export default function RedlineView({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch {
-      // silent
+      setExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      setTimeout(() => setExportError(null), 5000);
     } finally {
       setExportingPdf(false);
     }
@@ -176,15 +178,20 @@ export default function RedlineView({
 
             {/* Feature 4: PDF Export */}
             {resultId && (
-              <button
-                className={styles.rlExportBtn}
-                onClick={handleRedlinePdf}
-                disabled={exportingPdf}
-                title="Redline als PDF exportieren"
-              >
-                <Download size={14} />
-                <span>{exportingPdf ? 'Export...' : 'PDF'}</span>
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button
+                  className={styles.rlExportBtn}
+                  onClick={handleRedlinePdf}
+                  disabled={exportingPdf}
+                  title="Redline als PDF exportieren"
+                >
+                  <Download size={14} />
+                  <span>{exportingPdf ? 'Export...' : 'PDF'}</span>
+                </button>
+                {exportError && (
+                  <p style={{ position: 'absolute', top: '100%', right: 0, color: '#ef4444', fontSize: '0.7rem', margin: '2px 0 0', whiteSpace: 'nowrap' }}>{exportError}</p>
+                )}
+              </div>
             )}
           </div>
         </div>
