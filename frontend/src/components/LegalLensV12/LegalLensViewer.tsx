@@ -129,6 +129,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const vw = window.innerWidth;
     if (vw <= 1280) return Math.max(300, vw * 0.3);
     if (vw <= 1440) return Math.max(320, vw * 0.32);
+    if (vw <= 1600) return Math.max(380, vw * 0.3);
     return 480;
   });
   const [isDragging, setIsDragging] = useState<boolean>(false);
