@@ -1,13 +1,23 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle, Scale, TrendingUp, Shield, ShieldAlert, Handshake } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ChevronDown, ChevronUp, MessageSquare, BookOpen, AlertTriangle, CheckCircle, Scale, TrendingUp, Shield, ShieldAlert, Handshake, BookmarkPlus, Loader2 } from 'lucide-react';
 import type {
   Clause, ClauseAnalysis, ClauseOptimization, ClauseScore,
   OptimizationMode, ChatMessage
 } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, STRENGTH_CONFIG, IMPORTANCE_CONFIG } from '../../types/optimizerV2';
+import { apiCall } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
 import ClauseAlternatives from './ClauseAlternatives';
 import ClauseChat from './ClauseChat';
 import styles from '../../styles/OptimizerV2.module.css';
+
+// Map OptimizerV2 categories → SavedClause clauseArea
+const AREA_MAP: Record<string, string> = {
+  termination: 'termination', payment: 'payment', liability: 'liability',
+  confidentiality: 'confidentiality', ip_rights: 'intellectual_property',
+  warranty: 'warranty', force_majeure: 'force_majeure', dispute: 'dispute',
+  data_protection: 'data_protection', non_compete: 'non_compete'
+};
 
 interface Props {
   clause: Clause;
@@ -27,8 +37,48 @@ export default function ClauseCard({
   isSelected, onSelect, onAcceptVersion, chatMessages, onSendChat
 }: Props) {
   const [showChat, setShowChat] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const toast = useToast();
   const strengthConfig = analysis ? STRENGTH_CONFIG[analysis.strength] : null;
   const categoryLabel = CATEGORY_LABELS[clause.category] || clause.category;
+
+  const handleSaveToLibrary = useCallback(async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    try {
+      // Save the optimized version (active mode) if available, otherwise original
+      const optimizedText = optimization?.needsOptimization && optimization.versions?.[activeMode]?.text
+        ? optimization.versions[activeMode].text
+        : clause.originalText;
+      const category = optimization?.needsOptimization ? 'good_practice' : 'important';
+      const res = await apiCall('/clause-library', {
+        method: 'POST',
+        body: JSON.stringify({
+          clauseText: optimizedText,
+          category,
+          clauseArea: AREA_MAP[clause.category] || 'other',
+          sourceClauseId: clause.id,
+          userNotes: `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.title}`,
+          tags: ['optimizer-v2', clause.category]
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      }) as { success?: boolean };
+      if (res?.success) {
+        setSaved(true);
+        toast.success('Klausel in Bibliothek gespeichert');
+      }
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 409) {
+        setSaved(true);
+        toast.info('Klausel bereits in Bibliothek vorhanden');
+        return;
+      }
+      toast.error('Speichern fehlgeschlagen');
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, saved, clause, optimization, activeMode, toast]);
 
   return (
     <div
@@ -203,17 +253,28 @@ export default function ClauseCard({
             <pre className={styles.originalText}>{clause.originalText}</pre>
           </details>
 
-          {/* Chat toggle */}
-          <button
-            className={styles.chatToggle}
-            onClick={() => setShowChat(!showChat)}
-          >
-            <MessageSquare size={14} />
-            {showChat ? 'Chat schließen' : 'Klausel besprechen'}
-            {chatMessages.length > 0 && (
-              <span className={styles.chatBadge}>{chatMessages.length}</span>
-            )}
-          </button>
+          {/* Action row */}
+          <div className={styles.clauseActions}>
+            <button
+              className={styles.chatToggle}
+              onClick={() => setShowChat(!showChat)}
+            >
+              <MessageSquare size={14} />
+              {showChat ? 'Chat schließen' : 'Klausel besprechen'}
+              {chatMessages.length > 0 && (
+                <span className={styles.chatBadge}>{chatMessages.length}</span>
+              )}
+            </button>
+            <button
+              className={`${styles.saveToLibraryBtn} ${saved ? styles.saveToLibraryBtnDone : ''}`}
+              onClick={handleSaveToLibrary}
+              disabled={saving || saved}
+              title={saved ? 'In Bibliothek gespeichert' : 'In Klausel-Bibliothek speichern'}
+            >
+              {saving ? <Loader2 size={14} className={styles.spinIcon} /> : <BookmarkPlus size={14} />}
+              {saved ? 'Gespeichert' : 'Speichern'}
+            </button>
+          </div>
 
           {showChat && (
             <ClauseChat

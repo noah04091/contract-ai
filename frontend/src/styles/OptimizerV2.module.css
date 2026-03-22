@@ -1456,7 +1456,13 @@
   border-radius: 2px;
 }
 
-/* ── Chat Toggle ── */
+/* ── Clause Actions Row ── */
+.clauseActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
 .chatToggle {
   display: flex;
   align-items: center;
@@ -1469,10 +1475,31 @@
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  margin-top: 12px;
   transition: all 0.15s;
 }
 .chatToggle:hover { border-color: var(--ov2-blue); color: var(--ov2-blue); }
+.saveToLibraryBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-xs);
+  background: white;
+  color: var(--ov2-gray-600);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--ov2-font);
+}
+.saveToLibraryBtn:hover { border-color: #8B5CF6; color: #8B5CF6; }
+.saveToLibraryBtnDone {
+  border-color: var(--ov2-green);
+  color: var(--ov2-green);
+  cursor: default;
+}
+.saveToLibraryBtnDone:hover { border-color: var(--ov2-green); color: var(--ov2-green); }
 .chatBadge {
   background: var(--ov2-blue);
   color: white;
