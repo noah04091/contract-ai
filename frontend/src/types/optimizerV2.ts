@@ -16,7 +16,7 @@ export type ClauseCategory =
   | 'dispute_resolution' | 'general_provisions' | 'deliverables'
   | 'sla' | 'penalties' | 'insurance' | 'compliance' | 'amendments' | 'other';
 
-export type ActiveTab = 'overview' | 'clauses' | 'redline' | 'export';
+export type ActiveTab = 'overview' | 'clauses' | 'redline' | 'export' | 'compare';
 
 // ── Diff Operations ──
 export interface DiffOp {

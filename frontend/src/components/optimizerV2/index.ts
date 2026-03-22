@@ -7,3 +7,4 @@ export { default as ClauseAlternatives } from './ClauseAlternatives';
 export { default as ClauseChat } from './ClauseChat';
 export { default as NegotiationModeSelector } from './NegotiationModeSelector';
 export { default as ExportPanel } from './ExportPanel';
+export { default as CompareResults } from './CompareResults';

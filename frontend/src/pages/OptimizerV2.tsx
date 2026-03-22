@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3 } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -10,7 +10,8 @@ import {
   RedlineView,
   ClauseCard,
   NegotiationModeSelector,
-  ExportPanel
+  ExportPanel,
+  CompareResults
 } from '../components/optimizerV2';
 import type { ActiveTab, ImportanceLevel, AnalysisResult, OptimizationMode, ChatMessage } from '../types/optimizerV2';
 import { CATEGORY_LABELS } from '../types/optimizerV2';
@@ -20,6 +21,7 @@ const TAB_CONFIG: { key: ActiveTab; label: string; icon: React.ElementType }[] =
   { key: 'overview', label: 'Übersicht', icon: LayoutGrid },
   { key: 'clauses', label: 'Klauseln', icon: List },
   { key: 'redline', label: 'Redline', icon: GitCompareArrows },
+  { key: 'compare', label: 'Vergleich', icon: BarChart3 },
   { key: 'export', label: 'Export', icon: Download }
 ];
 
@@ -177,6 +179,11 @@ export default function OptimizerV2() {
                 onClauseClick={(id) => { actions.selectClause(id); actions.setTab('clauses'); }}
                 resultId={result.resultId}
               />
+            )}
+
+            {/* Compare tab */}
+            {activeTab === 'compare' && (
+              <CompareResults currentResult={result} />
             )}
 
             {/* Export tab */}

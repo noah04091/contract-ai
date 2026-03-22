@@ -2643,3 +2643,191 @@
   .scoreCards { grid-template-columns: 1fr 1fr; }
   .tabNavigation { overflow-x: auto; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Compare Results
+   ═══════════════════════════════════════════════════════ */
+.cmpContainer {
+  padding: 24px 0;
+  font-family: var(--ov2-font);
+}
+.cmpTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ov2-gray-800);
+  margin: 0 0 4px;
+}
+.cmpSubtitle {
+  font-size: 13px;
+  color: var(--ov2-gray-500);
+  margin: 0 0 20px;
+}
+.cmpLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--ov2-gray-500);
+  font-size: 13px;
+  justify-content: center;
+}
+.cmpEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 24px;
+  color: var(--ov2-gray-400);
+  font-size: 14px;
+  text-align: center;
+}
+.cmpSelector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.cmpSelectorLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ov2-gray-600);
+  white-space: nowrap;
+}
+.cmpSelect {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-xs);
+  font-size: 13px;
+  font-family: var(--ov2-font);
+  color: var(--ov2-gray-700);
+  background: white;
+  cursor: pointer;
+}
+.cmpSelect:focus { outline: none; border-color: var(--ov2-blue); }
+.cmpDashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.cmpOverallRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px;
+  background: var(--ov2-gray-50);
+  border-radius: var(--ov2-radius-sm);
+  border: 1px solid var(--ov2-gray-200);
+}
+.cmpScoreBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cmpScoreLabel {
+  font-size: 11px;
+  color: var(--ov2-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  max-width: 120px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmpScoreValue {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ov2-gray-800);
+  line-height: 1;
+}
+.cmpScoreMax {
+  font-size: 14px;
+  color: var(--ov2-gray-400);
+}
+.cmpArrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--ov2-gray-400);
+}
+.cmpDeltaPositive { color: #34C759; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
+.cmpDeltaNegative { color: #FF3B30; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
+.cmpDeltaNeutral { color: var(--ov2-gray-400); display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 500; }
+.cmpSubScores {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: white;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-sm);
+  padding: 16px;
+}
+.cmpSubRow {
+  display: grid;
+  grid-template-columns: 100px 1fr 80px 60px;
+  align-items: center;
+  gap: 12px;
+}
+.cmpSubLabel {
+  font-size: 12px;
+  font-weight: 600;
+}
+.cmpSubBar {
+  position: relative;
+  height: 8px;
+}
+.cmpSubBarTrack {
+  position: relative;
+  height: 100%;
+  background: var(--ov2-gray-100);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.cmpSubBarCompare {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 4px;
+  opacity: 0.4;
+}
+.cmpSubBarCurrent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 4px;
+}
+.cmpSubValues {
+  font-size: 12px;
+  color: var(--ov2-gray-500);
+  text-align: right;
+  white-space: nowrap;
+}
+.cmpClauseStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.cmpClauseStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: white;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-xs);
+  font-size: 12px;
+}
+.cmpClauseStat span:first-child {
+  color: var(--ov2-gray-500);
+  font-weight: 500;
+}
+.cmpClauseStat span:last-child {
+  color: var(--ov2-gray-800);
+  font-weight: 600;
+}
