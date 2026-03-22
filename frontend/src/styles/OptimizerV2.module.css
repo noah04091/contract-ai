@@ -2219,6 +2219,86 @@
 .exportBtnActive:hover:not(:disabled) { opacity: 0.9; }
 .exportBtnActive:disabled { opacity: 0.6; cursor: wait; }
 
+/* ── Email Pitch Templates ── */
+.pitchSection {
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius);
+  padding: 20px;
+}
+.pitchHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--ov2-blue);
+}
+.pitchTitle { font-size: 15px; font-weight: 600; margin: 0; color: var(--ov2-gray-800); }
+.pitchSubtitle { font-size: 12px; color: var(--ov2-gray-500); margin: 2px 0 0; }
+.pitchTabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 0;
+}
+.pitchTab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-sm);
+  background: var(--ov2-gray-50);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pitchTab:hover { border-color: var(--ov2-blue); background: #f0f7ff; }
+.pitchTabActive {
+  border-color: var(--ov2-blue);
+  background: #f0f7ff;
+  box-shadow: 0 0 0 1px var(--ov2-blue);
+}
+.pitchTabLabel { font-size: 13px; font-weight: 600; color: var(--ov2-gray-800); }
+.pitchTabDesc { font-size: 11px; color: var(--ov2-gray-500); }
+.pitchPreview {
+  margin-top: 12px;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-sm);
+  overflow: hidden;
+}
+.pitchText {
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ov2-gray-800);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--ov2-gray-50);
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.pitchCopyBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-top: 1px solid var(--ov2-gray-200);
+  background: #fff;
+  color: var(--ov2-blue);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.pitchCopyBtn:hover { background: #f0f7ff; }
+
 .exportSummary { padding: 16px; background: var(--ov2-gray-50); border-radius: var(--ov2-radius-sm); }
 .exportSummary h4 { font-size: 13px; font-weight: 600; margin: 0 0 12px; }
 .exportSummaryGrid {

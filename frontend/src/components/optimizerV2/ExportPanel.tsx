@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Download, FileText, File, Loader2, CheckCircle2 } from 'lucide-react';
+import { Download, FileText, File, Loader2, CheckCircle2, Mail, Copy, Check } from 'lucide-react';
 import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -141,6 +141,106 @@ export default function ExportPanel({ result, userSelections }: Props) {
       setSelectedClauses(new Set(optimizableClauses.map(c => c.opt.clauseId)));
     }
   };
+
+  // ── Email Pitch Templates ──
+  type PitchStyle = 'lawyer' | 'business' | 'private';
+  const [activePitch, setActivePitch] = useState<PitchStyle | null>(null);
+  const [copiedPitch, setCopiedPitch] = useState(false);
+
+  const pitchMeta: { key: PitchStyle; label: string; desc: string }[] = [
+    { key: 'lawyer', label: 'An Anwalt', desc: 'Formell – für juristische Prüfung' },
+    { key: 'business', label: 'An Geschäftspartner', desc: 'Professionell – Nachverhandlung' },
+    { key: 'private', label: 'Privat', desc: 'Einfach – z. B. Vermieter, Dienstleister' },
+  ];
+
+  const criticalClauses = useMemo(() =>
+    result.clauseAnalyses.filter(a => a.importanceLevel === 'critical' || a.importanceLevel === 'high'),
+    [result.clauseAnalyses]
+  );
+
+  const generatePitch = useCallback((style: PitchStyle): string => {
+    const contractType = result.structure?.contractTypeLabel || 'Vertrag';
+    const score = result.scores.overall;
+    const clauseCount = result.clauses.length;
+
+    // Build critical findings list
+    const findings = criticalClauses.slice(0, 5).map(a => {
+      const clause = result.clauses.find(c => c.id === a.clauseId);
+      const title = clause?.title || 'Unbenannte Klausel';
+      const level = a.importanceLevel === 'critical' ? 'KRITISCH' : 'WICHTIG';
+      return `• ${title} [${level}]: ${a.summary || a.concerns?.[0] || 'Überprüfungsbedarf'}`;
+    }).join('\n');
+
+    const optimizableList = result.optimizations
+      .filter(o => o.needsOptimization)
+      .slice(0, 3)
+      .map(o => {
+        const clause = result.clauses.find(c => c.id === o.clauseId);
+        return `• ${clause?.title || 'Klausel'}: ${o.negotiationAdvice?.substring(0, 80) || 'Optimierungspotenzial'}`;
+      }).join('\n');
+
+    if (style === 'lawyer') {
+      return `Sehr geehrte Damen und Herren,
+
+ich bitte um rechtliche Prüfung des beigefügten ${contractType}s. Eine KI-gestützte Voranalyse (Contract AI) hat folgende Ergebnisse ergeben:
+
+**Gesamtbewertung:** ${score}/100 Punkte
+**Analysierte Klauseln:** ${clauseCount}
+**Optimierungsbedarf:** ${optimizedCount} Klauseln
+
+${criticalClauses.length > 0 ? `**Identifizierte Schwachstellen:**\n${findings}\n` : ''}${optimizedCount > 0 ? `**Optimierungsvorschläge liegen vor für:**\n${optimizableList}\n` : ''}
+Ich bitte um Ihre Einschätzung, insbesondere bezüglich der markierten Risiken und der vorgeschlagenen Alternativformulierungen.
+
+Den vollständigen Analysebericht und den optimierten Vertragsentwurf sende ich als Anlage mit.
+
+Mit freundlichen Grüßen`;
+    }
+
+    if (style === 'business') {
+      return `Guten Tag,
+
+vielen Dank für die Übersendung des ${contractType}s. Ich habe den Vertrag eingehend geprüft und möchte einige Punkte ansprechen:
+
+**Bewertung:** ${score}/100 (${score >= 70 ? 'insgesamt solide Basis' : score >= 50 ? 'einige Anpassungen nötig' : 'wesentlicher Überarbeitungsbedarf'})
+
+${criticalClauses.length > 0 ? `Folgende Punkte sollten wir besprechen:\n${findings}\n` : 'Der Vertrag ist in den wesentlichen Punkten gut aufgestellt.\n'}
+${optimizedCount > 0 ? `Für ${optimizedCount} Klauseln habe ich konkrete Formulierungsvorschläge, die für beide Seiten eine fairere Regelung ermöglichen.\n` : ''}
+Ich würde vorschlagen, dass wir die genannten Punkte in einem kurzen Gespräch klären. Wann passt es Ihnen?
+
+Beste Grüße`;
+    }
+
+    // private
+    return `Hallo,
+
+ich habe mir den ${contractType} genau angeschaut und ein paar Anmerkungen:
+
+Gesamteindruck: ${score}/100 – ${score >= 70 ? 'sieht grundsätzlich gut aus' : score >= 50 ? 'ein paar Sachen sollten wir anpassen' : 'da müssen wir noch einiges ändern'}.
+
+${criticalClauses.length > 0 ? `Das sollten wir klären:\n${findings}\n` : ''}${optimizedCount > 0 ? `Bei ${optimizedCount} Stellen habe ich bessere Formulierungen, die fairer für beide Seiten wären.\n` : ''}
+Können wir kurz darüber sprechen?
+
+Viele Grüße`;
+  }, [result, criticalClauses, optimizedCount]);
+
+  const handleCopyPitch = useCallback(async (style: PitchStyle) => {
+    const text = generatePitch(style);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedPitch(true);
+      setTimeout(() => setCopiedPitch(false), 2000);
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopiedPitch(true);
+      setTimeout(() => setCopiedPitch(false), 2000);
+    }
+  }, [generatePitch]);
 
   return (
     <div className={styles.exportPanel}>
@@ -309,6 +409,45 @@ export default function ExportPanel({ result, userSelections }: Props) {
           )}
         </div>
       )}
+
+      {/* ── Email Pitch Templates ── */}
+      <div className={styles.pitchSection}>
+        <div className={styles.pitchHeader}>
+          <Mail size={18} />
+          <div>
+            <h4 className={styles.pitchTitle}>E-Mail-Vorlagen</h4>
+            <p className={styles.pitchSubtitle}>Versende deine Ergebnisse per E-Mail — Vorlage wählen und kopieren</p>
+          </div>
+        </div>
+
+        <div className={styles.pitchTabs}>
+          {pitchMeta.map(({ key, label, desc }) => (
+            <button
+              key={key}
+              className={`${styles.pitchTab} ${activePitch === key ? styles.pitchTabActive : ''}`}
+              onClick={() => setActivePitch(prev => prev === key ? null : key)}
+            >
+              <span className={styles.pitchTabLabel}>{label}</span>
+              <span className={styles.pitchTabDesc}>{desc}</span>
+            </button>
+          ))}
+        </div>
+
+        {activePitch && (
+          <div className={styles.pitchPreview}>
+            <pre className={styles.pitchText}>{generatePitch(activePitch)}</pre>
+            <button
+              className={styles.pitchCopyBtn}
+              onClick={() => handleCopyPitch(activePitch)}
+            >
+              {copiedPitch
+                ? <><Check size={14} /> Kopiert!</>
+                : <><Copy size={14} /> In Zwischenablage kopieren</>
+              }
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Analysis summary */}
       <div className={styles.exportSummary}>
