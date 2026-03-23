@@ -86,7 +86,7 @@ export default function ClauseCard({
       id={`clause-${clause.id}`}
     >
       {/* Header - always visible */}
-      <div className={styles.clauseCardHeader} onClick={() => onSelect(isSelected ? null : clause.id)}>
+      <div className={styles.clauseCardHeader} onClick={() => onSelect(clause.id)}>
         <div className={styles.clauseCardLeft}>
           {clause.sectionNumber && clause.sectionNumber !== 'null' && (
             <span className={styles.clauseSectionNumber}>{clause.sectionNumber}</span>

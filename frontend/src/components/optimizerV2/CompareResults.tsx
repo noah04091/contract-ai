@@ -158,6 +158,55 @@ export default function CompareResults({ currentResult }: Props) {
         </div>
       )}
 
+      {/* Intro card when no comparison selected yet */}
+      {!selectedId && !loadError && history.length > 0 && (
+        <div className={styles.cmpIntro}>
+          <div className={styles.cmpIntroCard}>
+            <div className={styles.cmpIntroIcon}>
+              <BarChart3 size={28} />
+            </div>
+            <div className={styles.cmpIntroContent}>
+              <h4>Aktuelle Analyse</h4>
+              <div className={styles.cmpIntroStats}>
+                <div className={styles.cmpIntroStat}>
+                  <span className={styles.cmpIntroStatValue} style={{ color: currentResult.scores.overall >= 60 ? '#34C759' : currentResult.scores.overall >= 40 ? '#FF9500' : '#FF3B30' }}>
+                    {currentResult.scores.overall}
+                  </span>
+                  <span className={styles.cmpIntroStatLabel}>Score</span>
+                </div>
+                <div className={styles.cmpIntroStat}>
+                  <span className={styles.cmpIntroStatValue}>{currentResult.clauses.length}</span>
+                  <span className={styles.cmpIntroStatLabel}>Klauseln</span>
+                </div>
+                <div className={styles.cmpIntroStat}>
+                  <span className={styles.cmpIntroStatValue} style={{ color: '#FF9500' }}>
+                    {currentResult.optimizations.filter(o => o.needsOptimization).length}
+                  </span>
+                  <span className={styles.cmpIntroStatLabel}>Optimierbar</span>
+                </div>
+              </div>
+              <p className={styles.cmpIntroHint}>
+                Wähle oben eine frühere Analyse aus, um die Score-Entwicklung und Unterschiede zu sehen.
+              </p>
+            </div>
+          </div>
+          <div className={styles.cmpIntroFeatures}>
+            <div className={styles.cmpIntroFeature}>
+              <ArrowUpRight size={16} style={{ color: '#34C759' }} />
+              <span>Score-Veränderungen auf einen Blick</span>
+            </div>
+            <div className={styles.cmpIntroFeature}>
+              <BarChart3 size={16} style={{ color: '#007AFF' }} />
+              <span>5 Sub-Scores im direkten Vergleich</span>
+            </div>
+            <div className={styles.cmpIntroFeature}>
+              <FileText size={16} style={{ color: '#FF9500' }} />
+              <span>Klausel- und Optimierungsstatistik</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Loading compare */}
       {loadingCompare && (
         <div className={styles.cmpLoading}><Loader2 size={16} className={styles.spinIcon} /> Lade Ergebnis...</div>

@@ -3063,3 +3063,83 @@
   color: var(--ov2-gray-800);
   font-weight: 600;
 }
+
+/* ── Compare Intro (empty state) ── */
+.cmpIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 4px;
+}
+.cmpIntroCard {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  background: white;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: var(--ov2-radius-sm);
+  box-shadow: var(--ov2-shadow);
+}
+.cmpIntroIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0f7ff, #e0efff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ov2-blue);
+  flex-shrink: 0;
+}
+.cmpIntroContent { flex: 1; }
+.cmpIntroContent h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--ov2-gray-800);
+}
+.cmpIntroStats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 14px;
+}
+.cmpIntroStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.cmpIntroStatValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ov2-gray-800);
+}
+.cmpIntroStatLabel {
+  font-size: 11px;
+  color: var(--ov2-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+.cmpIntroHint {
+  font-size: 13px;
+  color: var(--ov2-gray-500);
+  margin: 0;
+  line-height: 1.5;
+}
+.cmpIntroFeatures {
+  display: flex;
+  gap: 12px;
+}
+.cmpIntroFeature {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--ov2-gray-50);
+  border: 1px solid var(--ov2-gray-100);
+  border-radius: var(--ov2-radius-sm);
+  font-size: 13px;
+  color: var(--ov2-gray-700);
+}
