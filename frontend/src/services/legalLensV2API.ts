@@ -284,6 +284,32 @@ export async function simulateClause(
 }
 
 // ============================================================
+// Clause Rewrite (Quick Actions)
+// ============================================================
+
+/**
+ * Formuliert eine Klausel anhand einer Anweisung um
+ */
+export async function rewriteClause(
+  contractId: string,
+  clause: string,
+  instruction: string,
+  industry?: string
+): Promise<{ success: boolean; rewrittenClause: string }> {
+  const response = await fetchWithAuth(`${V2_BASE}/${contractId}/rewrite-clause`, {
+    method: 'POST',
+    body: JSON.stringify({ clause, instruction, industry })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Umformulierung fehlgeschlagen' }));
+    throw new Error(error.error || `Umformulierung fehlgeschlagen: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ============================================================
 // V1 Deep-Dive & Chat API (wiederverwendet)
 // ============================================================
 

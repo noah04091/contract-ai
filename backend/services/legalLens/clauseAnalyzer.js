@@ -1331,6 +1331,67 @@ Regeln:
       throw new Error(`Simulation fehlgeschlagen: ${error.message}`);
     }
   }
+
+  /**
+   * Formuliert eine Klausel anhand einer Anweisung um (Quick-Actions im Simulator)
+   */
+  async rewriteClause(originalClause, instruction, contractContext = '', options = {}) {
+    const { industry = 'general' } = options;
+    const model = 'gpt-4o';
+    const temperature = 0.3;
+
+    const industryContext = this.getIndustryContext(industry);
+
+    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt. Ein Nutzer möchte eine Vertragsklausel umformulieren.
+${industryContext}
+
+AUFGABE: Formuliere die Klausel gemäß der Anweisung des Nutzers um.
+
+Regeln:
+- Behalte den rechtlichen Kern der Klausel bei
+- Formuliere rechtssicher und präzise
+- Halte dich eng an die Anweisung
+- Antworte NUR mit dem umformulierten Klauseltext, KEIN JSON, KEINE Erklärung
+- Der Text soll direkt als Vertragsklausel verwendbar sein`;
+
+    try {
+      const startTime = Date.now();
+
+      const response = await this.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: contractContext
+              ? `Kontext:\n${contractContext.substring(0, 500)}\n\n---\n\nKLAUSEL:\n"${originalClause}"\n\nANWEISUNG: ${instruction}`
+              : `KLAUSEL:\n"${originalClause}"\n\nANWEISUNG: ${instruction}`
+          }
+        ],
+        temperature,
+        max_tokens: 2000
+      });
+
+      const processingTime = Date.now() - startTime;
+      const rewrittenText = response.choices[0].message.content.trim()
+        .replace(/^["']|["']$/g, ''); // Anführungszeichen entfernen falls vorhanden
+
+      console.log(`✅ Clause Rewrite abgeschlossen in ${processingTime}ms`);
+
+      return {
+        rewrittenClause: rewrittenText,
+        _metadata: {
+          model,
+          tokensUsed: response.usage?.total_tokens || 0,
+          processingTimeMs: processingTime
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Clause Rewrite Fehler:', error.message);
+      throw new Error(`Umformulierung fehlgeschlagen: ${error.message}`);
+    }
+  }
 }
 
 // Singleton-Export

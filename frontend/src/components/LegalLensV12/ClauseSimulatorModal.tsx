@@ -1,9 +1,9 @@
 // 📁 components/LegalLensV12/ClauseSimulatorModal.tsx
 // Klausel-Simulator: Bearbeite eine Klausel und sieh sofort die Risiko-Änderung
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, AlertTriangle, Copy } from 'lucide-react';
-import { simulateClause } from '../../services/legalLensV2API';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, AlertTriangle, Copy, Loader2 } from 'lucide-react';
+import { simulateClause, rewriteClause } from '../../services/legalLensV2API';
 import type { ClauseSimulation } from '../../types/legalLensV2';
 import styles from '../../styles/LegalLensV12.module.css';
 
@@ -13,6 +13,7 @@ interface ClauseSimulatorModalProps {
   originalText: string;
   contractId: string;
   industry?: string;
+  suggestedAlternative?: string;
 }
 
 const RECOMMENDATION_LABELS: Record<string, { text: string; emoji: string; color: string; bg: string }> = {
@@ -21,15 +22,77 @@ const RECOMMENDATION_LABELS: Record<string, { text: string; emoji: string; color
   keep_original: { text: 'Original beibehalten', emoji: '⚠️', color: '#dc2626', bg: '#fef2f2' },
 };
 
+interface QuickAction {
+  label: string;
+  icon: string;
+  instruction: string;
+  instant?: boolean; // true = no API call needed
+}
+
+// Word-level diff algorithm
+function computeWordDiff(original: string, modified: string): Array<{ type: 'same' | 'added' | 'removed'; text: string }> {
+  const origWords = original.split(/(\s+)/);
+  const modWords = modified.split(/(\s+)/);
+
+  // LCS-based diff
+  const m = origWords.length;
+  const n = modWords.length;
+
+  // Build LCS table
+  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (origWords[i - 1] === modWords[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  // Backtrack to find diff
+  const result: Array<{ type: 'same' | 'added' | 'removed'; text: string }> = [];
+  let i = m, j = n;
+  const ops: Array<{ type: 'same' | 'added' | 'removed'; text: string }> = [];
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && origWords[i - 1] === modWords[j - 1]) {
+      ops.push({ type: 'same', text: origWords[i - 1] });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      ops.push({ type: 'added', text: modWords[j - 1] });
+      j--;
+    } else {
+      ops.push({ type: 'removed', text: origWords[i - 1] });
+      i--;
+    }
+  }
+
+  ops.reverse();
+
+  // Merge consecutive same-type segments
+  for (const op of ops) {
+    if (result.length > 0 && result[result.length - 1].type === op.type) {
+      result[result.length - 1].text += op.text;
+    } else {
+      result.push({ ...op });
+    }
+  }
+
+  return result;
+}
+
 const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   isOpen,
   onClose,
   originalText,
   contractId,
-  industry = 'general'
+  industry = 'general',
+  suggestedAlternative
 }) => {
   const [modifiedText, setModifiedText] = useState(originalText);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isRewriting, setIsRewriting] = useState(false);
   const [simulation, setSimulation] = useState<ClauseSimulation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -39,13 +102,25 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   // Only reset when the CLAUSE changes (different originalText), not on re-open
   useEffect(() => {
     if (isOpen && originalText !== prevOriginalRef.current) {
-      setModifiedText(originalText);
+      // New clause — pre-fill with AI suggestion if available, else original
+      setModifiedText(suggestedAlternative || originalText);
       setSimulation(null);
       setError(null);
       setCopied(false);
       prevOriginalRef.current = originalText;
     }
-  }, [isOpen, originalText]);
+  }, [isOpen, originalText, suggestedAlternative]);
+
+  // On very first open, pre-fill with suggested alternative if available
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (isOpen && !initializedRef.current) {
+      initializedRef.current = true;
+      if (suggestedAlternative && modifiedText === originalText) {
+        setModifiedText(suggestedAlternative);
+      }
+    }
+  }, [isOpen, suggestedAlternative, modifiedText, originalText]);
 
   // Auto-resize textarea to fit content
   const autoResize = useCallback(() => {
@@ -74,6 +149,50 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose]);
+
+  // Quick actions
+  const quickActions: QuickAction[] = useMemo(() => {
+    const actions: QuickAction[] = [];
+    if (suggestedAlternative) {
+      actions.push({
+        label: 'KI-Vorschlag',
+        icon: '💡',
+        instruction: '',
+        instant: true
+      });
+    }
+    actions.push(
+      { label: 'Kürzer formulieren', icon: '✂️', instruction: 'Formuliere die Klausel kürzer und prägnanter, ohne den rechtlichen Inhalt zu ändern.' },
+      { label: 'Haftung begrenzen', icon: '🛡️', instruction: 'Ergänze eine angemessene Haftungsbegrenzung oder verschärfe eine bestehende zugunsten des Unterzeichners.' },
+      { label: 'Kündigungsrecht', icon: '🚪', instruction: 'Ergänze ein ordentliches Kündigungsrecht mit angemessener Frist oder verbessere ein bestehendes.' },
+      { label: 'Einfacher formulieren', icon: '📝', instruction: 'Formuliere die Klausel in einfacherer, verständlicherer Sprache, behalte aber die rechtliche Wirkung bei.' }
+    );
+    return actions;
+  }, [suggestedAlternative]);
+
+  const handleQuickAction = async (action: QuickAction) => {
+    if (action.instant && suggestedAlternative) {
+      setModifiedText(suggestedAlternative);
+      setSimulation(null);
+      setError(null);
+      setTimeout(autoResize, 0);
+      return;
+    }
+
+    setIsRewriting(true);
+    setError(null);
+
+    try {
+      const result = await rewriteClause(contractId, originalText, action.instruction, industry);
+      setModifiedText(result.rewrittenClause);
+      setSimulation(null);
+      setTimeout(autoResize, 0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Umformulierung fehlgeschlagen');
+    } finally {
+      setIsRewriting(false);
+    }
+  };
 
   const handleSimulate = async () => {
     if (!modifiedText.trim() || modifiedText.trim() === originalText.trim()) {
@@ -108,6 +227,12 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Compute diff for display
+  const diffResult = useMemo(() => {
+    if (!simulation || modifiedText.trim() === originalText.trim()) return null;
+    return computeWordDiff(originalText, modifiedText);
+  }, [simulation, originalText, modifiedText]);
+
   if (!isOpen) return null;
 
   const hasChanges = modifiedText.trim() !== originalText.trim();
@@ -132,6 +257,30 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
           <button className={styles.simulatorCloseBtn} onClick={onClose}>
             <X size={20} />
           </button>
+        </div>
+
+        {/* Quick Actions */}
+        <div className={styles.simulatorQuickActions}>
+          <span className={styles.simulatorQuickLabel}>Schnell-Aktionen:</span>
+          <div className={styles.simulatorQuickChips}>
+            {quickActions.map((action, idx) => (
+              <button
+                key={idx}
+                className={`${styles.simulatorQuickChip} ${action.instant ? styles.simulatorQuickChipHighlight : ''}`}
+                onClick={() => handleQuickAction(action)}
+                disabled={isRewriting || isSimulating}
+              >
+                <span>{action.icon}</span>
+                {action.label}
+              </button>
+            ))}
+          </div>
+          {isRewriting && (
+            <div className={styles.simulatorRewritingHint}>
+              <Loader2 size={14} className={styles.spinIcon} />
+              KI formuliert um...
+            </div>
+          )}
         </div>
 
         {/* Editor Area */}
@@ -174,13 +323,33 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
                 onChange={(e) => {
                   setModifiedText(e.target.value);
                   if (simulation) setSimulation(null);
-                  // Auto-resize on input
                   setTimeout(autoResize, 0);
                 }}
                 placeholder="Bearbeite die Klausel hier..."
               />
             </div>
           </div>
+
+          {/* Diff View — shown after simulation */}
+          {diffResult && simulation && (
+            <div className={styles.simulatorDiffSection}>
+              <div className={styles.simulatorDiffHeader}>Änderungen im Detail</div>
+              <div className={styles.simulatorDiffContent}>
+                {diffResult.map((segment, idx) => (
+                  <span
+                    key={idx}
+                    className={
+                      segment.type === 'added' ? styles.diffAdded :
+                      segment.type === 'removed' ? styles.diffRemoved :
+                      undefined
+                    }
+                  >
+                    {segment.text}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className={styles.simulatorActions}>

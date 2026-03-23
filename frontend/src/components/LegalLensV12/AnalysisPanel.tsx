@@ -974,6 +974,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           originalText={originalClauseText}
           contractId={sourceContractId}
           industry={currentIndustry}
+          suggestedAlternative={betterAlternative?.text}
         />
       )}
     </div>

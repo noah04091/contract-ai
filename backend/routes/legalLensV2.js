@@ -364,4 +364,63 @@ router.post('/:contractId/simulate-clause', async (req, res) => {
 });
 
 
+/**
+ * POST /v2/:contractId/rewrite-clause
+ *
+ * Formuliert eine Klausel anhand einer Anweisung um (Quick-Actions im Simulator).
+ *
+ * Body: { clause, instruction, industry? }
+ */
+router.post('/:contractId/rewrite-clause', async (req, res) => {
+  const { contractId } = req.params;
+  const userId = req.user.userId;
+  const { clause, instruction, industry = 'general' } = req.body;
+
+  if (!clause || !instruction) {
+    return res.status(400).json({
+      success: false,
+      error: 'clause und instruction sind erforderlich'
+    });
+  }
+
+  if (clause.length > 15000) {
+    return res.status(400).json({
+      success: false,
+      error: 'Klausel darf maximal 15.000 Zeichen lang sein'
+    });
+  }
+
+  try {
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
+    const contract = access.contract;
+    const contractContext = (contract.content || contract.extractedText || contract.fullText || '')
+      .substring(0, 500);
+
+    const result = await clauseAnalyzer.rewriteClause(
+      clause,
+      instruction,
+      contractContext,
+      { industry }
+    );
+
+    res.json({
+      success: true,
+      rewrittenClause: result.rewrittenClause
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens V2] Rewrite Fehler:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Umformulierung fehlgeschlagen',
+      details: error.message
+    });
+  }
+});
+
+
 module.exports = router;
