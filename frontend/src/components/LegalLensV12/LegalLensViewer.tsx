@@ -120,6 +120,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Keyboard Shortcuts Modal
   const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
 
+  // Header Score & Worst Clause Popovers
+  const [showScorePopover, setShowScorePopover] = useState<boolean>(false);
+  const [showWorstPopover, setShowWorstPopover] = useState<boolean>(false);
+  const scorePopoverRef = useRef<HTMLDivElement>(null);
+  const worstPopoverRef = useRef<HTMLDivElement>(null);
+
   // Celebration when all clauses reviewed
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const celebrationShownRef = useRef<boolean>(false);
@@ -149,6 +155,22 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Click-outside for score & worst clause popovers
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (showScorePopover && scorePopoverRef.current && !scorePopoverRef.current.contains(e.target as Node)) {
+        setShowScorePopover(false);
+      }
+      if (showWorstPopover && worstPopoverRef.current && !worstPopoverRef.current.contains(e.target as Node)) {
+        setShowWorstPopover(false);
+      }
+    };
+    if (showScorePopover || showWorstPopover) {
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }
+  }, [showScorePopover, showWorstPopover]);
 
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
@@ -1501,7 +1523,52 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           {/* Risk Stats — erscheint sobald Analysen gecacht sind */}
           {riskStats && (
             <div className={styles.headerStats}>
-              <RiskScoreGauge score={riskStats.overallScore} size={40} strokeWidth={3} />
+              {/* Klickbarer Score-Gauge mit Erklärungs-Popover */}
+              <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
+                <button
+                  className={styles.scoreGaugeBtn}
+                  onClick={() => { setShowScorePopover(prev => !prev); setShowWorstPopover(false); }}
+                  aria-label="Risiko-Score Erklärung anzeigen"
+                >
+                  <RiskScoreGauge score={riskStats.overallScore} size={40} strokeWidth={3} />
+                </button>
+                {showScorePopover && (
+                  <div className={styles.scorePopover}>
+                    <div className={styles.scorePopoverHeader}>
+                      <span className={styles.scorePopoverTitle}>Risiko-Score erklärt</span>
+                    </div>
+                    <p className={styles.scorePopoverDesc}>
+                      Der Score zeigt das <strong>durchschnittliche Risiko</strong> aller {riskStats.analyzed} analysierten Klauseln auf einer Skala von 0–100.
+                    </p>
+                    <div className={styles.scorePopoverScale}>
+                      <div className={styles.scoreScaleRow}>
+                        <span className={styles.scoreScaleDot} style={{ background: '#10b981' }} />
+                        <span className={styles.scoreScaleRange}>0–29</span>
+                        <span className={styles.scoreScaleLabel}>Niedriges Risiko</span>
+                        {riskStats.low > 0 && <span className={styles.scoreScaleCount}>{riskStats.low} Klauseln</span>}
+                      </div>
+                      <div className={styles.scoreScaleRow}>
+                        <span className={styles.scoreScaleDot} style={{ background: '#f59e0b' }} />
+                        <span className={styles.scoreScaleRange}>30–59</span>
+                        <span className={styles.scoreScaleLabel}>Mittleres Risiko</span>
+                        {riskStats.medium > 0 && <span className={styles.scoreScaleCount}>{riskStats.medium} Klauseln</span>}
+                      </div>
+                      <div className={styles.scoreScaleRow}>
+                        <span className={styles.scoreScaleDot} style={{ background: '#ef4444' }} />
+                        <span className={styles.scoreScaleRange}>60–100</span>
+                        <span className={styles.scoreScaleLabel}>Hohes Risiko</span>
+                        {riskStats.high > 0 && <span className={styles.scoreScaleCount}>{riskStats.high} Klauseln</span>}
+                      </div>
+                    </div>
+                    <div className={styles.scorePopoverCurrent}>
+                      Ihr Vertrag: <strong style={{ color: riskStats.overallScore < 30 ? '#10b981' : riskStats.overallScore < 60 ? '#f59e0b' : '#ef4444' }}>{riskStats.overallScore}/100</strong>
+                      {riskStats.overallScore < 30 && ' — Überwiegend unbedenklich'}
+                      {riskStats.overallScore >= 30 && riskStats.overallScore < 60 && ' — Einige Klauseln prüfen'}
+                      {riskStats.overallScore >= 60 && ' — Mehrere kritische Klauseln'}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className={styles.quickStats}>
                 {riskStats.high > 0 && <span className={styles.statBadgeHigh}>{riskStats.high}</span>}
                 {riskStats.medium > 0 && <span className={styles.statBadgeMedium}>{riskStats.medium}</span>}
@@ -1509,14 +1576,44 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 <span className={styles.statCount}>{riskStats.analyzed} analysiert</span>
               </div>
               {riskStats.worstClause && riskStats.worstScore >= 50 && (
-                <button
-                  className={styles.worstClauseBtn}
-                  onClick={() => selectClause(riskStats.worstClause!)}
-                  title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
-                >
-                  <AlertTriangle size={14} />
-                  <span>Riskanteste: {riskStats.worstScore}</span>
-                </button>
+                <div className={styles.worstPopoverAnchor} ref={worstPopoverRef}>
+                  <button
+                    className={styles.worstClauseBtn}
+                    onClick={() => { setShowWorstPopover(prev => !prev); setShowScorePopover(false); }}
+                    title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
+                  >
+                    <AlertTriangle size={14} />
+                    <span>Riskanteste: {riskStats.worstScore}</span>
+                  </button>
+                  {showWorstPopover && (
+                    <div className={styles.worstPopover}>
+                      <div className={styles.worstPopoverHeader}>
+                        <AlertTriangle size={16} style={{ color: '#ef4444' }} />
+                        <span className={styles.worstPopoverTitle}>Riskanteste Klausel</span>
+                      </div>
+                      <div className={styles.worstPopoverClause}>
+                        <span className={styles.worstPopoverName}>
+                          {riskStats.worstClause!.title || riskStats.worstClause!.number || 'Klausel'}
+                        </span>
+                        <span className={styles.worstPopoverScore} style={{ color: '#ef4444' }}>
+                          {riskStats.worstScore}/100
+                        </span>
+                      </div>
+                      <p className={styles.worstPopoverDesc}>
+                        Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
+                        {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
+                        {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
+                      </p>
+                      <button
+                        className={styles.worstPopoverBtn}
+                        onClick={() => { selectClause(riskStats.worstClause!); setShowWorstPopover(false); }}
+                      >
+                        Zur Klausel springen
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               {(riskStats.high > 0 || riskStats.medium > 0) && (
                 <button

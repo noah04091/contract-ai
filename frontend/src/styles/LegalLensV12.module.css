@@ -3660,6 +3660,164 @@
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
 }
 
+/* ===== SCORE POPOVER ===== */
+.scorePopoverAnchor,
+.worstPopoverAnchor {
+  position: relative;
+}
+
+.scoreGaugeBtn {
+  background: none;
+  border: none;
+  padding: 2px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scoreGaugeBtn:hover {
+  background: #f1f5f9;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.scorePopover,
+.worstPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  padding: 1rem;
+  z-index: 50;
+  animation: popoverFadeIn 0.15s ease-out;
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.scorePopoverHeader,
+.worstPopoverHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.scorePopoverTitle,
+.worstPopoverTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.scorePopoverDesc,
+.worstPopoverDesc {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.45;
+  margin: 0 0 0.75rem 0;
+}
+
+.scorePopoverScale {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.scoreScaleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.scoreScaleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.scoreScaleRange {
+  font-weight: 700;
+  color: #334155;
+  min-width: 36px;
+}
+
+.scoreScaleLabel {
+  color: #64748b;
+  flex: 1;
+}
+
+.scoreScaleCount {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.7rem;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.scorePopoverCurrent {
+  font-size: 0.78rem;
+  color: #334155;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ===== WORST CLAUSE POPOVER ===== */
+.worstPopoverClause {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.worstPopoverName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.worstPopoverScore {
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.worstPopoverBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.worstPopoverBtn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
 /* ===== "NÄCHSTES RISIKO" BUTTON ===== */
 .nextRiskBtn {
   display: inline-flex;
@@ -4261,6 +4419,18 @@
 
   .quickStats .statCount {
     display: none;
+  }
+
+  .scorePopover,
+  .worstPopover {
+    left: 0;
+    transform: none;
+    width: 260px;
+  }
+
+  @keyframes popoverFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
