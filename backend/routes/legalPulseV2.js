@@ -1478,14 +1478,40 @@ router.post("/scan-now", requirePremium, scanNowRateLimiter, async (req, res) =>
 const verifyAdmin = require("../middleware/verifyAdmin");
 
 /**
+ * Helper: Check a title string for HTML artifacts / dirty content.
+ * Returns null if clean, or a description of what was found.
+ */
+function checkTitleCleanliness(title) {
+  if (!title || typeof title !== "string") return "missing or non-string title";
+  const issues = [];
+  if (/\n/.test(title)) issues.push("contains \\n");
+  if (/\t/.test(title)) issues.push("contains \\t");
+  if (/<[^>]+>/.test(title)) issues.push("contains HTML tags");
+  if (/\s{3,}/.test(title)) issues.push("excess whitespace (3+)");
+  if (/&[a-z]+;/i.test(title)) issues.push("contains HTML entities");
+  if (/&#\d+;/.test(title)) issues.push("contains numeric HTML entities");
+  return issues.length > 0 ? issues.join(", ") : null;
+}
+
+/**
  * POST /admin/test-rss-sync
- * Triggers RSS sync manually and returns detailed results.
+ * Triggers RSS sync manually and returns detailed results with automated checks.
  * Safe: only writes to shared `laws` collection (no user-specific impact).
+ *
+ * Checks:
+ *  - feedsResponding: Did RSS feeds return data? How many of total?
+ *  - itemsInserted: Were new laws inserted?
+ *  - titlesClean: Are the 20 most recent law titles free of HTML artifacts?
+ *  - areasAssigned: Do all recent laws have an area assigned?
+ *  - processedFlagSet: Are new entries marked pulseV2Processed: false?
  */
 router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
+    const rssService = require("../services/rssService");
+    const totalFeedCount = Object.keys(rssService.LEGAL_RSS_FEEDS).length;
+    const enabledFeedCount = Object.values(rssService.LEGAL_RSS_FEEDS).filter(f => f.enabled).length;
 
     // Count laws before sync
     const lawsBefore = await db.collection("laws").countDocuments();
@@ -1503,7 +1529,7 @@ router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
     const recentLaws = await db.collection("laws")
       .find({})
       .sort({ updatedAt: -1 })
-      .limit(10)
+      .limit(20)
       .project({ lawId: 1, title: 1, area: 1, source: 1, sourceUrl: 1, updatedAt: 1, pulseV2Processed: 1 })
       .toArray();
 
@@ -1511,13 +1537,45 @@ router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
     const areas = await db.collection("laws").distinct("area");
     const sources = await db.collection("laws").distinct("source");
 
+    // ── Automated checks ──
+
+    // Check 1: feedsResponding — Did the sync fetch items at all?
+    const itemsFetched = syncResult.total || 0;
+    const feedsRespondedEstimate = itemsFetched > 0 ? enabledFeedCount : 0; // rough: if items came, feeds responded
+    const feedsRespondingPassed = itemsFetched > 0;
+
+    // Check 2: itemsInserted
+    const netNew = lawsAfter - lawsBefore;
+    const itemsInsertedPassed = (syncResult.inserted || 0) > 0 || netNew > 0 || (syncResult.skipped || 0) > 0;
+    // If all skipped, feeds responded but all items already exist — still a pass
+
+    // Check 3: titlesClean — check 20 most recent laws for HTML artifacts
+    const dirtyTitles = [];
+    for (const law of recentLaws) {
+      const issue = checkTitleCleanliness(law.title);
+      if (issue) {
+        dirtyTitles.push({ lawId: law.lawId, title: (law.title || "").substring(0, 100), issue });
+      }
+    }
+    const titlesCleanPassed = dirtyTitles.length === 0;
+
+    // Check 4: areasAssigned — do all recent laws have a non-empty area?
+    const lawsWithoutArea = recentLaws.filter(l => !l.area || l.area === "");
+    const areasAssignedPassed = lawsWithoutArea.length === 0;
+
+    // Check 5: processedFlagSet — are new entries marked pulseV2Processed: false?
+    const newUnprocessed = unprocessedAfter - unprocessedBefore;
+    const insertedCount = syncResult.inserted || 0;
+    // If items were inserted, unprocessed count should have grown
+    const processedFlagPassed = insertedCount === 0 || newUnprocessed > 0;
+
     res.json({
       success: true,
       syncResult,
       database: {
         lawsBefore,
         lawsAfter,
-        netNew: lawsAfter - lawsBefore,
+        netNew,
         unprocessedBefore,
         unprocessedAfter,
         totalLaws: lawsAfter,
@@ -1528,11 +1586,111 @@ router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
         areaCount: areas.length,
         sourceCount: sources.length,
       },
-      recentLaws,
-      message: `RSS Sync abgeschlossen. ${syncResult.inserted || 0} neu, ${syncResult.updated || 0} aktualisiert. ${unprocessedAfter} Laws warten auf Radar-Scan.`,
+      recentLaws: recentLaws.slice(0, 10),
+      checks: {
+        feedsResponding: {
+          passed: feedsRespondingPassed,
+          detail: feedsRespondingPassed
+            ? `RSS feeds returned ${itemsFetched} items. ${enabledFeedCount} of ${totalFeedCount} feeds enabled.`
+            : `No items fetched from RSS feeds. ${enabledFeedCount} of ${totalFeedCount} feeds enabled. Check network/feed URLs.`,
+        },
+        itemsInserted: {
+          passed: itemsInsertedPassed,
+          detail: `${insertedCount} new laws inserted, ${syncResult.updated || 0} updated, ${syncResult.skipped || 0} skipped (already existed). Net DB change: ${netNew}.`,
+        },
+        titlesClean: {
+          passed: titlesCleanPassed,
+          detail: titlesCleanPassed
+            ? `All ${recentLaws.length} sampled titles are clean (no HTML artifacts, no excess whitespace).`
+            : `${dirtyTitles.length} of ${recentLaws.length} sampled titles have issues.`,
+          ...(dirtyTitles.length > 0 && { dirtyTitles }),
+        },
+        areasAssigned: {
+          passed: areasAssignedPassed,
+          detail: areasAssignedPassed
+            ? `All ${recentLaws.length} sampled laws have an area assigned. Areas: ${areas.join(", ")}.`
+            : `${lawsWithoutArea.length} of ${recentLaws.length} sampled laws missing area. Areas in DB: ${areas.join(", ")}.`,
+        },
+        processedFlagSet: {
+          passed: processedFlagPassed,
+          detail: processedFlagPassed
+            ? `New entries correctly marked pulseV2Processed: false. Unprocessed: ${unprocessedBefore} -> ${unprocessedAfter} (${insertedCount} inserted).`
+            : `Expected unprocessed count to grow after ${insertedCount} inserts, but went from ${unprocessedBefore} to ${unprocessedAfter}.`,
+        },
+      },
+      message: `RSS Sync abgeschlossen. ${insertedCount} neu, ${syncResult.updated || 0} aktualisiert. ${unprocessedAfter} Laws warten auf Radar-Scan.`,
     });
   } catch (error) {
     console.error("[AdminTest] RSS Sync error:", error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
+  }
+});
+
+/**
+ * POST /admin/test-rss-dedup
+ * Runs RSS sync TWICE and verifies deduplication works correctly.
+ * The second run should insert 0 (or very few) new items.
+ *
+ * Checks:
+ *  - noDuplicates: Second run inserted 0 new items (or very few)
+ *  - idempotent: Total law count didn't significantly increase on second run
+ */
+router.post("/admin/test-rss-dedup", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const { runPulseV2RssSync } = require("../jobs/pulseV2RssSync");
+
+    // Run 1
+    const countBefore1 = await db.collection("laws").countDocuments();
+    const run1Result = await runPulseV2RssSync(db);
+    const countAfter1 = await db.collection("laws").countDocuments();
+
+    // Run 2 (immediate second run — should be near-idempotent)
+    const countBefore2 = countAfter1;
+    const run2Result = await runPulseV2RssSync(db);
+    const countAfter2 = await db.collection("laws").countDocuments();
+
+    const run2Inserted = run2Result.inserted || 0;
+    const run2NetChange = countAfter2 - countBefore2;
+
+    // Allow a small tolerance (e.g., 2) because RSS feeds could publish new items between runs
+    const DEDUP_TOLERANCE = 2;
+    const noDuplicatesPassed = run2Inserted <= DEDUP_TOLERANCE;
+    const idempotentPassed = run2NetChange <= DEDUP_TOLERANCE;
+
+    res.json({
+      success: true,
+      run1: {
+        lawsBefore: countBefore1,
+        lawsAfter: countAfter1,
+        netNew: countAfter1 - countBefore1,
+        syncResult: run1Result,
+      },
+      run2: {
+        lawsBefore: countBefore2,
+        lawsAfter: countAfter2,
+        netNew: run2NetChange,
+        syncResult: run2Result,
+      },
+      checks: {
+        noDuplicates: {
+          passed: noDuplicatesPassed,
+          detail: noDuplicatesPassed
+            ? `Second run inserted ${run2Inserted} items (tolerance: ${DEDUP_TOLERANCE}). Deduplication working correctly.`
+            : `Second run inserted ${run2Inserted} items — exceeds tolerance of ${DEDUP_TOLERANCE}. Possible dedup failure.`,
+        },
+        idempotent: {
+          passed: idempotentPassed,
+          detail: idempotentPassed
+            ? `Total law count stable: ${countBefore2} -> ${countAfter2} (delta: ${run2NetChange}, tolerance: ${DEDUP_TOLERANCE}).`
+            : `Total law count grew unexpectedly: ${countBefore2} -> ${countAfter2} (delta: ${run2NetChange}). Expected near-zero change.`,
+        },
+      },
+      message: `Dedup-Test abgeschlossen. Run 1: ${run1Result.inserted || 0} neu. Run 2: ${run2Inserted} neu (soll ~0 sein).`,
+    });
+  } catch (error) {
+    console.error("[AdminTest] RSS Dedup error:", error);
     res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
   }
 });
@@ -1542,6 +1700,14 @@ router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
  * Triggers Radar for the authenticated admin user's contracts ONLY.
  * dryRun=true (default): stores alerts but does NOT send emails.
  * dryRun=false: full run including email notifications.
+ *
+ * Checks:
+ *  - lawsFound: Were recent unprocessed laws found?
+ *  - contractsMatched: Were user's contracts matched to laws?
+ *  - aiDecisionsLogged: Are there AI decision logs?
+ *  - alertsCreated: Were any alerts created?
+ *  - noOtherUsersAffected: No alerts created for other userIds
+ *  - clauseIdsValid: If alerts exist, clauseIds reference real clauses
  */
 router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
   try {
@@ -1557,10 +1723,22 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
         success: false,
         message: "Keine V2-Analyse-Ergebnisse gefunden. Bitte erst einen Vertrag analysieren, damit der Radar etwas matchen kann.",
         prerequisite: "Mindestens 1 abgeschlossene V2-Analyse erforderlich.",
+        checks: {
+          lawsFound: { passed: false, detail: "Skipped — no V2 results for this user." },
+          contractsMatched: { passed: false, detail: "Skipped — no V2 results for this user." },
+          aiDecisionsLogged: { passed: false, detail: "Skipped — no V2 results for this user." },
+          alertsCreated: { passed: false, detail: "Skipped — no V2 results for this user." },
+          noOtherUsersAffected: { passed: true, detail: "No radar run performed." },
+          clauseIdsValid: { passed: true, detail: "No alerts to check." },
+        },
       });
     }
 
-    // 2. Check: are there unprocessed laws?
+    // 2. Count other users' alerts BEFORE radar run (for isolation check)
+    const otherAlertsBeforeRun = await db.collection("pulse_v2_legal_alerts")
+      .countDocuments({ userId: { $ne: userId } });
+
+    // 3. Check: are there unprocessed laws?
     const unprocessedLaws = await db.collection("laws")
       .find({ pulseV2Processed: { $ne: true } })
       .sort({ updatedAt: -1 })
@@ -1586,11 +1764,18 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
         unprocessedLaws: 0,
         recentlyProcessed: recentProcessed,
         userV2Results: userResults,
+        checks: {
+          lawsFound: { passed: false, detail: "No unprocessed laws found. Run /admin/test-rss-sync first." },
+          contractsMatched: { passed: false, detail: "Skipped — no unprocessed laws." },
+          aiDecisionsLogged: { passed: false, detail: "Skipped — no radar run." },
+          alertsCreated: { passed: false, detail: "Skipped — no radar run." },
+          noOtherUsersAffected: { passed: true, detail: "No radar run performed." },
+          clauseIdsValid: { passed: true, detail: "No alerts to check." },
+        },
       });
     }
 
-    // 3. Run Radar — but scoped to this user only
-    // We override the radar to only match this user's contracts
+    // 4. Run Radar — but scoped to this user only
     const { runPulseV2Radar } = require("../jobs/pulseV2Radar");
 
     // Store original queueEmail to intercept in dryRun mode
@@ -1599,7 +1784,6 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
     const interceptedEmails = [];
 
     if (dryRun) {
-      // Replace queueEmail with a no-op that captures the call
       emailRetryService.queueEmail = async (emailData) => {
         interceptedEmails.push({
           to: emailData.to,
@@ -1607,7 +1791,7 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
           bodyPreview: (emailData.body || emailData.html || "").substring(0, 200) + "...",
           intercepted: true,
         });
-        console.log(`[AdminTest] DryRun: Email intercepted → ${emailData.to} | ${emailData.subject}`);
+        console.log(`[AdminTest] DryRun: Email intercepted -> ${emailData.to} | ${emailData.subject}`);
         return { intercepted: true };
       };
     }
@@ -1632,10 +1816,8 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
 
     let radarResult;
     try {
-      // Pass userId to scope radar to this admin's contracts ONLY
       radarResult = await runPulseV2Radar(db, { userId });
     } finally {
-      // Always restore console and queueEmail
       console.log = originalLog;
       console.warn = originalWarn;
       if (dryRun) {
@@ -1643,20 +1825,56 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
       }
     }
 
-    // 4. Get alerts created for this user
+    // 5. Get alerts created for this user
     const userAlerts = await db.collection("pulse_v2_legal_alerts")
       .find({ userId })
       .sort({ createdAt: -1 })
       .limit(10)
       .toArray();
 
-    // 5. Get the laws that were just processed (for context)
+    // 6. Count other users' alerts AFTER radar run (isolation check)
+    const otherAlertsAfterRun = await db.collection("pulse_v2_legal_alerts")
+      .countDocuments({ userId: { $ne: userId } });
+
+    // 7. Get the laws that were just processed (for context)
     const justProcessed = await db.collection("laws")
       .find({ pulseV2Processed: true, pulseV2ProcessedAt: { $gte: new Date(Date.now() - 60000) } })
       .sort({ pulseV2ProcessedAt: -1 })
       .limit(10)
       .project({ title: 1, area: 1, source: 1, pulseV2ProcessedAt: 1 })
       .toArray();
+
+    // 8. Validate clauseIds in alerts against actual V2 results
+    const clauseIdIssues = [];
+    for (const alert of userAlerts) {
+      if (alert.affectedClauseIds && alert.affectedClauseIds.length > 0) {
+        // Look up the V2 result for this contract to get actual clause IDs
+        const v2Result = await LegalPulseV2Result.findOne(
+          { userId, contractId: alert.contractId, status: "completed" },
+          { sort: { createdAt: -1 } }
+        );
+        if (v2Result && v2Result.clauses) {
+          const validIds = new Set(v2Result.clauses.map(c => c.id));
+          const invalidIds = alert.affectedClauseIds.filter(id => !validIds.has(id));
+          if (invalidIds.length > 0) {
+            clauseIdIssues.push({
+              alertId: alert._id,
+              contractName: alert.contractName,
+              invalidClauseIds: invalidIds,
+            });
+          }
+        }
+      }
+    }
+
+    // ── Automated checks ──
+    const aiDecisions = radarLogs.filter(l => l.includes("AI decision"));
+    const lawsFoundPassed = (radarResult.lawChanges || 0) > 0;
+    const contractsMatchedPassed = (radarResult.contractsMatched || 0) > 0;
+    const aiDecisionsLoggedPassed = aiDecisions.length > 0;
+    const alertsCreatedCount = radarResult.alertsSent || 0;
+    const noOtherUsersPassed = otherAlertsAfterRun === otherAlertsBeforeRun;
+    const clauseIdsValidPassed = clauseIdIssues.length === 0;
 
     res.json({
       success: true,
@@ -1667,7 +1885,7 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
         v2ResultsCount: userResults,
         alertsForUser: userAlerts.length,
       },
-      aiDecisions: radarLogs.filter(l => l.includes("AI decision")),
+      aiDecisions,
       radarLogs,
       processedLaws: justProcessed,
       alerts: userAlerts.map(a => ({
@@ -1682,9 +1900,50 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
       })),
       interceptedEmails: dryRun ? interceptedEmails : "Emails were sent (dryRun=false)",
       unprocessedLawsBefore: unprocessedLaws.length,
+      checks: {
+        lawsFound: {
+          passed: lawsFoundPassed,
+          detail: lawsFoundPassed
+            ? `${radarResult.lawChanges} unprocessed law changes found and scanned.`
+            : `No law changes picked up by radar. ${unprocessedLaws.length} were unprocessed before run.`,
+        },
+        contractsMatched: {
+          passed: contractsMatchedPassed,
+          detail: contractsMatchedPassed
+            ? `${radarResult.contractsMatched} contract(s) matched against law changes for userId ${userId}.`
+            : `No contracts matched. User has ${userResults} V2 results. Check area-to-contractType mapping.`,
+        },
+        aiDecisionsLogged: {
+          passed: aiDecisionsLoggedPassed,
+          detail: aiDecisionsLoggedPassed
+            ? `${aiDecisions.length} AI decision(s) logged. Radar AI assessment ran successfully.`
+            : `No AI decisions logged. Either no contracts matched, or OpenAI call failed. Check radarLogs.`,
+        },
+        alertsCreated: {
+          passed: alertsCreatedCount > 0,
+          detail: alertsCreatedCount > 0
+            ? `${alertsCreatedCount} alert(s) created for this user.`
+            : `0 alerts created. AI may have determined no contracts are affected (confidence < threshold), or all alerts already existed (dedup).`,
+        },
+        noOtherUsersAffected: {
+          passed: noOtherUsersPassed,
+          detail: noOtherUsersPassed
+            ? `Other users' alert count unchanged (${otherAlertsBeforeRun} before, ${otherAlertsAfterRun} after). userId scoping correct.`
+            : `WARNING: Other users' alert count changed from ${otherAlertsBeforeRun} to ${otherAlertsAfterRun}. Possible userId scoping issue!`,
+        },
+        clauseIdsValid: {
+          passed: clauseIdsValidPassed,
+          detail: clauseIdsValidPassed
+            ? userAlerts.length > 0
+              ? `All clauseIds in ${userAlerts.length} alert(s) reference valid clauses from V2 results.`
+              : `No alerts to validate clauseIds against.`
+            : `${clauseIdIssues.length} alert(s) have invalid clauseIds.`,
+          ...(clauseIdIssues.length > 0 && { clauseIdIssues }),
+        },
+      },
       message: dryRun
-        ? `Radar-Test abgeschlossen (DRY RUN). ${radarResult.alertsSent || 0} Alerts erstellt, ${interceptedEmails.length} Emails abgefangen (NICHT gesendet).`
-        : `Radar-Test abgeschlossen (LIVE). ${radarResult.alertsSent || 0} Alerts erstellt, Emails wurden versendet.`,
+        ? `Radar-Test abgeschlossen (DRY RUN). ${alertsCreatedCount} Alerts erstellt, ${interceptedEmails.length} Emails abgefangen (NICHT gesendet).`
+        : `Radar-Test abgeschlossen (LIVE). ${alertsCreatedCount} Alerts erstellt, Emails wurden versendet.`,
     });
   } catch (error) {
     console.error("[AdminTest] Radar error:", error);
@@ -1695,6 +1954,14 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
 /**
  * GET /admin/test-status
  * Shows complete system status: Laws DB, RSS coverage, Radar state, Alerts, Cron health.
+ *
+ * Checks:
+ *  - rssSyncHealthy: Did the last RSS sync cron succeed?
+ *  - radarHealthy: Did the last Radar cron succeed?
+ *  - lawsExist: Are there laws in the DB?
+ *  - recentLawsExist: Are there laws from the last 7 days?
+ *  - dataQuality: Sample 20 recent laws, check for HTML artifacts in titles
+ *  - userHasV2Results: Does this user have completed V2 analyses?
  */
 router.get("/admin/test-status", verifyAdmin, async (req, res) => {
   try {
@@ -1716,6 +1983,26 @@ router.get("/admin/test-status", verifyAdmin, async (req, res) => {
     // Oldest unprocessed law
     const oldestUnprocessed = await db.collection("laws")
       .findOne({ pulseV2Processed: { $ne: true } }, { sort: { updatedAt: 1 }, projection: { title: 1, area: 1, updatedAt: 1 } });
+
+    // Recent laws (last 7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentLawCount = await db.collection("laws").countDocuments({ updatedAt: { $gte: sevenDaysAgo } });
+
+    // Sample 20 recent laws for data quality check
+    const sampleLaws = await db.collection("laws")
+      .find({})
+      .sort({ updatedAt: -1 })
+      .limit(20)
+      .project({ lawId: 1, title: 1, area: 1 })
+      .toArray();
+
+    const dirtyTitles = [];
+    for (const law of sampleLaws) {
+      const issue = checkTitleCleanliness(law.title);
+      if (issue) {
+        dirtyTitles.push({ lawId: law.lawId, title: (law.title || "").substring(0, 100), issue });
+      }
+    }
 
     // User's V2 analysis results
     const userResults = await LegalPulseV2Result.countDocuments({ userId, status: "completed" });
@@ -1746,11 +2033,23 @@ router.get("/admin/test-status", verifyAdmin, async (req, res) => {
       .project({ jobName: 1, status: 1, startedAt: 1, completedAt: 1, result: 1, error: 1 })
       .toArray();
 
+    // Find last RSS sync and Radar cron entries specifically
+    const lastRssSync = cronLogs.find(l => l.jobName === "pulse-v2-rss-sync");
+    const lastRadar = cronLogs.find(l => l.jobName === "pulse-v2-radar");
+
     // RSS feed health check (which feeds have contributed data?)
     const feedContributions = await db.collection("laws").aggregate([
       { $group: { _id: "$source", count: { $sum: 1 }, lastEntry: { $max: "$updatedAt" } } },
       { $sort: { count: -1 } },
     ]).toArray();
+
+    // ── Automated checks ──
+    const rssSyncHealthyPassed = lastRssSync ? lastRssSync.status === "completed" : false;
+    const radarHealthyPassed = lastRadar ? lastRadar.status === "completed" : false;
+    const lawsExistPassed = totalLaws > 0;
+    const recentLawsExistPassed = recentLawCount > 0;
+    const dataQualityPassed = dirtyTitles.length === 0;
+    const userHasV2ResultsPassed = userResults > 0;
 
     res.json({
       success: true,
@@ -1765,6 +2064,7 @@ router.get("/admin/test-status", verifyAdmin, async (req, res) => {
         sourceCount: lawSources.length,
         newestLaw,
         oldestUnprocessed,
+        recentLawCount,
       },
       rssFeedHealth: feedContributions,
       userPortfolio: {
@@ -1780,23 +2080,334 @@ router.get("/admin/test-status", verifyAdmin, async (req, res) => {
       },
       cronHealth: cronLogs,
       checks: {
-        lawsExist: totalLaws > 0,
-        unprocessedExist: unprocessedLaws > 0,
-        userHasResults: userResults > 0,
-        rssFeedsContribute: feedContributions.length > 0,
-        cronJobsRan: cronLogs.length > 0,
+        rssSyncHealthy: {
+          passed: rssSyncHealthyPassed,
+          detail: lastRssSync
+            ? `Last RSS sync cron: status="${lastRssSync.status}" at ${lastRssSync.startedAt}. ${lastRssSync.error ? "Error: " + lastRssSync.error : "No errors."}`
+            : "No RSS sync cron log found. Cron may not have run yet.",
+        },
+        radarHealthy: {
+          passed: radarHealthyPassed,
+          detail: lastRadar
+            ? `Last Radar cron: status="${lastRadar.status}" at ${lastRadar.startedAt}. ${lastRadar.error ? "Error: " + lastRadar.error : "No errors."}`
+            : "No Radar cron log found. Cron may not have run yet.",
+        },
+        lawsExist: {
+          passed: lawsExistPassed,
+          detail: lawsExistPassed
+            ? `${totalLaws} laws in DB (${processedLaws} processed, ${unprocessedLaws} unprocessed).`
+            : "No laws in DB. Run /admin/test-rss-sync first.",
+        },
+        recentLawsExist: {
+          passed: recentLawsExistPassed,
+          detail: recentLawsExistPassed
+            ? `${recentLawCount} laws from the last 7 days.`
+            : "No laws from the last 7 days. RSS feeds may not be delivering current content.",
+        },
+        dataQuality: {
+          passed: dataQualityPassed,
+          detail: dataQualityPassed
+            ? `All ${sampleLaws.length} sampled law titles are clean (no HTML artifacts).`
+            : `${dirtyTitles.length} of ${sampleLaws.length} sampled titles have HTML artifacts or formatting issues.`,
+          ...(dirtyTitles.length > 0 && { dirtyTitles }),
+        },
+        userHasV2Results: {
+          passed: userHasV2ResultsPassed,
+          detail: userHasV2ResultsPassed
+            ? `User has ${userResults} completed V2 analyses across ${userContracts.length} contract(s). Radar can match.`
+            : "No completed V2 analyses for this user. Analyze a contract first so Radar can match.",
+        },
       },
       recommendations: [
-        ...(totalLaws === 0 ? ["⚠️ Keine Laws in DB. Führe zuerst /admin/test-rss-sync aus."] : []),
-        ...(unprocessedLaws === 0 && totalLaws > 0 ? ["ℹ️ Alle Laws verarbeitet. RSS Sync nötig für neue Daten."] : []),
-        ...(userResults === 0 ? ["⚠️ Keine V2-Analysen. Analysiere erst einen Vertrag, damit der Radar matchen kann."] : []),
-        ...(feedContributions.length === 0 ? ["⚠️ Kein RSS-Feed hat Daten geliefert. Prüfe rssService."] : []),
-        ...(totalLaws > 0 && unprocessedLaws > 0 && userResults > 0 ? ["✅ System bereit für Radar-Test (/admin/test-radar)."] : []),
+        ...(totalLaws === 0 ? ["Keine Laws in DB. Fuehre zuerst /admin/test-rss-sync aus."] : []),
+        ...(unprocessedLaws === 0 && totalLaws > 0 ? ["Alle Laws verarbeitet. RSS Sync noetig fuer neue Daten."] : []),
+        ...(userResults === 0 ? ["Keine V2-Analysen. Analysiere erst einen Vertrag, damit der Radar matchen kann."] : []),
+        ...(feedContributions.length === 0 ? ["Kein RSS-Feed hat Daten geliefert. Pruefe rssService."] : []),
+        ...(totalLaws > 0 && unprocessedLaws > 0 && userResults > 0 ? ["System bereit fuer Radar-Test (/admin/test-radar)."] : []),
       ],
     });
   } catch (error) {
     console.error("[AdminTest] Status error:", error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /admin/test-email-preview
+ * Generates the Radar email HTML for a MOCK alert (doesn't actually send).
+ * Returns the rendered HTML so the admin can preview the email template.
+ *
+ * Checks:
+ *  - templateRendered: Was the email HTML generated successfully?
+ *  - hasContractName: Does the email contain the contract name?
+ *  - hasRecommendation: Does the email contain a recommendation?
+ *  - hasDashboardLink: Does the email contain a link to the dashboard?
+ */
+router.post("/admin/test-email-preview", verifyAdmin, async (req, res) => {
+  try {
+    const {
+      generateEmailTemplate,
+      generateEventCard,
+      generateStatsRow,
+      generateParagraph,
+      generateDivider,
+    } = require("../utils/emailTemplate");
+
+    const mockContractName = "SaaS-Vertrag CloudProvider GmbH";
+    const mockLawTitle = "DSGVO-Novelle 2026: Neue Anforderungen an Auftragsverarbeitung";
+    const mockImpactSummary = "Die neue DSGVO-Novelle verschaerft die Anforderungen an Auftragsverarbeitungsvertraege. Ihr SaaS-Vertrag enthaelt eine AV-Klausel, die nicht den neuen Mindestanforderungen entspricht.";
+    const mockRecommendation = "AV-Klausel in Abschnitt 7 aktualisieren: Neue Loeschfristen und Unterauftragnehmer-Regelung gemaess Art. 28 Abs. 3 DSGVO-neu aufnehmen.";
+    const mockSeverity = "high";
+
+    const userName = req.user.name || req.user.firstName || "Admin";
+
+    let body = generateParagraph(`Hallo ${userName},`);
+    body += generateParagraph(
+      `Legal Pulse Radar hat <strong>1 Gesetzesaenderung</strong> erkannt, die Ihre Vertraege betreffen koennte.`
+    );
+
+    body += generateStatsRow([
+      { value: "1", label: "Betroffene Vertraege", color: "#ea580c" },
+      { value: "1", label: "Hoch", color: "#ea580c" },
+    ]);
+
+    body += generateDivider();
+
+    body += generateEventCard({
+      title: mockLawTitle,
+      subtitle: `Datenschutz / DSGVO - 1 Vertrag betroffen`,
+      badge: "Pruefen",
+      badgeColor: "warning",
+      icon: "\u2696\ufe0f",
+    });
+
+    const sevColor = "#ea580c";
+    body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${sevColor}; background: #f9fafb; border-radius: 0 6px 6px 0;">
+      <div style="font-size: 13px; font-weight: 600; color: #111827;">${mockContractName}</div>
+      <div style="font-size: 12px; color: #4b5563; margin-top: 2px;">${mockImpactSummary}</div>
+      <div style="font-size: 12px; color: #1e40af; margin-top: 4px; font-style: italic;">${mockRecommendation}</div>
+    </div>`;
+
+    const html = generateEmailTemplate({
+      title: "\u2696\ufe0f Legal Pulse Radar: Gesetzesaenderung erkannt",
+      body,
+      preheader: `1 Vertrag von Gesetzesaenderungen betroffen`,
+      cta: {
+        text: "Im Dashboard ansehen \u2192",
+        url: "https://contract-ai.de/pulse",
+      },
+      unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
+    });
+
+    // ── Automated checks ──
+    const templateRendered = typeof html === "string" && html.length > 100;
+    const hasContractName = html.includes(mockContractName);
+    const hasRecommendation = html.includes(mockRecommendation);
+    const hasDashboardLink = html.includes("https://contract-ai.de/pulse");
+
+    res.json({
+      success: true,
+      html,
+      mockData: {
+        contractName: mockContractName,
+        lawTitle: mockLawTitle,
+        impactSummary: mockImpactSummary,
+        recommendation: mockRecommendation,
+        severity: mockSeverity,
+      },
+      checks: {
+        templateRendered: {
+          passed: templateRendered,
+          detail: templateRendered
+            ? `Email HTML rendered successfully (${html.length} chars).`
+            : "Email HTML generation failed or returned empty content.",
+        },
+        hasContractName: {
+          passed: hasContractName,
+          detail: hasContractName
+            ? `Contract name "${mockContractName}" found in email body.`
+            : `Contract name "${mockContractName}" NOT found in rendered email.`,
+        },
+        hasRecommendation: {
+          passed: hasRecommendation,
+          detail: hasRecommendation
+            ? "Recommendation text found in email body."
+            : "Recommendation text NOT found in rendered email.",
+        },
+        hasDashboardLink: {
+          passed: hasDashboardLink,
+          detail: hasDashboardLink
+            ? "Dashboard link (https://contract-ai.de/pulse) found in email."
+            : "Dashboard link NOT found in rendered email.",
+        },
+      },
+      message: "Email-Preview generiert. HTML kann im Browser gerendert werden.",
+    });
+  } catch (error) {
+    console.error("[AdminTest] Email preview error:", error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
+  }
+});
+
+/**
+ * GET /admin/test-alerts-check
+ * Validates existing alerts for this user: required fields, dedup, clauseImpacts, status tracking.
+ *
+ * Checks:
+ *  - alertsHaveRequiredFields: Every alert has lawTitle, contractName, severity, impactSummary, recommendation
+ *  - dedupWorking: No duplicate alerts (same lawId + contractId)
+ *  - clauseImpactsValid: clauseImpacts have clauseId, clauseTitle, impact, suggestedChange
+ *  - statusTracking: Alerts have status field (unread/read/dismissed/resolved)
+ */
+router.get("/admin/test-alerts-check", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    const allAlerts = await db.collection("pulse_v2_legal_alerts")
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    if (allAlerts.length === 0) {
+      return res.json({
+        success: true,
+        alertCount: 0,
+        message: "Keine Alerts fuer diesen User vorhanden. Fuehre erst /admin/test-radar aus.",
+        checks: {
+          alertsHaveRequiredFields: { passed: true, detail: "No alerts to check." },
+          dedupWorking: { passed: true, detail: "No alerts to check." },
+          clauseImpactsValid: { passed: true, detail: "No alerts to check." },
+          statusTracking: { passed: true, detail: "No alerts to check." },
+        },
+      });
+    }
+
+    // Check 1: Required fields
+    const requiredFields = ["lawTitle", "contractName", "severity", "impactSummary", "recommendation"];
+    const alertsMissingFields = [];
+    for (const alert of allAlerts) {
+      const missing = requiredFields.filter(f => !alert[f] || (typeof alert[f] === "string" && alert[f].trim() === ""));
+      if (missing.length > 0) {
+        alertsMissingFields.push({
+          alertId: alert._id,
+          lawTitle: (alert.lawTitle || "?").substring(0, 60),
+          contractName: alert.contractName || "?",
+          missingFields: missing,
+        });
+      }
+    }
+    const requiredFieldsPassed = alertsMissingFields.length === 0;
+
+    // Check 2: Dedup — no duplicate lawId+contractId combinations
+    const seen = new Set();
+    const duplicates = [];
+    for (const alert of allAlerts) {
+      const key = `${alert.lawId}__${alert.contractId}`;
+      if (seen.has(key)) {
+        duplicates.push({
+          alertId: alert._id,
+          lawId: alert.lawId,
+          contractId: alert.contractId,
+          lawTitle: (alert.lawTitle || "?").substring(0, 60),
+          contractName: alert.contractName || "?",
+        });
+      }
+      seen.add(key);
+    }
+    const dedupPassed = duplicates.length === 0;
+
+    // Check 3: clauseImpacts validity
+    const clauseImpactIssues = [];
+    const clauseImpactRequiredFields = ["clauseId", "clauseTitle", "impact", "suggestedChange"];
+    for (const alert of allAlerts) {
+      if (alert.clauseImpacts && Array.isArray(alert.clauseImpacts)) {
+        for (const ci of alert.clauseImpacts) {
+          const missing = clauseImpactRequiredFields.filter(f => !ci[f] || (typeof ci[f] === "string" && ci[f].trim() === ""));
+          if (missing.length > 0) {
+            clauseImpactIssues.push({
+              alertId: alert._id,
+              contractName: alert.contractName || "?",
+              clauseId: ci.clauseId || "?",
+              missingFields: missing,
+            });
+          }
+        }
+      }
+    }
+    // Count alerts that have clauseImpacts at all
+    const alertsWithClauseImpacts = allAlerts.filter(a => a.clauseImpacts && a.clauseImpacts.length > 0).length;
+    const clauseImpactsPassed = clauseImpactIssues.length === 0;
+
+    // Check 4: Status tracking
+    const validStatuses = ["unread", "read", "dismissed", "resolved"];
+    const alertsWithBadStatus = [];
+    for (const alert of allAlerts) {
+      if (!alert.status || !validStatuses.includes(alert.status)) {
+        alertsWithBadStatus.push({
+          alertId: alert._id,
+          contractName: alert.contractName || "?",
+          status: alert.status || "(missing)",
+        });
+      }
+    }
+    const statusTrackingPassed = alertsWithBadStatus.length === 0;
+
+    // Summary stats
+    const statusDistribution = {};
+    for (const alert of allAlerts) {
+      const s = alert.status || "(missing)";
+      statusDistribution[s] = (statusDistribution[s] || 0) + 1;
+    }
+
+    const severityDistribution = {};
+    for (const alert of allAlerts) {
+      const s = alert.severity || "(missing)";
+      severityDistribution[s] = (severityDistribution[s] || 0) + 1;
+    }
+
+    res.json({
+      success: true,
+      alertCount: allAlerts.length,
+      statusDistribution,
+      severityDistribution,
+      alertsWithClauseImpacts,
+      checks: {
+        alertsHaveRequiredFields: {
+          passed: requiredFieldsPassed,
+          detail: requiredFieldsPassed
+            ? `All ${allAlerts.length} alerts have required fields (lawTitle, contractName, severity, impactSummary, recommendation).`
+            : `${alertsMissingFields.length} of ${allAlerts.length} alerts missing required fields.`,
+          ...(alertsMissingFields.length > 0 && { alertsMissingFields: alertsMissingFields.slice(0, 10) }),
+        },
+        dedupWorking: {
+          passed: dedupPassed,
+          detail: dedupPassed
+            ? `No duplicate alerts found (${allAlerts.length} alerts, ${seen.size} unique lawId+contractId combos).`
+            : `${duplicates.length} duplicate alert(s) found (same lawId+contractId).`,
+          ...(duplicates.length > 0 && { duplicates: duplicates.slice(0, 10) }),
+        },
+        clauseImpactsValid: {
+          passed: clauseImpactsPassed,
+          detail: clauseImpactsPassed
+            ? `${alertsWithClauseImpacts} of ${allAlerts.length} alerts have clauseImpacts, all with valid structure (clauseId, clauseTitle, impact, suggestedChange).`
+            : `${clauseImpactIssues.length} clauseImpact entries missing required fields.`,
+          ...(clauseImpactIssues.length > 0 && { clauseImpactIssues: clauseImpactIssues.slice(0, 10) }),
+        },
+        statusTracking: {
+          passed: statusTrackingPassed,
+          detail: statusTrackingPassed
+            ? `All ${allAlerts.length} alerts have valid status. Distribution: ${JSON.stringify(statusDistribution)}.`
+            : `${alertsWithBadStatus.length} alert(s) have invalid/missing status. Valid: ${validStatuses.join(", ")}.`,
+          ...(alertsWithBadStatus.length > 0 && { alertsWithBadStatus: alertsWithBadStatus.slice(0, 10) }),
+        },
+      },
+      message: `Alerts-Check abgeschlossen. ${allAlerts.length} Alerts geprueft.`,
+    });
+  } catch (error) {
+    console.error("[AdminTest] Alerts check error:", error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
   }
 });
 
