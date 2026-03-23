@@ -596,17 +596,19 @@
   border-radius: 50%;
   border: 3px solid;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
+  padding-top: 20px;
   flex-shrink: 0;
   cursor: pointer;
   transition: box-shadow 0.2s;
+  box-sizing: border-box;
 }
 .overallScore:hover {
   box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
 }
 .overallScoreNumber { font-size: 28px; font-weight: 700; line-height: 1; }
-.overallScoreMax { font-size: 13px; color: var(--ov2-gray-400); line-height: 1; align-self: flex-end; margin-bottom: 2px; }
+.overallScoreMax { font-size: 13px; color: var(--ov2-gray-400); line-height: 1; }
 
 .overallScoreInfo { display: flex; flex-direction: column; }
 .overallScoreLabel { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
