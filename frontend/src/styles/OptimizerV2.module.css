@@ -228,7 +228,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 28px;
+  border-radius: 16px;
   padding: 40px;
   box-shadow:
     0 4px 6px rgba(0, 0, 0, 0.02),
@@ -744,10 +744,10 @@
 .topRiskItem {
   display: flex; align-items: center; gap: 12px; padding: 10px 12px;
   background: transparent; border: none; border-radius: var(--ov2-radius-xs);
-  cursor: pointer; text-align: left; width: 100%; transition: background 0.15s;
+  cursor: pointer; text-align: left; width: 100%; transition: background 0.15s, transform 0.15s;
   font-family: var(--ov2-font);
 }
-.topRiskItem:hover { background: var(--ov2-gray-50); }
+.topRiskItem:hover { background: var(--ov2-gray-50); transform: translateX(2px); }
 .topRiskRank { font-size: 13px; font-weight: 700; color: var(--ov2-gray-400); min-width: 18px; }
 .topRiskInfo { flex: 1; min-width: 0; }
 .topRiskName { display: block; font-size: 13px; font-weight: 500; color: var(--ov2-gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1053,9 +1053,9 @@
   border: 1px solid var(--ov2-gray-200);
   border-radius: var(--ov2-radius-sm);
   overflow: hidden;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.clauseCard:hover { border-color: var(--ov2-gray-300); }
+.clauseCard:hover { border-color: var(--ov2-gray-300); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .clauseCardExpanded { border-color: var(--ov2-blue); box-shadow: var(--ov2-shadow-md); }
 
 .clauseCardHeader {
@@ -1086,8 +1086,8 @@
   white-space: nowrap;
 }
 .clauseCategory {
-  font-size: 11px;
-  color: var(--ov2-gray-400);
+  font-size: 12px;
+  color: var(--ov2-gray-500);
   white-space: nowrap;
 }
 
@@ -1873,6 +1873,9 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ov2-gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .rlCategoryTag {
   font-size: 10.5px;
@@ -2427,11 +2430,12 @@
   border-radius: var(--ov2-radius-sm);
   border: 1px solid var(--ov2-gray-100);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 .riskHeatmapCell:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: var(--ov2-shadow-md);
+  border-color: var(--ov2-gray-200);
 }
 .riskHeatmapCellName {
   font-size: 12px;
