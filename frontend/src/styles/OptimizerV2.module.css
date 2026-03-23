@@ -596,16 +596,71 @@
   border-radius: 50%;
   border: 3px solid;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
 }
-.overallScoreNumber { font-size: 28px; font-weight: 700; }
-.overallScoreMax { font-size: 13px; color: var(--ov2-gray-400); }
+.overallScore:hover {
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+}
+.overallScoreNumber { font-size: 28px; font-weight: 700; line-height: 1; }
+.overallScoreMax { font-size: 13px; color: var(--ov2-gray-400); line-height: 1; align-self: flex-end; margin-bottom: 2px; }
 
 .overallScoreInfo { display: flex; flex-direction: column; }
-.overallScoreLabel { font-size: 16px; font-weight: 600; }
+.overallScoreLabel { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
 .contractType { font-size: 13px; color: var(--ov2-gray-500); }
+.scoreInfoBtn {
+  background: none;
+  border: none;
+  color: var(--ov2-gray-400);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.scoreInfoBtn:hover { color: var(--ov2-blue); }
+.scoreInfoPanel {
+  position: relative;
+  width: 100%;
+  background: #f0f7ff;
+  border: 1px solid #c6deff;
+  border-radius: var(--ov2-radius-sm);
+  padding: 16px 36px 16px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ov2-gray-700);
+}
+.scoreInfoPanel strong { color: var(--ov2-gray-800); }
+.scoreInfoPanel p { margin: 6px 0 10px; }
+.scoreInfoClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--ov2-gray-400);
+  cursor: pointer;
+  padding: 2px;
+}
+.scoreInfoClose:hover { color: var(--ov2-gray-600); }
+.scoreInfoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.scoreInfoGrid div { font-size: 12px; }
+.scoreInfoGrid span { font-weight: 600; }
+.scoreInfoScale {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #c6deff;
+}
 
 .summaryStats {
   display: flex;

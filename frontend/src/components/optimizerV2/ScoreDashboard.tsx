@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, HelpCircle } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import { apiCall } from '../../utils/api';
@@ -84,18 +84,32 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       });
   }, [result]);
 
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
+
   return (
     <div className={styles.scoreDashboard}>
       {/* Contract Summary Panel */}
       <div className={styles.summaryPanel}>
         <div className={styles.summaryLeft}>
-          <div className={styles.overallScore} style={{ borderColor: getScoreColor(scores.overall) }}>
+          <div
+            className={styles.overallScore}
+            style={{ borderColor: getScoreColor(scores.overall) }}
+            onClick={() => setShowScoreInfo(s => !s)}
+            title="Klicken für Score-Erklärung"
+          >
             <span className={styles.overallScoreNumber}>{scores.overall}</span>
             <span className={styles.overallScoreMax}>/100</span>
           </div>
           <div className={styles.overallScoreInfo}>
             <span className={styles.overallScoreLabel} style={{ color: getScoreColor(scores.overall) }}>
               {getScoreLabel(scores.overall)}
+              <button
+                className={styles.scoreInfoBtn}
+                onClick={() => setShowScoreInfo(s => !s)}
+                title="Score-Erklärung"
+              >
+                <HelpCircle size={14} />
+              </button>
             </span>
             <span className={styles.contractType}>{structure.recognizedAs || structure.contractTypeLabel}</span>
           </div>
@@ -132,6 +146,28 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             Redline ansehen
           </button>
         </div>
+
+        {/* Score Info Panel */}
+        {showScoreInfo && (
+          <div className={styles.scoreInfoPanel}>
+            <button className={styles.scoreInfoClose} onClick={() => setShowScoreInfo(false)}><X size={14} /></button>
+            <strong>Wie wird der Score berechnet?</strong>
+            <p>Der Gesamtscore (0–100) setzt sich aus 5 gewichteten Dimensionen zusammen:</p>
+            <div className={styles.scoreInfoGrid}>
+              <div><span style={{ color: '#FF3B30' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
+              <div><span style={{ color: '#AF52DE' }}>Fairness (20%)</span> — Sind die Rechte und Pflichten ausgewogen verteilt?</div>
+              <div><span style={{ color: '#007AFF' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
+              <div><span style={{ color: '#34C759' }}>Vollständigkeit (10%)</span> — Sind alle branchenüblichen Klauseln vorhanden?</div>
+              <div><span style={{ color: '#FF9500' }}>Marktstandard (10%)</span> — Entspricht der Vertrag marktüblichen Regelungen?</div>
+            </div>
+            <div className={styles.scoreInfoScale}>
+              <span><strong>80–100</strong> Sehr gut</span>
+              <span><strong>60–79</strong> Gut</span>
+              <span><strong>40–59</strong> Verbesserbar</span>
+              <span><strong>0–39</strong> Kritisch</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Score Cards */}
