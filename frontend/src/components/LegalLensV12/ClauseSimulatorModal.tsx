@@ -103,31 +103,21 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   const [copied, setCopied] = useState(false);
   const [showSaveOriginal, setShowSaveOriginal] = useState(false);
   const [showSaveModified, setShowSaveModified] = useState(false);
+  const [rewriteCache, setRewriteCache] = useState<Record<string, string>>({});
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevOriginalRef = useRef(originalText);
 
   // Only reset when the CLAUSE changes (different originalText), not on re-open
   useEffect(() => {
     if (isOpen && originalText !== prevOriginalRef.current) {
-      // New clause — pre-fill with AI suggestion if available, else original
-      setModifiedText(suggestedAlternative || originalText);
+      setModifiedText(originalText);
       setSimulation(null);
       setError(null);
       setCopied(false);
+      setRewriteCache({});
       prevOriginalRef.current = originalText;
     }
-  }, [isOpen, originalText, suggestedAlternative]);
-
-  // On very first open, pre-fill with suggested alternative if available
-  const initializedRef = useRef(false);
-  useEffect(() => {
-    if (isOpen && !initializedRef.current) {
-      initializedRef.current = true;
-      if (suggestedAlternative && modifiedText === originalText) {
-        setModifiedText(suggestedAlternative);
-      }
-    }
-  }, [isOpen, suggestedAlternative, modifiedText, originalText]);
+  }, [isOpen, originalText]);
 
   // Auto-resize textarea to fit content
   const autoResize = useCallback(() => {
@@ -164,7 +154,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
       actions.push({
         label: 'KI-Vorschlag',
         icon: '💡',
-        instruction: '',
+        instruction: '__ki_vorschlag__',
         instant: true
       });
     }
@@ -178,6 +168,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   }, [suggestedAlternative]);
 
   const handleQuickAction = async (action: QuickAction) => {
+    // KI-Vorschlag = instant load from prop
     if (action.instant && suggestedAlternative) {
       setModifiedText(suggestedAlternative);
       setSimulation(null);
@@ -186,11 +177,24 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
       return;
     }
 
+    // Check cache first — instant if already generated
+    const cacheKey = action.instruction;
+    if (rewriteCache[cacheKey]) {
+      setModifiedText(rewriteCache[cacheKey]);
+      setSimulation(null);
+      setError(null);
+      setTimeout(autoResize, 0);
+      return;
+    }
+
+    // API call
     setIsRewriting(true);
     setError(null);
 
     try {
       const result = await rewriteClause(contractId, originalText, action.instruction, industry);
+      // Cache the result
+      setRewriteCache(prev => ({ ...prev, [cacheKey]: result.rewrittenClause }));
       setModifiedText(result.rewrittenClause);
       setSimulation(null);
       setTimeout(autoResize, 0);
@@ -273,12 +277,15 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
             {quickActions.map((action, idx) => (
               <button
                 key={idx}
-                className={`${styles.simulatorQuickChip} ${action.instant ? styles.simulatorQuickChipHighlight : ''}`}
+                className={styles.simulatorQuickChip}
                 onClick={() => handleQuickAction(action)}
                 disabled={isRewriting || isSimulating}
               >
                 <span>{action.icon}</span>
                 {action.label}
+                {!action.instant && rewriteCache[action.instruction] && (
+                  <Check size={10} className={styles.simulatorChipCached} />
+                )}
               </button>
             ))}
           </div>
