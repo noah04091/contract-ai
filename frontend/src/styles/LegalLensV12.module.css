@@ -984,194 +984,245 @@
 }
 
 /* ===== ENHANCED PERSPECTIVE SWITCHER ===== */
+/* ===== PERSPECTIVE SWITCHER (Compact Dropdown) ===== */
 .perspectiveSwitcherEnhanced {
   background: white;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
 }
 
-.perspectiveHeader {
+.perspectiveDropdownRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 0.5rem;
 }
 
-.perspectiveHeaderLeft {
+.perspectiveDropdownWrapper {
+  position: relative;
+  flex: 1;
+}
+
+.perspectiveDropdownTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  background: var(--perspective-bg, #f8fafc);
+  border: 1.5px solid var(--perspective-color, #e2e8f0);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.perspectiveDropdownTrigger:hover {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.perspectiveDropdownTrigger.open {
+  border-radius: 8px 8px 0 0;
+}
+
+.perspectiveDropdownIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.perspectiveDropdownName {
+  font-weight: 600;
+  color: #1e293b;
+  flex: 1;
+}
+
+.perspectiveDropdownChevron {
+  color: #64748b;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.perspectiveDropdownChevron.rotated {
+  transform: rotate(180deg);
+}
+
+.perspectiveDropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  overflow: hidden;
+  animation: slideDown 0.15s ease-out;
+}
+
+.perspectiveDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.perspectiveDropdownItem:hover {
+  background: #f1f5f9;
+}
+
+.perspectiveDropdownItem.active {
+  background: #eff6ff;
+}
+
+.perspectiveDropdownItem + .perspectiveDropdownItem {
+  border-top: 1px solid #f1f5f9;
+}
+
+.perspectiveDropdownItemIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.perspectiveDropdownItemText {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
 }
 
-.perspectiveLabel {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.perspectiveCurrentHint {
+.perspectiveDropdownItemName {
   font-size: 0.8rem;
-  color: #64748b;
-  font-style: italic;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.perspectiveHelpBtn {
+.perspectiveDropdownItemDesc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.perspectiveDropdownCheck {
+  font-size: 0.75rem;
+  color: #3b82f6;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ? Help Icon Button */
+.perspectiveHelpIcon {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 0.75rem;
-  color: #64748b;
+  color: #94a3b8;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
-.perspectiveHelpBtn:hover {
+.perspectiveHelpIcon:hover {
   background: #f1f5f9;
-  color: #475569;
+  color: #64748b;
 }
 
-.perspectiveHelpBtn.active {
+.perspectiveHelpIcon.active {
   background: #eff6ff;
   border-color: #3b82f6;
   color: #3b82f6;
 }
 
-/* Perspective Cards */
-.perspectiveCards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  overflow-x: visible;
-}
-
-
-.perspectiveCard {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 0.75rem;
+/* Help Popover */
+.perspectiveHelpPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
   background: white;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 220px;
-}
-
-.perspectiveCard:hover {
-  background: var(--perspective-bg);
-  border-color: var(--perspective-color);
-}
-
-.perspectiveCard.active {
-  background: var(--perspective-bg);
-  border-color: var(--perspective-color);
-  border-width: 2px;
-}
-
-.perspectiveCard:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.perspectiveCardIcon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.perspectiveCardContent {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.perspectiveCardName {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.perspectiveCard.active .perspectiveCardName {
-  color: var(--perspective-color);
-}
-
-.perspectiveCardDesc {
-  font-size: 0.7rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.perspectiveCard.active .perspectiveCardDesc {
-  color: var(--perspective-color);
-  opacity: 0.8;
-}
-
-.perspectiveCardActive {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 16px;
-  height: 16px;
-  background: var(--perspective-color);
-  color: white;
-  border-radius: 50%;
-  font-size: 0.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-/* Help Panel */
-.perspectiveHelpPanel {
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 60;
+  padding: 0.875rem;
   animation: slideDown 0.2s ease-out;
-  max-height: 400px;
-  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
 
-.perspectiveHelpPanel::-webkit-scrollbar {
-  width: 6px;
+.perspectiveHelpPopover::-webkit-scrollbar {
+  width: 5px;
 }
 
-.perspectiveHelpPanel::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.perspectiveHelpPanel::-webkit-scrollbar-thumb {
+.perspectiveHelpPopover::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
 
-.perspectiveHelpPanel::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+.perspectiveHelpTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.625rem;
+}
+
+.perspectiveHelpList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.perspectiveHelpListItem {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.625rem;
+  border-left: 3px solid;
+}
+
+.perspectiveHelpItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.8rem;
+  color: #1e293b;
+}
+
+.perspectiveHelpItemDesc {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 0.375rem 0;
+}
+
+.perspectiveHelpUseCasesList {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.7rem;
+  color: #475569;
+}
+
+.perspectiveHelpUseCasesList li {
+  margin-bottom: 0.125rem;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -1179,91 +1230,29 @@
   }
 }
 
-.perspectiveHelpTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-}
-
-.perspectiveHelpGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-}
-
-.perspectiveHelpCard {
-  background: white;
-  border-radius: 8px;
-  padding: 0.875rem;
-  border-left: 3px solid;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.perspectiveHelpCardHeader {
+/* Keep old class names for AnalysisPanel's "Andere Perspektiven" section */
+.perspectiveCards {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  color: #1e293b;
 }
 
-.perspectiveHelpCardHeader strong {
-  color: #1e293b;
-  font-weight: 600;
-}
-
-.perspectiveHelpDesc {
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.5;
-  margin: 0 0 0.75rem 0;
-}
-
-.perspectiveHelpUseCases {
-  margin-bottom: 0.75rem;
-}
-
-.perspectiveHelpUseCasesLabel {
-  display: block;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.375rem;
-}
-
-.perspectiveHelpUseCases ul {
-  margin: 0;
-  padding-left: 1rem;
-  font-size: 0.75rem;
-  color: #475569;
-}
-
-.perspectiveHelpUseCases li {
-  margin-bottom: 0.25rem;
-}
-
-.perspectiveHelpChoose {
-  width: 100%;
+.perspectiveCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding: 0.5rem;
-  border: none;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  color: white;
+  flex: 1 1 auto;
+  min-width: 80px;
+}
+
+.perspectiveCardName {
   font-size: 0.75rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.perspectiveHelpChoose:hover {
-  opacity: 0.9;
-}
-
-.perspectiveHelpChoose:disabled {
-  cursor: not-allowed;
+  color: #1e293b;
 }
 
 /* ===== ANALYSIS CONTENT ===== */
@@ -1886,18 +1875,7 @@
     font-size: 1.25rem;
   }
 
-  .perspectiveCard {
-    min-width: 120px;
-    padding: 0.5rem 0.625rem;
-  }
-
-  .perspectiveCardName {
-    font-size: 0.8rem;
-  }
-
-  .perspectiveCardDesc {
-    font-size: 0.65rem;
-  }
+  /* perspectiveCard overrides removed — now using dropdown */
 
   .compareModalContent {
     padding: 1rem;
@@ -1986,37 +1964,15 @@
     min-width: 36px;
   }
 
-  /* Perspective cards: allow wrapping on narrower screens */
-  .perspectiveCards {
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    overflow-x: visible;
-  }
-
-  .perspectiveCard {
-    min-width: 110px;
-    max-width: none;
-    flex: 1 1 auto;
-    padding: 0.5rem;
-    gap: 0.375rem;
-  }
-
-  .perspectiveCardDesc {
-    display: none;
-  }
+  /* Perspective dropdown: already compact, no changes needed */
 
   /* Action badge: scale down at narrower widths */
-  .actionBadgeHeader {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
   .actionEmoji {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
   }
 
   .actionTitle {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .actionReasonText {
@@ -2112,10 +2068,10 @@
     padding: 0.375rem 0.625rem;
   }
 
-  /* Risk arc: slightly smaller */
+  /* Risk arc: slightly smaller on tablets */
   .riskArcWrapper {
-    width: 56px;
-    height: 56px;
+    width: 42px;
+    height: 42px;
   }
 
   /* Celebration: scale for smaller screens */
@@ -2356,125 +2312,15 @@
   }
 }
 
-/* ===== ENHANCED PERSPECTIVE SWITCHER MOBILE ===== */
+/* ===== PERSPECTIVE DROPDOWN MOBILE ===== */
 @media (max-width: 1024px) {
   .perspectiveSwitcherEnhanced {
-    border-bottom: 1px solid #e2e8f0;
+    padding: 0.375rem 0.625rem;
   }
 
-  .perspectiveHeader {
-    padding: 0.625rem 0.75rem;
-  }
-
-  .perspectiveLabel {
-    font-size: 0.65rem;
-  }
-
-  .perspectiveCurrentHint {
-    font-size: 0.75rem;
-  }
-
-  .perspectiveHelpBtn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
-  }
-
-  .perspectiveHelpBtn span {
-    display: none;
-  }
-
-  .perspectiveCards {
-    flex-wrap: wrap;
-    gap: 0.375rem;
-    padding: 0.5rem 0.75rem;
-    overflow-x: visible;
-  }
-
-  .perspectiveCard {
-    padding: 0.5rem;
-    gap: 0.375rem;
-    flex: 1 1 calc(50% - 0.2rem);
-    min-width: 110px;
-    max-width: calc(50% - 0.2rem);
-  }
-
-  .perspectiveCardIcon {
-    font-size: 1.1rem;
-  }
-
-  .perspectiveCardName {
-    font-size: 0.75rem;
-  }
-
-  .perspectiveCardDesc {
-    font-size: 0.65rem;
-  }
-
-  .perspectiveCardActive {
-    width: 14px;
-    height: 14px;
-    font-size: 0.5rem;
-  }
-
-  .perspectiveHelpPanel {
-    padding: 0.75rem;
-    max-height: 350px;
-  }
-
-  .perspectiveHelpTitle {
-    font-size: 0.85rem;
-    margin-bottom: 0.5rem;
-    color: #1e293b;
-  }
-
-  .perspectiveHelpGrid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .perspectiveHelpCardHeader {
-    color: #1e293b;
-  }
-
-  .perspectiveHelpCardHeader strong {
-    color: #1e293b;
-  }
-
-  .perspectiveHelpCard {
-    padding: 0.75rem;
-  }
-
-  .perspectiveHelpCardHeader {
-    font-size: 0.8rem;
-    margin-bottom: 0.375rem;
-  }
-
-  .perspectiveHelpDesc {
-    font-size: 0.75rem;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-  }
-
-  .perspectiveHelpUseCases {
-    margin-bottom: 0.5rem;
-  }
-
-  .perspectiveHelpUseCasesLabel {
-    font-size: 0.65rem;
-  }
-
-  .perspectiveHelpUseCases ul {
-    font-size: 0.7rem;
-    padding-left: 0.875rem;
-  }
-
-  .perspectiveHelpUseCases li {
-    margin-bottom: 0.125rem;
-  }
-
-  .perspectiveHelpChoose {
-    padding: 0.375rem;
-    font-size: 0.7rem;
+  .perspectiveHelpPopover {
+    width: 280px;
+    right: -8px;
   }
 }
 
@@ -2883,38 +2729,34 @@
   }
 }
 
-/* ===== FLOATING SAVE BUTTON ===== */
+/* ===== SAVE BUTTON (static at bottom of analysis) ===== */
 .floatingSaveButton {
-  position: sticky;
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
   background: linear-gradient(135deg, #60a5fa 0%, #9333ea 100%);
   border: none;
-  border-radius: 50px;
+  border-radius: 8px;
   color: white;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
-  margin: 1rem auto;
-  z-index: 100;
+  box-shadow: 0 2px 10px rgba(168, 85, 247, 0.25);
+  margin-top: 0.75rem;
 }
 
 .floatingSaveButton:hover {
   background: linear-gradient(135deg, #9333ea 0%, #3b82f6 100%);
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
 }
 
 .floatingSaveButton:active {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 .floatingSaveButton svg {
@@ -3249,51 +3091,51 @@
   overflow-wrap: break-word;
 }
 
-/* 2. Action Badge Section */
+/* 2. Action Badge Section — compact, scrolls with content */
 .actionBadgeSection {
   background: var(--action-bg);
   border: 2px solid var(--action-color);
-  border-radius: 12px;
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 0.5rem 0.75rem !important;
 }
 
 .actionBadgeHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .actionBadgeInfo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .actionEmoji {
-  font-size: 2rem;
+  font-size: 1.35rem;
 }
 
 .actionTitle {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--action-color);
+  line-height: 1.2;
 }
 
 .metaLabel {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: #64748b;
 }
 
 .scoreCard {
-  text-align: right;
-  padding: 0.5rem 1rem;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
   background: white;
-  border-radius: 8px;
-  min-width: 100px;
+  border-radius: 6px;
+  min-width: 60px;
 }
 
 .scoreValue {
@@ -3303,20 +3145,20 @@
 }
 
 .scoreLabel {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--score-color);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .scoreHint {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   color: #64748b;
 }
 
 .actionReasonText {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #374151;
   font-weight: 500;
   overflow-wrap: break-word;
@@ -3968,8 +3810,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 68px;
-  height: 68px;
+  width: 48px;
+  height: 48px;
 }
 .riskArcSvg {
   position: absolute;
@@ -3982,11 +3824,11 @@
   transition: stroke-dasharray 0.8s ease-out;
 }
 .riskArcValue {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--score-color);
   font-variant-numeric: tabular-nums;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 /* ===== FOCUS MODE ===== */

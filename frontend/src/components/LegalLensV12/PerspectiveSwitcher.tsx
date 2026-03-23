@@ -1,8 +1,8 @@
 // 📁 components/LegalLens/PerspectiveSwitcher.tsx
-// Komponente für den Perspektiven-Wechsler - REDESIGNED mit Erklärungen
+// Kompakter Dropdown-Perspektiven-Wechsler mit ? Hilfe-Icon
 
-import React, { useState } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { HelpCircle, ChevronDown } from 'lucide-react';
 import type { PerspectiveType } from '../../types/legalLens';
 import styles from '../../styles/LegalLensV12.module.css';
 
@@ -93,116 +93,103 @@ const PerspectiveSwitcher: React.FC<PerspectiveSwitcherProps> = ({
   disabled = false
 }) => {
   const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
   const currentInfo = PERSPECTIVES_ENHANCED.find(p => p.id === currentPerspective);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+      if (helpRef.current && !helpRef.current.contains(e.target as Node)) {
+        setShowHelp(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className={styles.perspectiveSwitcherEnhanced}>
-      {/* Header mit Hilfe-Button */}
-      <div className={styles.perspectiveHeader}>
-        <div className={styles.perspectiveHeaderLeft}>
-          <span className={styles.perspectiveLabel}>Analyse-Perspektive</span>
-          <span className={styles.perspectiveCurrentHint}>
-            {currentInfo?.shortHint}
-          </span>
-        </div>
-        <button
-          className={`${styles.perspectiveHelpBtn} ${showHelp ? styles.active : ''}`}
-          onClick={() => setShowHelp(!showHelp)}
-          title="Perspektiven erklärt"
-        >
-          <HelpCircle size={16} />
-          <span>Welche wählen?</span>
-          {showHelp ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-      </div>
+      <div className={styles.perspectiveDropdownRow}>
+        {/* Compact Dropdown */}
+        <div className={styles.perspectiveDropdownWrapper} ref={dropdownRef}>
+          <button
+            className={`${styles.perspectiveDropdownTrigger} ${dropdownOpen ? styles.open : ''}`}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            disabled={disabled}
+            style={{ '--perspective-color': currentInfo?.color, '--perspective-bg': currentInfo?.bgColor } as React.CSSProperties}
+          >
+            <span className={styles.perspectiveDropdownIcon}>{currentInfo?.icon}</span>
+            <span className={styles.perspectiveDropdownName}>{currentInfo?.name}</span>
+            <ChevronDown size={14} className={`${styles.perspectiveDropdownChevron} ${dropdownOpen ? styles.rotated : ''}`} />
+          </button>
 
-      {/* Perspektiven Cards */}
-      <div className={styles.perspectiveCards}>
-        {PERSPECTIVES_ENHANCED.map((perspective) => {
-          const isActive = currentPerspective === perspective.id;
-          return (
-            <button
-              key={perspective.id}
-              className={`${styles.perspectiveCard} ${isActive ? styles.active : ''}`}
-              onClick={() => onChangePerspective(perspective.id)}
-              disabled={disabled}
-              style={{
-                '--perspective-color': perspective.color,
-                '--perspective-bg': perspective.bgColor
-              } as React.CSSProperties}
-            >
-              <div className={styles.perspectiveCardIcon}>
-                {perspective.icon}
-              </div>
-              <div className={styles.perspectiveCardContent}>
-                <span className={styles.perspectiveCardName}>
-                  {perspective.name}
-                </span>
-                <span className={styles.perspectiveCardDesc}>
-                  {perspective.description}
-                </span>
-              </div>
-              {isActive && (
-                <span className={styles.perspectiveCardActive}>
-                  ✓
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Ausklappbare Hilfe */}
-      {showHelp && (
-        <div className={styles.perspectiveHelpPanel}>
-          <div className={styles.perspectiveHelpTitle}>
-            🎯 Welche Perspektive ist richtig für dich?
-          </div>
-          <div className={styles.perspectiveHelpGrid}>
-            {PERSPECTIVES_ENHANCED.map((perspective) => (
-              <div
-                key={perspective.id}
-                className={styles.perspectiveHelpCard}
-                style={{
-                  borderLeftColor: perspective.color
-                }}
-              >
-                <div className={styles.perspectiveHelpCardHeader}>
-                  <span>{perspective.icon}</span>
-                  <strong>{perspective.name}</strong>
-                </div>
-                <p className={styles.perspectiveHelpDesc}>
-                  {perspective.longDescription}
-                </p>
-                <div className={styles.perspectiveHelpUseCases}>
-                  <span className={styles.perspectiveHelpUseCasesLabel}>
-                    Nutze diese Perspektive wenn:
-                  </span>
-                  <ul>
-                    {perspective.useCases.map((useCase, idx) => (
-                      <li key={idx}>{useCase}</li>
-                    ))}
-                  </ul>
-                </div>
-                <button
-                  className={styles.perspectiveHelpChoose}
-                  onClick={() => {
-                    onChangePerspective(perspective.id);
-                    setShowHelp(false);
-                  }}
-                  disabled={disabled}
-                  style={{
-                    background: perspective.color,
-                    opacity: currentPerspective === perspective.id ? 0.5 : 1
-                  }}
-                >
-                  {currentPerspective === perspective.id ? 'Ausgewählt' : 'Auswählen'}
-                </button>
-              </div>
-            ))}
-          </div>
+          {dropdownOpen && (
+            <div className={styles.perspectiveDropdownMenu}>
+              {PERSPECTIVES_ENHANCED.map((p) => {
+                const isActive = currentPerspective === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    className={`${styles.perspectiveDropdownItem} ${isActive ? styles.active : ''}`}
+                    onClick={() => {
+                      onChangePerspective(p.id);
+                      setDropdownOpen(false);
+                    }}
+                    disabled={disabled}
+                  >
+                    <span className={styles.perspectiveDropdownItemIcon}>{p.icon}</span>
+                    <div className={styles.perspectiveDropdownItemText}>
+                      <span className={styles.perspectiveDropdownItemName}>{p.name}</span>
+                      <span className={styles.perspectiveDropdownItemDesc}>{p.description}</span>
+                    </div>
+                    {isActive && <span className={styles.perspectiveDropdownCheck}>&#10003;</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Separate ? Help Icon */}
+        <div ref={helpRef} style={{ position: 'relative' }}>
+          <button
+            className={`${styles.perspectiveHelpIcon} ${showHelp ? styles.active : ''}`}
+            onClick={() => setShowHelp(!showHelp)}
+            title="Perspektiven erklärt"
+          >
+            <HelpCircle size={16} />
+          </button>
+
+          {showHelp && (
+            <div className={styles.perspectiveHelpPopover}>
+              <div className={styles.perspectiveHelpTitle}>
+                Welche Perspektive ist richtig?
+              </div>
+              <div className={styles.perspectiveHelpList}>
+                {PERSPECTIVES_ENHANCED.map((p) => (
+                  <div key={p.id} className={styles.perspectiveHelpListItem} style={{ borderLeftColor: p.color }}>
+                    <div className={styles.perspectiveHelpItemHeader}>
+                      <span>{p.icon}</span>
+                      <strong>{p.name}</strong>
+                    </div>
+                    <p className={styles.perspectiveHelpItemDesc}>{p.longDescription}</p>
+                    <ul className={styles.perspectiveHelpUseCasesList}>
+                      {p.useCases.map((uc, idx) => (
+                        <li key={idx}>{uc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -338,7 +338,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         className={`${styles.analysisSection} ${styles.actionBadgeSection}`}
         style={{ '--action-bg': actionInfo.bgColor, '--action-color': actionInfo.color } as React.CSSProperties}
       >
-        <div className={styles.actionBadgeHeader} style={{ marginBottom: actionReason ? '0.75rem' : 0 }}>
+        <div className={styles.actionBadgeHeader} style={{ marginBottom: actionReason ? '0.4rem' : 0 }}>
           <div className={styles.actionBadgeInfo}>
             <span className={styles.actionEmoji}>{actionInfo.emoji}</span>
             <div>
