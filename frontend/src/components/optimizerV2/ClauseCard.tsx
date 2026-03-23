@@ -59,7 +59,7 @@ export default function ClauseCard({
           category,
           clauseArea: AREA_MAP[clause.category] || 'other',
           sourceClauseId: clause.id,
-          userNotes: `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.title}`,
+          userNotes: `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.sectionNumber && clause.title?.startsWith(clause.sectionNumber) ? clause.title.slice(clause.sectionNumber.length).trimStart() : clause.title}`,
           tags: ['optimizer-v2', clause.category]
         }),
         headers: { 'Content-Type': 'application/json' }
@@ -91,7 +91,11 @@ export default function ClauseCard({
           {clause.sectionNumber && clause.sectionNumber !== 'null' && (
             <span className={styles.clauseSectionNumber}>{clause.sectionNumber}</span>
           )}
-          <span className={styles.clauseTitle}>{clause.title}</span>
+          <span className={styles.clauseTitle}>
+            {clause.sectionNumber && clause.title?.startsWith(clause.sectionNumber)
+              ? clause.title.slice(clause.sectionNumber.length).trimStart()
+              : clause.title}
+          </span>
           <span className={styles.clauseCategory}>{categoryLabel}</span>
         </div>
 

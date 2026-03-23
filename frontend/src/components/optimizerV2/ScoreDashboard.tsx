@@ -76,7 +76,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
         const insight = a.neutralRecommendation || a.recipientView || a.economicRiskAssessment || a.concerns?.[0] || a.summary;
         return {
           clauseId: a.clauseId,
-          title: clause ? `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.title}` : a.clauseId,
+          title: clause ? `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.sectionNumber && clause.title?.startsWith(clause.sectionNumber) ? clause.title.slice(clause.sectionNumber.length).trimStart() : clause.title}` : a.clauseId,
           insight: insight.length > 120 ? insight.substring(0, 117) + '...' : insight,
           powerBalance: a.powerBalance,
           riskLevel: a.riskLevel
@@ -781,7 +781,7 @@ function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavi
             <span className={styles.topRiskRank}>{i + 1}</span>
             <div className={styles.topRiskInfo}>
               <span className={styles.topRiskName}>
-                {clause.sectionNumber && clause.sectionNumber !== 'null' && `${clause.sectionNumber} `}{clause.title}
+                {clause.sectionNumber && clause.sectionNumber !== 'null' && `${clause.sectionNumber} `}{clause.sectionNumber && clause.title?.startsWith(clause.sectionNumber) ? clause.title.slice(clause.sectionNumber.length).trimStart() : clause.title}
               </span>
               <span className={styles.topRiskCategory}>{CATEGORY_LABELS[clause.category]}</span>
             </div>

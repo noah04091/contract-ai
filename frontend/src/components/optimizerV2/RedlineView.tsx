@@ -273,7 +273,7 @@ export default function RedlineView({
                 <div className={styles.rlRowMeta}>
                   {changed && <div className={styles.rlChangeIndicator} />}
                   {sectionNum && <span className={styles.rlSectionBadge}>{sectionNum}</span>}
-                  <span className={styles.rlClauseTitle}>{clause.title}</span>
+                  <span className={styles.rlClauseTitle}>{sectionNum && clause.title?.startsWith(sectionNum) ? clause.title.slice(sectionNum.length).trimStart() : clause.title}</span>
                   <span className={styles.rlCategoryTag}>{categoryLabel}</span>
                   {changed && <span className={styles.rlOptimizedTag}>Optimiert</span>}
                 </div>
@@ -327,7 +327,7 @@ export default function RedlineView({
                   {selectedClause.sectionNumber && selectedClause.sectionNumber !== 'null' && (
                     <span className={styles.rlSectionBadge} style={{ marginRight: 8 }}>{selectedClause.sectionNumber}</span>
                   )}
-                  {selectedClause.title}
+                  {selectedClause.sectionNumber && selectedClause.title?.startsWith(selectedClause.sectionNumber) ? selectedClause.title.slice(selectedClause.sectionNumber.length).trimStart() : selectedClause.title}
                 </h4>
                 <span className={styles.rlCategoryTag}>
                   {CATEGORY_LABELS[selectedClause.category] || selectedClause.category}

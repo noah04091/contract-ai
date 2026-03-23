@@ -366,7 +366,7 @@ Viele Grüße`;
                   <div className={styles.docxClauseInfo}>
                     <span className={styles.docxClauseTitle}>
                       {sectionNum && <span className={styles.docxClauseSection}>{sectionNum}</span>}
-                      {clause!.title}
+                      {sectionNum && clause!.title?.startsWith(sectionNum) ? clause!.title.slice(sectionNum.length).trimStart() : clause!.title}
                       {acceptedMode && (
                         <span className={styles.docxAcceptedBadge} title="In Klauselansicht akzeptiert">
                           <CheckCircle2 size={11} />
