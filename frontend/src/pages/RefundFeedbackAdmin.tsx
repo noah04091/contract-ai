@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Link, Copy, Check, Plus, ArrowLeft, MessageSquare, Clock, CheckCircle, Star, ExternalLink } from "lucide-react";
+import { Copy, Check, Plus, MessageSquare, Clock, CheckCircle, Star, ExternalLink } from "lucide-react";
 import styles from "./RefundFeedbackAdmin.module.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.contract-ai.de";
