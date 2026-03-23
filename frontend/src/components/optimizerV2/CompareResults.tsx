@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowUpRight, ArrowDownRight, Minus, Loader2, FileText, BarChart3, HelpCircle, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Minus, Loader2, FileText, BarChart3, HelpCircle, X, AlertCircle } from 'lucide-react';
 import { apiCall } from '../../utils/api';
 import type { AnalysisResult, Scores } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -35,9 +35,11 @@ function ScoreDelta({ value, size = 'normal' }: { value: number; size?: 'normal'
 export default function CompareResults({ currentResult }: Props) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [compareResult, setCompareResult] = useState<AnalysisResult | null>(null);
   const [loadingCompare, setLoadingCompare] = useState(false);
+  const [compareError, setCompareError] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
   // Load history
@@ -46,25 +48,30 @@ export default function CompareResults({ currentResult }: Props) {
       try {
         const data = await apiCall('/optimizer-v2/history') as { success?: boolean; results?: HistoryItem[] };
         if (data?.success && data.results) {
-          // Filter out current result and only completed ones
           setHistory(data.results.filter(r => r._id !== currentResult.resultId && r.status === 'completed'));
+          setLoadError(false);
         }
-      } catch { /* ignore */ }
+      } catch {
+        setLoadError(true);
+      }
       setLoading(false);
     })();
   }, [currentResult.resultId]);
 
   // Load selected result
   useEffect(() => {
-    if (!selectedId) { setCompareResult(null); return; }
+    if (!selectedId) { setCompareResult(null); setCompareError(false); return; }
     setLoadingCompare(true);
+    setCompareError(false);
     (async () => {
       try {
         const data = await apiCall(`/optimizer-v2/results/${selectedId}`) as { success?: boolean; result?: AnalysisResult };
         if (data?.success && data.result) {
           setCompareResult(data.result);
         }
-      } catch { /* ignore */ }
+      } catch {
+        setCompareError(true);
+      }
       setLoadingCompare(false);
     })();
   }, [selectedId]);
@@ -121,7 +128,12 @@ export default function CompareResults({ currentResult }: Props) {
       )}
 
       {/* History selector */}
-      {history.length === 0 ? (
+      {loadError ? (
+        <div className={styles.cmpEmpty}>
+          <AlertCircle size={20} />
+          <p>Historie konnte nicht geladen werden. Bitte lade die Seite neu.</p>
+        </div>
+      ) : history.length === 0 ? (
         <div className={styles.cmpEmpty}>
           <FileText size={20} />
           <p>Keine weiteren Analysen vorhanden. Lade einen zweiten Vertrag hoch, um Ergebnisse zu vergleichen.</p>
@@ -149,6 +161,12 @@ export default function CompareResults({ currentResult }: Props) {
       {/* Loading compare */}
       {loadingCompare && (
         <div className={styles.cmpLoading}><Loader2 size={16} className={styles.spinIcon} /> Lade Ergebnis...</div>
+      )}
+      {compareError && !loadingCompare && (
+        <div className={styles.cmpErrorMsg}>
+          <AlertCircle size={14} />
+          Ergebnis konnte nicht geladen werden. Bitte wähle eine andere Analyse.
+        </div>
       )}
 
       {/* Comparison dashboard */}

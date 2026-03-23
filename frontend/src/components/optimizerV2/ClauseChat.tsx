@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, AlertCircle } from 'lucide-react';
 import type { ChatMessage } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
@@ -19,6 +19,7 @@ const QUICK_PROMPTS = [
 export default function ClauseChat({ clauseId, messages, onSend }: Props) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,9 +31,12 @@ export default function ClauseChat({ clauseId, messages, onSend }: Props) {
     if (!msg || isLoading) return;
 
     setInput('');
+    setError(null);
     setIsLoading(true);
     try {
       await onSend(clauseId, msg);
+    } catch {
+      setError('Antwort konnte nicht geladen werden. Bitte erneut versuchen.');
     } finally {
       setIsLoading(false);
     }
@@ -40,9 +44,12 @@ export default function ClauseChat({ clauseId, messages, onSend }: Props) {
 
   const handleQuickPrompt = async (prompt: string) => {
     if (isLoading) return;
+    setError(null);
     setIsLoading(true);
     try {
       await onSend(clauseId, prompt);
+    } catch {
+      setError('Antwort konnte nicht geladen werden. Bitte erneut versuchen.');
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +91,15 @@ export default function ClauseChat({ clauseId, messages, onSend }: Props) {
             </div>
           )}
           <div ref={messagesEndRef} />
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className={styles.chatError}>
+          <AlertCircle size={13} />
+          <span>{error}</span>
+          <button className={styles.chatErrorDismiss} onClick={() => setError(null)}>&times;</button>
         </div>
       )}
 

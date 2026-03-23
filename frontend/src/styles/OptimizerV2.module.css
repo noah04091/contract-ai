@@ -1599,6 +1599,30 @@
   align-items: center;
 }
 .chatSendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.chatError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--ov2-radius-xs);
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.chatErrorDismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.6;
+}
+.chatErrorDismiss:hover { opacity: 1; }
 
 /* ── Redline View V2 ── */
 .rlContainer {
@@ -1993,6 +2017,11 @@
 .rlRowFocused {
   box-shadow: inset 0 0 0 2px var(--ov2-blue);
   border-radius: 2px;
+  animation: rlFocusPulse 1.2s ease-out;
+}
+@keyframes rlFocusPulse {
+  0% { background-color: rgba(0, 122, 255, 0.12); }
+  100% { background-color: transparent; }
 }
 
 /* Selected row (side panel) */
@@ -2794,6 +2823,18 @@
   color: var(--ov2-gray-500);
   font-size: 13px;
   justify-content: center;
+}
+.cmpErrorMsg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--ov2-radius-sm);
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 16px;
 }
 .cmpEmpty {
   display: flex;

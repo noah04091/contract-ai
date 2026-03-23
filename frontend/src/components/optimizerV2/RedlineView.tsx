@@ -89,8 +89,11 @@ export default function RedlineView({
       newIdx = focusedChangeIdx > 0 ? focusedChangeIdx - 1 : changedIds.length - 1;
     }
     setFocusedChangeIdx(newIdx);
-    const el = changeRefs.current.get(changedIds[newIdx]);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Short delay to let React render the focused state before scrolling
+    requestAnimationFrame(() => {
+      const el = changeRefs.current.get(changedIds[newIdx]);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }, [changedIds, focusedChangeIdx]);
 
   // ── Feature 5: Mode-switch animation ──
