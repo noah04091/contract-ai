@@ -2,9 +2,10 @@
 // Klausel-Simulator: Bearbeite eine Klausel und sieh sofort die Risiko-Änderung
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, AlertTriangle, Copy, Loader2 } from 'lucide-react';
+import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, AlertTriangle, Copy, Loader2, BookmarkPlus } from 'lucide-react';
 import { simulateClause, rewriteClause } from '../../services/legalLensV2API';
 import type { ClauseSimulation } from '../../types/legalLensV2';
+import SaveClauseModal from './SaveClauseModal';
 import styles from '../../styles/LegalLensV12.module.css';
 
 interface ClauseSimulatorModalProps {
@@ -12,8 +13,10 @@ interface ClauseSimulatorModalProps {
   onClose: () => void;
   originalText: string;
   contractId: string;
+  contractName?: string;
   industry?: string;
   suggestedAlternative?: string;
+  onClauseSaved?: (clauseId: string) => void;
 }
 
 const RECOMMENDATION_LABELS: Record<string, { text: string; emoji: string; color: string; bg: string }> = {
@@ -87,8 +90,10 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   onClose,
   originalText,
   contractId,
+  contractName,
   industry = 'general',
-  suggestedAlternative
+  suggestedAlternative,
+  onClauseSaved
 }) => {
   const [modifiedText, setModifiedText] = useState(originalText);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -96,6 +101,8 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   const [simulation, setSimulation] = useState<ClauseSimulation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showSaveOriginal, setShowSaveOriginal] = useState(false);
+  const [showSaveModified, setShowSaveModified] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevOriginalRef = useRef(originalText);
 
@@ -459,16 +466,63 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
                 );
               })()}
 
-              {/* Copy modified text button */}
-              {simulation.recommendation !== 'keep_original' && (
-                <button className={styles.simulatorCopyBtn} onClick={handleCopyModified}>
-                  {copied ? <><Check size={14} /> Kopiert!</> : <><Copy size={14} /> Geänderte Klausel kopieren</>}
+              {/* Action buttons row */}
+              <div className={styles.simulatorActionRow}>
+                {simulation.recommendation !== 'keep_original' && (
+                  <button className={styles.simulatorCopyBtn} onClick={handleCopyModified}>
+                    {copied ? <><Check size={14} /> Kopiert!</> : <><Copy size={14} /> Kopieren</>}
+                  </button>
+                )}
+                <button className={styles.simulatorSaveBtn} onClick={() => setShowSaveModified(true)}>
+                  <BookmarkPlus size={14} />
+                  Neue Klausel speichern
                 </button>
-              )}
+                <button className={styles.simulatorSaveOriginalBtn} onClick={() => setShowSaveOriginal(true)}>
+                  <BookmarkPlus size={14} />
+                  Original speichern
+                </button>
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Save Modified Clause Modal */}
+      {showSaveModified && (
+        <SaveClauseModal
+          clauseText={modifiedText}
+          sourceContractId={contractId}
+          sourceContractName={contractName}
+          originalAnalysis={simulation ? {
+            riskScore: simulation.modifiedRiskScore,
+            riskLevel: simulation.modifiedRiskScore >= 70 ? 'high' : simulation.modifiedRiskScore >= 40 ? 'medium' : 'low',
+            actionLevel: simulation.recommendation === 'accept_change' ? 'accept' : simulation.recommendation === 'keep_original' ? 'reject' : 'negotiate'
+          } : undefined}
+          onClose={() => setShowSaveModified(false)}
+          onSaved={(clauseId) => {
+            onClauseSaved?.(clauseId);
+            setShowSaveModified(false);
+          }}
+        />
+      )}
+
+      {/* Save Original Clause Modal */}
+      {showSaveOriginal && (
+        <SaveClauseModal
+          clauseText={originalText}
+          sourceContractId={contractId}
+          sourceContractName={contractName}
+          originalAnalysis={simulation ? {
+            riskScore: simulation.originalRiskScore,
+            riskLevel: simulation.originalRiskScore >= 70 ? 'high' : simulation.originalRiskScore >= 40 ? 'medium' : 'low'
+          } : undefined}
+          onClose={() => setShowSaveOriginal(false)}
+          onSaved={(clauseId) => {
+            onClauseSaved?.(clauseId);
+            setShowSaveOriginal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

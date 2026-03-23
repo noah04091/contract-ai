@@ -973,8 +973,10 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           onClose={() => setShowSimulator(false)}
           originalText={originalClauseText}
           contractId={sourceContractId}
+          contractName={sourceContractName}
           industry={currentIndustry}
           suggestedAlternative={betterAlternative?.text}
+          onClauseSaved={onClauseSaved}
         />
       )}
     </div>
