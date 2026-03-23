@@ -323,10 +323,10 @@ router.post('/:contractId/simulate-clause', async (req, res) => {
     });
   }
 
-  if (modifiedClause.length > 5000 || originalClause.length > 5000) {
+  if (modifiedClause.length > 15000 || originalClause.length > 15000) {
     return res.status(400).json({
       success: false,
-      error: 'Klauseln dürfen maximal 5000 Zeichen lang sein'
+      error: 'Klauseln dürfen maximal 15.000 Zeichen lang sein'
     });
   }
 
