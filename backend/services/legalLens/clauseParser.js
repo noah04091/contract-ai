@@ -208,6 +208,18 @@ class ClauseParser {
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n');
 
+    // Markdown-Formatierung entfernen (PDFs die aus Markdown erzeugt wurden)
+    processed = processed.replace(/^#{1,6}\s+/gm, '');       // # ## ### Header-Prefix
+    processed = processed.replace(/\*\*(.+?)\*\*/g, '$1');   // **bold** → bold
+    processed = processed.replace(/^---+\s*$/gm, '');        // --- Horizontal rules
+    processed = processed.replace(/^___+\s*$/gm, '');        // ___ Horizontal rules
+    // Markdown-Tabellen: Trennzeilen entfernen, Datenzeilen als "  - col1; col2; ..." formatieren
+    processed = processed.replace(/^\|[-\s:|]+\|$/gm, '');   // Tabellen-Trennzeilen (|---|---|)
+    processed = processed.replace(/^\|(.+)\|$/gm, (_, inner) => { // Datenzeilen → eingerückt mit Semikolon
+      const cells = inner.split('|').map(c => c.trim()).filter(c => c);
+      return '  - ' + cells.join('; ');
+    });
+
     // Silbentrennung reparieren: Wörter die am Zeilenende getrennt wurden
     // z.B. "Vertrags-\npartner" → "Vertragspartner"
     processed = processed.replace(/(\w)-\n(\w)/g, '$1$2');
@@ -320,8 +332,8 @@ class ClauseParser {
    * Prüft ob eine Zeile ein Sektions-Header ist
    */
   matchSectionHeader(line) {
-    // § X - Titel
-    let match = line.match(/^§\s*(\d+(?:\.\d+)?)\s*[:\-]?\s*(.*)$/);
+    // § X - Titel (auch mit optionalem Markdown-Prefix ## )
+    let match = line.match(/^(?:#{1,6}\s+)?§\s*(\d+(?:\.\d+)?)\s*[:\-]?\s*(.*)$/);
     if (match) {
       return {
         id: `§${match[1]}`,
