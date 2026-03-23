@@ -103,6 +103,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   const [showSaveOriginal, setShowSaveOriginal] = useState(false);
   const [showSaveModified, setShowSaveModified] = useState(false);
   const [rewriteCache, setRewriteCache] = useState<Record<string, string>>({});
+  const [saveToast, setSaveToast] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevOriginalRef = useRef(originalText);
 
@@ -497,6 +498,8 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
           onSaved={(clauseId) => {
             onClauseSaved?.(clauseId);
             setShowSaveModified(false);
+            setSaveToast('Neue Klausel in Bibliothek gespeichert!');
+            setTimeout(() => setSaveToast(null), 3000);
           }}
         />
       )}
@@ -515,8 +518,18 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
           onSaved={(clauseId) => {
             onClauseSaved?.(clauseId);
             setShowSaveOriginal(false);
+            setSaveToast('Original-Klausel in Bibliothek gespeichert!');
+            setTimeout(() => setSaveToast(null), 3000);
           }}
         />
+      )}
+
+      {/* Save Toast Confirmation */}
+      {saveToast && (
+        <div className={styles.simulatorSaveToast}>
+          <Check size={16} />
+          {saveToast}
+        </div>
       )}
     </div>
   );
