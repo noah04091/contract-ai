@@ -1612,12 +1612,32 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
       };
     }
 
+    // Capture console.log output from Radar for diagnostic visibility
+    const radarLogs = [];
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const logInterceptor = (...args) => {
+      const msg = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
+      if (msg.includes("[PulseV2Radar]")) {
+        radarLogs.push(msg);
+      }
+      originalLog.apply(console, args);
+    };
+    console.log = logInterceptor;
+    console.warn = (...args) => {
+      const msg = args.map(a => typeof a === "string" ? a : JSON.stringify(a)).join(" ");
+      if (msg.includes("[PulseV2Radar]")) radarLogs.push("[WARN] " + msg);
+      originalWarn.apply(console, args);
+    };
+
     let radarResult;
     try {
       // Pass userId to scope radar to this admin's contracts ONLY
       radarResult = await runPulseV2Radar(db, { userId });
     } finally {
-      // Always restore original queueEmail
+      // Always restore console and queueEmail
+      console.log = originalLog;
+      console.warn = originalWarn;
       if (dryRun) {
         emailRetryService.queueEmail = originalQueueEmail;
       }
@@ -1630,6 +1650,14 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
       .limit(10)
       .toArray();
 
+    // 5. Get the laws that were just processed (for context)
+    const justProcessed = await db.collection("laws")
+      .find({ pulseV2Processed: true, pulseV2ProcessedAt: { $gte: new Date(Date.now() - 60000) } })
+      .sort({ pulseV2ProcessedAt: -1 })
+      .limit(10)
+      .project({ title: 1, area: 1, source: 1, pulseV2ProcessedAt: 1 })
+      .toArray();
+
     res.json({
       success: true,
       dryRun,
@@ -1639,6 +1667,9 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
         v2ResultsCount: userResults,
         alertsForUser: userAlerts.length,
       },
+      aiDecisions: radarLogs.filter(l => l.includes("AI decision")),
+      radarLogs,
+      processedLaws: justProcessed,
       alerts: userAlerts.map(a => ({
         _id: a._id,
         lawTitle: a.lawTitle,

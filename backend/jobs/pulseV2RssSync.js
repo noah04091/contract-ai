@@ -26,7 +26,19 @@ async function runPulseV2RssSync(db) {
   const lawsCol = db.collection("laws");
 
   // Ensure index for efficient upserts
-  await lawsCol.createIndex({ lawId: 1 }, { unique: true, background: true });
+  // Use try/catch: if a non-unique index with same name already exists, skip
+  // (the V1 system may have created a non-unique lawId_1 index)
+  try {
+    await lawsCol.createIndex({ lawId: 1 }, { unique: true, background: true });
+  } catch (indexErr) {
+    if (indexErr.code === 85 || indexErr.code === 86) {
+      // 85 = IndexOptionsConflict, 86 = IndexKeySpecsConflict
+      // Index exists with different options — the existing index still works for queries
+      console.log("[PulseV2RssSync] Index lawId_1 already exists (non-unique). Using existing index.");
+    } else {
+      throw indexErr;
+    }
+  }
 
   // 1. Fetch RSS feeds (last 7 days for daily sync; 30 days for first run)
   let rssItems;

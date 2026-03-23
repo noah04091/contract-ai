@@ -344,6 +344,17 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
     const parsed = JSON.parse(response.choices[0].message.content);
     const confirmedImpacts = [];
 
+    // Log AI decisions for debugging (especially useful when alertsSent=0)
+    for (const impact of parsed.impacts || []) {
+      const contract = contracts[impact.contractIndex - 1];
+      const reason = !impact.affected
+        ? "not affected"
+        : impact.confidence < IMPACT_CONFIDENCE_THRESHOLD
+          ? `confidence too low (${impact.confidence}% < ${IMPACT_CONFIDENCE_THRESHOLD}%)`
+          : "ACCEPTED";
+      console.log(`[PulseV2Radar] AI decision: "${contract?.contractName || '?'}" × "${lawChange.title?.substring(0, 50)}" → ${reason}${impact.affected ? ` | severity=${impact.severity} | summary="${impact.summary?.substring(0, 80)}"` : ""}`);
+    }
+
     for (const impact of parsed.impacts || []) {
       if (!impact.affected) continue;
       if (impact.confidence < IMPACT_CONFIDENCE_THRESHOLD) continue;
