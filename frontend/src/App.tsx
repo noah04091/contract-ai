@@ -56,6 +56,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Beta = lazy(() => import("./pages/Beta")); // 🎁 Beta-Tester Landing Page
 const RefundFeedback = lazy(() => import("./pages/RefundFeedback")); // 💬 Refund-Feedback (öffentlich)
+const RefundFeedbackAdmin = lazy(() => import("./pages/RefundFeedbackAdmin")); // 💬 Refund-Feedback Admin
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // 🌟 Feature-Landingpages - Lazy Loading
@@ -289,6 +290,7 @@ function AppWithLoader() {
             <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
             <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
             <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
+            <Route path="/refund-feedback" element={<RequireAuth><RefundFeedbackAdmin /></RequireAuth>} />
 
             {/* ✅ 404 Catch-All Route (muss am Ende stehen) */}
             <Route path="*" element={<NotFound />} />
