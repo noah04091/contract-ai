@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ArrowUpRight, ArrowDownRight, Minus, Loader2, FileText, BarChart3 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Minus, Loader2, FileText, BarChart3, HelpCircle, X } from 'lucide-react';
 import { apiCall } from '../../utils/api';
 import type { AnalysisResult, Scores } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -38,6 +38,7 @@ export default function CompareResults({ currentResult }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [compareResult, setCompareResult] = useState<AnalysisResult | null>(null);
   const [loadingCompare, setLoadingCompare] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Load history
   useEffect(() => {
@@ -94,8 +95,30 @@ export default function CompareResults({ currentResult }: Props) {
 
   return (
     <div className={styles.cmpContainer}>
-      <h3 className={styles.cmpTitle}>Analysen vergleichen</h3>
+      <div className={styles.cmpTitleRow}>
+        <h3 className={styles.cmpTitle}>Analysen vergleichen</h3>
+        <button
+          className={styles.cmpHelpBtn}
+          onClick={() => setShowHelp(s => !s)}
+          title="Was ist der Analysenvergleich?"
+        >
+          <HelpCircle size={16} />
+        </button>
+      </div>
       <p className={styles.cmpSubtitle}>Vergleiche die aktuelle Analyse mit einem früheren Ergebnis</p>
+
+      {showHelp && (
+        <div className={styles.cmpHelpBox}>
+          <button className={styles.cmpHelpClose} onClick={() => setShowHelp(false)}><X size={14} /></button>
+          <strong>Wozu der Vergleich?</strong>
+          <ul>
+            <li><strong>Fortschritt messen</strong> — Sieh auf einen Blick, ob sich dein Vertrag nach einer Überarbeitung verbessert hat (Score-Deltas).</li>
+            <li><strong>Schwachstellen aufdecken</strong> — Vergleiche Sub-Scores (Risiko, Fairness, Klarheit etc.) und erkenne, welche Bereiche sich verändert haben.</li>
+            <li><strong>Verschiedene Verträge benchmarken</strong> — Vergleiche z. B. deinen Mietvertrag mit einem Dienstleistungsvertrag, um zu sehen, wo Unterschiede liegen.</li>
+            <li><strong>Verhandlungsgrundlage</strong> — Dokumentiere die Verbesserung nach einer Verhandlungsrunde mit konkreten Zahlen.</li>
+          </ul>
+        </div>
+      )}
 
       {/* History selector */}
       {history.length === 0 ? (
@@ -106,18 +129,20 @@ export default function CompareResults({ currentResult }: Props) {
       ) : (
         <div className={styles.cmpSelector}>
           <label className={styles.cmpSelectorLabel}>Vergleichen mit:</label>
-          <select
-            className={styles.cmpSelect}
-            value={selectedId || ''}
-            onChange={e => setSelectedId(e.target.value || null)}
-          >
-            <option value="">— Analyse auswählen —</option>
-            {history.map(h => (
-              <option key={h._id} value={h._id}>
-                {h.fileName} — Score {h.scores?.overall || '?'}/100 — {new Date(h.createdAt).toLocaleDateString('de-DE')}
-              </option>
-            ))}
-          </select>
+          <div className={styles.cmpSelectWrap}>
+            <select
+              className={styles.cmpSelect}
+              value={selectedId || ''}
+              onChange={e => setSelectedId(e.target.value || null)}
+            >
+              <option value="">Analyse auswählen...</option>
+              {history.map(h => (
+                <option key={h._id} value={h._id}>
+                  {h.fileName} — {h.scores?.overall || '?'}/100 — {new Date(h.createdAt).toLocaleDateString('de-DE')}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
 
