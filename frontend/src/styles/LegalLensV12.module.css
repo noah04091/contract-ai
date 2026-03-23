@@ -4676,10 +4676,12 @@
   font-size: 0.85rem;
   line-height: 1.6;
   color: #1e293b;
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   min-height: 140px;
   font-family: inherit;
   transition: border-color 0.2s;
+  white-space: pre-wrap;
 }
 
 .simulatorTextarea:focus {

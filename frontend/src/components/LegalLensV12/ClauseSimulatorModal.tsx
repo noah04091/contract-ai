@@ -1,7 +1,7 @@
 // 📁 components/LegalLensV12/ClauseSimulatorModal.tsx
 // Klausel-Simulator: Bearbeite eine Klausel und sieh sofort die Risiko-Änderung
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, AlertTriangle, Copy } from 'lucide-react';
 import { simulateClause } from '../../services/legalLensV2API';
 import type { ClauseSimulation } from '../../types/legalLensV2';
@@ -34,23 +34,36 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevOriginalRef = useRef(originalText);
 
-  // Reset when opening with new clause
+  // Only reset when the CLAUSE changes (different originalText), not on re-open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && originalText !== prevOriginalRef.current) {
       setModifiedText(originalText);
       setSimulation(null);
       setError(null);
       setCopied(false);
+      prevOriginalRef.current = originalText;
     }
   }, [isOpen, originalText]);
 
-  // Auto-focus textarea
+  // Auto-resize textarea to fit content
+  const autoResize = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  }, []);
+
+  // Auto-focus textarea & auto-size on open
   useEffect(() => {
     if (isOpen && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 100);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        autoResize();
+      }, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, autoResize]);
 
   // Escape to close
   useEffect(() => {
@@ -86,6 +99,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
     setModifiedText(originalText);
     setSimulation(null);
     setError(null);
+    setTimeout(autoResize, 0);
   };
 
   const handleCopyModified = () => {
@@ -160,9 +174,10 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
                 onChange={(e) => {
                   setModifiedText(e.target.value);
                   if (simulation) setSimulation(null);
+                  // Auto-resize on input
+                  setTimeout(autoResize, 0);
                 }}
                 placeholder="Bearbeite die Klausel hier..."
-                rows={6}
               />
             </div>
           </div>
