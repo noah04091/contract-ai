@@ -1469,4 +1469,304 @@ router.post("/scan-now", requirePremium, scanNowRateLimiter, async (req, res) =>
   }
 });
 
+// ══════════════════════════════════════════════════════════════
+// ADMIN TEST ENDPOINTS — Frühwarnsystem End-to-End Testing
+// Protected by verifyAdmin — only admin users can access
+// TODO: Remove after successful testing
+// ══════════════════════════════════════════════════════════════
+
+const verifyAdmin = require("../middleware/verifyAdmin");
+
+/**
+ * POST /admin/test-rss-sync
+ * Triggers RSS sync manually and returns detailed results.
+ * Safe: only writes to shared `laws` collection (no user-specific impact).
+ */
+router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    // Count laws before sync
+    const lawsBefore = await db.collection("laws").countDocuments();
+    const unprocessedBefore = await db.collection("laws").countDocuments({ pulseV2Processed: { $ne: true } });
+
+    // Run RSS sync
+    const { runPulseV2RssSync } = require("../jobs/pulseV2RssSync");
+    const syncResult = await runPulseV2RssSync(db);
+
+    // Count laws after sync
+    const lawsAfter = await db.collection("laws").countDocuments();
+    const unprocessedAfter = await db.collection("laws").countDocuments({ pulseV2Processed: { $ne: true } });
+
+    // Get sample of recent laws for inspection
+    const recentLaws = await db.collection("laws")
+      .find({})
+      .sort({ updatedAt: -1 })
+      .limit(10)
+      .project({ lawId: 1, title: 1, area: 1, source: 1, sourceUrl: 1, updatedAt: 1, pulseV2Processed: 1 })
+      .toArray();
+
+    // Get distinct areas and sources
+    const areas = await db.collection("laws").distinct("area");
+    const sources = await db.collection("laws").distinct("source");
+
+    res.json({
+      success: true,
+      syncResult,
+      database: {
+        lawsBefore,
+        lawsAfter,
+        netNew: lawsAfter - lawsBefore,
+        unprocessedBefore,
+        unprocessedAfter,
+        totalLaws: lawsAfter,
+      },
+      coverage: {
+        distinctAreas: areas,
+        distinctSources: sources,
+        areaCount: areas.length,
+        sourceCount: sources.length,
+      },
+      recentLaws,
+      message: `RSS Sync abgeschlossen. ${syncResult.inserted || 0} neu, ${syncResult.updated || 0} aktualisiert. ${unprocessedAfter} Laws warten auf Radar-Scan.`,
+    });
+  } catch (error) {
+    console.error("[AdminTest] RSS Sync error:", error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
+  }
+});
+
+/**
+ * POST /admin/test-radar?dryRun=true
+ * Triggers Radar for the authenticated admin user's contracts ONLY.
+ * dryRun=true (default): stores alerts but does NOT send emails.
+ * dryRun=false: full run including email notifications.
+ */
+router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+    const dryRun = req.query.dryRun !== "false"; // default: true
+
+    // 1. Check prerequisites: does this user have V2 results?
+    const userResults = await LegalPulseV2Result.countDocuments({ userId, status: "completed" });
+    if (userResults === 0) {
+      return res.json({
+        success: false,
+        message: "Keine V2-Analyse-Ergebnisse gefunden. Bitte erst einen Vertrag analysieren, damit der Radar etwas matchen kann.",
+        prerequisite: "Mindestens 1 abgeschlossene V2-Analyse erforderlich.",
+      });
+    }
+
+    // 2. Check: are there unprocessed laws?
+    const unprocessedLaws = await db.collection("laws")
+      .find({ pulseV2Processed: { $ne: true } })
+      .sort({ updatedAt: -1 })
+      .limit(10)
+      .project({ lawId: 1, title: 1, area: 1, updatedAt: 1 })
+      .toArray();
+
+    // Also get recently processed laws (last 7 days) for visibility
+    const recentProcessed = await db.collection("laws")
+      .find({
+        pulseV2Processed: true,
+        pulseV2ProcessedAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      })
+      .sort({ pulseV2ProcessedAt: -1 })
+      .limit(5)
+      .project({ lawId: 1, title: 1, area: 1, pulseV2ProcessedAt: 1 })
+      .toArray();
+
+    if (unprocessedLaws.length === 0) {
+      return res.json({
+        success: true,
+        message: "Keine neuen/unverarbeiteten Laws gefunden. Der Radar hat nichts zu tun. Tipp: Erst /admin/test-rss-sync ausführen.",
+        unprocessedLaws: 0,
+        recentlyProcessed: recentProcessed,
+        userV2Results: userResults,
+      });
+    }
+
+    // 3. Run Radar — but scoped to this user only
+    // We override the radar to only match this user's contracts
+    const { runPulseV2Radar } = require("../jobs/pulseV2Radar");
+
+    // Store original queueEmail to intercept in dryRun mode
+    const emailRetryService = require("../services/emailRetryService");
+    const originalQueueEmail = emailRetryService.queueEmail;
+    const interceptedEmails = [];
+
+    if (dryRun) {
+      // Replace queueEmail with a no-op that captures the call
+      emailRetryService.queueEmail = async (emailData) => {
+        interceptedEmails.push({
+          to: emailData.to,
+          subject: emailData.subject,
+          bodyPreview: (emailData.body || emailData.html || "").substring(0, 200) + "...",
+          intercepted: true,
+        });
+        console.log(`[AdminTest] DryRun: Email intercepted → ${emailData.to} | ${emailData.subject}`);
+        return { intercepted: true };
+      };
+    }
+
+    let radarResult;
+    try {
+      // Pass userId to scope radar to this admin's contracts ONLY
+      radarResult = await runPulseV2Radar(db, { userId });
+    } finally {
+      // Always restore original queueEmail
+      if (dryRun) {
+        emailRetryService.queueEmail = originalQueueEmail;
+      }
+    }
+
+    // 4. Get alerts created for this user
+    const userAlerts = await db.collection("pulse_v2_legal_alerts")
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .toArray();
+
+    res.json({
+      success: true,
+      dryRun,
+      radarResult,
+      userScope: {
+        userId,
+        v2ResultsCount: userResults,
+        alertsForUser: userAlerts.length,
+      },
+      alerts: userAlerts.map(a => ({
+        _id: a._id,
+        lawTitle: a.lawTitle,
+        contractName: a.contractName,
+        severity: a.severity,
+        impactSummary: a.impactSummary,
+        recommendation: a.recommendation,
+        status: a.status,
+        createdAt: a.createdAt,
+      })),
+      interceptedEmails: dryRun ? interceptedEmails : "Emails were sent (dryRun=false)",
+      unprocessedLawsBefore: unprocessedLaws.length,
+      message: dryRun
+        ? `Radar-Test abgeschlossen (DRY RUN). ${radarResult.alertsSent || 0} Alerts erstellt, ${interceptedEmails.length} Emails abgefangen (NICHT gesendet).`
+        : `Radar-Test abgeschlossen (LIVE). ${radarResult.alertsSent || 0} Alerts erstellt, Emails wurden versendet.`,
+    });
+  } catch (error) {
+    console.error("[AdminTest] Radar error:", error);
+    res.status(500).json({ success: false, error: error.message, stack: error.stack?.split("\n").slice(0, 5) });
+  }
+});
+
+/**
+ * GET /admin/test-status
+ * Shows complete system status: Laws DB, RSS coverage, Radar state, Alerts, Cron health.
+ */
+router.get("/admin/test-status", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    // Laws collection stats
+    const totalLaws = await db.collection("laws").countDocuments();
+    const unprocessedLaws = await db.collection("laws").countDocuments({ pulseV2Processed: { $ne: true } });
+    const processedLaws = await db.collection("laws").countDocuments({ pulseV2Processed: true });
+    const lawAreas = await db.collection("laws").distinct("area");
+    const lawSources = await db.collection("laws").distinct("source");
+
+    // Most recent law entry
+    const newestLaw = await db.collection("laws")
+      .findOne({}, { sort: { updatedAt: -1 }, projection: { title: 1, area: 1, source: 1, updatedAt: 1, pulseV2Processed: 1 } });
+
+    // Oldest unprocessed law
+    const oldestUnprocessed = await db.collection("laws")
+      .findOne({ pulseV2Processed: { $ne: true } }, { sort: { updatedAt: 1 }, projection: { title: 1, area: 1, updatedAt: 1 } });
+
+    // User's V2 analysis results
+    const userResults = await LegalPulseV2Result.countDocuments({ userId, status: "completed" });
+    const userContracts = await LegalPulseV2Result.distinct("contractId", { userId, status: "completed" });
+
+    // Contract types in user's portfolio (for radar matching)
+    const userContractTypes = await LegalPulseV2Result.aggregate([
+      { $match: { userId, status: "completed" } },
+      { $sort: { createdAt: -1 } },
+      { $group: { _id: "$contractId", type: { $first: "$document.contractType" }, name: { $first: "$context.contractName" } } },
+    ]);
+
+    // Alerts for this user
+    const totalAlerts = await db.collection("pulse_v2_legal_alerts").countDocuments({ userId });
+    const unresolvedAlerts = await db.collection("pulse_v2_legal_alerts").countDocuments({ userId, status: { $in: ["unread", "read"] } });
+    const recentAlerts = await db.collection("pulse_v2_legal_alerts")
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .project({ lawTitle: 1, contractName: 1, severity: 1, status: 1, createdAt: 1 })
+      .toArray();
+
+    // Cron job health (check cron_logs for last runs)
+    const cronLogs = await db.collection("cron_logs")
+      .find({ jobName: { $in: ["pulse-v2-rss-sync", "pulse-v2-radar", "pulse-v2-monitor", "pulse-v2-staleness-reminder"] } })
+      .sort({ startedAt: -1 })
+      .limit(10)
+      .project({ jobName: 1, status: 1, startedAt: 1, completedAt: 1, result: 1, error: 1 })
+      .toArray();
+
+    // RSS feed health check (which feeds have contributed data?)
+    const feedContributions = await db.collection("laws").aggregate([
+      { $group: { _id: "$source", count: { $sum: 1 }, lastEntry: { $max: "$updatedAt" } } },
+      { $sort: { count: -1 } },
+    ]).toArray();
+
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      laws: {
+        total: totalLaws,
+        processed: processedLaws,
+        unprocessed: unprocessedLaws,
+        areas: lawAreas,
+        areaCount: lawAreas.length,
+        sources: lawSources,
+        sourceCount: lawSources.length,
+        newestLaw,
+        oldestUnprocessed,
+      },
+      rssFeedHealth: feedContributions,
+      userPortfolio: {
+        userId,
+        v2ResultsCount: userResults,
+        analyzedContracts: userContracts.length,
+        contractTypes: userContractTypes.map(c => ({ contractId: c._id, type: c.type, name: c.name })),
+      },
+      alerts: {
+        total: totalAlerts,
+        unresolved: unresolvedAlerts,
+        recent: recentAlerts,
+      },
+      cronHealth: cronLogs,
+      checks: {
+        lawsExist: totalLaws > 0,
+        unprocessedExist: unprocessedLaws > 0,
+        userHasResults: userResults > 0,
+        rssFeedsContribute: feedContributions.length > 0,
+        cronJobsRan: cronLogs.length > 0,
+      },
+      recommendations: [
+        ...(totalLaws === 0 ? ["⚠️ Keine Laws in DB. Führe zuerst /admin/test-rss-sync aus."] : []),
+        ...(unprocessedLaws === 0 && totalLaws > 0 ? ["ℹ️ Alle Laws verarbeitet. RSS Sync nötig für neue Daten."] : []),
+        ...(userResults === 0 ? ["⚠️ Keine V2-Analysen. Analysiere erst einen Vertrag, damit der Radar matchen kann."] : []),
+        ...(feedContributions.length === 0 ? ["⚠️ Kein RSS-Feed hat Daten geliefert. Prüfe rssService."] : []),
+        ...(totalLaws > 0 && unprocessedLaws > 0 && userResults > 0 ? ["✅ System bereit für Radar-Test (/admin/test-radar)."] : []),
+      ],
+    });
+  } catch (error) {
+    console.error("[AdminTest] Status error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

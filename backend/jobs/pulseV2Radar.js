@@ -62,9 +62,13 @@ const AREA_TO_CONTRACT_TYPES = {
 
 /**
  * Main radar entry point.
+ * @param {import('mongodb').Db} db
+ * @param {object} [options]
+ * @param {string} [options.userId] - If set, only match contracts for this user (admin test mode)
  */
-async function runPulseV2Radar(db) {
-  console.log("[PulseV2Radar] Starting legal source scan...");
+async function runPulseV2Radar(db, options = {}) {
+  const scopeLabel = options.userId ? ` (scoped to user ${options.userId})` : "";
+  console.log(`[PulseV2Radar] Starting legal source scan...${scopeLabel}`);
   const startTime = Date.now();
 
   // Ensure unique index to prevent duplicate alerts (idempotent)
@@ -90,7 +94,7 @@ async function runPulseV2Radar(db) {
   for (const law of lawChanges) {
     if (totalMatches >= MAX_CONTRACT_MATCHES) break;
 
-    const matches = await matchLawToContracts(db, law);
+    const matches = await matchLawToContracts(db, law, options);
     if (matches.length === 0) continue;
 
     // 3. Assess impact with AI
@@ -161,7 +165,7 @@ async function fetchRecentLawChanges(db) {
  *   2. UNKNOWN area → take a small sample of recent contracts and let AI decide
  *      (ensures no legal area is silently ignored)
  */
-async function matchLawToContracts(db, lawChange) {
+async function matchLawToContracts(db, lawChange, options = {}) {
   const area = (lawChange.area || "").toLowerCase();
   const relevantTypes = AREA_TO_CONTRACT_TYPES[area] || [];
 
@@ -183,6 +187,11 @@ async function matchLawToContracts(db, lawChange) {
     console.log(`[PulseV2Radar] No pre-filter mapping for area "${area}" — using AI-based matching (sample of recent contracts)`);
     query = { status: "completed" };
     limit = 10; // Smaller sample for unknown areas to control AI cost
+  }
+
+  // Admin test mode: scope to specific user only
+  if (options.userId) {
+    query.userId = options.userId;
   }
 
   const results = await LegalPulseV2Result.aggregate([

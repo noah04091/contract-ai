@@ -108,17 +108,44 @@ function calculateTermsScore(findings) {
 
 /**
  * Calculate completeness sub-score (are all important categories covered?)
+ * Uses contract-type-specific essential categories so an NDA isn't penalized
+ * for missing "zahlungen" while a SaaS contract IS penalized for missing "datenschutz".
  */
-function calculateCompletenessScore(clauses) {
-  const essentialCategories = ["haftung", "kuendigung", "zahlungen", "vertragsbedingungen", "datenschutz"];
-  const presentCategories = new Set((clauses || []).map(c => c.category));
+function calculateCompletenessScore(clauses, contractType) {
+  // Universal essentials — every contract should address liability and termination
+  const baseEssentials = ["haftung", "kuendigung"];
 
+  // Type-specific additions
+  const typeSpecific = {
+    saas: ["datenschutz", "zahlungen"],
+    hosting: ["datenschutz", "zahlungen"],
+    arbeitsvertrag: ["zahlungen", "datenschutz"],
+    mietvertrag: ["zahlungen"],
+    dienstleistung: ["zahlungen"],
+    factoring: ["zahlungen"],
+    leasing: ["zahlungen"],
+    darlehen: ["zahlungen"],
+    versicherung: ["zahlungen"],
+    nda: ["geheimhaltung"],
+    freelancer: ["zahlungen"],
+    bauvertrag: ["zahlungen"],
+    pachtvertrag: ["zahlungen"],
+    maklervertrag: ["zahlungen"],
+    franchisevertrag: ["zahlungen", "wettbewerb"],
+    handelsvertreter: ["zahlungen", "wettbewerb"],
+  };
+
+  const type = (contractType || "").toLowerCase().replace(/[-\s]/g, "");
+  const extras = typeSpecific[type] || ["zahlungen", "datenschutz"];
+  const essentials = [...new Set([...baseEssentials, ...extras])];
+
+  const presentCategories = new Set((clauses || []).map(c => c.category));
   let covered = 0;
-  for (const cat of essentialCategories) {
+  for (const cat of essentials) {
     if (presentCategories.has(cat)) covered++;
   }
 
-  return Math.round((covered / essentialCategories.length) * 100);
+  return Math.round((covered / essentials.length) * 100);
 }
 
 /**
@@ -169,23 +196,28 @@ function runScoreCalculation(clauses, findings, context) {
   const risk = calculateRiskScore(findings);
   const compliance = calculateComplianceScore(findings);
   const terms = calculateTermsScore(findings);
-  const completeness = calculateCompletenessScore(clauses);
+  const completeness = calculateCompletenessScore(clauses, context.contractType);
 
   const riskSeverity = risk;
   const contractAge = calculateContractAgeFactor(context.startDate);
   const deadlineProximity = calculateDeadlineProximityFactor(context.daysUntilExpiry);
   const historicalTrend = calculateHistoricalTrendFactor(context.riskTrend);
 
-  // Weighted overall score
-  const overall = Math.round(
+  // Weighted overall score (completeness 15%, compliance 20%)
+  const rawOverall = Math.round(
     risk * 0.35 +
-    compliance * 0.25 +
+    compliance * 0.20 +
     terms * 0.15 +
-    completeness * 0.10 +
+    completeness * 0.15 +
     contractAge * 0.05 +
     deadlineProximity * 0.05 +
     historicalTrend * 0.05
   );
+
+  // Completeness cap: contracts missing essential clauses cannot score above a threshold.
+  // Prevents "false healthy" scores when important sections are simply absent.
+  const maxFromCompleteness = completeness >= 100 ? 100 : Math.round(50 + completeness * 0.5);
+  const overall = Math.min(rawOverall, maxFromCompleteness);
 
   return {
     overall: Math.max(0, Math.min(100, overall)),
