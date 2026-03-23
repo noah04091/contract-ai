@@ -1168,6 +1168,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Public Feedback:", err);
     }
 
+    // ✅ REFUND FEEDBACK (Öffentliche Feedback-Seite für Rückerstattungen)
+    try {
+      const refundFeedbackRoutes = require("./routes/refundFeedback")(db, transporter);
+      app.use("/api/refund-feedback", refundFeedbackRoutes);
+      console.log("✅ Refund Feedback Routes geladen unter /api/refund-feedback");
+    } catch (err) {
+      console.error("❌ Fehler bei Refund Feedback:", err);
+    }
+
     // ✅ 14.3 AUTOMATED ACTIONS (Phase 2)
     try {
       const automatedActionsRoutes = require("./routes/automatedActions");

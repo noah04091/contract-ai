@@ -55,6 +55,7 @@ const HelpCenter = lazy(() => import("./pages/HelpCenter"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Beta = lazy(() => import("./pages/Beta")); // 🎁 Beta-Tester Landing Page
+const RefundFeedback = lazy(() => import("./pages/RefundFeedback")); // 💬 Refund-Feedback (öffentlich)
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // 🌟 Feature-Landingpages - Lazy Loading
@@ -193,6 +194,7 @@ function AppWithLoader() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/beta" element={<Beta />} /> {/* 🎁 Beta-Tester Landing Page */}
+            <Route path="/feedback/refund/:token" element={<RefundFeedback />} /> {/* 💬 Refund-Feedback (öffentlich) */}
 
             {/* 📋 Features Übersichtsseite */}
             <Route path="/features" element={<Features />} />
