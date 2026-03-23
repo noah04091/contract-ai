@@ -29,7 +29,6 @@ interface QuickAction {
   label: string;
   icon: string;
   instruction: string;
-  instant?: boolean; // true = no API call needed
 }
 
 // Word-level diff algorithm
@@ -154,8 +153,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
       actions.push({
         label: 'KI-Vorschlag',
         icon: '💡',
-        instruction: '__ki_vorschlag__',
-        instant: true
+        instruction: `Verbessere diese Klausel zugunsten des Unterzeichners. Orientiere dich an folgendem Verbesserungsvorschlag, aber formuliere die GESAMTE Klausel vollständig um (nicht nur den kritischen Teil):\n\nVerbesserungsvorschlag: "${suggestedAlternative}"`
       });
     }
     actions.push(
@@ -168,15 +166,6 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   }, [suggestedAlternative]);
 
   const handleQuickAction = async (action: QuickAction) => {
-    // KI-Vorschlag = instant load from prop
-    if (action.instant && suggestedAlternative) {
-      setModifiedText(suggestedAlternative);
-      setSimulation(null);
-      setError(null);
-      setTimeout(autoResize, 0);
-      return;
-    }
-
     // Check cache first — instant if already generated
     const cacheKey = action.instruction;
     if (rewriteCache[cacheKey]) {
@@ -193,7 +182,6 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
 
     try {
       const result = await rewriteClause(contractId, originalText, action.instruction, industry);
-      // Cache the result
       setRewriteCache(prev => ({ ...prev, [cacheKey]: result.rewrittenClause }));
       setModifiedText(result.rewrittenClause);
       setSimulation(null);
@@ -283,7 +271,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
               >
                 <span>{action.icon}</span>
                 {action.label}
-                {!action.instant && rewriteCache[action.instruction] && (
+                {rewriteCache[action.instruction] && (
                   <Check size={10} className={styles.simulatorChipCached} />
                 )}
               </button>
