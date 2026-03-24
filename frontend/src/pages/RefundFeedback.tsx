@@ -567,7 +567,7 @@ export default function RefundFeedback() {
                 </div>
                 <textarea
                   className={styles.textarea}
-                  placeholder="Was k\u00f6nnte besser sein? Was hat gest\u00f6rt?"
+                  placeholder={"Was k\u00f6nnte besser sein? Was hat gest\u00f6rt?"}
                   value={negativeFeedback}
                   onChange={(e) => setNegativeFeedback(e.target.value)}
                 />
@@ -619,7 +619,7 @@ export default function RefundFeedback() {
                 </div>
                 <textarea
                   className={styles.textarea}
-                  placeholder="Was sollten wir \u00e4ndern oder hinzuf\u00fcgen?"
+                  placeholder={"Was sollten wir \u00e4ndern oder hinzuf\u00fcgen?"}
                   value={suggestions}
                   onChange={(e) => setSuggestions(e.target.value)}
                 />
