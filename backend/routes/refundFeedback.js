@@ -3,13 +3,14 @@ const router = express.Router();
 const crypto = require("crypto");
 const RefundFeedback = require("../models/RefundFeedback");
 const verifyToken = require("../middleware/verifyToken");
+const verifyAdmin = require("../middleware/verifyAdmin");
 
 module.exports = function (db, transporter) {
   // ─────────────────────────────────────────────────
-  // POST /api/refund-feedback/create (Admin/geschützt)
+  // POST /api/refund-feedback/create (Admin only)
   // Erstellt einen neuen Feedback-Link
   // ─────────────────────────────────────────────────
-  router.post("/create", verifyToken, async (req, res) => {
+  router.post("/create", verifyToken, verifyAdmin, async (req, res) => {
     try {
       const { customerName, customerEmail, subscriptionPlan } = req.body;
 
@@ -48,7 +49,7 @@ module.exports = function (db, transporter) {
   // GET /api/refund-feedback/admin/list (Geschützt)
   // Alle Feedbacks einsehen — MUSS vor /:token stehen!
   // ─────────────────────────────────────────────────
-  router.get("/admin/list", verifyToken, async (req, res) => {
+  router.get("/admin/list", verifyToken, verifyAdmin, async (req, res) => {
     try {
       const feedbacks = await RefundFeedback.find()
         .sort({ createdAt: -1 })

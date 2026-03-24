@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
+import { useNavigate } from "react-router-dom";
 import { Copy, Check, Plus, MessageSquare, Clock, CheckCircle, Star, ExternalLink } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 import styles from "./RefundFeedbackAdmin.module.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://api.contract-ai.de";
@@ -28,6 +30,8 @@ interface Feedback {
 }
 
 export default function RefundFeedbackAdmin() {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,10 +50,19 @@ export default function RefundFeedbackAdmin() {
 
   const token = localStorage.getItem("token");
 
+  // Admin-Check: Nicht-Admins zum Dashboard weiterleiten
+  useEffect(() => {
+    if (!authLoading && user?.role !== "admin") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
   // Load feedbacks
   useEffect(() => {
-    loadFeedbacks();
-  }, []);
+    if (user?.role === "admin") {
+      loadFeedbacks();
+    }
+  }, [user]);
 
   const loadFeedbacks = async () => {
     try {
@@ -150,6 +163,10 @@ export default function RefundFeedbackAdmin() {
         return null;
     }
   };
+
+  if (authLoading || user?.role !== "admin") {
+    return null;
+  }
 
   return (
     <>
