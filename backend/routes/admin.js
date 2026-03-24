@@ -1626,12 +1626,12 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     const userStatusMap = {};
     customerUsers.forEach(u => { userStatusMap[u.email] = u; });
 
-    // "Active" = last payment within last 35 days (covers monthly billing cycle)
-    const activeThreshold = new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
+    // "Active" = current plan in MongoDB is a paid plan (not free/unknown)
+    const paidPlans = ["business", "enterprise", "premium", "legendary"];
 
     const revenuePerUser = Object.values(customerMap).map(c => {
       const userInfo = userStatusMap[c.email] || {};
-      const isActive = c.lastPayment && c.lastPayment >= activeThreshold;
+      const isActive = paidPlans.includes(userInfo.subscriptionPlan);
       return {
         email: c.email,
         customerName: c.customerName,
