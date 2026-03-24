@@ -1577,7 +1577,33 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     if (currentChurnRate > lastChurnRate) churnTrend = "up";
     else if (currentChurnRate < lastChurnRate) churnTrend = "down";
 
-    // ===== E) CURRENT MRR =====
+    // ===== E) REVENUE PER USER (all invoices, grouped by customer) =====
+    const revenuePerUserAgg = await invoicesCollection.aggregate([
+      {
+        $group: {
+          _id: "$customerEmail",
+          customerName: { $last: "$customerName" },
+          plan: { $last: "$plan" },
+          totalRevenue: { $sum: "$amount" },
+          invoiceCount: { $sum: 1 },
+          firstPayment: { $min: "$createdAt" },
+          lastPayment: { $max: "$createdAt" }
+        }
+      },
+      { $sort: { totalRevenue: -1 } }
+    ]).toArray();
+
+    const revenuePerUser = revenuePerUserAgg.map(u => ({
+      email: u._id,
+      customerName: u.customerName || u._id,
+      plan: u.plan || "unknown",
+      totalRevenue: parseFloat((u.totalRevenue || 0).toFixed(2)),
+      invoiceCount: u.invoiceCount,
+      firstPayment: u.firstPayment,
+      lastPayment: u.lastPayment
+    }));
+
+    // ===== F) CURRENT MRR =====
     const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: "business" });
     const enterpriseUsers = await usersCollection.countDocuments({
       subscriptionPlan: { $in: ["enterprise", "premium"] }
@@ -1608,7 +1634,8 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
         },
         trend: churnTrend
       },
-      currentMRR
+      currentMRR,
+      revenuePerUser
     });
 
     console.log('✅ [ADMIN] Finance statistics compiled successfully');

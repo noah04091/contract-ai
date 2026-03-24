@@ -259,6 +259,15 @@ interface FinanceStats {
     trend: 'up' | 'down' | 'stable';
   };
   currentMRR: number;
+  revenuePerUser: Array<{
+    email: string;
+    customerName: string;
+    plan: string;
+    totalRevenue: number;
+    invoiceCount: number;
+    firstPayment: string;
+    lastPayment: string;
+  }>;
 }
 
 interface AdminStats {
@@ -3217,6 +3226,47 @@ export default function AdminDashboard() {
                         <span className={styles.statSubtext}>Vormonat: {financeStats.churn.lastMonth.rate}%</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Revenue per User Table */}
+                  <div className={styles.tableCard}>
+                    <h3>Einnahmen pro Kunde ({financeStats.revenuePerUser.length} zahlende Kunden, {formatEuro(financeStats.revenuePerUser.reduce((s, u) => s + u.totalRevenue, 0))} gesamt)</h3>
+                    {financeStats.revenuePerUser.length > 0 ? (
+                      <div className={styles.tableContainer} style={{ border: 'none', boxShadow: 'none' }}>
+                        <table className={styles.userTable}>
+                          <thead>
+                            <tr>
+                              <th>Kunde</th>
+                              <th>E-Mail</th>
+                              <th>Plan</th>
+                              <th>Rechnungen</th>
+                              <th>Gesamt</th>
+                              <th>Erste Zahlung</th>
+                              <th>Letzte Zahlung</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {financeStats.revenuePerUser.map((user, idx) => (
+                              <tr key={idx}>
+                                <td>{user.customerName}</td>
+                                <td className={styles.emailCell}>{user.email}</td>
+                                <td>
+                                  <span className={`${styles.planBadge} ${styles[user.plan] || ''}`}>
+                                    {user.plan}
+                                  </span>
+                                </td>
+                                <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
+                                <td style={{ fontWeight: 600, color: '#059669' }}>{formatEuro(user.totalRevenue)}</td>
+                                <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>Noch keine Zahlungen</p>
+                    )}
                   </div>
 
                   {/* Revenue vs Costs AreaChart */}
