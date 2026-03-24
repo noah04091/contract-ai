@@ -1617,6 +1617,20 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
       if (!c.lastPayment || paidAt > c.lastPayment) c.lastPayment = paidAt;
     }
 
+    // Get ACTIVE subscriptions from Stripe (the only source of truth)
+    const activeSubscriptions = await stripe.subscriptions.list({
+      status: 'active',
+      limit: 100
+    });
+    // Build set of emails with active Stripe subscriptions
+    const activeStripeEmails = new Set();
+    for (const sub of activeSubscriptions.data) {
+      try {
+        const customer = await stripe.customers.retrieve(sub.customer);
+        if (customer.email) activeStripeEmails.add(customer.email.toLowerCase());
+      } catch (e) { /* skip deleted customers */ }
+    }
+
     // Lookup canceledAt from MongoDB for display
     const customerEmails = Object.keys(customerMap);
     const customerUsers = await usersCollection.find(
@@ -1626,12 +1640,9 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     const userStatusMap = {};
     customerUsers.forEach(u => { userStatusMap[u.email] = u; });
 
-    // "Active" = current plan in MongoDB is a paid plan (not free/unknown)
-    const paidPlans = ["business", "enterprise", "premium", "legendary"];
-
     const revenuePerUser = Object.values(customerMap).map(c => {
       const userInfo = userStatusMap[c.email] || {};
-      const isActive = paidPlans.includes(userInfo.subscriptionPlan);
+      const isActive = activeStripeEmails.has(c.email.toLowerCase());
       return {
         email: c.email,
         customerName: c.customerName,
