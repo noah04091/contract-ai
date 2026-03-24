@@ -57,7 +57,7 @@ export default function OptimizerV2() {
   return (
     <>
       <Helmet>
-        <title>Optimizer V2 - Contract AI</title>
+        <title>Contract Intelligence - Contract AI</title>
       </Helmet>
 
       <div className={`${styles.pageContainer} ${(status === 'idle' || status === 'uploading') ? styles.pageContainerUpload : ''}`}>
@@ -77,7 +77,7 @@ export default function OptimizerV2() {
               <ArrowLeft size={16} /> Historie
             </button>
             <div className={styles.pageHeaderContent}>
-              <h1 className={styles.pageTitle}>Contract Optimizer</h1>
+              <h1 className={styles.pageTitle}>Contract Intelligence</h1>
               <p className={styles.pageSubtitle}>
                 KI-gestützte Vertragsanalyse und -optimierung
               </p>

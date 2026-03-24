@@ -56,7 +56,7 @@ export default function OptimizerHistory() {
   const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiCall('/optimizer-v2/history') as { success: boolean; results: HistoryItem[] };
+      const data = await apiCall('/optimizer/history') as { success: boolean; results: HistoryItem[] };
       if (data?.success) {
         setItems(data.results);
       }
@@ -78,7 +78,7 @@ export default function OptimizerHistory() {
     if (!window.confirm('Analyse wirklich löschen?')) return;
     setDeletingId(id);
     try {
-      await apiCall(`/optimizer-v2/results/${id}`, { method: 'DELETE' });
+      await apiCall(`/optimizer/results/${id}`, { method: 'DELETE' });
       setItems(prev => prev.filter(item => item._id !== id));
     } catch {
       // silent
@@ -89,7 +89,7 @@ export default function OptimizerHistory() {
 
   const handleOpen = (item: HistoryItem) => {
     if (item.status !== 'completed') return;
-    navigate(`/optimizer-v2?result=${item._id}`);
+    navigate(`/optimizer?result=${item._id}`);
   };
 
   return (
@@ -107,7 +107,7 @@ export default function OptimizerHistory() {
               Alle bisherigen Vertragsanalysen im Überblick
             </p>
           </div>
-          <button className={styles.newAnalysisBtn} onClick={() => navigate('/optimizer-v2')}>
+          <button className={styles.newAnalysisBtn} onClick={() => navigate('/optimizer')}>
             <Plus size={16} />
             Neue Analyse
           </button>
@@ -127,7 +127,7 @@ export default function OptimizerHistory() {
               </div>
               <h3>Noch keine Analysen</h3>
               <p>Starte deine erste Vertragsanalyse im Optimizer.</p>
-              <button className={styles.ctaBtn} onClick={() => navigate('/optimizer-v2')}>
+              <button className={styles.ctaBtn} onClick={() => navigate('/optimizer')}>
                 <Sparkles size={16} />
                 Erste Analyse starten
               </button>

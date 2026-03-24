@@ -245,13 +245,14 @@ function AppWithLoader() {
             <Route path="/cancel/:contractId" element={<RequireAuth><Cancel /></RequireAuth>} />
             <Route path="/cancellations" element={<RequireAuth><CancellationArchive /></RequireAuth>} />
             
-            {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
-            <Route path="/optimizer-v2" element={<RequireAuth><OptimizerV2 /></RequireAuth>} />
+            {/* ✨ Contract Intelligence (ehem. Optimizer V2) */}
+            <Route path="/optimizer" element={<RequireAuth><OptimizerV2 /></RequireAuth>} />
+            <Route path="/optimizer-v2" element={<Navigate to="/optimizer" replace />} />
             <Route path="/optimizer-history" element={<RequireAuth><OptimizerHistory /></RequireAuth>} />
-            <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
-            <Route path="/optimizer/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimizer-alt" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimizer-alt/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
             <Route path="/optimizer/finalize/:contractId" element={<RequireAuth><OptimizerFinalize /></RequireAuth>} />
-            <Route path="/optimize/:contractId" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimize/:contractId" element={<Navigate to="/optimizer" replace />} />
 
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
             <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
