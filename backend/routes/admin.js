@@ -1464,10 +1464,11 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     // ===== A) MONTHLY REVENUE from Stripe (last 12 months) =====
     const revenueByMonth = {};
     for (const inv of stripeInvoices) {
+      const amount = (inv.amount_paid || 0) / 100;
+      if (amount <= 0) continue; // Skip $0 test/trial invoices
       const paidAt = inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : new Date(inv.created * 1000);
       if (paidAt < twelveMonthsAgo) continue;
       const month = paidAt.toISOString().slice(0, 7);
-      const amount = (inv.amount_paid || 0) / 100;
 
       // Detect plan from line items
       const lineDesc = (inv.lines?.data?.[0]?.description || '').toLowerCase();
@@ -1590,44 +1591,47 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     if (currentChurnRate > lastChurnRate) churnTrend = "up";
     else if (currentChurnRate < lastChurnRate) churnTrend = "down";
 
-    // ===== E) REVENUE PER USER (from Stripe data loaded above) =====
+    // ===== E) REVENUE PER USER (from Stripe — only real payments > 0) =====
     const customerMap = {};
     for (const inv of stripeInvoices) {
+      const amount = (inv.amount_paid || 0) / 100;
+      // Skip $0 invoices — test/trial, no real money
+      if (amount <= 0) continue;
+
       const email = inv.customer_email || 'unknown';
       if (!customerMap[email]) {
         customerMap[email] = {
           email,
           customerName: inv.customer_name || email,
-          stripeCustomerId: inv.customer,
           totalRevenue: 0,
           invoiceCount: 0,
           firstPayment: null,
-          lastPayment: null,
-          invoices: []
+          lastPayment: null
         };
       }
       const c = customerMap[email];
-      const amount = (inv.amount_paid || 0) / 100; // Stripe amounts are in cents
       const paidAt = inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : new Date(inv.created * 1000);
       c.totalRevenue += amount;
       c.invoiceCount += 1;
       if (!c.firstPayment || paidAt < c.firstPayment) c.firstPayment = paidAt;
       if (!c.lastPayment || paidAt > c.lastPayment) c.lastPayment = paidAt;
-      c.invoices.push({ amount, date: paidAt, number: inv.number });
     }
 
-    // Lookup current subscription status from MongoDB
+    // Lookup canceledAt from MongoDB for display
     const customerEmails = Object.keys(customerMap);
     const customerUsers = await usersCollection.find(
       { email: { $in: customerEmails } },
-      { projection: { email: 1, subscriptionPlan: 1, subscriptionActive: 1, subscriptionStatus: 1, canceledAt: 1 } }
+      { projection: { email: 1, subscriptionPlan: 1, canceledAt: 1 } }
     ).toArray();
     const userStatusMap = {};
     customerUsers.forEach(u => { userStatusMap[u.email] = u; });
 
+    // "Active" = last payment within last 35 days (covers monthly billing cycle)
+    const activeThreshold = new Date(now.getTime() - 35 * 24 * 60 * 60 * 1000);
+
     const revenuePerUser = Object.values(customerMap).map(c => {
       const userInfo = userStatusMap[c.email] || {};
-      const isActive = userInfo.subscriptionActive === true && userInfo.subscriptionPlan !== 'free';
+      const isActive = c.lastPayment && c.lastPayment >= activeThreshold;
       return {
         email: c.email,
         customerName: c.customerName,
