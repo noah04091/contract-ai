@@ -55,6 +55,11 @@ const refundFeedbackSchema = new mongoose.Schema({
   // Verbesserungsvorschläge
   suggestions: { type: String, default: "" },
 
+  // Refund-Tracking
+  refundAmount: { type: Number, default: 0 },
+  refundedAt: { type: Date },
+  refundNote: { type: String, default: "" },
+
   // Timestamps
   createdAt: { type: Date, default: Date.now },
   submittedAt: { type: Date },

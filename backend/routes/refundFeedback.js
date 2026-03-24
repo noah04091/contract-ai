@@ -63,6 +63,35 @@ module.exports = function (db, transporter) {
   });
 
   // ─────────────────────────────────────────────────
+  // PUT /api/refund-feedback/admin/:id/refund (Admin only)
+  // Markiert Feedback als erstattet
+  // ─────────────────────────────────────────────────
+  router.put("/admin/:id/refund", verifyToken, verifyAdmin, async (req, res) => {
+    try {
+      const { refundAmount, refundNote } = req.body;
+
+      const feedback = await RefundFeedback.findById(req.params.id);
+      if (!feedback) {
+        return res.status(404).json({ error: "Feedback nicht gefunden." });
+      }
+
+      feedback.status = "refunded";
+      feedback.refundAmount = refundAmount || 0;
+      feedback.refundNote = refundNote || "";
+      feedback.refundedAt = new Date();
+
+      await feedback.save();
+
+      console.log(`✅ [REFUND-FEEDBACK] Als erstattet markiert: ${feedback.customerName} — ${refundAmount}€`);
+
+      res.json({ success: true, message: "Als erstattet markiert." });
+    } catch (error) {
+      console.error("❌ [REFUND-FEEDBACK] Refund Error:", error);
+      res.status(500).json({ error: "Fehler beim Markieren." });
+    }
+  });
+
+  // ─────────────────────────────────────────────────
   // GET /api/refund-feedback/:token (Öffentlich)
   // Lädt Feedback-Daten für die Anzeige
   // ─────────────────────────────────────────────────

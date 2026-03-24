@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
-import { Copy, Check, Plus, MessageSquare, Clock, CheckCircle, Star, ExternalLink } from "lucide-react";
+import { Copy, Check, Plus, MessageSquare, Clock, CheckCircle, Star, ExternalLink, DollarSign } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import styles from "./RefundFeedbackAdmin.module.css";
 
@@ -25,6 +25,9 @@ interface Feedback {
   negativeFeedback?: string;
   npsScore?: number;
   suggestions?: string;
+  refundAmount?: number;
+  refundedAt?: string;
+  refundNote?: string;
   createdAt: string;
   submittedAt?: string;
 }
@@ -47,6 +50,12 @@ export default function RefundFeedbackAdmin() {
 
   // Detail View
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
+
+  // Refund Modal
+  const [refundTarget, setRefundTarget] = useState<Feedback | null>(null);
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refundNote, setRefundNote] = useState("");
+  const [refunding, setRefunding] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -140,6 +149,36 @@ export default function RefundFeedbackAdmin() {
     setSubscriptionPlan("Business");
     setGeneratedUrl("");
     setError("");
+  };
+
+  const handleRefund = async () => {
+    if (!refundTarget) return;
+    setRefunding(true);
+    try {
+      const res = await fetch(`${API_URL}/api/refund-feedback/admin/${refundTarget._id}/refund`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          refundAmount: parseFloat(refundAmount) || 0,
+          refundNote,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRefundTarget(null);
+        setRefundAmount("");
+        setRefundNote("");
+        setSelectedFeedback(null);
+        loadFeedbacks();
+      }
+    } catch {
+      console.error("Refund-Fehler");
+    } finally {
+      setRefunding(false);
+    }
   };
 
   const formatDate = (d: string) =>
@@ -473,6 +512,92 @@ export default function RefundFeedbackAdmin() {
                         Eingegangen am {formatDate(selectedFeedback.submittedAt)}
                       </div>
                     )}
+
+                    {selectedFeedback.status === "refunded" && selectedFeedback.refundedAt ? (
+                      <div className={styles.refundedInfo}>
+                        <CheckCircle size={16} />
+                        <span>
+                          Erstattet: {selectedFeedback.refundAmount}€ am {formatDate(selectedFeedback.refundedAt)}
+                          {selectedFeedback.refundNote && ` — ${selectedFeedback.refundNote}`}
+                        </span>
+                      </div>
+                    ) : selectedFeedback.status === "submitted" ? (
+                      <button
+                        className={styles.refundBtn}
+                        onClick={() => {
+                          setRefundTarget(selectedFeedback);
+                          setRefundAmount(selectedFeedback.subscriptionPlan === "Enterprise" ? "29" : "19");
+                        }}
+                      >
+                        <DollarSign size={16} /> Als erstattet markieren
+                      </button>
+                    ) : null}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Refund Modal */}
+          <AnimatePresence>
+            {refundTarget && (
+              <motion.div
+                className={styles.overlay}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setRefundTarget(null)}
+              >
+                <motion.div
+                  className={styles.refundModal}
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className={styles.refundModalTitle}>Rückerstattung bestätigen</h3>
+                  <p className={styles.refundModalDesc}>
+                    {refundTarget.customerName} ({refundTarget.customerEmail})
+                  </p>
+
+                  <div className={styles.refundForm}>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Erstattungsbetrag (€) *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className={styles.input}
+                        value={refundAmount}
+                        onChange={(e) => setRefundAmount(e.target.value)}
+                        placeholder="19.00"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label className={styles.label}>Notiz (optional)</label>
+                      <input
+                        type="text"
+                        className={styles.input}
+                        value={refundNote}
+                        onChange={(e) => setRefundNote(e.target.value)}
+                        placeholder="z.B. Via Stripe erstattet"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.refundActions}>
+                    <button
+                      className={styles.refundCancelBtn}
+                      onClick={() => { setRefundTarget(null); setRefundAmount(""); setRefundNote(""); }}
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      className={styles.refundConfirmBtn}
+                      onClick={handleRefund}
+                      disabled={refunding || !refundAmount}
+                    >
+                      {refunding ? "Wird gespeichert..." : `${refundAmount}€ als erstattet markieren`}
+                    </button>
                   </div>
                 </motion.div>
               </motion.div>
