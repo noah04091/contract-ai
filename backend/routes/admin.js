@@ -1431,4 +1431,196 @@ router.post('/send-weekly-summary', verifyToken, verifyAdmin, async (req, res) =
   }
 });
 
+// ===== 💰 GET FINANCE STATISTICS =====
+// GET /api/admin/finance-stats
+// Returns: Monthly revenue, costs, refunds, churn rate, MRR
+router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    console.log('💰 [ADMIN] Fetching finance statistics...');
+
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
+    const invoicesCollection = db.collection("invoices");
+    const costTrackingCollection = db.collection("cost_tracking");
+
+    const now = new Date();
+    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+    // ===== A) MONTHLY REVENUE from invoices (last 12 months) =====
+    const revenueAgg = await invoicesCollection.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: twelveMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+          revenue: { $sum: "$amount" },
+          count: { $sum: 1 },
+          businessCount: {
+            $sum: { $cond: [{ $eq: ["$plan", "business"] }, 1, 0] }
+          },
+          enterpriseCount: {
+            $sum: { $cond: [{ $in: ["$plan", ["enterprise", "premium"]] }, 1, 0] }
+          }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    const monthlyRevenue = revenueAgg.map(r => ({
+      month: r._id,
+      revenue: parseFloat((r.revenue || 0).toFixed(2)),
+      count: r.count,
+      byPlan: {
+        business: r.businessCount,
+        enterprise: r.enterpriseCount
+      }
+    }));
+
+    // ===== B) MONTHLY COSTS from cost_tracking (last 12 months) =====
+    const twelveMonthsAgoStr = twelveMonthsAgo.toISOString().slice(0, 7); // "YYYY-MM"
+    const costsAgg = await costTrackingCollection.aggregate([
+      {
+        $match: {
+          date: { $gte: twelveMonthsAgoStr + "-01" }
+        }
+      },
+      {
+        $group: {
+          _id: { $substr: ["$date", 0, 7] },
+          cost: { $sum: "$totalCost" },
+          calls: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+
+    const monthlyCosts = costsAgg.map(c => ({
+      month: c._id,
+      cost: parseFloat((c.cost || 0).toFixed(2)),
+      calls: c.calls
+    }));
+
+    // ===== C) REFUND DATA from refundfeedbacks (Mongoose) =====
+    const RefundFeedback = require("../models/RefundFeedback");
+
+    // Monthly refunds
+    const refundedItems = await RefundFeedback.find({ status: "refunded" })
+      .sort({ refundedAt: -1 })
+      .lean();
+
+    // Group refunds by month
+    const refundsByMonth = {};
+    let refundTotal = 0;
+    let refundCount = 0;
+
+    refundedItems.forEach(item => {
+      const refundDate = item.refundedAt || item.submittedAt || item.createdAt;
+      if (refundDate) {
+        const month = new Date(refundDate).toISOString().slice(0, 7);
+        if (!refundsByMonth[month]) {
+          refundsByMonth[month] = { total: 0, count: 0 };
+        }
+        refundsByMonth[month].total += item.refundAmount || 0;
+        refundsByMonth[month].count += 1;
+      }
+      refundTotal += item.refundAmount || 0;
+      refundCount += 1;
+    });
+
+    const monthlyRefunds = Object.entries(refundsByMonth)
+      .map(([month, data]) => ({
+        month,
+        total: parseFloat(data.total.toFixed(2)),
+        count: data.count
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+
+    const refundAvg = refundCount > 0 ? parseFloat((refundTotal / refundCount).toFixed(2)) : 0;
+
+    // Last 50 refunds for the table
+    const refundList = refundedItems.slice(0, 50).map(item => ({
+      customerName: item.customerName,
+      customerEmail: item.customerEmail,
+      refundAmount: item.refundAmount || 0,
+      refundedAt: item.refundedAt,
+      refundNote: item.refundNote || "",
+      subscriptionPlan: item.subscriptionPlan || ""
+    }));
+
+    // ===== D) CHURN RATE from users =====
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+    // Currently paying users
+    const paidUsers = await usersCollection.countDocuments({
+      subscriptionPlan: { $in: ["business", "enterprise", "premium", "legendary"] }
+    });
+
+    // Canceled this month (users with canceledAt in current month)
+    const canceledThisMonth = await usersCollection.countDocuments({
+      canceledAt: { $gte: currentMonthStart, $lte: now }
+    });
+
+    // Canceled last month
+    const canceledLastMonth = await usersCollection.countDocuments({
+      canceledAt: { $gte: lastMonthStart, $lte: lastMonthEnd }
+    });
+
+    const currentChurnRate = paidUsers > 0 ? parseFloat(((canceledThisMonth / paidUsers) * 100).toFixed(1)) : 0;
+    const lastChurnRate = paidUsers > 0 ? parseFloat(((canceledLastMonth / paidUsers) * 100).toFixed(1)) : 0;
+
+    let churnTrend = "stable";
+    if (currentChurnRate > lastChurnRate) churnTrend = "up";
+    else if (currentChurnRate < lastChurnRate) churnTrend = "down";
+
+    // ===== E) CURRENT MRR =====
+    const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: "business" });
+    const enterpriseUsers = await usersCollection.countDocuments({
+      subscriptionPlan: { $in: ["enterprise", "premium"] }
+    });
+    const currentMRR = (businessUsers * 19) + (enterpriseUsers * 29);
+
+    // ===== RESPONSE =====
+    res.json({
+      success: true,
+      monthlyRevenue,
+      monthlyCosts,
+      monthlyRefunds,
+      refunds: {
+        total: parseFloat(refundTotal.toFixed(2)),
+        count: refundCount,
+        avg: refundAvg,
+        list: refundList
+      },
+      churn: {
+        currentMonth: {
+          canceled: canceledThisMonth,
+          paidUsers,
+          rate: currentChurnRate
+        },
+        lastMonth: {
+          canceled: canceledLastMonth,
+          rate: lastChurnRate
+        },
+        trend: churnTrend
+      },
+      currentMRR
+    });
+
+    console.log('✅ [ADMIN] Finance statistics compiled successfully');
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching finance statistics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden der Finanz-Statistiken',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

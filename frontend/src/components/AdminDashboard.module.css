@@ -2322,6 +2322,43 @@
   color: #1e293b;
 }
 
+/* 💰 Finance Tab */
+.financeTab {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.churnCard {
+  padding: 1rem 0;
+}
+
+.churnRate {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.churnTrend {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.churnTrend.up {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.churnTrend.down {
+  color: #059669;
+  background: #ecfdf5;
+}
+
+.churnTrend.stable {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
 /* Responsive Settings */
 @media (max-width: 768px) {
   .settingsGrid {

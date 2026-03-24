@@ -44,6 +44,8 @@ import {
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   PieChart,
@@ -53,6 +55,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer
 } from 'recharts';
 import styles from './AdminDashboard.module.css';
@@ -233,6 +236,31 @@ interface ActivityLogData {
   };
 }
 
+interface FinanceStats {
+  monthlyRevenue: Array<{ month: string; revenue: number; count: number; byPlan: { business: number; enterprise: number } }>;
+  monthlyCosts: Array<{ month: string; cost: number; calls: number }>;
+  monthlyRefunds: Array<{ month: string; total: number; count: number }>;
+  refunds: {
+    total: number;
+    count: number;
+    avg: number;
+    list: Array<{
+      customerName: string;
+      customerEmail: string;
+      refundAmount: number;
+      refundedAt: string;
+      refundNote: string;
+      subscriptionPlan: string;
+    }>;
+  };
+  churn: {
+    currentMonth: { canceled: number; paidUsers: number; rate: number };
+    lastMonth: { canceled: number; rate: number };
+    trend: 'up' | 'down' | 'stable';
+  };
+  currentMRR: number;
+}
+
 interface AdminStats {
   costs: {
     today: {
@@ -357,12 +385,14 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'settings'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
   const [deletedAccountsData, setDeletedAccountsData] = useState<DeletedAccountsStats | null>(null);
   const [activityLogData, setActivityLogData] = useState<ActivityLogData | null>(null);
+  const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
+  const [financeLoading, setFinanceLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -577,6 +607,31 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'monitoring') {
       fetchMonitoringData();
+    }
+  }, [activeTab]);
+
+  // Fetch Finance Data (lazy loaded)
+  const fetchFinanceData = async () => {
+    try {
+      setFinanceLoading(true);
+      const res = await fetch(`${API_URL}/api/admin/finance-stats`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFinanceStats(data);
+      }
+    } catch (err) {
+      console.error('Error fetching finance data:', err);
+    } finally {
+      setFinanceLoading(false);
+    }
+  };
+
+  // Load finance data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'finance' && !financeStats) {
+      fetchFinanceData();
     }
   }, [activeTab]);
 
@@ -1348,6 +1403,13 @@ export default function AdminDashboard() {
           {errorLogs.length > 0 && (
             <span className={styles.tabBadge} style={{ background: '#ef4444' }}>{errorLogs.length}</span>
           )}
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'finance' ? styles.active : ''}`}
+          onClick={() => setActiveTab('finance')}
+        >
+          <TrendingUp size={20} />
+          <span>Finanzen</span>
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'settings' ? styles.active : ''}`}
@@ -3057,6 +3119,237 @@ export default function AdminDashboard() {
         )}
 
         {/* SETTINGS TAB */}
+        {/* FINANCE TAB */}
+        {activeTab === 'finance' && (
+          <div className={styles.financeTab}>
+            {financeLoading ? (
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <RefreshCw className={styles.spinning} size={32} />
+                <p>Lade Finanzdaten...</p>
+              </div>
+            ) : financeStats ? (() => {
+              // Prepare merged chart data
+              const allMonths = new Set<string>();
+              financeStats.monthlyRevenue.forEach(r => allMonths.add(r.month));
+              financeStats.monthlyCosts.forEach(c => allMonths.add(c.month));
+              financeStats.monthlyRefunds.forEach(r => allMonths.add(r.month));
+
+              const revenueMap = Object.fromEntries(financeStats.monthlyRevenue.map(r => [r.month, r]));
+              const costsMap = Object.fromEntries(financeStats.monthlyCosts.map(c => [c.month, c]));
+              const refundsMap = Object.fromEntries(financeStats.monthlyRefunds.map(r => [r.month, r]));
+
+              const chartData = Array.from(allMonths).sort().map(month => ({
+                month,
+                label: month.slice(5) + '/' + month.slice(2, 4),
+                revenue: revenueMap[month]?.revenue || 0,
+                costs: parseFloat((((costsMap[month]?.cost || 0) * USD_TO_EUR)).toFixed(2)),
+                refunds: refundsMap[month]?.total || 0
+              }));
+
+              // Current month stats
+              const currentMonth = new Date().toISOString().slice(0, 7);
+              const currentRevenue = revenueMap[currentMonth]?.revenue || 0;
+              const currentCosts = parseFloat(((costsMap[currentMonth]?.cost || 0) * USD_TO_EUR).toFixed(2));
+              const currentRefunds = refundsMap[currentMonth]?.total || 0;
+              const netRevenue = parseFloat((currentRevenue - currentCosts - currentRefunds).toFixed(2));
+
+              // Plan breakdown for pie chart
+              const totalBusiness = financeStats.monthlyRevenue.reduce((sum, r) => sum + r.byPlan.business, 0);
+              const totalEnterprise = financeStats.monthlyRevenue.reduce((sum, r) => sum + r.byPlan.enterprise, 0);
+              const planPieData = [
+                { name: 'Business', value: totalBusiness, color: '#3b82f6' },
+                { name: 'Enterprise', value: totalEnterprise, color: '#10b981' }
+              ].filter(d => d.value > 0);
+
+              return (
+                <>
+                  {/* KPI Cards */}
+                  <div className={styles.statsGrid}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon} style={{ background: netRevenue >= 0 ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'linear-gradient(135deg, #fef2f2, #fecaca)', color: netRevenue >= 0 ? '#059669' : '#dc2626' }}>
+                        <Euro size={28} />
+                      </div>
+                      <div className={styles.statContent}>
+                        <h3>Netto-Einnahmen</h3>
+                        <p className={styles.statValue} style={{ color: netRevenue >= 0 ? '#059669' : '#dc2626' }}>
+                          {formatEuro(netRevenue)}
+                        </p>
+                        <span className={styles.statSubtext}>nach Kosten & Refunds</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)', color: '#3b82f6' }}>
+                        <TrendingUp size={28} />
+                      </div>
+                      <div className={styles.statContent}>
+                        <h3>MRR</h3>
+                        <p className={styles.statValue}>{formatEuro(financeStats.currentMRR)}</p>
+                        <span className={styles.statSubtext}>ARR: {formatEuro(financeStats.currentMRR * 12)}</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #fff7ed, #ffedd5)', color: '#ea580c' }}>
+                        <RotateCcw size={28} />
+                      </div>
+                      <div className={styles.statContent}>
+                        <h3>Refunds gesamt</h3>
+                        <p className={styles.statValue}>{formatEuro(financeStats.refunds.total)}</p>
+                        <span className={styles.statSubtext}>{financeStats.refunds.count} Erstattungen</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon} style={{
+                        background: financeStats.churn.trend === 'up' ? 'linear-gradient(135deg, #fef2f2, #fecaca)' : financeStats.churn.trend === 'down' ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+                        color: financeStats.churn.trend === 'up' ? '#dc2626' : financeStats.churn.trend === 'down' ? '#059669' : '#64748b'
+                      }}>
+                        <Users size={28} />
+                      </div>
+                      <div className={styles.statContent}>
+                        <h3>Churn Rate</h3>
+                        <p className={styles.statValue}>
+                          {financeStats.churn.currentMonth.rate}%
+                          {financeStats.churn.trend === 'up' && <span style={{ color: '#dc2626', marginLeft: '0.5rem', fontSize: '1rem' }}>&#9650;</span>}
+                          {financeStats.churn.trend === 'down' && <span style={{ color: '#059669', marginLeft: '0.5rem', fontSize: '1rem' }}>&#9660;</span>}
+                        </p>
+                        <span className={styles.statSubtext}>Vormonat: {financeStats.churn.lastMonth.rate}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Revenue vs Costs AreaChart */}
+                  <div className={styles.chartCard} style={{ marginBottom: '2rem' }}>
+                    <h3>Einnahmen vs. Kosten (letzte 12 Monate)</h3>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <AreaChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="label" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value: number, name: string) => {
+                            const labels: Record<string, string> = { revenue: 'Einnahmen', costs: 'Kosten (EUR)', refunds: 'Refunds' };
+                            return [formatEuro(value), labels[name] || name];
+                          }}
+                        />
+                        <Legend formatter={(value: string) => {
+                          const labels: Record<string, string> = { revenue: 'Einnahmen', costs: 'Kosten (EUR)', refunds: 'Refunds' };
+                          return labels[value] || value;
+                        }} />
+                        <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
+                        <Area type="monotone" dataKey="costs" stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} />
+                        <Area type="monotone" dataKey="refunds" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Two columns: Plan PieChart + Churn Card */}
+                  <div className={styles.chartsRow}>
+                    <div className={styles.chartCard}>
+                      <h3>Revenue nach Plan</h3>
+                      {planPieData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              data={planPieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={90}
+                              paddingAngle={5}
+                              dataKey="value"
+                              label={({ name, value }) => `${name}: ${value}`}
+                            >
+                              {planPieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <p style={{ color: '#94a3b8', textAlign: 'center', padding: '3rem 0' }}>Noch keine Daten</p>
+                      )}
+                    </div>
+
+                    <div className={styles.chartCard}>
+                      <h3>Churn-Details</h3>
+                      <div className={styles.churnCard}>
+                        <div className={styles.churnRate}>
+                          <span style={{
+                            fontSize: '3rem',
+                            fontWeight: 700,
+                            color: financeStats.churn.currentMonth.rate > 10 ? '#dc2626' : financeStats.churn.currentMonth.rate > 5 ? '#f59e0b' : '#059669'
+                          }}>
+                            {financeStats.churn.currentMonth.rate}%
+                          </span>
+                          <span className={`${styles.churnTrend} ${styles[financeStats.churn.trend]}`}>
+                            {financeStats.churn.trend === 'up' ? '&#9650; steigend' : financeStats.churn.trend === 'down' ? '&#9660; sinkend' : '&#9644; stabil'}
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
+                          <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>Dieser Monat</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1e293b' }}>{financeStats.churn.currentMonth.canceled}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>von {financeStats.churn.currentMonth.paidUsers} zahlenden</div>
+                          </div>
+                          <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.25rem' }}>Vormonat</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 600, color: '#1e293b' }}>{financeStats.churn.lastMonth.canceled}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{financeStats.churn.lastMonth.rate}% Rate</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Refund Table */}
+                  <div className={styles.tableCard}>
+                    <h3>Refund-Übersicht ({financeStats.refunds.count} gesamt, {formatEuro(financeStats.refunds.avg)} Durchschnitt)</h3>
+                    {financeStats.refunds.list.length > 0 ? (
+                      <div className={styles.tableContainer} style={{ border: 'none', boxShadow: 'none' }}>
+                        <table className={styles.userTable}>
+                          <thead>
+                            <tr>
+                              <th>Kunde</th>
+                              <th>E-Mail</th>
+                              <th>Plan</th>
+                              <th>Betrag</th>
+                              <th>Datum</th>
+                              <th>Notiz</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {financeStats.refunds.list.map((refund, idx) => (
+                              <tr key={idx}>
+                                <td>{refund.customerName}</td>
+                                <td className={styles.emailCell}>{refund.customerEmail}</td>
+                                <td>
+                                  <span className={`${styles.planBadge} ${styles[refund.subscriptionPlan] || ''}`}>
+                                    {refund.subscriptionPlan || '-'}
+                                  </span>
+                                </td>
+                                <td style={{ fontWeight: 600, color: '#ea580c' }}>{formatEuro(refund.refundAmount)}</td>
+                                <td>{refund.refundedAt ? new Date(refund.refundedAt).toLocaleDateString('de-DE') : '-'}</td>
+                                <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{refund.refundNote || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>Keine Refunds vorhanden</p>
+                    )}
+                  </div>
+                </>
+              );
+            })() : (
+              <p style={{ color: '#94a3b8', textAlign: 'center', padding: '3rem 0' }}>Keine Finanzdaten verfügbar</p>
+            )}
+          </div>
+        )}
+
         {activeTab === 'settings' && (
           <div className={styles.settingsTab}>
             {/* Quick Actions */}
