@@ -82,7 +82,7 @@ export default function OptimizerV2() {
                 KI-gestützte Vertragsanalyse und -optimierung
               </p>
             </div>
-            <button className={styles.newAnalysisBtn} onClick={actions.reset}>
+            <button className={styles.newAnalysisBtn} onClick={() => { actions.reset(); navigate('/optimizer', { replace: true }); }}>
               Neue Analyse
             </button>
           </div>
