@@ -1577,7 +1577,7 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     if (currentChurnRate > lastChurnRate) churnTrend = "up";
     else if (currentChurnRate < lastChurnRate) churnTrend = "down";
 
-    // ===== E) REVENUE PER USER (all invoices, grouped by customer) =====
+    // ===== E) REVENUE PER USER (invoices + current subscription status) =====
     const revenuePerUserAgg = await invoicesCollection.aggregate([
       {
         $group: {
@@ -1593,15 +1593,31 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
       { $sort: { totalRevenue: -1 } }
     ]).toArray();
 
-    const revenuePerUser = revenuePerUserAgg.map(u => ({
-      email: u._id,
-      customerName: u.customerName || u._id,
-      plan: u.plan || "unknown",
-      totalRevenue: parseFloat((u.totalRevenue || 0).toFixed(2)),
-      invoiceCount: u.invoiceCount,
-      firstPayment: u.firstPayment,
-      lastPayment: u.lastPayment
-    }));
+    // Lookup current subscription status for each paying customer
+    const customerEmails = revenuePerUserAgg.map(u => u._id);
+    const customerUsers = await usersCollection.find(
+      { email: { $in: customerEmails } },
+      { projection: { email: 1, subscriptionPlan: 1, subscriptionActive: 1, subscriptionStatus: 1, canceledAt: 1 } }
+    ).toArray();
+    const userStatusMap = {};
+    customerUsers.forEach(u => { userStatusMap[u.email] = u; });
+
+    const revenuePerUser = revenuePerUserAgg.map(u => {
+      const userInfo = userStatusMap[u._id] || {};
+      const isActive = userInfo.subscriptionActive === true && userInfo.subscriptionPlan !== 'free';
+      return {
+        email: u._id,
+        customerName: u.customerName || u._id,
+        plan: u.plan || "unknown",
+        currentPlan: userInfo.subscriptionPlan || "unknown",
+        status: isActive ? "active" : "canceled",
+        canceledAt: userInfo.canceledAt || null,
+        totalRevenue: parseFloat((u.totalRevenue || 0).toFixed(2)),
+        invoiceCount: u.invoiceCount,
+        firstPayment: u.firstPayment,
+        lastPayment: u.lastPayment
+      };
+    });
 
     // ===== F) CURRENT MRR =====
     const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: "business" });

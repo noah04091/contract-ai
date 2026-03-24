@@ -263,6 +263,9 @@ interface FinanceStats {
     email: string;
     customerName: string;
     plan: string;
+    currentPlan: string;
+    status: 'active' | 'canceled';
+    canceledAt: string | null;
     totalRevenue: number;
     invoiceCount: number;
     firstPayment: string;
@@ -3229,45 +3232,108 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Revenue per User Table */}
-                  <div className={styles.tableCard}>
-                    <h3>Einnahmen pro Kunde ({financeStats.revenuePerUser.length} zahlende Kunden, {formatEuro(financeStats.revenuePerUser.reduce((s, u) => s + u.totalRevenue, 0))} gesamt)</h3>
-                    {financeStats.revenuePerUser.length > 0 ? (
-                      <div className={styles.tableContainer} style={{ border: 'none', boxShadow: 'none' }}>
-                        <table className={styles.userTable}>
-                          <thead>
-                            <tr>
-                              <th>Kunde</th>
-                              <th>E-Mail</th>
-                              <th>Plan</th>
-                              <th>Rechnungen</th>
-                              <th>Gesamt</th>
-                              <th>Erste Zahlung</th>
-                              <th>Letzte Zahlung</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {financeStats.revenuePerUser.map((user, idx) => (
-                              <tr key={idx}>
-                                <td>{user.customerName}</td>
-                                <td className={styles.emailCell}>{user.email}</td>
-                                <td>
-                                  <span className={`${styles.planBadge} ${styles[user.plan] || ''}`}>
-                                    {user.plan}
-                                  </span>
-                                </td>
-                                <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
-                                <td style={{ fontWeight: 600, color: '#059669' }}>{formatEuro(user.totalRevenue)}</td>
-                                <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
-                                <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>Noch keine Zahlungen</p>
-                    )}
-                  </div>
+                  {(() => {
+                    const activeUsers = financeStats.revenuePerUser.filter(u => u.status === 'active');
+                    const canceledUsers = financeStats.revenuePerUser.filter(u => u.status === 'canceled');
+                    const activeRevenue = activeUsers.reduce((s, u) => s + u.totalRevenue, 0);
+                    const canceledRevenue = canceledUsers.reduce((s, u) => s + u.totalRevenue, 0);
+
+                    return (
+                      <>
+                        {/* Active Subscribers */}
+                        <div className={styles.tableCard}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0 }}>
+                              <span style={{ color: '#059669' }}>&#9679;</span> Aktive Abonnenten ({activeUsers.length} Kunden, {formatEuro(activeRevenue)} Gesamtumsatz)
+                            </h3>
+                          </div>
+                          {activeUsers.length > 0 ? (
+                            <div className={styles.tableContainer} style={{ border: 'none', boxShadow: 'none' }}>
+                              <table className={styles.userTable}>
+                                <thead>
+                                  <tr>
+                                    <th>Kunde</th>
+                                    <th>E-Mail</th>
+                                    <th>Aktueller Plan</th>
+                                    <th>Rechnungen</th>
+                                    <th>Umsatz</th>
+                                    <th>Erste Zahlung</th>
+                                    <th>Letzte Zahlung</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {activeUsers.map((user, idx) => (
+                                    <tr key={idx}>
+                                      <td>{user.customerName}</td>
+                                      <td className={styles.emailCell}>{user.email}</td>
+                                      <td>
+                                        <span className={`${styles.planBadge} ${styles[user.currentPlan] || ''}`}>
+                                          {user.currentPlan}
+                                        </span>
+                                      </td>
+                                      <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
+                                      <td style={{ fontWeight: 600, color: '#059669' }}>{formatEuro(user.totalRevenue)}</td>
+                                      <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                      <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>Keine aktiven Abonnenten</p>
+                          )}
+                        </div>
+
+                        {/* Canceled / Former Subscribers */}
+                        <div className={styles.tableCard}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0 }}>
+                              <span style={{ color: '#94a3b8' }}>&#9679;</span> Ehemalige Abonnenten ({canceledUsers.length} Kunden, {formatEuro(canceledRevenue)} Gesamtumsatz)
+                            </h3>
+                          </div>
+                          {canceledUsers.length > 0 ? (
+                            <div className={styles.tableContainer} style={{ border: 'none', boxShadow: 'none' }}>
+                              <table className={styles.userTable}>
+                                <thead>
+                                  <tr>
+                                    <th>Kunde</th>
+                                    <th>E-Mail</th>
+                                    <th>Ehem. Plan</th>
+                                    <th>Rechnungen</th>
+                                    <th>Umsatz</th>
+                                    <th>Erste Zahlung</th>
+                                    <th>Letzte Zahlung</th>
+                                    <th>Gekündigt am</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {canceledUsers.map((user, idx) => (
+                                    <tr key={idx} style={{ opacity: 0.7 }}>
+                                      <td>{user.customerName}</td>
+                                      <td className={styles.emailCell}>{user.email}</td>
+                                      <td>
+                                        <span className={`${styles.planBadge}`} style={{ background: '#f1f5f9', color: '#94a3b8' }}>
+                                          {user.plan}
+                                        </span>
+                                      </td>
+                                      <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
+                                      <td style={{ fontWeight: 600, color: '#94a3b8' }}>{formatEuro(user.totalRevenue)}</td>
+                                      <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                      <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                      <td style={{ color: '#dc2626' }}>{user.canceledAt ? new Date(user.canceledAt).toLocaleDateString('de-DE') : '-'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 0' }}>Keine ehemaligen Abonnenten</p>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {/* Revenue vs Costs AreaChart */}
                   <div className={styles.chartCard} style={{ marginBottom: '2rem' }}>
