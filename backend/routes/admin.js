@@ -1622,27 +1622,37 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
       status: 'active',
       limit: 100
     });
-    // Build set of emails with active Stripe subscriptions
-    const activeStripeEmails = new Set();
+    // Build map of emails with active Stripe subscriptions (+ plan info)
+    const activeStripeMap = {};
     for (const sub of activeSubscriptions.data) {
       try {
         const customer = await stripe.customers.retrieve(sub.customer);
-        if (customer.email) activeStripeEmails.add(customer.email.toLowerCase());
+        if (customer.email) {
+          const planName = sub.items?.data?.[0]?.price?.nickname
+            || sub.items?.data?.[0]?.plan?.nickname
+            || '';
+          activeStripeMap[customer.email.toLowerCase()] = {
+            name: customer.name || customer.email,
+            plan: planName,
+            status: sub.status
+          };
+        }
       } catch (e) { /* skip deleted customers */ }
     }
 
     // Lookup canceledAt from MongoDB for display
-    const customerEmails = Object.keys(customerMap);
+    const allEmails = [...new Set([...Object.keys(customerMap), ...Object.keys(activeStripeMap)])];
     const customerUsers = await usersCollection.find(
-      { email: { $in: customerEmails } },
+      { email: { $in: allEmails } },
       { projection: { email: 1, subscriptionPlan: 1, canceledAt: 1 } }
     ).toArray();
     const userStatusMap = {};
     customerUsers.forEach(u => { userStatusMap[u.email] = u; });
 
+    // Build revenuePerUser from paid invoices
     const revenuePerUser = Object.values(customerMap).map(c => {
       const userInfo = userStatusMap[c.email] || {};
-      const isActive = activeStripeEmails.has(c.email.toLowerCase());
+      const isActive = c.email.toLowerCase() in activeStripeMap;
       return {
         email: c.email,
         customerName: c.customerName,
@@ -1654,7 +1664,27 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
         firstPayment: c.firstPayment,
         lastPayment: c.lastPayment
       };
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    });
+
+    // Add active Stripe subscribers who have NO paid invoices yet (e.g. pending SEPA)
+    for (const [email, info] of Object.entries(activeStripeMap)) {
+      if (!customerMap[email]) {
+        const userInfo = userStatusMap[email] || {};
+        revenuePerUser.push({
+          email,
+          customerName: info.name,
+          currentPlan: userInfo.subscriptionPlan || "unknown",
+          status: "active",
+          canceledAt: null,
+          totalRevenue: 0,
+          invoiceCount: 0,
+          firstPayment: null,
+          lastPayment: null
+        });
+      }
+    }
+
+    revenuePerUser.sort((a, b) => b.totalRevenue - a.totalRevenue);
 
     // ===== F) CURRENT MRR =====
     const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: "business" });
