@@ -43,7 +43,7 @@ const featureCategories = [
     description: "Verträge verstehen & bewerten",
     features: [
       { name: "KI-Vertragsanalyse", description: "Risiken & Chancen erkennen", icon: "🔍", path: "/features/vertragsanalyse" },
-      { name: "Vertragsoptimierung", description: "Verbesserungsvorschläge erhalten", icon: "✨", path: "/features/optimierung" },
+      { name: "Contract Intelligence", description: "Tiefenanalyse & Optimierung", icon: "✨", path: "/features/optimierung" },
       { name: "Vertragsvergleich", description: "Zwei Versionen vergleichen", icon: "📊", path: "/features/vergleich" },
       { name: "Legal Lens", description: "Klauseln sofort verstehen", icon: "👁️", path: "/features/legal-lens" },
     ]

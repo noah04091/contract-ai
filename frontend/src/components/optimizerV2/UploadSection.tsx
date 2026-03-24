@@ -77,10 +77,10 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
           <Sparkles size={36} />
         </div>
         <h1 className={styles.uploadHeroTitle}>
-          KI-<span className={styles.uploadHeroGradient}>Vertragsoptimierung</span>
+          <span className={styles.uploadHeroGradient}>Contract Intelligence</span>
         </h1>
         <p className={styles.uploadHeroDesc}>
-          Lade deinen Vertrag hoch und erhalte automatisch Verbesserungsvorschläge mit rechtlicher Begründung.
+          Lade deinen Vertrag hoch für eine KI-gestützte Tiefenanalyse mit Risikobewertung, Scoring und Optimierungsvorschlägen.
         </p>
         <div className={styles.uploadFeaturePills}>
           {FEATURE_PILLS.map(({ icon: Icon, label }) => (
