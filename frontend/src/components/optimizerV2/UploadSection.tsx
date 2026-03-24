@@ -9,6 +9,7 @@ interface Props {
   onFileSelect: (file: File | null) => void;
   onStartAnalysis: (file: File, perspective: string) => void;
   isAnalyzing: boolean;
+  disabled?: boolean;
 }
 
 const FEATURE_PILLS = [
@@ -20,7 +21,7 @@ const FEATURE_PILLS = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 
-export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing }: Props) {
+export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [perspective, setPerspective] = useState<OptimizationMode>('neutral');
   const [fileError, setFileError] = useState<string | null>(null);
@@ -98,10 +99,11 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
           <>
             <div
               className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragOver={(e) => { if (!disabled) { e.preventDefault(); setIsDragging(true); } }}
               onDragLeave={() => setIsDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
+              onDrop={disabled ? undefined : handleDrop}
+              onClick={() => !disabled && fileInputRef.current?.click()}
+              style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
             >
               <div className={styles.dropZoneIconWrapper}>
                 <Upload size={32} />
@@ -128,9 +130,9 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
             <button
               className={styles.analyzeButton}
               onClick={() => fileInputRef.current?.click()}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || disabled}
             >
-              Jetzt optimieren
+              Jetzt analysieren
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -166,9 +168,9 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
             <button
               className={styles.analyzeButton}
               onClick={() => onStartAnalysis(file, perspective === 'proCreator' ? 'creator' : perspective === 'proRecipient' ? 'recipient' : 'neutral')}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || disabled}
             >
-              {isAnalyzing ? 'Analysiere...' : 'Jetzt optimieren'}
+              {isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}
               {!isAnalyzing && (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />

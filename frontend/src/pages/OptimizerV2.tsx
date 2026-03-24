@@ -13,6 +13,8 @@ import {
   ExportPanel,
   CompareResults
 } from '../components/optimizerV2';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
+import { apiCall } from '../utils/api';
 import type { ActiveTab, ImportanceLevel, AnalysisResult, OptimizationMode, ChatMessage } from '../types/optimizerV2';
 import { CATEGORY_LABELS } from '../types/optimizerV2';
 import styles from '../styles/OptimizerV2.module.css';
@@ -33,11 +35,20 @@ export default function OptimizerV2() {
   const { state, actions } = useOptimizerV2();
   const [sortByImportance, setSortByImportance] = useState(false);
   const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // Check auth
+  // Check auth + premium status
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) navigate('/login');
+    if (!token) { navigate('/login'); return; }
+    (async () => {
+      try {
+        const data = await apiCall('/auth/me') as { user?: { subscriptionActive?: boolean } };
+        setIsPremium(data.user?.subscriptionActive === true);
+      } catch {
+        setIsPremium(false);
+      }
+    })();
   }, [navigate]);
 
   // Load result from URL query param (?result=ID)
@@ -59,6 +70,13 @@ export default function OptimizerV2() {
       <Helmet>
         <title>Contract Intelligence - Contract AI</title>
       </Helmet>
+
+      {isPremium === false && (
+        <UnifiedPremiumNotice
+          featureName="Contract Intelligence"
+          variant="fullWidth"
+        />
+      )}
 
       <div className={`${styles.pageContainer} ${(status === 'idle' || status === 'uploading') ? styles.pageContainerUpload : ''}`}>
         {/* Historie button floating top-right in upload state */}
@@ -95,6 +113,7 @@ export default function OptimizerV2() {
             onFileSelect={actions.setFile}
             onStartAnalysis={actions.startAnalysis}
             isAnalyzing={status === 'uploading'}
+            disabled={isPremium === false}
           />
         )}
 
