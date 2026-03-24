@@ -1440,44 +1440,57 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
 
     const db = await database.connect();
     const usersCollection = db.collection("users");
-    const invoicesCollection = db.collection("invoices");
     const costTrackingCollection = db.collection("cost_tracking");
 
     const now = new Date();
     const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-    // ===== A) MONTHLY REVENUE from invoices (last 12 months) =====
-    const revenueAgg = await invoicesCollection.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: twelveMonthsAgo }
-        }
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
-          revenue: { $sum: "$amount" },
-          count: { $sum: 1 },
-          businessCount: {
-            $sum: { $cond: [{ $eq: ["$plan", "business"] }, 1, 0] }
-          },
-          enterpriseCount: {
-            $sum: { $cond: [{ $in: ["$plan", ["enterprise", "premium"]] }, 1, 0] }
-          }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]).toArray();
+    // ===== STRIPE DATA (source of truth for all revenue) =====
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-    const monthlyRevenue = revenueAgg.map(r => ({
-      month: r._id,
-      revenue: parseFloat((r.revenue || 0).toFixed(2)),
-      count: r.count,
-      byPlan: {
-        business: r.businessCount,
-        enterprise: r.enterpriseCount
+    // Fetch all paid Stripe invoices (auto-paginate, up to 300)
+    const stripeInvoices = [];
+    let hasMore = true;
+    let startingAfter = undefined;
+    while (hasMore && stripeInvoices.length < 300) {
+      const params = { status: 'paid', limit: 100 };
+      if (startingAfter) params.starting_after = startingAfter;
+      const batch = await stripe.invoices.list(params);
+      stripeInvoices.push(...batch.data);
+      hasMore = batch.has_more;
+      if (batch.data.length > 0) startingAfter = batch.data[batch.data.length - 1].id;
+    }
+
+    // ===== A) MONTHLY REVENUE from Stripe (last 12 months) =====
+    const revenueByMonth = {};
+    for (const inv of stripeInvoices) {
+      const paidAt = inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : new Date(inv.created * 1000);
+      if (paidAt < twelveMonthsAgo) continue;
+      const month = paidAt.toISOString().slice(0, 7);
+      const amount = (inv.amount_paid || 0) / 100;
+
+      // Detect plan from line items
+      const lineDesc = (inv.lines?.data?.[0]?.description || '').toLowerCase();
+      const isBusiness = lineDesc.includes('business');
+      const isEnterprise = lineDesc.includes('enterprise') || lineDesc.includes('premium');
+
+      if (!revenueByMonth[month]) {
+        revenueByMonth[month] = { revenue: 0, count: 0, business: 0, enterprise: 0 };
       }
-    }));
+      revenueByMonth[month].revenue += amount;
+      revenueByMonth[month].count += 1;
+      if (isBusiness) revenueByMonth[month].business += 1;
+      if (isEnterprise) revenueByMonth[month].enterprise += 1;
+    }
+
+    const monthlyRevenue = Object.entries(revenueByMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => ({
+        month,
+        revenue: parseFloat(data.revenue.toFixed(2)),
+        count: data.count,
+        byPlan: { business: data.business, enterprise: data.enterprise }
+      }));
 
     // ===== B) MONTHLY COSTS from cost_tracking (last 12 months) =====
     const twelveMonthsAgoStr = twelveMonthsAgo.toISOString().slice(0, 7); // "YYYY-MM"
@@ -1577,24 +1590,34 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     if (currentChurnRate > lastChurnRate) churnTrend = "up";
     else if (currentChurnRate < lastChurnRate) churnTrend = "down";
 
-    // ===== E) REVENUE PER USER (invoices + current subscription status) =====
-    const revenuePerUserAgg = await invoicesCollection.aggregate([
-      {
-        $group: {
-          _id: "$customerEmail",
-          customerName: { $last: "$customerName" },
-          plan: { $last: "$plan" },
-          totalRevenue: { $sum: "$amount" },
-          invoiceCount: { $sum: 1 },
-          firstPayment: { $min: "$createdAt" },
-          lastPayment: { $max: "$createdAt" }
-        }
-      },
-      { $sort: { totalRevenue: -1 } }
-    ]).toArray();
+    // ===== E) REVENUE PER USER (from Stripe data loaded above) =====
+    const customerMap = {};
+    for (const inv of stripeInvoices) {
+      const email = inv.customer_email || 'unknown';
+      if (!customerMap[email]) {
+        customerMap[email] = {
+          email,
+          customerName: inv.customer_name || email,
+          stripeCustomerId: inv.customer,
+          totalRevenue: 0,
+          invoiceCount: 0,
+          firstPayment: null,
+          lastPayment: null,
+          invoices: []
+        };
+      }
+      const c = customerMap[email];
+      const amount = (inv.amount_paid || 0) / 100; // Stripe amounts are in cents
+      const paidAt = inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : new Date(inv.created * 1000);
+      c.totalRevenue += amount;
+      c.invoiceCount += 1;
+      if (!c.firstPayment || paidAt < c.firstPayment) c.firstPayment = paidAt;
+      if (!c.lastPayment || paidAt > c.lastPayment) c.lastPayment = paidAt;
+      c.invoices.push({ amount, date: paidAt, number: inv.number });
+    }
 
-    // Lookup current subscription status for each paying customer
-    const customerEmails = revenuePerUserAgg.map(u => u._id);
+    // Lookup current subscription status from MongoDB
+    const customerEmails = Object.keys(customerMap);
     const customerUsers = await usersCollection.find(
       { email: { $in: customerEmails } },
       { projection: { email: 1, subscriptionPlan: 1, subscriptionActive: 1, subscriptionStatus: 1, canceledAt: 1 } }
@@ -1602,22 +1625,21 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     const userStatusMap = {};
     customerUsers.forEach(u => { userStatusMap[u.email] = u; });
 
-    const revenuePerUser = revenuePerUserAgg.map(u => {
-      const userInfo = userStatusMap[u._id] || {};
+    const revenuePerUser = Object.values(customerMap).map(c => {
+      const userInfo = userStatusMap[c.email] || {};
       const isActive = userInfo.subscriptionActive === true && userInfo.subscriptionPlan !== 'free';
       return {
-        email: u._id,
-        customerName: u.customerName || u._id,
-        plan: u.plan || "unknown",
+        email: c.email,
+        customerName: c.customerName,
         currentPlan: userInfo.subscriptionPlan || "unknown",
         status: isActive ? "active" : "canceled",
         canceledAt: userInfo.canceledAt || null,
-        totalRevenue: parseFloat((u.totalRevenue || 0).toFixed(2)),
-        invoiceCount: u.invoiceCount,
-        firstPayment: u.firstPayment,
-        lastPayment: u.lastPayment
+        totalRevenue: parseFloat(c.totalRevenue.toFixed(2)),
+        invoiceCount: c.invoiceCount,
+        firstPayment: c.firstPayment,
+        lastPayment: c.lastPayment
       };
-    });
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
 
     // ===== F) CURRENT MRR =====
     const businessUsers = await usersCollection.countDocuments({ subscriptionPlan: "business" });
