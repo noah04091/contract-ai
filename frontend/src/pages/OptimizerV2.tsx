@@ -73,8 +73,8 @@ export default function OptimizerV2() {
         {/* Full page header for non-upload states */}
         {status !== 'idle' && status !== 'uploading' && (
           <div className={styles.pageHeader}>
-            <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
-              <ArrowLeft size={16} /> Dashboard
+            <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
+              <ArrowLeft size={16} /> Historie
             </button>
             <div className={styles.pageHeaderContent}>
               <h1 className={styles.pageTitle}>Contract Optimizer</h1>
@@ -82,14 +82,9 @@ export default function OptimizerV2() {
                 KI-gestützte Vertragsanalyse und -optimierung
               </p>
             </div>
-            <button className={styles.backButton} onClick={() => navigate('/optimizer-history')}>
-              <History size={14} /> Historie
+            <button className={styles.newAnalysisBtn} onClick={actions.reset}>
+              Neue Analyse
             </button>
-            {status === 'completed' && (
-              <button className={styles.newAnalysisBtn} onClick={actions.reset}>
-                Neue Analyse
-              </button>
-            )}
           </div>
         )}
 
