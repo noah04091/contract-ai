@@ -1412,7 +1412,7 @@ export default function Navbar() {
                     <li className={styles.navItemNew}>
                       <Link to="/optimizer" className={`${styles.navLinkNew} ${location.pathname === '/optimizer' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Rocket size={20} strokeWidth={1.75} /></span>
-                        <span className={styles.navLabelNew}>Vertrag optimieren</span>
+                        <span className={styles.navLabelNew}>Contract Intelligence</span>
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
