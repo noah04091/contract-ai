@@ -75,7 +75,7 @@
 }
 .backButton:hover { border-color: var(--ov2-gray-300); color: var(--ov2-gray-800); }
 
-.pageHeaderContent { flex: 1; }
+.pageHeaderContent { flex: 1; text-align: center; }
 .pageTitle { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
 .pageSubtitle { font-size: 14px; color: var(--ov2-gray-500); margin: 4px 0 0; }
 
