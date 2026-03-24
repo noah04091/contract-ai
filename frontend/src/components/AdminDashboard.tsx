@@ -3271,8 +3271,10 @@ export default function AdminDashboard() {
                                           {user.currentPlan}
                                         </span>
                                       </td>
-                                      <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
-                                      <td style={{ fontWeight: 600, color: '#059669' }}>{formatEuro(user.totalRevenue)}</td>
+                                      <td style={{ textAlign: 'center' }}>{user.invoiceCount || '-'}</td>
+                                      <td style={{ fontWeight: 600, color: user.totalRevenue > 0 ? '#059669' : '#f59e0b' }}>
+                                        {user.totalRevenue > 0 ? formatEuro(user.totalRevenue) : 'Zahlung ausstehend'}
+                                      </td>
                                       <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
                                       <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
                                     </tr>
