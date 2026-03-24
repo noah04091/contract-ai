@@ -131,7 +131,7 @@ export default function AGB() {
 
             <div className={styles.lastUpdated}>
               <Calendar size={14} />
-              Stand: Februar 2025
+              Stand: März 2026
             </div>
           </header>
 
@@ -427,10 +427,19 @@ export default function AGB() {
                 </p>
 
                 <div className={`${styles.highlightBox} ${styles.success}`}>
-                  <strong>4.6 14-Tage-Geld-zurück-Garantie:</strong> Für Erstkunden gilt eine
-                  14-Tage-Geld-zurück-Garantie. Sollten Sie mit Contract AI nicht zufrieden sein,
-                  erstatten wir Ihnen innerhalb von 14 Tagen nach Zahlungseingang den vollen
-                  Betrag zurück.
+                  <strong>4.6 14-Tage-Geld-zurück-Garantie:</strong> Für Erstkunden kostenpflichtiger
+                  Tarife bieten wir eine freiwillige 14-Tage-Geld-zurück-Garantie ab Zahlungseingang an.
+                  Um die Garantie in Anspruch zu nehmen, muss der Kunde innerhalb von 14 Tagen nach
+                  Zahlungseingang eine E-Mail an{" "}
+                  <a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a>{" "}
+                  senden und die Rückerstattung ausdrücklich beantragen. Nach Eingang der Anfrage erhält
+                  der Kunde einen individuellen Link zu unserem Feedback-Formular. Die vollständige
+                  Ausfüllung dieses Formulars ist Voraussetzung für die Bearbeitung der Rückerstattung.
+                  Die Rückerstattung erfolgt nach Eingang des vollständig ausgefüllten Feedbacks innerhalb
+                  von 7 Werktagen auf das ursprüngliche Zahlungsmittel. Ohne fristgerechte Anfrage oder
+                  ohne ausgefülltes Feedback besteht kein Anspruch auf Rückerstattung im Rahmen dieser
+                  Garantie. Diese freiwillige Kulanzleistung besteht unabhängig vom gesetzlichen
+                  Widerrufsrecht gemäß § 5.5 dieser AGB.
                 </div>
               </div>
             </section>
@@ -484,8 +493,12 @@ export default function AGB() {
                 <div className={styles.highlightBox}>
                   <strong>5.5 Widerrufsrecht für Verbraucher:</strong><br />
                   Verbraucher (§ 13 BGB) haben ein gesetzliches Widerrufsrecht von 14 Tagen ab
-                  Vertragsschluss. Das Widerrufsrecht erlischt vorzeitig, wenn der Nutzer die
-                  Dienstleistung vor Ablauf der Widerrufsfrist vollständig in Anspruch genommen hat.
+                  Vertragsschluss. Mit der erstmaligen Nutzung kostenpflichtiger Funktionen nach
+                  Abschluss eines Bezahltarifs stimmt der Nutzer ausdrücklich zu, dass die
+                  Leistungserbringung vor Ablauf der Widerrufsfrist beginnt, und bestätigt seine
+                  Kenntnis, dass das Widerrufsrecht mit vollständiger Inanspruchnahme der
+                  Dienstleistung erlischt (§ 356 Abs. 4 BGB). Unabhängig davon bietet der Anbieter
+                  eine freiwillige 14-Tage-Geld-zurück-Garantie gemäß § 4.6 an.
                 </div>
 
                 <h3 className={styles.subTitle}>Widerrufsbelehrung</h3>
