@@ -59,6 +59,42 @@ export default function OptimizerV2() {
     }
   }, [searchParams, state.status, state.resultId, actions]);
 
+  // Pre-load contract file from contractId query param
+  useEffect(() => {
+    const contractId = searchParams.get('contractId');
+    if (!contractId || state.file || state.status !== 'idle') return;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        // Get contract info
+        const contractData = await apiCall(`/contracts/${contractId}`) as { contract?: { fileName?: string; s3Key?: string } };
+        const contract = contractData?.contract;
+        if (!contract?.s3Key) return;
+        // Get presigned URL
+        const s3Res = await fetch(`/api/s3/view?contractId=${contractId}&type=original`, {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (!s3Res.ok) return;
+        const s3Data = await s3Res.json();
+        const fileUrl = s3Data.fileUrl || s3Data.url;
+        if (!fileUrl) return;
+        // Download file as blob
+        const fileRes = await fetch(fileUrl);
+        if (!fileRes.ok) return;
+        const blob = await fileRes.blob();
+        const fileName = contract.fileName || 'vertrag.pdf';
+        const mimeType = fileName.endsWith('.docx')
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf';
+        const file = new File([blob], fileName, { type: mimeType });
+        actions.setFile(file);
+      } catch {
+        // Silent fail — user can still upload manually
+      }
+    })();
+  }, [searchParams, state.file, state.status, actions]);
+
   const {
     file, status, progress, progressMessage, stages,
     result, resultId, activeMode, activeTab,
