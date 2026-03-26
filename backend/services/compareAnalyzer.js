@@ -229,6 +229,14 @@ Antworte NUR mit validem JSON:
 
 WICHTIG für originalText: Zitiere den VOLLSTÄNDIGEN Wortlaut aus dem Dokument. KEINE Abkürzung mit "...". Jeder Satz muss komplett sein.
 WICHTIG für parties: Extrahiere IMMER alle Parteien/Personen/Firmen die im Dokument genannt werden — mit korrekten Rollen.
+
+SPEZIELLE EXTRAKTION für Konditionenblätter, Preistabellen, Gebührentabellen, Leistungsverzeichnisse:
+- Erstelle für JEDE Tabelle/Konditionsübersicht eine EIGENE Klausel (area: "payment" oder "subject")
+- JEDER einzelne Wert (Gebühr, Limit, Frist, Prozentsatz, EUR-Betrag) MUSS als eigener keyValue-Eintrag erfasst werden
+- Fasse tabellarische Werte NICHT zusammen — jeder Zahlenwert bekommt seinen eigenen Key
+- Beispiel: Wenn ein Konditionenblatt "Flatrate-Gebühr: 1,95%, Ankauflimit: EUR 150.000, Selbstbehalt: EUR 5.000" enthält, dann müssen ALLE drei als separate keyValues erscheinen
+- Dies ist die WICHTIGSTE Extraktion — fehlende Zahlenwerte machen die gesamte Analyse wertlos
+
 Null für fehlende Infos. NICHTS erfinden.`
   };
 }
@@ -449,11 +457,28 @@ ${rawText2}
 """
 
 ${clauseMatchContext}
-DATENGENAUIGKEITS-CHECK (VOR der Analyse durchführen):
-1. Lies BEIDE Volltexte komplett durch
-2. Prüfe: Stehen in BEIDEN Dokumenten Parteien/Absender/Empfänger? → Wenn ja, sage NIEMALS "Keine Regelung" für Parteien
-3. Prüfe: Stehen in BEIDEN Dokumenten Leistungsbeschreibungen? → Wenn ja, sage NIEMALS "Keine Regelung" für Leistungen
-4. Nur wenn eine Information TATSÄCHLICH in einem Dokument fehlt (nicht im Volltext vorkommt), darfst du "Keine Regelung vorhanden" schreiben
+SCHRITT 0 — WERTE-EXTRAKTION AUS DEM VOLLTEXT (KRITISCH! VOR allen anderen Schritten durchführen):
+
+Lies BEIDE Volltexte KOMPLETT und extrahiere JEDEN konkreten Wert. Suche insbesondere nach:
+- Konditionenblättern, Preistabellen, Gebührentabellen, Leistungsverzeichnissen
+- Kopfdaten und Header-Informationen
+- Tabellarisch aufgelisteten Konditionen
+- Jeder Zahl, jedem Prozentsatz, jedem EUR-Betrag, jeder Frist, jedem Limit
+
+Dokument 1 — VOLLSTÄNDIGE Werteliste (JEDEN Zahlenwert aus dem Volltext auflisten):
+[Hier ALLE konkreten Werte aus Dokument 1 auflisten: Gebühren, Prozentsätze, EUR-Beträge, Fristen, Limits, Daten, Mengen — NICHTS weglassen]
+
+Dokument 2 — VOLLSTÄNDIGE Werteliste (JEDEN Zahlenwert aus dem Volltext auflisten):
+[Gleiche Struktur — ALLE konkreten Werte aus Dokument 2]
+
+VALIDIERUNGSREGELN (ABSOLUT VERBINDLICH — Verstöße machen die Analyse WERTLOS):
+
+1. Wenn du in Schritt 0 einen Wert für ein Dokument gefunden hast, darfst du in KEINEM späteren Schritt behaupten, dieser Wert fehle oder sei "Keine Regelung vorhanden".
+2. Wenn die Dokumentenkarte einen Wert NICHT enthält, aber der VOLLTEXT ihn enthält → der VOLLTEXT hat IMMER Vorrang.
+3. "Keine Regelung vorhanden" ist NUR erlaubt wenn der Wert weder in der Dokumentenkarte NOCH im Volltext vorkommt.
+4. Stehen in BEIDEN Dokumenten Parteien? → NIEMALS "Keine Regelung" für Parteien
+5. Stehen in BEIDEN Dokumenten Gebühren/Konditionen? → NIEMALS "Keine Regelung" für Vergütung
+6. Bevor du "Keine Regelung" schreibst: Prüfe NOCHMALS den Volltext. Wenn der Wert dort steht, ZITIERE ihn stattdessen.
 
 WICHTIG — Finde MÖGLICHST VIELE echte Unterschiede (typisch sind 6-10 bei ähnlichen Dokumenten).
 Jeder Zahlenunterschied (Fristen, Beträge, Dauer) ist ein EIGENER Eintrag.
@@ -540,8 +565,12 @@ SCHRITT 8 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste, prior
   "suggestedText": "KONKRETER Alternativ-Klauseltext (als Optimierungsvorschlag / Verhandlungsoption)"
 }
 
-Antworte NUR mit diesem JSON:
+Antworte NUR mit diesem JSON (REIHENFOLGE EINHALTEN — valueExtraction ZUERST!):
 {
+  "valueExtraction": {
+    "document1": {"label": "Dokumentname", "values": {"Wert1": "exakter Wert", "Wert2": "exakter Wert", ...}},
+    "document2": {"label": "Dokumentname", "values": {"Wert1": "exakter Wert", "Wert2": "exakter Wert", ...}}
+  },
   "differences": [...],
   "contract1Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "contract2Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
@@ -553,7 +582,9 @@ Antworte NUR mit diesem JSON:
   },
   "risks": [...],
   "recommendations": [...]
-}`
+}
+
+WICHTIG: "valueExtraction" MUSS das ERSTE Feld im JSON sein. Schreibe es VOR allem anderen. Es zwingt dich, die Werte zu lesen BEVOR du Unterschiede analysierst. Jeder Wert der hier steht, darf in "differences" NICHT als "Keine Regelung" erscheinen.`
   };
 }
 
@@ -574,8 +605,19 @@ async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutr
   });
 
   const raw = JSON.parse(completion.choices[0].message.content);
+
+  // Log valueExtraction for debugging
+  if (raw.valueExtraction) {
+    console.log(`📊 Value Extraction Dok1:`, JSON.stringify(raw.valueExtraction.document1?.values || {}).substring(0, 300));
+    console.log(`📊 Value Extraction Dok2:`, JSON.stringify(raw.valueExtraction.document2?.values || {}).substring(0, 300));
+  }
+
   const validated = validatePhaseBResponse(raw);
-  const stabilized = stabilizeScores(validated);
+
+  // Cross-check: Remove false "Keine Regelung" claims using valueExtraction
+  const crossChecked = crossCheckWithValueExtraction(validated);
+
+  const stabilized = stabilizeScores(crossChecked);
   const filtered = filterIdenticalClauses(stabilized);
 
   console.log(`✅ Phase B: ${filtered.differences.length} Unterschiede, ${filtered.risks.length} Risiken, ${filtered.recommendations.length} Empfehlungen`);
@@ -1046,6 +1088,75 @@ function stabilizeScores(result) {
   // Sync overall with contract analysis score
   result.contract1Analysis.score = result.scores.contract1.overall;
   result.contract2Analysis.score = result.scores.contract2.overall;
+
+  return result;
+}
+
+// ============================================
+// Cross-check: Remove false "Keine Regelung" claims
+// ============================================
+
+function crossCheckWithValueExtraction(result) {
+  if (!result.valueExtraction || !result.differences) return result;
+
+  const ve = result.valueExtraction;
+  const doc1Values = ve.document1?.values || {};
+  const doc2Values = ve.document2?.values || {};
+  const doc1Keys = Object.keys(doc1Values).map(k => k.toLowerCase());
+  const doc2Keys = Object.keys(doc2Values).map(k => k.toLowerCase());
+
+  const keineRegelungPattern = /keine regelung|nicht geregelt|nicht vorhanden|fehlt|nicht enthalten|keine angabe/i;
+  let removedCount = 0;
+
+  result.differences = result.differences.filter(diff => {
+    const c1IsKeineRegelung = keineRegelungPattern.test(diff.contract1);
+    const c2IsKeineRegelung = keineRegelungPattern.test(diff.contract2);
+
+    // If contract1 says "Keine Regelung" but valueExtraction found values for doc1
+    if (c1IsKeineRegelung && !c2IsKeineRegelung) {
+      // Check if any extracted doc1 value relates to this difference's category
+      const category = (diff.category || '').toLowerCase();
+      const section = (diff.section || '').toLowerCase();
+      const hasValueInDoc1 = doc1Keys.some(k =>
+        category.includes(k) || k.includes(category.split(' ')[0]) ||
+        section.includes(k) || k.includes(section.split(' ')[0]) ||
+        // Also check the contract2 text for keywords that match doc1 values
+        (diff.contract2 && doc1Values[Object.keys(doc1Values).find(dk => dk.toLowerCase() === k)]
+          && diff.contract2.toLowerCase().includes(k))
+      );
+      if (hasValueInDoc1) {
+        console.log(`⚠️ Cross-check: Entferne falsches "Keine Regelung" für Dok1 bei "${diff.category}" — Wert existiert in valueExtraction`);
+        removedCount++;
+        return false;
+      }
+    }
+
+    // Same check for contract2
+    if (c2IsKeineRegelung && !c1IsKeineRegelung) {
+      const category = (diff.category || '').toLowerCase();
+      const section = (diff.section || '').toLowerCase();
+      const hasValueInDoc2 = doc2Keys.some(k =>
+        category.includes(k) || k.includes(category.split(' ')[0]) ||
+        section.includes(k) || k.includes(section.split(' ')[0]) ||
+        (diff.contract1 && doc2Values[Object.keys(doc2Values).find(dk => dk.toLowerCase() === k)]
+          && diff.contract1.toLowerCase().includes(k))
+      );
+      if (hasValueInDoc2) {
+        console.log(`⚠️ Cross-check: Entferne falsches "Keine Regelung" für Dok2 bei "${diff.category}" — Wert existiert in valueExtraction`);
+        removedCount++;
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  if (removedCount > 0) {
+    console.log(`🔍 Cross-check: ${removedCount} falsche "Keine Regelung"-Einträge entfernt`);
+  }
+
+  // Remove valueExtraction from the result (not needed in frontend)
+  delete result.valueExtraction;
 
   return result;
 }
