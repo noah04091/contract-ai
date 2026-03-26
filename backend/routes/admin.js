@@ -1517,32 +1517,58 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
       calls: c.calls
     }));
 
-    // ===== C) REFUND DATA from refundfeedbacks (Mongoose) =====
-    const RefundFeedback = require("../models/RefundFeedback");
+    // ===== C) REFUND DATA from Stripe (source of truth) =====
+    const stripeRefunds = [];
+    let refundHasMore = true;
+    let refundStartingAfter = undefined;
+    while (refundHasMore && stripeRefunds.length < 200) {
+      const params = { limit: 100 };
+      if (refundStartingAfter) params.starting_after = refundStartingAfter;
+      const batch = await stripe.refunds.list(params);
+      stripeRefunds.push(...batch.data);
+      refundHasMore = batch.has_more;
+      if (batch.data.length > 0) refundStartingAfter = batch.data[batch.data.length - 1].id;
+    }
 
-    // Monthly refunds
-    const refundedItems = await RefundFeedback.find({ status: "refunded" })
-      .sort({ refundedAt: -1 })
-      .lean();
-
-    // Group refunds by month
+    // Group refunds by month + build list
     const refundsByMonth = {};
     let refundTotal = 0;
     let refundCount = 0;
+    const refundList = [];
 
-    refundedItems.forEach(item => {
-      const refundDate = item.refundedAt || item.submittedAt || item.createdAt;
-      if (refundDate) {
-        const month = new Date(refundDate).toISOString().slice(0, 7);
-        if (!refundsByMonth[month]) {
-          refundsByMonth[month] = { total: 0, count: 0 };
-        }
-        refundsByMonth[month].total += item.refundAmount || 0;
-        refundsByMonth[month].count += 1;
+    for (const ref of stripeRefunds) {
+      if (ref.status !== 'succeeded') continue;
+      const amount = (ref.amount || 0) / 100;
+      if (amount <= 0) continue;
+      const refundDate = new Date(ref.created * 1000);
+      const month = refundDate.toISOString().slice(0, 7);
+
+      if (!refundsByMonth[month]) {
+        refundsByMonth[month] = { total: 0, count: 0 };
       }
-      refundTotal += item.refundAmount || 0;
+      refundsByMonth[month].total += amount;
+      refundsByMonth[month].count += 1;
+      refundTotal += amount;
       refundCount += 1;
-    });
+
+      // Get customer info for the table
+      let customerEmail = '';
+      let customerName = '';
+      try {
+        const charge = await stripe.charges.retrieve(ref.charge);
+        customerEmail = charge.billing_details?.email || charge.receipt_email || '';
+        customerName = charge.billing_details?.name || customerEmail;
+      } catch (e) { /* skip */ }
+
+      refundList.push({
+        customerName,
+        customerEmail,
+        refundAmount: amount,
+        refundedAt: refundDate,
+        refundNote: ref.reason || "",
+        subscriptionPlan: ""
+      });
+    }
 
     const monthlyRefunds = Object.entries(refundsByMonth)
       .map(([month, data]) => ({
@@ -1553,16 +1579,6 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     const refundAvg = refundCount > 0 ? parseFloat((refundTotal / refundCount).toFixed(2)) : 0;
-
-    // Last 50 refunds for the table
-    const refundList = refundedItems.slice(0, 50).map(item => ({
-      customerName: item.customerName,
-      customerEmail: item.customerEmail,
-      refundAmount: item.refundAmount || 0,
-      refundedAt: item.refundedAt,
-      refundNote: item.refundNote || "",
-      subscriptionPlan: item.subscriptionPlan || ""
-    }));
 
     // ===== D) CHURN RATE from users =====
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
