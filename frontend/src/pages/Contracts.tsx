@@ -2256,9 +2256,7 @@ export default function Contracts() {
           if (isLimitError) {
             toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit === Infinity ? '∞' : userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
           } else if (isDocumentTooLarge && !userInfo.isPremium) {
-            toast.warning('Dokument zu groß für die Free-Version. Upgrade auf Business für größere Verträge!', {
-              onClick: () => window.location.href = '/pricing'
-            });
+            toast.warning('Dokument zu groß für die Free-Version. Upgrade auf Business für größere Verträge!');
           } else {
             toast.error(`Analyse fehlgeschlagen: ${errorMessage}`);
           }
