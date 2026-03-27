@@ -168,7 +168,10 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
       console.log(`[OptimizerV2] OCR erfolgreich: ${ocrResult.text.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence}%`);
       return ocrResult.text;
     }
-    console.log(`[OptimizerV2] OCR lieferte zu wenig Text: ${(ocrResult.text || '').trim().length} Zeichen${ocrResult.error ? ' — ' + ocrResult.error : ''}`);
+    const ocrErrDetail = ocrResult.error || `nur ${(ocrResult.text || '').trim().length} Zeichen erkannt`;
+    console.log(`[OptimizerV2] OCR fehlgeschlagen: ${ocrErrDetail}`);
+    // Store error for final message
+    runOCR._lastError = ocrErrDetail;
     return null;
   };
 
@@ -188,19 +191,50 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         return res.end();
       }
 
-    // ── PDFs: try pdf-parse first, then OCR fallback ──
+    // ── PDFs: 3-stage fallback: pdf-parse → pdfjs-dist → Textract OCR ──
     } else if (req.file.mimetype.includes('pdf')) {
+      // Stage A: pdf-parse (schnell, funktioniert für die meisten PDFs)
       try {
         const parsed = await pdfParse(buffer, { max: 0, version: 'v2.0.550' });
         contractText = parsed.text;
+        if (contractText && contractText.trim().length >= 100) {
+          console.log(`[OptimizerV2] pdf-parse erfolgreich: ${contractText.trim().length} Zeichen`);
+        }
       } catch (parseErr) {
         console.warn(`[OptimizerV2] pdf-parse Fehler: ${parseErr.message}`);
         contractText = '';
       }
 
-      // OCR fallback: if pdf-parse yields too little text
+      // Stage B: pdfjs-dist (Mozilla PDF.js — handles edge cases pdf-parse can't)
       if (!contractText || contractText.trim().length < 100) {
-        console.log(`[OptimizerV2] pdf-parse lieferte nur ${(contractText || '').trim().length} Zeichen, versuche OCR...`);
+        console.log(`[OptimizerV2] pdf-parse lieferte nur ${(contractText || '').trim().length} Zeichen, versuche pdfjs-dist...`);
+        sendSSE({ progress: 1, message: 'Alternativer PDF-Parser wird versucht...' });
+        try {
+          const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
+          const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+          const pdfDoc = await loadingTask.promise;
+          const pageTexts = [];
+          for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map(item => item.str).join(' ');
+            if (pageText.trim()) pageTexts.push(pageText);
+          }
+          const pdfjsText = pageTexts.join('\n\n');
+          if (pdfjsText.trim().length >= 100) {
+            contractText = pdfjsText;
+            console.log(`[OptimizerV2] pdfjs-dist erfolgreich: ${contractText.trim().length} Zeichen, ${pdfDoc.numPages} Seiten`);
+          } else {
+            console.log(`[OptimizerV2] pdfjs-dist lieferte nur ${pdfjsText.trim().length} Zeichen`);
+          }
+        } catch (pdfjsErr) {
+          console.warn(`[OptimizerV2] pdfjs-dist Fehler: ${pdfjsErr.message}`);
+        }
+      }
+
+      // Stage C: Textract OCR (für echte Scans / Bild-PDFs)
+      if (!contractText || contractText.trim().length < 100) {
+        console.log(`[OptimizerV2] Beide PDF-Parser fehlgeschlagen, versuche Textract OCR...`);
         const ocrText = await runOCR(buffer, 'PDF-Text nicht lesbar – OCR wird durchgeführt...');
         if (ocrText) {
           contractText = ocrText;
@@ -226,7 +260,7 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     sendSSE({
       error: true,
       message: ocrAttempted
-        ? 'Auch nach OCR-Erkennung enthält das Dokument zu wenig lesbaren Text. Möglicherweise ist die Datei passwortgeschützt, beschädigt oder die Bildqualität ist zu niedrig.'
+        ? `Text-Erkennung fehlgeschlagen (${runOCR._lastError || 'unbekannter Fehler'}). Möglicherweise ist die Datei passwortgeschützt, beschädigt oder die Bildqualität ist zu niedrig.`
         : 'Der Vertrag enthält zu wenig Text für eine Analyse. Bei gescannten PDFs und Bildern wird automatisch OCR versucht.'
     });
     clearInterval(keepalive);
