@@ -43,8 +43,16 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_MIMES = [
   'application/pdf',
   'application/x-pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+  'image/webp',
+  'image/tiff'
 ];
+
+const IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp', 'image/tiff'];
 
 // OpenAI singleton for clause chat
 let openaiInstance = null;
@@ -137,66 +145,89 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     }
   }, 15000);
 
-  // Extract text (with OCR fallback for scanned PDFs)
+  // Extract text (with OCR fallback for scanned PDFs, direct OCR for images)
   let contractText;
   let ocrApplied = false;
   let ocrAttempted = false;
+
+  // Helper: run OCR via AWS Textract
+  const runOCR = async (buffer, progressMsg) => {
+    const { checkOcrUsage, incrementOcrUsage } = require('../services/ocrUsageService');
+    const usage = await checkOcrUsage(req.user.userId);
+    if (!usage.allowed) {
+      sendSSE({ error: true, message: `OCR-Limit erreicht (${usage.pagesUsed}/${usage.pagesLimit} Seiten diesen Monat). Bitte upgraden Sie Ihren Plan für mehr OCR-Seiten.` });
+      return null;
+    }
+    ocrAttempted = true;
+    sendSSE({ progress: 2, message: progressMsg });
+    const { extractTextWithOCR } = require('../services/textractService');
+    const ocrResult = await extractTextWithOCR(buffer);
+    if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 50) {
+      ocrApplied = true;
+      await incrementOcrUsage(req.user.userId, ocrResult.pages || 1);
+      console.log(`[OptimizerV2] OCR erfolgreich: ${ocrResult.text.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence}%`);
+      return ocrResult.text;
+    }
+    console.log(`[OptimizerV2] OCR lieferte zu wenig Text: ${(ocrResult.text || '').trim().length} Zeichen${ocrResult.error ? ' — ' + ocrResult.error : ''}`);
+    return null;
+  };
+
   try {
     sendSSE({ progress: 0, message: 'Text wird extrahiert...' });
     const buffer = await fs.readFile(req.file.path);
-    if (req.file.mimetype.includes('pdf')) {
-      const parsed = await pdfParse(buffer, { max: 0, version: 'v2.0.550' });
-      contractText = parsed.text;
 
-      // OCR fallback: if pdf-parse yields too little text, try AWS Textract
+    // ── Images: go directly to OCR ──
+    if (IMAGE_MIMES.includes(req.file.mimetype)) {
+      console.log(`[OptimizerV2] Bild-Upload erkannt (${req.file.mimetype}), starte OCR...`);
+      contractText = await runOCR(buffer, 'Bild erkannt – Text wird per OCR extrahiert...');
+      if (!contractText) {
+        await cleanupFile(req.file.path);
+        if (!ocrAttempted) { /* limit message already sent */ }
+        else sendSSE({ error: true, message: 'Das Bild enthält zu wenig lesbaren Text. Bitte lade ein gut lesbares Foto oder ein PDF hoch.' });
+        clearInterval(keepalive);
+        return res.end();
+      }
+
+    // ── PDFs: try pdf-parse first, then OCR fallback ──
+    } else if (req.file.mimetype.includes('pdf')) {
+      try {
+        const parsed = await pdfParse(buffer, { max: 0, version: 'v2.0.550' });
+        contractText = parsed.text;
+      } catch (parseErr) {
+        console.warn(`[OptimizerV2] pdf-parse Fehler: ${parseErr.message}`);
+        contractText = '';
+      }
+
+      // OCR fallback: if pdf-parse yields too little text
       if (!contractText || contractText.trim().length < 100) {
         console.log(`[OptimizerV2] pdf-parse lieferte nur ${(contractText || '').trim().length} Zeichen, versuche OCR...`);
-        try {
-          const { checkOcrUsage, incrementOcrUsage } = require('../services/ocrUsageService');
-          const usage = await checkOcrUsage(req.user.userId);
-          if (!usage.allowed) {
-            await cleanupFile(req.file.path);
-            sendSSE({ error: true, message: `OCR-Limit erreicht (${usage.pagesUsed}/${usage.pagesLimit} Seiten diesen Monat). Bitte upgraden Sie für mehr OCR-Seiten.` });
-            clearInterval(keepalive);
-            return res.end();
-          }
-
-          ocrAttempted = true;
-          sendSSE({ progress: 0, message: 'Gescanntes PDF erkannt – OCR wird durchgeführt...' });
-          const { extractTextWithOCR } = require('../services/textractService');
-          const ocrResult = await extractTextWithOCR(buffer);
-          if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 100) {
-            contractText = ocrResult.text;
-            ocrApplied = true;
-            await incrementOcrUsage(req.user.userId, ocrResult.pages || 1);
-            console.log(`[OptimizerV2] OCR erfolgreich: ${contractText.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence}%`);
-          } else {
-            console.log(`[OptimizerV2] OCR lieferte zu wenig Text: ${(ocrResult.text || '').trim().length} Zeichen`);
-          }
-        } catch (ocrErr) {
-          ocrAttempted = true;
-          console.warn(`[OptimizerV2] OCR-Fallback fehlgeschlagen:`, ocrErr.message);
+        const ocrText = await runOCR(buffer, 'PDF-Text nicht lesbar – OCR wird durchgeführt...');
+        if (ocrText) {
+          contractText = ocrText;
         }
       }
+
+    // ── DOCX ──
     } else {
       const { extractTextFromBuffer } = require('../services/textExtractor');
       const result = await extractTextFromBuffer(buffer, req.file.mimetype);
       contractText = result.text;
     }
   } catch (err) {
+    console.error(`[OptimizerV2] Text-Extraktion Fehler:`, err.message);
     await cleanupFile(req.file.path);
     sendSSE({ error: true, message: 'Text konnte nicht aus der Datei extrahiert werden.' });
     clearInterval(keepalive);
     return res.end();
   }
 
-  if (!contractText || contractText.trim().length < 100) {
+  if (!contractText || contractText.trim().length < 50) {
     await cleanupFile(req.file.path);
     sendSSE({
       error: true,
       message: ocrAttempted
-        ? 'Auch nach OCR-Erkennung enthält das Dokument zu wenig lesbaren Text. Möglicherweise ist das PDF passwortgeschützt oder enthält nur Bilder in sehr niedriger Qualität.'
-        : 'Der Vertrag enthält zu wenig Text für eine Analyse. Bei gescannten PDFs wird automatisch OCR versucht.'
+        ? 'Auch nach OCR-Erkennung enthält das Dokument zu wenig lesbaren Text. Möglicherweise ist die Datei passwortgeschützt, beschädigt oder die Bildqualität ist zu niedrig.'
+        : 'Der Vertrag enthält zu wenig Text für eine Analyse. Bei gescannten PDFs und Bildern wird automatisch OCR versucht.'
     });
     clearInterval(keepalive);
     return res.end();

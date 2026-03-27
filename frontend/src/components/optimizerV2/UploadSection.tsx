@@ -19,7 +19,16 @@ const FEATURE_PILLS = [
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+  'image/webp',
+  'image/tiff'
+];
 
 export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing, disabled }: Props) {
   const [isDragging, setIsDragging] = useState(false);
@@ -28,8 +37,9 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = useCallback((f: File): string | null => {
-    if (!ALLOWED_TYPES.includes(f.type) && !f.name.endsWith('.docx')) {
-      return 'Nur PDF und DOCX Dateien werden unterstützt';
+    const isImage = f.type.startsWith('image/');
+    if (!ALLOWED_TYPES.includes(f.type) && !f.name.endsWith('.docx') && !isImage) {
+      return 'Nur PDF, DOCX und Bilddateien (JPG, PNG) werden unterstützt';
     }
     if (f.size > MAX_FILE_SIZE) {
       return 'Datei ist zu groß (max. 10 MB)';
@@ -113,11 +123,13 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
               <div className={styles.uploadFormats}>
                 <span className={styles.formatTag}>PDF</span>
                 <span className={styles.formatTag}>DOCX</span>
+                <span className={styles.formatTag}>JPG</span>
+                <span className={styles.formatTag}>PNG</span>
               </div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.docx"
+                accept=".pdf,.docx,.jpg,.jpeg,.png,.heic,.heif,.webp,.tiff"
                 onChange={handleFileInput}
                 style={{ display: 'none' }}
               />
