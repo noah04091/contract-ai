@@ -265,10 +265,45 @@ MARKTVERGLEICH:
 - Vergleiche jede Klausel mit typischen Marktstandards für ${contractType} in der Branche ${industry || 'allgemein'}.
 - Nutze konkrete, qualitative Einschätzungen. NICHT: "ist üblich." SONDERN: "Diese Haftungsklausel ist restriktiver als in vergleichbaren Verträgen der Branche üblich."
 
+KONSISTENZ-REGELN (ZWINGEND — HÖCHSTE PRIORITÄT):
+Alle Bewertungsfelder MÜSSEN zueinander konsistent sein. Widersprüche sind NICHT erlaubt.
+
+Score-Untergrenzen basierend auf powerBalance:
+- powerBalance "strongly_one_sided" → riskLevel MUSS ≥ 6 sein
+- powerBalance "extremely_one_sided" → riskLevel MUSS ≥ 7 sein
+- powerBalance "slightly_one_sided" → riskLevel MUSS ≥ 3 sein
+
+Score-Untergrenzen basierend auf strength:
+- strength "critical" → riskLevel MUSS ≥ 7 sein
+- strength "weak" → riskLevel MUSS ≥ 4 sein
+
+Score-Untergrenzen basierend auf marketComparison:
+- marketComparison "significantly_strict" → riskLevel MUSS ≥ 5 sein
+- marketComparison "unusually_disadvantageous" → riskLevel MUSS ≥ 6 sein
+
+FINALE RISIKO-ABLEITUNG:
+Der riskLevel orientiert sich IMMER am kritischsten Einzelindikator.
+Bestimme den impliziten Risikowert aus powerBalance, strength, marketComparison und legalAssessment.
+Setze riskLevel = MAXIMUM aller dieser impliziten Werte.
+Der riskLevel DARF NIEMALS niedriger sein als der höchste implizite Risikowert.
+
+Wenn dein legalAssessment-Text Worte wie "einseitig", "nachteilig", "problematisch", "riskant", "benachteiligt" enthält → riskLevel DARF NICHT unter 4 liegen.
+Wenn dein legalAssessment-Text Worte wie "deutlich einseitig", "erheblich nachteilig", "stark benachteiligend" enthält → riskLevel DARF NICHT unter 6 liegen.
+
+REGEL FÜR CONCERNS:
+- Jeder Concern MUSS diesem Format folgen: "[Konkretes Problem] → [Konkrete Auswirkung/Konsequenz] → [Relevantes Gesetz/Norm falls zutreffend]"
+- Jeder Concern MUSS eine reale Konsequenz benennen: finanzielles Risiko, rechtliches Risiko ODER operatives Risiko.
+- NICHT: "Klausel könnte problematisch sein"
+- SONDERN: "Einseitiges Kündigungsrecht ohne Frist → sofortige Vertragsbeendigung möglich, Einnahmeverlust droht → § 314 BGB erfordert grundsätzlich Abmahnung"
+- "concerns" darf leer sein wenn es WIRKLICH keine gibt.
+
+RISIKO-BEGRÜNDUNG:
+Der legalAssessment-Text MUSS den riskLevel nachvollziehbar machen.
+Benenne die dominanten Risikofaktoren explizit. Beispiel: "Risiko 7/10: Einseitiges Kündigungsrecht ohne Fristsetzung kombiniert mit vollständigem Haftungsausschluss zugunsten des Anbieters."
+
 WICHTIGE REGELN:
 - Bewerte NUR was im Text steht. Erfinde keine Probleme.
 - Wenn eine Klausel solide UND ausgewogen ist, sage das. Nicht jede Klausel muss Probleme haben.
-- "concerns" darf leer sein wenn es keine gibt.
 - Beziehe dich auf KONKRETE Textstellen, nicht auf Hypothetisches.
 - Formuliere ALLE Erklärungen professionell — Zielgruppe sind Geschäftsführer und Juristen, keine Verbraucher.`;
 
@@ -360,6 +395,30 @@ Das "reasoning"-Feld jeder Version MUSS diesem Schema folgen:
 BEISPIEL für gutes Reasoning:
 "PROBLEM: Die Original-Klausel schließt jegliche Haftung pauschal aus, was nach § 309 Nr. 7 BGB unwirksam ist. ÄNDERUNG: Haftung auf den typischen, vorhersehbaren Schaden begrenzt und Haftung für Vorsatz/grobe Fahrlässigkeit beibehalten. WIRKUNG: Klausel ist jetzt AGB-fest und schützt den Anbieter wirksam vor Bagatellansprüchen."
 
+VERBOTENE FORMULIERUNGEN — verwende NIEMALS in reasoning, marketBenchmark oder negotiationAdvice:
+- "könnte helfen"
+- "sollte geprüft werden"
+- "wäre sinnvoll"
+- "klarer formulieren"
+- "konkretisieren"
+- "präzisieren"
+- "möglicherweise"
+- "eventuell"
+- "gegebenenfalls"
+- "empfehlenswert wäre"
+- "könnte man"
+- "man sollte"
+
+Verwende stattdessen AUSSCHLIESSLICH imperative, konkrete Sprache:
+- "Ersetzen Sie [konkretes Zitat] durch: [konkrete neue Formulierung]"
+- "Ergänzen Sie nach [Stelle]: [konkreter neuer Satz]"
+- "Streichen Sie [konkretes Zitat], da [konkreter Grund]"
+
+KEINE ABSTRAKTE BERATUNG:
+Gib NIEMALS abstrakte Empfehlungen ohne konkrete Textänderung.
+Wenn du eine Verbesserung identifizierst, MUSST du die exakte neue Formulierung liefern.
+Jede Optimierung MUSS sofort einsetzbar sein — nicht als Denkanstoß, sondern als fertiger Vertragstext.
+
 REGELN:
 - Schreibe VOLLSTÄNDIGE, einsetzbare Klauseln. Keine Platzhalter wie [Name] oder [Datum].
   Verwende die konkreten Parteinamen oder allgemeine Bezeichnungen.
@@ -368,6 +427,7 @@ REGELN:
 - Die optimierten Texte müssen sich SPÜRBAR vom Original unterscheiden.
   Keine kosmetischen Änderungen. Echter Mehrwert.
 - Nutze die mitgelieferten Perspektiven (Ersteller/Empfänger/Kompromiss) als Grundlage für die drei Versionen.
+- Das "reasoning" MUSS sich auf konkrete Textstellen im Original beziehen. Benenne was gestrichen, ergänzt oder umformuliert wurde.
 - "marketBenchmark": KONKRETE qualitative Einschätzung im Marktvergleich. NICHT einfach "marktüblich", sondern:
   "Diese Haftungsklausel ist restriktiver als bei typischen ${contractType}-Verträgen in der Branche üblich."
   Nutze Formulierungen wie "strenger als üblich", "marktüblich", "günstiger als Branchendurchschnitt".
