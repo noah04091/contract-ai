@@ -67,11 +67,18 @@ async function runPulseV2RssSync(db) {
 
   for (const item of normalized) {
     try {
+      // Clean title: strip HTML artifacts, excess whitespace, tabs, newlines
+      const cleanTitle = (item.title || "")
+        .replace(/[\n\r\t]+/g, " ")
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+
       // Map RSS fields to laws collection schema
       const lawDoc = {
         lawId: item.lawId,
         sectionId: item.sectionId || item.lawId,
-        title: item.title,
+        title: cleanTitle || item.title,
         text: item.description || item.summary || item.title,
         summary: item.summary,
         sourceUrl: item.url || "",
