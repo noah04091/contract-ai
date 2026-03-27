@@ -558,14 +558,31 @@ const MODEL_LIMITS = {
 
 // 🚨 STRIKTE TOKEN & DOKUMENT LIMITS - Kostenkontrolle!
 const ANALYSIS_LIMITS = {
-  MAX_PDF_PAGES: 50,           // Maximal 50 Seiten pro Analyse
-  MAX_INPUT_TOKENS: 20000,     // Max Input-Tokens für Free-User (~80.000 Zeichen)
-  MAX_OUTPUT_TOKENS: 4000,     // Max Output-Tokens
-  MAX_TOTAL_TOKENS: 24000,     // Gesamt-Limit (Input + Output)
-  // Premium-User Limits (2x größer)
-  PREMIUM_MAX_PDF_PAGES: 100,
-  PREMIUM_MAX_INPUT_TOKENS: 40000  // Premium: ~160.000 Zeichen
+  // Free-User Limits
+  FREE_MAX_PDF_PAGES: 50,
+  FREE_MAX_INPUT_TOKENS: 20000,      // ~80.000 Zeichen
+  // Business-User Limits
+  BUSINESS_MAX_PDF_PAGES: 100,
+  BUSINESS_MAX_INPUT_TOKENS: 40000,  // ~160.000 Zeichen
+  // Enterprise-User Limits
+  ENTERPRISE_MAX_PDF_PAGES: 200,
+  ENTERPRISE_MAX_INPUT_TOKENS: 60000, // ~240.000 Zeichen
+  // Output
+  MAX_OUTPUT_TOKENS: 4000,
 };
+
+/**
+ * Gibt Limits basierend auf dem Plan zurück
+ */
+function getAnalysisLimits(plan) {
+  if (isEnterpriseOrHigher(plan)) {
+    return { maxPages: ANALYSIS_LIMITS.ENTERPRISE_MAX_PDF_PAGES, maxTokens: ANALYSIS_LIMITS.ENTERPRISE_MAX_INPUT_TOKENS };
+  }
+  if (isBusinessOrHigher(plan)) {
+    return { maxPages: ANALYSIS_LIMITS.BUSINESS_MAX_PDF_PAGES, maxTokens: ANALYSIS_LIMITS.BUSINESS_MAX_INPUT_TOKENS };
+  }
+  return { maxPages: ANALYSIS_LIMITS.FREE_MAX_PDF_PAGES, maxTokens: ANALYSIS_LIMITS.FREE_MAX_INPUT_TOKENS };
+}
 
 /**
  * 📊 Token-Schätzung (grobe Approximation)
@@ -2564,57 +2581,58 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       });
     }
 
-    // 🚨 STRIKTE SEITEN-LIMIT PRÜFUNG - Kostenkontrolle!
-    // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Check
-    const isUnlimited = isEnterpriseOrHigher(user.subscriptionPlan);
-    const maxPages = isUnlimited ? ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES : ANALYSIS_LIMITS.MAX_PDF_PAGES;
+    // 🚨 STRIKTE SEITEN- & TOKEN-LIMIT PRÜFUNG - Plan-basiert
+    const { maxPages, maxTokens: maxInputTokens } = getAnalysisLimits(plan);
+    const isEnterprise = isEnterpriseOrHigher(plan);
 
     if (pdfData.numpages > maxPages) {
-      console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages})`);
+      console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages}, Plan: ${plan})`);
+      const nextTier = !isPremium ? 'Business' : !isEnterprise ? 'Enterprise' : null;
+      const nextLimit = !isPremium ? ANALYSIS_LIMITS.BUSINESS_MAX_PDF_PAGES : !isEnterprise ? ANALYSIS_LIMITS.ENTERPRISE_MAX_PDF_PAGES : null;
       return res.status(400).json({
         success: false,
-        message: isPremium
-          ? `📊 Dokument zu groß (${pdfData.numpages} Seiten). Maximal ${maxPages} Seiten erlaubt.`
-          : `📊 Dokument zu groß für die Free-Version (${pdfData.numpages} Seiten, max. ${maxPages}). Upgrade auf Business für bis zu 100 Seiten!`,
+        message: nextTier
+          ? `📊 Dokument zu groß für dein ${plan === 'free' ? 'Free' : 'Business'}-Abo (${pdfData.numpages} Seiten, max. ${maxPages}). Upgrade auf ${nextTier} für bis zu ${nextLimit} Seiten!`
+          : `📊 Dokument zu groß (${pdfData.numpages} Seiten). Maximal ${maxPages} Seiten erlaubt. Bitte teile das Dokument auf.`,
         error: "DOCUMENT_TOO_LARGE",
         details: {
           yourPages: pdfData.numpages,
-          maxPages: maxPages,
-          premiumMaxPages: ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES,
-          subscriptionPlan: user.subscriptionPlan || 'free'
+          maxPages,
+          subscriptionPlan: plan
         },
-        suggestions: isPremium
-          ? ["Teilen Sie das Dokument in kleinere Abschnitte auf"]
-          : ["Upgrade auf Business für Dokumente bis zu 100 Seiten", "Teilen Sie das Dokument auf"],
-        upgradeUrl: isPremium ? null : "/pricing"
+        suggestions: nextTier
+          ? [`Upgrade auf ${nextTier} für Dokumente bis zu ${nextLimit} Seiten`, "Teile das Dokument in kleinere Abschnitte auf"]
+          : ["Teile das Dokument in kleinere Abschnitte auf"],
+        upgradeUrl: nextTier ? "/pricing" : null
       });
     }
 
     // 🚨 TOKEN-LIMIT PRÜFUNG - Geschätzte Tokens vor OpenAI Call
     const estimatedInputTokens = estimateTokenCount(pdfData.text);
-    const maxInputTokens = isPremium ? ANALYSIS_LIMITS.PREMIUM_MAX_INPUT_TOKENS : ANALYSIS_LIMITS.MAX_INPUT_TOKENS;
 
-    console.log(`📊 [${requestId}] Token-Schätzung: ${estimatedInputTokens} tokens (Limit: ${maxInputTokens})`);
+    console.log(`📊 [${requestId}] Token-Schätzung: ${estimatedInputTokens} tokens (Limit: ${maxInputTokens}, Plan: ${plan})`);
 
     if (estimatedInputTokens > maxInputTokens) {
-      console.warn(`⚠️ [${requestId}] Zu viele Tokens: ${estimatedInputTokens} (Limit: ${maxInputTokens})`);
+      console.warn(`⚠️ [${requestId}] Zu viele Tokens: ${estimatedInputTokens} (Limit: ${maxInputTokens}, Plan: ${plan})`);
+      const nextTier = !isPremium ? 'Business' : !isEnterprise ? 'Enterprise' : null;
+      const nextLimit = !isPremium ? ANALYSIS_LIMITS.BUSINESS_MAX_INPUT_TOKENS : !isEnterprise ? ANALYSIS_LIMITS.ENTERPRISE_MAX_INPUT_TOKENS : null;
       return res.status(400).json({
         success: false,
-        message: isPremium
-          ? `📊 Dokument zu groß für die Analyse. Bitte kürzen Sie das Dokument oder teilen Sie es auf.`
-          : `📊 Dieses Dokument ist zu groß für die Free-Version. Upgrade auf Business für größere Verträge!`,
+        message: nextTier
+          ? `📊 Dieses Dokument ist zu groß für dein ${plan === 'free' ? 'Free' : 'Business'}-Abo. Upgrade auf ${nextTier} für größere Verträge!`
+          : `📊 Dokument zu groß für die Analyse. Bitte kürze das Dokument oder teile es auf.`,
         error: "TOKEN_LIMIT_EXCEEDED",
         details: {
           estimatedTokens: estimatedInputTokens,
           maxTokens: maxInputTokens,
-          premiumMaxTokens: ANALYSIS_LIMITS.PREMIUM_MAX_INPUT_TOKENS,
-          subscriptionPlan: user.subscriptionPlan || 'free',
+          nextTierTokens: nextLimit,
+          subscriptionPlan: plan,
           pages: pdfData.numpages
         },
-        suggestions: isPremium
-          ? ["Entfernen Sie unnötige Abschnitte", "Teilen Sie das Dokument auf"]
-          : ["Upgrade auf Business für Dokumente bis zu 160.000 Zeichen", "Teilen Sie das Dokument auf"],
-        upgradeUrl: isPremium ? null : "/pricing"
+        suggestions: nextTier
+          ? [`Upgrade auf ${nextTier} für Dokumente bis zu ~${Math.round(nextLimit * 4 / 1000)}k Zeichen`, "Teile das Dokument auf"]
+          : ["Entferne unnötige Abschnitte", "Teile das Dokument auf"],
+        upgradeUrl: nextTier ? "/pricing" : null
       });
     }
 
