@@ -2238,6 +2238,7 @@ export default function Contracts() {
           // Extrahiere Fehler-Meldung
           const errorMessage = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
           const isLimitError = errorMessage.includes('Limit erreicht') || errorMessage.includes('LIMIT_EXCEEDED');
+          const isDocumentTooLarge = errorMessage.includes('zu groß für die Free') || errorMessage.includes('zu groß für die Analyse') || errorMessage.includes('zu komplex');
 
           // Markiere Datei als fehlgeschlagen
           setUploadFiles(prev => prev.map((item, idx) =>
@@ -2254,6 +2255,10 @@ export default function Contracts() {
           // Zeige Fehler-Toast mit Upgrade-Hinweis
           if (isLimitError) {
             toast.warning(`Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit === Infinity ? '∞' : userInfo.analysisLimit}). Upgrade für mehr Analysen!`);
+          } else if (isDocumentTooLarge && !userInfo.isPremium) {
+            toast.warning('Dokument zu groß für die Free-Version. Upgrade auf Business für größere Verträge!', {
+              onClick: () => window.location.href = '/pricing'
+            });
           } else {
             toast.error(`Analyse fehlgeschlagen: ${errorMessage}`);
           }

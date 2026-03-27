@@ -559,12 +559,12 @@ const MODEL_LIMITS = {
 // 🚨 STRIKTE TOKEN & DOKUMENT LIMITS - Kostenkontrolle!
 const ANALYSIS_LIMITS = {
   MAX_PDF_PAGES: 50,           // Maximal 50 Seiten pro Analyse
-  MAX_INPUT_TOKENS: 8000,      // Max Input-Tokens für GPT-4
+  MAX_INPUT_TOKENS: 20000,     // Max Input-Tokens für Free-User (~80.000 Zeichen)
   MAX_OUTPUT_TOKENS: 4000,     // Max Output-Tokens
-  MAX_TOTAL_TOKENS: 12000,     // Gesamt-Limit (Input + Output)
+  MAX_TOTAL_TOKENS: 24000,     // Gesamt-Limit (Input + Output)
   // Premium-User Limits (2x größer)
   PREMIUM_MAX_PDF_PAGES: 100,
-  PREMIUM_MAX_INPUT_TOKENS: 16000
+  PREMIUM_MAX_INPUT_TOKENS: 40000  // Premium: ~160.000 Zeichen
 };
 
 /**
@@ -2573,16 +2573,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages})`);
       return res.status(400).json({
         success: false,
-        message: `Dokument zu groß. Maximal ${maxPages} Seiten erlaubt.`,
+        message: isPremium
+          ? `📊 Dokument zu groß (${pdfData.numpages} Seiten). Maximal ${maxPages} Seiten erlaubt.`
+          : `📊 Dokument zu groß für die Free-Version (${pdfData.numpages} Seiten, max. ${maxPages}). Upgrade auf Business für bis zu 100 Seiten!`,
         error: "DOCUMENT_TOO_LARGE",
         details: {
           yourPages: pdfData.numpages,
           maxPages: maxPages,
-          subscriptionPlan: user.subscriptionPlan
+          premiumMaxPages: ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES,
+          subscriptionPlan: user.subscriptionPlan || 'free'
         },
         suggestions: isPremium
           ? ["Teilen Sie das Dokument in kleinere Abschnitte auf"]
-          : ["Upgrade auf Premium für größere Dokumente (bis zu 100 Seiten)", "Teilen Sie das Dokument auf"],
+          : ["Upgrade auf Business für Dokumente bis zu 100 Seiten", "Teilen Sie das Dokument auf"],
         upgradeUrl: isPremium ? null : "/pricing"
       });
     }
@@ -2597,17 +2600,20 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] Zu viele Tokens: ${estimatedInputTokens} (Limit: ${maxInputTokens})`);
       return res.status(400).json({
         success: false,
-        message: `Dokument zu komplex. Bitte kürzen Sie das Dokument.`,
+        message: isPremium
+          ? `📊 Dokument zu groß für die Analyse. Bitte kürzen Sie das Dokument oder teilen Sie es auf.`
+          : `📊 Dieses Dokument ist zu groß für die Free-Version. Upgrade auf Business für größere Verträge!`,
         error: "TOKEN_LIMIT_EXCEEDED",
         details: {
           estimatedTokens: estimatedInputTokens,
           maxTokens: maxInputTokens,
-          subscriptionPlan: user.subscriptionPlan,
+          premiumMaxTokens: ANALYSIS_LIMITS.PREMIUM_MAX_INPUT_TOKENS,
+          subscriptionPlan: user.subscriptionPlan || 'free',
           pages: pdfData.numpages
         },
         suggestions: isPremium
           ? ["Entfernen Sie unnötige Abschnitte", "Teilen Sie das Dokument auf"]
-          : ["Upgrade auf Premium für größere Dokumente", "Teilen Sie das Dokument auf"],
+          : ["Upgrade auf Business für Dokumente bis zu 160.000 Zeichen", "Teilen Sie das Dokument auf"],
         upgradeUrl: isPremium ? null : "/pricing"
       });
     }
