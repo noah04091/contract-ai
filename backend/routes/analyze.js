@@ -2309,6 +2309,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
   try {
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
+    const db = await database.connect(); // 🔧 FIX: db im Scope für triggerEmail-Funktionen
     console.log(`📊 [${requestId}] MongoDB collections available`);
 
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
@@ -2365,7 +2366,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     if (!isEnterpriseOrHigher(plan)) {
       // Only add limit check for non-unlimited users (free + business)
-      updateQuery.analysisCount = { $lt: limit };
+      // 🔧 FIX: $or für fehlende analysisCount Felder — MongoDB $lt matcht NICHT auf null/undefined
+      updateQuery.$or = [
+        { analysisCount: { $lt: limit } },
+        { analysisCount: { $exists: false } },
+        { analysisCount: null }
+      ];
     }
 
     console.log(`🔍 [${requestId}] Update Query:`, {
