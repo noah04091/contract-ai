@@ -2409,4 +2409,116 @@ router.get("/admin/test-alerts-check", requirePremium, async (req, res) => {
   }
 });
 
+/**
+ * GET /admin/test-email-diagnostic
+ * Checks WHY emails aren't being delivered:
+ * 1. Is the user's email in the bounce list?
+ * 2. Is the user unsubscribed?
+ * 3. Are there entries in the email_queue for this user?
+ * 4. What status do they have?
+ */
+router.get("/admin/test-email-diagnostic", requirePremium, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+    const { ObjectId } = require("mongodb");
+
+    // 1. Get user email
+    let user;
+    try {
+      user = await db.collection("users").findOne(
+        { $or: [{ _id: userId }, { _id: new ObjectId(userId) }] },
+        { projection: { email: 1, name: 1, firstName: 1 } }
+      );
+    } catch {
+      user = await db.collection("users").findOne(
+        { _id: userId },
+        { projection: { email: 1, name: 1, firstName: 1 } }
+      );
+    }
+
+    const userEmail = user?.email || "NOT FOUND";
+
+    // 2. Check bounce status
+    const { isEmailActive } = require("../services/emailBounceService");
+    const emailActive = user?.email ? await isEmailActive(db, user.email) : false;
+
+    // 3. Check unsubscribe status
+    const { isUnsubscribed, EMAIL_CATEGORIES } = require("../services/emailUnsubscribeService");
+    const unsubAll = user?.email ? await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL) : false;
+    const unsubCalendar = user?.email ? await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.CALENDAR) : false;
+
+    // 4. Check email queue for this user
+    const queueEntries = await db.collection("email_queue")
+      .find({ $or: [{ userId }, { to: user?.email }] })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .project({ to: 1, subject: 1, emailType: 1, status: 1, skipReason: 1, createdAt: 1, sentAt: 1, lastError: 1 })
+      .toArray();
+
+    // 5. Check for radar-specific emails
+    const radarEmails = queueEntries.filter(e => e.emailType === "legal_pulse_v2_radar");
+    const otherEmails = queueEntries.filter(e => e.emailType !== "legal_pulse_v2_radar");
+
+    // 6. Status breakdown
+    const statusCounts = {};
+    for (const e of queueEntries) {
+      statusCounts[e.status] = (statusCounts[e.status] || 0) + 1;
+    }
+
+    res.json({
+      success: true,
+      userLookup: {
+        userId,
+        found: !!user,
+        email: userEmail,
+        name: user?.firstName || user?.name || "unknown",
+      },
+      emailHealth: {
+        emailActive,
+        unsubscribedAll: unsubAll,
+        unsubscribedCalendar: unsubCalendar,
+      },
+      emailQueue: {
+        totalForUser: queueEntries.length,
+        radarEmails: radarEmails.length,
+        otherEmails: otherEmails.length,
+        statusBreakdown: statusCounts,
+        recent: queueEntries.slice(0, 10),
+      },
+      checks: {
+        userFound: {
+          passed: !!user,
+          detail: user ? `User found: ${userEmail}` : `User NOT FOUND for userId ${userId}. Emails cannot be sent.`,
+        },
+        emailNotBounced: {
+          passed: emailActive,
+          detail: emailActive ? `Email ${userEmail} is active (not bounced).` : `Email ${userEmail} is INACTIVE (bounced/blocked). Emails are being skipped!`,
+        },
+        notUnsubscribed: {
+          passed: !unsubAll,
+          detail: unsubAll ? `User has UNSUBSCRIBED from all emails. Emails are being skipped!` : `User is not unsubscribed.`,
+        },
+        radarEmailsQueued: {
+          passed: radarEmails.length > 0,
+          detail: radarEmails.length > 0
+            ? `${radarEmails.length} radar email(s) found in queue. Status: ${radarEmails.map(e => e.status).join(", ")}`
+            : `No radar emails in queue. storeAndNotify may not be calling queueEmail (user lookup might fail).`,
+        },
+        emailsDelivered: {
+          passed: queueEntries.some(e => e.status === "sent"),
+          detail: queueEntries.some(e => e.status === "sent")
+            ? `${queueEntries.filter(e => e.status === "sent").length} email(s) successfully sent.`
+            : `No emails marked as 'sent' in the queue. ${queueEntries.length > 0 ? "Emails exist but weren't delivered." : "No emails queued at all."}`,
+        },
+      },
+      message: "Email-Diagnose abgeschlossen.",
+    });
+  } catch (error) {
+    console.error("[AdminTest] Email diagnostic error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
