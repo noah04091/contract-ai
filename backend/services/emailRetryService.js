@@ -58,6 +58,67 @@ async function queueEmail(db, emailData) {
 }
 
 /**
+ * Auto-Retry: Prueft nach 7 Tagen ob deaktivierte Emails wieder erreichbar sind.
+ * Sendet eine Probe-Email; bei Erfolg wird die Adresse reaktiviert.
+ */
+async function attemptAutoRetry(db) {
+  const autoRetryDays = 7;
+  const cutoffDate = new Date(Date.now() - autoRetryDays * 24 * 60 * 60 * 1000);
+
+  const candidates = await db.collection("email_health")
+    .find({
+      status: "inactive",
+      deactivatedAt: { $lte: cutoffDate },
+      autoRetryAttempted: { $ne: true }
+    })
+    .limit(5)
+    .toArray();
+
+  if (candidates.length === 0) return;
+
+  console.log(`🔄 Auto-Retry: ${candidates.length} Kandidaten gefunden`);
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    }
+  });
+
+  for (const candidate of candidates) {
+    try {
+      await transporter.sendMail({
+        from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+        to: candidate.email,
+        subject: "Contract AI — E-Mail-Verbindung wiederhergestellt",
+        html: `<p>Gute Nachrichten! Ihre E-Mail-Adresse ist wieder erreichbar. Sie erhalten ab sofort wieder alle Benachrichtigungen von Contract AI.</p><p>Falls Sie keine Benachrichtigungen erhalten möchten, können Sie diese in Ihren <a href="https://contract-ai.de/profile">Profileinstellungen</a> deaktivieren.</p>`
+      });
+
+      const { reactivateEmail } = require("./emailBounceService");
+      await reactivateEmail(db, candidate.email);
+
+      await db.collection("email_queue").updateMany(
+        { to: candidate.email, status: "skipped", skipReason: "email_inactive_bounce" },
+        { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
+      );
+
+      console.log(`✅ Auto-Retry erfolgreich: ${candidate.email} reaktiviert`);
+    } catch (error) {
+      await db.collection("email_health").updateOne(
+        { email: candidate.email },
+        { $set: { autoRetryAttempted: true, autoRetryFailedAt: new Date(), updatedAt: new Date() } }
+      );
+      console.log(`❌ Auto-Retry fehlgeschlagen: ${candidate.email} - ${error.message}`);
+    }
+  }
+
+  transporter.close();
+}
+
+/**
  * Verarbeitet die E-Mail-Queue
  * @param {Object} db - MongoDB-Instanz
  */
@@ -65,6 +126,13 @@ async function processEmailQueue(db) {
   const now = new Date();
 
   console.log("📬 Starte E-Mail Queue Verarbeitung...");
+
+  // Auto-Retry-Probe fuer lange inaktive Emails
+  try {
+    await attemptAutoRetry(db);
+  } catch (err) {
+    console.error("⚠️ Auto-Retry Fehler (nicht kritisch):", err.message);
+  }
 
   // Hole alle E-Mails die versendet werden sollten
   const pendingEmails = await db.collection("email_queue")

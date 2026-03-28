@@ -39,9 +39,12 @@ const SMTP_ERROR_MAPPING = {
  * Schwellwerte fuer Bounce-Behandlung
  */
 const BOUNCE_THRESHOLDS = {
-  maxHardBounces: 1,      // Nach 1 Hard Bounce -> E-Mail deaktivieren
-  maxSoftBounces: 5,      // Nach 5 Soft Bounces -> E-Mail deaktivieren
-  softBounceResetDays: 30 // Soft Bounce Counter nach 30 Tagen zuruecksetzen
+  maxHardBounces: 3,                // Nach 3 Hard Bounces -> E-Mail deaktivieren (was: 1)
+  maxSoftBounces: 5,                // Nach 5 Soft Bounces -> E-Mail deaktivieren
+  softBounceResetDays: 30,          // Soft Bounce Counter nach 30 Tagen zuruecksetzen
+  quarantineAfterHardBounces: 1,    // Nach 1 Hard Bounce -> Quarantine (Beobachtung)
+  quarantineAfterSoftBounces: 3,    // Nach 3 Soft Bounces -> Quarantine
+  autoRetryDays: 7                  // Tage nach Deaktivierung bis Auto-Retry-Probe
 };
 
 /**
@@ -140,6 +143,8 @@ async function updateEmailHealth(db, email, bounceInfo) {
       lastSoftBounceAt: null,
       deactivatedAt: null,
       deactivationReason: null,
+      quarantinedAt: null,
+      autoRetryAttempted: false,
       createdAt: now
     };
   }
@@ -165,7 +170,22 @@ async function updateEmailHealth(db, email, bounceInfo) {
     health.lastBounceAt = now;
   }
 
-  // Pruefe ob E-Mail deaktiviert werden soll
+  // Stufe 1: Quarantine (Beobachtung — Emails werden weiter gesendet)
+  if (health.status === "active") {
+    let shouldQuarantine = false;
+    if (health.hardBounces >= BOUNCE_THRESHOLDS.quarantineAfterHardBounces) {
+      shouldQuarantine = true;
+    } else if (health.softBounces >= BOUNCE_THRESHOLDS.quarantineAfterSoftBounces) {
+      shouldQuarantine = true;
+    }
+    if (shouldQuarantine) {
+      health.status = "quarantine";
+      health.quarantinedAt = now;
+      console.log(`⚠️ E-Mail in Quarantine: ${emailLower} (Hard: ${health.hardBounces}, Soft: ${health.softBounces})`);
+    }
+  }
+
+  // Stufe 2: Deaktivierung (Emails werden blockiert)
   let shouldDeactivate = false;
   let deactivationReason = null;
 
@@ -184,6 +204,7 @@ async function updateEmailHealth(db, email, bounceInfo) {
     health.status = "inactive";
     health.deactivatedAt = now;
     health.deactivationReason = deactivationReason;
+    health.autoRetryAttempted = false;
 
     console.log(`🚫 E-Mail deaktiviert: ${emailLower} - ${deactivationReason}`);
 
@@ -214,7 +235,33 @@ async function isEmailActive(db, email) {
   // Keine Historie = aktiv
   if (!health) return true;
 
-  return health.status === "active";
+  // Quarantine = Beobachtung, Emails werden weiter gesendet
+  return health.status === "active" || health.status === "quarantine";
+}
+
+/**
+ * Liefert den vollstaendigen Email-Health-Status fuer Frontend-Anzeige
+ */
+async function getEmailHealth(db, email) {
+  const health = await db.collection("email_health").findOne({
+    email: email.toLowerCase()
+  });
+
+  if (!health) {
+    return { status: "active", bounceCount: 0, hardBounces: 0, softBounces: 0, reason: null, deactivatedAt: null, quarantinedAt: null, autoRetryAttempted: false, lastBounceAt: null };
+  }
+
+  return {
+    status: health.status || "active",
+    bounceCount: (health.hardBounces || 0) + (health.softBounces || 0),
+    hardBounces: health.hardBounces || 0,
+    softBounces: health.softBounces || 0,
+    reason: health.deactivationReason || null,
+    deactivatedAt: health.deactivatedAt || null,
+    quarantinedAt: health.quarantinedAt || null,
+    autoRetryAttempted: health.autoRetryAttempted || false,
+    lastBounceAt: health.lastBounceAt || null
+  };
 }
 
 /**
@@ -256,6 +303,8 @@ async function reactivateEmail(db, email) {
         softBounces: 0,
         deactivatedAt: null,
         deactivationReason: null,
+        quarantinedAt: null,
+        autoRetryAttempted: false,
         reactivatedAt: new Date(),
         updatedAt: new Date()
       }
@@ -314,6 +363,7 @@ module.exports = {
   analyzeBounce,
   recordBounce,
   isEmailActive,
+  getEmailHealth,
   reactivateEmail,
   getBounceStats,
   cleanupOldBounces

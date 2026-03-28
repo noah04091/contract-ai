@@ -12,7 +12,9 @@ import {
   Calendar,
   AlertTriangle,
   PenTool,
-  Megaphone
+  Megaphone,
+  MailX,
+  ShieldAlert
 } from 'lucide-react';
 import styles from './NotificationSettingsModal.module.css';
 
@@ -54,6 +56,18 @@ interface NotificationSettings {
   };
 }
 
+interface EmailHealthStatus {
+  status: 'active' | 'quarantine' | 'inactive';
+  bounceCount: number;
+  hardBounces: number;
+  softBounces: number;
+  reason: string | null;
+  deactivatedAt: string | null;
+  quarantinedAt: string | null;
+  autoRetryAttempted: boolean;
+  lastBounceAt: string | null;
+}
+
 interface NotificationSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,6 +81,8 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState<'channels' | 'types' | 'schedule'>(defaultTab);
+  const [emailHealth, setEmailHealth] = useState<EmailHealthStatus | null>(null);
+  const [isReactivating, setIsReactivating] = useState(false);
 
   // Auth headers helper
   const getAuthHeaders = (): HeadersInit => {
@@ -81,6 +97,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
     if (isOpen) {
       setSettingsTab(defaultTab);
       loadNotificationSettings();
+      loadEmailHealth();
     }
   }, [isOpen]);
 
@@ -105,6 +122,44 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
       console.error('Fehler beim Laden der Einstellungen:', error);
     } finally {
       setIsLoadingSettings(false);
+    }
+  };
+
+  const loadEmailHealth = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard/notifications/email-status`, {
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setEmailHealth(data);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des E-Mail-Status:', error);
+    }
+  };
+
+  const handleReactivateEmail = async () => {
+    setIsReactivating(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard/notifications/reactivate-email`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setEmailHealth(data);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Reaktivieren:', error);
+    } finally {
+      setIsReactivating(false);
     }
   };
 
@@ -215,6 +270,46 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
               </div>
             ) : (
               <>
+                {/* Email Health Banner */}
+                {emailHealth && emailHealth.status === 'inactive' && (
+                  <div className={styles.emailHealthBanner} data-severity="error">
+                    <div className={styles.bannerIcon}>
+                      <MailX size={20} />
+                    </div>
+                    <div className={styles.bannerContent}>
+                      <strong>E-Mail-Zustellung deaktiviert</strong>
+                      <p>
+                        {emailHealth.reason || 'Zustellungsprobleme erkannt'}.
+                        {emailHealth.deactivatedAt && ` Seit ${new Date(emailHealth.deactivatedAt).toLocaleDateString('de-DE')}.`}
+                        {' '}Du erh&auml;ltst derzeit keine E-Mail-Benachrichtigungen.
+                      </p>
+                    </div>
+                    <button
+                      className={styles.reactivateButton}
+                      onClick={handleReactivateEmail}
+                      disabled={isReactivating}
+                    >
+                      {isReactivating ? <RefreshCw size={14} className={styles.spinIcon} /> : <Mail size={14} />}
+                      {isReactivating ? 'Wird reaktiviert...' : 'Reaktivieren'}
+                    </button>
+                  </div>
+                )}
+
+                {emailHealth && emailHealth.status === 'quarantine' && (
+                  <div className={styles.emailHealthBanner} data-severity="warning">
+                    <div className={styles.bannerIcon}>
+                      <ShieldAlert size={20} />
+                    </div>
+                    <div className={styles.bannerContent}>
+                      <strong>E-Mail unter Beobachtung</strong>
+                      <p>
+                        Es wurden Zustellungsprobleme erkannt ({emailHealth.bounceCount} Bounce{emailHealth.bounceCount !== 1 ? 's' : ''}).
+                        E-Mails werden weiterhin gesendet, aber bei weiteren Fehlern deaktiviert.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Channels Tab */}
                 {settingsTab === 'channels' && (
                   <div className={styles.section}>

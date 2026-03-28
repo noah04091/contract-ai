@@ -458,6 +458,99 @@
   cursor: not-allowed;
 }
 
+/* Email Health Banner */
+.emailHealthBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.emailHealthBanner[data-severity="error"] {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.emailHealthBanner[data-severity="warning"] {
+  background: #fffbeb;
+  border: 1px solid #fed7aa;
+}
+
+.bannerIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.emailHealthBanner[data-severity="error"] .bannerIcon {
+  color: #dc2626;
+}
+
+.emailHealthBanner[data-severity="warning"] .bannerIcon {
+  color: #d97706;
+}
+
+.bannerContent {
+  flex: 1;
+}
+
+.bannerContent strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.emailHealthBanner[data-severity="error"] .bannerContent strong {
+  color: #991b1b;
+}
+
+.emailHealthBanner[data-severity="warning"] .bannerContent strong {
+  color: #92400e;
+}
+
+.bannerContent p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.emailHealthBanner[data-severity="error"] .bannerContent p {
+  color: #b91c1c;
+}
+
+.emailHealthBanner[data-severity="warning"] .bannerContent p {
+  color: #b45309;
+}
+
+.reactivateButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  background: #dc2626;
+  color: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.reactivateButton:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.reactivateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .modal {

@@ -7,6 +7,7 @@ const { ObjectId } = require("mongodb");
 const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+const { getEmailHealth, reactivateEmail } = require("../services/emailBounceService");
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -407,6 +408,81 @@ router.put("/settings", verifyToken, async (req, res) => {
       message: 'Fehler beim Speichern der Einstellungen',
       error: error.message
     });
+  }
+});
+
+/**
+ * GET /api/dashboard/notifications/email-status
+ * Liefert den Email-Zustellungs-Status fuer den aktuellen User
+ */
+router.get("/email-status", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await ensureDb();
+
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { email: 1 } }
+    );
+
+    if (!user?.email) {
+      return res.status(404).json({ success: false, message: "User nicht gefunden" });
+    }
+
+    const health = await getEmailHealth(db, user.email);
+
+    res.json({
+      success: true,
+      email: user.email,
+      ...health
+    });
+  } catch (error) {
+    console.error('[EMAIL-STATUS] Error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Laden des E-Mail-Status', error: error.message });
+  }
+});
+
+/**
+ * POST /api/dashboard/notifications/reactivate-email
+ * Reaktiviert eine gebounce-te Email-Adresse und setzt uebersprungene Emails zurueck
+ */
+router.post("/reactivate-email", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await ensureDb();
+
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { email: 1 } }
+    );
+
+    if (!user?.email) {
+      return res.status(404).json({ success: false, message: "User nicht gefunden" });
+    }
+
+    // 1. Email-Health zuruecksetzen
+    const reactivated = await reactivateEmail(db, user.email);
+
+    // 2. Uebersprungene Emails zurueck in die Queue
+    const resetResult = await db.collection("email_queue").updateMany(
+      { to: user.email, status: "skipped", skipReason: "email_inactive_bounce" },
+      { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
+    );
+
+    // 3. Aktuellen Status zurueckgeben
+    const health = await getEmailHealth(db, user.email);
+
+    console.log(`✅ [REACTIVATE-EMAIL] User ${userId}: reactivated=${reactivated}, emailsReset=${resetResult.modifiedCount}`);
+
+    res.json({
+      success: true,
+      message: `E-Mail-Zustellung reaktiviert. ${resetResult.modifiedCount} E-Mail(s) werden erneut versendet.`,
+      emailsReset: resetResult.modifiedCount,
+      ...health
+    });
+  } catch (error) {
+    console.error('[REACTIVATE-EMAIL] Error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Reaktivieren', error: error.message });
   }
 });
 
