@@ -135,16 +135,39 @@ async function processEmailQueue(db) {
   }
 
   // Hole alle E-Mails die versendet werden sollten
+  // FIX: Auch Emails ohne nextRetryAt oder mit null-Wert verarbeiten
   const pendingEmails = await db.collection("email_queue")
     .find({
       status: "pending",
-      nextRetryAt: { $lte: now }
+      $or: [
+        { nextRetryAt: { $lte: now } },
+        { nextRetryAt: null },
+        { nextRetryAt: { $exists: false } }
+      ]
     })
     .sort({ createdAt: 1 }) // Älteste zuerst
     .limit(50) // Max 50 pro Durchlauf (Rate Limiting)
     .toArray();
 
   console.log(`📧 ${pendingEmails.length} E-Mails in der Queue gefunden`);
+
+  // Debug: Wenn 0 gefunden, prüfe ob überhaupt pending-Emails existieren
+  if (pendingEmails.length === 0) {
+    const totalPending = await db.collection("email_queue").countDocuments({ status: "pending" });
+    if (totalPending > 0) {
+      // Es gibt pending-Emails, aber sie passen nicht auf unsere Query
+      const sample = await db.collection("email_queue").findOne({ status: "pending" });
+      console.log(`⚠️ ${totalPending} pending E-Mails existieren, aber Query matched nicht. Sample nextRetryAt: ${sample?.nextRetryAt} (type: ${typeof sample?.nextRetryAt})`);
+      // Repariere: Setze nextRetryAt auf jetzt für alle die null/missing haben
+      const repaired = await db.collection("email_queue").updateMany(
+        { status: "pending", $or: [{ nextRetryAt: null }, { nextRetryAt: { $exists: false } }] },
+        { $set: { nextRetryAt: new Date() } }
+      );
+      if (repaired.modifiedCount > 0) {
+        console.log(`🔧 ${repaired.modifiedCount} E-Mails repariert (nextRetryAt gesetzt)`);
+      }
+    }
+  }
 
   if (pendingEmails.length === 0) {
     return { processed: 0, sent: 0, failed: 0, retrying: 0 };

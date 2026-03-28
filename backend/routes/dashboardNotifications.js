@@ -443,6 +443,83 @@ router.get("/email-status", verifyToken, async (req, res) => {
 });
 
 /**
+ * POST /api/dashboard/notifications/repair-email-queue
+ * Repariert feststeckende Emails: setzt nextRetryAt auf jetzt fuer alle pending-Emails
+ */
+router.post("/repair-email-queue", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await ensureDb();
+
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { email: 1 } }
+    );
+
+    if (!user?.email) {
+      return res.status(404).json({ success: false, message: "User nicht gefunden" });
+    }
+
+    const email = user.email.toLowerCase();
+
+    // 1. Diagnose: Zeige alle Emails mit ihrem Status und nextRetryAt
+    const allEmails = await db.collection("email_queue")
+      .find({ to: email })
+      .project({ _id: 1, status: 1, nextRetryAt: 1, subject: 1, emailType: 1, createdAt: 1, skipReason: 1 })
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .toArray();
+
+    // 2. Repariere: Setze alle pending-Emails mit fehlendem/null nextRetryAt
+    const repairResult = await db.collection("email_queue").updateMany(
+      {
+        to: email,
+        status: "pending",
+        $or: [
+          { nextRetryAt: null },
+          { nextRetryAt: { $exists: false } }
+        ]
+      },
+      { $set: { nextRetryAt: new Date() } }
+    );
+
+    // 3. Auch skipped-Emails von Bounce zurueck zu pending setzen
+    const resetResult = await db.collection("email_queue").updateMany(
+      { to: email, status: "skipped", skipReason: "email_inactive_bounce" },
+      { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
+    );
+
+    // 4. Auch failed-Emails nochmal versuchen
+    const retryResult = await db.collection("email_queue").updateMany(
+      { to: email, status: "failed" },
+      { $set: { status: "pending", nextRetryAt: new Date(), retryCount: 0, lastError: null } }
+    );
+
+    console.log(`🔧 [REPAIR-QUEUE] User ${userId}: repaired=${repairResult.modifiedCount}, resetSkipped=${resetResult.modifiedCount}, retryFailed=${retryResult.modifiedCount}`);
+
+    res.json({
+      success: true,
+      message: `Queue repariert.`,
+      repaired: repairResult.modifiedCount,
+      resetSkipped: resetResult.modifiedCount,
+      retryFailed: retryResult.modifiedCount,
+      emailsInQueue: allEmails.map(e => ({
+        id: e._id.toString(),
+        status: e.status,
+        nextRetryAt: e.nextRetryAt,
+        nextRetryAtType: e.nextRetryAt === null ? "null" : typeof e.nextRetryAt,
+        emailType: e.emailType,
+        subject: e.subject?.substring(0, 50),
+        skipReason: e.skipReason
+      }))
+    });
+  } catch (error) {
+    console.error('[REPAIR-QUEUE] Error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Reparieren', error: error.message });
+  }
+});
+
+/**
  * POST /api/dashboard/notifications/reactivate-email
  * Reaktiviert eine gebounce-te Email-Adresse und setzt uebersprungene Emails zurueck
  */

@@ -2454,7 +2454,7 @@ router.get("/admin/test-email-diagnostic", requirePremium, async (req, res) => {
       .find({ $or: [{ userId }, { to: user?.email }] })
       .sort({ createdAt: -1 })
       .limit(20)
-      .project({ to: 1, subject: 1, emailType: 1, status: 1, skipReason: 1, createdAt: 1, sentAt: 1, lastError: 1 })
+      .project({ to: 1, subject: 1, emailType: 1, status: 1, skipReason: 1, createdAt: 1, sentAt: 1, lastError: 1, nextRetryAt: 1, retryCount: 1 })
       .toArray();
 
     // 5. Check for radar-specific emails
