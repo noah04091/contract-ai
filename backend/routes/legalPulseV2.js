@@ -2521,4 +2521,57 @@ router.get("/admin/test-email-diagnostic", requirePremium, async (req, res) => {
   }
 });
 
+/**
+ * POST /admin/test-email-reactivate
+ * Reactivates a bounced email and retries skipped radar emails.
+ */
+router.post("/admin/test-email-reactivate", requirePremium, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const userId = req.user.userId;
+    const { ObjectId } = require("mongodb");
+
+    // 1. Get user email
+    let user;
+    try {
+      user = await db.collection("users").findOne(
+        { $or: [{ _id: userId }, { _id: new ObjectId(userId) }] },
+        { projection: { email: 1 } }
+      );
+    } catch {
+      user = await db.collection("users").findOne({ _id: userId }, { projection: { email: 1 } });
+    }
+
+    if (!user?.email) {
+      return res.json({ success: false, error: "User nicht gefunden" });
+    }
+
+    // 2. Reactivate email
+    const { reactivateEmail } = require("../services/emailBounceService");
+    await reactivateEmail(db, user.email);
+
+    // 3. Reset skipped radar emails to pending
+    const resetResult = await db.collection("email_queue").updateMany(
+      { to: user.email, status: "skipped", emailType: "legal_pulse_v2_radar" },
+      { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
+    );
+
+    // 4. Verify
+    const { isEmailActive } = require("../services/emailBounceService");
+    const nowActive = await isEmailActive(db, user.email);
+
+    res.json({
+      success: true,
+      email: user.email,
+      reactivated: nowActive,
+      emailsReset: resetResult.modifiedCount,
+      message: `Email ${user.email} reaktiviert. ${resetResult.modifiedCount} Radar-Emails zurück in die Queue gesetzt. Versand erfolgt beim nächsten Queue-Durchlauf (alle 15 Min).`,
+    });
+  } catch (error) {
+    console.error("[AdminTest] Email reactivate error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;
