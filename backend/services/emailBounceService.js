@@ -228,15 +228,22 @@ async function updateEmailHealth(db, email, bounceInfo) {
  * Prueft ob eine E-Mail-Adresse aktiv ist (nicht gebounced)
  */
 async function isEmailActive(db, email) {
+  const emailLower = email.toLowerCase();
   const health = await db.collection("email_health").findOne({
-    email: email.toLowerCase()
+    email: emailLower
   });
 
   // Keine Historie = aktiv
   if (!health) return true;
 
-  // Quarantine = Beobachtung, Emails werden weiter gesendet
-  return health.status === "active" || health.status === "quarantine";
+  const isActive = health.status === "active" || health.status === "quarantine";
+
+  // Debug: Logge wenn eine Email als inaktiv erkannt wird
+  if (!isActive) {
+    console.log(`🔍 isEmailActive(${emailLower}): status="${health.status}", hardBounces=${health.hardBounces}, softBounces=${health.softBounces}, deactivatedAt=${health.deactivatedAt}, _id=${health._id}`);
+  }
+
+  return isActive;
 }
 
 /**

@@ -462,10 +462,39 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
 
     const email = user.email.toLowerCase();
 
+    // 0. ZUERST: Email-Health-Record anzeigen und FORCE-Reaktivieren
+    const healthBefore = await db.collection("email_health").findOne({ email });
+    // Auch mit Original-Case suchen falls unterschiedlich gespeichert
+    const healthByOriginal = email !== user.email ? await db.collection("email_health").findOne({ email: user.email }) : null;
+    // Auch alle email_health Records fuer diese Email finden
+    const allHealthRecords = await db.collection("email_health").find({
+      email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+    }).toArray();
+
+    // FORCE: Alle email_health Records fuer diese Email auf active setzen
+    const forceReactivate = await db.collection("email_health").updateMany(
+      { email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+      {
+        $set: {
+          status: "active",
+          hardBounces: 0,
+          softBounces: 0,
+          deactivatedAt: null,
+          deactivationReason: null,
+          quarantinedAt: null,
+          autoRetryAttempted: false,
+          reactivatedAt: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    const healthAfter = await db.collection("email_health").findOne({ email });
+
     // 1. Diagnose: Zeige alle Emails mit ihrem Status und nextRetryAt
     const allEmails = await db.collection("email_queue")
-      .find({ to: email })
-      .project({ _id: 1, status: 1, nextRetryAt: 1, subject: 1, emailType: 1, createdAt: 1, skipReason: 1 })
+      .find({ to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } })
+      .project({ _id: 1, status: 1, nextRetryAt: 1, subject: 1, emailType: 1, createdAt: 1, skipReason: 1, to: 1 })
       .sort({ createdAt: -1 })
       .limit(30)
       .toArray();
@@ -473,7 +502,7 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
     // 2. Repariere: Setze alle pending-Emails mit fehlendem/null nextRetryAt
     const repairResult = await db.collection("email_queue").updateMany(
       {
-        to: email,
+        to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         status: "pending",
         $or: [
           { nextRetryAt: null },
@@ -485,29 +514,34 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
 
     // 3. Auch skipped-Emails von Bounce zurueck zu pending setzen
     const resetResult = await db.collection("email_queue").updateMany(
-      { to: email, status: "skipped", skipReason: "email_inactive_bounce" },
+      { to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, status: "skipped" },
       { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
     );
 
     // 4. Auch failed-Emails nochmal versuchen
     const retryResult = await db.collection("email_queue").updateMany(
-      { to: email, status: "failed" },
+      { to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, status: "failed" },
       { $set: { status: "pending", nextRetryAt: new Date(), retryCount: 0, lastError: null } }
     );
 
-    console.log(`🔧 [REPAIR-QUEUE] User ${userId}: repaired=${repairResult.modifiedCount}, resetSkipped=${resetResult.modifiedCount}, retryFailed=${retryResult.modifiedCount}`);
+    console.log(`🔧 [REPAIR-QUEUE] User ${userId}: forceReactivated=${forceReactivate.modifiedCount}, repaired=${repairResult.modifiedCount}, resetSkipped=${resetResult.modifiedCount}, retryFailed=${retryResult.modifiedCount}`);
 
     res.json({
       success: true,
       message: `Queue repariert.`,
+      emailHealthBefore: healthBefore,
+      emailHealthByOriginalCase: healthByOriginal,
+      allHealthRecords: allHealthRecords.length,
+      emailHealthAfter: healthAfter,
+      forceReactivated: forceReactivate.modifiedCount,
       repaired: repairResult.modifiedCount,
       resetSkipped: resetResult.modifiedCount,
       retryFailed: retryResult.modifiedCount,
       emailsInQueue: allEmails.map(e => ({
         id: e._id.toString(),
         status: e.status,
+        to: e.to,
         nextRetryAt: e.nextRetryAt,
-        nextRetryAtType: e.nextRetryAt === null ? "null" : typeof e.nextRetryAt,
         emailType: e.emailType,
         subject: e.subject?.substring(0, 50),
         skipReason: e.skipReason
