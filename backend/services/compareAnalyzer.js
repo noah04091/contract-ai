@@ -15,6 +15,13 @@ const MAX_DIFFERENCES = 30;
 const MAX_PHASE_A_TIME = 90000; // 90s (complex contracts need more time)
 const MAX_PHASE_B_TIME = 120000; // 120s (deep comparison of long contracts)
 
+// Schicht 3: Klausel-für-Klausel Constants
+const MAX_CONCURRENT_CLAUSE_CALLS = 15;
+const MAX_CLAUSE_PAIRS = 20;
+const MAX_MISSING_ASSESSMENTS = 8;
+const MAX_CLAUSE_CALL_TIME = 15000; // 15s per call
+const MAX_CLAUSE_TEXT_LENGTH = 3000; // truncate long clauses
+
 const VALID_CLAUSE_AREAS = [
   'parties', 'subject', 'duration', 'termination', 'payment',
   'liability', 'warranty', 'confidentiality', 'ip_rights',
@@ -210,7 +217,10 @@ SCHRITT 2 — Erstelle für JEDEN Abschnitt/Bereich/Position einen Eintrag (maxi
 - title: Kurzer Titel
 - originalText: VOLLSTÄNDIGER wörtlicher Text — den KOMPLETTEN Abschnitt aus dem Dokument zitieren. NIEMALS mit "..." abkürzen oder Teile weglassen. Jeder Satz muss vollständig sein
 - summary: 1 Satz in einfacher Sprache
-- keyValues: Alle konkreten Werte als Key-Value-Paare (Fristen, Beträge, %, Daten, Limits, Nummern)
+- keyValues: Alle konkreten Werte als Key-Value-Paare. REGELN:
+  1. Keys IMMER auf Deutsch, als lesbare Begriffe mit Bindestrichen: "Flatrate-Gebühr", "Ankauflimit", "Kündigungsfrist", "Selbstbehalt", "Sicherungseinbehalt", "Inkasso-Gebühr", "Mindestgebühr", "Einrichtungsgebühr", "Vertragslaufzeit" — NIEMALS englisch (NICHT "flatrateFee", NICHT "purchaseLimit", NICHT "collectionFee")
+  2. Values IMMER mit Zahl UND Einheit: "1,95%", "EUR 150.000", "3 Monate", "EUR 5.000 p.a." — NIEMALS nur "EUR" ohne Betrag, NIEMALS nur eine Zahl ohne Einheit
+  3. Wenn ein Wert im Dokument steht, MUSS er vollständig extrahiert werden. "EUR" allein ist WERTLOS — der konkrete Betrag muss dabei stehen
 
 SCHRITT 3 — Extrahiere Parteien und Metadaten:
 - parties[]: ALLE genannten Personen/Firmen mit Rolle. Bei Rechnungen: "Rechnungssteller" und "Rechnungsempfänger". Bei Verträgen: "Auftraggeber"/"Auftragnehmer". NIEMALS leer lassen wenn Namen im Dokument stehen!
@@ -262,6 +272,15 @@ async function structureContract(contractText) {
 
   // Expand any truncated originalText snippets from the source contract
   expandOriginalTexts(validated.clauses, contractText);
+
+  // Maßnahme A.1: Regex-Nachextraktion für von GPT übersehene Werte
+  enrichKeyValuesFromText(validated.clauses, contractText);
+
+  // Maßnahme A.2: Qualitätsprüfung — warnt bei suspekt dünner Extraktion
+  const qualityIssues = checkExtractionQuality(validated);
+  if (qualityIssues.length > 0) {
+    console.warn(`⚠️ Phase A Qualität: ${qualityIssues.join(' | ')}`);
+  }
 
   console.log(`✅ Phase A: ${validated.clauses.length} Klauseln extrahiert, Typ: ${validated.contractType}`);
   logAIResponse('A', hash.substring(0, 12), JSON.stringify(validated).length, true);
@@ -341,7 +360,7 @@ function buildModeAddition(comparisonMode) {
   return mode.promptAddition;
 }
 
-function buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult = null) {
+function buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult = null, deterministicPromptBlock = '') {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
   const perspectiveBlock = buildPerspectiveBlock(perspective);
   const modeBlock = buildModeAddition(comparisonMode);
@@ -457,81 +476,49 @@ ${rawText2}
 """
 
 ${clauseMatchContext}
-SCHRITT 0 — WERTE-EXTRAKTION AUS DEM VOLLTEXT (KRITISCH! VOR allen anderen Schritten durchführen):
+${deterministicPromptBlock ? `\n${deterministicPromptBlock}\n` : ''}
+DEINE AUFGABE — 6 SCHRITTE:
 
-Lies BEIDE Volltexte KOMPLETT und extrahiere JEDEN konkreten Wert. Suche insbesondere nach:
-- Konditionenblättern, Preistabellen, Gebührentabellen, Leistungsverzeichnissen
-- Kopfdaten und Header-Informationen
-- Tabellarisch aufgelisteten Konditionen
-- Jeder Zahl, jedem Prozentsatz, jedem EUR-Betrag, jeder Frist, jedem Limit
+SCHRITT 1 — VERIFIZIERTE UNTERSCHIEDE BEWERTEN + QUALITATIV ERGÄNZEN:
 
-Dokument 1 — VOLLSTÄNDIGE Werteliste (JEDEN Zahlenwert aus dem Volltext auflisten):
-[Hier ALLE konkreten Werte aus Dokument 1 auflisten: Gebühren, Prozentsätze, EUR-Beträge, Fristen, Limits, Daten, Mengen — NICHTS weglassen]
-
-Dokument 2 — VOLLSTÄNDIGE Werteliste (JEDEN Zahlenwert aus dem Volltext auflisten):
-[Gleiche Struktur — ALLE konkreten Werte aus Dokument 2]
-
-VALIDIERUNGSREGELN (ABSOLUT VERBINDLICH — Verstöße machen die Analyse WERTLOS):
-
-1. Wenn du in Schritt 0 einen Wert für ein Dokument gefunden hast, darfst du in KEINEM späteren Schritt behaupten, dieser Wert fehle oder sei "Keine Regelung vorhanden".
-2. Wenn die Dokumentenkarte einen Wert NICHT enthält, aber der VOLLTEXT ihn enthält → der VOLLTEXT hat IMMER Vorrang.
-3. "Keine Regelung vorhanden" ist NUR erlaubt wenn der Wert weder in der Dokumentenkarte NOCH im Volltext vorkommt.
-4. Stehen in BEIDEN Dokumenten Parteien? → NIEMALS "Keine Regelung" für Parteien
-5. Stehen in BEIDEN Dokumenten Gebühren/Konditionen? → NIEMALS "Keine Regelung" für Vergütung
-6. Bevor du "Keine Regelung" schreibst: Prüfe NOCHMALS den Volltext. Wenn der Wert dort steht, ZITIERE ihn stattdessen.
-
-WICHTIG — Finde MÖGLICHST VIELE echte Unterschiede (typisch sind 6-10 bei ähnlichen Dokumenten).
-Jeder Zahlenunterschied (Fristen, Beträge, Dauer) ist ein EIGENER Eintrag.
-Ein einzelner Abschnitt kann MEHRERE Unterschiede enthalten — erfasse JEDEN separat.
-
-DEINE AUFGABE — 8 SCHRITTE:
-
-SCHRITT 1 — UNTERSCHIEDE (maximal ${MAX_DIFFERENCES}, nach Severity priorisiert):
-Gehe BEIDE Dokumente Abschnitt für Abschnitt durch. Für JEDEN echten Unterschied:
-
+a) BEWERTUNG DER GRUPPEN: Für JEDE Gruppe aus der obigen Liste (GRUPPE_1, GRUPPE_2, etc.) schreibe eine Bewertung in "groupEvaluations".
+Verwende die exakte Gruppen-ID als Key. Für jede Gruppe:
 {
-  "category": "Kategorie (z.B. Vergütung, Leistungsumfang, Parteien, Zahlungsbedingungen, etc.)",
-  "section": "Fundstelle (§-Verweis, Positionsnummer, oder Abschnittsname)",
-  "contract1": "Wörtliches Zitat (max 2 Sätze). NUR 'Keine Regelung vorhanden' wenn die Info TATSÄCHLICH im gesamten Dokument-Volltext NICHT vorkommt",
-  "contract2": "Wörtliches Zitat (max 2 Sätze). NUR 'Keine Regelung vorhanden' wenn die Info TATSÄCHLICH im gesamten Dokument-Volltext NICHT vorkommt",
   "severity": "low|medium|high|critical",
-  "explanation": "4-6 Sätze. Sprich Mandanten DIREKT an. KONKRETE Zahlen, EUR-Beträge, Szenarien.",
+  "explanation": "4-6 Sätze. Sprich Mandanten DIREKT an. KONKRETE Zahlen, EUR-Beträge, Szenarien. Erkläre WAS der Unterschied bedeutet und WARUM er relevant ist.",
   "impact": "1 Satz Einordnung (bei Verträgen: juristische §§-Verweise; bei Rechnungen: wirtschaftliche Auswirkung)",
   "recommendation": "KONKRETE Aktion — nicht 'Erwägen Sie'",
-  "clauseArea": "parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other",
   "semanticType": "missing|conflicting|weaker|stronger|different_scope",
   "financialImpact": "Geschätzter EUR-Betrag oder null",
   "marketContext": "Über/Unter/Entspricht Marktstandard oder null"
 }
 
-REGEL: Identische/sinngemäß gleiche Inhalte NICHT aufnehmen. Nur ECHTE Abweichungen.
-REGEL: "Keine Regelung vorhanden" nur bei TATSÄCHLICH fehlenden Informationen — NIEMALS wenn die Info im Volltext steht.
+WICHTIG: Du MUSST JEDE Gruppe bewerten. Lasse KEINE aus. Die Gruppen enthalten verifizierte Fakten.
+
+b) QUALITATIVE ERGÄNZUNGEN in "additionalDifferences" (maximal 5):
+Suche nach Unterschieden die NICHT in den Gruppen stehen: unterschiedliche Formulierungen, fehlende Klauseln, verschiedene Regelungstiefe. Belege mit Fundstelle.
+{
+  "category": "Kategorie",
+  "section": "Fundstelle",
+  "contract1": "Wörtliches Zitat (max 2 Sätze)",
+  "contract2": "Wörtliches Zitat (max 2 Sätze)",
+  "severity": "low|medium|high|critical",
+  "explanation": "4-6 Sätze, direkt an den Mandanten",
+  "impact": "1 Satz Einordnung",
+  "recommendation": "KONKRETE Aktion",
+  "clauseArea": "parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other",
+  "semanticType": "missing|conflicting|weaker|stronger|different_scope",
+  "financialImpact": "EUR-Betrag oder null",
+  "marketContext": "Marktstandard oder null"
+}
+
+REGEL: Nur ECHTE Abweichungen. Nichts das bereits in den Gruppen steht.
 
 SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Dokument):
 MIT konkreten Zahlen und Fundstellen.
 Bei Rechnungen: z.B. "Detaillierte Auflistung aller Positionen", "Günstigerer Gesamtpreis", "Klare Berechnungsgrundlage nach StBVV"
 
-SCHRITT 3 — RISIKO-LEVEL pro Dokument: "low"|"medium"|"high"
-Bei Rechnungen: "low" wenn korrekt berechnet, "medium" bei unklaren Positionen, "high" bei Berechnungsfehlern oder fehlenden Pflichtangaben.
-
-SCHRITT 4 — OVERALL SCORE pro Dokument (0-100)
-SCORE-REGELN (STRENG BEFOLGEN):
-- Zähle die Unterschiede: Welches Dokument hat MEHR high/critical Severity-Punkte GEGEN sich?
-- Das Dokument mit mehr schweren Schwächen MUSS einen deutlich niedrigeren Score haben.
-- MINIMUM 15 Punkte Differenz wenn ein Dokument klar besser ist (z.B. 80 vs 60, NICHT 75 vs 70).
-- Nutze die volle Skala: 40-90. Ein Dokument mit critical Problemen darf NICHT über 65 liegen.
-- Bei Rechnungen: Score = Kombination aus Preis-Leistung, Transparenz, Vollständigkeit.
-
-SCHRITT 5 — GESAMTURTEIL: 6-8 Sätze Fazit wie am Ende einer Erstberatung.
-
-SCHRITT 6 — KATEGORIE-SCORES (0-100 pro Dokument):
-- fairness: Bei Verträgen: Ausgewogenheit. Bei Rechnungen: Preis-Leistungs-Verhältnis
-- riskProtection: Bei Verträgen: Risikoschutz. Bei Rechnungen: Korrekte Berechnung, keine versteckten Kosten
-- flexibility: Bei Verträgen: Anpassungsmöglichkeiten. Bei Rechnungen: Zahlungskonditionen
-- completeness: Vollständigkeit der Angaben (Positionen, Berechnungen, Pflichtangaben)
-- clarity: Klarheit und Verständlichkeit der Darstellung
-
-SCHRITT 7 — RISIKO-/PROBLEM-ANALYSE (Reasoning Chain):
+SCHRITT 3 — RISIKO-/PROBLEM-ANALYSE (Reasoning Chain):
 Für jedes Risiko/Problem wende diese Denkschritte an:
   a) FAKT: Was steht im Dokument (oder fehlt)?
   b) EINORDNUNG: Bei Verträgen: relevante Norm/§§. Bei Rechnungen: Berechnungsgrundlage (StBVV, HOAI etc.)
@@ -540,7 +527,7 @@ Für jedes Risiko/Problem wende diese Denkschritte an:
   e) BEWERTUNG: Wie schwer wiegt das im Kontext dieses DOKUMENTTYPS?
 
 Bei VERTRÄGEN: Fehlende Klauseln sind ein Risiko (missing_protection).
-Bei RECHNUNGEN: Fehlende Pflichtangaben (§14 UStG) sind ein Problem. Fehlende Vertragsklauseln (Haftung, Kündigung) sind KEIN Problem — das gehört nicht in eine Rechnung.
+Bei RECHNUNGEN: Fehlende Pflichtangaben (§14 UStG) sind ein Problem. Fehlende Vertragsklauseln (Haftung, Kündigung) sind KEIN Problem.
 Standardmäßige Angaben sind KEIN Risiko — nur wenn etwas ungewöhnlich oder falsch ist.
 
 {
@@ -554,7 +541,7 @@ Standardmäßige Angaben sind KEIN Risiko — nur wenn etwas ungewöhnlich oder 
   "financialExposure": "Konkreter EUR-Betrag/% oder Beschreibung der finanziellen Auswirkung"
 }
 
-SCHRITT 8 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste, priorisiert nach wirtschaftlicher Relevanz):
+SCHRITT 4 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste, priorisiert nach wirtschaftlicher Relevanz):
 {
   "clauseArea": "area",
   "targetContract": 1|2,
@@ -565,13 +552,36 @@ SCHRITT 8 — VERBESSERUNGSVORSCHLÄGE MIT ALTERNATIVTEXT (3-5 wichtigste, prior
   "suggestedText": "KONKRETER Alternativ-Klauseltext (als Optimierungsvorschlag / Verhandlungsoption)"
 }
 
-Antworte NUR mit diesem JSON (REIHENFOLGE EINHALTEN — valueExtraction ZUERST!):
+SCHRITT 5 — SCORES:
+Overall Score (0-100) pro Dokument + 5 Kategorie-Scores + Risiko-Level.
+
+SCORE-REGELN (STRENG BEFOLGEN):
+- Zähle die Unterschiede: Welches Dokument hat MEHR high/critical Severity-Punkte GEGEN sich?
+- Das Dokument mit mehr schweren Schwächen MUSS einen deutlich niedrigeren Score haben.
+- MINIMUM 15 Punkte Differenz wenn ein Dokument klar besser ist (z.B. 80 vs 60, NICHT 75 vs 70).
+- Nutze die volle Skala: 40-90. Ein Dokument mit critical Problemen darf NICHT über 65 liegen.
+- Bei Rechnungen: Score = Kombination aus Preis-Leistung, Transparenz, Vollständigkeit.
+
+Kategorie-Scores (0-100 pro Dokument):
+- fairness: Bei Verträgen: Ausgewogenheit. Bei Rechnungen: Preis-Leistungs-Verhältnis
+- riskProtection: Bei Verträgen: Risikoschutz. Bei Rechnungen: Korrekte Berechnung, keine versteckten Kosten
+- flexibility: Bei Verträgen: Anpassungsmöglichkeiten. Bei Rechnungen: Zahlungskonditionen
+- completeness: Vollständigkeit der Angaben (Positionen, Berechnungen, Pflichtangaben)
+- clarity: Klarheit und Verständlichkeit der Darstellung
+
+Risiko-Level pro Dokument: "low"|"medium"|"high"
+Bei Rechnungen: "low" wenn korrekt berechnet, "medium" bei unklaren Positionen, "high" bei Berechnungsfehlern.
+
+SCHRITT 6 — GESAMTURTEIL: 6-8 Sätze Fazit wie am Ende einer Erstberatung.
+Empfehlung + Begründung + Bedingungen. Konkret und direkt.
+
+Antworte NUR mit diesem JSON:
 {
-  "valueExtraction": {
-    "document1": {"label": "Dokumentname", "values": {"Wert1": "exakter Wert", "Wert2": "exakter Wert", ...}},
-    "document2": {"label": "Dokumentname", "values": {"Wert1": "exakter Wert", "Wert2": "exakter Wert", ...}}
+  "groupEvaluations": {
+    "GRUPPE_1": {"severity": "...", "explanation": "...", "impact": "...", "recommendation": "...", "semanticType": "...", "financialImpact": null, "marketContext": null},
+    "GRUPPE_2": {"severity": "...", "explanation": "...", "impact": "...", "recommendation": "...", "semanticType": "...", "financialImpact": null, "marketContext": null}
   },
-  "differences": [...],
+  "additionalDifferences": [...],
   "contract1Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "contract2Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "overallRecommendation": {"recommended": 1|2, "reasoning": "string", "confidence": number, "conditions": ["string"]},
@@ -582,16 +592,14 @@ Antworte NUR mit diesem JSON (REIHENFOLGE EINHALTEN — valueExtraction ZUERST!)
   },
   "risks": [...],
   "recommendations": [...]
-}
-
-WICHTIG: "valueExtraction" MUSS das ERSTE Feld im JSON sein. Schreibe es VOR allem anderen. Es zwingt dich, die Werte zu lesen BEVOR du Unterschiede analysierst. Jeder Wert der hier steht, darf in "differences" NICHT als "Keine Regelung" erscheinen.`
+}`
   };
 }
 
-async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutral', comparisonMode = 'standard', userProfile = 'individual', clauseMatchResult = null) {
-  console.log(`🔍 Phase B: Tiefenvergleich (Perspektive: ${perspective}, Modus: ${comparisonMode}, Profil: ${userProfile})`);
+async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutral', comparisonMode = 'standard', userProfile = 'individual', clauseMatchResult = null, deterministicPromptBlock = '') {
+  console.log(`🔍 Phase B: Tiefenvergleich (Perspektive: ${perspective}, Modus: ${comparisonMode}, Profil: ${userProfile}, Schicht2: ${deterministicPromptBlock ? deterministicPromptBlock.split('\n').length + ' Zeilen' : 'keine'})`);
 
-  const prompt = buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult);
+  const prompt = buildPhaseBPrompt(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult, deterministicPromptBlock);
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -606,18 +614,8 @@ async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutr
 
   const raw = JSON.parse(completion.choices[0].message.content);
 
-  // Log valueExtraction for debugging
-  if (raw.valueExtraction) {
-    console.log(`📊 Value Extraction Dok1:`, JSON.stringify(raw.valueExtraction.document1?.values || {}).substring(0, 300));
-    console.log(`📊 Value Extraction Dok2:`, JSON.stringify(raw.valueExtraction.document2?.values || {}).substring(0, 300));
-  }
-
   const validated = validatePhaseBResponse(raw);
-
-  // Cross-check: Remove false "Keine Regelung" claims using valueExtraction
-  const crossChecked = crossCheckWithValueExtraction(validated);
-
-  const stabilized = stabilizeScores(crossChecked);
+  const stabilized = stabilizeScores(validated);
   const filtered = filterIdenticalClauses(stabilized);
 
   console.log(`✅ Phase B: ${filtered.differences.length} Unterschiede, ${filtered.risks.length} Risiken, ${filtered.recommendations.length} Empfehlungen`);
@@ -631,6 +629,12 @@ async function compareContractsV2(map1, map2, text1, text2, perspective = 'neutr
 // ============================================
 
 async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, userProfile, onProgress) {
+  // Route to new clause-by-clause pipeline
+  return runCompareV2PipelineNew(text1, text2, perspective, comparisonMode, userProfile, onProgress);
+}
+
+// Legacy pipeline kept as fallback
+async function runCompareV2PipelineLegacy(text1, text2, perspective, comparisonMode, userProfile, onProgress) {
   const progress = onProgress || (() => {});
 
   try {
@@ -663,22 +667,34 @@ async function runCompareV2Pipeline(text1, text2, perspective, comparisonMode, u
       progress('mapping', 42, 'Starte Tiefenvergleich...');
     }
 
-    // Phase B: Deep comparison (with clause matching context)
-    progress('comparing', 45, 'KI-Tiefenanalyse läuft...');
+    // SCHICHT 2: Deterministischer Wertevergleich (Maßnahme B + D)
+    progress('comparing', 45, 'Deterministischer Wertevergleich...');
+    const deterministicDiffs = buildDeterministicDifferences(map1, map2, clauseMatchResult);
+
+    // SCHICHT 2.5: Gruppierung — reduziert granulare Einzel-Diffs zu semantischen Gruppen
+    const groups = groupDeterministicDiffs(deterministicDiffs);
+    const groupsPromptBlock = formatGroupsForPrompt(groups);
+
+    // Phase B: Bewertet GRUPPEN + ergänzt qualitative Unterschiede
+    progress('comparing', 50, 'KI-Tiefenanalyse läuft...');
 
     const phaseBResult = await withTimeout(
-      compareContractsV2(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult),
+      compareContractsV2(map1, map2, text1, text2, perspective, comparisonMode, userProfile, clauseMatchResult, groupsPromptBlock),
       MAX_PHASE_B_TIME,
       'Phase B Timeout'
     );
 
-    // Gap Detection: Find differences Phase B missed using Phase A maps
-    progress('finalizing', 88, 'Vollständigkeitsprüfung...');
-    const gaps = detectGaps(map1, map2, phaseBResult.differences || []);
-    if (gaps.length > 0) {
-      phaseBResult.differences = [...(phaseBResult.differences || []), ...gaps];
-      console.log(`📊 Phase B + Gaps: ${phaseBResult.differences.length} Unterschiede total`);
-    }
+    // MERGE: Gruppen + Phase-B-Bewertungen + qualitative Ergänzungen → finale Differences
+    progress('finalizing', 88, 'Ergebnisse werden zusammengeführt...');
+    const groupEvaluations = phaseBResult.groupEvaluations || {};
+    const additionalDiffs = phaseBResult.additionalDifferences || phaseBResult.differences || [];
+    const evaluatedCount = Object.keys(groupEvaluations).length;
+    console.log(`📊 Phase B: ${evaluatedCount}/${groups.length} Gruppen bewertet, ${additionalDiffs.length} zusätzliche Diffs`);
+    phaseBResult.differences = mergeDifferences(groups, groupEvaluations, additionalDiffs);
+    console.log(`📊 Merge: ${phaseBResult.differences.length} finale Unterschiede (${groups.length} Gruppen + ${additionalDiffs.length} qualitative)`)
+
+    // SCHICHT 4: Post-merge score enforcement based on actual differences
+    enforceScoreDifferentiation(phaseBResult);
 
     // Market Benchmark: Deterministic comparison against market data
     progress('finalizing', 90, 'Marktvergleich wird erstellt...');
@@ -824,6 +840,49 @@ function validatePhaseAResponse(raw) {
 }
 
 /**
+ * Maßnahme A.2: Qualitätsprüfung der Phase-A-Extraktion.
+ * Gibt Warnungen zurück (Array von Strings), loggt aber bricht NICHT ab.
+ * Dient als Frühwarnsystem für schlechte Extraktion.
+ */
+function checkExtractionQuality(phaseAResult) {
+  const issues = [];
+  const clauses = phaseAResult.clauses || [];
+
+  // Q1: Mindestens 3 Klauseln — bei weniger hat GPT wahrscheinlich den Vertrag nicht verstanden
+  if (clauses.length < 3) {
+    issues.push(`Nur ${clauses.length} Klauseln extrahiert (Minimum: 3)`);
+  }
+
+  // Q2: Mindestens 1 Klausel sollte keyValues haben
+  const clausesWithKV = clauses.filter(c => Object.keys(c.keyValues || {}).length > 0);
+  if (clausesWithKV.length === 0 && clauses.length >= 3) {
+    issues.push('Keine einzige Klausel hat keyValues — Werte-Extraktion möglicherweise fehlgeschlagen');
+  }
+
+  // Q3: Payment-Klauseln sollten keyValues haben (häufigstes Fehlerfeld)
+  const paymentClauses = clauses.filter(c => c.area === 'payment');
+  if (paymentClauses.length > 0) {
+    const paymentWithoutKV = paymentClauses.filter(c => Object.keys(c.keyValues || {}).length === 0);
+    if (paymentWithoutKV.length === paymentClauses.length) {
+      issues.push('Payment-Klauseln ohne keyValues — Beträge/Gebühren evtl. nicht extrahiert');
+    }
+  }
+
+  // Q4: Parties sollten nicht leer sein
+  if (!phaseAResult.parties || phaseAResult.parties.length === 0) {
+    issues.push('Keine Vertragsparteien erkannt');
+  }
+
+  // Q5: originalText sollte nicht leer sein bei den meisten Klauseln
+  const emptyOriginal = clauses.filter(c => !c.originalText || c.originalText.length < 20);
+  if (emptyOriginal.length > clauses.length * 0.5 && clauses.length >= 3) {
+    issues.push(`${emptyOriginal.length}/${clauses.length} Klauseln ohne brauchbaren originalText`);
+  }
+
+  return issues;
+}
+
+/**
  * Expand truncated originalText snippets by finding them in the source contract.
  * GPT often abbreviates with "..." — this finds the full sentence/paragraph.
  */
@@ -881,10 +940,978 @@ function expandOriginalTexts(clauses, sourceText) {
   }
 }
 
+// ============================================
+// Maßnahme A.1: Regex-based keyValue enrichment
+// Extracts concrete values from originalText that GPT missed in keyValues
+// ============================================
+
+function enrichKeyValuesFromText(clauses, sourceText) {
+  if (!clauses?.length) return;
+
+  let totalEnriched = 0;
+
+  for (const clause of clauses) {
+    const text = clause.originalText || '';
+    if (text.length < 10) continue;
+
+    const existingKeys = Object.keys(clause.keyValues || {});
+    const existingNormalized = existingKeys.map(k => normalizeKeyForMatch(k));
+
+    const found = extractValuesWithContext(text);
+
+    for (const { key, value } of found) {
+      const normKey = normalizeKeyForMatch(key);
+
+      // Skip if a similar key already exists
+      const alreadyExists = existingNormalized.some(ek =>
+        ek === normKey ||
+        ek.includes(normKey) || normKey.includes(ek) ||
+        (normKey.length > 4 && ek.length > 4 && levenshteinClose(ek, normKey))
+      );
+
+      if (!alreadyExists) {
+        clause.keyValues[key] = value;
+        existingNormalized.push(normKey);
+        totalEnriched++;
+      }
+    }
+  }
+
+  // Also scan the full source text for values not captured in any clause
+  if (sourceText && sourceText.length > 50) {
+    const allClauseText = clauses.map(c => c.originalText || '').join(' ');
+    const uncoveredValues = findUncoveredValues(sourceText, allClauseText, clauses);
+    totalEnriched += uncoveredValues;
+  }
+
+  if (totalEnriched > 0) {
+    console.log(`📋 Enrichment: +${totalEnriched} keyValues durch Regex-Nachextraktion`);
+  }
+
+  return totalEnriched;
+}
+
+/**
+ * Extract values with surrounding context from text.
+ * Returns array of { key, value } pairs.
+ */
+function extractValuesWithContext(text) {
+  const results = [];
+
+  // Pattern 1: "Label: Wert" or "Label Wert" patterns (most common in Konditionenblätter)
+  // e.g., "Flatrate-Gebühr in % des Forderungsnennbetrages p.a.: 1,95%"
+  const labelValuePattern = /([A-ZÄÖÜ][a-zäöüß\-]+(?:[\s\-][A-Za-zäöüß\-]+){0,4})\s*(?::|beträgt|von|in Höhe von|i\.?\s*H\.?\s*v\.?)?\s*[:.]?\s*(\d[\d.,]*\s*(?:%|EUR|€|Monate?|Wochen?|Tage?|Jahre?|p\.?\s*a\.?))/gi;
+  let match;
+  while ((match = labelValuePattern.exec(text)) !== null) {
+    const key = match[1].trim().replace(/\s+/g, ' ');
+    const value = match[2].trim();
+    if (key.length >= 3 && key.length <= 60) {
+      results.push({ key, value });
+    }
+  }
+
+  // Pattern 2: EUR amounts with preceding context
+  // e.g., "EUR 150.000" or "€ 5.000,00"
+  const eurPattern = /(\b[A-ZÄÖÜ][a-zäöüß\-]+(?:[\s\-][A-Za-zäöüß\-]+){0,3})\s*(?::|von|beträgt)?\s*((?:EUR|€)\s*[\d.,]+(?:\s*(?:p\.?\s*a\.?|pro\s+Jahr|\/\s*Jahr|jährl))?)/gi;
+  while ((match = eurPattern.exec(text)) !== null) {
+    const key = match[1].trim().replace(/\s+/g, ' ');
+    const value = match[2].trim();
+    if (key.length >= 3 && key.length <= 60) {
+      results.push({ key, value });
+    }
+  }
+
+  // Pattern 3: Percentage values with preceding context
+  // e.g., "2,3205 %" or "10%"
+  const pctPattern = /(\b[A-ZÄÖÜ][a-zäöüß\-]+(?:[\s\-][A-Za-zäöüß\-]+){0,3})\s*(?::|von|beträgt)?\s*(\d[\d.,]*\s*(?:%|v\.?\s*H\.?|Prozent))/gi;
+  while ((match = pctPattern.exec(text)) !== null) {
+    const key = match[1].trim().replace(/\s+/g, ' ');
+    const value = match[2].trim();
+    if (key.length >= 3 && key.length <= 60) {
+      results.push({ key, value });
+    }
+  }
+
+  // Pattern 4: Time periods
+  // e.g., "Kündigungsfrist: 3 Monate"
+  const timePattern = /(\b[A-ZÄÖÜ][a-zäöüß\-]+(?:[\s\-][A-Za-zäöüß\-]+){0,3})\s*(?::|von|beträgt)?\s*(\d+\s*(?:Monate?|Wochen?|Tage?|Jahre?|Werktage?))/gi;
+  while ((match = timePattern.exec(text)) !== null) {
+    const key = match[1].trim().replace(/\s+/g, ' ');
+    const value = match[2].trim();
+    if (key.length >= 3 && key.length <= 60) {
+      results.push({ key, value });
+    }
+  }
+
+  // Deduplicate: keep first occurrence per normalized key
+  const seen = new Set();
+  return results.filter(r => {
+    const norm = normalizeKeyForMatch(r.key);
+    if (seen.has(norm)) return false;
+    seen.add(norm);
+    return true;
+  });
+}
+
+/**
+ * Scan full source text for values not captured by any clause.
+ * Creates a synthetic "payment" clause if values found in header/tables.
+ */
+function findUncoveredValues(sourceText, allClauseText, clauses) {
+  // Look at first 3000 chars (header/Konditionenblatt area)
+  const header = sourceText.substring(0, 3000);
+  const headerValues = extractValuesWithContext(header);
+
+  if (headerValues.length === 0) return 0;
+
+  // Check which header values are NOT in any clause keyValues
+  const allExistingKeys = [];
+  for (const c of clauses) {
+    allExistingKeys.push(...Object.keys(c.keyValues || {}).map(normalizeKeyForMatch));
+  }
+
+  const missing = headerValues.filter(hv => {
+    const norm = normalizeKeyForMatch(hv.key);
+    return !allExistingKeys.some(ek =>
+      ek === norm || ek.includes(norm) || norm.includes(ek)
+    );
+  });
+
+  if (missing.length === 0) return 0;
+
+  // Find the best payment clause to add these to, or create one
+  let targetClause = clauses.find(c => c.area === 'payment' && Object.keys(c.keyValues).length > 0)
+    || clauses.find(c => c.area === 'payment')
+    || null;
+
+  if (!targetClause) {
+    // Create a synthetic clause for header/Konditionenblatt values
+    targetClause = {
+      id: 'payment_header',
+      area: 'payment',
+      section: 'Konditionenblatt / Kopfdaten',
+      title: 'Vertragskonditionen',
+      originalText: header.substring(0, 500),
+      summary: 'Aus dem Kopfbereich / Konditionenblatt extrahierte Werte',
+      keyValues: {},
+    };
+    clauses.push(targetClause);
+    console.log(`📋 Enrichment: Synthetische Konditionenblatt-Klausel erstellt`);
+  }
+
+  let added = 0;
+  for (const { key, value } of missing) {
+    targetClause.keyValues[key] = value;
+    added++;
+  }
+
+  if (added > 0) {
+    console.log(`📋 Enrichment: +${added} Werte aus Header/Konditionenblatt in "${targetClause.id}" ergänzt`);
+  }
+
+  return added;
+}
+
+function normalizeKeyForMatch(key) {
+  return (key || '')
+    .toLowerCase()
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-zäöüß0-9 ]/g, '')
+    .trim();
+}
+
+function levenshteinClose(a, b) {
+  // Quick check: if length difference > 3, not close
+  if (Math.abs(a.length - b.length) > 3) return false;
+  // Simple Levenshtein for short strings
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return true;
+  if (maxLen > 30) return false; // Skip expensive computation for long strings
+
+  const matrix = [];
+  for (let i = 0; i <= a.length; i++) {
+    matrix[i] = [i];
+    for (let j = 1; j <= b.length; j++) {
+      if (i === 0) {
+        matrix[i][j] = j;
+      } else {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+  }
+  return matrix[a.length][b.length] <= 3;
+}
+
+// ============================================
+// SCHICHT 2: Deterministischer Wertevergleich (Maßnahme B + D)
+// Läuft VOR Phase B. Erzeugt verifizierte Fakten-Unterschiede.
+// Phase B bekommt diese als feste Grundlage und darf sie NICHT ändern.
+// ============================================
+
+/**
+ * Maßnahme B.2 — Wert+Einheit aus einem String extrahieren.
+ * Versteht deutsche Zahlenformate (1.234,56 = eintausendzweihundertvierunddreißig Komma 56).
+ */
+function extractValueAndUnit(str) {
+  if (!str || typeof str !== 'string') return { num: null, unit: null, raw: str || '' };
+  const s = str.trim();
+
+  // "entfällt", "keine", "nicht vereinbart" etc.
+  if (/^(entfällt|keine?r?s?|nicht\s+vereinbart|nicht\s+vorhanden|n\/?a|\-+)$/i.test(s)) {
+    return { num: null, unit: null, raw: s, isNone: true };
+  }
+
+  // Prozent: "1,95%", "10 %", "2,3205 Prozent"
+  let m = s.match(/(\d[\d.,]*)\s*(%|Prozent|v\.?\s*H\.?|p\.?\s*a\.?)/i);
+  if (m) return { num: parseGermanNumber(m[1]), unit: '%', raw: s };
+
+  // EUR vorgestellt: "EUR 150.000", "€ 5.000,00"
+  m = s.match(/(EUR|€)\s*([\d.,]+)/i);
+  if (m) return { num: parseGermanNumber(m[2]), unit: 'EUR', raw: s };
+
+  // EUR nachgestellt: "150.000 EUR", "5.000,00 €"
+  m = s.match(/([\d.,]+)\s*(EUR|Euro|€)/i);
+  if (m) return { num: parseGermanNumber(m[1]), unit: 'EUR', raw: s };
+
+  // Zeitraum: "3 Monate", "12 Wochen", "30 Tage", "2 Jahre"
+  m = s.match(/(\d+)\s*(Monate?|Wochen?|Tage?|Jahre?|Werktage?)/i);
+  if (m) return { num: parseInt(m[1], 10), unit: m[2], raw: s };
+
+  // Zahl ohne Einheit (Fallback)
+  m = s.match(/(\d[\d.,]*)/);
+  if (m) return { num: parseGermanNumber(m[1]), unit: null, raw: s };
+
+  // Reiner Text
+  return { num: null, unit: null, raw: s };
+}
+
+/**
+ * Parse deutsche Zahl: "150.000" → 150000, "1,95" → 1.95, "150.000,50" → 150000.50
+ */
+function parseGermanNumber(str) {
+  if (!str) return null;
+  const s = str.trim();
+
+  // Hat sowohl Punkt als auch Komma? → Punkt ist Tausender, Komma ist Dezimal
+  if (s.includes('.') && s.includes(',')) {
+    return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  }
+
+  // Nur Punkt: Prüfe ob Tausenderpunkt (3 Ziffern nach Punkt, kein weiterer Punkt)
+  if (s.includes('.') && !s.includes(',')) {
+    const parts = s.split('.');
+    // "150.000" = 150000 (Tausender), "1.95" = 1.95 (Dezimal)
+    if (parts.length === 2 && parts[1].length === 3) {
+      return parseFloat(s.replace('.', '')); // Tausenderpunkt
+    }
+    return parseFloat(s); // Dezimalpunkt
+  }
+
+  // Nur Komma → Dezimalkomma
+  if (s.includes(',')) {
+    return parseFloat(s.replace(',', '.'));
+  }
+
+  return parseFloat(s);
+}
+
+/**
+ * Maßnahme B.2 — Fuzzy Key Match
+ * Prüft ob zwei normalisierte Keys zusammengehören.
+ */
+function fuzzyKeyMatch(normKey1, normKey2) {
+  if (normKey1 === normKey2) return true;
+  if (normKey1.includes(normKey2) || normKey2.includes(normKey1)) return true;
+  if (normKey1.length > 4 && normKey2.length > 4 && levenshteinClose(normKey1, normKey2)) return true;
+
+  // Jaccard-Similarity der Wörter > 0.6 (für umgestellte Wörter)
+  const words1 = new Set(normKey1.split(' ').filter(w => w.length > 2));
+  const words2 = new Set(normKey2.split(' ').filter(w => w.length > 2));
+  if (words1.size >= 2 && words2.size >= 2) {
+    const intersection = [...words1].filter(w => words2.has(w)).length;
+    const union = new Set([...words1, ...words2]).size;
+    if (union > 0 && intersection / union > 0.6) return true;
+  }
+
+  // Synonym group check: do both keys belong to the same synonym group?
+  for (const group of KEY_SYNONYM_GROUPS) {
+    const k1InGroup = group.some(syn => normKey1.includes(syn) || syn.includes(normKey1));
+    const k2InGroup = group.some(syn => normKey2.includes(syn) || syn.includes(normKey2));
+    if (k1InGroup && k2InGroup) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Entfernt Duplikat-keyValues innerhalb einer Area.
+ * Duplikat = gleicher extrahierter numerischer Wert + gleiche Einheit, oder gleicher Rohtext.
+ * Behält den Key mit dem kürzeren, spezifischeren Namen.
+ */
+function deduplicateKeyValues(kv) {
+  if (!kv || typeof kv !== 'object') return kv;
+  const entries = Object.entries(kv);
+  if (entries.length <= 1) return kv;
+
+  const keep = {};
+  const seen = []; // { key, value, parsed }
+
+  for (const [key, value] of entries) {
+    const valStr = String(value).trim();
+    const parsed = extractValueAndUnit(valStr);
+
+    // Prüfe ob dieser Wert schon unter einem anderen Key existiert
+    let isDuplicate = false;
+    for (const existing of seen) {
+      // Gleicher Rohtext (normalisiert)
+      if (valStr.toLowerCase() === existing.value.toLowerCase()) {
+        isDuplicate = true;
+        break;
+      }
+      // Gleiche Zahl + gleiche Einheit
+      if (parsed.num !== null && existing.parsed.num !== null
+          && parsed.num === existing.parsed.num
+          && (parsed.unit || '') === (existing.parsed.unit || '')) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) {
+      keep[key] = value;
+      seen.push({ key, value: valStr, parsed });
+    }
+  }
+
+  const removed = entries.length - Object.keys(keep).length;
+  if (removed > 0) {
+    // Log only at debug level — not spam
+  }
+
+  return keep;
+}
+
+/**
+ * Maßnahme B.1 — KERNSTÜCK: Deterministischer Wertevergleich.
+ *
+ * Vergleicht keyValues beider Verträge Area für Area.
+ * Erkennt: gleiche Werte (skip), unterschiedliche Werte (diff), fehlende Bereiche (gap).
+ * Ergebnis geht als verifizierte Fakten an Phase B.
+ *
+ * @param {object} map1 - Phase-A-Ergebnis Vertrag 1 (mit angereicherten keyValues)
+ * @param {object} map2 - Phase-A-Ergebnis Vertrag 2 (mit angereicherten keyValues)
+ * @param {object|null} clauseMatchResult - Ergebnis von matchClauses()
+ * @returns {Array<DeterministicDifference>}
+ */
+function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
+  const diffs = [];
+  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+
+  // Schritt 1: keyValues pro Area sammeln
+  const areaKV1 = {};  // { area: { key: value, ... } }
+  const areaKV2 = {};
+  const areaSections1 = {}; // { area: "§5 Abs. 2" }
+  const areaSections2 = {};
+
+  for (const c of (map1.clauses || [])) {
+    if (skipAreas.has(c.area)) continue;
+    if (!areaKV1[c.area]) areaKV1[c.area] = {};
+    if (c.keyValues && typeof c.keyValues === 'object') {
+      Object.assign(areaKV1[c.area], c.keyValues);
+    }
+    if (!areaSections1[c.area]) areaSections1[c.area] = c.section;
+  }
+
+  for (const c of (map2.clauses || [])) {
+    if (skipAreas.has(c.area)) continue;
+    if (!areaKV2[c.area]) areaKV2[c.area] = {};
+    if (c.keyValues && typeof c.keyValues === 'object') {
+      Object.assign(areaKV2[c.area], c.keyValues);
+    }
+    if (!areaSections2[c.area]) areaSections2[c.area] = c.section;
+  }
+
+  // Dedup: Entferne Duplikat-keyValues pro Area (gleicher Wert unter verschiedenen Keys)
+  for (const areaKV of [areaKV1, areaKV2]) {
+    for (const area of Object.keys(areaKV)) {
+      areaKV[area] = deduplicateKeyValues(areaKV[area]);
+    }
+  }
+
+  const allAreas = new Set([...Object.keys(areaKV1), ...Object.keys(areaKV2)]);
+
+  console.log(`🔢 Schicht 2: Prüfe ${allAreas.size} Areas: [${[...allAreas].join(', ')}]`);
+
+  for (const area of allAreas) {
+    const kv1 = areaKV1[area] || {};
+    const kv2 = areaKV2[area] || {};
+    const section1 = areaSections1[area] || null;
+    const section2 = areaSections2[area] || null;
+
+    // Schritt 4 (integrierte Gap Detection — Maßnahme D):
+    // Area nur in einem Vertrag vorhanden
+    if (Object.keys(kv1).length === 0 && Object.keys(kv2).length === 0) continue;
+
+    // Schritt 2: Keys normalisieren und matchen
+    const entries1 = Object.entries(kv1).map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }));
+    const entries2 = Object.entries(kv2).map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }));
+    const matched2 = new Set();
+
+    // Match keys from contract 1 against contract 2
+    for (const e1 of entries1) {
+      let bestMatch = null;
+      for (const e2 of entries2) {
+        if (matched2.has(e2.key)) continue;
+        if (fuzzyKeyMatch(e1.norm, e2.norm)) {
+          bestMatch = e2;
+          break;
+        }
+      }
+
+      if (bestMatch) {
+        matched2.add(bestMatch.key);
+
+        // Schritt 3: Werte vergleichen
+        const parsed1 = extractValueAndUnit(e1.value);
+        const parsed2 = extractValueAndUnit(bestMatch.value);
+
+        // Beide numerisch → numerischer Vergleich
+        if (parsed1.num !== null && parsed2.num !== null) {
+          if (parsed1.num !== parsed2.num) {
+            diffs.push({
+              area,
+              key: e1.key,
+              value1: e1.value,
+              value2: bestMatch.value,
+              numValue1: parsed1.num,
+              numValue2: parsed2.num,
+              unit: parsed1.unit || parsed2.unit || null,
+              diffType: 'numeric',
+              section1,
+              section2,
+            });
+          }
+          // gleich → skip
+        } else {
+          // Mindestens einer nicht numerisch → Textvergleich
+          const norm1 = (e1.value || '').toLowerCase().trim();
+          const norm2 = (bestMatch.value || '').toLowerCase().trim();
+          if (norm1 !== norm2) {
+            diffs.push({
+              area,
+              key: e1.key,
+              value1: e1.value,
+              value2: bestMatch.value,
+              numValue1: parsed1.num,
+              numValue2: parsed2.num,
+              unit: parsed1.unit || parsed2.unit || null,
+              diffType: 'text',
+              section1,
+              section2,
+            });
+          }
+        }
+      } else {
+        // Key nur in Vertrag 1
+        diffs.push({
+          area,
+          key: e1.key,
+          value1: e1.value,
+          value2: null,
+          numValue1: extractValueAndUnit(e1.value).num,
+          numValue2: null,
+          unit: extractValueAndUnit(e1.value).unit,
+          diffType: 'only_in_1',
+          section1,
+          section2: null,
+        });
+      }
+    }
+
+    // Keys nur in Vertrag 2 (nicht gematcht)
+    for (const e2 of entries2) {
+      if (matched2.has(e2.key)) continue;
+      diffs.push({
+        area,
+        key: e2.key,
+        value1: null,
+        value2: e2.value,
+        numValue1: null,
+        numValue2: extractValueAndUnit(e2.value).num,
+        unit: extractValueAndUnit(e2.value).unit,
+        diffType: 'only_in_2',
+        section1: null,
+        section2,
+      });
+    }
+  }
+
+  // Schritt 4b: Area-Level Gaps (ganzer Bereich fehlt in einem Vertrag)
+  // Prüfe Areas die in Phase A Klauseln haben aber keine keyValues
+  const areasMap1 = {};
+  const areasMap2 = {};
+  for (const c of (map1.clauses || [])) {
+    if (skipAreas.has(c.area)) continue;
+    if (!areasMap1[c.area]) areasMap1[c.area] = [];
+    areasMap1[c.area].push(c);
+  }
+  for (const c of (map2.clauses || [])) {
+    if (skipAreas.has(c.area)) continue;
+    if (!areasMap2[c.area]) areasMap2[c.area] = [];
+    areasMap2[c.area].push(c);
+  }
+
+  const allClauseAreas = new Set([...Object.keys(areasMap1), ...Object.keys(areasMap2)]);
+  const coveredAreas = new Set(diffs.map(d => d.area));
+
+  for (const area of allClauseAreas) {
+    if (coveredAreas.has(area)) continue; // Already has value-level diffs
+    const c1 = areasMap1[area] || [];
+    const c2 = areasMap2[area] || [];
+
+    if (c1.length > 0 && c2.length === 0) {
+      diffs.push({
+        area,
+        key: '_area_missing',
+        value1: c1[0].summary || c1[0].title || 'Vorhanden',
+        value2: null,
+        numValue1: null,
+        numValue2: null,
+        unit: null,
+        diffType: 'only_in_1',
+        section1: c1[0].section || null,
+        section2: null,
+        _isAreaGap: true,
+      });
+    } else if (c2.length > 0 && c1.length === 0) {
+      diffs.push({
+        area,
+        key: '_area_missing',
+        value1: null,
+        value2: c2[0].summary || c2[0].title || 'Vorhanden',
+        numValue1: null,
+        numValue2: null,
+        unit: null,
+        diffType: 'only_in_2',
+        section1: null,
+        section2: c2[0].section || null,
+        _isAreaGap: true,
+      });
+    }
+  }
+
+  // Schritt 5: Sortieren — payment zuerst, dann numerisch vor text, dann nach Diff-Größe
+  diffs.sort((a, b) => {
+    // payment-Area zuerst
+    if (a.area === 'payment' && b.area !== 'payment') return -1;
+    if (b.area === 'payment' && a.area !== 'payment') return 1;
+    // numerisch vor text
+    if (a.diffType === 'numeric' && b.diffType !== 'numeric') return -1;
+    if (b.diffType === 'numeric' && a.diffType !== 'numeric') return 1;
+    // Größerer prozentualer Unterschied zuerst
+    if (a.diffType === 'numeric' && b.diffType === 'numeric' && a.numValue1 && b.numValue1) {
+      const pctA = Math.abs((a.numValue1 - a.numValue2) / a.numValue1);
+      const pctB = Math.abs((b.numValue1 - b.numValue2) / b.numValue1);
+      return pctB - pctA;
+    }
+    return 0;
+  });
+
+  console.log(`🔢 Schicht 2: ${diffs.length} deterministische Unterschiede gefunden`);
+  diffs.forEach(d => {
+    const label = AREA_LABELS[d.area] || d.area;
+    if (d._isAreaGap) {
+      const inContract = d.value1 ? 1 : 2;
+      console.log(`   → [GAP] ${label}: Bereich nur in Vertrag ${inContract}`);
+    } else if (d.diffType === 'numeric') {
+      console.log(`   → [NUM] ${label}.${d.key}: ${d.value1} vs ${d.value2}`);
+    } else if (d.diffType === 'text') {
+      console.log(`   → [TXT] ${label}.${d.key}: "${d.value1}" vs "${d.value2}"`);
+    } else {
+      const inContract = d.diffType === 'only_in_1' ? 1 : 2;
+      console.log(`   → [ONLY${inContract}] ${label}.${d.key}: ${d.value1 || d.value2}`);
+    }
+  });
+
+  return diffs;
+}
+
+// ============================================
+// SCHICHT 2.5: Gruppierung + Prompt-Formatierung + Merge
+// Gruppiert granulare Einzel-Diffs in semantische Gruppen.
+// Phase B bewertet GRUPPEN (nicht Einzelwerte).
+// ============================================
+
+/**
+ * Gruppiert rohe deterministische Diffs in semantische Gruppen:
+ * - Matched-Diffs (NUM/TXT) → je eine eigene Gruppe (klarer Vergleich)
+ * - ONLY_IN_1 pro Area → eine Gruppe ("Werte nur in Vertrag 1")
+ * - ONLY_IN_2 pro Area → eine Gruppe ("Werte nur in Vertrag 2")
+ */
+function groupDeterministicDiffs(rawDiffs) {
+  if (!rawDiffs || rawDiffs.length === 0) return [];
+
+  const groups = [];
+  let groupId = 0;
+
+  const matched = rawDiffs.filter(d => d.diffType === 'numeric' || d.diffType === 'text');
+  const onlyIn1 = rawDiffs.filter(d => d.diffType === 'only_in_1');
+  const onlyIn2 = rawDiffs.filter(d => d.diffType === 'only_in_2');
+
+  // Each matched diff = own group (clear 1:1 comparison)
+  for (const d of matched) {
+    groupId++;
+    const label = AREA_LABELS[d.area] || d.area;
+    groups.push({
+      id: `GRUPPE_${groupId}`,
+      area: d.area,
+      areaLabel: label,
+      type: 'matched',
+      severity: inferDiffSeverity(d),
+      items: [d],
+    });
+  }
+
+  // Group only_in_1 by area
+  const byArea1 = {};
+  for (const d of onlyIn1) {
+    if (!byArea1[d.area]) byArea1[d.area] = [];
+    byArea1[d.area].push(d);
+  }
+  for (const [area, diffs] of Object.entries(byArea1)) {
+    groupId++;
+    const label = AREA_LABELS[area] || area;
+    groups.push({
+      id: `GRUPPE_${groupId}`,
+      area,
+      areaLabel: label,
+      type: 'only_in_1',
+      severity: inferGroupSeverity(area, diffs),
+      items: diffs,
+    });
+  }
+
+  // Group only_in_2 by area
+  const byArea2 = {};
+  for (const d of onlyIn2) {
+    if (!byArea2[d.area]) byArea2[d.area] = [];
+    byArea2[d.area].push(d);
+  }
+  for (const [area, diffs] of Object.entries(byArea2)) {
+    groupId++;
+    const label = AREA_LABELS[area] || area;
+    groups.push({
+      id: `GRUPPE_${groupId}`,
+      area,
+      areaLabel: label,
+      type: 'only_in_2',
+      severity: inferGroupSeverity(area, diffs),
+      items: diffs,
+    });
+  }
+
+  // Sort: matched first, then by area importance
+  const areaPriority = { payment: 0, liability: 1, termination: 2, duration: 3, warranty: 4, confidentiality: 5 };
+  groups.sort((a, b) => {
+    if (a.type === 'matched' && b.type !== 'matched') return -1;
+    if (b.type === 'matched' && a.type !== 'matched') return 1;
+    const pA = areaPriority[a.area] ?? 10;
+    const pB = areaPriority[b.area] ?? 10;
+    return pA - pB;
+  });
+
+  console.log(`📦 Gruppierung: ${rawDiffs.length} Einzel-Diffs → ${groups.length} Gruppen`);
+  groups.forEach(g => {
+    const itemCount = g.items.filter(i => !i._isAreaGap).length;
+    const gapCount = g.items.filter(i => i._isAreaGap).length;
+    console.log(`   ${g.id} [${g.type}] ${g.areaLabel}: ${itemCount} Werte${gapCount > 0 ? ' + Area-Gap' : ''}, Severity: ${g.severity}`);
+  });
+
+  return groups;
+}
+
+function inferDiffSeverity(diff) {
+  if (diff.diffType === 'numeric' && diff.numValue1 !== null && diff.numValue2 !== null && diff.numValue1 !== 0) {
+    const pctDiff = Math.abs((diff.numValue2 - diff.numValue1) / diff.numValue1);
+    if (pctDiff > 0.5) return 'critical';
+    if (pctDiff > 0.2) return 'high';
+    if (pctDiff > 0.1) return 'medium';
+  }
+  return MISSING_SEVERITY[diff.area] || 'medium';
+}
+
+function inferGroupSeverity(area, diffs) {
+  if (diffs.some(d => d._isAreaGap)) return MISSING_SEVERITY[area] || 'medium';
+  if (area === 'payment' && diffs.length >= 3) return 'high';
+  if (area === 'liability' || area === 'payment') return 'medium';
+  return MISSING_SEVERITY[area] || 'low';
+}
+
+function inferGroupSemanticType(group) {
+  if (group.type === 'matched') {
+    return group.items[0]?.diffType === 'numeric' ? 'conflicting' : 'different_scope';
+  }
+  if (group.items.some(d => d._isAreaGap)) return 'missing';
+  return 'missing'; // only_in_1/only_in_2 = one side has it, other doesn't
+}
+
+/**
+ * Formatiert Gruppen als strukturierter Prompt-Block für Phase B.
+ * Jede Gruppe bekommt eine ID die Phase B referenzieren MUSS.
+ */
+function formatGroupsForPrompt(groups) {
+  if (!groups || groups.length === 0) return '';
+
+  let text = `VERIFIZIERTE UNTERSCHIEDE (${groups.length} Gruppen):
+
+Die folgenden Unterschiedsgruppen wurden durch exakten Wertevergleich ermittelt.
+Diese Fakten sind verifiziert. Du MUSST jede Gruppe in "groupEvaluations" bewerten.
+
+`;
+
+  for (const group of groups) {
+    text += `${group.id} | ${group.areaLabel} | `;
+
+    if (group.type === 'matched') {
+      const d = group.items[0];
+      text += `Direktvergleich\n`;
+      text += `  ${d.key}: Vertrag 1 = "${d.value1}" | Vertrag 2 = "${d.value2}"`;
+      if (d.diffType === 'numeric' && d.numValue1 !== null && d.numValue2 !== null && d.numValue1 !== 0) {
+        const pct = ((d.numValue2 - d.numValue1) / Math.abs(d.numValue1) * 100).toFixed(1);
+        text += ` (Δ ${pct > 0 ? '+' : ''}${pct}%)`;
+      }
+      text += '\n';
+    } else {
+      const contract = group.type === 'only_in_1' ? 1 : 2;
+      const otherContract = contract === 1 ? 2 : 1;
+      const gaps = group.items.filter(d => d._isAreaGap);
+      const items = group.items.filter(d => !d._isAreaGap);
+
+      if (gaps.length > 0 && items.length === 0) {
+        text += `Bereich fehlt komplett in Vertrag ${otherContract}\n`;
+        text += `  Vertrag ${contract}: ${gaps[0].value1 || gaps[0].value2}\n`;
+      } else {
+        text += `Nur in Vertrag ${contract} (${items.length} Werte)\n`;
+        for (const d of items) {
+          const val = d.value1 || d.value2;
+          text += `  • ${d.key}: ${val}\n`;
+        }
+      }
+    }
+    text += '\n';
+  }
+
+  return text;
+}
+
+/**
+ * Kombiniert deterministische Gruppen + Phase-B-Bewertungen + zusätzliche Diffs
+ * zu finalen EnhancedDifference[].
+ */
+function mergeDifferences(groups, groupEvaluations, additionalDiffs) {
+  const merged = [];
+
+  for (const group of groups) {
+    const ev = (groupEvaluations || {})[group.id] || {};
+
+    // Build contract1/contract2 text from group items
+    let contract1, contract2, section;
+
+    if (group.type === 'matched') {
+      const d = group.items[0];
+      contract1 = `${d.key}: ${d.value1}`;
+      contract2 = `${d.key}: ${d.value2}`;
+      section = d.section1 || d.section2 || '';
+    } else if (group.type === 'only_in_1') {
+      const items = group.items.filter(d => !d._isAreaGap);
+      const gaps = group.items.filter(d => d._isAreaGap);
+      contract1 = items.length > 0
+        ? items.map(d => `${d.key}: ${d.value1}`).join('; ')
+        : (gaps[0]?.value1 || 'Vorhanden');
+      contract2 = 'Keine Regelung vorhanden';
+      section = group.items[0]?.section1 || '';
+    } else {
+      const items = group.items.filter(d => !d._isAreaGap);
+      const gaps = group.items.filter(d => d._isAreaGap);
+      contract1 = 'Keine Regelung vorhanden';
+      contract2 = items.length > 0
+        ? items.map(d => `${d.key}: ${d.value2}`).join('; ')
+        : (gaps[0]?.value2 || 'Vorhanden');
+      section = group.items[0]?.section2 || '';
+    }
+
+    // Fallback explanation if Phase B didn't evaluate this group
+    const fallbackExplanation = group.type === 'matched'
+      ? `${group.items[0]?.key}: Vertrag 1 = "${group.items[0]?.value1}", Vertrag 2 = "${group.items[0]?.value2}".`
+      : `${group.areaLabel}: ${group.items.filter(d => !d._isAreaGap).length} Werte nur in Vertrag ${group.type === 'only_in_1' ? 1 : 2}.`;
+
+    merged.push({
+      category: group.areaLabel,
+      section,
+      contract1,
+      contract2,
+      severity: ev.severity || group.severity,
+      explanation: ev.explanation || fallbackExplanation,
+      impact: ev.impact || '',
+      recommendation: ev.recommendation || '',
+      clauseArea: group.area,
+      semanticType: ev.semanticType || inferGroupSemanticType(group),
+      financialImpact: ev.financialImpact || null,
+      marketContext: ev.marketContext || null,
+      _fromDeterministic: true,
+    });
+  }
+
+  // Add GPT's additional qualitative differences
+  for (const diff of (additionalDiffs || [])) {
+    merged.push({
+      ...diff,
+      _fromDeterministic: false,
+    });
+  }
+
+  return merged;
+}
+
+/**
+ * LEGACY — kept for backward compatibility.
+ * Formatiert deterministische Unterschiede als Text für Phase B (altes Format).
+ */
+function formatDeterministicDiffsForPrompt(diffs) {
+  if (!diffs || diffs.length === 0) return '';
+  const groups = groupDeterministicDiffs(diffs);
+  return formatGroupsForPrompt(groups);
+}
+
+/**
+ * Safety net: Prüft ob Phase B alle deterministischen Unterschiede übernommen hat.
+ * Falls nicht, werden fehlende als formatierte Differences zurückgegeben.
+ * Das ist der Fallback — im Idealfall hat Phase B alle Fakten übernommen.
+ */
+function checkDeterministicCoverage(deterministicDiffs, phaseBDifferences) {
+  if (!deterministicDiffs || deterministicDiffs.length === 0) return [];
+
+  const missing = [];
+
+  for (const dd of deterministicDiffs) {
+    if (dd.key === '_area_missing') {
+      // Area-level gap: check if Phase B has ANY difference for this area
+      const covered = phaseBDifferences.some(d => d.clauseArea === dd.area);
+      if (!covered) {
+        const label = AREA_LABELS[dd.area] || dd.area;
+        const inContract = dd.value1 ? 1 : 2;
+        const otherContract = inContract === 1 ? 2 : 1;
+        missing.push({
+          category: label,
+          section: dd.section1 || dd.section2 || '',
+          contract1: dd.value1 || 'Keine Regelung vorhanden',
+          contract2: dd.value2 || 'Keine Regelung vorhanden',
+          severity: MISSING_SEVERITY[dd.area] || 'medium',
+          explanation: `Vertrag ${inContract} enthält eine Regelung zu ${label}, die in Vertrag ${otherContract} vollständig fehlt.`,
+          impact: `Fehlende ${label}-Klausel — es gelten nur gesetzliche Regelungen.`,
+          recommendation: `Eine ${label}-Regelung sollte in Vertrag ${otherContract} ergänzt werden.`,
+          clauseArea: dd.area,
+          semanticType: 'missing',
+          financialImpact: null,
+          marketContext: null,
+          _autoDetected: true,
+          _fromDeterministic: true,
+        });
+      }
+    } else {
+      // Value-level diff: check if Phase B mentions this key
+      const keyNorm = normalizeKeyForMatch(dd.key);
+      const covered = phaseBDifferences.some(d => {
+        const text = `${d.contract1 || ''} ${d.contract2 || ''} ${d.explanation || ''} ${d.category || ''}`.toLowerCase();
+        return text.includes(keyNorm) || text.includes(dd.key.toLowerCase());
+      });
+
+      if (!covered) {
+        const label = AREA_LABELS[dd.area] || dd.area;
+        const v1 = dd.value1 || 'Keine Regelung vorhanden';
+        const v2 = dd.value2 || 'Keine Regelung vorhanden';
+
+        let explanation = `${dd.key}: Dokument 1 = "${v1}", Dokument 2 = "${v2}".`;
+        if (dd.diffType === 'numeric' && dd.numValue1 !== null && dd.numValue2 !== null && dd.numValue1 !== 0) {
+          const pct = ((dd.numValue2 - dd.numValue1) / Math.abs(dd.numValue1) * 100).toFixed(1);
+          explanation += ` Das ist ein Unterschied von ${pct > 0 ? '+' : ''}${pct}%.`;
+        }
+
+        missing.push({
+          category: label,
+          section: dd.section1 || dd.section2 || '',
+          contract1: v1,
+          contract2: v2,
+          severity: dd.diffType === 'numeric' ? 'medium' : 'low',
+          explanation,
+          impact: `Unterschiedliche Werte bei ${dd.key} beeinflussen Rechte und Pflichten.`,
+          recommendation: `Prüfen Sie den Unterschied bei ${dd.key} und verhandeln Sie ggf. bessere Konditionen.`,
+          clauseArea: dd.area,
+          semanticType: dd.diffType === 'only_in_1' || dd.diffType === 'only_in_2' ? 'missing' : 'different_scope',
+          financialImpact: dd.unit === 'EUR' && dd.numValue1 && dd.numValue2 ? `Differenz: ${Math.abs(dd.numValue1 - dd.numValue2).toLocaleString('de-DE')} EUR` : null,
+          marketContext: null,
+          _autoDetected: true,
+          _fromDeterministic: true,
+        });
+      }
+    }
+  }
+
+  return missing;
+}
+
+// ============================================
+// Phase B: Validation
+// ============================================
+
 function validatePhaseBResponse(raw) {
   const result = { ...raw };
 
-  // differences
+  // groupEvaluations (new format) — pass through, validate keys
+  if (typeof result.groupEvaluations === 'object' && result.groupEvaluations !== null && !Array.isArray(result.groupEvaluations)) {
+    for (const [key, ev] of Object.entries(result.groupEvaluations)) {
+      if (typeof ev !== 'object' || ev === null) {
+        result.groupEvaluations[key] = {};
+        continue;
+      }
+      result.groupEvaluations[key] = {
+        severity: VALID_SEVERITIES.includes(ev.severity) ? ev.severity : null,
+        explanation: typeof ev.explanation === 'string' ? ev.explanation : null,
+        impact: typeof ev.impact === 'string' ? ev.impact : null,
+        recommendation: typeof ev.recommendation === 'string' ? ev.recommendation : null,
+        semanticType: VALID_SEMANTIC_TYPES.includes(ev.semanticType) ? ev.semanticType : null,
+        financialImpact: typeof ev.financialImpact === 'string' ? ev.financialImpact : null,
+        marketContext: typeof ev.marketContext === 'string' ? ev.marketContext : null,
+      };
+    }
+  } else {
+    result.groupEvaluations = {};
+  }
+
+  // additionalDifferences (new format) — validate like old differences
+  const additionalRaw = Array.isArray(result.additionalDifferences) ? result.additionalDifferences : [];
+  result.additionalDifferences = additionalRaw.slice(0, 10).map(d => ({
+    category: typeof d.category === 'string' ? d.category : 'Sonstiges',
+    section: typeof d.section === 'string' ? d.section : '',
+    contract1: typeof d.contract1 === 'string' ? d.contract1 : 'Keine Regelung vorhanden',
+    contract2: typeof d.contract2 === 'string' ? d.contract2 : 'Keine Regelung vorhanden',
+    severity: VALID_SEVERITIES.includes(d.severity) ? d.severity : 'medium',
+    explanation: typeof d.explanation === 'string' ? d.explanation : (typeof d.impact === 'string' ? d.impact : ''),
+    impact: typeof d.impact === 'string' ? d.impact : '',
+    recommendation: typeof d.recommendation === 'string' ? d.recommendation : '',
+    clauseArea: VALID_CLAUSE_AREAS.includes(d.clauseArea) ? d.clauseArea : inferClauseAreaFromCategory(d.category),
+    semanticType: VALID_SEMANTIC_TYPES.includes(d.semanticType) ? d.semanticType : inferSemanticType(d),
+    financialImpact: typeof d.financialImpact === 'string' ? d.financialImpact : null,
+    marketContext: typeof d.marketContext === 'string' ? d.marketContext : null,
+  }));
+
+  // differences (legacy/fallback — GPT may still produce this)
   if (!Array.isArray(result.differences)) result.differences = [];
   result.differences = result.differences.slice(0, MAX_DIFFERENCES).map(d => ({
     category: typeof d.category === 'string' ? d.category : 'Sonstiges',
@@ -1092,71 +2119,78 @@ function stabilizeScores(result) {
   return result;
 }
 
-// ============================================
-// Cross-check: Remove false "Keine Regelung" claims
-// ============================================
+/**
+ * Post-merge score enforcement: ensures minimum score gap based on actual differences.
+ * Called AFTER mergeDifferences in the pipeline, so it sees the final diff set.
+ */
+function enforceScoreDifferentiation(result) {
+  if (!result.scores?.contract1 || !result.scores?.contract2) return result;
+  if (!result.differences || result.differences.length === 0) return result;
 
-function crossCheckWithValueExtraction(result) {
-  if (!result.valueExtraction || !result.differences) return result;
+  const s1 = result.scores.contract1;
+  const s2 = result.scores.contract2;
+  const gap = Math.abs(s1.overall - s2.overall);
+  const recommended = result.overallRecommendation?.recommended;
 
-  const ve = result.valueExtraction;
-  const doc1Values = ve.document1?.values || {};
-  const doc2Values = ve.document2?.values || {};
-  const doc1Keys = Object.keys(doc1Values).map(k => k.toLowerCase());
-  const doc2Keys = Object.keys(doc2Values).map(k => k.toLowerCase());
-
-  const keineRegelungPattern = /keine regelung|nicht geregelt|nicht vorhanden|fehlt|nicht enthalten|keine angabe/i;
-  let removedCount = 0;
-
-  result.differences = result.differences.filter(diff => {
-    const c1IsKeineRegelung = keineRegelungPattern.test(diff.contract1);
-    const c2IsKeineRegelung = keineRegelungPattern.test(diff.contract2);
-
-    // If contract1 says "Keine Regelung" but valueExtraction found values for doc1
-    if (c1IsKeineRegelung && !c2IsKeineRegelung) {
-      // Check if any extracted doc1 value relates to this difference's category
-      const category = (diff.category || '').toLowerCase();
-      const section = (diff.section || '').toLowerCase();
-      const hasValueInDoc1 = doc1Keys.some(k =>
-        category.includes(k) || k.includes(category.split(' ')[0]) ||
-        section.includes(k) || k.includes(section.split(' ')[0]) ||
-        // Also check the contract2 text for keywords that match doc1 values
-        (diff.contract2 && doc1Values[Object.keys(doc1Values).find(dk => dk.toLowerCase() === k)]
-          && diff.contract2.toLowerCase().includes(k))
-      );
-      if (hasValueInDoc1) {
-        console.log(`⚠️ Cross-check: Entferne falsches "Keine Regelung" für Dok1 bei "${diff.category}" — Wert existiert in valueExtraction`);
-        removedCount++;
-        return false;
+  // Count severity impact per contract
+  // A diff "against" a contract = that contract has a worse value
+  let sevImpact1 = 0, sevImpact2 = 0;
+  const SEVERITY_WEIGHT = { critical: 4, high: 2, medium: 1, low: 0 };
+  for (const diff of result.differences) {
+    const w = SEVERITY_WEIGHT[diff.severity] || 0;
+    if (w === 0) continue;
+    // "missing" + contract2 = "Keine Regelung" → disadvantage for contract 2
+    const c1Text = (diff.contract1 || '').toLowerCase();
+    const c2Text = (diff.contract2 || '').toLowerCase();
+    const c1Missing = c1Text.includes('keine regelung');
+    const c2Missing = c2Text.includes('keine regelung');
+    if (c1Missing && !c2Missing) sevImpact1 += w;
+    else if (c2Missing && !c1Missing) sevImpact2 += w;
+    else {
+      // Both have values — the "weaker" or "worse" one gets the impact
+      // Use semanticType if available
+      if (diff.semanticType === 'weaker') sevImpact1 += w; // contract 1 is weaker
+      else if (diff.semanticType === 'stronger') sevImpact2 += w; // contract 2 is stronger (disadvantage to c2 if from c1 perspective... actually this is ambiguous)
+      else {
+        // For matched diffs, both contracts are just different — assign to the one recommended AGAINST
+        if (recommended === 1) sevImpact2 += w * 0.5;
+        else if (recommended === 2) sevImpact1 += w * 0.5;
       }
     }
-
-    // Same check for contract2
-    if (c2IsKeineRegelung && !c1IsKeineRegelung) {
-      const category = (diff.category || '').toLowerCase();
-      const section = (diff.section || '').toLowerCase();
-      const hasValueInDoc2 = doc2Keys.some(k =>
-        category.includes(k) || k.includes(category.split(' ')[0]) ||
-        section.includes(k) || k.includes(section.split(' ')[0]) ||
-        (diff.contract1 && doc2Values[Object.keys(doc2Values).find(dk => dk.toLowerCase() === k)]
-          && diff.contract1.toLowerCase().includes(k))
-      );
-      if (hasValueInDoc2) {
-        console.log(`⚠️ Cross-check: Entferne falsches "Keine Regelung" für Dok2 bei "${diff.category}" — Wert existiert in valueExtraction`);
-        removedCount++;
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  if (removedCount > 0) {
-    console.log(`🔍 Cross-check: ${removedCount} falsche "Keine Regelung"-Einträge entfernt`);
   }
 
-  // Remove valueExtraction from the result (not needed in frontend)
-  delete result.valueExtraction;
+  const totalImpact = sevImpact1 + sevImpact2;
+  const MIN_GAP = 12;
+
+  console.log(`📊 Score-Enforcement: Gap=${gap}, sevImpact1=${sevImpact1.toFixed(1)}, sevImpact2=${sevImpact2.toFixed(1)}, recommended=${recommended}`);
+
+  if (recommended && gap < MIN_GAP && totalImpact > 0) {
+    const winner = recommended;
+    const loser = winner === 1 ? 2 : 1;
+    const winnerScores = winner === 1 ? s1 : s2;
+    const loserScores = loser === 1 ? s1 : s2;
+
+    // Enforce minimum gap: lower the loser's score
+    if (winnerScores.overall - loserScores.overall < MIN_GAP) {
+      const targetLoser = Math.max(40, winnerScores.overall - MIN_GAP);
+      const oldLoser = loserScores.overall;
+      loserScores.overall = Math.min(loserScores.overall, targetLoser);
+
+      // Also adjust category scores proportionally
+      if (oldLoser > 0 && loserScores.overall < oldLoser) {
+        const ratio = loserScores.overall / oldLoser;
+        for (const cat of ['fairness', 'riskProtection', 'flexibility', 'completeness', 'clarity']) {
+          loserScores[cat] = Math.round(Math.max(30, loserScores[cat] * ratio));
+        }
+      }
+
+      console.log(`📊 Score-Enforcement: Vertrag ${loser} Score ${oldLoser} → ${loserScores.overall} (Gap: ${gap} → ${winnerScores.overall - loserScores.overall})`);
+    }
+  }
+
+  // Sync overall with contract analysis score
+  if (result.contract1Analysis) result.contract1Analysis.score = s1.overall;
+  if (result.contract2Analysis) result.contract2Analysis.score = s2.overall;
 
   return result;
 }
@@ -1346,6 +2380,30 @@ const MISSING_SEVERITY = {
   confidentiality: 'medium', termination: 'medium', duration: 'medium',
   ip_rights: 'medium',
 };
+
+// Synonym groups for cross-contract key matching.
+// Keys within the same group refer to the same concept but may use different terminology.
+const KEY_SYNONYM_GROUPS = [
+  // Factoring
+  ['flatrate', 'servicegebühr', 'factoringgebühr', 'limitprüfung', 'limitprüfungsgebühr', 'pauschale', 'factoringentgelt'],
+  ['ankauflimit', 'forderungslimit', 'ankaufgrenze', 'höchstbetrag', 'kreditlimit', 'factoringlimit'],
+  ['sicherungseinbehalt', 'einbehalt', 'sicherheitseinbehalt', 'reservierung', 'sicherheit'],
+  ['selbstbehalt', 'eigenrisiko', 'delkredere', 'ausfallrisiko'],
+  ['zinssatz', 'zins', 'vorfinanzierungszins', 'finanzierungszins', 'basiszins'],
+  // Mietvertrag
+  ['kaution', 'mietkaution', 'sicherheitsleistung', 'mietsicherheit'],
+  ['miete', 'grundmiete', 'kaltmiete', 'nettomiete', 'nettokaltmiete', 'monatsmiete'],
+  ['nebenkosten', 'betriebskosten', 'nebenkostenvorauszahlung', 'vorauszahlung'],
+  ['gesamtmiete', 'warmmiete', 'bruttomiete', 'bruttowarmmiete'],
+  // Allgemein
+  ['kündigungsfrist', 'kündigungszeitraum', 'frist zur kündigung', 'frist'],
+  ['laufzeit', 'vertragsdauer', 'mindestlaufzeit', 'erstlaufzeit', 'grundlaufzeit', 'vertragslaufzeit'],
+  ['haftung', 'haftungsbegrenzung', 'haftungsobergrenze', 'haftungslimit', 'haftungsbeschränkung', 'haftungsgrenze'],
+  ['vertragsstrafe', 'konventionalstrafe', 'pönale', 'vertragsbuße'],
+  ['zahlungsfrist', 'zahlungsziel', 'fälligkeit', 'zahlungsbedingung'],
+  ['verlängerung', 'automatische verlängerung', 'verlängerungszeitraum', 'verlängerungsdauer'],
+  ['probezeit', 'testphase', 'testperiode', 'trial'],
+];
 
 // Areas that overlap conceptually — if one is covered, skip the other
 const RELATED_AREAS = {
@@ -1594,6 +2652,811 @@ function logAIResponse(phase, id, responseSize, parseSuccess) {
 }
 
 // ============================================
+// SCHICHT 3: Klausel-für-Klausel-Vergleich (NEU)
+// Jedes Klauselpaar bekommt eigenen fokussierten GPT-Call
+// ============================================
+
+/**
+ * Truncate long clauses keeping beginning + end for context.
+ */
+function smartTruncateClause(text, maxLen = MAX_CLAUSE_TEXT_LENGTH) {
+  if (!text || text.length <= maxLen) return text;
+  const beginLen = Math.floor(maxLen * 0.7);
+  const endLen = Math.floor(maxLen * 0.2);
+  return text.substring(0, beginLen) + '\n[...]\n' + text.substring(text.length - endLen);
+}
+
+/**
+ * Prioritize clause pairs: similar > related > potential. Skip equivalent.
+ */
+function prioritizeClausePairs(matches) {
+  if (!matches || !Array.isArray(matches)) return [];
+  const priority = { similar: 0, related: 1, potential: 2 };
+  return matches
+    .filter(m => m.type !== 'equivalent') // Skip equivalent (≥92%) — no meaningful diff
+    .sort((a, b) => (priority[a.type] ?? 3) - (priority[b.type] ?? 3))
+    .slice(0, MAX_CLAUSE_PAIRS);
+}
+
+/**
+ * Build prompt for a single clause pair comparison.
+ */
+function buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile) {
+  const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
+  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const modeBlock = buildModeAddition(comparisonMode);
+
+  const text1 = smartTruncateClause(clause1.originalText);
+  const text2 = smartTruncateClause(clause2.originalText);
+
+  const kv1 = clause1.keyValues && Object.keys(clause1.keyValues).length > 0
+    ? `\nKeyValues V1: ${JSON.stringify(clause1.keyValues)}` : '';
+  const kv2 = clause2.keyValues && Object.keys(clause2.keyValues).length > 0
+    ? `\nKeyValues V2: ${JSON.stringify(clause2.keyValues)}` : '';
+
+  return {
+    system: `Du bist ein erfahrener Vertragsanwalt. Du vergleichst EINE Klausel aus zwei Verträgen WORT FÜR WORT.
+${profileHint}
+${perspectiveBlock}
+${modeBlock}
+
+METHODE — wie ein Anwalt liest:
+1. WÖRTLICHE ABWEICHUNGEN: "kann" vs "muss", "ausgeschlossen" vs "begrenzt"
+2. UMFANG-UNTERSCHIEDE: Was deckt eine Klausel ab, die andere nicht?
+3. FEHLENDE QUALIFIKATIONEN: Bedingungen, Ausnahmen, Einschränkungen
+4. UNTERSCHIEDLICHE BEDINGUNGEN: Fristen, Schwellenwerte, Auslöser
+5. PFLICHTEN vs RECHTE: Wer muss was tun? Wer darf was?
+
+Antworte NUR mit validem JSON.`,
+
+    user: `KLAUSEL-VERGLEICH: "${clause1.title}" (${clause1.area})
+Match-Typ: ${match.type} (Ähnlichkeit: ${Math.round((match.similarity || 0) * 100)}%)
+
+VERTRAG 1 — ${clause1.section || clause1.id}:
+"""
+${text1}
+"""${kv1}
+
+VERTRAG 2 — ${clause2.section || clause2.id}:
+"""
+${text2}
+"""${kv2}
+
+Finde ALLE Unterschiede. Antworte mit JSON:
+{
+  "differences": [
+    {
+      "type": "wording|scope|qualifier|condition|obligation|right|limit",
+      "severity": "low|medium|high|critical",
+      "semanticType": "conflicting|weaker|stronger|different_scope",
+      "detail1": "Exaktes Zitat aus Vertrag 1 (min. 10 Zeichen)",
+      "detail2": "Exaktes Zitat aus Vertrag 2 (min. 10 Zeichen)",
+      "explanation": "2-3 Sätze für den Mandanten",
+      "impact": "Juristische Einordnung",
+      "recommendation": "Konkrete Aktion",
+      "financialImpact": null,
+      "legalBasis": null
+    }
+  ],
+  "overallAssessment": "1 Satz Zusammenfassung"
+}
+
+KRITISCHE REGELN:
+- detail1 und detail2 MÜSSEN echte Zitate aus dem jeweiligen Klauseltext sein. NIEMALS "Nicht vorhanden", "Keine Regelung", "N/A" oder Platzhalter verwenden.
+- Wenn ein Aspekt nur in EINER Klausel vorkommt, zitiere den relevanten Text als detail1/detail2 und beschreibe den Unterschied in "explanation".
+- Maximal 4 Unterschiede pro Klauselpaar — nur die WICHTIGSTEN.
+- Wenn die Klauseln IDENTISCH sind, gib "differences": [] zurück.`
+  };
+}
+
+/**
+ * GPT-Call for a single clause pair.
+ */
+async function compareClausePair(clause1, clause2, match, perspective, comparisonMode, userProfile) {
+  const prompt = buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile);
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: prompt.system },
+        { role: 'user', content: prompt.user }
+      ],
+      temperature: 0.1,
+      max_tokens: 2048,
+      response_format: { type: 'json_object' },
+    });
+
+    const raw = JSON.parse(completion.choices[0].message.content);
+    return validateClausePairResponse(raw, clause1, clause2, match);
+  } catch (err) {
+    console.warn(`⚠️ Schicht 3: Klauselpaar "${clause1.title}" fehlgeschlagen: ${err.message}`);
+    return null;
+  }
+}
+
+function validateClausePairResponse(raw, clause1, clause2, match) {
+  const result = { differences: [], overallAssessment: '' };
+
+  if (Array.isArray(raw.differences)) {
+    result.differences = raw.differences.slice(0, 8).map(d => ({
+      type: ['wording', 'scope', 'qualifier', 'condition', 'obligation', 'right', 'limit'].includes(d.type) ? d.type : 'scope',
+      severity: VALID_SEVERITIES.includes(d.severity) ? d.severity : 'medium',
+      semanticType: VALID_SEMANTIC_TYPES.includes(d.semanticType) ? d.semanticType : 'different_scope',
+      detail1: typeof d.detail1 === 'string' ? d.detail1 : '',
+      detail2: typeof d.detail2 === 'string' ? d.detail2 : '',
+      explanation: typeof d.explanation === 'string' ? d.explanation : '',
+      impact: typeof d.impact === 'string' ? d.impact : '',
+      recommendation: typeof d.recommendation === 'string' ? d.recommendation : '',
+      financialImpact: typeof d.financialImpact === 'string' ? d.financialImpact : null,
+      legalBasis: typeof d.legalBasis === 'string' ? d.legalBasis : null,
+      _clauseArea: clause1.area,
+      _clauseTitle: clause1.title,
+      _matchType: match.type,
+    }));
+  }
+
+  result.overallAssessment = typeof raw.overallAssessment === 'string' ? raw.overallAssessment : '';
+  return result;
+}
+
+/**
+ * Build prompt for missing clause assessment.
+ */
+function buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile) {
+  const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
+  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const text = smartTruncateClause(clause.originalText, 2000);
+  const otherContract = inContract === 1 ? 2 : 1;
+
+  return {
+    system: `Du bist ein erfahrener Vertragsanwalt. Bewerte eine Klausel die NUR in einem der beiden Verträge existiert.
+${profileHint}
+${perspectiveBlock}
+Antworte NUR mit validem JSON.`,
+
+    user: `FEHLENDE KLAUSEL: "${clause.title}" (${clause.area})
+Diese Klausel existiert NUR in Vertrag ${inContract}. Vertrag ${otherContract} hat KEINE entsprechende Regelung.
+
+KLAUSELTEXT:
+"""
+${text}
+"""
+
+Bewerte: Wie wichtig ist diese Klausel? Was passiert ohne sie?
+
+{
+  "severity": "low|medium|high|critical",
+  "explanation": "3-4 Sätze: Was regelt die Klausel, warum fehlt sie",
+  "legalDefault": "§-Verweis wenn Klausel fehlt",
+  "impact": "Konkreter Nachteil",
+  "recommendation": "Was ergänzen",
+  "financialImpact": null,
+  "isStandardClause": true
+}`
+  };
+}
+
+/**
+ * GPT-Call for a missing clause.
+ */
+async function assessMissingClause(clause, inContract, perspective, comparisonMode, userProfile) {
+  const prompt = buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile);
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: prompt.system },
+        { role: 'user', content: prompt.user }
+      ],
+      temperature: 0.1,
+      max_tokens: 1024,
+      response_format: { type: 'json_object' },
+    });
+
+    const raw = JSON.parse(completion.choices[0].message.content);
+    return validateMissingClauseResponse(raw, clause, inContract);
+  } catch (err) {
+    console.warn(`⚠️ Schicht 3: Fehlende Klausel "${clause.title}" fehlgeschlagen: ${err.message}`);
+    return null;
+  }
+}
+
+function validateMissingClauseResponse(raw, clause, inContract) {
+  return {
+    severity: VALID_SEVERITIES.includes(raw.severity) ? raw.severity : MISSING_SEVERITY[clause.area] || 'medium',
+    explanation: typeof raw.explanation === 'string' ? raw.explanation : `Klausel "${clause.title}" fehlt.`,
+    legalDefault: typeof raw.legalDefault === 'string' ? raw.legalDefault : null,
+    impact: typeof raw.impact === 'string' ? raw.impact : '',
+    recommendation: typeof raw.recommendation === 'string' ? raw.recommendation : '',
+    financialImpact: typeof raw.financialImpact === 'string' ? raw.financialImpact : null,
+    isStandardClause: raw.isStandardClause === true || raw.isStandardClause === false ? raw.isStandardClause : true,
+    _clauseArea: clause.area,
+    _clauseTitle: clause.title,
+    _inContract: inContract,
+  };
+}
+
+/**
+ * Concurrency limiter for parallel GPT calls.
+ */
+async function withConcurrencyLimit(tasks, limit) {
+  const results = [];
+  const executing = new Set();
+
+  for (const task of tasks) {
+    const p = task().then(result => {
+      executing.delete(p);
+      return result;
+    }).catch(err => {
+      executing.delete(p);
+      console.warn(`⚠️ Concurrent task failed: ${err.message}`);
+      return null;
+    });
+    executing.add(p);
+    results.push(p);
+
+    if (executing.size >= limit) {
+      await Promise.race(executing);
+    }
+  }
+
+  return Promise.allSettled(results);
+}
+
+/**
+ * Schicht 3 Orchestrator: Run clause-by-clause comparison in parallel.
+ */
+async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, onProgress) {
+  const progress = onProgress || (() => {});
+  const startTime = Date.now();
+
+  if (!clauseMatchResult) {
+    console.log('⚠️ Schicht 3: Kein Clause-Match-Ergebnis — übersprungen');
+    return { pairResults: [], missingResults: [] };
+  }
+
+  // Build clause lookup maps
+  const clauseMap1 = {};
+  const clauseMap2 = {};
+  for (const c of (map1.clauses || [])) clauseMap1[c.id] = c;
+  for (const c of (map2.clauses || [])) clauseMap2[c.id] = c;
+
+  // Prioritize and limit clause pairs
+  const pairs = prioritizeClausePairs(clauseMatchResult.matches || []);
+  console.log(`🔬 Schicht 3: ${pairs.length} Klauselpaare (von ${(clauseMatchResult.matches || []).length} gesamt, ${(clauseMatchResult.matches || []).filter(m => m.type === 'equivalent').length} equivalent übersprungen)`);
+
+  // Build tasks for clause pairs
+  const pairTasks = pairs.map(match => () => {
+    const c1 = clauseMap1[match.clause1Id];
+    const c2 = clauseMap2[match.clause2Id];
+    if (!c1 || !c2) return Promise.resolve(null);
+    return withTimeout(
+      compareClausePair(c1, c2, match, perspective, comparisonMode, userProfile),
+      MAX_CLAUSE_CALL_TIME,
+      `Klauselpaar ${c1.title}`
+    ).catch(() => null);
+  });
+
+  // Build tasks for missing clauses (unmatched)
+  const unmatched1 = (clauseMatchResult.unmatched1 || []).slice(0, MAX_MISSING_ASSESSMENTS);
+  const unmatched2 = (clauseMatchResult.unmatched2 || []).slice(0, MAX_MISSING_ASSESSMENTS - unmatched1.length);
+
+  const missingTasks = [
+    ...unmatched1.map(clauseId => () => {
+      const c = clauseMap1[clauseId];
+      if (!c) return Promise.resolve(null);
+      return withTimeout(
+        assessMissingClause(c, 1, perspective, comparisonMode, userProfile),
+        MAX_CLAUSE_CALL_TIME,
+        `Fehlende Klausel ${c.title}`
+      ).catch(() => null);
+    }),
+    ...unmatched2.map(clauseId => () => {
+      const c = clauseMap2[clauseId];
+      if (!c) return Promise.resolve(null);
+      return withTimeout(
+        assessMissingClause(c, 2, perspective, comparisonMode, userProfile),
+        MAX_CLAUSE_CALL_TIME,
+        `Fehlende Klausel ${c.title}`
+      ).catch(() => null);
+    }),
+  ];
+
+  console.log(`🔬 Schicht 3: Starte ${pairTasks.length} Paar-Calls + ${missingTasks.length} Fehlende-Calls (max ${MAX_CONCURRENT_CLAUSE_CALLS} parallel)`);
+  progress('clause_comparison', 55, `Klausel-für-Klausel-Vergleich (${pairTasks.length} Paare)...`);
+
+  // Run all tasks with concurrency limit
+  const allTasks = [...pairTasks, ...missingTasks];
+  const allResults = await withConcurrencyLimit(allTasks, MAX_CONCURRENT_CLAUSE_CALLS);
+
+  const pairResults = allResults.slice(0, pairTasks.length)
+    .map(r => r.status === 'fulfilled' ? r.value : null)
+    .filter(r => r !== null && r.differences && r.differences.length > 0);
+
+  const missingResults = allResults.slice(pairTasks.length)
+    .map(r => r.status === 'fulfilled' ? r.value : null)
+    .filter(r => r !== null);
+
+  const totalDiffs = pairResults.reduce((sum, r) => sum + r.differences.length, 0);
+  const elapsed = Date.now() - startTime;
+  console.log(`✅ Schicht 3: ${pairResults.length} Paare mit ${totalDiffs} Diffs + ${missingResults.length} fehlende Klauseln in ${elapsed}ms`);
+
+  return { pairResults, missingResults };
+}
+
+// ============================================
+// SCHICHT 3.5: Comprehensive Merge + Dedup
+// ============================================
+
+/**
+ * Check if a clause-level diff duplicates a deterministic group.
+ */
+function isDuplicateOfDeterministic(clauseDiff, groups) {
+  for (const group of groups) {
+    if (group.area !== clauseDiff._clauseArea) continue;
+
+    for (const item of group.items) {
+      // Check if same key/value is covered
+      const detKey = normalizeKeyForMatch(item.key || '');
+      const clauseText = `${clauseDiff.detail1 || ''} ${clauseDiff.detail2 || ''} ${clauseDiff.explanation || ''}`.toLowerCase();
+      if (detKey && detKey !== '_area_missing' && clauseText.includes(detKey)) return true;
+
+      // Check if same numeric values are referenced
+      if (item.numValue1 !== null && item.numValue2 !== null) {
+        const v1Str = String(item.numValue1);
+        const v2Str = String(item.numValue2);
+        if (clauseText.includes(v1Str) && clauseText.includes(v2Str)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Convert a clause-pair diff to EnhancedDifference format.
+ */
+function convertClauseDiffToEnhanced(diff) {
+  const label = AREA_LABELS[diff._clauseArea] || diff._clauseArea || 'Sonstiges';
+  return {
+    category: label,
+    section: diff._clauseTitle || '',
+    contract1: diff.detail1 || '',
+    contract2: diff.detail2 || '',
+    severity: diff.severity,
+    explanation: diff.explanation,
+    impact: diff.impact || (diff.legalBasis ? `Rechtsgrundlage: ${diff.legalBasis}` : ''),
+    recommendation: diff.recommendation || '',
+    clauseArea: diff._clauseArea || 'other',
+    semanticType: diff.semanticType || 'different_scope',
+    financialImpact: diff.financialImpact || null,
+    marketContext: null,
+    _fromClauseComparison: true,
+    _diffType: diff.type,
+  };
+}
+
+/**
+ * Convert a missing-clause assessment to EnhancedDifference format.
+ */
+function convertMissingToEnhanced(assessment) {
+  const label = AREA_LABELS[assessment._clauseArea] || assessment._clauseArea || 'Sonstiges';
+  const inContract = assessment._inContract;
+  const otherContract = inContract === 1 ? 2 : 1;
+
+  return {
+    category: label,
+    section: assessment._clauseTitle || '',
+    contract1: inContract === 1 ? assessment._clauseTitle : 'Keine Regelung vorhanden',
+    contract2: inContract === 2 ? assessment._clauseTitle : 'Keine Regelung vorhanden',
+    severity: assessment.severity,
+    explanation: assessment.explanation,
+    impact: assessment.impact || (assessment.legalDefault ? `Ohne Klausel gilt: ${assessment.legalDefault}` : ''),
+    recommendation: assessment.recommendation || `Klausel in Vertrag ${otherContract} ergänzen.`,
+    clauseArea: assessment._clauseArea || 'other',
+    semanticType: 'missing',
+    financialImpact: assessment.financialImpact || null,
+    marketContext: null,
+    _fromClauseComparison: true,
+    _isMissingClause: true,
+  };
+}
+
+/**
+ * Merge deterministic groups + clause-by-clause results + missing clause assessments.
+ * Dedup strategy: deterministic wins, clause-level enriches.
+ */
+function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
+  const merged = [];
+
+  // 1. Deterministic groups first (highest trust)
+  for (const group of groups) {
+    const ev = (groupEvaluations || {})[group.id] || {};
+
+    let contract1, contract2, section;
+    if (group.type === 'matched') {
+      const d = group.items[0];
+      contract1 = `${d.key}: ${d.value1}`;
+      contract2 = `${d.key}: ${d.value2}`;
+      section = d.section1 || d.section2 || '';
+    } else if (group.type === 'only_in_1') {
+      const items = group.items.filter(d => !d._isAreaGap);
+      const gaps = group.items.filter(d => d._isAreaGap);
+      contract1 = items.length > 0
+        ? items.map(d => `${d.key}: ${d.value1}`).join('; ')
+        : (gaps[0]?.value1 || 'Vorhanden');
+      contract2 = 'Keine Regelung vorhanden';
+      section = group.items[0]?.section1 || '';
+    } else {
+      const items = group.items.filter(d => !d._isAreaGap);
+      const gaps = group.items.filter(d => d._isAreaGap);
+      contract1 = 'Keine Regelung vorhanden';
+      contract2 = items.length > 0
+        ? items.map(d => `${d.key}: ${d.value2}`).join('; ')
+        : (gaps[0]?.value2 || 'Vorhanden');
+      section = group.items[0]?.section2 || '';
+    }
+
+    const fallbackExplanation = group.type === 'matched'
+      ? `${group.items[0]?.key}: Vertrag 1 = "${group.items[0]?.value1}", Vertrag 2 = "${group.items[0]?.value2}".`
+      : `${group.areaLabel}: ${group.items.filter(d => !d._isAreaGap).length} Werte nur in Vertrag ${group.type === 'only_in_1' ? 1 : 2}.`;
+
+    merged.push({
+      category: group.areaLabel,
+      section,
+      contract1,
+      contract2,
+      severity: ev.severity || group.severity,
+      explanation: ev.explanation || fallbackExplanation,
+      impact: ev.impact || '',
+      recommendation: ev.recommendation || '',
+      clauseArea: group.area,
+      semanticType: ev.semanticType || inferGroupSemanticType(group),
+      financialImpact: ev.financialImpact || null,
+      marketContext: ev.marketContext || null,
+      _fromDeterministic: true,
+    });
+  }
+
+  // 2. Clause-pair diffs (only if NOT already covered by deterministic)
+  // Quality filters: remove hallucinations, limit per area, cap total
+  const HALLUCINATION_PATTERNS = /^(nicht vorhanden|keine regelung|nicht geregelt|n\/a|keine angabe|entfällt|-+)$/i;
+  const MAX_CLAUSE_DIFFS_PER_AREA = 3;
+  const MAX_TOTAL_DIFFS = 25;
+
+  if (clauseBundle) {
+    const clauseDiffsByArea = {}; // Track count per area
+
+    for (const pairResult of (clauseBundle.pairResults || [])) {
+      for (const diff of (pairResult.differences || [])) {
+        // Filter 1: Hallucinations — both clauses exist (matched), so "Nicht vorhanden" is wrong
+        const d1 = (diff.detail1 || '').trim();
+        const d2 = (diff.detail2 || '').trim();
+        if (HALLUCINATION_PATTERNS.test(d1) || HALLUCINATION_PATTERNS.test(d2)) {
+          console.log(`🧹 Halluzination gefiltert: "${diff._clauseTitle}" — detail: "${d1}" / "${d2}"`);
+          continue;
+        }
+        // Filter 1b: Empty or too-short quotes (< 5 chars) are not useful
+        if (d1.length < 5 || d2.length < 5) continue;
+
+        // Filter 2: Dedup against deterministic
+        if (isDuplicateOfDeterministic(diff, groups)) continue;
+
+        // Filter 3: Max per area — keep highest severity first
+        const area = diff._clauseArea || 'other';
+        if (!clauseDiffsByArea[area]) clauseDiffsByArea[area] = 0;
+        if (clauseDiffsByArea[area] >= MAX_CLAUSE_DIFFS_PER_AREA) {
+          // Only allow if this diff is high/critical and we'd replace a lower one
+          if (diff.severity !== 'critical' && diff.severity !== 'high') continue;
+        }
+        clauseDiffsByArea[area]++;
+
+        merged.push(convertClauseDiffToEnhanced(diff));
+      }
+    }
+
+    // 3. Missing clause assessments (only if no area-gap in Schicht 2)
+    const deterministicAreas = new Set(groups.map(g => g.area));
+    for (const assessment of (clauseBundle.missingResults || [])) {
+      if (!deterministicAreas.has(assessment._clauseArea)) {
+        merged.push(convertMissingToEnhanced(assessment));
+      }
+    }
+  }
+
+  // 4. Sort: critical → high → medium → low, then by area priority
+  const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  const areaPriority = { payment: 0, liability: 1, termination: 2, duration: 3, warranty: 4, confidentiality: 5 };
+  merged.sort((a, b) => {
+    const sevA = sevOrder[a.severity] ?? 2;
+    const sevB = sevOrder[b.severity] ?? 2;
+    if (sevA !== sevB) return sevA - sevB;
+    const pA = areaPriority[a.clauseArea] ?? 10;
+    const pB = areaPriority[b.clauseArea] ?? 10;
+    return pA - pB;
+  });
+
+  // 5. Cap total — too many diffs overwhelm the user
+  if (merged.length > MAX_TOTAL_DIFFS) {
+    console.log(`🧹 Diff-Cap: ${merged.length} → ${MAX_TOTAL_DIFFS} (${merged.length - MAX_TOTAL_DIFFS} niedrig-priorisierte entfernt)`);
+    merged.length = MAX_TOTAL_DIFFS;
+  }
+
+  return merged;
+}
+
+// ============================================
+// SCHICHT 4: Synthese (Redesigned Phase B)
+// No full texts — only diffs, metadata, scores
+// ============================================
+
+function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups) {
+  const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
+  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const modeBlock = buildModeAddition(comparisonMode);
+
+  // Compact contract metadata (no full texts!)
+  const meta1 = {
+    contractType: map1.contractType,
+    parties: map1.parties,
+    subject: map1.subject,
+    metadata: map1.metadata,
+    clauseCount: (map1.clauses || []).length,
+  };
+  const meta2 = {
+    contractType: map2.contractType,
+    parties: map2.parties,
+    subject: map2.subject,
+    metadata: map2.metadata,
+    clauseCount: (map2.clauses || []).length,
+  };
+
+  // Format diffs compactly
+  const diffsText = allDiffs.map((d, i) => {
+    let entry = `${i + 1}. [${d.severity.toUpperCase()}] ${d.category}`;
+    if (d.section) entry += ` (${d.section})`;
+    entry += `\n   V1: ${(d.contract1 || '').substring(0, 200)}`;
+    entry += `\n   V2: ${(d.contract2 || '').substring(0, 200)}`;
+    if (d.explanation) entry += `\n   → ${d.explanation.substring(0, 300)}`;
+    return entry;
+  }).join('\n\n');
+
+  // Format groups compactly for groupEvaluations
+  const groupsText = (groups || []).map(g => {
+    let entry = `${g.id} | ${g.areaLabel} | ${g.type}`;
+    if (g.type === 'matched' && g.items[0]) {
+      entry += ` | ${g.items[0].key}: "${g.items[0].value1}" vs "${g.items[0].value2}"`;
+    }
+    return entry;
+  }).join('\n');
+
+  return {
+    system: `Du bist ein erfahrener Vertragsanalyst. Du bekommst eine FERTIGE Liste von Unterschieden zwischen zwei Verträgen.
+Deine Aufgabe: Bewerte, gewichte, fasse zusammen, gib Scores.
+
+${profileHint}
+${perspectiveBlock}
+${modeBlock}
+
+Du bekommst KEINE Volltexte. Arbeite NUR mit den gegebenen Unterschieden und Metadaten.
+Antworte ausschließlich mit validem JSON.`,
+
+    user: `VERTRAG 1: ${meta1.contractType || 'Vertrag'} — ${(meta1.parties || []).map(p => p.name).join(', ')} — ${meta1.subject || 'k.A.'} (${meta1.clauseCount} Klauseln)
+VERTRAG 2: ${meta2.contractType || 'Vertrag'} — ${(meta2.parties || []).map(p => p.name).join(', ')} — ${meta2.subject || 'k.A.'} (${meta2.clauseCount} Klauseln)
+
+DETERMINISTISCHE GRUPPEN (bewerte jede in groupEvaluations):
+${groupsText || 'Keine'}
+
+ALLE UNTERSCHIEDE (${allDiffs.length} Stück):
+${diffsText}
+
+DEINE AUFGABE — 4 SCHRITTE:
+
+SCHRITT 1 — GRUPPEN-BEWERTUNGEN:
+Für jede GRUPPE oben, schreibe eine Bewertung in "groupEvaluations" mit dem Gruppen-ID als Key:
+{
+  "severity": "low|medium|high|critical",
+  "explanation": "4-6 Sätze, konkret, mit EUR-Beträgen wo möglich",
+  "impact": "Juristische Einordnung",
+  "recommendation": "Konkrete Aktion",
+  "semanticType": "missing|conflicting|weaker|stronger|different_scope",
+  "financialImpact": "EUR oder null",
+  "marketContext": "Marktstandard oder null"
+}
+
+SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
+
+SCHRITT 3 — RISIKEN + EMPFEHLUNGEN:
+Risiken mit Reasoning Chain. Empfehlungen mit Alternativtext.
+
+SCHRITT 4 — SCORES + GESAMTURTEIL:
+Overall Score (0-100) + 5 Kategorie-Scores + Risiko-Level pro Vertrag.
+MINIMUM 12 Punkte Differenz wenn ein Vertrag klar besser ist.
+6-8 Sätze Fazit.
+
+{
+  "groupEvaluations": { ... },
+  "contract1Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
+  "contract2Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
+  "overallRecommendation": {"recommended": 1|2, "reasoning": "string", "confidence": number, "conditions": ["string"]},
+  "summary": {"tldr": "2-3 Sätze", "detailedSummary": "4-6 Sätze", "verdict": "Vertrag X ist besser, ABER..."},
+  "scores": {
+    "contract1": {"overall": number, "fairness": number, "riskProtection": number, "flexibility": number, "completeness": number, "clarity": number},
+    "contract2": {"overall": number, "fairness": number, "riskProtection": number, "flexibility": number, "completeness": number, "clarity": number}
+  },
+  "risks": [{"clauseArea": "area", "riskType": "unfair_clause|legal_risk|unusual_clause|hidden_obligation|missing_protection", "severity": "low|medium|high|critical", "contract": 1|2|"both", "title": "string", "description": "string", "legalBasis": null, "financialExposure": null}],
+  "recommendations": [{"clauseArea": "area", "targetContract": 1|2, "priority": "critical|high|medium|low", "title": "string", "reason": "string", "currentText": "string", "suggestedText": "string"}]
+}`
+  };
+}
+
+/**
+ * Schicht 4: Synthesize comparison from pre-analyzed diffs.
+ */
+async function synthesizeComparison(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups) {
+  console.log(`🔄 Schicht 4: Synthese (${allDiffs.length} Diffs, keine Volltexte)`);
+
+  const prompt = buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups);
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: prompt.system },
+      { role: 'user', content: prompt.user }
+    ],
+    temperature: 0.15,
+    max_tokens: 8192,
+    response_format: { type: 'json_object' },
+  });
+
+  const raw = JSON.parse(completion.choices[0].message.content);
+  const validated = validateSynthesisResponse(raw);
+
+  console.log(`✅ Schicht 4: Synthese abgeschlossen — Score V1=${validated.scores?.contract1?.overall}, V2=${validated.scores?.contract2?.overall}`);
+  return validated;
+}
+
+function validateSynthesisResponse(raw) {
+  // Reuse existing Phase B validation — same output format
+  return validatePhaseBResponse(raw);
+}
+
+/**
+ * Apply severity calibration from synthesis groupEvaluations back to merged diffs.
+ */
+function applySeverityCalibration(mergedDiffs, groupEvaluations, groups) {
+  if (!groupEvaluations || !groups) return mergedDiffs;
+
+  for (const group of groups) {
+    const ev = groupEvaluations[group.id];
+    if (!ev || !ev.severity) continue;
+
+    // Find the corresponding merged diff (deterministic ones have _fromDeterministic)
+    const matchingDiff = mergedDiffs.find(d =>
+      d._fromDeterministic &&
+      d.clauseArea === group.area &&
+      d.category === group.areaLabel
+    );
+
+    if (matchingDiff) {
+      matchingDiff.severity = ev.severity;
+      if (ev.explanation) matchingDiff.explanation = ev.explanation;
+      if (ev.impact) matchingDiff.impact = ev.impact;
+      if (ev.recommendation) matchingDiff.recommendation = ev.recommendation;
+      if (ev.semanticType) matchingDiff.semanticType = ev.semanticType;
+      if (ev.financialImpact) matchingDiff.financialImpact = ev.financialImpact;
+      if (ev.marketContext) matchingDiff.marketContext = ev.marketContext;
+    }
+  }
+
+  return mergedDiffs;
+}
+
+// ============================================
+// NEW V2 Pipeline: Klausel-für-Klausel
+// ============================================
+
+async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode, userProfile, onProgress) {
+  const progress = onProgress || (() => {});
+
+  try {
+    // SCHICHT 1: Structure both contracts in parallel
+    progress('structuring', 10, 'Vertrag 1 wird strukturiert...');
+
+    const phaseAResult = await withTimeout(
+      Promise.all([
+        structureContract(text1).then(r => { progress('structuring', 20, 'Vertrag 1 strukturiert, Vertrag 2 läuft...'); return r; }),
+        structureContract(text2)
+      ]),
+      MAX_PHASE_A_TIME * 2,
+      'Phase A Timeout'
+    );
+
+    const [map1, map2] = phaseAResult;
+    progress('mapping', 35, 'Beide Verträge strukturiert. Klauseln werden gematcht...');
+
+    // SCHICHT 1.5: Clause Matching
+    let clauseMatchResult = null;
+    try {
+      clauseMatchResult = await matchClauses(
+        map1.clauses || [],
+        map2.clauses || [],
+        { useEmbeddings: false }
+      );
+      progress('mapping', 42, `${clauseMatchResult.stats.matched} Klausel-Paare erkannt.`);
+    } catch (matchError) {
+      console.warn(`⚠️ Clause Matching fehlgeschlagen: ${matchError.message}`);
+      progress('mapping', 42, 'Clause Matching fehlgeschlagen, fahre fort...');
+    }
+
+    // SCHICHT 2: Deterministischer Wertevergleich
+    progress('comparing', 45, 'Deterministischer Wertevergleich...');
+    const deterministicDiffs = buildDeterministicDifferences(map1, map2, clauseMatchResult);
+
+    // SCHICHT 2.5: Gruppierung
+    const groups = groupDeterministicDiffs(deterministicDiffs);
+
+    // SCHICHT 3: Klausel-für-Klausel-Vergleich (PARALLEL)
+    progress('clause_comparison', 50, 'Klausel-für-Klausel-Vergleich startet...');
+    const clauseBundle = await runClauseByClauseComparison(
+      clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, progress
+    );
+
+    // SCHICHT 3.5: Comprehensive Merge + Dedup (ohne Synthese-Evaluations vorerst)
+    progress('merging', 70, 'Unterschiede werden zusammengeführt...');
+    const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
+    console.log(`📊 Schicht 3.5: ${mergedDiffs.length} Unterschiede nach Merge+Dedup`);
+
+    // SCHICHT 4: Synthese (kleiner Kontext, keine Volltexte)
+    progress('synthesis', 75, 'KI-Synthese läuft...');
+    const synthesisResult = await withTimeout(
+      synthesizeComparison(mergedDiffs, map1, map2, perspective, comparisonMode, userProfile, groups),
+      MAX_PHASE_B_TIME,
+      'Synthese Timeout'
+    );
+
+    // Apply severity calibration from synthesis back to merged diffs
+    const groupEvaluations = synthesisResult.groupEvaluations || {};
+    applySeverityCalibration(mergedDiffs, groupEvaluations, groups);
+
+    // Set final differences
+    synthesisResult.differences = mergedDiffs;
+
+    // SCHICHT 5: Post-Processing
+    progress('finalizing', 88, 'Ergebnisse werden finalisiert...');
+    enforceScoreDifferentiation(synthesisResult);
+
+    // Market Benchmark
+    progress('finalizing', 90, 'Marktvergleich wird erstellt...');
+    const benchmarkResult = runBenchmarkComparison(map1, map2, synthesisResult.differences || []);
+    if (benchmarkResult.benchmarks.length > 0) {
+      synthesisResult.differences = benchmarkResult.enrichedDifferences;
+    }
+
+    progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
+
+    // Build V2 response
+    const v2Result = buildV2Response(map1, map2, synthesisResult, perspective, text1, text2, benchmarkResult);
+
+    if (clauseMatchResult) {
+      v2Result._clauseMatching = clauseMatchResult.stats;
+    }
+    v2Result._pipelineVersion = 'clause-by-clause';
+
+    console.log(`✅ V2 Pipeline (NEU) komplett: ${v2Result.differences?.length || 0} Diffs, ${v2Result.risks?.length || 0} Risks, ${v2Result.recommendations?.length || 0} Recs`);
+    progress('complete', 100, 'Analyse abgeschlossen!');
+    return v2Result;
+
+  } catch (error) {
+    if (error.message?.includes('Timeout')) {
+      console.warn(`⚠️ V2 Pipeline (NEU) Timeout: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+// ============================================
 // Exports
 // ============================================
 
@@ -1601,11 +3464,22 @@ module.exports = {
   structureContract,
   compareContractsV2,
   runCompareV2Pipeline,
+  runCompareV2PipelineNew,
   buildV2Response,
   filterIdenticalClauses,
   detectGaps,
+  buildDeterministicDifferences,
+  groupDeterministicDiffs,
+  formatGroupsForPrompt,
+  mergeDifferences,
+  mergeAllDifferences,
+  enforceScoreDifferentiation,
+  formatDeterministicDiffsForPrompt,
+  checkDeterministicCoverage,
   validatePhaseAResponse,
   validatePhaseBResponse,
+  synthesizeComparison,
+  runClauseByClauseComparison,
   COMPARISON_MODES,
   SYSTEM_PROMPTS,
 };

@@ -1079,21 +1079,66 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
     console.log(`🔄 Re-Analyse: Perspektive → ${selectedPerspective}`);
     sendProgress(res, 'comparing', 30, `Re-Analyse mit Perspektive: ${selectedPerspective}...`, wantsSSE);
 
-    const { compareContractsV2, buildV2Response } = require("../services/compareAnalyzer");
+    const { buildV2Response, buildDeterministicDifferences, groupDeterministicDiffs, mergeAllDifferences, enforceScoreDifferentiation, runClauseByClauseComparison, synthesizeComparison } = require("../services/compareAnalyzer");
+    const { matchClauses } = require("../services/clauseMatcher");
 
-    const phaseBResult = await compareContractsV2(
-      contractMap.contract1,
-      contractMap.contract2,
-      contractTexts?.text1 || '',
-      contractTexts?.text2 || '',
-      selectedPerspective,
-      comparisonMode || 'standard',
-      userProfile || 'individual'
+    // Schicht 2: Deterministischer Wertevergleich + Gruppierung
+    const deterministicDiffs = buildDeterministicDifferences(contractMap.contract1, contractMap.contract2, null);
+    const groups = groupDeterministicDiffs(deterministicDiffs);
+
+    // Clause Matching für Re-Analyze
+    let clauseMatchResult = null;
+    try {
+      clauseMatchResult = await matchClauses(
+        contractMap.contract1.clauses || [],
+        contractMap.contract2.clauses || [],
+        { useEmbeddings: false }
+      );
+    } catch (matchError) {
+      console.warn(`⚠️ Re-Analyze Clause Matching fehlgeschlagen: ${matchError.message}`);
+    }
+
+    sendProgress(res, 'clause_comparison', 40, 'Klausel-für-Klausel-Vergleich...', wantsSSE);
+
+    // Schicht 3: Klausel-für-Klausel
+    const clauseBundle = await runClauseByClauseComparison(
+      clauseMatchResult, contractMap.contract1, contractMap.contract2,
+      selectedPerspective, comparisonMode || 'standard', userProfile || 'individual'
     );
+
+    // Schicht 3.5: Merge + Dedup
+    const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
+
+    sendProgress(res, 'synthesis', 60, 'KI-Synthese läuft...', wantsSSE);
+
+    // Schicht 4: Synthese
+    const synthesisResult = await synthesizeComparison(
+      mergedDiffs, contractMap.contract1, contractMap.contract2,
+      selectedPerspective, comparisonMode || 'standard', userProfile || 'individual', groups
+    );
+
+    // Apply calibration + set diffs
+    const groupEvaluations = synthesisResult.groupEvaluations || {};
+    for (const group of groups) {
+      const ev = groupEvaluations[group.id];
+      if (!ev) continue;
+      const matchingDiff = mergedDiffs.find(d => d._fromDeterministic && d.clauseArea === group.area && d.category === group.areaLabel);
+      if (matchingDiff) {
+        if (ev.severity) matchingDiff.severity = ev.severity;
+        if (ev.explanation) matchingDiff.explanation = ev.explanation;
+        if (ev.impact) matchingDiff.impact = ev.impact;
+        if (ev.recommendation) matchingDiff.recommendation = ev.recommendation;
+        if (ev.semanticType) matchingDiff.semanticType = ev.semanticType;
+        if (ev.financialImpact) matchingDiff.financialImpact = ev.financialImpact;
+        if (ev.marketContext) matchingDiff.marketContext = ev.marketContext;
+      }
+    }
+    synthesisResult.differences = mergedDiffs;
+    enforceScoreDifferentiation(synthesisResult);
 
     sendProgress(res, 'finalizing', 90, 'Ergebnis wird zusammengestellt...', wantsSSE);
 
-    const result = buildV2Response(contractMap.contract1, contractMap.contract2, phaseBResult, selectedPerspective, contractTexts?.text1 || '', contractTexts?.text2 || '');
+    const result = buildV2Response(contractMap.contract1, contractMap.contract2, synthesisResult, selectedPerspective, contractTexts?.text1 || '', contractTexts?.text2 || '');
     result.comparisonMode = {
       id: comparisonMode || 'standard',
       name: COMPARISON_MODES[comparisonMode]?.name || 'Standard-Vergleich',
