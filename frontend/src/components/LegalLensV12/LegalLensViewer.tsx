@@ -156,6 +156,45 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // PDF continuous scroll: ref + scroll helper + IntersectionObserver
+  const pdfScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToPdfPage = useCallback((page: number) => {
+    setPageNumber(page);
+    const container = pdfScrollRef.current;
+    if (!container) return;
+    const target = container.querySelector(`[data-page-num="${page}"]`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+  useEffect(() => {
+    const container = pdfScrollRef.current;
+    if (!container || numPages === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find the most visible page
+        let maxRatio = 0;
+        let visiblePage = pageNumber;
+        for (const entry of entries) {
+          if (entry.intersectionRatio > maxRatio) {
+            maxRatio = entry.intersectionRatio;
+            const pg = parseInt(entry.target.getAttribute('data-page-num') || '1', 10);
+            visiblePage = pg;
+          }
+        }
+        if (maxRatio > 0) setPageNumber(visiblePage);
+      },
+      { root: container, threshold: [0, 0.25, 0.5, 0.75] }
+    );
+
+    const pageElements = container.querySelectorAll('[data-page-num]');
+    pageElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [numPages, viewMode, pdfUrl]);
+
   // Click-outside for score & worst clause popovers
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -769,7 +808,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           const targetPage = findPageForClause(selectedClause.text);
           if (targetPage) {
             console.log(`[Legal Lens] onDocumentLoad: Navigating to clause page ${targetPage}`);
-            setPageNumber(targetPage);
+            scrollToPdfPage(targetPage);
             lastNavigatedClauseIdRef.current = selectedClause.id;
           } else {
             setPageNumber(1); // Fallback nur wenn Klausel nicht gefunden
@@ -994,11 +1033,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const targetPage = findPageForClause(selectedClause.text);
     if (targetPage) {
       console.log(`[Legal Lens] Navigating to page ${targetPage}`);
-      setPageNumber(targetPage);
+      scrollToPdfPage(targetPage);
     } else {
       devLog('[Legal Lens] Could not find clause in PDF');
     }
-  }, [viewMode, selectedClause?.id, pdfUrl, findPageForClause]);
+  }, [viewMode, selectedClause?.id, pdfUrl, findPageForClause, scrollToPdfPage]);
 
   // ========== EFFECT 3: Pending Navigation wenn Index bereit ==========
   useEffect(() => {
@@ -1020,11 +1059,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const targetPage = findPageForClause(selectedClause.text);
     if (targetPage) {
       console.log(`[Legal Lens] Navigating to page ${targetPage}`);
-      setPageNumber(targetPage);
+      scrollToPdfPage(targetPage);
     } else {
       devLog('[Legal Lens] Could not find clause in PDF index');
     }
-  }, [pdfIndexReady, selectedClause, findPageForClause]);
+  }, [pdfIndexReady, selectedClause, findPageForClause, scrollToPdfPage]);
 
   // ========== EFFECT 4: Highlighting v7 - Wort-basiertes Matching ==========
   useEffect(() => {
@@ -2091,60 +2130,31 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   <ZoomIn size={16} />
                 </button>
 
-                {/* Page Navigation */}
+                {/* Page Indicator (scroll-based) */}
                 {numPages > 1 && (
                   <>
                     <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 0.5rem' }} />
-                    <button
-                      onClick={() => setPageNumber(p => Math.max(1, p - 1))}
-                      disabled={pageNumber <= 1}
-                      style={{
-                        padding: '0.375rem',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '6px',
-                        background: 'white',
-                        cursor: pageNumber <= 1 ? 'not-allowed' : 'pointer',
-                        opacity: pageNumber <= 1 ? 0.5 : 1,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
                     <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                      {pageNumber} / {numPages}
+                      Seite {pageNumber} / {numPages}
                     </span>
-                    <button
-                      onClick={() => setPageNumber(p => Math.min(numPages, p + 1))}
-                      disabled={pageNumber >= numPages}
-                      style={{
-                        padding: '0.375rem',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '6px',
-                        background: 'white',
-                        cursor: pageNumber >= numPages ? 'not-allowed' : 'pointer',
-                        opacity: pageNumber >= numPages ? 0.5 : 1,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <ChevronRight size={16} />
-                    </button>
                   </>
                 )}
               </div>
             </div>
 
-            {/* PDF Viewer */}
+            {/* PDF Viewer — Continuous Scroll */}
             <div
+              ref={pdfScrollRef}
               className={styles.clauseList}
               style={{
                 flex: 1,
                 overflow: 'auto',
                 display: 'flex',
-                justifyContent: 'center',
+                flexDirection: 'column',
+                alignItems: 'center',
                 background: '#f8fafc',
-                padding: '1rem'
+                padding: '1rem',
+                gap: '12px'
               }}
               onClickCapture={handlePdfTextClick}
               onMouseUp={selectionMode === 'custom' ? handlePdfTextClick : undefined}
@@ -2188,12 +2198,20 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                     </div>
                   }
                 >
-                  <Page
-                    pageNumber={pageNumber}
-                    scale={scale}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={true}
-                  />
+                  {Array.from({ length: numPages }, (_, i) => (
+                    <div
+                      key={`page-${i + 1}`}
+                      data-page-num={i + 1}
+                      className={styles.pdfPageWrapper}
+                    >
+                      <Page
+                        pageNumber={i + 1}
+                        scale={scale}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={true}
+                      />
+                    </div>
+                  ))}
                 </Document>
               ) : null}
 

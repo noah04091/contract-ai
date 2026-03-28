@@ -1706,6 +1706,14 @@
   text-align: center;
 }
 
+/* ===== PDF CONTINUOUS SCROLL ===== */
+.pdfPageWrapper {
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 .loadingSpinner {
   width: 40px;
   height: 40px;
@@ -4136,6 +4144,7 @@
 .annotationBtn {
   color: #94a3b8 !important;
   border-color: #e2e8f0 !important;
+  margin-left: auto;
 }
 .annotationBtn:hover { color: #f59e0b !important; border-color: #f59e0b !important; }
 .annotationActive {

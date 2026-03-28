@@ -700,15 +700,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   </button>
                 </div>
 
-                {/* Annotation Button */}
-                <button
-                  className={`${styles.decisionBtn} ${styles.annotationBtn} ${clauseAnnotations[clause.id] ? styles.annotationActive : ''}`}
-                  onClick={(e) => startAnnotation(clause.id, e)}
-                  title={clauseAnnotations[clause.id] ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}
-                >
-                  <StickyNote size={12} />
-                </button>
-
                 {/* Status Icons */}
                 <div className={styles.clauseIcons}>
                   {isCached && (
@@ -726,6 +717,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
                     <span className={styles.clauseIcon} title="Durchgesehen">✓</span>
                   )}
                 </div>
+
+                {/* Annotation Button — far right */}
+                <button
+                  className={`${styles.decisionBtn} ${styles.annotationBtn} ${clauseAnnotations[clause.id] ? styles.annotationActive : ''}`}
+                  onClick={(e) => startAnnotation(clause.id, e)}
+                  title={clauseAnnotations[clause.id] ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}
+                >
+                  <StickyNote size={12} />
+                </button>
               </div>
 
               {/* Annotation Display / Editor */}
