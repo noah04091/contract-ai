@@ -319,13 +319,37 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const stored = localStorage.getItem('legalLens_decisions');
       if (!stored) return;
       const decisions: Record<string, string> = JSON.parse(stored);
-      const labels: Record<string, string> = { accepted: 'Akzeptiert', negotiate: 'Verhandeln', rejected: 'Abgelehnt' };
-      const lines = Object.entries(decisions).map(([clauseId, decision]) => {
+
+      const groups: Record<string, string[]> = { accepted: [], negotiate: [], rejected: [] };
+      for (const [clauseId, decision] of Object.entries(decisions)) {
         const clause = clauses.find(c => c.id === clauseId);
-        const name = clause?.number || clause?.title || clauseId.slice(-6);
-        return `${labels[decision] || decision}: ${name}${clause?.title ? ' – ' + clause.title : ''}`;
-      });
-      const summary = `Klausel-Entscheidungen (${contractName}):\n\n${lines.join('\n')}`;
+        let name = '';
+        if (clause?.number && clause?.title) {
+          name = `${clause.number} – ${clause.title}`;
+        } else if (clause?.title) {
+          name = clause.title;
+        } else if (clause?.number) {
+          name = clause.number;
+        } else if (clause) {
+          name = clause.text.substring(0, 60).trim() + '...';
+        } else {
+          continue; // Skip decisions for clauses that no longer exist
+        }
+        if (groups[decision]) groups[decision].push(name);
+      }
+
+      const sections: string[] = [];
+      if (groups.rejected.length > 0) {
+        sections.push(`Abgelehnt (${groups.rejected.length}):\n${groups.rejected.map(n => `  - ${n}`).join('\n')}`);
+      }
+      if (groups.negotiate.length > 0) {
+        sections.push(`Verhandeln (${groups.negotiate.length}):\n${groups.negotiate.map(n => `  - ${n}`).join('\n')}`);
+      }
+      if (groups.accepted.length > 0) {
+        sections.push(`Akzeptiert (${groups.accepted.length}):\n${groups.accepted.map(n => `  - ${n}`).join('\n')}`);
+      }
+
+      const summary = `Klausel-Entscheidungen — ${contractName}\n\n${sections.join('\n\n')}`;
       navigator.clipboard.writeText(summary);
       setDecisionsCopied(true);
       setTimeout(() => setDecisionsCopied(false), 2000);
