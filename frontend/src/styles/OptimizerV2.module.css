@@ -515,6 +515,42 @@
 .spinIcon { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+/* ── Fun Facts (Pipeline) ── */
+.pipelineFunFact {
+  margin-top: 28px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(0,122,255,0.04), rgba(88,86,214,0.04));
+  border: 1px solid rgba(0,122,255,0.1);
+  border-radius: var(--ov2-radius-xs);
+}
+.funFactHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ov2-blue);
+  margin-bottom: 8px;
+}
+.funFactText {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ov2-gray-700);
+  margin: 0;
+  min-height: 40px;
+  transition: opacity 0.4s ease;
+}
+.funFactVisible { opacity: 1; }
+.funFactHidden { opacity: 0; }
+.pipelineHint {
+  font-size: 11px;
+  color: var(--ov2-gray-400);
+  margin: 12px 0 0;
+  font-style: italic;
+}
+
 /* ── Error State ── */
 .errorContainer {
   background: white;
