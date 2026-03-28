@@ -69,6 +69,7 @@ interface ClauseListProps {
   analysisCache?: { [key: string]: unknown };
   currentPerspective?: string;
   focusMode?: boolean;
+  contractId?: string;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -83,7 +84,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   streamingProgress = 0,
   analysisCache = {},
   currentPerspective = 'contractor',
-  focusMode = false
+  focusMode = false,
+  contractId = ''
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -107,11 +109,12 @@ const ClauseList: React.FC<ClauseListProps> = ({
   type RiskFilter = 'all' | 'high' | 'medium' | 'low';
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
 
-  // Clause Decision Tracking (localStorage-persisted)
+  // Clause Decision Tracking (localStorage-persisted, scoped by contractId)
   type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
+  const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
   const [clauseDecisions, setClauseDecisions] = useState<Record<string, ClauseDecision>>(() => {
     try {
-      const stored = localStorage.getItem('legalLens_decisions');
+      const stored = localStorage.getItem(decisionsKey);
       return stored ? JSON.parse(stored) : {};
     } catch { return {}; }
   });
@@ -124,15 +127,16 @@ const ClauseList: React.FC<ClauseListProps> = ({
       } else {
         next[clauseId] = decision;
       }
-      localStorage.setItem('legalLens_decisions', JSON.stringify(next));
+      localStorage.setItem(decisionsKey, JSON.stringify(next));
       return next;
     });
-  }, []);
+  }, [decisionsKey]);
 
-  // Clause Annotations (localStorage-persisted)
+  // Clause Annotations (localStorage-persisted, scoped by contractId)
+  const annotationsKey = contractId ? `legalLens_annotations_${contractId}` : 'legalLens_annotations';
   const [clauseAnnotations, setClauseAnnotations] = useState<Record<string, string>>(() => {
     try {
-      const stored = localStorage.getItem('legalLens_annotations');
+      const stored = localStorage.getItem(annotationsKey);
       return stored ? JSON.parse(stored) : {};
     } catch { return {}; }
   });
@@ -148,12 +152,12 @@ const ClauseList: React.FC<ClauseListProps> = ({
       } else {
         delete next[clauseId];
       }
-      localStorage.setItem('legalLens_annotations', JSON.stringify(next));
+      localStorage.setItem(annotationsKey, JSON.stringify(next));
       return next;
     });
     setEditingAnnotation(null);
     setAnnotationDraft('');
-  }, [annotationDraft]);
+  }, [annotationDraft, annotationsKey]);
 
   const startAnnotation = useCallback((clauseId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -510,7 +514,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 setClauseDecisions(prev => {
                   const next = { ...prev };
                   lowRisk.forEach(c => { next[c.id] = 'accepted'; });
-                  localStorage.setItem('legalLens_decisions', JSON.stringify(next));
+                  localStorage.setItem(decisionsKey, JSON.stringify(next));
                   return next;
                 });
               }}

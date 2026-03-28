@@ -295,10 +295,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     bumpClauseInQueue
   } = useLegalLens();
 
-  // Decision Summary — reads from same localStorage as ClauseList
+  // Decision Summary — reads from same localStorage as ClauseList (scoped by contractId)
+  const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
   const decisionSummary = useMemo(() => {
     try {
-      const stored = localStorage.getItem('legalLens_decisions');
+      const stored = localStorage.getItem(decisionsKey);
       if (!stored) return null;
       const decisions: Record<string, string> = JSON.parse(stored);
       const values = Object.values(decisions);
@@ -310,13 +311,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         total: values.length
       };
     } catch { return null; }
-  }, [selectedClause]); // Re-compute when clause changes (proxy for decision changes)
+  }, [selectedClause, decisionsKey]); // Re-compute when clause changes (proxy for decision changes)
 
   // Copy all decisions summary to clipboard
   const copyDecisionsSummary = useCallback(() => {
     if (!clauses) return;
     try {
-      const stored = localStorage.getItem('legalLens_decisions');
+      const stored = localStorage.getItem(decisionsKey);
       if (!stored) return;
       const decisions: Record<string, string> = JSON.parse(stored);
 
@@ -354,7 +355,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       setDecisionsCopied(true);
       setTimeout(() => setDecisionsCopied(false), 2000);
     } catch { /* ignore */ }
-  }, [clauses, contractName]);
+  }, [clauses, contractName, decisionsKey]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
@@ -1914,6 +1915,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 analysisCache={analysisCache as Record<string, unknown>}
                 currentPerspective={currentPerspective}
                 focusMode={focusMode}
+                contractId={contractId}
               />
             </div>
           ) : (
@@ -2018,6 +2020,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               analysisCache={analysisCache as Record<string, unknown>}
               currentPerspective={currentPerspective}
               focusMode={focusMode}
+              contractId={contractId}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
