@@ -27,7 +27,7 @@ async function queueEmail(db, emailData) {
     to: emailData.to,
     subject: emailData.subject,
     html: emailData.html,
-    from: emailData.from || `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
+    from: emailData.from || process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
 
     // Referenz-Daten
     eventId: emailData.eventId || null,
@@ -91,7 +91,7 @@ async function attemptAutoRetry(db) {
   for (const candidate of candidates) {
     try {
       await transporter.sendMail({
-        from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
+        from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
         to: candidate.email,
         subject: "Contract AI — E-Mail-Verbindung wiederhergestellt",
         html: `<p>Gute Nachrichten! Ihre E-Mail-Adresse ist wieder erreichbar. Sie erhalten ab sofort wieder alle Benachrichtigungen von Contract AI.</p><p>Falls Sie keine Benachrichtigungen erhalten möchten, können Sie diese in Ihren <a href="https://contract-ai.de/profile">Profileinstellungen</a> deaktivieren.</p>`
@@ -228,7 +228,7 @@ async function processEmailQueue(db) {
       // Versende E-Mail mit Unsubscribe-Headers
       // WICHTIG: Immer korrekte FROM-Adresse verwenden, NICHT den gespeicherten Wert
       // (alte Queue-Einträge können EMAIL_USER=AWS-Key als FROM enthalten)
-      const correctFrom = `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`;
+      const correctFrom = process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>';
       await transporter.sendMail({
         from: correctFrom,
         to: email.to,
@@ -390,7 +390,7 @@ async function notifyAdminAboutFailure(db, failedEmail, error) {
     });
 
     await transporter.sendMail({
-      from: `"Contract AI System" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
+      from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: adminEmail,
       subject: `🚨 E-Mail-Versand fehlgeschlagen: ${failedEmail.emailType}`,
       html: `

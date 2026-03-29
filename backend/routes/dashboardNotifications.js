@@ -494,7 +494,7 @@ router.post("/test-smtp", verifyToken, async (req, res) => {
 
     try {
       smtpResult = await transporter.sendMail({
-        from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
+        from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
         to: email,
         subject: "Contract AI — SMTP Test",
         html: `<p>Dies ist eine Test-Email von Contract AI.</p><p>Wenn du diese Email siehst, funktioniert der SMTP-Versand an ${email} korrekt.</p><p>Zeitstempel: ${new Date().toISOString()}</p>`
@@ -606,7 +606,7 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
 
     // 1.5 FIX FROM ADDRESS: Alle Queue-Einträge mit falschem FROM reparieren
     // Alte Einträge hatten EMAIL_USER (AWS Key) als FROM statt EMAIL_FROM
-    const correctFrom = `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`;
+    const correctFrom = process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>';
     const emailRegex = new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
     const fixFromResult = await db.collection("email_queue").updateMany(
       {

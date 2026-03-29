@@ -155,7 +155,7 @@ class PulseNotificationService {
       const emailHtml = this.generateEmailHTML(notification, user);
 
       const mailOptions = {
-        from: `"Legal Pulse" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
+        from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
         to: user.email,
         subject: `Legal Pulse - ${notification.title}`,
         html: emailHtml
