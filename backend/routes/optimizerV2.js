@@ -1488,12 +1488,33 @@ router.post('/results/:id/docx', async (req, res) => {
     // ── Helpers ──
     const cleanText = (text) => {
       if (!text) return '';
-      return text
-        .replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-        .replace(/Seite\s+\d+\s+von\s+\d+/gi, '')
-        .replace(/Ausdruck vom\s*/gi, '')
-        .replace(/\s{3,}/g, '  ')
-        .trim();
+      let t = text;
+      // Decode HTML entities
+      t = t.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+      // Remove OCR page markers
+      t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
+      t = t.replace(/Ausdruck vom\s*/gi, '');
+      // Remove repeated OCR page headers/footers from scanned documents
+      // Pattern: Company + address + management + register info block
+      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr)[^\n]*/g, (match, offset) => {
+        return offset < 300 ? match : '';
+      });
+      // Remove standalone document name + page markers repeated throughout
+      t = t.replace(/\n\s*[\w\-]+(?:vertrag|rahmenvertrag|vereinbarung)\s*\([A-Z]+\)\s*\n/gi, '\n');
+      // Collapse excessive whitespace
+      t = t.replace(/\n{3,}/g, '\n\n');
+      t = t.replace(/\s{3,}/g, '  ');
+      return t.trim();
+    };
+
+    // Deduplicate heading: if title already starts with sectionNumber, skip prefix
+    const buildHeadingText = (sectionNumber, title) => {
+      const sec = (sectionNumber && sectionNumber !== 'null') ? sectionNumber.trim() : '';
+      const t = (title || '').trim();
+      if (!sec) return t;
+      // If title already starts with the section number, don't repeat it
+      if (t.startsWith(sec)) return t;
+      return `${sec} ${t}`;
     };
 
     const appliedCount = selectionMap.size;
@@ -1675,10 +1696,10 @@ router.post('/results/:id/docx', async (req, res) => {
       const selectedMode = selection?.mode;
       const isOptimized = selectedMode && (selectedMode === 'custom' || optimization?.needsOptimization);
 
-      // Section heading
-      const sectionPrefix = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber} ` : '';
+      // Section heading (deduplicated)
+      const headingText = buildHeadingText(clause.sectionNumber, clause.title);
       const headingRuns = [
-        new TextRun({ text: `${sectionPrefix}${clause.title}`, bold: true, size: 24, font: 'Arial', color: '111827' })
+        new TextRun({ text: headingText, bold: true, size: 24, font: 'Arial', color: '111827' })
       ];
       if (isOptimized) {
         headingRuns.push(new TextRun({ text: '  [optimiert]', size: 18, font: 'Arial', color: '2563EB', italics: true }));
