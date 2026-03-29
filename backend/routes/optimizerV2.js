@@ -1506,9 +1506,47 @@ router.post('/results/:id/docx', async (req, res) => {
       t = t.replace(/Ausdruck vom\s*/gi, '');
 
       // 4. Remove repeated company address/register blocks (OCR page headers)
-      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr)[^\n]*/g, (match, offset) => {
+      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr|IBAN|BLZ|BIC)[^\n]*/g, (match, offset) => {
         return offset < 300 ? match : '';
       });
+
+      // 4b. General OCR header dedup: find any substring (30+ chars) appearing 3+ times
+      // This catches repeated page headers/footers that OCR inserts on every page
+      const lines = t.split('\n');
+      const lineCounts = new Map();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length >= 30) {
+          lineCounts.set(trimmed, (lineCounts.get(trimmed) || 0) + 1);
+        }
+      }
+      for (const [line, count] of lineCounts) {
+        if (count >= 3) {
+          let found = 0;
+          t = t.replace(new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
+            found++;
+            return found <= 1 ? line : '';
+          });
+        }
+      }
+
+      // 4c. Remove inline OCR headers: "...Straße Nr PLZ Stadt IBAN:" merged with body text
+      // Uses tight non-newline match from Straße through IBAN
+      const addrIbanRe = /[^\n]{3,50}(?:Straße|Str\.)\s+\d+\s+\d{5}\s+[^\n]{3,30}?IBAN:[^\S\n]*/g;
+      const addrBlocks = t.match(addrIbanRe);
+      if (addrBlocks && addrBlocks.length > 2) {
+        const counts = new Map();
+        for (const m of addrBlocks) counts.set(m, (counts.get(m) || 0) + 1);
+        for (const [block, count] of counts) {
+          if (count > 2) {
+            let found = 0;
+            t = t.replace(new RegExp(block.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
+              found++;
+              return found <= 1 ? block : '';
+            });
+          }
+        }
+      }
 
       // 5. Remove standalone document type references
       t = t.replace(/\n\s*[\w\-]+(?:vertrag|rahmenvertrag|vereinbarung)\s*\([A-Z]+\)\s*\n/gi, '\n');
