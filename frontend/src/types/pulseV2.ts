@@ -214,6 +214,8 @@ export interface PulseV2LegalAlert {
   lawStatus?: LawStatus;
   lawSource: string;
   impactSummary: string;
+  plainSummary?: string;
+  businessImpact?: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
   impactDirection?: ImpactDirection;
   recommendation: string;

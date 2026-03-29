@@ -58,7 +58,7 @@ function getLawEmbeddings() {
 
 const MAX_LAW_CHANGES = 25;
 const MAX_CONTRACT_MATCHES = 150;
-const IMPACT_CONFIDENCE_THRESHOLD = 60;
+const IMPACT_CONFIDENCE_THRESHOLD = 70;
 
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
@@ -161,6 +161,8 @@ async function runPulseV2Radar(db, options = {}) {
         contractId: impact.contractId,
         contractName: impact.contractName,
         impactSummary: impact.summary,
+        plainSummary: impact.plainSummary || "",
+        businessImpact: impact.businessImpact || "",
         severity: impact.severity,
         impactDirection: impact.impactDirection || "negative",
         recommendation: impact.recommendation,
@@ -424,6 +426,8 @@ async function assessImpact(lawChange, contracts) {
                     severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
                     impactDirection: { type: "string", enum: ["negative", "positive", "neutral"] },
                     summary: { type: "string" },
+                    plainSummary: { type: "string" },
+                    businessImpact: { type: "string" },
                     recommendation: { type: "string" },
                     affectedClauseIds: {
                       type: "array",
@@ -444,7 +448,7 @@ async function assessImpact(lawChange, contracts) {
                       },
                     },
                   },
-                  required: ["contractIndex", "affected", "confidence", "severity", "impactDirection", "summary", "recommendation", "affectedClauseIds", "clauseImpacts"],
+                  required: ["contractIndex", "affected", "confidence", "severity", "impactDirection", "summary", "plainSummary", "businessImpact", "recommendation", "affectedClauseIds", "clauseImpacts"],
                   additionalProperties: false,
                 },
               },
@@ -457,17 +461,26 @@ async function assessImpact(lawChange, contracts) {
       messages: [
         {
           role: "system",
-          content: `Du bist ein deutscher Rechtsexperte. Prüfe ob eine Gesetzesänderung konkrete Auswirkungen auf bestimmte Verträge hat.
+          content: `Du bist ein deutscher Rechtsexperte der für Nicht-Juristen schreibt. Prüfe ob eine Gesetzesänderung konkrete Auswirkungen auf bestimmte Verträge hat.
 
-REGELN:
-- Nur ECHTE, KONKRETE Auswirkungen melden (nicht hypothetische)
-- confidence 0-100: Wie sicher bist du, dass der Vertrag betroffen ist?
-- severity: critical (Vertrag potentiell unwirksam/illegal), high (Klausel muss angepasst werden), medium (Prüfung empfohlen), low (informativ)
-- impactDirection: "negative" (Risiko/Nachteil), "positive" (Chance/Vorteil), "neutral" (informativ, keine Wertung)
-- recommendation: Konkreter nächster Schritt (z.B. "Klausel X in § Y anpassen", "AV-Vertrag aktualisieren")
-- affectedClauseIds: Liste der Klausel-IDs die von der Änderung betroffen sind (aus der Klausel-Liste des Vertrags)
-- clauseImpacts: Für JEDE betroffene Klausel: clauseId, clauseTitle, impact (was genau das Problem ist), suggestedChange (konkreter Textvorschlag für die Änderung)
-- Wenn ein Vertrag NICHT betroffen ist: affected=false, affectedClauseIds=[], clauseImpacts=[]
+KERNREGEL — RELEVANZ:
+- Nur melden wenn das Gesetz den Vertrag DIREKT und KONKRET betrifft
+- Wenn die Verbindung nur auf einem gemeinsamen Schlagwort basiert (z.B. beide erwähnen "Daten" aber in völlig verschiedenen Kontexten) → affected=false
+- Ein Gesetz über Medizinregister betrifft KEINEN Factoring-Vertrag, auch wenn beide "Datenweitergabe" erwähnen
+- Lieber 1 relevanter Alert als 10 vage — im Zweifel affected=false
+- confidence >80 NUR wenn du den GENAUEN Regelungsinhalt des Gesetzes benennen kannst, der die GENAUE Klausel im Vertrag betrifft
+- confidence 60-79: Vertrag ist nur indirekt oder am Rande betroffen
+
+AUSGABE-FELDER:
+- summary: Fachliche Zusammenfassung (1-2 Sätze) — WAS genau das Gesetz ändert in Bezug auf diesen Vertrag
+- plainSummary: Erkläre in EINEM einfachen Satz für einen Nicht-Juristen was sich ändert und warum es diesen Vertrag betrifft. Kein Juristendeutsch. Beispiel: "Ein neues Gesetz verkürzt die Kündigungsfrist von 3 auf 1 Monat — Ihr Mietvertrag hat noch die alte Frist."
+- businessImpact: Was passiert KONKRET wenn der User NICHTS tut? Kein "könnte Auswirkungen haben" sondern z.B. "Ab 01.07.2026 ist §3 Ihres Vertrags unwirksam" oder "Keine unmittelbare Gefahr, aber bei Neuverhandlung berücksichtigen"
+- severity: critical (Vertrag unwirksam/illegal), high (Klausel muss angepasst werden), medium (Prüfung empfohlen), low (informativ)
+- impactDirection: "negative" (Risiko), "positive" (Chance/Vorteil), "neutral" (informativ)
+- recommendation: Konkreter nächster Schritt mit Bezug auf die spezifische Klausel. NICHT "prüfen und gegebenenfalls anpassen" sondern z.B. "In §15 die Datenweitergabe auf namentlich benannte Empfänger beschränken" oder "Kündigungsfrist in §8 von 3 auf 1 Monat korrigieren"
+- affectedClauseIds: Klausel-IDs aus der Liste des Vertrags
+- clauseImpacts: Für JEDE betroffene Klausel: impact (was genau das Problem ist), suggestedChange (konkreter Formulierungsvorschlag)
+- Wenn NICHT betroffen: affected=false, confidence=0, plainSummary="", businessImpact="", affectedClauseIds=[], clauseImpacts=[]
 
 STATUS-KONTEXT:
 - "proposal": Gesetzesentwurf — noch nicht verabschiedet, Handlung vorbereiten aber nicht dringend
@@ -478,11 +491,9 @@ STATUS-KONTEXT:
 - Passe severity und recommendation an den Status an (Entwurf = niedrigere severity als in Kraft)
 
 POSITIVE ÄNDERUNGEN erkennen:
-- Neue Schutzrechte zugunsten des Vertragspartners
-- Verkürzte gesetzliche Fristen die den User begünstigen
-- Vereinfachte Compliance-Anforderungen
-- Neue Rechte die Neuverhandlung ermöglichen
-- Auch positive Änderungen als affected=true melden mit impactDirection="positive"`,
+- Neue Schutzrechte, verkürzte Fristen, vereinfachte Compliance, neue Verhandlungsrechte
+- Auch positive Änderungen als affected=true melden mit impactDirection="positive"
+- plainSummary auch für positive: "Ein neues Gesetz gibt Ihnen das Recht, den Vertrag kostenfrei zu kündigen"`,
         },
         {
           role: "user",
@@ -545,6 +556,8 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         contractId: contract.contractId,
         contractName: contract.contractName,
         summary: impact.summary,
+        plainSummary: impact.plainSummary || "",
+        businessImpact: impact.businessImpact || "",
         severity: impact.severity,
         impactDirection: impact.impactDirection || "negative",
         recommendation: impact.recommendation,
@@ -576,6 +589,8 @@ async function storeAndNotify(db, userId, alerts) {
     lawStatus: a.lawChange.lawStatus || "unknown",
     lawSource: a.lawChange.source,
     impactSummary: a.impactSummary,
+    plainSummary: a.plainSummary || "",
+    businessImpact: a.businessImpact || "",
     severity: a.severity,
     impactDirection: a.impactDirection || "negative",
     recommendation: a.recommendation,
@@ -662,7 +677,8 @@ async function storeAndNotify(db, userId, alerts) {
       const bgColor = isPositive ? "#f0fdf4" : "#f9fafb";
       body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${sevColor}; background: ${bgColor}; border-radius: 0 6px 6px 0;">
         <div style="font-size: 13px; font-weight: 600; color: #111827;">${isPositive ? "\u2705 " : ""}${contract.contractName}</div>
-        <div style="font-size: 12px; color: #4b5563; margin-top: 2px;">${contract.impactSummary}</div>
+        <div style="font-size: 12px; color: #4b5563; margin-top: 2px;">${contract.plainSummary || contract.impactSummary}</div>
+        ${contract.businessImpact ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#dc2626"}; margin-top: 3px; font-weight: 500;">${isPositive ? "Vorteil" : "Risiko"}: ${contract.businessImpact}</div>` : ""}
         <div style="font-size: 12px; color: ${isPositive ? "#059669" : "#1e40af"}; margin-top: 4px; font-style: italic;">${contract.recommendation}</div>
       </div>`;
     }
