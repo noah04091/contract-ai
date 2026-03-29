@@ -1469,113 +1469,231 @@ router.post('/results/:id/docx', async (req, res) => {
     }
 
     const { selections, mode } = req.body;
-    // selections: [{ clauseId, mode }] — which clauses to optimize and with which version
-    // mode: fallback mode if not specified per-clause
-
-    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, TableRow, TableCell, Table, WidthType, ShadingType } = require('docx');
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
+            BorderStyle, Header, Footer, PageNumber, PageBreak, Tab, TabStopType, TabStopPosition } = require('docx');
 
     const structure = result.structure || {};
     const clauses = result.clauses || [];
     const optimizations = result.optimizations || [];
     const clauseAnalyses = result.clauseAnalyses || [];
-    const scores = result.scores || {};
     const fallbackMode = mode || 'neutral';
 
-    // Build a map of selected clause optimizations
-    // Each entry: { mode, customText? }
     const selectionMap = new Map();
     if (Array.isArray(selections)) {
       for (const s of selections) {
-        selectionMap.set(s.clauseId, {
-          mode: s.mode || fallbackMode,
-          customText: s.customText || null
-        });
+        selectionMap.set(s.clauseId, { mode: s.mode || fallbackMode, customText: s.customText || null });
       }
     }
 
-    // ── Build document sections ──
-    const docChildren = [];
+    // ── Helpers ──
+    const cleanText = (text) => {
+      if (!text) return '';
+      return text
+        .replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        .replace(/Seite\s+\d+\s+von\s+\d+/gi, '')
+        .replace(/Ausdruck vom\s*/gi, '')
+        .replace(/\s{3,}/g, '  ')
+        .trim();
+    };
 
-    // Title page header
-    docChildren.push(
+    const appliedCount = selectionMap.size;
+    const totalOptimizable = optimizations.filter(o => o.needsOptimization).length;
+    const contractTitle = structure.contractTypeLabel || structure.recognizedAs || 'Vertrag';
+    const dateStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    // ── Header & Footer ──
+    const docHeader = new Header({
+      children: [
+        new Paragraph({
+          children: [
+            new TextRun({ text: contractTitle, font: 'Arial', size: 16, color: '9CA3AF' }),
+            new TextRun({ text: '\t', font: 'Arial' }),
+            new TextRun({ text: 'Contract AI', font: 'Arial', size: 16, color: '9CA3AF', bold: true })
+          ],
+          tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+          border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 4 } }
+        })
+      ]
+    });
+
+    const docFooter = new Footer({
+      children: [
+        new Paragraph({
+          children: [
+            new TextRun({ text: 'Erstellt mit Contract AI', font: 'Arial', size: 14, color: 'ABABAB', italics: true }),
+            new TextRun({ text: '\t', font: 'Arial' }),
+            new TextRun({ text: 'Seite ', font: 'Arial', size: 14, color: 'ABABAB' }),
+            new TextRun({ children: [PageNumber.CURRENT], font: 'Arial', size: 14, color: 'ABABAB' }),
+            new TextRun({ text: ' von ', font: 'Arial', size: 14, color: 'ABABAB' }),
+            new TextRun({ children: [PageNumber.TOTAL_PAGES], font: 'Arial', size: 14, color: 'ABABAB' })
+          ],
+          tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+          border: { top: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 4 } }
+        })
+      ]
+    });
+
+    // ── Title Page ──
+    const titleChildren = [];
+
+    // Spacer
+    titleChildren.push(new Paragraph({ spacing: { after: 600 }, children: [] }));
+
+    // Contract type as main title
+    titleChildren.push(
       new Paragraph({
-        children: [new TextRun({ text: 'OPTIMIERTER VERTRAG', bold: true, size: 36, font: 'Arial', color: '1F2937' })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 100 }
-      }),
-      new Paragraph({
-        children: [new TextRun({ text: structure.contractTypeLabel || structure.recognizedAs || 'Vertrag', size: 28, font: 'Arial', color: '6B7280' })],
+        children: [new TextRun({ text: contractTitle, bold: true, size: 48, font: 'Arial', color: '111827' })],
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 }
       })
     );
 
-    // Metadata line
-    const metaParts = [];
-    if (structure.jurisdiction) metaParts.push(`Jurisdiktion: ${structure.jurisdiction}`);
+    // Parties
     if (structure.parties?.length) {
-      const partyNames = structure.parties.filter(p => p.name).map(p => `${p.role}: ${p.name}`).join(' | ');
-      if (partyNames) metaParts.push(partyNames);
+      const partyLines = structure.parties.filter(p => p.name);
+      if (partyLines.length >= 2) {
+        titleChildren.push(
+          new Paragraph({
+            children: [new TextRun({ text: 'zwischen', size: 22, font: 'Arial', color: '6B7280', italics: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            children: [new TextRun({ text: partyLines[0].name, size: 24, font: 'Arial', color: '374151', bold: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 40 }
+          }),
+          ...(partyLines[0].role ? [new Paragraph({
+            children: [new TextRun({ text: `(${partyLines[0].role})`, size: 20, font: 'Arial', color: '9CA3AF', italics: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 100 }
+          })] : []),
+          new Paragraph({
+            children: [new TextRun({ text: 'und', size: 22, font: 'Arial', color: '6B7280', italics: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 100 }
+          }),
+          new Paragraph({
+            children: [new TextRun({ text: partyLines[1].name, size: 24, font: 'Arial', color: '374151', bold: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 40 }
+          }),
+          ...(partyLines[1].role ? [new Paragraph({
+            children: [new TextRun({ text: `(${partyLines[1].role})`, size: 20, font: 'Arial', color: '9CA3AF', italics: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 100 }
+          })] : [])
+        );
+      } else if (partyLines.length === 1) {
+        titleChildren.push(
+          new Paragraph({
+            children: [new TextRun({ text: partyLines[0].name, size: 24, font: 'Arial', color: '374151', bold: true })],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 200, after: 100 }
+          })
+        );
+      }
     }
-    if (scores.overall) metaParts.push(`Score: ${scores.overall}/100`);
 
-    if (metaParts.length) {
-      docChildren.push(
+    // Separator line
+    titleChildren.push(
+      new Paragraph({ spacing: { before: 300 }, children: [] }),
+      new Paragraph({
+        border: { bottom: { style: BorderStyle.SINGLE, size: 2, color: 'D1D5DB', space: 1 } },
+        spacing: { after: 200 },
+        children: []
+      })
+    );
+
+    // Meta info
+    titleChildren.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Datum: ', size: 20, font: 'Arial', color: '6B7280' }),
+          new TextRun({ text: dateStr, size: 20, font: 'Arial', color: '374151', bold: true })
+        ],
+        spacing: { after: 60 }
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Klauseln: ', size: 20, font: 'Arial', color: '6B7280' }),
+          new TextRun({ text: `${clauses.length}`, size: 20, font: 'Arial', color: '374151', bold: true })
+        ],
+        spacing: { after: 60 }
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Optimierungen: ', size: 20, font: 'Arial', color: '6B7280' }),
+          new TextRun({ text: `${appliedCount} von ${totalOptimizable} übernommen`, size: 20, font: 'Arial', color: '374151', bold: true })
+        ],
+        spacing: { after: 60 }
+      })
+    );
+
+    if (structure.jurisdiction) {
+      titleChildren.push(
         new Paragraph({
-          children: [new TextRun({ text: metaParts.join('  •  '), size: 18, font: 'Arial', color: '9CA3AF', italics: true })],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 100 }
+          children: [
+            new TextRun({ text: 'Rechtsordnung: ', size: 20, font: 'Arial', color: '6B7280' }),
+            new TextRun({ text: structure.jurisdiction, size: 20, font: 'Arial', color: '374151', bold: true })
+          ],
+          spacing: { after: 60 }
         })
       );
     }
 
-    // Separator
-    docChildren.push(
+    // Disclaimer
+    titleChildren.push(
+      new Paragraph({ spacing: { before: 400 }, children: [] }),
       new Paragraph({
-        children: [new TextRun({ text: '─'.repeat(80), size: 16, color: 'D1D5DB' })],
+        children: [new TextRun({
+          text: 'Dieses Dokument wurde KI-gestützt optimiert. Änderungen gegenüber dem Original sind als solche gekennzeichnet. Eine juristische Prüfung wird empfohlen.',
+          size: 18, font: 'Arial', color: '9CA3AF', italics: true
+        })],
         alignment: AlignmentType.CENTER,
-        spacing: { before: 200, after: 200 }
+        spacing: { after: 100 },
+        border: {
+          top: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 8 },
+          bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 8 },
+          left: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 8 },
+          right: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 8 }
+        }
       })
     );
 
-    // Optimization summary
-    const appliedCount = selectionMap.size;
-    const totalOptimizable = optimizations.filter(o => o.needsOptimization).length;
-    docChildren.push(
-      new Paragraph({
-        children: [new TextRun({ text: `${appliedCount} von ${totalOptimizable} Optimierungen übernommen`, size: 20, font: 'Arial', color: '007AFF', bold: true })],
-        spacing: { after: 300 }
-      })
+    // Page break after title page
+    titleChildren.push(
+      new Paragraph({ children: [new PageBreak()] })
     );
 
-    // ── Clause by clause ──
+    // ── Contract Body ──
+    const bodyChildren = [];
+
     for (const clause of clauses) {
       const optimization = optimizations.find(o => o.clauseId === clause.id);
-      const analysis = clauseAnalyses.find(a => a.clauseId === clause.id);
       const selection = selectionMap.get(clause.id);
       const selectedMode = selection?.mode;
       const isOptimized = selectedMode && (selectedMode === 'custom' || optimization?.needsOptimization);
 
       // Section heading
       const sectionPrefix = clause.sectionNumber && clause.sectionNumber !== 'null' ? `${clause.sectionNumber} ` : '';
-      docChildren.push(
+      const headingRuns = [
+        new TextRun({ text: `${sectionPrefix}${clause.title}`, bold: true, size: 24, font: 'Arial', color: '111827' })
+      ];
+      if (isOptimized) {
+        headingRuns.push(new TextRun({ text: '  [optimiert]', size: 18, font: 'Arial', color: '2563EB', italics: true }));
+      }
+
+      bodyChildren.push(
         new Paragraph({
-          children: [
-            new TextRun({
-              text: `${sectionPrefix}${clause.title}`,
-              bold: true,
-              size: 24,
-              font: 'Arial',
-              color: '1F2937'
-            }),
-            ...(isOptimized ? [new TextRun({ text: '  ✓ optimiert', size: 18, font: 'Arial', color: '34C759', italics: true })] : [])
-          ],
+          children: headingRuns,
           heading: HeadingLevel.HEADING_2,
-          spacing: { before: 300, after: 100 }
+          spacing: { before: 360, after: 120 },
+          border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'E5E7EB', space: 4 } }
         })
       );
 
-      // Clause text (custom > optimized > original)
+      // Clause text
       let clauseText = clause.originalText;
       if (isOptimized && selectedMode === 'custom' && selection.customText) {
         clauseText = selection.customText;
@@ -1583,83 +1701,66 @@ router.post('/results/:id/docx', async (req, res) => {
         clauseText = optimization.versions[selectedMode].text;
       }
 
-      // Split into paragraphs and add
-      const textParagraphs = clauseText.split('\n').filter(line => line.trim());
+      const textParagraphs = cleanText(clauseText).split('\n').filter(line => line.trim());
       for (const line of textParagraphs) {
-        docChildren.push(
+        bodyChildren.push(
           new Paragraph({
             children: [new TextRun({ text: line.trim(), size: 22, font: 'Arial', color: '374151' })],
-            spacing: { after: 80 }
+            spacing: { after: 100, line: 300 }
           })
         );
       }
 
-      // If optimized, show reasoning as a note
-      const reasoningText = selectedMode === 'custom'
-        ? 'Vom Benutzer individuell angepasste Formulierung.'
-        : optimization?.versions?.[selectedMode]?.reasoning;
-      if (isOptimized && reasoningText) {
-        docChildren.push(
-          new Paragraph({
-            children: [
-              new TextRun({ text: 'Änderungsgrund: ', bold: true, size: 18, font: 'Arial', color: '6B7280', italics: true }),
-              new TextRun({ text: reasoningText, size: 18, font: 'Arial', color: '6B7280', italics: true })
-            ],
-            spacing: { before: 80, after: 80 },
-            indent: { left: 400 }
-          })
-        );
-      }
+      // Optimization reasoning in a styled box
+      if (isOptimized) {
+        const reasoningText = selectedMode === 'custom'
+          ? 'Vom Benutzer individuell angepasste Formulierung.'
+          : optimization?.versions?.[selectedMode]?.reasoning;
 
-      // Separator between clauses
-      docChildren.push(
-        new Paragraph({
-          children: [new TextRun({ text: '', size: 10 })],
-          spacing: { after: 100 }
-        })
-      );
+        if (reasoningText) {
+          bodyChildren.push(
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'Änderungshinweis: ', bold: true, size: 18, font: 'Arial', color: '2563EB' }),
+                new TextRun({ text: cleanText(reasoningText), size: 18, font: 'Arial', color: '4B5563', italics: true })
+              ],
+              spacing: { before: 120, after: 160 },
+              indent: { left: 400, right: 400 },
+              border: {
+                left: { style: BorderStyle.SINGLE, size: 6, color: '93C5FD', space: 8 }
+              },
+              shading: { type: 'clear', fill: 'EFF6FF' }
+            })
+          );
+        }
+      }
     }
 
-    // ── Footer ──
-    docChildren.push(
-      new Paragraph({
-        children: [new TextRun({ text: '─'.repeat(80), size: 16, color: 'D1D5DB' })],
-        alignment: AlignmentType.CENTER,
-        spacing: { before: 400, after: 200 }
-      }),
-      new Paragraph({
-        children: [new TextRun({ text: `Erstellt mit Contract AI — ${new Date().toLocaleDateString('de-DE')}`, size: 16, font: 'Arial', color: '9CA3AF', italics: true })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 50 }
-      }),
-      new Paragraph({
-        children: [new TextRun({ text: 'Dieses Dokument wurde KI-gestützt optimiert. Eine juristische Prüfung wird empfohlen.', size: 16, font: 'Arial', color: '9CA3AF', italics: true })],
-        alignment: AlignmentType.CENTER
-      })
-    );
-
-    // Build document
+    // Build document with header/footer
     const doc = new Document({
+      creator: 'Contract AI',
+      title: contractTitle,
+      description: `Optimierter Vertrag — ${contractTitle}`,
       styles: {
         default: {
-          document: {
-            run: { font: 'Arial', size: 22 }
-          }
+          document: { run: { font: 'Arial', size: 22 } }
         }
       },
       sections: [{
         properties: {
           page: {
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+            margin: { top: 1440, right: 1200, bottom: 1440, left: 1200 }
           }
         },
-        children: docChildren
+        headers: { default: docHeader },
+        footers: { default: docFooter },
+        children: [...titleChildren, ...bodyChildren]
       }]
     });
 
     const buffer = await Packer.toBuffer(doc);
 
-    const fileName = `${(structure.contractTypeLabel || 'Vertrag').replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, '').replace(/\s+/g, '_')}_optimiert.docx`;
+    const fileName = `${contractTitle.replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, '').replace(/\s+/g, '_')}_optimiert.docx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
     res.setHeader('Content-Length', buffer.length);
