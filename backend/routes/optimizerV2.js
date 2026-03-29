@@ -1489,21 +1489,39 @@ router.post('/results/:id/docx', async (req, res) => {
     const cleanText = (text) => {
       if (!text) return '';
       let t = text;
-      // Decode HTML entities
+
+      // 1. Decode HTML entities
       t = t.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-      // Remove OCR page markers
+
+      // 2. Replace problematic Unicode characters
+      t = t.replace(/∙/g, '-');      // bullet operator → dash
+      t = t.replace(/·/g, '-');      // middle dot → dash
+      t = t.replace(/\u00AD/g, '');  // soft hyphen
+      t = t.replace(/[\u2000-\u200F]/g, ' '); // various unicode spaces
+      t = t.replace(/\uFFFD/g, ''); // replacement character (box)
+      t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); // control chars
+
+      // 3. Remove OCR page markers and headers
       t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
       t = t.replace(/Ausdruck vom\s*/gi, '');
-      // Remove repeated OCR page headers/footers from scanned documents
-      // Pattern: Company + address + management + register info block
+
+      // 4. Remove repeated company address/register blocks (OCR page headers)
       t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr)[^\n]*/g, (match, offset) => {
         return offset < 300 ? match : '';
       });
-      // Remove standalone document name + page markers repeated throughout
+
+      // 5. Remove standalone document type references
       t = t.replace(/\n\s*[\w\-]+(?:vertrag|rahmenvertrag|vereinbarung)\s*\([A-Z]+\)\s*\n/gi, '\n');
-      // Collapse excessive whitespace
+
+      // 6. Fix OCR hyphenated words across lines: "länge-\nren" → "längeren"
+      t = t.replace(/(\w)-\s*\n\s*(\w)/g, '$1$2');
+
+      // 7. Collapse multiple spaces to single space (per line)
+      t = t.split('\n').map(line => line.replace(/\s{2,}/g, ' ').trim()).join('\n');
+
+      // 8. Remove empty/near-empty lines
       t = t.replace(/\n{3,}/g, '\n\n');
-      t = t.replace(/\s{3,}/g, '  ');
+
       return t.trim();
     };
 
@@ -1722,12 +1740,21 @@ router.post('/results/:id/docx', async (req, res) => {
         clauseText = optimization.versions[selectedMode].text;
       }
 
-      const textParagraphs = cleanText(clauseText).split('\n').filter(line => line.trim());
-      for (const line of textParagraphs) {
+      const cleanedText = cleanText(clauseText);
+      // Smart paragraph splitting: double newline = new paragraph, single newline = join
+      const paragraphs = cleanedText.split(/\n\n+/).map(block =>
+        block.split('\n').map(l => l.trim()).filter(Boolean).join(' ')
+      ).filter(Boolean);
+
+      for (const para of paragraphs) {
+        // Skip very short junk paragraphs (likely OCR artifacts)
+        if (para.length < 3 && !/^\d+[.)]?$/.test(para)) continue;
+
         bodyChildren.push(
           new Paragraph({
-            children: [new TextRun({ text: line.trim(), size: 22, font: 'Arial', color: '374151' })],
-            spacing: { after: 100, line: 300 }
+            children: [new TextRun({ text: para, size: 22, font: 'Arial', color: '374151' })],
+            spacing: { after: 120, line: 276 },
+            indent: { firstLine: 0 }
           })
         );
       }
