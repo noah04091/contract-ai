@@ -765,7 +765,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       bumpClauseInQueue(selectedClause);
     }
 
-    analyzeClause(true);
+    // JSON-Modus statt Streaming — Streaming-Route liefert nur Markdown ohne strukturierte Analyse
+    analyzeClause(false);
   }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
 
   // Perspective Selection Handler

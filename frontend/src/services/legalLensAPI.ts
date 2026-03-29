@@ -107,6 +107,15 @@ export function analyzeClauseStreaming(
   onError: (error: Error) => void
 ): () => void {
   const controller = new AbortController();
+  let completed = false;
+
+  // 35s Timeout — wenn keine Antwort kommt, abbrechen
+  const timeoutId = setTimeout(() => {
+    if (!completed) {
+      controller.abort();
+      onError(new Error('Die Analyse hat zu lange gedauert (> 35s). Bitte versuchen Sie es erneut.'));
+    }
+  }, 35000);
 
   const token = localStorage.getItem('token');
 
@@ -155,6 +164,8 @@ export function analyzeClauseStreaming(
               if (parsed.chunk) {
                 onChunk(parsed.chunk);
               } else if (parsed.analysis) {
+                completed = true;
+                clearTimeout(timeoutId);
                 onComplete(parsed);
               }
             } catch {
@@ -168,9 +179,16 @@ export function analyzeClauseStreaming(
       if (error.name !== 'AbortError') {
         onError(error);
       }
+    })
+    .finally(() => {
+      clearTimeout(timeoutId);
     });
 
-  return () => controller.abort();
+  return () => {
+    completed = true;
+    clearTimeout(timeoutId);
+    controller.abort();
+  };
 }
 
 /**
