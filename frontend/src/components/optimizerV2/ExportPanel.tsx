@@ -58,8 +58,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
     setDownloading(true);
     try {
       const token = localStorage.getItem('token');
-      const apiBase = import.meta.env?.VITE_API_URL || (window.location.hostname === 'localhost' ? '' : 'https://api.contract-ai.de');
-      const response = await fetch(`${apiBase}/api/optimizer-v2/results/${result.resultId}/pdf`, {
+      const response = await fetch(`/api/optimizer-v2/results/${result.resultId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!response.ok) {
@@ -89,7 +88,6 @@ export default function ExportPanel({ result, userSelections }: Props) {
     setGenerating(true);
     try {
       const token = localStorage.getItem('token');
-      const apiBase = import.meta.env?.VITE_API_URL || (window.location.hostname === 'localhost' ? '' : 'https://api.contract-ai.de');
       const selections = Array.from(selectedClauses).map(clauseId => {
         // Use per-clause accepted mode if available, otherwise fall back to global docxMode
         const userSel = userSelections?.get(clauseId);
@@ -102,7 +100,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
         return { clauseId, mode };
       });
 
-      const response = await fetch(`${apiBase}/api/optimizer-v2/results/${result.resultId}/docx`, {
+      const response = await fetch(`/api/optimizer-v2/results/${result.resultId}/docx`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
