@@ -612,6 +612,210 @@ router.post('/import-from-generator', auth, async (req, res) => {
 });
 
 /**
+ * POST /api/contract-builder/import-from-optimizer
+ * Importiert einen optimierten Vertrag (Optimizer V2) als Builder-Dokument
+ */
+router.post('/import-from-optimizer', auth, async (req, res) => {
+  try {
+    const { resultId, selections, mode } = req.body;
+
+    if (!resultId) {
+      return res.status(400).json({ success: false, error: 'resultId ist erforderlich' });
+    }
+
+    // Load optimizer result
+    const OptimizerV2Result = require('../models/OptimizerV2Result');
+    const result = await OptimizerV2Result.findOne({
+      _id: resultId,
+      userId: req.user.userId,
+      status: 'completed'
+    });
+
+    if (!result) {
+      return res.status(404).json({ success: false, error: 'Analyse nicht gefunden.' });
+    }
+
+    const structure = result.structure || {};
+    const clauses = result.clauses || [];
+    const optimizations = result.optimizations || [];
+    const fallbackMode = mode || 'neutral';
+
+    // Build selection map
+    const selectionMap = new Map();
+    if (Array.isArray(selections)) {
+      for (const s of selections) {
+        selectionMap.set(s.clauseId, { mode: s.mode || fallbackMode, customText: s.customText || null });
+      }
+    }
+
+    // ── Build blocks ──
+    const blocks = [];
+    let order = 0;
+
+    const CHARS_PER_LINE = 85;
+    const LINE_HEIGHT = 22;
+    const PAGE_HEIGHT = 920;
+    let currentPageHeight = 0;
+
+    const estimateBlockHeight = (block) => {
+      if (block.type === 'header') return 120;
+      if (block.type === 'parties') return 160;
+      if (block.type === 'signature') return 220;
+      if (block.type === 'page-break') return 0;
+      if (block.type === 'preamble') {
+        const text = block.content?.preambleText || '';
+        const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+        return Math.max(lineCount * LINE_HEIGHT, 50) + 60;
+      }
+      const text = block.content?.body || '';
+      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+      const titleHeight = (block.content?.clauseTitle) ? 40 : 0;
+      return titleHeight + Math.max(lineCount * LINE_HEIGHT, 40) + 16;
+    };
+
+    const addBlock = (block) => {
+      const height = estimateBlockHeight(block);
+      if (blocks.length > 0 && currentPageHeight + height > PAGE_HEIGHT) {
+        blocks.push({
+          id: uuidv4(), type: 'page-break', order: order++,
+          content: {}, style: {}, locked: false, aiGenerated: false
+        });
+        currentPageHeight = 0;
+      }
+      block.order = order++;
+      blocks.push(block);
+      currentPageHeight += height;
+    };
+
+    // Header block
+    const contractTitle = structure.contractTypeLabel || structure.recognizedAs || 'Vertrag';
+    addBlock({
+      id: uuidv4(),
+      type: 'header',
+      content: {
+        title: contractTitle,
+        subtitle: result.fileName ? `Optimiert aus: ${result.fileName}` : 'Optimierter Vertrag',
+        showDivider: true
+      },
+      style: {}, locked: false, aiGenerated: true
+    });
+
+    // Parties block
+    const parties = (structure.parties || []).filter(p => p.name);
+    if (parties.length >= 2) {
+      addBlock({
+        id: uuidv4(),
+        type: 'parties',
+        content: {
+          party1: { role: parties[0].role || 'Partei A', name: parties[0].name, address: parties[0].address || '' },
+          party2: { role: parties[1].role || 'Partei B', name: parties[1].name, address: parties[1].address || '' },
+          partiesLayout: 'classic'
+        },
+        style: {}, locked: false, aiGenerated: true
+      });
+    } else if (parties.length === 1) {
+      addBlock({
+        id: uuidv4(),
+        type: 'parties',
+        content: {
+          party1: { role: parties[0].role || 'Partei A', name: parties[0].name, address: parties[0].address || '' },
+          party2: { role: 'Partei B', name: '', address: '' },
+          partiesLayout: 'classic'
+        },
+        style: {}, locked: false, aiGenerated: true
+      });
+    }
+
+    // Clause blocks
+    let clauseNumber = 1;
+    for (const clause of clauses) {
+      const optimization = optimizations.find(o => o.clauseId === clause.id);
+      const selection = selectionMap.get(clause.id);
+      const selectedMode = selection?.mode;
+
+      // Determine text: custom > optimized > original
+      let clauseText = clause.originalText;
+      if (selectedMode === 'custom' && selection?.customText) {
+        clauseText = selection.customText;
+      } else if (selectedMode && optimization?.versions?.[selectedMode]?.text) {
+        clauseText = optimization.versions[selectedMode].text;
+      }
+
+      // Clean §-prefix from title (ClauseBlock renders number separately)
+      const rawTitle = clause.title || '';
+      const clauseTitle = rawTitle.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim() || `Klausel ${clauseNumber}`;
+
+      // Use section number if available, otherwise auto-number
+      const number = clause.sectionNumber
+        ? clause.sectionNumber.replace(/^§\s*/, '').trim()
+        : String(clauseNumber);
+
+      addBlock({
+        id: uuidv4(),
+        type: 'clause',
+        content: { clauseTitle, number, body: clauseText },
+        style: {}, locked: false, aiGenerated: true
+      });
+      clauseNumber++;
+    }
+
+    // Signature block
+    const partyALabel = parties[0] ? `${parties[0].role || 'Partei A'}${parties[0].name ? ': ' + parties[0].name : ''}` : 'Partei A';
+    const partyBLabel = parties[1] ? `${parties[1].role || 'Partei B'}${parties[1].name ? ': ' + parties[1].name : ''}` : 'Partei B';
+    addBlock({
+      id: uuidv4(),
+      type: 'signature',
+      content: {
+        signatureFields: [
+          { partyIndex: 0, label: partyALabel, showDate: true, showPlace: true },
+          { partyIndex: 1, label: partyBLabel, showDate: true, showPlace: true }
+        ],
+        witnesses: 0,
+        signatureLayout: 'classic'
+      },
+      style: {}, locked: false, aiGenerated: true
+    });
+
+    // ── Create document ──
+    const document = new ContractBuilder({
+      userId: req.user.userId,
+      metadata: {
+        name: `${contractTitle} (optimiert)`,
+        contractType: structure.contractType || 'individuell',
+        status: 'draft',
+        description: `Importiert aus Optimizer V2 (Analyse: ${resultId})`
+      },
+      content: { blocks, variables: [] },
+      design: {
+        preset: 'executive',
+        primaryColor: '#0B1324',
+        secondaryColor: '#6B7280',
+        accentColor: '#3B82F6',
+        fontFamily: 'Inter, sans-serif',
+        pageSize: 'A4',
+        marginTop: 25, marginRight: 20, marginBottom: 25, marginLeft: 20
+      }
+    });
+
+    await document.save();
+
+    const pageCount = blocks.filter(b => b.type === 'page-break').length + 1;
+    console.log(`[ContractBuilder] Import aus Optimizer V2: ${document._id} (${blocks.length} Blöcke, ${pageCount} Seiten, ${selectionMap.size} Optimierungen)`);
+
+    res.status(201).json({
+      success: true,
+      documentId: document._id,
+      blockCount: blocks.length,
+      pageCount,
+      redirectUrl: `/contract-builder/${document._id}`
+    });
+  } catch (error) {
+    console.error('[ContractBuilder] POST /import-from-optimizer Error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Importieren des optimierten Vertrags' });
+  }
+});
+
+/**
  * PUT /api/contract-builder/:id
  * Dokument aktualisieren
  */

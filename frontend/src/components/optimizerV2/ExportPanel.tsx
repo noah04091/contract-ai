@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Download, FileText, File, Loader2, CheckCircle2, Mail, Copy, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Download, FileText, File, Loader2, CheckCircle2, Mail, Copy, Check, Hammer } from 'lucide-react';
+import { apiCall } from '../../utils/api';
 import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -12,6 +14,7 @@ interface Props {
 type DocxStep = 'idle' | 'selecting' | 'generating';
 
 export default function ExportPanel({ result, userSelections }: Props) {
+  const navigate = useNavigate();
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const [downloading, setDownloading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -148,6 +151,44 @@ export default function ExportPanel({ result, userSelections }: Props) {
       setSelectedClauses(new Set());
     } else {
       setSelectedClauses(new Set(optimizableClauses.map(c => c.opt.clauseId)));
+    }
+  };
+
+  // ── Contract Builder Import ──
+  const [builderLoading, setBuilderLoading] = useState(false);
+
+  const handleOpenInBuilder = async () => {
+    if (builderLoading) return;
+    setBuilderLoading(true);
+    try {
+      // Collect selections: all selected optimizations + accepted clauses
+      const selections = Array.from(selectedClauses).map(clauseId => {
+        const userSel = userSelections?.get(clauseId);
+        if (userSel?.selectedVersion === 'custom' && userSel.customText) {
+          return { clauseId, mode: 'custom', customText: userSel.customText };
+        }
+        const mode = (userSel?.selectedVersion && userSel.selectedVersion !== 'original' && userSel.selectedVersion !== 'custom')
+          ? userSel.selectedVersion
+          : docxMode;
+        return { clauseId, mode };
+      });
+
+      const data = await apiCall('/contract-builder/import-from-optimizer', {
+        method: 'POST',
+        body: JSON.stringify({
+          resultId: result.resultId,
+          selections,
+          mode: docxMode
+        })
+      }) as { success?: boolean; documentId?: string; redirectUrl?: string };
+
+      if (data?.success && data.redirectUrl) {
+        navigate(data.redirectUrl);
+      }
+    } catch {
+      showExportError('Contract Builder konnte nicht geöffnet werden.');
+    } finally {
+      setBuilderLoading(false);
     }
   };
 
@@ -418,6 +459,27 @@ Viele Grüße`;
           )}
         </div>
       )}
+
+      {/* ── Contract Builder ── */}
+      <div className={styles.exportOptions} style={{ marginTop: 8 }}>
+        <div className={styles.exportOption}>
+          <div className={styles.exportOptionIcon}>
+            <Hammer size={24} />
+          </div>
+          <div className={styles.exportOptionInfo}>
+            <h4>Im Contract Builder öffnen</h4>
+            <p>Optimierten Vertrag im visuellen Editor bearbeiten, Design wählen und als PDF exportieren</p>
+          </div>
+          <button
+            className={styles.exportBtnActive}
+            onClick={handleOpenInBuilder}
+            disabled={builderLoading}
+          >
+            {builderLoading ? <Loader2 size={14} className={styles.spinIcon} /> : <Hammer size={14} />}
+            {builderLoading ? 'Erstelle...' : 'Öffnen'}
+          </button>
+        </div>
+      </div>
 
       {/* ── Email Pitch Templates ── */}
       <div className={styles.pitchSection}>
