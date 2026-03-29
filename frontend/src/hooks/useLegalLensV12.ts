@@ -396,7 +396,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
             },
-            onComplete: (totalClauses) => {
+            onComplete: () => {
               if (parseRequestIdRef.current !== requestId) return;
               setIsStreaming(false);
               setStreamingProgress(100);
@@ -469,7 +469,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
             },
-            onComplete: (totalClauses) => {
+            onComplete: () => {
               if (parseRequestIdRef.current !== requestId) return;
               setIsStreaming(false);
               setStreamingProgress(100);
