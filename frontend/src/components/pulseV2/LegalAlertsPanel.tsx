@@ -13,8 +13,9 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
   if (active.length === 0 && resolvedCount === 0) return null;
 
-  const criticalCount = active.filter(a => a.severity === 'critical').length;
-  const highCount = active.filter(a => a.severity === 'high').length;
+  const criticalCount = active.filter(a => a.severity === 'critical' && a.impactDirection !== 'positive').length;
+  const highCount = active.filter(a => a.severity === 'high' && a.impactDirection !== 'positive').length;
+  const positiveCount = active.filter(a => a.impactDirection === 'positive').length;
 
   return (
     <div style={{
@@ -63,6 +64,18 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           {highCount > 0 && (
             <span style={{ fontSize: 11, color: '#ea580c', fontWeight: 600 }}>
               {highCount} hoch
+            </span>
+          )}
+          {positiveCount > 0 && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#059669',
+              background: '#ecfdf5',
+              padding: '2px 8px',
+              borderRadius: 10,
+            }}>
+              {positiveCount} Chance{positiveCount > 1 ? 'n' : ''}
             </span>
           )}
         </div>

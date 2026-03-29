@@ -194,6 +194,38 @@ const LEGAL_RSS_FEEDS = {
     name: 'BayLfD Bayern Pressemitteilungen',
     category: 'datenschutz',
     enabled: true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // EU-RECHT (C1)
+  // ═══════════════════════════════════════════════════
+  'edpb-news': {
+    url: 'https://www.edpb.europa.eu/rss_en',
+    name: 'EU Datenschutzausschuss (EDPB)',
+    category: 'datenschutz',
+    enabled: true
+  },
+  'eur-lex-amtsblatt': {
+    url: 'https://eur-lex.europa.eu/rss/treaty/ojl.xml',
+    name: 'EU Amtsblatt (OJ L)',
+    category: 'eu_recht',
+    enabled: true
+  },
+
+  // ═══════════════════════════════════════════════════
+  // AUFSICHTSBEHÖRDEN (C2)
+  // ═══════════════════════════════════════════════════
+  'bafin-meldungen': {
+    url: 'https://www.bafin.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/RSSNewsfeed_node.xml',
+    name: 'BaFin Finanzaufsicht',
+    category: 'finanzrecht',
+    enabled: true
+  },
+  'bnetza-presse': {
+    url: 'https://www.bundesnetzagentur.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/Pressemitteilungen.xml',
+    name: 'Bundesnetzagentur',
+    category: 'regulierung',
+    enabled: true
   }
 };
 
@@ -266,6 +298,39 @@ function detectLegalArea(title, summary = '') {
     return 'Insolvenzrecht';
   }
 
+  // A6: Energierecht
+  if (/energierecht|energieversorgung|erneuerbare|eeg|stromlieferung|netzentgelt|gasversorgung|energiewende/i.test(text)) {
+    return 'Energierecht';
+  }
+
+  // A6: Telekommunikationsrecht
+  if (/telekommunikation|tkg|netzneutralität|fernmeldegeheimnis|roaming|breitband/i.test(text)) {
+    return 'Telekommunikationsrecht';
+  }
+
+  // A6: Transportrecht
+  if (/transport(recht)?|spedition|frachtvertrag|frachtführer|cmt|hgb.*407/i.test(text)) {
+    return 'Transportrecht';
+  }
+
+  // A6: Patentrecht/Markenrecht
+  if (/patent(recht|gesetz)?|gebrauchsmuster|designschutz/i.test(text)) {
+    return 'Patentrecht';
+  }
+  if (/marke(nrecht|ngesetz)|markeninhaber/i.test(text)) {
+    return 'Markenrecht';
+  }
+
+  // A6: Umweltrecht
+  if (/umwelt(recht|schutz)|emission|klimaschutz|bundes-immissionsschutz|naturschutz/i.test(text)) {
+    return 'Umweltrecht';
+  }
+
+  // C1: EU-Recht
+  if (/eu-verordnung|eu-richtlinie|digital services act|dsa\b|dma\b|ai act|data act|cyber resilience|europäische kommission|eu-kommission/i.test(text)) {
+    return 'EU-Recht';
+  }
+
   // Handelsrecht
   if (/handels(recht|gesetzbuch|register|geschäft)|hgb|kaufmann|rügepflicht|handels(brauch|vertreter)|prokura|firma|wettbewerbsverbot/i.test(text)) {
     return 'Handelsrecht';
@@ -278,6 +343,69 @@ function detectLegalArea(title, summary = '') {
 
   // Default based on feed category
   return null;
+}
+
+/**
+ * Detect ALL matching legal areas from title and summary text (A4: Multi-Area).
+ * Returns array of areas, e.g. ["Datenschutz", "Arbeitsrecht"].
+ */
+function detectAllLegalAreas(title, summary = '') {
+  const text = `${title} ${summary}`.replace(/<[^>]*>/g, ' ').toLowerCase();
+  const areas = [];
+
+  if (/arbeit(s|nehmer|geber|srecht|svertrag|sverhältnis|szeit)|kündigungs(schutz|frist)|betriebsrat|tarifvertrag|mindestlohn|teilzeit|befristung|entgeltfortzahlung|mutterschutz|elternzeit|urlaubsanspruch|betriebsübergang|abfindung|arbeitszeugnis|probezeit|überstunden/i.test(text)) {
+    areas.push('Arbeitsrecht');
+  }
+  if (/miet(recht|vertrag|erhöhung|spiegel|preisbremse)|vermieter|mieter|nebenkosten|betriebskosten|kaution|eigenbedarf|wohnung(s|smarkt)?|mietrückstand|schönheitsreparatur|modernisierung|staffelmiete/i.test(text)) {
+    areas.push('Mietrecht');
+  }
+  if (/dsgvo|datenschutz|personenbezogen|datenverarbeitung|datenpanne|aufsichtsbehörde|einwilligung|auftragsverarbeitung|betroffenenrecht|privacy|data protection|cookie|tracking|löschung.*daten|bdsg/i.test(text)) {
+    areas.push('Datenschutz');
+  }
+  if (/kauf(recht|vertrag)|gewährleistung|sachmangel|nacherfüllung|mangel(recht|anspruch|haftung)|rücktritt.*kauf|kaufpreis|händler.*garantie|verbrauchsgüterkauf|umtausch/i.test(text)) {
+    areas.push('Kaufrecht');
+  }
+  if (/verbrauch(er|erschutz)|widerruf(srecht|sfrist)|fernabsatz|online.*(handel|shop)|e-commerce|haustürgeschäft|allgemein.*geschäftsbedingung|agb|button-lösung|preisangabe/i.test(text)) {
+    areas.push('Verbraucherrecht');
+  }
+  if (/steuer(recht|erklärung|bescheid|hinterziehung)|finanzamt|einkommensteuer|umsatzsteuer|gewerbesteuer|körperschaftsteuer|abgabenordnung|steuerfestsetzung|bfh/i.test(text)) {
+    areas.push('Steuerrecht');
+  }
+  if (/gesellschaft(srecht|svertrag|erversammlung)|gmbh|aktiengesellschaft|geschäftsführer|vorstand|aufsichtsrat|handelsregister|kapitalgesellschaft|personengesellschaft|kommanditgesellschaft/i.test(text)) {
+    areas.push('Gesellschaftsrecht');
+  }
+  if (/insolvenz(recht|verfahren|antrag|verwalter)|zahlungsunfähigkeit|überschuldung|gläubiger(versammlung)?|schuldner|restschuldbefreiung|insolvenzplan/i.test(text)) {
+    areas.push('Insolvenzrecht');
+  }
+  if (/energierecht|energieversorgung|erneuerbare|eeg|stromlieferung|netzentgelt|gasversorgung|energiewende/i.test(text)) {
+    areas.push('Energierecht');
+  }
+  if (/telekommunikation|tkg|netzneutralität|fernmeldegeheimnis|roaming|breitband/i.test(text)) {
+    areas.push('Telekommunikationsrecht');
+  }
+  if (/transport(recht)?|spedition|frachtvertrag|frachtführer|cmt|hgb.*407/i.test(text)) {
+    areas.push('Transportrecht');
+  }
+  if (/patent(recht|gesetz)?|gebrauchsmuster|designschutz/i.test(text)) {
+    areas.push('Patentrecht');
+  }
+  if (/marke(nrecht|ngesetz)|markeninhaber/i.test(text)) {
+    areas.push('Markenrecht');
+  }
+  if (/umwelt(recht|schutz)|emission|klimaschutz|bundes-immissionsschutz|naturschutz/i.test(text)) {
+    areas.push('Umweltrecht');
+  }
+  if (/eu-verordnung|eu-richtlinie|digital services act|dsa\b|dma\b|ai act|data act|cyber resilience|europäische kommission|eu-kommission/i.test(text)) {
+    areas.push('EU-Recht');
+  }
+  if (/handels(recht|gesetzbuch|register|geschäft)|hgb|kaufmann|rügepflicht|handels(brauch|vertreter)|prokura|firma|wettbewerbsverbot/i.test(text)) {
+    areas.push('Handelsrecht');
+  }
+  if (/vertrag(srecht|sschluss|sstrafe|sverletzung)|schuld(recht|verhältnis)|haftung|schadensersatz|verjährung|bürgschaft|werkvertrag|dienstvertrag|pflichtverletzung|verzug|anfechtung|arglist/i.test(text)) {
+    areas.push('Vertragsrecht');
+  }
+
+  return areas;
 }
 
 /**
@@ -327,12 +455,16 @@ function mapFeedCategoryToArea(feedCategory) {
     'steuerrecht': 'Steuerrecht',
     'verbraucherrecht': 'Verbraucherrecht',
     'mietrecht': 'Mietrecht',
-    'datenschutz': 'Datenschutz', // Data protection authorities
-    'rechtsprechung': 'Vertragsrecht', // General court decisions
-    'verfassungsrecht': 'Vertragsrecht', // Constitutional -> general
-    'sozialrecht': 'Arbeitsrecht', // Social law -> labor-related
-    'verwaltungsrecht': 'Vertragsrecht', // Administrative -> general
-    'patentrecht': 'Handelsrecht', // Patent law -> commercial
+    'datenschutz': 'Datenschutz',
+    'rechtsprechung': null, // A2: BGH-Urteile → per Content-Analyse klassifizieren, nicht pauschal
+    'verfassungsrecht': 'Verfassungsrecht',
+    'sozialrecht': 'Sozialrecht',
+    'verwaltungsrecht': 'Verwaltungsrecht',
+    'patentrecht': 'Patentrecht',
+    // C1/C2
+    'eu_recht': 'EU-Recht',
+    'finanzrecht': 'Finanzrecht',
+    'regulierung': 'Regulierung',
   };
   return mapping[feedCategory] || null;
 }
@@ -516,10 +648,17 @@ function normalizeForLegalPulse(items) {
   return items.map(item => {
     // Detect legal area from content
     const detectedArea = detectLegalArea(item.title, item.summary);
+    // A4: Detect ALL matching areas for cross-cutting laws
+    const allDetectedAreas = detectAllLegalAreas(item.title, item.summary);
     // Fallback to feed category mapping
     const feedArea = mapFeedCategoryToArea(item.category);
     // Use detected area, fallback to feed area, fallback to 'Vertragsrecht'
     const area = detectedArea || feedArea || 'Vertragsrecht';
+
+    // Build areas array: primary + all detected (deduplicated)
+    const areasSet = new Set([area, ...allDetectedAreas]);
+    if (feedArea) areasSet.add(feedArea);
+    const areas = [...areasSet];
 
     // Detect legislative status
     const lawStatus = detectLawStatus(item.title, item.summary, item.category);
@@ -534,6 +673,7 @@ function normalizeForLegalPulse(items) {
       description: item.summary,
       url: item.link,
       area,
+      areas, // A4: All detected areas for multi-area matching
       lawStatus,
       updatedAt: item.date,
       createdAt: new Date(),
@@ -574,6 +714,7 @@ module.exports = {
   toggleFeed,
   normalizeForLegalPulse,
   detectLegalArea,
+  detectAllLegalAreas,
   detectLawStatus,
   getFeedHealthReport,
   LEGAL_RSS_FEEDS

@@ -15,6 +15,21 @@
 
 const rssService = require("../services/rssService");
 
+// B1: Lazy-load embedding service for law embeddings during sync
+let _lawEmbeddings = null;
+function getLawEmbeddings() {
+  if (_lawEmbeddings === null) {
+    try {
+      const { getInstance } = require("../services/lawEmbeddings");
+      _lawEmbeddings = getInstance();
+    } catch (err) {
+      console.warn("[PulseV2RssSync] LawEmbeddings not available:", err.message);
+      _lawEmbeddings = false;
+    }
+  }
+  return _lawEmbeddings || null;
+}
+
 /**
  * Main RSS sync entry point.
  * @param {import('mongodb').Db} db - Shared database connection
@@ -84,6 +99,8 @@ async function runPulseV2RssSync(db) {
         sourceUrl: item.url || "",
         source: "rss",
         area: item.area || "Sonstiges",
+        areas: item.areas || [item.area || "Sonstiges"], // A4: Multi-area support
+        lawStatus: item.lawStatus || "unknown",
         updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(),
         metadata: item.metadata || {},
         // Do NOT set pulseV2Processed — Radar needs to process new entries
@@ -127,10 +144,86 @@ async function runPulseV2RssSync(db) {
     }
   }
 
-  const duration = Date.now() - startTime;
-  console.log(`[PulseV2RssSync] Done in ${duration}ms: ${inserted} inserted, ${updated} updated, ${skipped} skipped, ${errors} errors`);
+  // B1: Generate embeddings for newly inserted laws (max 50 per run)
+  let embeddingsGenerated = 0;
+  try {
+    const lawEmb = getLawEmbeddings();
+    if (lawEmb && inserted > 0) {
+      const newLaws = await lawsCol.find({
+        embedding: { $in: [null, []] },
+        source: "rss",
+      }).sort({ createdAt: -1 }).limit(50).toArray();
 
-  return { inserted, updated, skipped, errors, total: normalized.length, duration };
+      for (const law of newLaws) {
+        try {
+          const embText = `${law.title || ""} ${law.summary || law.text || ""}`.trim();
+          if (embText.length < 20) continue;
+          const embedding = await lawEmb.generateEmbedding(embText);
+          await lawsCol.updateOne({ _id: law._id }, { $set: { embedding } });
+          embeddingsGenerated++;
+          // Rate limit: 100ms between calls
+          await new Promise((r) => setTimeout(r, 100));
+        } catch (embErr) {
+          console.warn(`[PulseV2RssSync] Embedding failed for "${law.title?.substring(0, 40)}":`, embErr.message);
+          // Continue with remaining laws
+        }
+      }
+      if (embeddingsGenerated > 0) {
+        console.log(`[PulseV2RssSync] Generated ${embeddingsGenerated} embeddings for new laws`);
+      }
+    }
+  } catch (embGlobalErr) {
+    console.warn("[PulseV2RssSync] Embedding generation skipped:", embGlobalErr.message);
+  }
+
+  // C3: Enrich court decisions with Leitsätze from court_decisions collection
+  let enriched = 0;
+  try {
+    const courtDecisions = await lawsCol.find({
+      lawStatus: "court_decision",
+      "metadata.enrichedFromCourtDecisions": { $ne: true },
+      source: "rss",
+    }).sort({ createdAt: -1 }).limit(20).toArray();
+
+    if (courtDecisions.length > 0) {
+      const courtCol = db.collection("court_decisions");
+      for (const law of courtDecisions) {
+        // Extract Aktenzeichen (e.g., "XII ZR 123/45" or "I ZB 12/23")
+        const aktenMatch = law.title?.match(/\b([IVXL]+\s+Z[A-Z]\s+\d+\/\d+)\b/);
+        if (!aktenMatch) continue;
+        const aktenzeichen = aktenMatch[1];
+
+        const courtDoc = await courtCol.findOne({
+          $or: [
+            { aktenzeichen },
+            { title: { $regex: aktenzeichen.replace(/\//g, "\\/"), $options: "i" } },
+          ],
+        });
+
+        if (courtDoc) {
+          await lawsCol.updateOne({ _id: law._id }, {
+            $set: {
+              summary: courtDoc.leitsatz || courtDoc.summary || law.summary,
+              keywords: courtDoc.keywords || law.keywords || [],
+              "metadata.enrichedFromCourtDecisions": true,
+              "metadata.courtDecisionId": courtDoc._id.toString(),
+            },
+          });
+          enriched++;
+        }
+      }
+      if (enriched > 0) {
+        console.log(`[PulseV2RssSync] Enriched ${enriched} court decisions with Leitsätze`);
+      }
+    }
+  } catch (enrichErr) {
+    console.warn("[PulseV2RssSync] Court enrichment skipped:", enrichErr.message);
+  }
+
+  const duration = Date.now() - startTime;
+  console.log(`[PulseV2RssSync] Done in ${duration}ms: ${inserted} inserted, ${updated} updated, ${skipped} skipped, ${errors} errors, ${embeddingsGenerated} embeddings, ${enriched} enriched`);
+
+  return { inserted, updated, skipped, errors, embeddingsGenerated, enriched, total: normalized.length, duration };
 }
 
 module.exports = { runPulseV2RssSync };

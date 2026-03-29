@@ -27,9 +27,38 @@ const {
   generateDivider,
 } = require("../utils/emailTemplate");
 
-const MAX_LAW_CHANGES = 10;
-const MAX_CONTRACT_MATCHES = 50;
-const IMPACT_CONFIDENCE_THRESHOLD = 75;
+// B3: Lazy-load vector services for semantic matching (fail-safe)
+let _vectorStore = null;
+let _lawEmbeddings = null;
+async function getVectorStore() {
+  if (!_vectorStore) {
+    try {
+      const VectorStore = require("../services/vectorStore");
+      _vectorStore = new VectorStore();
+      await _vectorStore.init();
+    } catch (err) {
+      console.warn("[PulseV2Radar] VectorStore not available:", err.message);
+      _vectorStore = false; // Mark as unavailable
+    }
+  }
+  return _vectorStore || null;
+}
+function getLawEmbeddings() {
+  if (!_lawEmbeddings) {
+    try {
+      const { getInstance } = require("../services/lawEmbeddings");
+      _lawEmbeddings = getInstance();
+    } catch (err) {
+      console.warn("[PulseV2Radar] LawEmbeddings not available:", err.message);
+      _lawEmbeddings = false;
+    }
+  }
+  return _lawEmbeddings || null;
+}
+
+const MAX_LAW_CHANGES = 25;
+const MAX_CONTRACT_MATCHES = 150;
+const IMPACT_CONFIDENCE_THRESHOLD = 60;
 
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
@@ -56,6 +85,22 @@ const AREA_TO_CONTRACT_TYPES = {
   bgb: ["mietvertrag", "kaufvertrag", "dienstleistung", "darlehen", "buergschaft", "pachtvertrag", "maklervertrag"],
   hgb: ["handelsvertreter", "kaufvertrag", "factoring", "gesellschaftsvertrag", "franchisevertrag"],
   baurecht: ["bauvertrag"],
+  // Extended legal areas (A2)
+  energierecht: ["dienstleistung", "rahmenvertrag", "kaufvertrag"],
+  telekommunikationsrecht: ["saas", "hosting", "dienstleistung", "rahmenvertrag"],
+  transportrecht: ["dienstleistung", "rahmenvertrag", "kaufvertrag"],
+  medienrecht: ["lizenz", "freelancer", "dienstleistung"],
+  umweltrecht: ["bauvertrag", "pachtvertrag", "kaufvertrag"],
+  sozialrecht: ["arbeitsvertrag"],
+  patentrecht: ["lizenz", "nda", "franchisevertrag"],
+  markenrecht: ["lizenz", "nda", "franchisevertrag"],
+  insolvenzrecht: ["darlehen", "buergschaft", "factoring", "leasing"],
+  verwaltungsrecht: ["bauvertrag", "dienstleistung"],
+  verfassungsrecht: ["arbeitsvertrag", "mietvertrag", "dienstleistung"],
+  // EU & regulatory areas (C1/C2)
+  eu_recht: ["saas", "hosting", "dienstleistung", "freelancer", "lizenz", "nda", "arbeitsvertrag"],
+  finanzrecht: ["darlehen", "factoring", "buergschaft", "leasing", "versicherung"],
+  regulierung: ["saas", "hosting", "dienstleistung", "rahmenvertrag"],
   // Catch broader areas
   sonstiges: ["dienstleistung", "kaufvertrag", "rahmenvertrag"],
 };
@@ -112,6 +157,7 @@ async function runPulseV2Radar(db, options = {}) {
         contractName: impact.contractName,
         impactSummary: impact.summary,
         severity: impact.severity,
+        impactDirection: impact.impactDirection || "negative",
         recommendation: impact.recommendation,
         affectedClauseIds: impact.affectedClauseIds,
         clauseImpacts: impact.clauseImpacts,
@@ -133,11 +179,37 @@ async function runPulseV2Radar(db, options = {}) {
   );
 
   const duration = Date.now() - startTime;
+
+  // D5: Track run history for trend analysis
+  let positiveAlertCount = 0;
+  let negativeAlertCount = 0;
+  for (const [, alerts] of userAlerts.entries()) {
+    for (const a of alerts) {
+      if (a.impactDirection === "positive") positiveAlertCount++;
+      else negativeAlertCount++;
+    }
+  }
+
+  try {
+    await db.collection("radar_run_history").insertOne({
+      runAt: new Date(),
+      lawChanges: lawChanges.length,
+      contractsMatched: totalMatches,
+      alertsSent: totalAlerts,
+      positiveAlerts: positiveAlertCount,
+      negativeAlerts: negativeAlertCount,
+      durationMs: duration,
+      scoped: !!options.userId,
+    });
+  } catch (histErr) {
+    console.warn("[PulseV2Radar] Failed to write run history:", histErr.message);
+  }
+
   console.log(
-    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts. ${Math.round(duration / 1000)}s`
+    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} positive, ${negativeAlertCount} negative). ${Math.round(duration / 1000)}s`
   );
 
-  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, durationMs: duration };
+  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, durationMs: duration };
 }
 
 /**
@@ -166,25 +238,38 @@ async function fetchRecentLawChanges(db) {
  *      (ensures no legal area is silently ignored)
  */
 async function matchLawToContracts(db, lawChange, options = {}) {
-  const area = (lawChange.area || "").toLowerCase();
-  const relevantTypes = AREA_TO_CONTRACT_TYPES[area] || [];
+  // A4: Multi-Area matching — check primary area AND all areas
+  const allAreas = [
+    ...(lawChange.areas || []),
+    lawChange.area || "",
+  ].map((a) => a.toLowerCase()).filter(Boolean);
+  const uniqueAreas = [...new Set(allAreas)];
+
+  // Collect relevant contract types from ALL matched areas (union)
+  const relevantTypesSet = new Set();
+  for (const area of uniqueAreas) {
+    const types = AREA_TO_CONTRACT_TYPES[area] || [];
+    types.forEach((t) => relevantTypesSet.add(t));
+  }
+  const relevantTypes = [...relevantTypesSet];
 
   let query;
   let limit;
 
   if (relevantTypes.length > 0) {
-    // KNOWN area → fast pre-filter by contract type
+    // KNOWN area(s) → fast pre-filter by contract type
     query = {
       status: "completed",
       "document.contractType": {
         $in: relevantTypes.map((t) => new RegExp(t, "i")),
       },
     };
-    limit = 30;
+    limit = 50;
   } else {
     // UNKNOWN area → don't skip! Take a small sample of recent contracts
     // and let the AI decide if they're affected. Conservative limit to control cost.
-    console.log(`[PulseV2Radar] No pre-filter mapping for area "${area}" — using AI-based matching (sample of recent contracts)`);
+    const primaryArea = uniqueAreas[0] || "(empty)";
+    console.log(`[PulseV2Radar] No pre-filter mapping for area "${primaryArea}" — using AI-based matching (sample of recent contracts)`);
     query = { status: "completed" };
     limit = 10; // Smaller sample for unknown areas to control AI cost
   }
@@ -206,18 +291,79 @@ async function matchLawToContracts(db, lawChange, options = {}) {
     { $limit: limit },
   ]);
 
-  return results.map((r) => ({
-    userId: r._id.userId,
-    contractId: r._id.contractId,
-    contractName: r.latestResult.context?.contractName || r._id.contractId,
-    contractType: r.latestResult.document?.contractType || "unknown",
-    findings: (r.latestResult.clauseFindings || [])
-      .filter((f) => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
-      .map((f) => ({ title: f.title, category: f.category, severity: f.severity, clauseId: f.clauseId })),
-    clauses: (r.latestResult.clauses || [])
-      .map((c) => ({ id: c.id, title: c.title, category: c.category })),
-    scores: r.latestResult.scores,
-  }));
+  // B3: Semantic matching — find additional contracts via vector similarity
+  let semanticResults = [];
+  try {
+    const vectorStore = await getVectorStore();
+    const lawEmb = getLawEmbeddings();
+    if (vectorStore && lawEmb) {
+      // Generate embedding for the law change
+      const lawText = `${lawChange.title || ""} ${lawChange.description || lawChange.summary || ""}`.trim();
+      if (lawText.length > 20) {
+        const embedding = await lawEmb.generateEmbedding(lawText);
+        const vResults = await vectorStore.queryContracts(embedding, 20);
+        // Filter by minimum similarity (distance < 0.35 = similarity > 0.65)
+        const contractIds = (vResults.ids?.[0] || [])
+          .map((id, idx) => ({
+            id,
+            distance: vResults.distances?.[0]?.[idx] || 1,
+            metadata: vResults.metadatas?.[0]?.[idx] || {},
+          }))
+          .filter((r) => r.distance < 0.35 && r.metadata.contractId)
+          .map((r) => r.metadata.contractId);
+
+        if (contractIds.length > 0) {
+          // Fetch full V2 results for semantically matched contracts
+          const keywordContractIds = new Set(results.map((r) => r._id.contractId));
+          const newContractIds = contractIds.filter((id) => !keywordContractIds.has(id));
+
+          if (newContractIds.length > 0) {
+            const semQuery = {
+              status: "completed",
+              contractId: { $in: newContractIds },
+            };
+            if (options.userId) semQuery.userId = options.userId;
+
+            semanticResults = await LegalPulseV2Result.aggregate([
+              { $match: semQuery },
+              { $sort: { createdAt: -1 } },
+              { $group: { _id: { contractId: "$contractId", userId: "$userId" }, latestResult: { $first: "$$ROOT" } } },
+              { $limit: 20 },
+            ]);
+            if (semanticResults.length > 0) {
+              console.log(`[PulseV2Radar] Semantic matching found ${semanticResults.length} additional contracts`);
+            }
+          }
+        }
+      }
+    }
+  } catch (semErr) {
+    console.warn("[PulseV2Radar] Semantic matching failed (falling back to keyword only):", semErr.message);
+  }
+
+  // Merge keyword + semantic results (deduplicated)
+  const allResults = [...results, ...semanticResults];
+  const seen = new Set();
+
+  return allResults
+    .filter((r) => {
+      const key = `${r._id.userId}_${r._id.contractId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((r) => ({
+      userId: r._id.userId,
+      contractId: r._id.contractId,
+      contractName: r.latestResult.context?.contractName || r._id.contractId,
+      contractType: r.latestResult.document?.contractType || "unknown",
+      findings: (r.latestResult.clauseFindings || [])
+        .filter((f) => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
+        .map((f) => ({ title: f.title, category: f.category, severity: f.severity, clauseId: f.clauseId })),
+      clauses: (r.latestResult.clauses || [])
+        .map((c) => ({ id: c.id, title: c.title, category: c.category })),
+      scores: r.latestResult.scores,
+    }));
 }
 
 /**
@@ -271,6 +417,7 @@ async function assessImpact(lawChange, contracts) {
                     affected: { type: "boolean" },
                     confidence: { type: "number" },
                     severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
+                    impactDirection: { type: "string", enum: ["negative", "positive", "neutral"] },
                     summary: { type: "string" },
                     recommendation: { type: "string" },
                     affectedClauseIds: {
@@ -292,7 +439,7 @@ async function assessImpact(lawChange, contracts) {
                       },
                     },
                   },
-                  required: ["contractIndex", "affected", "confidence", "severity", "summary", "recommendation", "affectedClauseIds", "clauseImpacts"],
+                  required: ["contractIndex", "affected", "confidence", "severity", "impactDirection", "summary", "recommendation", "affectedClauseIds", "clauseImpacts"],
                   additionalProperties: false,
                 },
               },
@@ -311,6 +458,7 @@ REGELN:
 - Nur ECHTE, KONKRETE Auswirkungen melden (nicht hypothetische)
 - confidence 0-100: Wie sicher bist du, dass der Vertrag betroffen ist?
 - severity: critical (Vertrag potentiell unwirksam/illegal), high (Klausel muss angepasst werden), medium (Prüfung empfohlen), low (informativ)
+- impactDirection: "negative" (Risiko/Nachteil), "positive" (Chance/Vorteil), "neutral" (informativ, keine Wertung)
 - recommendation: Konkreter nächster Schritt (z.B. "Klausel X in § Y anpassen", "AV-Vertrag aktualisieren")
 - affectedClauseIds: Liste der Klausel-IDs die von der Änderung betroffen sind (aus der Klausel-Liste des Vertrags)
 - clauseImpacts: Für JEDE betroffene Klausel: clauseId, clauseTitle, impact (was genau das Problem ist), suggestedChange (konkreter Textvorschlag für die Änderung)
@@ -322,7 +470,14 @@ STATUS-KONTEXT:
 - "effective": Bereits in Kraft — sofortiger Handlungsbedarf
 - "court_decision": Gerichtsentscheidung — Praxis könnte sich ändern, Klauseln prüfen
 - "guideline": Behörden-Leitlinie — empfohlene Anpassung
-- Passe severity und recommendation an den Status an (Entwurf = niedrigere severity als in Kraft)`,
+- Passe severity und recommendation an den Status an (Entwurf = niedrigere severity als in Kraft)
+
+POSITIVE ÄNDERUNGEN erkennen:
+- Neue Schutzrechte zugunsten des Vertragspartners
+- Verkürzte gesetzliche Fristen die den User begünstigen
+- Vereinfachte Compliance-Anforderungen
+- Neue Rechte die Neuverhandlung ermöglichen
+- Auch positive Änderungen als affected=true melden mit impactDirection="positive"`,
         },
         {
           role: "user",
@@ -345,6 +500,8 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
     const confirmedImpacts = [];
 
     // Log AI decisions for debugging (especially useful when alertsSent=0)
+    let borderlineCount = 0;
+    let confidentCount = 0;
     for (const impact of parsed.impacts || []) {
       const contract = contracts[impact.contractIndex - 1];
       const reason = !impact.affected
@@ -352,7 +509,14 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         : impact.confidence < IMPACT_CONFIDENCE_THRESHOLD
           ? `confidence too low (${impact.confidence}% < ${IMPACT_CONFIDENCE_THRESHOLD}%)`
           : "ACCEPTED";
-      console.log(`[PulseV2Radar] AI decision: "${contract?.contractName || '?'}" × "${lawChange.title?.substring(0, 50)}" → ${reason}${impact.affected ? ` | severity=${impact.severity} | summary="${impact.summary?.substring(0, 80)}"` : ""}`);
+      console.log(`[PulseV2Radar] AI decision: "${contract?.contractName || '?'}" × "${lawChange.title?.substring(0, 50)}" → ${reason}${impact.affected ? ` | severity=${impact.severity} | direction=${impact.impactDirection || "negative"} | summary="${impact.summary?.substring(0, 80)}"` : ""}`);
+      if (impact.affected && impact.confidence >= IMPACT_CONFIDENCE_THRESHOLD) {
+        if (impact.confidence < 75) borderlineCount++;
+        else confidentCount++;
+      }
+    }
+    if (borderlineCount > 0 || confidentCount > 0) {
+      console.log(`[PulseV2Radar] Confidence distribution: ${borderlineCount} borderline (60-74%), ${confidentCount} confident (75-100%)`);
     }
 
     for (const impact of parsed.impacts || []) {
@@ -377,6 +541,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
         contractName: contract.contractName,
         summary: impact.summary,
         severity: impact.severity,
+        impactDirection: impact.impactDirection || "negative",
         recommendation: impact.recommendation,
         confidence: impact.confidence,
         affectedClauseIds: validatedClauseIds.slice(0, 5),
@@ -407,6 +572,7 @@ async function storeAndNotify(db, userId, alerts) {
     lawSource: a.lawChange.source,
     impactSummary: a.impactSummary,
     severity: a.severity,
+    impactDirection: a.impactDirection || "negative",
     recommendation: a.recommendation,
     affectedClauseIds: a.affectedClauseIds || [],
     clauseImpacts: a.clauseImpacts || [],
@@ -450,11 +616,14 @@ async function storeAndNotify(db, userId, alerts) {
 
   const criticalAlerts = alerts.filter((a) => a.severity === "critical");
   const highAlerts = alerts.filter((a) => a.severity === "high");
+  const positiveAlerts = alerts.filter((a) => a.impactDirection === "positive");
+  const negativeAlerts = alerts.filter((a) => a.impactDirection !== "positive");
 
   body += generateStatsRow([
     { value: String(alerts.length), label: "Betroffene Verträge", color: "#ea580c" },
     ...(criticalAlerts.length > 0 ? [{ value: String(criticalAlerts.length), label: "Kritisch", color: "#dc2626" }] : []),
     ...(highAlerts.length > 0 ? [{ value: String(highAlerts.length), label: "Hoch", color: "#ea580c" }] : []),
+    ...(positiveAlerts.length > 0 ? [{ value: String(positiveAlerts.length), label: "Chancen", color: "#059669" }] : []),
   ]);
 
   body += generateDivider();
@@ -470,20 +639,26 @@ async function storeAndNotify(db, userId, alerts) {
   }
 
   for (const [lawTitle, group] of byLaw.entries()) {
+    const hasPositive = group.contracts.some((c) => c.impactDirection === "positive");
+    const hasCritical = group.contracts.some((c) => c.severity === "critical" && c.impactDirection !== "positive");
+    const allPositive = group.contracts.every((c) => c.impactDirection === "positive");
+
     body += generateEventCard({
       title: lawTitle,
       subtitle: `${group.law.area || "Recht"} · ${group.contracts.length} Vertrag/Verträge betroffen`,
-      badge: group.contracts.some((c) => c.severity === "critical") ? "Kritisch" : "Prüfen",
-      badgeColor: group.contracts.some((c) => c.severity === "critical") ? "critical" : "warning",
-      icon: "\u2696\ufe0f",
+      badge: allPositive ? "Chance" : hasCritical ? "Kritisch" : hasPositive ? "Chance & Prüfen" : "Prüfen",
+      badgeColor: allPositive ? "success" : hasCritical ? "critical" : "warning",
+      icon: allPositive ? "\u2705" : "\u2696\ufe0f",
     });
 
     for (const contract of group.contracts.slice(0, 3)) {
-      const sevColor = contract.severity === "critical" ? "#dc2626" : contract.severity === "high" ? "#ea580c" : "#d97706";
-      body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${sevColor}; background: #f9fafb; border-radius: 0 6px 6px 0;">
-        <div style="font-size: 13px; font-weight: 600; color: #111827;">${contract.contractName}</div>
+      const isPositive = contract.impactDirection === "positive";
+      const sevColor = isPositive ? "#059669" : contract.severity === "critical" ? "#dc2626" : contract.severity === "high" ? "#ea580c" : "#d97706";
+      const bgColor = isPositive ? "#f0fdf4" : "#f9fafb";
+      body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${sevColor}; background: ${bgColor}; border-radius: 0 6px 6px 0;">
+        <div style="font-size: 13px; font-weight: 600; color: #111827;">${isPositive ? "\u2705 " : ""}${contract.contractName}</div>
         <div style="font-size: 12px; color: #4b5563; margin-top: 2px;">${contract.impactSummary}</div>
-        <div style="font-size: 12px; color: #1e40af; margin-top: 4px; font-style: italic;">${contract.recommendation}</div>
+        <div style="font-size: 12px; color: ${isPositive ? "#059669" : "#1e40af"}; margin-top: 4px; font-style: italic;">${contract.recommendation}</div>
       </div>`;
     }
 
@@ -505,9 +680,15 @@ async function storeAndNotify(db, userId, alerts) {
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
+  const emailSubject = positiveAlerts.length > 0 && negativeAlerts.length === 0
+    ? `\u2705 Legal Radar: ${positiveAlerts.length} Chance(n) erkannt`
+    : positiveAlerts.length > 0
+      ? `\u2696\ufe0f Legal Radar: ${negativeAlerts.length} Handlungsbedarf + ${positiveAlerts.length} Chance(n)`
+      : `\u2696\ufe0f Legal Radar: ${alerts.length} Verträge von Gesetzesänderung betroffen`;
+
   await queueEmail(db, {
     to: user.email,
-    subject: `\u2696\ufe0f Legal Radar: ${alerts.length} Verträge von Gesetzesänderung betroffen`,
+    subject: emailSubject,
     html,
     userId,
     emailType: "legal_pulse_v2_radar",

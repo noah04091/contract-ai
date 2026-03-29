@@ -439,6 +439,19 @@ router.get("/alert-metrics", async (req, res) => {
           bySeverity: {
             $push: "$severity",
           },
+          // D2: Impact direction counts
+          positiveCount: { $sum: { $cond: [{ $eq: ["$impactDirection", "positive"] }, 1, 0] } },
+          negativeCount: { $sum: { $cond: [{ $or: [{ $eq: ["$impactDirection", "negative"] }, { $eq: [{ $ifNull: ["$impactDirection", "negative"] }, "negative"] }] }, 1, 0] } },
+          // D2: Average time to action (first fix)
+          avgTimeToAction: {
+            $avg: {
+              $cond: [
+                { $ne: ["$lastFixAppliedAt", null] },
+                { $subtract: [{ $ifNull: ["$lastFixAppliedAt", "$createdAt"] }, "$createdAt"] },
+                null,
+              ],
+            },
+          },
         },
       },
     ];
@@ -448,9 +461,10 @@ router.get("/alert-metrics", async (req, res) => {
     if (!result || result.total === 0) {
       return res.json({
         funnel: { total: 0, opened: 0, fixApplied: 0, resolved: 0, dismissed: 0 },
-        rates: { openRate: 0, actionRate: 0, resolveRate: 0 },
+        rates: { openRate: 0, actionRate: 0, resolveRate: 0, falsePositiveRate: 0 },
         clauses: { affected: 0, resolved: 0, resolveRate: 0 },
         severity: { critical: 0, high: 0, medium: 0, low: 0 },
+        direction: { positive: 0, negative: 0 },
       });
     }
 
@@ -468,10 +482,15 @@ router.get("/alert-metrics", async (req, res) => {
       dismissed: result.dismissed,
     };
 
+    // D2: False positive rate = dismissed / (dismissed + resolved + fixApplied)
+    const actionable = result.dismissed + result.resolved + result.withFixes;
+    const falsePositiveRate = actionable > 0 ? Math.round((result.dismissed / actionable) * 100) : 0;
+
     const rates = {
       openRate: Math.round((result.read / result.total) * 100),
       actionRate: Math.round((result.withFixes / result.total) * 100),
       resolveRate: Math.round((result.resolved / result.total) * 100),
+      falsePositiveRate,
     };
 
     const clauses = {
@@ -483,7 +502,12 @@ router.get("/alert-metrics", async (req, res) => {
           : 0,
     };
 
-    res.json({ funnel, rates, clauses, severity });
+    const direction = {
+      positive: result.positiveCount || 0,
+      negative: result.negativeCount || 0,
+    };
+
+    res.json({ funnel, rates, clauses, severity, direction, avgTimeToActionMs: result.avgTimeToAction || 0 });
   } catch (error) {
     console.error("[PulseV2] Alert metrics error:", error);
     res.status(500).json({ error: "Fehler beim Laden der Alert-Metriken" });
@@ -2571,6 +2595,221 @@ router.post("/admin/test-email-reactivate", requirePremium, async (req, res) => 
   } catch (error) {
     console.error("[AdminTest] Email reactivate error:", error);
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// D1: GET /radar-email-stats — Radar email delivery statistics
+// ══════════════════════════════════════════════════════════════
+router.get("/radar-email-stats", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+
+    const pipeline = [
+      { $match: { emailType: "legal_pulse_v2_radar" } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          sent: { $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] } },
+          failed: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } },
+          pending: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
+          skipped: { $sum: { $cond: [{ $eq: ["$status", "skipped"] }, 1, 0] } },
+          avgDeliveryMs: {
+            $avg: {
+              $cond: [
+                { $and: [{ $eq: ["$status", "sent"] }, { $ne: ["$sentAt", null] }] },
+                { $subtract: ["$sentAt", "$createdAt"] },
+                null,
+              ],
+            },
+          },
+        },
+      },
+    ];
+
+    const [result] = await db.collection("email_queue").aggregate(pipeline).toArray();
+
+    if (!result) {
+      return res.json({ total: 0, sent: 0, failed: 0, pending: 0, skipped: 0, deliveryRate: 0 });
+    }
+
+    res.json({
+      total: result.total,
+      sent: result.sent,
+      failed: result.failed,
+      pending: result.pending,
+      skipped: result.skipped,
+      deliveryRate: result.total > 0 ? Math.round((result.sent / (result.sent + result.failed)) * 100) : 0,
+      avgDeliveryMs: Math.round(result.avgDeliveryMs || 0),
+    });
+  } catch (error) {
+    console.error("[PulseV2] Radar email stats error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Email-Statistiken" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// D3: POST /legal-alerts/:alertId/feedback — User feedback on alert quality
+// ══════════════════════════════════════════════════════════════
+router.post("/legal-alerts/:alertId/feedback", async (req, res) => {
+  try {
+    const { alertId } = req.params;
+    const { useful, comment } = req.body;
+    if (typeof useful !== "boolean") {
+      return res.status(400).json({ error: "useful (boolean) erforderlich" });
+    }
+
+    const database = require("../config/database");
+    const { ObjectId } = require("mongodb");
+    const db = await database.connect();
+    const userId = req.user.userId;
+
+    const result = await db.collection("pulse_v2_legal_alerts").updateOne(
+      { _id: new ObjectId(alertId), userId },
+      {
+        $set: {
+          userFeedback: {
+            useful,
+            comment: (comment || "").substring(0, 500),
+            feedbackAt: new Date(),
+          },
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "Alert nicht gefunden" });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("[PulseV2] Alert feedback error:", error);
+    res.status(500).json({ error: "Fehler beim Speichern des Feedbacks" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// D4: GET /radar-health-detail — Comprehensive Radar health data
+// ══════════════════════════════════════════════════════════════
+router.get("/radar-health-detail", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const rssService = require("../services/rssService");
+
+    // Feed health
+    const feedStats = rssService.getFeedStats();
+
+    // Law coverage
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [lawStats] = await db.collection("laws").aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          newThisWeek: { $sum: { $cond: [{ $gte: ["$createdAt", oneWeekAgo] }, 1, 0] } },
+          processed: { $sum: { $cond: [{ $eq: ["$pulseV2Processed", true] }, 1, 0] } },
+          unprocessed: { $sum: { $cond: [{ $ne: ["$pulseV2Processed", true] }, 1, 0] } },
+          withEmbedding: {
+            $sum: {
+              $cond: [{ $and: [{ $ne: ["$embedding", null] }, { $gt: [{ $size: { $ifNull: ["$embedding", []] } }, 0] }] }, 1, 0],
+            },
+          },
+        },
+      },
+    ]).toArray();
+
+    // Alert pipeline stats (this week)
+    const [alertStats] = await db.collection("pulse_v2_legal_alerts").aggregate([
+      { $match: { createdAt: { $gte: oneWeekAgo } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          bySeverity: { $push: "$severity" },
+          byDirection: { $push: { $ifNull: ["$impactDirection", "negative"] } },
+          resolved: { $sum: { $cond: [{ $eq: ["$status", "resolved"] }, 1, 0] } },
+          dismissed: { $sum: { $cond: [{ $eq: ["$status", "dismissed"] }, 1, 0] } },
+          withFeedback: { $sum: { $cond: [{ $ne: ["$userFeedback", null] }, 1, 0] } },
+          usefulFeedback: {
+            $sum: { $cond: [{ $eq: ["$userFeedback.useful", true] }, 1, 0] },
+          },
+        },
+      },
+    ]).toArray();
+
+    // Email delivery
+    const [emailStats] = await db.collection("email_queue").aggregate([
+      { $match: { emailType: "legal_pulse_v2_radar", createdAt: { $gte: oneWeekAgo } } },
+      {
+        $group: {
+          _id: null,
+          sent: { $sum: { $cond: [{ $eq: ["$status", "sent"] }, 1, 0] } },
+          failed: { $sum: { $cond: [{ $eq: ["$status", "failed"] }, 1, 0] } },
+        },
+      },
+    ]).toArray();
+
+    // Recent radar runs
+    const recentRuns = await db.collection("radar_run_history")
+      .find({}).sort({ runAt: -1 }).limit(5).toArray();
+
+    // Count severities and directions
+    const severity = { critical: 0, high: 0, medium: 0, low: 0 };
+    for (const s of alertStats?.bySeverity || []) {
+      if (severity[s] !== undefined) severity[s]++;
+    }
+    const directions = { negative: 0, positive: 0, neutral: 0 };
+    for (const d of alertStats?.byDirection || []) {
+      if (directions[d] !== undefined) directions[d]++;
+    }
+
+    res.json({
+      feeds: {
+        total: feedStats.total,
+        enabled: feedStats.enabled,
+        disabled: feedStats.disabled,
+      },
+      laws: {
+        total: lawStats?.total || 0,
+        newThisWeek: lawStats?.newThisWeek || 0,
+        processed: lawStats?.processed || 0,
+        unprocessed: lawStats?.unprocessed || 0,
+        withEmbedding: lawStats?.withEmbedding || 0,
+      },
+      alertsThisWeek: {
+        total: alertStats?.total || 0,
+        severity,
+        directions,
+        resolved: alertStats?.resolved || 0,
+        dismissed: alertStats?.dismissed || 0,
+        resolutionRate: alertStats?.total > 0
+          ? Math.round(((alertStats?.resolved || 0) / alertStats.total) * 100) : 0,
+        feedbackCount: alertStats?.withFeedback || 0,
+        usefulRate: alertStats?.withFeedback > 0
+          ? Math.round(((alertStats?.usefulFeedback || 0) / alertStats.withFeedback) * 100) : 0,
+      },
+      email: {
+        sent: emailStats?.sent || 0,
+        failed: emailStats?.failed || 0,
+        deliveryRate: (emailStats?.sent || 0) + (emailStats?.failed || 0) > 0
+          ? Math.round((emailStats.sent / (emailStats.sent + emailStats.failed)) * 100) : 100,
+      },
+      recentRuns: recentRuns.map((r) => ({
+        runAt: r.runAt,
+        lawChanges: r.lawChanges,
+        contractsMatched: r.contractsMatched,
+        alertsSent: r.alertsSent,
+        positiveAlerts: r.positiveAlerts || 0,
+        negativeAlerts: r.negativeAlerts || 0,
+        durationMs: r.durationMs,
+      })),
+    });
+  } catch (error) {
+    console.error("[PulseV2] Radar health detail error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Radar-Health-Daten" });
   }
 });
 

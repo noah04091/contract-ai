@@ -10,6 +10,7 @@ import { ActionItem } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard';
+import { RadarHealthCard } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
 import '../styles/PulseV2.module.css';
 
@@ -498,6 +499,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           {stats.analyzed} von {stats.total} Verträgen analysiert
         </div>
       </div>
+
+      {/* ══════════ Radar Health ══════════ */}
+      <RadarHealthCard />
 
       {/* ══════════ Monitoring Status ══════════ */}
       {monitoringStatus && (

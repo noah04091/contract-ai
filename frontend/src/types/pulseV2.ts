@@ -201,6 +201,8 @@ export interface PulseV2ClauseImpact {
 
 export type LawStatus = 'proposal' | 'passed' | 'effective' | 'court_decision' | 'guideline' | 'unknown';
 
+export type ImpactDirection = 'negative' | 'positive' | 'neutral';
+
 export interface PulseV2LegalAlert {
   _id: string;
   userId: string;
@@ -213,12 +215,18 @@ export interface PulseV2LegalAlert {
   lawSource: string;
   impactSummary: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
+  impactDirection?: ImpactDirection;
   recommendation: string;
   affectedClauseIds: string[];
   clauseImpacts: PulseV2ClauseImpact[];
   status: 'unread' | 'read' | 'dismissed' | 'resolved';
   resolvedClauseIds?: string[];
   lastFixAppliedAt?: string;
+  userFeedback?: {
+    useful: boolean;
+    comment?: string;
+    feedbackAt: string;
+  };
   createdAt: string;
 }
 
