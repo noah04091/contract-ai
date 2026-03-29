@@ -97,7 +97,7 @@ const withRetry = async <T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch {
+    } catch (err) {
       lastError = err;
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
@@ -528,7 +528,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           // Progress loading failed silently
         }
       }
-    } catch {
+    } catch (err) {
       if (parseRequestIdRef.current !== requestId) return;
       const errorDetails = categorizeError(err, retryCount);
       setError(errorDetails.message);
@@ -709,7 +709,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         }
         setIsAnalyzing(false);
       }
-    } catch {
+    } catch (err) {
       // ✅ Race Condition Fix: Fehler nur anzeigen wenn Request noch aktuell
       if (isRequestStale()) return;
       const errorDetails = categorizeError(err, retryCount);
@@ -886,7 +886,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setAlternatives(response.alternatives);
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -916,7 +916,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setNegotiation(response.negotiation);
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -960,7 +960,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         };
         setChatHistory(prev => [...prev, assistantMessage]);
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Bessere Chat-Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1013,7 +1013,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           notes: [...prev.notes, response.note]
         } : null);
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1046,7 +1046,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           }
         });
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1068,7 +1068,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setSummary(response.summary);
       }
-    } catch {
+    } catch (err) {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
