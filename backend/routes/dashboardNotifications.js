@@ -604,10 +604,27 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
       .limit(30)
       .toArray();
 
+    // 1.5 FIX FROM ADDRESS: Alle Queue-Einträge mit falschem FROM reparieren
+    // Alte Einträge hatten EMAIL_USER (AWS Key) als FROM statt EMAIL_FROM
+    const correctFrom = `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`;
+    const emailRegex = new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    const fixFromResult = await db.collection("email_queue").updateMany(
+      {
+        to: { $regex: emailRegex },
+        status: { $in: ["pending", "skipped", "failed"] },
+        $or: [
+          { from: { $not: { $regex: /@/ } } },  // FROM ohne @ = definitiv kaputt (AWS Key)
+          { from: null },
+          { from: { $exists: false } }
+        ]
+      },
+      { $set: { from: correctFrom } }
+    );
+
     // 2. Repariere: Setze alle pending-Emails mit fehlendem/null nextRetryAt
     const repairResult = await db.collection("email_queue").updateMany(
       {
-        to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+        to: { $regex: emailRegex },
         status: "pending",
         $or: [
           { nextRetryAt: null },
@@ -619,17 +636,17 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
 
     // 3. Auch skipped-Emails von Bounce zurueck zu pending setzen
     const resetResult = await db.collection("email_queue").updateMany(
-      { to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, status: "skipped" },
-      { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null } }
+      { to: { $regex: emailRegex }, status: "skipped" },
+      { $set: { status: "pending", nextRetryAt: new Date(), skipReason: null, from: correctFrom } }
     );
 
     // 4. Auch failed-Emails nochmal versuchen
     const retryResult = await db.collection("email_queue").updateMany(
-      { to: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, status: "failed" },
-      { $set: { status: "pending", nextRetryAt: new Date(), retryCount: 0, lastError: null } }
+      { to: { $regex: emailRegex }, status: "failed" },
+      { $set: { status: "pending", nextRetryAt: new Date(), retryCount: 0, lastError: null, from: correctFrom } }
     );
 
-    console.log(`🔧 [REPAIR-QUEUE] User ${userId}: forceReactivated=${forceReactivate.modifiedCount}, repaired=${repairResult.modifiedCount}, resetSkipped=${resetResult.modifiedCount}, retryFailed=${retryResult.modifiedCount}`);
+    console.log(`🔧 [REPAIR-QUEUE] User ${userId}: fixedFrom=${fixFromResult.modifiedCount}, forceReactivated=${forceReactivate.modifiedCount}, repaired=${repairResult.modifiedCount}, resetSkipped=${resetResult.modifiedCount}, retryFailed=${retryResult.modifiedCount}`);
 
     res.json({
       success: true,
@@ -638,6 +655,7 @@ router.post("/repair-email-queue", verifyToken, async (req, res) => {
       emailHealthByOriginalCase: healthByOriginal,
       allHealthRecords: allHealthRecords.length,
       emailHealthAfter: healthAfter,
+      fixedFromAddress: fixFromResult.modifiedCount,
       forceReactivated: forceReactivate.modifiedCount,
       repaired: repairResult.modifiedCount,
       resetSkipped: resetResult.modifiedCount,

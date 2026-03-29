@@ -226,8 +226,11 @@ async function processEmailQueue(db) {
       const unsubHeaders = getUnsubscribeHeaders(email.to, emailCategory);
 
       // Versende E-Mail mit Unsubscribe-Headers
+      // WICHTIG: Immer korrekte FROM-Adresse verwenden, NICHT den gespeicherten Wert
+      // (alte Queue-Einträge können EMAIL_USER=AWS-Key als FROM enthalten)
+      const correctFrom = `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`;
       await transporter.sendMail({
-        from: email.from,
+        from: correctFrom,
         to: email.to,
         subject: email.subject,
         html: email.html,
