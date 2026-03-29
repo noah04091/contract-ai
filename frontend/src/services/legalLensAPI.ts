@@ -25,6 +25,31 @@ import type {
 const LEGAL_LENS_BASE = `${API_BASE_URL}/legal-lens`;
 
 /**
+ * fetchWithAuth mit automatischem Timeout (Standard: 35s)
+ * Verhindert, dass API-Calls endlos hängen bleiben.
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = 35000
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetchWithAuth(url, { ...options, signal: controller.signal });
+    return response;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
  * Vertrag in Klauseln parsen
  */
 export async function parseContract(
@@ -35,13 +60,13 @@ export async function parseContract(
     forceRefresh?: boolean; // Force Cache-Invalidierung
   }
 ): Promise<ParseContractResponse> {
-  const response = await fetchWithAuth(`${LEGAL_LENS_BASE}/parse`, {
+  const response = await fetchWithTimeout(`${LEGAL_LENS_BASE}/parse`, {
     method: 'POST',
     body: JSON.stringify({
       contractId,
       ...options
     })
-  });
+  }, 60000);
 
   if (!response.ok) {
     const error = await response.json();
@@ -198,7 +223,7 @@ export async function getAllPerspectives(
   contractId: string,
   clauseId: string
 ): Promise<GetPerspectivesResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/perspectives`,
     { method: 'GET' }
   );
@@ -220,7 +245,7 @@ export async function generateAlternatives(
   clauseText: string,
   perspective: PerspectiveType = 'contractor'
 ): Promise<GenerateAlternativesResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/alternatives`,
     {
       method: 'POST',
@@ -248,7 +273,7 @@ export async function generateNegotiationTips(
   clauseText: string,
   perspective: PerspectiveType = 'contractor'
 ): Promise<GenerateNegotiationResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/negotiation`,
     {
       method: 'POST',
@@ -277,7 +302,7 @@ export async function chatAboutClause(
   clauseText: string,
   perspective: PerspectiveType = 'contractor'
 ): Promise<ChatResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/chat`,
     {
       method: 'POST',
@@ -303,7 +328,7 @@ export async function chatAboutClause(
 export async function getProgress(
   contractId: string
 ): Promise<ProgressResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/progress`,
     { method: 'GET' }
   );
@@ -326,7 +351,7 @@ export async function updateProgress(
     'scrollPosition' | 'status'
   >>
 ): Promise<ProgressResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/progress`,
     {
       method: 'POST',
@@ -350,7 +375,7 @@ export async function addNote(
   clauseId: string,
   content: string
 ): Promise<{ success: boolean; note: Note }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/note`,
     {
       method: 'POST',
@@ -378,7 +403,7 @@ export async function toggleBookmark(
   label?: string,
   color?: string
 ): Promise<{ success: boolean; action: 'added' | 'removed'; bookmark?: Bookmark }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/bookmark`,
     {
       method: 'POST',
@@ -409,7 +434,7 @@ export async function getAvailablePerspectives(): Promise<{
     description: string;
   }>;
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/perspectives`,
     { method: 'GET' }
   );
@@ -428,7 +453,7 @@ export async function getAvailablePerspectives(): Promise<{
 export async function getAnalysisSummary(
   contractId: string
 ): Promise<SummaryResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/summary`,
     { method: 'GET' }
   );
@@ -455,7 +480,7 @@ export async function getAvailableIndustries(): Promise<{
     name: string;
   }>;
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/industries`,
     { method: 'GET' }
   );
@@ -480,7 +505,7 @@ export async function setIndustryContext(
   industrySetAt: string;
   message: string;
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/industry`,
     {
       method: 'POST',
@@ -509,7 +534,7 @@ export async function getIndustryContext(
   confidence?: number;
   detectedKeywords?: string[];
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/industry`,
     { method: 'GET' }
   );
@@ -533,7 +558,7 @@ export async function generateNegotiationChecklist(
   contractId: string,
   perspective: PerspectiveType = 'contractor'
 ): Promise<NegotiationChecklistResponse> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/negotiation-checklist`,
     {
       method: 'POST',
@@ -556,12 +581,13 @@ export async function exportChecklistPdf(
   contractId: string,
   perspective: PerspectiveType = 'contractor'
 ): Promise<Blob> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/${contractId}/checklist-pdf`,
     {
       method: 'POST',
       body: JSON.stringify({ perspective })
-    }
+    },
+    60000
   );
 
   if (!response.ok) {
@@ -583,7 +609,7 @@ export async function getExportDesigns(): Promise<{
   success: boolean;
   designs: ReportDesignInfo[];
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/export/designs`,
     { method: 'GET' }
   );
@@ -603,7 +629,7 @@ export async function getExportSections(): Promise<{
   success: boolean;
   sections: ReportSectionInfo[];
 }> {
-  const response = await fetchWithAuth(
+  const response = await fetchWithTimeout(
     `${LEGAL_LENS_BASE}/export/sections`,
     { method: 'GET' }
   );
@@ -626,19 +652,32 @@ export async function exportAnalysisReport(
   includeSections: ReportSection[] = ['summary', 'criticalClauses']
 ): Promise<Blob> {
   const token = localStorage.getItem('token');
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-  const response = await fetch(
-    `${LEGAL_LENS_BASE}/${contractId}/export-report`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` })
-      },
-      credentials: 'include',
-      body: JSON.stringify({ design, includeSections })
+  let response: Response;
+  try {
+    response = await fetch(
+      `${LEGAL_LENS_BASE}/${contractId}/export-report`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({ design, includeSections }),
+        signal: controller.signal
+      }
+    );
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Der Report-Export hat zu lange gedauert. Bitte versuchen Sie es erneut.');
     }
-  );
+    throw err;
+  }
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     // Versuche JSON-Fehlermeldung zu lesen

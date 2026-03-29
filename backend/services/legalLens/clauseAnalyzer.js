@@ -537,7 +537,7 @@ Antworte in diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.5,
         max_tokens: 1000
-      });
+      }, { timeout: 30000 });
 
       const result = safeParseJSON(response.choices[0].message.content, 'generateAlternatives');
 
@@ -594,7 +594,7 @@ Antworte in diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.4,
         max_tokens: 800
-      });
+      }, { timeout: 30000 });
 
       const result = safeParseJSON(response.choices[0].message.content, 'generateNegotiationTips');
 
@@ -641,7 +641,7 @@ Bei rechtlichen Fragen weise darauf hin, dass du keine Rechtsberatung gibst.`;
         messages,
         temperature: 0.5,
         max_tokens: 300
-      });
+      }, { timeout: 30000 });
 
       const answer = response.choices[0].message.content;
 
@@ -731,7 +731,7 @@ Strukturiere deine Antwort so:
         stream: true,
         temperature: 0.3,
         max_tokens: 1800
-      });
+      }, { timeout: 30000 });
 
       let fullContent = '';
 
@@ -830,7 +830,7 @@ Antworte NUR mit diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.2,
         max_tokens: 2000
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'batchPreAnalyze');
@@ -1018,7 +1018,7 @@ Antworte NUR mit diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.3,
         max_tokens: 2500
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'generateContractSummary');
@@ -1159,7 +1159,7 @@ WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrli
         stream: true,
         temperature: 0.3,
         max_tokens: 2000
-      });
+      }, { timeout: 30000 });
 
       let fullContent = '';
 
@@ -1227,7 +1227,7 @@ Regeln: reject=Dealbreaker. accept=fair+üblich. Immer €/%/Tage nennen. better
         response_format: { type: 'json_object' },
         temperature,
         max_tokens: 1000
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'analyzeClauseV2');
@@ -1315,7 +1315,7 @@ Regeln:
         response_format: { type: 'json_object' },
         temperature,
         max_tokens: 600
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'simulateClause');
@@ -1383,7 +1383,7 @@ Regeln:
         ],
         temperature,
         max_tokens: 2000
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const rewrittenText = response.choices[0].message.content.trim()
