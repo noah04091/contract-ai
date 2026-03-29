@@ -28,10 +28,10 @@ async function sendEmailHtml(to, subject, html, options = {}) {
   const { unsubscribeUrl, category = 'general', userId = null } = options;
 
   try {
-    // ✅ Robuster FROM-Fallback: EMAIL_FROM > EMAIL_USER > Hardcoded Fallback
+    // ✅ Robuster FROM-Fallback: EMAIL_FROM > Hardcoded Fallback
+    // WICHTIG: EMAIL_USER ist der SES SMTP-Benutzername (AWS Key), KEINE Email-Adresse!
     const fromAddress = process.env.EMAIL_FROM
-      || (process.env.EMAIL_USER ? `"Contract AI" <${process.env.EMAIL_USER}>` : null)
-      || "Contract AI <no-reply@contract-ai.de>";
+      || "Contract AI <info@contract-ai.de>";
 
     // 📧 Debug: FROM-Adresse loggen (ohne sensible Daten)
     console.log(`📧 sendEmailHtml: Sende von "${fromAddress}" an ${to} [${category}]`);

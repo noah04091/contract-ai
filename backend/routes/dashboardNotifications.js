@@ -494,7 +494,7 @@ router.post("/test-smtp", verifyToken, async (req, res) => {
 
     try {
       smtpResult = await transporter.sendMail({
-        from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+        from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
         to: email,
         subject: "Contract AI — SMTP Test",
         html: `<p>Dies ist eine Test-Email von Contract AI.</p><p>Wenn du diese Email siehst, funktioniert der SMTP-Versand an ${email} korrekt.</p><p>Zeitstempel: ${new Date().toISOString()}</p>`

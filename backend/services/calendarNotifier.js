@@ -250,7 +250,7 @@ async function queueEventNotification(event, db) {
     to: event.user.email,
     subject: subject,
     html: htmlContent,
-    from: `"Contract AI Calendar" <${process.env.EMAIL_USER}>`,
+    from: `"Contract AI Calendar" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
     eventId: event._id.toString(),
     userId: event.userId.toString(),
     emailType: `calendar_${event.type.toLowerCase()}`

@@ -51,7 +51,7 @@ async function createDigestEmail(db, userId, events, user) {
     to: user.email,
     subject: subject,
     html: htmlContent,
-    from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+    from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
     userId: userId,
     emailType: "calendar_digest"
   });

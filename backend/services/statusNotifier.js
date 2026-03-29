@@ -55,7 +55,7 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
     });
 
     await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+      from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
       to: userEmail,
       subject: `${contractName} - Frist in ${daysLeft} Tagen`,
       html: htmlContent
@@ -112,7 +112,7 @@ async function notifyExpired(userEmail, contractName, expiryDate) {
     });
 
     await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+      from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
       to: userEmail,
       subject: `${contractName} - Vertragsstatus`,
       html: htmlContent
@@ -170,7 +170,7 @@ async function notifyAutoRenewed(userEmail, contractName, oldExpiryDate, newExpi
     });
 
     await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+      from: `"Contract AI" <${process.env.EMAIL_FROM || 'info@contract-ai.de'}>`,
       to: userEmail,
       subject: `${contractName} - Vertragsverlaengerung`,
       html: htmlContent
