@@ -2671,9 +2671,12 @@ function smartTruncateClause(text, maxLen = MAX_CLAUSE_TEXT_LENGTH) {
  */
 function prioritizeClausePairs(matches) {
   if (!matches || !Array.isArray(matches)) return [];
+  // Areas that produce noise, not real contractual differences (template placeholders, boilerplate)
+  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
   const priority = { similar: 0, related: 1, potential: 2 };
   return matches
     .filter(m => m.type !== 'equivalent') // Skip equivalent (≥92%) — no meaningful diff
+    .filter(m => !skipAreas.has(m.area))   // Skip noise areas (parties, subject, etc.)
     .sort((a, b) => (priority[a.type] ?? 3) - (priority[b.type] ?? 3))
     .slice(0, MAX_CLAUSE_PAIRS);
 }
@@ -2939,9 +2942,14 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
     ).catch(() => null);
   });
 
-  // Build tasks for missing clauses (unmatched)
-  const unmatched1 = (clauseMatchResult.unmatched1 || []).slice(0, MAX_MISSING_ASSESSMENTS);
-  const unmatched2 = (clauseMatchResult.unmatched2 || []).slice(0, MAX_MISSING_ASSESSMENTS - unmatched1.length);
+  // Build tasks for missing clauses (unmatched) — skip noise areas
+  const clauseSkipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  const unmatched1 = (clauseMatchResult.unmatched1 || [])
+    .filter(id => { const c = clauseMap1[id]; return c && !clauseSkipAreas.has(c.area); })
+    .slice(0, MAX_MISSING_ASSESSMENTS);
+  const unmatched2 = (clauseMatchResult.unmatched2 || [])
+    .filter(id => { const c = clauseMap2[id]; return c && !clauseSkipAreas.has(c.area); })
+    .slice(0, MAX_MISSING_ASSESSMENTS - unmatched1.length);
 
   const missingTasks = [
     ...unmatched1.map(clauseId => () => {
