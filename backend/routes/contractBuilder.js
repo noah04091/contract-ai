@@ -657,6 +657,7 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       t = t.replace(/\u00AD/g, '');
       t = t.replace(/[\u2000-\u200F]/g, ' ');
       t = t.replace(/\uFFFD/g, '');
+      t = t.replace(/[\u25A0-\u25FF]/g, '');
       t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
       t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
       t = t.replace(/Seite\s+von\s+\d+/gi, '');
@@ -927,20 +928,20 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       const bodyLines = clauseText.split('\n');
       if (bodyLines.length === 0) return clauseText;
 
-      const firstLine = bodyLines[0].trim();
+      // Normalize: remove □ artifacts and collapse whitespace for comparison
+      const normalize = (s) => s.replace(/[\u25A0-\u25FF]/g, '').replace(/\s+/g, ' ').trim();
+      const firstLine = normalize(bodyLines[0]);
       const headingVariants = [
-        fullHeading.trim(),
-        fullHeading.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim(),
+        fullHeading,
+        fullHeading.replace(/^§\s*\d+\s*[-–—]?\s*/, ''),
         `§ ${number} ${clauseTitle}`,
         `§${number} ${clauseTitle}`,
         clauseTitle
-      ].filter(Boolean);
+      ].map(normalize).filter(v => v.length > 3);
 
       const isHeadingDuplicate = headingVariants.some(variant =>
-        variant.length > 3 && (
-          firstLine === variant ||
-          firstLine.startsWith(variant) && firstLine.length - variant.length < 5
-        )
+        firstLine === variant ||
+        (firstLine.startsWith(variant) && firstLine.length - variant.length < 5)
       );
 
       if (isHeadingDuplicate) {
@@ -950,71 +951,72 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       return clauseText;
     };
 
-    // Sort clauses by section number to fix OCR ordering issues
-    const sortedClauses = [...clauses].sort((a, b) => {
-      // Preamble/no-number clauses come first
-      const numA = a.sectionNumber ? parseInt(a.sectionNumber.replace(/\D/g, '')) || 999 : 0;
-      const numB = b.sectionNumber ? parseInt(b.sectionNumber.replace(/\D/g, '')) || 999 : 0;
-      return numA - numB;
-    });
+    // ── Pre-scan: find Präambel clause and process it FIRST (before §1) ──
+    let preambleIdx = -1;
+    for (let i = 0; i < clauses.length; i++) {
+      const t = (clauses[i].title || '').replace(/[\u25A0-\u25FF]/g, '').trim();
+      if (/präambel|preamble|einleitung|vorbemerkung/i.test(t)) {
+        preambleIdx = i;
+        break;
+      }
+    }
 
-    // Clause blocks
-    let clauseNumber = 1;
-    let preambleHandled = false;
-    for (const clause of sortedClauses) {
+    // Helper: get clause text with selected optimization applied
+    const getClauseText = (clause) => {
       const optimization = optimizations.find(o => o.clauseId === clause.id);
       const selection = selectionMap.get(clause.id);
       const selectedMode = selection?.mode;
-
-      // Determine text: custom > optimized > original
-      let clauseText = clause.originalText;
+      let text = clause.originalText;
       if (selectedMode === 'custom' && selection?.customText) {
-        clauseText = selection.customText;
+        text = selection.customText;
       } else if (selectedMode && optimization?.versions?.[selectedMode]?.text) {
-        clauseText = optimization.versions[selectedMode].text;
+        text = optimization.versions[selectedMode].text;
+      }
+      return cleanBuilderText(text);
+    };
+
+    // Process Präambel + Konditionenblatt FIRST (before any §-clauses)
+    if (preambleIdx >= 0) {
+      const preambleRaw = getClauseText(clauses[preambleIdx]);
+
+      // Extract Konditionenblatt as table block before cleaning
+      const kondTable = extractKonditionenTable(preambleRaw);
+      if (kondTable) {
+        addBlock({
+          id: uuidv4(),
+          type: 'table',
+          content: { headers: kondTable.headers, rows: kondTable.rows, footer: kondTable.footer },
+          style: {}, locked: false, aiGenerated: true
+        });
       }
 
-      // Clean OCR artifacts from clause text
-      clauseText = cleanBuilderText(clauseText);
-
-      const rawTitle = clause.title || '';
-      const isPreamble = !preambleHandled && (
-        /präambel|preamble|einleitung|vorbemerkung/i.test(rawTitle) ||
-        (clauseNumber === 1 && !clause.sectionNumber)
-      );
-
-      if (isPreamble) {
-        preambleHandled = true;
-
-        // Extract Konditionenblatt as table block before cleaning
-        const kondTable = extractKonditionenTable(clauseText);
-        if (kondTable) {
-          addBlock({
-            id: uuidv4(),
-            type: 'table',
-            content: { headers: kondTable.headers, rows: kondTable.rows, footer: kondTable.footer },
-            style: {}, locked: false, aiGenerated: true
-          });
-        }
-
-        // Strip OCR front-matter, keep only actual preamble text
-        const preambleText = cleanPreambleText(clauseText);
-        if (preambleText.length > 20) {
-          addBlock({
-            id: uuidv4(),
-            type: 'preamble',
-            content: { preambleText, preambleLayout: 'accent-bar' },
-            style: {}, locked: false, aiGenerated: true
-          });
-        }
-        clauseNumber++;
-        continue;
+      // Strip OCR front-matter, keep only actual preamble text
+      const preambleText = cleanPreambleText(preambleRaw);
+      if (preambleText.length > 20) {
+        addBlock({
+          id: uuidv4(),
+          type: 'preamble',
+          content: { preambleText, preambleLayout: 'accent-bar' },
+          style: {}, locked: false, aiGenerated: true
+        });
       }
+    }
+
+    // ── Process remaining clauses in original order (optimizer already extracts in document order) ──
+    let clauseNumber = 1;
+    for (let i = 0; i < clauses.length; i++) {
+      if (i === preambleIdx) continue; // already handled above
+
+      const clause = clauses[i];
+      let clauseText = getClauseText(clause);
+
+      // Clean title of □ artifacts + normalize whitespace
+      const rawTitle = (clause.title || '').replace(/[\u25A0-\u25FF]/g, '').replace(/\s{2,}/g, ' ').trim();
 
       // Regular clause handling
       const clauseTitle = rawTitle.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim() || `Klausel ${clauseNumber}`;
       const number = clause.sectionNumber
-        ? clause.sectionNumber.replace(/^§\s*/, '').trim()
+        ? clause.sectionNumber.replace(/^§\s*/, '').replace(/[\u25A0-\u25FF]/g, '').trim()
         : String(clauseNumber);
 
       // Strip duplicate heading from body
