@@ -406,8 +406,8 @@ function generateCalendarEmailTemplate(params) {
     return `
       <table border="0" cellpadding="0" cellspacing="0" style="margin: 10px auto;">
         <tr>
-          <td align="center" style="background: ${colors.bg}; border-radius: 25px;">
-            <a href="${button.url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 600; color: ${colors.text}; text-decoration: none;">${button.text}</a>
+          <td align="center">
+            <a href="${button.url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 600; color: ${colors.text}; text-decoration: none; background: ${colors.bg}; border-radius: 25px;">${button.text}</a>
           </td>
         </tr>
       </table>

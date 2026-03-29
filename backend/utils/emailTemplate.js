@@ -15,12 +15,12 @@ function generateEmailTemplate({
   unsubscribeUrl = null  // 🆕 GDPR: Unsubscribe-Link (Pflicht für Marketing-Emails)
 }) {
 
-  // CTA-Button immer zentriert mit abgerundeten Ecken
+  // CTA-Button immer zentriert mit Pill-Form (border-radius auf <a> fuer Email-Client-Kompatibilitaet)
   const ctaHtml = cta ? `
               <table cellpadding="0" cellspacing="0" style="margin-top: 28px; margin-left: auto; margin-right: auto;">
                 <tr>
-                  <td style="background-color: #3b82f6; border-radius: 25px;">
-                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
+                  <td>
+                    <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 25px;">
                       ${cta.text}
                     </a>
                   </td>
