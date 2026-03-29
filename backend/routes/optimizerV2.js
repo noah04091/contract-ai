@@ -1499,6 +1499,15 @@ router.post('/results/:id/docx', async (req, res) => {
       t = t.replace(/\u00AD/g, '');  // soft hyphen
       t = t.replace(/[\u2000-\u200F]/g, ' '); // various unicode spaces
       t = t.replace(/\uFFFD/g, ''); // replacement character (box)
+      t = t.replace(/\uFEFF/g, ''); // BOM
+      t = t.replace(/[\u25A0-\u25FF]/g, ''); // geometric shapes (□ ■)
+      t = t.replace(/[\u2500-\u257F]/g, ''); // box drawing (─ │ ┌)
+      t = t.replace(/[\u2580-\u259F]/g, ''); // block elements (▀ ▄ █)
+      t = t.replace(/[\u2600-\u26FF]/g, ''); // misc symbols (☀ ★)
+      t = t.replace(/[\u2700-\u27BF]/g, ''); // dingbats (✂ ✓)
+      t = t.replace(/[\uE000-\uF8FF]/g, ''); // private use area
+      t = t.replace(/[\u2028\u2029]/g, '\n'); // unicode line separators
+      t = t.replace(/[\uFB00-\uFB06]/g, (m) => ({ '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl', '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB05': 'st', '\uFB06': 'st' }[m] || m)); // ligatures
       t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); // control chars
 
       // 3. Remove OCR page markers and headers

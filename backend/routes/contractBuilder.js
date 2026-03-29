@@ -657,7 +657,15 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       t = t.replace(/\u00AD/g, '');
       t = t.replace(/[\u2000-\u200F]/g, ' ');
       t = t.replace(/\uFFFD/g, '');
+      t = t.replace(/\uFEFF/g, '');
       t = t.replace(/[\u25A0-\u25FF]/g, '');
+      t = t.replace(/[\u2500-\u257F]/g, '');
+      t = t.replace(/[\u2580-\u259F]/g, '');
+      t = t.replace(/[\u2600-\u26FF]/g, '');
+      t = t.replace(/[\u2700-\u27BF]/g, '');
+      t = t.replace(/[\uE000-\uF8FF]/g, '');
+      t = t.replace(/[\u2028\u2029]/g, '\n');
+      t = t.replace(/[\uFB00-\uFB06]/g, (m) => ({ '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl', '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB05': 'st', '\uFB06': 'st' }[m] || m));
       t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
       t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
       t = t.replace(/Seite\s+von\s+\d+/gi, '');
