@@ -446,6 +446,111 @@ router.get("/email-status", verifyToken, async (req, res) => {
  * POST /api/dashboard/notifications/repair-email-queue
  * Repariert feststeckende Emails: setzt nextRetryAt auf jetzt fuer alle pending-Emails
  */
+/**
+ * POST /api/dashboard/notifications/test-smtp
+ * Sendet EINE einzelne Test-Email und gibt das SMTP-Ergebnis zurueck.
+ * Zeigt auch aktuelle Bounce-History fuer diese Email.
+ */
+router.post("/test-smtp", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await ensureDb();
+
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { email: 1, name: 1 } }
+    );
+
+    if (!user?.email) {
+      return res.status(404).json({ success: false, message: "User nicht gefunden" });
+    }
+
+    const email = user.email.toLowerCase();
+
+    // 1. Zeige letzte Bounce-Records fuer diese Email
+    const recentBounces = await db.collection("email_bounces")
+      .find({ email })
+      .sort({ timestamp: -1 })
+      .limit(10)
+      .toArray();
+
+    // 2. Zeige aktuellen email_health Status
+    const health = await db.collection("email_health").findOne({ email });
+
+    // 3. Sende EINE Test-Email direkt (NICHT ueber Queue)
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: Number(process.env.EMAIL_PORT),
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      }
+    });
+
+    let smtpResult = null;
+    let smtpError = null;
+
+    try {
+      smtpResult = await transporter.sendMail({
+        from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "Contract AI — SMTP Test",
+        html: `<p>Dies ist eine Test-Email von Contract AI.</p><p>Wenn du diese Email siehst, funktioniert der SMTP-Versand an ${email} korrekt.</p><p>Zeitstempel: ${new Date().toISOString()}</p>`
+      });
+    } catch (error) {
+      smtpError = {
+        message: error.message,
+        code: error.code,
+        responseCode: error.responseCode,
+        response: error.response,
+        command: error.command
+      };
+    }
+
+    transporter.close();
+
+    console.log(`🧪 [SMTP-TEST] User ${userId} (${email}): ${smtpResult ? 'SUCCESS' : 'FAILED'} ${smtpError ? smtpError.message : ''}`);
+
+    res.json({
+      success: true,
+      email,
+      smtpConfig: {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        user: process.env.EMAIL_USER
+      },
+      smtpResult: smtpResult ? {
+        accepted: smtpResult.accepted,
+        rejected: smtpResult.rejected,
+        response: smtpResult.response,
+        messageId: smtpResult.messageId
+      } : null,
+      smtpError,
+      emailHealth: health ? {
+        status: health.status,
+        hardBounces: health.hardBounces,
+        softBounces: health.softBounces,
+        deactivatedAt: health.deactivatedAt,
+        deactivationReason: health.deactivationReason,
+        lastBounceAt: health.lastBounceAt,
+        reactivatedAt: health.reactivatedAt
+      } : null,
+      recentBounces: recentBounces.map(b => ({
+        bounceType: b.bounceType,
+        smtpCode: b.smtpCode,
+        errorMessage: b.errorMessage?.substring(0, 200),
+        emailSubject: b.emailSubject?.substring(0, 60),
+        timestamp: b.timestamp
+      }))
+    });
+  } catch (error) {
+    console.error('[SMTP-TEST] Error:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim SMTP-Test', error: error.message });
+  }
+});
+
 router.post("/repair-email-queue", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
