@@ -1900,8 +1900,15 @@ REGELN:
 - Sprich den Leser mit "du/dein" an in issue und risk
 - WENIGER Punkte sind besser als erfundene Punkte!`;
 
+    if (!truncatedText || truncatedText.trim().length < 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Kein Vertragstext verfügbar. Bitte lade den Vertrag erneut hoch.'
+      });
+    }
+
     const response = await clauseAnalyzer.openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -1942,10 +1949,11 @@ REGELN:
     });
 
   } catch (error) {
-    console.error('[Legal Lens] Negotiation checklist error:', error);
+    console.error('[Legal Lens] Negotiation checklist error:', error?.message || error);
     res.status(500).json({
       success: false,
-      error: 'Fehler beim Generieren der Verhandlungs-Checkliste'
+      error: 'Fehler beim Generieren der Verhandlungs-Checkliste',
+      details: error?.message || 'Unbekannter Fehler'
     });
   }
 });
