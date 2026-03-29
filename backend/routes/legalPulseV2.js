@@ -2732,7 +2732,7 @@ router.get("/radar-health-detail", async (req, res) => {
           byDirection: { $push: { $ifNull: ["$impactDirection", "negative"] } },
           resolved: { $sum: { $cond: [{ $eq: ["$status", "resolved"] }, 1, 0] } },
           dismissed: { $sum: { $cond: [{ $eq: ["$status", "dismissed"] }, 1, 0] } },
-          withFeedback: { $sum: { $cond: [{ $ne: ["$userFeedback", null] }, 1, 0] } },
+          withFeedback: { $sum: { $cond: [{ $gt: ["$userFeedback.feedbackAt", null] }, 1, 0] } },
           usefulFeedback: {
             $sum: { $cond: [{ $eq: ["$userFeedback.useful", true] }, 1, 0] },
           },
