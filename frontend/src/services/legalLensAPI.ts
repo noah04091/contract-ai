@@ -563,7 +563,8 @@ export async function generateNegotiationChecklist(
     {
       method: 'POST',
       body: JSON.stringify({ perspective })
-    }
+    },
+    45000
   );
 
   if (!response.ok) {

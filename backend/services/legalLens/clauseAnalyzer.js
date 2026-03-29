@@ -830,7 +830,7 @@ Antworte NUR mit diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.2,
         max_tokens: 2000
-      }, { timeout: 30000 });
+      }, { timeout: 60000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'batchPreAnalyze');
@@ -1018,7 +1018,7 @@ Antworte NUR mit diesem JSON-Format:
         response_format: { type: 'json_object' },
         temperature: 0.3,
         max_tokens: 2500
-      }, { timeout: 30000 });
+      }, { timeout: 60000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'generateContractSummary');
@@ -1159,7 +1159,7 @@ WICHTIG: Nenne KONKRETE Zahlen (€, Monate, %). Sprich mit "du/dein". Sei ehrli
         stream: true,
         temperature: 0.3,
         max_tokens: 2000
-      }, { timeout: 30000 });
+      }, { timeout: 60000 });
 
       let fullContent = '';
 

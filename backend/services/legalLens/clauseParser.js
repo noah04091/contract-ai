@@ -1361,7 +1361,7 @@ Antworte NUR mit einem JSON-Array:
           temperature: 0.1, // Niedrig für konsistente Ergebnisse
           max_tokens: 16000, // ERHÖHT von 4000 - GPT-4o-mini unterstützt bis 16k
           response_format: { type: 'json_object' }
-        }, { timeout: 30000 });
+        }, { timeout: 60000 });
 
         const content = response.choices[0].message.content;
 
@@ -1578,7 +1578,7 @@ Antworte NUR mit einem JSON-Array:
         temperature: 0.1,
         max_tokens: 16000,
         response_format: { type: 'json_object' }
-      }, { timeout: 30000 });
+      }, { timeout: 60000 });
 
       const content = response.choices[0].message.content;
       const parsed = JSON.parse(content);
