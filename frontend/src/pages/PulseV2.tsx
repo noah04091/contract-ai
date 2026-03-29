@@ -10,7 +10,7 @@ import { ActionItem } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard';
-import { RadarHealthCard } from '../components/pulseV2/RadarHealthCard';
+import { useRadarHealth, RadarHealthCompact, RadarHealthExpanded } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
 import '../styles/PulseV2.module.css';
 
@@ -340,6 +340,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
+  const [radarExpanded, setRadarExpanded] = useState(false);
+  const { data: radarData } = useRadarHealth();
 
   // Debounce search to avoid excessive re-renders
   useEffect(() => {
@@ -500,8 +502,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </div>
       </div>
 
-      {/* ══════════ Radar Health ══════════ */}
-      <RadarHealthCard />
+      {/* RadarHealthCard is now embedded in the Contract Health card below */}
 
       {/* ══════════ Monitoring Status ══════════ */}
       {monitoringStatus && (
@@ -519,10 +520,12 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
         padding: '36px 44px',
         marginBottom: 28,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 40,
       }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 40,
+        }}>
         {/* SVG Score Ring */}
         {(() => {
           const score = alertStats.avgScore;
@@ -600,6 +603,17 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             </>
           );
         })()}
+        {/* ── Radar Status (compact, right side) ── */}
+        {radarData && (
+          <RadarHealthCompact
+            data={radarData}
+            expanded={radarExpanded}
+            onToggle={() => setRadarExpanded(!radarExpanded)}
+          />
+        )}
+        </div>
+        {/* ── Radar expanded details (full width, below flex row) ── */}
+        {radarExpanded && radarData && <RadarHealthExpanded data={radarData} />}
       </div>
 
       {/* ══════════ First-Use: Demo Insight + Value Proposition ══════════ */}
