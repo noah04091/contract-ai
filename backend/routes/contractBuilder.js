@@ -809,8 +809,106 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       });
     }
 
+    // ── Helper: extract Konditionenblatt as table ──
+    const extractKonditionenTable = (text) => {
+      // Look for "Konditionenblatt" section with key:value pairs
+      const kondMatch = text.match(/Konditionenblatt[\s\S]*?(?=\n\s*(?:Präambel|Debitorenliste|§\s*\d|$))/i);
+      if (!kondMatch) return null;
+      const section = kondMatch[0];
+      const headers = ['Position', 'Wert'];
+      const rows = [];
+      // Extract "Label: Value" or "Label:\nValue" pairs
+      const lineArr = section.split('\n').filter(l => l.trim());
+      for (let i = 0; i < lineArr.length; i++) {
+        const line = lineArr[i].trim();
+        if (line.toLowerCase() === 'konditionenblatt') continue;
+        // "Label: Value" on same line
+        const kvMatch = line.match(/^(.+?):\s+(.+)$/);
+        if (kvMatch && kvMatch[1].length < 80) {
+          rows.push([kvMatch[1].trim(), kvMatch[2].trim()]);
+        } else if (line.endsWith(':') && i + 1 < lineArr.length) {
+          // "Label:\n Value" on next line
+          const label = line.replace(/:$/, '').trim();
+          const value = lineArr[i + 1].trim();
+          if (label.length < 80 && value.length < 100) {
+            rows.push([label, value]);
+            i++; // skip value line
+          }
+        }
+      }
+      return rows.length >= 3 ? { headers, rows, footer: '' } : null;
+    };
+
+    // ── Helper: strip OCR front-matter from Präambel clause ──
+    const cleanPreambleText = (text) => {
+      // Try to find where actual Präambel starts
+      const preambleMarker = text.match(/\n\s*Präambel\s*\n/i);
+      if (preambleMarker) {
+        return text.substring(preambleMarker.index + preambleMarker[0].length).trim();
+      }
+      // Fallback: strip known OCR front-matter patterns
+      let t = text;
+      // Remove Geschäftsführer/Amtsgericht/Handelsregister blocks
+      t = t.replace(/Geschäftsführer:?[^\n]*\n/gi, '');
+      t = t.replace(/Amtsgericht[^\n]*\n/gi, '');
+      t = t.replace(/Handelsregister[^\n]*\n/gi, '');
+      t = t.replace(/USt-Id[^\n]*\n/gi, '');
+      t = t.replace(/Steuer-Nr[^\n]*\n/gi, '');
+      t = t.replace(/FAST\s*\/\/\s*FORWARD\s*\/\/\s*FINANCE[^\n]*/gi, '');
+      t = t.replace(/©[^\n]*/g, '');
+      // Remove "Angaben zum Unternehmen" sections
+      t = t.replace(/Angaben zum Unternehmen:?[\s\S]*?(?=\n\s*(?:Konditionenblatt|Präambel|§\s*\d))/i, '');
+      // Remove "Konditionenblatt" sections (extracted separately as table)
+      t = t.replace(/Konditionenblatt[\s\S]*?(?=\n\s*(?:Präambel|Debitorenliste|§\s*\d|$))/i, '');
+      // Remove "Debitorenliste" sections
+      t = t.replace(/Debitorenliste[\s\S]*?(?=\n\s*(?:Präambel|§\s*\d|$))/i, '');
+      // Remove standalone date lines
+      t = t.replace(/^\s*\d{2}\.\d{2}\.\d{4}\s*$/gm, '');
+      // Remove "Name / genaue Anschrift" form data
+      t = t.replace(/Name\s*\/\s*genaue Anschrift[^\n]*/gi, '');
+      t = t.replace(/\(Firmenstempel\)[^\n]*/gi, '');
+      t = t.replace(/Nachstehend\s+\w+\s+genannt[^\n]*/gi, '');
+      t = t.replace(/\(Vor- und Nachname\)[^\n]*/gi, '');
+      t = t.replace(/Im Handelsregister eingetragen\?[^\n]*/gi, '');
+      t = t.replace(/Bankleitzahl\s*\/\s*BIC[^\n]*/gi, '');
+      // Remove "Seite von X" markers
+      t = t.replace(/Seite\s+(?:von\s+)?\d+/gi, '');
+      // Clean up empty lines
+      t = t.replace(/\n{3,}/g, '\n\n');
+      return t.trim();
+    };
+
+    // ── Helper: strip duplicate heading from body text ──
+    const stripDuplicateHeading = (clauseText, clauseTitle, number, fullHeading) => {
+      const bodyLines = clauseText.split('\n');
+      if (bodyLines.length === 0) return clauseText;
+
+      const firstLine = bodyLines[0].trim();
+      const headingVariants = [
+        fullHeading.trim(),
+        fullHeading.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim(),
+        `§ ${number} ${clauseTitle}`,
+        `§${number} ${clauseTitle}`,
+        clauseTitle
+      ].filter(Boolean);
+
+      const isHeadingDuplicate = headingVariants.some(variant =>
+        variant.length > 3 && (
+          firstLine === variant ||
+          firstLine.startsWith(variant) && firstLine.length - variant.length < 5
+        )
+      );
+
+      if (isHeadingDuplicate) {
+        bodyLines.shift();
+        return bodyLines.join('\n').trim();
+      }
+      return clauseText;
+    };
+
     // Clause blocks
     let clauseNumber = 1;
+    let preambleHandled = false;
     for (const clause of clauses) {
       const optimization = optimizations.find(o => o.clauseId === clause.id);
       const selection = selectionMap.get(clause.id);
@@ -827,40 +925,82 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       // Clean OCR artifacts from clause text
       clauseText = cleanBuilderText(clauseText);
 
-      // Clean §-prefix from title (ClauseBlock renders number separately)
       const rawTitle = clause.title || '';
-      const clauseTitle = rawTitle.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim() || `Klausel ${clauseNumber}`;
+      const isPreamble = !preambleHandled && (
+        /präambel|preamble|einleitung|vorbemerkung/i.test(rawTitle) ||
+        (clauseNumber === 1 && !clause.sectionNumber)
+      );
 
-      // Use section number if available, otherwise auto-number
+      if (isPreamble) {
+        preambleHandled = true;
+
+        // Extract Konditionenblatt as table block before cleaning
+        const kondTable = extractKonditionenTable(clauseText);
+        if (kondTable) {
+          addBlock({
+            id: uuidv4(),
+            type: 'table',
+            content: { headers: kondTable.headers, rows: kondTable.rows, footer: kondTable.footer },
+            style: {}, locked: false, aiGenerated: true
+          });
+        }
+
+        // Strip OCR front-matter, keep only actual preamble text
+        const preambleText = cleanPreambleText(clauseText);
+        if (preambleText.length > 20) {
+          addBlock({
+            id: uuidv4(),
+            type: 'preamble',
+            content: { preambleText, preambleLayout: 'accent-bar' },
+            style: {}, locked: false, aiGenerated: true
+          });
+        }
+        clauseNumber++;
+        continue;
+      }
+
+      // Regular clause handling
+      const clauseTitle = rawTitle.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim() || `Klausel ${clauseNumber}`;
       const number = clause.sectionNumber
         ? clause.sectionNumber.replace(/^§\s*/, '').trim()
         : String(clauseNumber);
 
-      // Strip duplicate heading from body text — Builder renders number+title as heading
-      // so if body starts with "§ 1 Title" or just "Title", remove that first line
-      const fullHeading = clause.title || '';
-      const bodyLines = clauseText.split('\n');
-      if (bodyLines.length > 0) {
-        const firstLine = bodyLines[0].trim();
-        // Check if first line matches the clause heading (with or without § prefix)
-        const headingVariants = [
-          fullHeading.trim(),
-          fullHeading.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim(),
-          `§ ${number} ${clauseTitle}`,
-          `§${number} ${clauseTitle}`,
-          clauseTitle
-        ].filter(Boolean);
+      // Strip duplicate heading from body
+      clauseText = stripDuplicateHeading(clauseText, clauseTitle, number, rawTitle);
 
-        const isHeadingDuplicate = headingVariants.some(variant =>
-          variant.length > 3 && (
-            firstLine === variant ||
-            firstLine.startsWith(variant) && firstLine.length - variant.length < 5
-          )
-        );
+      // Strip repeated OCR page headers/footers from clause body
+      clauseText = clauseText.replace(/FAST\s*\/\/\s*FORWARD\s*\/\/\s*FINANCE[^\n]*/gi, '');
+      clauseText = clauseText.replace(/©[^\n]*/g, '');
+      clauseText = clauseText.replace(/^\s*\d{2}\.\d{2}\.\d{4}\s*$/gm, '');
+      clauseText = clauseText.replace(/\n{3,}/g, '\n\n').trim();
 
-        if (isHeadingDuplicate) {
-          bodyLines.shift();
-          clauseText = bodyLines.join('\n').trim();
+      // Split oversized blocks — if body exceeds ~3000 chars, split at paragraph breaks
+      if (clauseText.length > 3000) {
+        const paragraphs = clauseText.split(/\n\n+/);
+        let part1 = '';
+        let part2 = '';
+        let inPart1 = true;
+        for (const para of paragraphs) {
+          if (inPart1 && (part1.length + para.length) < clauseText.length * 0.6) {
+            part1 += (part1 ? '\n\n' : '') + para;
+          } else {
+            inPart1 = false;
+            part2 += (part2 ? '\n\n' : '') + para;
+          }
+        }
+        if (part2) {
+          addBlock({
+            id: uuidv4(), type: 'clause',
+            content: { clauseTitle, number, body: part1 },
+            style: {}, locked: false, aiGenerated: true
+          });
+          addBlock({
+            id: uuidv4(), type: 'clause',
+            content: { clauseTitle: `${clauseTitle} (Forts.)`, number, body: part2 },
+            style: {}, locked: false, aiGenerated: true
+          });
+          clauseNumber++;
+          continue;
         }
       }
 
