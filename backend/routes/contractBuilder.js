@@ -720,159 +720,161 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
     const blocks = [];
     let order = 0;
 
-    const CHARS_PER_LINE = 85;
-    const LINE_HEIGHT = 22;
-    const PAGE_HEIGHT = 880; // conservative to avoid overflow
-    const MAX_BLOCK_HEIGHT = 800; // single block must never exceed this
-    let currentPageHeight = 0;
+    // Hard character limit per block — no height estimation needed.
+    // ~1200 chars ≈ 30-35 rendered lines, safely fits one A4 page.
+    const MAX_CHARS_PER_BLOCK = 1200;
+    const MAX_TABLE_ROWS = 18;
 
-    const estimateTextHeight = (text) => {
-      if (!text) return 0;
-      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
-      return lineCount * LINE_HEIGHT;
-    };
+    // Split text into chunks that fit one page. Prefers paragraph boundaries,
+    // falls back to line boundaries, last resort: hard char cut.
+    const splitText = (text, maxChars) => {
+      if (!text || text.length <= maxChars) return [text];
 
-    const estimateBlockHeight = (block) => {
-      if (block.type === 'header') return 120;
-      if (block.type === 'parties') return 160;
-      if (block.type === 'signature') return 220;
-      if (block.type === 'page-break') return 0;
-      if (block.type === 'table') {
-        const rowCount = (block.content?.rows || []).length;
-        return 50 + (rowCount + 1) * 32; // header + rows * row height
-      }
-      if (block.type === 'preamble') {
-        return estimateTextHeight(block.content?.preambleText || '') + 60;
-      }
-      const titleHeight = (block.content?.clauseTitle) ? 40 : 0;
-      return titleHeight + estimateTextHeight(block.content?.body || '') + 16;
-    };
-
-    // Split text at paragraph boundaries to fit within maxHeight
-    const splitTextToFit = (text, maxHeight) => {
       const paragraphs = text.split(/\n\n+/);
-      if (paragraphs.length <= 1) {
-        // No paragraph breaks — split at line breaks
-        const lines = text.split('\n');
-        const maxLines = Math.floor(maxHeight / LINE_HEIGHT);
-        if (lines.length <= maxLines) return [text];
+      if (paragraphs.length > 1) {
+        // Split at paragraph boundaries
         const chunks = [];
-        for (let i = 0; i < lines.length; i += maxLines) {
-          chunks.push(lines.slice(i, i + maxLines).join('\n'));
+        let current = '';
+        for (const para of paragraphs) {
+          const combined = current ? current + '\n\n' + para : para;
+          if (combined.length > maxChars && current) {
+            chunks.push(current);
+            current = para;
+          } else {
+            current = combined;
+          }
         }
+        if (current) chunks.push(current);
+        // Recursively split any chunk that's still too long
+        const result = [];
+        for (const chunk of chunks) {
+          if (chunk.length > maxChars) {
+            result.push(...splitText(chunk, maxChars));
+          } else {
+            result.push(chunk);
+          }
+        }
+        return result;
+      }
+
+      // No paragraph breaks — split at line boundaries
+      const lines = text.split('\n');
+      if (lines.length > 1) {
+        const chunks = [];
+        let current = '';
+        for (const line of lines) {
+          const combined = current ? current + '\n' + line : line;
+          if (combined.length > maxChars && current) {
+            chunks.push(current);
+            current = line;
+          } else {
+            current = combined;
+          }
+        }
+        if (current) chunks.push(current);
         return chunks;
       }
-      // Split at paragraph boundaries
+
+      // Last resort: hard character split at sentence/word boundaries
       const chunks = [];
-      let current = '';
-      for (const para of paragraphs) {
-        const combined = current ? current + '\n\n' + para : para;
-        if (estimateTextHeight(combined) > maxHeight && current) {
-          chunks.push(current);
-          current = para;
-        } else {
-          current = combined;
-        }
+      let remaining = text;
+      while (remaining.length > maxChars) {
+        let cutAt = remaining.lastIndexOf('. ', maxChars);
+        if (cutAt < maxChars * 0.3) cutAt = remaining.lastIndexOf(' ', maxChars);
+        if (cutAt < maxChars * 0.3) cutAt = maxChars;
+        chunks.push(remaining.substring(0, cutAt + 1).trim());
+        remaining = remaining.substring(cutAt + 1).trim();
       }
-      if (current) chunks.push(current);
+      if (remaining) chunks.push(remaining);
       return chunks;
     };
 
-    const addPageBreak = () => {
-      blocks.push({
-        id: uuidv4(), type: 'page-break', order: order++,
-        content: {}, style: {}, locked: false, aiGenerated: false
-      });
-      currentPageHeight = 0;
-    };
-
     const addBlock = (block) => {
-      const height = estimateBlockHeight(block);
-
-      // Page break before block if it would overflow
-      if (blocks.length > 0 && currentPageHeight + height > PAGE_HEIGHT) {
-        addPageBreak();
-      }
-
-      // If single block exceeds max height, split it
-      if (height > MAX_BLOCK_HEIGHT) {
-        if (block.type === 'clause') {
-          const body = block.content?.body || '';
-          const titleOverhead = 56; // title + padding
-          const chunks = splitTextToFit(body, MAX_BLOCK_HEIGHT - titleOverhead);
-          chunks.forEach((chunk, idx) => {
-            const partBlock = {
-              id: uuidv4(),
-              type: 'clause',
+      // Auto-split clause blocks
+      if (block.type === 'clause') {
+        const body = block.content?.body || '';
+        if (body.length > MAX_CHARS_PER_BLOCK) {
+          const chunks = splitText(body, MAX_CHARS_PER_BLOCK);
+          for (let i = 0; i < chunks.length; i++) {
+            blocks.push({
+              id: uuidv4(), order: order++, type: 'clause',
               content: {
-                clauseTitle: idx === 0 ? block.content.clauseTitle : `${block.content.clauseTitle} (Forts.)`,
+                clauseTitle: i === 0 ? block.content.clauseTitle : `${block.content.clauseTitle} (Forts.)`,
                 number: block.content.number,
-                body: chunk
+                body: chunks[i]
               },
               style: {}, locked: false, aiGenerated: true
-            };
-            const partHeight = estimateBlockHeight(partBlock);
-            if (blocks.length > 0 && currentPageHeight + partHeight > PAGE_HEIGHT) {
-              addPageBreak();
+            });
+            // Page break after each chunk except the last
+            if (i < chunks.length - 1) {
+              blocks.push({
+                id: uuidv4(), type: 'page-break', order: order++,
+                content: {}, style: {}, locked: false, aiGenerated: false
+              });
             }
-            partBlock.order = order++;
-            blocks.push(partBlock);
-            currentPageHeight += partHeight;
-          });
-          return;
-        }
-        if (block.type === 'preamble') {
-          const text = block.content?.preambleText || '';
-          const chunks = splitTextToFit(text, MAX_BLOCK_HEIGHT - 60);
-          chunks.forEach((chunk, idx) => {
-            const partBlock = {
-              id: uuidv4(),
-              type: idx === 0 ? 'preamble' : 'clause',
-              content: idx === 0
-                ? { preambleText: chunk, preambleLayout: 'accent-bar' }
-                : { clauseTitle: 'Präambel (Forts.)', number: '', body: chunk },
-              style: {}, locked: false, aiGenerated: true
-            };
-            const partHeight = estimateBlockHeight(partBlock);
-            if (blocks.length > 0 && currentPageHeight + partHeight > PAGE_HEIGHT) {
-              addPageBreak();
-            }
-            partBlock.order = order++;
-            blocks.push(partBlock);
-            currentPageHeight += partHeight;
-          });
-          return;
-        }
-        if (block.type === 'table') {
-          const rows = block.content?.rows || [];
-          const maxRowsPerPage = Math.floor((MAX_BLOCK_HEIGHT - 50) / 32);
-          for (let i = 0; i < rows.length; i += maxRowsPerPage) {
-            const partBlock = {
-              id: uuidv4(),
-              type: 'table',
-              content: {
-                headers: block.content.headers,
-                rows: rows.slice(i, i + maxRowsPerPage),
-                footer: i + maxRowsPerPage >= rows.length ? (block.content.footer || '') : ''
-              },
-              style: {}, locked: false, aiGenerated: true
-            };
-            const partHeight = estimateBlockHeight(partBlock);
-            if (blocks.length > 0 && currentPageHeight + partHeight > PAGE_HEIGHT) {
-              addPageBreak();
-            }
-            partBlock.order = order++;
-            blocks.push(partBlock);
-            currentPageHeight += partHeight;
           }
           return;
         }
       }
 
-      // Normal case: block fits on page
+      // Auto-split preamble blocks
+      if (block.type === 'preamble') {
+        const text = block.content?.preambleText || '';
+        if (text.length > MAX_CHARS_PER_BLOCK) {
+          const chunks = splitText(text, MAX_CHARS_PER_BLOCK);
+          for (let i = 0; i < chunks.length; i++) {
+            if (i === 0) {
+              blocks.push({
+                id: uuidv4(), order: order++, type: 'preamble',
+                content: { preambleText: chunks[i], preambleLayout: 'accent-bar' },
+                style: {}, locked: false, aiGenerated: true
+              });
+            } else {
+              blocks.push({
+                id: uuidv4(), order: order++, type: 'clause',
+                content: { clauseTitle: 'Präambel (Forts.)', number: '', body: chunks[i] },
+                style: {}, locked: false, aiGenerated: true
+              });
+            }
+            if (i < chunks.length - 1) {
+              blocks.push({
+                id: uuidv4(), type: 'page-break', order: order++,
+                content: {}, style: {}, locked: false, aiGenerated: false
+              });
+            }
+          }
+          return;
+        }
+      }
+
+      // Auto-split table blocks
+      if (block.type === 'table') {
+        const rows = block.content?.rows || [];
+        if (rows.length > MAX_TABLE_ROWS) {
+          for (let i = 0; i < rows.length; i += MAX_TABLE_ROWS) {
+            blocks.push({
+              id: uuidv4(), order: order++, type: 'table',
+              content: {
+                headers: block.content.headers,
+                rows: rows.slice(i, i + MAX_TABLE_ROWS),
+                footer: i + MAX_TABLE_ROWS >= rows.length ? (block.content.footer || '') : ''
+              },
+              style: {}, locked: false, aiGenerated: true
+            });
+            if (i + MAX_TABLE_ROWS < rows.length) {
+              blocks.push({
+                id: uuidv4(), type: 'page-break', order: order++,
+                content: {}, style: {}, locked: false, aiGenerated: false
+              });
+            }
+          }
+          return;
+        }
+      }
+
+      // Default: add block as-is
       block.order = order++;
       blocks.push(block);
-      currentPageHeight += height;
     };
 
     // Header block
