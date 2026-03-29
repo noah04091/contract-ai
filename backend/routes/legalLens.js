@@ -1839,8 +1839,8 @@ router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) 
     const contract = access.contract;
     const industryContext = progress?.industryContext || 'general';
 
-    // Vertragstext für Analyse vorbereiten
-    const contractText = contract.extractedText || contract.originalText || '';
+    // Vertragstext für Analyse vorbereiten (alle möglichen Textfelder prüfen)
+    const contractText = contract.content || contract.extractedText || contract.fullText || contract.originalText || '';
     const truncatedText = contractText.substring(0, 15000); // Max 15k chars
 
     console.log(`🔄 [Legal Lens] Generating new checklist...`);
