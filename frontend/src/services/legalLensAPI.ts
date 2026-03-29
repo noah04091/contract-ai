@@ -95,10 +95,7 @@ export function analyzeClauseStreaming(
 ): () => void {
   const controller = new AbortController();
 
-  const token = document.cookie
-    .split(';')
-    .find(c => c.trim().startsWith('token='))
-    ?.split('=')[1];
+  const token = localStorage.getItem('token');
 
   fetch(`${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/analyze`, {
     method: 'POST',

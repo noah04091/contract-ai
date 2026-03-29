@@ -91,6 +91,10 @@ const LegalLensStart = () => {
       try {
         const apiUrl = getApiUrl();
         const response = await fetch(`${apiUrl}/api/contracts`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
           credentials: 'include'
         });
 

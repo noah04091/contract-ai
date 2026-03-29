@@ -1353,6 +1353,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setStreamingText('');
     setError(null);
     setAnalysisCache({}); // ✅ NEU: Cache leeren
+    cacheInsertionOrder.length = 0; // ✅ LRU-Ordnung zurücksetzen
     startedPreloadRef.current = false; // ✅ Phase 1: Preload-Flag zurücksetzen
     // ✅ Phase 1 Schritt 4: Queue zurücksetzen
     preloadQueueRef.current.clear();
@@ -1368,6 +1369,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (abortControllerRef.current) {
         abortControllerRef.current();
       }
+      cacheInsertionOrder.length = 0; // LRU-Ordnung bei Unmount leeren
     };
   }, []);
 

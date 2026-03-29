@@ -7,10 +7,11 @@
  * @version 1.0.0
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const pdfParse = require('pdf-parse');
 const { clauseParser } = require('./index');
+const { getDb } = require('../../config/database');
 
 // S3 Client
 const s3Client = new S3Client({
@@ -20,9 +21,6 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
   }
 });
-
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI;
 
 /**
  * Extrahiert Text aus einem Contract (S3 oder DB)
@@ -80,10 +78,8 @@ async function preprocessContract(contractId, options = {}) {
   const startTime = Date.now();
   console.log(`\n🧠 [Preprocessor] Starte Legal Lens Vorverarbeitung für Contract: ${contractId}`);
 
-  let client;
   try {
-    client = await MongoClient.connect(MONGO_URI);
-    const db = client.db('contract_ai');
+    const db = await getDb();
     const contractsCollection = db.collection('contracts');
 
     // Contract laden
@@ -194,29 +190,23 @@ async function preprocessContract(contractId, options = {}) {
     console.error(`❌ [Preprocessor] Fehler bei Vorverarbeitung:`, error);
 
     // Fehler in DB speichern
-    if (client) {
-      try {
-        const db = client.db('contract_ai');
-        await db.collection('contracts').updateOne(
-          { _id: new ObjectId(contractId) },
-          {
-            $set: {
-              'legalLens.preprocessStatus': 'failed',
-              'legalLens.preprocessError': error.message,
-              'legalLens.preprocessedAt': new Date()
-            }
+    try {
+      const db = await getDb();
+      await db.collection('contracts').updateOne(
+        { _id: new ObjectId(contractId) },
+        {
+          $set: {
+            'legalLens.preprocessStatus': 'failed',
+            'legalLens.preprocessError': error.message,
+            'legalLens.preprocessedAt': new Date()
           }
-        );
-      } catch (dbError) {
-        console.error(`❌ [Preprocessor] Konnte Fehler nicht in DB speichern:`, dbError);
-      }
+        }
+      );
+    } catch (dbError) {
+      console.error(`❌ [Preprocessor] Konnte Fehler nicht in DB speichern:`, dbError);
     }
 
     return { success: false, error: error.message };
-  } finally {
-    if (client) {
-      await client.close();
-    }
   }
 }
 

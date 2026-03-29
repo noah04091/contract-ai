@@ -1466,10 +1466,10 @@ Antworte NUR mit einem JSON-Array:
    * Schätzt die Anzahl der Tokens für einen Text
    * Grobe Schätzung: ~4 Zeichen = 1 Token (Deutsch/Englisch gemischt)
    */
-  estimateTokens(text) {
-    if (!text) return 0;
-    // Etwas konservativer für deutsche Texte (längere Wörter)
-    return Math.ceil(text.length / 3.5);
+  estimateTokens(textOrLength) {
+    if (!textOrLength) return 0;
+    const len = typeof textOrLength === 'string' ? textOrLength.length : textOrLength;
+    return Math.ceil(len / 3.5);
   }
 
   /**

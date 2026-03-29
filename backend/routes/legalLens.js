@@ -942,12 +942,16 @@ router.post('/parse', verifyToken, async (req, res) => {
     const industryDetection = detectIndustryFromText(text);
     console.log(`🏢 [Legal Lens] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}% confidence)`);
 
-    // Progress erstellen/aktualisieren
+    // Progress erstellen/aktualisieren — reviewedClauses bei neuem Parse zurücksetzen
     await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
       {
         $set: {
           totalClauses: parseResult.totalClauses,
+          reviewedClauses: [], // Reset: alte Clause-IDs sind nach Re-Parse ungültig
+          percentComplete: 0,
+          status: 'in_progress',
+          completedAt: null,
           overallRisk: preAnalysis?.overallRisk || 'medium',
           highRiskCount: preAnalysis?.highRiskCount || 0,
           preAnalyzedAt: preAnalysis?.success ? new Date() : null,
@@ -962,7 +966,6 @@ router.post('/parse', verifyToken, async (req, res) => {
           updatedAt: new Date()
         },
         $setOnInsert: {
-          reviewedClauses: [],
           currentSessionStart: new Date(),
           createdAt: new Date()
         }
@@ -1602,7 +1605,7 @@ router.post('/:contractId/progress', verifyToken, async (req, res) => {
       updateData.totalClauses = totalClauses;
     }
 
-    const progress = await LegalLensProgress.findOneAndUpdate(
+    let progress = await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
       {
         $set: updateData,
@@ -1610,6 +1613,18 @@ router.post('/:contractId/progress', verifyToken, async (req, res) => {
       },
       { upsert: true, new: true }
     );
+
+    // Recalculate percentComplete (pre-save hooks don't run on findOneAndUpdate)
+    if (progress && progress.totalClauses > 0) {
+      const pct = Math.min(100, Math.round((progress.reviewedClauses.length / progress.totalClauses) * 100));
+      if (pct !== progress.percentComplete) {
+        await LegalLensProgress.updateOne(
+          { _id: progress._id },
+          { $set: { percentComplete: pct } }
+        );
+        progress.percentComplete = pct;
+      }
+    }
 
     res.json({
       success: true,
@@ -2973,7 +2988,20 @@ router.post('/:contractId/clear-cache', verifyToken, async (req, res) => {
       }
     );
 
-    console.log(`✅ [Legal Lens] Cache cleared for contract ${contractId}`);
+    // Progress bereinigen: alte reviewedClauses und Bookmarks/Notes entfernen (werden bei Re-Parse ungültig)
+    await LegalLensProgress.updateOne(
+      { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+      {
+        $set: {
+          reviewedClauses: [],
+          percentComplete: 0,
+          status: 'in_progress',
+          completedAt: null
+        }
+      }
+    );
+
+    console.log(`✅ [Legal Lens] Cache + progress cleared for contract ${contractId}`);
 
     res.json({
       success: true,
