@@ -377,7 +377,7 @@
   background: rgba(59, 130, 246, 0.04);
 }
 
-.perspectiveSection { margin-top: 4px; margin-bottom: 4px; }
+.perspectiveSection { margin-top: 4px; margin-bottom: 4px; display: flex; flex-direction: column; align-items: center; }
 .perspectiveLabel { font-size: 13px; font-weight: 500; color: var(--ov2-gray-600); margin: 0 0 8px; }
 
 /* ── Analyze Button (gradient with glow like V1) ── */
