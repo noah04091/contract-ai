@@ -255,13 +255,23 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     return res.end();
   }
 
-  if (!contractText || contractText.trim().length < 50) {
+  if (!contractText || contractText.trim().length === 0) {
     await cleanupFile(req.file.path);
     sendSSE({
       error: true,
       message: ocrAttempted
-        ? `Text-Erkennung fehlgeschlagen (${runOCR._lastError || 'unbekannter Fehler'}). Möglicherweise ist die Datei passwortgeschützt, beschädigt oder die Bildqualität ist zu niedrig.`
-        : 'Der Vertrag enthält zu wenig Text für eine Analyse. Bei gescannten PDFs und Bildern wird automatisch OCR versucht.'
+        ? `Das Dokument konnte nicht gelesen werden. Mögliche Ursachen:\n• Die Datei ist passwortgeschützt\n• Die PDF ist beschädigt oder enthält keine lesbaren Inhalte\n• Bei gescannten Dokumenten: Die Bildqualität ist zu niedrig für die Texterkennung\n\nBitte versuche es mit einer anderen Datei oder einer besseren Scan-Qualität.`
+        : 'Das Dokument enthält keinen erkennbaren Text. Bei gescannten PDFs oder Fotos wird automatisch OCR (Texterkennung) versucht — bitte stelle sicher, dass die Datei nicht beschädigt oder leer ist.'
+    });
+    clearInterval(keepalive);
+    return res.end();
+  }
+
+  if (contractText.trim().length < 20) {
+    await cleanupFile(req.file.path);
+    sendSSE({
+      error: true,
+      message: `Das Dokument enthält nur ${contractText.trim().length} Zeichen — das ist zu wenig für eine sinnvolle Vertragsanalyse. Bitte lade ein vollständiges Vertragsdokument hoch.`
     });
     clearInterval(keepalive);
     return res.end();

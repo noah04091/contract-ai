@@ -231,6 +231,7 @@ export interface AnalysisResult {
   userSelections?: UserSelection[];
   fileName?: string;
   ocrApplied?: boolean;
+  createdAt?: string;
 }
 
 // ── Pipeline Stage Info ──

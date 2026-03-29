@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3 } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -132,9 +132,19 @@ export default function OptimizerV2() {
             </button>
             <div className={styles.pageHeaderContent}>
               <h1 className={styles.pageTitle}>Contract Intelligence</h1>
-              <p className={styles.pageSubtitle}>
-                KI-gestützte Vertragsanalyse und -optimierung
-              </p>
+              {result?.fileName ? (
+                <p className={styles.pageSubtitle}>
+                  <FileText size={13} style={{ verticalAlign: '-2px', marginRight: '4px', opacity: 0.6 }} />
+                  {result.fileName}
+                  {result.structure?.contractTypeLabel && (
+                    <span className={styles.pageHeaderType}>{result.structure.contractTypeLabel}</span>
+                  )}
+                </p>
+              ) : (
+                <p className={styles.pageSubtitle}>
+                  KI-gestützte Vertragsanalyse und -optimierung
+                </p>
+              )}
             </div>
             <button className={styles.newAnalysisBtn} onClick={() => { actions.reset(); navigate('/optimizer', { replace: true }); }}>
               Neue Analyse

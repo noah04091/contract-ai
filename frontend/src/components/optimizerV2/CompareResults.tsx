@@ -207,6 +207,36 @@ export default function CompareResults({ currentResult }: Props) {
         </div>
       )}
 
+      {/* Selected comparison info card */}
+      {selectedId && !loadingCompare && !compareError && compareResult && (
+        <div className={styles.cmpInfoCards}>
+          <div className={styles.cmpInfoCard}>
+            <div className={styles.cmpInfoCardHeader}>
+              <FileText size={14} />
+              <span>Aktueller Vertrag</span>
+            </div>
+            <p className={styles.cmpInfoFileName}>{currentResult.fileName || 'Unbenannt'}</p>
+            <div className={styles.cmpInfoMeta}>
+              <span>{currentResult.structure?.contractTypeLabel || '–'}</span>
+              <span>{currentResult.clauses.length} Klauseln</span>
+            </div>
+          </div>
+          <div className={styles.cmpInfoVs}>vs</div>
+          <div className={styles.cmpInfoCard}>
+            <div className={styles.cmpInfoCardHeader}>
+              <FileText size={14} />
+              <span>Vergleichsvertrag</span>
+            </div>
+            <p className={styles.cmpInfoFileName}>{compareResult.fileName || 'Unbenannt'}</p>
+            <div className={styles.cmpInfoMeta}>
+              <span>{compareResult.structure?.contractTypeLabel || '–'}</span>
+              <span>{compareResult.clauses.length} Klauseln</span>
+              <span>{new Date(compareResult.createdAt || '').toLocaleDateString('de-DE')}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Loading compare */}
       {loadingCompare && (
         <div className={styles.cmpLoading}><Loader2 size={16} className={styles.spinIcon} /> Lade Ergebnis...</div>
