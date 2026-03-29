@@ -22,9 +22,12 @@ const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
   low: { color: '#6b7280', bg: '#f9fafb' },
 };
 
+const POSITIVE_COLORS = { color: '#059669', bg: '#ecfdf5' };
+
 export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) => {
   const [expanded, setExpanded] = useState(false);
-  const sev = SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.low;
+  const isPositive = alert.impactDirection === 'positive';
+  const sev = isPositive ? POSITIVE_COLORS : (SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.low);
   const hasClauseImpacts = alert.clauseImpacts && alert.clauseImpacts.length > 0;
 
   return (
@@ -92,14 +95,16 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
           <div style={{ paddingTop: 16 }}>
             {/* Step 1: Law Change */}
             <GraphNode
-              icon="&#9878;&#65039;"
-              label={alert.lawStatus === 'court_decision' ? 'Gerichtsentscheidung'
+              icon={isPositive ? "&#9989;" : "&#9878;&#65039;"}
+              label={isPositive ? 'Chance erkannt'
+                : alert.lawStatus === 'court_decision' ? 'Gerichtsentscheidung'
                 : alert.lawStatus === 'guideline' ? 'Behörden-Leitlinie'
                 : alert.lawStatus === 'proposal' ? 'Gesetzesentwurf'
                 : 'Gesetzesänderung'}
               title={alert.lawTitle}
               detail={alert.impactSummary}
-              color={alert.lawStatus === 'court_decision' ? '#7c3aed'
+              color={isPositive ? '#059669'
+                : alert.lawStatus === 'court_decision' ? '#7c3aed'
                 : alert.lawStatus === 'guideline' ? '#2563eb'
                 : '#6366f1'}
             />
@@ -137,6 +142,9 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
                 />
               </>
             )}
+
+            {/* D3: User feedback */}
+            <FeedbackButtons alertId={alert._id} existingFeedback={alert.userFeedback} />
           </div>
         </div>
       )}
@@ -521,6 +529,67 @@ const ClauseImpactNode: React.FC<{
         <style>{`
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
+      )}
+    </div>
+  );
+};
+
+// D3: Feedback buttons component
+const FeedbackButtons: React.FC<{
+  alertId: string;
+  existingFeedback?: { useful: boolean; comment?: string; feedbackAt: string };
+}> = ({ alertId, existingFeedback }) => {
+  const [feedback, setFeedback] = useState<boolean | null>(existingFeedback?.useful ?? null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleFeedback = useCallback(async (useful: boolean) => {
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/legal-alerts/${alertId}/feedback`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ useful }),
+      });
+      if (res.ok) setFeedback(useful);
+    } catch {
+      // Silently fail
+    } finally {
+      setSubmitting(false);
+    }
+  }, [alertId]);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 8, borderTop: '1px solid #f3f4f6' }}>
+      <span style={{ fontSize: 12, color: '#9ca3af' }}>War dieser Alert hilfreich?</span>
+      <button
+        onClick={() => handleFeedback(true)}
+        disabled={submitting || feedback !== null}
+        style={{
+          padding: '2px 8px', fontSize: 12, borderRadius: 4,
+          border: '1px solid #d1d5db', cursor: feedback !== null ? 'default' : 'pointer',
+          background: feedback === true ? '#ecfdf5' : '#fff',
+          color: feedback === true ? '#059669' : '#6b7280',
+          opacity: submitting ? 0.5 : 1,
+        }}
+      >
+        &#128077; Ja
+      </button>
+      <button
+        onClick={() => handleFeedback(false)}
+        disabled={submitting || feedback !== null}
+        style={{
+          padding: '2px 8px', fontSize: 12, borderRadius: 4,
+          border: '1px solid #d1d5db', cursor: feedback !== null ? 'default' : 'pointer',
+          background: feedback === false ? '#fef2f2' : '#fff',
+          color: feedback === false ? '#dc2626' : '#6b7280',
+          opacity: submitting ? 0.5 : 1,
+        }}
+      >
+        &#128078; Nein
+      </button>
+      {feedback !== null && (
+        <span style={{ fontSize: 11, color: '#9ca3af' }}>Danke!</span>
       )}
     </div>
   );
