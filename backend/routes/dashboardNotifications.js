@@ -492,12 +492,35 @@ router.post("/test-smtp", verifyToken, async (req, res) => {
     let smtpResult = null;
     let smtpError = null;
 
+    // Vollformatierte Test-Email mit Template
+    const { generateEmailTemplate, generateInfoBox, generateAlertBox } = require("../utils/emailTemplate");
+    const testHtml = generateEmailTemplate({
+      title: "Bürogebäude Mietvertrag - Frist in 7 Tagen",
+      preheader: "Ihre Kündigungsfrist endet bald",
+      body: `
+        <h2 style="color: #ff9500; text-align: center;">Wichtige Erinnerung</h2>
+        <p style="text-align: center;">In <strong>7 Tagen</strong> endet die Kündigungsfrist für <strong>"Bürogebäude Mietvertrag"</strong>.</p>
+        ${generateInfoBox([
+          { label: "Vertrag", value: "Bürogebäude Mietvertrag" },
+          { label: "Vertragsende", value: new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString('de-DE') },
+          { label: "Kündigungsfrist", value: "14 Tage" },
+          { label: "Anbieter", value: "Mustermann Immobilien GmbH" }
+        ], { title: "Vertragsdetails" })}
+        ${generateAlertBox("Ohne Kündigung verlängert sich der Vertrag automatisch um weitere 12 Monate.", "warning")}
+        <p style="text-align: center; margin-top: 20px; font-size: 13px; color: #64748b;">Dies ist eine Design-Test-Email. Zeitstempel: ${new Date().toISOString()}</p>
+      `,
+      cta: {
+        text: "Vertrag ansehen",
+        url: "https://contract-ai.de/contracts"
+      }
+    });
+
     try {
       smtpResult = await transporter.sendMail({
         from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
         to: email,
-        subject: "Contract AI — SMTP Test",
-        html: `<p>Dies ist eine Test-Email von Contract AI.</p><p>Wenn du diese Email siehst, funktioniert der SMTP-Versand an ${email} korrekt.</p><p>Zeitstempel: ${new Date().toISOString()}</p>`
+        subject: "Contract AI — Design Test: Zentriert + Pill-Buttons",
+        html: testHtml
       });
     } catch (error) {
       smtpError = {
