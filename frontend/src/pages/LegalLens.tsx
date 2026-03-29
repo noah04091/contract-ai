@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LegalLensViewer } from '../components/LegalLens';
+import { LegalLensViewer } from '../components/LegalLensV12';
 import { WelcomePopup } from '../components/Tour';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 import { Search, Crown, Sparkles } from 'lucide-react';
