@@ -1536,7 +1536,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Zeige normales UI mit Overlay für Streaming-Progress
   const showStreamingOverlay = isStreaming && streamingProgress < 100;
 
-  const percentComplete = progress?.percentComplete || 0;
+  // Berechne Fortschritt aus tatsächlicher Klauselanzahl statt gespeichertem totalClauses
+  const percentComplete = useMemo(() => {
+    if (!progress || !clauses || clauses.length === 0) return 0;
+    const reviewed = progress.reviewedClauses?.length || 0;
+    return Math.min(100, Math.round((reviewed / clauses.length) * 100));
+  }, [progress, clauses]);
 
   return (
     <div className={styles.container}>
