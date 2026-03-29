@@ -97,7 +97,7 @@ const withRetry = async <T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (err) {
+    } catch {
       lastError = err;
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
@@ -528,7 +528,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           // Progress loading failed silently
         }
       }
-    } catch (err) {
+    } catch {
       if (parseRequestIdRef.current !== requestId) return;
       const errorDetails = categorizeError(err, retryCount);
       setError(errorDetails.message);
@@ -709,7 +709,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         }
         setIsAnalyzing(false);
       }
-    } catch (err) {
+    } catch {
       // ✅ Race Condition Fix: Fehler nur anzeigen wenn Request noch aktuell
       if (isRequestStale()) return;
       const errorDetails = categorizeError(err, retryCount);
@@ -843,7 +843,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     if (contractId) {
       try {
         await legalLensAPI.updateProgress(contractId, { currentPerspective: perspective });
-      } catch (err) {
+      } catch {
         // Perspective save failed silently
       }
     }
@@ -886,7 +886,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setAlternatives(response.alternatives);
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -916,7 +916,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setNegotiation(response.negotiation);
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -960,7 +960,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         };
         setChatHistory(prev => [...prev, assistantMessage]);
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Bessere Chat-Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -994,7 +994,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           percentComplete: Math.round((updatedReviewed.length / (prev.totalClauses || 1)) * 100)
         } : null);
       }
-    } catch (err) {
+    } catch {
       // Mark reviewed failed silently
     }
   }, [contractId, progress]);
@@ -1013,7 +1013,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           notes: [...prev.notes, response.note]
         } : null);
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1046,7 +1046,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           }
         });
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1068,7 +1068,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         setSummary(response.summary);
       }
-    } catch (err) {
+    } catch {
       // ✅ Phase 1 Task 4: Kategorisierte Fehlermeldungen
       const errorDetails = categorizeError(err);
       setError(errorDetails.message);
@@ -1140,7 +1140,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           // In Cache speichern (mit LRU Eviction)
           setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
         }
-      } catch (err) {
+      } catch {
         // Fehler bei einer Klausel sollte den Batch nicht abbrechen
       }
 
@@ -1272,7 +1272,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           setAnalysisCache(prev => addToCacheWithEviction(prev, nextCacheKey, response.analysis));
           completedCount++;
         }
-      } catch (err) {
+      } catch {
         completedCount++; // Trotzdem weiterzählen
       }
 
