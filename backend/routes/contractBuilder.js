@@ -648,22 +648,16 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       }
     }
 
-    // ── Text cleanup for OCR artifacts ──
+    // ── Text cleanup — exact copy of DOCX export's cleanText ──
     const cleanBuilderText = (text) => {
       if (!text) return '';
       let t = text;
-
-      // Decode HTML entities
       t = t.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-
-      // Replace problematic Unicode characters
       t = t.replace(/∙/g, '-').replace(/·/g, '-');
-      t = t.replace(/\u00AD/g, '');  // soft hyphen
+      t = t.replace(/\u00AD/g, '');
       t = t.replace(/[\u2000-\u200F]/g, ' ');
       t = t.replace(/\uFFFD/g, '');
       t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
-
-      // Remove OCR page markers and headers/footers
       t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
       t = t.replace(/Seite\s+von\s+\d+/gi, '');
       t = t.replace(/Ausdruck vom\s*/gi, '');
@@ -672,78 +666,26 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       t = t.replace(/USt-Id\s*Nr\.\s*DE[\s\d]*\/\s*Steuer-Nr\.:\s*[\d/]+/gi, '');
       t = t.replace(/Factoring-Rahmenvertrag\s*\(FRV\)/gi, '');
       t = t.replace(/^\s*\d{2}\.\d{2}\.\d{4}\s*$/gm, '');
-
-      // Remove repeated company address/register blocks
-      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr|IBAN|BLZ|BIC)[^\n]*/g, (match, offset) => {
-        return offset < 300 ? match : '';
-      });
-
-      // General OCR header dedup (identical lines 30+ chars, 3+ occurrences)
+      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr|IBAN|BLZ|BIC)[^\n]*/g, (match, offset) => offset < 300 ? match : '');
       const lines = t.split('\n');
       const lineCounts = new Map();
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.length >= 30) lineCounts.set(trimmed, (lineCounts.get(trimmed) || 0) + 1);
-      }
+      for (const line of lines) { const tr = line.trim(); if (tr.length >= 30) lineCounts.set(tr, (lineCounts.get(tr) || 0) + 1); }
       for (const [line, count] of lineCounts) {
-        if (count >= 3) {
-          let found = 0;
-          t = t.replace(new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
-            found++;
-            return found <= 1 ? line : '';
-          });
-        }
+        if (count >= 3) { let f = 0; t = t.replace(new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => { f++; return f <= 1 ? line : ''; }); }
       }
-
-      // Inline OCR headers: "...Straße Nr PLZ Stadt IBAN:" merged with body text
       const addrIbanRe = /[^\n]{3,50}(?:Straße|Str\.)\s+\d+\s+\d{5}\s+[^\n]{3,30}?IBAN:[^\S\n]*/g;
       const addrBlocks = t.match(addrIbanRe);
       if (addrBlocks && addrBlocks.length > 2) {
         const counts = new Map();
         for (const m of addrBlocks) counts.set(m, (counts.get(m) || 0) + 1);
         for (const [block, count] of counts) {
-          if (count > 2) {
-            let found = 0;
-            t = t.replace(new RegExp(block.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
-              found++;
-              return found <= 1 ? block : '';
-            });
-          }
+          if (count > 2) { let f = 0; t = t.replace(new RegExp(block.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => { f++; return f <= 1 ? block : ''; }); }
         }
       }
-
-      // Fix OCR hyphenated words across lines: "länge-\nren" → "längeren"
+      t = t.replace(/\n\s*[\w\-]+(?:vertrag|rahmenvertrag|vereinbarung)\s*\([A-Z]+\)\s*\n/gi, '\n');
       t = t.replace(/([a-zäöüß])-\s*\n\s*([a-zäöüß])/g, '$1$2');
-
-      // ── Join OCR hard line breaks into proper paragraphs ──
-      // OCR creates line breaks at ~60-80 chars even mid-sentence.
-      // Join lines that don't start with a paragraph indicator.
-      const joinedLines = [];
-      for (const line of t.split('\n')) {
-        const trimmed = line.trim();
-        if (!trimmed) {
-          joinedLines.push(''); // preserve paragraph breaks
-          continue;
-        }
-        const prev = joinedLines.length > 0 ? joinedLines[joinedLines.length - 1] : '';
-        // Start new paragraph if line starts with: (1), (a), §, -, bullet, number+dot, or is a heading
-        const isNewParagraph = /^(\(\d+\)|\([a-z]\)|§\s*\d|[-–•]\s|\d+\.\s|[A-ZÄÖÜ]{2,})/.test(trimmed);
-        const prevEmpty = prev === '';
-        const prevEndsClean = /[.;:!?"]$/.test(prev.trim());
-
-        if (prev && !prevEmpty && !isNewParagraph && !prevEndsClean) {
-          // Join with previous line (OCR mid-sentence break)
-          joinedLines[joinedLines.length - 1] = prev + ' ' + trimmed;
-        } else {
-          joinedLines.push(trimmed);
-        }
-      }
-      t = joinedLines.join('\n');
-
-      // Collapse multiple spaces and empty lines
       t = t.split('\n').map(line => line.replace(/\s{2,}/g, ' ').trim()).join('\n');
       t = t.replace(/\n{3,}/g, '\n\n');
-
       return t.trim();
     };
 
@@ -751,81 +693,54 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
     const blocks = [];
     let order = 0;
 
-    // Hard character limit per block — no height estimation needed.
-    // ~1200 chars ≈ 30-35 rendered lines, safely fits one A4 page.
-    const MAX_CHARS_PER_BLOCK = 1200;
+    // Count visual lines: each \n = 1 line, long lines wrap at ~80 chars
+    const countVisualLines = (text) => {
+      if (!text) return 0;
+      let count = 0;
+      for (const line of text.split('\n')) {
+        count += Math.max(1, Math.ceil(line.length / 80));
+      }
+      return count;
+    };
+
+    // Max 28 visual lines per block body (leaves room for title + padding within 1002px page)
+    const MAX_LINES = 28;
     const MAX_TABLE_ROWS = 18;
 
-    // Split text into chunks that fit one page. Prefers paragraph boundaries,
-    // falls back to line boundaries, last resort: hard char cut.
-    const splitText = (text, maxChars) => {
-      if (!text || text.length <= maxChars) return [text];
+    // Split text into chunks of max N visual lines.
+    // Prefers paragraph breaks (\n\n), falls back to line breaks (\n).
+    const splitByLines = (text, maxLines) => {
+      if (!text) return [text];
+      if (countVisualLines(text) <= maxLines) return [text];
 
-      const paragraphs = text.split(/\n\n+/);
-      if (paragraphs.length > 1) {
-        // Split at paragraph boundaries
-        const chunks = [];
-        let current = '';
-        for (const para of paragraphs) {
-          const combined = current ? current + '\n\n' + para : para;
-          if (combined.length > maxChars && current) {
-            chunks.push(current);
-            current = para;
-          } else {
-            current = combined;
-          }
-        }
-        if (current) chunks.push(current);
-        // Recursively split any chunk that's still too long
-        const result = [];
-        for (const chunk of chunks) {
-          if (chunk.length > maxChars) {
-            result.push(...splitText(chunk, maxChars));
-          } else {
-            result.push(chunk);
-          }
-        }
-        return result;
-      }
-
-      // No paragraph breaks — split at line boundaries
-      const lines = text.split('\n');
-      if (lines.length > 1) {
-        const chunks = [];
-        let current = '';
-        for (const line of lines) {
-          const combined = current ? current + '\n' + line : line;
-          if (combined.length > maxChars && current) {
-            chunks.push(current);
-            current = line;
-          } else {
-            current = combined;
-          }
-        }
-        if (current) chunks.push(current);
-        return chunks;
-      }
-
-      // Last resort: hard character split at sentence/word boundaries
+      const inputLines = text.split('\n');
       const chunks = [];
-      let remaining = text;
-      while (remaining.length > maxChars) {
-        let cutAt = remaining.lastIndexOf('. ', maxChars);
-        if (cutAt < maxChars * 0.3) cutAt = remaining.lastIndexOf(' ', maxChars);
-        if (cutAt < maxChars * 0.3) cutAt = maxChars;
-        chunks.push(remaining.substring(0, cutAt + 1).trim());
-        remaining = remaining.substring(cutAt + 1).trim();
+      let currentLines = [];
+      let currentVisual = 0;
+
+      for (const line of inputLines) {
+        const lineVisual = Math.max(1, Math.ceil(line.length / 80));
+        if (currentVisual + lineVisual > maxLines && currentLines.length > 0) {
+          chunks.push(currentLines.join('\n'));
+          currentLines = [line];
+          currentVisual = lineVisual;
+        } else {
+          currentLines.push(line);
+          currentVisual += lineVisual;
+        }
       }
-      if (remaining) chunks.push(remaining);
+      if (currentLines.length > 0) chunks.push(currentLines.join('\n'));
       return chunks;
     };
 
+    // Simple addBlock — NO page-breaks injected, NO height estimation.
+    // Frontend auto-break handles pagination between blocks.
     const addBlock = (block) => {
-      // Auto-split clause blocks
+      // Auto-split oversized clause blocks by visual lines
       if (block.type === 'clause') {
         const body = block.content?.body || '';
-        if (body.length > MAX_CHARS_PER_BLOCK) {
-          const chunks = splitText(body, MAX_CHARS_PER_BLOCK);
+        if (countVisualLines(body) > MAX_LINES) {
+          const chunks = splitByLines(body, MAX_LINES);
           for (let i = 0; i < chunks.length; i++) {
             blocks.push({
               id: uuidv4(), order: order++, type: 'clause',
@@ -836,49 +751,31 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
               },
               style: {}, locked: false, aiGenerated: true
             });
-            // Page break after each chunk except the last
-            if (i < chunks.length - 1) {
-              blocks.push({
-                id: uuidv4(), type: 'page-break', order: order++,
-                content: {}, style: {}, locked: false, aiGenerated: false
-              });
-            }
           }
           return;
         }
       }
 
-      // Auto-split preamble blocks
+      // Auto-split oversized preamble blocks
       if (block.type === 'preamble') {
         const text = block.content?.preambleText || '';
-        if (text.length > MAX_CHARS_PER_BLOCK) {
-          const chunks = splitText(text, MAX_CHARS_PER_BLOCK);
+        if (countVisualLines(text) > MAX_LINES) {
+          const chunks = splitByLines(text, MAX_LINES);
           for (let i = 0; i < chunks.length; i++) {
-            if (i === 0) {
-              blocks.push({
-                id: uuidv4(), order: order++, type: 'preamble',
-                content: { preambleText: chunks[i], preambleLayout: 'accent-bar' },
-                style: {}, locked: false, aiGenerated: true
-              });
-            } else {
-              blocks.push({
-                id: uuidv4(), order: order++, type: 'clause',
-                content: { clauseTitle: 'Präambel (Forts.)', number: '', body: chunks[i] },
-                style: {}, locked: false, aiGenerated: true
-              });
-            }
-            if (i < chunks.length - 1) {
-              blocks.push({
-                id: uuidv4(), type: 'page-break', order: order++,
-                content: {}, style: {}, locked: false, aiGenerated: false
-              });
-            }
+            blocks.push({
+              id: uuidv4(), order: order++,
+              type: i === 0 ? 'preamble' : 'clause',
+              content: i === 0
+                ? { preambleText: chunks[i], preambleLayout: 'accent-bar' }
+                : { clauseTitle: 'Präambel (Forts.)', number: '', body: chunks[i] },
+              style: {}, locked: false, aiGenerated: true
+            });
           }
           return;
         }
       }
 
-      // Auto-split table blocks
+      // Auto-split oversized tables
       if (block.type === 'table') {
         const rows = block.content?.rows || [];
         if (rows.length > MAX_TABLE_ROWS) {
@@ -892,12 +789,6 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
               },
               style: {}, locked: false, aiGenerated: true
             });
-            if (i + MAX_TABLE_ROWS < rows.length) {
-              blocks.push({
-                id: uuidv4(), type: 'page-break', order: order++,
-                content: {}, style: {}, locked: false, aiGenerated: false
-              });
-            }
           }
           return;
         }
