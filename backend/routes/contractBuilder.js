@@ -648,6 +648,74 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       }
     }
 
+    // ── Text cleanup for OCR artifacts ──
+    const cleanBuilderText = (text) => {
+      if (!text) return '';
+      let t = text;
+
+      // Decode HTML entities
+      t = t.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+
+      // Replace problematic Unicode characters
+      t = t.replace(/∙/g, '-').replace(/·/g, '-');
+      t = t.replace(/\u00AD/g, '');  // soft hyphen
+      t = t.replace(/[\u2000-\u200F]/g, ' ');
+      t = t.replace(/\uFFFD/g, '');
+      t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+
+      // Remove OCR page markers
+      t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
+      t = t.replace(/Ausdruck vom\s*/gi, '');
+
+      // Remove repeated company address/register blocks
+      t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr|IBAN|BLZ|BIC)[^\n]*/g, (match, offset) => {
+        return offset < 300 ? match : '';
+      });
+
+      // General OCR header dedup (identical lines 30+ chars, 3+ occurrences)
+      const lines = t.split('\n');
+      const lineCounts = new Map();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length >= 30) lineCounts.set(trimmed, (lineCounts.get(trimmed) || 0) + 1);
+      }
+      for (const [line, count] of lineCounts) {
+        if (count >= 3) {
+          let found = 0;
+          t = t.replace(new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
+            found++;
+            return found <= 1 ? line : '';
+          });
+        }
+      }
+
+      // Inline OCR headers: "...Straße Nr PLZ Stadt IBAN:" merged with body text
+      const addrIbanRe = /[^\n]{3,50}(?:Straße|Str\.)\s+\d+\s+\d{5}\s+[^\n]{3,30}?IBAN:[^\S\n]*/g;
+      const addrBlocks = t.match(addrIbanRe);
+      if (addrBlocks && addrBlocks.length > 2) {
+        const counts = new Map();
+        for (const m of addrBlocks) counts.set(m, (counts.get(m) || 0) + 1);
+        for (const [block, count] of counts) {
+          if (count > 2) {
+            let found = 0;
+            t = t.replace(new RegExp(block.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), () => {
+              found++;
+              return found <= 1 ? block : '';
+            });
+          }
+        }
+      }
+
+      // Fix OCR hyphenated words across lines: "länge-\nren" → "längeren"
+      t = t.replace(/([a-zäöüß])-\s*\n\s*([a-zäöüß])/g, '$1$2');
+
+      // Collapse multiple spaces and empty lines
+      t = t.split('\n').map(line => line.replace(/\s{2,}/g, ' ').trim()).join('\n');
+      t = t.replace(/\n{3,}/g, '\n\n');
+
+      return t.trim();
+    };
+
     // ── Build blocks ──
     const blocks = [];
     let order = 0;
@@ -689,12 +757,27 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
 
     // Header block
     const contractTitle = structure.contractTypeLabel || structure.recognizedAs || 'Vertrag';
+
+    // Clean subtitle: use contract type label, not raw S3 filename
+    let subtitle = 'Optimierter Vertrag';
+    if (structure.contractTypeLabel) {
+      subtitle = `Optimierter ${structure.contractTypeLabel}`;
+    } else if (result.fileName) {
+      // Strip S3 prefixes (timestamps), decode URI, replace underscores
+      let cleanName = result.fileName
+        .replace(/^\d+_\d+-/, '')       // remove "1774701591628_1774448806621-"
+        .replace(/\.[^.]+$/, '')         // remove file extension
+        .replace(/_/g, ' ');             // underscores → spaces
+      try { cleanName = decodeURIComponent(cleanName); } catch {}
+      subtitle = `Optimiert aus: ${cleanName}`;
+    }
+
     addBlock({
       id: uuidv4(),
       type: 'header',
       content: {
         title: contractTitle,
-        subtitle: result.fileName ? `Optimiert aus: ${result.fileName}` : 'Optimierter Vertrag',
+        subtitle,
         showDivider: true
       },
       style: {}, locked: false, aiGenerated: true
@@ -741,6 +824,9 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
         clauseText = optimization.versions[selectedMode].text;
       }
 
+      // Clean OCR artifacts from clause text
+      clauseText = cleanBuilderText(clauseText);
+
       // Clean §-prefix from title (ClauseBlock renders number separately)
       const rawTitle = clause.title || '';
       const clauseTitle = rawTitle.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim() || `Klausel ${clauseNumber}`;
@@ -749,6 +835,34 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       const number = clause.sectionNumber
         ? clause.sectionNumber.replace(/^§\s*/, '').trim()
         : String(clauseNumber);
+
+      // Strip duplicate heading from body text — Builder renders number+title as heading
+      // so if body starts with "§ 1 Title" or just "Title", remove that first line
+      const fullHeading = clause.title || '';
+      const bodyLines = clauseText.split('\n');
+      if (bodyLines.length > 0) {
+        const firstLine = bodyLines[0].trim();
+        // Check if first line matches the clause heading (with or without § prefix)
+        const headingVariants = [
+          fullHeading.trim(),
+          fullHeading.replace(/^§\s*\d+\s*[-–—]?\s*/, '').trim(),
+          `§ ${number} ${clauseTitle}`,
+          `§${number} ${clauseTitle}`,
+          clauseTitle
+        ].filter(Boolean);
+
+        const isHeadingDuplicate = headingVariants.some(variant =>
+          variant.length > 3 && (
+            firstLine === variant ||
+            firstLine.startsWith(variant) && firstLine.length - variant.length < 5
+          )
+        );
+
+        if (isHeadingDuplicate) {
+          bodyLines.shift();
+          clauseText = bodyLines.join('\n').trim();
+        }
+      }
 
       addBlock({
         id: uuidv4(),
