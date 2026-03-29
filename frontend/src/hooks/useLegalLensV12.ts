@@ -326,7 +326,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   const parseContract = useCallback(async (id: string, forceRefresh: boolean = false) => {
     // FIX: Race Condition - Abort any existing streaming FIRST
     if (streamingAbortRef.current) {
-      console.log('[Legal Lens] Aborting existing streaming session');
       streamingAbortRef.current();
       streamingAbortRef.current = null;
     }
@@ -349,11 +348,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     }
 
     try {
-      // Log force refresh
-      if (forceRefresh) {
-        console.log(`🔄 [Legal Lens] Force-Refresh angefordert für Contract ${id}`);
-      }
-
       // Erst normalen Parse versuchen (prüft auf vorverarbeitete Klauseln)
       const response = await withRetry(
         () => legalLensAPI.parseContract(id, { forceRefresh }),
@@ -361,7 +355,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         (attempt) => {
           setIsRetrying(true);
           setRetryCount(attempt);
-          console.log(`[Legal Lens] Parse retry attempt ${attempt}`);
         }
       );
 
@@ -374,7 +367,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (response.success) {
         // STREAMING PATH: Backend empfiehlt Streaming (keine Vorverarbeitung)
         if (response.useStreaming) {
-          console.log(`🌊 [Legal Lens] Backend empfiehlt Streaming: ${response.reason}`);
           setIsParsing(false);
           setIsStreaming(true);
           setStreamingStatus(response.message || 'Starte KI-Analyse...');
@@ -406,7 +398,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onComplete: (totalClauses) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.log(`[Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
               setIsStreaming(false);
               setStreamingProgress(100);
               setStreamingStatus('Analyse abgeschlossen');
@@ -416,7 +407,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onError: (errorMsg) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.error(`[Legal Lens] Streaming error:`, errorMsg);
               setIsStreaming(false);
               setConnectionLost(false);
               setStreamRetryCount(0);
@@ -424,7 +414,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onConnectionLost: (info) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.warn(`[Legal Lens] Verbindung verloren:`, info);
               setConnectionLost(true);
               setStreamRetryCount(info.retryCount);
               if (info.willRetry) {
@@ -433,7 +422,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onRetrying: (attempt, maxAttempts) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.log(`[Legal Lens] Retry ${attempt}/${maxAttempts}`);
               setStreamRetryCount(attempt);
               setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
             }
@@ -446,14 +434,12 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
 
         if (source === 'preprocessed') {
           // ⚡ FAST PATH: Vorverarbeitete Klauseln - sofort anzeigen
-          console.log(`⚡ [Legal Lens] Vorverarbeitete Klauseln: ${response.clauses?.length}`);
           setClauses(response.clauses || []);
           setParseSource('preprocessed');
           setIsParsing(false);
         } else if (response.clauses && response.clauses.length > 50) {
           // 🌊 FALLBACK STREAMING: Viele Klauseln vom alten Regex-Parser
           // (Sollte mit neuer Backend-Logik nicht mehr vorkommen)
-          console.log(`🌊 [Legal Lens] Fallback: Starte Streaming für bessere Ergebnisse...`);
           setIsParsing(false);
           setIsStreaming(true);
           setStreamingStatus('Starte KI-Analyse...');
@@ -485,7 +471,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onComplete: (totalClauses) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.log(`[Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
               setIsStreaming(false);
               setStreamingProgress(100);
               setStreamingStatus('Analyse abgeschlossen');
@@ -495,7 +480,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onError: (errorMsg) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.error(`[Legal Lens] Streaming error:`, errorMsg);
               setIsStreaming(false);
               setConnectionLost(false);
               setStreamRetryCount(0);
@@ -505,7 +489,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onConnectionLost: (info) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.warn(`[Legal Lens] Verbindung verloren:`, info);
               setConnectionLost(true);
               setStreamRetryCount(info.retryCount);
               if (info.willRetry) {
@@ -514,20 +497,17 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             },
             onRetrying: (attempt, maxAttempts) => {
               if (parseRequestIdRef.current !== requestId) return;
-              console.log(`[Legal Lens] Retry ${attempt}/${maxAttempts}`);
               setStreamRetryCount(attempt);
               setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
             }
           }, forceRefresh);
         } else if (response.clauses && response.clauses.length > 0) {
           // Wenige Klauseln - normal anzeigen (könnte vorverarbeitet sein ohne Metadata)
-          console.log(`📋 [Legal Lens] ${response.clauses.length} Klauseln geladen`);
           setClauses(response.clauses);
           setParseSource(source || 'regex');
           setIsParsing(false);
         } else {
           // Keine Klauseln - Fehler
-          console.error(`❌ [Legal Lens] Keine Klauseln in Response`);
           setError('Keine Klauseln gefunden');
           setIsParsing(false);
         }
@@ -545,7 +525,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
             }
           }
         } catch {
-          console.warn('[Legal Lens] Could not load progress');
+          // Progress loading failed silently
         }
       }
     } catch (err) {
@@ -555,7 +535,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       setErrorInfo(errorDetails);
       setIsRetrying(false);
       setIsParsing(false);
-      console.error('[Legal Lens] Parse error after retries:', err);
     }
   }, [retryCount]);
 
@@ -567,7 +546,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     // ✅ Race Condition Fix: Abbrechen laufender Analyse wenn andere Klausel
     if (lastClauseIdRef.current !== clause.id) {
       if (abortControllerRef.current) {
-        console.log('[Legal Lens] Abbreche laufende Analyse (neue Klausel ausgewählt)');
         abortControllerRef.current();
         abortControllerRef.current = null;
       }
@@ -654,7 +632,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       const isStale = analysisRequestIdRef.current !== currentRequestId ||
                       lastClauseIdRef.current !== currentClauseId;
       if (isStale) {
-        console.log('[Legal Lens] Ignoriere veraltete Response (Request ID mismatch)');
+        // Stale request — discard
       }
       return isStale;
     };
@@ -715,7 +693,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               setIsRetrying(true);
               setRetryCount(attempt);
             }
-            console.log(`[Legal Lens] Analyze retry attempt ${attempt}`);
           }
         );
 
@@ -800,8 +777,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       return; // Alles bereits gecached oder in-progress
     }
 
-    console.log(`🔮 [Legal Lens] Pre-fetch: ${uncachedClauses.length} adjacent clauses`);
-
     // Starte Pre-fetch für alle (parallel, aber mit Abstand)
     for (const clause of uncachedClauses) {
       const cacheKey = getCacheKey(clause, currentPerspective);
@@ -820,10 +795,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         if (response.success) {
           // In Cache speichern (mit LRU Eviction)
           setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
-          console.log(`✅ [Legal Lens] Pre-fetched: ${clause.id.slice(-8)}`);
         }
-      }).catch(err => {
-        console.warn(`⚠️ [Legal Lens] Pre-fetch failed for ${clause.id}:`, err);
+      }).catch(() => {
+        // Pre-fetch failed silently
       }).finally(() => {
         // Aus in-progress entfernen
         prefetchInProgressRef.current.delete(cacheKey);
@@ -870,7 +844,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       try {
         await legalLensAPI.updateProgress(contractId, { currentPerspective: perspective });
       } catch (err) {
-        console.error('[Legal Lens] Error saving perspective:', err);
+        // Perspective save failed silently
       }
     }
 
@@ -1021,7 +995,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
         } : null);
       }
     } catch (err) {
-      console.error('[Legal Lens] Error marking clause reviewed:', err);
+      // Mark reviewed failed silently
     }
   }, [contractId, progress]);
 
@@ -1123,7 +1097,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     });
 
     if (uncachedClauses.length === 0) {
-      console.log('[Legal Lens] All clauses already cached!');
       setIsBatchAnalyzing(false);
       return;
     }
@@ -1135,13 +1108,10 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       isRunning: true
     });
 
-    console.log(`[Legal Lens] Starting batch analysis for ${uncachedClauses.length} clauses`);
-
     // Analysiere Klauseln nacheinander
     for (let i = 0; i < uncachedClauses.length; i++) {
       // Prüfe ob abgebrochen werden soll
       if (batchAbortRef.current) {
-        console.log('[Legal Lens] Batch analysis cancelled');
         break;
       }
 
@@ -1171,7 +1141,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
         }
       } catch (err) {
-        console.error(`[Legal Lens] Error analyzing clause ${clause.id}:`, err);
         // Fehler bei einer Klausel sollte den Batch nicht abbrechen
       }
 
@@ -1189,7 +1158,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     }));
     setIsBatchAnalyzing(false);
 
-    console.log('[Legal Lens] Batch analysis completed');
   }, [contractId, clauses, currentPerspective, analysisCache]);
 
   /**
@@ -1197,7 +1165,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
    */
   const cancelBatchAnalysis = useCallback(() => {
     batchAbortRef.current = true;
-    console.log('[Legal Lens] Batch analysis cancel requested');
   }, []);
 
   /**
@@ -1243,8 +1210,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     });
 
     if (uncachedHighRisk.length === 0) return;
-
-    console.log(`🚀 [Legal Lens] Auto-Preload: ${uncachedHighRisk.length} high-risk clauses`);
 
     // Queue aufbauen (Map: cacheKey -> clause)
     preloadQueueRef.current.clear();
@@ -1308,7 +1273,6 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           completedCount++;
         }
       } catch (err) {
-        console.error(`❌ [Legal Lens] Auto-Preload error for ${clause.id}:`, err);
         completedCount++; // Trotzdem weiterzählen
       }
 

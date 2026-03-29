@@ -77,8 +77,8 @@ const LegalLensStart = () => {
           const user = data.user || data;
           setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
-      } catch (err) {
-        console.error('[Legal Lens] Error fetching user plan:', err);
+      } catch {
+        // User plan fetch failed silently
       } finally {
         setPlanLoading(false);
       }
@@ -107,7 +107,6 @@ const LegalLensStart = () => {
         setContracts(contractsList);
         setFilteredContracts(contractsList);
       } catch (err) {
-        console.error('[Legal Lens Start] Error:', err);
         setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
       } finally {
         setIsLoading(false);
@@ -164,7 +163,6 @@ const LegalLensStart = () => {
         throw new Error('Keine Vertrags-ID erhalten');
       }
     } catch (err) {
-      console.error('[Legal Lens Start] Upload error:', err);
       setError(err instanceof Error ? err.message : 'Upload fehlgeschlagen');
       setIsUploading(false);
     }

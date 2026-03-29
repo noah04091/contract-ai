@@ -10,6 +10,19 @@
 
 const OpenAI = require('openai');
 
+/**
+ * Safely parse JSON from GPT response, logging raw content on failure.
+ */
+function safeParseJSON(content, context = '') {
+  try {
+    return JSON.parse(content);
+  } catch (parseError) {
+    console.error(`[ClauseAnalyzer] JSON parse error${context ? ' in ' + context : ''}:`, parseError.message);
+    console.error(`[ClauseAnalyzer] Raw content (first 500 chars):`, content?.substring(0, 500));
+    throw new Error(`KI-Antwort konnte nicht verarbeitet werden${context ? ' (' + context + ')' : ''}`);
+  }
+}
+
 class ClauseAnalyzer {
   constructor() {
     this.openai = new OpenAI({
@@ -414,7 +427,7 @@ REGELN:
       });
 
       const processingTime = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'analyzeClause');
 
       console.log(`✅ Analyse abgeschlossen in ${processingTime}ms`);
 
@@ -526,7 +539,7 @@ Antworte in diesem JSON-Format:
         max_tokens: 1000
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'generateAlternatives');
 
       return {
         success: true,
@@ -583,7 +596,7 @@ Antworte in diesem JSON-Format:
         max_tokens: 800
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'generateNegotiationTips');
 
       return {
         success: true,
@@ -820,7 +833,7 @@ Antworte NUR mit diesem JSON-Format:
       });
 
       const processingTime = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'batchPreAnalyze');
       const tokensUsed = response.usage?.total_tokens || 0;
 
       console.log(`✅ Batch-Voranalyse abgeschlossen in ${processingTime}ms (${tokensUsed} tokens)`);
@@ -1008,7 +1021,7 @@ Antworte NUR mit diesem JSON-Format:
       });
 
       const processingTime = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'generateContractSummary');
       const tokensUsed = response.usage?.total_tokens || 0;
 
       console.log(`✅ Smart Summary generiert in ${processingTime}ms (${tokensUsed} tokens)`);
@@ -1217,7 +1230,7 @@ Regeln: reject=Dealbreaker. accept=fair+üblich. Immer €/%/Tage nennen. better
       });
 
       const processingTime = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'analyzeClauseV2');
 
       console.log(`✅ V2 Analyse abgeschlossen in ${processingTime}ms (${response.usage?.total_tokens || 0} Tokens)`);
 
@@ -1305,7 +1318,7 @@ Regeln:
       });
 
       const processingTime = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content);
+      const result = safeParseJSON(response.choices[0].message.content, 'simulateClause');
 
       console.log(`✅ Clause Simulation abgeschlossen in ${processingTime}ms`);
 

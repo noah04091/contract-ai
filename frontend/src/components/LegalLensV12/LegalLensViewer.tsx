@@ -776,14 +776,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     analyzeClause(true);
   }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
 
-  // Klausel als gelesen markieren
-  useEffect(() => {
-    if (selectedClause && currentAnalysis) {
-      markClauseReviewed(selectedClause.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClause?.id, currentAnalysis]);
-
   // Smart Summary Handler
   const handleDismissSummary = useCallback(() => {
     setShowSmartSummary(false);
@@ -825,14 +817,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
         pdfTextIndexRef.current = textIndex;
         setPdfIndexReady(true); // ✅ Signal dass Index bereit ist
-        console.log(`[Legal Lens] PDF Text-Index erstellt: ${numPages} Seiten`);
-
         // ✅ FIX: Nach Index-Erstellung zur Klausel navigieren (wenn vorhanden)
         // NICHT vorher setPageNumber(1) aufrufen - das überschreibt die Navigation!
         if (selectedClause && !selectedClause.id.startsWith('pdf-')) {
           const targetPage = findPageForClause(selectedClause.text);
           if (targetPage) {
-            console.log(`[Legal Lens] onDocumentLoad: Navigating to clause page ${targetPage}`);
             scrollToPdfPage(targetPage);
             lastNavigatedClauseIdRef.current = selectedClause.id;
           } else {
@@ -892,7 +881,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         // Prüfe ob alle Wörter der Sequenz auf der Seite vorkommen (in beliebiger Reihenfolge)
         const allFound = sequence.every(word => pageText.includes(word));
         if (allFound) {
-          console.log(`[Legal Lens] findPageForClause: Found on page ${pageNum} (sequence: ${sequence.join(', ')})`);
           return pageNum;
         }
       }
@@ -917,7 +905,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
 
     if (bestPage) {
-      console.log(`[Legal Lens] findPageForClause: Best match on page ${bestPage} (score: ${Math.round(bestScore * 100)}%)`);
       return bestPage;
     }
 
@@ -1057,7 +1044,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     const targetPage = findPageForClause(selectedClause.text);
     if (targetPage) {
-      console.log(`[Legal Lens] Navigating to page ${targetPage}`);
       scrollToPdfPage(targetPage);
     } else {
       devLog('[Legal Lens] Could not find clause in PDF');
@@ -1083,7 +1069,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     const targetPage = findPageForClause(selectedClause.text);
     if (targetPage) {
-      console.log(`[Legal Lens] Navigating to page ${targetPage}`);
       scrollToPdfPage(targetPage);
     } else {
       devLog('[Legal Lens] Could not find clause in PDF index');
@@ -1445,8 +1430,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       devLog('[Legal Lens] Text zu kurz:', selectedText.length);
       return;
     }
-
-    console.log(`[Legal Lens] ${selectionMode.toUpperCase()}: ${selectedSpans.length} Spans, "${selectedText.substring(0, 80)}..."`);
 
     // ========== IMMER neue Klausel erstellen (KEIN Matching!) ==========
     // Das verhindert das "Springen" zu anderen Klauseln

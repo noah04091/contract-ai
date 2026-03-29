@@ -72,7 +72,6 @@ const LegalLens = () => {
         const data = await response.json();
         setContract(data);
       } catch (err) {
-        console.error('[Legal Lens] Error loading contract:', err);
         setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
       } finally {
         setIsLoading(false);
@@ -113,8 +112,8 @@ const LegalLens = () => {
           const user = data.user || data;
           setUserPlan(user.subscriptionPlan || user.plan || 'free');
         }
-      } catch (err) {
-        console.error('Error fetching user plan:', err);
+      } catch {
+        // User plan fetch failed silently
       } finally {
         setPlanLoading(false);
       }

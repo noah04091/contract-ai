@@ -49,6 +49,23 @@ const analysisRateLimiter = rateLimit({
 });
 
 // ============================================
+// SAFE JSON PARSE UTILITY
+// ============================================
+
+/**
+ * Safely parse JSON from GPT response, logging raw content on failure.
+ */
+function safeParseJSON(content, context = '') {
+  try {
+    return JSON.parse(content);
+  } catch (parseError) {
+    console.error(`[Legal Lens] JSON parse error${context ? ' in ' + context : ''}:`, parseError.message);
+    console.error(`[Legal Lens] Raw content (first 500 chars):`, content?.substring(0, 500));
+    throw new Error(`KI-Antwort konnte nicht verarbeitet werden${context ? ' (' + context + ')' : ''}`);
+  }
+}
+
+// ============================================
 // RETRY UTILITY
 // ============================================
 
@@ -1897,7 +1914,7 @@ REGELN:
       max_tokens: 3000
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = safeParseJSON(response.choices[0].message.content, 'negotiationChecklist');
     const generatedAt = new Date();
 
     console.log(`✅ [Legal Lens] Checklist generated with ${result.checklist?.length || 0} items`);
