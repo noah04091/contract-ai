@@ -1514,7 +1514,8 @@ router.post('/results/:id/docx', async (req, res) => {
       t = t.replace(/\n\s*[\w\-]+(?:vertrag|rahmenvertrag|vereinbarung)\s*\([A-Z]+\)\s*\n/gi, '\n');
 
       // 6. Fix OCR hyphenated words across lines: "länge-\nren" → "längeren"
-      t = t.replace(/(\w)-\s*\n\s*(\w)/g, '$1$2');
+      // Only fix when lowercase letter before hyphen and lowercase after (real word splits)
+      t = t.replace(/([a-zäöüß])-\s*\n\s*([a-zäöüß])/g, '$1$2');
 
       // 7. Collapse multiple spaces to single space (per line)
       t = t.split('\n').map(line => line.replace(/\s{2,}/g, ' ').trim()).join('\n');
@@ -1741,23 +1742,84 @@ router.post('/results/:id/docx', async (req, res) => {
       }
 
       const cleanedText = cleanText(clauseText);
-      // Smart paragraph splitting: double newline = new paragraph, single newline = join
-      const paragraphs = cleanedText.split(/\n\n+/).map(block =>
-        block.split('\n').map(l => l.trim()).filter(Boolean).join(' ')
-      ).filter(Boolean);
+      const lines = cleanedText.split('\n');
 
-      for (const para of paragraphs) {
-        // Skip very short junk paragraphs (likely OCR artifacts)
-        if (para.length < 3 && !/^\d+[.)]?$/.test(para)) continue;
+      // Smart line classification and grouping
+      let currentBlock = [];
+      const flushBlock = () => {
+        if (currentBlock.length === 0) return;
+        const joined = currentBlock.join(' ');
+        if (joined.trim().length >= 3) {
+          bodyChildren.push(
+            new Paragraph({
+              children: [new TextRun({ text: joined.trim(), size: 22, font: 'Arial', color: '374151' })],
+              spacing: { after: 140, line: 276 }
+            })
+          );
+        }
+        currentBlock = [];
+      };
 
-        bodyChildren.push(
-          new Paragraph({
-            children: [new TextRun({ text: para, size: 22, font: 'Arial', color: '374151' })],
-            spacing: { after: 120, line: 276 },
-            indent: { firstLine: 0 }
-          })
-        );
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) { flushBlock(); continue; }
+        if (line.length < 3 && !/^\d+[.)]?$/.test(line)) continue;
+
+        // Detect numbered subpoints: (1), (2), 1., 2., a), b) etc.
+        const isNumberedItem = /^\(\d+\)/.test(line) || /^\d+[.)]\s/.test(line) || /^[a-z]\)\s/i.test(line);
+        // Detect roman numerals: I., II., III., IV.
+        const isRomanItem = /^[IVX]+[.)]\s/.test(line);
+        // Detect label lines ending with ":"
+        const isLabel = line.endsWith(':') && line.length < 80;
+        // Detect section reference in text
+        const isSectionRef = /^§\s*\d/.test(line);
+        // Empty line means new paragraph
+        const isNewBlock = !line;
+
+        if (isNumberedItem || isRomanItem) {
+          flushBlock();
+          bodyChildren.push(
+            new Paragraph({
+              children: [new TextRun({ text: line, size: 22, font: 'Arial', color: '374151' })],
+              spacing: { after: 80, line: 276 },
+              indent: { left: 420, hanging: 280 }
+            })
+          );
+        } else if (isLabel) {
+          flushBlock();
+          bodyChildren.push(
+            new Paragraph({
+              children: [new TextRun({ text: line, size: 22, font: 'Arial', color: '374151', bold: true })],
+              spacing: { before: 100, after: 60, line: 276 }
+            })
+          );
+        } else if (isSectionRef) {
+          flushBlock();
+          bodyChildren.push(
+            new Paragraph({
+              children: [new TextRun({ text: line, size: 22, font: 'Arial', color: '374151' })],
+              spacing: { before: 80, after: 100, line: 276 }
+            })
+          );
+        } else {
+          // Check if this is a continuation of previous text or a new item
+          const prevLine = i > 0 ? lines[i - 1].trim() : '';
+          const startsWithUpper = /^[A-ZÄÖÜ]/.test(line);
+          const prevEndsWithPeriod = /[.;!?]$/.test(prevLine);
+          const prevEndsWithColon = prevLine.endsWith(':');
+
+          if ((startsWithUpper && (prevEndsWithPeriod || prevEndsWithColon || !prevLine)) ||
+              currentBlock.length === 0) {
+            // Start new paragraph block
+            if (prevEndsWithPeriod || prevEndsWithColon) flushBlock();
+            currentBlock.push(line);
+          } else {
+            // Continuation — append to current block
+            currentBlock.push(line);
+          }
+        }
       }
+      flushBlock();
 
       // Optimization reasoning in a styled box
       if (isOptimized) {
