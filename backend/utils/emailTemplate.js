@@ -15,11 +15,11 @@ function generateEmailTemplate({
   unsubscribeUrl = null  // 🆕 GDPR: Unsubscribe-Link (Pflicht für Marketing-Emails)
 }) {
 
-  // 🆕 Zentrierter CTA-Button wenn centerContent=true
+  // CTA-Button immer zentriert mit abgerundeten Ecken
   const ctaHtml = cta ? `
-              <table cellpadding="0" cellspacing="0" style="margin-top: 28px;${centerContent ? ' margin-left: auto; margin-right: auto;' : ''}">
+              <table cellpadding="0" cellspacing="0" style="margin-top: 28px; margin-left: auto; margin-right: auto;">
                 <tr>
-                  <td style="background-color: #3b82f6; border-radius: 8px;">
+                  <td style="background-color: #3b82f6; border-radius: 25px;">
                     <a href="${cta.url}" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600;">
                       ${cta.text}
                     </a>
@@ -75,7 +75,7 @@ function generateEmailTemplate({
           <!-- Content -->
           <tr>
             <td style="padding: 32px 40px 40px 40px;">
-              <h1 style="margin: 0 0 24px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3;${centerContent ? ' text-align: center;' : ''}">
+              <h1 style="margin: 0 0 24px 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.3; text-align: center;">
                 ${title}
               </h1>
 

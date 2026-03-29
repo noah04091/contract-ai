@@ -280,8 +280,8 @@ async function generateActionToken(eventId, userId) {
 function generateCancelReminderEmail(event, token, baseUrl) {
   const daysUntilWindow = event.metadata?.daysUntilWindow || 30;
   return `
-    <h2 style="color: #3b82f6;">Erinnerung: Kündigungsfrist naht</h2>
-    <p>In ca. <strong>${daysUntilWindow} Tagen</strong> öffnet sich das Kündigungsfenster für <strong>${event.metadata.contractName}</strong>.</p>
+    <h2 style="color: #3b82f6; text-align: center;">Erinnerung: Kündigungsfrist naht</h2>
+    <p style="text-align: center;">In ca. <strong>${daysUntilWindow} Tagen</strong> öffnet sich das Kündigungsfenster für <strong>${event.metadata.contractName}</strong>.</p>
     <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
       <h3>Details:</h3>
       <ul style="list-style: none; padding: 0;">
@@ -290,15 +290,15 @@ function generateCancelReminderEmail(event, token, baseUrl) {
         ${event.metadata?.isAutoRenewal ? '<li><strong>Hinweis:</strong> Dieser Vertrag verlängert sich automatisch!</li>' : ''}
       </ul>
     </div>
-    <p>Jetzt ist ein guter Zeitpunkt, Ihre Optionen zu prüfen.</p>
+    <p style="text-align: center;">Jetzt ist ein guter Zeitpunkt, Ihre Optionen zu prüfen.</p>
   `;
 }
 
 function generateCancelWindowEmail(event, token, baseUrl) {
   const daysUntilExpiry = Math.ceil((new Date(event.metadata.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
   return `
-    <h2 style="color: #34c759;">Gute Nachrichten!</h2>
-    <p>Das Kuendigungsfenster fuer <strong>${event.metadata.contractName}</strong> ist jetzt geoeffnet.</p>
+    <h2 style="color: #34c759; text-align: center;">Gute Nachrichten!</h2>
+    <p style="text-align: center;">Das Kuendigungsfenster fuer <strong>${event.metadata.contractName}</strong> ist jetzt geoeffnet.</p>
     <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
       <h3>Wichtige Informationen:</h3>
       <ul style="list-style: none; padding: 0;">
@@ -313,8 +313,8 @@ function generateCancelWindowEmail(event, token, baseUrl) {
 
 function generateLastCancelDayEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #991b1b;">Wichtige Erinnerung</h2>
-    <p style="font-size: 15px; line-height: 1.7; color: #334155;">
+    <h2 style="color: #991b1b; text-align: center;">Wichtige Erinnerung</h2>
+    <p style="font-size: 15px; line-height: 1.7; color: #334155; text-align: center;">
       Heute ist der letzte Tag, um <strong>"${event.metadata.contractName}"</strong> zu kündigen.
     </p>
     <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
@@ -329,29 +329,29 @@ function generateLastCancelDayEmail(event, token, baseUrl) {
 
 function generateCancelWarningEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #ff9500;">Wichtige Erinnerung</h2>
-    <p>In <strong>${event.metadata.daysLeft} Tagen</strong> endet die Kuendigungsfrist fuer "${event.metadata.contractName}".</p>
+    <h2 style="color: #ff9500; text-align: center;">Wichtige Erinnerung</h2>
+    <p style="text-align: center;">In <strong>${event.metadata.daysLeft} Tagen</strong> endet die Kuendigungsfrist fuer "${event.metadata.contractName}".</p>
   `;
 }
 
 function generatePriceIncreaseEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #ff6b35;">Preiserhoehung angekuendigt</h2>
-    <p>Der Preis fuer "${event.metadata.contractName}" wird erhoeht.</p>
+    <h2 style="color: #ff6b35; text-align: center;">Preiserhoehung angekuendigt</h2>
+    <p style="text-align: center;">Der Preis fuer "${event.metadata.contractName}" wird erhoeht.</p>
   `;
 }
 
 function generateAutoRenewalEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #5c7cfa;">Automatische Verlaengerung steht bevor</h2>
-    <p>"${event.metadata.contractName}" verlaengert sich automatisch.</p>
+    <h2 style="color: #5c7cfa; text-align: center;">Automatische Verlaengerung steht bevor</h2>
+    <p style="text-align: center;">"${event.metadata.contractName}" verlaengert sich automatisch.</p>
   `;
 }
 
 function generateReviewEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #10b981;">Zeit fuer einen Vertrags-Check!</h2>
-    <p>Ihr Vertrag "${event.metadata.contractName}" laeuft seit laengerer Zeit.</p>
+    <h2 style="color: #10b981; text-align: center;">Zeit fuer einen Vertrags-Check!</h2>
+    <p style="text-align: center;">Ihr Vertrag "${event.metadata.contractName}" laeuft seit laengerer Zeit.</p>
   `;
 }
 
@@ -360,8 +360,8 @@ function generateCancellationConfirmationCheckEmail(event, token, baseUrl) {
   const provider = event.metadata?.provider || "Anbieter";
   const isFollowUp = event.metadata?.isFollowUp;
   return `
-    <h2 style="color: #f59e0b;">Kündigungsbestätigung prüfen</h2>
-    <p>Haben Sie bereits eine <strong>Bestätigung</strong> für die Kündigung von <strong>${contractName}</strong> ${provider ? `bei ${provider}` : ''} erhalten?</p>
+    <h2 style="color: #f59e0b; text-align: center;">Kündigungsbestätigung prüfen</h2>
+    <p style="text-align: center;">Haben Sie bereits eine <strong>Bestätigung</strong> für die Kündigung von <strong>${contractName}</strong> ${provider ? `bei ${provider}` : ''} erhalten?</p>
     <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
       <h3 style="margin: 0 0 8px; font-size: 15px;">Was Sie jetzt tun sollten:</h3>
       <ul style="padding-left: 18px; margin: 0;">
@@ -371,7 +371,7 @@ function generateCancellationConfirmationCheckEmail(event, token, baseUrl) {
       </ul>
     </div>
     ${isFollowUp ? '<p style="color: #92400e; font-size: 13px;">Dies ist eine Folge-Erinnerung. Sie haben zuvor angegeben, keine Bestätigung erhalten zu haben.</p>' : ''}
-    <p>Öffnen Sie Ihren Kalender in Contract AI, um direkt zu reagieren.</p>
+    <p style="text-align: center;">Öffnen Sie Ihren Kalender in Contract AI, um direkt zu reagieren.</p>
   `;
 }
 
@@ -406,7 +406,7 @@ function generateCalendarEmailTemplate(params) {
     return `
       <table border="0" cellpadding="0" cellspacing="0" style="margin: 10px auto;">
         <tr>
-          <td align="center" style="background: ${colors.bg}; border-radius: 8px;">
+          <td align="center" style="background: ${colors.bg}; border-radius: 25px;">
             <a href="${button.url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 600; color: ${colors.text}; text-decoration: none;">${button.text}</a>
           </td>
         </tr>
