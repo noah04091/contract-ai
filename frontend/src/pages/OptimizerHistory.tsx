@@ -56,7 +56,7 @@ export default function OptimizerHistory() {
   const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiCall('/optimizer/history') as { success: boolean; results: HistoryItem[] };
+      const data = await apiCall('/optimizer-v2/history') as { success: boolean; results: HistoryItem[] };
       if (data?.success) {
         setItems(data.results);
       }
@@ -78,7 +78,7 @@ export default function OptimizerHistory() {
     if (!window.confirm('Analyse wirklich löschen?')) return;
     setDeletingId(id);
     try {
-      await apiCall(`/optimizer/results/${id}`, { method: 'DELETE' });
+      await apiCall(`/optimizer-v2/results/${id}`, { method: 'DELETE' });
       setItems(prev => prev.filter(item => item._id !== id));
     } catch {
       // silent
