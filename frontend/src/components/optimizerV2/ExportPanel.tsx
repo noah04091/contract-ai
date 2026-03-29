@@ -62,7 +62,10 @@ export default function ExportPanel({ result, userSelections }: Props) {
       const response = await fetch(`${apiBase}/api/optimizer-v2/results/${result.resultId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('Export fehlgeschlagen');
+      if (!response.ok) {
+        if (response.status === 403) throw new Error('SESSION_EXPIRED');
+        throw new Error('EXPORT_FAILED');
+      }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -72,8 +75,10 @@ export default function ExportPanel({ result, userSelections }: Props) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch {
-      showExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    } catch (err) {
+      showExportError(err instanceof Error && err.message === 'SESSION_EXPIRED'
+        ? 'Sitzung abgelaufen — bitte Seite neu laden und erneut versuchen.'
+        : 'Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
       setDownloading(false);
     }
@@ -106,7 +111,11 @@ export default function ExportPanel({ result, userSelections }: Props) {
         body: JSON.stringify({ selections, mode: docxMode })
       });
 
-      if (!response.ok) throw new Error('DOCX-Export fehlgeschlagen');
+      if (!response.ok) {
+        if (response.status === 403) throw new Error('SESSION_EXPIRED');
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.message || 'EXPORT_FAILED');
+      }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -118,8 +127,10 @@ export default function ExportPanel({ result, userSelections }: Props) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setDocxStep('idle');
-    } catch {
-      showExportError('Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    } catch (err) {
+      showExportError(err instanceof Error && err.message === 'SESSION_EXPIRED'
+        ? 'Sitzung abgelaufen — bitte Seite neu laden und erneut versuchen.'
+        : 'Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
       setGenerating(false);
     }
