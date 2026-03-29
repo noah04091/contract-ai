@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText, ExternalLink } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -36,6 +36,17 @@ export default function OptimizerV2() {
   const [sortByImportance, setSortByImportance] = useState(false);
   const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
+
+  const handleViewFile = useCallback(async (resultId: string) => {
+    try {
+      const data = await apiCall(`/optimizer-v2/results/${resultId}/view-file`) as { success?: boolean; url?: string };
+      if (data?.success && data.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch {
+      // File not available — silently fail
+    }
+  }, []);
 
   // Check auth + premium status
   useEffect(() => {
@@ -134,8 +145,15 @@ export default function OptimizerV2() {
               <h1 className={styles.pageTitle}>Contract Intelligence</h1>
               {result?.fileName ? (
                 <p className={styles.pageSubtitle}>
-                  <FileText size={13} style={{ verticalAlign: '-2px', marginRight: '4px', opacity: 0.6 }} />
-                  {result.fileName}
+                  <button
+                    className={styles.pageFileLink}
+                    onClick={() => resultId && handleViewFile(resultId)}
+                    title="Original-Dokument in neuem Tab öffnen"
+                  >
+                    <FileText size={13} />
+                    {result.fileName}
+                    <ExternalLink size={11} className={styles.pageFileLinkIcon} />
+                  </button>
                   {result.structure?.contractTypeLabel && (
                     <span className={styles.pageHeaderType}>{result.structure.contractTypeLabel}</span>
                   )}

@@ -29,6 +29,16 @@ const OptimizerV2Result = require('../models/OptimizerV2Result');
 const { CLAUSE_CHAT_PROMPT } = require('../services/optimizerV2/prompts/systemPrompts');
 const { generateWordDiff } = require('../services/optimizerV2/utils/diffGenerator');
 const { getFeatureLimit } = require('../constants/subscriptionPlans');
+const { generateSignedUrl } = require('../services/fileStorage');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+
+const s3Main = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
 
 // File upload config
 const uploadsDir = path.join(__dirname, '..', 'uploads');
@@ -277,6 +287,22 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     return res.end();
   }
 
+  // Upload original file to S3 for later viewing
+  let s3Key = null;
+  try {
+    const fileBuffer = await fs.readFile(req.file.path);
+    s3Key = `optimizer-v2/${userId}/${requestId}_${req.file.originalname}`;
+    await s3Main.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: req.file.mimetype || 'application/octet-stream'
+    }));
+  } catch (s3Err) {
+    console.warn('[OptimizerV2] S3 upload for viewing failed (non-critical):', s3Err.message);
+    s3Key = null; // Non-critical — analysis continues without stored file
+  }
+
   try {
     const result = await runPipeline(
       {
@@ -285,6 +311,7 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         userId,
         requestId,
         perspective,
+        s3Key,
         fileSize: req.file.size,
         ocrApplied
       },
@@ -579,6 +606,27 @@ router.post('/results/:id/resume', async (req, res) => {
     sendSSE({ error: true, message: err.message });
   } finally {
     if (!clientDisconnected) res.end();
+  }
+});
+
+// ════════════════════════════════════════════════════════
+// GET /results/:id/view-file - Presigned URL for original file
+// ════════════════════════════════════════════════════════
+router.get('/results/:id/view-file', async (req, res) => {
+  try {
+    const result = await OptimizerV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId
+    }).select('s3Key fileName');
+
+    if (!result || !result.s3Key) {
+      return res.status(404).json({ success: false, message: 'Originaldatei nicht verfügbar.' });
+    }
+
+    const url = await generateSignedUrl(result.s3Key);
+    res.json({ success: true, url, fileName: result.fileName });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Fehler beim Laden der Datei.' });
   }
 });
 
