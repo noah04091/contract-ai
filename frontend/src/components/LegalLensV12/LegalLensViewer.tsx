@@ -15,6 +15,7 @@ import IndustrySelector from './IndustrySelector';
 import NegotiationChecklist from './NegotiationChecklist';
 import ExportAnalysisModal from './ExportAnalysisModal';
 import RiskScoreGauge from './RiskScoreGauge';
+import PerspectiveSelectionModal from './PerspectiveSelectionModal';
 import * as legalLensAPI from '../../services/legalLensAPI';
 import type { IndustryType } from '../../types/legalLens';
 import styles from '../../styles/LegalLensV12.module.css';
@@ -64,6 +65,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // Analysis Panel ref for scroll-to-top
   const analysisPanelRef = useRef<HTMLDivElement>(null);
+
+  // Perspective Selection Modal State
+  const [showPerspectiveModal, setShowPerspectiveModal] = useState<boolean>(() => {
+    return !localStorage.getItem('legalLens_defaultPerspective');
+  });
 
   // Smart Summary State
   const [showSmartSummary, setShowSmartSummary] = useState<boolean>(true);
@@ -775,6 +781,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     analyzeClause(true);
   }, [selectedClause?.id, currentPerspective, isAnalyzing, analysisCache, currentAnalysis, analyzeClause, isBatchAnalyzing, bumpClauseInQueue]);
+
+  // Perspective Selection Handler
+  const handlePerspectiveSelected = useCallback((perspective: import('../../types/legalLens').PerspectiveType) => {
+    localStorage.setItem('legalLens_defaultPerspective', perspective);
+    changePerspective(perspective);
+    setShowPerspectiveModal(false);
+  }, [changePerspective]);
 
   // Smart Summary Handler
   const handleDismissSummary = useCallback(() => {
@@ -1553,6 +1566,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             </span>
           </div>
         </div>
+      )}
+
+      {/* Perspective Selection Modal — nur beim allerersten Mal */}
+      {showPerspectiveModal && !isParsing && (
+        <PerspectiveSelectionModal onSelect={handlePerspectiveSelected} />
       )}
 
       {/* Smart Summary Modal - Zeigt sich SOFORT wenn Streaming startet (parallel zu Klauseln) */}

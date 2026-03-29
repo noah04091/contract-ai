@@ -253,7 +253,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   const [clauses, setClauses] = useState<ParsedClause[]>([]);
   const [selectedClause, setSelectedClause] = useState<ParsedClause | null>(null);
   const [currentAnalysis, setCurrentAnalysis] = useState<ClauseAnalysis | null>(null);
-  const [currentPerspective, setCurrentPerspective] = useState<PerspectiveType>('contractor');
+  const [currentPerspective, setCurrentPerspective] = useState<PerspectiveType>(
+    () => (localStorage.getItem('legalLens_defaultPerspective') as PerspectiveType) || 'contractor'
+  );
   const [progress, setProgress] = useState<LegalLensProgress | null>(null);
   const [alternatives, setAlternatives] = useState<ClauseAlternative[]>([]);
   const [negotiation, setNegotiation] = useState<NegotiationInfo | null>(null);

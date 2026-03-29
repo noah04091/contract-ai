@@ -13,3 +13,4 @@ export { default as SaveClauseModal } from './SaveClauseModal';
 export { default as ExportAnalysisModal } from './ExportAnalysisModal';
 export { default as RiskScoreGauge } from './RiskScoreGauge';
 export { default as HoverTooltip } from './HoverTooltip';
+export { default as PerspectiveSelectionModal } from './PerspectiveSelectionModal';
