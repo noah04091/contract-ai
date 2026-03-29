@@ -424,7 +424,7 @@ REGELN:
         response_format: { type: 'json_object' },
         temperature,
         max_tokens: maxTokens
-      });
+      }, { timeout: 30000 });
 
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'analyzeClause');

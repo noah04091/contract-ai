@@ -236,7 +236,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     );
   }
 
-  // Loading State (Streaming)
+  // Loading State (Streaming) or waiting for analysis to start
   if (isAnalyzing) {
     const perspInfo = getCurrentPerspectiveInfo();
     return (
@@ -245,7 +245,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <div className={styles.sectionHeader}>
             <h4 className={styles.sectionTitle}>
               <span className={styles.sectionIcon}>{perspInfo.icon || '🔍'}</span>
-              Analyse läuft...
+              {elapsedSec >= 8 ? 'Dauert etwas länger...' : 'Analyse läuft...'}
             </h4>
             <span className={styles.elapsedTime}>{elapsedSec}s</span>
           </div>
@@ -258,7 +258,10 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <div className={styles.loadingOverlay}>
               <div className={styles.loadingSpinner} />
               <span className={styles.loadingText}>
-                {perspInfo.name}
+                {elapsedSec >= 8
+                  ? 'GPT-4 analysiert gerade — komplexe Klauseln brauchen etwas länger'
+                  : `${perspInfo.name}-Perspektive wird analysiert`
+                }
               </span>
             </div>
           )}
@@ -267,17 +270,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     );
   }
 
-  // No Analysis Yet - aber Klausel ausgewählt
-  // ✅ Phase 1 Task 4: Fallback-Text statt leerer Anzeige
+  // No Analysis Yet - Klausel ausgewählt, Analyse startet gleich
   if (!analysis) {
     return (
       <div className={styles.analysisContent}>
-        <div className={styles.emptyAnalysisState}>
-          <span className={styles.emptyAnalysisIcon}>📋</span>
-          <h4 className={styles.emptyAnalysisTitle}>Analyse wird vorbereitet</h4>
-          <p className={styles.emptyAnalysisText}>
-            Die Analyse für diese Klausel wird geladen. Bitte warten Sie einen Moment.
-          </p>
+        <div className={styles.analysisSection}>
+          <div className={styles.loadingOverlay}>
+            <div className={styles.loadingSpinner} />
+            <span className={styles.loadingText}>
+              Analyse wird gestartet...
+            </span>
+          </div>
         </div>
       </div>
     );

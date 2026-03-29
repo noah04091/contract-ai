@@ -760,23 +760,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     if (currentMatchesClause) return;
 
-    // ✅ SCHRITT 4: Queue-Priorisierung wenn Batch läuft
+    // Queue-Priorisierung wenn Batch läuft, aber sofort analysieren
     if (isBatchAnalyzing) {
-      // Versuche Klausel in der Queue zu priorisieren
-      const wasBumped = bumpClauseInQueue(selectedClause);
-
-      if (wasBumped) {
-        // Fallback-Timer: Wenn nach 2s immer noch nicht gecached, direkt analysieren
-        const fallbackTimer = setTimeout(() => {
-          if (!(cacheKey in analysisCache)) {
-            analyzeClause(false);
-          }
-        }, 2000);
-
-        // Cleanup bei Unmount oder wenn sich Klausel ändert
-        return () => clearTimeout(fallbackTimer);
-      }
-      // Klausel nicht in Queue → normal analysieren (z.B. nicht-high-risk Klausel)
+      bumpClauseInQueue(selectedClause);
     }
 
     analyzeClause(true);

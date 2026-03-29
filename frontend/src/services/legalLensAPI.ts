@@ -61,24 +61,37 @@ export async function analyzeClause(
   perspective: PerspectiveType = 'contractor',
   stream: boolean = false
 ): Promise<AnalyzeClauseResponse> {
-  const response = await fetchWithAuth(
-    `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/analyze`,
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        clauseText,
-        perspective,
-        stream
-      })
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+  try {
+    const response = await fetchWithAuth(
+      `${LEGAL_LENS_BASE}/${contractId}/clause/${clauseId}/analyze`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          clauseText,
+          perspective,
+          stream
+        }),
+        signal: controller.signal
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Fehler bei der Klausel-Analyse');
     }
-  );
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Fehler bei der Klausel-Analyse');
+    return response.json();
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('Die Analyse hat zu lange gedauert. Bitte versuchen Sie es erneut.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
 /**
