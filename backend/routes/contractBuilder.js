@@ -663,9 +663,15 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       t = t.replace(/\uFFFD/g, '');
       t = t.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 
-      // Remove OCR page markers
+      // Remove OCR page markers and headers/footers
       t = t.replace(/Seite\s+\d+\s+von\s+\d+/gi, '');
+      t = t.replace(/Seite\s+von\s+\d+/gi, '');
       t = t.replace(/Ausdruck vom\s*/gi, '');
+      t = t.replace(/FAST\s*\/\/\s*FORWARD\s*\/\/\s*FINANCE[^\n]*/gi, '');
+      t = t.replace(/©[^\n]*/g, '');
+      t = t.replace(/USt-Id\s*Nr\.\s*DE[\s\d]*\/\s*Steuer-Nr\.:\s*[\d/]+/gi, '');
+      t = t.replace(/Factoring-Rahmenvertrag\s*\(FRV\)/gi, '');
+      t = t.replace(/^\s*\d{2}\.\d{2}\.\d{4}\s*$/gm, '');
 
       // Remove repeated company address/register blocks
       t = t.replace(/(?:\n|^)\s*[A-ZÄÖÜ][\wäöüÄÖÜß\s\-&.]+(?:GmbH|AG|KG|SE|e\.K\.)[\s\S]{0,300}?(?:Handelsregister|USt-Id|Steuer-Nr|IBAN|BLZ|BIC)[^\n]*/g, (match, offset) => {
@@ -708,6 +714,31 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
 
       // Fix OCR hyphenated words across lines: "länge-\nren" → "längeren"
       t = t.replace(/([a-zäöüß])-\s*\n\s*([a-zäöüß])/g, '$1$2');
+
+      // ── Join OCR hard line breaks into proper paragraphs ──
+      // OCR creates line breaks at ~60-80 chars even mid-sentence.
+      // Join lines that don't start with a paragraph indicator.
+      const joinedLines = [];
+      for (const line of t.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          joinedLines.push(''); // preserve paragraph breaks
+          continue;
+        }
+        const prev = joinedLines.length > 0 ? joinedLines[joinedLines.length - 1] : '';
+        // Start new paragraph if line starts with: (1), (a), §, -, bullet, number+dot, or is a heading
+        const isNewParagraph = /^(\(\d+\)|\([a-z]\)|§\s*\d|[-–•]\s|\d+\.\s|[A-ZÄÖÜ]{2,})/.test(trimmed);
+        const prevEmpty = prev === '';
+        const prevEndsClean = /[.;:!?"]$/.test(prev.trim());
+
+        if (prev && !prevEmpty && !isNewParagraph && !prevEndsClean) {
+          // Join with previous line (OCR mid-sentence break)
+          joinedLines[joinedLines.length - 1] = prev + ' ' + trimmed;
+        } else {
+          joinedLines.push(trimmed);
+        }
+      }
+      t = joinedLines.join('\n');
 
       // Collapse multiple spaces and empty lines
       t = t.split('\n').map(line => line.replace(/\s{2,}/g, ' ').trim()).join('\n');
@@ -1028,10 +1059,18 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
       return clauseText;
     };
 
+    // Sort clauses by section number to fix OCR ordering issues
+    const sortedClauses = [...clauses].sort((a, b) => {
+      // Preamble/no-number clauses come first
+      const numA = a.sectionNumber ? parseInt(a.sectionNumber.replace(/\D/g, '')) || 999 : 0;
+      const numB = b.sectionNumber ? parseInt(b.sectionNumber.replace(/\D/g, '')) || 999 : 0;
+      return numA - numB;
+    });
+
     // Clause blocks
     let clauseNumber = 1;
     let preambleHandled = false;
-    for (const clause of clauses) {
+    for (const clause of sortedClauses) {
       const optimization = optimizations.find(o => o.clauseId === clause.id);
       const selection = selectionMap.get(clause.id);
       const selectedMode = selection?.mode;
@@ -1089,12 +1128,13 @@ router.post('/import-from-optimizer', auth, async (req, res) => {
 
       // Strip duplicate heading from body
       clauseText = stripDuplicateHeading(clauseText, clauseTitle, number, rawTitle);
-
-      // Strip repeated OCR page headers/footers from clause body
-      clauseText = clauseText.replace(/FAST\s*\/\/\s*FORWARD\s*\/\/\s*FINANCE[^\n]*/gi, '');
-      clauseText = clauseText.replace(/©[^\n]*/g, '');
-      clauseText = clauseText.replace(/^\s*\d{2}\.\d{2}\.\d{4}\s*$/gm, '');
       clauseText = clauseText.replace(/\n{3,}/g, '\n\n').trim();
+
+      // Skip empty clauses (OCR artifacts or stripped content)
+      if (!clauseText || clauseText.length < 10) {
+        clauseNumber++;
+        continue;
+      }
 
       // addBlock auto-splits oversized blocks
       addBlock({
