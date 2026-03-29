@@ -73,12 +73,13 @@ const AREA_TO_CONTRACT_TYPES = {
   kaufrecht: ["kaufvertrag", "factoring", "leasing"],
   handelsrecht: ["dienstleistung", "saas", "hosting", "factoring", "handelsvertreter", "franchisevertrag", "rahmenvertrag"],
   verbraucherschutz: ["saas", "hosting", "versicherung", "leasing", "darlehen", "maklervertrag"],
+  verbraucherrecht: ["saas", "hosting", "versicherung", "leasing", "darlehen", "maklervertrag"],
   steuerrecht: ["dienstleistung", "freelancer", "gesellschaftsvertrag"],
   it_recht: ["saas", "hosting", "lizenz"],
   wettbewerbsrecht: ["nda", "freelancer", "handelsvertreter", "franchisevertrag"],
   versicherungsrecht: ["versicherung"],
   gesellschaftsrecht: ["gesellschaftsvertrag", "dienstleistung"],
-  vertragsrecht: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag"],
+  vertragsrecht: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag", "versicherung", "mietvertrag", "arbeitsvertrag", "darlehen"],
   urheberrecht: ["freelancer", "nda", "lizenz"],
   // Financial law areas
   bankrecht: ["darlehen", "factoring", "buergschaft", "leasing"],
@@ -101,6 +102,10 @@ const AREA_TO_CONTRACT_TYPES = {
   eu_recht: ["saas", "hosting", "dienstleistung", "freelancer", "lizenz", "nda", "arbeitsvertrag"],
   finanzrecht: ["darlehen", "factoring", "buergschaft", "leasing", "versicherung"],
   regulierung: ["saas", "hosting", "dienstleistung", "rahmenvertrag"],
+  // Feed categories that leak through as areas (fallback from rssService)
+  gesetzgebung: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag", "arbeitsvertrag"],
+  rechtsnews: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag"],
+  bundesrecht: ["saas", "hosting", "dienstleistung", "freelancer", "rahmenvertrag", "kaufvertrag", "arbeitsvertrag", "mietvertrag"],
   // Catch broader areas
   sonstiges: ["dienstleistung", "kaufvertrag", "rahmenvertrag"],
 };
