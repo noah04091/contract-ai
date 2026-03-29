@@ -103,7 +103,7 @@ export const RadarHealthExpanded: React.FC<{ data: RadarHealthData }> = ({ data 
     </div>
 
     {/* Alert pipeline */}
-    <SectionHeader title="Alert-Pipeline (diese Woche)" />
+    <SectionHeader title="Deine Alerts (diese Woche)" />
     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
       <MiniStat label="Negativ" value={String(data.alertsThisWeek.directions.negative)} color="#dc2626" />
       <MiniStat label="Positiv" value={String(data.alertsThisWeek.directions.positive)} color="#059669" />
@@ -185,7 +185,7 @@ export const RadarHealthCard: React.FC<{ embedded?: boolean }> = () => {
       <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
         <MiniStat label="Feeds aktiv" value={`${data.feeds.enabled}/${data.feeds.total}`} color={feedHealthy ? '#059669' : '#d97706'} />
         <MiniStat label="Laws in DB" value={String(data.laws.total)} color="#6366f1" />
-        <MiniStat label="Alerts diese Woche" value={String(data.alertsThisWeek.total)} color="#ea580c" />
+        <MiniStat label="Deine Alerts" value={String(data.alertsThisWeek.total)} color="#ea580c" />
         <MiniStat label="Email Delivery" value={`${data.email.deliveryRate}%`} color={emailHealthy ? '#059669' : '#dc2626'} />
       </div>
       {expanded && <RadarHealthExpanded data={data} />}

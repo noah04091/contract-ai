@@ -2698,11 +2698,12 @@ router.get("/radar-health-detail", async (req, res) => {
     const database = require("../config/database");
     const db = await database.connect();
     const rssService = require("../services/rssService");
+    const userId = req.user?.userId;
 
-    // Feed health
+    // Feed health (global — system data)
     const feedStats = rssService.getFeedStats();
 
-    // Law coverage
+    // Law coverage (global — system data)
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const [lawStats] = await db.collection("laws").aggregate([
       {
@@ -2721,9 +2722,11 @@ router.get("/radar-health-detail", async (req, res) => {
       },
     ]).toArray();
 
-    // Alert pipeline stats (this week)
+    // Alert pipeline stats — USER-SPECIFIC
+    const alertMatch = { createdAt: { $gte: oneWeekAgo } };
+    if (userId) alertMatch.userId = userId;
     const [alertStats] = await db.collection("pulse_v2_legal_alerts").aggregate([
-      { $match: { createdAt: { $gte: oneWeekAgo } } },
+      { $match: alertMatch },
       {
         $group: {
           _id: null,
@@ -2740,9 +2743,11 @@ router.get("/radar-health-detail", async (req, res) => {
       },
     ]).toArray();
 
-    // Email delivery
+    // Email delivery — USER-SPECIFIC
+    const emailMatch = { emailType: "legal_pulse_v2_radar", createdAt: { $gte: oneWeekAgo } };
+    if (userId) emailMatch.userId = userId;
     const [emailStats] = await db.collection("email_queue").aggregate([
-      { $match: { emailType: "legal_pulse_v2_radar", createdAt: { $gte: oneWeekAgo } } },
+      { $match: emailMatch },
       {
         $group: {
           _id: null,
@@ -2752,7 +2757,7 @@ router.get("/radar-health-detail", async (req, res) => {
       },
     ]).toArray();
 
-    // Recent radar runs
+    // Recent radar runs (global — system-wide runs, not per-user)
     const recentRuns = await db.collection("radar_run_history")
       .find({}).sort({ runAt: -1 }).limit(5).toArray();
 
