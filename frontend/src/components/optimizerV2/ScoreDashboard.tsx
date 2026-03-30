@@ -78,6 +78,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           clauseId: a.clauseId,
           title: clause ? `${clause.sectionNumber && clause.sectionNumber !== 'null' ? clause.sectionNumber + ' ' : ''}${clause.sectionNumber && clause.title?.startsWith(clause.sectionNumber) ? clause.title.slice(clause.sectionNumber.length).trimStart() : clause.title}` : a.clauseId,
           insight: insight.length > 120 ? insight.substring(0, 117) + '...' : insight,
+          fullInsight: insight.length > 120 ? insight : undefined,
           powerBalance: a.powerBalance,
           riskLevel: a.riskLevel
         };
@@ -231,7 +232,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
                 <span className={styles.strategyRank}>#{i + 1}</span>
                 <div className={styles.strategyInfo}>
                   <span className={styles.strategyClause}>{point.title}</span>
-                  <span className={styles.strategyInsight}>{point.insight}</span>
+                  <span className={styles.strategyInsight} title={point.fullInsight}>{point.insight}</span>
                 </div>
                 <div className={styles.strategyMeta}>
                   {point.powerBalance !== 'balanced' && (

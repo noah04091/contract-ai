@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, FileText, File, Loader2, CheckCircle2, Mail, Copy, Check, Hammer } from 'lucide-react';
 import { apiCall } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
 import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -15,6 +16,7 @@ type DocxStep = 'idle' | 'selecting' | 'generating';
 
 export default function ExportPanel({ result, userSelections }: Props) {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const optimizedCount = result.optimizations.filter(o => o.needsOptimization).length;
   const [downloading, setDownloading] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -184,6 +186,8 @@ export default function ExportPanel({ result, userSelections }: Props) {
 
       if (data?.success && data.redirectUrl) {
         navigate(data.redirectUrl);
+      } else {
+        showExportError('Contract Builder konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.');
       }
     } catch {
       showExportError('Contract Builder konnte nicht geöffnet werden.');
@@ -278,19 +282,25 @@ Viele Grüße`;
     try {
       await navigator.clipboard.writeText(text);
       setCopiedPitch(true);
+      addToast('Text in Zwischenablage kopiert', 'success');
       setTimeout(() => setCopiedPitch(false), 2000);
     } catch {
       // Fallback
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      setCopiedPitch(true);
-      setTimeout(() => setCopiedPitch(false), 2000);
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        setCopiedPitch(true);
+        addToast('Text in Zwischenablage kopiert', 'success');
+        setTimeout(() => setCopiedPitch(false), 2000);
+      } catch {
+        addToast('Kopieren fehlgeschlagen — bitte manuell markieren und kopieren', 'error');
+      }
     }
-  }, [generatePitch]);
+  }, [generatePitch, addToast]);
 
   return (
     <div className={styles.exportPanel}>

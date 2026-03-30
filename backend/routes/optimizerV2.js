@@ -2048,9 +2048,10 @@ router.post('/results/:id/generate-clause', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
     }
 
-    // ── Cache check: return cached clause if already generated ──
+    // ── Cache check: return cached clause if recent (max 7 days) ──
+    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
     const cached = (result.generatedClauses || []).find(gc => gc.category === category);
-    if (cached) {
+    if (cached && cached.createdAt && (Date.now() - new Date(cached.createdAt).getTime()) < CACHE_TTL_MS) {
       return res.json({
         success: true,
         category,

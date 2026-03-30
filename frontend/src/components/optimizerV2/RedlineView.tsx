@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import {
   FileText, Sparkles, ChevronDown, ChevronRight, Minus, X,
   ArrowUp, ArrowDown, Filter, Download, AlertTriangle,
-  BookOpen, Lightbulb, Scale
+  BookOpen, Lightbulb, Scale, Check
 } from 'lucide-react';
 import NegotiationModeSelector from './NegotiationModeSelector';
 import type { Clause, ClauseOptimization, ClauseAnalysis, OptimizationMode, DiffOp } from '../../types/optimizerV2';
@@ -158,13 +158,13 @@ export default function RedlineView({
           <div className={styles.rlHeaderActions}>
             {/* Feature 1: Navigation */}
             <div className={styles.rlNavGroup}>
-              <button className={styles.rlNavBtn} onClick={() => jumpToChange('prev')} title="Vorherige Änderung">
+              <button className={styles.rlNavBtn} onClick={() => jumpToChange('prev')} disabled={changedIds.length === 0} title="Vorherige Änderung">
                 <ArrowUp size={14} />
               </button>
               <span className={styles.rlNavLabel}>
-                {focusedChangeIdx >= 0 ? `${focusedChangeIdx + 1}/${changedIds.length}` : `${changedIds.length}`}
+                {changedIds.length === 0 ? '0' : focusedChangeIdx >= 0 ? `${focusedChangeIdx + 1}/${changedIds.length}` : `${changedIds.length}`}
               </span>
-              <button className={styles.rlNavBtn} onClick={() => jumpToChange('next')} title="Nächste Änderung">
+              <button className={styles.rlNavBtn} onClick={() => jumpToChange('next')} disabled={changedIds.length === 0} title="Nächste Änderung">
                 <ArrowDown size={14} />
               </button>
             </div>
@@ -231,6 +231,12 @@ export default function RedlineView({
 
       {/* ── Clause Rows ── */}
       <div className={styles.rlBody}>
+        {changedCount === 0 && (
+          <div style={{ padding: '32px 24px', textAlign: 'center', color: '#8E8E93', fontSize: 14 }}>
+            <Check size={24} style={{ margin: '0 auto 8px', display: 'block', color: '#34C759' }} />
+            Alle Klauseln sind in dieser Perspektive unverändert — keine Optimierungen vorgeschlagen.
+          </div>
+        )}
         {clauseGroups.map(({ clause, opt, changed }, idx) => {
           // Feature 2: hide unchanged when filter is active
           if (!changed && showOnlyChanges) return null;
