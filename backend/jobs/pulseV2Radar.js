@@ -348,15 +348,18 @@ async function matchLawToContracts(db, lawChange, options = {}) {
     console.warn("[PulseV2Radar] Semantic matching failed (falling back to keyword only):", semErr.message);
   }
 
-  // Merge keyword + semantic results (deduplicated)
+  // Merge keyword + semantic results, deduplicated by contract NAME
+  // (not just contractId — users may upload the same file multiple times,
+  //  creating different contractIds for the same document)
   const allResults = [...results, ...semanticResults];
-  const seen = new Set();
+  const seenNames = new Set();
 
   return allResults
     .filter((r) => {
-      const key = `${r._id.userId}_${r._id.contractId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      const name = r.latestResult.context?.contractName || r._id.contractId;
+      const key = `${r._id.userId}_${name}`;
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
       return true;
     })
     .map((r) => ({
