@@ -745,7 +745,7 @@ async function seedCourtDecisions() {
   try {
     // Connect to MongoDB
     console.log("🔌 Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, { dbName: "contract_ai" });
     console.log("✅ Connected to MongoDB");
 
     // Get embeddings service

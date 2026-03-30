@@ -186,30 +186,49 @@ async function runPulseV2RssSync(db) {
     }).sort({ createdAt: -1 }).limit(20).toArray();
 
     if (courtDecisions.length > 0) {
-      const courtCol = db.collection("court_decisions");
+      const courtCol = db.collection("courtdecisions");
       for (const law of courtDecisions) {
-        // Extract Aktenzeichen (e.g., "XII ZR 123/45" or "I ZB 12/23")
-        const aktenMatch = law.title?.match(/\b([IVXL]+\s+Z[A-Z]\s+\d+\/\d+)\b/);
-        if (!aktenMatch) continue;
-        const aktenzeichen = aktenMatch[1];
+        // Extract Aktenzeichen from title like "BGH 6. Zivilsenat, ..., VI ZR 365/23"
+        // Covers: Roman (XII ZR 123/45), digit (2 AZR 424/19), dot-format (1 B 18.25)
+        const aktenMatch = law.title?.match(/\b([IVXL]{1,4}\s+[A-Z][A-Za-z]{0,4}\s+\d+[\/\.]\d+)\b/)
+          || law.title?.match(/\b(\d{1,2}\s+[A-Z][A-Za-z]{0,4}\s+\d+[\/\.]\d+)\b/)
+          || law.title?.match(/\b([A-Z][A-Za-z]{1,4}\s+\d+[\/\.]\d+)\b/); // e.g. EnZR 5/24
+        if (!aktenMatch) {
+          // Mark as checked so we don't retry forever
+          await lawsCol.updateOne({ _id: law._id }, {
+            $set: { "metadata.enrichedFromCourtDecisions": "no_match" },
+          });
+          continue;
+        }
+        const aktenzeichen = aktenMatch[1].trim();
 
         const courtDoc = await courtCol.findOne({
           $or: [
-            { aktenzeichen },
-            { title: { $regex: aktenzeichen.replace(/\//g, "\\/"), $options: "i" } },
+            { caseNumber: aktenzeichen },
+            { caseNumber: { $regex: aktenzeichen.replace(/[.*+?^${}()|[\]\\\/]/g, "\\$&"), $options: "i" } },
           ],
         });
 
         if (courtDoc) {
+          // headnotes is an array of Leitsätze, join for summary enrichment
+          const leitsaetze = Array.isArray(courtDoc.headnotes) && courtDoc.headnotes.length > 0
+            ? courtDoc.headnotes.join(" ")
+            : null;
           await lawsCol.updateOne({ _id: law._id }, {
             $set: {
-              summary: courtDoc.leitsatz || courtDoc.summary || law.summary,
+              summary: leitsaetze || courtDoc.summary || law.summary,
               keywords: courtDoc.keywords || law.keywords || [],
               "metadata.enrichedFromCourtDecisions": true,
               "metadata.courtDecisionId": courtDoc._id.toString(),
+              "metadata.courtLegalArea": courtDoc.legalArea || null,
+              "metadata.courtRelevantLaws": courtDoc.relevantLaws || [],
             },
           });
           enriched++;
+        } else {
+          await lawsCol.updateOne({ _id: law._id }, {
+            $set: { "metadata.enrichedFromCourtDecisions": "no_match" },
+          });
         }
       }
       if (enriched > 0) {
