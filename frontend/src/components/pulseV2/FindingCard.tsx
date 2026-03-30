@@ -658,7 +658,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
                     gap: 6,
                   }}
                 >
-                  &#10003; Kopieren &amp; Übernehmen
+                  &#10003; Anwenden &amp; Speichern
                 </button>
                 <button
                   onClick={(e) => {

@@ -206,10 +206,10 @@ const LEGAL_RSS_FEEDS = {
     enabled: true
   },
   'eur-lex-amtsblatt': {
-    url: 'https://eur-lex.europa.eu/DE/display-feed.rss?rssId=168',
-    name: 'EU Amtsblatt (OJ L)',
+    url: 'https://eur-lex.europa.eu/DE/display-feed.rss?rssId=162',
+    name: 'EU Parlament & Rat Gesetzgebung',
     category: 'eu_recht',
-    enabled: true
+    enabled: false // NOTE: 100 Items/Sync, meist Berichtigungen — hohes Rauschen, geringer Nutzen. Aktivieren wenn Content-Filter implementiert.
   },
 
   // ═══════════════════════════════════════════════════
@@ -734,6 +734,7 @@ function normalizeForLegalPulse(items) {
       updatedAt: item.date,
       createdAt: new Date(),
       metadata: {
+        feedId: item.feedId,
         feedName: item.feedName,
         author: item.author,
         categories: item.categories,

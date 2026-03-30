@@ -286,8 +286,76 @@ function printReport(report) {
   console.log(`\n${grade} — ${report.label}`);
 }
 
+async function runDeterminismTest(testId, runs = 3) {
+  console.log(`\n${'═'.repeat(80)}`);
+  console.log(`🔬 DETERMINISMUS-TEST: ${testId} — ${runs}x hintereinander`);
+  console.log(`${'═'.repeat(80)}`);
+
+  const reports = [];
+  for (let i = 0; i < runs; i++) {
+    console.log(`\n--- Run ${i + 1}/${runs} ---`);
+    const report = await runTest(testId);
+    if (report) reports.push(report);
+  }
+
+  if (reports.length < 2) {
+    console.log('❌ Nicht genug erfolgreiche Runs für Determinismus-Check');
+    return;
+  }
+
+  // Analyze determinism
+  console.log(`\n${'═'.repeat(80)}`);
+  console.log(`📊 DETERMINISMUS-ERGEBNIS: ${testId}`);
+  console.log(`${'═'.repeat(80)}`);
+
+  const diffCounts = reports.map(r => r.diffCount);
+  const detCounts = reports.map(r => r.diffs.filter(d => d.fromDeterministic).length);
+  const clauseCounts = reports.map(r => r.diffs.filter(d => d.fromClause).length);
+  const scores1 = reports.map(r => r.score1);
+  const scores2 = reports.map(r => r.score2);
+  const scoreDiffs = reports.map(r => r.scoreDiff);
+
+  const range = (arr) => Math.max(...arr) - Math.min(...arr);
+  const avg = (arr) => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+
+  console.log(`\n   Diff-Counts: [${diffCounts.join(', ')}] — Range: ��${range(diffCounts)} (Avg: ${avg(diffCounts)})`);
+  console.log(`   Deterministic: [${detCounts.join(', ')}] — Range: ±${range(detCounts)}`);
+  console.log(`   Clause-Diffs: [${clauseCounts.join(', ')}] — Range: ±${range(clauseCounts)}`);
+  console.log(`   Score Dok1: [${scores1.join(', ')}] — Range: ±${range(scores1)}`);
+  console.log(`   Score Dok2: [${scores2.join(', ')}] — Range: ±${range(scores2)}`);
+  console.log(`   Score-Gap: [${scoreDiffs.join(', ')}] — Range: ±${range(scoreDiffs)}`);
+
+  // Expected keys consistency
+  const keyResults = reports.map(r => r.expectedKeysFound.sort().join(','));
+  const keysConsistent = keyResults.every(k => k === keyResults[0]);
+  console.log(`   Expected Keys: ${keysConsistent ? '✅ Konsistent' : '❌ Inkonsistent: ' + keyResults.join(' | ')}`);
+
+  // Deterministic diff categories consistency
+  const detCategories = reports.map(r =>
+    r.diffs.filter(d => d.fromDeterministic).map(d => `${d.area}:${d.category}`).sort().join(' | ')
+  );
+  const detConsistent = detCategories.every(c => c === detCategories[0]);
+  console.log(`   Det-Kategorien: ${detConsistent ? '✅ Konsistent' : '⚠️ Variiert'}`);
+  if (!detConsistent) {
+    for (let i = 0; i < detCategories.length; i++) {
+      console.log(`     Run ${i + 1}: ${detCategories[i]}`);
+    }
+  }
+
+  // Grade
+  const diffRange = range(diffCounts);
+  const detRange = range(detCounts);
+  const grade = diffRange <= 2 && detRange === 0 ? '🟢 STABIL'
+    : diffRange <= 4 && detRange <= 1 ? '🟡 AKZEPTABEL'
+    : '🔴 INSTABIL';
+
+  console.log(`\n${grade} — Diff-Varianz ±${diffRange}, Deterministisch-Varianz ±${detRange}`);
+  console.log(`   Ziel: Diff-Varianz ≤2, Deterministisch-Varianz = 0`);
+}
+
 async function main() {
   const arg = process.argv[2] || 'factoring';
+  const arg2 = process.argv[3]; // optional: "3x" for determinism test
 
   if (arg === 'all') {
     const reports = [];
@@ -307,6 +375,10 @@ async function main() {
         : '🟡 WARN';
       console.log(`${grade} ${r.label}: ${r.diffCount} Diffs, Score ${r.score1}/${r.score2}, ${r.issues.length} Issues (${r.elapsed}s)`);
     }
+  } else if (arg2 && arg2.match(/^\d+x$/)) {
+    // Determinism test: "factoring 3x"
+    const runs = parseInt(arg2);
+    await runDeterminismTest(arg, runs);
   } else {
     await runTest(arg);
   }

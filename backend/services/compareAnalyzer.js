@@ -1,7 +1,7 @@
 // backend/services/compareAnalyzer.js — Compare V2: Two-Phase AI Analysis
 const { OpenAI } = require("openai");
 const crypto = require("crypto");
-const { matchClauses, formatMatchesForPrompt } = require("./clauseMatcher");
+const { matchClauses, formatMatchesForPrompt, tokenOverlapSimilarity } = require("./clauseMatcher");
 const { runBenchmarkComparison } = require("./marketBenchmarks");
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -21,6 +21,40 @@ const MAX_CLAUSE_PAIRS = 20;
 const MAX_MISSING_ASSESSMENTS = 8;
 const MAX_CLAUSE_CALL_TIME = 15000; // 15s per call
 const MAX_CLAUSE_TEXT_LENGTH = 3000; // truncate long clauses
+
+// Layer 0: Deterministische Volltext-Extraktion — Feature Flag
+const USE_RAW_VALUES = true;
+
+// ============================================
+// V2.2: Caching Infrastructure (Säule 2 + 3b)
+// ============================================
+const phaseACache = new Map();   // Map<hash, { result, timestamp }>
+const clausePairCache = new Map(); // Map<pairHash, { result, timestamp }>
+const CACHE_TTL = 10 * 60 * 1000; // 10 Minuten
+const MAX_CACHE_SIZE = 20;
+
+function cacheCleanup(cache) {
+  if (cache.size <= MAX_CACHE_SIZE) return;
+  // Remove oldest entries
+  const entries = [...cache.entries()].sort((a, b) => a[1].timestamp - b[1].timestamp);
+  const toRemove = entries.slice(0, cache.size - MAX_CACHE_SIZE);
+  for (const [key] of toRemove) cache.delete(key);
+}
+
+function getCached(cache, key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.result;
+}
+
+function setCache(cache, key, result) {
+  cache.set(key, { result, timestamp: Date.now() });
+  cacheCleanup(cache);
+}
 
 const VALID_CLAUSE_AREAS = [
   'parties', 'subject', 'duration', 'termination', 'payment',
@@ -182,6 +216,167 @@ Die Differenz zwischen den Scores MUSS mindestens 10 Punkte betragen, wenn ein A
 };
 
 // ============================================
+// V2.2 Säule 1: Deterministische Text-Segmentierung
+// ============================================
+const { preSplitClauses } = require('./optimizerV2/utils/clauseSplitter');
+
+/**
+ * V2.2 Säule 1: Deterministisch segmentiert den Vertragstext per Regex.
+ * Gleicher Input = Gleiche Sections, immer.
+ * Fallback auf alten GPT-Modus wenn <3 Sections erkannt werden.
+ */
+function deterministicSegmentation(text) {
+  if (!text || text.length < 100) return [];
+
+  const normalizedText = normalizeOcrText(text);
+  const sections = preSplitClauses(normalizedText);
+
+  // Filter out trivial sections (< 30 chars body)
+  const meaningful = sections.filter(s => s.text && s.text.trim().length >= 30);
+
+  if (meaningful.length < 3) return []; // Fallback: not enough structure
+
+  // Build deterministic clause objects
+  return meaningful.map((section, idx) => {
+    // Extract title from first line
+    const firstLine = section.text.split('\n')[0].trim();
+    const title = firstLine.length <= 100 ? firstLine : firstLine.substring(0, 100);
+
+    // Extract raw values for this section
+    const sectionRawValues = extractAllValuesFromRawText(section.text);
+
+    // Build deterministic keyValues from regex extraction
+    const keyValues = {};
+    for (const rv of sectionRawValues) {
+      keyValues[rv.rawKey] = rv.value;
+    }
+
+    // Deterministic ID based on section number + position
+    const sectionId = `det_${(section.sectionNumber || 'sec').replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, '_')}_${idx}`;
+
+    return {
+      id: sectionId,
+      sectionNumber: section.sectionNumber,
+      title,
+      originalText: section.text,
+      keyValues,
+      _position: idx,
+    };
+  });
+}
+
+/**
+ * V2.2 Säule 1: Modified Phase A prompt — GPT classifies pre-segmented sections.
+ * GPT provides area + summary for each section, but does NOT determine clause boundaries.
+ */
+function buildPhaseAPromptWithSections(contractText, sections) {
+  const text = contractText.length > MAX_CONTRACT_CHARS
+    ? smartTruncate(contractText, MAX_CONTRACT_CHARS)
+    : contractText;
+
+  // Build sections overview for GPT
+  const sectionsOverview = sections.map((s, i) => {
+    const preview = s.originalText.substring(0, 300).replace(/\n/g, ' ');
+    return `SECTION_${i} | ${s.sectionNumber || 'k.A.'} | "${s.title.substring(0, 60)}" | ${preview}...`;
+  }).join('\n');
+
+  return {
+    system: `Du bist ein Dokumenten-Analyst mit 20 Jahren Erfahrung. Du bekommst ein Dokument das bereits in Abschnitte aufgeteilt wurde.
+Deine EINZIGE Aufgabe: Für jeden vorgegebenen Abschnitt die Area klassifizieren und eine kurze Zusammenfassung schreiben.
+Du darfst KEINE neuen Abschnitte hinzufügen, KEINE Abschnitte weglassen, KEINE Abschnittsgrenzen ändern.
+Extrahiere zusätzlich Parteien, Dokumenttyp und Metadaten.`,
+
+    user: `DOKUMENT-VOLLTEXT (Referenz):
+"""
+${text}
+"""
+
+VORGEGEBENE ABSCHNITTE (${sections.length} Stück):
+${sectionsOverview}
+
+DEINE AUFGABE — Für JEDEN der ${sections.length} Abschnitte oben:
+
+1. "area": Klassifiziere als: parties|subject|duration|termination|payment|liability|warranty|confidentiality|ip_rights|data_protection|non_compete|force_majeure|jurisdiction|other
+2. "summary": 1-2 Sätze in einfacher Sprache
+3. "keyValues": Konkrete Werte als Key-Value-Paare (ergänzend zu den bereits extrahierten).
+   Keys auf Deutsch mit Bindestrichen. Values mit Zahl + Einheit.
+
+Zusätzlich extrahiere:
+- parties[]: Alle Personen/Firmen mit Rolle
+- subject: Worum geht es
+- contractType: Dokumenttyp
+- metadata: duration, startDate, governingLaw, jurisdiction, language
+
+Antworte NUR mit validem JSON:
+{
+  "parties": [{"role": "string", "name": "string"}],
+  "subject": "string",
+  "contractType": "string",
+  "sections": [{"index": 0, "area": "string", "summary": "string", "keyValues": {}}],
+  "metadata": {"duration": "string|null", "startDate": "string|null", "governingLaw": "string|null", "jurisdiction": "string|null", "language": "string|null"}
+}
+
+WICHTIG: "sections" Array MUSS exakt ${sections.length} Einträge haben — einen für jeden vorgegebenen Abschnitt.
+WICHTIG für keyValues: Keys IMMER auf Deutsch als lesbare Begriffe. Values IMMER mit Zahl UND Einheit.
+Null für fehlende Infos. NICHTS erfinden.`
+  };
+}
+
+/**
+ * V2.2 Säule 1: Merge GPT classification with deterministic sections.
+ * Sections boundaries come from Regex, areas/summaries from GPT.
+ */
+function mergeGptWithDeterministicSections(gptResult, sections, contractText) {
+  const gptSections = gptResult.sections || [];
+
+  const clauses = sections.map((section, idx) => {
+    // Find matching GPT classification
+    const gptSection = gptSections.find(gs => gs.index === idx) || gptSections[idx] || {};
+
+    const area = VALID_CLAUSE_AREAS.includes(gptSection.area) ? gptSection.area : 'other';
+    const summary = typeof gptSection.summary === 'string' ? gptSection.summary : '';
+
+    // Merge keyValues: Regex (deterministic) + GPT (supplementary)
+    const mergedKV = { ...section.keyValues };
+    if (gptSection.keyValues && typeof gptSection.keyValues === 'object' && !Array.isArray(gptSection.keyValues)) {
+      for (const [key, value] of Object.entries(gptSection.keyValues)) {
+        const normKey = normalizeKeyForMatch(key);
+        const existingNorms = Object.keys(mergedKV).map(normalizeKeyForMatch);
+        const alreadyExists = existingNorms.some(ek => fuzzyKeyMatch(ek, normKey));
+        if (!alreadyExists) {
+          mergedKV[key] = value;
+        }
+      }
+    }
+
+    return {
+      id: `${area}_${idx}`,
+      area,
+      section: section.sectionNumber || `Abschnitt ${idx + 1}`,
+      title: section.title,
+      originalText: section.originalText,
+      summary,
+      keyValues: mergedKV,
+    };
+  });
+
+  // Build result in same format as validatePhaseAResponse output
+  return {
+    parties: Array.isArray(gptResult.parties) ? gptResult.parties : [],
+    subject: typeof gptResult.subject === 'string' ? gptResult.subject : 'Nicht erkannt',
+    contractType: typeof gptResult.contractType === 'string' ? gptResult.contractType : 'Vertrag',
+    clauses: clauses.slice(0, MAX_CLAUSES),
+    metadata: {
+      duration: gptResult.metadata?.duration || null,
+      startDate: gptResult.metadata?.startDate || null,
+      governingLaw: gptResult.metadata?.governingLaw || null,
+      jurisdiction: gptResult.metadata?.jurisdiction || null,
+      language: gptResult.metadata?.language || null,
+    },
+  };
+}
+
+// ============================================
 // Phase A: Contract Structuring
 // ============================================
 
@@ -252,9 +447,30 @@ Null für fehlende Infos. NICHTS erfinden.`
 }
 
 async function structureContract(contractText) {
-  const prompt = buildPhaseAPrompt(contractText);
   const hash = crypto.createHash('sha256').update(contractText).digest('hex');
-  console.log(`📋 Phase A: Strukturiere Vertrag (Hash: ${hash.substring(0, 12)}..., ${contractText.length} Zeichen)`);
+
+  // V2.2 Säule 2: Phase A Cache — identischer Text → identisches Ergebnis
+  const cached = getCached(phaseACache, hash);
+  if (cached) {
+    console.log(`📋 Phase A: Cache hit (Hash: ${hash.substring(0, 12)}...) — 0 GPT-Calls`);
+    return cached;
+  }
+
+  // V2.2 Säule 1: Deterministische Segmentierung (VOR GPT)
+  const sections = deterministicSegmentation(contractText);
+  const useDeterministicSegments = sections.length >= 3;
+
+  const prompt = useDeterministicSegments
+    ? buildPhaseAPromptWithSections(contractText, sections)
+    : buildPhaseAPrompt(contractText);
+
+  console.log(`📋 Phase A: Strukturiere Vertrag (Hash: ${hash.substring(0, 12)}..., ${contractText.length} Zeichen, ${useDeterministicSegments ? sections.length + ' det. Sections' : 'GPT-Modus'})`);
+
+  // Layer 0: Deterministische Volltext-Extraktion (VOR GPT, instant)
+  let rawValues = [];
+  if (USE_RAW_VALUES) {
+    rawValues = extractAllValuesFromRawText(contractText);
+  }
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -268,13 +484,26 @@ async function structureContract(contractText) {
   });
 
   const raw = JSON.parse(completion.choices[0].message.content);
-  const validated = validatePhaseAResponse(raw);
+
+  let validated;
+  if (useDeterministicSegments) {
+    // V2.2 Säule 1: Merge — Regex-Sections bestimmen Grenzen, GPT bestimmt Area/Summary
+    validated = mergeGptWithDeterministicSections(raw, sections, contractText);
+  } else {
+    validated = validatePhaseAResponse(raw);
+  }
 
   // Expand any truncated originalText snippets from the source contract
   expandOriginalTexts(validated.clauses, contractText);
 
   // Maßnahme A.1: Regex-Nachextraktion für von GPT übersehene Werte
   enrichKeyValuesFromText(validated.clauses, contractText);
+
+  // Layer 0: Regex-Werte den GPT-Klauseln zuordnen
+  if (USE_RAW_VALUES && rawValues.length > 0) {
+    assignValuesToClauses(rawValues, validated.clauses, contractText);
+    validated._rawValues = rawValues;
+  }
 
   // Maßnahme A.2: Qualitätsprüfung — warnt bei suspekt dünner Extraktion
   const qualityIssues = checkExtractionQuality(validated);
@@ -284,6 +513,9 @@ async function structureContract(contractText) {
 
   console.log(`✅ Phase A: ${validated.clauses.length} Klauseln extrahiert, Typ: ${validated.contractType}`);
   logAIResponse('A', hash.substring(0, 12), JSON.stringify(validated).length, true);
+
+  // V2.2 Säule 2: Cache result
+  setCache(phaseACache, hash, validated);
 
   return validated;
 }
@@ -1297,6 +1529,541 @@ function deduplicateKeyValues(kv) {
   return keep;
 }
 
+// ============================================
+// LAYER 0: Deterministische Volltext-Extraktion
+// Extrahiert ALLE numerischen Werte aus dem kompletten Rohtext.
+// Gleicher Input = Gleiches Ergebnis, immer.
+// ============================================
+
+/**
+ * OCR-Vorverarbeitung: Normalisiert Text aus pdf-parse für bessere Wert-Extraktion.
+ * - Kollabiert Mehrfach-Leerzeichen → ein Leerzeichen (pro Zeile)
+ * - Repariert Zeilenumbrüche mitten in Wörtern ("Factoring-\nkunden" → "Factoringkunden")
+ * - Verbindet EUR/€ mit Zahl auf nächster Zeile ("EUR\n5.000" → "EUR 5.000")
+ *
+ * @param {string} text - Rohtext aus pdf-parse
+ * @returns {string} - Normalisierter Text
+ */
+function normalizeOcrText(text) {
+  if (!text) return text;
+  let normalized = text;
+
+  // Fix hyphenated line breaks: "wort-\nfortsetzung" → "wortfortsetzung" (German word splits)
+  // Only lowercase-to-lowercase to avoid breaking compound words like "EUR-Betrag"
+  normalized = normalized.replace(/([a-zäöüß])-\n\s*([a-zäöüß])/g, '$1$2');
+
+  // Fix EUR/€ separated from number by line break: "EUR\n5.000" → "EUR 5.000"
+  normalized = normalized.replace(/(EUR|€)\s*\n\s*(\d)/g, '$1 $2');
+
+  // Collapse 2+ spaces → single space (per line, preserve line breaks for structure)
+  normalized = normalized.split('\n').map(line => line.replace(/ {2,}/g, ' ').trimEnd()).join('\n');
+
+  return normalized;
+}
+
+/**
+ * Extrahiert ALLE numerischen Werte, Prozentsätze, EUR-Beträge, Zeiträume und Daten
+ * aus dem KOMPLETTEN Rohtext eines Vertrags. Läuft VOR jeder GPT-Call.
+ * Gleicher Input = Gleiches Ergebnis, immer.
+ *
+ * @param {string} text - Kompletter Rohtext des Vertrags (wird intern OCR-normalisiert)
+ * @returns {Array<{key, rawKey, value, numValue, unit, context, position, source}>}
+ */
+function extractAllValuesFromRawText(text) {
+  if (!text || text.length < 50) return [];
+
+  // Maßnahme 1: OCR-Vorverarbeitung
+  const normalizedText = normalizeOcrText(text);
+
+  const results = [];
+  const seen = new Map(); // normalizedKey → true (for dedup)
+  const startTime = Date.now();
+
+  // Exclusion: phone numbers, postal codes, page numbers, bank details, IDs
+  const isExcludedLabel = (label) => {
+    return /(\+\d{2}|PLZ|Seite\s*\d|Tel[\.\s:]|Fax[\.\s:]|Postfach|BLZ\b|IBAN|BIC\b|HRB?\s*\d|USt[\-\s]?Id|Amtsgericht|Handelsregister|Registergericht|Steuernummer|Bankverbindung|Bankleitzahl|Kontonummer|Geschäftsführer|Vertretungsberechtigt|E-?Mail|www\.|http)/i.test(label);
+  };
+
+  // Common non-label words to skip
+  const NOISE_LABELS = new Set(['eur', 'euro', 'der', 'die', 'das', 'und', 'oder', 'von', 'für', 'mit', 'bis', 'auf', 'aus', 'bei', 'den', 'dem', 'des', 'ein', 'eine', 'sich', 'ist', 'hat', 'wird', 'sind', 'nach', 'vor']);
+
+  // Quality check: reject labels that look like OCR sentence fragments
+  const isNoisyLabel = (rawKey) => {
+    const k = rawKey.trim();
+    // Allow labels ending with legal references like (§ 3 Abs. 1 FRV) or (jeweils ..., § 4 Abs. 1 FRV)
+    if (/\([^)]*§[^)]*\)\s*$/.test(k)) return false;
+    // Allow labels ending with common contract abbreviations in parens
+    if (/\([^)]+\)\s*$/.test(k) && /(?:FRV|AGB|BGB|HGB|GmbH|Abs|Satz|Nr)\b/i.test(k)) return false;
+    // Ends with period or closing paren → sentence fragment (but allow "p.a.", "i.H.v.", "Abs.", "Nr.")
+    if (/[.)\]]$/.test(k) && !/(?:p\.a\.|i\.h\.v\.|abs\.|nr\.|eur\.)$/i.test(k)) return true;
+    // Contains double+ spaces → OCR artifact
+    if (/\s{2,}/.test(k)) return true;
+    // Too many words (>8) → likely a sentence, not a label
+    // Strip parenthetical references like (§ 6 Abs. 1 FRV) before counting
+    const coreLabel = k.replace(/\([^)]*\)/g, '').trim();
+    if (coreLabel.split(/\s+/).length > 8) return true;
+    // Starts with lowercase after first char → likely a continuation
+    if (/^[a-zäöüß]/.test(k)) return true;
+    // Contains typical sentence verbs → not a label
+    // Stricter: verbs like "erfüllen", "einhalten" are enough to disqualify with 2+ words
+    if (/\b(erfüllen|einhalten|anbietet|enthalten|berechnet|bezeichnet|bestimmen|informieren|vereinbar)\b/i.test(k)) return true;
+    // Common verbs need 3+ words (to allow "Vertragsbeginn ist" type labels)
+    if (/\b(ist|wird|hat|sind|werden|kann|muss|soll|darf|gilt|erfolgt|besteht|stellt)\b/i.test(k) && coreLabel.split(/\s+/).length > 2) return true;
+    return false;
+  };
+
+  // Helper: Add result with dedup by normalized key
+  const addResult = (rawKey, value, numValue, unit, context, position) => {
+    const key = normalizeKeyForMatch(rawKey);
+    if (!key || key.length < 3) return;
+    if (NOISE_LABELS.has(key)) return;
+    if (isExcludedLabel(rawKey)) return;
+    if (isNoisyLabel(rawKey)) return;
+    if (seen.has(key)) return;
+
+    results.push({
+      key,
+      rawKey: rawKey.trim(),
+      value: value.trim(),
+      numValue: numValue,
+      unit: unit,
+      context: (context || '').substring(0, 120),
+      position: position,
+      source: 'regex',
+    });
+    seen.set(key, true);
+  };
+
+  // ── Pass 1: Konditionenblatt / Tabellen-Patterns ──
+  // "Label: Wert" lines — highest priority for structured contracts
+  const lines = normalizedText.split('\n');
+  const blankValueLabels = []; // Maßnahme 2: Labels mit leeren Werten für Recovery
+  let linePos = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.length >= 5) {
+      // Pattern 1a: "Label: Value" (colon-separated)
+      // Value must start with a number, EUR/€, "entfällt", or similar — not arbitrary text
+      // Limit increased to 90 for long German labels with legal references like "(§ 6 Abs. 1 FRV)"
+      if (/\d/.test(trimmed)) {
+        const m = trimmed.match(/^([A-ZÄÖÜa-zäöüß][^:\n]{2,90}?)\s*:\s*(.+)$/);
+        if (m) {
+          const label = m[1].trim();
+          const valueStr = m[2].trim();
+          // Only process if value starts with a number, EUR, %, "entfällt", etc.
+          if (/^(\d|EUR|€|entfällt|keine|mind|max|bis)/i.test(valueStr)) {
+            // Detect dates (dd.MM.yyyy) before numeric parsing
+            if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(valueStr.trim())) {
+              addResult(label, valueStr, null, 'Datum', trimmed, linePos);
+            } else {
+              const parsed = extractValueAndUnit(valueStr);
+              if (parsed.num !== null || parsed.isNone) {
+                addResult(label, valueStr, parsed.num, parsed.unit, trimmed, linePos);
+              }
+            }
+          }
+        }
+
+        // Pattern 1b: "Label  Value" (tab or multi-space separated)
+        const tabMatch = trimmed.match(/^([A-ZÄÖÜa-zäöüß][^\t\n]{2,55}?)\s{2,}(\S.{0,40})$/);
+        if (tabMatch) {
+          const label = tabMatch[1].trim();
+          const valueStr = tabMatch[2].trim();
+          if (/\d/.test(valueStr)) {
+            const parsed = extractValueAndUnit(valueStr);
+            if (parsed.num !== null) {
+              addResult(label, valueStr, parsed.num, parsed.unit, trimmed, linePos);
+            }
+          }
+        }
+      }
+
+      // Pattern 1d: Blank-value detection — "Label: EUR  " or "Label:  " (OCR lost the number)
+      // Catches labels where pdf-parse extracted the label but not the value (two-column layout)
+      // Must have ≥ 2 words or contain financial terms to avoid section headers like "Gebühren:"
+      const blankMatch = trimmed.match(/^([A-ZÄÖÜa-zäöüß][^:\n]{2,90}?)\s*:\s*((?:EUR|€)\s*(?:p\.\s*a\.?)?)?\s*$/);
+      if (blankMatch) {
+        const label = blankMatch[1].trim();
+        const partial = (blankMatch[2] || '').trim(); // "EUR" or "EUR p.a." or ""
+        const words = label.split(/\s+/).length;
+        const isFinancialLabel = /(?:gebühr|limit|behalt|betrag|zins|satz|preis|kosten|vergütung|entgelt|pauschale|provision|frist|laufzeit|dauer)/i.test(label);
+        // Section headers like "Gebühren:" are single words — require ≥ 2 words for generic, or financial compound word
+        const isCompoundFinancial = isFinancialLabel && label.length >= 10;
+        if (!isExcludedLabel(label) && !isNoisyLabel(label) && label.length >= 5 && (words >= 2 || isCompoundFinancial)) {
+          blankValueLabels.push({ label, partial, lineIndex: i, linePos });
+        }
+      }
+
+      // Pattern 1c: Multi-line label — current line is label-only, next line has value
+      // Exclude: lines with colon, company names, Roman numeral section headers
+      if (i + 1 < lines.length && /^[A-ZÄÖÜa-zäöüß]/.test(trimmed) && !/\d/.test(trimmed)
+          && trimmed.length <= 60 && !trimmed.includes(':') && !/(?:GmbH|AG|KG|e\.K\.|OHG)\b/.test(trimmed)
+          && !/^(?:I{1,4}V?|V|VI{0,3}|IX|X)\.?\s/.test(trimmed)) {
+        const nextLine = lines[i + 1].trim();
+        // Next line must start with a value indicator (number, EUR, ≤, >, etc.) — not another label
+        if (/^(\d|EUR|€|≤|>|mind|max|bis)/.test(nextLine) && nextLine.length > 3) {
+          // Sub-entries like "≤ EUR 1.000: EUR 1,75"
+          const subEntries = nextLine.match(/([^,;]+?(?:EUR|€|%)\s*[\d.,]+[^,;]*)/g);
+          if (subEntries && subEntries.length > 1) {
+            for (const sub of subEntries) {
+              const subParsed = extractValueAndUnit(sub.trim());
+              if (subParsed.num !== null) {
+                const subLabel = sub.replace(/[\d.,]+\s*(%|EUR|€).*/, '').trim();
+                const combinedLabel = `${trimmed} ${subLabel}`.trim();
+                addResult(combinedLabel || trimmed, sub.trim(), subParsed.num, subParsed.unit, `${trimmed}: ${nextLine}`, linePos);
+              }
+            }
+          } else {
+            const parsed = extractValueAndUnit(nextLine);
+            if (parsed.num !== null) {
+              addResult(trimmed, nextLine, parsed.num, parsed.unit, `${trimmed}: ${nextLine}`, linePos);
+            }
+          }
+        }
+      }
+    }
+
+    linePos += line.length + 1;
+  }
+
+  // ── Pass 1.5: Blank-value recovery + registration ──
+  // For labels detected with blank values, try to find orphaned values nearby.
+  // Conservative: only recover from immediately following lines (i+1, i+2).
+  // Labels with no recoverable value → marked as "blank" for honest comparison.
+  if (blankValueLabels.length > 0) {
+    let recoveredCount = 0;
+
+    for (const bv of blankValueLabels) {
+      // Skip if we already extracted a value for this label in Pass 1
+      const normKey = normalizeKeyForMatch(bv.label);
+      if (seen.has(normKey)) continue;
+
+      // Try orphaned value recovery: ONLY look at the next 1-2 lines for a value
+      // (handles cases where pdf-parse puts the value on the following line)
+      let recovered = false;
+      for (let offset = 1; offset <= 2; offset++) {
+        const nextIdx = bv.lineIndex + offset;
+        if (nextIdx >= lines.length) break;
+        const nextLine = lines[nextIdx].trim();
+        // Must look like a standalone value (EUR amount, percentage, etc.) without a colon (not a new label)
+        if (nextLine.length > 2 && !nextLine.includes(':') && /^(\d|EUR|€|mind|max)/.test(nextLine)) {
+          const parsed = extractValueAndUnit(nextLine.replace(/^jeweils\s+/i, ''));
+          if (parsed.num !== null) {
+            addResult(bv.label, nextLine, parsed.num, parsed.unit,
+              `${bv.label}: ${nextLine} (recovered)`, bv.linePos);
+            recovered = true;
+            recoveredCount++;
+            break;
+          }
+        }
+      }
+
+      // If no adjacent value found → register as blank-value entry
+      if (!recovered) {
+        const blankValue = bv.partial
+          ? `${bv.partial} (Wert nicht extrahierbar)`
+          : 'vorhanden (Wert nicht extrahierbar)';
+        results.push({
+          key: normKey,
+          rawKey: bv.label,
+          value: blankValue,
+          numValue: null,
+          unit: bv.partial?.includes('EUR') ? 'EUR' : null,
+          context: lines[bv.lineIndex]?.trim() || '',
+          position: bv.linePos,
+          source: 'regex-blank',
+        });
+        seen.set(normKey, true);
+      }
+    }
+
+    const blanks = results.filter(r => r.source === 'regex-blank').length;
+    if (blankValueLabels.length > 0) {
+      console.log(`🔍 OCR Blank-Value: ${blankValueLabels.length} Labels erkannt, ${recoveredCount} recovered, ${blanks} unextrahierbar`);
+    }
+  }
+
+  // ── Pass 2: EUR amounts with preceding context ──
+  const eurRegex = /(\b[A-ZÄÖÜa-zäöüß][A-Za-zäöüßÄÖÜ\-\s]{2,40}?)\s*(?::\s*|von\s+|beträgt\s+|in Höhe von\s+|i\.\s*H\.\s*v\.\s*)?((?:EUR|€)\s*[\d.,]+(?:\s*(?:p\.\s*a\.?|pro\s+Jahr|\/\s*Jahr|jährl\.?|netto|brutto))?)/gi;
+  let match;
+  while ((match = eurRegex.exec(normalizedText)) !== null) {
+    const label = match[1].trim().replace(/\s+/g, ' ');
+    const valueStr = match[2].trim();
+    if (label.length >= 3 && label.length <= 60 && !isExcludedLabel(label)) {
+      const parsed = extractValueAndUnit(valueStr);
+      if (parsed.num !== null) {
+        const ctxStart = Math.max(0, match.index - 20);
+        const ctxEnd = Math.min(normalizedText.length, match.index + match[0].length + 20);
+        addResult(label, valueStr, parsed.num, parsed.unit, normalizedText.substring(ctxStart, ctxEnd), match.index);
+      }
+    }
+  }
+
+  // ── Pass 3: Percentage values with preceding context ──
+  const pctRegex = /(\b[A-ZÄÖÜa-zäöüß][A-Za-zäöüßÄÖÜ\-\s]{2,40}?)\s*(?::\s*|von\s+|beträgt\s+)?(\d[\d.,]*\s*(?:%|v\.\s*H\.?|Prozent|p\.\s*a\.?))/gi;
+  while ((match = pctRegex.exec(normalizedText)) !== null) {
+    const label = match[1].trim().replace(/\s+/g, ' ');
+    const valueStr = match[2].trim();
+    if (label.length >= 3 && label.length <= 60 && !isExcludedLabel(label)) {
+      const parsed = extractValueAndUnit(valueStr);
+      if (parsed.num !== null) {
+        const ctxStart = Math.max(0, match.index - 20);
+        const ctxEnd = Math.min(normalizedText.length, match.index + match[0].length + 20);
+        addResult(label, valueStr, parsed.num, parsed.unit, normalizedText.substring(ctxStart, ctxEnd), match.index);
+      }
+    }
+  }
+
+  // ── Pass 4: Time periods with preceding context ──
+  const timeRegex = /(\b[A-ZÄÖÜa-zäöüß][A-Za-zäöüßÄÖÜ\-\s]{2,40}?)\s*(?::\s*|von\s+|beträgt\s+)?(\d+\s*(?:Monate?|Wochen?|Tage?|Jahre?|Werktage?))/gi;
+  while ((match = timeRegex.exec(normalizedText)) !== null) {
+    const label = match[1].trim().replace(/\s+/g, ' ');
+    const valueStr = match[2].trim();
+    if (label.length >= 3 && label.length <= 60 && !isExcludedLabel(label)) {
+      const parsed = extractValueAndUnit(valueStr);
+      if (parsed.num !== null) {
+        const ctxStart = Math.max(0, match.index - 20);
+        const ctxEnd = Math.min(normalizedText.length, match.index + match[0].length + 20);
+        addResult(label, valueStr, parsed.num, parsed.unit, normalizedText.substring(ctxStart, ctxEnd), match.index);
+      }
+    }
+  }
+
+  // ── Pass 5: Date patterns ──
+  const dateRegex = /(\b[A-ZÄÖÜa-zäöüß][A-Za-zäöüßÄÖÜ\-\s]{2,30}?)\s*(?::\s*|am\s+|vom\s+|zum\s+|bis\s+|ab\s+)?(\d{1,2}\.\d{1,2}\.\d{4})/gi;
+  while ((match = dateRegex.exec(normalizedText)) !== null) {
+    const label = match[1].trim().replace(/\s+/g, ' ');
+    const valueStr = match[2].trim();
+    if (label.length >= 3 && label.length <= 60 && !isExcludedLabel(label)) {
+      const ctxStart = Math.max(0, match.index - 20);
+      const ctxEnd = Math.min(normalizedText.length, match.index + match[0].length + 20);
+      addResult(label, valueStr, null, 'Datum', normalizedText.substring(ctxStart, ctxEnd), match.index);
+    }
+  }
+
+  // ── Pass 6: Standalone structured numbers with qualifiers ──
+  // "max. 25.000", "mind. EUR 500", "bis zu 10%"
+  const qualRegex = /\b((?:max(?:imal)?|min(?:dest(?:ens)?)?|mind(?:estens)?|bis zu|ab|höchstens|wenigstens)\.?\s*)((?:EUR|€)\s*[\d.,]+|\d[\d.,]*\s*(?:%|EUR|€|Monate?|Tage?|Jahre?))/gi;
+  while ((match = qualRegex.exec(normalizedText)) !== null) {
+    const qualifier = match[1].trim();
+    const valueStr = match[2].trim();
+    const before = normalizedText.substring(Math.max(0, match.index - 60), match.index);
+    const labelMatch = before.match(/([A-ZÄÖÜa-zäöüß][A-Za-zäöüßÄÖÜ\-\s]{2,40}?)[\s:]*$/);
+    if (labelMatch) {
+      const label = `${labelMatch[1].trim()} ${qualifier}`.trim();
+      const parsed = extractValueAndUnit(valueStr);
+      if (parsed.num !== null && !isExcludedLabel(label)) {
+        addResult(label, `${qualifier} ${valueStr}`, parsed.num, parsed.unit,
+          normalizedText.substring(Math.max(0, match.index - 30), Math.min(normalizedText.length, match.index + match[0].length + 10)), match.index);
+      }
+    }
+  }
+
+  const elapsed = Date.now() - startTime;
+  const blankCount = results.filter(r => r.source === 'regex-blank').length;
+  const regexCount = results.filter(r => r.source === 'regex').length;
+  console.log(`🔢 Layer 0: ${results.length} Werte extrahiert (${regexCount} regex + ${blankCount} blank-value) aus ${text.length} Zeichen (${elapsed}ms)`);
+
+  return results;
+}
+
+/**
+ * Ordnet Regex-Werte aus Layer 0 den GPT-Klauseln zu (per Textposition).
+ * So haben die Klauseln sowohl GPT-keyValues als auch Regex-keyValues.
+ *
+ * @param {Array} extractedValues - Output von extractAllValuesFromRawText()
+ * @param {Array} clauses - Phase A clauses (mit originalText, area, keyValues)
+ * @param {string} rawText - Der Rohtext des Vertrags
+ */
+function assignValuesToClauses(extractedValues, clauses, rawText) {
+  if (!extractedValues?.length || !clauses?.length || !rawText) return;
+
+  // Build clause position map
+  const clausePositions = [];
+  const normalized = rawText.replace(/\s+/g, ' ');
+
+  for (const clause of clauses) {
+    if (!clause.originalText || clause.originalText.length < 20) continue;
+    const snippet = clause.originalText.substring(0, 80).replace(/\s+/g, ' ').trim();
+    if (snippet.length < 15) continue;
+    const idx = normalized.indexOf(snippet);
+    if (idx >= 0) {
+      clausePositions.push({
+        clause,
+        start: idx,
+        end: idx + Math.floor(clause.originalText.length * 1.2),
+      });
+    }
+  }
+
+  clausePositions.sort((a, b) => a.start - b.start);
+
+  let assigned = 0;
+  for (const val of extractedValues) {
+    const approxPos = val.position;
+    let targetClause = null;
+
+    // Find clause whose range covers this value's position
+    for (const cp of clausePositions) {
+      if (approxPos >= cp.start && approxPos <= cp.end) {
+        targetClause = cp.clause;
+        break;
+      }
+    }
+
+    // Fallback: closest clause within 2000 chars
+    if (!targetClause && clausePositions.length > 0) {
+      let minDist = Infinity;
+      let closest = null;
+      for (const cp of clausePositions) {
+        const dist = Math.min(Math.abs(approxPos - cp.start), Math.abs(approxPos - cp.end));
+        if (dist < minDist) { minDist = dist; closest = cp.clause; }
+      }
+      if (minDist <= 2000) targetClause = closest;
+    }
+
+    // Fallback: first payment clause
+    if (!targetClause) {
+      targetClause = clauses.find(c => c.area === 'payment' && Object.keys(c.keyValues || {}).length > 0)
+        || clauses.find(c => c.area === 'payment');
+    }
+
+    // Fallback: create synthetic clause
+    if (!targetClause) {
+      targetClause = {
+        id: 'layer0_values',
+        area: 'payment',
+        section: 'Vertragskonditionen',
+        title: 'Extrahierte Werte',
+        originalText: '',
+        summary: 'Automatisch extrahierte Werte aus dem Rohtext',
+        keyValues: {},
+      };
+      clauses.push(targetClause);
+    }
+
+    // Add to clause keyValues if not already present
+    if (!targetClause.keyValues) targetClause.keyValues = {};
+    const existingNorms = Object.keys(targetClause.keyValues).map(normalizeKeyForMatch);
+    const alreadyExists = existingNorms.some(ek => fuzzyKeyMatch(ek, val.key));
+
+    if (!alreadyExists) {
+      targetClause.keyValues[val.rawKey] = val.value;
+      assigned++;
+    }
+
+    // Store area mapping for cross-area matching
+    val._assignedArea = targetClause.area;
+  }
+
+  if (assigned > 0) {
+    console.log(`📋 Layer 0→Klauseln: ${assigned} Werte zugeordnet`);
+  }
+}
+
+/**
+ * Mergt Layer-0-Regex-Werte in die Area-keyValues für Schicht 2.
+ * Regex-Werte haben Vorrang bei Konflikten (höheres Vertrauen).
+ */
+function mergeRawValuesIntoAreas(areaKV, rawValues, clauses) {
+  if (!rawValues?.length) return;
+
+  let merged = 0;
+  for (const rv of rawValues) {
+    const area = rv._assignedArea || 'payment';
+    if (!areaKV[area]) areaKV[area] = {};
+
+    const existingKeys = Object.keys(areaKV[area]);
+    const existingNorms = existingKeys.map(normalizeKeyForMatch);
+
+    let existingMatch = null;
+    for (let i = 0; i < existingNorms.length; i++) {
+      if (fuzzyKeyMatch(existingNorms[i], rv.key)) {
+        existingMatch = existingKeys[i];
+        break;
+      }
+    }
+
+    if (!existingMatch) {
+      // Not present → add
+      areaKV[area][rv.rawKey] = rv.value;
+      merged++;
+    } else {
+      // Present → regex wins if values differ numerically
+      const existingVal = areaKV[area][existingMatch];
+      const existingParsed = extractValueAndUnit(String(existingVal));
+      if (rv.numValue !== null && existingParsed.num !== null && rv.numValue !== existingParsed.num) {
+        areaKV[area][existingMatch] = rv.value;
+        merged++;
+      }
+    }
+  }
+
+  if (merged > 0) {
+    console.log(`🔢 Layer 0→Schicht 2: ${merged} Regex-Werte in Areas gemergt`);
+  }
+}
+
+/**
+ * Nach Schicht 3: Prüft ob zitierte detail1/detail2 Texte tatsächlich im jeweiligen
+ * Vertrag vorkommen. Eliminiert halluzinierte Zitate (beide fehlen → entfernen).
+ */
+function verifyClauseQuotes(clauseBundle, text1, text2) {
+  if (!clauseBundle?.pairResults?.length || !text1 || !text2) return;
+
+  const norm = (t) => (t || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const normText1 = norm(text1);
+  const normText2 = norm(text2);
+
+  let removed = 0;
+  let warned = 0;
+
+  const verifyQuote = (detail, sourceNorm) => {
+    if (!detail || detail.length < 20) return true; // too short to verify
+    const d = norm(detail);
+    if (sourceNorm.includes(d)) return true;
+    // Try 30-char substring from middle
+    const mid = Math.floor(d.length / 2);
+    const subLen = Math.min(30, d.length);
+    const sub = d.substring(mid - Math.floor(subLen / 2), mid + Math.ceil(subLen / 2));
+    if (sub.length >= 20 && sourceNorm.includes(sub)) return true;
+    // Try first 30 chars
+    const start = d.substring(0, Math.min(30, d.length));
+    if (start.length >= 20 && sourceNorm.includes(start)) return true;
+    return false;
+  };
+
+  for (const pairResult of clauseBundle.pairResults) {
+    if (!pairResult.differences) continue;
+
+    pairResult.differences = pairResult.differences.filter(diff => {
+      const d1 = (diff.detail1 || '').trim();
+      const d2 = (diff.detail2 || '').trim();
+
+      // Skip very short quotes
+      if (d1.length < 20 && d2.length < 20) return true;
+
+      const v1 = verifyQuote(d1, normText1);
+      const v2 = verifyQuote(d2, normText2);
+
+      if (!v1 && !v2) {
+        console.log(`🧹 Quote-Check: ENTFERNT "${(diff._clauseTitle || '').substring(0, 40)}" — beide Zitate nicht im Originaltext`);
+        removed++;
+        return false;
+      }
+
+      if (!v1 || !v2) warned++;
+      return true;
+    });
+  }
+
+  if (removed > 0 || warned > 0) {
+    console.log(`🧹 Quote-Check: ${removed} entfernt, ${warned} Warnungen`);
+  }
+}
+
 /**
  * Maßnahme B.1 — KERNSTÜCK: Deterministischer Wertevergleich.
  *
@@ -1312,6 +2079,112 @@ function deduplicateKeyValues(kv) {
 function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
   const diffs = [];
   const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+
+  // Schritt 0: DIREKTE rawValues-Vergleich (100% deterministisch, area-unabhängig)
+  // Vergleicht Layer 0 rawValues V1 vs V2 direkt — immer gleiches Ergebnis.
+  const directMatchedKeys = new Set(); // Track matched keys to avoid duplicates in per-area pass
+  if (USE_RAW_VALUES && map1._rawValues?.length && map2._rawValues?.length) {
+    const rv1 = map1._rawValues;
+    const rv2 = map2._rawValues;
+    const matched2 = new Set();
+
+    for (const r1 of rv1) {
+      let bestMatch = null;
+      for (const r2 of rv2) {
+        if (matched2.has(r2.key)) continue;
+        if (fuzzyKeyMatch(r1.key, r2.key)) {
+          bestMatch = r2;
+          break;
+        }
+      }
+
+      if (bestMatch) {
+        matched2.add(bestMatch.key);
+        directMatchedKeys.add(r1.key);
+        directMatchedKeys.add(bestMatch.key);
+
+        // Compare values
+        if (r1.numValue !== null && bestMatch.numValue !== null) {
+          if (r1.numValue !== bestMatch.numValue) {
+            diffs.push({
+              area: r1._assignedArea || bestMatch._assignedArea || 'payment',
+              key: r1.rawKey,
+              value1: r1.value,
+              value2: bestMatch.value,
+              numValue1: r1.numValue,
+              numValue2: bestMatch.numValue,
+              unit: r1.unit || bestMatch.unit || null,
+              diffType: 'numeric',
+              section1: null,
+              section2: null,
+              _fromDirectRaw: true,
+            });
+          }
+          // Equal → skip (good!)
+        } else {
+          const n1 = (r1.value || '').toLowerCase().trim();
+          const n2 = (bestMatch.value || '').toLowerCase().trim();
+          if (n1 !== n2) {
+            diffs.push({
+              area: r1._assignedArea || bestMatch._assignedArea || 'payment',
+              key: r1.rawKey,
+              value1: r1.value,
+              value2: bestMatch.value,
+              numValue1: r1.numValue,
+              numValue2: bestMatch.numValue,
+              unit: r1.unit || bestMatch.unit || null,
+              diffType: 'text',
+              section1: null,
+              section2: null,
+              _fromDirectRaw: true,
+            });
+          }
+        }
+      } else {
+        // Only in V1
+        if (r1.numValue !== null || r1.unit) {
+          diffs.push({
+            area: r1._assignedArea || 'payment',
+            key: r1.rawKey,
+            value1: r1.value,
+            value2: null,
+            numValue1: r1.numValue,
+            numValue2: null,
+            unit: r1.unit,
+            diffType: 'only_in_1',
+            section1: null,
+            section2: null,
+            _fromDirectRaw: true,
+          });
+        }
+      }
+    }
+
+    // Only in V2
+    for (const r2 of rv2) {
+      if (matched2.has(r2.key)) continue;
+      if (r2.numValue !== null || r2.unit) {
+        diffs.push({
+          area: r2._assignedArea || 'payment',
+          key: r2.rawKey,
+          value1: null,
+          value2: r2.value,
+          numValue1: null,
+          numValue2: r2.numValue,
+          unit: r2.unit,
+          diffType: 'only_in_2',
+          section1: null,
+          section2: null,
+          _fromDirectRaw: true,
+        });
+      }
+    }
+
+    const directCount = diffs.length;
+    if (directCount > 0) {
+      console.log(`🔢 Layer 0 Direkt: ${directCount} Diffs aus rawValues-Vergleich (deterministisch)`);
+    }
+  }
 
   // Schritt 1: keyValues pro Area sammeln
   const areaKV1 = {};  // { area: { key: value, ... } }
@@ -1344,6 +2217,19 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
     }
   }
 
+  // Schritt 1b: Layer 0 Regex-Werte in Area-keyValues mergen (Regex hat Vorrang)
+  if (USE_RAW_VALUES) {
+    if (map1._rawValues) mergeRawValuesIntoAreas(areaKV1, map1._rawValues, map1.clauses);
+    if (map2._rawValues) mergeRawValuesIntoAreas(areaKV2, map2._rawValues, map2.clauses);
+
+    // Re-dedup after merge
+    for (const areaKV of [areaKV1, areaKV2]) {
+      for (const area of Object.keys(areaKV)) {
+        areaKV[area] = deduplicateKeyValues(areaKV[area]);
+      }
+    }
+  }
+
   const allAreas = new Set([...Object.keys(areaKV1), ...Object.keys(areaKV2)]);
 
   console.log(`🔢 Schicht 2: Prüfe ${allAreas.size} Areas: [${[...allAreas].join(', ')}]`);
@@ -1359,8 +2245,13 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
     if (Object.keys(kv1).length === 0 && Object.keys(kv2).length === 0) continue;
 
     // Schritt 2: Keys normalisieren und matchen
-    const entries1 = Object.entries(kv1).map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }));
-    const entries2 = Object.entries(kv2).map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }));
+    // Skip keys already covered by direct rawValues comparison (Schritt 0)
+    const entries1 = Object.entries(kv1)
+      .map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }))
+      .filter(e => !directMatchedKeys.has(e.norm));
+    const entries2 = Object.entries(kv2)
+      .map(([k, v]) => ({ key: k, norm: normalizeKeyForMatch(k), value: String(v) }))
+      .filter(e => !directMatchedKeys.has(e.norm));
     const matched2 = new Set();
 
     // Match keys from contract 1 against contract 2
@@ -1506,7 +2397,80 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
     }
   }
 
-  // Schritt 5: Sortieren — payment zuerst, dann numerisch vor text, dann nach Diff-Größe
+  // Schritt 6: Cross-Area-Matching (Layer 0)
+  // Match rawValues that weren't covered in per-area comparison
+  if (USE_RAW_VALUES && map1._rawValues && map2._rawValues) {
+    const matchedRawKeys1 = new Set();
+    const matchedRawKeys2 = new Set();
+
+    // Mark rawValues already covered by existing diffs
+    for (const d of diffs) {
+      const normKey = normalizeKeyForMatch(d.key);
+      for (const rv of map1._rawValues) {
+        if (fuzzyKeyMatch(rv.key, normKey)) matchedRawKeys1.add(rv.key);
+      }
+      for (const rv of map2._rawValues) {
+        if (fuzzyKeyMatch(rv.key, normKey)) matchedRawKeys2.add(rv.key);
+      }
+    }
+
+    // Cross-area: match unmatched V1 rawValues against unmatched V2 rawValues
+    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key));
+    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key));
+    const crossMatched2 = new Set();
+
+    for (const rv1 of unmatched1) {
+      for (const rv2 of unmatched2) {
+        if (crossMatched2.has(rv2.key)) continue;
+        if (fuzzyKeyMatch(rv1.key, rv2.key)) {
+          crossMatched2.add(rv2.key);
+          if (rv1.numValue !== null && rv2.numValue !== null) {
+            if (rv1.numValue !== rv2.numValue) {
+              diffs.push({
+                area: rv1._assignedArea || rv2._assignedArea || 'payment',
+                key: rv1.rawKey,
+                value1: rv1.value,
+                value2: rv2.value,
+                numValue1: rv1.numValue,
+                numValue2: rv2.numValue,
+                unit: rv1.unit || rv2.unit || null,
+                diffType: 'numeric',
+                section1: null,
+                section2: null,
+                _fromCrossArea: true,
+              });
+            }
+          } else {
+            const n1 = (rv1.value || '').toLowerCase().trim();
+            const n2 = (rv2.value || '').toLowerCase().trim();
+            if (n1 !== n2) {
+              diffs.push({
+                area: rv1._assignedArea || rv2._assignedArea || 'payment',
+                key: rv1.rawKey,
+                value1: rv1.value,
+                value2: rv2.value,
+                numValue1: rv1.numValue,
+                numValue2: rv2.numValue,
+                unit: rv1.unit || rv2.unit || null,
+                diffType: 'text',
+                section1: null,
+                section2: null,
+                _fromCrossArea: true,
+              });
+            }
+          }
+          break;
+        }
+      }
+    }
+
+    const crossCount = diffs.filter(d => d._fromCrossArea).length;
+    if (crossCount > 0) {
+      console.log(`🔢 Layer 0 Cross-Area: ${crossCount} zusätzliche Diffs`);
+    }
+  }
+
+  // Schritt 7: Sortieren — payment zuerst, dann numerisch vor text, dann nach Diff-Größe
   diffs.sort((a, b) => {
     // payment-Area zuerst
     if (a.area === 'payment' && b.area !== 'payment') return -1;
@@ -2756,6 +3720,16 @@ KRITISCHE REGELN:
  * GPT-Call for a single clause pair.
  */
 async function compareClausePair(clause1, clause2, match, perspective, comparisonMode, userProfile) {
+  // V2.2 Säule 3b: Clause-pair cache
+  const pairHash = crypto.createHash('sha256')
+    .update((clause1.originalText || '') + '||' + (clause2.originalText || ''))
+    .digest('hex').substring(0, 16);
+  const cached = getCached(clausePairCache, pairHash);
+  if (cached) {
+    console.log(`🔬 Schicht 3: Cache hit für "${clause1.title}" (${pairHash})`);
+    return cached;
+  }
+
   const prompt = buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile);
 
   try {
@@ -2765,13 +3739,17 @@ async function compareClausePair(clause1, clause2, match, perspective, compariso
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user }
       ],
-      temperature: 0.1,
+      temperature: 0.0, // V2.2 Säule 3a: T=0.0 für maximale Determinismus
       max_tokens: 2048,
       response_format: { type: 'json_object' },
     });
 
     const raw = JSON.parse(completion.choices[0].message.content);
-    return validateClausePairResponse(raw, clause1, clause2, match);
+    const result = validateClausePairResponse(raw, clause1, clause2, match);
+
+    // V2.2 Säule 3b: Cache result
+    setCache(clausePairCache, pairHash, result);
+    return result;
   } catch (err) {
     console.warn(`⚠️ Schicht 3: Klauselpaar "${clause1.title}" fehlgeschlagen: ${err.message}`);
     return null;
@@ -2853,7 +3831,7 @@ async function assessMissingClause(clause, inContract, perspective, comparisonMo
         { role: 'system', content: prompt.system },
         { role: 'user', content: prompt.user }
       ],
-      temperature: 0.1,
+      temperature: 0.0, // V2.2 Säule 3a: T=0.0 für maximale Determinismus
       max_tokens: 1024,
       response_format: { type: 'json_object' },
     });
@@ -3006,16 +3984,31 @@ function isDuplicateOfDeterministic(clauseDiff, groups) {
     if (group.area !== clauseDiff._clauseArea) continue;
 
     for (const item of group.items) {
-      // Check if same key/value is covered
+      // Check if same key/value is covered — word boundary match (not substring)
       const detKey = normalizeKeyForMatch(item.key || '');
       const clauseText = `${clauseDiff.detail1 || ''} ${clauseDiff.detail2 || ''} ${clauseDiff.explanation || ''}`.toLowerCase();
-      if (detKey && detKey !== '_area_missing' && clauseText.includes(detKey)) return true;
+      if (detKey && detKey !== '_area_missing') {
+        // Word boundary check: detKey must appear as a whole word/phrase
+        try {
+          const escaped = detKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const re = new RegExp(`\\b${escaped}\\b`, 'i');
+          if (re.test(clauseText)) return true;
+        } catch {
+          // Fallback: exact word match via split
+          if (clauseText.includes(detKey)) return true;
+        }
+      }
 
-      // Check if same numeric values are referenced
+      // Check if same numeric values are referenced — parsed comparison (not string inclusion)
       if (item.numValue1 !== null && item.numValue2 !== null) {
-        const v1Str = String(item.numValue1);
-        const v2Str = String(item.numValue2);
-        if (clauseText.includes(v1Str) && clauseText.includes(v2Str)) return true;
+        // Extract all numbers from clause text and compare
+        const clauseNums = [];
+        const numMatches = clauseText.match(/\d[\d.,]*/g) || [];
+        for (const nm of numMatches) {
+          const parsed = parseGermanNumber(nm);
+          if (parsed !== null && !isNaN(parsed)) clauseNums.push(parsed);
+        }
+        if (clauseNums.includes(item.numValue1) && clauseNums.includes(item.numValue2)) return true;
       }
     }
   }
@@ -3069,6 +4062,78 @@ function convertMissingToEnhanced(assessment) {
     _fromClauseComparison: true,
     _isMissingClause: true,
   };
+}
+
+// ============================================
+// V2.2 Säule 3c: Deterministische Severity-Berechnung
+// ============================================
+
+/**
+ * V2.2 Säule 3c: Deterministische Severity-Berechnung.
+ * Ersetzt die subjektive GPT-Severity durch eine formelbasierte Bewertung.
+ * GPT-Severity wird als Fallback behalten wenn keine Formel-Regel greift.
+ */
+function calculateSeverity(diff) {
+  // Financial impact check
+  const financialStr = diff.financialImpact || diff.financialExposure || '';
+  const financialMatch = financialStr.match(/(\d[\d.,]*)\s*(?:EUR|€|Euro)/i)
+    || financialStr.match(/(EUR|€)\s*(\d[\d.,]*)/i);
+  if (financialMatch) {
+    const numStr = financialMatch[2] || financialMatch[1];
+    const amount = parseGermanNumber(numStr);
+    if (amount !== null) {
+      if (amount >= 10000) return 'critical';
+      if (amount >= 1000) return 'high';
+    }
+  }
+
+  // Missing clause/value → high
+  const semanticType = diff.semanticType || '';
+  if (semanticType === 'missing') return 'high';
+
+  // Conflicting → high
+  if (semanticType === 'conflicting') return 'high';
+
+  // Numeric diff check for "weaker" with >50% difference
+  if (semanticType === 'weaker') {
+    const num1 = diff._numValue1 || diff.numValue1;
+    const num2 = diff._numValue2 || diff.numValue2;
+    if (num1 !== null && num1 !== undefined && num2 !== null && num2 !== undefined) {
+      const maxVal = Math.max(Math.abs(num1), Math.abs(num2));
+      if (maxVal > 0) {
+        const diffPercent = Math.abs(num1 - num2) / maxVal;
+        if (diffPercent > 0.5) return 'high';
+      }
+    }
+    return 'medium';
+  }
+
+  // different_scope → medium
+  if (semanticType === 'different_scope') return 'medium';
+
+  // Area-based defaults for deterministic diffs
+  const area = diff.clauseArea || diff.area || '';
+  if (['payment', 'liability'].includes(area)) {
+    // Payment/liability diffs are at least medium
+    return diff.severity === 'critical' || diff.severity === 'high' ? diff.severity : 'medium';
+  }
+
+  // Fallback: keep GPT severity if set, otherwise 'low'
+  return VALID_SEVERITIES.includes(diff.severity) ? diff.severity : 'low';
+}
+
+/**
+ * V2.2: Apply deterministic severity to all merged diffs.
+ */
+function applyDeterministicSeverity(diffs) {
+  for (const diff of diffs) {
+    const detSeverity = calculateSeverity(diff);
+    if (diff._fromDeterministic || diff._fromClauseComparison) {
+      diff._gptSeverity = diff.severity; // Preserve original
+      diff.severity = detSeverity;
+    }
+  }
+  return diffs;
 }
 
 /**
@@ -3130,11 +4195,13 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
   // 2. Clause-pair diffs (only if NOT already covered by deterministic)
   // Quality filters: remove hallucinations, limit per area, cap total
   const HALLUCINATION_PATTERNS = /^(nicht vorhanden|keine regelung|nicht geregelt|n\/a|keine angabe|entfällt|-+)$/i;
-  const MAX_CLAUSE_DIFFS_PER_AREA = 3;
+  // Dynamic cap: payment areas get more slots (many fees), others get 3
+  const MAX_CLAUSE_DIFFS_FOR_AREA = (area) => (area === 'payment') ? 5 : 3;
   const MAX_TOTAL_DIFFS = 25;
 
   if (clauseBundle) {
     const clauseDiffsByArea = {}; // Track count per area
+    const allClauseDiffs = []; // Collect for inter-clause dedup
 
     for (const pairResult of (clauseBundle.pairResults || [])) {
       for (const diff of (pairResult.differences || [])) {
@@ -3151,13 +4218,27 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
         // Filter 2: Dedup against deterministic
         if (isDuplicateOfDeterministic(diff, groups)) continue;
 
-        // Filter 3: Max per area — keep highest severity first
+        // Filter 3: Max per area — high/critical bypass the cap
         const area = diff._clauseArea || 'other';
         if (!clauseDiffsByArea[area]) clauseDiffsByArea[area] = 0;
-        if (clauseDiffsByArea[area] >= MAX_CLAUSE_DIFFS_PER_AREA) {
-          // Only allow if this diff is high/critical and we'd replace a lower one
+        const maxForArea = MAX_CLAUSE_DIFFS_FOR_AREA(area);
+        if (clauseDiffsByArea[area] >= maxForArea) {
           if (diff.severity !== 'critical' && diff.severity !== 'high') continue;
         }
+
+        // Filter 4: Clause-diff to clause-diff dedup via tokenOverlapSimilarity
+        const diffText = `${d1} ${d2}`.trim();
+        let isClauseDupe = false;
+        for (const existing of allClauseDiffs) {
+          const overlap = tokenOverlapSimilarity(diffText, existing);
+          if (overlap > 0.7) {
+            isClauseDupe = true;
+            break;
+          }
+        }
+        if (isClauseDupe) continue;
+
+        allClauseDiffs.push(diffText);
         clauseDiffsByArea[area]++;
 
         merged.push(convertClauseDiffToEnhanced(diff));
@@ -3185,7 +4266,20 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
     return pA - pB;
   });
 
-  // 5. Cap total — too many diffs overwhelm the user
+  // 5. V2.2 Säule 3c: Deterministische Severity-Berechnung
+  applyDeterministicSeverity(merged);
+
+  // 6. Re-sort after severity recalculation
+  merged.sort((a, b) => {
+    const sevA = sevOrder[a.severity] ?? 2;
+    const sevB = sevOrder[b.severity] ?? 2;
+    if (sevA !== sevB) return sevA - sevB;
+    const pA = areaPriority[a.clauseArea] ?? 10;
+    const pB = areaPriority[b.clauseArea] ?? 10;
+    return pA - pB;
+  });
+
+  // 7. Cap total — too many diffs overwhelm the user
   if (merged.length > MAX_TOTAL_DIFFS) {
     console.log(`🧹 Diff-Cap: ${merged.length} → ${MAX_TOTAL_DIFFS} (${merged.length - MAX_TOTAL_DIFFS} niedrig-priorisierte entfernt)`);
     merged.length = MAX_TOTAL_DIFFS;
@@ -3299,6 +4393,99 @@ MINIMUM 12 Punkte Differenz wenn ein Vertrag klar besser ist.
   };
 }
 
+// ============================================
+// V2.2 Säule 4: Deterministische Score-Berechnung
+// ============================================
+
+/**
+ * V2.2 Säule 4: Formelbasierte Score-Berechnung.
+ * Scores kommen aus Diffs, NICHT aus GPT. 100% deterministisch.
+ */
+function calculateScoresFromDiffs(mergedDiffs, map1, map2) {
+  // Reduced weights — old weights (8/4/2/1) caused both scores to hit the floor (35)
+  // with 20+ diffs. New weights keep scores in 50-85 range so enforceScoreDifferentiation
+  // has room to create the 12pt minimum gap.
+  const SEVERITY_WEIGHT = { critical: 5, high: 3, medium: 1.5, low: 0.5 };
+  const AREA_WEIGHT = { payment: 1.4, liability: 1.3, termination: 1.2, warranty: 1.1, duration: 1.1 };
+  const BASE_SCORE = 78;
+  const MAX_PENALTY = 35; // Floor at BASE_SCORE - MAX_PENALTY = 43
+
+  let penalty1 = 0, penalty2 = 0;
+  let fairness1 = 0, fairness2 = 0;
+  let risk1 = 0, risk2 = 0;
+  let flexibility1 = 0, flexibility2 = 0;
+  let completeness1 = 0, completeness2 = 0;
+  let clarity1 = 0, clarity2 = 0;
+
+  for (const diff of mergedDiffs) {
+    const sevWeight = SEVERITY_WEIGHT[diff.severity] || 0.5;
+    const areaWeight = AREA_WEIGHT[diff.clauseArea] || 1.0;
+    const impact = sevWeight * areaWeight;
+
+    // Determine which contract is disadvantaged
+    const c1Text = (diff.contract1 || '').toLowerCase();
+    const c2Text = (diff.contract2 || '').toLowerCase();
+    const c1Missing = c1Text.includes('keine regelung');
+    const c2Missing = c2Text.includes('keine regelung');
+    const semanticType = diff.semanticType || '';
+
+    let disadvantaged = 0; // 0 = both/unknown, 1 = c1 worse, 2 = c2 worse
+    if (c1Missing && !c2Missing) disadvantaged = 1;
+    else if (c2Missing && !c1Missing) disadvantaged = 2;
+    else if (semanticType === 'weaker') disadvantaged = 1;
+    else if (semanticType === 'stronger') disadvantaged = 2;
+    else if (semanticType === 'conflicting' || semanticType === 'different_scope') {
+      // Neutral diffs — minimal penalty (these are differences, not defects)
+      penalty1 += impact * 0.15;
+      penalty2 += impact * 0.15;
+      continue;
+    }
+
+    if (disadvantaged === 1) {
+      penalty1 += impact;
+      if (['payment'].includes(diff.clauseArea)) fairness1 += impact;
+      if (['liability', 'warranty'].includes(diff.clauseArea)) risk1 += impact;
+      if (['termination', 'duration'].includes(diff.clauseArea)) flexibility1 += impact;
+      if (semanticType === 'missing') completeness1 += impact;
+    } else if (disadvantaged === 2) {
+      penalty2 += impact;
+      if (['payment'].includes(diff.clauseArea)) fairness2 += impact;
+      if (['liability', 'warranty'].includes(diff.clauseArea)) risk2 += impact;
+      if (['termination', 'duration'].includes(diff.clauseArea)) flexibility2 += impact;
+      if (semanticType === 'missing') completeness2 += impact;
+    } else {
+      // Unknown direction — very small penalty
+      penalty1 += impact * 0.1;
+      penalty2 += impact * 0.1;
+    }
+  }
+
+  // Cap penalties to prevent floor-hitting
+  penalty1 = Math.min(penalty1, MAX_PENALTY);
+  penalty2 = Math.min(penalty2, MAX_PENALTY);
+
+  const clamp = (val, min, max) => Math.round(Math.max(min, Math.min(max, val)));
+
+  return {
+    contract1: {
+      overall: clamp(BASE_SCORE - penalty1, 40, 92),
+      fairness: clamp(BASE_SCORE - fairness1 * 1.8, 35, 92),
+      riskProtection: clamp(BASE_SCORE - risk1 * 1.8, 35, 92),
+      flexibility: clamp(BASE_SCORE - flexibility1 * 1.8, 35, 92),
+      completeness: clamp(BASE_SCORE - completeness1 * 1.8, 35, 92),
+      clarity: clamp(BASE_SCORE - clarity1 * 1.8, 45, 92),
+    },
+    contract2: {
+      overall: clamp(BASE_SCORE - penalty2, 40, 92),
+      fairness: clamp(BASE_SCORE - fairness2 * 1.8, 35, 92),
+      riskProtection: clamp(BASE_SCORE - risk2 * 1.8, 35, 92),
+      flexibility: clamp(BASE_SCORE - flexibility2 * 1.8, 35, 92),
+      completeness: clamp(BASE_SCORE - completeness2 * 1.8, 35, 92),
+      clarity: clamp(BASE_SCORE - clarity2 * 1.8, 45, 92),
+    },
+  };
+}
+
 /**
  * Schicht 4: Synthesize comparison from pre-analyzed diffs.
  */
@@ -3313,7 +4500,7 @@ async function synthesizeComparison(allDiffs, map1, map2, perspective, compariso
       { role: 'system', content: prompt.system },
       { role: 'user', content: prompt.user }
     ],
-    temperature: 0.15,
+    temperature: 0.05, // V2.2 Säule 5: T=0.05 (Scores formelbasiert, nur Texte von GPT)
     max_tokens: 8192,
     response_format: { type: 'json_object' },
   });
@@ -3321,7 +4508,7 @@ async function synthesizeComparison(allDiffs, map1, map2, perspective, compariso
   const raw = JSON.parse(completion.choices[0].message.content);
   const validated = validateSynthesisResponse(raw);
 
-  console.log(`✅ Schicht 4: Synthese abgeschlossen — Score V1=${validated.scores?.contract1?.overall}, V2=${validated.scores?.contract2?.overall}`);
+  console.log(`✅ Schicht 4: Synthese abgeschlossen — GPT-Score V1=${validated.scores?.contract1?.overall}, V2=${validated.scores?.contract2?.overall} (wird durch Formel überschrieben)`);
   return validated;
 }
 
@@ -3411,6 +4598,9 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
       clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, progress
     );
 
+    // SCHICHT 3.25: Quote Verification — eliminiert halluzinierte Zitate
+    verifyClauseQuotes(clauseBundle, text1, text2);
+
     // SCHICHT 3.5: Comprehensive Merge + Dedup (ohne Synthese-Evaluations vorerst)
     progress('merging', 70, 'Unterschiede werden zusammengeführt...');
     const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
@@ -3424,12 +4614,20 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
       'Synthese Timeout'
     );
 
-    // Apply severity calibration from synthesis back to merged diffs
+    // Apply severity calibration from synthesis back to merged diffs (text enrichment only)
     const groupEvaluations = synthesisResult.groupEvaluations || {};
     applySeverityCalibration(mergedDiffs, groupEvaluations, groups);
 
     // Set final differences
     synthesisResult.differences = mergedDiffs;
+
+    // V2.2 Säule 4: Formelbasierte Scores ÜBERSCHREIBEN GPT-Scores
+    const calculatedScores = calculateScoresFromDiffs(mergedDiffs, map1, map2);
+    console.log(`📊 V2.2 Formel-Scores: V1=${calculatedScores.contract1.overall}, V2=${calculatedScores.contract2.overall} (GPT war V1=${synthesisResult.scores?.contract1?.overall}, V2=${synthesisResult.scores?.contract2?.overall})`);
+    synthesisResult.scores = calculatedScores;
+    // Sync with contract analysis
+    if (synthesisResult.contract1Analysis) synthesisResult.contract1Analysis.score = calculatedScores.contract1.overall;
+    if (synthesisResult.contract2Analysis) synthesisResult.contract2Analysis.score = calculatedScores.contract2.overall;
 
     // SCHICHT 5: Post-Processing
     progress('finalizing', 88, 'Ergebnisse werden finalisiert...');
@@ -3488,6 +4686,12 @@ module.exports = {
   validatePhaseBResponse,
   synthesizeComparison,
   runClauseByClauseComparison,
+  extractAllValuesFromRawText,
+  normalizeOcrText,
+  // V2.2 exports
+  deterministicSegmentation,
+  calculateScoresFromDiffs,
+  calculateSeverity,
   COMPARISON_MODES,
   SYSTEM_PROMPTS,
 };
