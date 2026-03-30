@@ -116,7 +116,40 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
         ]
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
+      // Truncation detection
+      const finishReason = response.choices[0]?.finish_reason;
+      if (finishReason === 'length') {
+        console.warn(`[OptimizerV2] Stage 4 batch ${batchIdx + 1}: Response TRUNCATED (finish_reason=length, completion_tokens=${response.usage?.completion_tokens}/${12000})`);
+      }
+
+      // Safe JSON parsing with granular error handling
+      const rawContent = response.choices[0]?.message?.content;
+      if (!rawContent) {
+        throw new Error('GPT returned empty response content');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(rawContent);
+      } catch (parseErr) {
+        console.error(`[OptimizerV2] Stage 4 batch ${batchIdx + 1}: JSON.parse failed:`, parseErr.message, '| Raw:', rawContent.substring(0, 300));
+        throw new Error(`JSON-Parsing fehlgeschlagen: ${parseErr.message}`);
+      }
+
+      if (!result.optimizations || !Array.isArray(result.optimizations)) {
+        console.error(`[OptimizerV2] Stage 4 batch ${batchIdx + 1}: Invalid structure — missing optimizations array`);
+        throw new Error('Invalid response structure: missing optimizations array');
+      }
+
+      // Version differentiation check — detect when GPT produces identical versions
+      for (const opt of result.optimizations) {
+        if (!opt.needsOptimization) continue;
+        const texts = [opt.neutral?.text, opt.proCreator?.text, opt.proRecipient?.text].filter(Boolean);
+        const unique = new Set(texts);
+        if (unique.size < texts.length) {
+          console.warn(`[OptimizerV2] Stage 4: Clause ${opt.clauseId} has ${texts.length - unique.size} duplicate version(s) — neutral/proCreator/proRecipient should be distinct`);
+        }
+      }
 
       // Generate diffs for each optimization
       for (const opt of result.optimizations) {
@@ -154,18 +187,20 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
 
     } catch (err) {
       console.error(`[OptimizerV2] Stage 4 batch ${batchIdx + 1} failed:`, err.message);
-      // Fallback: mark clauses as not optimizable
+      // Fallback: keep needsOptimization TRUE so the error is visible to the user
+      // (needsOptimization: false would silently hide the failure)
       for (const clause of batch) {
         allOptimizations.push({
           clauseId: clause.id,
-          needsOptimization: false,
+          needsOptimization: true,
+          optimizationFailed: true,
           versions: {
-            neutral: { text: clause.originalText, reasoning: 'Optimierung fehlgeschlagen', diffs: [] },
-            proCreator: { text: clause.originalText, reasoning: 'Optimierung fehlgeschlagen', diffs: [] },
-            proRecipient: { text: clause.originalText, reasoning: 'Optimierung fehlgeschlagen', diffs: [] }
+            neutral: { text: clause.originalText, reasoning: 'Automatische Optimierung fehlgeschlagen — bitte verwenden Sie den Klausel-Chat für manuelle Verbesserungen.', diffs: [] },
+            proCreator: { text: clause.originalText, reasoning: 'Automatische Optimierung fehlgeschlagen — bitte verwenden Sie den Klausel-Chat für manuelle Verbesserungen.', diffs: [] },
+            proRecipient: { text: clause.originalText, reasoning: 'Automatische Optimierung fehlgeschlagen — bitte verwenden Sie den Klausel-Chat für manuelle Verbesserungen.', diffs: [] }
           },
-          marketBenchmark: '',
-          negotiationAdvice: ''
+          marketBenchmark: 'Optimierung fehlgeschlagen — keine Marktdaten verfügbar.',
+          negotiationAdvice: 'Nutzen Sie den Klausel-Chat, um diese Klausel manuell zu besprechen und optimieren.'
         });
       }
     }

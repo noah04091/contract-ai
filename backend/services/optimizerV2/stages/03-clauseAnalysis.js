@@ -101,7 +101,31 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
         ]
       });
 
-      const result = JSON.parse(response.choices[0].message.content);
+      // Truncation detection
+      const finishReason = response.choices[0]?.finish_reason;
+      if (finishReason === 'length') {
+        console.warn(`[OptimizerV2] Stage 3 batch ${batchIdx + 1}: Response TRUNCATED (finish_reason=length, completion_tokens=${response.usage?.completion_tokens}/${16000})`);
+      }
+
+      // Safe JSON parsing with granular error handling
+      const rawContent = response.choices[0]?.message?.content;
+      if (!rawContent) {
+        throw new Error('GPT returned empty response content');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(rawContent);
+      } catch (parseErr) {
+        console.error(`[OptimizerV2] Stage 3 batch ${batchIdx + 1}: JSON.parse failed:`, parseErr.message, '| Raw:', rawContent.substring(0, 300));
+        throw new Error(`JSON-Parsing fehlgeschlagen: ${parseErr.message}`);
+      }
+
+      if (!result.analyses || !Array.isArray(result.analyses)) {
+        console.error(`[OptimizerV2] Stage 3 batch ${batchIdx + 1}: Invalid structure — missing analyses array`);
+        throw new Error('Invalid response structure: missing analyses array');
+      }
+
       // Reinforce importance levels with category-based heuristics
       for (const analysis of result.analyses) {
         const clause = batch.find(c => c.id === analysis.clauseId);

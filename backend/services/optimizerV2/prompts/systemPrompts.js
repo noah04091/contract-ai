@@ -301,6 +301,16 @@ RISIKO-BEGRÜNDUNG:
 Der legalAssessment-Text MUSS den riskLevel nachvollziehbar machen.
 Benenne die dominanten Risikofaktoren explizit. Beispiel: "Risiko 7/10: Einseitiges Kündigungsrecht ohne Fristsetzung kombiniert mit vollständigem Haftungsausschluss zugunsten des Anbieters."
 
+LÄNGENBEGRENZUNGEN (ZWINGEND):
+- "concerns": Maximal 5 Einträge. Nur die WICHTIGSTEN Bedenken. Lieber 3 starke als 7 schwache.
+- "keyTerms": Maximal 8 Einträge. Nur die juristisch relevantesten Begriffe.
+- "legalReferences": Maximal 5 Einträge. Nur direkt einschlägige Normen, keine entfernten Bezüge.
+- "summary": 1-2 Sätze. Niemals mehr als 3 Sätze.
+- "plainLanguage": 2-3 Sätze. Kompakt und verständlich.
+- "legalAssessment": 2-4 Sätze. Fokus auf die Kernbewertung.
+- "economicRiskAssessment": 1-3 Sätze.
+- "creatorView"/"recipientView"/"neutralRecommendation": Bei "critical"/"high" importanceLevel: 2-4 Sätze. Bei "medium"/"low": 1 Satz.
+
 WICHTIGE REGELN:
 - Bewerte NUR was im Text steht. Erfinde keine Probleme.
 - Wenn eine Klausel solide UND ausgewogen ist, sage das. Nicht jede Klausel muss Probleme haben.
@@ -432,7 +442,19 @@ REGELN:
   "Diese Haftungsklausel ist restriktiver als bei typischen ${contractType}-Verträgen in der Branche üblich."
   Nutze Formulierungen wie "strenger als üblich", "marktüblich", "günstiger als Branchendurchschnitt".
 - "negotiationAdvice": Ein KONKRETER, umsetzbarer Tipp für die Vertragsverhandlung.
-  Nicht generisch ("Klausel anpassen"), sondern spezifisch ("Verhandeln Sie eine gegenseitige Kündigungsfrist von mindestens 3 Monaten, da einseitige Kündigungsrechte in ${contractType}-Verträgen zunehmend kritisch gesehen werden.").`;
+  Nicht generisch ("Klausel anpassen"), sondern spezifisch ("Verhandeln Sie eine gegenseitige Kündigungsfrist von mindestens 3 Monaten, da einseitige Kündigungsrechte in ${contractType}-Verträgen zunehmend kritisch gesehen werden.").
+
+VERSIONS-DIFFERENZIERUNG (KRITISCH):
+Die drei Versionen (neutral, proCreator, proRecipient) MÜSSEN sich INHALTLICH unterscheiden.
+- "neutral": Ausgewogener Kompromiss — faire Rechte und Pflichten für beide Seiten
+- "proCreator": Schützt den Anbieter MAXIMAL — stärkere Haftungsbegrenzungen, kürzere Fristen, mehr Kontrolle
+- "proRecipient": Schützt den Empfänger MAXIMAL — mehr Rechte, längere Fristen, weniger Risiko
+NIEMALS drei identische oder nahezu identische Texte liefern. Jede Version MUSS eigene Formulierungen und andere Schwerpunkte haben.
+
+LÄNGENBEGRENZUNGEN (ZWINGEND):
+- "reasoning": 2-4 Sätze nach dem PROBLEM/ÄNDERUNG/WIRKUNG-Schema. Niemals mehr als 5 Sätze.
+- "marketBenchmark": 1-2 Sätze.
+- "negotiationAdvice": 1-2 Sätze.`;
 
 const OPTIMIZATION_GENERATION_SCHEMA = {
   type: "object",

@@ -330,7 +330,7 @@ const CATEGORY_KEYWORD_LISTS = {
  */
 function classifyByKeywords(title, text) {
   const titleLower = (title || '').toLowerCase();
-  const bodyLower = (text || '').substring(0, 500).toLowerCase();
+  const bodyLower = (text || '').substring(0, 2000).toLowerCase();
 
   let bestCategory = null;
   let bestScore = 0;
