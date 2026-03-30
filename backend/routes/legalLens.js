@@ -2402,6 +2402,60 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
 });
 
 // ============================================
+// BULK ANALYSES ENDPOINT — Alle vorhandenen Analysen laden
+// ============================================
+
+/**
+ * GET /:contractId/analyses
+ * Gibt alle bereits analysierten Klauseln für einen Vertrag zurück.
+ * Wird beim zweiten Besuch genutzt, um sofort alle Risiko-Farben anzuzeigen.
+ */
+router.get('/:contractId/analyses', verifyToken, async (req, res) => {
+  const { contractId } = req.params;
+  const userId = req.user.userId;
+  const { perspective } = req.query;
+
+  try {
+    // Zugriffsprüfung
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
+    // Alle Analysen für diesen Vertrag laden
+    const analyses = await ClauseAnalysis.find({
+      contractId: new ObjectId(contractId),
+      userId: new ObjectId(userId)
+    }).select('clauseId perspectives riskLevel riskScore actionLevel').lean();
+
+    // Analysen als Map: clauseId → perspective analysis
+    const analysesMap = {};
+    const targetPerspective = perspective || 'contractor';
+
+    for (const analysis of analyses) {
+      const perspectiveData = analysis.perspectives?.[targetPerspective];
+      if (perspectiveData?.analyzedAt) {
+        analysesMap[analysis.clauseId] = perspectiveData;
+      }
+    }
+
+    res.json({
+      success: true,
+      analyses: analysesMap,
+      perspective: targetPerspective,
+      total: Object.keys(analysesMap).length
+    });
+
+  } catch (error) {
+    console.error('❌ [Legal Lens] Bulk analyses error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Fehler beim Laden der Analysen'
+    });
+  }
+});
+
+// ============================================
 // STREAMING PARSE ENDPOINT (SSE)
 // ============================================
 

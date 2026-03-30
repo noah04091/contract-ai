@@ -311,6 +311,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   // ✅ Phase 1 Performance: Ref um doppelten Auto-Preload zu verhindern
   const startedPreloadRef = useRef<boolean>(false);
 
+  // ✅ Bulk-Load: Trackt welche Perspektive bereits geladen wurde
+  const bulkLoadedPerspectiveRef = useRef<string | null>(null);
+
   // ✅ Opt 3: Pre-fetch Adjacent - Ref um laufende Pre-fetches zu tracken
   const prefetchInProgressRef = useRef<Set<string>>(new Set());
   const lastPrefetchClauseIdRef = useRef<string | null>(null);
@@ -1327,6 +1330,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setAnalysisCache({}); // ✅ NEU: Cache leeren
     cacheInsertionOrder.length = 0; // ✅ LRU-Ordnung zurücksetzen
     startedPreloadRef.current = false; // ✅ Phase 1: Preload-Flag zurücksetzen
+    bulkLoadedPerspectiveRef.current = null; // ✅ Bulk-Load-Flag zurücksetzen
     // ✅ Phase 1 Schritt 4: Queue zurücksetzen
     preloadQueueRef.current.clear();
     priorityClauseRef.current = null;
@@ -1344,6 +1348,46 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       cacheInsertionOrder.length = 0; // LRU-Ordnung bei Unmount leeren
     };
   }, []);
+
+  /**
+   * ✅ Bulk-Load: Beim zweiten Besuch alle gecachten Analysen sofort laden
+   *
+   * Wenn Klauseln aus dem preprocessed Cache kommen, lädt dieser Effect
+   * alle bereits analysierten Klauseln vom Backend und füllt den Frontend-Cache.
+   * So sieht der User sofort alle Risikofarben und kann Klauseln ohne Warten anklicken.
+   */
+  useEffect(() => {
+    if (
+      parseSource === 'preprocessed' &&                    // Klauseln kamen aus dem Cache
+      clauses.length > 0 &&                                // Klauseln sind da
+      contractId &&                                        // Contract ID vorhanden
+      bulkLoadedPerspectiveRef.current !== currentPerspective  // Diese Perspektive noch nicht geladen
+    ) {
+      bulkLoadedPerspectiveRef.current = currentPerspective;
+
+      legalLensAPI.getAllAnalyses(contractId, currentPerspective)
+        .then(result => {
+          if (!result.success || result.total === 0) return;
+
+          setAnalysisCache(prev => {
+            let next = { ...prev };
+            for (const clause of clauses) {
+              const perspectiveData = result.analyses[clause.id];
+              if (!perspectiveData) continue;
+
+              const cacheKey = getCacheKey(clause, currentPerspective);
+              next = addToCacheWithEviction(next, cacheKey, perspectiveData as ClauseAnalysis);
+            }
+            return next;
+          });
+
+          console.log(`✅ [Legal Lens] Bulk-loaded ${result.total} cached analyses for perspective "${currentPerspective}"`);
+        })
+        .catch(err => {
+          console.warn('[Legal Lens] Bulk-load failed (non-critical):', err instanceof Error ? err.message : err);
+        });
+    }
+  }, [parseSource, clauses, contractId, currentPerspective]);
 
   /**
    * ✅ Phase 1 Performance: Auto-Preload nach Streaming

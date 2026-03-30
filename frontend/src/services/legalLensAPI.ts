@@ -217,6 +217,32 @@ export function analyzeClauseStreaming(
 }
 
 /**
+ * Alle vorhandenen Analysen eines Vertrags bulk-laden
+ * Wird beim zweiten Besuch genutzt, um sofort alle Risiko-Farben anzuzeigen.
+ */
+export async function getAllAnalyses(
+  contractId: string,
+  perspective: PerspectiveType = 'contractor'
+): Promise<{
+  success: boolean;
+  analyses: Record<string, AnalyzeClauseResponse['analysis']>;
+  perspective: string;
+  total: number;
+}> {
+  const response = await fetchWithTimeout(
+    `${LEGAL_LENS_BASE}/${contractId}/analyses?perspective=${perspective}`,
+    { method: 'GET' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden der Analysen');
+  }
+
+  return response.json();
+}
+
+/**
  * Alle Perspektiven für eine Klausel abrufen
  */
 export async function getAllPerspectives(
