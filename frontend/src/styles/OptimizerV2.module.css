@@ -2901,6 +2901,22 @@
   .modeSelector { flex-direction: column; }
   .scoreCards { grid-template-columns: 1fr 1fr; }
   .tabNavigation { overflow-x: auto; }
+  .comparisonGrid { grid-template-columns: 1fr; gap: 8px; }
+  .comparisonArrow { transform: rotate(90deg); padding: 4px 0; }
+  .alternativesTabs { flex-wrap: wrap; }
+  .reasoningStructured { gap: 8px; }
+  .benchmarkCard, .adviceCard { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .pageContainer { padding: 12px; }
+  .scoreCards { grid-template-columns: 1fr; }
+  .perspectiveGrid { grid-template-columns: 1fr; }
+  .alternativesHeader { flex-direction: column; gap: 8px; }
+  .viewToggle { width: 100%; }
+  .viewToggleBtn { flex: 1; }
+  .customEditorActions { flex-wrap: wrap; }
+  .acceptButton { width: 100%; justify-content: center; }
 }
 
 /* ═══════════════════════════════════════════════════════

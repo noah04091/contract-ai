@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Check, Scale, Shield, UserCheck, ArrowRight, Lightbulb, BarChart3, Pencil } from 'lucide-react';
 import type { ClauseOptimization, OptimizationMode, DiffOp } from '../../types/optimizerV2';
 import { MODE_LABELS } from '../../types/optimizerV2';
+import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/OptimizerV2.module.css';
 
 type TabMode = OptimizationMode | 'custom';
@@ -56,12 +57,19 @@ function parseReasoning(reasoning: string | undefined): { problem?: string; chan
 }
 
 export default function ClauseAlternatives({ clauseId, originalText, optimization, activeMode, onAcceptVersion }: Props) {
+  const { addToast } = useToast();
   const [selectedTab, setSelectedTab] = useState<TabMode>(activeMode);
   const [viewMode, setViewMode] = useState<'sideBySide' | 'diff'>('sideBySide');
   const [customText, setCustomText] = useState(() => {
     // Pre-fill with the active mode's optimized text
     return optimization.versions[activeMode]?.text || originalText;
   });
+
+  const handleAccept = (version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', text?: string) => {
+    onAcceptVersion(clauseId, version, text);
+    const label = version === 'custom' ? 'Eigener Text' : MODE_LABELS[version as OptimizationMode] || version;
+    addToast(`"${label}" wurde übernommen`, 'success');
+  };
 
   const isCustomTab = selectedTab === 'custom';
   const version = isCustomTab ? null : optimization.versions[selectedTab as OptimizationMode];
@@ -236,8 +244,8 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
       <button
         className={styles.acceptButton}
         onClick={() => isCustomTab
-          ? onAcceptVersion(clauseId, 'custom', customText)
-          : onAcceptVersion(clauseId, selectedTab as OptimizationMode)
+          ? handleAccept('custom', customText)
+          : handleAccept(selectedTab as OptimizationMode)
         }
       >
         <Check size={14} />

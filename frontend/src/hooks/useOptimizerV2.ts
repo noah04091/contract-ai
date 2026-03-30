@@ -217,6 +217,9 @@ export function useOptimizerV2() {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      let streamCompleted = false;
+      let lastResultId: string | null = null;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -232,8 +235,11 @@ export function useOptimizerV2() {
 
             if (event.error) {
               dispatch({ type: 'ANALYSIS_ERROR', error: event.message });
+              streamCompleted = true;
               return;
             }
+
+            if (event.resultId) lastResultId = event.resultId;
 
             if (event.complete && event.resultId) {
               // SSE complete event only contains resultId — fetch full result
@@ -251,6 +257,7 @@ export function useOptimizerV2() {
               } catch {
                 dispatch({ type: 'ANALYSIS_ERROR', error: 'Ergebnis konnte nicht geladen werden.' });
               }
+              streamCompleted = true;
               return;
             }
 
@@ -272,9 +279,35 @@ export function useOptimizerV2() {
           }
         }
       }
+
+      // Stream ended without completion — try to recover result
+      if (!streamCompleted && lastResultId) {
+        dispatch({ type: 'PROGRESS', progress: 95, message: 'Verbindung unterbrochen — versuche Ergebnis zu laden...' });
+        try {
+          const data = await apiCall(`/optimizer-v2/results/${lastResultId}`) as { success?: boolean; result?: AnalysisResult };
+          if (data?.success && data?.result && data.result.status === 'completed') {
+            dispatch({ type: 'ANALYSIS_COMPLETE', result: data.result, resultId: lastResultId });
+            return;
+          }
+        } catch { /* ignore */ }
+        dispatch({ type: 'ANALYSIS_ERROR', error: 'Verbindung zum Server wurde unterbrochen. Die Analyse läuft möglicherweise noch — bitte lade die Seite neu.' });
+      } else if (!streamCompleted) {
+        dispatch({ type: 'ANALYSIS_ERROR', error: 'Verbindung zum Server wurde unerwartet beendet. Bitte versuche es erneut.' });
+      }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : 'Analyse fehlgeschlagen';
+      // User-friendly error messages
+      let message = 'Analyse fehlgeschlagen. Bitte versuche es erneut.';
+      if (err instanceof Error) {
+        const errMsg = err.message.toLowerCase();
+        if (errMsg.includes('failed to fetch') || errMsg.includes('network')) {
+          message = 'Keine Verbindung zum Server. Bitte prüfe deine Internetverbindung.';
+        } else if (errMsg.includes('http 4')) {
+          message = 'Sitzung abgelaufen — bitte melde dich erneut an.';
+        } else if (errMsg.includes('streaming')) {
+          message = 'Echtzeitverbindung konnte nicht hergestellt werden. Bitte versuche es erneut.';
+        }
+      }
       dispatch({ type: 'ANALYSIS_ERROR', error: message });
     }
   }, []);
