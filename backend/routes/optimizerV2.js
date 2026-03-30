@@ -172,10 +172,18 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     sendSSE({ progress: 2, message: progressMsg });
     const { extractTextWithOCR } = require('../services/textractService');
     const ocrResult = await extractTextWithOCR(buffer);
-    if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 50) {
+    if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 200) {
       ocrApplied = true;
       await incrementOcrUsage(req.user.userId, ocrResult.pages || 1);
-      console.log(`[OptimizerV2] OCR erfolgreich: ${ocrResult.text.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence}%`);
+      console.log(`[OptimizerV2] OCR erfolgreich: ${ocrResult.text.trim().length} Zeichen, ${ocrResult.pages} Seiten, Konfidenz: ${ocrResult.confidence?.toFixed(1)}%`);
+      // Confidence-Gate: warn user if OCR quality is low
+      if (ocrResult.lowConfidence) {
+        sendSSE({
+          progress: 3,
+          message: `Hinweis: Die Texterkennungsqualität liegt bei ${ocrResult.confidence?.toFixed(0)}%. Bei schlechten Scans können Analyseergebnisse ungenau sein. Für beste Ergebnisse ein hochauflösendes PDF verwenden.`,
+          warning: true
+        });
+      }
       return ocrResult.text;
     }
     const ocrErrDetail = ocrResult.error || `nur ${(ocrResult.text || '').trim().length} Zeichen erkannt`;
@@ -303,6 +311,9 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     });
   }
 
+  // NFC-Normalisierung: Combining Characters zu precomposed Form (ä statt a+̈)
+  contractText = contractText.normalize('NFC');
+
   if (contractText.trim().length < 500) {
     await cleanupFile(req.file.path);
     sendSSE({
@@ -311,6 +322,36 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     });
     clearInterval(keepalive);
     return res.end();
+  }
+
+  // Text-Quality-Gate: Prüfe ob der Text tatsächlich sinnvoller Vertragstext ist
+  // (verhindert dass OCR-Müll an GPT geht und Kosten verursacht)
+  {
+    const words = contractText.trim().split(/\s+/);
+    const totalWords = words.length;
+    // Ein "Wort" muss mind. 2 Buchstaben haben und mind. 1 Vokal/Umlaut enthalten
+    const realWords = words.filter(w => w.length >= 2 && /[aeiouyäöü]/i.test(w)).length;
+    const wordRatio = totalWords > 0 ? realWords / totalWords : 0;
+
+    if (wordRatio < 0.4 && totalWords > 20) {
+      console.log(`[OptimizerV2] Text-Quality-Gate: nur ${(wordRatio * 100).toFixed(0)}% echte Wörter (${realWords}/${totalWords})`);
+      await cleanupFile(req.file.path);
+      sendSSE({
+        error: true,
+        message: 'Der extrahierte Text enthält zu viele unleserliche Zeichen — die Dokumentqualität reicht nicht für eine zuverlässige Analyse. Bitte lade ein besseres Scan oder ein natives PDF hoch.'
+      });
+      clearInterval(keepalive);
+      return res.end();
+    }
+
+    // Soft warning bei grenzwertiger Qualität (40-60% echte Wörter)
+    if (wordRatio < 0.6 && totalWords > 20) {
+      sendSSE({
+        progress: 4,
+        message: `Hinweis: Die Textqualität ist eingeschränkt (${(wordRatio * 100).toFixed(0)}% lesbare Wörter). Die Analyseergebnisse könnten bei diesem Dokument weniger präzise sein.`,
+        warning: true
+      });
+    }
   }
 
   // Upload original file to S3 for later viewing
@@ -1526,7 +1567,7 @@ router.post('/results/:id/docx', async (req, res) => {
     // ── Helpers ──
     const cleanText = (text) => {
       if (!text) return '';
-      let t = text;
+      let t = text.normalize('NFC'); // NFC-Normalisierung: combining chars → precomposed
 
       // 1. Decode HTML entities
       t = t.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'");

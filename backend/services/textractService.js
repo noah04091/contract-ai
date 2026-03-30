@@ -149,10 +149,16 @@ async function ocrSync(buf, docType) {
 
   console.log(`✅ [Textract] Sync-OCR (${docType}) in ${duration}ms: ${lineCount} Zeilen, ${text.trim().length} Zeichen, ${confidence.toFixed(1)}% Confidence`);
 
+  if (text.trim().length < 200) {
+    return { success: false, text, confidence, pages: 1, lineCount, duration,
+      error: `OCR hat nur ${text.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
+  }
+
   return {
-    success: text.trim().length > 0,
+    success: true,
     text,
     confidence,
+    lowConfidence: confidence > 0 && confidence < 70,
     pages: 1,
     lineCount,
     duration
@@ -264,7 +270,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
 
     console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${sortedPages.length} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
 
-    if (fullText.trim().length < 50) {
+    if (fullText.trim().length < 200) {
       return { success: false, text: fullText, confidence: avgConfidence, pages: sortedPages.length,
         error: `OCR hat nur ${fullText.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
     }
@@ -273,6 +279,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       success: true,
       text: fullText,
       confidence: avgConfidence,
+      lowConfidence: avgConfidence > 0 && avgConfidence < 70,
       pages: sortedPages.length,
       lineCount: blockCount,
       duration
