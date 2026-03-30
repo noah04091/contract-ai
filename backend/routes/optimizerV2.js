@@ -189,8 +189,16 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     sendSSE({ progress: 0, message: 'Text wird extrahiert...' });
     const buffer = await fs.readFile(req.file.path);
 
-    // ── Images: go directly to OCR ──
+    // ── Images: pre-check OCR budget, then go directly to OCR ──
     if (IMAGE_MIMES.includes(req.file.mimetype)) {
+      const { checkOcrUsage } = require('../services/ocrUsageService');
+      const ocrBudget = await checkOcrUsage(req.user.userId);
+      if (!ocrBudget.allowed) {
+        await cleanupFile(req.file.path);
+        sendSSE({ error: true, message: `OCR-Limit erreicht (${ocrBudget.pagesUsed}/${ocrBudget.pagesLimit} Seiten diesen Monat). Bilder benötigen OCR-Texterkennung. Bitte upgraden Sie Ihren Plan.` });
+        clearInterval(keepalive);
+        return res.end();
+      }
       console.log(`[OptimizerV2] Bild-Upload erkannt (${req.file.mimetype}), starte OCR...`);
       contractText = await runOCR(buffer, 'Bild erkannt – Text wird per OCR extrahiert...');
       if (!contractText) {
@@ -205,12 +213,20 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     } else if (req.file.mimetype.includes('pdf')) {
       // Stage A: pdf-parse (schnell, funktioniert für die meisten PDFs)
       try {
-        const parsed = await pdfParse(buffer, { max: 0, version: 'v2.0.550' });
+        const parsed = await pdfParse(buffer, { max: 500, version: 'v2.0.550' });
         contractText = parsed.text;
         if (contractText && contractText.trim().length >= 100) {
           console.log(`[OptimizerV2] pdf-parse erfolgreich: ${contractText.trim().length} Zeichen`);
         }
       } catch (parseErr) {
+        // Detect password-protected PDFs
+        const errMsg = (parseErr.message || '').toLowerCase();
+        if (errMsg.includes('encrypt') || errMsg.includes('password') || errMsg.includes('protected')) {
+          await cleanupFile(req.file.path);
+          sendSSE({ error: true, message: 'Die PDF-Datei ist passwortgeschützt. Bitte entferne den Passwortschutz und lade die Datei erneut hoch.' });
+          clearInterval(keepalive);
+          return res.end();
+        }
         console.warn(`[OptimizerV2] pdf-parse Fehler: ${parseErr.message}`);
         contractText = '';
       }
@@ -277,11 +293,21 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     return res.end();
   }
 
-  if (contractText.trim().length < 20) {
+  // Warn user if contract text will be truncated (>50K chars)
+  const textLength = contractText.trim().length;
+  if (textLength > 50000) {
+    sendSSE({
+      progress: 3,
+      message: `Hinweis: Das Dokument ist sehr umfangreich (${Math.round(textLength / 1000)}K Zeichen). Die Analyse erfasst die wichtigsten ~50.000 Zeichen. Bei sehr langen Verträgen können Details am Ende fehlen.`,
+      warning: true
+    });
+  }
+
+  if (contractText.trim().length < 500) {
     await cleanupFile(req.file.path);
     sendSSE({
       error: true,
-      message: `Das Dokument enthält nur ${contractText.trim().length} Zeichen — das ist zu wenig für eine sinnvolle Vertragsanalyse. Bitte lade ein vollständiges Vertragsdokument hoch.`
+      message: `Das Dokument enthält nur ${contractText.trim().length} Zeichen — das ist zu wenig für eine sinnvolle Vertragsanalyse. Ein typischer Vertrag hat mindestens 1.000 Zeichen. Bitte lade ein vollständiges Vertragsdokument hoch.`
     });
     clearInterval(keepalive);
     return res.end();
@@ -333,7 +359,19 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
   } catch (err) {
     console.error('[OptimizerV2] Pipeline error:', err);
     if (!clientDisconnected) {
-      sendSSE({ error: true, message: err.message || 'Analyse fehlgeschlagen.' });
+      // Translate technical errors to user-friendly German messages
+      let userMessage = 'Analyse fehlgeschlagen. Bitte versuche es erneut.';
+      const errMsg = (err.message || '').toLowerCase();
+      if (errMsg.includes('timeout') || errMsg.includes('timed out')) {
+        userMessage = 'Die Analyse hat zu lange gedauert. Der Vertrag ist möglicherweise zu komplex. Bitte versuche es erneut.';
+      } else if (errMsg.includes('rate limit') || errMsg.includes('429')) {
+        userMessage = 'Unsere KI-Server sind aktuell überlastet. Bitte warte einen Moment und versuche es erneut.';
+      } else if (errMsg.includes('api') || errMsg.includes('openai') || errMsg.includes('503') || errMsg.includes('500')) {
+        userMessage = 'Verbindung zum Analyse-Server fehlgeschlagen. Bitte versuche es in wenigen Minuten erneut.';
+      } else if (errMsg.includes('abort') || errMsg.includes('cancel')) {
+        userMessage = 'Analyse wurde abgebrochen.';
+      }
+      sendSSE({ error: true, message: userMessage });
     }
   } finally {
     clearInterval(keepalive);

@@ -81,6 +81,14 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
       { $set: { structure: stage1.result, currentStage: 2, 'costs.perStage': costs } }
     );
 
+    // Language check: warn if non-German contract detected
+    const detectedLang = stage1.result?.language;
+    if (detectedLang && detectedLang !== 'de') {
+      const langNames = { en: 'Englisch', fr: 'Französisch', es: 'Spanisch', it: 'Italienisch', other: 'nicht-deutsch' };
+      const langLabel = langNames[detectedLang] || detectedLang;
+      onProgress(10, `Hinweis: Vertrag in ${langLabel} erkannt. Die Analyse ist für deutsche Verträge optimiert — Ergebnisse können bei fremdsprachigen Verträgen ungenau sein.`, { warning: true });
+    }
+
     onProgress(11, 'Vertragsstruktur erkannt', { stage: 1, complete: true, result: stage1.result });
 
     // ═══════════════════════════════════════════════
