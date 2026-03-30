@@ -7,7 +7,9 @@ interface Props {
   stages: StageInfo[];
   progress: number;
   message: string;
+  error?: string | null;
   onCancel: () => void;
+  onRetry?: () => void;
 }
 
 const CONTRACT_FACTS = [
@@ -66,8 +68,51 @@ function useRotatingFact() {
   return { fact: CONTRACT_FACTS[index], fade };
 }
 
-export default function AnalysisPipeline({ stages, progress, message, onCancel }: Props) {
+export default function AnalysisPipeline({ stages, progress, message, error, onCancel, onRetry }: Props) {
   const { fact, fade } = useRotatingFact();
+
+  // Error state
+  if (error) {
+    return (
+      <div className={styles.pipelineContainer}>
+        <div className={styles.pipelineHeader}>
+          <h2 className={styles.pipelineTitle} style={{ color: '#FF3B30' }}>Analyse fehlgeschlagen</h2>
+        </div>
+
+        {/* Show stages with error state */}
+        <div className={styles.stageList}>
+          {stages.map((stage) => (
+            <div key={stage.number} className={`${styles.stageItem} ${styles[`stage_${stage.status}`]}`}>
+              <div className={styles.stageIcon}>
+                {stage.status === 'completed' && <Check size={14} />}
+                {stage.status === 'error' && <AlertCircle size={14} />}
+                {(stage.status === 'pending' || stage.status === 'running') && <Circle size={14} />}
+              </div>
+              <div className={styles.stageContent}>
+                <span className={styles.stageName}>{stage.name}</span>
+                <span className={styles.stageDescription}>{stage.description}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ margin: '16px 0', padding: '12px 16px', background: '#FFF2F2', borderRadius: 8, border: '1px solid #FFD6D6', color: '#CC1100', fontSize: 13, lineHeight: 1.5 }}>
+          {error}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          {onRetry && (
+            <button className={styles.cancelButton} style={{ background: '#007AFF', color: '#fff', border: 'none' }} onClick={onRetry}>
+              Erneut versuchen
+            </button>
+          )}
+          <button className={styles.cancelButton} onClick={onCancel}>
+            Zurück
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.pipelineContainer}>

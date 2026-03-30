@@ -57,7 +57,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
   }, [result]);
 
   const handlePdfExport = async () => {
-    if (downloading) return;
+    if (downloading || !result?.resultId) return;
     setDownloading(true);
     try {
       const token = localStorage.getItem('token');
@@ -87,7 +87,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
   };
 
   const handleDocxGenerate = async () => {
-    if (generating) return;
+    if (generating || !result?.resultId) return;
     setGenerating(true);
     try {
       const token = localStorage.getItem('token');
@@ -255,7 +255,7 @@ vielen Dank für die Übersendung des ${contractType}s. Ich habe den Vertrag ein
 
 ${criticalClauses.length > 0 ? `Folgende Punkte sollten wir besprechen:\n${findings}\n` : 'Der Vertrag ist in den wesentlichen Punkten gut aufgestellt.\n'}
 ${optimizedCount > 0 ? `Für ${optimizedCount} Klauseln habe ich konkrete Formulierungsvorschläge, die für beide Seiten eine fairere Regelung ermöglichen.\n` : ''}
-Ich würde vorschlagen, dass wir die genannten Punkte in einem kurzen Gespräch klären. Wann passt es Ihnen?
+${criticalClauses.length > 0 || optimizedCount > 0 ? 'Ich würde vorschlagen, dass wir die genannten Punkte in einem kurzen Gespräch klären. Wann passt es Ihnen?' : 'Gerne können wir den Vertrag bei Gelegenheit gemeinsam durchgehen. Wann passt es Ihnen?'}
 
 Beste Grüße`;
     }
@@ -335,7 +335,7 @@ Viele Grüße`;
             <button
               className={styles.exportBtnActive}
               onClick={() => setDocxStep('selecting')}
-              disabled={optimizedCount === 0}
+              disabled={optimizedCount === 0 || generating}
             >
               <File size={14} /> Erstellen
             </button>

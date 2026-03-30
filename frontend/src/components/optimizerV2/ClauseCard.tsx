@@ -44,8 +44,9 @@ export default function ClauseCard({
   const categoryLabel = CATEGORY_LABELS[clause.category] || clause.category;
 
   const handleSaveToLibrary = useCallback(async () => {
-    if (saving || saved) return;
+    if (saving) return;
     setSaving(true);
+    setSaved(false);
     try {
       // Save the optimized version (active mode) if available, otherwise original
       const optimizedText = optimization?.needsOptimization && optimization.versions?.[activeMode]?.text

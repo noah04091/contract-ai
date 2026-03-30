@@ -487,8 +487,14 @@ router.patch('/results/:id/mode', async (req, res) => {
 // ════════════════════════════════════════════════════════
 router.patch('/results/:id/selections', async (req, res) => {
   const { selections } = req.body;
-  if (!Array.isArray(selections)) {
-    return res.status(400).json({ success: false, message: 'Auswahl muss ein Array sein.' });
+  if (!Array.isArray(selections) || selections.length > 500) {
+    return res.status(400).json({ success: false, message: 'Auswahl muss ein Array sein (max. 500 Einträge).' });
+  }
+  // Validate each selection element
+  for (const s of selections) {
+    if (!s || typeof s.clauseId !== 'string' || !s.clauseId) {
+      return res.status(400).json({ success: false, message: 'Jede Auswahl muss eine gültige clauseId enthalten.' });
+    }
   }
 
   try {
@@ -515,6 +521,9 @@ router.post('/results/:id/clause-chat', async (req, res) => {
   const { clauseId, message } = req.body;
   if (!clauseId || !message) {
     return res.status(400).json({ success: false, message: 'clauseId und message sind erforderlich.' });
+  }
+  if (typeof message !== 'string' || message.length > 5000) {
+    return res.status(400).json({ success: false, message: 'Nachricht darf maximal 5.000 Zeichen lang sein.' });
   }
 
   try {
@@ -563,7 +572,11 @@ router.post('/results/:id/clause-chat', async (req, res) => {
       ]
     });
 
-    const assistantMessage = response.choices[0].message.content;
+    const assistantMessage = response.choices?.[0]?.message?.content;
+    if (!assistantMessage) {
+      console.error('[OptimizerV2] clause-chat: Empty OpenAI response');
+      return res.status(502).json({ success: false, message: 'KI-Antwort konnte nicht generiert werden. Bitte erneut versuchen.' });
+    }
 
     // Extract new version if present
     let generatedVersion = null;
@@ -632,7 +645,7 @@ router.get('/results/:id/redline', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
     }
 
-    const redlineData = result.clauses.map(clause => {
+    const redlineData = (result.clauses || []).map(clause => {
       const opt = result.optimizations?.find(o => o.clauseId === clause.id);
       const version = opt?.versions?.[mode];
 
@@ -676,12 +689,20 @@ router.post('/results/:id/resume', async (req, res) => {
   };
 
   try {
+    // Authorization: verify user owns this result
+    const existing = await OptimizerV2Result.findOne({ _id: req.params.id, userId: req.user.userId }).select('_id');
+    if (!existing) {
+      sendSSE({ error: true, message: 'Analyse nicht gefunden oder keine Berechtigung.' });
+      return res.end();
+    }
+
     const result = await resumePipeline(req.params.id, (progress, message, stageData) => {
       sendSSE({ progress, message, ...stageData });
     });
 
     sendSSE({ progress: 100, complete: true, resultId: result.resultId });
   } catch (err) {
+    console.error('[OptimizerV2] Resume error:', err.message);
     sendSSE({ error: true, message: err.message });
   } finally {
     if (!clientDisconnected) res.end();
@@ -2105,7 +2126,11 @@ Dann eine Leerzeile, dann exakt:
       ]
     });
 
-    const fullResponse = response.choices[0].message.content.trim();
+    const fullResponse = response.choices?.[0]?.message?.content?.trim();
+    if (!fullResponse) {
+      console.error('[OptimizerV2] generate-clause: Empty OpenAI response');
+      return res.status(502).json({ success: false, message: 'Klausel konnte nicht generiert werden. Bitte erneut versuchen.' });
+    }
 
     // Extract "warum wichtig" section
     let generatedText = fullResponse;

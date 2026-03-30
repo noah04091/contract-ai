@@ -342,13 +342,13 @@ export function useOptimizerV2() {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch {
-        // Mode change is client-side first, server sync is best-effort
+        console.warn('[OptimizerV2] Mode sync failed — local change preserved');
       }
     }
   }, [state.resultId]);
 
   // ── Save Selection ──
-  const saveSelection = useCallback(async (clauseId: string, selectedVersion: UserSelection['selectedVersion'], customText?: string) => {
+  const saveSelection = useCallback(async (clauseId: string, selectedVersion: UserSelection['selectedVersion'], customText?: string): Promise<boolean> => {
     const selection: UserSelection = { clauseId, selectedVersion, customText };
     dispatch({ type: 'SET_SELECTION', clauseId, selection });
 
@@ -361,10 +361,13 @@ export function useOptimizerV2() {
           body: JSON.stringify({ selections: Array.from(allSelections.values()) }),
           headers: { 'Content-Type': 'application/json' }
         });
+        return true;
       } catch {
-        // Best-effort sync
+        console.warn('[OptimizerV2] Selection sync failed — local change preserved');
+        return false;
       }
     }
+    return true;
   }, [state.resultId, state.userSelections]);
 
   // ── Clause Chat ──

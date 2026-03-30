@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText, ExternalLink } from 'lucide-react';
+import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
 import {
   UploadSection,
@@ -36,6 +36,7 @@ export default function OptimizerV2() {
   const [sortByImportance, setSortByImportance] = useState(false);
   const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
+  const [loadingResult, setLoadingResult] = useState(false);
 
   const handleViewFile = useCallback(async (resultId: string) => {
     try {
@@ -65,10 +66,11 @@ export default function OptimizerV2() {
   // Load result from URL query param (?result=ID)
   useEffect(() => {
     const resultParam = searchParams.get('result');
-    if (resultParam && state.status === 'idle' && !state.resultId) {
-      actions.loadResult(resultParam);
+    if (resultParam && state.status === 'idle' && !state.resultId && !loadingResult) {
+      setLoadingResult(true);
+      actions.loadResult(resultParam).finally(() => setLoadingResult(false));
     }
-  }, [searchParams, state.status, state.resultId, actions]);
+  }, [searchParams, state.status, state.resultId, actions, loadingResult]);
 
   // Pre-load contract file from contractId query param
   useEffect(() => {
@@ -170,8 +172,16 @@ export default function OptimizerV2() {
           </div>
         )}
 
+        {/* Loading saved result */}
+        {loadingResult && status === 'idle' && (
+          <div className={styles.pipelineContainer} style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <Loader2 size={32} className={styles.spinIcon} style={{ margin: '0 auto 16px', display: 'block', color: '#007AFF' }} />
+            <p style={{ color: '#6B7280', fontSize: 14 }}>Gespeicherte Analyse wird geladen...</p>
+          </div>
+        )}
+
         {/* Upload state */}
-        {(status === 'idle' || status === 'uploading') && (
+        {(status === 'idle' || status === 'uploading') && !loadingResult && (
           <UploadSection
             file={file}
             onFileSelect={actions.setFile}
@@ -181,25 +191,16 @@ export default function OptimizerV2() {
           />
         )}
 
-        {/* Analysis in progress */}
-        {status === 'analyzing' && (
+        {/* Analysis in progress or error */}
+        {(status === 'analyzing' || status === 'error') && (
           <AnalysisPipeline
             stages={stages}
             progress={progress}
             message={progressMessage}
-            onCancel={actions.cancelAnalysis}
+            error={status === 'error' ? error : null}
+            onCancel={actions.reset}
+            onRetry={status === 'error' && file ? () => actions.startAnalysis(file) : undefined}
           />
-        )}
-
-        {/* Error state */}
-        {status === 'error' && (
-          <div className={styles.errorContainer}>
-            <h3>Analyse fehlgeschlagen</h3>
-            <p>{error}</p>
-            <button className={styles.retryButton} onClick={actions.reset}>
-              Erneut versuchen
-            </button>
-          </div>
         )}
 
         {/* Results */}
