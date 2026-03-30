@@ -566,12 +566,13 @@ export default function EnhancedCompare() {
       formData.append("version", "2");
     }
 
+    // 📡 SSE Request with streaming progress + 3-minute timeout
+    const controller = new AbortController();
+    const streamTimeout = setTimeout(() => {
+      controller.abort();
+    }, 180000); // 3 Minuten
+
     try {
-      // 📡 SSE Request with streaming progress + 3-minute timeout
-      const controller = new AbortController();
-      const streamTimeout = setTimeout(() => {
-        controller.abort();
-      }, 180000); // 3 Minuten
 
       const res = await fetch(`/api/compare?stream=true${useV2 ? '&version=2' : ''}`, {
         method: "POST",
