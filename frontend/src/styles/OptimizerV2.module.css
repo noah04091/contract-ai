@@ -76,7 +76,16 @@
 .backButton:hover { border-color: var(--ov2-gray-300); color: var(--ov2-gray-800); }
 
 .pageHeaderContent { flex: 1; text-align: center; }
-.pageTitle { font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.3px; }
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #007AFF 0%, #AF52DE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .pageSubtitle { font-size: 14px; color: var(--ov2-gray-500); margin: 4px 0 0; }
 .pageFileLink {
   display: inline-flex;
