@@ -118,7 +118,9 @@ export default function ClauseCard({
             </span>
           )}
           {score && (
-            <span className={styles.clauseScore}>{score.score}</span>
+            <span className={styles.clauseScore} style={{
+              color: score.score >= 80 ? '#34C759' : score.score >= 60 ? '#FF9500' : score.score >= 40 ? '#FF3B30' : '#AF52DE'
+            }}>{score.score}</span>
           )}
           {isSelected ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>

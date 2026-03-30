@@ -179,7 +179,7 @@ function detectMissingClauses(clauses, structure) {
 
   const completenessScore = essentialCategories.length > 0
     ? Math.round((completenessHits / essentialCategories.length) * 100)
-    : 100;
+    : 50;
 
   return { missingClauses, completenessScore, essentialCount: essentialCategories.length };
 }
@@ -275,7 +275,7 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
     fairnessWeightedSum += clauseFairness * imp;
     fairnessWeightTotal += imp;
   }
-  const fairnessScore = fairnessWeightTotal > 0 ? Math.round(fairnessWeightedSum / fairnessWeightTotal) : 70;
+  const fairnessScore = fairnessWeightTotal > 0 ? Math.round(fairnessWeightedSum / fairnessWeightTotal) : 50;
 
   // Overall score (weighted average — fairness is now a major factor)
   const overall = Math.round(
@@ -287,15 +287,28 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
     marketStandardScore * 0.10
   );
 
+  // Detect misleading score combinations
+  const warnings = [];
+  const clampedOverall = Math.max(0, Math.min(100, overall));
+  const clampedRisk = Math.max(0, Math.min(100, riskScore));
+  const clampedFairness = Math.max(0, Math.min(100, fairnessScore));
+  if (clampedOverall >= 60 && clampedRisk < 40) {
+    warnings.push({ type: 'risk_despite_overall', message: 'Trotz akzeptablem Gesamtscore bestehen erhebliche Risiken. Prüfen Sie die Risikoanalyse besonders sorgfältig.' });
+  }
+  if (clampedOverall >= 60 && clampedFairness < 40) {
+    warnings.push({ type: 'fairness_despite_overall', message: 'Trotz akzeptablem Gesamtscore ist der Vertrag deutlich einseitig formuliert. Prüfen Sie die Fairness-Analyse.' });
+  }
+
   const scores = {
-    overall: Math.max(0, Math.min(100, overall)),
-    risk: Math.max(0, Math.min(100, riskScore)),
-    fairness: Math.max(0, Math.min(100, fairnessScore)),
+    overall: clampedOverall,
+    risk: clampedRisk,
+    fairness: clampedFairness,
     clarity: Math.max(0, Math.min(100, clarityScore)),
     completeness: Math.max(0, Math.min(100, completenessScore)),
     marketStandard: Math.max(0, Math.min(100, marketStandardScore)),
     perClause,
-    missingClauses
+    missingClauses,
+    warnings
   };
 
   onProgress(90, `Vertrags-Score: ${scores.overall}/100`);

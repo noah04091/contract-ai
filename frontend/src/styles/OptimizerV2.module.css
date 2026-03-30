@@ -763,6 +763,26 @@
 }
 .summaryActionBtn:hover { border-color: var(--ov2-blue); color: var(--ov2-blue); }
 
+.scoreWarnings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scoreWarning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.25);
+  border-radius: 10px;
+  color: var(--ov2-gray-900, #1a1a2e);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .scoreCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

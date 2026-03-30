@@ -141,6 +141,7 @@ export interface Scores {
   marketStandard: number;
   perClause: ClauseScore[];
   missingClauses?: MissingClause[];
+  warnings?: Array<{ type: string; message: string }>;
 }
 
 // ── User Selection ──

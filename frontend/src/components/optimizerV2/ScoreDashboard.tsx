@@ -152,8 +152,9 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           <div className={styles.scoreInfoPanel}>
             <button className={styles.scoreInfoClose} onClick={() => setShowScoreInfo(false)}><X size={14} /></button>
             <strong>Wie wird der Score berechnet?</strong>
-            <p>Der Gesamtscore (0–100) setzt sich aus 5 gewichteten Dimensionen zusammen:</p>
+            <p>Der Gesamtscore (0–100) setzt sich aus 6 gewichteten Dimensionen zusammen:</p>
             <div className={styles.scoreInfoGrid}>
+              <div><span style={{ color: '#5856D6' }}>Klauselqualität (25%)</span> — Gewichteter Durchschnitt aller Einzelklausel-Bewertungen (wichtige Klauseln zählen stärker)</div>
               <div><span style={{ color: '#FF3B30' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
               <div><span style={{ color: '#AF52DE' }}>Fairness (20%)</span> — Sind die Rechte und Pflichten ausgewogen verteilt?</div>
               <div><span style={{ color: '#007AFF' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
@@ -193,6 +194,18 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
           );
         })}
       </div>
+
+      {/* Score Warnings */}
+      {scores.warnings && scores.warnings.length > 0 && (
+        <div className={styles.scoreWarnings}>
+          {scores.warnings.map((w: { type: string; message: string }, i: number) => (
+            <div key={i} className={styles.scoreWarning}>
+              <AlertTriangle size={16} style={{ color: '#FF3B30', flexShrink: 0 }} />
+              <span>{w.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Score Explanation */}
       <ScoreExplanation scores={scores} result={result} />
