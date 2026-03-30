@@ -58,7 +58,7 @@ function getLawEmbeddings() {
 
 const MAX_LAW_CHANGES = 25;
 const MAX_CONTRACT_MATCHES = 150;
-const IMPACT_CONFIDENCE_THRESHOLD = 70;
+const IMPACT_CONFIDENCE_THRESHOLD = 60;
 
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
