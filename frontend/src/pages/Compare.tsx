@@ -568,11 +568,12 @@ export default function EnhancedCompare() {
 
     // 📡 SSE Request with streaming progress + 3-minute timeout
     const controller = new AbortController();
-    const streamTimeout = setTimeout(() => {
-      controller.abort();
-    }, 180000); // 3 Minuten
+    let streamTimeout: ReturnType<typeof setTimeout> | null = null;
 
     try {
+      streamTimeout = setTimeout(() => {
+        controller.abort();
+      }, 180000); // 3 Minuten
 
       const res = await fetch(`/api/compare?stream=true${useV2 ? '&version=2' : ''}`, {
         method: "POST",
@@ -617,7 +618,7 @@ export default function EnhancedCompare() {
                   message: eventData.message
                 });
               } else if (eventData.type === 'result') {
-                clearTimeout(streamTimeout);
+                if (streamTimeout) clearTimeout(streamTimeout);
                 setResult(eventData.data);
                 setFile1Name(file1?.name || null);
                 setFile2Name(file2?.name || null);
@@ -645,7 +646,7 @@ export default function EnhancedCompare() {
         }
       }
     } catch (err) {
-      clearTimeout(streamTimeout);
+      if (streamTimeout) clearTimeout(streamTimeout);
       const isAbort = err instanceof DOMException && err.name === 'AbortError';
       const message = isAbort
         ? "Die Analyse hat zu lange gedauert (> 3 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
