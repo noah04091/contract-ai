@@ -326,9 +326,44 @@ function detectLegalArea(title, summary = '') {
     return 'Umweltrecht';
   }
 
-  // C1: EU-Recht
+  // C1: EU-Recht (before IT-Recht so explicit EU markers take priority)
   if (/eu-verordnung|eu-richtlinie|digital services act|dsa\b|dma\b|ai act|data act|cyber resilience|europäische kommission|eu-kommission/i.test(text)) {
     return 'EU-Recht';
+  }
+
+  // Versicherungsrecht
+  if (/versicherung(srecht|svertrag|snehmer|sschutz|sbedingung)|vvg|versicherer|prämie(nanpassung)?|deckung(summe|sschutz)|schadenfall|haftpflicht|rechtsschutzversicherung|lebensversicherung|kaskoversicherung/i.test(text)) {
+    return 'Versicherungsrecht';
+  }
+
+  // Bankrecht/Finanzrecht
+  if (/bank(recht|aufsicht|geheimnis)|finanz(recht|aufsicht|dienstleistung)|kredit(recht|vertrag|institut)|bafin|zahlungsdienste|wertpapier|anlageberatung|einlagensicherung|geldwäsche|kreditwesengesetz|kwg|zahlungsverkehr/i.test(text)) {
+    return 'Bankrecht';
+  }
+
+  // IT-Recht
+  if (/it-recht|softwarevertrag|lizenzrecht|cloud|saas|hosting|digitale.*dienste|plattformregulierung|cyber(sicherheit|angriff)|nis-?2|kritis/i.test(text)) {
+    return 'IT-Recht';
+  }
+
+  // Wettbewerbsrecht
+  if (/wettbewerb(srecht|sverbot|swidrig)|uwg|kartell(recht|verbot|amt)|bundeskartellamt|marktmissbrauch|preisabsprache|fusionskontrolle|beihilfe(recht|kontrolle)/i.test(text)) {
+    return 'Wettbewerbsrecht';
+  }
+
+  // Urheberrecht
+  if (/urheber(recht|rechtsgesetz)|copyright|lizenzgebühr|nutzungsrecht|verwertungsrecht|urheberrechtsverletzung|filesharing|kreativwirtschaft/i.test(text)) {
+    return 'Urheberrecht';
+  }
+
+  // Baurecht
+  if (/bau(recht|vertrag|ordnung|genehmigung|vorhaben)|hoai|architekt(envertrag)?|bauträger|werkvertrag.*bau|bauabnahme|baumangel|schwarzbau/i.test(text)) {
+    return 'Baurecht';
+  }
+
+  // Sozialrecht
+  if (/sozial(recht|versicherung|gesetzbuch|leistung)|sgb|rente(nrecht|nversicherung|nanspruch)|arbeitslosengeld|bürgergeld|krankenkasse|pflegeversicherung|sozialamt/i.test(text)) {
+    return 'Sozialrecht';
   }
 
   // Handelsrecht
@@ -394,6 +429,27 @@ function detectAllLegalAreas(title, summary = '') {
   }
   if (/umwelt(recht|schutz)|emission|klimaschutz|bundes-immissionsschutz|naturschutz/i.test(text)) {
     areas.push('Umweltrecht');
+  }
+  if (/versicherung(srecht|svertrag|snehmer|sschutz|sbedingung)|vvg|versicherer|prämie(nanpassung)?|deckung(summe|sschutz)|schadenfall|haftpflicht|rechtsschutzversicherung|lebensversicherung|kaskoversicherung/i.test(text)) {
+    areas.push('Versicherungsrecht');
+  }
+  if (/bank(recht|aufsicht|geheimnis)|finanz(recht|aufsicht|dienstleistung)|kredit(recht|vertrag|institut)|bafin|zahlungsdienste|wertpapier|anlageberatung|einlagensicherung|geldwäsche|kreditwesengesetz|kwg|zahlungsverkehr/i.test(text)) {
+    areas.push('Bankrecht');
+  }
+  if (/it-recht|softwarevertrag|lizenzrecht|cloud|saas|hosting|digitale.*dienste|plattformregulierung|cyber(sicherheit|angriff)|nis-?2|kritis/i.test(text)) {
+    areas.push('IT-Recht');
+  }
+  if (/wettbewerb(srecht|sverbot|swidrig)|uwg|kartell(recht|verbot|amt)|bundeskartellamt|marktmissbrauch|preisabsprache|fusionskontrolle|beihilfe(recht|kontrolle)/i.test(text)) {
+    areas.push('Wettbewerbsrecht');
+  }
+  if (/urheber(recht|rechtsgesetz)|copyright|lizenzgebühr|nutzungsrecht|verwertungsrecht|urheberrechtsverletzung|filesharing|kreativwirtschaft/i.test(text)) {
+    areas.push('Urheberrecht');
+  }
+  if (/bau(recht|vertrag|ordnung|genehmigung|vorhaben)|hoai|architekt(envertrag)?|bauträger|werkvertrag.*bau|bauabnahme|baumangel|schwarzbau/i.test(text)) {
+    areas.push('Baurecht');
+  }
+  if (/sozial(recht|versicherung|gesetzbuch|leistung)|sgb|rente(nrecht|nversicherung|nanspruch)|arbeitslosengeld|bürgergeld|krankenkasse|pflegeversicherung|sozialamt/i.test(text)) {
+    areas.push('Sozialrecht');
   }
   if (/eu-verordnung|eu-richtlinie|digital services act|dsa\b|dma\b|ai act|data act|cyber resilience|europäische kommission|eu-kommission/i.test(text)) {
     areas.push('EU-Recht');

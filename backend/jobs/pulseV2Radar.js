@@ -249,7 +249,7 @@ async function matchLawToContracts(db, lawChange, options = {}) {
   const allAreas = [
     ...(lawChange.areas || []),
     lawChange.area || "",
-  ].map((a) => a.toLowerCase()).filter(Boolean);
+  ].map((a) => a.toLowerCase().replace(/-/g, "_")).filter(Boolean);
   const uniqueAreas = [...new Set(allAreas)];
 
   // Collect relevant contract types from ALL matched areas (union)
