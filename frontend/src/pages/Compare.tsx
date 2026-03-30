@@ -513,6 +513,10 @@ export default function EnhancedCompare() {
 
   // 📜 Clear all history via backend API
   const clearHistory = async () => {
+    if (!window.confirm('Möchten Sie wirklich den gesamten Vergleichsverlauf löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+      return;
+    }
+
     try {
       const res = await fetch('/api/compare/history', {
         method: 'DELETE',
@@ -563,7 +567,12 @@ export default function EnhancedCompare() {
     }
 
     try {
-      // 📡 SSE Request with streaming progress
+      // 📡 SSE Request with streaming progress + 3-minute timeout
+      const controller = new AbortController();
+      const streamTimeout = setTimeout(() => {
+        controller.abort();
+      }, 180000); // 3 Minuten
+
       const res = await fetch(`/api/compare?stream=true${useV2 ? '&version=2' : ''}`, {
         method: "POST",
         credentials: "include",
@@ -571,6 +580,7 @@ export default function EnhancedCompare() {
           'Accept': 'text/event-stream'
         },
         body: formData,
+        signal: controller.signal,
       });
 
       if (!res.ok && !res.body) {
@@ -606,6 +616,7 @@ export default function EnhancedCompare() {
                   message: eventData.message
                 });
               } else if (eventData.type === 'result') {
+                clearTimeout(streamTimeout);
                 setResult(eventData.data);
                 setFile1Name(file1?.name || null);
                 setFile2Name(file2?.name || null);
@@ -633,9 +644,13 @@ export default function EnhancedCompare() {
         }
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
+      clearTimeout(streamTimeout);
+      const isAbort = err instanceof DOMException && err.name === 'AbortError';
+      const message = isAbort
+        ? "Die Analyse hat zu lange gedauert (> 3 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
+        : err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
       setNotification({
-        message: "Fehler: " + message,
+        message: isAbort ? message : "Fehler: " + message,
         type: "error"
       });
       setProgress(null);

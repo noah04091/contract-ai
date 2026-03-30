@@ -159,6 +159,17 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
 
       {/* Differences List */}
       <div className={styles.differencesList}>
+        {filteredDifferences.length === 0 && selectedArea !== 'all' && (
+          <div className={styles.emptyFilterState} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+            <p>Keine Unterschiede in der Kategorie &bdquo;{selectedArea}&ldquo; gefunden.</p>
+            <button
+              onClick={() => setSelectedArea('all')}
+              style={{ marginTop: '0.5rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              Alle Bereiche anzeigen
+            </button>
+          </div>
+        )}
         {filteredDifferences.map((diff, index) => {
           const isActive = index === activeDiffIndex;
           const sevColor = getSeverityColor(diff.severity);

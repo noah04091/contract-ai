@@ -1579,9 +1579,9 @@ function extractAllValuesFromRawText(text) {
   const seen = new Map(); // normalizedKey → true (for dedup)
   const startTime = Date.now();
 
-  // Exclusion: phone numbers, postal codes, page numbers, bank details, IDs
+  // Exclusion: phone numbers, postal codes, page numbers, bank details, IDs, print metadata
   const isExcludedLabel = (label) => {
-    return /(\+\d{2}|PLZ|Seite\s*\d|Tel[\.\s:]|Fax[\.\s:]|Postfach|BLZ\b|IBAN|BIC\b|HRB?\s*\d|USt[\-\s]?Id|Amtsgericht|Handelsregister|Registergericht|Steuernummer|Bankverbindung|Bankleitzahl|Kontonummer|Geschäftsführer|Vertretungsberechtigt|E-?Mail|www\.|http)/i.test(label);
+    return /(\+\d{2}|PLZ|Seite\s*\d|Tel[\.\s:]|Fax[\.\s:]|Postfach|BLZ\b|IBAN|BIC\b|HRB?\s*\d|USt[\-\s]?Id|Amtsgericht|Handelsregister|Registergericht|Steuernummer|Bankverbindung|Bankleitzahl|Kontonummer|Geschäftsführer|Vertretungsberechtigt|E-?Mail|www\.|http|Ausdruck|Druckdatum|Stand\s*:|Erstellt\s*am|Gedruckt\s*am|Dokument[\-\s]?Nr|Seite\s*\d+\s*von)/i.test(label);
   };
 
   // Common non-label words to skip
@@ -3740,7 +3740,7 @@ async function compareClausePair(clause1, clause2, match, perspective, compariso
         { role: 'user', content: prompt.user }
       ],
       temperature: 0.0, // V2.2 Säule 3a: T=0.0 für maximale Determinismus
-      max_tokens: 2048,
+      max_tokens: 3000,
       response_format: { type: 'json_object' },
     });
 
@@ -3759,8 +3759,22 @@ async function compareClausePair(clause1, clause2, match, perspective, compariso
 function validateClausePairResponse(raw, clause1, clause2, match) {
   const result = { differences: [], overallAssessment: '' };
 
+  // Pattern for false "no regulation" claims — both clauses exist (matched pair), so "Keine Regelung" is wrong
+  const FALSE_MISSING_PATTERN = /^(keine regelung|nicht geregelt|nicht vorhanden|fehlt|nicht enthalten|n\/a)\b/i;
+
   if (Array.isArray(raw.differences)) {
-    result.differences = raw.differences.slice(0, 8).map(d => ({
+    result.differences = raw.differences.slice(0, 8)
+      .filter(d => {
+        // Filter false "Keine Regelung" — both clauses exist, so neither can be "missing"
+        const d1 = (d.detail1 || '').trim();
+        const d2 = (d.detail2 || '').trim();
+        if (FALSE_MISSING_PATTERN.test(d1) || FALSE_MISSING_PATTERN.test(d2)) {
+          console.log(`🧹 False-Missing gefiltert in Klauselpaar: "${clause1.title}" — "${d1}" / "${d2}"`);
+          return false;
+        }
+        return true;
+      })
+      .map(d => ({
       type: ['wording', 'scope', 'qualifier', 'condition', 'obligation', 'right', 'limit'].includes(d.type) ? d.type : 'scope',
       severity: VALID_SEVERITIES.includes(d.severity) ? d.severity : 'medium',
       semanticType: VALID_SEMANTIC_TYPES.includes(d.semanticType) ? d.semanticType : 'different_scope',
@@ -4193,8 +4207,11 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
   }
 
   // 2. Clause-pair diffs (only if NOT already covered by deterministic)
-  // Quality filters: remove hallucinations, limit per area, cap total
+  // Quality filters: remove hallucinations, metadata noise, limit per area, cap total
   const HALLUCINATION_PATTERNS = /^(nicht vorhanden|keine regelung|nicht geregelt|n\/a|keine angabe|entfällt|-+)$/i;
+  // Metadata noise: print dates, page numbers, document IDs — not real contract differences
+  const METADATA_NOISE_PATTERNS = /\b(Ausdruck|Druckdatum|Gedruckt am|Erstellt am|Stand:|Seite \d+ von|Dokument-?Nr|Seite\s*\d+)\b/i;
+  const isMetadataDate = (text) => /^\d{1,2}\.\d{1,2}\.\d{4}$/.test((text || '').trim());
   // Dynamic cap: payment areas get more slots (many fees), others get 3
   const MAX_CLAUSE_DIFFS_FOR_AREA = (area) => (area === 'payment') ? 5 : 3;
   const MAX_TOTAL_DIFFS = 25;
@@ -4202,6 +4219,7 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
   if (clauseBundle) {
     const clauseDiffsByArea = {}; // Track count per area
     const allClauseDiffs = []; // Collect for inter-clause dedup
+    const seenNumericKeys = new Set(); // Track numeric value combos per area
 
     for (const pairResult of (clauseBundle.pairResults || [])) {
       for (const diff of (pairResult.differences || [])) {
@@ -4214,6 +4232,17 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
         }
         // Filter 1b: Empty or too-short quotes (< 5 chars) are not useful
         if (d1.length < 5 || d2.length < 5) continue;
+
+        // Filter 1c: Metadata noise — print dates, page numbers, document metadata
+        if (METADATA_NOISE_PATTERNS.test(d1) || METADATA_NOISE_PATTERNS.test(d2)) {
+          console.log(`🧹 Metadata-Noise gefiltert: "${diff._clauseTitle}" — "${d1}" / "${d2}"`);
+          continue;
+        }
+        // Filter 1d: Standalone dates as diffs (e.g. "04.11.2021" vs "15.03.2022") — likely print/creation dates
+        if (isMetadataDate(d1) && isMetadataDate(d2)) {
+          console.log(`🧹 Datums-Noise gefiltert: "${diff._clauseTitle}" — "${d1}" vs "${d2}"`);
+          continue;
+        }
 
         // Filter 2: Dedup against deterministic
         if (isDuplicateOfDeterministic(diff, groups)) continue;
@@ -4238,6 +4267,17 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
         }
         if (isClauseDupe) continue;
 
+        // Filter 5: Numeric dedup — same numbers extracted under different phrasings in same area
+        const nums = diffText.match(/\d+[\.,]?\d*/g) || [];
+        if (nums.length > 0 && area) {
+          const numKey = `${area}:${nums.sort().join(',')}`;
+          if (seenNumericKeys.has(numKey)) {
+            console.log(`🧹 Numerische Dedup: "${diff._clauseTitle}" — gleiche Werte in ${area}`);
+            continue;
+          }
+          seenNumericKeys.add(numKey);
+        }
+
         allClauseDiffs.push(diffText);
         clauseDiffsByArea[area]++;
 
@@ -4251,6 +4291,16 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
       if (!deterministicAreas.has(assessment._clauseArea)) {
         merged.push(convertMissingToEnhanced(assessment));
       }
+    }
+  }
+
+  // 4a. Area-Korrektur: Diffs mit Zahlungs-Keywords dürfen nicht in falscher Area landen
+  const PAYMENT_KEYWORDS = /\b(Gebühr|Entgelt|Vergütung|Provision|Pauschale|Zins|Preis|EUR|€|%\s*p\.\s*a|Kosten|Aufschlag|Abschlag|Rabatt|Skonto|Netto|Brutto)\b/i;
+  for (const diff of merged) {
+    const fullText = `${diff.contract1 || ''} ${diff.contract2 || ''} ${diff.category || ''}`;
+    if (PAYMENT_KEYWORDS.test(fullText) && diff.clauseArea !== 'payment' && diff.clauseArea !== 'liability') {
+      console.log(`🔧 Area-Korrektur: "${diff.category}" ${diff.clauseArea} → payment (Payment-Keywords erkannt)`);
+      diff.clauseArea = 'payment';
     }
   }
 

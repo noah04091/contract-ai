@@ -16,6 +16,7 @@ const database = require("../config/database");
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 const { runCompareV2Pipeline } = require("../services/compareAnalyzer"); // 🆕 Compare V2
+const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 Cost Tracking
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
@@ -51,6 +52,9 @@ const upload = multer({
     }
   }
 });
+
+// 🛡️ In-flight rate limiter: max 2 concurrent comparisons per user
+const activeComparisons = new Map(); // userId → count
 
 let usersCollection, contractsCollection;
 async function ensureDb() {
@@ -670,6 +674,7 @@ router.post("/", verifyToken, upload.fields([
   }
 
   try {
+    req._startTime = Date.now();
     await ensureDb();
     console.log("🚀 Contract comparison started" + (wantsSSE ? " (SSE Mode)" : ""));
     sendProgress(res, 'init', 5, 'Vergleich wird gestartet...', wantsSSE);
@@ -706,6 +711,20 @@ router.post("/", verifyToken, upload.fields([
       }
       return res.status(403).json(error);
     }
+
+    // 🛡️ Concurrent rate limit: max 2 parallel comparisons per user
+    const userId = req.user.userId;
+    const currentActive = activeComparisons.get(userId) || 0;
+    if (currentActive >= 2) {
+      console.warn(`⚠️ Rate limit: User ${userId} has ${currentActive} active comparisons`);
+      const error = { message: 'Maximal 2 gleichzeitige Vergleiche möglich. Bitte warten Sie, bis der laufende Vergleich abgeschlossen ist.' };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(429).json(error);
+    }
+    activeComparisons.set(userId, currentActive + 1);
 
     // Check usage limits
     const plan = user.subscriptionPlan || "free";
@@ -814,6 +833,18 @@ router.post("/", verifyToken, upload.fields([
     }
 
     console.log(`📝 Text extracted: Contract 1 (${contract1Text.length} chars), Contract 2 (${contract2Text.length} chars)`);
+
+    // 🛡️ Same-file detection — warn if both files have identical content
+    if (contract1Text === contract2Text) {
+      console.warn('⚠️ Same file detected: Both contracts have identical text');
+      const error = { message: 'Beide Dateien haben identischen Inhalt. Bitte laden Sie zwei verschiedene Verträge hoch.' };
+      if (wantsSSE) {
+        res.write(`data: ${JSON.stringify({ type: 'error', ...error })}\n\n`);
+        return res.end();
+      }
+      return res.status(400).json(error);
+    }
+
     sendProgress(res, 'chunking', 35, 'Verträge werden vorbereitet...', wantsSSE);
 
     // 🆕 V2 Pipeline: Check query param OR body field
@@ -986,6 +1017,30 @@ router.post("/", verifyToken, upload.fields([
       console.error("⚠️ Warning: Could not update usage count:", updateError.message);
     }
 
+    // 💰 Cost Tracking — estimate based on pipeline version and diff count
+    try {
+      const diffCount = analysisResult.differences?.length || 0;
+      // V2 pipeline: ~2 Phase A calls + up to 28 Schicht 3 calls + 1 Schicht 4 call
+      // Estimated ~4000 tokens per call average, GPT-4o pricing
+      const estimatedCalls = useV2 ? (2 + Math.min(diffCount + 8, 28) + 1) : 2;
+      const estimatedTokens = estimatedCalls * 4000;
+      const estimatedCost = estimatedTokens * 0.0000025 + (estimatedTokens * 0.4) * 0.00001; // gpt-4o input + output estimate
+      const costTracking = getCostTrackingService();
+      costTracking.trackAPICall({
+        userId: req.user.userId,
+        contractId: null,
+        model: 'gpt-4o',
+        feature: 'compare',
+        promptTokens: Math.round(estimatedTokens * 0.6),
+        completionTokens: Math.round(estimatedTokens * 0.4),
+        totalTokens: estimatedTokens,
+        estimatedCost: parseFloat(estimatedCost.toFixed(4)),
+        duration: Date.now() - (req._startTime || Date.now()),
+      }).catch(err => console.warn('⚠️ Compare cost tracking failed:', err.message));
+    } catch (costErr) {
+      console.warn('⚠️ Compare cost tracking error:', costErr.message);
+    }
+
     // 🛡️ DSGVO-Compliance: Sofortige Dateilöschung nach Verarbeitung
     sendProgress(res, 'cleanup', 95, 'Aufräumen...', wantsSSE);
     console.log("🗑️ Lösche temporäre Dateien (DSGVO-konform)...");
@@ -1001,6 +1056,11 @@ router.post("/", verifyToken, upload.fields([
 
     console.log(`✅ Comparison completed: version=${analysisResult.version || 1}, v2Fallback=${analysisResult._v2Fallback || false}, risks=${analysisResult.risks?.length || 0}, recs=${analysisResult.recommendations?.length || 0}, diffs=${analysisResult.differences?.length || 0}`);
 
+    // Decrement active comparison counter
+    const activeNow = activeComparisons.get(userId) || 1;
+    if (activeNow <= 1) activeComparisons.delete(userId);
+    else activeComparisons.set(userId, activeNow - 1);
+
     // Send final result
     if (wantsSSE) {
       sendProgress(res, 'complete', 100, 'Analyse abgeschlossen!', true);
@@ -1011,6 +1071,14 @@ router.post("/", verifyToken, upload.fields([
     }
 
   } catch (error) {
+    // Decrement active comparison counter on error
+    const errUserId = req.user?.userId;
+    if (errUserId) {
+      const activeNow = activeComparisons.get(errUserId) || 1;
+      if (activeNow <= 1) activeComparisons.delete(errUserId);
+      else activeComparisons.set(errUserId, activeNow - 1);
+    }
+
     console.error("❌ Comparison error:", error);
 
     // Clean up files on error (async)
@@ -1079,8 +1147,16 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
     console.log(`🔄 Re-Analyse: Perspektive → ${selectedPerspective}`);
     sendProgress(res, 'comparing', 30, `Re-Analyse mit Perspektive: ${selectedPerspective}...`, wantsSSE);
 
-    const { buildV2Response, buildDeterministicDifferences, groupDeterministicDiffs, mergeAllDifferences, enforceScoreDifferentiation, runClauseByClauseComparison, synthesizeComparison } = require("../services/compareAnalyzer");
+    const { buildV2Response, buildDeterministicDifferences, groupDeterministicDiffs, mergeAllDifferences, enforceScoreDifferentiation, runClauseByClauseComparison, synthesizeComparison, extractAllValuesFromRawText } = require("../services/compareAnalyzer");
     const { matchClauses } = require("../services/clauseMatcher");
+
+    // Layer 0: Nachholen der deterministischen Regex-Extraktion für Re-Analyze
+    if (contractTexts?.text1 && !contractMap.contract1._rawValues) {
+      contractMap.contract1._rawValues = extractAllValuesFromRawText(contractTexts.text1);
+    }
+    if (contractTexts?.text2 && !contractMap.contract2._rawValues) {
+      contractMap.contract2._rawValues = extractAllValuesFromRawText(contractTexts.text2);
+    }
 
     // Schicht 2: Deterministischer Wertevergleich + Gruppierung
     const deterministicDiffs = buildDeterministicDifferences(contractMap.contract1, contractMap.contract2, null);
