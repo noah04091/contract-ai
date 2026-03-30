@@ -110,7 +110,7 @@ export default function AnalysisPanelV2({
                   className={styles.analysisPanelNavBtn}
                   onClick={() => onNavigate('next')}
                   disabled={clauseIndex >= totalClauses - 1}
-                  title="N\u00e4chste Klausel"
+                  title="Nächste Klausel"
                 >
                   {'\u203A'}
                 </button>
@@ -193,7 +193,7 @@ export default function AnalysisPanelV2({
               <div className={styles.analysisPanelSections}>
                 {analysis.realWorldImpact && (
                   <Section
-                    title="Auswirkungen f\u00fcr dich"
+                    title="Auswirkungen für dich"
                     icon="&#x1F3AF;"
                     isExpanded={expandedSections.has('impact') || isHighRisk}
                     onToggle={() => toggleSection('impact')}

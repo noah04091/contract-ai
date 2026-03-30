@@ -95,8 +95,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
     : score >= 60
       ? `Solider Vertrag mit ${criticalCount + highCount > 0 ? 'einigen wichtigen Punkten' : 'einseitigen Klauseln'}. Keine akuten Risiken.`
       : score >= 40
-        ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt' : 'wichtigen Punkten'}, die gepr\u00fcft werden sollten.`
-        : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend pr\u00fcfen.'}`;
+        ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt' : 'wichtigen Punkten'}, die geprüft werden sollten.`
+        : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend prüfen.'}`;
 
   return (
     <div>

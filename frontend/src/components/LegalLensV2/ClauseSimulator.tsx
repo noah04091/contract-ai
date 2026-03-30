@@ -111,11 +111,11 @@ export default function ClauseSimulator({ originalClause, contractId, onClose }:
             {/* Details */}
             <div className={styles.simDetails}>
               <div className={styles.simDetailItem}>
-                <strong>F\u00fcr dich:</strong>
+                <strong>Für dich:</strong>
                 <p>{simulation.forYou}</p>
               </div>
               <div className={styles.simDetailItem}>
-                <strong>F\u00fcr die Gegenseite:</strong>
+                <strong>Für die Gegenseite:</strong>
                 <p>{simulation.forCounterparty}</p>
               </div>
               <div className={styles.simDetailItem}>

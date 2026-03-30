@@ -81,7 +81,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
             {/* Step 1: What's changing? (plain language) */}
             <GraphNode
               icon={isPositive ? "&#9989;" : "&#128203;"}
-              label={isPositive ? 'Chance erkannt' : 'Was \u00e4ndert sich?'}
+              label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
               title={alert.plainSummary || alert.impactSummary}
               detail={alert.plainSummary ? alert.impactSummary : undefined}
               color={isPositive ? '#059669' : '#6366f1'}
@@ -127,7 +127,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
                 <GraphConnector />
                 <GraphNode
                   icon="&#9989;"
-                  label="N\u00e4chster Schritt"
+                  label="Nächster Schritt"
                   title={alert.recommendation}
                   color="#16a34a"
                 />

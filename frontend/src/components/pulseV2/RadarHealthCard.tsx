@@ -116,7 +116,7 @@ export const RadarHealthExpanded: React.FC<{ data: RadarHealthData }> = ({ data 
     {/* Recent runs */}
     {data.recentRuns.length > 0 && (
       <>
-        <SectionHeader title="Letzte Radar-L\u00e4ufe" />
+        <SectionHeader title="Letzte Radar-Läufe" />
         <div style={{ fontSize: 12, color: '#6b7280' }}>
           {data.recentRuns.map((run, idx) => (
             <div key={idx} style={{
@@ -173,7 +173,7 @@ export const RadarHealthCard: React.FC<{ embedded?: boolean }> = () => {
             background: overallHealthy ? '#ecfdf5' : '#fffbeb',
             padding: '2px 8px', borderRadius: 10,
           }}>
-            {overallHealthy ? 'Aktiv' : 'Eingeschr\u00e4nkt'}
+            {overallHealthy ? 'Aktiv' : 'Eingeschränkt'}
           </span>
         </div>
         <span style={{

@@ -22,24 +22,24 @@ const FEATURES = [
 ];
 
 const CANCELLATION_REASONS = [
-  "Zu teuer f\u00fcr den gebotenen Funktionsumfang",
+  "Zu teuer für den gebotenen Funktionsumfang",
   "Funktionen entsprechen nicht meinen Erwartungen",
-  "Qualit\u00e4t der KI-Ergebnisse nicht ausreichend",
+  "Qualität der KI-Ergebnisse nicht ausreichend",
   "Zu kompliziert in der Bedienung",
-  "Fehlende Funktionen, die ich ben\u00f6tigt h\u00e4tte",
+  "Fehlende Funktionen, die ich benötigt hätte",
   "Technische Probleme / Bugs",
-  "Alternative L\u00f6sung gefunden",
+  "Alternative Lösung gefunden",
   "Kein Bedarf mehr",
   "Nur zum Testen registriert",
 ];
 
 const ADDITIONAL_REASONS = [
-  "Analyseergebnisse waren ungenau oder oberfl\u00e4chlich",
-  "Optimierungsvorschl\u00e4ge waren nicht praxistauglich",
+  "Analyseergebnisse waren ungenau oder oberflächlich",
+  "Optimierungsvorschläge waren nicht praxistauglich",
   "Zu lange Wartezeiten bei der Verarbeitung",
   "Fehlende Vertragstypen / Branchen",
   "Schlechte Dokumentenerkennung (PDF/OCR)",
-  "Un\u00fcbersichtliche Benutzeroberfl\u00e4che",
+  "Unübersichtliche Benutzeroberfläche",
   "Fehlende Integrationen (z.B. CRM, DMS)",
   "Datenschutzbedenken",
   "Kundenservice nicht zufriedenstellend",
@@ -100,7 +100,7 @@ export default function RefundFeedback() {
   // ─── Load token data ─────────────────────────
   useEffect(() => {
     if (!token) {
-      setErrorMsg("Kein g\u00fcltiger Feedback-Link.");
+      setErrorMsg("Kein gültiger Feedback-Link.");
       setPageState("error");
       return;
     }
@@ -125,7 +125,7 @@ export default function RefundFeedback() {
         setCustomerName(data.customerName);
         setPageState("form");
       } catch {
-        setErrorMsg("Verbindungsfehler. Bitte versuche es sp\u00e4ter erneut.");
+        setErrorMsg("Verbindungsfehler. Bitte versuche es später erneut.");
         setPageState("error");
       }
     })();
@@ -151,7 +151,7 @@ export default function RefundFeedback() {
       return;
     }
     if (!cancellationReason) {
-      setFormError("Bitte w\u00e4hle einen K\u00fcndigungsgrund.");
+      setFormError("Bitte wähle einen Kündigungsgrund.");
       return;
     }
     if (!expectedFeatures.trim()) {
@@ -263,7 +263,7 @@ export default function RefundFeedback() {
             <h2 className={styles.alreadyTitle}>Feedback bereits abgegeben</h2>
             <p className={styles.alreadyText}>
               Vielen Dank, {customerName}! Du hast dein Feedback bereits abgegeben.
-              Deine R{"\u00fc"}ckerstattung wird bearbeitet.
+              Deine Rückerstattung wird bearbeitet.
             </p>
           </motion.div>
         </div>
@@ -286,15 +286,15 @@ export default function RefundFeedback() {
             transition={{ duration: 0.5, type: "spring" }}
           >
             <div className={styles.successIconWrap}>&#10003;</div>
-            <h2 className={styles.successTitle}>Vielen Dank f{"\u00fc"}r dein Feedback!</h2>
+            <h2 className={styles.successTitle}>Vielen Dank für dein Feedback!</h2>
             <p className={styles.successText}>
               Dein Feedback hilft uns, Contract AI besser zu machen.
-              Deine R{"\u00fc"}ckerstattung wird nun bearbeitet und du erh{"\u00e4"}ltst eine
-              Best{"\u00e4"}tigung per E-Mail.
+              Deine Rückerstattung wird nun bearbeitet und du erhältst eine
+              Bestätigung per E-Mail.
             </p>
             <Link to="/" className={styles.successHomeLink}>
               <ArrowLeft size={16} />
-              Zur{"\u00fc"}ck zur Startseite
+              Zurück zur Startseite
             </Link>
           </motion.div>
         </div>
@@ -310,7 +310,7 @@ export default function RefundFeedback() {
   return (
     <>
       <Helmet>
-        <title>Feedback zur K{"\u00fc"}ndigung | Contract AI</title>
+        <title>Feedback zur Kündigung | Contract AI</title>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
@@ -324,7 +324,7 @@ export default function RefundFeedback() {
             <div className={styles.progressBar}>
               <div className={styles.progressFill} style={{ width: `${progress}%` }} />
             </div>
-            <div className={styles.progressLabel}>{progress}% ausgef{"\u00fc"}llt</div>
+            <div className={styles.progressLabel}>{progress}% ausgefüllt</div>
           </div>
 
           <motion.div
@@ -345,7 +345,7 @@ export default function RefundFeedback() {
               </motion.div>
               <h1 className={styles.title}>Dein Feedback ist uns wichtig</h1>
               <p className={styles.subtitle}>
-                Hilf uns, Contract AI zu verbessern. Dein ehrliches Feedback erm{"\u00f6"}glicht es uns,
+                Hilf uns, Contract AI zu verbessern. Dein ehrliches Feedback ermöglicht es uns,
                 unsere Plattform weiterzuentwickeln.
               </p>
               {customerName && (
@@ -361,8 +361,8 @@ export default function RefundFeedback() {
               <div className={styles.importantNote}>
                 <span className={styles.importantNoteIcon}>&#9432;</span>
                 <span className={styles.importantNoteText}>
-                  Bitte f{"\u00fc"}ll dieses Formular vollst{"\u00e4"}ndig aus. Nach Eingang deines Feedbacks
-                  wird deine R{"\u00fc"}ckerstattung bearbeitet.
+                  Bitte füll dieses Formular vollständig aus. Nach Eingang deines Feedbacks
+                  wird deine Rückerstattung bearbeitet.
                 </span>
               </div>
 
@@ -431,7 +431,7 @@ export default function RefundFeedback() {
                   <div className={styles.sectionNum}>{nextNum()}</div>
                   <div className={styles.sectionLabelWrap}>
                     <label className={styles.sectionLabel}>
-                      Was war der Hauptgrund f{"\u00fc"}r deine K{"\u00fc"}ndigung?
+                      Was war der Hauptgrund für deine Kündigung?
                       <span className={styles.required}>*</span>
                     </label>
                   </div>
@@ -454,13 +454,13 @@ export default function RefundFeedback() {
 
               <div className={styles.divider} />
 
-              {/* 4. Weitere Gr\u00fcnde */}
+              {/* 4. Weitere Gründe */}
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <div className={styles.sectionNum}>{nextNum()}</div>
                   <div className={styles.sectionLabelWrap}>
-                    <label className={styles.sectionLabel}>Treffen weitere Gr{"\u00fc"}nde zu?</label>
-                    <span className={styles.sectionHint}>Mehrfachauswahl m{"\u00f6"}glich</span>
+                    <label className={styles.sectionLabel}>Treffen weitere Gründe zu?</label>
+                    <span className={styles.sectionHint}>Mehrfachauswahl möglich</span>
                   </div>
                 </div>
                 <div className={styles.radioGroup}>
@@ -522,11 +522,11 @@ export default function RefundFeedback() {
                   <div className={styles.sectionNum}>{nextNum()}</div>
                   <div className={styles.sectionLabelWrap}>
                     <label className={styles.sectionLabel}>
-                      Was hast du dir von Contract AI vorgestellt? Welche Funktionen h{"\u00e4"}ttest du dir gew{"\u00fc"}nscht?
+                      Was hast du dir von Contract AI vorgestellt? Welche Funktionen hättest du dir gewünscht?
                       <span className={styles.required}>*</span>
                     </label>
                     <span className={styles.sectionHint}>
-                      Deine Antwort hilft uns zu verstehen, was wir verbessern m{"\u00fc"}ssen
+                      Deine Antwort hilft uns zu verstehen, was wir verbessern müssen
                     </span>
                   </div>
                 </div>
@@ -567,7 +567,7 @@ export default function RefundFeedback() {
                 </div>
                 <textarea
                   className={styles.textarea}
-                  placeholder={"Was k\u00f6nnte besser sein? Was hat gest\u00f6rt?"}
+                  placeholder="Was könnte besser sein? Was hat gestört?"
                   value={negativeFeedback}
                   onChange={(e) => setNegativeFeedback(e.target.value)}
                 />
@@ -581,7 +581,7 @@ export default function RefundFeedback() {
                   <div className={styles.sectionNum}>{nextNum()}</div>
                   <div className={styles.sectionLabelWrap}>
                     <label className={styles.sectionLabel}>
-                      Wie wahrscheinlich w{"\u00fc"}rdest du Contract AI weiterempfehlen?
+                      Wie wahrscheinlich würdest du Contract AI weiterempfehlen?
                     </label>
                   </div>
                 </div>
@@ -609,17 +609,17 @@ export default function RefundFeedback() {
 
               <div className={styles.divider} />
 
-              {/* 10. Verbesserungsvorschl\u00e4ge */}
+              {/* 10. Verbesserungsvorschläge */}
               <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <div className={styles.sectionNum}>{nextNum()}</div>
                   <div className={styles.sectionLabelWrap}>
-                    <label className={styles.sectionLabel}>Hast du Verbesserungsvorschl{"\u00e4"}ge f{"\u00fc"}r uns?</label>
+                    <label className={styles.sectionLabel}>Hast du Verbesserungsvorschläge für uns?</label>
                   </div>
                 </div>
                 <textarea
                   className={styles.textarea}
-                  placeholder={"Was sollten wir \u00e4ndern oder hinzuf\u00fcgen?"}
+                  placeholder="Was sollten wir ändern oder hinzufügen?"
                   value={suggestions}
                   onChange={(e) => setSuggestions(e.target.value)}
                 />

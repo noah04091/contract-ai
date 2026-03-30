@@ -84,7 +84,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               background: criticalCount > 0 ? '#dc2626' : '#ea580c',
               padding: '2px 8px', borderRadius: 10,
             }}>
-              {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Vertrag' : 'Vertr\u00e4ge'}
+              {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Vertrag' : 'Verträge'}
             </span>
           )}
           {resolvedCount > 0 && (
@@ -192,7 +192,7 @@ const LawGroup: React.FC<{
             fontSize: 11, fontWeight: 600, color: '#6b7280',
             background: '#f3f4f6', padding: '1px 8px', borderRadius: 8, flexShrink: 0,
           }}>
-            {group.alerts.length} {group.alerts.length === 1 ? 'Vertrag' : 'Vertr\u00e4ge'}
+            {group.alerts.length} {group.alerts.length === 1 ? 'Vertrag' : 'Verträge'}
           </span>
           <span style={{
             fontSize: 14, color: '#9ca3af',
