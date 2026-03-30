@@ -5472,6 +5472,31 @@
 .perspectiveModalHeader {
   text-align: center;
   margin-bottom: 28px;
+  position: relative;
+}
+
+.perspectiveModalClose {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.perspectiveModalClose:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
 }
 
 .perspectiveModalIcon {

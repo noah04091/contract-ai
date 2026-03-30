@@ -1213,16 +1213,23 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       }
     };
 
-    // 500ms Timeout mit Retry wenn Text-Layer noch nicht bereit
-    syncPdfHighlightTimeoutRef.current = setTimeout(() => {
+    // 500ms Timeout mit Retry wenn Text-Layer noch nicht bereit (max 5 Versuche)
+    let highlightRetries = 0;
+    const MAX_HIGHLIGHT_RETRIES = 5;
+
+    const tryHighlight = () => {
       const textLayer = document.querySelector('.react-pdf__Page__textContent');
       if (!textLayer || textLayer.querySelectorAll('span').length === 0) {
-        // Text-Layer noch nicht bereit, retry nach 500ms
-        syncPdfHighlightTimeoutRef.current = setTimeout(attemptHighlight, 500);
+        highlightRetries++;
+        if (highlightRetries < MAX_HIGHLIGHT_RETRIES) {
+          syncPdfHighlightTimeoutRef.current = setTimeout(tryHighlight, 500);
+        }
         return;
       }
       attemptHighlight();
-    }, 500);
+    };
+
+    syncPdfHighlightTimeoutRef.current = setTimeout(tryHighlight, 500);
 
     return () => {
       if (syncPdfHighlightTimeoutRef.current) {

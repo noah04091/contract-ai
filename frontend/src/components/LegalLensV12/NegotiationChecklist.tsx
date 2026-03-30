@@ -279,8 +279,8 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
         <div className={styles.content}>
           {checklist.map((item) => {
             const isExpanded = expandedItems.has(item.id);
-            const priorityInfo = PRIORITY_LABELS[item.priority];
-            const difficultyInfo = DIFFICULTY_LABELS[item.difficulty];
+            const priorityInfo = PRIORITY_LABELS[item.priority as keyof typeof PRIORITY_LABELS] || PRIORITY_LABELS[3];
+            const difficultyInfo = DIFFICULTY_LABELS[item.difficulty as keyof typeof DIFFICULTY_LABELS] || DIFFICULTY_LABELS['medium'];
 
             return (
               <div

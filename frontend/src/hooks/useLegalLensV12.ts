@@ -17,6 +17,7 @@ import type {
 interface BatchProgress {
   total: number;
   completed: number;
+  failed?: number;
   current: string | null;
   isRunning: boolean;
 }
@@ -1142,8 +1143,13 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
           // In Cache speichern (mit LRU Eviction)
           setAnalysisCache(prev => addToCacheWithEviction(prev, cacheKey, response.analysis));
         }
-      } catch {
-        // Fehler bei einer Klausel sollte den Batch nicht abbrechen
+      } catch (err) {
+        // Fehler zählen aber Batch nicht abbrechen
+        console.warn(`[Legal Lens] Batch-Analyse fehlgeschlagen für Klausel ${clause.id}:`, err instanceof Error ? err.message : err);
+        setBatchProgress(prev => ({
+          ...prev,
+          failed: (prev.failed || 0) + 1
+        }));
       }
 
       // Kleine Pause um Backend nicht zu überlasten (300ms)

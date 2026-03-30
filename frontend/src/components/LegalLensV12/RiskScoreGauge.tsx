@@ -51,7 +51,7 @@ export default function RiskScoreGauge({ score, size = 48, strokeWidth = 4 }: Ri
         />
       </svg>
       <span className={styles.riskGaugeValue} style={{ color }}>
-        {score}
+        {isNaN(score) || !isFinite(score) ? '–' : Math.max(0, Math.min(100, Math.round(score)))}
       </span>
     </div>
   );

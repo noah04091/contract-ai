@@ -312,14 +312,14 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
                   <circle
                     cx="50" cy="50" r="45"
                     fill="none"
-                    stroke={summary.riskScore.overall > 70 ? '#ef4444' : summary.riskScore.overall > 40 ? '#f59e0b' : '#22c55e'}
+                    stroke={(summary.riskScore?.overall ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.overall ?? 0) > 40 ? '#f59e0b' : '#22c55e'}
                     strokeWidth="8"
-                    strokeDasharray={`${summary.riskScore.overall * 2.83} 283`}
+                    strokeDasharray={`${(summary.riskScore?.overall ?? 0) * 2.83} 283`}
                     strokeLinecap="round"
                     transform="rotate(-90 50 50)"
                   />
                 </svg>
-                <span className={styles.scoreValue}>{summary.riskScore.overall}</span>
+                <span className={styles.scoreValue}>{summary.riskScore?.overall ?? '–'}</span>
               </div>
               <span className={styles.scoreLabel}>Gesamt</span>
             </div>
@@ -330,12 +330,12 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
                   <div
                     className={styles.breakdownFill}
                     style={{
-                      width: `${summary.riskScore.breakdown.financial}%`,
-                      background: summary.riskScore.breakdown.financial > 70 ? '#ef4444' : summary.riskScore.breakdown.financial > 40 ? '#f59e0b' : '#22c55e'
+                      width: `${summary.riskScore?.breakdown?.financial ?? 0}%`,
+                      background: (summary.riskScore?.breakdown?.financial ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.financial ?? 0) > 40 ? '#f59e0b' : '#22c55e'
                     }}
                   />
                 </div>
-                <span className={styles.breakdownValue}>{summary.riskScore.breakdown.financial}</span>
+                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.financial ?? 0}</span>
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>⚖️ Rechtlich</span>
@@ -343,12 +343,12 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
                   <div
                     className={styles.breakdownFill}
                     style={{
-                      width: `${summary.riskScore.breakdown.legal}%`,
-                      background: summary.riskScore.breakdown.legal > 70 ? '#ef4444' : summary.riskScore.breakdown.legal > 40 ? '#f59e0b' : '#22c55e'
+                      width: `${summary.riskScore?.breakdown?.legal ?? 0}%`,
+                      background: (summary.riskScore?.breakdown?.legal ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.legal ?? 0) > 40 ? '#f59e0b' : '#22c55e'
                     }}
                   />
                 </div>
-                <span className={styles.breakdownValue}>{summary.riskScore.breakdown.legal}</span>
+                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.legal ?? 0}</span>
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>🔧 Operativ</span>
@@ -356,12 +356,12 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
                   <div
                     className={styles.breakdownFill}
                     style={{
-                      width: `${summary.riskScore.breakdown.operational}%`,
-                      background: summary.riskScore.breakdown.operational > 70 ? '#ef4444' : summary.riskScore.breakdown.operational > 40 ? '#f59e0b' : '#22c55e'
+                      width: `${summary.riskScore?.breakdown?.operational ?? 0}%`,
+                      background: (summary.riskScore?.breakdown?.operational ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.operational ?? 0) > 40 ? '#f59e0b' : '#22c55e'
                     }}
                   />
                 </div>
-                <span className={styles.breakdownValue}>{summary.riskScore.breakdown.operational}</span>
+                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.operational ?? 0}</span>
               </div>
             </div>
           </div>
@@ -471,13 +471,13 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
           <div className={styles.keyTermsGrid}>
             <div className={styles.keyTerm}>
               <span className={styles.ktLabel}>Laufzeit</span>
-              <span className={styles.ktValue}>{summary.keyTerms.duration}</span>
+              <span className={styles.ktValue}>{summary.keyTerms?.duration ?? 'Nicht angegeben'}</span>
             </div>
             <div className={styles.keyTerm}>
               <span className={styles.ktLabel}>Kündigungsfrist</span>
-              <span className={styles.ktValue}>{summary.keyTerms.terminationNotice}</span>
+              <span className={styles.ktValue}>{summary.keyTerms?.terminationNotice ?? 'Nicht angegeben'}</span>
             </div>
-            {summary.keyTerms.value && summary.keyTerms.value !== 'Nicht angegeben' && (
+            {summary.keyTerms?.value && summary.keyTerms.value !== 'Nicht angegeben' && (
               <div className={styles.keyTerm}>
                 <span className={styles.ktLabel}>Vertragswert</span>
                 <span className={styles.ktValue}>{summary.keyTerms.value}</span>

@@ -1,7 +1,7 @@
 // 📁 components/LegalLensV12/PerspectiveSelectionModal.tsx
 // Erstmalige Perspektiven-Auswahl beim Öffnen von Legal Lens
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { PerspectiveType } from '../../types/legalLens';
 import styles from '../../styles/LegalLensV12.module.css';
 
@@ -67,11 +67,35 @@ const PerspectiveSelectionModal: React.FC<PerspectiveSelectionModalProps> = ({ o
     }
   };
 
+  const handleSkip = useCallback(() => {
+    // Standard-Perspektive "contractor" verwenden
+    onSelect('contractor');
+  }, [onSelect]);
+
+  // ESC-Taste zum Schließen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleSkip();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSkip]);
+
   return (
-    <div className={styles.perspectiveModalOverlay}>
-      <div className={styles.perspectiveModalContent}>
+    <div className={styles.perspectiveModalOverlay} onClick={handleSkip}>
+      <div className={styles.perspectiveModalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.perspectiveModalHeader}>
           <span className={styles.perspectiveModalIcon}>🔍</span>
+          <button
+            className={styles.perspectiveModalClose}
+            onClick={handleSkip}
+            title="Überspringen (Standard: Auftraggeber)"
+            aria-label="Modal schließen"
+          >
+            ✕
+          </button>
           <h2 className={styles.perspectiveModalTitle}>
             Aus welcher Sicht analysieren?
           </h2>

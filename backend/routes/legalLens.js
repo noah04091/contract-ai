@@ -571,6 +571,9 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
 
+      let clientDisconnected = false;
+      res.on('close', () => { clientDisconnected = true; });
+
       res.write(`event: start\ndata: ${JSON.stringify({ contractId, contractName })}\n\n`);
 
       try {
@@ -578,15 +581,21 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
           text,
           contractName,
           (chunk) => {
-            res.write(`event: chunk\ndata: ${JSON.stringify({ content: chunk })}\n\n`);
+            if (!clientDisconnected) {
+              res.write(`event: chunk\ndata: ${JSON.stringify({ content: chunk })}\n\n`);
+            }
           }
         );
 
-        res.write(`event: done\ndata: ${JSON.stringify({ complete: true, format: 'markdown' })}\n\n`);
+        if (!clientDisconnected) {
+          res.write(`event: done\ndata: ${JSON.stringify({ complete: true, format: 'markdown' })}\n\n`);
+        }
         res.end();
 
       } catch (streamError) {
-        res.write(`event: error\ndata: ${JSON.stringify({ error: streamError.message })}\n\n`);
+        if (!clientDisconnected) {
+          try { res.write(`event: error\ndata: ${JSON.stringify({ error: streamError.message })}\n\n`); } catch { /* already closed */ }
+        }
         res.end();
       }
       return;
@@ -1139,6 +1148,9 @@ router.post(
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
+        let clientDisconnected = false;
+        res.on('close', () => { clientDisconnected = true; });
+
         res.write(`event: start\ndata: ${JSON.stringify({ clauseId, perspective })}\n\n`);
 
         try {
@@ -1146,15 +1158,21 @@ router.post(
             clauseText,
             perspective,
             (chunk) => {
-              res.write(`event: chunk\ndata: ${JSON.stringify({ content: chunk })}\n\n`);
+              if (!clientDisconnected) {
+                res.write(`event: chunk\ndata: ${JSON.stringify({ content: chunk })}\n\n`);
+              }
             }
           );
 
-          res.write(`event: done\ndata: ${JSON.stringify({ complete: true })}\n\n`);
+          if (!clientDisconnected) {
+            res.write(`event: done\ndata: ${JSON.stringify({ complete: true })}\n\n`);
+          }
           res.end();
 
         } catch (streamError) {
-          res.write(`event: error\ndata: ${JSON.stringify({ error: streamError.message })}\n\n`);
+          if (!clientDisconnected) {
+            try { res.write(`event: error\ndata: ${JSON.stringify({ error: streamError.message })}\n\n`); } catch { /* already closed */ }
+          }
           res.end();
         }
         return;
@@ -2412,10 +2430,22 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
-  // Helper für SSE-Nachrichten
+  // Client-Disconnect-Erkennung
+  let clientDisconnected = false;
+  res.on('close', () => {
+    clientDisconnected = true;
+    console.log(`🔌 [Legal Lens] Client disconnected during parse-stream for ${contractId}`);
+  });
+
+  // Helper für SSE-Nachrichten (prüft Disconnect)
   const sendEvent = (type, data) => {
-    res.write(`event: ${type}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    if (clientDisconnected) return;
+    try {
+      res.write(`event: ${type}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    } catch {
+      clientDisconnected = true;
+    }
   };
 
   try {
