@@ -200,13 +200,13 @@ const LEGAL_RSS_FEEDS = {
   // EU-RECHT (C1)
   // ═══════════════════════════════════════════════════
   'edpb-news': {
-    url: 'https://www.edpb.europa.eu/rss_en',
+    url: 'https://www.edpb.europa.eu/feed/news_en',
     name: 'EU Datenschutzausschuss (EDPB)',
     category: 'datenschutz',
     enabled: true
   },
   'eur-lex-amtsblatt': {
-    url: 'https://eur-lex.europa.eu/rss/treaty/ojl.xml',
+    url: 'https://eur-lex.europa.eu/DE/display-feed.rss?rssId=168',
     name: 'EU Amtsblatt (OJ L)',
     category: 'eu_recht',
     enabled: true
@@ -216,13 +216,13 @@ const LEGAL_RSS_FEEDS = {
   // AUFSICHTSBEHÖRDEN (C2)
   // ═══════════════════════════════════════════════════
   'bafin-meldungen': {
-    url: 'https://www.bafin.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/RSSNewsfeed_node.xml',
+    url: 'https://www.bafin.de/DE/Service/TopNavigation/RSS/_function/rssnewsfeed.xml',
     name: 'BaFin Finanzaufsicht',
     category: 'finanzrecht',
     enabled: true
   },
   'bnetza-presse': {
-    url: 'https://www.bundesnetzagentur.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/Pressemitteilungen.xml',
+    url: 'https://www.bundesnetzagentur.de/SiteGlobals/Functions/RSSFeed/DE/RSSNewsfeed/RSSNewsfeed_Pressemitteilungen.xml?nn=654666',
     name: 'Bundesnetzagentur',
     category: 'regulierung',
     enabled: true
