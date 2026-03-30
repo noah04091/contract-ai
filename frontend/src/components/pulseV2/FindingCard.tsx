@@ -7,6 +7,7 @@ interface FindingCardProps {
   finding: PulseV2Finding;
   clause?: PulseV2Clause;
   contractId?: string;
+  resultId?: string;
   disabled?: boolean;
 }
 
@@ -32,7 +33,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
   unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, disabled }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, resultId, disabled }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
@@ -615,8 +616,31 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
+                    // Persist fix to backend if we have context
+                    if (resultId && finding.clauseId) {
+                      try {
+                        const res = await fetch('/api/legal-pulse-v2/apply-quick-fix', {
+                          method: 'POST',
+                          credentials: 'include',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            resultId,
+                            clauseId: finding.clauseId,
+                            fixedText: quickFix.fixedText,
+                            reasoning: quickFix.reasoning,
+                            legalBasis: quickFix.legalBasis,
+                            findingTitle: finding.title,
+                          }),
+                        });
+                        if (res.ok) {
+                          setFixApplied(true);
+                          return;
+                        }
+                      } catch { /* fallback to clipboard */ }
+                    }
+                    // Fallback: copy to clipboard
                     navigator.clipboard.writeText(quickFix.fixedText);
                     setFixApplied(true);
                   }}

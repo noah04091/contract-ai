@@ -428,6 +428,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               finding={finding}
               clause={clauseMap.get(finding.clauseId)}
               contractId={result.contractId}
+              resultId={result._id}
             />
           ))}
         </div>
@@ -455,6 +456,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               finding={finding}
               clause={clauseMap.get(finding.clauseId)}
               contractId={result.contractId}
+              resultId={result._id}
             />
           ))}
         </div>
@@ -520,6 +522,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                   finding={finding}
                   clause={clauseMap.get(finding.clauseId)}
                   contractId={result.contractId}
+                  resultId={result._id}
                 />
               ))}
             </div>

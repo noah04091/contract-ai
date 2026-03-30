@@ -1019,6 +1019,132 @@ router.post("/apply-fix", requirePremium, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// POST /apply-quick-fix — Persist a Quick-Fix from analysis findings (no alert needed)
+// Like /apply-fix but works with resultId instead of alertId
+// ══════════════════════════════════════════════════════════════
+router.post("/apply-quick-fix", requirePremium, async (req, res) => {
+  try {
+    const { resultId, clauseId, fixedText, reasoning, legalBasis, changeType, findingTitle } = req.body;
+    if (!resultId || !clauseId || !fixedText) {
+      return res.status(400).json({ error: "resultId, clauseId und fixedText erforderlich" });
+    }
+
+    const trimmed = (fixedText || "").trim();
+    if (!trimmed) {
+      return res.status(400).json({ error: "fixedText darf nicht leer sein" });
+    }
+    if (trimmed.length > 20000) {
+      return res.status(400).json({ error: "fixedText zu lang (max. 20.000 Zeichen)" });
+    }
+
+    const userId = req.user.userId;
+
+    // 1. Find the V2 result
+    const { ObjectId } = require("mongodb");
+    let v2Result;
+    try {
+      v2Result = await LegalPulseV2Result.findOne({
+        _id: new ObjectId(resultId),
+        userId,
+        status: "completed",
+      }).lean();
+    } catch {
+      return res.status(400).json({ error: "Ungültige resultId" });
+    }
+
+    if (!v2Result) {
+      return res.status(404).json({ error: "Analyse-Ergebnis nicht gefunden" });
+    }
+
+    // 2. Find the clause
+    const clause = v2Result.clauses.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: `Klausel ${clauseId} nicht gefunden` });
+    }
+
+    // 3. Prevent duplicate applies
+    const normalize = (t) => t.replace(/\s+/g, " ").trim();
+    const currentText = clause.currentText || clause.originalText;
+    if (normalize(currentText) === normalize(trimmed)) {
+      return res.json({
+        success: true,
+        clauseId,
+        version: (clause.history || []).length > 0 ? clause.history.length + 1 : 1,
+        skipped: true,
+        message: "Klausel ist bereits auf dem neuesten Stand",
+      });
+    }
+
+    const existingHistory = clause.history || [];
+    const nextVersion = existingHistory.length + 2;
+
+    // 4. Build history entry
+    const historyEntry = {
+      version: nextVersion,
+      text: trimmed,
+      source: "legal_pulse_fix",
+      reasoning: reasoning || "",
+      legalBasis: legalBasis || "",
+      changeType: changeType || "targeted_fix",
+      alertId: "",
+      lawTitle: findingTitle || "",
+      appliedAt: new Date(),
+    };
+
+    // 5. If no history, store original as v1 first
+    const updates = {};
+    if (existingHistory.length === 0) {
+      updates.$push = {
+        "clauses.$.history": {
+          $each: [
+            {
+              version: 1,
+              text: clause.originalText,
+              source: "original",
+              reasoning: "Originalversion aus der Vertragsanalyse",
+              legalBasis: "",
+              changeType: "targeted_fix",
+              alertId: "",
+              lawTitle: "",
+              appliedAt: clause.createdAt || v2Result.createdAt || new Date(),
+            },
+            historyEntry,
+          ],
+        },
+      };
+    } else {
+      updates.$push = { "clauses.$.history": historyEntry };
+    }
+
+    // 6. Update currentText
+    updates.$set = { "clauses.$.currentText": trimmed };
+
+    await LegalPulseV2Result.updateOne(
+      { _id: v2Result._id, "clauses.id": clauseId },
+      updates
+    );
+
+    // 7. Track timestamp
+    await LegalPulseV2Result.updateOne(
+      { _id: v2Result._id },
+      { $set: { lastClauseFixAt: new Date() } }
+    );
+
+    console.log(`[PulseV2] Quick-fix applied: ${clauseId} v${nextVersion} (result ${resultId})`);
+
+    res.json({
+      success: true,
+      clauseId,
+      version: nextVersion,
+      historyLength: existingHistory.length === 0 ? 2 : existingHistory.length + 1,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Apply quick-fix error:", error);
+    res.status(500).json({ error: "Fehler beim Anwenden der Quick-Fix-Anpassung" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // GET /clause-history/:contractId/:clauseId — Version history for a clause
 // ══════════════════════════════════════════════════════════════
 router.get("/clause-history/:contractId/:clauseId", async (req, res) => {
