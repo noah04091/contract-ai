@@ -158,33 +158,6 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
     loadSummary();
   }, [loadSummary]);
 
-  const getVerdictColor = (action: string) => {
-    switch (action) {
-      case 'accept': return '#22c55e';
-      case 'negotiate': return '#f59e0b';
-      case 'reject': return '#ef4444';
-      default: return '#64748b';
-    }
-  };
-
-  const getVerdictBg = (action: string) => {
-    switch (action) {
-      case 'accept': return '#f0fdf4';
-      case 'negotiate': return '#fffbeb';
-      case 'reject': return '#fef2f2';
-      default: return '#f8fafc';
-    }
-  };
-
-  const getVerdictLabel = (action: string) => {
-    switch (action) {
-      case 'accept': return 'AKZEPTABEL';
-      case 'negotiate': return 'VERHANDELBAR';
-      case 'reject': return 'KRITISCH';
-      default: return 'ZU PRÜFEN';
-    }
-  };
-
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'critical': return <AlertTriangle size={18} />;
