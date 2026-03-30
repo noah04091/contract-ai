@@ -268,30 +268,12 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
 
       {/* Main Content */}
       <div className={styles.content}>
-        {/* Verdict Card */}
-        <div
-          className={styles.verdictCard}
-          style={{
-            background: getVerdictBg(summary.overallVerdict.action),
-            borderColor: getVerdictColor(summary.overallVerdict.action)
-          }}
-        >
-          <div className={styles.verdictHeader}>
-            <span className={styles.verdictEmoji}>{summary.overallVerdict.emoji}</span>
-            <span
-              className={styles.verdictLabel}
-              style={{ color: getVerdictColor(summary.overallVerdict.action) }}
-            >
-              {getVerdictLabel(summary.overallVerdict.action)}
-            </span>
-          </div>
-          <p className={styles.verdictHeadline}>{summary.overallVerdict.headline}</p>
-          <div className={styles.contractType}>
-            <span className={styles.contractTypeLabel}>{summary.contractType}</span>
-            {summary.contractTypeDetail && (
-              <span className={styles.contractTypeDetail}>{summary.contractTypeDetail}</span>
-            )}
-          </div>
+        {/* Contract Type Info */}
+        <div className={styles.contractTypeCard}>
+          <span className={styles.contractTypeLabel}>{summary.contractType}</span>
+          {summary.contractTypeDetail && (
+            <span className={styles.contractTypeDetail}>{summary.contractTypeDetail}</span>
+          )}
         </div>
 
         {/* Risk Score */}

@@ -240,11 +240,16 @@
   line-height: 1.5;
 }
 
-.contractType {
+.contractTypeCard {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.25rem;
 }
 
 .contractTypeLabel {
