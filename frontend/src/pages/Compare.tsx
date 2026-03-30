@@ -618,7 +618,7 @@ export default function EnhancedCompare() {
                   message: eventData.message
                 });
               } else if (eventData.type === 'result') {
-                if (streamTimeout) clearTimeout(streamTimeout);
+                if (streamTimeout !== null) clearTimeout(streamTimeout);
                 setResult(eventData.data);
                 setFile1Name(file1?.name || null);
                 setFile2Name(file2?.name || null);
@@ -646,7 +646,7 @@ export default function EnhancedCompare() {
         }
       }
     } catch (err) {
-      if (streamTimeout) clearTimeout(streamTimeout);
+      if (streamTimeout !== null) clearTimeout(streamTimeout);
       const isAbort = err instanceof DOMException && err.name === 'AbortError';
       const message = isAbort
         ? "Die Analyse hat zu lange gedauert (> 3 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
