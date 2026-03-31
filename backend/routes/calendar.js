@@ -270,12 +270,17 @@ router.post("/regenerate-all", verifyToken, async (req, res) => {
       .find({ userId })
       .toArray();
     
-    // Delete old events
-    await req.db.collection("contract_events").deleteMany({ userId });
-    
-    // Generate new events for all contracts
+    // Find contracts that don't have any events yet
+    const contractsWithEvents = await req.db.collection("contract_events")
+      .distinct("contractId", { userId });
+
+    const contractsWithoutEvents = contracts.filter(c =>
+      !contractsWithEvents.some(id => id && id.toString() === c._id.toString())
+    );
+
+    // Only generate events for contracts missing them — never delete existing events
     let totalEvents = 0;
-    for (const contract of contracts) {
+    for (const contract of contractsWithoutEvents) {
       const events = await generateEventsForContract(req.db, contract);
       totalEvents += events.length;
     }

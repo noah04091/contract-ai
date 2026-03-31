@@ -1004,14 +1004,26 @@ async function generateEventsForContract(db, contract) {
         console.log(`  Event ${idx + 1}: ${e.type} - Datum: ${e.date.toISOString()} (Local: ${e.date})`);
       });
 
-      // Lösche alte Events für diesen Vertrag
-      await db.collection("contract_events").deleteMany({
-        contractId: contract._id,
-        status: "scheduled" // Nur geplante Events löschen, nicht bereits bearbeitete
-      });
+      // Nur neue Events einfügen, die noch nicht existieren (keine Löschung!)
+      // Prüfe pro Event ob schon ein gleiches existiert (gleicher Vertrag + Typ + Datum)
+      const newEvents = [];
+      for (const event of events) {
+        const exists = await db.collection("contract_events").findOne({
+          contractId: contract._id,
+          type: event.type,
+          date: event.date
+        });
+        if (!exists) {
+          newEvents.push(event);
+        }
+      }
 
-      // Füge neue Events ein
-      const result = await db.collection("contract_events").insertMany(events);
+      if (newEvents.length === 0) {
+        console.log(`ℹ️ Alle Events für "${contract.name}" existieren bereits`);
+        return events;
+      }
+
+      const result = await db.collection("contract_events").insertMany(newEvents);
       console.log(`✅ ${result.insertedCount} Events für Vertrag "${contract.name}" generiert${isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
     } else {
       console.log(`ℹ️ Keine Events für "${contract.name}" generiert (keine relevanten Daten oder alle Events in Vergangenheit)`);
