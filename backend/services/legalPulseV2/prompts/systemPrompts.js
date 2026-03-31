@@ -312,30 +312,106 @@ const DEEP_ANALYSIS_SCHEMA = {
 
 // Contract type-specific analysis hints
 const CONTRACT_TYPE_HINTS = {
-  mietvertrag: "Achte besonders auf: Mietrecht (§§ 535-580a BGB), Schönheitsreparaturen, Nebenkostenabrechnung (BetrKV), Kündigungsfristen (§ 573c BGB), Mietpreisbremse, Indexklauseln.",
-  arbeitsvertrag: "Achte besonders auf: Arbeitsrecht (TzBfG, KSchG), Kündigungsschutz (§ 622 BGB), Wettbewerbsverbot (§§ 74-75d HGB), Arbeitszeitgesetz, Vergütung, Urlaub (BUrlG), Überstunden.",
-  nda: "Achte besonders auf: Vertraulichkeitsumfang, Laufzeit, Vertragsstrafen (§ 339 BGB), Rückgabepflichten, Ausnahmen, Schadensersatz.",
-  dienstleistung: "Achte besonders auf: Werkvertrag vs. Dienstvertrag (§§ 611/631 BGB), Haftungsbeschränkungen, SLA, Abnahme, Gewährleistung.",
-  saas: "Achte besonders auf: SLA/Verfügbarkeit, Datenlöschung, DSGVO (Art. 28), Subunternehmer, Preisanpassungen, Lock-in-Effekte, Exit-Klauseln.",
-  versicherung: "Achte besonders auf: Deckungslücken, Ausschlüsse, Selbstbeteiligung, Obliegenheiten (§§ 19-32 VVG), Kündigungsrechte, Prämienanpassung.",
-  kaufvertrag: "Achte besonders auf: Gewährleistung (§§ 434-442 BGB), Eigentumsvorbehalt (§ 449 BGB), Gefahrübergang, Rügepflicht (§ 377 HGB).",
-  lizenz: "Achte besonders auf: Nutzungsrechte (§§ 31-44 UrhG), Unterlizenzierung, Territorialbeschränkungen, Laufzeit, Kündigung.",
-  freelancer: "Achte besonders auf: Scheinselbständigkeit (§ 7 SGB IV), Weisungsfreiheit, Haftung, IP-Übertragung, Wettbewerbsverbot.",
-  gesellschaftsvertrag: "Achte besonders auf: Gesellschafterrechte, Gewinnverteilung, Geschäftsführung, Ausscheiden, Nachfolge, Wettbewerbsverbot.",
+  mietvertrag: `NORMEN: Mietrecht (§§ 535-580a BGB), Wohnraum-Kündigung (§§ 573-573c BGB), Geschäftsraum (§ 580a BGB), Mietpreisbremse (§§ 556d-556g BGB), Betriebskosten (§ 556 BGB + BetrKV), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Mietzahlung, Nebenkostenvorauszahlung, Kaution (bis 3 Monatsmieten § 551 BGB), Instandhaltungspflicht des Vermieters, Duldungspflichten des Mieters, Übergabeprotokoll, Indexmietvereinbarung (§ 557b BGB).
+BRANCHENÜBLICH: Staffelmiete, Indexklausel, Kleinreparaturklausel (bis ~120 EUR/Einzelfall, ~350 EUR/Jahr), Hausordnung als Anlage, Untervermietungsverbot mit Erlaubnisvorbehalt, Tierhaltungsklausel.
+ECHTE RISIKEN: Schönheitsreparaturklausel mit starren Fristen (BGH: unwirksam), Quotenabgeltungsklausel (BGH: unwirksam seit 2015), Kaution über 3 Monatsmieten (§ 551 BGB: nichtig), Aufrechnungsverbot für Mieter (§ 556b Abs. 2 BGB).
+DSGVO: Art. 6(1)(b) für Vertragsdurchführung, Nebenkostenabrechnung mit Personenbezug, Videoüberwachung Gemeinschaftsflächen.`,
+  arbeitsvertrag: `NORMEN: Arbeitsrecht (§§ 611a ff. BGB), Kündigung (§ 622 BGB), KSchG, Befristung (TzBfG), Arbeitszeit (ArbZG), Urlaub (BUrlG), Wettbewerbsverbot (§§ 74-75d HGB), NachwG.
+KERNMECHANISMEN (KEIN Risiko): Weisungsrecht des Arbeitgebers, Vergütungsregelung, Arbeitszeit/-ort, Probezeit (max. 6 Monate § 622 Abs. 3 BGB), gesetzliche Kündigungsfristen, Urlaub (min. 20 Tage/5-Tage-Woche), Nebentätigkeitsanzeige.
+BRANCHENÜBLICH: Geheimhaltungsklausel, Rückzahlungsklausel für Fortbildungen (gestaffelt), Überstundenregelung (Abgeltung/Freizeitausgleich), Dienstwagenregelung, Homeoffice-Regelung, Versetzungsklausel innerhalb zumutbarer Grenzen.
+ECHTE RISIKEN: Wettbewerbsverbot OHNE Karenzentschädigung (§ 74 Abs. 2 HGB: unverbindlich), Überstunden-Pauschalabgeltung ohne Obergrenze (BAG: unwirksam), Vertragsstrafe bei Nichtantritt über 1 Bruttomonatsgehalt (unverhältnismäßig), Ausschlussfristen unter 3 Monaten in AGB (§ 307 BGB), Befristung ohne Sachgrund über 2 Jahre (§ 14 TzBfG).
+DSGVO: § 26 BDSG (Beschäftigtendatenschutz), Art. 88 DSGVO, Überwachung am Arbeitsplatz, Betriebsvereinbarung.`,
+  nda: `NORMEN: Vertragsfreiheit (§ 311 BGB), Vertragsstrafe (§ 339 BGB, AGB: § 307 BGB), Geschäftsgeheimnisgesetz (GeschGehG), Schadensersatz (§§ 280 ff. BGB).
+KERNMECHANISMEN (KEIN Risiko): Definition vertraulicher Informationen, Geheimhaltungspflicht, Rückgabepflicht bei Vertragsende, Need-to-Know-Prinzip, Ausnahmen (öffentlich bekannt, eigenständig entwickelt, behördlich angeordnet).
+BRANCHENÜBLICH: Laufzeit 2-5 Jahre, Vertragsstrafe als pauschalierter Schadensersatz, Einbeziehung von Mitarbeitern/Beratern, Residualklausel, Rückgabe/Löschung bei Vertragsende.
+ECHTE RISIKEN: Unverhältnismäßig hohe Vertragsstrafe (§ 307 BGB bei AGB), zu weite Definition (alles = nichts), fehlende Standardausnahmen (öffentlich bekannt), einseitige NDA ohne sachlichen Grund, unbegrenzte Laufzeit bei Nicht-Geschäftsgeheimnissen.
+DSGVO: Art. 6(1)(f) bei Due-Diligence-Kontext, Vertraulichkeit personenbezogener Daten.`,
+  dienstleistung: `NORMEN: Dienstvertrag (§§ 611 ff. BGB) vs. Werkvertrag (§§ 631 ff. BGB) — Abgrenzung entscheidend! Haftung (§§ 280 ff. BGB), Kündigung Dienstvertrag (§ 621 BGB), Kündigung Werkvertrag (§ 648 BGB), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Leistungsbeschreibung/Pflichtenheft, Vergütungsregelung (Stunden-/Tagessatz oder Festpreis), Abnahme (bei Werkvertrag), Mitwirkungspflichten des Auftraggebers, Change-Request-Verfahren.
+BRANCHENÜBLICH: Haftungsbegrenzung auf Auftragswert, Gewährleistungsfrist 12 Monate (Werkvertrag gesetzlich: 2 Jahre), Geheimhaltungsklausel, Versicherungsnachweis, Abwerbe-/Übernahmeverbot für Mitarbeiter.
+ECHTE RISIKEN: Falsche Vertragsqualifikation (Dienstvertrag statt Werkvertrag — bestimmt Gewährleistung/Abnahme/Kündigung), Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit (§ 309 Nr. 7 BGB in AGB: unwirksam), fehlende Leistungsbeschreibung, einseitiges Leistungsänderungsrecht ohne Preisanpassung.
+DSGVO: Art. 28 (AV-Vertrag wenn personenbezogene Daten verarbeitet), Zugangsregelungen zu Kundensystemen.`,
+  saas: `NORMEN: AGB-Recht (§§ 305-310 BGB), Mietrecht analog (§§ 535 ff. BGB), DSGVO Art. 28 (Auftragsverarbeitung), Art. 32 (TOMs), Art. 44 ff. (Drittlandtransfer), TTDSG.
+KERNMECHANISMEN (KEIN Risiko): SLA mit Verfügbarkeitsgarantie (99,5-99,9% Standard), Subunternehmer-Einsatz mit Information, nutzungsbasierte Abrechnung, automatische Updates, API-Zugang mit Rate Limits, Mandantentrennung.
+BRANCHENÜBLICH: Fair-Use-Klausel, Preisanpassung bei Indexierung (max. 1x jährlich), Wartungsfenster (geplant, außerhalb Kernzeiten), Support-Level-Abstufung, Datenmigration bei Vertragsende, Löschfristen 30-90 Tage nach Ende.
+ECHTE RISIKEN: Kein AV-Vertrag nach Art. 28 DSGVO (Compliance-Verstoß!), fehlende Exit-Strategie/Datenportabilität, einseitige Leistungsänderung OHNE Sonderkündigungsrecht (§ 307 BGB), Haftungsausschluss für Datenverlust bei Verschulden (§ 309 Nr. 7 BGB), Vendor Lock-in durch proprietäre Formate, US-Cloud ohne Schutzniveau (Schrems II).
+DSGVO: Art. 28 AV-Vertrag ist PFLICHT, Art. 32 TOMs, Art. 44 ff. Drittlandtransfer, Art. 33/34 Meldepflicht bei Datenpannen, Unterauftragsverarbeiter-Liste.`,
+  versicherung: `NORMEN: VVG (§§ 1-215), Obliegenheiten (§§ 19-32 VVG), Kündigung (§§ 11, 40 VVG), Leistungsfreiheit (§ 28 VVG), AGB-Kontrolle (§§ 305-310 BGB, soweit nicht durch VVG verdrängt).
+KERNMECHANISMEN (KEIN Risiko): Risikoübernahme gegen Prämie, Selbstbeteiligung, Risikoausschlüsse (definieren den Versicherungsschutz), Obliegenheiten (Anzeige-/Rettungs-/Schadenminderungspflichten), Wartezeiten, Prämienanpassung bei Risikoänderung.
+BRANCHENÜBLICH: Summenbegrenzung pro Schadensfall/Jahr, Sublimits, Nachhaftung, Vorwärtsdeckung, Abtretungsverbot für Versicherungsleistung, unverzügliche Schadensmeldung.
+ECHTE RISIKEN: Versteckte Deckungslücken die branchenunüblich eng sind, Obliegenheitsverletzung mit Totalverlust (§ 28 VVG: nur bei Vorsatz/grober Fahrlässigkeit), Prämienanpassung OHNE Sonderkündigungsrecht (§ 40 VVG), arglistige Täuschung (§ 22 VVG).
+DSGVO: Art. 9 (Gesundheitsdaten bei Personenversicherung), Art. 22 (Profiling bei Risikobewertung), Art. 6(1)(b).`,
+  kaufvertrag: `NORMEN: Kaufrecht (§§ 433-479 BGB), Gewährleistung (§§ 434-442 BGB), Eigentumsvorbehalt (§ 449 BGB), Gefahrübergang (§ 446 BGB), Handelskauf (§ 377 HGB Rügepflicht), Verbrauchsgüterkauf (§§ 474-479 BGB), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Lieferung gegen Kaufpreiszahlung, Eigentumsvorbehalt (einfach/erweitert), Gefahrübergang bei Übergabe, Gewährleistung (Nacherfüllung vor Rücktritt), Rügepflicht im Handelskauf (§ 377 HGB).
+BRANCHENÜBLICH: Erweiterter Eigentumsvorbehalt (B2B Standard), Abnahmeprozedur, Incoterms, Mindestbestellmengen, Gewährleistungsfrist 12 Monate B2B, Haftungsbegrenzung auf Kaufpreis.
+ECHTE RISIKEN: Gewährleistungsausschluss bei Verbrauchsgüterkauf (§ 476 BGB: unwirksam), Haftungsausschluss für zugesicherte Eigenschaften (§ 444 BGB: unwirksam), fehlende Regelung für Serienmängel, Gewährleistungsverkürzung unter 1 Jahr B2B (§ 307 BGB: grenzwertig).
+DSGVO: Meist gering, Kundendaten bei Garantieabwicklung.`,
+  lizenz: `NORMEN: Urheberrecht (§§ 31-44 UrhG), Zweckübertragungsregel (§ 31 Abs. 5 UrhG), angemessene Vergütung (§ 32 UrhG), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Einräumung von Nutzungsrechten (einfach/ausschließlich), Territorialbeschränkung, zeitliche Befristung, Nutzungsartbeschränkung, Lizenzgebühr (einmalig/laufend).
+BRANCHENÜBLICH: Unterlizenzierungsverbot, Audit-Recht des Lizenzgebers, Bearbeitungsverbot, Rückfallklausel bei Nichtausübung, Mindestroyalty.
+ECHTE RISIKEN: Zu weite Rechteeinräumung ohne angemessene Vergütung (§ 32 UrhG), fehlende Regelung für Vertragsende (Nutzung bestehender Werke?), Unterlizenzierung ohne Zustimmung, Buy-Out ohne Nachvergütung bei Erfolg (§ 32a UrhG).
+DSGVO: Meist gering, bei Software-Lizenzen evtl. Nutzungstracking.`,
+  freelancer: `NORMEN: Dienstvertrag/Werkvertrag (§§ 611/631 BGB), Scheinselbständigkeit (§ 7 SGB IV, § 611a BGB), Statusfeststellung (§ 7a SGB IV), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Projektbasierte Beauftragung, Vergütung auf Stunden-/Tagessatz, keine Weisungsbindung bzgl. Ort/Zeit/Durchführung, eigene Betriebsmittel, Möglichkeit der Substitution.
+BRANCHENÜBLICH: Geheimhaltungsklausel, IP-Übertragung auf Auftraggeber, Versicherungsnachweis (Berufshaftpflicht), Haftungsbegrenzung, Abwerbe-/Übernahmeverbot, Kündigungsfrist 2-4 Wochen.
+ECHTE RISIKEN: Scheinselbständigkeitsindikatoren (Weisungsbindung, feste Arbeitszeiten, ein Auftraggeber >5/6 Umsatz, kein unternehmerisches Risiko) → § 7 SGB IV: Sozialversicherungspflicht mit Nachzahlung! Wettbewerbsverbot OHNE Karenzentschädigung (analog § 74 HGB), unbefristete Exklusivität.
+DSGVO: Art. 28 (wenn Freelancer personenbezogene Daten verarbeitet), Zugangsregelungen, Datenlöschung nach Projektende.`,
+  gesellschaftsvertrag: `NORMEN: GbR (§§ 705-740 BGB), OHG (§§ 105-160 HGB), KG (§§ 161-177a HGB), GmbH (GmbHG), Treuepflicht, AGB-Kontrolle nur bei formularmäßiger Verwendung.
+KERNMECHANISMEN (KEIN Risiko): Beitragspflicht, Gewinn-/Verlustverteilung, Geschäftsführungsbefugnis, Gesellschafterversammlung, Informations-/Kontrollrechte, Wettbewerbsverbot der Gesellschafter.
+BRANCHENÜBLICH: Abfindungsregelung bei Ausscheiden, Nachfolgeregelung, Einziehungsklausel, Drag-Along/Tag-Along, Vorkaufsrecht der Gesellschafter, Stimmrechtsvollmacht.
+ECHTE RISIKEN: Hinauskündigungsklausel ohne sachlichen Grund (BGH: sittenwidrig § 138 BGB), Abfindung zum Buchwert bei erheblich höherem Verkehrswert (§ 138 BGB), fehlende Nachfolgeregelung (gesetzliche Auflösung bei Tod), Totalausschluss von Informationsrechten.
+DSGVO: Meist gering, Gesellschafterliste, steuerliche Datenverarbeitung.`,
   factoring: `NORMEN: AGB-Kontrolle (§§ 305-310 BGB, insb. § 307 für unangemessene Klauseln), Abtretungsrecht (§§ 398 ff. BGB), Abtretungsverbot Handelsverkehr (§ 354a HGB), DSGVO Art. 6(1)(b/f) + Art. 14 (Informationspflicht an Debitoren bei Forderungsabtretung).
 KERNMECHANISMEN (KEIN Risiko — das IST Factoring): Delkredere-Übernahme (echtes Factoring), Rückabwicklung/Rückabtretung (unechtes Factoring), Veritätshaftung des Anschlusskunden, Forderungsabtretung, Bonitätsprüfung/Debitorenauswahl durch Factor.
 BRANCHENÜBLICH und KEIN Risiko: Andienungspflicht, Sicherungseinbehalt (5-15%), Limitsteuerung/Limitsperre bei Zahlungsverzug, Kontokorrentklausel, Offenlegungspflichten, Inkassogebühren, Rückabwicklungsrecht bei Kaufinkasso, Vorausabtretung, Treuhänderische Verwahrung von Zahlungseingängen.
 ECHTE RISIKEN (hier genau hinschauen): Unbegrenzte verschuldensunabhängige Garantien OHNE Deckelung (§ 307 BGB), intransparente Gebührenstrukturen, einseitige Limitänderungen ohne Vorankündigung, fehlende DSGVO-Regelung für Debitorendaten.
 KOMMERZIELLE KONDITIONEN: Analysiere Konditionenblatt / Gebührenstruktur (Factoringgebühr, Mindestgebühr, EURIBOR-Klausel, Ankaufsabschlag, Bearbeitungsgebühren). Prüfe ob Gebühren marktüblich und Zinsanpassungsklauseln (EURIBOR + Marge) transparent sind.`,
-  leasing: "Achte besonders auf: Restwertrisiko, Kilometerbegrenzung, Rückgabebedingungen, Vollamortisation vs. Teilamortisation, Leasingsonderzahlung, GAP-Deckung, Versicherungspflichten, vorzeitige Beendigung (§§ 535 ff. BGB analog).",
-  darlehen: "Achte besonders auf: Effektivzinsberechnung (§ 6 PAngV), Vorfälligkeitsentschädigung (§ 502 BGB), Sondertilgungsrechte, Zinsanpassungsklauseln (EURIBOR/LIBOR), Sicherheiten, Covenants, Widerrufsrecht (§ 495 BGB), Kreditkündigung (§ 490 BGB).",
-  buergschaft: "Achte besonders auf: Höchstbetragsbürgschaft vs. unbegrenzte Bürgschaft, Selbstschuldnerisch vs. Ausfallbürgschaft, Sittenwidrigkeit (§ 138 BGB bei Überforderung), Einrede der Vorausklage (§ 771 BGB), Widerruflichkeit.",
-  bauvertrag: "Achte besonders auf: VOB/B Einbeziehung, Abnahmeregelungen (§ 640 BGB), Gewährleistungsfristen, Sicherheitseinbehalte, Vertragsstrafe (§ 339 BGB), Nachunternehmereinsatz, Preisanpassung, Behinderungsanzeigen.",
-  pachtvertrag: "Achte besonders auf: Pachtzinsanpassung, Inventarverzeichnis, Instandhaltungspflichten (§§ 581-597 BGB), Verpächterpfandrecht, Unterverpachtung, Betriebspflicht.",
-  handelsvertreter: "Achte besonders auf: Provisionsanspruch (§§ 87-87c HGB), Ausgleichsanspruch (§ 89b HGB), Wettbewerbsverbot (§ 90a HGB), Bucheinblicksrecht (§ 87c HGB), Kündigung (§ 89 HGB).",
-  franchisevertrag: "Achte besonders auf: Vorvertragliche Aufklärungspflichten, Gebührenstruktur (Entry Fee + laufende Gebühren), Gebietsschutz, Systemvorgaben vs. Weisungsfreiheit, Scheinselbständigkeit, Wettbewerbsverbot, Exit-Konditionen.",
-  rahmenvertrag: "Achte besonders auf: Abrufmodalitäten, Mindest-/Höchstmengen, Preisanpassungsklauseln, Exklusivität, Laufzeit und Kündigung, Haftung bei Abrufausfall.",
-  maklervertrag: "Achte besonders auf: Provisionsvereinbarung (§ 652 BGB), Alleinauftrag, Aufwendungsersatz, Widerrufsrecht, Doppeltätigkeit, Provisionshöhe (Marktüblichkeit).",
+  leasing: `NORMEN: Mietrecht analog (§§ 535 ff. BGB), AGB-Kontrolle (§§ 305-310 BGB), Verbraucherkreditrecht bei Finanzierungsleasing (§§ 491 ff. BGB analog), Leasingerlass BMF.
+KERNMECHANISMEN (KEIN Risiko): Nutzungsüberlassung gegen Leasingrate, Restwertrisiko (Restwertleasing), Kilometerbegrenzung (Kilometerleasing), Vollamortisation durch Raten, Instandhaltungspflicht des Leasingnehmers, GAP-Deckung.
+BRANCHENÜBLICH: Leasingsonderzahlung (bis 30%), Wartungspauschale, Versicherungspflicht, Zustandsprotokoll bei Rückgabe, Mehrkilometerabrechnung, Mindestlaufzeit 24-48 Monate.
+ECHTE RISIKEN: Restwertgarantie über Marktwert (§ 307 BGB), versteckte Rückgabekosten (überhöhte Aufbereitungspauschalen), fehlender effektiver Jahreszins bei Verbraucherleasing (§ 6 PAngV), doppelte Schadensberechnung (Restwert + Schadenersatz).
+DSGVO: Art. 6(1)(b), SCHUFA-Abfrage, Fahrzeugdaten/Telematik bei Kfz-Leasing.`,
+  darlehen: `NORMEN: Darlehensrecht (§§ 488-505 BGB), Verbraucherdarlehen (§§ 491-505 BGB), Effektivzins (§ 6 PAngV), Vorfälligkeit (§ 502 BGB), Widerruf (§§ 495, 355 BGB), Kreditkündigung (§ 490 BGB), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Zinszahlung (fest/variabel), Tilgungsplan, Sicherheitenbestellung (Grundschuld, Sicherungsübereignung, Verpfändung), Financial Covenants, Zinsanpassung (EURIBOR + Marge), Bereitstellungszinsen.
+BRANCHENÜBLICH: Vorfälligkeitsentschädigung (max. 1%/0,5% Restschuld § 502 BGB), Sondertilgung (5-10% p.a.), Kontoführungsgebühr, Negativerklärung, Jahresabschluss-Informationspflicht.
+ECHTE RISIKEN: Fehlende/falsche Effektivzinsangabe (§ 494 BGB: gesetzlicher Zinssatz!), fehlende Widerrufsbelehrung bei Verbrauchern (ewiges Widerrufsrecht), intransparente Zinsanpassung ohne klare Bezugsgröße (§ 307 BGB), Bearbeitungsgebühr bei Verbraucherdarlehen (BGH XI ZR 405/12: unwirksam), unverhältnismäßige Cross-Default-Klauseln.
+DSGVO: Art. 6(1)(b), SCHUFA-Abfrage (Art. 6(1)(f) + Art. 22 Profiling), Bonitätsprüfung, Datenweitergabe an Sicherungsgeber.`,
+  buergschaft: `NORMEN: Bürgschaftsrecht (§§ 765-778 BGB), Sittenwidrigkeit (§ 138 BGB), Einrede der Vorausklage (§ 771 BGB), Schriftform (§ 766 BGB), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Selbstschuldnerische Bürgschaft (Verzicht auf § 771 — B2B Standard), Bürgschaft auf erstes Anfordern (Bankbürgschaft), Höchstbetragsbürgschaft, Befristung, Rückgabe der Bürgschaftsurkunde.
+BRANCHENÜBLICH: Bürgschaft auf erstes Anfordern, Bürgschaftsgebühr (0,5-3% p.a.), Verwertungsreihenfolge bei mehreren Sicherheiten, Informationspflicht über Hauptschuld, Freigabeklausel bei Teiltilgung.
+ECHTE RISIKEN: Bürgschaft finanziell überforderter Angehöriger (§ 138 BGB: BGH-Rspr. Sittenwidrigkeit), Globalzession + Bürgschaft = Übersicherung, fehlende Höchstbetragsbegrenzung bei Verbrauchern, Bürgschaft für künftige unbestimmte Forderungen ohne Limit, formunwirksame Bürgschaft (§ 766 BGB: Schriftform!).
+DSGVO: Bonitätsprüfung des Bürgen (Art. 6(1)(f), SCHUFA).`,
+  bauvertrag: `NORMEN: Werkvertragsrecht (§§ 631-651 BGB), Bauvertragsrecht (§§ 650a-650h BGB), VOB/B, Abnahme (§ 640 BGB), AGB-Kontrolle (§§ 305-310 BGB — VOB/B nur als Ganzes AGB-fest!).
+KERNMECHANISMEN (KEIN Risiko): Leistungsbeschreibung/LV, Abnahmeverfahren (förmlich/fiktiv), Gewährleistung (4 Jahre BGB/VOB/B), Sicherheitseinbehalt (5-10%), Abschlagszahlungen nach Baufortschritt, Behinderungsanzeige, Nachtragsmanagement.
+BRANCHENÜBLICH: VOB/B-Einbeziehung, Vertragsstrafe bei Terminüberschreitung (bis 5% Auftragssumme), Bauhandwerkersicherung (§ 650f BGB), Nachunternehmereinsatz mit Zustimmung, Bürgschaft für Vorauszahlung, Preisgeitungsklausel bei langen Bauzeiten.
+ECHTE RISIKEN: VOB/B nur teilweise einbezogen (dann volle AGB-Kontrolle auf JEDE Klausel!), Vertragsstrafe über 5% (BGH: unangemessen), Abnahmefiktion ohne angemessene Frist (§ 640 BGB), fehlende Bauhandwerkersicherung (§ 650f BGB), Pauschalpreis ohne Change-Request-Verfahren.
+DSGVO: Meist gering, Baustellendokumentation, Arbeitszeiterfassung Subunternehmer.`,
+  pachtvertrag: `NORMEN: Pachtrecht (§§ 581-597 BGB), Landpachtrecht (§§ 585-597 BGB), Betriebspflicht, Verpächterpfandrecht (§ 592 BGB), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Überlassung mit Fruchtziehungsrecht, Pachtzinszahlung, Inventarübernahme/-rückgabe, Instandhaltungspflichtverteilung, Verpächterpfandrecht, Betriebspflicht.
+BRANCHENÜBLICH: Pachtzinsanpassung (Index/Staffel), Inventarverzeichnis als Anlage, Unterverpachtungsverbot, Konkurrenzschutz (Gastronomie/Gewerbe), Mindestlaufzeit 5-10 Jahre, Vorkaufsrecht.
+ECHTE RISIKEN: Unangemessen kurze Kündigungsfrist bei Landpacht (§ 594a BGB: min. 2 Jahre), Pachtzinsanpassung ohne Obergrenze, fehlende Inventarregelung, Betriebspflicht ohne Ausnahme für höhere Gewalt.
+DSGVO: Meist gering.`,
+  handelsvertreter: `NORMEN: HV-Recht (§§ 84-92c HGB), Provision (§§ 87-87c HGB), Ausgleichsanspruch (§ 89b HGB — ZWINGEND!), Wettbewerbsverbot (§ 90a HGB), Kündigung (§ 89 HGB), Bucheinblick (§ 87c HGB).
+KERNMECHANISMEN (KEIN Risiko): Provisionsbasierte Vergütung, Gebiets-/Kundenzuweisung, Berichtspflichten, Treuepflicht, Wettbewerbsverbot während Vertragszeit.
+BRANCHENÜBLICH: Branchenabhängige Provisionssätze, Delkredere gegen Sonderprovision (§ 86b HGB), Inkassovollmacht, Kundenschutzklausel, Mindestprovision/Fixum.
+ECHTE RISIKEN: Ausgleichsanspruch-Ausschluss (§ 89b Abs. 4 HGB: nur bei Kündigung durch HV zulässig — sonst UNWIRKSAM), nachvertragliches Wettbewerbsverbot ohne Karenzentschädigung (§ 90a HGB: max. 2 Jahre), Delkredere OHNE Sonderprovision (§ 86b HGB), Bucheinblicksrecht-Ausschluss (§ 87c HGB: zwingend!).
+DSGVO: Kundendatenweitergabe (Art. 6(1)(f)), Datenrückgabe bei Vertragsende.`,
+  franchisevertrag: `NORMEN: Vertragsfreiheit (§ 311 BGB), AGB-Kontrolle (§§ 305-310 BGB — Franchise-Verträge sind oft AGB!), vorvertragliche Aufklärung (§ 241 Abs. 2 BGB), Kartellrecht (Art. 5 Vertikal-GVO EU), Scheinselbständigkeit (§ 7 SGB IV).
+KERNMECHANISMEN (KEIN Risiko): Entry Fee, laufende Franchisegebühr (% vom Umsatz), Systemvorgaben (CI, Sortiment, Qualität), Gebietsschutz, Schulungspflichten, Werbungskostenbeitrag.
+BRANCHENÜBLICH: Exklusiver Gebietsschutz, Bezugsbindung bei systemrelevanten Produkten, Wettbewerbsverbot während + max. 1 Jahr nach Vertragsende, Mindestabnahme, Investitionskostentragung durch Franchisenehmer, Audit-Recht.
+ECHTE RISIKEN: Übermäßige Bezugsbindung bei nicht-systemrelevanten Produkten (Kartellrecht), nachvertragliches Wettbewerbsverbot über 1 Jahr/ohne Gebietsbegrenzung (Art. 5 Vertikal-GVO), fehlende vorvertragliche Aufklärung (§ 241 Abs. 2 BGB: Schadensersatz), Scheinselbständigkeit durch enge Weisungsbindung (§ 7 SGB IV), Exit ohne Investitionsrückkauf.
+DSGVO: Kundendatenteilung (gemeinsame Verantwortlichkeit Art. 26?), CRM-Systeme, Marketingdaten.`,
+  rahmenvertrag: `NORMEN: Vertragsfreiheit (§ 311 BGB), Abrufrecht (je nach Ausgestaltung), AGB-Kontrolle (§§ 305-310 BGB), Schadensersatz bei Abrufausfall (§§ 280 ff. BGB).
+KERNMECHANISMEN (KEIN Risiko): Rahmenvereinbarung mit Einzelabrufen, Mengenkorridore (Mindest-/Höchstmengen), Preisvereinbarung für Rahmenperiode, Abrufmodalitäten (Frist, Form, Mindestmenge).
+BRANCHENÜBLICH: Exklusivität (ganz oder anteilig), Preisanpassung (jährlich bei Index/Rohstoff), Qualitätsstandards/Lastenheft, Lieferzeitfenster, Mindestabnahme mit Vertragsstrafe, Bonus/Malus-System.
+ECHTE RISIKEN: Unbegrenzte Abnahmeverpflichtung ohne Höchstmenge (unkalkulierbar), einseitige Preisanpassung OHNE Sonderkündigungsrecht (§ 307 BGB), fehlende Regelung für Abrufausfall, automatische Verlängerung ohne angemessene Kündigungsfrist.
+DSGVO: Abhängig vom Vertragsgegenstand, Art. 28 wenn personenbezogene Daten verarbeitet.`,
+  maklervertrag: `NORMEN: Maklerrecht (§§ 652-656d BGB), Wohnungsvermittlung (§ 2 WoVermG), Bestellerprinzip (§ 656c BGB), Widerruf (§§ 355 ff. BGB bei Fernabsatz), AGB-Kontrolle (§§ 305-310 BGB).
+KERNMECHANISMEN (KEIN Risiko): Provisionsvereinbarung (erfolgsabhängig), Nachweis-/Vermittlungstätigkeit, Alleinauftrag (zeitlich begrenzt), Doppeltätigkeit (zulässig wenn offengelegt).
+BRANCHENÜBLICH: Provisionshöhe (Kauf: 3-7% regional, Miete: max. 2 Nettokaltmieten + MwSt.), Aufwendungsersatz bei Alleinauftrag, Hinweispflicht auf Doppeltätigkeit, Widerrufsbelehrung bei Fernabsatz.
+ECHTE RISIKEN: Provision ohne Nachweis-/Vermittlungsleistung (§ 652 BGB: Voraussetzung!), überhöhte Provision (§ 138 BGB), Umgehung Bestellerprinzip (§ 656c BGB: Käufer max. 50%), fehlende Widerrufsbelehrung bei Online-Beauftragung, Aufwendungsersatz trotz gescheitertem Geschäft.
+DSGVO: Expose-Versand mit Personenbezug, Bonitätsprüfung (Art. 6(1)(f)), Maklerdatenbank.`,
 };
 
 function getContractTypeHint(contractType) {
