@@ -357,8 +357,8 @@ function generateCalendarLinks(token) {
     // Google Calendar - Nutze /calendar/u/0/r/settings/addbyurl für direkte URL-Eingabe
     google: `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?url=${encodeURIComponent(icsUrl)}`,
     
-    // Outlook.com
-    outlook: `https://outlook.live.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}&name=Contract%20AI%20Kalender`,
+    // Outlook.com / Microsoft 365
+    outlook: `https://outlook.office.com/calendar/0/addfromweb?url=${encodeURIComponent(icsUrl)}&name=Contract%20AI%20Kalender`,
     
     // Apple Calendar (macOS/iOS)
     apple: webcalUrl,
