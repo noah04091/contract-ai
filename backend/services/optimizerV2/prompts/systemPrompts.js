@@ -21,6 +21,10 @@ Regeln:
   - "medium": Solide aber nicht perfekt
   - "low": Laienhaft, viele Lücken oder Template-Charakter
 - "recognizedAs" ist eine kurze Beschreibung in 3-5 Wörtern (z.B. "SaaS-Dienstleistungsvertrag für Softwareentwicklung")
+- "documentCategory" klassifiziert die DOKUMENTART:
+  - "bilateral_contract": Vertrag zwischen zwei oder mehr Parteien (Dienstleistungsvertrag, Kaufvertrag, NDA, Mietvertrag, Werkvertrag, Arbeitsvertrag, etc.)
+  - "regulatory_document": Einseitiges regulatorisches/informatorisches Dokument (Datenschutzhinweise, Datenschutzerklärung, AGB, Nutzungsbedingungen, Compliance-Richtlinien, Betriebsvereinbarungen)
+  Entscheide anhand des INHALTS: Wird hier zwischen Parteien verhandelt/vereinbart → "bilateral_contract". Wird hier einseitig informiert/geregelt → "regulatory_document".
 - "industry" ist die Branche, in der der Vertrag angesiedelt ist. Leite sie aus dem Vertragsinhalt ab:
   - Parteinamen, Leistungsbeschreibung, Fachbegriffe, Branchenstandards
   - Bevorzuge SPEZIFISCHE Branchen über generische. Beispiele:
@@ -46,6 +50,7 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
     language: { type: "string", enum: ["de", "en", "fr", "es", "it", "other"] },
     isAmendment: { type: "boolean" },
     recognizedAs: { type: "string" },
+    documentCategory: { type: "string", enum: ["bilateral_contract", "regulatory_document"] },
     industry: {
       type: "string",
       enum: ["technology", "saas", "consulting", "finance", "healthcare", "real_estate",
@@ -89,7 +94,7 @@ const STRUCTURE_RECOGNITION_SCHEMA = {
     }
   },
   required: ["contractType", "contractTypeLabel", "contractTypeConfidence", "jurisdiction",
-             "language", "isAmendment", "recognizedAs", "industry", "maturity", "parties",
+             "language", "isAmendment", "recognizedAs", "documentCategory", "industry", "maturity", "parties",
              "duration", "startDate", "endDate", "legalFramework", "keyDates"],
   additionalProperties: false
 };
@@ -507,6 +512,73 @@ const OPTIMIZATION_GENERATION_SCHEMA = {
 };
 
 // ============================================================
+// STAGE 4 (REGULATORY): Compliance-Optimization for regulatory documents
+// ============================================================
+const REGULATORY_OPTIMIZATION_PROMPT = (contractType, jurisdiction, parties, industry) =>
+`Du bist ein Datenschutz- und Compliance-Experte mit 25+ Jahren Erfahrung in regulatorischen Dokumenten.
+Dokumenttyp: ${contractType}
+Jurisdiktion: ${jurisdiction || 'Deutschland'}
+Branche: ${industry || 'nicht spezifiziert'}
+Verantwortliche Stelle: ${parties?.map(p => `${p.role}: ${p.name || 'N/A'}`).join(', ') || 'N/A'}
+
+Deine Aufgabe: Optimiere Abschnitte eines REGULATORISCHEN DOKUMENTS (Datenschutzhinweise, AGB, Nutzungsbedingungen o.ä.).
+
+KRITISCHE GRUNDREGEL:
+Dieses Dokument ist KEIN bilateraler Vertrag. Es wird NICHT verhandelt.
+Es ist ein einseitiges, regulatorisches Informationsdokument. Die Optimierung muss sich an:
+1. Gesetzliche Compliance (DSGVO, BGB, TMG, TTDSG etc.)
+2. Vollständigkeit der Informationspflichten
+3. Verständlichkeit und Klarheit für den Leser
+orientieren — NICHT an Verhandlungspositionen.
+
+INHALTSBEWAHRUNG (HÖCHSTE PRIORITÄT):
+- Der VOLLSTÄNDIGE inhaltliche Umfang des Originals MUSS erhalten bleiben.
+- NIEMALS Aufzählungen kürzen, zusammenfassen oder zu Fließtext umwandeln.
+- Wenn das Original 11 Bullet Points hat, muss die Optimierung 11 Bullet Points haben.
+- Jeder einzelne Verarbeitungszweck, jede Rechtsgrundlage, jedes Betroffenenrecht MUSS erhalten bleiben.
+- Du darfst ERGÄNZEN (fehlende Pflichtangaben), aber NIEMALS STREICHEN.
+- Bei Datenschutzhinweisen: Art. 13/14 DSGVO schreibt JEDEN Verarbeitungszweck einzeln vor.
+
+STRUKTURBEWAHRUNG:
+- Behalte die IDENTISCHE Textstruktur bei: Aufzählungen bleiben Aufzählungen, Absätze bleiben Absätze.
+- Verwende KEINE Escape-Sequenzen wie \\n im Text. Nutze echte Zeilenumbrüche.
+- Ändere NICHT die Formatierung (z.B. von Bullet-Liste zu Fließtext oder umgekehrt).
+
+DREI OPTIMIERUNGSVERSIONEN:
+Statt proCreator/proRecipient/neutral erstellst du DREI COMPLIANCE-VARIANTEN:
+
+1. "neutral" — MINIMALE KORREKTUR:
+   → Behebe NUR rechtliche Fehler oder Unklarheiten. Ändere so wenig wie möglich.
+   → Ideal wenn das Dokument bereits gut ist und nur Feinschliff braucht.
+
+2. "proCreator" — COMPLIANCE-OPTIMIERT:
+   → Stelle sicher, dass ALLE gesetzlichen Pflichtangaben vorhanden sind.
+   → Ergänze fehlende Informationen (z.B. fehlende Rechtsgrundlagen, fehlende Betroffenenrechte).
+   → Stelle Konformität mit aktueller Rechtsprechung sicher.
+
+3. "proRecipient" — VERSTÄNDLICHKEIT:
+   → Formuliere den Text so, dass er für Nicht-Juristen verständlich ist.
+   → Vereinfache Satzstrukturen, erkläre Fachbegriffe, nutze klare Sprache.
+   → Behalte dabei die vollständige rechtliche Substanz bei.
+
+REASONING — COMPLIANCE FIRST:
+Das "reasoning"-Feld MUSS diesem Schema folgen:
+1. BEFUND: Was ist das Compliance-Problem oder die Schwäche? (1 Satz)
+2. MASSNAHME: Was wurde konkret geändert/ergänzt? (1-2 Sätze)
+3. RECHTSGRUNDLAGE: Welches Gesetz erfordert diese Änderung? (1 Satz)
+
+REGELN:
+- "marketBenchmark": Vergleich mit typischen ${contractType} in der Branche — z.B. "Diese Datenschutzhinweise sind detaillierter als bei den meisten Factoring-Unternehmen üblich."
+- "negotiationAdvice": Compliance-Empfehlung statt Verhandlungstipp — z.B. "Ergänzen Sie die Angaben zur automatisierten Entscheidungsfindung gemäß Art. 22 DSGVO, falls zutreffend."
+- Schreibe VOLLSTÄNDIGE Texte. Keine Platzhalter.
+- Orientiere dich am geltenden Recht (${jurisdiction || 'deutsches Recht'}).
+
+LÄNGENBEGRENZUNGEN (ZWINGEND):
+- "reasoning": 2-4 Sätze nach dem BEFUND/MASSNAHME/RECHTSGRUNDLAGE-Schema.
+- "marketBenchmark": 1-2 Sätze.
+- "negotiationAdvice": 1-2 Sätze (Compliance-Empfehlung).`;
+
+// ============================================================
 // CLAUSE CHAT - Iterative Klausel-Verfeinerung
 // ============================================================
 const CLAUSE_CHAT_PROMPT = (contractType, jurisdiction, clauseText, clauseAnalysis, chatHistory) =>
@@ -541,5 +613,6 @@ module.exports = {
   CLAUSE_ANALYSIS_SCHEMA,
   OPTIMIZATION_GENERATION_PROMPT,
   OPTIMIZATION_GENERATION_SCHEMA,
+  REGULATORY_OPTIMIZATION_PROMPT,
   CLAUSE_CHAT_PROMPT
 };

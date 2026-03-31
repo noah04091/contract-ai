@@ -7,13 +7,15 @@
  * This stage has ALL context from stages 1-3, which is why the
  * generated alternatives are dramatically better than a single-call approach.
  */
-const { OPTIMIZATION_GENERATION_PROMPT, OPTIMIZATION_GENERATION_SCHEMA } = require('../prompts/systemPrompts');
+const { OPTIMIZATION_GENERATION_PROMPT, OPTIMIZATION_GENERATION_SCHEMA, REGULATORY_OPTIMIZATION_PROMPT } = require('../prompts/systemPrompts');
 const { generateClauseDiffs } = require('../utils/diffGenerator');
 const { calculateCost } = require('./01-structureRecognition');
 
 const BATCH_SIZE = 3; // Smaller batches for higher quality output
 
 async function runOptimizationGeneration(openai, clauses, clauseAnalyses, structure, onProgress) {
+  const isRegulatory = structure.documentCategory === 'regulatory_document';
+  console.log(`[OptimizerV2] Stage 4: documentCategory=${structure.documentCategory || 'not set'}, using ${isRegulatory ? 'REGULATORY' : 'CONTRACT'} optimization prompt`);
   onProgress(50, 'Generiere optimierte Klauseln...');
 
   // Build analysis map for quick lookup
@@ -87,7 +89,10 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
       ].join('\n');
     }).join('\n\n---\n\n');
 
-    const systemPrompt = OPTIMIZATION_GENERATION_PROMPT(
+    // Select prompt based on document category — regulatory docs get compliance-focused optimization
+    const isRegulatory = structure.documentCategory === 'regulatory_document';
+    const promptFn = isRegulatory ? REGULATORY_OPTIMIZATION_PROMPT : OPTIMIZATION_GENERATION_PROMPT;
+    const systemPrompt = promptFn(
       structure.contractTypeLabel || structure.contractType,
       structure.jurisdiction,
       structure.parties,
@@ -141,14 +146,34 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
         throw new Error('Invalid response structure: missing optimizations array');
       }
 
-      // Version differentiation check — detect when GPT produces identical versions
+      // Quality checks on GPT output
       for (const opt of result.optimizations) {
         if (!opt.needsOptimization) continue;
+
+        // Version differentiation check — detect identical versions
         const texts = [opt.neutral?.text, opt.proCreator?.text, opt.proRecipient?.text].filter(Boolean);
         const unique = new Set(texts);
         if (unique.size < texts.length) {
           console.warn(`[OptimizerV2] Stage 4: Clause ${opt.clauseId} has ${texts.length - unique.size} duplicate version(s) — neutral/proCreator/proRecipient should be distinct`);
         }
+
+        // Content preservation check — warn if optimization shortened text significantly
+        const clause = clauses.find(c => c.id === opt.clauseId);
+        if (clause) {
+          const originalLen = clause.originalText.length;
+          for (const [mode, version] of Object.entries({ neutral: opt.neutral, proCreator: opt.proCreator, proRecipient: opt.proRecipient })) {
+            if (version?.text && version.text.length < originalLen * 0.7) {
+              console.warn(`[OptimizerV2] Stage 4: Clause ${opt.clauseId} ${mode} is ${Math.round((1 - version.text.length / originalLen) * 100)}% shorter than original (${version.text.length} vs ${originalLen} chars)`);
+            }
+          }
+        }
+      }
+
+      // Post-processing: clean literal \n escape sequences from GPT output
+      for (const opt of result.optimizations) {
+        if (opt.neutral?.text) opt.neutral.text = opt.neutral.text.replace(/\\n/g, '\n').trim();
+        if (opt.proCreator?.text) opt.proCreator.text = opt.proCreator.text.replace(/\\n/g, '\n').trim();
+        if (opt.proRecipient?.text) opt.proRecipient.text = opt.proRecipient.text.replace(/\\n/g, '\n').trim();
       }
 
       // Generate diffs for each optimization

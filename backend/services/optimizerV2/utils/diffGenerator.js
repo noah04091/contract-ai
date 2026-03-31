@@ -16,7 +16,19 @@ function generateWordDiff(original, optimized) {
     return [{ type: 'equal', text: original }];
   }
 
-  const changes = Diff.diffWords(original, optimized, { intlSegmenter: undefined });
+  // Choose diff algorithm based on change magnitude:
+  // If the texts differ significantly in structure, use sentence-level diff for cleaner output.
+  // Word-level diff produces confusing artifacts when lists are restructured to prose.
+  const wordDiffChanges = Diff.diffWords(original, optimized, { intlSegmenter: undefined });
+  const changeCount = wordDiffChanges.filter(c => c.added || c.removed).length;
+  const totalParts = wordDiffChanges.length;
+  const changeRatio = totalParts > 0 ? changeCount / totalParts : 0;
+
+  // If >60% of diff parts are changes, switch to sentence-level diff for readability
+  const changes = changeRatio > 0.6
+    ? Diff.diffSentences(original, optimized)
+    : wordDiffChanges;
+
   const ops = [];
 
   for (const change of changes) {
