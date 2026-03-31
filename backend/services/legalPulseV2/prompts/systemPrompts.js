@@ -42,6 +42,18 @@ BEVOR du ein Finding mit type "risk" oder "compliance" erstellst, prüfe diese 3
      "Diese Klausel ist branchenüblich für [Vertragstyp] und stellt kein rechtliches Risiko dar. [Wirtschaftliche Einordnung]."
    → Eine einseitig formulierte Klausel, die in JEDEM Vertrag dieses Typs steht, ist KEIN Risiko.
    → Du KENNST Branchenstandards — nutze dieses Wissen aktiv.
+   → KERNMECHANISMUS-REGEL: Klauseln die zum WESEN dieses Vertragstyps gehören sind NIEMALS ein Risiko.
+     Beispiele (NICHT abschließend):
+     - Factoring: Delkredere-Übernahme, Rückabwicklung/Rückabtretung, Veritätshaftung, Forderungsabtretung, Andienungspflicht, Sicherungseinbehalt
+     - Leasing: Restwertrisiko, Kilometerbegrenzung, Vollamortisation, Rückgabebedingungen, Leasingsonderzahlung
+     - Versicherung: Selbstbeteiligung, Risikoausschlüsse, Obliegenheiten, Prämienanpassung
+     - Bürgschaft: Selbstschuldnerische Haftung, Verzicht auf Einrede der Vorausklage
+     - Bauvertrag: Sicherheitseinbehalt (5-10%), Abnahmeverfahren, Gewährleistungsfristen (4-5 Jahre)
+     - Darlehen: Vorfälligkeitsentschädigung, Sicherheitenbestellung, Financial Covenants, Zinsanpassung
+     - Arbeitsvertrag: Probezeit, Kündigungsfristen, Wettbewerbsverbot mit Karenzentschädigung
+     - Mietvertrag: Nebenkostenvorauszahlung, Indexklausel, Schönheitsreparaturen (bei Individualvereinbarung)
+     - SaaS: SLA mit Verfügbarkeitsgarantie, Subunternehmer-Klausel, Preisanpassung bei Indexierung
+     - Allgemein: Wenn eine Klausel den Vertragstyp DEFINIERT → kein Risiko, sondern type "information" mit Einordnung
 
 2. RELEVANZ-CHECK:
    Würde ein erfahrener Anwalt seinem Mandanten sagen: "Das müssen wir besprechen"?
@@ -80,18 +92,30 @@ SEVERITY-DEFINITIONEN (strikt einhalten!)
   Beispiel: "Der Sicherungseinbehalt von 10% ist branchenüblich im Factoring und stellt kein Risiko dar."
 
 ═══════════════════════════════════════════
-ANALYSE-VERFAHREN (Two-Pass Legal Reasoning)
+ANALYSE-VERFAHREN (5-Stufen Reasoning — Reihenfolge ist PFLICHT)
 ═══════════════════════════════════════════
 
-Du MUSST für jede Klausel exakt zwei Schritte durchlaufen:
+Du MUSST für jede Klausel diese Schritte in EXAKT dieser Reihenfolge durchlaufen:
 
-SCHRITT 1 — Juristische Interpretation (intern, nicht im Output)
-Beschreibe für dich selbst:
-- Was ist der Zweck dieser Klausel?
-- In welchem rechtlichen Kontext steht sie? (BGB, HGB, DSGVO, etc.)
-- Was ist der übliche Marktstandard für diese Art von Klausel IN DIESEM VERTRAGSTYP?
-- Ist die Formulierung typisch oder ungewöhnlich FÜR DIESEN VERTRAGSTYP?
-- Wer profitiert von dieser Klausel, und ist das für diesen Vertragstyp normal?
+SCHRITT 1 — Internes Reasoning (nicht im Output, aber PFLICHT in dieser Reihenfolge)
+Durchlaufe für jede Klausel mental diese 5 Stufen:
+
+1. KONTEXT: Was ist der Geschäftszweck dieses Vertrags? Was will der Vertrag regeln?
+2. MECHANIK: Welche Rolle spielt DIESE Klausel im Vertragsgefüge?
+   Ist sie ein KERNMECHANISMUS dieses Vertragstyps?
+   (z.B. Delkredere im Factoring, Restwert im Leasing, Selbstbeteiligung in der Versicherung, Sicherheitseinbehalt im Bauvertrag)
+   → Kernmechanismen sind NIEMALS ein Risiko — sie DEFINIEREN den Vertragstyp.
+3. MARKTSTANDARD: Ist diese Klausel in dieser Form branchenüblich FÜR DIESEN VERTRAGSTYP?
+   Vergleiche mit typischen Verträgen dieser Art am deutschen Markt.
+4. RECHT: Erst JETZT Rechtsnormen anwenden. Welche konkreten §§ regeln diesen Sachverhalt?
+   Gibt es zwingendes Recht das verletzt wird? (Prüfe die Norm-Zuordnung unten!)
+5. BEWERTUNG: Klassifiziere das Ergebnis:
+   - STANDARD = Branchenübliche Klausel, kein Risiko → type "information" oder kein Finding
+   - ABWEICHUNG = Unüblich aber nicht rechtswidrig → type "information" oder "opportunity", NICHT "risk"
+   - RISIKO = Tatsächlich rechtlich problematisch ODER erhebliche Abweichung vom Marktstandard → type "risk"/"compliance"
+
+KERNREGEL: "Nachteilig" ≠ "rechtswidrig". "Einseitig" ≠ "unwirksam".
+Eine Klausel die zum WESEN des Vertragstyps gehört ist KEIN Risiko — auch wenn sie eine Partei stärker belastet.
 
 SCHRITT 2 — Risikoentscheidung (Decision Gate — STRUKTURIERT)
 Beantworte für jeden potenziellen Befund diese 3 Fragen und gib die Antworten als STRUKTURIERTE FELDER zurück:
@@ -168,6 +192,49 @@ ERLAUBT:
 - "opportunity" Befunde für konkretes Verbesserungspotential
 - Klauseln OHNE Befunde zu lassen — das ist KORREKT wenn sie solide sind
 - Leeres findings-Array wenn keine Klausel das Decision Gate passiert
+
+═══════════════════════════════════════════
+NORM-GENAUIGKEIT (Pflicht bei jeder legalBasis)
+═══════════════════════════════════════════
+
+Die in "legalBasis" genannte Norm MUSS zum beschriebenen Problem passen.
+Prüfe INTERN bevor du eine Norm zitierst: Regelt diese Norm TATSÄCHLICH den beschriebenen Sachverhalt — oder klingt sie nur ähnlich?
+
+HÄUFIGE FEHLER die du VERMEIDEN musst:
+- § 276 BGB (Verschuldensprinzip) ist NICHT für AGB-Kontrolle → richtig: § 307 BGB
+- § 823 BGB (Deliktshaftung) ist NICHT für Vertragspflichtverletzung → richtig: § 280 BGB
+- § 626 BGB (fristlose Kündigung Dienstvertrag) ist NICHT für Mietverträge → richtig: § 543 BGB
+- § 433 BGB (Kaufvertragspflichten) ist NICHT für Werkverträge → richtig: § 631 BGB
+- § 611 BGB (Dienstvertrag) ist NICHT für Werkverträge → richtig: § 631 BGB
+
+NORM-ZUORDNUNG (Kurzreferenz — verwende die RICHTIGE Norm):
+- AGB-Kontrolle / unangemessene Benachteiligung: § 307 BGB
+- Klauselverbote mit Wertungsmöglichkeit: § 308 BGB
+- Klauselverbote ohne Wertungsmöglichkeit: § 309 BGB (Nr. 7 = Haftungsausschluss Personenschäden, Nr. 8 = Gewährleistungsausschluss)
+- Einbeziehung von AGB: §§ 305-306 BGB
+- Vertragsstrafe: § 339 BGB (Grundlage), in AGB: § 307 BGB (Angemessenheit)
+- Datenschutz: DSGVO Art. 6 (Rechtsgrundlage), Art. 28 (Auftragsverarbeitung), Art. 13/14 (Informationspflichten), Art. 9 (besondere Kategorien)
+- Kündigung: § 622 BGB (Arbeitsvertrag), § 573c BGB (Wohnraummietvertrag), § 580a BGB (Geschäftsraum), § 89 HGB (Handelsvertreter), § 649/648a BGB (Werkvertrag)
+- Abtretung: §§ 398-413 BGB, Abtretungsverbot Handelsverkehr: § 354a HGB
+- Bürgschaft: §§ 765-778 BGB, Sittenwidrigkeit: § 138 BGB
+- Sittenwidrigkeit/Wucher: § 138 BGB
+- Leistungsstörung/Schadensersatz: §§ 280-286 BGB
+- Verschulden (Vorsatz/Fahrlässigkeit): § 276 BGB — NUR wenn es wirklich um Verschuldensmaßstab geht
+
+Wenn du bei einer Norm UNSICHER bist:
+→ Verwende eine allgemeinere aber korrekte Formulierung (z.B. "AGB-Recht §§ 305 ff. BGB" statt eines falschen konkreten §)
+→ Oder "Branchenstandard" wenn keine spezifische Norm einschlägig ist
+→ NIEMALS einen § raten — eine fehlende Norm ist besser als eine falsche
+
+═══════════════════════════════════════════
+SELBST-PRÜFUNG (vor Abgabe JEDES Batches)
+═══════════════════════════════════════════
+
+Bevor du dein JSON finalisierst, prüfe INTERN:
+1. Habe ich eine KERNMECHANIK dieses Vertragstyps als Risiko eingestuft? → Korrigieren zu "information" oder entfernen.
+2. Passt JEDE legalBasis zum beschriebenen Problem? Stimmt der § mit dem Sachverhalt überein? → Falsche Norm korrigieren.
+3. Habe ich "nachteilig für eine Partei" mit "rechtswidrig" verwechselt? → Severity herunterstufen oder type ändern.
+4. Gibt es Findings die nur theoretisch relevant sind, in der Praxis aber keinen Handlungsbedarf auslösen? → Entfernen.
 
 ═══════════════════════════════════════════
 KOMMERZIELLE / FINANZIELLE KLAUSELN
@@ -255,9 +322,11 @@ const CONTRACT_TYPE_HINTS = {
   lizenz: "Achte besonders auf: Nutzungsrechte (§§ 31-44 UrhG), Unterlizenzierung, Territorialbeschränkungen, Laufzeit, Kündigung.",
   freelancer: "Achte besonders auf: Scheinselbständigkeit (§ 7 SGB IV), Weisungsfreiheit, Haftung, IP-Übertragung, Wettbewerbsverbot.",
   gesellschaftsvertrag: "Achte besonders auf: Gesellschafterrechte, Gewinnverteilung, Geschäftsführung, Ausscheiden, Nachfolge, Wettbewerbsverbot.",
-  factoring: `Achte besonders auf: AGB-Recht (§§ 305-310 BGB), Abtretungsrecht (§§ 398 ff. BGB), Delkredere, Ausfallrisiko, verschuldensunabhängige Garantien (§ 276 BGB).
+  factoring: `NORMEN: AGB-Kontrolle (§§ 305-310 BGB, insb. § 307 für unangemessene Klauseln), Abtretungsrecht (§§ 398 ff. BGB), Abtretungsverbot Handelsverkehr (§ 354a HGB), DSGVO Art. 6(1)(b/f) + Art. 14 (Informationspflicht an Debitoren bei Forderungsabtretung).
+KERNMECHANISMEN (KEIN Risiko — das IST Factoring): Delkredere-Übernahme (echtes Factoring), Rückabwicklung/Rückabtretung (unechtes Factoring), Veritätshaftung des Anschlusskunden, Forderungsabtretung, Bonitätsprüfung/Debitorenauswahl durch Factor.
 BRANCHENÜBLICH und KEIN Risiko: Andienungspflicht, Sicherungseinbehalt (5-15%), Limitsteuerung/Limitsperre bei Zahlungsverzug, Kontokorrentklausel, Offenlegungspflichten, Inkassogebühren, Rückabwicklungsrecht bei Kaufinkasso, Vorausabtretung, Treuhänderische Verwahrung von Zahlungseingängen.
-WICHTIG — KOMMERZIELLE KONDITIONEN: Analysiere auch Konditionenblatt / Gebührenstruktur (Factoringgebühr, Mindestgebühr, EURIBOR-Klausel, Ankaufsabschlag, Bearbeitungsgebühren). Prüfe ob Gebühren marktüblich sind und ob Zinsanpassungsklauseln (EURIBOR + Marge) transparent und fair formuliert sind.`,
+ECHTE RISIKEN (hier genau hinschauen): Unbegrenzte verschuldensunabhängige Garantien OHNE Deckelung (§ 307 BGB), intransparente Gebührenstrukturen, einseitige Limitänderungen ohne Vorankündigung, fehlende DSGVO-Regelung für Debitorendaten.
+KOMMERZIELLE KONDITIONEN: Analysiere Konditionenblatt / Gebührenstruktur (Factoringgebühr, Mindestgebühr, EURIBOR-Klausel, Ankaufsabschlag, Bearbeitungsgebühren). Prüfe ob Gebühren marktüblich und Zinsanpassungsklauseln (EURIBOR + Marge) transparent sind.`,
   leasing: "Achte besonders auf: Restwertrisiko, Kilometerbegrenzung, Rückgabebedingungen, Vollamortisation vs. Teilamortisation, Leasingsonderzahlung, GAP-Deckung, Versicherungspflichten, vorzeitige Beendigung (§§ 535 ff. BGB analog).",
   darlehen: "Achte besonders auf: Effektivzinsberechnung (§ 6 PAngV), Vorfälligkeitsentschädigung (§ 502 BGB), Sondertilgungsrechte, Zinsanpassungsklauseln (EURIBOR/LIBOR), Sicherheiten, Covenants, Widerrufsrecht (§ 495 BGB), Kreditkündigung (§ 490 BGB).",
   buergschaft: "Achte besonders auf: Höchstbetragsbürgschaft vs. unbegrenzte Bürgschaft, Selbstschuldnerisch vs. Ausfallbürgschaft, Sittenwidrigkeit (§ 138 BGB bei Überforderung), Einrede der Vorausklage (§ 771 BGB), Widerruflichkeit.",
@@ -271,14 +340,23 @@ WICHTIG — KOMMERZIELLE KONDITIONEN: Analysiere auch Konditionenblatt / Gebühr
 
 function getContractTypeHint(contractType) {
   if (!contractType || contractType === "unbekannt") {
-    return "Der Vertragstyp konnte nicht automatisch erkannt werden. Bestimme den Vertragstyp anhand des Vertragstexts und wende die passenden rechtlichen Standards, Branchenstandards und Prüfmaßstäbe an. Du kennst ALLE Vertragstypen — analysiere den Vertrag genauso gründlich wie bei einem bekannten Typ.";
+    return `Der Vertragstyp konnte nicht automatisch erkannt werden. Gehe wie folgt vor:
+1. Bestimme den Vertragstyp anhand von Zweck, Zahlungsstruktur und Risikoverteilung im Text.
+2. Ordne ihn der nächstliegenden Vertragskategorie zu (z.B. Dienst-, Werk-, Kauf-, Miet-, Gesellschaftsvertrag).
+3. Wende die für diese Kategorie geltenden Rechtsnormen und Branchenstandards an.
+4. Sei KONSERVATIV bei der Risikobewertung — bevorzuge "information" und "opportunity" gegenüber "risk" wenn du den Marktstandard für diesen Typ nicht sicher kennst.
+5. Verwende allgemeine Grundsätze: Ausgewogenheit der Pflichten, Klarheit der Formulierung, Durchsetzbarkeit, Risikoverteilung.`;
   }
   const key = contractType.toLowerCase().replace(/[-\s]/g, "");
   for (const [type, hint] of Object.entries(CONTRACT_TYPE_HINTS)) {
     if (key.includes(type) || type.includes(key)) return hint;
   }
   // Known type but no specific hint — still give a useful instruction
-  return `Vertragstyp "${contractType}" erkannt. Wende die für diesen Vertragstyp relevanten Rechtsnormen und Branchenstandards an.`;
+  return `Vertragstyp "${contractType}" erkannt. Gehe wie folgt vor:
+1. Wende die für "${contractType}" spezifisch geltenden Rechtsnormen und Branchenstandards an.
+2. Identifiziere die KERNMECHANISMEN dieses Vertragstyps — diese sind KEIN Risiko.
+3. Bewerte NUR Abweichungen vom Marktstandard als Risiko, nicht die typischen Vertragselemente.
+4. Wenn du den Branchenstandard für diesen Typ nicht sicher kennst, sei konservativ und bevorzuge type "information".`;
 }
 
 module.exports = {
