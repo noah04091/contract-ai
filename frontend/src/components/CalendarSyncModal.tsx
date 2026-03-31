@@ -452,6 +452,15 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               </div>
             </div>
 
+            <div className={styles.syncNotice}>
+              <AlertCircle size={16} />
+              <p>
+                <strong>Hinweis:</strong> Outlook aktualisiert abonnierte Kalender nur alle paar Stunden automatisch.
+                Neue Ereignisse erscheinen daher nicht sofort. Sie können in Outlook manuell aktualisieren:
+                Rechtsklick auf den Kalender → "Aktualisieren".
+              </p>
+            </div>
+
             <div className={styles.alternativeMethod}>
               <h4>Alternative: Desktop Outlook</h4>
               <p>Für Outlook Desktop kopieren Sie diese URL:</p>
