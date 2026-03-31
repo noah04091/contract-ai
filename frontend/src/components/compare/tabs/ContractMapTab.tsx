@@ -125,7 +125,7 @@ function severityRank(s?: string): number {
 export default function ContractMapTab({ contract1, contract2, differences, documentType }: ContractMapTabProps) {
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const rows = buildAreaRows(contract1, contract2, differences);
-  const _docName = documentType?.labels?.documentName || 'Vertrag';
+  const docName = documentType?.labels?.documentName || 'Vertrag';
 
   // Stats
   const stats = {
