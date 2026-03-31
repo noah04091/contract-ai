@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, CheckCircle, AlertTriangle, XCircle, Minus } fr
 import {
   ContractStructure, StructuredClause,
   ClauseArea, CLAUSE_AREA_LABELS,
-  EnhancedDifference,
+  EnhancedDifference, DocumentTypeInfo,
 } from '../../../types/compare';
 import styles from '../../../styles/Compare.module.css';
 
@@ -11,6 +11,7 @@ interface ContractMapTabProps {
   contract1: ContractStructure;
   contract2: ContractStructure;
   differences: EnhancedDifference[];
+  documentType?: DocumentTypeInfo | null;
 }
 
 // Preferred display order for clause areas
@@ -121,9 +122,10 @@ function severityRank(s?: string): number {
   }
 }
 
-export default function ContractMapTab({ contract1, contract2, differences }: ContractMapTabProps) {
+export default function ContractMapTab({ contract1, contract2, differences, documentType }: ContractMapTabProps) {
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const rows = buildAreaRows(contract1, contract2, differences);
+  const _docName = documentType?.labels?.documentName || 'Vertrag';
 
   // Stats
   const stats = {
@@ -150,8 +152,8 @@ export default function ContractMapTab({ contract1, contract2, differences }: Co
       {/* Header */}
       <div className={styles.mapHeader}>
         <div className={styles.mapHeaderArea}>Klauselbereich</div>
-        <div className={styles.mapHeaderContract}>Vertrag 1</div>
-        <div className={styles.mapHeaderContract}>Vertrag 2</div>
+        <div className={styles.mapHeaderContract}>{docName} 1</div>
+        <div className={styles.mapHeaderContract}>{docName} 2</div>
       </div>
 
       {/* Rows */}
@@ -199,8 +201,8 @@ export default function ContractMapTab({ contract1, contract2, differences }: Co
               {isExpanded && (
                 <div className={styles.mapDetail}>
                   <div className={styles.mapDetailGrid}>
-                    <ClauseDetail clauses={row.clauses1} label="Vertrag 1" />
-                    <ClauseDetail clauses={row.clauses2} label="Vertrag 2" />
+                    <ClauseDetail clauses={row.clauses1} label={`${docName} 1`} />
+                    <ClauseDetail clauses={row.clauses2} label={`${docName} 2`} />
                   </div>
                 </div>
               )}

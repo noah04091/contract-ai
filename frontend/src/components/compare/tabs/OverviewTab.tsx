@@ -43,22 +43,24 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
       {v2Result && (
         <div className={styles.scoresGrid}>
           <ScoreCard
-            title="Vertrag 1"
+            title={`${v2Result.documentType?.labels?.documentName || 'Vertrag'} 1`}
             fileName={file1Name || file1?.name}
             file={file1}
             s3Key={file1S3Key}
             scores={v2Result.scores.contract1}
             isRecommended={v2Result.overallRecommendation.recommended === 1}
             analysis={v2Result.contract1Analysis}
+            scoreLabels={v2Result.documentType?.scoreLabels}
           />
           <ScoreCard
-            title="Vertrag 2"
+            title={`${v2Result.documentType?.labels?.documentName || 'Vertrag'} 2`}
             fileName={file2Name || file2?.name}
             file={file2}
             s3Key={file2S3Key}
             scores={v2Result.scores.contract2}
             isRecommended={v2Result.overallRecommendation.recommended === 2}
             analysis={v2Result.contract2Analysis}
+            scoreLabels={v2Result.documentType?.scoreLabels}
           />
         </div>
       )}
@@ -135,7 +137,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
       >
         <div className={styles.verdictHeader}>
           <Star size={20} />
-          <h4>Empfehlung: Vertrag {result.overallRecommendation.recommended}</h4>
+          <h4>Empfehlung: {v2Result?.documentType?.labels?.documentName || 'Vertrag'} {result.overallRecommendation.recommended}</h4>
         </div>
         <p className={styles.verdictText}>
           {v2Result
@@ -214,6 +216,7 @@ function ScoreCard({
   scores,
   isRecommended,
   analysis,
+  scoreLabels: customScoreLabels,
 }: {
   title: string;
   fileName?: string;
@@ -222,8 +225,10 @@ function ScoreCard({
   scores: CategoryScores;
   isRecommended: boolean;
   analysis: { strengths: string[]; weaknesses: string[]; riskLevel: string };
+  scoreLabels?: Record<keyof CategoryScores, string> | null;
 }) {
   const scoreKeys = ['fairness', 'riskProtection', 'flexibility', 'completeness', 'clarity'] as const;
+  const labels = customScoreLabels || SCORE_LABELS;
 
   return (
     <motion.div
@@ -282,7 +287,7 @@ function ScoreCard({
         {scoreKeys.map((key) => (
           <div key={key} className={styles.categoryScoreRow}>
             <span className={styles.categoryScoreName}>
-              {SCORE_LABELS[key]}
+              {labels[key]}
             </span>
             <div className={styles.scoreBarTrack}>
               <motion.div
