@@ -959,7 +959,7 @@ function generateOtpEmailHTML(data) {
 
   return generateEmailTemplate({
     title: `Verifizierungscode`,
-    preheader: `Ihr Code: ${code} - G\u00FCltig f\u00FCr ${expiresMinutes} Minuten`,
+    preheader: `Ihr Code: ${code} - Gültig für ${expiresMinutes} Minuten`,
     body: body,
     centerContent: true
   });

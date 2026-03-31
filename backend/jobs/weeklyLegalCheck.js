@@ -266,7 +266,7 @@ class WeeklyLegalCheck {
         confidenceScore: this.calculateConfidence(stage1Results, chunks.length),
         lastDataSync: lastSyncTime,
         modelUsed: 'gpt-4o-mini',
-        disclaimer: 'KI-gest\u00FCtzte Vorpr\u00FCfung - ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gew\u00E4hr.'
+        disclaimer: 'KI-gestützte Vorprüfung - ersetzt keine anwaltliche Beratung. Alle Angaben ohne Gewähr.'
       }
     };
 
@@ -378,7 +378,7 @@ class WeeklyLegalCheck {
    */
   generateMergedSummary(findings, chunksCount, totalChars) {
     if (findings.length === 0) {
-      return `Vollst\u00E4ndige Analyse (${chunksCount} Abschnitte, ${totalChars.toLocaleString('de-DE')} Zeichen). Keine rechtlichen Auff\u00E4lligkeiten gefunden.`;
+      return `Vollständige Analyse (${chunksCount} Abschnitte, ${totalChars.toLocaleString('de-DE')} Zeichen). Keine rechtlichen Auffälligkeiten gefunden.`;
     }
 
     const critical = findings.filter(f => f.severity === 'critical').length;
@@ -390,7 +390,7 @@ class WeeklyLegalCheck {
     if (warnings > 0) parts.push(`${warnings} Warnungen`);
     if (info > 0) parts.push(`${info} Hinweise`);
 
-    return `Vollst\u00E4ndige Analyse (${chunksCount} Abschnitte, 100% des Vertrags): ${parts.join(', ')}. ${findings.length} Befunde insgesamt.`;
+    return `Vollständige Analyse (${chunksCount} Abschnitte, 100% des Vertrags): ${parts.join(', ')}. ${findings.length} Befunde insgesamt.`;
   }
 
   /**
@@ -580,29 +580,29 @@ class WeeklyLegalCheck {
       ? `\nHINWEIS: Dies ist Abschnitt ${chunkIndex + 1} von ${totalChunks} des Vertrags. Analysiere NUR diesen Abschnitt.\n`
       : '';
 
-    const systemPrompt = `Du bist ein erfahrener Rechtsanwalt f\u00FCr deutsches Recht, spezialisiert auf Vertragsrecht, Arbeitsrecht, Mietrecht, Handelsrecht, Datenschutzrecht und Verbraucherrecht.
-Du f\u00FChrst eine w\u00F6chentliche Rechts\u00E4nderungs-\u00DCberwachung von Vertr\u00E4gen durch. Deine Aufgabe ist es, die Auswirkungen neu erkannter rechtlicher \u00C4nderungen auf den Vertrag zu bewerten.
-Bewerte AUSSCHLIESSLICH auf Basis der bereitgestellten Quellen und deines allgemeinen Rechtswissens. Die bereitgestellten Rechts\u00E4nderungen stammen aus 20 offiziellen deutschen Rechtsquellen der letzten 7 Tage.
+    const systemPrompt = `Du bist ein erfahrener Rechtsanwalt für deutsches Recht, spezialisiert auf Vertragsrecht, Arbeitsrecht, Mietrecht, Handelsrecht, Datenschutzrecht und Verbraucherrecht.
+Du führst eine wöchentliche Rechtsänderungs-Überwachung von Verträgen durch. Deine Aufgabe ist es, die Auswirkungen neu erkannter rechtlicher Änderungen auf den Vertrag zu bewerten.
+Bewerte AUSSCHLIESSLICH auf Basis der bereitgestellten Quellen und deines allgemeinen Rechtswissens. Die bereitgestellten Rechtsänderungen stammen aus 20 offiziellen deutschen Rechtsquellen der letzten 7 Tage.
 Antworte IMMER auf Deutsch und NUR mit validem JSON.`;
 
-    const userPrompt = `Bewerte die Auswirkungen neu erkannter Rechts\u00E4nderungen auf den folgenden Vertrag (Pr\u00FCfdatum: ${today}).
+    const userPrompt = `Bewerte die Auswirkungen neu erkannter Rechtsänderungen auf den folgenden Vertrag (Prüfdatum: ${today}).
 
 VERTRAGSNAME: ${contract.name || 'Unbekannt'}
 VERTRAGSSTATUS: ${contract.status || 'Aktiv'}
 LAUFZEIT: ${contract.laufzeit || 'Nicht angegeben'}
-K\u00DCNDIGUNGSFRIST: ${contract.kuendigung || 'Nicht angegeben'}
+KÜNDIGUNGSFRIST: ${contract.kuendigung || 'Nicht angegeben'}
 ${chunkInfo}
 VERTRAGSTEXT:
 ${contractText}
 ${stage1Context}
 
-Pr\u00FCfe folgende Aspekte UNIVERSELL (unabh\u00E4ngig vom Vertragstyp):
+Prüfe folgende Aspekte UNIVERSELL (unabhängig vom Vertragstyp):
 1. Sind alle Klauseln nach aktuellem Recht noch wirksam?
-2. Gibt es neue gesetzliche Anforderungen die der Vertrag nicht erf\u00FCllt?
-3. Sind Fristen/K\u00FCndigungsrechte nach aktuellem Recht korrekt?
-4. Gibt es AGB-rechtliche Probleme (\u00A7\u00A7 305-310 BGB)?
+2. Gibt es neue gesetzliche Anforderungen die der Vertrag nicht erfüllt?
+3. Sind Fristen/Kündigungsrechte nach aktuellem Recht korrekt?
+4. Gibt es AGB-rechtliche Probleme (§§ 305-310 BGB)?
 5. Ist der DSGVO-Compliance-Status aktuell?
-6. Gibt es branchenspezifische \u00C4nderungen die relevant sind?
+6. Gibt es branchenspezifische Änderungen die relevant sind?
 7. Fehlen wichtige Vertragsklauseln die gesetzlich empfohlen/vorgeschrieben sind?
 
 WICHTIG:
@@ -620,13 +620,13 @@ Antworte NUR mit diesem JSON-Format:
       "type": "law_change" | "risk" | "improvement" | "compliance",
       "severity": "info" | "warning" | "critical",
       "title": "Kurzer Titel",
-      "description": "Was genau das Problem/die \u00C4nderung ist",
+      "description": "Was genau das Problem/die Änderung ist",
       "affectedClause": "Betroffene Klausel im Vertrag (Zitat oder Verweis)",
-      "legalBasis": "Rechtsgrundlage (z.B. \u00A7 622 BGB)",
+      "legalBasis": "Rechtsgrundlage (z.B. § 622 BGB)",
       "recommendation": "Konkreter Handlungsvorschlag"
     }
   ],
-  "summary": "1-2 S\u00E4tze Zusammenfassung des Gesamtstatus"
+  "summary": "1-2 Sätze Zusammenfassung des Gesamtstatus"
 }`;
 
     try {
@@ -658,7 +658,7 @@ Antworte NUR mit diesem JSON-Format:
           hasChanges: false,
           overallStatus: 'aktuell',
           findings: [],
-          summary: 'Analyse konnte nicht durchgef\u00FChrt werden (API-Fehler).'
+          summary: 'Analyse konnte nicht durchgeführt werden (API-Fehler).'
         },
         cost: { inputTokens: 0, outputTokens: 0, estimatedCost: 0 }
       };
@@ -677,7 +677,7 @@ Antworte NUR mit diesem JSON-Format:
           hasChanges: !!parsed.hasChanges,
           overallStatus: parsed.overallStatus || 'aktuell',
           findings: Array.isArray(parsed.findings) ? parsed.findings : [],
-          summary: parsed.summary || 'Keine Zusammenfassung verf\u00FCgbar.'
+          summary: parsed.summary || 'Keine Zusammenfassung verfügbar.'
         };
       }
     } catch (parseError) {
@@ -777,9 +777,9 @@ Antworte NUR mit diesem JSON-Format:
         contractId: contract._id.toString(),
         contractName: contract.name || 'Unbekannt',
         type: 'weekly_legal_check',
-        lawTitle: `Rechts\u00E4nderungs-\u00DCberwachung: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
+        lawTitle: `Rechtsänderungs-Überwachung: ${analysis.overallStatus === 'kritisch' ? 'Kritische Probleme' : 'Handlungsbedarf'}`,
         lawDescription: analysis.summary,
-        lawArea: 'Rechts\u00E4nderungs-\u00DCberwachung',
+        lawArea: 'Rechtsänderungs-Überwachung',
         score: analysis.overallStatus === 'kritisch' ? 0.95 : 0.80,
         findings: analysis.findings,
         findingsSummary,
