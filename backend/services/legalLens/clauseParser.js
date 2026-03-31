@@ -41,7 +41,11 @@ class ClauseParser {
         'automatische verlängerung', 'stillschweigende verlängerung',
         'vertragsstrafe', 'konventionalstrafe',
         'höhere gewalt', 'force majeure',
-        'gerichtsstand', 'schiedsgericht'
+        'gerichtsstand', 'schiedsgericht',
+        // Datenschutz & Compliance — kritisch
+        'weitergabe an dritte', 'unbefristete speicherung',
+        'profiling', 'automatisierte entscheidung',
+        'ohne einwilligung', 'keine löschung'
       ],
       medium: [
         // Vertragsbedingungen
@@ -55,7 +59,12 @@ class ClauseParser {
         'haftungsbeschränkung', 'haftungsbegrenzung',
         'gewährleistung', 'garantie', 'zusicherung',
         'rücktritt', 'widerruf', 'anfechtung',
-        'abtretung', 'übertragung'
+        'abtretung', 'übertragung',
+        // Datenschutz & Compliance — prüfenswert
+        'einwilligung', 'widerspruchsrecht', 'widerspruch',
+        'cookies', 'tracking', 'auftragsverarbeitung',
+        'drittland', 'datenübermittlung', 'speicherdauer',
+        'zweckbindung', 'datenminimierung'
       ],
       low: [
         // Standard-Klauseln
@@ -65,7 +74,11 @@ class ClauseParser {
         'mitteilung', 'schriftform', 'textform',
         'salvatorische klausel', 'schlussbestimmungen',
         'gesamtvereinbarung', 'vollständigkeit',
-        'anwendbares recht', 'deutsches recht'
+        'anwendbares recht', 'deutsches recht',
+        // Datenschutz & Compliance — Standard
+        'betroffenenrechte', 'datenschutzbeauftragter',
+        'rechtsgrundlage', 'verarbeitungszweck',
+        'auskunftsrecht', 'löschungsrecht', 'datenportabilität'
       ]
     };
 
@@ -318,7 +331,7 @@ class ClauseParser {
     // Falls keine Sektionen erkannt wurden, behandle gesamten Text als eine Sektion
     if (sections.length === 0) {
       sections.push({
-        title: 'Vertrag',
+        title: 'Dokument',
         content: text,
         startPosition: 0,
         startLine: 0
@@ -352,9 +365,20 @@ class ClauseParser {
       };
     }
 
+    // Dezimal-Nummerierung: 1.1, 2.3.1, 1.1.1 (häufig in Datenschutz, AGB, etc.)
+    match = line.match(/^(\d+(?:\.\d+)+)\s+(.+)$/);
+    if (match && match[2].length < 80 && !/[.;,]$/.test(match[2].trim())) {
+      return {
+        id: match[1],
+        title: match[2].trim(),
+        type: 'numbered'
+      };
+    }
+
     // Nummerierte Überschrift: 1. Vertragsparteien
-    match = line.match(/^(\d+)\.\s+([A-ZÄÖÜ][A-Za-zÄÖÜäöüß\s\-]+)$/);
-    if (match && match[2].length < 50) {
+    // Erlaubt Klammern, Zahlen, Punkte im Titel (z.B. "1. Datenerhebung (Art. 6 DSGVO)")
+    match = line.match(/^(\d+)\.\s+([A-ZÄÖÜ][^\n]{2,})$/);
+    if (match && match[2].length < 80 && !/[;,]$/.test(match[2].trim())) {
       return {
         id: match[1],
         title: match[2].trim(),
@@ -653,7 +677,15 @@ class ClauseParser {
       '§', 'abs.', 'absatz', 'ziffer', 'artikel', 'gemäß', 'nach maßgabe',
       // Vertragsbestandteile
       'leistung', 'pflicht', 'recht', 'anspruch',
-      'vertragsbeginn', 'vertragsende', 'mindestlaufzeit', 'verlängerung'
+      'vertragsbeginn', 'vertragsende', 'mindestlaufzeit', 'verlängerung',
+      // Datenschutz & Compliance
+      'personenbezogen', 'verarbeitung', 'einwilligung', 'widerspruch',
+      'löschung', 'speicherdauer', 'cookies', 'tracking',
+      'betroffenenrecht', 'dsgvo', 'gdpr', 'auftragsverarbeitung',
+      'datenübermittlung', 'drittland', 'profiling', 'rechtsgrundlage',
+      // AGB & Nutzungsbedingungen
+      'nutzungsbedingung', 'haftungsausschluss', 'rückgabe',
+      'widerrufsrecht', 'gewährleistungsausschluss'
     ];
 
     // Prüfe ob Titel oder Text relevante Keywords enthält
@@ -1246,7 +1278,7 @@ class ClauseParser {
           // WICHTIG: Markiere kurze Blöcke, aber verwerfe sie nicht!
           short: paragraph.length < 20,
           // Erkenne strukturelle Marker (§, Artikel, etc.)
-          isStructuralStart: /^(§\s*\d|Artikel\s*\d|Art\.\s*\d|\d+\.\s+[A-ZÄÖÜ]|[IVXLC]+\.\s)/i.test(paragraph)
+          isStructuralStart: /^(§\s*\d|Artikel\s*\d|Art\.\s*\d|\d+\.\d+\s|\d+\.\s+[A-ZÄÖÜ]|[IVXLC]+\.\s)/i.test(paragraph)
         });
         blockIndex++;
       }
@@ -1314,9 +1346,9 @@ class ClauseParser {
       batchNum++;
       log.debug(`📦 Batch ${batchNum}: Blöcke ${i + 1} bis ${batchEnd} (${batchBlocks.length} Blöcke)`);
 
-      const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
+      const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Rechtsdokument (Vertrag, AGB, Datenschutzhinweise, NDA, o.ä.) und gruppiere sie zu sinnvollen, eigenständigen Klauseln/Abschnitten.
 
-VERTRAGSNAME: ${contractName || 'Unbekannt'}
+DOKUMENTNAME: ${contractName || 'Unbekannt'}
 
 TEXT-BLÖCKE (mit IDs):
 ${batchBlocks.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
@@ -1326,10 +1358,11 @@ REGELN:
 2. Zusammengehörige Absätze (z.B. Aufzählungen, Unterabschnitte eines §) = EINE Klausel
 3. Kurze eigenständige Sätze können einzelne Klauseln sein, wenn sie rechtlich relevant sind
 4. Gebührentabellen/Konditionenübersichten = EINE Klausel "Konditionen" oder "Gebühren"
-5. Reine Kontaktdaten/Adressen/Handelsregister = EINE Klausel "Vertragsparteien" oder "Firmendaten"
+5. Reine Kontaktdaten/Adressen/Impressum = EINE Klausel "Kontaktdaten" oder "Firmendaten"
 6. Ignoriere leere oder sinnlose Fragmente
 7. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
 8. Alle Blöcke müssen erfasst werden - überspringe keine.
+9. Das Dokument kann ein beliebiges Rechtsdokument sein — nicht nur ein klassischer Vertrag.
 
 WICHTIG: Behalte die Block-IDs für Traceability!
 
@@ -1351,14 +1384,14 @@ Antworte NUR mit einem JSON-Array:
           messages: [
             {
               role: 'system',
-              content: 'Du bist ein Rechtsexperte, der Verträge in sinnvolle Klauseln segmentiert. Antworte IMMER mit validem JSON.'
+              content: 'Du bist ein Rechtsexperte, der Rechtsdokumente (Verträge, AGB, Datenschutzhinweise, NDAs etc.) in sinnvolle Klauseln/Abschnitte segmentiert. Antworte IMMER mit validem JSON.'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.1, // Niedrig für konsistente Ergebnisse
+          temperature: 0.15, // Niedrig aber flexibel genug für verschiedene Dokumenttypen
           max_tokens: 16000, // ERHÖHT von 4000 - GPT-4o-mini unterstützt bis 16k
           response_format: { type: 'json_object' }
         }, { timeout: 60000 });
@@ -1537,9 +1570,9 @@ Antworte NUR mit einem JSON-Array:
       blocksForGPT = safeBlocks;
     }
 
-    const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Vertrag und gruppiere sie zu sinnvollen, eigenständigen Klauseln.
+    const prompt = `Du bist ein erfahrener Rechtsexperte. Analysiere die folgenden Text-Blöcke aus einem Rechtsdokument (Vertrag, AGB, Datenschutzhinweise, NDA, o.ä.) und gruppiere sie zu sinnvollen, eigenständigen Klauseln/Abschnitten.
 
-VERTRAGSNAME: ${contractName || 'Unbekannt'}
+DOKUMENTNAME: ${contractName || 'Unbekannt'}
 
 TEXT-BLÖCKE (mit IDs):
 ${blocksForGPT.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
@@ -1549,9 +1582,10 @@ REGELN:
 2. Zusammengehörige Absätze = EINE Klausel
 3. Kurze eigenständige Sätze können einzelne Klauseln sein
 4. Gebührentabellen = EINE Klausel "Konditionen"
-5. Kontaktdaten = EINE Klausel "Vertragsparteien"
+5. Kontaktdaten/Impressum = EINE Klausel "Kontaktdaten"
 6. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
 7. Alle Blöcke müssen erfasst werden - überspringe keine.
+8. Das Dokument kann ein beliebiges Rechtsdokument sein — nicht nur ein klassischer Vertrag.
 
 Antworte NUR mit einem JSON-Array:
 [
@@ -1571,11 +1605,11 @@ Antworte NUR mit einem JSON-Array:
         messages: [
           {
             role: 'system',
-            content: 'Du bist ein Rechtsexperte, der Verträge in Klauseln segmentiert. Antworte mit validem JSON.'
+            content: 'Du bist ein Rechtsexperte, der Rechtsdokumente (Verträge, AGB, Datenschutzhinweise, NDAs etc.) in sinnvolle Klauseln/Abschnitte segmentiert. Antworte mit validem JSON.'
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.1,
+        temperature: 0.15,
         max_tokens: 16000,
         response_format: { type: 'json_object' }
       }, { timeout: 60000 });
