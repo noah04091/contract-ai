@@ -491,20 +491,34 @@ export default function AGB() {
                 </ul>
 
                 <div className={styles.highlightBox}>
-                  <strong>5.5 Widerrufsrecht für Verbraucher:</strong><br />
-                  Verbraucher (§ 13 BGB) haben ein gesetzliches Widerrufsrecht von 14 Tagen ab
-                  Vertragsschluss. Mit der erstmaligen Nutzung kostenpflichtiger Funktionen nach
-                  Abschluss eines Bezahltarifs stimmt der Nutzer ausdrücklich zu, dass die
-                  Leistungserbringung vor Ablauf der Widerrufsfrist beginnt, und bestätigt seine
-                  Kenntnis, dass das Widerrufsrecht mit vollständiger Inanspruchnahme der
-                  Dienstleistung erlischt (§ 356 Abs. 4 BGB). Unabhängig davon bietet der Anbieter
-                  eine freiwillige 14-Tage-Geld-zurück-Garantie gemäß § 4.6 an.
+                  <strong>5.5 Widerrufsrecht für Verbraucher</strong><br /><br />
+                  Verbraucher (§ 13 BGB) haben grundsätzlich ein gesetzliches Widerrufsrecht von
+                  14 Tagen ab Vertragsschluss.<br /><br />
+                  <strong>Bei digitalen Dienstleistungen gilt jedoch:</strong><br />
+                  Der Nutzer stimmt ausdrücklich zu, dass der Anbieter mit der Ausführung der
+                  Dienstleistung vor Ablauf der Widerrufsfrist beginnt. Gleichzeitig bestätigt
+                  der Nutzer, dass ihm bekannt ist, dass sein Widerrufsrecht mit vollständiger
+                  Vertragserfüllung erlischt (§ 356 Abs. 4 BGB).<br /><br />
+                  Im Falle einer teilweisen Nutzung kann ein Wertersatz für bereits erbrachte
+                  Leistungen verlangt werden.<br /><br />
+                  Unabhängig davon gewährt der Anbieter eine freiwillige 14-Tage-Geld-zurück-Garantie
+                  gemäß § 4.6.
                 </div>
 
                 <h3 className={styles.subTitle}>Widerrufsbelehrung</h3>
                 <p>
                   Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag
                   zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsschlusses.
+                </p>
+
+                <p>
+                  <strong>Hinweis:</strong> Das Widerrufsrecht kann vorzeitig erlöschen, wenn Sie
+                  ausdrücklich zugestimmt haben, dass wir mit der Ausführung der Dienstleistung vor
+                  Ablauf der Widerrufsfrist beginnen und Sie die Dienstleistung vollständig in
+                  Anspruch genommen haben.
+                </p>
+
+                <p>
                   Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Noah Liebold, E-Mail: info@contract-ai.de)
                   mittels einer eindeutigen Erklärung (z. B. per E-Mail) über Ihren Entschluss, diesen
                   Vertrag zu widerrufen, informieren.
@@ -512,9 +526,7 @@ export default function AGB() {
 
                 <p>
                   <strong>Folgen des Widerrufs:</strong> Wenn Sie diesen Vertrag widerrufen, haben wir
-                  Ihnen alle Zahlungen, die wir von Ihnen erhalten haben, unverzüglich und spätestens
-                  binnen vierzehn Tagen ab dem Tag zurückzuzahlen, an dem die Mitteilung über Ihren
-                  Widerruf bei uns eingegangen ist.
+                  Ihnen alle Zahlungen unverzüglich und spätestens binnen vierzehn Tagen zurückzuzahlen.
                 </p>
               </div>
             </section>
