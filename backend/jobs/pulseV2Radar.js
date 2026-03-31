@@ -474,6 +474,13 @@ KERNREGEL — RELEVANZ:
 - confidence >80 NUR wenn du den GENAUEN Regelungsinhalt des Gesetzes benennen kannst, der die GENAUE Klausel im Vertrag betrifft
 - confidence 60-79: Vertrag ist nur indirekt oder am Rande betroffen
 
+VERTRAGSTYP-INTELLIGENZ:
+- Verstehe den Vertrag BEVOR du das Gesetz anwendest: Was ist der Geschäftszweck? Was sind die Kernmechanismen?
+- Kernmechanismen eines Vertragstyps sind KEIN "Risiko" — ein Gesetz das Factoring-Abtretung reguliert betrifft zwar den Vertrag, aber die Abtretung selbst ist kein Problem
+- Unterscheide: Betrifft das Gesetz eine ABWEICHUNG im Vertrag (→ echtes Risiko) oder eine STANDARDKLAUSEL (→ informativ/neutral)?
+- "Nachteilig für eine Partei" ≠ "rechtswidrig" — melde affected=true NUR wenn das Gesetz konkret eine Klausel ändert/einschränkt/erweitert
+- Norm-Genauigkeit: Zitiere in recommendation/clauseImpacts NUR Normen die du sicher dem Problem zuordnen kannst
+
 AUSGABE-FELDER:
 - summary: Fachliche Zusammenfassung (1-2 Sätze) — WAS genau das Gesetz ändert in Bezug auf diesen Vertrag
 - plainSummary: Erkläre in EINEM einfachen Satz für einen Nicht-Juristen was sich ändert und warum es diesen Vertrag betrifft. Kein Juristendeutsch. Beispiel: "Ein neues Gesetz verkürzt die Kündigungsfrist von 3 auf 1 Monat — Ihr Mietvertrag hat noch die alte Frist."
