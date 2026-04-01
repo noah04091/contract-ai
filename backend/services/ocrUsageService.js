@@ -68,8 +68,11 @@ function getOcrLimit(plan) {
 async function checkOcrUsage(userId) {
   try {
     const users = await initMongo();
+    // userId can be String OR ObjectId in MongoDB — use $or pattern
+    const idQueries = [{ _id: userId }];
+    try { idQueries.push({ _id: new ObjectId(userId) }); } catch (_) { /* invalid ObjectId format */ }
     const user = await users.findOne(
-      { _id: new ObjectId(userId) },
+      { $or: idQueries },
       { projection: { subscriptionPlan: 1, ocrPagesUsed: 1, ocrResetDate: 1 } }
     );
 
@@ -158,8 +161,11 @@ async function incrementOcrUsage(userId, pageCount = 1) {
   try {
     const users = await initMongo();
 
+    // userId can be String OR ObjectId — try both
+    const idQueries = [{ _id: userId }];
+    try { idQueries.push({ _id: new ObjectId(userId) }); } catch (_) { /* invalid ObjectId format */ }
     const result = await users.findOneAndUpdate(
-      { _id: new ObjectId(userId) },
+      { $or: idQueries },
       {
         $inc: { ocrPagesUsed: pageCount },
         $setOnInsert: { ocrResetDate: new Date() }
