@@ -256,6 +256,7 @@ export interface DocumentTypeInfo {
     mapTab: string;
     partiesLabel: string;
   };
+  perspectiveLabels?: Record<Perspective, string> | null;
 }
 
 // ============================================

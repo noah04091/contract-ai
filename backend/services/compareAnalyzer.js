@@ -86,6 +86,11 @@ const DOCUMENT_TYPE_CONFIGS = {
       mapTab: 'Vertragskarte',
       partiesLabel: 'Vertragsparteien',
     },
+    perspectiveLabels: {
+      auftraggeber: 'Auftraggeber',
+      auftragnehmer: 'Auftragnehmer',
+      neutral: 'Neutral',
+    },
     benchmarkEnabled: true,
     noiseFilter: 'standard',
   },
@@ -120,6 +125,11 @@ Bewerte nach: Vollständigkeit der DSGVO-Pflichtangaben, Transparenz, Aktualitä
       documentName: 'Datenschutzerklärung',
       mapTab: 'Dokumentstruktur',
       partiesLabel: 'Verantwortliche',
+    },
+    perspectiveLabels: {
+      auftraggeber: 'Betroffener',
+      auftragnehmer: 'Verantwortlicher',
+      neutral: 'Neutral',
     },
     benchmarkEnabled: false,
     noiseFilter: 'aggressive',
@@ -156,6 +166,11 @@ Bewerte nach: Rechtmäßigkeit, Verbraucherfreundlichkeit, Transparenz.`,
       mapTab: 'AGB-Struktur',
       partiesLabel: 'Anbieter / Nutzer',
     },
+    perspectiveLabels: {
+      auftraggeber: 'Verbraucher',
+      auftragnehmer: 'Anbieter',
+      neutral: 'Neutral',
+    },
     benchmarkEnabled: false,
     noiseFilter: 'standard',
   },
@@ -190,6 +205,178 @@ Bewerte nach: Korrektheit der Berechnung, Vollständigkeit der Pflichtangaben, P
       mapTab: 'Rechnungspositionen',
       partiesLabel: 'Rechnungssteller / -empfänger',
     },
+    perspectiveLabels: {
+      auftraggeber: 'Empfänger',
+      auftragnehmer: 'Aussteller',
+      neutral: 'Neutral',
+    },
+    benchmarkEnabled: false,
+    noiseFilter: 'standard',
+  },
+
+  angebot: {
+    category: 'angebot',
+    label: 'Angebot',
+    relevantAreas: ['payment', 'parties', 'subject', 'duration', 'warranty', 'liability', 'other'],
+    irrelevantAreas: ['non_compete', 'force_majeure', 'confidentiality', 'data_protection', 'ip_rights'],
+    missingSeverityOverrides: {
+      payment: 'critical',
+      warranty: 'medium',
+      liability: 'medium',
+      duration: 'medium',
+      non_compete: 'low', force_majeure: 'low', confidentiality: 'low',
+      data_protection: 'low', ip_rights: 'low',
+      termination: 'low',
+      jurisdiction: 'low',
+      other: 'low',
+    },
+    promptAddition: `DOKUMENTTYP: ANGEBOT / KOSTENVORANSCHLAG
+Du vergleichst zwei Angebote (NICHT Verträge!).
+FOKUS auf: Preise und Konditionen, Leistungsumfang (was ist inklusive, was kostet extra),
+Zahlungsbedingungen (Skonto, Zahlungsziel, Anzahlung), Lieferfristen und -bedingungen,
+Gültigkeitsdauer des Angebots, Gewährleistungszusagen, Nebenkosten und versteckte Gebühren.
+IGNORIERE: Wettbewerbsverbot, Höhere Gewalt, Geheimhaltung, Datenschutz — das gehört nicht in Angebote.
+Bewerte nach: Preis-Leistungs-Verhältnis, Transparenz der Kosten, Vollständigkeit des Angebots.
+BERECHNE wo möglich: Gesamtkosten, Kosten pro Einheit/Monat, versteckte Mehrkosten.`,
+    scoreLabels: {
+      overall: 'Gesamt',
+      fairness: 'Preis-Leistung',
+      riskProtection: 'Kostentransparenz',
+      flexibility: 'Konditionen',
+      completeness: 'Vollständigkeit',
+      clarity: 'Übersichtlichkeit',
+    },
+    labels: {
+      documentName: 'Angebot',
+      mapTab: 'Angebotsstruktur',
+      partiesLabel: 'Anbieter / Empfänger',
+    },
+    perspectiveLabels: {
+      auftraggeber: 'Empfänger',
+      auftragnehmer: 'Anbieter',
+      neutral: 'Neutral',
+    },
+    perspectivePrompts: {
+      auftraggeber: `PERSPEKTIVE: ANGEBOTSEMPFÄNGER (Käufer / Besteller)
+
+Du vertrittst AUSSCHLIESSLICH die Interessen des ANGEBOTSEMPFÄNGERS. Du bist SEIN Berater.
+
+BEWERTUNGS-BIAS (MUSS die Analyse durchziehen):
+- Niedrige Preise / gutes Preis-Leistungs-Verhältnis → positiv bewerten
+- Umfangreiche Leistungen im Grundpreis → positiv bewerten
+- Lange Zahlungsfristen → GUT (mehr Liquidität)
+- Umfangreiche Garantien/Gewährleistung → GUT (mehr Sicherheit)
+- Transparente Kostenaufschlüsselung → GUT
+- Kurze Bindungsfrist des Angebots → SCHLECHT (weniger Zeit zum Vergleichen)
+- Versteckte Zusatzkosten / Nebenkosten → SCHLECHT, severity hoch
+- Einschränkungen bei Gewährleistung → SCHLECHT
+
+Bei "recommendation": Aus Empfänger-Sicht formulieren — "Verhandeln Sie den Preis...", "Fordern Sie detailliertere Aufschlüsselung..."
+Bei Scores: Das Angebot mit BESSEREM Preis-Leistungs-Verhältnis bekommt den HÖHEREN Score.`,
+
+      auftragnehmer: `PERSPEKTIVE: ANBIETER (Lieferant / Verkäufer / Dienstleister)
+
+Du vertrittst AUSSCHLIESSLICH die Interessen des ANBIETERS. Du bist SEIN Berater.
+
+BEWERTUNGS-BIAS (MUSS die Analyse durchziehen):
+- Hohe Preise / gute Margen → positiv bewerten
+- Kurze Zahlungsfristen → GUT (schnellerer Cashflow)
+- Eingeschränkte Gewährleistung → GUT (weniger Risiko)
+- Haftungsbegrenzung → GUT (Schadensdeckel)
+- Nachtragsregelungen / Mehrvergütung → GUT
+- Lange Bindungsfrist → GUT (Kunde kann nicht so leicht wechseln)
+- Pauschale statt Aufwandsabrechnung → SCHLECHT bei komplexen Projekten
+
+Bei "recommendation": Aus Anbieter-Sicht formulieren — "Die Haftungsbegrenzung schützt Sie...", "Fordern Sie Abschlagszahlungen..."
+Bei Scores: Das Angebot mit BESSEREN Konditionen für den Anbieter bekommt den HÖHEREN Score.`,
+
+      neutral: `PERSPEKTIVE: NEUTRAL (Berater)
+
+Du berätst NEUTRAL — keiner Seite verpflichtet. Du bewertest Fairness und Transparenz.
+
+BEWERTUNGS-LOGIK:
+- Angemessenes Preis-Leistungs-Verhältnis → positiv
+- Transparente Kostenaufschlüsselung → positiv
+- Einseitig vorteilhafte Konditionen → negativ
+- Vollständigkeit des Angebots → positiv
+- Das FAIRERE und TRANSPARENTERE Angebot bekommt den höheren Score
+Bei "recommendation": Schlage ausgewogene Verbesserungen vor`,
+    },
+    benchmarkEnabled: false,
+    noiseFilter: 'standard',
+  },
+
+  allgemein: {
+    category: 'allgemein',
+    label: 'Dokument',
+    relevantAreas: null,
+    irrelevantAreas: [],
+    missingSeverityOverrides: {
+      parties: 'low', subject: 'low', duration: 'low',
+      termination: 'low', payment: 'low', liability: 'low',
+      warranty: 'low', confidentiality: 'low', ip_rights: 'low',
+      data_protection: 'low', non_compete: 'low',
+      force_majeure: 'low', jurisdiction: 'low', other: 'low',
+    },
+    promptAddition: `DOKUMENTTYP: ALLGEMEINES DOKUMENT
+Du vergleichst zwei Dokumente unbekannten Typs. Das sind KEINE Verträge im klassischen Sinn.
+FOKUS auf: Inhaltliche Unterschiede, Zahlen und Werte, Konditionen, Formulierungsunterschiede, Vollständigkeit.
+NICHT bewerten: Ob bestimmte Klauseln "fehlen" — bei unbekannten Dokumenttypen ist das nicht sinnvoll.
+STATTDESSEN: Konzentriere dich darauf, WAS in beiden Dokumenten steht und WO sie sich unterscheiden.
+Bewerte nach: Inhaltliche Qualität, Vollständigkeit, Klarheit der Formulierungen.`,
+    scoreLabels: {
+      overall: 'Gesamt',
+      fairness: 'Ausgewogenheit',
+      riskProtection: 'Genauigkeit',
+      flexibility: 'Flexibilität',
+      completeness: 'Vollständigkeit',
+      clarity: 'Verständlichkeit',
+    },
+    labels: {
+      documentName: 'Dokument',
+      mapTab: 'Dokumentstruktur',
+      partiesLabel: 'Beteiligte',
+    },
+    perspectiveLabels: {
+      auftraggeber: 'Seite A',
+      auftragnehmer: 'Seite B',
+      neutral: 'Neutral',
+    },
+    perspectivePrompts: {
+      auftraggeber: `PERSPEKTIVE: SEITE A (Dokument 1)
+
+Du bewertest die Dokumente aus der Perspektive von Dokument 1.
+
+BEWERTUNGS-BIAS:
+- Inhalte die in Dokument 1 besser/vollständiger sind → positiv bewerten
+- Stärken von Dokument 2 die Dokument 1 fehlen → als Schwäche bewerten
+- Fehlende Informationen in Dokument 1 → als Verbesserungspotenzial bewerten
+
+Bei "recommendation": Vorschläge zur Verbesserung aus Sicht von Dokument 1 formulieren.
+Bei Scores: Dokument 1 wird bevorzugt bewertet wenn seine Inhalte vollständiger/besser sind.`,
+
+      auftragnehmer: `PERSPEKTIVE: SEITE B (Dokument 2)
+
+Du bewertest die Dokumente aus der Perspektive von Dokument 2.
+
+BEWERTUNGS-BIAS:
+- Inhalte die in Dokument 2 besser/vollständiger sind → positiv bewerten
+- Stärken von Dokument 1 die Dokument 2 fehlen → als Schwäche bewerten
+- Fehlende Informationen in Dokument 2 → als Verbesserungspotenzial bewerten
+
+Bei "recommendation": Vorschläge zur Verbesserung aus Sicht von Dokument 2 formulieren.
+Bei Scores: Dokument 2 wird bevorzugt bewertet wenn seine Inhalte vollständiger/besser sind.`,
+
+      neutral: `PERSPEKTIVE: NEUTRAL (Objektiver Vergleich)
+
+Du vergleichst beide Dokumente NEUTRAL — objektiv und unparteiisch.
+
+BEWERTUNGS-LOGIK:
+- Vollständigkeit und Qualität beider Dokumente gleichwertig bewerten
+- Das QUALITATIV BESSERE Dokument bekommt den höheren Score
+- Fehlende Inhalte in beiden Dokumenten gleichwertig als Schwäche bewerten
+- Bei "recommendation": Objektive Verbesserungsvorschläge für beide Dokumente`,
+    },
     benchmarkEnabled: false,
     noiseFilter: 'standard',
   },
@@ -203,7 +390,9 @@ function detectDocumentCategory(map1, map2) {
     if (/datenschutz|privacy|dsgvo|gdpr/.test(type)) return 'datenschutz';
     if (/agb|allgemeine geschäftsbedingung|terms|nutzungsbedingung/.test(type)) return 'agb';
     if (/rechnung|invoice|faktura/.test(type)) return 'rechnung';
-    return 'vertrag';
+    if (/angebot|offerte|kostenvoranschlag|proposal|quote|anbieter/.test(type)) return 'angebot';
+    if (/vertrag|vereinbarung|contract|agreement|überlassung|leasing|darlehen|miet|kauf|pacht|werk|dienst|service|lizenz|franchise|rahmen/.test(type)) return 'vertrag';
+    return 'allgemein';
   };
 
   const cat1 = categorize(type1);
@@ -211,9 +400,13 @@ function detectDocumentCategory(map1, map2) {
 
   if (cat1 === cat2) return cat1;
 
-  // Gemischt → "vertrag" (sicherster Default, heutiges Verhalten)
-  console.log(`📋 Dokumenttyp: Gemischt (${cat1} vs ${cat2}) → Fallback auf "vertrag"`);
-  return 'vertrag';
+  // Einer spezifisch + einer allgemein → den spezifischen nehmen
+  if (cat1 === 'allgemein' && cat2 !== 'allgemein') return cat2;
+  if (cat2 === 'allgemein' && cat1 !== 'allgemein') return cat1;
+
+  // Zwei verschiedene spezifische Typen → allgemein (sicherster Default)
+  console.log(`📋 Dokumenttyp: Gemischt (${cat1} vs ${cat2}) → Fallback auf "allgemein"`);
+  return 'allgemein';
 }
 
 function getDocTypeConfig(category) {
@@ -677,7 +870,12 @@ async function structureContract(contractText) {
 // Phase B: Deep Comparison
 // ============================================
 
-function buildPerspectiveBlock(perspective) {
+function buildPerspectiveBlock(perspective, docConfig = null) {
+  // V3.1: Custom perspective prompts for non-contract document types
+  if (docConfig?.perspectivePrompts?.[perspective]) {
+    return docConfig.perspectivePrompts[perspective];
+  }
+
   switch (perspective) {
     case 'auftraggeber':
       return `PERSPEKTIVE: AUFTRAGGEBER (Besteller / Käufer / Dienstleistungsnehmer)
@@ -1120,6 +1318,7 @@ function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2, be
       label: docConfig.label,
       scoreLabels: docConfig.scoreLabels || null,
       labels: docConfig.labels,
+      perspectiveLabels: docConfig.perspectiveLabels || null,
     } : null,
 
     // Phase A
@@ -3828,7 +4027,7 @@ function prioritizeClausePairs(matches) {
  */
 function buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile, docConfig) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
-  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const perspectiveBlock = buildPerspectiveBlock(perspective, docConfig);
   const modeBlock = buildModeAddition(comparisonMode);
   const docTypeBlock = docConfig?.promptAddition ? `\n${docConfig.promptAddition}\n` : '';
 
@@ -3978,9 +4177,9 @@ function validateClausePairResponse(raw, clause1, clause2, match) {
 /**
  * Build prompt for missing clause assessment.
  */
-function buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile) {
+function buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile, docConfig = null) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
-  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const perspectiveBlock = buildPerspectiveBlock(perspective, docConfig);
   const text = smartTruncateClause(clause.originalText, 2000);
   const otherContract = inContract === 1 ? 2 : 1;
 
@@ -4015,8 +4214,8 @@ Bewerte: Wie wichtig ist diese Klausel? Was passiert ohne sie?
 /**
  * GPT-Call for a missing clause.
  */
-async function assessMissingClause(clause, inContract, perspective, comparisonMode, userProfile) {
-  const prompt = buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile);
+async function assessMissingClause(clause, inContract, perspective, comparisonMode, userProfile, docConfig = null) {
+  const prompt = buildMissingClausePrompt(clause, inContract, perspective, comparisonMode, userProfile, docConfig);
 
   try {
     const completion = await openai.chat.completions.create({
@@ -4132,7 +4331,7 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
       const c = clauseMap1[clauseId];
       if (!c) return Promise.resolve(null);
       return withTimeout(
-        assessMissingClause(c, 1, perspective, comparisonMode, userProfile),
+        assessMissingClause(c, 1, perspective, comparisonMode, userProfile, docConfig),
         MAX_CLAUSE_CALL_TIME,
         `Fehlende Klausel ${c.title}`
       ).catch(() => null);
@@ -4141,7 +4340,7 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
       const c = clauseMap2[clauseId];
       if (!c) return Promise.resolve(null);
       return withTimeout(
-        assessMissingClause(c, 2, perspective, comparisonMode, userProfile),
+        assessMissingClause(c, 2, perspective, comparisonMode, userProfile, docConfig),
         MAX_CLAUSE_CALL_TIME,
         `Fehlende Klausel ${c.title}`
       ).catch(() => null);
@@ -4553,7 +4752,7 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
 
 function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups, docConfig) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
-  const perspectiveBlock = buildPerspectiveBlock(perspective);
+  const perspectiveBlock = buildPerspectiveBlock(perspective, docConfig);
   const modeBlock = buildModeAddition(comparisonMode);
   const docTypeBlock = docConfig?.promptAddition ? `\n${docConfig.promptAddition}\n` : '';
 

@@ -55,6 +55,9 @@ export default function CompareResults({
     tab.key === 'contractMap' ? { ...tab, label: mapTabLabel } : tab
   );
 
+  // V3.1: Dynamic perspective labels based on document type
+  const perspLabels = v2Result?.documentType?.perspectiveLabels || PERSPECTIVE_LABELS;
+
   const getBadgeCount = (tab: CompareTab): number | undefined => {
     if (!v2Result) return undefined;
     switch (tab) {
@@ -84,7 +87,7 @@ export default function CompareResults({
                   disabled={reAnalyzing}
                 >
                   <Icon size={14} />
-                  <span>{PERSPECTIVE_LABELS[p]}</span>
+                  <span>{perspLabels[p]}</span>
                 </button>
               );
             })}
