@@ -267,6 +267,7 @@ const NOISE_PATTERNS = [
   // Political / administrative noise
   /fortschrittsbericht\s+\d{4}/i,
   /normenkontrolle.*bundesverfassungsgericht/i,
+  /normenkontrolle.*sondervermögen/i,
   /pilotprojekt.*simulation/i,
   /wissenschaftliche.*arbeitskreis/i,
   /neue\s+mitglieder.*berufen/i,
@@ -275,6 +276,11 @@ const NOISE_PATTERNS = [
   /spritpreis|kraftstoffpreis|elektrokleinstfahrzeug/i,
   /sondervermögen\s+(infrastruktur|bundeswehr)/i,
   /boykottmaßnahmen/i,
+  // Bundestag Kleine Anfragen (political statistics, not law changes)
+  /^(daten|zahlen|erkenntnisse|angaben|informationen)\s+(zu|zum|zur|über)\s/i,
+  /^sorge-\s*und\s*umgangsrecht/i,
+  /gesundheitsbezogene\s+fehlinformation/i,
+  /^afd\s+fordert/i,
   // Political slogans / coalition programs
   /für\s+gute\s+arbeit\s+und\s+faire/i,
   /koalitionsvertrag|regierungsprogramm|wahlprogramm/i,
@@ -385,7 +391,7 @@ async function fetchRecentLawChanges(db) {
       pulseV2Processed: { $ne: true },
     })
     .sort({ updatedAt: -1 })
-    .limit(200) // Wider pool for scoring
+    .limit(500) // Full 7-day pool for scoring (typically 300-500 laws/week)
     .toArray();
 
   if (candidates.length === 0) return [];
