@@ -230,13 +230,52 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
           // Quality gate: detect multi-column PDF artifacts
           // Checks: single-letter breaks, non-sequential §-numbers, short avg line length
           if (hasColumnArtifacts(contractText)) {
-            console.log(`[OptimizerV2] Spaltenartefakte erkannt (mehrspaltige PDF), versuche OCR...`);
-            const ocrText = await runOCR(buffer, 'Mehrspaltige PDF erkannt — Text wird per OCR optimiert...');
-            if (ocrText) {
-              console.log(`[OptimizerV2] OCR-Text übernommen: ${ocrText.trim().length} Zeichen (vorher pdf-parse: ${contractText.trim().length})`);
-              contractText = ocrText;
-            } else {
-              console.log(`[OptimizerV2] OCR nicht verfügbar, verwende pdf-parse Ergebnis`);
+            console.log(`[OptimizerV2] ⚠️ Spaltenartefakte erkannt in "${req.file.originalname}" (${contractText.trim().length} Zeichen pdf-parse)`);
+            let columnOcrSuccess = false;
+
+            try {
+              // Non-fatal OCR attempt — never sends error:true, analysis always continues with pdf-parse
+              const { isTextractAvailable, extractTextWithOCR } = require('../services/textractService');
+              const { checkOcrUsage, incrementOcrUsage } = require('../services/ocrUsageService');
+
+              const textractStatus = await isTextractAvailable();
+              console.log(`[OptimizerV2] Textract Status: available=${textractStatus.available}${textractStatus.reason ? ', reason=' + textractStatus.reason : ''}`);
+
+              if (textractStatus.available) {
+                const usage = await checkOcrUsage(req.user.userId);
+                console.log(`[OptimizerV2] OCR-Usage: userId=${req.user.userId}, allowed=${usage.allowed}, plan=${usage.plan}, used=${usage.pagesUsed}/${usage.pagesLimit}${usage.error ? ', error=' + usage.error : ''}`);
+
+                if (usage.allowed) {
+                  sendSSE({ progress: 2, message: 'Mehrspaltige PDF erkannt — Text wird per OCR optimiert...' });
+                  ocrAttempted = true;
+
+                  const ocrResult = await extractTextWithOCR(buffer);
+                  console.log(`[OptimizerV2] Textract-Ergebnis: success=${ocrResult.success}, text=${(ocrResult.text || '').trim().length} Zeichen, pages=${ocrResult.pages || 0}, confidence=${ocrResult.confidence?.toFixed(1) || 'n/a'}%, error=${ocrResult.error || 'none'}`);
+
+                  if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 200) {
+                    ocrApplied = true;
+                    columnOcrSuccess = true;
+                    await incrementOcrUsage(req.user.userId, ocrResult.pages || 1);
+                    console.log(`[OptimizerV2] ✅ OCR-Text übernommen: ${ocrResult.text.trim().length} Zeichen (vorher pdf-parse: ${contractText.trim().length})`);
+                    contractText = ocrResult.text;
+
+                    if (ocrResult.lowConfidence) {
+                      sendSSE({ progress: 3, message: `OCR-Qualität: ${ocrResult.confidence?.toFixed(0)}% — bei niedrigen Werten können Ergebnisse ungenau sein.`, warning: true });
+                    }
+                  } else {
+                    console.warn(`[OptimizerV2] ❌ Textract fehlgeschlagen: ${ocrResult.error || 'zu wenig Text erkannt'}`);
+                  }
+                } else {
+                  console.log(`[OptimizerV2] OCR-Limit erreicht (${usage.pagesUsed}/${usage.pagesLimit}), überspringe Spalten-Korrektur`);
+                }
+              }
+            } catch (ocrErr) {
+              console.error(`[OptimizerV2] ❌ OCR-Fehler bei Spalten-Korrektur:`, ocrErr.message, ocrErr.stack?.split('\n').slice(0, 3).join('\n'));
+            }
+
+            if (!columnOcrSuccess) {
+              console.log(`[OptimizerV2] Verwende pdf-parse Text trotz Spaltenartefakten`);
+              sendSSE({ progress: 2, message: 'Hinweis: Mehrspaltige PDF erkannt. Die Textdarstellung kann Artefakte enthalten — Optimierungen sind davon nicht betroffen.', warning: true });
             }
           }
         }

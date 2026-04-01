@@ -101,7 +101,7 @@ async function checkOcrUsage(userId) {
       // Neuer Monat → Reset durchführen
       console.log(`🔄 [OCR Usage] Monatlicher Reset für User ${userId}`);
       await users.updateOne(
-        { _id: new ObjectId(userId) },
+        { $or: idQueries },
         {
           $set: {
             ocrPagesUsed: 0,
