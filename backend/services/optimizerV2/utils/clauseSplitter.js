@@ -217,6 +217,149 @@ function mergeHeaderOnlySections(sections) {
 }
 
 /**
+ * Column-aware text extraction using pdfjs-dist positioning data.
+ *
+ * pdf-parse reads multi-column PDFs left-to-right across columns, interleaving
+ * text from different columns. This function uses pdfjs-dist's text item positions
+ * (X/Y coordinates) to detect columns and read them sequentially.
+ *
+ * Supports 2-column AND 3-column layouts (e.g., dense AGBs like FERCHAU).
+ *
+ * Algorithm:
+ *   1. Extract text items with X/Y positions per page
+ *   2. Cluster X-positions to detect column boundaries
+ *   3. Split items into columns, read each top-to-bottom
+ *   4. Concatenate columns left-to-right
+ *
+ * @param {Buffer} pdfBuffer - PDF file buffer
+ * @returns {Promise<{text: string, pages: number} | null>} Column-ordered text, or null on failure
+ */
+async function extractColumnAwareText(pdfBuffer) {
+  try {
+    const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
+    const pdfDoc = await loadingTask.promise;
+
+    const pageTexts = [];
+
+    for (let p = 1; p <= pdfDoc.numPages; p++) {
+      const page = await pdfDoc.getPage(p);
+      const content = await page.getTextContent();
+
+      const items = [];
+      for (const item of content.items) {
+        if (!item.str || !item.str.trim()) continue;
+        items.push({
+          text: item.str,
+          x: item.transform[4],
+          y: item.transform[5],
+          width: item.width || 0,
+          height: item.height || 10
+        });
+      }
+
+      if (items.length === 0) continue;
+
+      const boundaries = detectColumnBoundaries(items);
+
+      if (boundaries && boundaries.length > 0) {
+        // Split items into columns using boundaries
+        const columns = [];
+        const allBounds = [-Infinity, ...boundaries, Infinity];
+        for (let c = 0; c < allBounds.length - 1; c++) {
+          const colItems = items.filter(i => i.x >= allBounds[c] && i.x < allBounds[c + 1]);
+          if (colItems.length > 0) columns.push(colItems);
+        }
+        pageTexts.push(columns.map(col => positionedItemsToText(col)).join('\n'));
+      } else {
+        pageTexts.push(positionedItemsToText(items));
+      }
+    }
+
+    const fullText = pageTexts.join('\n\n');
+    if (fullText.trim().length < 200) return null;
+
+    console.log(`[ColumnExtract] Erfolgreich: ${pdfDoc.numPages} Seiten, ${fullText.trim().length} Zeichen`);
+    return { text: fullText, pages: pdfDoc.numPages };
+  } catch (err) {
+    console.error(`[ColumnExtract] Fehler:`, err.message);
+    return null;
+  }
+}
+
+/**
+ * Detect column boundaries by clustering X-start positions.
+ *
+ * Groups items by their starting X coordinate. X positions within 20pt of each
+ * other belong to the same cluster. Gaps > 20pt between clusters with 5+ items
+ * each indicate column boundaries.
+ *
+ * @returns {number[] | null} Array of X boundary values, or null for single-column
+ */
+function detectColumnBoundaries(items) {
+  // Count items per rounded X position
+  const xCounts = {};
+  for (const item of items) {
+    const x = Math.round(item.x);
+    xCounts[x] = (xCounts[x] || 0) + 1;
+  }
+
+  // Keep only X positions with >= 5 items (filter noise)
+  const significantX = Object.entries(xCounts)
+    .filter(([, count]) => count >= 5)
+    .map(([x]) => parseInt(x))
+    .sort((a, b) => a - b);
+
+  if (significantX.length < 2) return null;
+
+  // Find gaps > 20pt between significant X positions
+  const CLUSTER_GAP = 20;
+  const boundaries = [];
+  for (let i = 1; i < significantX.length; i++) {
+    if (significantX[i] - significantX[i - 1] > CLUSTER_GAP) {
+      boundaries.push((significantX[i - 1] + significantX[i]) / 2);
+    }
+  }
+
+  return boundaries.length > 0 ? boundaries : null;
+}
+
+/**
+ * Convert positioned text items to line-ordered text.
+ * Groups items by Y-position (same line), sorts each line by X.
+ */
+function positionedItemsToText(items) {
+  if (items.length === 0) return '';
+
+  // Sort top-to-bottom (Y descending in PDF coords), then left-to-right
+  items.sort((a, b) => b.y - a.y || a.x - b.x);
+
+  // Group into lines using half-height tolerance
+  const avgHeight = items.reduce((s, i) => s + i.height, 0) / items.length || 10;
+  const tolerance = avgHeight * 0.5;
+
+  const lines = [];
+  let line = [items[0]];
+
+  for (let i = 1; i < items.length; i++) {
+    if (Math.abs(items[i].y - line[0].y) <= tolerance) {
+      line.push(items[i]);
+    } else {
+      lines.push(line);
+      line = [items[i]];
+    }
+  }
+  lines.push(line);
+
+  return lines
+    .map(l => {
+      l.sort((a, b) => a.x - b.x);
+      return l.map(i => i.text).join(' ');
+    })
+    .join('\n');
+}
+
+/**
  * Smart truncation that doesn't cut mid-clause
  */
 function smartTruncate(text, maxLength = 50000) {
@@ -242,5 +385,6 @@ module.exports = {
   preSplitClauses,
   smartTruncate,
   normalizePdfText,
-  hasColumnArtifacts
+  hasColumnArtifacts,
+  extractColumnAwareText
 };
