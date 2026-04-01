@@ -1257,8 +1257,28 @@ class ClauseParser {
   createTextBlocks(text) {
     const blocks = [];
 
+    // PRE-PROCESSING: Zeilenumbrüche vor erkannten Section-Headern einfügen
+    // Löst das Problem bei Multi-Column-PDFs, die kaum \n\n zwischen Sektionen haben
+    const lines = text.split('\n');
+    const processedLines = [];
+    const sectionHeaderPattern = /^(§\s*\d+|Artikel\s+\d+|Art\.\s*\d+|\d+\.\d+(?:\.\d+)*\s+[A-ZÄÖÜ]|\d+\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[A-Z]\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[IVXLC]+\.\s+[A-ZÄÖÜ])/;
+
+    for (let i = 0; i < lines.length; i++) {
+      const trimmedLine = lines[i].trim();
+      // Wenn Zeile wie ein Section-Header aussieht UND nicht die erste Zeile ist
+      // UND die vorherige Zeile nicht leer war → Umbruch einfügen
+      if (i > 0 && trimmedLine.length > 0 && sectionHeaderPattern.test(trimmedLine)) {
+        const prevLine = (processedLines.length > 0) ? processedLines[processedLines.length - 1].trim() : '';
+        if (prevLine.length > 0) {
+          processedLines.push(''); // Leere Zeile einfügen → ergibt \n\n beim Join
+        }
+      }
+      processedLines.push(lines[i]);
+    }
+    const preprocessedText = processedLines.join('\n');
+
     // Splitte nach Doppel-Zeilenumbrüchen (Absätze)
-    const paragraphs = text.split(/\n\n+/);
+    const paragraphs = preprocessedText.split(/\n\n+/);
     let currentPosition = 0;
     let blockIndex = 0;
 
