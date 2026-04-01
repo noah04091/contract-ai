@@ -34,12 +34,19 @@ function normalizePdfText(text) {
 /**
  * Detect multi-column PDF extraction artifacts.
  *
- * When pdf-parse extracts text from multi-column PDFs, it often mixes
- * columns and produces single-letter lines (e.g., "A" on one line,
- * "rbeitnehmer" on the next — instead of "Arbeitnehmer").
+ * pdf-parse reads multi-column PDFs left-to-right across columns, producing
+ * two distinct artifact types:
  *
- * Counts isolated single-letter lines (letters only, no digits/punctuation).
- * Normal documents have 0-1 such lines; column-broken PDFs have 5-20+.
+ * Check 1 — Single-letter breaks: Word split after first letter across columns
+ *           ("A" on one line, "rbeitnehmer" on the next). Threshold: 3+ occurrences.
+ *
+ * Check 2 — Section number interleaving: Columns read alternately produce
+ *           non-sequential § numbers (§1, §11, §2, §12 instead of §1, §2, §3).
+ *           Detected via backward jumps in § numbering (>25% backward, min 3).
+ *
+ * Check 3 — Short average line length: Each column is ~40-50% page width,
+ *           so multi-column extraction produces many short lines.
+ *           Threshold: avg < 35 chars with 50+ non-empty lines.
  *
  * @param {string} text - Extracted PDF text
  * @returns {boolean} True if column artifacts are likely present
@@ -48,18 +55,43 @@ function hasColumnArtifacts(text) {
   if (!text || text.length < 500) return false;
 
   const lines = text.split('\n');
-  let singleLetterLines = 0;
 
+  // === Check 1: Single-letter lines ===
+  let singleLetterLines = 0;
   for (const line of lines) {
     const trimmed = line.trim();
-    // Single letter on its own line (no digit, no punctuation, no symbol)
     if (trimmed.length === 1 && /[A-Za-zÄÖÜäöüß]/.test(trimmed)) {
       singleLetterLines++;
     }
   }
+  if (singleLetterLines >= 3) return true;
 
-  // Threshold: 3+ single-letter lines strongly indicates column artifacts
-  return singleLetterLines >= 3;
+  // === Check 2: Non-sequential § section headers (column interleaving) ===
+  // Only match § at line start (actual headers, not inline references)
+  const sectionNumbers = [];
+  for (const line of lines) {
+    const match = line.trim().match(/^§\s*(\d+)\b/);
+    if (match) sectionNumbers.push(parseInt(match[1]));
+  }
+  if (sectionNumbers.length >= 4) {
+    let backwards = 0;
+    for (let i = 1; i < sectionNumbers.length; i++) {
+      if (sectionNumbers[i] < sectionNumbers[i - 1]) backwards++;
+    }
+    // >25% backward jumps with at least 3 = strong interleaving signal
+    if (backwards >= 3 && backwards / (sectionNumbers.length - 1) > 0.25) return true;
+  }
+
+  // === Check 3: Short average line length ===
+  // Single-column PDFs: avg 60-120 chars. Multi-column: avg 25-45 chars.
+  const nonEmptyLines = lines.filter(l => l.trim().length > 0);
+  if (nonEmptyLines.length >= 50) {
+    const totalLength = nonEmptyLines.reduce((sum, l) => sum + l.trim().length, 0);
+    const avgLength = totalLength / nonEmptyLines.length;
+    if (avgLength < 35) return true;
+  }
+
+  return false;
 }
 
 /**

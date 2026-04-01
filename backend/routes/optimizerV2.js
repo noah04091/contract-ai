@@ -227,10 +227,10 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         if (contractText && contractText.trim().length >= 100) {
           console.log(`[OptimizerV2] pdf-parse erfolgreich: ${contractText.trim().length} Zeichen`);
 
-          // Quality gate: detect multi-column PDF artifacts (isolated single-letter lines)
-          // If detected, Textract OCR handles multi-column layout correctly
+          // Quality gate: detect multi-column PDF artifacts
+          // Checks: single-letter breaks, non-sequential §-numbers, short avg line length
           if (hasColumnArtifacts(contractText)) {
-            console.log(`[OptimizerV2] Spaltenartefakte erkannt (mehrspaltige PDF vermutet), versuche OCR...`);
+            console.log(`[OptimizerV2] Spaltenartefakte erkannt (mehrspaltige PDF), versuche OCR...`);
             const ocrText = await runOCR(buffer, 'Mehrspaltige PDF erkannt — Text wird per OCR optimiert...');
             if (ocrText) {
               console.log(`[OptimizerV2] OCR-Text übernommen: ${ocrText.trim().length} Zeichen (vorher pdf-parse: ${contractText.trim().length})`);
