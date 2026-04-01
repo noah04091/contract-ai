@@ -2806,8 +2806,9 @@ function inferGroupSemanticType(group) {
  * Formatiert Gruppen als strukturierter Prompt-Block für Phase B.
  * Jede Gruppe bekommt eine ID die Phase B referenzieren MUSS.
  */
-function formatGroupsForPrompt(groups) {
+function formatGroupsForPrompt(groups, docConfig) {
   if (!groups || groups.length === 0) return '';
+  const dl = docConfig?.labels?.documentName || 'Vertrag';
 
   let text = `VERIFIZIERTE UNTERSCHIEDE (${groups.length} Gruppen):
 
@@ -2822,7 +2823,7 @@ Diese Fakten sind verifiziert. Du MUSST jede Gruppe in "groupEvaluations" bewert
     if (group.type === 'matched') {
       const d = group.items[0];
       text += `Direktvergleich\n`;
-      text += `  ${d.key}: Vertrag 1 = "${d.value1}" | Vertrag 2 = "${d.value2}"`;
+      text += `  ${d.key}: ${dl} 1 = "${d.value1}" | ${dl} 2 = "${d.value2}"`;
       if (d.diffType === 'numeric' && d.numValue1 !== null && d.numValue2 !== null && d.numValue1 !== 0) {
         const pct = ((d.numValue2 - d.numValue1) / Math.abs(d.numValue1) * 100).toFixed(1);
         text += ` (Δ ${pct > 0 ? '+' : ''}${pct}%)`;
@@ -2835,10 +2836,10 @@ Diese Fakten sind verifiziert. Du MUSST jede Gruppe in "groupEvaluations" bewert
       const items = group.items.filter(d => !d._isAreaGap);
 
       if (gaps.length > 0 && items.length === 0) {
-        text += `Bereich fehlt komplett in Vertrag ${otherContract}\n`;
-        text += `  Vertrag ${contract}: ${gaps[0].value1 || gaps[0].value2}\n`;
+        text += `Bereich fehlt komplett in ${dl} ${otherContract}\n`;
+        text += `  ${dl} ${contract}: ${gaps[0].value1 || gaps[0].value2}\n`;
       } else {
-        text += `Nur in Vertrag ${contract} (${items.length} Werte)\n`;
+        text += `Nur in ${dl} ${contract} (${items.length} Werte)\n`;
         for (const d of items) {
           const val = d.value1 || d.value2;
           text += `  • ${d.key}: ${val}\n`;
@@ -4368,9 +4369,10 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
       section = group.items[0]?.section2 || '';
     }
 
+    const dl = docConfig?.labels?.documentName || 'Vertrag';
     const fallbackExplanation = group.type === 'matched'
-      ? `${group.items[0]?.key}: Vertrag 1 = "${group.items[0]?.value1}", Vertrag 2 = "${group.items[0]?.value2}".`
-      : `${group.areaLabel}: ${group.items.filter(d => !d._isAreaGap).length} Werte nur in Vertrag ${group.type === 'only_in_1' ? 1 : 2}.`;
+      ? `${group.items[0]?.key}: ${dl} 1 = "${group.items[0]?.value1}", ${dl} 2 = "${group.items[0]?.value2}".`
+      : `${group.areaLabel}: ${group.items.filter(d => !d._isAreaGap).length} Werte nur in ${dl} ${group.type === 'only_in_1' ? 1 : 2}.`;
 
     // V3: Override severity for missing diffs in irrelevant areas
     let groupSeverity = ev.severity || group.severity;
@@ -4575,8 +4577,8 @@ function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode,
   const diffsText = allDiffs.map((d, i) => {
     let entry = `${i + 1}. [${d.severity.toUpperCase()}] ${d.category}`;
     if (d.section) entry += ` (${d.section})`;
-    entry += `\n   V1: ${(d.contract1 || '').substring(0, 200)}`;
-    entry += `\n   V2: ${(d.contract2 || '').substring(0, 200)}`;
+    entry += `\n   ${docLabel} 1: ${(d.contract1 || '').substring(0, 200)}`;
+    entry += `\n   ${docLabel} 2: ${(d.contract2 || '').substring(0, 200)}`;
     if (d.explanation) entry += `\n   → ${d.explanation.substring(0, 300)}`;
     return entry;
   }).join('\n\n');
@@ -4590,9 +4592,12 @@ function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode,
     return entry;
   }).join('\n');
 
+  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
+
   return {
-    system: `Du bist ein erfahrener Vertragsanalyst. Du bekommst eine FERTIGE Liste von Unterschieden zwischen zwei Verträgen.
+    system: `Du bist ein erfahrener Vertragsanalyst. Du bekommst eine FERTIGE Liste von Unterschieden zwischen zwei ${docLabel === 'Vertrag' ? 'Verträgen' : docLabel + '-Dokumenten'}.
 Deine Aufgabe: Bewerte, gewichte, fasse zusammen, gib Scores.
+WICHTIG: Verwende in deiner Antwort IMMER "${docLabel} 1" und "${docLabel} 2" (NICHT "Vertrag 1/2"${docLabel !== 'Vertrag' ? ', denn es handelt sich um ' + docLabel + '-Dokumente' : ''}).
 
 ${profileHint}
 ${perspectiveBlock}
@@ -4624,14 +4629,14 @@ Für jede GRUPPE oben, schreibe eine Bewertung in "groupEvaluations" mit dem Gru
   "marketContext": "Marktstandard oder null"
 }
 
-SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro Vertrag):
+SCHRITT 2 — STÄRKEN & SCHWÄCHEN (je 3-5 pro ${docLabel}):
 
 SCHRITT 3 — RISIKEN + EMPFEHLUNGEN:
 Risiken mit Reasoning Chain. Empfehlungen mit Alternativtext.
 
 SCHRITT 4 — SCORES + GESAMTURTEIL:
-Overall Score (0-100) + 5 Kategorie-Scores + Risiko-Level pro Vertrag.
-MINIMUM 12 Punkte Differenz wenn ein Vertrag klar besser ist.
+Overall Score (0-100) + 5 Kategorie-Scores + Risiko-Level pro ${docLabel}.
+MINIMUM 12 Punkte Differenz wenn ein ${docLabel} klar besser ist.
 6-8 Sätze Fazit.
 
 {
@@ -4639,7 +4644,7 @@ MINIMUM 12 Punkte Differenz wenn ein Vertrag klar besser ist.
   "contract1Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "contract2Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "overallRecommendation": {"recommended": 1|2, "reasoning": "string", "confidence": number, "conditions": ["string"]},
-  "summary": {"tldr": "2-3 Sätze", "detailedSummary": "4-6 Sätze", "verdict": "Vertrag X ist besser, ABER..."},
+  "summary": {"tldr": "2-3 Sätze", "detailedSummary": "4-6 Sätze", "verdict": "${docLabel} X ist besser, ABER..."},
   "scores": {
     "contract1": {"overall": number, "fairness": number, "riskProtection": number, "flexibility": number, "completeness": number, "clarity": number},
     "contract2": {"overall": number, "fairness": number, "riskProtection": number, "flexibility": number, "completeness": number, "clarity": number}
