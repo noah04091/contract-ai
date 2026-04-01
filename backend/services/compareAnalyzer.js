@@ -132,6 +132,7 @@ Bewerte nach: Vollständigkeit der DSGVO-Pflichtangaben, Transparenz, Aktualitä
     irrelevantAreas: ['ip_rights', 'non_compete', 'force_majeure', 'confidentiality'],
     missingSeverityOverrides: {
       ip_rights: 'low', non_compete: 'low', force_majeure: 'low', confidentiality: 'low',
+      other: 'low',
       warranty: 'high',
       liability: 'high',
       termination: 'high',
@@ -2248,8 +2249,19 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
   // Vergleicht Layer 0 rawValues V1 vs V2 direkt — immer gleiches Ergebnis.
   const directMatchedKeys = new Set(); // Track matched keys to avoid duplicates in per-area pass
   if (USE_RAW_VALUES && map1._rawValues?.length && map2._rawValues?.length) {
-    const rv1 = map1._rawValues;
-    const rv2 = map2._rawValues;
+    // V3: Filter rawValues from skipAreas + deduplicate (same key+value = skip)
+    const dedupRaw = (rawValues) => {
+      const seen = new Set();
+      return rawValues.filter(rv => {
+        if (skipAreas.has(rv._assignedArea)) return false;
+        const sig = `${(rv.key || '').toLowerCase()}|${(rv.value || '').toLowerCase()}`;
+        if (seen.has(sig)) return false;
+        seen.add(sig);
+        return true;
+      });
+    };
+    const rv1 = dedupRaw(map1._rawValues);
+    const rv2 = dedupRaw(map2._rawValues);
     const matched2 = new Set();
 
     for (const r1 of rv1) {
@@ -2579,8 +2591,9 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
     }
 
     // Cross-area: match unmatched V1 rawValues against unmatched V2 rawValues
-    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key));
-    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key));
+    // V3: Also filter out rawValues from skipAreas (includes docConfig.irrelevantAreas)
+    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key) && !skipAreas.has(rv._assignedArea));
+    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key) && !skipAreas.has(rv._assignedArea));
     const crossMatched2 = new Set();
 
     for (const rv1 of unmatched1) {
@@ -3845,12 +3858,12 @@ Antworte NUR mit validem JSON.`,
     user: `KLAUSEL-VERGLEICH: "${clause1.title}" (${clause1.area})
 Match-Typ: ${match.type} (Ähnlichkeit: ${Math.round((match.similarity || 0) * 100)}%)
 
-VERTRAG 1 — ${clause1.section || clause1.id}:
+${docConfig?.labels?.documentName || 'VERTRAG'} 1 — ${clause1.section || clause1.id}:
 """
 ${text1}
 """${kv1}
 
-VERTRAG 2 — ${clause2.section || clause2.id}:
+${docConfig?.labels?.documentName || 'VERTRAG'} 2 — ${clause2.section || clause2.id}:
 """
 ${text2}
 """${kv2}
@@ -3862,8 +3875,8 @@ Finde ALLE Unterschiede. Antworte mit JSON:
       "type": "wording|scope|qualifier|condition|obligation|right|limit",
       "severity": "low|medium|high|critical",
       "semanticType": "conflicting|weaker|stronger|different_scope",
-      "detail1": "Exaktes Zitat aus Vertrag 1 (min. 10 Zeichen)",
-      "detail2": "Exaktes Zitat aus Vertrag 2 (min. 10 Zeichen)",
+      "detail1": "Exaktes Zitat aus ${docConfig?.labels?.documentName || 'Vertrag'} 1 (min. 10 Zeichen)",
+      "detail2": "Exaktes Zitat aus ${docConfig?.labels?.documentName || 'Vertrag'} 2 (min. 10 Zeichen)",
       "explanation": "2-3 Sätze für den Mandanten",
       "impact": "Juristische Einordnung",
       "recommendation": "Konkrete Aktion",
@@ -4101,7 +4114,11 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
   });
 
   // Build tasks for missing clauses (unmatched) — skip noise areas
+  // V3: Also skip irrelevant areas from document type config
   const clauseSkipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  if (docConfig?.irrelevantAreas) {
+    for (const area of docConfig.irrelevantAreas) clauseSkipAreas.add(area);
+  }
   const unmatched1 = (clauseMatchResult.unmatched1 || [])
     .filter(id => { const c = clauseMap1[id]; return c && !clauseSkipAreas.has(c.area); })
     .slice(0, MAX_MISSING_ASSESSMENTS);
@@ -4396,6 +4413,12 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
 
     for (const pairResult of (clauseBundle.pairResults || [])) {
       for (const diff of (pairResult.differences || [])) {
+        // V3 Filter 0: Skip diffs from irrelevant areas
+        const diffArea = diff._clauseArea || 'other';
+        if (docConfig?.irrelevantAreas?.length > 0 && docConfig.irrelevantAreas.includes(diffArea)) {
+          continue;
+        }
+
         // Filter 1: Hallucinations — both clauses exist (matched), so "Nicht vorhanden" is wrong
         const d1 = (diff.detail1 || '').trim();
         const d2 = (diff.detail2 || '').trim();
@@ -4461,8 +4484,18 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
     // 3. Missing clause assessments (only if no area-gap in Schicht 2)
     const deterministicAreas = new Set(groups.map(g => g.area));
     for (const assessment of (clauseBundle.missingResults || [])) {
+      // V3: Skip missing assessments from irrelevant areas
+      if (docConfig?.irrelevantAreas?.length > 0 && docConfig.irrelevantAreas.includes(assessment._clauseArea)) {
+        continue;
+      }
       if (!deterministicAreas.has(assessment._clauseArea)) {
-        merged.push(convertMissingToEnhanced(assessment));
+        const enhanced = convertMissingToEnhanced(assessment);
+        // V3: Override severity for missing clauses in non-critical areas
+        if (docConfig?.missingSeverityOverrides) {
+          const override = docConfig.missingSeverityOverrides[assessment._clauseArea];
+          if (override) enhanced.severity = override;
+        }
+        merged.push(enhanced);
       }
     }
   }
@@ -4568,8 +4601,8 @@ ${docTypeBlock}
 Du bekommst KEINE Volltexte. Arbeite NUR mit den gegebenen Unterschieden und Metadaten.
 Antworte ausschließlich mit validem JSON.`,
 
-    user: `VERTRAG 1: ${meta1.contractType || 'Vertrag'} — ${(meta1.parties || []).map(p => p.name).join(', ')} — ${meta1.subject || 'k.A.'} (${meta1.clauseCount} Klauseln)
-VERTRAG 2: ${meta2.contractType || 'Vertrag'} — ${(meta2.parties || []).map(p => p.name).join(', ')} — ${meta2.subject || 'k.A.'} (${meta2.clauseCount} Klauseln)
+    user: `${(docConfig?.labels?.documentName || 'VERTRAG').toUpperCase()} 1: ${meta1.contractType || docConfig?.labels?.documentName || 'Vertrag'} — ${(meta1.parties || []).map(p => p.name).join(', ')} — ${meta1.subject || 'k.A.'} (${meta1.clauseCount} Klauseln)
+${(docConfig?.labels?.documentName || 'VERTRAG').toUpperCase()} 2: ${meta2.contractType || docConfig?.labels?.documentName || 'Vertrag'} — ${(meta2.parties || []).map(p => p.name).join(', ')} — ${meta2.subject || 'k.A.'} (${meta2.clauseCount} Klauseln)
 
 DETERMINISTISCHE GRUPPEN (bewerte jede in groupEvaluations):
 ${groupsText || 'Keine'}
