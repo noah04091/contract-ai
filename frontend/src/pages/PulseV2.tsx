@@ -502,17 +502,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </div>
       </div>
 
-      {/* RadarHealthCard is now embedded in the Contract Health card below */}
-
-      {/* ══════════ Monitoring Status ══════════ */}
-      {monitoringStatus && (
-        <MonitoringStatusCard
-          monitoring={monitoringStatus}
-          onRefresh={refreshMonitoringStatus}
-          onNavigate={(id) => onSelectContract(id)}
-        />
-      )}
-
       {/* ══════════ Hero: Portfolio Health Score ══════════ */}
       <div style={{
         background: '#fff',
@@ -740,7 +729,16 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </div>
       )}
 
-      {/* Legal Radar Alerts */}
+      {/* ══════════ Monitoring Status + Legal Radar ══════════ */}
+      {monitoringStatus && (
+        <MonitoringStatusCard
+          monitoring={monitoringStatus}
+          onRefresh={refreshMonitoringStatus}
+          onNavigate={(id) => onSelectContract(id)}
+        />
+      )}
+
+      {/* Legal Radar Alerts — directly below MonitoringStatusCard */}
       <LegalAlertsPanel
         alerts={legalAlerts}
         onDismiss={async (alertId) => {
