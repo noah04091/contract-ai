@@ -7,12 +7,59 @@
 
 /**
  * Normalize common PDF extraction artifacts before any processing.
- * - Merges hyphenated line breaks from multi-column PDFs ("erbrin-\ngung" → "erbringung")
- * - Only matches genuine mid-word hyphenation (lowercase-hyphen-newline-lowercase)
+ *
+ * Rule 1: Merges hyphenated line breaks ("erbrin-\ngung" → "erbringung")
+ *         Pattern: lowercase-hyphen-newline-lowercase
+ *
+ * Rule 2: Merges single-letter column break artifacts ("A\nrbeitnehmer" → "Arbeitnehmer")
+ *         When a PDF column break splits a word after its first letter, producing a
+ *         line with just one letter followed by the rest of the word on the next line.
+ *         Safe because: single letter on its own line (no punctuation, no list marker)
+ *         followed by lowercase is almost exclusively a PDF column artifact.
+ *         Legitimate patterns like "A." or "I." have punctuation and wouldn't match.
  */
 function normalizePdfText(text) {
   if (!text) return text;
-  return text.replace(/([a-zäöüß])-\n([a-zäöüß])/g, '$1$2');
+
+  // Rule 1: Hyphenated line breaks (existing)
+  text = text.replace(/([a-zäöüß])-\n([a-zäöüß])/g, '$1$2');
+
+  // Rule 2: Single-letter column break artifacts
+  // Matches: line consisting of exactly one letter + newline + lowercase continuation
+  text = text.replace(/^([A-Za-zÄÖÜäöüß])\n([a-zäöüß])/gm, '$1$2');
+
+  return text;
+}
+
+/**
+ * Detect multi-column PDF extraction artifacts.
+ *
+ * When pdf-parse extracts text from multi-column PDFs, it often mixes
+ * columns and produces single-letter lines (e.g., "A" on one line,
+ * "rbeitnehmer" on the next — instead of "Arbeitnehmer").
+ *
+ * Counts isolated single-letter lines (letters only, no digits/punctuation).
+ * Normal documents have 0-1 such lines; column-broken PDFs have 5-20+.
+ *
+ * @param {string} text - Extracted PDF text
+ * @returns {boolean} True if column artifacts are likely present
+ */
+function hasColumnArtifacts(text) {
+  if (!text || text.length < 500) return false;
+
+  const lines = text.split('\n');
+  let singleLetterLines = 0;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Single letter on its own line (no digit, no punctuation, no symbol)
+    if (trimmed.length === 1 && /[A-Za-zÄÖÜäöüß]/.test(trimmed)) {
+      singleLetterLines++;
+    }
+  }
+
+  // Threshold: 3+ single-letter lines strongly indicates column artifacts
+  return singleLetterLines >= 3;
 }
 
 /**
@@ -162,5 +209,6 @@ function smartTruncate(text, maxLength = 50000) {
 module.exports = {
   preSplitClauses,
   smartTruncate,
-  normalizePdfText
+  normalizePdfText,
+  hasColumnArtifacts
 };

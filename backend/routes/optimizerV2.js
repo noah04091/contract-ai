@@ -28,6 +28,7 @@ const { runPipeline, resumePipeline } = require('../services/optimizerV2/index')
 const OptimizerV2Result = require('../models/OptimizerV2Result');
 const { CLAUSE_CHAT_PROMPT } = require('../services/optimizerV2/prompts/systemPrompts');
 const { generateWordDiff } = require('../services/optimizerV2/utils/diffGenerator');
+const { hasColumnArtifacts } = require('../services/optimizerV2/utils/clauseSplitter');
 const { getFeatureLimit } = require('../constants/subscriptionPlans');
 const { generateSignedUrl } = require('../services/fileStorage');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
@@ -225,6 +226,19 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         contractText = parsed.text;
         if (contractText && contractText.trim().length >= 100) {
           console.log(`[OptimizerV2] pdf-parse erfolgreich: ${contractText.trim().length} Zeichen`);
+
+          // Quality gate: detect multi-column PDF artifacts (isolated single-letter lines)
+          // If detected, Textract OCR handles multi-column layout correctly
+          if (hasColumnArtifacts(contractText)) {
+            console.log(`[OptimizerV2] Spaltenartefakte erkannt (mehrspaltige PDF vermutet), versuche OCR...`);
+            const ocrText = await runOCR(buffer, 'Mehrspaltige PDF erkannt — Text wird per OCR optimiert...');
+            if (ocrText) {
+              console.log(`[OptimizerV2] OCR-Text übernommen: ${ocrText.trim().length} Zeichen (vorher pdf-parse: ${contractText.trim().length})`);
+              contractText = ocrText;
+            } else {
+              console.log(`[OptimizerV2] OCR nicht verfügbar, verwende pdf-parse Ergebnis`);
+            }
+          }
         }
       } catch (parseErr) {
         // Detect password-protected PDFs
