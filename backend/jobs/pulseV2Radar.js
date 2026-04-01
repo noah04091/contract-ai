@@ -59,6 +59,9 @@ function getLawEmbeddings() {
 const MAX_LAW_CHANGES = 25;
 const MAX_CONTRACT_MATCHES = 150;
 const IMPACT_CONFIDENCE_THRESHOLD = 60;
+const MIN_RELEVANCE_SCORE = 30; // Laws below this score are skipped (no keyword match, no specific area)
+const MAX_PER_AREA = 4; // Diversity: max laws from same primary area in top 25
+const MAX_ALERTS_PER_USER = 3; // Safety: prevent alert spam per radar run
 
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
@@ -173,9 +176,21 @@ async function runPulseV2Radar(db, options = {}) {
     }
   }
 
-  // 4. Store alerts + send emails
+  // 4. Store alerts + send emails (with per-user cap to prevent spam)
+  let cappedCount = 0;
   for (const [userId, alerts] of userAlerts.entries()) {
-    await storeAndNotify(db, userId, alerts);
+    if (alerts.length > MAX_ALERTS_PER_USER) {
+      // Keep highest severity first, then by confidence
+      const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+      alerts.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
+      const capped = alerts.slice(0, MAX_ALERTS_PER_USER);
+      const dropped = alerts.length - capped.length;
+      cappedCount += dropped;
+      console.log(`[PulseV2Radar] Alert cap: user ${userId} has ${alerts.length} alerts, keeping top ${MAX_ALERTS_PER_USER} (dropped ${dropped} lower-priority)`);
+      await storeAndNotify(db, userId, capped);
+    } else {
+      await storeAndNotify(db, userId, alerts);
+    }
   }
 
   // 5. Mark processed law changes
@@ -203,8 +218,10 @@ async function runPulseV2Radar(db, options = {}) {
       lawChanges: lawChanges.length,
       contractsMatched: totalMatches,
       alertsSent: totalAlerts,
+      alertsCapped: cappedCount,
       positiveAlerts: positiveAlertCount,
       negativeAlerts: negativeAlertCount,
+      usersNotified: userAlerts.size,
       durationMs: duration,
       scoped: !!options.userId,
     });
@@ -213,27 +230,220 @@ async function runPulseV2Radar(db, options = {}) {
   }
 
   console.log(
-    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} positive, ${negativeAlertCount} negative). ${Math.round(duration / 1000)}s`
+    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s`
   );
 
-  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, durationMs: duration };
+  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration };
+}
+
+// ═══════════════════════════════════════════════════
+// NOISE FILTER — skip laws that are never contract-relevant
+// ═══════════════════════════════════════════════════
+const NOISE_PATTERNS = [
+  // Parliamentary / procedural
+  /protokoll\s+der\s+\d+\.\s+sitzung/i,
+  /tagesordnungspunkt|^top\s+\d/i,
+  /drucksache\s+\d+\/\d+/i,
+  /kleine\s+anfrage|große\s+anfrage/i,
+  /beschlussempfehlung\s+und\s+bericht/i,
+  /^21\/\d+:/i, // Bundestag Drucksachen
+  // Energy / infrastructure
+  /ausschreibung.*(wind|solar|biomasse|netz)/i,
+  /netzausbau|stromtrasse|genehmigt.*trasse/i,
+  /smart\s*meter|rollout/i,
+  /überzeichnung.*ausschreibung/i,
+  /höchstwerte.*ausschreibung/i,
+  /lieferantenwechsel/i,
+  /infrastrukturgebiet/i,
+  // EU noise
+  /^OJ:L:\d{4}:\d+/i,
+  /amtsblatt\s+der\s+europäischen\s+union/i,
+  // Criminal law (never relevant for contracts)
+  /strafbarkeit|strafgesetzbuch|strafrecht/i,
+  /strafsenat|strafkammer/i,
+  /\d+\s+StR\s+\d+/i, // Criminal case numbers (2 StR 365/25)
+  /\d+\s+ARs\s+\d+/i, // Criminal referral numbers
+  /genitalverstümmelung|todesstrafe|deepfake/i,
+  // Political / administrative noise
+  /fortschrittsbericht\s+\d{4}/i,
+  /normenkontrolle.*bundesverfassungsgericht/i,
+  /pilotprojekt.*simulation/i,
+  /wissenschaftliche.*arbeitskreis/i,
+  /neue\s+mitglieder.*berufen/i,
+  /transparenzbericht.*terroris/i,
+  /klage\s+der\s+afd|allianz\s+gegen\s+rechtsextremismus/i,
+  /spritpreis|kraftstoffpreis|elektrokleinstfahrzeug/i,
+  /sondervermögen\s+(infrastruktur|bundeswehr)/i,
+  /boykottmaßnahmen/i,
+  // Political slogans / coalition programs
+  /für\s+gute\s+arbeit\s+und\s+faire/i,
+  /koalitionsvertrag|regierungsprogramm|wahlprogramm/i,
+  // Military / defense
+  /wehrdienstsenat|truppendienstgericht|soldatengesetz/i,
+  // Administrative / internal notices
+  /technischer\s+fehler|newsletterversand/i,
+  /arbeitsmarkt\s+(zeigt|bericht|statistik|daten)/i,
+  // Regulatory body procedural
+  /bundesnetzagentur\s+(leitet|stellt|benennt|begrüßt|veröffentlicht|sieht)/i,
+];
+
+function isNoiseLaw(law) {
+  const title = (law.title || "").trim();
+  if (title.length < 15) return true;
+  return NOISE_PATTERNS.some((p) => p.test(title));
+}
+
+// ═══════════════════════════════════════════════════
+// RELEVANCE SCORING — prioritize laws that match existing contracts
+// ═══════════════════════════════════════════════════
+
+// Keywords by contract type — what makes a law relevant to each type
+const CONTRACT_RELEVANCE_KEYWORDS = {
+  versicherung: /versicherung|vvg|prämie|deckung|police|versicherer|versicherungsnehmer|rechtsschutz|haftpflicht|schadenfall|selbstbeteiligung|obliegenheit|tarif/i,
+  mietvertrag: /miet(recht|vertrag|erhöhung|spiegel|preisbremse)|vermieter|mieter|nebenkosten|kaution|eigenbedarf|wohnung|mietrückstand|indexmiete|staffelmiete|schönheitsreparatur/i,
+  arbeitsvertrag: /arbeit(s|nehmer|geber|srecht|svertrag|szeit)|kündigung(sschutz|sfrist)|betriebsrat|tarifvertrag|mindestlohn|teilzeit|probezeit|urlaubsanspruch|überstunden|elternzeit|entgeltfortzahlung/i,
+  freelancer: /freiberuf|werkvertrag|dienstvertrag|honorar|scheinselbständig|solo-selbständig|auftragnehmer|vergütung|nutzungsrecht|urheberrecht/i,
+  werkvertrag: /werkvertrag|bauvertrag|abnahme|mängel(recht|haftung|anspruch)|nacherfüllung|gewährleistung|hoai|bauordnung|vob|werkleistung|subunternehmer/i,
+  dienstleistung: /dienstleistung|dienstvertrag|vergütung|haftung|gewährleistung|auftragsverarbeitung/i,
+  saas: /saas|software|cloud|hosting|verfügbarkeit|sla|service.level|api|datenschutz|auftragsverarbeitung|it-sicherheit|cyber/i,
+  factoring: /factoring|forderung(s|en|skauf|sabtretung)|abtretung|delkredere|zession|veritätshaftung|ankaufsfaktor/i,
+  darlehen: /darlehen|kredit|zinssatz|tilgung|sondertilgung|bereitstellungszins|verbraucherdarlehen/i,
+  kaufvertrag: /kauf(recht|vertrag|preis)|gewährleistung|sachmangel|nacherfüllung|mangel(recht|haftung)|rücktritt/i,
+  nda: /geheimhaltung|vertraulich|geschäftsgeheimnis|verschwiegenheit|nda|geschgehg/i,
+};
+
+// High-impact words that boost relevance regardless of contract type
+const IMPACT_BOOST_PATTERN = /unwirksam|verpflichtend|in\s*kraft|rechtswidrig|verboten|pflicht|frist|neue.*anforderung|änderung|novelle|reform|richtlinie|verordnung/i;
+
+// Broad catch-all areas that match many contract types → weak signal.
+// These get minimal weight because they don't indicate specific relevance.
+// "Vertragsrecht" alone maps to 10 types, inflating all scores equally.
+const BROAD_AREAS = new Set([
+  "vertragsrecht", "bgb", "hgb", "handelsrecht",
+  "gesetzgebung", "rechtsnews", "bundesrecht", "sonstiges",
+  "verwaltungsrecht", "verfassungsrecht", "sozialrecht",
+]);
+
+function scoreLawRelevance(law, activeContractTypes) {
+  const text = `${law.title || ""} ${(law.summary || law.text || "").substring(0, 500)}`;
+  let score = 0;
+
+  // 1. Area match — specific areas are strong signals, broad areas are weak
+  const lawAreas = [law.area, ...(law.areas || [])].filter(Boolean).map((a) => a.toLowerCase().replace(/-/g, "_"));
+  for (const area of lawAreas) {
+    const mappedTypes = AREA_TO_CONTRACT_TYPES[area] || [];
+    const overlap = mappedTypes.filter((t) => activeContractTypes.some((ct) => ct.includes(t) || t.includes(ct)));
+    if (overlap.length > 0) {
+      if (BROAD_AREAS.has(area)) {
+        score += 5; // Broad area: minimal signal (just confirms it's legal content)
+      } else {
+        score += 15 + Math.min(overlap.length * 5, 15); // Specific area: 15-30 pts
+      }
+    }
+  }
+
+  // 2. Keyword match — PRIMARY differentiator
+  // Law text mentioning contract-specific terms is the strongest relevance signal
+  for (const [contractType, pattern] of Object.entries(CONTRACT_RELEVANCE_KEYWORDS)) {
+    if (activeContractTypes.some((ct) => ct.includes(contractType) || contractType.includes(ct))) {
+      if (pattern.test(text)) score += 30;
+    }
+  }
+
+  // 3. Impact word boost
+  if (IMPACT_BOOST_PATTERN.test(text)) score += 15;
+
+  // 4. Law status boost (in-force > passed > court_decision > proposal)
+  const statusBoost = { effective: 20, passed: 15, court_decision: 10, guideline: 5, proposal: 3 };
+  score += statusBoost[law.lawStatus] || 0;
+
+  // 5. Recency boost (newer = slight boost, max 10 points)
+  if (law.updatedAt) {
+    const ageHours = (Date.now() - new Date(law.updatedAt).getTime()) / (1000 * 60 * 60);
+    score += Math.max(0, Math.round(10 - ageHours / 24)); // 1 point per day, max 10
+  }
+
+  return score;
 }
 
 /**
  * Fetch law changes from the last 7 days that haven't been processed by V2 yet.
+ * Uses relevance scoring instead of pure chronological order:
+ *   1. Fetch unprocessed laws (wider pool)
+ *   2. Filter out noise (Bundestag protocols, Ausschreibungen, old EU OJ)
+ *   3. Score by relevance to existing V2 contracts
+ *   4. Return top MAX_LAW_CHANGES by score
  */
 async function fetchRecentLawChanges(db) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  return db
+  // 1. Fetch wider pool of unprocessed laws
+  const candidates = await db
     .collection("laws")
     .find({
       updatedAt: { $gte: since },
       pulseV2Processed: { $ne: true },
     })
     .sort({ updatedAt: -1 })
-    .limit(MAX_LAW_CHANGES)
+    .limit(200) // Wider pool for scoring
     .toArray();
+
+  if (candidates.length === 0) return [];
+
+  // 2. Noise filter
+  const filtered = candidates.filter((law) => !isNoiseLaw(law));
+  const noiseCount = candidates.length - filtered.length;
+  if (noiseCount > 0) {
+    console.log(`[PulseV2Radar] Noise filter: ${noiseCount}/${candidates.length} laws filtered out`);
+  }
+
+  if (filtered.length === 0) return [];
+
+  // 3. Get active contract types from V2 results
+  const contractTypes = await LegalPulseV2Result.distinct("document.contractType", {
+    status: "completed",
+  });
+  const activeTypes = contractTypes
+    .filter(Boolean)
+    .map((t) => t.toLowerCase().replace(/[-\s]+(vertrag|rahmenvertrag|vereinbarung)/g, "").replace(/[^a-zäöü]/g, ""));
+
+  if (activeTypes.length === 0) {
+    // No V2 contracts yet — fall back to chronological
+    console.log("[PulseV2Radar] No V2 contracts for scoring, using chronological order");
+    return filtered.slice(0, MAX_LAW_CHANGES);
+  }
+
+  // 4. Score and sort by relevance
+  const scored = filtered.map((law) => ({
+    law,
+    score: scoreLawRelevance(law, activeTypes),
+  }));
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // 5. Score threshold — skip laws with no meaningful signal
+  const aboveThreshold = scored.filter((s) => s.score >= MIN_RELEVANCE_SCORE);
+  const belowThreshold = scored.length - aboveThreshold.length;
+
+  // 6. Diversity filter — prevent area flooding (e.g. 10x Verwaltungsrecht)
+  const topItems = [];
+  const areaCounts = {};
+  for (const item of aboveThreshold) {
+    if (topItems.length >= MAX_LAW_CHANGES) break;
+    const primaryArea = (item.law.area || "unknown").toLowerCase();
+    areaCounts[primaryArea] = (areaCounts[primaryArea] || 0) + 1;
+    if (areaCounts[primaryArea] <= MAX_PER_AREA) {
+      topItems.push(item);
+    }
+  }
+
+  console.log(`[PulseV2Radar] Relevance scoring: ${aboveThreshold.length}/${filtered.length} above threshold (>=${MIN_RELEVANCE_SCORE}), ${belowThreshold} skipped, taking ${topItems.length}`);
+  if (topItems.length > 0) {
+    const topScores = topItems.slice(0, 5).map((s) => `${s.score}:"${(s.law.title || "").substring(0, 50)}"`);
+    console.log(`[PulseV2Radar] Top scores: ${topScores.join(" | ")}`);
+  }
+
+  return topItems.map((s) => s.law);
 }
 
 /**

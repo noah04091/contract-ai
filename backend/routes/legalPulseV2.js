@@ -1932,7 +1932,7 @@ router.post("/admin/test-radar", requirePremium, async (req, res) => {
     const interceptedEmails = [];
 
     if (dryRun) {
-      emailRetryService.queueEmail = async (emailData) => {
+      emailRetryService.queueEmail = async (db, emailData) => {
         interceptedEmails.push({
           to: emailData.to,
           subject: emailData.subject,
