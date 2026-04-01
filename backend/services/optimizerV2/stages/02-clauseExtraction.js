@@ -198,9 +198,13 @@ Beispiel: "§ 8 Sonstiges — Der Anbieter haftet nicht für mittelbare Schäden
  */
 async function extractSmallContract(openai, contractText, preSplit, structure, onProgress) {
   const truncated = smartTruncate(contractText, 50000);
+  const sectionNumbers = preSplit.filter(s => s.sectionNumber).map(s => s.sectionNumber);
   const contextHint = preSplit.length > 1
     ? `\n\nHINWEIS: Der Vertrag enthält ca. ${preSplit.length} Abschnitte. ` +
-      `Erkannte Sektionsnummern: ${preSplit.filter(s => s.sectionNumber).map(s => s.sectionNumber).join(', ')}`
+      `Erkannte Sektionsnummern: ${sectionNumbers.join(', ')}` +
+      `\n\nWICHTIG: Wenn ein Abschnitt nur eine Überschrift enthält (z.B. "3. Preise/Zahlungsbedingungen") ` +
+      `und direkt danach Unterabschnitte folgen (3.1, 3.2, etc.), fasse die Überschrift mit dem ersten ` +
+      `Unterabschnitt zu EINER Klausel zusammen. Erstelle KEINE separaten Klauseln für reine Überschriften ohne eigenen Inhalt.`
     : '';
 
   onProgress(16, 'KI extrahiert Klauseln...');

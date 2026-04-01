@@ -22,9 +22,9 @@ Regeln:
   - "low": Laienhaft, viele Lücken oder Template-Charakter
 - "recognizedAs" ist eine kurze Beschreibung in 3-5 Wörtern (z.B. "SaaS-Dienstleistungsvertrag für Softwareentwicklung")
 - "documentCategory" klassifiziert die DOKUMENTART:
-  - "bilateral_contract": Vertrag zwischen zwei oder mehr Parteien (Dienstleistungsvertrag, Kaufvertrag, NDA, Mietvertrag, Werkvertrag, Arbeitsvertrag, etc.)
-  - "regulatory_document": Einseitiges regulatorisches/informatorisches Dokument (Datenschutzhinweise, Datenschutzerklärung, AGB, Nutzungsbedingungen, Compliance-Richtlinien, Betriebsvereinbarungen)
-  Entscheide anhand des INHALTS: Wird hier zwischen Parteien verhandelt/vereinbart → "bilateral_contract". Wird hier einseitig informiert/geregelt → "regulatory_document".
+  - "bilateral_contract": Dokument das vertragliche Rechte und Pflichten zwischen Parteien regelt — auch wenn einseitig gestellt (Dienstleistungsvertrag, Kaufvertrag, NDA, Mietvertrag, Werkvertrag, Arbeitsvertrag, AGB, Allgemeine Geschäftsbedingungen, Nutzungsbedingungen, etc.)
+  - "regulatory_document": Rein informatorisches Dokument OHNE vertragliche Rechte/Pflichten (Datenschutzhinweise, Datenschutzerklärung, Privacy Policy, Compliance-Richtlinien, interne Betriebsanweisungen)
+  WICHTIG: AGB und Nutzungsbedingungen sind "bilateral_contract" — sie regeln Rechte/Pflichten zwischen den Parteien und der Empfänger kann dagegen verhandeln. Nur rein INFORMATORISCHE Dokumente ohne Vertragscharakter sind "regulatory_document".
 - "industry" ist die Branche, in der der Vertrag angesiedelt ist. Leite sie aus dem Vertragsinhalt ab:
   - Parteinamen, Leistungsbeschreibung, Fachbegriffe, Branchenstandards
   - Bevorzuge SPEZIFISCHE Branchen über generische. Beispiele:

@@ -15,6 +15,7 @@ const { OpenAI } = require('openai');
 const OptimizerV2Result = require('../../models/OptimizerV2Result');
 const { runStructureRecognition } = require('./stages/01-structureRecognition');
 const { runClauseExtraction } = require('./stages/02-clauseExtraction');
+const { normalizePdfText } = require('./utils/clauseSplitter');
 const { runClauseAnalysis } = require('./stages/03-clauseAnalysis');
 const { runOptimizationGeneration } = require('./stages/04-optimizationGeneration');
 const { runScoreCalculation } = require('./stages/05-scoreCalculation');
@@ -66,6 +67,10 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
   });
 
   const costs = [];
+
+  // Normalize PDF extraction artifacts (hyphenation, column breaks)
+  // Applied AFTER DB save (originalText preserved) but BEFORE all pipeline stages
+  contractText = normalizePdfText(contractText);
 
   try {
     // ═══════════════════════════════════════════════
@@ -228,6 +233,9 @@ async function resumePipeline(resultId, onProgress) {
 
   await OptimizerV2Result.updateOne({ _id: record._id }, { $set: { status: 'running' } });
 
+  // Normalize PDF artifacts for resumed pipeline (same as runPipeline)
+  const normalizedText = normalizePdfText(record.originalText);
+
   try {
     let structure = record.structure;
     let clauses = record.clauses;
@@ -235,14 +243,14 @@ async function resumePipeline(resultId, onProgress) {
     let optimizations = record.optimizations;
 
     if (!hasStructure) {
-      const stage1 = await runStructureRecognition(openai, record.originalText, record.fileName, onProgress);
+      const stage1 = await runStructureRecognition(openai, normalizedText, record.fileName, onProgress);
       structure = stage1.result;
       costs.push({ stage: 1, stageName: 'Vertragsstruktur', ...stage1.usage, durationMs: 0 });
       await OptimizerV2Result.updateOne({ _id: record._id }, { $set: { structure, currentStage: 2, 'costs.perStage': costs } });
     }
 
     if (!hasClauses) {
-      const stage2 = await runClauseExtraction(openai, record.originalText, structure, onProgress);
+      const stage2 = await runClauseExtraction(openai, normalizedText, structure, onProgress);
       clauses = stage2.result;
       costs.push({ stage: 2, stageName: 'Klauselextraktion', ...stage2.usage, durationMs: 0 });
       await OptimizerV2Result.updateOne({ _id: record._id }, { $set: { clauses, currentStage: 3, 'costs.perStage': costs } });

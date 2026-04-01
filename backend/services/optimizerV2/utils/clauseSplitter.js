@@ -6,6 +6,16 @@
  */
 
 /**
+ * Normalize common PDF extraction artifacts before any processing.
+ * - Merges hyphenated line breaks from multi-column PDFs ("erbrin-\ngung" → "erbringung")
+ * - Only matches genuine mid-word hyphenation (lowercase-hyphen-newline-lowercase)
+ */
+function normalizePdfText(text) {
+  if (!text) return text;
+  return text.replace(/([a-zäöüß])-\n([a-zäöüß])/g, '$1$2');
+}
+
+/**
  * Split contract text into preliminary sections using common patterns.
  * This is a heuristic to help GPT by providing section boundaries.
  */
@@ -80,7 +90,51 @@ function preSplitClauses(text) {
     }
   }
 
-  return sections.length > 0 ? sections : [{ text: text.trim(), sectionNumber: null }];
+  const result = sections.length > 0 ? sections : [{ text: text.trim(), sectionNumber: null }];
+  return mergeHeaderOnlySections(result);
+}
+
+/**
+ * Merge header-only sections with their first subsection.
+ *
+ * Problem: When a document has "3. Preise" followed by "3.1 Preise können...",
+ * the regex creates a section for "3." that contains only the header text.
+ * This causes Stage 4 to generate phantom content for empty headers.
+ *
+ * Solution: If a section has very short text (<120 chars) and the next section's
+ * number starts with the same prefix (e.g., "3." → "3.1"), merge them.
+ */
+function mergeHeaderOnlySections(sections) {
+  if (sections.length < 2) return sections;
+
+  const merged = [];
+  let i = 0;
+
+  while (i < sections.length) {
+    const current = sections[i];
+    const next = sections[i + 1];
+
+    if (next && current.text.length < 120 && current.sectionNumber && next.sectionNumber) {
+      // Normalize: "3." → "3", "§ 3" → "§ 3"
+      const currentBase = current.sectionNumber.replace(/\.$/, '');
+      const nextNum = next.sectionNumber;
+
+      // Check if next is a subsection of current (e.g., "3" → "3.1" or "3.2")
+      if (nextNum.startsWith(currentBase + '.')) {
+        merged.push({
+          text: current.text.trimEnd() + '\n' + next.text,
+          sectionNumber: current.sectionNumber
+        });
+        i += 2;
+        continue;
+      }
+    }
+
+    merged.push(current);
+    i++;
+  }
+
+  return merged;
 }
 
 /**
@@ -107,5 +161,6 @@ function smartTruncate(text, maxLength = 50000) {
 
 module.exports = {
   preSplitClauses,
-  smartTruncate
+  smartTruncate,
+  normalizePdfText
 };
