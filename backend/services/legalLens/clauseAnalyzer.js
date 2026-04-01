@@ -208,6 +208,111 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
       }
     };
 
+    // Dokumenttyp-spezifische Kontext-Prompts (ergänzt Branchen-Kontexte)
+    this.documentTypeContexts = {
+      datenschutz: {
+        name: 'Datenschutzhinweise / Datenschutzerklärung',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — DATENSCHUTZHINWEISE:
+- DSGVO-Konformität: Art. 13/14 Informationspflichten vollständig erfüllt?
+- Rechtsgrundlagen: Werden Art. 6 Abs. 1 lit. a-f DSGVO korrekt benannt?
+- Betroffenenrechte: Auskunft (Art. 15), Löschung (Art. 17), Widerspruch (Art. 21) vollständig aufgelistet?
+- Drittlandtransfer: Werden Daten in die USA/Drittländer übermittelt? Rechtsgrundlage (Art. 46/49)?
+- Speicherdauer: Konkrete Fristen oder nur „so lange wie nötig"? Letzteres ist unzureichend.
+- Auftragsverarbeiter: Sind Sub-Prozessoren benannt? Art. 28 DSGVO eingehalten?
+- Cookies & Tracking: Einwilligung nach TTDSG § 25? Opt-In statt Opt-Out?
+- Profiling & automatisierte Entscheidungen: Art. 22 DSGVO beachtet?
+- Datenschutzbeauftragter: Kontaktdaten vorhanden (Art. 37-39)?
+- Marktüblich: Konkrete Speicherfristen, granulare Cookie-Einwilligung, vollständige Rechtsgrundlagen-Auflistung`
+      },
+      agb: {
+        name: 'Allgemeine Geschäftsbedingungen',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — AGB:
+- AGB-Kontrolle nach §§ 305-310 BGB: Enthält das Dokument überraschende Klauseln (§ 305c)?
+- Haftungsausschlüsse: Nach § 309 Nr. 7 BGB nicht für Körperschäden/grobe Fahrlässigkeit ausschließbar
+- Gewährleistung: Verjährungsfrist min. 1 Jahr (§ 309 Nr. 8 BGB), bei neu hergestellten Sachen 2 Jahre
+- Kündigungsfristen: Mehr als 2 Jahre Erstlaufzeit? § 309 Nr. 9 BGB Grenze beachten
+- Preisanpassungsklauseln: Transparent und nachvollziehbar? § 307 Abs. 1 S. 2 BGB
+- Widerrufsrecht: Bei Verbraucherverträgen 14 Tage (§ 355 BGB), korrekte Widerrufsbelehrung?
+- Gerichtsstandklausel: Bei B2C unzulässig (§ 38 ZPO)
+- Schriftformklausel: Doppelte Schriftformklausel unwirksam in AGB
+- Pauschalierter Schadensersatz: Muss dem typischen Schaden entsprechen (§ 309 Nr. 5 BGB)
+- Marktüblich: Transparente Preise, 14-Tage Widerruf, keine Haftungsausschlüsse für Vorsatz/grobe Fahrlässigkeit`
+      },
+      nda: {
+        name: 'Geheimhaltungsvereinbarung / NDA',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — NDA/GEHEIMHALTUNGSVEREINBARUNG:
+- Definition vertraulicher Informationen: Klar abgegrenzt oder zu weit gefasst?
+- Ausnahmen: Öffentlich bekannte, eigenständig entwickelte, rechtlich offenzulegende Infos ausgenommen?
+- Dauer: Wie lange gilt die Geheimhaltung? Unbefristet ist bei Geschäftsgeheimnissen üblich, bei allgemeinen Infos zu lang
+- Rückgabepflicht: Müssen Unterlagen nach Vertragsende zurückgegeben/vernichtet werden?
+- Vertragsstrafe: Höhe angemessen? Pro Verstoß oder pauschal?
+- Beweislast: Wer muss Verstoß beweisen?
+- Wettbewerbsverbot: Ist ein verstecktes Wettbewerbsverbot eingebaut?
+- Beidseitig/Einseitig: Nur eine Partei verpflichtet oder beide?
+- Mitarbeiter-Bindung: Müssen eigene Mitarbeiter separat verpflichtet werden?
+- Marktüblich: 2-5 Jahre Laufzeit, beidseitig, klare Ausnahmen, angemessene Vertragsstrafe (10.000-50.000€)`
+      },
+      arbeitsvertrag: {
+        name: 'Arbeitsvertrag',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — ARBEITSVERTRAG:
+- Vergütung: Gehalt, Boni, Sonderzahlungen klar geregelt? Freiwilligkeitsvorbehalt?
+- Arbeitszeit: Überstundenregelung? „Mit dem Gehalt abgegolten" nur bis 20% über Normalarbeitszeit zulässig
+- Befristung: Sachgrund oder sachgrundlos? Max. 2 Jahre ohne Sachgrund (§ 14 TzBfG)
+- Kündigungsfristen: Gesetzlich gestaffelt (§ 622 BGB), günstigere Regelung für AN?
+- Wettbewerbsverbot: Nachvertragliches Wettbewerbsverbot nur mit Karenzentschädigung (§ 74 HGB, min. 50%)
+- Probezeit: Max. 6 Monate, 2 Wochen Kündigungsfrist (§ 622 Abs. 3 BGB)
+- Urlaub: Min. 24 Werktage/20 Arbeitstage (BUrlG), Verfall nur mit Hinweispflicht
+- Nebentätigkeit: Genehmigungspflicht zulässig, Pauschalverbot unwirksam
+- Geheimhaltung: Angemessen oder zu weit (z.B. nach Vertragsende)?
+- Marktüblich: 30 Tage Urlaub, 6 Monate Probezeit, 3 Monate Kündigungsfrist, Überstundenausgleich`
+      },
+      mietvertrag: {
+        name: 'Mietvertrag',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — MIETVERTRAG:
+- Miethöhe & Nebenkosten: Kaltmiete + Nebenkostenvorauszahlung aufgeschlüsselt?
+- Mieterhöhung: Staffelmiete, Indexmiete oder Vergleichsmiete? Kappungsgrenze beachtet?
+- Kaution: Max. 3 Monatskaltmieten (§ 551 BGB), Ratenzahlung möglich?
+- Schönheitsreparaturen: Starre Fristen unwirksam (BGH-Rechtsprechung)
+- Kleinreparaturklausel: Einzelobergrenze (75-100€) + Jahreshöchstgrenze (6-8% der Jahresmiete)
+- Untervermietung: Erlaubnispflicht, aber Anspruch bei berechtigtem Interesse (§ 553 BGB)
+- Kündigungsfristen: Vermieter gestaffelt (3-9 Monate), Mieter immer 3 Monate
+- Tierhaltung: Pauschales Verbot von Kleintieren unwirksam
+- Betriebskostenabrechnung: Frist 12 Monate nach Abrechnungszeitraum
+- Marktüblich: 3 Monatskaltmieten Kaution, NK-Vorauszahlung 2-3€/m², Staffel max. 10%/Jahr`
+      },
+      dienstleistung: {
+        name: 'Dienstleistungsvertrag',
+        focusAreas: `
+DOKUMENTTYP-FOKUS — DIENSTLEISTUNGSVERTRAG:
+- Leistungsbeschreibung: Konkret genug definiert oder zu vage?
+- Vergütung: Festpreis, Stundenbasis oder Erfolgsbasis? Abrechnungsmodalitäten klar?
+- Abnahme: Wie werden Leistungen abgenommen? Fristen für Mängelrüge?
+- Haftung: Haftungsbeschränkung angemessen? Höhe der Haftungsobergrenze?
+- Kündigung: Ordentliche + außerordentliche Kündigung geregelt?
+- Subunternehmer: Dürfen Subunternehmer eingesetzt werden?
+- Scheinselbständigkeit: Bei Freelancer-Verträgen — Eingliederung in Betrieb, Weisungsgebundenheit?
+- Urheberrecht: Wem gehören die Arbeitsergebnisse?
+- Marktüblich: Monatliche Abrechnung, 30 Tage Zahlungsziel, Haftung auf Auftragswert begrenzt`
+      },
+      general_document: {
+        name: 'Allgemeines Rechtsdokument',
+        focusAreas: `
+ALLGEMEINE DOKUMENTPRÜFUNG:
+- Rechtskonformität: Entspricht das Dokument dem geltenden deutschen Recht?
+- Vollständigkeit: Sind alle wesentlichen Regelungen enthalten?
+- Klarheit: Sind Formulierungen eindeutig und verständlich?
+- Fairness: Sind Rechte und Pflichten ausgewogen verteilt?
+- DSGVO: Datenschutzrelevante Aspekte berücksichtigt?
+- Haftung: Haftungsregelungen angemessen?
+- Fristen: Alle relevanten Fristen klar definiert?`
+      }
+    };
+
     // Analyse-Struktur für GPT - ERWEITERT für actionable insights
     this.analysisSchema = {
       type: 'object',
@@ -321,6 +426,40 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
   }
 
   /**
+   * Gibt Dokumenttyp-spezifischen Kontext zurück
+   *
+   * @param {string} documentType - Der Dokumenttyp (datenschutz, agb, nda, etc.)
+   * @returns {string} Der Dokumenttyp-Kontext für den Prompt, oder leerer String wenn unbekannt
+   */
+  getDocumentTypeContext(documentType) {
+    if (!documentType || documentType === 'general' || documentType === 'vertrag') return '';
+    const context = this.documentTypeContexts[documentType];
+    return context ? context.focusAreas : '';
+  }
+
+  /**
+   * Kombiniert Branchen- und Dokumenttyp-Kontext für maximale Analyse-Qualität.
+   * Dokumenttyp hat Vorrang, Branche ergänzt.
+   *
+   * @param {string} industry - Die Branche (z.B. 'it_software', 'general')
+   * @param {string} documentType - Der Dokumenttyp (z.B. 'datenschutz', 'agb')
+   * @returns {string} Kombinierter Kontext-String
+   */
+  getCombinedContext(industry = 'general', documentType = '') {
+    const docContext = this.getDocumentTypeContext(documentType);
+    const industryContext = this.getIndustryContext(industry);
+
+    // Dokumenttyp-Kontext hat Vorrang, Branchen-Kontext ergänzt
+    if (docContext && industry !== 'general') {
+      return `${docContext}\n\n${industryContext}`;
+    }
+    if (docContext) {
+      return docContext;
+    }
+    return industryContext;
+  }
+
+  /**
    * Analysiert eine einzelne Klausel aus einer bestimmten Perspektive
    *
    * @param {string} clauseText - Der Text der Klausel
@@ -330,8 +469,8 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
    * @returns {Promise<Object>} Die Analyse
    */
   async analyzeClause(clauseText, perspective = 'contractor', contractContext = '', options = {}) {
-    const { industry = 'general' } = options;
-    console.log(`🔍 Legal Lens: Analysiere Klausel aus Perspektive "${perspective}" (Branche: ${industry})...`);
+    const { industry = 'general', documentType = '' } = options;
+    console.log(`🔍 Legal Lens: Analysiere Klausel aus Perspektive "${perspective}" (Branche: ${industry}, DocType: ${documentType || 'general'})...`);
 
     const perspectiveConfig = this.perspectives[perspective];
     if (!perspectiveConfig) {
@@ -345,14 +484,14 @@ Sei PESSIMISTISCH und zeige MAXIMALE RISIKEN auf - aber bleibe realistisch.`
       language = 'de'
     } = options;
 
-    // Branchen-spezifischen Kontext hinzufügen
-    const industryContext = this.getIndustryContext(industry);
+    // Kombinierter Kontext: Dokumenttyp + Branche
+    const combinedContext = this.getCombinedContext(industry, documentType);
 
     const systemPrompt = `${perspectiveConfig.systemPrompt}
 
-${industryContext}
+${combinedContext}
 
-WICHTIG: Du bist ein erfahrener Vertragsanwalt der für Laien und Gründer berät.
+WICHTIG: Du bist ein erfahrener Rechtsexperte der für Laien und Gründer berät.
 Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!
 
 Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
@@ -417,8 +556,8 @@ REGELN:
           {
             role: 'user',
             content: contractContext
-              ? `Kontext zum Vertrag:\n${contractContext.substring(0, 1500)}\n\n---\n\nAnalysiere diese Klausel:\n"${clauseText}"`
-              : `Analysiere diese Vertragsklausel:\n"${clauseText}"`
+              ? `Kontext zum Dokument:\n${contractContext.substring(0, 1500)}\n\n---\n\nAnalysiere diese Klausel:\n"${clauseText}"`
+              : `Analysiere diese Klausel:\n"${clauseText}"`
           }
         ],
         response_format: { type: 'json_object' },
@@ -903,29 +1042,34 @@ Antworte NUR mit diesem JSON-Format:
    * @param {Array} clauses - Optional: Bereits geparste Klauseln
    * @returns {Promise<Object>} Executive Summary mit Top-Risiken
    */
-  async generateContractSummary(fullText, contractName = '', clauses = []) {
-    console.log(`📊 Legal Lens: Generiere Smart Summary für "${contractName}"...`);
+  async generateContractSummary(fullText, contractName = '', clauses = [], options = {}) {
+    const { industry, documentType } = options;
+    console.log(`📊 Legal Lens: Generiere Smart Summary für "${contractName}" (Branche: ${industry || 'general'}, Typ: ${documentType || 'auto'})...`);
 
     const textLength = fullText?.length || 0;
     const truncatedText = fullText ? fullText.substring(0, 12000) : ''; // Max 12k chars für GPT
 
-    const systemPrompt = `Du bist ein erfahrener Vertragsanwalt und analysierst Verträge für Laien und Gründer.
+    // Kontext aus Branche + Dokumenttyp zusammenbauen
+    const combinedContext = this.getCombinedContext(industry, documentType);
 
-AUFGABE: Erstelle eine SOFORT-ÜBERSICHT für diesen Vertrag. Der Nutzer soll in 10 Sekunden verstehen:
-1. Was für ein Vertrag ist das?
-2. Was sind die TOP 3 RISIKEN (mit konkreten €-Beträgen und Fristen)?
-3. Soll ich unterschreiben oder verhandeln?
+    const systemPrompt = `Du bist ein erfahrener Rechtsexperte und analysierst Rechtsdokumente (Verträge, AGB, Datenschutzhinweise, NDAs etc.) für Laien und Gründer.
 
+AUFGABE: Erstelle eine SOFORT-ÜBERSICHT für dieses Dokument. Der Nutzer soll in 10 Sekunden verstehen:
+1. Was für ein Dokument ist das?
+2. Was sind die TOP 3 RISIKEN oder PROBLEME (mit konkreten Details)?
+3. Muss ich handeln oder ist alles in Ordnung?
+${combinedContext ? `\n${combinedContext}\n` : ''}
 WICHTIG:
-- Nenne KONKRETE Zahlen (€, Monate, Prozent)
+- Nenne KONKRETE Zahlen (€, Monate, Prozent) wo möglich
 - Sei DIREKT und EHRLICH - beschönige nichts
 - Sprich den Leser mit "du/dein" an
 - Erkläre wie einem Freund ohne Jurastudium
+- Erkenne den Dokumenttyp korrekt (nicht alles ist ein "Vertrag"!)
 
 Antworte NUR mit diesem JSON-Format:
 {
-  "contractType": "Arbeitsvertrag|Mietvertrag|Dienstleistungsvertrag|Kaufvertrag|SaaS-Vertrag|Sonstiges",
-  "contractTypeDetail": "Kurze Spezifizierung, z.B. 'Unbefristeter Arbeitsvertrag' oder 'Gewerbemietvertrag'",
+  "contractType": "Arbeitsvertrag|Mietvertrag|Dienstleistungsvertrag|Kaufvertrag|SaaS-Vertrag|AGB|Datenschutzhinweise|NDA|Sonstiges",
+  "contractTypeDetail": "Kurze Spezifizierung, z.B. 'Unbefristeter Arbeitsvertrag' oder 'DSGVO-konforme Datenschutzerklärung'",
 
   "overallVerdict": {
     "action": "accept|negotiate|reject|review",
@@ -1012,7 +1156,7 @@ Antworte NUR mit diesem JSON-Format:
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Analysiere diesen Vertrag und erstelle eine Sofort-Übersicht:\n\nVertragsname: ${contractName || 'Unbekannt'}\nTextlänge: ${textLength} Zeichen\n\n---\n\n${truncatedText}`
+            content: `Analysiere dieses Rechtsdokument und erstelle eine Sofort-Übersicht:\n\nDokumentname: ${contractName || 'Unbekannt'}\nTextlänge: ${textLength} Zeichen\n\n---\n\n${truncatedText}`
           }
         ],
         response_format: { type: 'json_object' },

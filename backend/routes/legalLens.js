@@ -435,6 +435,146 @@ function detectIndustryFromText(text) {
 }
 
 // ============================================
+// DOKUMENTTYP-ERKENNUNG
+// ============================================
+
+/**
+ * Erkennt den Dokumenttyp (Datenschutz, AGB, NDA, Arbeitsvertrag, etc.)
+ * aus dem Text. Schnell, keyword-basiert, kein API-Call.
+ *
+ * @param {string} text - Der Dokumenttext
+ * @returns {{ documentType: string, confidence: number, detectedKeywords: string[] }}
+ */
+function detectDocumentType(text) {
+  const textLower = text.substring(0, 5000).toLowerCase(); // Nur Anfang prüfen — Titel/Header sind dort
+
+  const typePatterns = {
+    datenschutz: {
+      keywords: [
+        'datenschutzhinweis', 'datenschutzerklärung', 'privacy policy', 'datenschutzrichtlinie',
+        'personenbezogene daten', 'datenverarbeitung', 'betroffenenrechte',
+        'verantwortlicher im sinne', 'art. 13', 'art. 14', 'art. 6 abs',
+        'datenschutzbeauftragter', 'auftragsverarbeitung', 'cookies',
+        'speicherdauer', 'rechtsgrundlage der verarbeitung', 'datenerhebung',
+        'drittlandübermittlung', 'löschung der daten', 'dsgvo', 'gdpr',
+        'zweck der verarbeitung', 'empfänger der daten', 'tracking'
+      ],
+      titlePatterns: ['datenschutz', 'privacy', 'datenverarbeitung'],
+      weight: 1.8
+    },
+    agb: {
+      keywords: [
+        'allgemeine geschäftsbedingungen', 'nutzungsbedingungen', 'terms of service',
+        'terms and conditions', 'geltungsbereich', 'vertragsschluss',
+        'widerrufsrecht', 'widerrufsbelehrung', 'gewährleistung und haftung',
+        'haftungsausschluss', 'schlussbestimmungen', 'salvatorische klausel',
+        'gerichtsstand', 'streitbeilegung', 'verbraucherschlichtung',
+        'online-streitbeilegung', 'änderungsvorbehalt', 'preise und zahlungsbedingungen'
+      ],
+      titlePatterns: ['allgemeine geschäftsbedingungen', 'agb', 'nutzungsbedingungen', 'terms'],
+      weight: 1.8
+    },
+    nda: {
+      keywords: [
+        'geheimhaltungsvereinbarung', 'vertraulichkeitsvereinbarung', 'non-disclosure',
+        'nda', 'confidentiality agreement', 'vertrauliche informationen',
+        'geheimhaltungspflicht', 'vertraulichkeit', 'offenbarung',
+        'rückgabe vertraulicher', 'geheimhaltungsverpflichtung',
+        'geschäftsgeheimnisse', 'vertraulich behandeln'
+      ],
+      titlePatterns: ['geheimhaltung', 'vertraulichkeit', 'non-disclosure', 'nda'],
+      weight: 2.0
+    },
+    arbeitsvertrag: {
+      keywords: [
+        'arbeitsvertrag', 'arbeitsverhältnis', 'arbeitnehmer', 'arbeitgeber',
+        'probezeit', 'vergütung', 'arbeitszeit', 'überstunden',
+        'urlaub', 'krankheit', 'nebentätigkeit', 'wettbewerbsverbot',
+        'kündigungsfrist', 'abmahnung', 'betriebsgeheimnisse',
+        'tarifvertrag', 'sozialversicherung', 'lohnfortzahlung'
+      ],
+      titlePatterns: ['arbeitsvertrag', 'anstellungsvertrag', 'employment'],
+      weight: 1.5
+    },
+    mietvertrag: {
+      keywords: [
+        'mietvertrag', 'mietverhältnis', 'mieter', 'vermieter', 'mietobjekt',
+        'mietsache', 'kaltmiete', 'nebenkosten', 'kaution',
+        'schönheitsreparaturen', 'betriebskosten', 'mieterhöhung',
+        'staffelmiete', 'indexmiete', 'untervermietung', 'wohnfläche',
+        'übergabeprotokoll', 'hausordnung'
+      ],
+      titlePatterns: ['mietvertrag', 'pachtvertrag', 'lease'],
+      weight: 1.5
+    },
+    dienstleistung: {
+      keywords: [
+        'dienstleistungsvertrag', 'dienstvertrag', 'dienstleistung',
+        'auftraggeber', 'auftragnehmer', 'leistungsbeschreibung',
+        'werkvertrag', 'servicevertrag', 'rahmenvertrag',
+        'stundenhonorar', 'tagessatz', 'abnahme der leistung'
+      ],
+      titlePatterns: ['dienstleistungsvertrag', 'servicevertrag', 'rahmenvertrag'],
+      weight: 1.2
+    }
+  };
+
+  // Titel-Check: erste 500 Zeichen haben stärkstes Signal
+  const titleText = textLower.substring(0, 500);
+
+  // Phase 1: Titel-Pattern (hochkonfident)
+  for (const [docType, config] of Object.entries(typePatterns)) {
+    for (const pattern of config.titlePatterns) {
+      if (titleText.includes(pattern)) {
+        const allKeywords = config.keywords.filter(kw => textLower.includes(kw));
+        console.log(`📄 [DocType Detection] Title match: ${docType} (pattern: "${pattern}", keywords: ${allKeywords.length})`);
+        return {
+          documentType: docType,
+          confidence: Math.min(95, 70 + allKeywords.length * 3),
+          detectedKeywords: allKeywords.slice(0, 10)
+        };
+      }
+    }
+  }
+
+  // Phase 2: Keyword-Scoring (wie Industry-Detection)
+  const results = {};
+  const allDetectedKeywords = {};
+
+  for (const [docType, config] of Object.entries(typePatterns)) {
+    const foundKeywords = config.keywords.filter(kw => textLower.includes(kw));
+    const score = foundKeywords.length * config.weight;
+    results[docType] = score;
+    allDetectedKeywords[docType] = foundKeywords;
+  }
+
+  const sorted = Object.entries(results).sort((a, b) => b[1] - a[1]);
+  const [topType, topScore] = sorted[0];
+  const [, secondScore] = sorted[1] || ['', 0];
+
+  const confidence = topScore > 0
+    ? Math.min(90, Math.round((topScore * 10) + ((topScore - secondScore) * 8)))
+    : 0;
+
+  if (topScore >= 4 && confidence > 40) {
+    console.log(`📄 [DocType Detection] Keyword match: ${topType} (confidence: ${confidence}%, keywords: ${allDetectedKeywords[topType].slice(0, 5).join(', ')})`);
+    return {
+      documentType: topType,
+      confidence,
+      detectedKeywords: allDetectedKeywords[topType].slice(0, 10)
+    };
+  }
+
+  // Fallback: generischer Vertrag
+  console.log(`📄 [DocType Detection] No specific document type detected, using 'vertrag'`);
+  return {
+    documentType: 'vertrag',
+    confidence: 0,
+    detectedKeywords: []
+  };
+}
+
+// ============================================
 // SMART SUMMARY - SOFORT-ÜBERSICHT NACH UPLOAD
 // ============================================
 
@@ -563,7 +703,12 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
       });
     }
 
-    const contractName = contract.name || contract.title || 'Vertrag';
+    const contractName = contract.name || contract.title || 'Dokument';
+
+    // Dokumenttyp + Branche erkennen für kontextbewusste Summary
+    const docTypeDetection = detectDocumentType(text);
+    const industryDetection = detectIndustryFromText(text);
+    console.log(`📄 [Legal Lens] Smart Summary context — DocType: ${docTypeDetection.documentType} (${docTypeDetection.confidence}%), Industry: ${industryDetection.industry} (${industryDetection.confidence}%)`);
 
     // Streaming Response
     if (stream) {
@@ -602,7 +747,10 @@ router.post('/smart-summary', verifyToken, async (req, res) => {
     }
 
     // Normale (nicht-streaming) Response
-    const result = await clauseAnalyzer.generateContractSummary(text, contractName);
+    const result = await clauseAnalyzer.generateContractSummary(text, contractName, [], {
+      industry: industryDetection.industry,
+      documentType: docTypeDetection.documentType
+    });
 
     if (!result.success) {
       return res.status(500).json({
@@ -964,9 +1112,11 @@ router.post('/parse', verifyToken, async (req, res) => {
       // Fortfahren ohne Voranalyse - nicht kritisch
     }
 
-    // 🏢 AUTO-BRANCHENERKENNUNG
+    // 🏢 AUTO-BRANCHENERKENNUNG + 📄 DOKUMENTTYP-ERKENNUNG
     const industryDetection = detectIndustryFromText(text);
-    console.log(`🏢 [Legal Lens] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}% confidence)`);
+    const docTypeDetection = detectDocumentType(text);
+    console.log(`🏢 [Legal Lens] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}%)`);
+    console.log(`📄 [Legal Lens] Auto-detected document type: ${docTypeDetection.documentType} (${docTypeDetection.confidence}%)`);
 
     // Progress erstellen/aktualisieren — reviewedClauses bei neuem Parse zurücksetzen
     await LegalLensProgress.findOneAndUpdate(
@@ -988,6 +1138,12 @@ router.post('/parse', verifyToken, async (req, res) => {
             industryAutoDetected: true,
             industryConfidence: industryDetection.confidence,
             industryKeywords: industryDetection.detectedKeywords
+          } : {}),
+          // Auto-erkannter Dokumenttyp (immer setzen wenn Confidence > 30%)
+          ...(docTypeDetection.confidence > 30 ? {
+            documentType: docTypeDetection.documentType,
+            documentTypeConfidence: docTypeDetection.confidence,
+            documentTypeAutoDetected: true
           } : {}),
           updatedAt: new Date()
         },
@@ -1052,10 +1208,11 @@ router.post(
       const { perspective = 'contractor', clauseText, stream = false, industry } = req.body;
       const userId = req.user.userId;
 
-      // Branchen-Kontext ermitteln
+      // Branchen- + Dokumenttyp-Kontext ermitteln
       let industryContext = industry || 'general';
+      let documentType = '';
 
-      // Wenn keine Branche übergeben, aus Progress laden
+      // Wenn keine Branche übergeben, aus Progress laden (+ Dokumenttyp)
       if (!industry) {
         try {
           const progress = await LegalLensProgress.findOne({
@@ -1065,12 +1222,15 @@ router.post(
           if (progress?.industryContext) {
             industryContext = progress.industryContext;
           }
+          if (progress?.documentType) {
+            documentType = progress.documentType;
+          }
         } catch (err) {
-          console.warn('[Legal Lens] Could not load industry from progress:', err.message);
+          console.warn('[Legal Lens] Could not load industry/docType from progress:', err.message);
         }
       }
 
-      console.log(`🔍 [Legal Lens] Analyze clause ${clauseId} from ${perspective} perspective (Industry: ${industryContext})`);
+      console.log(`🔍 [Legal Lens] Analyze clause ${clauseId} from ${perspective} perspective (Industry: ${industryContext}, DocType: ${documentType || 'general'})`);
 
       if (!clauseText) {
         return res.status(400).json({
@@ -1179,7 +1339,7 @@ router.post(
       }
 
       // Normale Analyse mit Branchen-Kontext
-      const result = await clauseAnalyzer.analyzeClause(clauseText, perspective, '', { industry: industryContext });
+      const result = await clauseAnalyzer.analyzeClause(clauseText, perspective, '', { industry: industryContext, documentType });
 
       if (!result.success) {
         return res.status(500).json({
