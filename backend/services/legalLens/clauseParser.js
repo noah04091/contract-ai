@@ -237,8 +237,28 @@ class ClauseParser {
     // z.B. "Vertrags-\npartner" → "Vertragspartner"
     processed = processed.replace(/(\w)-\n(\w)/g, '$1$2');
 
+    // Section-Header schützen: Leerzeile VOR Headern einfügen,
+    // damit sie nicht mit der vorherigen Zeile zusammengefügt werden.
+    // Löst das Kernproblem bei Multi-Column-PDFs, wo Section-Header
+    // nur durch einfache \n (statt \n\n) getrennt sind.
+    const headerProtectPattern = /^(§\s*\d|Artikel\s+\d|Art\.\s*\d|\d+\.\d+(?:\.\d+)*\s+[A-ZÄÖÜ]|\d+\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[A-Z]\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[IVXLC]+\.\s+[A-ZÄÖÜ])/;
+    const protectedLines = processed.split('\n');
+    const resultLines = [];
+    for (let i = 0; i < protectedLines.length; i++) {
+      const trimmed = protectedLines[i].trim();
+      if (i > 0 && trimmed.length > 0 && headerProtectPattern.test(trimmed)) {
+        const prev = resultLines.length > 0 ? resultLines[resultLines.length - 1].trim() : '';
+        if (prev.length > 0) {
+          resultLines.push(''); // Leere Zeile → \n\n → wird nicht zusammengefügt
+        }
+      }
+      resultLines.push(protectedLines[i]);
+    }
+    processed = resultLines.join('\n');
+
     // Zeilenumbrüche innerhalb von Absätzen zusammenfügen
     // (einzelner Zeilenumbruch ohne Leerzeile = gleicher Absatz)
+    // Section-Header sind durch die Leerzeile oben geschützt (\n\n wird nicht getroffen)
     processed = processed.replace(/([^\n])\n([^\n\s])/g, '$1 $2');
 
     // Übermäßige Leerzeilen reduzieren
