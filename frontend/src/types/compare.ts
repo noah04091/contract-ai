@@ -245,10 +245,27 @@ export const BENCHMARK_RATING_LABELS: Record<string, string> = {
 };
 
 // ============================================
+// V3: Document Type Intelligence
+// ============================================
+export interface DocumentTypeInfo {
+  category: string;
+  label: string;
+  scoreLabels: Record<keyof CategoryScores, string> | null;
+  labels: {
+    documentName: string;
+    mapTab: string;
+    partiesLabel: string;
+  };
+}
+
+// ============================================
 // V2 Full Result
 // ============================================
 export interface ComparisonResultV2 {
   version: 2;
+
+  // V3: Document type intelligence
+  documentType?: DocumentTypeInfo | null;
 
   // Phase A: Contract Maps
   contractMap: {

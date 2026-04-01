@@ -26,7 +26,7 @@ interface CompareResultsProps {
   reAnalyzing?: boolean;
 }
 
-const TAB_CONFIG: { key: CompareTab; label: string; icon: React.ElementType }[] = [
+const BASE_TAB_CONFIG: { key: CompareTab; label: string; icon: React.ElementType }[] = [
   { key: 'overview', label: 'Übersicht', icon: LayoutGrid },
   { key: 'differences', label: 'Unterschiede', icon: GitCompareArrows },
   { key: 'risks', label: 'Risiken', icon: Shield },
@@ -48,6 +48,12 @@ export default function CompareResults({
   const [activeTab, setActiveTab] = useState<CompareTab>('overview');
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
+
+  // V3: Dynamic tab labels based on document type
+  const mapTabLabel = v2Result?.documentType?.labels?.mapTab || 'Vertragskarte';
+  const TAB_CONFIG = BASE_TAB_CONFIG.map(tab =>
+    tab.key === 'contractMap' ? { ...tab, label: mapTabLabel } : tab
+  );
 
   const getBadgeCount = (tab: CompareTab): number | undefined => {
     if (!v2Result) return undefined;
@@ -164,6 +170,7 @@ export default function CompareResults({
             contract1={v2Result.contractMap.contract1}
             contract2={v2Result.contractMap.contract2}
             differences={v2Result.differences}
+            documentType={v2Result.documentType}
           />
         )}
       </div>

@@ -68,6 +68,158 @@ const VALID_SEVERITIES = ['low', 'medium', 'high', 'critical'];
 const VALID_PRIORITIES = ['critical', 'high', 'medium', 'low'];
 
 // ============================================
+// V3: Document Type Intelligence — Config-driven per-type pipeline
+// ============================================
+
+const DOCUMENT_TYPE_CONFIGS = {
+  // Vertrag = heutige Defaults = KEINE ÄNDERUNG am bisherigen Verhalten
+  vertrag: {
+    category: 'vertrag',
+    label: 'Vertrag',
+    relevantAreas: null,       // null = alle (heutiges Verhalten)
+    irrelevantAreas: [],
+    missingSeverityOverrides: null, // null = nutze Default MISSING_SEVERITY
+    promptAddition: null,      // null = kein Zusatz
+    scoreLabels: null,         // null = Default Labels
+    labels: {
+      documentName: 'Vertrag',
+      mapTab: 'Vertragskarte',
+      partiesLabel: 'Vertragsparteien',
+    },
+    benchmarkEnabled: true,
+    noiseFilter: 'standard',
+  },
+
+  datenschutz: {
+    category: 'datenschutz',
+    label: 'Datenschutzerklärung',
+    relevantAreas: ['data_protection', 'parties', 'subject', 'jurisdiction', 'other'],
+    irrelevantAreas: ['payment', 'warranty', 'non_compete', 'force_majeure', 'ip_rights', 'liability', 'termination', 'duration'],
+    missingSeverityOverrides: {
+      payment: 'low', liability: 'low', warranty: 'low',
+      termination: 'low', duration: 'low', non_compete: 'low',
+      force_majeure: 'low', ip_rights: 'low',
+      data_protection: 'critical',
+    },
+    promptAddition: `DOKUMENTTYP: DATENSCHUTZERKLÄRUNG / DATENSCHUTZHINWEISE
+Du vergleichst zwei Datenschutz-Dokumente (NICHT Verträge!).
+FOKUS auf: Art. 13/14 DSGVO Informationspflichten, Rechtsgrundlagen (Art. 6 DSGVO),
+Speicherfristen, Betroffenenrechte (Art. 15-22 DSGVO), Drittland-Transfers (Art. 44-49 DSGVO),
+Datenschutzbeauftragter, Cookies/Tracking, Auftragsverarbeitung (Art. 28 DSGVO).
+IGNORIERE: Haftung, Kündigung, Gewährleistung, Wettbewerbsverbot — das gehört nicht in Datenschutzhinweise.
+Bewerte nach: Vollständigkeit der DSGVO-Pflichtangaben, Transparenz, Aktualität.`,
+    scoreLabels: {
+      overall: 'Gesamt',
+      fairness: 'DSGVO-Konformität',
+      riskProtection: 'Transparenz',
+      flexibility: 'Betroffenenrechte',
+      completeness: 'Vollständigkeit',
+      clarity: 'Verständlichkeit',
+    },
+    labels: {
+      documentName: 'Datenschutzerklärung',
+      mapTab: 'Dokumentstruktur',
+      partiesLabel: 'Verantwortliche',
+    },
+    benchmarkEnabled: false,
+    noiseFilter: 'aggressive',
+  },
+
+  agb: {
+    category: 'agb',
+    label: 'AGB',
+    relevantAreas: ['payment', 'liability', 'warranty', 'termination', 'duration', 'jurisdiction', 'data_protection', 'subject', 'other'],
+    irrelevantAreas: ['ip_rights', 'non_compete', 'force_majeure', 'confidentiality'],
+    missingSeverityOverrides: {
+      ip_rights: 'low', non_compete: 'low', force_majeure: 'low', confidentiality: 'low',
+      warranty: 'high',
+      liability: 'high',
+      termination: 'high',
+    },
+    promptAddition: `DOKUMENTTYP: ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB)
+Du vergleichst zwei AGB-Dokumente (NICHT individuelle Verträge!).
+FOKUS auf: AGB-Kontrolle nach §§305-310 BGB, Klauselverbote (§308, §309 BGB),
+überraschende Klauseln (§305c BGB), Transparenzgebot (§307 BGB),
+Widerrufsrecht (§355ff BGB), Gewährleistungsausschlüsse, Haftungsbeschränkungen.
+Bewerte nach: Rechtmäßigkeit, Verbraucherfreundlichkeit, Transparenz.`,
+    scoreLabels: {
+      overall: 'Gesamt',
+      fairness: 'Verbraucherfreundlichkeit',
+      riskProtection: 'Rechtmäßigkeit',
+      flexibility: 'Flexibilität',
+      completeness: 'Vollständigkeit',
+      clarity: 'Verständlichkeit',
+    },
+    labels: {
+      documentName: 'AGB',
+      mapTab: 'AGB-Struktur',
+      partiesLabel: 'Anbieter / Nutzer',
+    },
+    benchmarkEnabled: false,
+    noiseFilter: 'standard',
+  },
+
+  rechnung: {
+    category: 'rechnung',
+    label: 'Rechnung',
+    relevantAreas: ['payment', 'parties', 'subject', 'other'],
+    irrelevantAreas: ['liability', 'warranty', 'confidentiality', 'ip_rights', 'non_compete', 'force_majeure', 'termination', 'duration', 'data_protection', 'jurisdiction'],
+    missingSeverityOverrides: {
+      liability: 'low', warranty: 'low', termination: 'low', duration: 'low',
+      confidentiality: 'low', ip_rights: 'low', non_compete: 'low',
+      force_majeure: 'low', data_protection: 'low', jurisdiction: 'low',
+      payment: 'critical',
+    },
+    promptAddition: `DOKUMENTTYP: RECHNUNG
+Du vergleichst zwei Rechnungen (NICHT Verträge!).
+FOKUS auf: Leistungspositionen, Beträge, Steuersätze (USt), Zahlungsbedingungen,
+Skonto, Fälligkeitsdaten, Rechnungsnummern, Pflichtangaben nach §14 UStG.
+IGNORIERE komplett: Haftung, Kündigung, Gewährleistung, Datenschutz — das gehört nicht auf Rechnungen.
+Bewerte nach: Korrektheit der Berechnung, Vollständigkeit der Pflichtangaben, Preis-Leistung.`,
+    scoreLabels: {
+      overall: 'Gesamt',
+      fairness: 'Preis-Leistung',
+      riskProtection: 'Korrektheit',
+      flexibility: 'Zahlungsbedingungen',
+      completeness: 'Pflichtangaben',
+      clarity: 'Übersichtlichkeit',
+    },
+    labels: {
+      documentName: 'Rechnung',
+      mapTab: 'Rechnungspositionen',
+      partiesLabel: 'Rechnungssteller / -empfänger',
+    },
+    benchmarkEnabled: false,
+    noiseFilter: 'standard',
+  },
+};
+
+function detectDocumentCategory(map1, map2) {
+  const type1 = (map1.contractType || '').toLowerCase();
+  const type2 = (map2.contractType || '').toLowerCase();
+
+  const categorize = (type) => {
+    if (/datenschutz|privacy|dsgvo|gdpr/.test(type)) return 'datenschutz';
+    if (/agb|allgemeine geschäftsbedingung|terms|nutzungsbedingung/.test(type)) return 'agb';
+    if (/rechnung|invoice|faktura/.test(type)) return 'rechnung';
+    return 'vertrag';
+  };
+
+  const cat1 = categorize(type1);
+  const cat2 = categorize(type2);
+
+  if (cat1 === cat2) return cat1;
+
+  // Gemischt → "vertrag" (sicherster Default, heutiges Verhalten)
+  console.log(`📋 Dokumenttyp: Gemischt (${cat1} vs ${cat2}) → Fallback auf "vertrag"`);
+  return 'vertrag';
+}
+
+function getDocTypeConfig(category) {
+  return DOCUMENT_TYPE_CONFIGS[category] || DOCUMENT_TYPE_CONFIGS.vertrag;
+}
+
+// ============================================
 // User Profile System Prompts (shared with V1)
 // ============================================
 const SYSTEM_PROMPTS = {
@@ -957,9 +1109,17 @@ async function runCompareV2PipelineLegacy(text1, text2, perspective, comparisonM
   }
 }
 
-function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2, benchmarkResult) {
+function buildV2Response(map1, map2, phaseBResult, perspective, text1, text2, benchmarkResult, docConfig) {
   return {
     version: 2,
+
+    // V3: Document type intelligence
+    documentType: docConfig ? {
+      category: docConfig.category,
+      label: docConfig.label,
+      scoreLabels: docConfig.scoreLabels || null,
+      labels: docConfig.labels,
+    } : null,
 
     // Phase A
     contractMap: {
@@ -2076,9 +2236,13 @@ function verifyClauseQuotes(clauseBundle, text1, text2) {
  * @param {object|null} clauseMatchResult - Ergebnis von matchClauses()
  * @returns {Array<DeterministicDifference>}
  */
-function buildDeterministicDifferences(map1, map2, clauseMatchResult) {
+function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig) {
   const diffs = [];
   const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  // V3: Add irrelevant areas from document type config
+  if (docConfig?.irrelevantAreas) {
+    for (const area of docConfig.irrelevantAreas) skipAreas.add(area);
+  }
 
   // Schritt 0: DIREKTE rawValues-Vergleich (100% deterministisch, area-unabhängig)
   // Vergleicht Layer 0 rawValues V1 vs V2 direkt — immer gleiches Ergebnis.
@@ -3648,10 +3812,11 @@ function prioritizeClausePairs(matches) {
 /**
  * Build prompt for a single clause pair comparison.
  */
-function buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile) {
+function buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile, docConfig) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
   const perspectiveBlock = buildPerspectiveBlock(perspective);
   const modeBlock = buildModeAddition(comparisonMode);
+  const docTypeBlock = docConfig?.promptAddition ? `\n${docConfig.promptAddition}\n` : '';
 
   const text1 = smartTruncateClause(clause1.originalText);
   const text2 = smartTruncateClause(clause2.originalText);
@@ -3666,6 +3831,7 @@ function buildClausePairPrompt(clause1, clause2, match, perspective, comparisonM
 ${profileHint}
 ${perspectiveBlock}
 ${modeBlock}
+${docTypeBlock}
 
 METHODE — wie ein Anwalt liest:
 1. WÖRTLICHE ABWEICHUNGEN: "kann" vs "muss", "ausgeschlossen" vs "begrenzt"
@@ -3719,7 +3885,7 @@ KRITISCHE REGELN:
 /**
  * GPT-Call for a single clause pair.
  */
-async function compareClausePair(clause1, clause2, match, perspective, comparisonMode, userProfile) {
+async function compareClausePair(clause1, clause2, match, perspective, comparisonMode, userProfile, docConfig) {
   // V2.2 Säule 3b: Clause-pair cache
   const pairHash = crypto.createHash('sha256')
     .update((clause1.originalText || '') + '||' + (clause2.originalText || ''))
@@ -3730,7 +3896,7 @@ async function compareClausePair(clause1, clause2, match, perspective, compariso
     return cached;
   }
 
-  const prompt = buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile);
+  const prompt = buildClausePairPrompt(clause1, clause2, match, perspective, comparisonMode, userProfile, docConfig);
 
   try {
     const completion = await openai.chat.completions.create({
@@ -3903,7 +4069,7 @@ async function withConcurrencyLimit(tasks, limit) {
 /**
  * Schicht 3 Orchestrator: Run clause-by-clause comparison in parallel.
  */
-async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, onProgress) {
+async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, onProgress, docConfig) {
   const progress = onProgress || (() => {});
   const startTime = Date.now();
 
@@ -3928,7 +4094,7 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
     const c2 = clauseMap2[match.clause2Id];
     if (!c1 || !c2) return Promise.resolve(null);
     return withTimeout(
-      compareClausePair(c1, c2, match, perspective, comparisonMode, userProfile),
+      compareClausePair(c1, c2, match, perspective, comparisonMode, userProfile, docConfig),
       MAX_CLAUSE_CALL_TIME,
       `Klauselpaar ${c1.title}`
     ).catch(() => null);
@@ -4154,7 +4320,7 @@ function applyDeterministicSeverity(diffs) {
  * Merge deterministic groups + clause-by-clause results + missing clause assessments.
  * Dedup strategy: deterministic wins, clause-level enriches.
  */
-function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
+function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) {
   const merged = [];
 
   // 1. Deterministic groups first (highest trust)
@@ -4189,12 +4355,19 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
       ? `${group.items[0]?.key}: Vertrag 1 = "${group.items[0]?.value1}", Vertrag 2 = "${group.items[0]?.value2}".`
       : `${group.areaLabel}: ${group.items.filter(d => !d._isAreaGap).length} Werte nur in Vertrag ${group.type === 'only_in_1' ? 1 : 2}.`;
 
+    // V3: Override severity for missing diffs in irrelevant areas
+    let groupSeverity = ev.severity || group.severity;
+    if (docConfig?.missingSeverityOverrides && (group.type === 'only_in_1' || group.type === 'only_in_2')) {
+      const override = docConfig.missingSeverityOverrides[group.area];
+      if (override) groupSeverity = override;
+    }
+
     merged.push({
       category: group.areaLabel,
       section,
       contract1,
       contract2,
-      severity: ev.severity || group.severity,
+      severity: groupSeverity,
       explanation: ev.explanation || fallbackExplanation,
       impact: ev.impact || '',
       recommendation: ev.recommendation || '',
@@ -4343,10 +4516,11 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle) {
 // No full texts — only diffs, metadata, scores
 // ============================================
 
-function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups) {
+function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups, docConfig) {
   const profileHint = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
   const perspectiveBlock = buildPerspectiveBlock(perspective);
   const modeBlock = buildModeAddition(comparisonMode);
+  const docTypeBlock = docConfig?.promptAddition ? `\n${docConfig.promptAddition}\n` : '';
 
   // Compact contract metadata (no full texts!)
   const meta1 = {
@@ -4390,7 +4564,7 @@ Deine Aufgabe: Bewerte, gewichte, fasse zusammen, gib Scores.
 ${profileHint}
 ${perspectiveBlock}
 ${modeBlock}
-
+${docTypeBlock}
 Du bekommst KEINE Volltexte. Arbeite NUR mit den gegebenen Unterschieden und Metadaten.
 Antworte ausschließlich mit validem JSON.`,
 
@@ -4451,7 +4625,7 @@ MINIMUM 12 Punkte Differenz wenn ein Vertrag klar besser ist.
  * V2.2 Säule 4: Formelbasierte Score-Berechnung.
  * Scores kommen aus Diffs, NICHT aus GPT. 100% deterministisch.
  */
-function calculateScoresFromDiffs(mergedDiffs, map1, map2) {
+function calculateScoresFromDiffs(mergedDiffs, map1, map2, docConfig) {
   // Reduced weights — old weights (8/4/2/1) caused both scores to hit the floor (35)
   // with 20+ diffs. New weights keep scores in 50-85 range so enforceScoreDifferentiation
   // has room to create the 12pt minimum gap.
@@ -4468,6 +4642,9 @@ function calculateScoresFromDiffs(mergedDiffs, map1, map2) {
   let clarity1 = 0, clarity2 = 0;
 
   for (const diff of mergedDiffs) {
+    // V3: Skip diffs in irrelevant areas — no penalty for missing "Haftung" in Datenschutz
+    if (docConfig?.irrelevantAreas?.includes(diff.clauseArea)) continue;
+
     const sevWeight = SEVERITY_WEIGHT[diff.severity] || 0.5;
     const areaWeight = AREA_WEIGHT[diff.clauseArea] || 1.0;
     const impact = sevWeight * areaWeight;
@@ -4539,10 +4716,10 @@ function calculateScoresFromDiffs(mergedDiffs, map1, map2) {
 /**
  * Schicht 4: Synthesize comparison from pre-analyzed diffs.
  */
-async function synthesizeComparison(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups) {
+async function synthesizeComparison(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups, docConfig) {
   console.log(`🔄 Schicht 4: Synthese (${allDiffs.length} Diffs, keine Volltexte)`);
 
-  const prompt = buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups);
+  const prompt = buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode, userProfile, groups, docConfig);
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',
@@ -4619,7 +4796,13 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     );
 
     const [map1, map2] = phaseAResult;
-    progress('mapping', 35, 'Beide Verträge strukturiert. Klauseln werden gematcht...');
+
+    // V3: Dokumenttyp-Erkennung (nach Phase A, vor Pipeline)
+    const docCategory = detectDocumentCategory(map1, map2);
+    const docConfig = getDocTypeConfig(docCategory);
+    console.log(`📋 Dokumenttyp: ${docConfig.label} (${docCategory})`);
+
+    progress('mapping', 35, 'Beide Dokumente strukturiert. Klauseln werden gematcht...');
 
     // SCHICHT 1.5: Clause Matching
     let clauseMatchResult = null;
@@ -4635,31 +4818,31 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
       progress('mapping', 42, 'Clause Matching fehlgeschlagen, fahre fort...');
     }
 
-    // SCHICHT 2: Deterministischer Wertevergleich
+    // SCHICHT 2: Deterministischer Wertevergleich (docConfig → irrelevante Areas skippen)
     progress('comparing', 45, 'Deterministischer Wertevergleich...');
-    const deterministicDiffs = buildDeterministicDifferences(map1, map2, clauseMatchResult);
+    const deterministicDiffs = buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig);
 
     // SCHICHT 2.5: Gruppierung
     const groups = groupDeterministicDiffs(deterministicDiffs);
 
-    // SCHICHT 3: Klausel-für-Klausel-Vergleich (PARALLEL)
+    // SCHICHT 3: Klausel-für-Klausel-Vergleich (docConfig → Prompt-Ergänzung)
     progress('clause_comparison', 50, 'Klausel-für-Klausel-Vergleich startet...');
     const clauseBundle = await runClauseByClauseComparison(
-      clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, progress
+      clauseMatchResult, map1, map2, perspective, comparisonMode, userProfile, progress, docConfig
     );
 
     // SCHICHT 3.25: Quote Verification — eliminiert halluzinierte Zitate
     verifyClauseQuotes(clauseBundle, text1, text2);
 
-    // SCHICHT 3.5: Comprehensive Merge + Dedup (ohne Synthese-Evaluations vorerst)
+    // SCHICHT 3.5: Comprehensive Merge + Dedup (docConfig → Severity-Override)
     progress('merging', 70, 'Unterschiede werden zusammengeführt...');
-    const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
+    const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle, docConfig);
     console.log(`📊 Schicht 3.5: ${mergedDiffs.length} Unterschiede nach Merge+Dedup`);
 
-    // SCHICHT 4: Synthese (kleiner Kontext, keine Volltexte)
+    // SCHICHT 4: Synthese (docConfig → Prompt-Ergänzung)
     progress('synthesis', 75, 'KI-Synthese läuft...');
     const synthesisResult = await withTimeout(
-      synthesizeComparison(mergedDiffs, map1, map2, perspective, comparisonMode, userProfile, groups),
+      synthesizeComparison(mergedDiffs, map1, map2, perspective, comparisonMode, userProfile, groups, docConfig),
       MAX_PHASE_B_TIME,
       'Synthese Timeout'
     );
@@ -4671,8 +4854,8 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     // Set final differences
     synthesisResult.differences = mergedDiffs;
 
-    // V2.2 Säule 4: Formelbasierte Scores ÜBERSCHREIBEN GPT-Scores
-    const calculatedScores = calculateScoresFromDiffs(mergedDiffs, map1, map2);
+    // V2.2 Säule 4: Formelbasierte Scores ÜBERSCHREIBEN GPT-Scores (docConfig → irrelevante Diffs ignorieren)
+    const calculatedScores = calculateScoresFromDiffs(mergedDiffs, map1, map2, docConfig);
     console.log(`📊 V2.2 Formel-Scores: V1=${calculatedScores.contract1.overall}, V2=${calculatedScores.contract2.overall} (GPT war V1=${synthesisResult.scores?.contract1?.overall}, V2=${synthesisResult.scores?.contract2?.overall})`);
     synthesisResult.scores = calculatedScores;
     // Sync with contract analysis
@@ -4683,17 +4866,22 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     progress('finalizing', 88, 'Ergebnisse werden finalisiert...');
     enforceScoreDifferentiation(synthesisResult);
 
-    // Market Benchmark
+    // Market Benchmark (docConfig → benchmarkEnabled Gate)
     progress('finalizing', 90, 'Marktvergleich wird erstellt...');
-    const benchmarkResult = runBenchmarkComparison(map1, map2, synthesisResult.differences || []);
-    if (benchmarkResult.benchmarks.length > 0) {
-      synthesisResult.differences = benchmarkResult.enrichedDifferences;
+    let benchmarkResult = { contractType: null, benchmarks: [], enrichedDifferences: synthesisResult.differences || [] };
+    if (docConfig.benchmarkEnabled) {
+      benchmarkResult = runBenchmarkComparison(map1, map2, synthesisResult.differences || []);
+      if (benchmarkResult.benchmarks.length > 0) {
+        synthesisResult.differences = benchmarkResult.enrichedDifferences;
+      }
+    } else {
+      console.log(`📊 Benchmark: Übersprungen für Dokumenttyp "${docConfig.label}"`);
     }
 
     progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
 
-    // Build V2 response
-    const v2Result = buildV2Response(map1, map2, synthesisResult, perspective, text1, text2, benchmarkResult);
+    // Build V2 response (docConfig → documentType in output)
+    const v2Result = buildV2Response(map1, map2, synthesisResult, perspective, text1, text2, benchmarkResult, docConfig);
 
     if (clauseMatchResult) {
       v2Result._clauseMatching = clauseMatchResult.stats;
@@ -4744,4 +4932,8 @@ module.exports = {
   calculateSeverity,
   COMPARISON_MODES,
   SYSTEM_PROMPTS,
+  // V3 exports
+  DOCUMENT_TYPE_CONFIGS,
+  detectDocumentCategory,
+  getDocTypeConfig,
 };
