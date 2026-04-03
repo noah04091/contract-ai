@@ -3665,10 +3665,28 @@ function applyBenchmarkScoreAdjustment(result, benchmarks) {
     loserScores.fairness = Math.max(35, loserScores.fairness - bonus);
     loserScores.riskProtection = Math.max(35, loserScores.riskProtection - Math.ceil(bonus / 2));
 
-    // Flip recommendation if needed
+    // Flip recommendation if needed + update reasoning text
     if (result.overallRecommendation?.recommended !== benchmarkWinner) {
-      console.log(`📊 Benchmark-Score: Empfehlung V${result.overallRecommendation.recommended} → V${benchmarkWinner}`);
+      const oldRec = result.overallRecommendation.recommended;
+      console.log(`📊 Benchmark-Score: Empfehlung V${oldRec} → V${benchmarkWinner}`);
       result.overallRecommendation.recommended = benchmarkWinner;
+
+      // Build concrete reasoning from benchmark wins
+      const winReasons = benchmarks
+        .filter(b => {
+          const r1 = b.contract1?.assessment?.rating;
+          const r2 = b.contract2?.assessment?.rating;
+          return benchmarkWinner === 1
+            ? (r1 === 'above' && r2 !== 'above') || (r1 === 'standard' && r2 === 'below')
+            : (r2 === 'above' && r1 !== 'above') || (r2 === 'standard' && r1 === 'below');
+        })
+        .map(b => {
+          const wVal = benchmarkWinner === 1 ? b.contract1?.value : b.contract2?.value;
+          const lVal = benchmarkWinner === 1 ? b.contract2?.value : b.contract1?.value;
+          return `${b.label}: ${wVal}${b.unit} vs ${lVal}${b.unit}`;
+        });
+
+      result.overallRecommendation.reasoning = `Vertrag ${benchmarkWinner} hat deutlich bessere Marktkonditionen (${winReasons.join(', ')}). ${result.overallRecommendation.reasoning || ''}`.trim();
     }
   } else {
     // Score already aligns with benchmark — reinforce the gap
@@ -4750,9 +4768,9 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
   // Metadata noise: print dates, page numbers, document IDs — not real contract differences
   const METADATA_NOISE_PATTERNS = /\b(Ausdruck|Druckdatum|Gedruckt am|Erstellt am|Stand:|Seite \d+ von|Dokument-?Nr|Seite\s*\d+)\b/i;
   const isMetadataDate = (text) => /^\d{1,2}\.\d{1,2}\.\d{4}$/.test((text || '').trim());
-  // Dynamic cap: payment areas get more slots (many fees), others get 3
-  const MAX_CLAUSE_DIFFS_FOR_AREA = (area) => (area === 'payment') ? 5 : 3;
-  const MAX_TOTAL_DIFFS = 25;
+  // V3.1: Tighter caps — quality over quantity
+  const MAX_CLAUSE_DIFFS_FOR_AREA = (area) => (area === 'payment') ? 3 : 2;
+  const MAX_TOTAL_DIFFS = 12;
 
   if (clauseBundle) {
     const clauseDiffsByArea = {}; // Track count per area
@@ -4791,13 +4809,11 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
         // Filter 2: Dedup against deterministic
         if (isDuplicateOfDeterministic(diff, groups)) continue;
 
-        // Filter 3: Max per area — high/critical bypass the cap
+        // Filter 3: Max per area — strict cap, no bypass
         const area = diff._clauseArea || 'other';
         if (!clauseDiffsByArea[area]) clauseDiffsByArea[area] = 0;
         const maxForArea = MAX_CLAUSE_DIFFS_FOR_AREA(area);
-        if (clauseDiffsByArea[area] >= maxForArea) {
-          if (diff.severity !== 'critical' && diff.severity !== 'high') continue;
-        }
+        if (clauseDiffsByArea[area] >= maxForArea) continue;
 
         // Filter 4: Clause-diff to clause-diff dedup via tokenOverlapSimilarity
         const diffText = `${d1} ${d2}`.trim();
@@ -5275,12 +5291,9 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     if (synthesisResult.contract1Analysis) synthesisResult.contract1Analysis.score = calculatedScores.contract1.overall;
     if (synthesisResult.contract2Analysis) synthesisResult.contract2Analysis.score = calculatedScores.contract2.overall;
 
-    // SCHICHT 5: Post-Processing
-    progress('finalizing', 88, 'Ergebnisse werden finalisiert...');
-    enforceScoreDifferentiation(synthesisResult);
-
-    // Market Benchmark (docConfig → benchmarkEnabled Gate)
-    progress('finalizing', 90, 'Marktvergleich wird erstellt...');
+    // Market Benchmark FIRST (docConfig → benchmarkEnabled Gate)
+    // Must run BEFORE enforceScoreDifferentiation so benchmark can correct the direction
+    progress('finalizing', 88, 'Marktvergleich wird erstellt...');
     let benchmarkResult = { contractType: null, benchmarks: [], enrichedDifferences: synthesisResult.differences || [] };
     if (docConfig.benchmarkEnabled) {
       benchmarkResult = runBenchmarkComparison(map1, map2, synthesisResult.differences || []);
@@ -5294,6 +5307,10 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     } else {
       console.log(`📊 Benchmark: Übersprungen für Dokumenttyp "${docConfig.label}"`);
     }
+
+    // SCHICHT 5: Post-Processing — AFTER benchmark so enforcement works in correct direction
+    progress('finalizing', 92, 'Ergebnisse werden finalisiert...');
+    enforceScoreDifferentiation(synthesisResult);
 
     progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
 
