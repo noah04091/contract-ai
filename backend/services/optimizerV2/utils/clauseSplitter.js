@@ -240,8 +240,8 @@ async function extractColumnAwareText(pdfBuffer) {
     const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) });
     const pdfDoc = await loadingTask.promise;
 
-    const pageTexts = [];
-
+    // Pass 1: Collect all items per page to detect repeating header/footer
+    const allPageItems = [];
     for (let p = 1; p <= pdfDoc.numPages; p++) {
       const page = await pdfDoc.getPage(p);
       const content = await page.getTextContent();
@@ -257,34 +257,95 @@ async function extractColumnAwareText(pdfBuffer) {
           height: item.height || 10
         });
       }
+      allPageItems.push(items);
+    }
 
-      if (items.length === 0) continue;
+    // Detect repeating header/footer fingerprints across pages
+    const repeatFingerprints = detectRepeatingHeaderFooter(allPageItems);
 
-      const boundaries = detectColumnBoundaries(items);
+    // Pass 2: Build text with header/footer items removed
+    const pageTexts = [];
+
+    for (const items of allPageItems) {
+      // Filter out header/footer items
+      const filtered = repeatFingerprints.size > 0
+        ? items.filter(i => !repeatFingerprints.has(itemFingerprint(i)))
+        : items;
+
+      if (filtered.length === 0) continue;
+
+      const boundaries = detectColumnBoundaries(filtered);
 
       if (boundaries && boundaries.length > 0) {
-        // Split items into columns using boundaries
         const columns = [];
         const allBounds = [-Infinity, ...boundaries, Infinity];
         for (let c = 0; c < allBounds.length - 1; c++) {
-          const colItems = items.filter(i => i.x >= allBounds[c] && i.x < allBounds[c + 1]);
+          const colItems = filtered.filter(i => i.x >= allBounds[c] && i.x < allBounds[c + 1]);
           if (colItems.length > 0) columns.push(colItems);
         }
         pageTexts.push(columns.map(col => positionedItemsToText(col)).join('\n'));
       } else {
-        pageTexts.push(positionedItemsToText(items));
+        pageTexts.push(positionedItemsToText(filtered));
       }
     }
 
     const fullText = pageTexts.join('\n\n');
     if (fullText.trim().length < 200) return null;
 
-    console.log(`[ColumnExtract] Erfolgreich: ${pdfDoc.numPages} Seiten, ${fullText.trim().length} Zeichen`);
+    const removedCount = repeatFingerprints.size;
+    console.log(`[ColumnExtract] Erfolgreich: ${pdfDoc.numPages} Seiten, ${fullText.trim().length} Zeichen${removedCount > 0 ? `, ${removedCount} Header/Footer-Muster entfernt` : ''}`);
     return { text: fullText, pages: pdfDoc.numPages };
   } catch (err) {
     console.error(`[ColumnExtract] Fehler:`, err.message);
     return null;
   }
+}
+
+/**
+ * Create a position+text fingerprint for a text item.
+ * Rounded X/Y so near-identical positions across pages match.
+ */
+function itemFingerprint(item) {
+  return `${Math.round(item.x)}_${Math.round(item.y)}_${item.text.trim()}`;
+}
+
+/**
+ * Detect repeating header/footer text across pages.
+ *
+ * Header/footer items appear on most pages at nearly identical positions
+ * with identical text (e.g., "ferchau.com", company address, page numbers).
+ * Items appearing on 60%+ of pages (min 3 pages) are considered repeating.
+ *
+ * @param {Array<Array>} allPageItems - Items per page
+ * @returns {Set<string>} Set of fingerprints to filter out
+ */
+function detectRepeatingHeaderFooter(allPageItems) {
+  const totalPages = allPageItems.length;
+  if (totalPages < 3) return new Set();
+
+  // Count how many pages each fingerprint appears on
+  const fpPageCount = {};
+  for (const items of allPageItems) {
+    const seenOnPage = new Set();
+    for (const item of items) {
+      const fp = itemFingerprint(item);
+      if (!seenOnPage.has(fp)) {
+        seenOnPage.add(fp);
+        fpPageCount[fp] = (fpPageCount[fp] || 0) + 1;
+      }
+    }
+  }
+
+  // Items on 60%+ of pages = header/footer
+  const threshold = Math.max(3, Math.floor(totalPages * 0.6));
+  const repeating = new Set();
+  for (const [fp, count] of Object.entries(fpPageCount)) {
+    if (count >= threshold) {
+      repeating.add(fp);
+    }
+  }
+
+  return repeating;
 }
 
 /**
