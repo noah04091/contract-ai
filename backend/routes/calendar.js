@@ -654,13 +654,16 @@ router.get("/ics", async (req, res) => {
 
     const userId = new ObjectId(decoded.userId);
 
-    // Get all future events
+    // Get all events (1 year back + all future — same range as frontend)
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 365);
+
     const events = await req.db.collection("contract_events")
       .aggregate([
         {
           $match: {
             userId,
-            date: { $gte: new Date() },
+            date: { $gte: pastDate },
             status: { $ne: "dismissed" }
           }
         },
