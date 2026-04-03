@@ -13,6 +13,7 @@
  */
 const { OpenAI } = require('openai');
 const OptimizerV2Result = require('../../models/OptimizerV2Result');
+const { deleteFile } = require('../fileStorage');
 const { runStructureRecognition } = require('./stages/01-structureRecognition');
 const { runClauseExtraction } = require('./stages/02-clauseExtraction');
 const { normalizePdfText } = require('./utils/clauseSplitter');
@@ -211,6 +212,16 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
       { _id: record._id },
       { $set: { status: 'failed', error: err.message, 'costs.perStage': costs } }
     );
+
+    // Clean up uploaded S3 file on pipeline failure
+    if (s3Key) {
+      try {
+        await deleteFile(s3Key);
+        console.log(`[OptimizerV2] Cleaned up S3 file: ${s3Key}`);
+      } catch (cleanupErr) {
+        console.warn(`[OptimizerV2] S3 cleanup failed for ${s3Key}:`, cleanupErr.message);
+      }
+    }
 
     throw err;
   }

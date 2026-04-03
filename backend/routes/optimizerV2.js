@@ -1634,7 +1634,21 @@ router.post('/results/:id/docx', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
     }
 
-    const { selections, mode } = req.body;
+    const { selections: rawSelections, mode: rawMode } = req.body;
+
+    // ── Input Validation ──
+    const VALID_MODES = ['neutral', 'proCreator', 'proRecipient'];
+    const mode = (typeof rawMode === 'string' && VALID_MODES.includes(rawMode)) ? rawMode : 'neutral';
+
+    let selections = [];
+    if (Array.isArray(rawSelections)) {
+      selections = rawSelections.filter(s =>
+        s && typeof s.clauseId === 'string' && s.clauseId.length > 0
+        && (!s.mode || VALID_MODES.includes(s.mode))
+        && (!s.customText || typeof s.customText === 'string')
+      );
+    }
+
     const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType,
             BorderStyle, Header, Footer, PageNumber, PageBreak, Tab, TabStopType, TabStopPosition } = require('docx');
 
@@ -1642,13 +1656,11 @@ router.post('/results/:id/docx', async (req, res) => {
     const clauses = result.clauses || [];
     const optimizations = result.optimizations || [];
     const clauseAnalyses = result.clauseAnalyses || [];
-    const fallbackMode = mode || 'neutral';
+    const fallbackMode = mode;
 
     const selectionMap = new Map();
-    if (Array.isArray(selections)) {
-      for (const s of selections) {
-        selectionMap.set(s.clauseId, { mode: s.mode || fallbackMode, customText: s.customText || null });
-      }
+    for (const s of selections) {
+      selectionMap.set(s.clauseId, { mode: s.mode || fallbackMode, customText: s.customText || null });
     }
 
     // ── Helpers ──
