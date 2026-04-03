@@ -46,9 +46,9 @@ interface PortfolioImprovementCardProps {
 }
 
 export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> = ({ summary, onNavigate }) => {
-  if (!summary.hasData || summary.avgScorePrevious === null) return null;
-
   const [expandedSection, setExpandedSection] = useState<'improved' | 'worsened' | 'actions' | null>(null);
+
+  if (!summary.hasData || summary.avgScorePrevious === null) return null;
 
   const isPositive = summary.delta >= 0;
   const accentColor = isPositive ? '#15803d' : '#dc2626';
