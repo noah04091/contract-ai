@@ -24,6 +24,7 @@ interface OverviewTabProps {
 export default function OverviewTab({ result, file1, file2, file1Name, file2Name, file1S3Key, file2S3Key }: OverviewTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
+  const docName = v2Result?.documentType?.labels?.documentName || 'Vertrag';
 
   return (
     <div className={styles.overviewTab}>
@@ -69,7 +70,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
       {!v2 && (
         <div className={styles.scoresGrid}>
           <V1ScoreCard
-            title="Vertrag 1"
+            title={`${docName} 1`}
             fileName={file1Name || file1?.name}
             file={file1}
             s3Key={file1S3Key}
@@ -77,7 +78,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
             isRecommended={result.overallRecommendation.recommended === 1}
           />
           <V1ScoreCard
-            title="Vertrag 2"
+            title={`${docName} 2`}
             fileName={file2Name || file2?.name}
             file={file2}
             s3Key={file2S3Key}
@@ -124,7 +125,7 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
               <BenchmarkRow key={metric.metricId} metric={metric} />
             ))}
           </div>
-          <BenchmarkSummary metrics={v2Result.benchmark.metrics} />
+          <BenchmarkSummary metrics={v2Result.benchmark.metrics} docName={docName} />
         </motion.div>
       )}
 
@@ -478,6 +479,7 @@ function generateInsight(
   v2: BenchmarkMetric['contract2'],
   typical: number | null,
   metric: BenchmarkMetric,
+  docLabel: string = 'Vertrag',
 ): string | null {
   if (!typical || typical === 0) return null;
   if (metric.direction === 'info_only') return null;
@@ -491,9 +493,9 @@ function generateInsight(
     if (pctDiff12 >= 10) {
       const isLowerBetter = metric.direction === 'lower_better';
       const better = isLowerBetter
-        ? (v1.value < v2.value ? 'Vertrag 1' : 'Vertrag 2')
-        : (v1.value > v2.value ? 'Vertrag 1' : 'Vertrag 2');
-      const worse = better === 'Vertrag 1' ? 'Vertrag 2' : 'Vertrag 1';
+        ? (v1.value < v2.value ? `${docLabel} 1` : `${docLabel} 2`)
+        : (v1.value > v2.value ? `${docLabel} 1` : `${docLabel} 2`);
+      const worse = better === `${docLabel} 1` ? `${docLabel} 2` : `${docLabel} 1`;
 
       if (pctDiff12 >= 30) {
         return `${better} ist hier deutlich besser (+${pctDiff12}% Vorteil gegenüber ${worse}).`;
@@ -504,8 +506,8 @@ function generateInsight(
 
   // Single value or small difference: compare against market
   const vals: { value: number; label: string }[] = [];
-  if (v1) vals.push({ value: v1.value, label: 'Vertrag 1' });
-  if (v2) vals.push({ value: v2.value, label: 'Vertrag 2' });
+  if (v1) vals.push({ value: v1.value, label: `${docLabel} 1` });
+  if (v2) vals.push({ value: v2.value, label: `${docLabel} 2` });
   if (vals.length === 0) return null;
 
   const mostDeviated = vals.reduce((best, curr) =>
@@ -592,7 +594,7 @@ function BenchmarkBar({
   );
 }
 
-function BenchmarkSummary({ metrics }: { metrics: BenchmarkMetric[] }) {
+function BenchmarkSummary({ metrics, docName = 'Vertrag' }: { metrics: BenchmarkMetric[]; docName?: string }) {
   let v1Wins = 0;
   let v2Wins = 0;
   let ties = 0;
@@ -618,7 +620,7 @@ function BenchmarkSummary({ metrics }: { metrics: BenchmarkMetric[] }) {
   const total = v1Wins + v2Wins + ties;
   if (total === 0) return null;
 
-  const overallWinner = v1Wins > v2Wins ? 'Vertrag 1' : v2Wins > v1Wins ? 'Vertrag 2' : null;
+  const overallWinner = v1Wins > v2Wins ? `${docName} 1` : v2Wins > v1Wins ? `${docName} 2` : null;
 
   return (
     <div className={styles.benchmarkSummary}>
@@ -680,7 +682,7 @@ function BenchmarkValueCell({
       <div className={styles.benchmarkCell}>
         <span className={styles.benchmarkCellLabel}>{label}</span>
         <span className={styles.benchmarkCellValue} style={{ color: '#a1a1a6', fontSize: '0.78rem', fontStyle: 'italic' }}>
-          Nicht im Vertrag erkennbar
+          Nicht erkennbar
         </span>
       </div>
     );

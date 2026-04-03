@@ -13,9 +13,10 @@ import styles from '../../../styles/Compare.module.css';
 
 interface RisksTabProps {
   risks: RiskFinding[];
+  docName?: string;
 }
 
-export default function RisksTab({ risks }: RisksTabProps) {
+export default function RisksTab({ risks, docName = 'Vertrag' }: RisksTabProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   if (risks.length === 0) {
@@ -23,7 +24,7 @@ export default function RisksTab({ risks }: RisksTabProps) {
       <div className={styles.emptyTab}>
         <Shield size={48} strokeWidth={1} />
         <h3>Keine Risiken identifiziert</h3>
-        <p>Die KI hat keine besonderen Risiken in den Verträgen gefunden.</p>
+        <p>Die KI hat keine besonderen Risiken in den Dokumenten gefunden.</p>
       </div>
     );
   }
@@ -90,7 +91,7 @@ export default function RisksTab({ risks }: RisksTabProps) {
                     </div>
                     <div className={styles.riskCardActions}>
                       <span className={styles.contractBadge} data-contract={risk.contract}>
-                        {risk.contract === 'both' ? 'Beide' : `Vertrag ${risk.contract}`}
+                        {risk.contract === 'both' ? 'Beide' : `${docName} ${risk.contract}`}
                       </span>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </div>

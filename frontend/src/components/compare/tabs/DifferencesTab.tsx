@@ -17,9 +17,10 @@ interface DifferencesTabProps {
   result: ComparisonResult;
   file1: File | null;
   file2: File | null;
+  docName?: string;
 }
 
-export default function DifferencesTab({ result, file1, file2 }: DifferencesTabProps) {
+export default function DifferencesTab({ result, file1, file2, docName = 'Vertrag' }: DifferencesTabProps) {
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
 
@@ -271,11 +272,12 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
                       showDiff={false}
                       recommended={recommended}
                       sevColor={sevColor}
+                      docName={docName}
                     />
                   ) : (
                     <div className={styles.stackedQuotes}>
-                      <div className={styles.quoteBlock}><strong>Vertrag 1:</strong> {diff.contract1}</div>
-                      <div className={styles.quoteBlock}><strong>Vertrag 2:</strong> {diff.contract2}</div>
+                      <div className={styles.quoteBlock}><strong>{docName} 1:</strong> {diff.contract1}</div>
+                      <div className={styles.quoteBlock}><strong>{docName} 2:</strong> {diff.contract2}</div>
                     </div>
                   )}
                 </div>
@@ -295,12 +297,12 @@ export default function DifferencesTab({ result, file1, file2 }: DifferencesTabP
                       className={`${styles.pdfTab} ${activePdfTab === 1 ? styles.pdfTabActive : ''}`}
                       onClick={(e) => { e.stopPropagation(); setActivePdfTab(1); }}
                       disabled={!file1}
-                    >Vertrag 1</button>
+                    >{docName} 1</button>
                     <button
                       className={`${styles.pdfTab} ${activePdfTab === 2 ? styles.pdfTabActive : ''}`}
                       onClick={(e) => { e.stopPropagation(); setActivePdfTab(2); }}
                       disabled={!file2}
-                    >Vertrag 2</button>
+                    >{docName} 2</button>
                     <button
                       className={`${styles.pdfTab} ${styles.pdfTabClose}`}
                       onClick={(e) => { e.stopPropagation(); setExpandedPdfIndex(null); }}
@@ -330,17 +332,19 @@ function SideBySideQuotes({
   contract2,
   recommended,
   sevColor,
+  docName = 'Vertrag',
 }: {
   contract1: string;
   contract2: string;
   showDiff: boolean;
   recommended: 1 | 2;
   sevColor: string;
+  docName?: string;
 }) {
   return (
     <div className={styles.sideBySideContent}>
       <div className={`${styles.contractColumn} ${recommended === 1 ? styles.columnRecommended : ''}`}>
-        <h5>Vertrag 1 {recommended === 1 && <span className={styles.recBadge}>&#10003;</span>}</h5>
+        <h5>{docName} 1 {recommended === 1 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
           {contract1 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>}
         </div>
@@ -349,7 +353,7 @@ function SideBySideQuotes({
         <span>VS</span>
       </div>
       <div className={`${styles.contractColumn} ${recommended === 2 ? styles.columnRecommended : ''}`}>
-        <h5>Vertrag 2 {recommended === 2 && <span className={styles.recBadge}>&#10003;</span>}</h5>
+        <h5>{docName} 2 {recommended === 2 && <span className={styles.recBadge}>&#10003;</span>}</h5>
         <div className={styles.contractText}>
           {contract2 || <em style={{ color: '#8e8e93' }}>Kein Originaltext verfügbar</em>}
         </div>

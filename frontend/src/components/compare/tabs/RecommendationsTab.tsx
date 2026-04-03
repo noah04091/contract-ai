@@ -11,6 +11,7 @@ import styles from '../../../styles/Compare.module.css';
 
 interface RecommendationsTabProps {
   recommendations: ClauseRecommendation[];
+  docName?: string;
 }
 
 const PRIORITY_CONFIG = {
@@ -20,7 +21,7 @@ const PRIORITY_CONFIG = {
   low: { label: 'Niedrig', color: '#34c759', bg: 'rgba(52, 199, 89, 0.08)' },
 };
 
-export default function RecommendationsTab({ recommendations }: RecommendationsTabProps) {
+export default function RecommendationsTab({ recommendations, docName = 'Vertrag' }: RecommendationsTabProps) {
   if (recommendations.length === 0) {
     return (
       <div className={styles.emptyTab}>
@@ -40,13 +41,13 @@ export default function RecommendationsTab({ recommendations }: RecommendationsT
   return (
     <div className={styles.recommendationsTab}>
       {sorted.map((rec, index) => (
-        <RecommendationCard key={index} rec={rec} index={index} />
+        <RecommendationCard key={index} rec={rec} index={index} docName={docName} />
       ))}
     </div>
   );
 }
 
-function RecommendationCard({ rec, index }: { rec: ClauseRecommendation; index: number }) {
+function RecommendationCard({ rec, index, docName = 'Vertrag' }: { rec: ClauseRecommendation; index: number; docName?: string }) {
   const [copied, setCopied] = useState(false);
   const config = PRIORITY_CONFIG[rec.priority] || PRIORITY_CONFIG.medium;
 
@@ -86,7 +87,7 @@ function RecommendationCard({ rec, index }: { rec: ClauseRecommendation; index: 
             {config.label}
           </span>
           <span className={styles.recTargetBadge}>
-            Vertrag {rec.targetContract}
+            {docName} {rec.targetContract}
           </span>
         </div>
         <h4 className={styles.recTitle}>{rec.title}</h4>

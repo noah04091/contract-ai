@@ -58,6 +58,9 @@ export default function CompareResults({
   // V3.1: Dynamic perspective labels based on document type
   const perspLabels = v2Result?.documentType?.perspectiveLabels || PERSPECTIVE_LABELS;
 
+  // V3.1: Dynamic document name for all tabs
+  const docName = v2Result?.documentType?.labels?.documentName || 'Vertrag';
+
   const getBadgeCount = (tab: CompareTab): number | undefined => {
     if (!v2Result) return undefined;
     switch (tab) {
@@ -157,15 +160,16 @@ export default function CompareResults({
             result={result}
             file1={file1}
             file2={file2}
+            docName={docName}
           />
         )}
 
         {activeTab === 'risks' && (
-          <RisksTab risks={v2Result?.risks || []} />
+          <RisksTab risks={v2Result?.risks || []} docName={docName} />
         )}
 
         {activeTab === 'recommendations' && (
-          <RecommendationsTab recommendations={v2Result?.recommendations || []} />
+          <RecommendationsTab recommendations={v2Result?.recommendations || []} docName={docName} />
         )}
 
         {activeTab === 'contractMap' && v2Result && v2Result.contractMap && (
