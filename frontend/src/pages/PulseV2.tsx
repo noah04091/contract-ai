@@ -691,7 +691,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         <MonitoringStatusCard
           monitoring={monitoringStatus}
           onRefresh={refreshMonitoringStatus}
-          onNavigate={(id) => onSelectContract(id)}
           actionSummary={{
             openActions: alertStats.openActions.length,
             radarAlerts: new Set(legalAlerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved').map(a => a.lawId || a.lawTitle)).size,

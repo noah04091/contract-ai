@@ -36,7 +36,6 @@ interface ActionSummary {
 interface MonitoringStatusCardProps {
   monitoring: MonitoringStatus;
   onRefresh?: () => void;
-  onNavigate?: (contractId: string) => void;
   actionSummary?: ActionSummary;
   onScrollTo?: (section: 'actions' | 'radar' | 'renewal') => void;
 }
@@ -73,7 +72,7 @@ function formatNextScan(dateStr: string): string {
   return date.toLocaleDateString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ monitoring, onRefresh, onNavigate, actionSummary, onScrollTo }) => {
+export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ monitoring, onRefresh, actionSummary, onScrollTo }) => {
   const config = STATUS_CONFIG[monitoring.status] || STATUS_CONFIG.neutral;
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
