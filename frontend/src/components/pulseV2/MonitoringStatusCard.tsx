@@ -27,10 +27,18 @@ interface ScanResult {
   newLawChanges: number;
 }
 
+interface ActionSummary {
+  openActions: number;
+  radarAlerts: number;
+  renewalSoon: number;
+}
+
 interface MonitoringStatusCardProps {
   monitoring: MonitoringStatus;
   onRefresh?: () => void;
   onNavigate?: (contractId: string) => void;
+  actionSummary?: ActionSummary;
+  onScrollTo?: (section: 'actions' | 'radar' | 'renewal') => void;
 }
 
 const STATUS_CONFIG: Record<string, { color: string; bg: string; border: string; dot: string }> = {
@@ -65,7 +73,7 @@ function formatNextScan(dateStr: string): string {
   return date.toLocaleDateString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ monitoring, onRefresh, onNavigate }) => {
+export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ monitoring, onRefresh, onNavigate, actionSummary, onScrollTo }) => {
   const config = STATUS_CONFIG[monitoring.status] || STATUS_CONFIG.neutral;
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -96,29 +104,34 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
     }
   }, [onRefresh]);
 
-  // Build status summary lines
-  const summaryLines: { icon: string; text: string; color: string }[] = [];
+  // Build action-oriented summary lines (clickable waypoints to sections below)
+  const summaryLines: { icon: string; text: string; color: string; section?: 'actions' | 'radar' | 'renewal' }[] = [];
 
-  if (monitoring.severityCounts.critical > 0) {
-    summaryLines.push({
-      icon: '⚠️',
-      text: `${monitoring.severityCounts.critical} kritische${monitoring.severityCounts.critical === 1 ? 's' : ''} Risiko${monitoring.severityCounts.critical === 1 ? '' : 'en'} erkannt`,
-      color: '#dc2626',
-    });
-  }
-  if (monitoring.severityCounts.high > 0) {
-    summaryLines.push({
-      icon: '⚠',
-      text: `${monitoring.severityCounts.high} hohe${monitoring.severityCounts.high === 1 ? 's' : ''} Risiko${monitoring.severityCounts.high === 1 ? '' : 'en'} erkannt`,
-      color: '#ea580c',
-    });
-  }
-  if (monitoring.severityCounts.medium > 0) {
-    summaryLines.push({
-      icon: 'ℹ️',
-      text: `${monitoring.severityCounts.medium} mittlere${monitoring.severityCounts.medium === 1 ? 's' : ''} Risiko${monitoring.severityCounts.medium === 1 ? '' : 'en'}`,
-      color: '#d97706',
-    });
+  if (actionSummary) {
+    if (actionSummary.openActions > 0) {
+      summaryLines.push({
+        icon: '⚡',
+        text: `${actionSummary.openActions} offene Aktion${actionSummary.openActions === 1 ? '' : 'en'}`,
+        color: '#ea580c',
+        section: 'actions',
+      });
+    }
+    if (actionSummary.radarAlerts > 0) {
+      summaryLines.push({
+        icon: '⚖️',
+        text: `${actionSummary.radarAlerts} Gesetz${actionSummary.radarAlerts === 1 ? '' : 'e'} betreffen Ihre Verträge`,
+        color: '#7c3aed',
+        section: 'radar',
+      });
+    }
+    if (actionSummary.renewalSoon > 0) {
+      summaryLines.push({
+        icon: '↻',
+        text: `${actionSummary.renewalSoon} Vertrag${actionSummary.renewalSoon === 1 ? '' : ' Verträge'} lauf${actionSummary.renewalSoon === 1 ? 't' : 'en'} bald aus`,
+        color: '#d97706',
+        section: 'renewal',
+      });
+    }
   }
   if (summaryLines.length === 0 && monitoring.contractsMonitored > 0) {
     summaryLines.push({
@@ -347,16 +360,30 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
           }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {summaryLines.map((line, idx) => (
-              <div key={idx} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                fontSize: 13,
-                color: line.color,
-                fontWeight: 500,
-              }}>
+              <div
+                key={idx}
+                onClick={line.section && onScrollTo ? () => onScrollTo(line.section!) : undefined}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 13,
+                  color: line.color,
+                  fontWeight: 500,
+                  cursor: line.section && onScrollTo ? 'pointer' : 'default',
+                  padding: '4px 8px',
+                  margin: '0 -8px',
+                  borderRadius: 6,
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={(e) => { if (line.section) e.currentTarget.style.background = `${line.color}11`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
                 <span style={{ fontSize: 14, width: 20, textAlign: 'center', flexShrink: 0 }}>{line.icon}</span>
                 {line.text}
+                {line.section && (
+                  <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9ca3af' }}>&#8595;</span>
+                )}
               </div>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 // DashboardLayout not used — PulseV2 uses the global Navbar only
 import { usePulseV2 } from '../hooks/usePulseV2';
@@ -341,7 +341,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
   const [radarExpanded, setRadarExpanded] = useState(false);
-  const [expandedCard, setExpandedCard] = useState<'renewal' | 'actions' | null>(null);
+  const radarRef = useRef<HTMLDivElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const { data: radarData } = useRadarHealth();
 
   // Debounce search to avoid excessive re-renders
@@ -685,215 +686,30 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         />
       )}
 
-      {/* Alert Cards — only when we have data */}
-      {stats.analyzed > 0 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 16,
-          marginBottom: 28,
-        }}>
-          <AlertCard
-            icon="&#9888;"
-            label="Kritische Verträge"
-            value={alertStats.criticalContracts.length}
-            color={alertStats.criticalContracts.length > 0 ? '#dc2626' : '#22c55e'}
-            bg={alertStats.criticalContracts.length > 0 ? '#fef2f2' : '#f0fdf4'}
-            onClick={() => setFilter(alertStats.criticalContracts.length > 0 ? 'critical' : 'all')}
-          />
-          <AlertCard
-            icon="&#8635;"
-            label="Renewal < 60 Tage"
-            value={alertStats.renewalSoon.length}
-            color={alertStats.renewalSoon.length > 0 ? '#d97706' : '#6b7280'}
-            bg={alertStats.renewalSoon.length > 0 ? '#fffbeb' : '#f9fafb'}
-            onClick={alertStats.renewalSoon.length > 0 ? () => setExpandedCard(prev => prev === 'renewal' ? null : 'renewal') : undefined}
-            active={expandedCard === 'renewal'}
-          />
-          <AlertCard
-            icon="&#9889;"
-            label="Offene Aktionen"
-            value={alertStats.openActions.length}
-            color={alertStats.openActions.length > 0 ? '#ea580c' : '#6b7280'}
-            bg={alertStats.openActions.length > 0 ? '#fff7ed' : '#f9fafb'}
-            onClick={alertStats.openActions.length > 0 ? () => setExpandedCard(prev => prev === 'actions' ? null : 'actions') : undefined}
-            active={expandedCard === 'actions'}
-          />
-          <AlertCard
-            icon="&#9733;"
-            label="Durchschnitt-Score"
-            value={alertStats.avgScore ?? '—'}
-            color={
-              alertStats.avgScore === null ? '#9ca3af'
-                : alertStats.avgScore >= 70 ? '#22c55e'
-                : alertStats.avgScore >= 50 ? '#d97706'
-                : '#dc2626'
-            }
-            bg="#f9fafb"
-          />
-        </div>
-      )}
-
-      {/* Alert Card Drill-Down */}
-      {expandedCard === 'renewal' && alertStats.renewalSoon.length > 0 && (
-        <div style={{
-          background: '#fff',
-          border: '1px solid #fde68a',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginTop: -16,
-          marginBottom: 28,
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 12 }}>
-            Verträge mit Ablauf in den nächsten 60 Tagen
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {alertStats.renewalSoon.map(c => {
-              const daysLeft = Math.ceil((new Date(c.endDate!).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-              return (
-                <div
-                  key={c.contractId}
-                  onClick={() => onSelectContract(c.contractId)}
-                  style={{
-                    padding: '10px 14px',
-                    background: daysLeft <= 14 ? '#fef2f2' : '#fffbeb',
-                    border: `1px solid ${daysLeft <= 14 ? '#fecaca' : '#fde68a'}`,
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: '#111827',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {c.name}
-                    </div>
-                    {c.contractType && (
-                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                        {safeStr(c.contractType)}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: daysLeft <= 14 ? '#dc2626' : '#d97706',
-                    marginLeft: 12,
-                    flexShrink: 0,
-                    textAlign: 'right',
-                  }}>
-                    {daysLeft <= 0 ? 'Abgelaufen' : `${daysLeft} Tage`}
-                    <div style={{ fontSize: 10, fontWeight: 400, color: '#9ca3af' }}>
-                      {new Date(c.endDate!).toLocaleDateString('de-DE')}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {expandedCard === 'actions' && alertStats.openActions.length > 0 && (
-        <div style={{
-          background: '#fff',
-          border: '1px solid #fed7aa',
-          borderRadius: 12,
-          padding: '16px 20px',
-          marginTop: -16,
-          marginBottom: 28,
-        }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#9a3412', marginBottom: 12 }}>
-            Offene Aktionen
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {alertStats.openActions.slice(0, 10).map(action => {
-              const prioConfig: Record<string, { label: string; color: string; bg: string }> = {
-                now: { label: 'Sofort', color: '#dc2626', bg: '#fef2f2' },
-                plan: { label: 'Geplant', color: '#d97706', bg: '#fffbeb' },
-                watch: { label: 'Beobachten', color: '#6b7280', bg: '#f9fafb' },
-              };
-              const prio = prioConfig[action.priority] || prioConfig.plan;
-              return (
-                <div
-                  key={action.id}
-                  onClick={() => action.relatedContracts?.[0] && onSelectContract(action.relatedContracts[0])}
-                  style={{
-                    padding: '10px 14px',
-                    background: prio.bg,
-                    border: `1px solid ${prio.color}22`,
-                    borderRadius: 8,
-                    cursor: action.relatedContracts?.[0] ? 'pointer' : 'default',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                  }}
-                >
-                  <span style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    background: prio.color,
-                    flexShrink: 0,
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: '#111827',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {action.title}
-                    </div>
-                    {action.nextStep && (
-                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                        {action.nextStep}
-                      </div>
-                    )}
-                  </div>
-                  <span style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: prio.color,
-                    background: `${prio.color}11`,
-                    padding: '2px 8px',
-                    borderRadius: 4,
-                    flexShrink: 0,
-                  }}>
-                    {prio.label}
-                  </span>
-                </div>
-              );
-            })}
-            {alertStats.openActions.length > 10 && (
-              <div style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', padding: 4 }}>
-                + {alertStats.openActions.length - 10} weitere
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ══════════ Monitoring Status + Legal Radar ══════════ */}
       {monitoringStatus && (
         <MonitoringStatusCard
           monitoring={monitoringStatus}
           onRefresh={refreshMonitoringStatus}
           onNavigate={(id) => onSelectContract(id)}
+          actionSummary={{
+            openActions: alertStats.openActions.length,
+            radarAlerts: new Set(legalAlerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved').map(a => a.lawId || a.lawTitle)).size,
+            renewalSoon: alertStats.renewalSoon.length,
+          }}
+          onScrollTo={(section) => {
+            const ref = section === 'actions' ? actionsRef : section === 'radar' ? radarRef : null;
+            if (ref?.current) {
+              ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (section === 'renewal' && alertStats.renewalSoon[0]) {
+              onSelectContract(alertStats.renewalSoon[0].contractId);
+            }
+          }}
         />
       )}
 
       {/* Legal Radar Alerts — directly below MonitoringStatusCard */}
+      <div ref={radarRef} />
       <LegalAlertsPanel
         alerts={legalAlerts}
         onDismiss={async (alertId) => {
@@ -919,7 +735,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
       {/* Action Center */}
       {alertStats.openActions.length > 0 && (
-        <div style={{
+        <div ref={actionsRef} style={{
           background: '#fff',
           borderRadius: 20,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
@@ -1130,48 +946,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     </div>
   );
 };
-
-// ═══════════════════════════════════════════════════════════
-// Alert Card
-// ═══════════════════════════════════════════════════════════
-const AlertCard: React.FC<{
-  icon: string;
-  label: string;
-  value: number | string;
-  color: string;
-  bg: string;
-  onClick?: () => void;
-  active?: boolean;
-}> = ({ icon, label, value, color, bg, onClick, active }) => (
-  <div
-    onClick={onClick}
-    style={{
-      padding: '20px 24px',
-      background: active ? `${color}11` : (bg || '#fff'),
-      borderRadius: 16,
-      boxShadow: active ? `0 0 0 2px ${color}44` : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
-      cursor: onClick ? 'pointer' : 'default',
-      borderLeft: `4px solid ${color}`,
-      transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-    }}
-    onMouseEnter={(e) => {
-      if (onClick) {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-      }
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'none';
-      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)';
-    }}
-  >
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-      <span style={{ fontSize: 16 }} dangerouslySetInnerHTML={{ __html: icon }} />
-      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500, letterSpacing: '0.2px' }}>{label}</span>
-    </div>
-    <div style={{ fontSize: 32, fontWeight: 800, color, letterSpacing: '-0.5px' }}>{value}</div>
-  </div>
-);
 
 // ═══════════════════════════════════════════════════════════
 // Contract Card

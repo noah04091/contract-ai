@@ -155,43 +155,6 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
             bg="#f0f9ff"
           />
         )}
-        {summary.actionsTotal > 0 && (
-          <div
-            onClick={() => toggle('actions')}
-            style={{
-              padding: '12px 14px',
-              background: expandedSection === 'actions' ? '#f0f9ff' : '#f9fafb',
-              borderRadius: 8,
-              border: expandedSection === 'actions' ? '1px solid #bfdbfe' : '1px solid #f3f4f6',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
-              Aktionen
-              <span style={{ marginLeft: 4, fontSize: 10, color: '#9ca3af' }}>&#8250;</span>
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>
-              {summary.actionsCompleted}/{summary.actionsTotal}
-            </div>
-            {/* Mini progress bar */}
-            <div style={{
-              height: 3,
-              background: '#e5e7eb',
-              borderRadius: 2,
-              marginTop: 6,
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${actionPct}%`,
-                background: actionPct === 100 ? '#22c55e' : '#3b82f6',
-                borderRadius: 2,
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Expanded Details */}
@@ -206,12 +169,6 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
         <ContractList
           contracts={summary.worsenedContracts!}
           positive={false}
-          onNavigate={onNavigate}
-        />
-      )}
-      {expandedSection === 'actions' && (summary.actionsByContract || []).length > 0 && (
-        <ActionsDetail
-          actionsByContract={summary.actionsByContract!}
           onNavigate={onNavigate}
         />
       )}
