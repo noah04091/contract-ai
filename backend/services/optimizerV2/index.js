@@ -47,7 +47,7 @@ function getOpenAI() {
  * @param {Function} onProgress - (progress: number, message: string, stageData?: object) => void
  * @returns {Promise<Object>} Complete analysis result
  */
-async function runPipeline({ contractText, fileName, userId, requestId, perspective, s3Key, fileSize, ocrApplied }, onProgress) {
+async function runPipeline({ contractText, fileName, userId, requestId, perspective, s3Key, fileSize, ocrApplied, textHash }, onProgress) {
   const openai = getOpenAI();
   const startTime = Date.now();
 
@@ -59,6 +59,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
     fileSize: fileSize || 0,
     textLength: contractText.length,
     s3Key: s3Key || null,
+    textHash: textHash || null,
     originalText: contractText,
     ocrApplied: !!ocrApplied,
     status: 'running',

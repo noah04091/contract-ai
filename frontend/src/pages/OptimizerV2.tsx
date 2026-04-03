@@ -111,8 +111,22 @@ export default function OptimizerV2() {
   const {
     file, status, progress, progressMessage, stages,
     result, resultId, activeMode, activeTab,
-    clauseChats, error
+    clauseChats, error, duplicateInfo
   } = state;
+
+  const handleDuplicateGoToResult = useCallback(() => {
+    if (duplicateInfo?.existingResultId) {
+      actions.dismissDuplicate();
+      actions.loadResult(duplicateInfo.existingResultId);
+    }
+  }, [duplicateInfo, actions]);
+
+  const handleDuplicateNewAnalysis = useCallback(() => {
+    if (file) {
+      actions.dismissDuplicate();
+      actions.startAnalysis(file, 'neutral', true);
+    }
+  }, [file, actions]);
 
   return (
     <>
@@ -125,6 +139,45 @@ export default function OptimizerV2() {
           featureName="Contract Intelligence"
           variant="fullWidth"
         />
+      )}
+
+      {/* Duplicate Detection Modal */}
+      {duplicateInfo && (
+        <div className={styles.modalOverlay} onClick={actions.dismissDuplicate}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <History size={40} style={{ color: '#007AFF', marginBottom: 12 }} />
+              <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#111' }}>Vertrag bereits analysiert</h3>
+              <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                {duplicateInfo.existingContractType
+                  ? `Dieser ${duplicateInfo.existingContractType} wurde bereits am ${new Date(duplicateInfo.existingCreatedAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} analysiert.`
+                  : `Dieser Vertrag wurde bereits am ${new Date(duplicateInfo.existingCreatedAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} analysiert.`
+                }
+              </p>
+              {duplicateInfo.existingScore > 0 && (
+                <p style={{ margin: '8px 0 0', color: '#111', fontSize: '0.95rem', fontWeight: 600 }}>
+                  Score: {duplicateInfo.existingScore}/100
+                </p>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                className={styles.analyzeButton}
+                onClick={handleDuplicateGoToResult}
+                style={{ flex: 1 }}
+              >
+                Zu den Ergebnissen
+              </button>
+              <button
+                className={styles.backButton}
+                onClick={handleDuplicateNewAnalysis}
+                style={{ flex: 1, padding: '10px 16px', fontSize: '0.9rem' }}
+              >
+                Neue Analyse starten
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className={`${styles.pageContainer} ${(status === 'idle' || status === 'uploading') ? styles.pageContainerUpload : ''}`}>

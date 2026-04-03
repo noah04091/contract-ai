@@ -9,7 +9,8 @@ import type {
   ChatMessage,
   ProgressEvent,
   StageInfo,
-  ClauseChatResponse
+  ClauseChatResponse,
+  DuplicateInfo
 } from '../types/optimizerV2';
 
 // ── Pipeline Stage Definitions ──
@@ -36,6 +37,7 @@ const initialState: OptimizerV2State = {
   selectedClauseId: null,
   userSelections: new Map(),
   clauseChats: new Map(),
+  duplicateInfo: null,
   error: null
 };
 
@@ -53,6 +55,8 @@ type Action =
   | { type: 'SET_SELECTION'; clauseId: string; selection: UserSelection }
   | { type: 'ADD_CHAT_MESSAGE'; clauseId: string; messages: ChatMessage[] }
   | { type: 'LOAD_RESULT'; result: AnalysisResult; resultId: string }
+  | { type: 'DUPLICATE_FOUND'; duplicateInfo: DuplicateInfo }
+  | { type: 'DISMISS_DUPLICATE' }
   | { type: 'RESET' };
 
 // ── Reducer ──
@@ -165,6 +169,16 @@ function reducer(state: OptimizerV2State, action: Action): OptimizerV2State {
       };
     }
 
+    case 'DUPLICATE_FOUND':
+      return {
+        ...state,
+        status: 'idle',
+        duplicateInfo: action.duplicateInfo
+      };
+
+    case 'DISMISS_DUPLICATE':
+      return { ...state, duplicateInfo: null };
+
     case 'RESET':
       return { ...initialState, stages: PIPELINE_STAGES.map(s => ({ ...s })) };
 
@@ -187,12 +201,13 @@ export function useOptimizerV2() {
   };
 
   // ── Start Analysis ──
-  const startAnalysis = useCallback(async (file: File, perspective: string = 'neutral') => {
+  const startAnalysis = useCallback(async (file: File, perspective: string = 'neutral', force: boolean = false) => {
     dispatch({ type: 'START_ANALYSIS' });
 
     const formData = new FormData();
     formData.append('file', file);
     formData.append('perspective', perspective);
+    if (force) formData.append('force', 'true');
 
     abortControllerRef.current = new AbortController();
     const token = localStorage.getItem('token');
@@ -232,6 +247,21 @@ export function useOptimizerV2() {
           if (!line.startsWith('data: ')) continue;
           try {
             const event: ProgressEvent = JSON.parse(line.slice(6));
+
+            if (event.duplicate) {
+              dispatch({
+                type: 'DUPLICATE_FOUND',
+                duplicateInfo: {
+                  existingResultId: event.existingResultId || '',
+                  existingFileName: event.existingFileName || '',
+                  existingCreatedAt: event.existingCreatedAt || '',
+                  existingScore: event.existingScore || 0,
+                  existingContractType: event.existingContractType || ''
+                }
+              });
+              streamCompleted = true;
+              return;
+            }
 
             if (event.error) {
               dispatch({ type: 'ANALYSIS_ERROR', error: event.message });
@@ -463,6 +493,11 @@ export function useOptimizerV2() {
     dispatch({ type: 'RESET' });
   }, []);
 
+  // ── Dismiss Duplicate ──
+  const dismissDuplicate = useCallback(() => {
+    dispatch({ type: 'DISMISS_DUPLICATE' });
+  }, []);
+
   return {
     state,
     actions: {
@@ -475,7 +510,8 @@ export function useOptimizerV2() {
       sendClauseChat,
       setTab,
       selectClause,
-      reset
+      reset,
+      dismissDuplicate
     }
   };
 }

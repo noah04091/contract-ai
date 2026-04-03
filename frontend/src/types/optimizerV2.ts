@@ -198,6 +198,15 @@ export interface Costs {
   perStage: CostStage[];
 }
 
+// ── Duplicate Detection ──
+export interface DuplicateInfo {
+  existingResultId: string;
+  existingFileName: string;
+  existingCreatedAt: string;
+  existingScore: number;
+  existingContractType: string;
+}
+
 // ── SSE Progress Event ──
 export interface ProgressEvent {
   requestId?: string;
@@ -207,6 +216,12 @@ export interface ProgressEvent {
   stageName?: string;
   complete?: boolean;
   error?: boolean;
+  duplicate?: boolean;
+  existingResultId?: string;
+  existingFileName?: string;
+  existingCreatedAt?: string;
+  existingScore?: number;
+  existingContractType?: string;
   result?: AnalysisResult;
   resultId?: string;
   timestamp?: string;
@@ -267,6 +282,9 @@ export interface OptimizerV2State {
   selectedClauseId: string | null;
   userSelections: Map<string, UserSelection>;
   clauseChats: Map<string, ChatMessage[]>;
+
+  // Duplicate Detection
+  duplicateInfo: DuplicateInfo | null;
 
   // Error
   error: string | null;

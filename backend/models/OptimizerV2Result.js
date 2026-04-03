@@ -92,6 +92,7 @@ const optimizerV2ResultSchema = new mongoose.Schema({
   fileName: String,
   fileSize: Number,
   textLength: Number,
+  textHash: String,
   s3Key: String,
   originalText: String,
   ocrApplied: { type: Boolean, default: false },
@@ -216,5 +217,6 @@ const optimizerV2ResultSchema = new mongoose.Schema({
 optimizerV2ResultSchema.index({ userId: 1, createdAt: -1 });
 optimizerV2ResultSchema.index({ requestId: 1 }, { unique: true });
 optimizerV2ResultSchema.index({ status: 1 });
+optimizerV2ResultSchema.index({ userId: 1, textHash: 1, status: 1 });
 
 module.exports = mongoose.model('OptimizerV2Result', optimizerV2ResultSchema);

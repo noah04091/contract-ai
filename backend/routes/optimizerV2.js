@@ -20,6 +20,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const fsSync = require('fs');
+const crypto = require('crypto');
 const pdfParse = require('pdf-parse');
 const { OpenAI } = require('openai');
 const { ObjectId } = require('mongodb');
@@ -420,6 +421,40 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     }
   }
 
+  // Compute text hash for duplicate detection
+  const textHash = crypto.createHash('sha256').update(contractText.trim()).digest('hex');
+
+  // Duplicate check: skip if force=true
+  const forceReanalyze = req.body?.force === 'true' || req.body?.force === true;
+  if (!forceReanalyze) {
+    try {
+      const existing = await OptimizerV2Result.findOne({
+        userId,
+        textHash,
+        status: 'completed'
+      }).select('fileName createdAt scores.overall structure.contractTypeLabel').sort({ createdAt: -1 });
+
+      if (existing) {
+        console.log(`[OptimizerV2] Duplicate detected for user ${userId}: ${existing._id}`);
+        sendSSE({
+          duplicate: true,
+          existingResultId: existing._id.toString(),
+          existingFileName: existing.fileName,
+          existingCreatedAt: existing.createdAt,
+          existingScore: existing.scores?.overall,
+          existingContractType: existing.structure?.contractTypeLabel,
+          message: 'Dieser Vertrag wurde bereits analysiert.'
+        });
+        clearInterval(keepalive);
+        await cleanupFile(req.file.path);
+        return res.end();
+      }
+    } catch (dupErr) {
+      console.warn('[OptimizerV2] Duplicate check failed (non-critical):', dupErr.message);
+      // Continue with analysis if duplicate check fails
+    }
+  }
+
   // Upload original file to S3 for later viewing
   let s3Key = null;
   try {
@@ -446,7 +481,8 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         perspective,
         s3Key,
         fileSize: req.file.size,
-        ocrApplied
+        ocrApplied,
+        textHash
       },
       (progress, message, stageData) => {
         if (clientDisconnected) return;
