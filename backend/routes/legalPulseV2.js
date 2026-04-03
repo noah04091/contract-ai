@@ -1270,19 +1270,36 @@ router.get("/portfolio-summary", async (req, res) => {
     let criticalPrevious = 0;
     let topImprovement = null;
     let topDecline = null;
+    const improvedContracts = [];
+    const worsenedContracts = [];
+    const actionsByContract = [];
 
     for (const r of results) {
       const nowScore = r.latest?.scores?.overall ?? 0;
+      const contractName = r.latest?.context?.contractName || "Unbenannt";
       totalScoreNow += nowScore;
 
       // Count current critical findings
       const currentCritical = (r.latest?.clauseFindings || []).filter(f => f.severity === "critical").length;
       criticalNow += currentCritical;
 
-      // Count actions
+      // Count actions and collect details
       const latestActions = r.latest?.actions || [];
       actionsTotal += latestActions.length;
       actionsCompleted += latestActions.filter(a => a.status === "done").length;
+      if (latestActions.length > 0) {
+        actionsByContract.push({
+          contractId: r._id,
+          name: contractName,
+          actions: latestActions.slice(0, 5).map(a => ({
+            title: a.title || a.description || "Aktion",
+            priority: a.priority || "plan",
+            status: a.status || "open",
+          })),
+          total: latestActions.length,
+          completed: latestActions.filter(a => a.status === "done").length,
+        });
+      }
 
       // Compare with previous
       if (r.previous && r.previous.scores) {
@@ -1296,23 +1313,15 @@ router.get("/portfolio-summary", async (req, res) => {
         const delta = nowScore - prevScore;
         if (delta > 0) {
           contractsImproved++;
+          improvedContracts.push({ contractId: r._id, name: contractName, delta, scoreNow: nowScore });
           if (!topImprovement || delta > topImprovement.delta) {
-            topImprovement = {
-              contractId: r._id,
-              name: r.latest.context?.contractName || "Unbenannt",
-              delta,
-              scoreNow: nowScore,
-            };
+            topImprovement = { contractId: r._id, name: contractName, delta, scoreNow: nowScore };
           }
         } else if (delta < 0) {
           contractsWorsened++;
+          worsenedContracts.push({ contractId: r._id, name: contractName, delta, scoreNow: nowScore });
           if (!topDecline || delta < topDecline.delta) {
-            topDecline = {
-              contractId: r._id,
-              name: r.latest.context?.contractName || "Unbenannt",
-              delta,
-              scoreNow: nowScore,
-            };
+            topDecline = { contractId: r._id, name: contractName, delta, scoreNow: nowScore };
           }
         }
       }
@@ -1340,6 +1349,9 @@ router.get("/portfolio-summary", async (req, res) => {
       criticalResolved,
       topImprovement,
       topDecline,
+      improvedContracts: improvedContracts.sort((a, b) => b.delta - a.delta),
+      worsenedContracts: worsenedContracts.sort((a, b) => a.delta - b.delta),
+      actionsByContract,
     });
   } catch (error) {
     console.error("[PulseV2] Portfolio summary error:", error);

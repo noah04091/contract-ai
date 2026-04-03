@@ -1,4 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+interface ContractDelta {
+  contractId: string;
+  name: string;
+  delta: number;
+  scoreNow: number;
+}
+
+interface ActionItem {
+  title: string;
+  priority: string;
+  status: string;
+}
+
+interface ContractActions {
+  contractId: string;
+  name: string;
+  actions: ActionItem[];
+  total: number;
+  completed: number;
+}
 
 interface PortfolioSummary {
   hasData: boolean;
@@ -12,8 +33,11 @@ interface PortfolioSummary {
   actionsCompleted: number;
   criticalNow: number;
   criticalResolved: number;
-  topImprovement: { contractId: string; name: string; delta: number; scoreNow: number } | null;
-  topDecline: { contractId: string; name: string; delta: number; scoreNow: number } | null;
+  topImprovement: ContractDelta | null;
+  topDecline: ContractDelta | null;
+  improvedContracts?: ContractDelta[];
+  worsenedContracts?: ContractDelta[];
+  actionsByContract?: ContractActions[];
 }
 
 interface PortfolioImprovementCardProps {
@@ -24,12 +48,18 @@ interface PortfolioImprovementCardProps {
 export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> = ({ summary, onNavigate }) => {
   if (!summary.hasData || summary.avgScorePrevious === null) return null;
 
+  const [expandedSection, setExpandedSection] = useState<'improved' | 'worsened' | 'actions' | null>(null);
+
   const isPositive = summary.delta >= 0;
   const accentColor = isPositive ? '#15803d' : '#dc2626';
   const accentBg = isPositive ? '#f0fdf4' : '#fef2f2';
   const actionPct = summary.actionsTotal > 0
     ? Math.round((summary.actionsCompleted / summary.actionsTotal) * 100)
     : 0;
+
+  const toggle = (section: 'improved' | 'worsened' | 'actions') => {
+    setExpandedSection(prev => prev === section ? null : section);
+  };
 
   return (
     <div style={{
@@ -101,6 +131,8 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
             value={summary.contractsImproved}
             color="#15803d"
             bg="#f0fdf4"
+            onClick={() => toggle('improved')}
+            active={expandedSection === 'improved'}
           />
         )}
         {summary.contractsWorsened > 0 && (
@@ -110,6 +142,8 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
             value={summary.contractsWorsened}
             color="#dc2626"
             bg="#fef2f2"
+            onClick={() => toggle('worsened')}
+            active={expandedSection === 'worsened'}
           />
         )}
         {summary.criticalResolved > 0 && (
@@ -122,14 +156,20 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           />
         )}
         {summary.actionsTotal > 0 && (
-          <div style={{
-            padding: '12px 14px',
-            background: '#f9fafb',
-            borderRadius: 8,
-            border: '1px solid #f3f4f6',
-          }}>
+          <div
+            onClick={() => toggle('actions')}
+            style={{
+              padding: '12px 14px',
+              background: expandedSection === 'actions' ? '#f0f9ff' : '#f9fafb',
+              borderRadius: 8,
+              border: expandedSection === 'actions' ? '1px solid #bfdbfe' : '1px solid #f3f4f6',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
             <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
               Aktionen
+              <span style={{ marginLeft: 4, fontSize: 10, color: '#9ca3af' }}>&#8250;</span>
             </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>
               {summary.actionsCompleted}/{summary.actionsTotal}
@@ -154,6 +194,28 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
         )}
       </div>
 
+      {/* Expanded Details */}
+      {expandedSection === 'improved' && (summary.improvedContracts || []).length > 0 && (
+        <ContractList
+          contracts={summary.improvedContracts!}
+          positive
+          onNavigate={onNavigate}
+        />
+      )}
+      {expandedSection === 'worsened' && (summary.worsenedContracts || []).length > 0 && (
+        <ContractList
+          contracts={summary.worsenedContracts!}
+          positive={false}
+          onNavigate={onNavigate}
+        />
+      )}
+      {expandedSection === 'actions' && (summary.actionsByContract || []).length > 0 && (
+        <ActionsDetail
+          actionsByContract={summary.actionsByContract!}
+          onNavigate={onNavigate}
+        />
+      )}
+
       {/* Top Improvement / Decline Highlights */}
       {(summary.topImprovement || summary.topDecline) && (
         <div style={{
@@ -172,7 +234,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           )}
           {summary.topDecline && (
             <HighlightChip
-              label="Größter Rückgang"
+              label="Gr&ouml;&szlig;ter R&uuml;ckgang"
               name={summary.topDecline.name}
               delta={summary.topDecline.delta}
               positive={false}
@@ -185,22 +247,194 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
   );
 };
 
+// ── Expanded: Contract list (improved/worsened) ──
+const ContractList: React.FC<{
+  contracts: ContractDelta[];
+  positive: boolean;
+  onNavigate?: (contractId: string) => void;
+}> = ({ contracts, positive, onNavigate }) => (
+  <div style={{
+    padding: '12px 0',
+    marginBottom: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  }}>
+    {contracts.map(c => (
+      <div
+        key={c.contractId}
+        onClick={() => onNavigate?.(c.contractId)}
+        style={{
+          padding: '8px 12px',
+          background: positive ? '#f0fdf4' : '#fef2f2',
+          border: `1px solid ${positive ? '#bbf7d0' : '#fecaca'}`,
+          borderRadius: 8,
+          cursor: onNavigate ? 'pointer' : 'default',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <span style={{
+          fontSize: 13,
+          fontWeight: 500,
+          color: '#111827',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flex: 1,
+          minWidth: 0,
+        }}>
+          {c.name}
+        </span>
+        <span style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: positive ? '#15803d' : '#dc2626',
+          marginLeft: 12,
+          flexShrink: 0,
+        }}>
+          {c.delta > 0 ? '+' : ''}{c.delta} &#183; Score {c.scoreNow}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// ── Expanded: Actions by contract ──
+const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
+  now: { label: 'Sofort', color: '#dc2626' },
+  plan: { label: 'Geplant', color: '#d97706' },
+  watch: { label: 'Beobachten', color: '#6b7280' },
+};
+
+const ActionsDetail: React.FC<{
+  actionsByContract: ContractActions[];
+  onNavigate?: (contractId: string) => void;
+}> = ({ actionsByContract, onNavigate }) => (
+  <div style={{
+    padding: '12px 0',
+    marginBottom: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  }}>
+    {actionsByContract.map(ca => (
+      <div key={ca.contractId} style={{
+        background: '#f9fafb',
+        border: '1px solid #f3f4f6',
+        borderRadius: 8,
+        overflow: 'hidden',
+      }}>
+        {/* Contract header */}
+        <div
+          onClick={() => onNavigate?.(ca.contractId)}
+          style={{
+            padding: '8px 12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: onNavigate ? 'pointer' : 'default',
+          }}
+        >
+          <span style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: '#111827',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
+          }}>
+            {ca.name}
+          </span>
+          <span style={{
+            fontSize: 11,
+            color: '#6b7280',
+            marginLeft: 12,
+            flexShrink: 0,
+          }}>
+            {ca.completed}/{ca.total}
+          </span>
+        </div>
+        {/* Action items */}
+        <div style={{ padding: '0 12px 8px' }}>
+          {ca.actions.map((action, idx) => {
+            const prio = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.plan;
+            const isDone = action.status === 'done';
+            return (
+              <div key={idx} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 0',
+                fontSize: 12,
+                color: isDone ? '#9ca3af' : '#374151',
+                textDecoration: isDone ? 'line-through' : 'none',
+              }}>
+                <span style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: isDone ? '#d1d5db' : prio.color,
+                  flexShrink: 0,
+                }} />
+                <span style={{
+                  flex: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {action.title}
+                </span>
+                {!isDone && (
+                  <span style={{
+                    fontSize: 10,
+                    color: prio.color,
+                    fontWeight: 600,
+                  }}>
+                    {prio.label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+          {ca.total > ca.actions.length && (
+            <div style={{ fontSize: 11, color: '#9ca3af', paddingTop: 4 }}>
+              + {ca.total - ca.actions.length} weitere
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const MiniStat: React.FC<{
   icon: string;
   label: string;
   value: number;
   color: string;
   bg: string;
-}> = ({ icon, label, value, color, bg }) => (
-  <div style={{
-    padding: '12px 14px',
-    background: bg,
-    borderRadius: 8,
-    border: `1px solid ${color}22`,
-  }}>
+  onClick?: () => void;
+  active?: boolean;
+}> = ({ icon, label, value, color, bg, onClick, active }) => (
+  <div
+    onClick={onClick}
+    style={{
+      padding: '12px 14px',
+      background: active ? `${color}11` : bg,
+      borderRadius: 8,
+      border: active ? `1px solid ${color}44` : `1px solid ${color}22`,
+      cursor: onClick ? 'pointer' : 'default',
+      transition: 'all 0.15s ease',
+    }}
+  >
     <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
       <span dangerouslySetInnerHTML={{ __html: icon }} style={{ marginRight: 4, color }} />
       {label}
+      {onClick && <span style={{ marginLeft: 4, fontSize: 10, color: '#9ca3af' }}>&#8250;</span>}
     </div>
     <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
   </div>
