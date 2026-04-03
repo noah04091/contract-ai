@@ -53,11 +53,8 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
   const isPositive = summary.delta >= 0;
   const accentColor = isPositive ? '#15803d' : '#dc2626';
   const accentBg = isPositive ? '#f0fdf4' : '#fef2f2';
-  const actionPct = summary.actionsTotal > 0
-    ? Math.round((summary.actionsCompleted / summary.actionsTotal) * 100)
-    : 0;
 
-  const toggle = (section: 'improved' | 'worsened' | 'actions') => {
+  const toggle = (section: 'improved' | 'worsened') => {
     setExpandedSection(prev => prev === section ? null : section);
   };
 
@@ -253,116 +250,6 @@ const ContractList: React.FC<{
         }}>
           {c.delta > 0 ? '+' : ''}{c.delta} &#183; Score {c.scoreNow}
         </span>
-      </div>
-    ))}
-  </div>
-);
-
-// ── Expanded: Actions by contract ──
-const PRIORITY_CONFIG: Record<string, { label: string; color: string }> = {
-  now: { label: 'Sofort', color: '#dc2626' },
-  plan: { label: 'Geplant', color: '#d97706' },
-  watch: { label: 'Beobachten', color: '#6b7280' },
-};
-
-const ActionsDetail: React.FC<{
-  actionsByContract: ContractActions[];
-  onNavigate?: (contractId: string) => void;
-}> = ({ actionsByContract, onNavigate }) => (
-  <div style={{
-    padding: '12px 0',
-    marginBottom: 12,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 10,
-  }}>
-    {actionsByContract.map(ca => (
-      <div key={ca.contractId} style={{
-        background: '#f9fafb',
-        border: '1px solid #f3f4f6',
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}>
-        {/* Contract header */}
-        <div
-          onClick={() => onNavigate?.(ca.contractId)}
-          style={{
-            padding: '8px 12px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            cursor: onNavigate ? 'pointer' : 'default',
-          }}
-        >
-          <span style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: '#111827',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            flex: 1,
-            minWidth: 0,
-          }}>
-            {ca.name}
-          </span>
-          <span style={{
-            fontSize: 11,
-            color: '#6b7280',
-            marginLeft: 12,
-            flexShrink: 0,
-          }}>
-            {ca.completed}/{ca.total}
-          </span>
-        </div>
-        {/* Action items */}
-        <div style={{ padding: '0 12px 8px' }}>
-          {ca.actions.map((action, idx) => {
-            const prio = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.plan;
-            const isDone = action.status === 'done';
-            return (
-              <div key={idx} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '4px 0',
-                fontSize: 12,
-                color: isDone ? '#9ca3af' : '#374151',
-                textDecoration: isDone ? 'line-through' : 'none',
-              }}>
-                <span style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: isDone ? '#d1d5db' : prio.color,
-                  flexShrink: 0,
-                }} />
-                <span style={{
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {action.title}
-                </span>
-                {!isDone && (
-                  <span style={{
-                    fontSize: 10,
-                    color: prio.color,
-                    fontWeight: 600,
-                  }}>
-                    {prio.label}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-          {ca.total > ca.actions.length && (
-            <div style={{ fontSize: 11, color: '#9ca3af', paddingTop: 4 }}>
-              + {ca.total - ca.actions.length} weitere
-            </div>
-          )}
-        </div>
       </div>
     ))}
   </div>
