@@ -68,6 +68,9 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
 
   const costs = [];
 
+  // Send resultId early so frontend can recover if SSE connection drops
+  onProgress(0, 'Pipeline gestartet...', { resultId: record._id.toString() });
+
   // Normalize PDF extraction artifacts (hyphenation, column breaks)
   // Applied AFTER DB save (originalText preserved) but BEFORE all pipeline stages
   contractText = normalizePdfText(contractText);

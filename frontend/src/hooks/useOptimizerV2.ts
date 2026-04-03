@@ -296,7 +296,34 @@ export function useOptimizerV2() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      // User-friendly error messages
+
+      // If we have a resultId, the backend may still be processing — poll for result
+      if (lastResultId) {
+        dispatch({ type: 'PROGRESS', progress: 90, message: 'Verbindung unterbrochen — warte auf Ergebnis...' });
+        // Poll up to 3 minutes (18 attempts × 10s) for the backend to finish
+        for (let attempt = 0; attempt < 18; attempt++) {
+          await new Promise(r => setTimeout(r, 10000));
+          try {
+            const data = await apiCall(`/optimizer-v2/results/${lastResultId}`) as { success?: boolean; result?: AnalysisResult };
+            if (data?.success && data?.result) {
+              if (data.result.status === 'completed') {
+                dispatch({ type: 'ANALYSIS_COMPLETE', result: data.result, resultId: lastResultId });
+                return;
+              }
+              if (data.result.status === 'failed') {
+                dispatch({ type: 'ANALYSIS_ERROR', error: 'Analyse fehlgeschlagen. Bitte versuche es erneut.' });
+                return;
+              }
+              // Still running — update progress
+              dispatch({ type: 'PROGRESS', progress: 90 + attempt, message: `Analyse läuft noch (Stage ${data.result.currentStage || '?'})...` });
+            }
+          } catch { /* ignore poll errors, keep trying */ }
+        }
+        dispatch({ type: 'ANALYSIS_ERROR', error: 'Verbindung unterbrochen. Die Analyse läuft möglicherweise noch — bitte lade die Seite neu.' });
+        return;
+      }
+
+      // No resultId — genuine connection error
       let message = 'Analyse fehlgeschlagen. Bitte versuche es erneut.';
       if (err instanceof Error) {
         const errMsg = err.message.toLowerCase();

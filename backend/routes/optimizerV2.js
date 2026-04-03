@@ -146,7 +146,7 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
   let clientDisconnected = false;
   req.on('close', () => { clientDisconnected = true; });
 
-  // Keepalive: send SSE comment every 15s to prevent proxy/Render idle timeout
+  // Keepalive: send SSE comment every 8s to prevent QUIC/HTTP3 idle disconnect
   const keepalive = setInterval(() => {
     if (clientDisconnected) return;
     try {
@@ -154,7 +154,7 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
     } catch (e) {
       clientDisconnected = true;
     }
-  }, 15000);
+  }, 8000);
 
   // Extract text (with OCR fallback for scanned PDFs, direct OCR for images)
   let contractText;
