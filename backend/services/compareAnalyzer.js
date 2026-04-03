@@ -3536,6 +3536,153 @@ function enforceScoreDifferentiation(result) {
   return result;
 }
 
+/**
+ * V3.1: Deterministic post-dedup — catches duplicates that GPT's relevance filter missed.
+ * Removes diffs that share the same key numbers or have very similar contract text.
+ */
+function deduplicateByContent(diffs) {
+  if (diffs.length <= 1) return diffs;
+
+  const kept = [];
+  const seenNumbers = new Set();
+  const seenTextKeys = new Set();
+
+  for (const diff of diffs) {
+    // Extract all numbers from contract1 + contract2 text
+    const allText = `${diff.contract1 || ''} ${diff.contract2 || ''}`;
+    const numbers = allText.match(/[\d]+[.,]?\d*\s*[%€]/g) || [];
+    const numKey = numbers.sort().join('|');
+
+    // Check for numeric duplicate: same set of key numbers in same clauseArea
+    if (numKey && numKey.length > 2) {
+      const areaNumKey = `${diff.clauseArea}:${numKey}`;
+      if (seenNumbers.has(areaNumKey)) {
+        console.log(`🔍 Post-Dedup: Entferne numerisches Duplikat in ${diff.clauseArea}: "${diff.section || diff.category}"`);
+        continue;
+      }
+      seenNumbers.add(areaNumKey);
+    }
+
+    // Check for text duplicate: very similar contract1+contract2 across different categories
+    const textKey = allText.replace(/\s+/g, ' ').trim().substring(0, 100).toLowerCase();
+    if (textKey.length > 20) {
+      // Check similarity against already-seen texts
+      let isDuplicate = false;
+      for (const seen of seenTextKeys) {
+        if (textSimilarity(textKey, seen) > 0.8) {
+          console.log(`🔍 Post-Dedup: Entferne Text-Duplikat: "${diff.section || diff.category}"`);
+          isDuplicate = true;
+          break;
+        }
+      }
+      if (isDuplicate) continue;
+      seenTextKeys.add(textKey);
+    }
+
+    kept.push(diff);
+  }
+
+  if (kept.length < diffs.length) {
+    console.log(`🔍 Post-Dedup: ${diffs.length - kept.length} Duplikate entfernt, ${kept.length} verbleiben`);
+  }
+  return kept;
+}
+
+/** Simple character-level similarity for dedup (Jaccard on character trigrams) */
+function textSimilarity(a, b) {
+  const trigrams = (s) => {
+    const t = new Set();
+    for (let i = 0; i <= s.length - 3; i++) t.add(s.substring(i, i + 3));
+    return t;
+  };
+  const ta = trigrams(a);
+  const tb = trigrams(b);
+  let intersection = 0;
+  for (const t of ta) { if (tb.has(t)) intersection++; }
+  const union = ta.size + tb.size - intersection;
+  return union === 0 ? 0 : intersection / union;
+}
+
+/**
+ * V3.1: Integrate benchmark results into scores.
+ * If benchmarks clearly show one contract is financially better,
+ * adjust overall scores + recommendation to avoid contradicting the benchmark.
+ */
+function applyBenchmarkScoreAdjustment(result, benchmarks) {
+  if (!benchmarks || benchmarks.length === 0) return;
+  if (!result.scores?.contract1 || !result.scores?.contract2) return;
+
+  // Count wins per contract
+  let wins1 = 0, wins2 = 0, ties = 0;
+  for (const b of benchmarks) {
+    const r1 = b.contract1?.assessment?.rating;
+    const r2 = b.contract2?.assessment?.rating;
+    if (!r1 && !r2) continue;
+
+    // "above" = better than market, "below" = worse than market
+    if (r1 === 'above' && r2 !== 'above') wins1++;
+    else if (r2 === 'above' && r1 !== 'above') wins2++;
+    else if (r1 === 'above' && r2 === 'above') ties++;
+    else if (r1 === 'standard' && r2 === 'below') wins1++;
+    else if (r2 === 'standard' && r1 === 'below') wins2++;
+    else ties++;
+  }
+
+  const totalRated = wins1 + wins2 + ties;
+  if (totalRated === 0) return;
+
+  console.log(`📊 Benchmark-Score: V1 gewinnt ${wins1}, V2 gewinnt ${wins2}, ${ties} gleich (von ${totalRated} Metriken)`);
+
+  // Only adjust if there's a clear benchmark winner (at least 2 more wins)
+  const benchmarkAdvantage = Math.abs(wins1 - wins2);
+  if (benchmarkAdvantage < 2) {
+    console.log(`📊 Benchmark-Score: Kein klarer Gewinner — keine Score-Anpassung`);
+    return;
+  }
+
+  const benchmarkWinner = wins1 > wins2 ? 1 : 2;
+  const s1 = result.scores.contract1;
+  const s2 = result.scores.contract2;
+  const currentWinner = s1.overall >= s2.overall ? 1 : 2;
+
+  // Calculate bonus: 3 points per win advantage, capped at 12
+  const bonus = Math.min(benchmarkAdvantage * 3, 12);
+
+  if (benchmarkWinner !== currentWinner) {
+    // Score contradicts benchmark — this is the critical case
+    // Boost the benchmark winner and lower the benchmark loser
+    console.log(`📊 Benchmark-Score: WIDERSPRUCH — Score sagt V${currentWinner}, Benchmark sagt V${benchmarkWinner}. Korrigiere mit ±${bonus} Punkten.`);
+
+    const winnerScores = benchmarkWinner === 1 ? s1 : s2;
+    const loserScores = benchmarkWinner === 1 ? s2 : s1;
+
+    winnerScores.overall = Math.min(92, winnerScores.overall + Math.ceil(bonus / 2));
+    loserScores.overall = Math.max(40, loserScores.overall - Math.floor(bonus / 2));
+
+    // Adjust fairness/riskProtection (most financial-relevant sub-scores)
+    winnerScores.fairness = Math.min(92, winnerScores.fairness + bonus);
+    winnerScores.riskProtection = Math.min(92, winnerScores.riskProtection + Math.ceil(bonus / 2));
+    loserScores.fairness = Math.max(35, loserScores.fairness - bonus);
+    loserScores.riskProtection = Math.max(35, loserScores.riskProtection - Math.ceil(bonus / 2));
+
+    // Flip recommendation if needed
+    if (result.overallRecommendation?.recommended !== benchmarkWinner) {
+      console.log(`📊 Benchmark-Score: Empfehlung V${result.overallRecommendation.recommended} → V${benchmarkWinner}`);
+      result.overallRecommendation.recommended = benchmarkWinner;
+    }
+  } else {
+    // Score already aligns with benchmark — reinforce the gap
+    console.log(`📊 Benchmark-Score: Score und Benchmark stimmen überein (V${benchmarkWinner}). Verstärke um ${Math.ceil(bonus / 2)} Punkte.`);
+
+    const winnerScores = benchmarkWinner === 1 ? s1 : s2;
+    winnerScores.fairness = Math.min(92, winnerScores.fairness + Math.ceil(bonus / 2));
+  }
+
+  // Sync with contract analysis
+  if (result.contract1Analysis) result.contract1Analysis.score = s1.overall;
+  if (result.contract2Analysis) result.contract2Analysis.score = s2.overall;
+}
+
 // ============================================
 // Filter Identical Clauses (from V1)
 // ============================================
@@ -4823,11 +4970,13 @@ Gib in "irrelevantDiffIndices" die NUMMERN (1-basiert) der Unterschiede an, die 
 Irrelevant sind Unterschiede, die:
 - Rein administrative/formale Details betreffen, die für die Entscheidung des Users irrelevant sind
 - Den gleichen Sachverhalt nur anders formulieren, ohne inhaltliche Abweichung
-- Doppelt/überlappend mit anderen Unterschieden sind — behalte NUR den besseren/vollständigeren
+- DUPLIKATE: Zwei Unterschiede zeigen die gleichen Zahlen/Werte/Fakten, nur in verschiedenen Kategorien — entferne den schwächeren/kürzeren
+- FALSCH ZUGEORDNET: Inhalt passt nicht zur Kategorie (z.B. Zahlungsdaten unter "Datenschutz", Gebühren unter "Sonstiges") — entferne diese
 - Für diesen konkreten Dokumenttyp und die Entscheidung des Users keine Rolle spielen
-- Unverständlichen, verstümmelten oder zusammenhanglosen Text enthalten (z.B. OCR-Artefakte)
+- Unverständlichen, verstümmelten oder zusammenhanglosen Text enthalten (z.B. OCR-Artefakte, "Wert nicht extrahierbar")
+- Vage "Kategorie: X Werte nur in..." Sammel-Unterschiede, wenn die Einzelwerte bereits in anderen Unterschieden abgedeckt sind
 
-QUALITÄT > QUANTITÄT: Lieber 3 herausragende Unterschiede als 15 mittelmäßige.
+SEI AGGRESSIV: Lieber 4-6 herausragende Unterschiede als 12+ mittelmäßige.
 Jeder behaltene Unterschied MUSS dem User helfen, eine bessere Entscheidung zu treffen.
 
 SCHRITT 1 — GRUPPEN-BEWERTUNGEN:
@@ -5112,6 +5261,9 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
       console.log(`🔍 Relevanz-Filter: ${irrelevantIndices.length} irrelevante Diffs entfernt, ${finalDiffs.length} von ${mergedDiffs.length} verbleiben`);
     }
 
+    // V3.1: Deterministic post-dedup — catch duplicates GPT missed
+    finalDiffs = deduplicateByContent(finalDiffs);
+
     // Set final differences
     synthesisResult.differences = finalDiffs;
 
@@ -5134,6 +5286,10 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
       benchmarkResult = runBenchmarkComparison(map1, map2, synthesisResult.differences || []);
       if (benchmarkResult.benchmarks.length > 0) {
         synthesisResult.differences = benchmarkResult.enrichedDifferences;
+
+        // V3.1: Benchmark → Score Integration
+        // If benchmark clearly shows one contract is financially better, adjust scores + recommendation
+        applyBenchmarkScoreAdjustment(synthesisResult, benchmarkResult.benchmarks);
       }
     } else {
       console.log(`📊 Benchmark: Übersprungen für Dokumenttyp "${docConfig.label}"`);
