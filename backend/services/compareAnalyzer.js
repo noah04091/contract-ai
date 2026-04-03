@@ -4814,7 +4814,21 @@ ${groupsText || 'Keine'}
 ALLE UNTERSCHIEDE (${allDiffs.length} Stück):
 ${diffsText}
 
-DEINE AUFGABE — 4 SCHRITTE:
+DEINE AUFGABE — 5 SCHRITTE:
+
+SCHRITT 0 — RELEVANZ-PRÜFUNG (KRITISCH):
+Prüfe JEDEN der ${allDiffs.length} Unterschiede oben auf echten Mehrwert für den User.
+Gib in "irrelevantDiffIndices" die NUMMERN (1-basiert) der Unterschiede an, die KEINEN echten Informationswert haben.
+
+Irrelevant sind Unterschiede, die:
+- Rein administrative/formale Details betreffen, die für die Entscheidung des Users irrelevant sind
+- Den gleichen Sachverhalt nur anders formulieren, ohne inhaltliche Abweichung
+- Doppelt/überlappend mit anderen Unterschieden sind — behalte NUR den besseren/vollständigeren
+- Für diesen konkreten Dokumenttyp und die Entscheidung des Users keine Rolle spielen
+- Unverständlichen, verstümmelten oder zusammenhanglosen Text enthalten (z.B. OCR-Artefakte)
+
+QUALITÄT > QUANTITÄT: Lieber 3 herausragende Unterschiede als 15 mittelmäßige.
+Jeder behaltene Unterschied MUSS dem User helfen, eine bessere Entscheidung zu treffen.
 
 SCHRITT 1 — GRUPPEN-BEWERTUNGEN:
 Für jede GRUPPE oben, schreibe eine Bewertung in "groupEvaluations" mit dem Gruppen-ID als Key:
@@ -4839,6 +4853,7 @@ MINIMUM 12 Punkte Differenz wenn ein ${docLabel} klar besser ist.
 6-8 Sätze Fazit.
 
 {
+  "irrelevantDiffIndices": [numbers],
   "groupEvaluations": { ... },
   "contract1Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
   "contract2Analysis": {"strengths": [...], "weaknesses": [...], "riskLevel": "low|medium|high", "score": number},
@@ -5088,11 +5103,20 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     const groupEvaluations = synthesisResult.groupEvaluations || {};
     applySeverityCalibration(mergedDiffs, groupEvaluations, groups);
 
+    // V3.1: AI-based relevance filter — remove diffs GPT marked as irrelevant
+    const irrelevantIndices = Array.isArray(synthesisResult.irrelevantDiffIndices) ? synthesisResult.irrelevantDiffIndices : [];
+    let finalDiffs = mergedDiffs;
+    if (irrelevantIndices.length > 0) {
+      const toRemove = new Set(irrelevantIndices.map(i => i - 1)); // prompt uses 1-based indices
+      finalDiffs = mergedDiffs.filter((_, i) => !toRemove.has(i));
+      console.log(`🔍 Relevanz-Filter: ${irrelevantIndices.length} irrelevante Diffs entfernt, ${finalDiffs.length} von ${mergedDiffs.length} verbleiben`);
+    }
+
     // Set final differences
-    synthesisResult.differences = mergedDiffs;
+    synthesisResult.differences = finalDiffs;
 
     // V2.2 Säule 4: Formelbasierte Scores ÜBERSCHREIBEN GPT-Scores (docConfig → irrelevante Diffs ignorieren)
-    const calculatedScores = calculateScoresFromDiffs(mergedDiffs, map1, map2, docConfig);
+    const calculatedScores = calculateScoresFromDiffs(finalDiffs, map1, map2, docConfig);
     console.log(`📊 V2.2 Formel-Scores: V1=${calculatedScores.contract1.overall}, V2=${calculatedScores.contract2.overall} (GPT war V1=${synthesisResult.scores?.contract1?.overall}, V2=${synthesisResult.scores?.contract2?.overall})`);
     synthesisResult.scores = calculatedScores;
     // Sync with contract analysis
