@@ -234,6 +234,7 @@ export interface AnalysisResult {
   ocrApplied?: boolean;
   createdAt?: string;
   status?: string;
+  currentStage?: number;
 }
 
 // ── Pipeline Stage Info ──

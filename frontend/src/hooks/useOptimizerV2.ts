@@ -197,6 +197,7 @@ export function useOptimizerV2() {
     abortControllerRef.current = new AbortController();
     const token = localStorage.getItem('token');
     const apiBase = getApiBase();
+    let lastResultId: string | null = null;
 
     try {
       const response = await fetch(`${apiBase}/api/optimizer-v2/analyze`, {
@@ -218,7 +219,6 @@ export function useOptimizerV2() {
       let buffer = '';
 
       let streamCompleted = false;
-      let lastResultId: string | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
