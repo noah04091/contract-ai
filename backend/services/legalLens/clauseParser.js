@@ -242,11 +242,18 @@ class ClauseParser {
     // Löst das Kernproblem bei Multi-Column-PDFs, wo Section-Header
     // nur durch einfache \n (statt \n\n) getrennt sind.
     const headerProtectPattern = /^(§\s*\d|Artikel\s+\d|Art\.\s*\d|\d+\.\d+(?:\.\d+)*\s+[A-ZÄÖÜ]|\d+\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[A-Z]\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[IVXLC]+\.\s+[A-ZÄÖÜ])/;
+    // Gesetzes-Referenzen: "§ 18 AktG", "§ 618 BGB" etc. sind KEINE Sektions-Header
+    const legalReferencePattern = /^§\s*\d+\s*(Abs\.?\s*\d+\s*)?(S\.\s*\d+\s*)?(AktG|BGB|HGB|AÜG|StGB|GmbHG|UStG|GewO|SGB|ZPO|BetrVG|KSchG|AGG|BDSG|TzBfG|ArbZG|MuSchG|BEEG|EntgFG|ArbSchG|ASiG|eIDAS|DSGVO|GWB|InsO|PatG|UrhG|MarkenG|WpHG|VAG|GenG|PartGG|ArbNErfG|ProdHaftG|UWG|TKG|TMG|TTDSG|KWG|WpÜG|MiLoG|AEntG|TVG|SprAuG|DrittelbG|MitbestG)/i;
     const protectedLines = processed.split('\n');
     const resultLines = [];
     for (let i = 0; i < protectedLines.length; i++) {
       const trimmed = protectedLines[i].trim();
       if (i > 0 && trimmed.length > 0 && headerProtectPattern.test(trimmed)) {
+        // Überspringe Gesetzes-Referenzen (§ 18 AktG ist kein Sektions-Header)
+        if (legalReferencePattern.test(trimmed)) {
+          resultLines.push(protectedLines[i]);
+          continue;
+        }
         const prev = resultLines.length > 0 ? resultLines[resultLines.length - 1].trim() : '';
         if (prev.length > 0) {
           resultLines.push(''); // Leere Zeile → \n\n → wird nicht zusammengefügt
@@ -263,6 +270,12 @@ class ClauseParser {
 
     // Übermäßige Leerzeilen reduzieren
     processed = processed.replace(/\n{4,}/g, '\n\n\n');
+
+    // Multi-Column-PDF Artefakte reparieren: Gebrochene Wörter zusammenfügen
+    // pdf-parse trennt bei mehrspaltigem Layout Wörter auf: "D ie" → "Die", "s ind" → "sind"
+    // Pattern: einzelner Buchstabe + Leerzeichen + 2+ Kleinbuchstaben (= gebrochenes Wort)
+    // Sicher für dt. Rechtstext: Abkürzungen haben Punkte (z. B., d. h.), keine nackten Einzelbuchstaben
+    processed = processed.replace(/(?<=\s|^)([A-ZÄÖÜa-zäöü]) ([a-zäöüß]{2,})/gm, '$1$2');
 
     // Mehrfache Leerzeichen zu einem zusammenfassen
     processed = processed.replace(/ {2,}/g, ' ');
@@ -1198,7 +1211,13 @@ class ClauseParser {
       // Dateinamen
       /\d+\.\d+\s+\w+\s+\w+\s+\w+\.doc/g,
       // Geschäftsführer-Zeile (wenn wiederholt)
-      /Geschäftsführer:\s*[\w\s-]+\s+Amtsgericht\s+\w+/g
+      /Geschäftsführer:\s*[\w\s-]+\s+Amtsgericht\s+\w+/g,
+      // Firmen-Footer: GmbH/AG + Adresse + Telefon/Fax/Email
+      /[A-ZÄÖÜ][\w\s&.-]+(?:GmbH|AG|KG|e\.V\.?),?\s*(?:Zentrale|Hauptsitz|Sitz)?[^§\n]*(?:Fon|Tel|Telefon|Phone)\s*[\+\d\s/-]+[^§\n]*(?:Fax|info\s*@|mail)[^\n]*/gi,
+      // Standalone-URLs als Footer (z.B. "ferchau.com", "www.example.de")
+      /^(?:www\.)?[a-z0-9][\w-]*\.[a-z]{2,4}\s*$/gmi,
+      // Dokumenten-IDs: "F A 3 6 ; S t a n d 1 2 - 2 5" (Multi-Column-Artefakte)
+      /(?:[A-Z]\s){2,}\d[\s\d;-]*(?:Stand|Version|Rev)[\s\d.-]*/gi
     ];
 
     for (const pattern of headerFooterPatterns) {
@@ -1282,12 +1301,14 @@ class ClauseParser {
     const lines = text.split('\n');
     const processedLines = [];
     const sectionHeaderPattern = /^(§\s*\d+|Artikel\s+\d+|Art\.\s*\d+|\d+\.\d+(?:\.\d+)*\s+[A-ZÄÖÜ]|\d+\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[A-Z]\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[IVXLC]+\.\s+[A-ZÄÖÜ])/;
+    const legalRefPattern = /^§\s*\d+\s*(Abs\.?\s*\d+\s*)?(S\.\s*\d+\s*)?(AktG|BGB|HGB|AÜG|StGB|GmbHG|UStG|GewO|SGB|ZPO|BetrVG|KSchG|AGG|BDSG|TzBfG|ArbZG|MuSchG|BEEG|EntgFG|ArbSchG|ASiG|eIDAS|DSGVO|GWB|InsO|PatG|UrhG|MarkenG|WpHG|VAG|GenG|PartGG|ArbNErfG|ProdHaftG|UWG|TKG|TMG|TTDSG|KWG|WpÜG|MiLoG|AEntG|TVG|SprAuG|DrittelbG|MitbestG)/i;
 
     for (let i = 0; i < lines.length; i++) {
       const trimmedLine = lines[i].trim();
       // Wenn Zeile wie ein Section-Header aussieht UND nicht die erste Zeile ist
       // UND die vorherige Zeile nicht leer war → Umbruch einfügen
-      if (i > 0 && trimmedLine.length > 0 && sectionHeaderPattern.test(trimmedLine)) {
+      // ABER: Gesetzes-Referenzen (§ 18 AktG, § 618 BGB) überspringen
+      if (i > 0 && trimmedLine.length > 0 && sectionHeaderPattern.test(trimmedLine) && !legalRefPattern.test(trimmedLine)) {
         const prevLine = (processedLines.length > 0) ? processedLines[processedLines.length - 1].trim() : '';
         if (prevLine.length > 0) {
           processedLines.push(''); // Leere Zeile einfügen → ergibt \n\n beim Join
