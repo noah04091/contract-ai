@@ -1347,7 +1347,33 @@ class ClauseParser {
       currentPosition += paragraph.length + 2; // +2 für \n\n
     }
 
-    return blocks;
+    // POST-PROCESSING: Kurze Header-Blöcke mit dem nächsten Block zusammenführen
+    // Verhindert, dass "A. Allgemeines" oder "F. Schlussbestimmungen" als eigene Klauseln enden.
+    // Ein Block wird gemerged wenn: kurz (< 60 Zeichen) UND sieht wie ein Header aus UND nächster Block existiert
+    const headerLikePattern = /^([A-Z]\.\s*\n?[A-ZÄÖÜ]|[IVXLC]+\.\s+[A-ZÄÖÜ]|[A-ZÄÖÜ][A-ZÄÖÜ\s-]{3,}$)/;
+    const mergedBlocks = [];
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      const nextBlock = blocks[i + 1];
+      // Merge wenn: kurzer Header-Block + es gibt einen nächsten Block + Block war nicht selbst Merge-Ziel
+      if (block.text.length < 60 && headerLikePattern.test(block.text.trim()) && nextBlock && !block._merged) {
+        // Header-Text dem nächsten Block voranstellen
+        nextBlock.text = block.text.trim() + '\n' + nextBlock.text;
+        nextBlock.startPosition = block.startPosition;
+        nextBlock.lineCount += block.lineCount;
+        nextBlock.wordCount += block.wordCount;
+        nextBlock.isStructuralStart = true;
+        nextBlock._merged = true; // Verhindere Kaskaden-Merge
+        log.debug(`[createTextBlocks] Merged header "${block.text.trim().substring(0, 40)}" into next block`);
+        continue; // Header-Block überspringen, nächster Block hat seinen Text
+      }
+      mergedBlocks.push(block);
+    }
+
+    // Block-IDs nach Merge neu vergeben
+    mergedBlocks.forEach((b, idx) => { b.id = `block_${idx + 1}`; });
+
+    return mergedBlocks;
   }
 
   /**
