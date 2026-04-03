@@ -4772,6 +4772,8 @@ function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode,
     clauseCount: (map2.clauses || []).length,
   };
 
+  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
+
   // Format diffs compactly
   const diffsText = allDiffs.map((d, i) => {
     let entry = `${i + 1}. [${d.severity.toUpperCase()}] ${d.category}`;
@@ -4790,8 +4792,6 @@ function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode,
     }
     return entry;
   }).join('\n');
-
-  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
 
   return {
     system: `Du bist ein erfahrener Vertragsanalyst. Du bekommst eine FERTIGE Liste von Unterschieden zwischen zwei ${docLabel === 'Vertrag' ? 'Verträgen' : docLabel + '-Dokumenten'}.
