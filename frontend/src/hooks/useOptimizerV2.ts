@@ -315,7 +315,7 @@ export function useOptimizerV2() {
                 return;
               }
               // Still running — update progress
-              dispatch({ type: 'PROGRESS', progress: 90 + attempt, message: `Analyse läuft noch (Stage ${(data.result as Record<string, unknown>).currentStage || '?'})...` });
+              dispatch({ type: 'PROGRESS', progress: 90 + attempt, message: `Analyse läuft noch (Stage ${(data as any).result.currentStage || '?'})...` });
             }
           } catch { /* ignore poll errors, keep trying */ }
         }
