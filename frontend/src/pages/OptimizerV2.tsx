@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-react';
@@ -36,7 +36,7 @@ export default function OptimizerV2() {
   const [sortByImportance, setSortByImportance] = useState(false);
   const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
-  const [loadingResult, setLoadingResult] = useState(false);
+  const loadingResultRef = useRef(false);
 
   const handleViewFile = useCallback(async (resultId: string) => {
     try {
@@ -66,11 +66,11 @@ export default function OptimizerV2() {
   // Load result from URL query param (?result=ID)
   useEffect(() => {
     const resultParam = searchParams.get('result');
-    if (resultParam && state.status === 'idle' && !state.resultId && !loadingResult) {
-      setLoadingResult(true);
-      actions.loadResult(resultParam).finally(() => setLoadingResult(false));
+    if (resultParam && state.status === 'idle' && !state.resultId && !loadingResultRef.current) {
+      loadingResultRef.current = true;
+      actions.loadResult(resultParam).finally(() => { loadingResultRef.current = false; });
     }
-  }, [searchParams, state.status, state.resultId, actions, loadingResult]);
+  }, [searchParams, state.status, state.resultId, actions]);
 
   // Pre-load contract file from contractId query param
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function OptimizerV2() {
         )}
 
         {/* Loading saved result */}
-        {loadingResult && status === 'idle' && (
+        {loadingResultRef.current && status === 'idle' && (
           <div className={styles.pipelineContainer} style={{ textAlign: 'center', padding: '48px 24px' }}>
             <Loader2 size={32} className={styles.spinIcon} style={{ margin: '0 auto 16px', display: 'block', color: '#007AFF' }} />
             <p style={{ color: '#6B7280', fontSize: 14 }}>Gespeicherte Analyse wird geladen...</p>
@@ -181,7 +181,7 @@ export default function OptimizerV2() {
         )}
 
         {/* Upload state */}
-        {(status === 'idle' || status === 'uploading') && !loadingResult && (
+        {(status === 'idle' || status === 'uploading') && !loadingResultRef.current && (
           <UploadSection
             file={file}
             onFileSelect={actions.setFile}
