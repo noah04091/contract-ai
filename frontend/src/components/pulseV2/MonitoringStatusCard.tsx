@@ -127,7 +127,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
     if (actionSummary.renewalSoon > 0) {
       summaryLines.push({
         icon: '↻',
-        text: `${actionSummary.renewalSoon} Vertrag${actionSummary.renewalSoon === 1 ? '' : ' Verträge'} lauf${actionSummary.renewalSoon === 1 ? 't' : 'en'} bald aus`,
+        text: `${actionSummary.renewalSoon} ${actionSummary.renewalSoon === 1 ? 'Vertrag läuft' : 'Verträge laufen'} bald aus`,
         color: '#d97706',
         section: 'renewal',
       });
@@ -260,103 +260,51 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
         </div>
       )}
 
-      {/* Scan Result */}
+      {/* Scan Result: brief verdict banner */}
       {scanResult && !scanning && (
-        <>
-          <div style={{
-            height: 1,
-            background: config.border,
-            marginBottom: 12,
-          }} />
-
-          {/* Verdict */}
-          <div style={{
-            padding: '10px 14px',
-            background: scanResult.verdict === 'green' ? '#f0fdf4' : scanResult.verdict === 'yellow' ? '#fffbeb' : '#f9fafb',
-            border: `1px solid ${scanResult.verdict === 'green' ? '#bbf7d0' : scanResult.verdict === 'yellow' ? '#fde68a' : '#e5e7eb'}`,
-            borderRadius: 8,
-            marginBottom: 12,
-            fontSize: 13,
-            color: scanResult.verdict === 'green' ? '#15803d' : scanResult.verdict === 'yellow' ? '#92400e' : '#6b7280',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <span style={{ fontSize: 16 }}>
-              {scanResult.verdict === 'green' ? '✔️' : scanResult.verdict === 'yellow' ? '⚠️' : 'ℹ️'}
-            </span>
-            {scanResult.verdictMessage}
-          </div>
-
-          {/* New Law Changes Highlight */}
-          {scanResult.newLawChanges > 0 && (
-            <div style={{
-              padding: '8px 12px',
-              background: '#f5f3ff',
-              border: '1px solid #ddd6fe',
-              borderRadius: 6,
-              marginBottom: 12,
-              fontSize: 13,
-              color: '#5b21b6',
-              fontWeight: 500,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}>
-              <span style={{ fontSize: 15 }}>&#9878;&#65039;</span>
-              {scanResult.newLawChanges} neue rechtliche {scanResult.newLawChanges === 1 ? 'Änderung erkannt' : 'Änderungen erkannt'}
-            </div>
-          )}
-
-          {/* Scan Stats */}
-          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#6b7280', marginBottom: scanResult.staleContracts.length > 0 ? 12 : 0, flexWrap: 'wrap' }}>
-            <span>{scanResult.freshCount} aktuell</span>
-            {scanResult.staleCount > 0 && (
-              <span style={{ color: '#d97706', fontWeight: 600 }}>{scanResult.staleCount} veraltet</span>
-            )}
-            {scanResult.unanalyzedCount > 0 && (
-              <span>{scanResult.unanalyzedCount} nicht analysiert</span>
-            )}
-          </div>
-
-          {/* Stale contracts — clickable to navigate */}
-          {scanResult.staleContracts.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {scanResult.staleContracts.map(c => (
-                <div
-                  key={c.contractId}
-                  onClick={() => onNavigate?.(c.contractId)}
-                  style={{
-                    padding: '8px 12px',
-                    background: '#fff',
-                    border: '1px solid #fde68a',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    cursor: onNavigate ? 'pointer' : 'default',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span style={{ fontWeight: 500, color: '#111827' }}>{c.name}</span>
-                  <span style={{ fontSize: 12, color: '#d97706' }}>
-                    vor {c.daysAgo} Tagen &#183; Score {c.score}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+        <div style={{
+          padding: '8px 12px',
+          background: scanResult.verdict === 'green' ? '#f0fdf4' : scanResult.verdict === 'yellow' ? '#fffbeb' : '#f9fafb',
+          border: `1px solid ${scanResult.verdict === 'green' ? '#bbf7d0' : scanResult.verdict === 'yellow' ? '#fde68a' : '#e5e7eb'}`,
+          borderRadius: 8,
+          marginBottom: 4,
+          fontSize: 13,
+          color: scanResult.verdict === 'green' ? '#15803d' : scanResult.verdict === 'yellow' ? '#92400e' : '#6b7280',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span style={{ fontSize: 14 }}>
+            {scanResult.verdict === 'green' ? '✔️' : scanResult.verdict === 'yellow' ? '⚠️' : 'ℹ️'}
+          </span>
+          <span style={{ flex: 1 }}>{scanResult.verdictMessage}</span>
+          <button
+            onClick={() => setScanResult(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#9ca3af',
+              fontSize: 16,
+              padding: '0 2px',
+              lineHeight: 1,
+            }}
+            title="Schließen"
+          >
+            &times;
+          </button>
+        </div>
       )}
 
-      {/* Default summary (when no scan result showing) */}
-      {!scanResult && !scanning && summaryLines.length > 0 && (
+      {/* Waypoints: always visible when not scanning */}
+      {!scanning && summaryLines.length > 0 && (
         <>
           <div style={{
             height: 1,
             background: config.border,
             marginBottom: 12,
+            marginTop: scanResult ? 8 : 0,
           }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {summaryLines.map((line, idx) => (
