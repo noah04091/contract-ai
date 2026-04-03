@@ -771,6 +771,7 @@ router.delete("/delete", verifyToken, async (req, res) => {
 
     // Jetzt tatsächlich löschen
     await contractsCollection.deleteMany({ userId: req.user.userId });
+    await dbInstance.collection("contract_events").deleteMany({ userId: req.user.userId });
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);

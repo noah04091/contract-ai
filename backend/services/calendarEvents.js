@@ -50,9 +50,10 @@ async function generateEventsForContract(db, contract) {
       console.log(`🔄 Auto-Renewal Vertrag "${contract.name}" - berechne nächste Periode`);
       const originalExpiry = new Date(expiryDate);
       
-      // Berechne nächstes Ablaufdatum (jährliche Verlängerung)
+      // Berechne nächstes Ablaufdatum (nutzt autoRenewMonths, Default: 12 Monate)
+      const autoRenewMonths = contract.autoRenewMonths || 12;
       while (expiryDate < now) {
-        expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+        expiryDate.setMonth(expiryDate.getMonth() + autoRenewMonths);
       }
       
       console.log(`📅 Ablaufdatum angepasst von ${originalExpiry.toISOString()} auf ${expiryDate.toISOString()}`);

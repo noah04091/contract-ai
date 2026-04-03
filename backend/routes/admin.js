@@ -518,6 +518,10 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     const contractsResult = await contractsCollection.deleteMany({ userId: userId });
     console.log(`   📄 Deleted ${contractsResult.deletedCount} contracts`);
 
+    // Delete user's calendar events
+    const eventsResult = await db.collection("contract_events").deleteMany({ userId: userId });
+    console.log(`   📅 Deleted ${eventsResult.deletedCount} calendar events`);
+
     // Delete user's cost tracking entries
     const costResult = await costTrackingCollection.deleteMany({ userId: userId });
     console.log(`   💰 Deleted ${costResult.deletedCount} cost tracking entries`);
@@ -625,6 +629,11 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
 
     // Delete contracts
     const contractsResult = await contractsCollection.deleteMany({
+      userId: { $in: userIdsToDelete }
+    });
+
+    // Delete calendar events
+    await db.collection("contract_events").deleteMany({
       userId: { $in: userIdsToDelete }
     });
 
