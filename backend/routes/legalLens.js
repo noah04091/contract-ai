@@ -101,7 +101,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 10;
+const CACHE_VERSION = 11;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2918,9 +2918,28 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     console.log(`📊 [Batch-Size] ${rawBlocks.length} Blöcke, avg ${Math.round(avgBlockLength)} chars/block → ${maxBlocksPerCall} Blöcke/Batch`);
 
+    // Intelligentes Batching: Nicht mitten in einem § trennen
+    // Sucht rückwärts nach strukturellen Starts (§, Artikel, etc.) als Batch-Grenzen
     const batches = [];
-    for (let i = 0; i < rawBlocks.length; i += maxBlocksPerCall) {
-      batches.push(rawBlocks.slice(i, i + maxBlocksPerCall));
+    let batchStart = 0;
+    while (batchStart < rawBlocks.length) {
+      const idealEnd = Math.min(batchStart + maxBlocksPerCall, rawBlocks.length);
+      if (idealEnd >= rawBlocks.length) {
+        batches.push(rawBlocks.slice(batchStart));
+        break;
+      }
+      // Suche rückwärts nach einem strukturellen Start (§, Artikel, nummerierte Abschnitte)
+      // Minimum halbe Batch-Größe um Micro-Batches zu vermeiden
+      const minBatchSize = Math.max(3, Math.floor(maxBlocksPerCall / 2));
+      let batchEnd = idealEnd;
+      for (let j = idealEnd; j > batchStart + minBatchSize; j--) {
+        if (rawBlocks[j].isStructuralStart) {
+          batchEnd = j;
+          break;
+        }
+      }
+      batches.push(rawBlocks.slice(batchStart, batchEnd));
+      batchStart = batchEnd;
     }
 
     let allClauses = [];

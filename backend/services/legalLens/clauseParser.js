@@ -237,6 +237,28 @@ class ClauseParser {
     // z.B. "Vertrags-\npartner" → "Vertragspartner"
     processed = processed.replace(/(\w)-\n(\w)/g, '$1$2');
 
+    // ===== FRÜHE BEREINIGUNG (VOR Line-Joining) =====
+    // Diese Filter MÜSSEN vor dem Zusammenfügen von Zeilen laufen,
+    // sonst wird Garbage mit Nachbartext zusammengefügt und rutscht durch.
+
+    // Spaced-out Müllzeilen entfernen: "F A 3 6 ; S t a n d 1 2 - 2 5"
+    // Erkennung: Zeilen mit vielen Einzelzeichen-Wörtern (typisch für Multi-Column-PDF-Artefakte)
+    processed = processed.split('\n').filter(line => {
+      const trimmed = line.trim();
+      if (trimmed.length < 6) return true; // Kurze Zeilen behalten
+      const words = trimmed.split(/\s+/);
+      if (words.length < 5) return true; // Zu wenige Wörter für sichere Erkennung (schützt "§ 1 Geltungsbereich")
+      const singleCharWords = words.filter(w => w.length === 1).length;
+      // Wenn >50% der Wörter nur 1 Zeichen lang → Müllzeile
+      return singleCharWords / words.length < 0.5;
+    }).join('\n');
+
+    // Gebrochene Paragraphen-Nummern reparieren: Multi-Column-PDF extrahiert
+    // "11.1" als "1\n1.1" weil die "11" über eine Spaltengrenze gebrochen wird.
+    // Pattern: einzelne Ziffer ALLEIN auf einer Zeile + Ziffer.Ziffer am nächsten Zeilenanfang
+    // [^\S\n]* = nur Leerzeichen/Tabs (keine Newlines) → matcht nicht über Absatzgrenzen (\n\n)
+    processed = processed.replace(/^(\d)[^\S\n]*\n(\d+\.\d)/gm, '$1$2');
+
     // Section-Header schützen: Leerzeile VOR Headern einfügen,
     // damit sie nicht mit der vorherigen Zeile zusammengefügt werden.
     // Löst das Kernproblem bei Multi-Column-PDFs, wo Section-Header
@@ -273,20 +295,9 @@ class ClauseParser {
 
     // Multi-Column-PDF Artefakte reparieren: Gebrochene Wörter zusammenfügen
     // pdf-parse trennt bei mehrspaltigem Layout Wörter auf: "D ie" → "Die", "s ind" → "sind"
+    // (Spaced-out-Filter läuft bereits oben VOR dem Line-Joining)
 
-    // 1. Spaced-out Müllzeilen entfernen: "F A 3 6 ; S t a n d 1 2 - 2 5"
-    // Erkennung: Zeilen wo fast jedes Zeichen durch Leerzeichen getrennt ist
-    processed = processed.split('\n').filter(line => {
-      const trimmed = line.trim();
-      if (trimmed.length < 6) return true; // Kurze Zeilen behalten
-      // Zähle "Einzelzeichen + Space" Muster
-      const spacedChars = (trimmed.match(/(?:^|(?<=\s))[A-Za-z0-9äöüÄÖÜ;.,/:-](?=\s)/g) || []).length;
-      const totalNonSpace = trimmed.replace(/\s/g, '').length;
-      // Wenn >60% der Zeichen einzeln stehen → Müllzeile
-      return totalNonSpace < 3 || spacedChars / totalNonSpace < 0.6;
-    }).join('\n');
-
-    // 2. Einzelbuchstabe + Leerzeichen + Kleinbuchstaben: "D ie" → "Die", "s ind" → "sind"
+    // Einzelbuchstabe + Leerzeichen + Kleinbuchstaben: "D ie" → "Die", "s ind" → "sind"
     processed = processed.replace(/(?<=\s|^)([A-ZÄÖÜa-zäöü])\s([a-zäöüß]{2,})/gm, '$1$2');
 
     // 3. Einzelbuchstabe + Leerzeichen + Großbuchstaben (Eigennamen): "F ERCHAU" → "FERCHAU"
@@ -1235,7 +1246,10 @@ class ClauseParser {
       // Standalone-URLs als Footer (z.B. "ferchau.com", "www.example.de")
       /^(?:www\.)?[a-z0-9][\w-]*\.[a-z]{2,4}\s*$/gmi,
       // Dokumenten-IDs: "F A 3 6 ; S t a n d 1 2 - 2 5" (Multi-Column-Artefakte)
-      /(?:[A-Z]\s){2,}\d[\s\d;-]*(?:Stand|Version|Rev)[\s\d.-]*/gi
+      /(?:[A-Z]\s){2,}\d[\s\d;-]*(?:Stand|Version|Rev)[\s\d.-]*/gi,
+      // Dokumentversion-Header: kurze Zeilen die mit "Stand: MM/YYYY" o.ä. enden
+      // Fängt z.B. "Allgemeine GeschäftsbedingungenS tand: 12/2025" ab
+      /^[A-ZÄÖÜ].{0,70}S\s*tand\s*:?\s*\d{1,2}[\/-]\d{2,4}\s*$/gmi
     ];
 
     for (const pattern of headerFooterPatterns) {
@@ -1685,23 +1699,28 @@ TEXT-BLÖCKE (mit IDs):
 ${blocksForGPT.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
 
 REGELN:
-1. Jede Klausel muss einen abgeschlossenen rechtlichen Gedanken enthalten
-2. Zusammengehörige Absätze = EINE Klausel
-3. Kurze eigenständige Sätze können einzelne Klauseln sein
-4. Gebührentabellen = EINE Klausel "Konditionen"
-5. Kontaktdaten/Impressum = EINE Klausel "Kontaktdaten"
-6. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
-7. Alle Blöcke müssen erfasst werden - überspringe keine.
-8. Das Dokument kann ein beliebiges Rechtsdokument sein — nicht nur ein klassischer Vertrag.
+1. WICHTIGSTE REGEL — PARAGRAPHEN ZUSAMMENHALTEN: Ein nummerierter Paragraph (§ 1, § 2, Artikel 1, Ziffer 1, etc.) mit allen seinen Unterpunkten (1.1, 1.2, (a), (b), (c), etc.) ist IMMER EINE EINZIGE Klausel. Trenne Unterpunkte NIEMALS in eigene Klauseln ab. Beispiel: § 8 mit Unterpunkten 8.1 bis 8.11 = EINE Klausel "§ 8".
+2. Zusammengehörige Absätze, Aufzählungen und Unterabschnitte eines Paragraphen = EINE Klausel.
+3. Kapitel-Überschriften (z.B. "A. Allgemeines", "B. Arbeitnehmerüberlassung", "I. Einleitung") die nur aus einer kurzen Überschrift ohne eigenen Inhalt bestehen, werden dem NÄCHSTEN Paragraphen zugeordnet — NICHT als eigene Klausel.
+4. Gebührentabellen/Konditionenübersichten = EINE Klausel "Konditionen" oder "Gebühren"
+5. Reine Kontaktdaten/Adressen/Impressum = EINE Klausel "Kontaktdaten" oder "Firmendaten"
+6. Ignoriere leere oder sinnlose Fragmente (Seitenzahlen, Dokumenten-IDs, Firmen-Footer, Dokumenttitel mit Versionsnummern)
+7. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
+8. Alle Blöcke müssen erfasst werden — überspringe keine.
+9. Das Dokument kann ein beliebiges Rechtsdokument sein — Verträge, AGB, NDA, Datenschutzhinweise, Satzungen, etc. Passe deine Erkennung an den jeweiligen Dokumenttyp an.
+10. NUMMERIERUNG: Behalte die Original-Nummerierung des Dokuments EXAKT bei (z.B. "§ 1", "§ 2", "Artikel 3", "1.", "2.", "A.", "B." etc.). Falls im Originaltext KEINE Nummerierung vorhanden ist, vergib eine konsistente Nummerierung: "Abschnitt 1", "Abschnitt 2", etc.
+11. TITEL: Jede Klausel MUSS einen kurzen, aussagekräftigen Titel haben. Verwende die Original-Überschrift aus dem Dokument (z.B. "Geltungsbereich", "Haftung"). Falls keine existiert, erstelle einen passenden Titel.
+
+WICHTIG: Behalte die Block-IDs für Traceability!
 
 Antworte NUR mit einem JSON-Array:
 [
   {
-    "title": "Kurzer Titel",
-    "text": "Vollständiger Text",
+    "title": "Kurzer Titel der Klausel",
+    "text": "Vollständiger Text der Klausel",
     "type": "paragraph|article|section|header|condition",
-    "sourceBlockIds": ["block_1"],
-    "number": "§ 1" oder null,
+    "sourceBlockIds": ["block_1", "block_2"],
+    "number": "§ 1" oder "1." oder null,
     "confidence": 0.0-1.0
   }
 ]`;
@@ -1719,7 +1738,7 @@ Antworte NUR mit einem JSON-Array:
         temperature: 0.15,
         max_tokens: 16000,
         response_format: { type: 'json_object' }
-      }, { timeout: 60000 });
+      }, { timeout: 120000 }); // 120s Timeout (60s war zu knapp für große Batches)
 
       const content = response.choices[0].message.content;
       const parsed = JSON.parse(content);
