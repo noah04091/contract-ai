@@ -435,7 +435,30 @@ router.get("/clause-text/:contractId/:clauseId", async (req, res) => {
       return res.status(404).json({ error: "Keine Analyse gefunden" });
     }
 
-    const clause = v2Result.clauses?.find((c) => c.id === clauseId);
+    let clause = v2Result.clauses?.find((c) => c.id === clauseId);
+
+    // Fallback: if clauseId doesn't match, try matching by title from query param
+    if (!clause && req.query.title) {
+      const searchTitle = req.query.title.toLowerCase();
+      clause = v2Result.clauses?.find((c) => {
+        const ct = (c.title || "").toLowerCase();
+        const sn = (c.sectionNumber || "").toLowerCase();
+        // Match by section number (e.g. "§ 7") or title substring
+        return ct.includes(searchTitle) || searchTitle.includes(ct)
+          || (sn && searchTitle.includes(sn));
+      });
+    }
+
+    // Fallback 2: extract section number from clauseId (e.g. "clause_7" → look for § 7)
+    if (!clause && clauseId.startsWith("clause_")) {
+      const num = clauseId.replace("clause_", "");
+      clause = v2Result.clauses?.find((c) =>
+        (c.sectionNumber || "").includes(num) ||
+        (c.title || "").includes(`§ ${num}`) ||
+        (c.title || "").includes(`§${num}`)
+      );
+    }
+
     if (!clause) {
       return res.status(404).json({ error: "Klausel nicht gefunden" });
     }
@@ -1241,7 +1264,7 @@ router.patch("/legal-alerts/:alertId", async (req, res) => {
     const db = await database.connect();
     const { status } = req.body;
 
-    if (!["read", "dismissed", "resolved"].includes(status)) {
+    if (!["unread", "read", "dismissed", "resolved"].includes(status)) {
       return res.status(400).json({ error: "Ungültiger Status" });
     }
 

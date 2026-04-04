@@ -239,7 +239,8 @@ const ClauseImpactNode: React.FC<{
     if (!contractId) return;
     setClauseTextLoading(true);
     try {
-      const res = await fetch(`/api/legal-pulse-v2/clause-text/${contractId}/${clauseImpact.clauseId}`, {
+      const titleParam = encodeURIComponent(clauseImpact.clauseTitle || '');
+      const res = await fetch(`/api/legal-pulse-v2/clause-text/${contractId}/${clauseImpact.clauseId}?title=${titleParam}`, {
         credentials: 'include',
       });
       if (res.ok) {

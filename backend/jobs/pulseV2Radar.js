@@ -704,8 +704,8 @@ AUSGABE-FELDER:
 - severity: critical (Vertrag unwirksam/illegal), high (Klausel muss angepasst werden), medium (Prüfung empfohlen), low (informativ)
 - impactDirection: "negative" (Risiko), "positive" (Chance/Vorteil), "neutral" (informativ)
 - recommendation: Konkreter nächster Schritt mit Bezug auf die spezifische Klausel. NICHT "prüfen und gegebenenfalls anpassen" sondern z.B. "In §15 die Datenweitergabe auf namentlich benannte Empfänger beschränken" oder "Kündigungsfrist in §8 von 3 auf 1 Monat korrigieren"
-- affectedClauseIds: Klausel-IDs aus der Liste des Vertrags
-- clauseImpacts: Für JEDE betroffene Klausel: impact (was genau das Problem ist), suggestedChange (konkreter Formulierungsvorschlag)
+- affectedClauseIds: EXAKTE Klausel-IDs im Format "clause_N" wie sie in eckigen Klammern [clause_N] in der Klauselliste des Vertrags stehen. NIEMALS Paragraphennummern wie "§7" verwenden — immer das ID-Format "clause_1", "clause_2" etc.
+- clauseImpacts: Für JEDE betroffene Klausel: clauseId MUSS exakt das Format "clause_N" haben (wie in der Klauselliste), clauseTitle ist der Klauseltitel mit §-Nummer, impact (was genau das Problem ist), suggestedChange (konkreter Formulierungsvorschlag)
 - Wenn NICHT betroffen: affected=false, confidence=0, plainSummary="", businessImpact="", affectedClauseIds=[], clauseImpacts=[]
 
 STATUS-KONTEXT:
