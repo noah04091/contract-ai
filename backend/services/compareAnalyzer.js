@@ -3687,6 +3687,15 @@ function applyBenchmarkScoreAdjustment(result, benchmarks) {
         });
 
       result.overallRecommendation.reasoning = `Vertrag ${benchmarkWinner} hat deutlich bessere Marktkonditionen (${winReasons.join(', ')}). ${result.overallRecommendation.reasoning || ''}`.trim();
+
+      // Also fix summary/verdict to not contradict the recommendation
+      const loserNum = benchmarkWinner === 1 ? 2 : 1;
+      if (result.summary?.verdict) {
+        // Replace "Vertrag X ist besser" if it names the wrong contract
+        result.summary.verdict = result.summary.verdict
+          .replace(new RegExp(`Vertrag ${loserNum} ist (klar )?besser`, 'gi'), `Vertrag ${benchmarkWinner} ist besser`)
+          .replace(new RegExp(`Vertrag ${loserNum} ist insgesamt`, 'gi'), `Vertrag ${benchmarkWinner} ist insgesamt`);
+      }
     }
   } else {
     // Score already aligns with benchmark — reinforce the gap
@@ -5279,6 +5288,13 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
 
     // V3.1: Deterministic post-dedup — catch duplicates GPT missed
     finalDiffs = deduplicateByContent(finalDiffs);
+
+    // V3.1: Hard cap — absolute maximum diffs the user sees
+    // More than 10 overwhelms the user, quality matters more than quantity
+    if (finalDiffs.length > 10) {
+      console.log(`🔍 Hard-Cap: ${finalDiffs.length} → 10 (überzählige niedrig-priorisierte entfernt)`);
+      finalDiffs = finalDiffs.slice(0, 10);
+    }
 
     // Set final differences
     synthesisResult.differences = finalDiffs;
