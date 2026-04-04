@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { PulseV2LegalAlert } from '../../types/pulseV2';
 import { ImpactGraph } from './ImpactGraph';
 
@@ -54,6 +54,18 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
 export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onRestore, onNavigate }) => {
   const [showDismissed, setShowDismissed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showInfo]);
 
   const active = alerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved');
   const dismissed = alerts.filter(a => a.status === 'dismissed');
@@ -83,7 +95,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
             Legal Radar
           </span>
           {/* Info icon */}
-          <div style={{ position: 'relative', display: 'inline-block' }}>
+          <div ref={infoRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button
               onClick={() => setShowInfo(!showInfo)}
               style={{
@@ -249,14 +261,25 @@ const LawGroup: React.FC<{
 }> = ({ group, onDismiss, onRestore, onNavigate }) => {
   const [expanded, setExpanded] = useState(false);
   const [confirmDismiss, setConfirmDismiss] = useState<string | null>(null);
+  const dismissRef = useRef<HTMLDivElement>(null);
   const sevColor = group.hasPositive ? '#059669' : (SEVERITY_COLORS[group.highestSeverity] || '#6b7280');
+
+  useEffect(() => {
+    if (!confirmDismiss) return;
+    const handler = (e: MouseEvent) => {
+      if (dismissRef.current && !dismissRef.current.contains(e.target as Node)) {
+        setConfirmDismiss(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [confirmDismiss]);
   const statusConf = group.lawStatus ? LAW_STATUS_LABELS[group.lawStatus] : null;
 
   return (
     <div style={{
       border: `1px solid ${sevColor}22`,
       borderRadius: 10,
-      overflow: 'hidden',
       marginBottom: 12,
     }}>
       {/* Group header */}
@@ -265,6 +288,7 @@ const LawGroup: React.FC<{
         style={{
           padding: '14px 16px',
           background: group.hasPositive ? '#f0fdf4' : '#fafafa',
+          borderRadius: expanded ? '10px 10px 0 0' : 10,
           cursor: 'pointer',
         }}
       >
@@ -345,7 +369,7 @@ const LawGroup: React.FC<{
 
                   {/* Confirmation popup */}
                   {confirmDismiss === alert._id && (
-                    <div style={{
+                    <div ref={dismissRef} style={{
                       position: 'absolute', top: 40, right: 20,
                       width: 260, padding: '12px 14px',
                       background: '#fff', border: '1px solid #e5e7eb',
