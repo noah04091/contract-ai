@@ -13,6 +13,21 @@ import styles from '../../styles/LegalLens.module.css';
  * - Erkennt §-Paragraphen und Aufzählungen
  * - Begrenzt auf max. 3 Absätze für Vorschau
  */
+/**
+ * Erkennt ob eine Zeile ein Unterpunkt ist (1.1, (a), (b), etc.)
+ * und gibt die Einrückungsstufe zurück (0 = kein Unterpunkt)
+ */
+const getIndentLevel = (line: string): number => {
+  const trimmed = line.trim();
+  // Unterpunkte: 1.1, 2.3, 8.11, etc.
+  if (/^\d+\.\d+/.test(trimmed)) return 1;
+  // Aufzählungen: (a), (b), (1), (2), (i), (ii)
+  if (/^\([a-z]+\)/.test(trimmed) || /^\(\d+\)/.test(trimmed)) return 2;
+  // Spiegelstrich-Aufzählung
+  if (/^[-–—•]/.test(trimmed)) return 1;
+  return 0;
+};
+
 const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactNode => {
   if (!text) return null;
 
@@ -20,15 +35,15 @@ const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactN
   let formatted = text.replace(/\s+/g, ' ').trim();
 
   // Füge Zeilenumbrüche ein bei:
-  // 1. Satzende gefolgt von Großbuchstabe (aber nicht bei Abkürzungen)
-  formatted = formatted.replace(/([.!?])\s+([A-ZÄÖÜ])/g, '$1\n$2');
+  // 1. Vor Unterpunkt-Nummern: 1.1, 2.3, 8.11, etc.
+  formatted = formatted.replace(/\s+(\d+\.\d+\s)/g, '\n$1');
 
   // 2. Vor §-Zeichen oder "Art." / "Artikel"
   formatted = formatted.replace(/\s+(§\s*\d)/g, '\n$1');
   formatted = formatted.replace(/\s+(Art\.\s*\d)/g, '\n$1');
 
   // 3. Bei Aufzählungen (a), (b), (1), (2), etc.
-  formatted = formatted.replace(/\s+(\([a-z]\)|\(\d+\)|\d+\.)\s+/g, '\n$1 ');
+  formatted = formatted.replace(/\s+(\([a-z]\)|\(\d+\))\s+/g, '\n$1 ');
 
   // 4. Bei Bindestrichen am Zeilenanfang (Aufzählung)
   formatted = formatted.replace(/\s+-\s+([A-ZÄÖÜ])/g, '\n- $1');
@@ -42,12 +57,19 @@ const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactN
 
   return (
     <>
-      {displayParagraphs.map((paragraph, index) => (
-        <span key={index} className={styles.clauseParagraph}>
-          {paragraph.trim()}
-          {index < displayParagraphs.length - 1 && <br />}
-        </span>
-      ))}
+      {displayParagraphs.map((paragraph, index) => {
+        const indent = getIndentLevel(paragraph);
+        return (
+          <span
+            key={index}
+            className={`${styles.clauseParagraph} ${indent > 0 ? styles.clauseSubPoint : ''}`}
+            style={indent > 0 ? { paddingLeft: `${indent * 16}px` } : undefined}
+          >
+            {paragraph.trim()}
+            {index < displayParagraphs.length - 1 && <br />}
+          </span>
+        );
+      })}
       {hasMore && <span className={styles.clauseMoreIndicator}>...</span>}
     </>
   );
@@ -313,10 +335,14 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 className={`${styles.clauseItem} ${styles.nonAnalyzable}`}
               >
                 <div className={styles.clauseHeader}>
-                  <span className={styles.clauseNumber}>
-                    {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
-                    {clause.title && ` - ${clause.title}`}
-                  </span>
+                  <div className={styles.clauseNumberBlock}>
+                    <span className={styles.clauseNumber}>
+                      {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
+                    </span>
+                    {clause.title && (
+                      <span className={styles.clauseTitle}>{clause.title}</span>
+                    )}
+                  </div>
                   <span className={`${styles.clauseRisk} ${styles.none}`}>
                     {clause.nonAnalyzableReason && NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
                       ? NON_ANALYZABLE_LABELS[clause.nonAnalyzableReason]
@@ -344,10 +370,14 @@ const ClauseList: React.FC<ClauseListProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && onSelectClause(clause)}
             >
               <div className={styles.clauseHeader}>
-                <span className={styles.clauseNumber}>
-                  {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
-                  {clause.title && ` - ${clause.title}`}
-                </span>
+                <div className={styles.clauseNumberBlock}>
+                  <span className={styles.clauseNumber}>
+                    {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
+                  </span>
+                  {clause.title && (
+                    <span className={styles.clauseTitle}>{clause.title}</span>
+                  )}
+                </div>
                 <span className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}>
                   {getRiskEmoji(effectiveRiskLevel)} {RISK_LABELS[effectiveRiskLevel]}
                 </span>

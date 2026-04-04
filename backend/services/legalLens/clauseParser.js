@@ -1459,17 +1459,17 @@ TEXT-BLÖCKE (mit IDs):
 ${batchBlocks.map(b => `[${b.id}]\n${b.text}`).join('\n\n---\n\n')}
 
 REGELN:
-1. Jede Klausel muss einen abgeschlossenen rechtlichen Gedanken enthalten
-2. Zusammengehörige Absätze (z.B. Aufzählungen, Unterabschnitte eines §) = EINE Klausel
-3. Kurze eigenständige Sätze können einzelne Klauseln sein, wenn sie rechtlich relevant sind
+1. WICHTIGSTE REGEL — PARAGRAPHEN ZUSAMMENHALTEN: Ein nummerierter Paragraph (§ 1, § 2, Artikel 1, Ziffer 1, etc.) mit allen seinen Unterpunkten (1.1, 1.2, (a), (b), (c), etc.) ist IMMER EINE EINZIGE Klausel. Trenne Unterpunkte NIEMALS in eigene Klauseln ab. Beispiel: § 8 mit Unterpunkten 8.1 bis 8.11 = EINE Klausel "§ 8".
+2. Zusammengehörige Absätze, Aufzählungen und Unterabschnitte eines Paragraphen = EINE Klausel.
+3. Kapitel-Überschriften (z.B. "A. Allgemeines", "B. Arbeitnehmerüberlassung", "I. Einleitung") die nur aus einer kurzen Überschrift ohne eigenen Inhalt bestehen, werden dem NÄCHSTEN Paragraphen zugeordnet — NICHT als eigene Klausel.
 4. Gebührentabellen/Konditionenübersichten = EINE Klausel "Konditionen" oder "Gebühren"
 5. Reine Kontaktdaten/Adressen/Impressum = EINE Klausel "Kontaktdaten" oder "Firmendaten"
-6. Ignoriere leere oder sinnlose Fragmente
+6. Ignoriere leere oder sinnlose Fragmente (Seitenzahlen, Dokumenten-IDs, Firmen-Footer)
 7. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
-8. Alle Blöcke müssen erfasst werden - überspringe keine.
-9. Das Dokument kann ein beliebiges Rechtsdokument sein — nicht nur ein klassischer Vertrag.
-10. NUMMERIERUNG: Behalte die Original-Nummerierung des Dokuments EXAKT bei (z.B. "§ 1", "§ 2", "Artikel 3", "1.1", "1.2", "A.", "B." etc.). Falls im Originaltext KEINE Nummerierung vorhanden ist, vergib eine konsistente, fortlaufende Nummerierung: "Abschnitt 1", "Abschnitt 2", etc. Mische NIEMALS verschiedene Formate — entweder alle mit Original-Nummern oder alle mit "Abschnitt X".
-11. TITEL: Jede Klausel MUSS einen kurzen, aussagekräftigen Titel haben. Verwende die Original-Überschrift aus dem Dokument falls vorhanden (z.B. "Geltungsbereich", "Haftung"). Falls keine Überschrift existiert, erstelle einen passenden Titel basierend auf dem Inhalt.
+8. Alle Blöcke müssen erfasst werden — überspringe keine.
+9. Das Dokument kann ein beliebiges Rechtsdokument sein — Verträge, AGB, NDA, Datenschutzhinweise, Satzungen, etc. Passe deine Erkennung an den jeweiligen Dokumenttyp an.
+10. NUMMERIERUNG: Behalte die Original-Nummerierung des Dokuments EXAKT bei (z.B. "§ 1", "§ 2", "Artikel 3", "1.", "2.", "A.", "B." etc.). Falls im Originaltext KEINE Nummerierung vorhanden ist, vergib eine konsistente Nummerierung: "Abschnitt 1", "Abschnitt 2", etc.
+11. TITEL: Jede Klausel MUSS einen kurzen, aussagekräftigen Titel haben. Verwende die Original-Überschrift aus dem Dokument (z.B. "Geltungsbereich", "Haftung"). Falls keine existiert, erstelle einen passenden Titel.
 
 WICHTIG: Behalte die Block-IDs für Traceability!
 
