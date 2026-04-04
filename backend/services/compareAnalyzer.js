@@ -664,6 +664,7 @@ Antworte NUR mit validem JSON:
 
 WICHTIG: "sections" Array MUSS exakt ${sections.length} Einträge haben — einen für jeden vorgegebenen Abschnitt.
 WICHTIG für keyValues: Keys IMMER auf Deutsch als lesbare Begriffe. Values IMMER mit Zahl UND Einheit.
+FORMULARFELDER: Falls ein Abschnitt "Ausgefüllte Vertragskonditionen" am Textende steht, ordne dessen Werte (z.B. Selbstbehalt, Flatrate-Gebühr, Ankauflimit) als keyValues den PASSENDEN Fachklauseln zu (liability, payment, termination etc.) — NICHT als eigene "other"-Klausel.
 Null für fehlende Infos. NICHTS erfinden.`
   };
 }
@@ -787,6 +788,12 @@ SPEZIELLE EXTRAKTION für Konditionenblätter, Preistabellen, Gebührentabellen,
 - Fasse tabellarische Werte NICHT zusammen — jeder Zahlenwert bekommt seinen eigenen Key
 - Beispiel: Wenn ein Konditionenblatt "Flatrate-Gebühr: 1,95%, Ankauflimit: EUR 150.000, Selbstbehalt: EUR 5.000" enthält, dann müssen ALLE drei als separate keyValues erscheinen
 - Dies ist die WICHTIGSTE Extraktion — fehlende Zahlenwerte machen die gesamte Analyse wertlos
+
+FORMULARFELDER: Falls am Textende ein Abschnitt "Ausgefüllte Vertragskonditionen" steht:
+- Diese Werte stammen aus ausgefüllten PDF-Formularfeldern und enthalten die KONKRETEN Vertragswerte
+- Ordne JEDEN Formularfeld-Wert der PASSENDEN Klausel zu (z.B. Selbstbehalt → liability/Delkredere, Flatrate-Gebühr → payment/Kaufpreis, Ankauflimit → payment/Kauflimits, Kündigungsfrist → termination)
+- Erstelle KEINE separate Klausel nur für Formularfelder — die Werte MÜSSEN in die keyValues der jeweiligen Fachklausel integriert werden
+- Wenn eine Klausel im Vertragstext existiert (z.B. § 9 Delkrederehaftung) aber der konkrete Betrag nur im Formularfeld steht → trage den Formularfeld-Wert als keyValue in diese Klausel ein
 
 Null für fehlende Infos. NICHTS erfinden.`
   };

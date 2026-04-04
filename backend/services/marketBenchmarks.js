@@ -401,10 +401,24 @@ function extractValuesForMetric(metric, clauses) {
         }
 
         if (keyHasPrimary || keyHasLabel) {
-          const num = extractNumberFromText(String(value));
-          if (num !== null && isPlausibleValue(num, metric)) {
-            // V3.1: Cross-metric contamination check — reject if key contains
-            // a DIFFERENT metric's primary keyword (e.g., "Inkasso" key for Flatrate metric)
+          let num = extractNumberFromText(String(value));
+          if (num !== null) {
+            // V3.2: Unit conflict detection — "2 Wochen" for a "Monate" metric → convert
+            const conflict = detectUnitConflict(String(value), metric.unit);
+            if (conflict) {
+              if (conflict.factor !== null) {
+                const original = num;
+                num = Math.round(num * conflict.factor * 100) / 100;
+                console.log(`📊 Benchmark: Einheit konvertiert: ${original} ${conflict.detected} → ${num} ${metric.unit} für "${metric.label}"`);
+              } else {
+                console.log(`📊 Benchmark: Inkompatible Einheit: "${value}" (${conflict.detected}) für ${metric.label} (${metric.unit}) — übersprungen`);
+                continue;
+              }
+            }
+
+            if (!isPlausibleValue(num, metric)) continue;
+
+            // V3.1: Cross-metric contamination check
             const otherMetricPrimaries = ['flatrate', 'inkasso', 'selbstbehalt', 'ankauflimit',
               'sicherungseinbehalt', 'kündigungsfrist', 'limitprüfung', 'einrichtung', 'mindestgebühr'];
             const contaminated = otherMetricPrimaries.some(other =>
@@ -476,6 +490,35 @@ function isPlausibleValue(value, metric) {
   }
 
   return true;
+}
+
+/**
+ * Detects if a value text contains a different unit than the metric expects,
+ * and returns a conversion factor. E.g., "2 Wochen" for a "Monate" metric → factor 1/4.33.
+ * Returns null if no conflict, or { detected, factor } if mismatch found.
+ * factor=null means incompatible (e.g., % vs EUR).
+ */
+function detectUnitConflict(valueText, metricUnit) {
+  const text = String(valueText).toLowerCase();
+  const base = metricUnit.includes('EUR') ? 'EUR' : metricUnit.includes('%') ? '%' : metricUnit;
+
+  if (base === 'Monate') {
+    if (/\bwochen?\b/.test(text)) return { detected: 'Wochen', factor: 1 / 4.33 };
+    if (/\b(?:tag|tage|tagen)\b/.test(text)) return { detected: 'Tage', factor: 1 / 30 };
+    if (/\b(?:jahr|jahre|jahren)\b/.test(text)) return { detected: 'Jahre', factor: 12 };
+  }
+  if (base === 'Wochen') {
+    if (/\b(?:monat|monate|monaten)\b/.test(text)) return { detected: 'Monate', factor: 4.33 };
+    if (/\b(?:tag|tage|tagen)\b/.test(text)) return { detected: 'Tage', factor: 1 / 7 };
+  }
+  if (base === 'Tage') {
+    if (/\bwochen?\b/.test(text)) return { detected: 'Wochen', factor: 7 };
+    if (/\b(?:monat|monate|monaten)\b/.test(text)) return { detected: 'Monate', factor: 30 };
+  }
+  if (base === '%' && /\beur\b|€/.test(text)) return { detected: 'EUR', factor: null };
+  if (base === 'EUR' && /%/.test(text) && !/p\.\s*a\./.test(text)) return { detected: '%', factor: null };
+
+  return null; // No conflict
 }
 
 /**

@@ -36,7 +36,7 @@ async function extractTextFromBuffer(buffer, mimetype) {
     try {
       const formFieldText = await extractPdfFormFields(buffer);
       if (formFieldText) {
-        text = text + '\n\n--- Formularfelder ---\n' + formFieldText;
+        text = text + '\n\n--- Ausgefüllte Vertragskonditionen (aus Formularfeldern) ---\nDie folgenden Werte wurden aus den ausgefüllten Formularfeldern dieses Dokuments extrahiert.\nSie ergänzen die oben genannten Paragraphen und enthalten die konkreten Vertragswerte:\n' + formFieldText;
         console.log(`📄 PDF-Formular: ${formFieldText.split('\n').length} Felder extrahiert (${formFieldText.length} Zeichen)`);
       }
     } catch (e) {
