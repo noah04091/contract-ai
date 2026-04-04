@@ -455,15 +455,34 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
             <div className={styles.syncNotice}>
               <AlertCircle size={16} />
               <p>
-                <strong>Hinweis:</strong> Outlook aktualisiert abonnierte Kalender nur alle paar Stunden automatisch.
-                Neue Ereignisse erscheinen daher nicht sofort. Sie können in Outlook manuell aktualisieren:
-                Rechtsklick auf den Kalender → "Aktualisieren".
+                <strong>Gut zu wissen:</strong> Das Kalender-Abo synchronisiert automatisch alle paar Stunden,
+                zeigt in Outlook aber nur <strong>zukünftige</strong> Termine an. Für eine vollständige Übersicht
+                inkl. vergangener Ereignisse nutzen Sie den einmaligen Import (siehe unten).
               </p>
             </div>
 
             <div className={styles.alternativeMethod}>
-              <h4>Alternative: Desktop Outlook</h4>
-              <p>Für Outlook Desktop kopieren Sie diese URL:</p>
+              <h4>Einmaliger Import (inkl. vergangene Ereignisse)</h4>
+              <p>Laden Sie die Kalender-Datei herunter und öffnen Sie diese mit Doppelklick in Outlook.
+                 So werden alle Ereignisse importiert — auch vergangene.</p>
+              <motion.button
+                className={styles.primaryBtn}
+                onClick={() => openLink(syncLinks.download)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ background: 'linear-gradient(135deg, #059669, #047857)' }}
+              >
+                <Calendar size={18} />
+                <span>ICS-Datei herunterladen</span>
+              </motion.button>
+              <p className={styles.hint}>
+                Tipp: Doppelklick auf die heruntergeladene .ics-Datei — Outlook importiert sie automatisch.
+              </p>
+            </div>
+
+            <div className={styles.alternativeMethod}>
+              <h4>Alternative: Desktop Outlook (Abo per URL)</h4>
+              <p>Für ein Kalender-Abo in Outlook Desktop kopieren Sie diese URL:</p>
               <div className={styles.urlBox}>
                 <code>{syncLinks.download}</code>
                 <button
