@@ -70,6 +70,14 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   const active = alerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved');
   const dismissed = alerts.filter(a => a.status === 'dismissed');
   const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
+
+  // Auto-switch back to active view when no dismissed alerts remain
+  useEffect(() => {
+    if (showDismissed && dismissed.length === 0) {
+      setShowDismissed(false);
+    }
+  }, [showDismissed, dismissed.length]);
+
   if (active.length === 0 && resolvedCount === 0 && dismissed.length === 0) return null;
 
   const criticalCount = active.filter(a => a.severity === 'critical' && a.impactDirection !== 'positive').length;
