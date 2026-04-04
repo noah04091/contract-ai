@@ -2974,6 +2974,18 @@
   .alternativesTabs { flex-wrap: wrap; }
   .reasoningStructured { gap: 8px; }
   .benchmarkCard, .adviceCard { flex-direction: column; }
+  /* Upload page */
+  .uploadPage { padding: 32px 16px; }
+  .uploadCard { padding: 24px; }
+  .dropZone { padding: 32px 16px; }
+  /* Clauses toolbar */
+  .clausesModeRow { gap: 6px; }
+  .clauseSearch { width: 140px; }
+  .clauseSearch:focus { width: 180px; }
+  /* Export options */
+  .exportOption { flex-wrap: wrap; }
+  .exportBtnActive, .exportBtn { width: 100%; justify-content: center; margin-top: 8px; }
+  .exportPanel { padding: 16px; }
 }
 
 @media (max-width: 480px) {
@@ -2985,6 +2997,24 @@
   .viewToggleBtn { flex: 1; }
   .customEditorActions { flex-wrap: wrap; }
   .acceptButton { width: 100%; justify-content: center; }
+  /* Upload page */
+  .uploadPage { padding: 24px 12px; }
+  .uploadCard { padding: 16px; }
+  .dropZone { padding: 24px 12px; }
+  .uploadHeroIcon { width: 56px; height: 56px; }
+  .uploadHeroIcon svg { width: 28px; height: 28px; }
+  .uploadFeaturePill { padding: 6px 12px; font-size: 12px; }
+  /* Tabs compact */
+  .tabButton { padding: 8px 10px; font-size: 11px; gap: 4px; }
+  /* Clauses toolbar stacked */
+  .clausesModeRow { flex-direction: column; align-items: stretch; }
+  .clauseSearchWrap { margin-right: 0; }
+  .clauseSearch { width: 100%; }
+  .clauseSearch:focus { width: 100%; }
+  /* Export full-width */
+  .exportOption { flex-direction: column; text-align: center; gap: 8px; }
+  .docxSelection { padding: 16px; }
+  .docxModeRow { flex-direction: column; gap: 8px; }
 }
 
 /* ═══════════════════════════════════════════════════════
