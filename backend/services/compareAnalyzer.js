@@ -3645,25 +3645,28 @@ function applyBenchmarkScoreAdjustment(result, benchmarks) {
   const s2 = result.scores.contract2;
   const currentWinner = s1.overall >= s2.overall ? 1 : 2;
 
-  // Calculate bonus: 3 points per win advantage, capped at 12
-  const bonus = Math.min(benchmarkAdvantage * 3, 12);
-
   if (benchmarkWinner !== currentWinner) {
-    // Score contradicts benchmark — this is the critical case
-    // Boost the benchmark winner and lower the benchmark loser
-    console.log(`📊 Benchmark-Score: WIDERSPRUCH — Score sagt V${currentWinner}, Benchmark sagt V${benchmarkWinner}. Korrigiere mit ±${bonus} Punkten.`);
-
+    // Score contradicts benchmark — MUST flip so user gets consistent signals
     const winnerScores = benchmarkWinner === 1 ? s1 : s2;
     const loserScores = benchmarkWinner === 1 ? s2 : s1;
 
-    winnerScores.overall = Math.min(92, winnerScores.overall + Math.ceil(bonus / 2));
-    loserScores.overall = Math.max(40, loserScores.overall - Math.floor(bonus / 2));
+    // Calculate how much we need to swing to put benchmark winner ahead by 6+ points
+    const currentGap = loserScores.overall - winnerScores.overall; // positive = wrong direction
+    const neededSwing = currentGap + 6; // ensure winner is 6pts ahead after adjustment
+    const winnerBonus = Math.min(Math.ceil(neededSwing / 2), 20); // cap individual adjustment at 20
+    const loserPenalty = Math.min(Math.floor(neededSwing / 2), 20);
+
+    console.log(`📊 Benchmark-Score: WIDERSPRUCH — Score sagt V${currentWinner}, Benchmark sagt V${benchmarkWinner}. Gap=${currentGap}, Swing=${neededSwing} (±${winnerBonus}/${loserPenalty}).`);
+
+    winnerScores.overall = Math.min(92, winnerScores.overall + winnerBonus);
+    loserScores.overall = Math.max(40, loserScores.overall - loserPenalty);
 
     // Adjust fairness/riskProtection (most financial-relevant sub-scores)
-    winnerScores.fairness = Math.min(92, winnerScores.fairness + bonus);
-    winnerScores.riskProtection = Math.min(92, winnerScores.riskProtection + Math.ceil(bonus / 2));
-    loserScores.fairness = Math.max(35, loserScores.fairness - bonus);
-    loserScores.riskProtection = Math.max(35, loserScores.riskProtection - Math.ceil(bonus / 2));
+    const subBonus = Math.min(benchmarkAdvantage * 4, 16);
+    winnerScores.fairness = Math.min(92, winnerScores.fairness + subBonus);
+    winnerScores.riskProtection = Math.min(92, winnerScores.riskProtection + Math.ceil(subBonus / 2));
+    loserScores.fairness = Math.max(35, loserScores.fairness - subBonus);
+    loserScores.riskProtection = Math.max(35, loserScores.riskProtection - Math.ceil(subBonus / 2));
 
     // Flip recommendation if needed + update reasoning text
     if (result.overallRecommendation?.recommended !== benchmarkWinner) {
@@ -3698,11 +3701,12 @@ function applyBenchmarkScoreAdjustment(result, benchmarks) {
       }
     }
   } else {
-    // Score already aligns with benchmark — reinforce the gap
-    console.log(`📊 Benchmark-Score: Score und Benchmark stimmen überein (V${benchmarkWinner}). Verstärke um ${Math.ceil(bonus / 2)} Punkte.`);
+    // Score already aligns with benchmark — reinforce with fairness boost
+    const reinforceBonus = Math.min(benchmarkAdvantage * 3, 10);
+    console.log(`📊 Benchmark-Score: Score und Benchmark stimmen überein (V${benchmarkWinner}). Verstärke Fairness um ${reinforceBonus}.`);
 
     const winnerScores = benchmarkWinner === 1 ? s1 : s2;
-    winnerScores.fairness = Math.min(92, winnerScores.fairness + Math.ceil(bonus / 2));
+    winnerScores.fairness = Math.min(92, winnerScores.fairness + reinforceBonus);
   }
 
   // Sync with contract analysis
