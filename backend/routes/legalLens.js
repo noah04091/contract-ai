@@ -2903,14 +2903,14 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     const totalTextLength = rawBlocks.reduce((sum, b) => sum + (b.text?.length || 0), 0);
     const avgBlockLength = rawBlocks.length > 0 ? totalTextLength / rawBlocks.length : 500;
 
-    // Max 15 Blöcke pro Batch — verhindert GPT-Timeouts bei großen Dokumenten
-    // Bei avg 800-1000 chars/block = ~12.000-15.000 chars → sicher unter Token-Limit
+    // Max 10 Blöcke pro Batch — GPT-4o-mini braucht bei AGB ~60-90s für 15 Blöcke
+    // 10 Blöcke = ~8.000-10.000 chars → GPT antwortet in ~30-45s
     const MAX_CHARS_PER_BATCH = 200000;
-    let maxBlocksPerCall = Math.max(5, Math.min(15, Math.floor(MAX_CHARS_PER_BATCH / avgBlockLength)));
+    let maxBlocksPerCall = Math.max(3, Math.min(10, Math.floor(MAX_CHARS_PER_BATCH / avgBlockLength)));
 
     // Für sehr lange Verträge, noch kleinere Batches
     if (rawBlocks.length > 100) {
-      maxBlocksPerCall = Math.min(maxBlocksPerCall, 12);
+      maxBlocksPerCall = Math.min(maxBlocksPerCall, 8);
     }
     if (rawBlocks.length > 200) {
       maxBlocksPerCall = Math.min(maxBlocksPerCall, 10);
@@ -3008,17 +3008,27 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         progress
       });
 
+      // SSE-Keepalive: Alle 15s ein Ping senden damit Render/Browser die Verbindung nicht killt
+      const keepaliveInterval = setInterval(() => {
+        sendEvent('status', {
+          message: `Analysiere Block ${batchIndex}/${batches.length}... (GPT arbeitet)`,
+          progress
+        });
+      }, 15000);
+
       try {
         // GPT-Segmentierung mit Retry und exponentiellem Backoff
         const batchClauses = await retryWithBackoff(
           () => clauseParser.gptSegmentClausesBatch(batch, contract.name || ''),
           2, 1000
         );
+        clearInterval(keepaliveInterval);
 
         const validClauses = processBatchClauses(batchClauses);
         deduplicateAndStream(validClauses, batchIndex);
 
       } catch (batchError) {
+        clearInterval(keepaliveInterval);
         console.error(`[Legal Lens] Batch ${batchIndex} fehlgeschlagen nach Retries:`, batchError.message);
         failedBatchCount++;
 
@@ -3029,12 +3039,22 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           const halves = [batch.slice(0, mid), batch.slice(mid)];
 
           for (let halfIdx = 0; halfIdx < halves.length; halfIdx++) {
+            // Keepalive auch für Split-Hälften
+            const halfKeepalive = setInterval(() => {
+              sendEvent('status', {
+                message: `Analysiere Block ${batchIndex}/${batches.length} (Teil ${halfIdx + 1}/2)...`,
+                progress
+              });
+            }, 15000);
+
             try {
               const halfClauses = await clauseParser.gptSegmentClausesBatch(halves[halfIdx], contract.name || '');
+              clearInterval(halfKeepalive);
               const validHalfClauses = processBatchClauses(halfClauses);
               deduplicateAndStream(validHalfClauses, batchIndex);
               console.log(`[Legal Lens] Split-Hälfte ${halfIdx + 1}/2 erfolgreich: ${validHalfClauses.length} Klauseln`);
             } catch (halfError) {
+              clearInterval(halfKeepalive);
               console.error(`[Legal Lens] Split-Hälfte ${halfIdx + 1}/2 fehlgeschlagen:`, halfError.message);
               sendEvent('warning', {
                 message: `Teil von Batch ${batchIndex} konnte nicht analysiert werden`
