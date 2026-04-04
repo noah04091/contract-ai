@@ -61,6 +61,32 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.duplicateBtnPrimary {
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--ov2-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.duplicateBtnPrimary:hover { opacity: 0.85; }
+
+.duplicateBtnSecondary {
+  padding: 8px 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid var(--ov2-gray-200);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ov2-gray-700);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.duplicateBtnSecondary:hover { background: var(--ov2-gray-50); }
+
 /* ── Page Layout ── */
 .pageContainer {
   max-width: 1200px;

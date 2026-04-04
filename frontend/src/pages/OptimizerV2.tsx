@@ -160,19 +160,11 @@ export default function OptimizerV2() {
                 </p>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                className={styles.analyzeButton}
-                onClick={handleDuplicateGoToResult}
-                style={{ flex: 1 }}
-              >
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button className={styles.duplicateBtnPrimary} onClick={handleDuplicateGoToResult}>
                 Zu den Ergebnissen
               </button>
-              <button
-                className={styles.backButton}
-                onClick={handleDuplicateNewAnalysis}
-                style={{ flex: 1, padding: '10px 16px', fontSize: '0.9rem' }}
-              >
+              <button className={styles.duplicateBtnSecondary} onClick={handleDuplicateNewAnalysis}>
                 Neue Analyse starten
               </button>
             </div>
