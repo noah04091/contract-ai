@@ -225,32 +225,53 @@
 
 @media (max-width: 768px) {
   .fieldOverlay {
-    border-width: 2px;
+    border-width: 1.5px;
+    overflow: hidden;
+    padding: 1px;
   }
 
   .fieldHeader {
-    font-size: 10px;
-    padding: 0.2rem 0.4rem;
+    font-size: 7px;
+    padding: 1px 2px;
+    gap: 2px;
+    box-shadow: none;
   }
 
   .fieldIcon {
-    width: 12px;
-    height: 12px;
+    width: 9px;
+    height: 9px;
+  }
+
+  .fieldLabel {
+    max-width: 30px;
+    font-size: 7px;
+    letter-spacing: 0;
   }
 
   .completedBadge {
-    width: 24px;
-    height: 24px;
+    width: 14px;
+    height: 14px;
+    top: 0;
+    right: 0;
+    border-width: 1px;
+    box-shadow: none;
   }
 
   .completedBadge svg {
-    width: 16px;
-    height: 16px;
+    width: 9px;
+    height: 9px;
   }
 
   .clickHint {
-    font-size: 9px;
-    padding: 0.2rem 0.4rem;
+    display: none;
+  }
+
+  .valueText {
+    font-size: 8px;
+    padding: 1px 2px;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
   }
 }
 
