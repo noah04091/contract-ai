@@ -82,7 +82,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
             <GraphNode
               icon={isPositive ? "&#9989;" : "&#128203;"}
               label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
-              title={alert.impactSummary || alert.plainSummary}
+              title={alert.impactSummary || alert.plainSummary || ''}
               color={isPositive ? '#059669' : '#6366f1'}
             />
             {/* Source link — only show if it's a real URL */}
