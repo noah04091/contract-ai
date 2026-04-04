@@ -731,6 +731,19 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             console.error('[PulseV2] Alert dismiss failed:', err);
           }
         }}
+        onRestore={async (alertId) => {
+          try {
+            await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'unread' }),
+            });
+            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
+          } catch (err) {
+            console.error('[PulseV2] Alert restore failed:', err);
+          }
+        }}
         onNavigate={(contractId) => onSelectContract(contractId)}
       />
 

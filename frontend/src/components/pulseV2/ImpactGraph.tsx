@@ -86,6 +86,28 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
               detail={alert.plainSummary ? alert.impactSummary : undefined}
               color={isPositive ? '#059669' : '#6366f1'}
             />
+            {/* Source link */}
+            {alert.lawSource && (
+              <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
+                <a
+                  href={alert.lawSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 11,
+                    color: '#6366f1',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+                >
+                  &#128279; Originalquelle anzeigen
+                </a>
+              </div>
+            )}
 
             {/* Step 2: What happens if you do nothing? */}
             {alert.businessImpact && (
@@ -117,7 +139,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
             {hasClauseImpacts && alert.clauseImpacts.map((ci, idx) => (
               <React.Fragment key={idx}>
                 <GraphConnector />
-                <ClauseImpactNode clauseImpact={ci} severity={alert.severity} alertId={alert._id} />
+                <ClauseImpactNode clauseImpact={ci} severity={alert.severity} alertId={alert._id} contractId={alert.contractId} />
               </React.Fragment>
             ))}
 
@@ -197,7 +219,8 @@ const ClauseImpactNode: React.FC<{
   clauseImpact: { clauseId: string; clauseTitle: string; impact: string; suggestedChange: string };
   severity: string;
   alertId: string;
-}> = ({ clauseImpact, severity, alertId }) => {
+  contractId?: string;
+}> = ({ clauseImpact, severity, alertId, contractId }) => {
   const [showFix, setShowFix] = useState(false);
   const [autoFix, setAutoFix] = useState<PulseV2AutoFixResult | null>(null);
   const [fixLoading, setFixLoading] = useState(false);
@@ -206,7 +229,27 @@ const ClauseImpactNode: React.FC<{
   const [copied, setCopied] = useState(false);
   const [applied, setApplied] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
+  const [showClauseText, setShowClauseText] = useState(false);
+  const [clauseText, setClauseText] = useState<string | null>(null);
+  const [clauseTextLoading, setClauseTextLoading] = useState(false);
   const sev = SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium;
+
+  const handleShowClause = useCallback(async () => {
+    if (clauseText !== null) { setShowClauseText(!showClauseText); return; }
+    if (!contractId) return;
+    setClauseTextLoading(true);
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/clause-text/${contractId}/${clauseImpact.clauseId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setClauseText(data.text || 'Kein Text verfügbar');
+        setShowClauseText(true);
+      }
+    } catch { /* silent */ }
+    finally { setClauseTextLoading(false); }
+  }, [contractId, clauseImpact.clauseId, clauseText, showClauseText]);
 
   const handleAutoFix = useCallback(async () => {
     setFixLoading(true);
@@ -296,6 +339,36 @@ const ClauseImpactNode: React.FC<{
           <div style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
             {clauseImpact.impact}
           </div>
+
+          {/* Show full clause text */}
+          {contractId && (
+            <button
+              onClick={handleShowClause}
+              disabled={clauseTextLoading}
+              style={{
+                marginTop: 6, padding: '3px 10px',
+                fontSize: 11, fontWeight: 500,
+                color: clauseTextLoading ? '#9ca3af' : '#6366f1',
+                background: 'transparent',
+                border: `1px solid ${clauseTextLoading ? '#d1d5db' : '#c7d2fe'}`,
+                borderRadius: 4, cursor: clauseTextLoading ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {clauseTextLoading ? 'Lade...' : showClauseText ? 'Klausel ausblenden' : 'Komplette Klausel anzeigen'}
+            </button>
+          )}
+          {showClauseText && clauseText && (
+            <div style={{
+              marginTop: 6, padding: '10px 12px',
+              background: '#f8fafc', borderRadius: 6,
+              border: '1px solid #e2e8f0',
+              fontSize: 12, color: '#334155',
+              lineHeight: 1.6, whiteSpace: 'pre-wrap',
+              maxHeight: 300, overflowY: 'auto',
+            }}>
+              {clauseText}
+            </div>
+          )}
 
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>

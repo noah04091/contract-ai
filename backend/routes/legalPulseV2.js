@@ -404,10 +404,51 @@ router.get("/legal-alerts", async (req, res) => {
       .limit(20)
       .toArray();
 
+    // Fix UTF-8 encoding in contract names (legacy data)
+    for (const a of alerts) {
+      if (a.contractName) a.contractName = fixUtf8Filename(a.contractName);
+    }
+
     res.json({ alerts });
   } catch (error) {
     console.error("[PulseV2] Legal alerts error:", error);
     res.status(500).json({ error: "Fehler beim Laden der Legal Alerts" });
+  }
+});
+
+// GET /clause-text/:contractId/:clauseId — Return full clause text for display
+router.get("/clause-text/:contractId/:clauseId", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contractId, clauseId } = req.params;
+
+    const v2Result = await LegalPulseV2Result.findOne({
+      contractId,
+      userId,
+      status: "completed",
+    })
+      .sort({ createdAt: -1 })
+      .select("clauses")
+      .lean();
+
+    if (!v2Result) {
+      return res.status(404).json({ error: "Keine Analyse gefunden" });
+    }
+
+    const clause = v2Result.clauses?.find((c) => c.id === clauseId);
+    if (!clause) {
+      return res.status(404).json({ error: "Klausel nicht gefunden" });
+    }
+
+    res.json({
+      clauseId,
+      title: clause.title || "",
+      sectionNumber: clause.sectionNumber || "",
+      text: clause.currentText || clause.originalText || "",
+    });
+  } catch (error) {
+    console.error("[PulseV2] Clause text error:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Klausel" });
   }
 });
 
