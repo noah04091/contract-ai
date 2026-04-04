@@ -158,13 +158,13 @@ function detectMissingClauses(clauses, structure) {
 
     // titleHit >= 1 → always strong (e.g. "§ 12 Haftung" is unambiguous)
     if (hits.titleHits >= 1 || hits.totalScore >= 3) {
-      completenessHits += 0.7;
+      completenessHits += 0.6;
       missingClauses.push({
         category: cat, categoryLabel: label, severity, foundInContent: true,
         recommendation: `Inhalte zu "${label}" sind im Vertrag vorhanden, aber nicht als eigenständige Klausel ausgewiesen.`
       });
     } else if (hits.totalScore >= 1) {
-      completenessHits += 0.4;
+      completenessHits += 0.2;
       missingClauses.push({
         category: cat, categoryLabel: label, severity, foundInContent: true,
         recommendation: `"${label}" wird im Vertrag nur am Rande erwähnt. Eine ausführliche Regelung wird empfohlen.`
@@ -179,7 +179,7 @@ function detectMissingClauses(clauses, structure) {
 
   const completenessScore = essentialCategories.length > 0
     ? Math.round((completenessHits / essentialCategories.length) * 100)
-    : 50;
+    : 30;
 
   return { missingClauses, completenessScore, essentialCount: essentialCategories.length };
 }
@@ -196,22 +196,23 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
   // Importance weights for overall score calculation
   const importanceWeights = { critical: 2.0, high: 1.5, medium: 1.0, low: 0.5 };
 
-  // Per-clause scores
+  // Per-clause scores (calibrated for full 0-100 spread)
   const perClause = clauses.map(clause => {
     const analysis = analysisMap.get(clause.id);
-    if (!analysis) return { clauseId: clause.id, score: 50, importanceLevel: CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'medium' };
+    if (!analysis) return { clauseId: clause.id, score: 30, importanceLevel: CATEGORY_IMPORTANCE_FLOOR[clause.category] || 'medium' };
 
-    let score = 50; // baseline
+    let score = 45; // baseline
 
-    // Strength bonus/penalty
-    const strengthScores = { strong: 30, adequate: 15, weak: -10, critical: -25 };
+    // Strength bonus/penalty (wider spread than before)
+    const strengthScores = { strong: 35, adequate: 15, weak: -15, critical: -35 };
     score += strengthScores[analysis.strength] || 0;
 
-    // Risk penalty (0-10 scale → 0-20 penalty)
-    score -= (analysis.riskLevel || 0) * 2;
+    // Risk penalty (exponential — high risks punish much harder)
+    const risk = Math.min(analysis.riskLevel || 0, 10);
+    score -= Math.round(Math.pow(risk / 10, 1.5) * 25);
 
-    // Concerns penalty
-    score -= Math.min((analysis.concerns?.length || 0) * 3, 15);
+    // Concerns penalty (increased weight)
+    score -= Math.min((analysis.concerns?.length || 0) * 4, 20);
 
     // Legal references bonus (well-researched clause)
     score += Math.min((analysis.legalReferences?.length || 0) * 2, 10);
@@ -231,7 +232,7 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
     weightedSum += pc.score * w;
     weightTotal += w;
   }
-  const avgScore = weightTotal > 0 ? weightedSum / weightTotal : 50;
+  const avgScore = weightTotal > 0 ? weightedSum / weightTotal : 30;
 
   // Risk score (inverse of average risk)
   const risks = clauseAnalyses.map(a => a.riskLevel || 0);
@@ -248,17 +249,17 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
   const total = clauseAnalyses.length || 1;
   const clarityScore = Math.round(
     (strengthCounts.strong / total * 100) +
-    (strengthCounts.adequate / total * 70) +
-    (strengthCounts.weak / total * 30) +
-    (strengthCounts.critical / total * 10)
+    (strengthCounts.adequate / total * 55) +
+    (strengthCounts.weak / total * 20) +
+    (strengthCounts.critical / total * 5)
   );
 
   // Completeness score + Missing Clause Detection
   const { missingClauses, completenessScore } = detectMissingClauses(clauses, structure);
 
-  // Market standard score (based on optimization needs)
+  // Market standard score (based on optimization needs — wider spread)
   const optimizable = optimizations.filter(o => o.needsOptimization).length;
-  const marketStandardScore = Math.round(100 - (optimizable / Math.max(clauses.length, 1) * 60));
+  const marketStandardScore = Math.round(100 - (optimizable / Math.max(clauses.length, 1) * 80));
 
   // ── NEW: Fairness score (based on power balance + market comparison) ──
   const powerBalanceScores = { balanced: 100, slightly_one_sided: 70, strongly_one_sided: 35, extremely_one_sided: 10 };
@@ -270,8 +271,8 @@ function runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, 
     const imp = importanceWeights[a.importanceLevel || 'medium'] || 1.0;
     const pbScore = powerBalanceScores[a.powerBalance] || 70;
     const mcScore = marketComparisonScores[a.marketComparison] || 80;
-    // Combine power balance (60%) and market comparison (40%)
-    const clauseFairness = pbScore * 0.6 + mcScore * 0.4;
+    // Combine power balance (70%) and market comparison (30%)
+    const clauseFairness = pbScore * 0.7 + mcScore * 0.3;
     fairnessWeightedSum += clauseFairness * imp;
     fairnessWeightTotal += imp;
   }
