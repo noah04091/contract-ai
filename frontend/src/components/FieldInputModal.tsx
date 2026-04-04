@@ -412,7 +412,7 @@ export default function FieldInputModal({
                   width: canvasWidth,
                   height: canvasHeight
                 }}
-                backgroundColor="#ffffff"
+                backgroundColor="rgba(0,0,0,0)"
                 penColor="#000000"
                 minWidth={minPenWidth}
                 maxWidth={maxPenWidth}

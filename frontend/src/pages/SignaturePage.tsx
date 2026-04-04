@@ -534,7 +534,7 @@ export default function SignaturePage() {
                   canvasProps={{
                     className: styles.signatureCanvas
                   }}
-                  backgroundColor="#ffffff"
+                  backgroundColor="rgba(0,0,0,0)"
                   penColor="#000000"
                   minWidth={1}
                   maxWidth={2.5}
