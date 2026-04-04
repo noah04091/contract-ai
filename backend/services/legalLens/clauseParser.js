@@ -1483,7 +1483,7 @@ Antworte NUR mit einem JSON-Array:
           temperature: 0.15, // Niedrig aber flexibel genug für verschiedene Dokumenttypen
           max_tokens: 16000, // ERHÖHT von 4000 - GPT-4o-mini unterstützt bis 16k
           response_format: { type: 'json_object' }
-        }, { timeout: 60000 });
+        }, { timeout: 120000 }); // 120s Timeout (60s war zu knapp für große Batches)
 
         const content = response.choices[0].message.content;
 

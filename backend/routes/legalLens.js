@@ -2903,17 +2903,17 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     const totalTextLength = rawBlocks.reduce((sum, b) => sum + (b.text?.length || 0), 0);
     const avgBlockLength = rawBlocks.length > 0 ? totalTextLength / rawBlocks.length : 500;
 
-    // Token-Limit: ~80k Tokens sicher, ~3.5 chars/token
-    // Max chars pro Batch: 80000 * 3.5 = 280000, aber mit Puffer: 200000
+    // Max 15 Blöcke pro Batch — verhindert GPT-Timeouts bei großen Dokumenten
+    // Bei avg 800-1000 chars/block = ~12.000-15.000 chars → sicher unter Token-Limit
     const MAX_CHARS_PER_BATCH = 200000;
-    let maxBlocksPerCall = Math.max(5, Math.min(30, Math.floor(MAX_CHARS_PER_BATCH / avgBlockLength)));
+    let maxBlocksPerCall = Math.max(5, Math.min(15, Math.floor(MAX_CHARS_PER_BATCH / avgBlockLength)));
 
-    // Für sehr lange Verträge, kleinere Batches
+    // Für sehr lange Verträge, noch kleinere Batches
     if (rawBlocks.length > 100) {
-      maxBlocksPerCall = Math.min(maxBlocksPerCall, 20);
+      maxBlocksPerCall = Math.min(maxBlocksPerCall, 12);
     }
     if (rawBlocks.length > 200) {
-      maxBlocksPerCall = Math.min(maxBlocksPerCall, 15);
+      maxBlocksPerCall = Math.min(maxBlocksPerCall, 10);
     }
 
     console.log(`📊 [Batch-Size] ${rawBlocks.length} Blöcke, avg ${Math.round(avgBlockLength)} chars/block → ${maxBlocksPerCall} Blöcke/Batch`);
