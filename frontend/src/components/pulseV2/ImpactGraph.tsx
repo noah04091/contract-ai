@@ -78,12 +78,11 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
       {expanded && (
         <div style={{ padding: '0 16px 16px', background: '#fff' }}>
           <div style={{ paddingTop: 16 }}>
-            {/* Step 1: What's changing? (plain language) */}
+            {/* Step 1: What's changing? — show impactSummary (technical detail) since plainSummary is already in LawGroup header + collapsed header */}
             <GraphNode
               icon={isPositive ? "&#9989;" : "&#128203;"}
               label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
-              title={alert.plainSummary || alert.impactSummary}
-              detail={alert.plainSummary ? alert.impactSummary : undefined}
+              title={alert.impactSummary || alert.plainSummary}
               color={isPositive ? '#059669' : '#6366f1'}
             />
             {/* Source link — only show if it's a real URL */}

@@ -21,6 +21,26 @@ interface AlertGroup {
 }
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+const URGENCY_ORDER: Record<string, number> = {
+  effective: 0,       // In Kraft — sofort handeln
+  court_decision: 1,  // Urteil — bereits entschieden
+  passed: 2,          // Verabschiedet — bald in Kraft
+  guideline: 3,       // Leitlinie — empfohlen
+  proposal: 4,        // Entwurf — vorbereiten
+  unknown: 5,
+};
+
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return 'heute';
+  if (diffDays === 1) return 'gestern';
+  if (diffDays < 7) return `vor ${diffDays} Tagen`;
+  if (diffDays < 30) return `vor ${Math.floor(diffDays / 7)} Woche${Math.floor(diffDays / 7) > 1 ? 'n' : ''}`;
+  return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
 function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
   const map = new Map<string, AlertGroup>();
@@ -46,9 +66,14 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
     if (alert.impactDirection === 'positive') group.hasPositive = true;
     if (!group.plainSummary && alert.plainSummary) group.plainSummary = alert.plainSummary;
   }
-  return Array.from(map.values()).sort(
-    (a, b) => (SEVERITY_ORDER[a.highestSeverity] || 3) - (SEVERITY_ORDER[b.highestSeverity] || 3)
-  );
+  return Array.from(map.values()).sort((a, b) => {
+    // Primary: lawStatus urgency (In Kraft > Urteil > Verabschiedet > ...)
+    const urgA = URGENCY_ORDER[a.lawStatus || 'unknown'] ?? 5;
+    const urgB = URGENCY_ORDER[b.lawStatus || 'unknown'] ?? 5;
+    if (urgA !== urgB) return urgA - urgB;
+    // Secondary: severity
+    return (SEVERITY_ORDER[a.highestSeverity] || 3) - (SEVERITY_ORDER[b.highestSeverity] || 3);
+  });
 }
 
 export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onRestore, onNavigate }) => {
@@ -323,6 +348,11 @@ const LawGroup: React.FC<{
           }}>
             {group.alerts.length} {group.alerts.length === 1 ? 'Vertrag' : 'Verträge'}
           </span>
+          {group.alerts[0]?.createdAt && (
+            <span style={{ fontSize: 10, color: '#9ca3af', flexShrink: 0 }}>
+              {formatRelativeDate(group.alerts[0].createdAt)}
+            </span>
+          )}
           <span style={{
             fontSize: 14, color: '#9ca3af',
             transform: expanded ? 'rotate(90deg)' : 'none',

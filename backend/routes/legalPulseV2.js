@@ -409,6 +409,39 @@ router.get("/legal-alerts", async (req, res) => {
       if (a.contractName) a.contractName = fixUtf8Filename(a.contractName);
     }
 
+    // Self-healing: enrich alerts that have missing sourceUrl from laws collection
+    const { ObjectId } = require("mongodb");
+    const alertsNeedingSource = alerts.filter(a => !a.lawSource || a.lawSource === "rss");
+    if (alertsNeedingSource.length > 0) {
+      const lawIds = [...new Set(alertsNeedingSource.map(a => a.lawId))];
+      const lawObjectIds = lawIds.map(id => { try { return new ObjectId(id); } catch { return null; } }).filter(Boolean);
+      if (lawObjectIds.length > 0) {
+        const laws = await db.collection("laws").find(
+          { _id: { $in: lawObjectIds } },
+          { projection: { sourceUrl: 1 } }
+        ).toArray();
+        const lawUrlMap = new Map(laws.map(l => [l._id.toString(), l.sourceUrl]));
+
+        const bulkOps = [];
+        for (const a of alertsNeedingSource) {
+          const url = lawUrlMap.get(a.lawId);
+          if (url && url !== "rss") {
+            a.lawSource = url;
+            bulkOps.push({
+              updateOne: {
+                filter: { _id: a._id },
+                update: { $set: { lawSource: url } },
+              },
+            });
+          }
+        }
+        // Write-through fix: persist corrected URLs
+        if (bulkOps.length > 0) {
+          db.collection("pulse_v2_legal_alerts").bulkWrite(bulkOps).catch(() => {});
+        }
+      }
+    }
+
     res.json({ alerts });
   } catch (error) {
     console.error("[PulseV2] Legal alerts error:", error);
