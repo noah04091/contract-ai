@@ -101,7 +101,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -3140,52 +3140,9 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       low: allClauses.filter(c => c.riskLevel === 'low' && !c.nonAnalyzable).length
     };
 
-    // Ergebnis in DB cachen für nächstes Mal
-    sendEvent('status', { message: 'Speichere Ergebnisse...', progress: 95 });
-
-    try {
-      await Contract.updateOne(
-        { _id: new ObjectId(contractId) },
-        {
-          $set: {
-            'legalLens.preParsedClauses': allClauses,
-            'legalLens.riskSummary': riskSummary,
-            'legalLens.metadata': {
-              parsedAt: new Date().toISOString(),
-              parserVersion: '2.1.0-coverage-verified',
-              cacheVersion: CACHE_VERSION, // Für automatische Invalidierung bei Code-Updates
-              usedGPT: true,
-              blockCount: rawBlocks.length,
-              batchCount: batches.length,
-              // Coverage-Metriken für Qualitätssicherung
-              coverage: {
-                textPercent: finalTextCoverage,
-                blockPercent: blockCoveragePercent,
-                originalLength: originalTextLength,
-                extractedLength: finalExtractedLength,
-                recoveredClauses: finalRecoveredCount,
-                failedBatches: failedBatchCount
-              }
-            },
-            'legalLens.preprocessStatus': 'completed',
-            'legalLens.preprocessedAt': new Date()
-          }
-        }
-      );
-      console.log(`✅ [Legal Lens] Cache gespeichert: ${allClauses.length} Klauseln für Contract ${contractId}`);
-    } catch (dbError) {
-      console.error(`⚠️ [Legal Lens] Cache-Fehler:`, dbError.message);
-      console.error(`⚠️ [Legal Lens] Error Details:`, JSON.stringify({
-        name: dbError.name,
-        code: dbError.code,
-        path: dbError.path,
-        kind: dbError.kind,
-        clauseCount: allClauses.length,
-        firstClauseKeys: allClauses[0] ? Object.keys(allClauses[0]) : []
-      }, null, 2));
-    }
-
-    // Finale Nachricht mit Coverage-Info
+    // Finale Nachricht SOFORT senden (BEVOR DB-Cache gespeichert wird)
+    // So bekommt der User sofort das Ergebnis, ohne auf MongoDB zu warten
+    sendEvent('status', { message: 'Analyse abgeschlossen', progress: 100 });
     sendEvent('complete', {
       success: true,
       totalClauses: allClauses.length,
@@ -3201,6 +3158,40 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     });
 
     console.log(`✅ [Legal Lens] Streaming complete: ${allClauses.length} Klauseln`);
+
+    // Ergebnis in DB cachen (im Hintergrund, blockiert den User nicht)
+    Contract.updateOne(
+      { _id: new ObjectId(contractId) },
+      {
+        $set: {
+          'legalLens.preParsedClauses': allClauses,
+          'legalLens.riskSummary': riskSummary,
+          'legalLens.metadata': {
+            parsedAt: new Date().toISOString(),
+            parserVersion: '2.1.0-coverage-verified',
+            cacheVersion: CACHE_VERSION, // Für automatische Invalidierung bei Code-Updates
+            usedGPT: true,
+            blockCount: rawBlocks.length,
+            batchCount: batches.length,
+            // Coverage-Metriken für Qualitätssicherung
+            coverage: {
+              textPercent: finalTextCoverage,
+              blockPercent: blockCoveragePercent,
+              originalLength: originalTextLength,
+              extractedLength: finalExtractedLength,
+              recoveredClauses: finalRecoveredCount,
+              failedBatches: failedBatchCount
+            }
+          },
+          'legalLens.preprocessStatus': 'completed',
+          'legalLens.preprocessedAt': new Date()
+        }
+      }
+    ).then(() => {
+      console.log(`✅ [Legal Lens] Cache gespeichert: ${allClauses.length} Klauseln für Contract ${contractId}`);
+    }).catch(dbError => {
+      console.error(`⚠️ [Legal Lens] Cache-Fehler:`, dbError.message);
+    });
 
   } catch (error) {
     console.error('❌ [Legal Lens] Streaming error:', error);

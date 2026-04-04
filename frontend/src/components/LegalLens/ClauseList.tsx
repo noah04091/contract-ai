@@ -290,7 +290,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
       </div>
 
       <div className={styles.clauseList}>
-        {filteredClauses.map((clause) => {
+        {filteredClauses.map((clause, clauseDisplayIndex) => {
           const isSelected = selectedClause?.id === clause.id;
           const isReviewed = isClauseReviewed(clause.id);
           const isCached = isClauseCached(clause.id);
@@ -314,7 +314,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
               >
                 <div className={styles.clauseHeader}>
                   <span className={styles.clauseNumber}>
-                    {clause.number || `#${clause.id.slice(-4)}`}
+                    {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
                     {clause.title && ` - ${clause.title}`}
                   </span>
                   <span className={`${styles.clauseRisk} ${styles.none}`}>
@@ -345,7 +345,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
             >
               <div className={styles.clauseHeader}>
                 <span className={styles.clauseNumber}>
-                  {clause.number || `#${clause.id.slice(-4)}`}
+                  {clause.number || `Klausel ${clauseDisplayIndex + 1}`}
                   {clause.title && ` - ${clause.title}`}
                 </span>
                 <span className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}>

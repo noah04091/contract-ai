@@ -1450,6 +1450,8 @@ REGELN:
 7. WICHTIG: Jeder Block darf in GENAU EINER Klausel vorkommen. Keine Überlappungen.
 8. Alle Blöcke müssen erfasst werden - überspringe keine.
 9. Das Dokument kann ein beliebiges Rechtsdokument sein — nicht nur ein klassischer Vertrag.
+10. NUMMERIERUNG: Behalte die Original-Nummerierung des Dokuments EXAKT bei (z.B. "§ 1", "§ 2", "Artikel 3", "1.1", "1.2", "A.", "B." etc.). Falls im Originaltext KEINE Nummerierung vorhanden ist, vergib eine konsistente, fortlaufende Nummerierung: "Abschnitt 1", "Abschnitt 2", etc. Mische NIEMALS verschiedene Formate — entweder alle mit Original-Nummern oder alle mit "Abschnitt X".
+11. TITEL: Jede Klausel MUSS einen kurzen, aussagekräftigen Titel haben. Verwende die Original-Überschrift aus dem Dokument falls vorhanden (z.B. "Geltungsbereich", "Haftung"). Falls keine Überschrift existiert, erstelle einen passenden Titel basierend auf dem Inhalt.
 
 WICHTIG: Behalte die Block-IDs für Traceability!
 
