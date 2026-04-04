@@ -654,27 +654,26 @@ router.get("/ics", async (req, res) => {
 
     const userId = new ObjectId(decoded.userId);
 
-    // Get ALL events for this user (same approach as debug endpoint)
-    const userIdStr = decoded.userId.toString();
-    const events = await req.db.collection("contract_events")
-      .aggregate([
-        {
-          $match: {
-            $or: [{ userId }, { userId: userIdStr }],
-            status: { $ne: "dismissed" }
-          }
-        },
-        {
-          $lookup: {
-            from: "contracts",
-            localField: "contractId",
-            foreignField: "_id",
-            as: "contract"
-          }
-        },
-        { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } }
-      ])
+    // Get ALL events for this user — same simple query as debug endpoint
+    // Step 1: Find all events (identical to debug which finds 24)
+    const allEvents = await req.db.collection("contract_events")
+      .find({ userId, status: { $ne: "dismissed" } })
+      .sort({ date: 1 })
       .toArray();
+
+    // Step 2: Enrich with contract data
+    const contractIds = [...new Set(allEvents.filter(e => e.contractId).map(e => e.contractId.toString()))];
+    const contracts = contractIds.length > 0
+      ? await req.db.collection("contracts")
+          .find({ _id: { $in: contractIds.map(id => new ObjectId(id)) } })
+          .toArray()
+      : [];
+    const contractMap = new Map(contracts.map(c => [c._id.toString(), c]));
+
+    const events = allEvents.map(e => ({
+      ...e,
+      contract: e.contractId ? contractMap.get(e.contractId.toString()) || null : null
+    }));
 
     console.log(`📅 ICS Feed: ${events.length} Events für User ${userId}`);
 
