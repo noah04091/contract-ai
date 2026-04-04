@@ -425,26 +425,15 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
   const handleOptimize = () => {
     if (!result && !initialResult) return;
 
-    // Sammle alle Analyse-Daten für zusätzlichen Context
     const analysisData = result || initialResult;
+    const targetContractId = analysisData?.originalContractId || propContractId;
 
-    navigate('/optimizer', {
-      state: {
-        contractId: analysisData?.originalContractId,
-        file: file,
-        analysisContext: {
-          summary: analysisData?.summary,
-          legalAssessment: analysisData?.legalAssessment,
-          suggestions: analysisData?.suggestions,
-          comparison: analysisData?.comparison,
-          positiveAspects: analysisData?.positiveAspects,
-          criticalIssues: analysisData?.criticalIssues,
-          recommendations: analysisData?.recommendations,
-          detailedLegalOpinion: analysisData?.detailedLegalOpinion,
-          contractScore: analysisData?.contractScore
-        }
-      }
-    });
+    if (targetContractId) {
+      // OptimizerV2 lädt die PDF automatisch über ?contractId=
+      navigate(`/optimizer?contractId=${targetContractId}`);
+    } else {
+      navigate('/optimizer');
+    }
   };
 
   const handleDownloadPdf = async () => {
