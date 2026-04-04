@@ -418,14 +418,23 @@ router.get("/legal-alerts", async (req, res) => {
       if (lawObjectIds.length > 0) {
         const laws = await db.collection("laws").find(
           { _id: { $in: lawObjectIds } },
-          { projection: { sourceUrl: 1 } }
+          { projection: { sourceUrl: 1, url: 1, link: 1, metadata: 1 } }
         ).toArray();
-        const lawUrlMap = new Map(laws.map(l => [l._id.toString(), l.sourceUrl]));
+        const lawUrlMap = new Map();
+        for (const l of laws) {
+          // Try multiple field names where URL might be stored
+          const url = l.sourceUrl || l.url || l.link
+            || (l.metadata && (l.metadata.sourceUrl || l.metadata.url || l.metadata.link))
+            || "";
+          if (url && url.startsWith("http")) {
+            lawUrlMap.set(l._id.toString(), url);
+          }
+        }
 
         const bulkOps = [];
         for (const a of alertsNeedingSource) {
           const url = lawUrlMap.get(a.lawId);
-          if (url && url !== "rss") {
+          if (url) {
             a.lawSource = url;
             bulkOps.push({
               updateOne: {

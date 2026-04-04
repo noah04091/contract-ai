@@ -740,7 +740,8 @@ function normalizeForLegalPulse(items) {
         categories: item.categories,
         fullContent: item.fullContent,
         detectedArea,
-        feedCategory: item.category
+        feedCategory: item.category,
+        link: item.link || null,
       }
     };
   });
