@@ -9,6 +9,7 @@ const rateLimit = require("express-rate-limit");
 const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
+const { fixUtf8Filename } = require("../utils/fixUtf8");
 
 // Normalize fields that may be stored as object {name, displayName, ...} or string
 function normalizeToString(val) {
@@ -295,7 +296,7 @@ router.get("/dashboard", async (req, res) => {
       const v2 = resultMap[c._id.toString()];
       return {
         contractId: c._id.toString(),
-        name: c.name || c.title || c.filename || "Unbenannt",
+        name: fixUtf8Filename(c.name || c.title || c.filename || "Unbenannt"),
         contractType: normalizeToString(c.contractType || c.type),
         provider: normalizeToString(c.provider) || normalizeToString(c.partner) || normalizeToString(c.company) || null,
         endDate: c.endDate || c.expiryDate || null,

@@ -14,6 +14,12 @@ const INSIGHT_TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
   benchmark_gap: { icon: '\ud83d\udcca', label: 'Benchmark-Abweichung' },
 };
 
+/** Replace UUID filenames in AI-generated text with friendly label */
+const UUID_FILE_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+/gi;
+function cleanInsightText(text: string): string {
+  return text.replace(UUID_FILE_RE, 'Unbenannter Vertrag');
+}
+
 const SEVERITY_COLORS: Record<string, string> = {
   critical: '#dc2626',
   high: '#ea580c',
@@ -75,10 +81,10 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
                 )}
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
-                {insight.title}
+                {cleanInsightText(insight.title)}
               </div>
               <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>
-                {insight.description}
+                {cleanInsightText(insight.description)}
               </div>
               {insight.relatedContracts && insight.relatedContracts.length > 0 && contractNames && (
                 <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>

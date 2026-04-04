@@ -27,6 +27,13 @@ function safeStr(val: unknown): string {
   return '';
 }
 
+/** Clean contract name: replace UUID filenames with friendly fallback */
+const UUID_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+$/i;
+function cleanContractName(name: string): string {
+  if (!name || UUID_FILE_RE.test(name)) return 'Unbenannter Vertrag';
+  return name;
+}
+
 const PulseV2: React.FC = () => {
   const { contractId } = useParams<{ contractId?: string }>();
   const navigate = useNavigate();
@@ -467,7 +474,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const contractNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const item of items) {
-      map.set(item.contractId, item.name);
+      map.set(item.contractId, cleanContractName(item.name));
     }
     return map;
   }, [items]);
@@ -1021,7 +1028,7 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
           alignItems: 'center',
           gap: 8,
         }}>
-          {item.name}
+          {cleanContractName(item.name)}
           {item.v2CriticalCount > 0 && (
             <span style={{
               fontSize: 10,

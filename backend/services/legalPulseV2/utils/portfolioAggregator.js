@@ -6,6 +6,7 @@
 const database = require("../../../config/database");
 const { ObjectId } = require("mongodb");
 const LegalPulseV2Result = require("../../../models/LegalPulseV2Result");
+const { fixUtf8Filename } = require("../../../utils/fixUtf8");
 
 /**
  * Aggregate portfolio data for cross-contract analysis
@@ -57,7 +58,7 @@ async function aggregatePortfolio(userId) {
 
     return {
       id,
-      name: c.name || c.title || c.filename || "Unbenannt",
+      name: fixUtf8Filename(c.name || c.title || c.filename || "Unbenannt"),
       contractType: c.contractType || c.type || v2?.document?.contractType || "unbekannt",
       provider: c.provider || c.partner || c.company || null,
       endDate: endDate || null,
