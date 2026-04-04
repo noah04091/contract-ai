@@ -411,7 +411,7 @@ router.get("/legal-alerts", async (req, res) => {
 
     // Self-healing: enrich alerts that have missing sourceUrl from laws collection
     const { ObjectId } = require("mongodb");
-    const alertsNeedingSource = alerts.filter(a => !a.lawSource || a.lawSource === "rss");
+    const alertsNeedingSource = alerts.filter(a => !a.lawSource || !a.lawSource.startsWith("http"));
     if (alertsNeedingSource.length > 0) {
       // Build lookup queries: by _id AND by title (fallback)
       const lawIds = [...new Set(alertsNeedingSource.map(a => a.lawId))];
