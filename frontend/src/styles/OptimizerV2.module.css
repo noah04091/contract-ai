@@ -2959,16 +2959,19 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .pageContainer { padding: 16px; }
-  .pageHeader { flex-wrap: wrap; }
-  .summaryPanel { flex-direction: column; }
-  .summaryStats { margin-left: 0; }
+  .pageHeader { flex-wrap: wrap; gap: 10px; }
+  .pageTitle { font-size: 20px; }
+  .summaryPanel { flex-direction: column; align-items: flex-start; }
+  .summaryLeft { flex-wrap: wrap; }
+  .summaryStats { margin-left: 0; gap: 16px; }
+  .summaryActions { flex-wrap: wrap; }
   .rlColHeaders { grid-template-columns: 1fr; }
   .rlColHeader:first-child { border-right: none; border-bottom: 1px solid var(--ov2-gray-200); }
   .rlRowContent { grid-template-columns: 1fr; gap: 12px; }
   .rlColDivider { display: none; }
   .modeSelector { flex-direction: column; }
   .scoreCards { grid-template-columns: 1fr 1fr; }
-  .tabNavigation { overflow-x: auto; }
+  .tabNavigation { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .comparisonGrid { grid-template-columns: 1fr; gap: 8px; }
   .comparisonArrow { transform: rotate(90deg); padding: 4px 0; }
   .alternativesTabs { flex-wrap: wrap; }
@@ -2978,6 +2981,7 @@
   .uploadPage { padding: 32px 16px; }
   .uploadCard { padding: 24px; }
   .dropZone { padding: 32px 16px; }
+  .dropZoneFile { padding: 32px 16px; }
   /* Clauses toolbar */
   .clausesModeRow { gap: 6px; }
   .clauseSearch { width: 140px; }
@@ -2986,10 +2990,28 @@
   .exportOption { flex-wrap: wrap; }
   .exportBtnActive, .exportBtn { width: 100%; justify-content: center; margin-top: 8px; }
   .exportPanel { padding: 16px; }
+  /* Pitch email templates */
+  .pitchTabs { grid-template-columns: 1fr; }
+  .pitchSection { padding: 16px; }
+  /* Score factors */
+  .scoreFactor { flex-wrap: wrap; }
+  .scoreFactorLabel { min-width: auto; width: 100%; }
+  /* Importance bar */
+  .importanceBar { flex-wrap: wrap; gap: 10px; padding: 12px; }
+  /* Metadata grid */
+  .metadataGrid { grid-template-columns: 1fr 1fr; }
+  /* Risk heatmap */
+  .riskHeatmap { padding: 16px; }
+  /* Error container */
+  .errorContainer { padding: 24px; }
 }
 
 @media (max-width: 480px) {
   .pageContainer { padding: 12px; }
+  .pageHeader { gap: 8px; margin-bottom: 20px; }
+  .pageTitle { font-size: 18px; }
+  .newAnalysisBtn { padding: 6px 12px; font-size: 12px; }
+  .backButton { padding: 6px 10px; font-size: 12px; }
   .scoreCards { grid-template-columns: 1fr; }
   .perspectiveGrid { grid-template-columns: 1fr; }
   .alternativesHeader { flex-direction: column; gap: 8px; }
@@ -3001,6 +3023,7 @@
   .uploadPage { padding: 24px 12px; }
   .uploadCard { padding: 16px; }
   .dropZone { padding: 24px 12px; }
+  .dropZoneFile { padding: 24px 12px; }
   .uploadHeroIcon { width: 56px; height: 56px; }
   .uploadHeroIcon svg { width: 28px; height: 28px; }
   .uploadFeaturePill { padding: 6px 12px; font-size: 12px; }
@@ -3011,10 +3034,34 @@
   .clauseSearchWrap { margin-right: 0; }
   .clauseSearch { width: 100%; }
   .clauseSearch:focus { width: 100%; }
+  /* Sort/filter buttons full-width */
+  .sortToggle { width: 100%; justify-content: center; }
   /* Export full-width */
   .exportOption { flex-direction: column; text-align: center; gap: 8px; }
   .docxSelection { padding: 16px; }
   .docxModeRow { flex-direction: column; gap: 8px; }
+  .docxModeButtons { flex-direction: column; }
+  .exportSummaryGrid { grid-template-columns: 1fr 1fr; }
+  /* Metadata single column */
+  .metadataGrid { grid-template-columns: 1fr; }
+  /* Summary stats wrap */
+  .summaryStats { flex-wrap: wrap; gap: 12px; }
+  .summaryActionBtn { font-size: 12px; padding: 8px 12px; }
+  /* Score explanation panel */
+  .scoreInfoScale { flex-direction: column; gap: 4px; }
+  /* Modal responsive */
+  .modalContent { padding: 24px; }
+  .generatedClauseModal { max-height: 90vh; }
+  .generatedClauseActions { flex-direction: column; }
+  .generatedClauseCopyBtn, .generatedClauseSaveBtn { width: 100%; justify-content: center; }
+  /* Missing clauses */
+  .missingClauseItem { flex-direction: column; gap: 6px; }
+  /* Top risks */
+  .topRiskTags { flex-wrap: wrap; }
+  .topRiskItem { gap: 8px; padding: 8px; }
+  /* Strategy items */
+  .strategyMeta { flex-wrap: wrap; }
+  .strategyItem { flex-direction: column; gap: 6px; }
 }
 
 /* ═══════════════════════════════════════════════════════
