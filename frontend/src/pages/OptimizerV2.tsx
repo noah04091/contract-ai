@@ -80,8 +80,8 @@ export default function OptimizerV2() {
       try {
         const token = localStorage.getItem('token');
         // Get contract info
-        const contractData = await apiCall(`/contracts/${contractId}`) as { contract?: { fileName?: string; s3Key?: string } };
-        const contract = contractData?.contract;
+        const contractData = await apiCall(`/contracts/${contractId}`) as { contract?: { fileName?: string; s3Key?: string }; fileName?: string; s3Key?: string };
+        const contract = contractData?.contract || contractData;
         if (!contract?.s3Key) return;
         // Get presigned URL
         const s3Res = await fetch(`/api/s3/view?contractId=${contractId}&type=original`, {
