@@ -86,8 +86,8 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
               detail={alert.plainSummary ? alert.impactSummary : undefined}
               color={isPositive ? '#059669' : '#6366f1'}
             />
-            {/* Source link */}
-            {alert.lawSource && (
+            {/* Source link — only show if it's a real URL */}
+            {alert.lawSource && alert.lawSource.startsWith('http') && (
               <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
                 <a
                   href={alert.lawSource}
@@ -333,29 +333,36 @@ const ClauseImpactNode: React.FC<{
           <div style={{ fontSize: 11, fontWeight: 600, color: sev.color, textTransform: 'uppercase', marginBottom: 2 }}>
             Betroffene Klausel
           </div>
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#111827' }}>
-            {clauseImpact.clauseTitle}
+          {/* Clickable clause title + impact to expand full text */}
+          <div
+            onClick={contractId ? handleShowClause : undefined}
+            style={{
+              cursor: contractId ? 'pointer' : 'default',
+              borderRadius: 6,
+              padding: contractId ? '4px 6px' : 0,
+              margin: contractId ? '-4px -6px 0' : 0,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => { if (contractId) e.currentTarget.style.background = '#f1f5f9'; }}
+            onMouseLeave={(e) => { if (contractId) e.currentTarget.style.background = 'transparent'; }}
+          >
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {clauseImpact.clauseTitle}
+              {contractId && (
+                <span style={{
+                  fontSize: 10, color: '#9ca3af',
+                  transform: showClauseText ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.15s',
+                  display: 'inline-block',
+                }}>&#9660;</span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
+              {clauseImpact.impact}
+            </div>
           </div>
-          <div style={{ fontSize: 12, color: '#4b5563', marginTop: 2 }}>
-            {clauseImpact.impact}
-          </div>
-
-          {/* Show full clause text */}
-          {contractId && (
-            <button
-              onClick={handleShowClause}
-              disabled={clauseTextLoading}
-              style={{
-                marginTop: 6, padding: '3px 10px',
-                fontSize: 11, fontWeight: 500,
-                color: clauseTextLoading ? '#9ca3af' : '#6366f1',
-                background: 'transparent',
-                border: `1px solid ${clauseTextLoading ? '#d1d5db' : '#c7d2fe'}`,
-                borderRadius: 4, cursor: clauseTextLoading ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {clauseTextLoading ? 'Lade...' : showClauseText ? 'Klausel ausblenden' : 'Komplette Klausel anzeigen'}
-            </button>
+          {clauseTextLoading && (
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>Klausel wird geladen...</div>
           )}
           {showClauseText && clauseText && (
             <div style={{
@@ -364,7 +371,6 @@ const ClauseImpactNode: React.FC<{
               border: '1px solid #e2e8f0',
               fontSize: 12, color: '#334155',
               lineHeight: 1.6, whiteSpace: 'pre-wrap',
-              maxHeight: 300, overflowY: 'auto',
             }}>
               {clauseText}
             </div>

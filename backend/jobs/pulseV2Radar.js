@@ -813,7 +813,7 @@ async function storeAndNotify(db, userId, alerts) {
     lawTitle: a.lawChange.title,
     lawArea: a.lawChange.area,
     lawStatus: a.lawChange.lawStatus || "unknown",
-    lawSource: a.lawChange.source,
+    lawSource: a.lawChange.sourceUrl || "",
     impactSummary: a.impactSummary,
     plainSummary: a.plainSummary || "",
     businessImpact: a.businessImpact || "",
