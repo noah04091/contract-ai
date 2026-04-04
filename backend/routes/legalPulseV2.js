@@ -413,41 +413,47 @@ router.get("/legal-alerts", async (req, res) => {
     const { ObjectId } = require("mongodb");
     const alertsNeedingSource = alerts.filter(a => !a.lawSource || a.lawSource === "rss");
     if (alertsNeedingSource.length > 0) {
+      // Build lookup queries: by _id AND by title (fallback)
       const lawIds = [...new Set(alertsNeedingSource.map(a => a.lawId))];
+      const lawTitles = [...new Set(alertsNeedingSource.map(a => a.lawTitle))];
       const lawObjectIds = lawIds.map(id => { try { return new ObjectId(id); } catch { return null; } }).filter(Boolean);
-      if (lawObjectIds.length > 0) {
-        const laws = await db.collection("laws").find(
-          { _id: { $in: lawObjectIds } },
-          { projection: { sourceUrl: 1, url: 1, link: 1, metadata: 1 } }
-        ).toArray();
-        const lawUrlMap = new Map();
-        for (const l of laws) {
-          // Try multiple field names where URL might be stored
-          const url = l.sourceUrl || l.url || l.link
-            || (l.metadata && (l.metadata.sourceUrl || l.metadata.url || l.metadata.link))
-            || "";
-          if (url && url.startsWith("http")) {
-            lawUrlMap.set(l._id.toString(), url);
-          }
-        }
 
-        const bulkOps = [];
-        for (const a of alertsNeedingSource) {
-          const url = lawUrlMap.get(a.lawId);
-          if (url) {
-            a.lawSource = url;
-            bulkOps.push({
-              updateOne: {
-                filter: { _id: a._id },
-                update: { $set: { lawSource: url } },
-              },
-            });
-          }
+      const laws = await db.collection("laws").find(
+        { $or: [
+          ...(lawObjectIds.length > 0 ? [{ _id: { $in: lawObjectIds } }] : []),
+          { title: { $in: lawTitles } },
+        ] },
+        { projection: { title: 1, sourceUrl: 1, url: 1, link: 1, metadata: 1 } }
+      ).toArray();
+
+      // Build two maps: by _id and by title
+      const urlByObjectId = new Map();
+      const urlByTitle = new Map();
+      for (const l of laws) {
+        const url = l.sourceUrl || l.url || l.link
+          || (l.metadata && (l.metadata.sourceUrl || l.metadata.url || l.metadata.link))
+          || "";
+        if (url && url.startsWith("http")) {
+          urlByObjectId.set(l._id.toString(), url);
+          if (l.title) urlByTitle.set(l.title, url);
         }
-        // Write-through fix: persist corrected URLs
-        if (bulkOps.length > 0) {
-          db.collection("pulse_v2_legal_alerts").bulkWrite(bulkOps).catch(() => {});
+      }
+
+      const bulkOps = [];
+      for (const a of alertsNeedingSource) {
+        const url = urlByObjectId.get(a.lawId) || urlByTitle.get(a.lawTitle);
+        if (url) {
+          a.lawSource = url;
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: a._id },
+              update: { $set: { lawSource: url } },
+            },
+          });
         }
+      }
+      if (bulkOps.length > 0) {
+        db.collection("pulse_v2_legal_alerts").bulkWrite(bulkOps).catch(() => {});
       }
     }
 
