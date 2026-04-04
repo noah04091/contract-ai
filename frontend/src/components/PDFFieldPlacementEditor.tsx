@@ -142,6 +142,8 @@ const FIELD_TYPES = [
 
 // 🔥 Store last used sizes per field type (persists during session)
 const lastFieldSizes: Record<string, { width: number; height: number }> = {};
+// Global last resized size (cross-type: resize a signature → next date field gets same size)
+let lastResizedSizeGlobal: { width: number; height: number } | null = null;
 
 const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   pdfUrl,
@@ -270,8 +272,8 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     const fieldType = FIELD_TYPES.find(f => f.type === selectedFieldType);
     if (!fieldType) return;
 
-    // 🔥 Use last saved normalized size, or calculate from percentage defaults
-    const savedSize = lastFieldSizes[selectedFieldType];
+    // 🔥 Use last saved size: per-type first, then global (cross-type), then defaults
+    const savedSize = lastFieldSizes[selectedFieldType] || lastResizedSizeGlobal;
 
     // Calculate default size from percentage of PDF dimensions
     const defaultWidth = fieldType.defaultSizePercent.width * pdfOriginal.width;
@@ -279,14 +281,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     const fieldWidth = savedSize?.width || defaultWidth;
     const fieldHeight = savedSize?.height || defaultHeight;
-
-    console.log('📐 handleAddField:', {
-      type: selectedFieldType,
-      savedSize,
-      defaultSize: { width: defaultWidth, height: defaultHeight },
-      finalSize: { width: fieldWidth, height: fieldHeight },
-      allSavedSizes: { ...lastFieldSizes },
-    });
 
     // Start position: 8% from left, 15% from top
     const startX = pdfOriginal.width * 0.08;
@@ -451,11 +445,9 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const handleMouseUp = () => {
     // Ensure last resize size is saved (safety net for React batching edge cases)
     if (lastResizeSizeRef.current) {
-      console.log('🛑 mouseUp saving from ref:', lastResizeSizeRef.current);
-      lastFieldSizes[lastResizeSizeRef.current.type] = {
-        width: lastResizeSizeRef.current.width,
-        height: lastResizeSizeRef.current.height,
-      };
+      const { type, width, height } = lastResizeSizeRef.current;
+      lastFieldSizes[type] = { width, height };
+      lastResizedSizeGlobal = { width, height };
       lastResizeSizeRef.current = null;
     }
     setDraggingField(null);
@@ -465,10 +457,9 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   // Stop dragging (Touch) 📱
   const handleTouchEnd = () => {
     if (lastResizeSizeRef.current) {
-      lastFieldSizes[lastResizeSizeRef.current.type] = {
-        width: lastResizeSizeRef.current.width,
-        height: lastResizeSizeRef.current.height,
-      };
+      const { type, width, height } = lastResizeSizeRef.current;
+      lastFieldSizes[type] = { width, height };
+      lastResizedSizeGlobal = { width, height };
       lastResizeSizeRef.current = null;
     }
     setDraggingField(null);
@@ -542,10 +533,10 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
       )
     );
 
-    // 🔥 Save this size for future fields of the same type
+    // 🔥 Save this size for future fields (per-type + global cross-type)
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
+    lastResizedSizeGlobal = { width: constrainedWidth, height: constrainedHeight };
     lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
-    console.log('🔧 RESIZE saved:', field.type, { width: constrainedWidth, height: constrainedHeight });
   };
 
   // 🔥 RESIZE MOVE (Touch)
@@ -597,10 +588,10 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
       )
     );
 
-    // 🔥 Save this size for future fields of the same type
+    // 🔥 Save this size for future fields (per-type + global cross-type)
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
+    lastResizedSizeGlobal = { width: constrainedWidth, height: constrainedHeight };
     lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
-    console.log('🔧 RESIZE (touch) saved:', field.type, { width: constrainedWidth, height: constrainedHeight });
   };
 
   // Zoom handlers
