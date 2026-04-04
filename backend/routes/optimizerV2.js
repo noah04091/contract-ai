@@ -31,7 +31,7 @@ const { CLAUSE_CHAT_PROMPT } = require('../services/optimizerV2/prompts/systemPr
 const { generateWordDiff } = require('../services/optimizerV2/utils/diffGenerator');
 const { hasColumnArtifacts, extractColumnAwareText } = require('../services/optimizerV2/utils/clauseSplitter');
 const { getFeatureLimit } = require('../constants/subscriptionPlans');
-const { generateSignedUrl } = require('../services/fileStorage');
+const { generateSignedUrl, deleteFile } = require('../services/fileStorage');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 
 const s3Main = new S3Client({
@@ -650,9 +650,10 @@ router.post('/results/:id/clause-chat', async (req, res) => {
       ? `Stärke: ${analysis.strength}, Risiko: ${analysis.riskLevel}/10, Bedenken: ${analysis.concerns?.join('; ') || 'keine'}`
       : 'Keine Analyse verfügbar';
 
-    // Build chat history
+    // Build chat history (limit to last 10 messages to control GPT token cost)
     let existingChat = result.clauseChats?.find(c => c.clauseId === clauseId);
-    const chatHistory = existingChat?.messages?.map(m => `${m.role}: ${m.content}`).join('\n') || '';
+    const recentMessages = (existingChat?.messages || []).slice(-10);
+    const chatHistory = recentMessages.map(m => `${m.role}: ${m.content}`).join('\n');
 
     // Build prompt (lean context - only clause + analysis + history, not full contract)
     const systemPrompt = CLAUSE_CHAT_PROMPT(
@@ -837,10 +838,28 @@ router.get('/results/:id/view-file', async (req, res) => {
 // ════════════════════════════════════════════════════════
 router.get('/history', async (req, res) => {
   try {
-    const results = await OptimizerV2Result.find({ userId: req.user.userId })
-      .select('requestId fileName status scores.overall structure.contractType structure.contractTypeLabel structure.recognizedAs structure.industry performance.clauseCount performance.optimizedCount createdAt completedAt')
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const results = await OptimizerV2Result.aggregate([
+      { $match: { userId: req.user.userId } },
+      { $sort: { createdAt: -1 } },
+      { $limit: 50 },
+      { $project: {
+        requestId: 1, fileName: 1, status: 1,
+        'scores.overall': 1,
+        'structure.contractType': 1,
+        'structure.contractTypeLabel': 1,
+        'structure.recognizedAs': 1,
+        'structure.industry': 1,
+        performance: {
+          clauseCount: { $size: { $ifNull: ['$clauses', []] } },
+          optimizedCount: { $size: { $filter: {
+            input: { $ifNull: ['$optimizations', []] },
+            as: 'opt',
+            cond: { $eq: ['$$opt.needsOptimization', true] }
+          }}}
+        },
+        createdAt: 1, completedAt: 1
+      }}
+    ]);
 
     res.json({ success: true, results });
   } catch (err) {
@@ -860,6 +879,11 @@ router.delete('/results/:id', async (req, res) => {
 
     if (!result) {
       return res.status(404).json({ success: false, message: 'Analyse nicht gefunden.' });
+    }
+
+    // Clean up S3 file (fire-and-forget, deleteFile has own error handling)
+    if (result.s3Key) {
+      deleteFile(result.s3Key).catch(() => {});
     }
 
     res.json({ success: true, message: 'Analyse gelöscht.' });
