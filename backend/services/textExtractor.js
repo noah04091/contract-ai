@@ -7,6 +7,7 @@
 
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
+const { PDFDocument } = require('pdf-lib');
 
 const SUPPORTED_MIMETYPES = [
   'application/pdf',
@@ -28,8 +29,22 @@ async function extractTextFromBuffer(buffer, mimetype) {
   // PDF
   if (mimetype === 'application/pdf') {
     const result = await pdfParse(buffer);
+    let text = result.text || '';
+
+    // Extract AcroForm field values (fillable PDF forms)
+    // pdf-parse misses form field content — pdf-lib reads it
+    try {
+      const formFieldText = await extractPdfFormFields(buffer);
+      if (formFieldText) {
+        text = text + '\n\n--- Formularfelder ---\n' + formFieldText;
+        console.log(`📄 PDF-Formular: ${formFieldText.split('\n').length} Felder extrahiert (${formFieldText.length} Zeichen)`);
+      }
+    } catch (e) {
+      // Not a form PDF or corrupted — ignore silently
+    }
+
     return {
-      text: result.text || '',
+      text,
       pageCount: result.numpages || 0
     };
   }
@@ -65,6 +80,54 @@ function isPdf(mimetype) {
  */
 function isDocx(mimetype) {
   return mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
+
+/**
+ * Extracts filled-in form field values from AcroForm PDFs.
+ * Returns "Feldname: Wert" lines for all non-empty fields.
+ */
+async function extractPdfFormFields(buffer) {
+  const doc = await PDFDocument.load(buffer, { ignoreEncryption: true });
+  const form = doc.getForm();
+  const fields = form.getFields();
+
+  if (!fields || fields.length === 0) return null;
+
+  const lines = [];
+  for (const field of fields) {
+    const name = field.getName() || '';
+    let value = '';
+
+    try {
+      const typeName = field.constructor.name;
+      if (typeName === 'PDFCheckBox') {
+        value = field.isChecked() ? 'Ja' : 'Nein';
+      } else if (typeName === 'PDFDropdown' || typeName === 'PDFOptionList') {
+        const selected = field.getSelected();
+        value = Array.isArray(selected) ? selected.join(', ') : String(selected || '');
+      } else if (typeName === 'PDFRadioGroup') {
+        value = String(field.getSelected() || '');
+      } else if (typeof field.getText === 'function') {
+        value = field.getText() || '';
+      }
+    } catch {
+      // Field read error — skip
+      continue;
+    }
+
+    if (value && value.trim()) {
+      // Clean field name: "form1[0].page1[0].Flatrate_Gebuehr[0]" → "Flatrate Gebühr"
+      const cleanName = name
+        .replace(/\[\d+\]/g, '')       // Remove index brackets [0], [1]
+        .replace(/^[^a-zA-ZÄÖÜäöü]*/, '') // Remove leading non-alpha chars
+        .replace(/_/g, ' ')
+        .trim() || name.trim();
+
+      lines.push(`${cleanName}: ${value.trim()}`);
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n') : null;
 }
 
 module.exports = {
