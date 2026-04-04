@@ -654,18 +654,13 @@ router.get("/ics", async (req, res) => {
 
     const userId = new ObjectId(decoded.userId);
 
-    // Get all events (1 year back + all future — same range as frontend)
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 365);
-
-    // userId can be stored as ObjectId OR String — match both
+    // Get ALL events for this user (same approach as debug endpoint)
     const userIdStr = decoded.userId.toString();
     const events = await req.db.collection("contract_events")
       .aggregate([
         {
           $match: {
             $or: [{ userId }, { userId: userIdStr }],
-            date: { $gte: pastDate },
             status: { $ne: "dismissed" }
           }
         },
