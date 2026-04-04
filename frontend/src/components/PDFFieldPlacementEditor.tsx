@@ -167,6 +167,9 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const pdfPageWrapperRef = useRef<HTMLDivElement>(null);
 
+  // Track last resize dimensions via ref (immune to React closure/batching issues)
+  const lastResizeSizeRef = useRef<{ type: string; width: number; height: number } | null>(null);
+
   // ✅ NEW: Separate original PDF dimensions (viewport-independent) from rendered dimensions
   const [pdfOriginal, setPdfOriginal] = useState<{ width: number; height: number } | null>(null);
   const [renderedWidth, setRenderedWidth] = useState<number>(0);
@@ -438,12 +441,27 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
   // Stop dragging (Mouse)
   const handleMouseUp = () => {
+    // Ensure last resize size is saved (safety net for React batching edge cases)
+    if (lastResizeSizeRef.current) {
+      lastFieldSizes[lastResizeSizeRef.current.type] = {
+        width: lastResizeSizeRef.current.width,
+        height: lastResizeSizeRef.current.height,
+      };
+      lastResizeSizeRef.current = null;
+    }
     setDraggingField(null);
     setResizingField(null);
   };
 
   // Stop dragging (Touch) 📱
   const handleTouchEnd = () => {
+    if (lastResizeSizeRef.current) {
+      lastFieldSizes[lastResizeSizeRef.current.type] = {
+        width: lastResizeSizeRef.current.width,
+        height: lastResizeSizeRef.current.height,
+      };
+      lastResizeSizeRef.current = null;
+    }
     setDraggingField(null);
     setResizingField(null);
   };
@@ -517,6 +535,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     // 🔥 Save this size for future fields of the same type
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
+    lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
   };
 
   // 🔥 RESIZE MOVE (Touch)
@@ -570,6 +589,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     // 🔥 Save this size for future fields of the same type
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
+    lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
   };
 
   // Zoom handlers
