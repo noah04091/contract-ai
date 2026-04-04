@@ -280,6 +280,14 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     const fieldWidth = savedSize?.width || defaultWidth;
     const fieldHeight = savedSize?.height || defaultHeight;
 
+    console.log('📐 handleAddField:', {
+      type: selectedFieldType,
+      savedSize,
+      defaultSize: { width: defaultWidth, height: defaultHeight },
+      finalSize: { width: fieldWidth, height: fieldHeight },
+      allSavedSizes: { ...lastFieldSizes },
+    });
+
     // Start position: 8% from left, 15% from top
     const startX = pdfOriginal.width * 0.08;
     const startY = pdfOriginal.height * 0.15;
@@ -443,6 +451,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const handleMouseUp = () => {
     // Ensure last resize size is saved (safety net for React batching edge cases)
     if (lastResizeSizeRef.current) {
+      console.log('🛑 mouseUp saving from ref:', lastResizeSizeRef.current);
       lastFieldSizes[lastResizeSizeRef.current.type] = {
         width: lastResizeSizeRef.current.width,
         height: lastResizeSizeRef.current.height,
@@ -536,6 +545,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     // 🔥 Save this size for future fields of the same type
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
     lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
+    console.log('🔧 RESIZE saved:', field.type, { width: constrainedWidth, height: constrainedHeight });
   };
 
   // 🔥 RESIZE MOVE (Touch)
@@ -590,6 +600,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     // 🔥 Save this size for future fields of the same type
     lastFieldSizes[field.type] = { width: constrainedWidth, height: constrainedHeight };
     lastResizeSizeRef.current = { type: field.type, width: constrainedWidth, height: constrainedHeight };
+    console.log('🔧 RESIZE (touch) saved:', field.type, { width: constrainedWidth, height: constrainedHeight });
   };
 
   // Zoom handlers
