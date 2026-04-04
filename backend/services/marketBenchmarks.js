@@ -354,11 +354,10 @@ function detectContractType(contractMap1, contractMap2) {
 
 function extractValuesForMetric(metric, clauses) {
   const results = [];
+  const primaryKey = metric.searchKeys[0]; // e.g., 'flatrate', 'selbstbehalt', 'inkasso'
+  let primaryKeyFoundButUnextractable = false;
 
   for (const clause of clauses) {
-    // Check if clause area matches
-    const areaMatch = clause.area === metric.clauseArea;
-
     // Check if any searchKey appears in title, summary, or originalText
     const textToSearch = [
       clause.title || '',
@@ -368,11 +367,19 @@ function extractValuesForMetric(metric, clauses) {
       ...Object.values(clause.keyValues || {}).map(v => String(v)),
     ].join(' ').toLowerCase();
 
-    const keywordMatch = metric.searchKeys.some(k => textToSearch.includes(k));
+    // V3.1: Two-tier matching — primary keyword vs secondary keywords
+    const hasPrimaryKey = textToSearch.includes(primaryKey);
+    const hasSecondaryKey = metric.searchKeys.slice(1).some(k => textToSearch.includes(k));
 
-    // STRICT: Require keyword match — area match alone is too broad
-    // (e.g. "Inkasso-Gebühr" clause shouldn't provide values for "Ankauflimit" just because both are payment)
-    if (!keywordMatch) continue;
+    // Only accept secondary matches if the clause ALSO contains the primary keyword
+    // This prevents "Inkasso-Gebühr" clause from providing values for "Flatrate-Gebühr"
+    // (both contain "gebühr" but only Flatrate clause contains "flatrate")
+    if (!hasPrimaryKey && !hasSecondaryKey) continue;
+    if (!hasPrimaryKey && hasSecondaryKey) {
+      // Secondary keyword matches but primary doesn't — skip this clause
+      // unless the clause area matches (allows area-specific fallback)
+      if (clause.area !== metric.clauseArea) continue;
+    }
 
     // Extract numeric values from keyValues
     if (clause.keyValues && typeof clause.keyValues === 'object') {
@@ -380,35 +387,61 @@ function extractValuesForMetric(metric, clauses) {
         const keyLower = key.toLowerCase();
         const valueLower = String(value).toLowerCase();
 
-        // Check if this key/value relates to our metric
-        const isRelevant = metric.searchKeys.some(sk =>
-          keyLower.includes(sk) || valueLower.includes(sk)
-        );
+        // V3.1: Strict key matching — the key name must contain the primary keyword
+        // OR the metric label's main word
+        const keyHasPrimary = keyLower.includes(primaryKey);
+        const labelMainWord = metric.label.toLowerCase().split(' ')[0];
+        const keyHasLabel = keyLower.includes(labelMainWord) ||
+          metric.label.toLowerCase().split(' ').some(w => w.length > 4 && keyLower.includes(w));
 
-        // Also accept if clause-level keyword matched AND key broadly matches the metric label
-        const labelMatch = keyLower.includes(metric.label.toLowerCase().split(' ')[0]) ||
-          metric.label.toLowerCase().split(' ').some(w => w.length > 3 && keyLower.includes(w));
+        // Also check if value is "not extractable" — track this to prevent fallback
+        if ((keyHasPrimary || keyHasLabel) && valueLower.includes('nicht extrahierbar')) {
+          primaryKeyFoundButUnextractable = true;
+          continue;
+        }
 
-        if (isRelevant || (keywordMatch && (labelMatch || areaMatch))) {
+        if (keyHasPrimary || keyHasLabel) {
           const num = extractNumberFromText(String(value));
           if (num !== null && isPlausibleValue(num, metric)) {
+            // V3.1: Cross-metric contamination check — reject if key contains
+            // a DIFFERENT metric's primary keyword (e.g., "Inkasso" key for Flatrate metric)
+            const otherMetricPrimaries = ['flatrate', 'inkasso', 'selbstbehalt', 'ankauflimit',
+              'sicherungseinbehalt', 'kündigungsfrist', 'limitprüfung', 'einrichtung', 'mindestgebühr'];
+            const contaminated = otherMetricPrimaries.some(other =>
+              other !== primaryKey && keyLower.includes(other)
+            );
+            if (contaminated) {
+              console.log(`📊 Benchmark: Kreuz-Metrik Kontamination: "${key}" enthält fremdes Keyword — übersprungen für "${metric.label}"`);
+              continue;
+            }
+
             results.push({ value: num, source: `${clause.section}: ${key}`, rawText: String(value) });
           }
         }
       }
     }
 
-    // Also try extracting from summary/originalText if keyValues didn't yield results
-    if (results.length === 0 && keywordMatch) {
+    // V3.1: Only fall back to summary/originalText if:
+    // 1. No keyValues results found
+    // 2. Primary keyword found in clause
+    // 3. The value was NOT marked as "nicht extrahierbar" (prevent wrong fallback)
+    if (results.length === 0 && hasPrimaryKey && !primaryKeyFoundButUnextractable) {
       const textsToCheck = [clause.summary || '', clause.originalText || ''];
       for (const text of textsToCheck) {
-        const num = extractNumberFromText(text);
+        // V3.1: Unit-aware extraction — only extract if the unit context matches
+        const num = extractNumberWithUnit(text, metric.unit);
         if (num !== null && isPlausibleValue(num, metric)) {
           results.push({ value: num, source: clause.section, rawText: text.substring(0, 100) });
           break;
         }
       }
     }
+  }
+
+  if (results.length > 0) {
+    console.log(`📊 Benchmark: "${metric.label}" → ${results.length} Wert(e) gefunden: ${results.map(r => `${r.value} (${r.source})`).join(', ')}`);
+  } else {
+    console.log(`📊 Benchmark: "${metric.label}" → Kein Wert gefunden${primaryKeyFoundButUnextractable ? ' (Primär-Key gefunden aber nicht extrahierbar)' : ''}`);
   }
 
   return results;
@@ -422,12 +455,13 @@ function isPlausibleValue(value, metric) {
   if (value === null || value === undefined) return false;
   if (value < 0) return false;
 
-  // Unit-based hard limits
-  if (metric.unit === '%' && value > 100) return false;
-  if (metric.unit === 'EUR' && value < 1) return false;
-  if (metric.unit === 'Monate' && value > 120) return false;
-  if (metric.unit === 'Jahre' && value > 50) return false;
-  if (metric.unit === 'Tage' && value > 365) return false;
+  // Unit-based hard limits (normalize unit for matching)
+  const u = metric.unit || '';
+  if (u.includes('%') && value > 100) return false;
+  if (u.includes('EUR') && value < 1) return false;
+  if (u.includes('Monate') && value > 120) return false;
+  if (u.includes('Jahre') && value > 50) return false;
+  if (u.includes('Tage') && value > 365) return false;
 
   const { min, best } = metric.market;
   if (typeof min !== 'number') return true; // Can't validate non-numeric markets
@@ -442,6 +476,47 @@ function isPlausibleValue(value, metric) {
   }
 
   return true;
+}
+
+/**
+ * Unit-aware number extraction — only extracts numbers with matching unit context.
+ * Prevents extracting "90" from random text when looking for EUR amounts.
+ */
+function extractNumberWithUnit(text, unit) {
+  if (!text || typeof text !== 'string') return null;
+
+  // Normalize unit for pattern lookup (e.g., "EUR/Jahr" → "EUR")
+  const baseUnit = unit.includes('EUR') ? 'EUR' : unit.includes('%') ? '%' : unit;
+
+  const unitPatterns = {
+    '%': [/(\d+(?:,\d+)?)\s*%/g],
+    'EUR': [/(\d{1,3}(?:\.\d{3})*(?:,\d+)?)\s*(?:eur|€)/gi],
+    'Monate': [
+      /(\d+(?:,\d+)?)\s*(?:monat|monate|monaten)/gi,
+      /(\d+(?:,\d+)?)\s*(?:jahr|jahre|jahren)/gi,
+    ],
+    'Jahre': [/(\d+(?:,\d+)?)\s*(?:jahr|jahre|jahren)/gi],
+    'Tage': [/(\d+(?:,\d+)?)\s*(?:tag|tage|tagen|werktag|werktage)/gi],
+  };
+
+  const patterns = unitPatterns[baseUnit];
+  if (!patterns) return extractNumberFromText(text); // unknown unit → fallback
+
+  // Collect ALL matches, return the largest (most likely the actual value, not a sub-clause number)
+  const values = [];
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const num = parseFloat(match[1].replace(/\./g, '').replace(',', '.'));
+      if (!isNaN(num) && num > 0) values.push(num);
+    }
+  }
+
+  if (values.length === 0) return null;
+  // For EUR: return the largest (5000 > 90)
+  // For %: return the first match (usually the most relevant)
+  return unit === 'EUR' ? Math.max(...values) : values[0];
 }
 
 function extractNumberFromText(text) {
