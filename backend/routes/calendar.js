@@ -658,11 +658,13 @@ router.get("/ics", async (req, res) => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 365);
 
+    // userId can be stored as ObjectId OR String — match both
+    const userIdStr = decoded.userId.toString();
     const events = await req.db.collection("contract_events")
       .aggregate([
         {
           $match: {
-            userId,
+            $or: [{ userId }, { userId: userIdStr }],
             date: { $gte: pastDate },
             status: { $ne: "dismissed" }
           }
