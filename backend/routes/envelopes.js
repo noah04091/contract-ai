@@ -850,6 +850,14 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, emailSendLimiter
       });
     }
 
+    // Validate that signature fields exist before sending
+    if (!envelope.signatureFields || envelope.signatureFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Bitte platzieren Sie mindestens ein Signaturfeld bevor Sie die Anfrage senden."
+      });
+    }
+
     console.log(`📤 Sending invitations for envelope: ${envelope.title} (Mode: ${envelope.signingMode})`);
 
     // 🆕 Determine which signers to notify based on signing mode

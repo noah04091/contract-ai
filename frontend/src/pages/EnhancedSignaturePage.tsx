@@ -105,6 +105,7 @@ export default function EnhancedSignaturePage() {
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [successDetails, setSuccessDetails] = useState<string | null>(null);
   const [allSigned, setAllSigned] = useState<boolean>(false);
+  const [sealingFailed, setSealingFailed] = useState<boolean>(false);
 
   // UI State
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -714,6 +715,7 @@ export default function EnhancedSignaturePage() {
       if (data.details) setSuccessDetails(data.details);
       if (data.envelope?.sealedPdfUrl) setSealedPdfUrl(data.envelope.sealedPdfUrl);
       if (data.envelope?.allSigned !== undefined) setAllSigned(data.envelope.allSigned);
+      if (data.sealingFailed) setSealingFailed(true);
 
       // Clear sessionStorage
       if (token) {
@@ -852,6 +854,25 @@ export default function EnhancedSignaturePage() {
           <p>Ihre Signatur wurde erfolgreich eingereicht.</p>
           {successDetails && (
             <p className={styles.successSubtext}>{successDetails}</p>
+          )}
+
+          {sealingFailed && (
+            <div style={{
+              background: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '8px',
+              padding: '1rem',
+              marginTop: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <AlertCircle size={20} style={{ color: '#d97706', flexShrink: 0 }} />
+              <p style={{ margin: 0, color: '#92400e', fontSize: '0.9rem' }}>
+                Ihre Signatur wurde gespeichert, aber das versiegelte PDF konnte nicht erstellt werden.
+                Der Vertragsinhaber wird benachrichtigt und kann das Dokument erneut versiegeln.
+              </p>
+            </div>
           )}
 
           {sealedPdfUrl ? (
