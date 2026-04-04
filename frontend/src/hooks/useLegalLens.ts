@@ -313,10 +313,9 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
     setParseSource(null);
     setStreamingProgress(0);
     setStreamingStatus('');
-    // Reset clauses nur bei neuem Contract, nicht bei Force-Refresh (vermeidet Flackern)
-    if (!forceRefresh) {
-      setClauses([]);
-    }
+    // IMMER Klauseln leeren — bei Force-Refresh sind die alten Daten veraltet
+    // und würden sonst Duplikate erzeugen wenn neue Klauseln gestreamt werden
+    setClauses([]);
 
     try {
       // Log force refresh

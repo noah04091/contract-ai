@@ -273,9 +273,27 @@ class ClauseParser {
 
     // Multi-Column-PDF Artefakte reparieren: Gebrochene Wörter zusammenfügen
     // pdf-parse trennt bei mehrspaltigem Layout Wörter auf: "D ie" → "Die", "s ind" → "sind"
-    // Pattern: einzelner Buchstabe + Leerzeichen + 2+ Kleinbuchstaben (= gebrochenes Wort)
-    // Sicher für dt. Rechtstext: Abkürzungen haben Punkte (z. B., d. h.), keine nackten Einzelbuchstaben
-    processed = processed.replace(/(?<=\s|^)([A-ZÄÖÜa-zäöü]) ([a-zäöüß]{2,})/gm, '$1$2');
+
+    // 1. Spaced-out Müllzeilen entfernen: "F A 3 6 ; S t a n d 1 2 - 2 5"
+    // Erkennung: Zeilen wo fast jedes Zeichen durch Leerzeichen getrennt ist
+    processed = processed.split('\n').filter(line => {
+      const trimmed = line.trim();
+      if (trimmed.length < 6) return true; // Kurze Zeilen behalten
+      // Zähle "Einzelzeichen + Space" Muster
+      const spacedChars = (trimmed.match(/(?:^|(?<=\s))[A-Za-z0-9äöüÄÖÜ;.,/:-](?=\s)/g) || []).length;
+      const totalNonSpace = trimmed.replace(/\s/g, '').length;
+      // Wenn >60% der Zeichen einzeln stehen → Müllzeile
+      return totalNonSpace < 3 || spacedChars / totalNonSpace < 0.6;
+    }).join('\n');
+
+    // 2. Einzelbuchstabe + Leerzeichen + Kleinbuchstaben: "D ie" → "Die", "s ind" → "sind"
+    processed = processed.replace(/(?<=\s|^)([A-ZÄÖÜa-zäöü])\s([a-zäöüß]{2,})/gm, '$1$2');
+
+    // 3. Einzelbuchstabe + Leerzeichen + Großbuchstaben (Eigennamen): "F ERCHAU" → "FERCHAU"
+    processed = processed.replace(/(?<=\s|^)([A-ZÄÖÜ])\s([A-ZÄÖÜ]{2,})/gm, '$1$2');
+
+    // 4. Nummer-Artefakte: "1 .1" → "1.1", "8 .2" → "8.2"
+    processed = processed.replace(/(\d)\s+\.(\d)/g, '$1.$2');
 
     // Mehrfache Leerzeichen zu einem zusammenfassen
     processed = processed.replace(/ {2,}/g, ' ');
