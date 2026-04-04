@@ -312,12 +312,28 @@ export default function Contracts() {
   const [quickEditContract, setQuickEditContract] = useState<Contract | null>(null);
 
   // ⚡ NEU: Schnellanalyse-Modal State (zeigt ausführliche Analyse nach Schnellanalyse)
+  // Lazy Initializer: Stellt Modal aus sessionStorage wieder her (Back-Navigation)
   const [quickAnalysisModal, setQuickAnalysisModal] = useState<{
     show: boolean;
     contractName: string;
     contractId: string;
     analysisResult: Record<string, unknown> | null;
-  }>({ show: false, contractName: '', contractId: '', analysisResult: null });
+  }>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const quickAnalysisId = params.get('quickAnalysis');
+      if (quickAnalysisId) {
+        const saved = sessionStorage.getItem('contractai_quickAnalysis');
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.contractId === quickAnalysisId) {
+            return { show: true, contractName: data.contractName, contractId: data.contractId, analysisResult: data.analysisResult };
+          }
+        }
+      }
+    } catch { /* sessionStorage unavailable or corrupt — use default */ }
+    return { show: false, contractName: '', contractId: '', analysisResult: null };
+  });
   
   // ✅ KORRIGIERT: User-Plan States - Free = 3 Analysen!
   const [userInfo, setUserInfo] = useState<UserInfo>({
@@ -521,6 +537,15 @@ export default function Contracts() {
       window.history.replaceState({}, document.title, location.pathname);
     }
   }, [location.search]);
+
+  // ⚡ Cleanup: Entferne verwaisten quickAnalysis-URL-Param wenn Modal nicht offen ist
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.has('quickAnalysis') && !quickAnalysisModal.show) {
+      navigate('/contracts', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ✅ NEW: Handle "view" URL parameter to open contract details
   // Wird getriggert wenn URL sich ändert ODER wenn contracts geladen wurden
@@ -1767,6 +1792,10 @@ export default function Contracts() {
   const closeQuickAnalysis = async () => {
     const analyzedContractId = quickAnalysisModal.contractId;
     setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+    sessionStorage.removeItem('contractai_quickAnalysis');
+    if (new URLSearchParams(location.search).has('quickAnalysis')) {
+      navigate('/contracts', { replace: true });
+    }
     await silentRefreshContracts(analyzedContractId);
   };
 
@@ -2400,29 +2429,41 @@ export default function Contracts() {
         }
 
         // ⚡ NEU: Öffne das ausführliche Analyse-Modal statt ContractDetailView
+        const analysisResultData = {
+          success: true,
+          originalContractId: updatedContract._id,
+          contractScore: updatedContract.analysis?.contractScore ?? updatedContract.contractScore,
+          summary: updatedContract.analysis?.summary || updatedContract.summary,
+          legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
+          suggestions: updatedContract.analysis?.suggestions || updatedContract.suggestions,
+          comparison: updatedContract.analysis?.comparison,
+          positiveAspects: updatedContract.analysis?.positiveAspects,
+          criticalIssues: updatedContract.analysis?.criticalIssues,
+          recommendations: updatedContract.analysis?.recommendations,
+          detailedLegalOpinion: updatedContract.analysis?.detailedLegalOpinion || updatedContract.detailedLegalOpinion,
+          // Legacy Felder für Kompatibilität
+          kuendigung: updatedContract.kuendigung,
+          laufzeit: updatedContract.laufzeit,
+          risiken: updatedContract.risiken,
+          optimierungen: updatedContract.optimierungen
+        };
+
         setQuickAnalysisModal({
           show: true,
           contractName: updatedContract.name,
           contractId: updatedContract._id,
-          analysisResult: {
-            success: true,
-            originalContractId: updatedContract._id,
-            contractScore: updatedContract.analysis?.contractScore ?? updatedContract.contractScore,
-            summary: updatedContract.analysis?.summary || updatedContract.summary,
-            legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
-            suggestions: updatedContract.analysis?.suggestions || updatedContract.suggestions,
-            comparison: updatedContract.analysis?.comparison,
-            positiveAspects: updatedContract.analysis?.positiveAspects,
-            criticalIssues: updatedContract.analysis?.criticalIssues,
-            recommendations: updatedContract.analysis?.recommendations,
-            detailedLegalOpinion: updatedContract.analysis?.detailedLegalOpinion || updatedContract.detailedLegalOpinion,
-            // Legacy Felder für Kompatibilität
-            kuendigung: updatedContract.kuendigung,
-            laufzeit: updatedContract.laufzeit,
-            risiken: updatedContract.risiken,
-            optimierungen: updatedContract.optimierungen
-          }
+          analysisResult: analysisResultData
         });
+
+        // Speichere für Back-Navigation-Wiederherstellung
+        try {
+          sessionStorage.setItem('contractai_quickAnalysis', JSON.stringify({
+            contractName: updatedContract.name,
+            contractId: updatedContract._id,
+            analysisResult: analysisResultData
+          }));
+        } catch { /* sessionStorage voll oder nicht verfügbar */ }
+        navigate(`/contracts?quickAnalysis=${updatedContract._id}`, { replace: true });
 
 
         // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
