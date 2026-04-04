@@ -118,7 +118,7 @@ interface LegalPulseData {
   [key: string]: unknown;
 }
 
-export default function ContractAnalysis({ file, contractName, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
+export default function ContractAnalysis({ file, contractName, contractId: propContractId, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   // Nutze file.name oder contractName als Fallback
   const displayName = file?.name || contractName || 'Vertrag';
   const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
@@ -522,7 +522,7 @@ export default function ContractAnalysis({ file, contractName, onReset, onNaviga
   // 💬 Handler: Mit KI-Rechtsbot besprechen
   const handleOpenInChat = async () => {
     const analysisData = result || initialResult;
-    const contractId = analysisData?.originalContractId;
+    const contractId = analysisData?.originalContractId || propContractId;
 
     if (!contractId) {
       alert('Kein Vertrag für den Chat gefunden.');

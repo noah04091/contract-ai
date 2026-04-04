@@ -2406,6 +2406,7 @@ export default function Contracts() {
           contractId: updatedContract._id,
           analysisResult: {
             success: true,
+            originalContractId: updatedContract._id,
             contractScore: updatedContract.analysis?.contractScore ?? updatedContract.contractScore,
             summary: updatedContract.analysis?.summary || updatedContract.summary,
             legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
