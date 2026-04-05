@@ -874,6 +874,14 @@ export function parseContractStreaming(
           }
         }
       }
+
+      // Stream ist beendet (done = true) — falls kein 'complete' Event ankam,
+      // trotzdem als fertig markieren wenn Klauseln empfangen wurden
+      if (!isComplete && clausesReceived > 0) {
+        console.warn(`[Legal Lens] Stream ended without complete event. ${clausesReceived} clauses received — marking as complete.`);
+        isComplete = true;
+        callbacks.onComplete?.(clausesReceived);
+      }
     } catch (error) {
       // Abbruch durch User? → Kein Retry
       if (isAborted || (error instanceof Error && error.name === 'AbortError')) {
@@ -921,11 +929,17 @@ export function parseContractStreaming(
           executeStream(); // Rekursiver Retry
         }
       } else {
-        // Kein Retry mehr möglich
-        callbacks.onError?.(isConnectionLost
-          ? `Verbindung verloren nach ${MAX_RETRIES} Versuchen. Bitte prüfe deine Internetverbindung.`
-          : errorMessage
-        );
+        // Kein Retry mehr möglich — aber Klauseln vorhanden? → Als complete markieren
+        if (clausesReceived > 0 && !isComplete) {
+          console.warn(`[Legal Lens] Connection lost after ${clausesReceived} clauses — marking as complete.`);
+          isComplete = true;
+          callbacks.onComplete?.(clausesReceived);
+        } else {
+          callbacks.onError?.(isConnectionLost
+            ? `Verbindung verloren nach ${MAX_RETRIES} Versuchen. Bitte prüfe deine Internetverbindung.`
+            : errorMessage
+          );
+        }
       }
     }
   };
