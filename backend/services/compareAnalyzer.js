@@ -221,6 +221,8 @@ Bewerte nach: Korrektheit der Berechnung, Vollständigkeit der Pflichtangaben, P
     irrelevantAreas: ['non_compete', 'force_majeure', 'confidentiality', 'data_protection', 'ip_rights'],
     missingSeverityOverrides: {
       payment: 'critical',
+      subject: 'critical',        // Fehlender Leistungsumfang bei Angeboten = sehr kritisch
+      parties: 'high',            // Fehlende Anbieter-/Empfängerinfo = wichtig
       warranty: 'medium',
       liability: 'medium',
       duration: 'medium',
@@ -232,12 +234,21 @@ Bewerte nach: Korrektheit der Berechnung, Vollständigkeit der Pflichtangaben, P
     },
     promptAddition: `DOKUMENTTYP: ANGEBOT / KOSTENVORANSCHLAG
 Du vergleichst zwei Angebote (NICHT Verträge!).
-FOKUS auf: Preise und Konditionen, Leistungsumfang (was ist inklusive, was kostet extra),
-Zahlungsbedingungen (Skonto, Zahlungsziel, Anzahlung), Lieferfristen und -bedingungen,
-Gültigkeitsdauer des Angebots, Gewährleistungszusagen, Nebenkosten und versteckte Gebühren.
+
+WICHTIGSTE UNTERSCHIEDE bei Angeboten (in dieser Reihenfolge bewerten):
+1. LEISTUNGSUMFANG: Was wird angeboten? Welche konkreten Leistungen/Produkte/Positionen enthält jedes Angebot?
+   - Unterschiedliche Leistungen IMMER als Hauptunterschied hervorheben
+   - Jede Leistungsposition einzeln benennen (z.B. "Angebot 1: Visitenkarten + Flyer, Angebot 2: Website-Erstellung")
+2. PARTEIEN: Wer bietet an, wer ist Empfänger? Sind es verschiedene Anbieter oder verschiedene Kunden?
+3. PREISE: Gesamtkosten, Einzelpreise pro Position, Preis-Leistungs-Verhältnis
+   - Preise NUR im Kontext der Leistung bewerten — ein teureres Angebot kann besser sein wenn es mehr bietet
+4. KONDITIONEN: Zahlungsbedingungen, Lieferfristen, Gültigkeitsdauer, Gewährleistung
+5. TRANSPARENZ: Wie detailliert sind die Positionen aufgeschlüsselt?
+
 IGNORIERE: Wettbewerbsverbot, Höhere Gewalt, Geheimhaltung, Datenschutz — das gehört nicht in Angebote.
-Bewerte nach: Preis-Leistungs-Verhältnis, Transparenz der Kosten, Vollständigkeit des Angebots.
-BERECHNE wo möglich: Gesamtkosten, Kosten pro Einheit/Monat, versteckte Mehrkosten.`,
+BERECHNE wo möglich: Gesamtkosten, Kosten pro Einheit/Monat, versteckte Mehrkosten.
+
+WICHTIG: Wenn die Angebote VERSCHIEDENE Leistungen enthalten, ist DAS der wichtigste Unterschied — nicht der Preis allein.`,
     scoreLabels: {
       overall: 'Gesamt',
       fairness: 'Preis-Leistung',
