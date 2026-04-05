@@ -33,12 +33,18 @@ export default function NegotiationModeSelector({ activeMode, onModeChange, comp
           <button
             key={mode}
             className={`${styles.modeButton} ${isActive ? styles.modeButtonActive : ''}`}
-            style={isActive ? { borderColor: config.color, backgroundColor: `${config.color}10` } : undefined}
             onClick={() => onModeChange(mode)}
             title={MODE_TOOLTIPS[mode]}
           >
-            <Icon size={compact ? 14 : 16} style={isActive ? { color: config.color } : undefined} />
-            <span className={styles.modeLabel}>{config.label}</span>
+            <span
+              className={styles.modeIconDot}
+              style={isActive ? { background: config.color, color: 'white' } : undefined}
+            >
+              <Icon size={compact ? 12 : 13} />
+            </span>
+            <span className={styles.modeLabel} style={isActive ? { color: config.color } : undefined}>
+              {config.label}
+            </span>
             {!compact && <span className={styles.modeDescription}>{config.description}</span>}
           </button>
         );
