@@ -329,6 +329,166 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 };
 
 // ═══════════════════════════════════════════════════════════
+// Action Center — Handlungsbedarf Section
+// ═══════════════════════════════════════════════════════════
+
+const ActionCenter: React.FC<{
+  actions: PulseV2Action[];
+  actionsRef: React.RefObject<HTMLDivElement | null>;
+  contractNames: Map<string, string>;
+}> = ({ actions, actionsRef, contractNames }) => {
+  const [showAll, setShowAll] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showInfo]);
+
+  const sorted = [...actions].sort((a, b) => {
+    const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
+    return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+  });
+
+  const displayActions = showAll ? sorted : sorted.slice(0, 5);
+  const hiddenCount = sorted.length - 5;
+  const nowCount = actions.filter(a => a.priority === 'now').length;
+  const planCount = actions.filter(a => a.priority === 'plan').length;
+
+  return (
+    <div ref={actionsRef} style={{
+      background: '#fff',
+      borderRadius: 20,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+      padding: 24,
+      marginBottom: 24,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px' }}>
+        Handlungsbedarf
+        <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
+          {actions.length} offen
+        </span>
+        {nowCount > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#dc2626', background: '#fef2f2', padding: '2px 8px', borderRadius: 10 }}>
+            {nowCount} dringend
+          </span>
+        )}
+        {/* Info tooltip */}
+        <div ref={infoRef} style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            onClick={() => setShowInfo(!showInfo)}
+            style={{
+              width: 18, height: 18, borderRadius: '50%',
+              border: '1px solid #d1d5db', background: showInfo ? '#f3f4f6' : '#fff',
+              cursor: 'pointer', fontSize: 11, fontWeight: 700,
+              color: '#9ca3af', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', padding: 0,
+            }}
+            title="Was ist der Handlungsbedarf?"
+          >
+            ?
+          </button>
+          {showInfo && (
+            <div style={{
+              position: 'absolute', top: 24, left: -8,
+              width: 340, padding: '14px 16px',
+              background: '#fff', border: '1px solid #e5e7eb',
+              borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 100, fontSize: 12, color: '#4b5563', lineHeight: 1.6,
+            }}>
+              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
+                Was ist der Handlungsbedarf?
+              </div>
+              <p style={{ margin: '0 0 8px' }}>
+                Hier sehen Sie alle <strong>konkreten Schritte</strong>, die Sie f&uuml;r Ihre
+                Vertr&auml;ge unternehmen sollten — priorisiert nach Dringlichkeit.
+              </p>
+              <p style={{ margin: '0 0 8px' }}>
+                <strong style={{ color: '#dc2626' }}>Sofort</strong> = Innerhalb von 7 Tagen handeln (Fristablauf, kritisches Risiko)<br />
+                <strong style={{ color: '#d97706' }}>Planen</strong> = Innerhalb von 30 Tagen einplanen<br />
+                <strong style={{ color: '#6b7280' }}>Beobachten</strong> = Im Auge behalten, kein sofortiger Handlungsbedarf
+              </p>
+              <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
+                Jede Empfehlung zeigt den n&auml;chsten konkreten Schritt und welche Vertr&auml;ge betroffen sind.
+                Klicken Sie auf einen Vertrag um direkt zu den Details zu gelangen.
+              </p>
+              <button
+                onClick={() => setShowInfo(false)}
+                style={{
+                  position: 'absolute', top: 8, right: 8,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 14, color: '#9ca3af', padding: 2,
+                }}
+              >
+                &#10005;
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Summary bar */}
+      {(nowCount > 0 || planCount > 0) && (
+        <div style={{
+          display: 'flex', gap: 12, marginBottom: 14,
+          padding: '8px 12px', background: '#fafbfc', borderRadius: 8,
+          fontSize: 12, color: '#6b7280',
+        }}>
+          {nowCount > 0 && (
+            <span>{nowCount} Aktion{nowCount > 1 ? 'en' : ''} mit sofortigem Handlungsbedarf</span>
+          )}
+          {nowCount > 0 && planCount > 0 && <span>|</span>}
+          {planCount > 0 && (
+            <span>{planCount} Aktion{planCount > 1 ? 'en' : ''} zum Einplanen</span>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {displayActions.map(action => (
+          <ActionItem key={action.id} action={action} contractNames={contractNames} />
+        ))}
+        {hiddenCount > 0 && !showAll && (
+          <button
+            onClick={() => setShowAll(true)}
+            style={{
+              fontSize: 13, color: '#3b82f6', fontWeight: 600,
+              textAlign: 'center', padding: '10px 8px',
+              background: '#f8fafc', border: '1px solid #e2e8f0',
+              borderRadius: 8, cursor: 'pointer',
+              transition: 'background 0.15s ease',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
+          >
+            + {hiddenCount} weitere Aktion{hiddenCount > 1 ? 'en' : ''} anzeigen
+          </button>
+        )}
+        {showAll && sorted.length > 5 && (
+          <button
+            onClick={() => setShowAll(false)}
+            style={{
+              fontSize: 12, color: '#9ca3af', fontWeight: 500,
+              textAlign: 'center', padding: 6,
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
+          >
+            Weniger anzeigen
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════
 // Dashboard View — Portfolio Dashboard
 // ═══════════════════════════════════════════════════════════
 type DashboardFilter = 'all' | 'critical' | 'action_needed' | 'unanalyzed';
@@ -754,37 +914,11 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
       {/* Action Center */}
       {alertStats.openActions.length > 0 && (
-        <div ref={actionsRef} style={{
-          background: '#fff',
-          borderRadius: 20,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
-          padding: 24,
-          marginBottom: 24,
-        }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px' }}>
-            Handlungsbedarf
-            <span style={{ marginLeft: 10, fontSize: 12, color: '#64748b', fontWeight: 500 }}>
-              {alertStats.openActions.length} offen
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[...alertStats.openActions]
-              .sort((a, b) => {
-                const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
-                return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
-              })
-              .slice(0, 5)
-              .map(action => (
-                <ActionItem key={action.id} action={action} />
-              ))
-            }
-            {alertStats.openActions.length > 5 && (
-              <div style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: 8 }}>
-                + {alertStats.openActions.length - 5} weitere Aktionen
-              </div>
-            )}
-          </div>
-        </div>
+        <ActionCenter
+          actions={alertStats.openActions}
+          actionsRef={actionsRef}
+          contractNames={contractNames}
+        />
       )}
 
       {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}

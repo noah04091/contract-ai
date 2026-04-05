@@ -5,13 +5,14 @@ import type { PulseV2Action } from '../../types/pulseV2';
 interface ActionItemProps {
   action: PulseV2Action;
   contractId?: string;
+  contractNames?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed') => void;
 }
 
-const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string }> = {
-  now: { color: '#dc2626', bg: '#fef2f2', label: 'Sofort', icon: '\u26a1' },
-  plan: { color: '#d97706', bg: '#fffbeb', label: 'Planen', icon: '\ud83d\udcc5' },
-  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Beobachten', icon: '\ud83d\udc41\ufe0f' },
+const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
+  now: { color: '#dc2626', bg: '#fef2f2', label: 'Sofort', icon: '\u26a1', deadline: 'Innerhalb von 7 Tagen' },
+  plan: { color: '#d97706', bg: '#fffbeb', label: 'Planen', icon: '\ud83d\udcc5', deadline: 'Innerhalb von 30 Tagen' },
+  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Beobachten', icon: '\ud83d\udc41\ufe0f', deadline: 'Keine Frist' },
 };
 
 /**
@@ -27,14 +28,17 @@ function getImpactIcon(impact: string): string {
   return '\ud83d\udccc';
 }
 
-export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, onStatusChange }) => {
+export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, contractNames, onStatusChange }) => {
   const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
 
+  // Resolve the contract to link to: explicit contractId prop OR first related contract
+  const linkContractId = contractId || (action.relatedContracts && action.relatedContracts[0]) || null;
+
   // Check if action relates to a fixable clause (for deep link)
-  const hasOptimizeLink = contractId && !isDone && (
+  const hasOptimizeLink = linkContractId && !isDone && (
     action.priority === 'now' || action.priority === 'plan'
   );
 
@@ -62,7 +66,11 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, onSt
             }}>
               {priority.label}
             </span>
-            {/* Micro-Trust: always show confidence */}
+            {/* Deadline */}
+            <span style={{ fontSize: 11, color: action.priority === 'now' ? '#dc2626' : '#9ca3af', fontWeight: action.priority === 'now' ? 600 : 400 }}>
+              {priority.deadline}
+            </span>
+            {/* Confidence */}
             <span style={{ fontSize: 11, color: '#9ca3af' }}>
               {action.confidence}% Konfidenz
             </span>
@@ -113,12 +121,42 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, onSt
             </div>
           )}
 
+          {/* Related contracts — clickable links */}
+          {action.relatedContracts && action.relatedContracts.length > 0 && contractNames && !contractId && (
+            <div style={{
+              marginTop: 8,
+              display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
+            }}>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Betrifft:</span>
+              {action.relatedContracts.map((id) => {
+                const name = contractNames.get(id) || id;
+                return (
+                  <button
+                    key={id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/contracts?view=${id}`);
+                    }}
+                    style={{
+                      fontSize: 11, fontWeight: 500,
+                      color: '#3b82f6', background: '#eff6ff',
+                      border: '1px solid #bfdbfe', borderRadius: 4,
+                      padding: '2px 8px', cursor: 'pointer',
+                    }}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Deep Link: optimize this clause */}
           {hasOptimizeLink && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/optimize/${contractId}`);
+                navigate(`/contracts?view=${linkContractId}`);
               }}
               style={{
                 marginTop: 10,
@@ -135,7 +173,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, onSt
                 gap: 6,
               }}
             >
-              Klausel optimieren &#8594;
+              Vertrag ansehen &#8594;
             </button>
           )}
         </div>
