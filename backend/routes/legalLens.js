@@ -101,7 +101,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2934,8 +2934,13 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       let batchEnd = idealEnd;
       for (let j = idealEnd; j > batchStart + minBatchSize; j--) {
         if (rawBlocks[j].isStructuralStart) {
-          batchEnd = j;
-          break;
+          // Nur an MAJOR Sections trennen (§ N, Artikel N, "N. Titel") — NICHT an Sub-Punkten (8.7, 11.2)
+          const blockText = rawBlocks[j].text.trim();
+          const isMajorSection = /^(§\s*\d|Artikel\s*\d|Art\.\s*\d|\d+\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[A-Z]\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{2,}|[IVXLC]+\.\s+[A-ZÄÖÜ])/i.test(blockText);
+          if (isMajorSection) {
+            batchEnd = j;
+            break;
+          }
         }
       }
       batches.push(rawBlocks.slice(batchStart, batchEnd));
@@ -2994,13 +2999,17 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // Hilfsfunktion: Deduplizierung und Streaming
     const deduplicateAndStream = (validClauses, currentBatchIndex) => {
       const uniqueValidClauses = validClauses.filter(c => {
-        const normalized = (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
-        const hash = clauseParser.generateHash(normalized);
-        if (existingTextHashes.has(hash)) {
+        const fullNormalized = (c.text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        // Start-Hash (erste 600 Zeichen) — erkennt identische Anfänge
+        const startHash = clauseParser.generateHash(fullNormalized.substring(0, 600));
+        // End-Hash (letzte 200 Zeichen) — erkennt Containment-Duplikate (kurzer Text ⊂ langer Text)
+        const endHash = clauseParser.generateHash('END:' + fullNormalized.substring(Math.max(0, fullNormalized.length - 200)));
+        if (existingTextHashes.has(startHash) || existingTextHashes.has(endHash)) {
           console.log(`[Dedup] Cross-Batch Duplikat entfernt: "${(c.text || '').substring(0, 50)}..."`);
           return false;
         }
-        existingTextHashes.add(hash);
+        existingTextHashes.add(startHash);
+        existingTextHashes.add(endHash);
         return true;
       });
 

@@ -1795,6 +1795,16 @@ Antworte NUR mit einem JSON-Array:
         for (const orphan of orphanedBlocks) {
           // Nur wenn Block substantiellen Text hat (nicht nur Whitespace)
           if (orphan.text && orphan.text.trim().length > 10) {
+            // Garbage-Check: Spaced-out Artefakte nicht als Klauseln zurückholen
+            // (GPT hat sie zu Recht ignoriert — z.B. "A 3 6 ; S t a n d 1 2 - 2 5")
+            const orphanWords = orphan.text.trim().split(/\s+/);
+            if (orphanWords.length >= 5) {
+              const singleCharWords = orphanWords.filter(w => w.length === 1).length;
+              if (singleCharWords / orphanWords.length >= 0.5) {
+                log.debug(`🗑️ [Coverage] Garbage-Block übersprungen: "${orphan.text.substring(0, 50)}..."`);
+                continue;
+              }
+            }
             log.debug(`📥 [Coverage] Füge verwaisten Block hinzu: "${orphan.text.substring(0, 50)}..."`);
             clausesArray.push({
               id: `recovered_${orphan.id}`,
@@ -1820,12 +1830,16 @@ Antworte NUR mit einem JSON-Array:
       const seenTextHashes = new Set();
 
       for (const clause of clausesArray) {
-        const normalizedText = (clause.text || '')
-          .toLowerCase().replace(/\s+/g, ' ').trim().substring(0, 300);
-        const textHash = this.generateHash(normalizedText);
+        const fullNormalized = (clause.text || '')
+          .toLowerCase().replace(/\s+/g, ' ').trim();
+        // Start-Hash (erste 600 Zeichen) — erkennt identische Anfänge
+        const startHash = this.generateHash(fullNormalized.substring(0, 600));
+        // End-Hash (letzte 200 Zeichen) — erkennt Containment-Duplikate
+        const endHash = this.generateHash('END:' + fullNormalized.substring(Math.max(0, fullNormalized.length - 200)));
 
-        if (!seenTextHashes.has(textHash)) {
-          seenTextHashes.add(textHash);
+        if (!seenTextHashes.has(startHash) && !seenTextHashes.has(endHash)) {
+          seenTextHashes.add(startHash);
+          seenTextHashes.add(endHash);
           deduplicatedClauses.push(clause);
         } else {
           log.debug(`[Dedup] Duplikat entfernt: "${(clause.text || '').substring(0, 50)}..."`);
