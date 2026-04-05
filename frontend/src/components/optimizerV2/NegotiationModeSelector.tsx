@@ -29,10 +29,17 @@ export default function NegotiationModeSelector({ activeMode, onModeChange, comp
         const config = MODE_LABELS[mode];
         const isActive = activeMode === mode;
 
+        const activeStyle = isActive ? {
+          borderColor: config.color,
+          boxShadow: `0 0 0 1px ${config.color}, 0 2px 12px ${config.color}20`,
+          background: `${config.color}06`
+        } : undefined;
+
         return (
           <button
             key={mode}
             className={`${styles.modeButton} ${isActive ? styles.modeButtonActive : ''}`}
+            style={activeStyle}
             onClick={() => onModeChange(mode)}
             title={MODE_TOOLTIPS[mode]}
           >
@@ -40,7 +47,7 @@ export default function NegotiationModeSelector({ activeMode, onModeChange, comp
               className={styles.modeIconDot}
               style={isActive ? { background: config.color, color: 'white' } : undefined}
             >
-              <Icon size={compact ? 12 : 13} />
+              <Icon size={compact ? 13 : 14} />
             </span>
             <span className={styles.modeLabel} style={isActive ? { color: config.color } : undefined}>
               {config.label}
