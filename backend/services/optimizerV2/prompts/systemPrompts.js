@@ -604,6 +604,76 @@ DEINE ROLLE:
 - Wenn du eine neue Version der Klausel erstellst, markiere sie mit dem Tag [NEUE_VERSION].
 - Halte deine Antworten fokussiert auf diese eine Klausel.`;
 
+// ============================================================
+// STAGE 5b: Executive Summary
+// ============================================================
+const EXECUTIVE_SUMMARY_PROMPT = (context) =>
+`Du bist ein erfahrener Unternehmensberater, der Vertragsanalysen für Entscheider zusammenfasst.
+
+VERTRAGSKONTEXT:
+- Dokumenttyp: ${context.contractTypeLabel} (${context.documentCategory === 'regulatory_document' ? 'Regulatorisches Dokument' : 'Vertrag'})
+- Branche: ${context.industry}
+- Parteien: ${context.partiesText}
+- Gesamtscore: ${context.scores.overall}/100
+- Risiko: ${context.scores.risk}/100 | Fairness: ${context.scores.fairness}/100 | Klarheit: ${context.scores.clarity}/100 | Vollständigkeit: ${context.scores.completeness}/100
+
+TOP-RISIKEN:
+${context.topRisksText}
+
+FEHLENDE REGELUNGEN:
+${context.missingClausesText}
+
+MACHTVERTEILUNG:
+${context.powerBalanceSummary}
+
+DEINE AUFGABE — Erstelle zwei Felder:
+
+1. "verdict": Ein Executive-Fazit in 1-2 Sätzen.
+   REGELN:
+   - Sprich den Leser direkt an ("Dieser Vertrag...", "Das Dokument...")
+   - Passe die Sprache an den DOKUMENTTYP an:
+     * Bei Verträgen: "Vor Unterzeichnung..." / "Verhandlungsbedarf bei..."
+     * Bei regulatorischen Dokumenten: "Compliance-Status:" / "Datenschutzrechtlich..." / "Informationspflichten..."
+   - Nenne den KONKRETEN Hauptgrund für deine Einschätzung (nicht generisch)
+   - Beziehe den Gesamtscore mit ein
+
+2. "negotiationPriorities": Array von maximal 3 Verhandlungsprioritäten.
+   Jede Priorität hat:
+   - "priority": 1, 2 oder 3
+   - "clauseTitle": Titel der betroffenen Klausel
+   - "action": KONKRETER Verhandlungspunkt in einem Satz (was GENAU fordern/ändern?)
+   - "businessImpact": Warum ist das geschäftsrelevant? (1 Satz, Business-Sprache)
+   Bei regulatorischen Dokumenten: Statt Verhandlung "Compliance-Maßnahmen" — was muss ergänzt/geändert werden?
+   Wenn keine Risiken vorliegen, gib ein leeres Array zurück.
+
+VERBOTEN:
+- Juristen-Deutsch ("salvatorische Klausel", "AGB-Kontrolle")
+- Generische Phrasen ("sollte geprüft werden", "ist zu empfehlen")
+- Erwähnung interner Scores oder Berechnungsmethodik`;
+
+const EXECUTIVE_SUMMARY_SCHEMA = {
+  type: 'object',
+  properties: {
+    verdict: { type: 'string' },
+    negotiationPriorities: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          priority: { type: 'number' },
+          clauseTitle: { type: 'string' },
+          action: { type: 'string' },
+          businessImpact: { type: 'string' }
+        },
+        required: ['priority', 'clauseTitle', 'action', 'businessImpact'],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ['verdict', 'negotiationPriorities'],
+  additionalProperties: false
+};
+
 module.exports = {
   STRUCTURE_RECOGNITION_PROMPT,
   STRUCTURE_RECOGNITION_SCHEMA,
@@ -614,5 +684,7 @@ module.exports = {
   OPTIMIZATION_GENERATION_PROMPT,
   OPTIMIZATION_GENERATION_SCHEMA,
   REGULATORY_OPTIMIZATION_PROMPT,
-  CLAUSE_CHAT_PROMPT
+  CLAUSE_CHAT_PROMPT,
+  EXECUTIVE_SUMMARY_PROMPT,
+  EXECUTIVE_SUMMARY_SCHEMA
 };

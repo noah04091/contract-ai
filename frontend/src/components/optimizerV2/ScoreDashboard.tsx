@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from 'react';
 import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, HelpCircle } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
+import ExecutiveSummary from './ExecutiveSummary';
 import { apiCall } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -89,6 +90,11 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
 
   return (
     <div className={styles.scoreDashboard}>
+      {/* Executive Summary */}
+      {result.summary && (
+        <ExecutiveSummary summary={result.summary} onNavigate={onNavigate} />
+      )}
+
       {/* Contract Summary Panel */}
       <div className={styles.summaryPanel}>
         <div className={styles.summaryLeft}>

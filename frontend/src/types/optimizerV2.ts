@@ -48,6 +48,7 @@ export interface ContractStructure {
   contractType: string;
   contractTypeLabel: string;
   contractTypeConfidence: number;
+  documentCategory?: 'bilateral_contract' | 'regulatory_document';
   jurisdiction: string | null;
   language: string;
   isAmendment: boolean;
@@ -229,6 +230,43 @@ export interface ProgressEvent {
 }
 
 // ── Full Analysis Result ──
+// ── Executive Summary (Stage 5b) ──
+export interface SummaryTopRisk {
+  clauseId: string;
+  clauseTitle: string;
+  category: string;
+  riskLevel: number;
+  businessImpact: string;
+  concern: string;
+}
+
+export interface SummaryCriticalGap {
+  category: string;
+  categoryLabel: string;
+  severity: string;
+  recommendation: string;
+}
+
+export interface NegotiationPriority {
+  priority: number;
+  clauseTitle: string;
+  action: string;
+  businessImpact: string;
+  clauseId?: string;
+}
+
+export interface ExecutiveSummary {
+  trafficLight: 'green' | 'yellow' | 'red';
+  trafficLightLabel: string;
+  verdict: string;
+  topRisks: SummaryTopRisk[];
+  fairnessVerdict: string;
+  criticalGaps: SummaryCriticalGap[];
+  negotiationPriorities: NegotiationPriority[];
+  generatedAt: string;
+  gptFallback: boolean;
+}
+
 export interface AnalysisResult {
   resultId: string;
   requestId: string;
@@ -237,6 +275,7 @@ export interface AnalysisResult {
   clauseAnalyses: ClauseAnalysis[];
   optimizations: ClauseOptimization[];
   scores: Scores;
+  summary?: ExecutiveSummary;
   costs: Costs;
   performance: {
     totalDurationMs: number;

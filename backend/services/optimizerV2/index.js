@@ -20,6 +20,7 @@ const { normalizePdfText } = require('./utils/clauseSplitter');
 const { runClauseAnalysis } = require('./stages/03-clauseAnalysis');
 const { runOptimizationGeneration } = require('./stages/04-optimizationGeneration');
 const { runScoreCalculation } = require('./stages/05-scoreCalculation');
+const { runExecutiveSummary } = require('./stages/05b-executiveSummary');
 
 let openaiInstance = null;
 function getOpenAI() {
@@ -161,6 +162,18 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
 
     const stage5 = runScoreCalculation(stage2.result, stage3.result, stage4.result, stage1.result, onProgress);
 
+    // ═══════════════════════════════════════════════
+    // STAGE 5b: Executive Summary
+    // ═══════════════════════════════════════════════
+    onProgress(91, 'Executive Summary wird erstellt...', { stage: 5, stageName: 'Summary' });
+
+    const stage5b = await runExecutiveSummary(
+      openai, stage1.result, stage2.result, stage3.result, stage4.result, stage5.result, onProgress
+    );
+    if (stage5b.usage) {
+      costs.push({ stage: 5.5, stageName: 'Executive Summary', ...stage5b.usage, durationMs: 0 });
+    }
+
     // Calculate total costs
     const totalCosts = {
       totalTokensInput: costs.reduce((sum, c) => sum + (c.inputTokens || 0), 0),
@@ -175,6 +188,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
       {
         $set: {
           scores: stage5.result,
+          summary: stage5b.result,
           costs: totalCosts,
           status: 'completed',
           currentStage: 5,
@@ -193,6 +207,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
       clauseAnalyses: stage3.result,
       optimizations: stage4.result,
       scores: stage5.result,
+      summary: stage5b.result,
       costs: totalCosts,
       performance: {
         totalDurationMs,
@@ -287,6 +302,11 @@ async function resumePipeline(resultId, onProgress) {
 
     const stage5 = runScoreCalculation(clauses, clauseAnalyses, optimizations, structure, onProgress);
 
+    const stage5b = await runExecutiveSummary(openai, structure, clauses, clauseAnalyses, optimizations, stage5.result, onProgress);
+    if (stage5b.usage) {
+      costs.push({ stage: 5.5, stageName: 'Executive Summary', ...stage5b.usage, durationMs: 0 });
+    }
+
     const totalCosts = {
       totalTokensInput: costs.reduce((sum, c) => sum + (c.inputTokens || 0), 0),
       totalTokensOutput: costs.reduce((sum, c) => sum + (c.outputTokens || 0), 0),
@@ -295,7 +315,7 @@ async function resumePipeline(resultId, onProgress) {
     };
 
     await OptimizerV2Result.updateOne({ _id: record._id }, {
-      $set: { scores: stage5.result, costs: totalCosts, status: 'completed', completedAt: new Date() }
+      $set: { scores: stage5.result, summary: stage5b.result, costs: totalCosts, status: 'completed', completedAt: new Date() }
     });
 
     return {
