@@ -740,7 +740,7 @@ export function downloadPdfBlob(blob: Blob, filename: string): void {
 export interface StreamingParseCallbacks {
   onStatus?: (message: string, progress: number) => void;
   onClausesBatch?: (clauses: ParsedClause[], totalSoFar: number) => void;
-  onComplete?: (totalClauses: number, riskSummary: { high: number; medium: number; low: number }) => void;
+  onComplete?: (totalClauses: number, riskSummary?: { high: number; medium: number; low: number }) => void;
   onError?: (error: string) => void;
   /** Phase 5: Callback bei Verbindungsverlust */
   onConnectionLost?: (info: {
