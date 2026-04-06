@@ -67,8 +67,9 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
 
   const handleAccept = (version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', text?: string) => {
     onAcceptVersion(clauseId, version, text);
-    const label = version === 'custom' ? 'Eigener Text' : MODE_LABELS[version as OptimizationMode] || version;
-    addToast(`"${label}" wurde übernommen`, 'success');
+    const modeConfig = MODE_LABELS[version as OptimizationMode];
+    const label = version === 'custom' ? 'Eigener Text' : version === 'original' ? 'Original' : modeConfig?.label || version;
+    addToast(`„${label}"-Version übernommen — wird beim Export verwendet`, 'success');
   };
 
   const isCustomTab = selectedTab === 'custom';

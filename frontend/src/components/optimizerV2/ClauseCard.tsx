@@ -30,11 +30,12 @@ interface Props {
   onAcceptVersion: (clauseId: string, version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', customText?: string) => void;
   chatMessages: ChatMessage[];
   onSendChat: (clauseId: string, message: string) => Promise<unknown>;
+  acceptedVersion?: string;
 }
 
 export default function ClauseCard({
   clause, analysis, optimization, score, activeMode,
-  isSelected, onSelect, onAcceptVersion, chatMessages, onSendChat
+  isSelected, onSelect, onAcceptVersion, chatMessages, onSendChat, acceptedVersion
 }: Props) {
   const [showChat, setShowChat] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -116,6 +117,12 @@ export default function ClauseCard({
                 : <CheckCircle size={12} />
               }
               {strengthConfig.label}
+            </span>
+          )}
+          {acceptedVersion && acceptedVersion !== 'original' && (
+            <span className={styles.acceptedBadge} title="Version übernommen — wird beim Export verwendet">
+              <CheckCircle size={12} />
+              Übernommen
             </span>
           )}
           {score && (
