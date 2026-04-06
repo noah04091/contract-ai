@@ -373,6 +373,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
             },
+            onClausesMerged: (mergedClauses, totalClauses) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              console.log(`[Legal Lens] §-Merge: ${totalClauses} finale Klauseln`);
+              setClauses(mergedClauses); // REPLACE, nicht append
+              setStreamingStatus(`${totalClauses} Klauseln (zusammengeführt)`);
+            },
             onComplete: (totalClauses) => {
               if (parseRequestIdRef.current !== requestId) return;
               console.log(`[Legal Lens] Streaming complete: ${totalClauses} Klauseln`);
@@ -451,6 +457,12 @@ export function useLegalLens(initialContractId?: string): UseLegalLensReturn {
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
+            },
+            onClausesMerged: (mergedClauses, totalClauses) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              console.log(`[Legal Lens] §-Merge: ${totalClauses} finale Klauseln`);
+              setClauses(mergedClauses);
+              setStreamingStatus(`${totalClauses} Klauseln (zusammengeführt)`);
             },
             onComplete: (totalClauses) => {
               if (parseRequestIdRef.current !== requestId) return;

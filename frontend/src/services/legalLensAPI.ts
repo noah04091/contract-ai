@@ -740,6 +740,8 @@ export function downloadPdfBlob(blob: Blob, filename: string): void {
 export interface StreamingParseCallbacks {
   onStatus?: (message: string, progress: number) => void;
   onClausesBatch?: (clauses: ParsedClause[], totalSoFar: number) => void;
+  /** Wird aufgerufen wenn Post-Processing Klauseln mit gleicher § Nummer zusammenführt — ERSETZT alle bisherigen Klauseln */
+  onClausesMerged?: (clauses: ParsedClause[], totalClauses: number) => void;
   onComplete?: (totalClauses: number, riskSummary?: { high: number; medium: number; low: number }) => void;
   onError?: (error: string) => void;
   /** Phase 5: Callback bei Verbindungsverlust */
@@ -851,6 +853,12 @@ export function parseContractStreaming(
                     // Alle Klauseln auf einmal (cached)
                     clausesReceived = data.totalClauses || clausesReceived;
                     callbacks.onClausesBatch?.(data.clauses, data.totalClauses);
+                    break;
+                  case 'clauses_merged':
+                    // Post-Processing hat Klauseln mit gleicher § Nummer zusammengeführt → REPLACE
+                    clausesReceived = data.totalClauses || clausesReceived;
+                    console.log(`[Legal Lens] §-Merge: ${data.mergedCount} Klauseln zusammengeführt → ${data.totalClauses}`);
+                    callbacks.onClausesMerged?.(data.clauses, data.totalClauses);
                     break;
                   case 'complete':
                     isComplete = true;

@@ -101,7 +101,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 12;
+const CACHE_VERSION = 13;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -3164,6 +3164,24 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       if (newCoveragePercent > textCoveragePercent) {
         console.log(`[Recovery] Coverage verbessert: ${textCoveragePercent}% → ${newCoveragePercent}%`);
       }
+    }
+
+    // Post-Processing: Klauseln mit gleicher § Hauptnummer zusammenführen
+    // Löst das Problem, dass Batch-Grenzen oder GPT einen langen § in mehrere Klauseln splitten
+    const beforeMergeCount = allClauses.length;
+    allClauses = clauseParser.mergeClausesBySectionNumber(allClauses);
+    if (allClauses.length < beforeMergeCount) {
+      // IDs neu vergeben nach Merge
+      allClauses = allClauses.map((clause, idx) => ({
+        ...clause,
+        id: clause.id || `clause_merged_${idx + 1}`
+      }));
+      // Merged Klauseln an Frontend senden — REPLACE statt APPEND
+      sendEvent('clauses_merged', {
+        clauses: allClauses,
+        totalClauses: allClauses.length,
+        mergedCount: beforeMergeCount - allClauses.length
+      });
     }
 
     // Recalculate final coverage (may have changed after recovery)

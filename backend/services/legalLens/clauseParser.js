@@ -306,6 +306,15 @@ class ClauseParser {
     // 4. Nummer-Artefakte: "1 .1" → "1.1", "8 .2" → "8.2"
     processed = processed.replace(/(\d)\s+\.(\d)/g, '$1.$2');
 
+    // 5. Multi-Column Zahlen-Artefakte: "2 5 %" → "25%", "7 0 %" → "70%"
+    processed = processed.replace(/(\d)\s+(\d+)\s*%/g, '$1$2%');
+
+    // 6. Fehlender Space nach Unterpunkt-Nummer: "2.2D ie" → "2.2 Die", "3.3Soweit" → "3.3 Soweit"
+    processed = processed.replace(/(\d+\.\d+)([A-ZÄÖÜ])/g, '$1 $2');
+
+    // 7. Gebrochene §-Verweise: "§ 1 8 AktG" → "§ 18 AktG" (nur 2-stellig)
+    processed = processed.replace(/§\s*(\d)\s+(\d)(?=\s)/g, '§ $1$2');
+
     // Mehrfache Leerzeichen zu einem zusammenfassen
     processed = processed.replace(/ {2,}/g, ' ');
 
@@ -1865,6 +1874,145 @@ Antworte NUR mit einem JSON-Array:
         confidence: 0.3
       }));
     }
+  }
+  /**
+   * Post-Processing: Klauseln mit gleicher § Hauptnummer zusammenführen.
+   * Löst das Problem, dass GPT oder Batch-Grenzen einen langen § (z.B. § 8 mit 8.1-8.11)
+   * in mehrere separate Klauseln aufteilen.
+   *
+   * Regeln:
+   * - NUR aufeinanderfolgende Klauseln mit gleicher Major-Nummer werden gemerged
+   * - Klauseln ohne erkennbare Nummer bleiben unverändert
+   * - Risiko-Level wird auf das höchste der Gruppe gesetzt
+   */
+  mergeClausesBySectionNumber(clauses) {
+    if (!clauses || clauses.length <= 1) return clauses;
+
+    const log = this.log || { debug: () => {}, info: () => {} };
+
+    /**
+     * Extrahiert die Haupt-§-Nummer aus einer Klausel.
+     * "§ 8" → 8, "8.7" → 8, "Artikel 3" → 3, "A. Allgemeines" mit "1. Geltungsbereich" im Text → 1
+     */
+    const extractMajorNumber = (clause) => {
+      const num = clause.number || '';
+      const title = clause.title || '';
+      const textStart = (clause.text || '').substring(0, 150);
+      const combined = `${num} ${title} ${textStart}`;
+
+      // § N (höchste Priorität)
+      let match = combined.match(/§\s*(\d+)/);
+      if (match) return parseInt(match[1]);
+
+      // Artikel N
+      match = combined.match(/Artikel\s*(\d+)/i);
+      if (match) return parseInt(match[1]);
+
+      // Nummer-Feld: "8" oder "8.7" → major=8
+      match = num.match(/^(\d+)/);
+      if (match) return parseInt(match[1]);
+
+      // Titel: "8. Besondere Bedingungen"
+      match = title.match(/^(\d+)\.\s/);
+      if (match) return parseInt(match[1]);
+
+      // Text-Anfang: "1. Geltungsbereich" oder "1.1 Diese allgemeinen..."
+      match = textStart.match(/^(\d+)\.\s/);
+      if (match) return parseInt(match[1]);
+
+      return null;
+    };
+
+    // Schritt 1: Major-Nummern zuweisen
+    const annotated = clauses.map(c => ({
+      clause: c,
+      major: extractMajorNumber(c)
+    }));
+
+    // Schritt 2: Aufeinanderfolgende Klauseln mit gleicher Major-Nummer gruppieren
+    const groups = [];
+    let currentGroup = [annotated[0]];
+
+    for (let i = 1; i < annotated.length; i++) {
+      const prev = currentGroup[currentGroup.length - 1];
+      const curr = annotated[i];
+
+      // Gleiche Major-Nummer UND beide haben eine Nummer → zur Gruppe
+      if (curr.major !== null && prev.major !== null && curr.major === prev.major) {
+        currentGroup.push(curr);
+      } else {
+        groups.push(currentGroup);
+        currentGroup = [curr];
+      }
+    }
+    groups.push(currentGroup);
+
+    // Schritt 3: Gruppen mit >1 Klausel zusammenführen
+    const riskPriority = { high: 3, medium: 2, low: 1, none: 0 };
+    const merged = [];
+
+    for (const group of groups) {
+      if (group.length === 1) {
+        merged.push(group[0].clause);
+        continue;
+      }
+
+      // Merge: Texte zusammenführen, höchstes Risiko nehmen
+      const first = group[0].clause;
+      const allTexts = group.map(g => g.clause.text).filter(Boolean);
+
+      // Bester Titel: Erster mit § oder aus Text extrahieren
+      let bestTitle = first.title;
+      for (const g of group) {
+        const t = g.clause.title || '';
+        if (/^(§\s*\d|\d+\.\s+[A-ZÄÖÜ])/.test(t)) {
+          bestTitle = t;
+          break;
+        }
+      }
+      // Fallback: Titel aus Text extrahieren wenn nur Sektions-Header
+      if (bestTitle && /^[A-F]\.\s/i.test(bestTitle)) {
+        const textMatch = allTexts[0]?.match(/^(?:§\s*)?(\d+\.?\s+[A-ZÄÖÜ][^\n]{3,60})/m);
+        if (textMatch) bestTitle = textMatch[1];
+      }
+
+      // Höchstes Risiko der Gruppe
+      let maxRisk = 'none';
+      let maxScore = 0;
+      const allKeywords = new Set();
+      for (const g of group) {
+        const c = g.clause;
+        if ((riskPriority[c.riskLevel] || 0) > (riskPriority[maxRisk] || 0)) {
+          maxRisk = c.riskLevel;
+        }
+        if ((c.riskScore || 0) > maxScore) maxScore = c.riskScore;
+        (c.riskKeywords || []).forEach(k => allKeywords.add(k));
+      }
+
+      const mergedClause = {
+        ...first,
+        title: bestTitle,
+        text: allTexts.join('\n\n'),
+        riskLevel: maxRisk,
+        riskScore: maxScore,
+        riskKeywords: Array.from(allKeywords),
+        riskIndicators: {
+          level: maxRisk,
+          keywords: Array.from(allKeywords),
+          score: maxScore
+        },
+        _mergedFrom: group.length // Debug-Info
+      };
+
+      log.debug(`[Merge] §${group[0].major}: ${group.length} Klauseln → 1 (Risiko: ${maxRisk})`);
+      merged.push(mergedClause);
+    }
+
+    if (merged.length < clauses.length) {
+      console.log(`🔗 [Merge] ${clauses.length} Klauseln → ${merged.length} (${clauses.length - merged.length} zusammengeführt)`);
+    }
+
+    return merged;
   }
 }
 
