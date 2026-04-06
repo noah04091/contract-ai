@@ -665,9 +665,9 @@ DEINE AUFGABE — Für JEDEN der ${sections.length} Abschnitte oben:
    Keys auf Deutsch mit Bindestrichen. Values mit Zahl + Einheit.
 
 Zusätzlich extrahiere:
-- parties[]: Alle Personen/Firmen mit Rolle
+- parties[]: ALLE genannten Personen/Firmen mit Rolle. Bei Rechnungen: "Rechnungssteller"/"Rechnungsempfänger". Bei Angeboten: "Anbieter"/"Empfänger". Bei Verträgen: "Auftraggeber"/"Auftragnehmer". NIEMALS leer lassen wenn Namen im Dokument stehen!
 - subject: Worum geht es
-- contractType: Dokumenttyp
+- contractType: Der erkannte Dokumenttyp (z.B. "Rechnung", "Dienstleistungsvertrag", "Angebot", "AGB")
 - metadata: duration, startDate, governingLaw, jurisdiction, language
 
 Antworte NUR mit validem JSON:
@@ -874,6 +874,9 @@ async function structureContract(contractText) {
     assignValuesToClauses(rawValues, validated.clauses, contractText);
     validated._rawValues = rawValues;
   }
+
+  // V3.1: Sicherheitsnetz — wenn parties[] top-level vorhanden aber keine Klausel mit area='parties'
+  ensurePartiesClause(validated);
 
   // Maßnahme A.2: Qualitätsprüfung — warnt bei suspekt dünner Extraktion
   const qualityIssues = checkExtractionQuality(validated);
@@ -1453,6 +1456,41 @@ function validatePhaseAResponse(raw) {
   };
 
   return result;
+}
+
+/**
+ * V3.1: Sicherheitsnetz für Parties-Extraktion.
+ * Wenn GPT parties[] top-level füllt aber KEINE Klausel mit area='parties' erstellt,
+ * synthetisieren wir eine Klausel aus den top-level Daten.
+ * Betrifft vor allem den Section-Prompt-Pfad (buildPhaseAPromptWithSections),
+ * wo GPT parties als Metadaten sieht statt als eigene Klausel.
+ */
+function ensurePartiesClause(phaseAResult) {
+  const clauses = phaseAResult.clauses || [];
+  const hasPartiesClause = clauses.some(c => c.area === 'parties');
+  if (hasPartiesClause) return; // Klausel existiert bereits — nichts zu tun
+
+  const parties = phaseAResult.parties || [];
+  if (parties.length === 0) return; // Keine Daten vorhanden — nichts zu reparieren
+
+  // Synthetisiere eine Parties-Klausel aus den top-level parties
+  const keyValues = {};
+  for (const p of parties) {
+    if (p.role && p.name) keyValues[p.role] = p.name;
+  }
+
+  const synthesized = {
+    id: 'parties_0',
+    area: 'parties',
+    section: 'Parteien',
+    title: 'Beteiligte Parteien',
+    originalText: parties.map(p => `${p.role || 'Partei'}: ${p.name || 'Unbekannt'}`).join('\n'),
+    summary: parties.map(p => `${p.role || 'Partei'}: ${p.name || 'Unbekannt'}`).join(', '),
+    keyValues,
+  };
+
+  phaseAResult.clauses.unshift(synthesized);
+  console.log(`🔧 Parties-Repair: Klausel aus ${parties.length} top-level Parteien synthetisiert`);
 }
 
 /**
