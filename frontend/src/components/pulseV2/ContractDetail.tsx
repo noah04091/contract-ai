@@ -24,6 +24,7 @@ interface ContractDetailProps {
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
+  const [showActionHistory, setShowActionHistory] = useState(false);
 
   // Build contract name map for portfolio insights
   const [contractNames, setContractNames] = useState<Map<string, string>>(new Map());
@@ -291,9 +292,13 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
 
       {/* ═══ Handlungsbedarf (Actions) — the CORE section ═══ */}
       {actions.length > 0 && (() => {
-        const doneCount = actions.filter(a => a.status === 'done').length;
+        const openActions = actions.filter(a => a.status === 'open');
+        const doneActions = actions.filter(a => a.status === 'done');
+        const dismissedActions = actions.filter(a => a.status === 'dismissed');
+        const doneCount = doneActions.length;
         const totalCount = actions.length;
         const progressPct = Math.round((doneCount / totalCount) * 100);
+        const historyActions = [...doneActions, ...dismissedActions];
 
         return (
           <div style={{
@@ -307,7 +312,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               <div style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
                 Handlungsbedarf
                 <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>
-                  {actions.filter(a => a.status === 'open').length} offen
+                  {openActions.length} offen
                 </span>
               </div>
               {doneCount > 0 && (
@@ -346,7 +351,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               }}>
                 <div style={{ fontSize: 24, marginBottom: 4 }}>&#127881;</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#15803d' }}>
-                  Alle Maßnahmen erledigt
+                  Alle Ma&szlig;nahmen erledigt
                 </div>
                 <div style={{ fontSize: 13, color: '#16a34a', marginTop: 2 }}>
                   Starten Sie eine neue Analyse, um den verbesserten Score zu sehen.
@@ -354,21 +359,71 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[...actions]
-                .sort((a, b) => {
-                  const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
-                  return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
-                })
-                .map(action => (
-                <ActionItem
-                  key={action.id}
-                  action={action}
-                  contractId={result.contractId}
-                  onStatusChange={handleActionStatusChange}
-                />
-              ))}
-            </div>
+            {/* Active (open) actions */}
+            {openActions.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[...openActions]
+                  .sort((a, b) => {
+                    const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
+                    return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+                  })
+                  .map(action => (
+                  <ActionItem
+                    key={action.id}
+                    action={action}
+                    contractId={result.contractId}
+                    onStatusChange={handleActionStatusChange}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Historie — done + dismissed actions, collapsible */}
+            {historyActions.length > 0 && (
+              <div style={{ marginTop: openActions.length > 0 ? 16 : 0 }}>
+                <button
+                  onClick={() => setShowActionHistory(!showActionHistory)}
+                  style={{
+                    width: '100%',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 14px',
+                    background: '#f9fafb', border: '1px solid #e5e7eb',
+                    borderRadius: 8, cursor: 'pointer',
+                    fontSize: 13, fontWeight: 600, color: '#6b7280',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 12,
+                    transform: showActionHistory ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.15s ease',
+                  }}>
+                    &#x203A;
+                  </span>
+                  Historie
+                  {doneActions.length > 0 && (
+                    <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 500 }}>
+                      {doneActions.length} erledigt
+                    </span>
+                  )}
+                  {dismissedActions.length > 0 && (
+                    <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
+                      {dismissedActions.length} ausgeblendet
+                    </span>
+                  )}
+                </button>
+                {showActionHistory && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                    {historyActions.map(action => (
+                      <ActionItem
+                        key={`hist_${action.id}`}
+                        action={action}
+                        contractId={result.contractId}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       })()}

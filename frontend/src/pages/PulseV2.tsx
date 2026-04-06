@@ -351,6 +351,7 @@ const ActionCenter: React.FC<{
 }> = ({ actions, actionsRef, contractNames, onStatusChange }) => {
   const [showAll, setShowAll] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -364,15 +365,21 @@ const ActionCenter: React.FC<{
     return () => document.removeEventListener('mousedown', handler);
   }, [showInfo]);
 
-  const sorted = [...actions].sort((a, b) => {
+  // Split actions by status
+  const openActions = actions.filter(a => a.status === 'open');
+  const doneActions = actions.filter(a => a.status === 'done');
+  const dismissedActions = actions.filter(a => a.status === 'dismissed');
+  const historyCount = doneActions.length + dismissedActions.length;
+
+  const sorted = [...openActions].sort((a, b) => {
     const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
     return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
   });
 
   const displayActions = showAll ? sorted : sorted.slice(0, 5);
   const hiddenCount = sorted.length - 5;
-  const nowCount = actions.filter(a => a.priority === 'now').length;
-  const planCount = actions.filter(a => a.priority === 'plan').length;
+  const nowCount = openActions.filter(a => a.priority === 'now').length;
+  const planCount = openActions.filter(a => a.priority === 'plan').length;
 
   return (
     <div ref={actionsRef} style={{
@@ -385,7 +392,7 @@ const ActionCenter: React.FC<{
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px' }}>
         Handlungsbedarf
         <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
-          {actions.length} offen
+          {openActions.length} offen
         </span>
         {nowCount > 0 && (
           <span style={{ fontSize: 11, fontWeight: 600, color: '#dc2626', background: '#fef2f2', padding: '2px 8px', borderRadius: 10 }}>
@@ -463,43 +470,104 @@ const ActionCenter: React.FC<{
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {displayActions.map(action => (
-          <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={onStatusChange} />
-        ))}
-        {hiddenCount > 0 && !showAll && (
-          <div style={{ textAlign: 'center', paddingTop: 4 }}>
-            <button
-              onClick={() => setShowAll(true)}
-              style={{
-                fontSize: 12, color: '#3b82f6', fontWeight: 600,
-                padding: '6px 20px',
-                background: '#f8fafc', border: '1px solid #e2e8f0',
-                borderRadius: 20, cursor: 'pointer',
-                transition: 'background 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
-            >
-              + {hiddenCount} weitere anzeigen
-            </button>
+      {/* Open actions */}
+      {openActions.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {displayActions.map(action => (
+            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={onStatusChange} />
+          ))}
+          {hiddenCount > 0 && !showAll && (
+            <div style={{ textAlign: 'center', paddingTop: 4 }}>
+              <button
+                onClick={() => setShowAll(true)}
+                style={{
+                  fontSize: 12, color: '#3b82f6', fontWeight: 600,
+                  padding: '6px 20px',
+                  background: '#f8fafc', border: '1px solid #e2e8f0',
+                  borderRadius: 20, cursor: 'pointer',
+                  transition: 'background 0.15s ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
+              >
+                + {hiddenCount} weitere anzeigen
+              </button>
+            </div>
+          )}
+          {showAll && sorted.length > 5 && (
+            <div style={{ textAlign: 'center', paddingTop: 2 }}>
+              <button
+                onClick={() => setShowAll(false)}
+                style={{
+                  fontSize: 11, color: '#9ca3af', fontWeight: 500,
+                  padding: '4px 16px',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                }}
+              >
+                Weniger anzeigen
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          padding: '16px 20px',
+          background: '#f0fdf4',
+          border: '1px solid #bbf7d0',
+          borderRadius: 10,
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#15803d' }}>
+            Alle Ma&szlig;nahmen erledigt
           </div>
-        )}
-        {showAll && sorted.length > 5 && (
-          <div style={{ textAlign: 'center', paddingTop: 2 }}>
-            <button
-              onClick={() => setShowAll(false)}
-              style={{
-                fontSize: 11, color: '#9ca3af', fontWeight: 500,
-                padding: '4px 16px',
-                background: 'none', border: 'none', cursor: 'pointer',
-              }}
-            >
-              Weniger anzeigen
-            </button>
+          <div style={{ fontSize: 13, color: '#16a34a', marginTop: 2 }}>
+            Keine offenen Handlungsempfehlungen vorhanden.
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Historie — collapsible section for done + dismissed actions */}
+      {historyCount > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            style={{
+              width: '100%',
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 14px',
+              background: '#f9fafb', border: '1px solid #e5e7eb',
+              borderRadius: 8, cursor: 'pointer',
+              fontSize: 13, fontWeight: 600, color: '#6b7280',
+            }}
+          >
+            <span style={{
+              fontSize: 12,
+              transform: showHistory ? 'rotate(90deg)' : 'rotate(0deg)',
+              transition: 'transform 0.15s ease',
+            }}>
+              &#x203A;
+            </span>
+            Historie
+            {doneActions.length > 0 && (
+              <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 500 }}>
+                {doneActions.length} erledigt
+              </span>
+            )}
+            {dismissedActions.length > 0 && (
+              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
+                {dismissedActions.length} ausgeblendet
+              </span>
+            )}
+          </button>
+          {showHistory && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+              {[...doneActions, ...dismissedActions].map(action => (
+                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -950,9 +1018,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       )}
 
       {/* Action Center */}
-      {alertStats.openActions.length > 0 && (
+      {actions.length > 0 && (
         <ActionCenter
-          actions={alertStats.openActions}
+          actions={actions}
           actionsRef={actionsRef}
           contractNames={contractNames}
           onStatusChange={handleActionStatusChange}
