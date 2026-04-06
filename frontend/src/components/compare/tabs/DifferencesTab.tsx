@@ -188,7 +188,7 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
               {/* Header */}
               <div className={styles.diffItemHeader}>
                 <div className={styles.diffSectionInfo}>
-                  <span className={styles.categoryBadge}>{diff.category}</span>
+                  <span className={styles.categoryBadge}>{CLAUSE_AREA_LABELS[diff.category as ClauseArea] || diff.category}</span>
                   {v2Diff && (
                     <span
                       className={styles.semanticBadge}
