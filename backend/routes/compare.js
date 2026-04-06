@@ -65,38 +65,7 @@ async function ensureDb() {
 }
 ensureDb().catch(err => console.error("❌ MongoDB-Fehler (compare):", err));
 
-// ✅ FIXED: Inline saveContract function (replaces external dependency)
-const saveContract = async (contractData) => {
-  try {
-    const contractDoc = {
-      userId: new ObjectId(contractData.userId),
-      fileName: contractData.fileName,
-      originalName: contractData.fileName,
-      toolUsed: contractData.toolUsed || "contract_compare",
-      filePath: contractData.filePath,
-      fileSize: contractData.fileSize || 0,
-      status: "processed",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ...contractData.extraRefs
-    };
-
-    const result = await contractsCollection.insertOne(contractDoc);
-    console.log(`✅ Contract saved: ${contractData.fileName} (ID: ${result.insertedId})`);
-    
-    return {
-      success: true,
-      contractId: result.insertedId,
-      message: "Contract successfully saved"
-    };
-  } catch (error) {
-    console.error("❌ Error saving contract:", error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
+// Compare-Uploads werden NICHT als Verträge gespeichert (nur als compare_history)
 
 // Enhanced system prompts for different user profiles
 const SYSTEM_PROMPTS = {
@@ -908,43 +877,9 @@ router.post("/", verifyToken, upload.fields([
     }
 
     sendProgress(res, 'saving', 85, 'Ergebnis wird gespeichert...', wantsSSE);
-    // ✅ FIXED: Save contracts and analysis to database with proper error handling
-    console.log("💾 Saving contracts to database...");
-    try {
-      const comparisonId = new ObjectId();
-      
-      await Promise.all([
-        saveContract({
-          userId: req.user.userId,
-          fileName: fixUtf8Filename(file1.originalname),
-          toolUsed: "contract_compare",
-          filePath: file1.path,
-          fileSize: file1.size,
-          extraRefs: {
-            comparisonId: comparisonId,
-            role: "contract1",
-            userProfile
-          }
-        }),
-        saveContract({
-          userId: req.user.userId,
-          fileName: fixUtf8Filename(file2.originalname),
-          toolUsed: "contract_compare",
-          filePath: file2.path,
-          fileSize: file2.size,
-          extraRefs: {
-            comparisonId: comparisonId,
-            role: "contract2",
-            userProfile
-          }
-        })
-      ]);
-
-      console.log("✅ Contracts saved successfully");
-    } catch (saveError) {
-      console.error("⚠️ Warning: Could not save contracts to database:", saveError.message);
-      // Continue with the comparison even if saving fails
-    }
+    // Compare-Uploads werden NICHT in die contracts-Collection gespeichert
+    // (sonst tauchen sie als leere Einträge auf der Vertragsverwaltung auf)
+    // Die Vergleichs-Ergebnisse werden unten als compare_history gespeichert.
 
     // Upload PDFs to S3 for history access
     let file1S3Key = null;
