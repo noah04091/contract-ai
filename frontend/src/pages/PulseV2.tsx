@@ -27,11 +27,22 @@ function safeStr(val: unknown): string {
   return '';
 }
 
-/** Clean contract name: replace UUID filenames with friendly fallback */
+/** Clean contract name: remove file extensions, timestamps, date prefixes, underscores */
 const UUID_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+$/i;
 function cleanContractName(name: string): string {
   if (!name || UUID_FILE_RE.test(name)) return 'Unbenannter Vertrag';
-  return name;
+  let clean = name;
+  // Remove file extension (.pdf, .docx, etc.)
+  clean = clean.replace(/\.\w{2,4}$/, '');
+  // Remove leading 13-digit unix timestamp + separator
+  clean = clean.replace(/^\d{10,13}[-_]/, '');
+  // Remove leading 6-digit date prefix (YYMMDD_ or DDMMYY_)
+  clean = clean.replace(/^\d{6}_/, '');
+  // Replace underscores with spaces
+  clean = clean.replace(/_/g, ' ');
+  // Collapse whitespace and trim
+  clean = clean.replace(/\s+/g, ' ').trim();
+  return clean || 'Unbenannter Vertrag';
 }
 
 const PulseV2: React.FC = () => {
@@ -336,7 +347,8 @@ const ActionCenter: React.FC<{
   actions: PulseV2Action[];
   actionsRef: React.RefObject<HTMLDivElement | null>;
   contractNames: Map<string, string>;
-}> = ({ actions, actionsRef, contractNames }) => {
+  onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
+}> = ({ actions, actionsRef, contractNames, onStatusChange }) => {
   const [showAll, setShowAll] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const infoRef = useRef<HTMLDivElement>(null);
@@ -453,7 +465,7 @@ const ActionCenter: React.FC<{
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {displayActions.map(action => (
-          <ActionItem key={action.id} action={action} contractNames={contractNames} />
+          <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={onStatusChange} />
         ))}
         {hiddenCount > 0 && !showAll && (
           <div style={{ textAlign: 'center', paddingTop: 4 }}>
@@ -555,6 +567,27 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       }
     };
     load();
+  }, []);
+
+  // Handle action status changes from the dashboard (done/dismissed)
+  const handleActionStatusChange = useCallback(async (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => {
+    if (!resultId) return;
+    try {
+      const res = await fetch(`${API_BASE}/legal-pulse-v2/results/${resultId}/actions/${actionId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActions(prev => prev.map(a =>
+          (a.id === actionId && a.resultId === resultId) ? { ...a, status } : a
+        ));
+      }
+    } catch (err) {
+      console.error('[PulseV2] Action status update failed:', err);
+    }
   }, []);
 
   const refreshMonitoringStatus = useCallback(async () => {
@@ -922,6 +955,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           actions={alertStats.openActions}
           actionsRef={actionsRef}
           contractNames={contractNames}
+          onStatusChange={handleActionStatusChange}
         />
       )}
 

@@ -43,7 +43,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
     setContractNames(names);
   }, [result]);
 
-  const handleActionStatusChange = useCallback(async (actionId: string, status: 'open' | 'done' | 'dismissed') => {
+  const handleActionStatusChange = useCallback(async (actionId: string, status: 'open' | 'done' | 'dismissed', _resultId?: string) => {
     try {
       const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/actions/${actionId}`, {
         method: 'PATCH',

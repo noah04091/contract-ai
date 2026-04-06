@@ -106,6 +106,7 @@ export interface PulseV2Action {
   confidence: number;
   nextStep: string;
   status: 'open' | 'done' | 'dismissed';
+  resultId?: string;
 }
 
 export interface PulseV2Result {

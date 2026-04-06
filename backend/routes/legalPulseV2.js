@@ -332,6 +332,60 @@ router.get("/dashboard", async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 // GET /portfolio-insights — Cross-contract insights (latest per user)
 // ══════════════════════════════════════════════════════════════
+
+/**
+ * Deduplicate similar actions across contracts.
+ * Groups by word overlap in titles — if >= 50% overlap, merge into one action
+ * with combined relatedContracts and highest confidence.
+ */
+function deduplicateActions(actions) {
+  if (actions.length <= 1) return actions;
+
+  // Extract significant words (>3 chars) from a title
+  const getWords = (title) =>
+    (title || "").toLowerCase().replace(/[^a-zäöüß\s]/g, "").split(/\s+/).filter(w => w.length > 3);
+
+  // Jaccard similarity of two word sets
+  const wordOverlap = (a, b) => {
+    if (a.length === 0 || b.length === 0) return 0;
+    const setA = new Set(a);
+    const setB = new Set(b);
+    let intersection = 0;
+    for (const w of setA) { if (setB.has(w)) intersection++; }
+    return intersection / Math.min(setA.size, setB.size);
+  };
+
+  const groups = []; // { words, action (best), contracts Set, resultId }
+  for (const action of actions) {
+    const words = getWords(action.title);
+    let merged = false;
+    for (const g of groups) {
+      if (wordOverlap(g.words, words) >= 0.5) {
+        // Merge contracts
+        for (const c of (action.relatedContracts || [])) g.contracts.add(c);
+        // Keep higher-confidence version
+        if (action.confidence > g.action.confidence) {
+          g.action = { ...action, relatedContracts: [...g.contracts], resultId: action.resultId };
+          g.words = words;
+        } else {
+          g.action.relatedContracts = [...g.contracts];
+        }
+        merged = true;
+        break;
+      }
+    }
+    if (!merged) {
+      groups.push({
+        words,
+        action: { ...action },
+        contracts: new Set(action.relatedContracts || []),
+      });
+    }
+  }
+
+  return groups.map(g => ({ ...g.action, relatedContracts: [...g.contracts] }));
+}
+
 router.get("/portfolio-insights", async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -347,7 +401,7 @@ router.get("/portfolio-insights", async (req, res) => {
       .lean();
 
     // Aggregate open actions from ALL completed results (latest per contract)
-    // This ensures Handlungsbedarf shows actions for all analyzed contracts, not just one
+    // Also capture the result document _id for status updates from the dashboard
     const actionResults = await LegalPulseV2Result.aggregate([
       {
         $match: {
@@ -362,25 +416,29 @@ router.get("/portfolio-insights", async (req, res) => {
           _id: "$contractId",
           actions: { $first: "$actions" },
           contractId: { $first: "$contractId" },
+          resultDocId: { $first: "$_id" },
         },
       },
     ]);
 
-    // Flatten actions and always override relatedContracts with real contractId
-    // (GPT may have returned filenames instead of IDs in older data)
+    // Flatten actions with resultId and real contractId
     const allActions = [];
     for (const r of actionResults) {
       for (const a of (r.actions || [])) {
         allActions.push({
           ...a,
+          resultId: r.resultDocId.toString(),
           relatedContracts: [r.contractId],
         });
       }
     }
 
+    // Deduplicate similar actions (e.g. "Garantieklausel prüfen" across 3 contracts → 1 action)
+    const deduplicated = deduplicateActions(allActions);
+
     res.json({
       insights: latestWithInsights?.portfolioInsights || [],
-      actions: allActions,
+      actions: deduplicated,
       lastAnalysis: latestWithInsights?.createdAt || null,
     });
   } catch (error) {

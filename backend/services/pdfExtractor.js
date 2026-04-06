@@ -14,6 +14,7 @@ const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const { extractTextWithOCR, isTextractAvailable } = require('./textractService');
 const { checkOcrUsage, incrementOcrUsage, getOcrLimitMessage } = require('./ocrUsageService');
+const { hasColumnArtifacts, extractColumnAwareText } = require('./optimizerV2/utils/clauseSplitter');
 
 class PdfExtractor {
   /**
@@ -254,6 +255,31 @@ class PdfExtractor {
     const result = await this.extractText(buffer, options);
     result.usedOCR = false;
     result.ocrUsage = null;
+
+    // Schritt 1b: Multi-Column-Erkennung (nur PDF)
+    const isPdfDoc = mimetype === 'application/pdf';
+    if (isPdfDoc && result.success && hasColumnArtifacts(result.text)) {
+      console.log(`🔀 [PdfExtractor] Multi-Column-Artefakte erkannt — starte spaltenweise Neuextraktion...`);
+      try {
+        const colResult = await extractColumnAwareText(buffer);
+        if (colResult && colResult.text && !hasColumnArtifacts(colResult.text)) {
+          console.log(`✅ [PdfExtractor] Spaltenweise Extraktion erfolgreich: ${colResult.text.length} Zeichen (vorher: ${result.text.length})`);
+          result.text = colResult.text;
+          result.quality.charCount = colResult.text.length;
+          result.quality.wordCount = colResult.text.split(/\s+/).filter(w => w.length > 0).length;
+          result.quality.columnCorrected = true;
+          result.warnings.push({
+            type: 'column_corrected',
+            message: 'Multi-Spalten-Layout erkannt und korrigiert.',
+            suggestion: 'Text wurde spaltenweise neu extrahiert für korrekte Reihenfolge.'
+          });
+        } else {
+          console.log(`⚠️ [PdfExtractor] Spaltenweise Extraktion hat Artefakte nicht vollständig behoben — verwende Original`);
+        }
+      } catch (colErr) {
+        console.warn(`⚠️ [PdfExtractor] Spaltenweise Extraktion fehlgeschlagen:`, colErr.message);
+      }
+    }
 
     // Wenn erfolgreich und gute Qualität → fertig
     if (result.success && result.quality.qualityScore >= ocrThreshold) {

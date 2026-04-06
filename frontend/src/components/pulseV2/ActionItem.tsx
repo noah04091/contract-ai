@@ -6,7 +6,7 @@ interface ActionItemProps {
   action: PulseV2Action;
   contractId?: string;
   contractNames?: Map<string, string>;
-  onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed') => void;
+  onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
@@ -168,7 +168,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             {action.status !== 'done' && (
               <button
-                onClick={() => onStatusChange(action.id, 'done')}
+                onClick={() => onStatusChange(action.id, 'done', action.resultId)}
                 title="Als erledigt markieren"
                 style={{
                   width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db',
@@ -180,7 +180,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
               </button>
             )}
             <button
-              onClick={() => onStatusChange(action.id, action.status === 'dismissed' ? 'open' : 'dismissed')}
+              onClick={() => onStatusChange(action.id, action.status === 'dismissed' ? 'open' : 'dismissed', action.resultId)}
               title="Ausblenden"
               style={{
                 width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db',
