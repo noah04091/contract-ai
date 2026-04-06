@@ -336,20 +336,52 @@ router.get("/portfolio-insights", async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    // Get latest result that has portfolio insights
-    const result = await LegalPulseV2Result.findOne({
+    // Get latest result that has portfolio insights (insights are cross-contract)
+    const latestWithInsights = await LegalPulseV2Result.findOne({
       userId,
       status: "completed",
       "portfolioInsights.0": { $exists: true },
     })
       .sort({ createdAt: -1 })
-      .select("portfolioInsights actions createdAt")
+      .select("portfolioInsights createdAt")
       .lean();
 
+    // Aggregate open actions from ALL completed results (latest per contract)
+    // This ensures Handlungsbedarf shows actions for all analyzed contracts, not just one
+    const actionResults = await LegalPulseV2Result.aggregate([
+      {
+        $match: {
+          userId,
+          status: "completed",
+          "actions.0": { $exists: true },
+        },
+      },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$contractId",
+          actions: { $first: "$actions" },
+          contractId: { $first: "$contractId" },
+        },
+      },
+    ]);
+
+    // Flatten actions and always override relatedContracts with real contractId
+    // (GPT may have returned filenames instead of IDs in older data)
+    const allActions = [];
+    for (const r of actionResults) {
+      for (const a of (r.actions || [])) {
+        allActions.push({
+          ...a,
+          relatedContracts: [r.contractId],
+        });
+      }
+    }
+
     res.json({
-      insights: result?.portfolioInsights || [],
-      actions: result?.actions || [],
-      lastAnalysis: result?.createdAt || null,
+      insights: latestWithInsights?.portfolioInsights || [],
+      actions: allActions,
+      lastAnalysis: latestWithInsights?.createdAt || null,
     });
   } catch (error) {
     console.error("[PulseV2] Portfolio insights error:", error);
