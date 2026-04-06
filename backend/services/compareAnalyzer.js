@@ -78,6 +78,7 @@ const DOCUMENT_TYPE_CONFIGS = {
     label: 'Vertrag',
     relevantAreas: null,       // null = alle (heutiges Verhalten)
     irrelevantAreas: [],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: null, // null = nutze Default MISSING_SEVERITY
     promptAddition: null,      // null = kein Zusatz
     scoreLabels: null,         // null = Default Labels
@@ -100,6 +101,7 @@ const DOCUMENT_TYPE_CONFIGS = {
     label: 'Datenschutzerklärung',
     relevantAreas: ['data_protection', 'parties', 'subject', 'jurisdiction', 'other'],
     irrelevantAreas: ['payment', 'warranty', 'non_compete', 'force_majeure', 'ip_rights', 'liability', 'termination', 'duration'],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: {
       payment: 'low', liability: 'low', warranty: 'low',
       termination: 'low', duration: 'low', non_compete: 'low',
@@ -140,6 +142,7 @@ Bewerte nach: Vollständigkeit der DSGVO-Pflichtangaben, Transparenz, Aktualitä
     label: 'AGB',
     relevantAreas: ['payment', 'liability', 'warranty', 'termination', 'duration', 'jurisdiction', 'data_protection', 'subject', 'other'],
     irrelevantAreas: ['ip_rights', 'non_compete', 'force_majeure', 'confidentiality'],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: {
       ip_rights: 'low', non_compete: 'low', force_majeure: 'low', confidentiality: 'low',
       other: 'low',
@@ -180,6 +183,7 @@ Bewerte nach: Rechtmäßigkeit, Verbraucherfreundlichkeit, Transparenz.`,
     label: 'Rechnung',
     relevantAreas: ['payment', 'parties', 'subject', 'other'],
     irrelevantAreas: ['liability', 'warranty', 'confidentiality', 'ip_rights', 'non_compete', 'force_majeure', 'termination', 'duration', 'data_protection', 'jurisdiction'],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: {
       liability: 'low', warranty: 'low', termination: 'low', duration: 'low',
       confidentiality: 'low', ip_rights: 'low', non_compete: 'low',
@@ -219,6 +223,7 @@ Bewerte nach: Korrektheit der Berechnung, Vollständigkeit der Pflichtangaben, P
     label: 'Angebot',
     relevantAreas: ['payment', 'parties', 'subject', 'duration', 'warranty', 'liability', 'other'],
     irrelevantAreas: ['non_compete', 'force_majeure', 'confidentiality', 'data_protection', 'ip_rights'],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: {
       payment: 'critical',
       subject: 'critical',        // Fehlender Leistungsumfang bei Angeboten = sehr kritisch
@@ -322,6 +327,7 @@ Bei "recommendation": Schlage ausgewogene Verbesserungen vor`,
     label: 'Dokument',
     relevantAreas: null,
     irrelevantAreas: [],
+    compareSkipAreas: [],  // Universell: alle Areas vergleichen, GPT filtert Relevanz
     missingSeverityOverrides: {
       parties: 'low', subject: 'low', duration: 'low',
       termination: 'low', payment: 'low', liability: 'low',
@@ -2456,7 +2462,7 @@ function verifyClauseQuotes(clauseBundle, text1, text2) {
  */
 function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig) {
   const diffs = [];
-  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  const skipAreas = new Set(docConfig?.compareSkipAreas || ['parties', 'subject', 'jurisdiction', 'other']);
   // V3: Add irrelevant areas from document type config
   if (docConfig?.irrelevantAreas) {
     for (const area of docConfig.irrelevantAreas) skipAreas.add(area);
@@ -3948,7 +3954,7 @@ const RELATED_AREAS = {
   termination: ['duration'],
 };
 
-function detectGaps(map1, map2, existingDifferences) {
+function detectGaps(map1, map2, existingDifferences, docConfig) {
   const coveredAreas = new Set(existingDifferences.map(d => d.clauseArea));
   // Also consider areas covered by related areas
   const effectivelyCovered = new Set(coveredAreas);
@@ -3958,7 +3964,7 @@ function detectGaps(map1, map2, existingDifferences) {
   }
 
   const gaps = [];
-  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  const skipAreas = new Set(docConfig?.compareSkipAreas || ['parties', 'subject', 'jurisdiction', 'other']);
 
   // Build area → clauses maps
   const areasMap1 = {};
@@ -3986,9 +3992,9 @@ function detectGaps(map1, map2, existingDifferences) {
 
     // Case 1: Area only in one contract → missing clause
     if (c1.length > 0 && c2.length === 0) {
-      gaps.push(buildMissingDiff(area, c1[0], 1));
+      gaps.push(buildMissingDiff(area, c1[0], 1, docConfig));
     } else if (c2.length > 0 && c1.length === 0) {
-      gaps.push(buildMissingDiff(area, c2[0], 2));
+      gaps.push(buildMissingDiff(area, c2[0], 2, docConfig));
     } else if (c1.length > 0 && c2.length > 0) {
       // Case 2: Both have the area → compare keyValues
       const kvGap = compareClauseKeyValues(c1, c2, area);
@@ -4004,21 +4010,26 @@ function detectGaps(map1, map2, existingDifferences) {
   return gaps;
 }
 
-function buildMissingDiff(area, existingClause, existsInContract) {
+function buildMissingDiff(area, existingClause, existsInContract, docConfig) {
   const label = AREA_LABELS[area] || area;
   const section = existingClause.section || '';
   const summary = existingClause.summary || existingClause.originalText || '';
   const otherContract = existsInContract === 1 ? 2 : 1;
+  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
+  const missingText = docConfig?.category === 'angebot' ? 'Nicht im Angebot enthalten' :
+                      docConfig?.category === 'allgemein' ? 'Nicht enthalten' : 'Keine Regelung vorhanden';
 
   return {
     category: label,
     section,
-    contract1: existsInContract === 1 ? summary : 'Keine Regelung vorhanden',
-    contract2: existsInContract === 2 ? summary : 'Keine Regelung vorhanden',
+    contract1: existsInContract === 1 ? summary : missingText,
+    contract2: existsInContract === 2 ? summary : missingText,
     severity: MISSING_SEVERITY[area] || 'medium',
-    explanation: `Vertrag ${existsInContract} enthält eine Regelung zu ${label} (${section}), die in Vertrag ${otherContract} vollständig fehlt. Für Sie bedeutet das, dass im Vertrag ${otherContract} keine vertragliche Absicherung in diesem Bereich besteht.`,
-    impact: `Fehlende ${label}-Klausel — es gelten nur gesetzliche Regelungen, die möglicherweise nicht ausreichend schützen.`,
-    recommendation: `Eine ${label}-Regelung sollte in Vertrag ${otherContract} ergänzt werden.`,
+    explanation: `${docLabel} ${existsInContract} enthält eine Regelung zu ${label} (${section}), die in ${docLabel} ${otherContract} fehlt.`,
+    impact: docConfig?.category === 'vertrag' || !docConfig?.category
+      ? `Fehlende ${label}-Klausel — es gelten nur gesetzliche Regelungen, die möglicherweise nicht ausreichend schützen.`
+      : `${label} ist nur in ${docLabel} ${existsInContract} vorhanden.`,
+    recommendation: `${label} sollte in ${docLabel} ${otherContract} ergänzt werden.`,
     clauseArea: area,
     semanticType: 'missing',
     financialImpact: null,
@@ -4206,10 +4217,10 @@ function smartTruncateClause(text, maxLen = MAX_CLAUSE_TEXT_LENGTH) {
 /**
  * Prioritize clause pairs: similar > related > potential. Skip equivalent.
  */
-function prioritizeClausePairs(matches) {
+function prioritizeClausePairs(matches, docConfig) {
   if (!matches || !Array.isArray(matches)) return [];
   // Areas that produce noise, not real contractual differences (template placeholders, boilerplate)
-  const skipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  const skipAreas = new Set(docConfig?.compareSkipAreas || ['parties', 'subject', 'jurisdiction', 'other']);
   const priority = { similar: 0, related: 1, potential: 2 };
   return matches
     .filter(m => m.type !== 'equivalent') // Skip equivalent (≥92%) — no meaningful diff
@@ -4378,27 +4389,29 @@ function buildMissingClausePrompt(clause, inContract, perspective, comparisonMod
   const perspectiveBlock = buildPerspectiveBlock(perspective, docConfig);
   const text = smartTruncateClause(clause.originalText, 2000);
   const otherContract = inContract === 1 ? 2 : 1;
+  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
+  const docTypeHint = docConfig?.promptAddition ? `\n${docConfig.promptAddition}\n` : '';
 
   return {
-    system: `Du bist ein erfahrener Vertragsanwalt. Bewerte eine Klausel die NUR in einem der beiden Verträge existiert.
+    system: `Du bist ein erfahrener Vertragsanwalt. Bewerte einen Abschnitt der NUR in einem der beiden ${docLabel === 'Vertrag' ? 'Verträge' : docLabel + '-Dokumente'} existiert.
 ${profileHint}
-${perspectiveBlock}
+${perspectiveBlock}${docTypeHint}
 Antworte NUR mit validem JSON.`,
 
-    user: `FEHLENDE KLAUSEL: "${clause.title}" (${clause.area})
-Diese Klausel existiert NUR in Vertrag ${inContract}. Vertrag ${otherContract} hat KEINE entsprechende Regelung.
+    user: `FEHLENDER ABSCHNITT: "${clause.title}" (${clause.area})
+Dieser Abschnitt existiert NUR in ${docLabel} ${inContract}. ${docLabel} ${otherContract} hat KEINEN entsprechenden Abschnitt.
 
-KLAUSELTEXT:
+TEXT:
 """
 ${text}
 """
 
-Bewerte: Wie wichtig ist diese Klausel? Was passiert ohne sie?
+Bewerte: Wie wichtig ist dieser Abschnitt? Was bedeutet es, dass ${docLabel} ${otherContract} ihn nicht enthält?
 
 {
   "severity": "low|medium|high|critical",
-  "explanation": "3-4 Sätze: Was regelt die Klausel, warum fehlt sie",
-  "legalDefault": "§-Verweis wenn Klausel fehlt",
+  "explanation": "3-4 Sätze: Was regelt der Abschnitt, warum fehlt er",
+  "legalDefault": "§-Verweis wenn relevant, sonst null",
   "impact": "Konkreter Nachteil",
   "recommendation": "Was ergänzen",
   "financialImpact": null,
@@ -4494,7 +4507,7 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
   for (const c of (map2.clauses || [])) clauseMap2[c.id] = c;
 
   // Prioritize and limit clause pairs
-  const pairs = prioritizeClausePairs(clauseMatchResult.matches || []);
+  const pairs = prioritizeClausePairs(clauseMatchResult.matches || [], docConfig);
   console.log(`🔬 Schicht 3: ${pairs.length} Klauselpaare (von ${(clauseMatchResult.matches || []).length} gesamt, ${(clauseMatchResult.matches || []).filter(m => m.type === 'equivalent').length} equivalent übersprungen)`);
 
   // Build tasks for clause pairs
@@ -4511,7 +4524,7 @@ async function runClauseByClauseComparison(clauseMatchResult, map1, map2, perspe
 
   // Build tasks for missing clauses (unmatched) — skip noise areas
   // V3: Also skip irrelevant areas from document type config
-  const clauseSkipAreas = new Set(['parties', 'subject', 'jurisdiction', 'other']);
+  const clauseSkipAreas = new Set(docConfig?.compareSkipAreas || ['parties', 'subject', 'jurisdiction', 'other']);
   if (docConfig?.irrelevantAreas) {
     for (const area of docConfig.irrelevantAreas) clauseSkipAreas.add(area);
   }
@@ -4634,20 +4647,23 @@ function convertClauseDiffToEnhanced(diff) {
 /**
  * Convert a missing-clause assessment to EnhancedDifference format.
  */
-function convertMissingToEnhanced(assessment) {
+function convertMissingToEnhanced(assessment, docConfig) {
   const label = AREA_LABELS[assessment._clauseArea] || assessment._clauseArea || 'Sonstiges';
   const inContract = assessment._inContract;
   const otherContract = inContract === 1 ? 2 : 1;
+  const docLabel = docConfig?.labels?.documentName || 'Vertrag';
+  const missingText = docConfig?.category === 'angebot' ? 'Nicht im Angebot enthalten' :
+                      docConfig?.category === 'allgemein' ? 'Nicht enthalten' : 'Keine Regelung vorhanden';
 
   return {
     category: label,
     section: assessment._clauseTitle || '',
-    contract1: inContract === 1 ? assessment._clauseTitle : 'Keine Regelung vorhanden',
-    contract2: inContract === 2 ? assessment._clauseTitle : 'Keine Regelung vorhanden',
+    contract1: inContract === 1 ? assessment._clauseTitle : missingText,
+    contract2: inContract === 2 ? assessment._clauseTitle : missingText,
     severity: assessment.severity,
     explanation: assessment.explanation,
     impact: assessment.impact || (assessment.legalDefault ? `Ohne Klausel gilt: ${assessment.legalDefault}` : ''),
-    recommendation: assessment.recommendation || `Klausel in Vertrag ${otherContract} ergänzen.`,
+    recommendation: assessment.recommendation || `${label} in ${docLabel} ${otherContract} ergänzen.`,
     clauseArea: assessment._clauseArea || 'other',
     semanticType: 'missing',
     financialImpact: assessment.financialImpact || null,
@@ -4735,6 +4751,8 @@ function applyDeterministicSeverity(diffs) {
  */
 function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) {
   const merged = [];
+  const missingText = docConfig?.category === 'angebot' ? 'Nicht im Angebot enthalten' :
+                      docConfig?.category === 'allgemein' ? 'Nicht enthalten' : 'Keine Regelung vorhanden';
 
   // 1. Deterministic groups first (highest trust)
   for (const group of groups) {
@@ -4752,12 +4770,12 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
       contract1 = items.length > 0
         ? items.map(d => `${d.key}: ${d.value1}`).join('; ')
         : (gaps[0]?.value1 || 'Vorhanden');
-      contract2 = 'Keine Regelung vorhanden';
+      contract2 = missingText;
       section = group.items[0]?.section1 || '';
     } else {
       const items = group.items.filter(d => !d._isAreaGap);
       const gaps = group.items.filter(d => d._isAreaGap);
-      contract1 = 'Keine Regelung vorhanden';
+      contract1 = missingText;
       contract2 = items.length > 0
         ? items.map(d => `${d.key}: ${d.value2}`).join('; ')
         : (gaps[0]?.value2 || 'Vorhanden');
@@ -4884,7 +4902,7 @@ function mergeAllDifferences(groups, groupEvaluations, clauseBundle, docConfig) 
         continue;
       }
       if (!deterministicAreas.has(assessment._clauseArea)) {
-        const enhanced = convertMissingToEnhanced(assessment);
+        const enhanced = convertMissingToEnhanced(assessment, docConfig);
         // V3: Override severity for missing clauses in non-critical areas
         if (docConfig?.missingSeverityOverrides) {
           const override = docConfig.missingSeverityOverrides[assessment._clauseArea];
@@ -4968,6 +4986,31 @@ function buildSynthesisPrompt(allDiffs, map1, map2, perspective, comparisonMode,
 
   const docLabel = docConfig?.labels?.documentName || 'Vertrag';
 
+  // Universell: Build subject/content overview from clauses
+  // This gives GPT context about WHAT each document offers/contains
+  let subjectContext = '';
+  {
+    const getClauseSummaries = (map, areas) => {
+      const summaries = [];
+      for (const area of areas) {
+        const clauses = (map.clauses || []).filter(c => c.area === area);
+        for (const c of clauses) {
+          const text = c.summary || c.originalText || '';
+          if (text.length > 10) summaries.push(`[${area}] ${text.substring(0, 300)}`);
+        }
+      }
+      return summaries;
+    };
+    const contextAreas = ['subject', 'parties', 'other'];
+    const sum1 = getClauseSummaries(map1, contextAreas);
+    const sum2 = getClauseSummaries(map2, contextAreas);
+    if (sum1.length > 0 || sum2.length > 0) {
+      subjectContext = `\nINHALTSÜBERSICHT (Leistungen, Parteien, Sonstiges):
+${docLabel} 1:\n${sum1.length > 0 ? sum1.join('\n') : 'Keine Klauseln in diesen Bereichen'}
+${docLabel} 2:\n${sum2.length > 0 ? sum2.join('\n') : 'Keine Klauseln in diesen Bereichen'}\n`;
+    }
+  }
+
   // Format diffs compactly
   const diffsText = allDiffs.map((d, i) => {
     let entry = `${i + 1}. [${d.severity.toUpperCase()}] ${d.category}`;
@@ -5001,7 +5044,7 @@ Antworte ausschließlich mit validem JSON.`,
 
     user: `${(docConfig?.labels?.documentName || 'VERTRAG').toUpperCase()} 1: ${meta1.contractType || docConfig?.labels?.documentName || 'Vertrag'} — ${(meta1.parties || []).map(p => p.name).join(', ')} — ${meta1.subject || 'k.A.'} (${meta1.clauseCount} Klauseln)
 ${(docConfig?.labels?.documentName || 'VERTRAG').toUpperCase()} 2: ${meta2.contractType || docConfig?.labels?.documentName || 'Vertrag'} — ${(meta2.parties || []).map(p => p.name).join(', ')} — ${meta2.subject || 'k.A.'} (${meta2.clauseCount} Klauseln)
-
+${subjectContext}
 DETERMINISTISCHE GRUPPEN (bewerte jede in groupEvaluations):
 ${groupsText || 'Keine'}
 
