@@ -456,32 +456,36 @@ const ActionCenter: React.FC<{
           <ActionItem key={action.id} action={action} contractNames={contractNames} />
         ))}
         {hiddenCount > 0 && !showAll && (
-          <button
-            onClick={() => setShowAll(true)}
-            style={{
-              fontSize: 13, color: '#3b82f6', fontWeight: 600,
-              textAlign: 'center', padding: '10px 8px',
-              background: '#f8fafc', border: '1px solid #e2e8f0',
-              borderRadius: 8, cursor: 'pointer',
-              transition: 'background 0.15s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
-          >
-            + {hiddenCount} weitere Aktion{hiddenCount > 1 ? 'en' : ''} anzeigen
-          </button>
+          <div style={{ textAlign: 'center', paddingTop: 4 }}>
+            <button
+              onClick={() => setShowAll(true)}
+              style={{
+                fontSize: 12, color: '#3b82f6', fontWeight: 600,
+                padding: '6px 20px',
+                background: '#f8fafc', border: '1px solid #e2e8f0',
+                borderRadius: 20, cursor: 'pointer',
+                transition: 'background 0.15s ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
+            >
+              + {hiddenCount} weitere anzeigen
+            </button>
+          </div>
         )}
         {showAll && sorted.length > 5 && (
-          <button
-            onClick={() => setShowAll(false)}
-            style={{
-              fontSize: 12, color: '#9ca3af', fontWeight: 500,
-              textAlign: 'center', padding: 6,
-              background: 'none', border: 'none', cursor: 'pointer',
-            }}
-          >
-            Weniger anzeigen
-          </button>
+          <div style={{ textAlign: 'center', paddingTop: 2 }}>
+            <button
+              onClick={() => setShowAll(false)}
+              style={{
+                fontSize: 11, color: '#9ca3af', fontWeight: 500,
+                padding: '4px 16px',
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}
+            >
+              Weniger anzeigen
+            </button>
+          </div>
         )}
       </div>
     </div>

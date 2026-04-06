@@ -34,14 +34,6 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
 
-  // Resolve the contract to link to: explicit contractId prop OR first related contract
-  const linkContractId = contractId || (action.relatedContracts && action.relatedContracts[0]) || null;
-
-  // Check if action relates to a fixable clause (for deep link)
-  const hasOptimizeLink = linkContractId && !isDone && (
-    action.priority === 'now' || action.priority === 'plan'
-  );
-
   return (
     <div style={{
       padding: 16,
@@ -121,7 +113,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
             </div>
           )}
 
-          {/* Related contracts — clickable links */}
+          {/* Related contracts — clickable links to Pulse detail */}
           {action.relatedContracts && action.relatedContracts.length > 0 && contractNames && !contractId && (
             <div style={{
               marginTop: 8,
@@ -135,7 +127,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
                     key={id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/contracts?view=${id}`);
+                      navigate(`/pulse/${id}`);
                     }}
                     style={{
                       fontSize: 11, fontWeight: 500,
@@ -149,32 +141,6 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
                 );
               })}
             </div>
-          )}
-
-          {/* Deep Link: optimize this clause */}
-          {hasOptimizeLink && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/contracts?view=${linkContractId}`);
-              }}
-              style={{
-                marginTop: 10,
-                padding: '6px 14px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#7c3aed',
-                background: '#f5f3ff',
-                border: '1px solid #ddd6fe',
-                borderRadius: 6,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              Vertrag ansehen &#8594;
-            </button>
           )}
         </div>
 
