@@ -562,7 +562,7 @@ const ActionCenter: React.FC<{
           {showHistory && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {[...doneActions, ...dismissedActions].map(action => (
-                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} />
+                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={action.status === 'dismissed' ? onStatusChange : undefined} />
               ))}
             </div>
           )}

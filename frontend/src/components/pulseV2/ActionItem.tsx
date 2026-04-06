@@ -163,24 +163,22 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
           )}
         </div>
 
-        {/* Status Buttons */}
-        {onStatusChange && !isDismissed && (
+        {/* Status Buttons — open actions: checkmark + dismiss */}
+        {onStatusChange && !isDismissed && !isDone && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-            {action.status !== 'done' && (
-              <button
-                onClick={() => onStatusChange(action.id, 'done', action.resultId)}
-                title="Als erledigt markieren"
-                style={{
-                  width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db',
-                  background: '#fff', cursor: 'pointer', fontSize: 14, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                &#10003;
-              </button>
-            )}
             <button
-              onClick={() => onStatusChange(action.id, action.status === 'dismissed' ? 'open' : 'dismissed', action.resultId)}
+              onClick={() => onStatusChange(action.id, 'done', action.resultId)}
+              title="Als erledigt markieren"
+              style={{
+                width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db',
+                background: '#fff', cursor: 'pointer', fontSize: 14, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              &#10003;
+            </button>
+            <button
+              onClick={() => onStatusChange(action.id, 'dismissed', action.resultId)}
               title="Ausblenden"
               style={{
                 width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db',
@@ -191,6 +189,21 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
               &#10005;
             </button>
           </div>
+        )}
+        {/* Reactivate button — dismissed actions can be restored */}
+        {onStatusChange && isDismissed && (
+          <button
+            onClick={() => onStatusChange(action.id, 'open', action.resultId)}
+            title="Wiederherstellen"
+            style={{
+              height: 28, borderRadius: 6, border: '1px solid #d1d5db',
+              background: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 500,
+              color: '#6b7280', padding: '0 10px', flexShrink: 0,
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            &#x21A9; Aktivieren
+          </button>
         )}
       </div>
     </div>
