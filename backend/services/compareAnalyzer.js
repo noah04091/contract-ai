@@ -2498,6 +2498,83 @@ function verifyClauseQuotes(clauseBundle, text1, text2) {
  * @param {object|null} clauseMatchResult - Ergebnis von matchClauses()
  * @returns {Array<DeterministicDifference>}
  */
+/**
+ * V3.1: Inferiert die korrekte Area aus dem KeyValue-Namen.
+ * Löst das Konditionenblatt-Problem: Wenn Phase A z.B. Finanzdaten
+ * unter "parties" einordnet, werden sie hier zur richtigen Area umgeleitet.
+ * Gibt null zurück wenn keine sichere Zuordnung möglich ist.
+ */
+function inferAreaFromKeyName(key) {
+  const k = (key || '').toLowerCase();
+
+  // Payment-Begriffe
+  if (/gebühr|gebuehr|preis|betrag|kosten|honorar|vergütung|verguetung|entgelt|provision|rabatt|skonto|netto|brutto|mwst|umsatzsteuer|zahlung|flatrate|inkasso|einrichtung|mindest.*gebühr|ankauf.*limit|factoringvolumen|zwischensumme|gesamtbetrag|rechnungs/.test(k)) {
+    return 'payment';
+  }
+  // Sicherungseinbehalt ist auch Payment (Einbehalt vom Kaufpreis)
+  if (/sicherungseinbehalt|einbehalt/.test(k)) {
+    return 'payment';
+  }
+
+  // Liability-Begriffe
+  if (/selbstbehalt|haftung|delkredere|schadensersatz|haftungsbegrenzung|haftungsausschluss/.test(k)) {
+    return 'liability';
+  }
+
+  // Termination-Begriffe
+  if (/kündigungsfrist|kuendigungsfrist|kündigung|kuendigung/.test(k)) {
+    return 'termination';
+  }
+
+  // Duration-Begriffe
+  if (/laufzeit|vertragsdauer|vertragslaufzeit|mindestlaufzeit|gültig.*bis|gueltig.*bis/.test(k)) {
+    return 'duration';
+  }
+
+  // Warranty-Begriffe
+  if (/gewährleistung|gewaehrleistung|garantie|mängelrüge|maengelruege/.test(k)) {
+    return 'warranty';
+  }
+
+  return null; // Keine sichere Zuordnung → Clause-Area beibehalten
+}
+
+/**
+ * V3.1: Reklassifiziert keyValues die in der falschen Area gelandet sind.
+ * Verschiebt z.B. "Flatrate-Gebühr" von "parties" nach "payment".
+ * Nur aktiv für Areas wo eine Fehlklassifikation wahrscheinlich ist (parties, other).
+ */
+function reclassifyKeyValues(areaKV) {
+  const sourcesForReclass = ['parties', 'other']; // Nur aus diesen Areas reklassifizieren
+  const moved = [];
+
+  for (const sourceArea of sourcesForReclass) {
+    if (!areaKV[sourceArea]) continue;
+    const toRemove = [];
+
+    for (const [key, value] of Object.entries(areaKV[sourceArea])) {
+      const correctArea = inferAreaFromKeyName(key);
+      if (correctArea && correctArea !== sourceArea) {
+        // In richtige Area verschieben
+        if (!areaKV[correctArea]) areaKV[correctArea] = {};
+        if (!areaKV[correctArea][key]) { // Nicht überschreiben wenn schon vorhanden
+          areaKV[correctArea][key] = value;
+        }
+        toRemove.push(key);
+        moved.push(`"${key}": ${sourceArea} → ${correctArea}`);
+      }
+    }
+
+    for (const key of toRemove) {
+      delete areaKV[sourceArea][key];
+    }
+  }
+
+  if (moved.length > 0) {
+    console.log(`🔄 KeyValue-Reclassification: ${moved.length} Werte umgeordnet: ${moved.join(', ')}`);
+  }
+}
+
 function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig) {
   const diffs = [];
   const skipAreas = new Set(docConfig?.compareSkipAreas || ['parties', 'subject', 'jurisdiction', 'other']);
@@ -2666,6 +2743,10 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
       }
     }
   }
+
+  // V3.1: Reklassifiziere fehlzugeordnete keyValues (z.B. Finanzdaten unter "parties")
+  reclassifyKeyValues(areaKV1);
+  reclassifyKeyValues(areaKV2);
 
   const allAreas = new Set([...Object.keys(areaKV1), ...Object.keys(areaKV2)]);
 
