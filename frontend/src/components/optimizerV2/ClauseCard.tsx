@@ -119,10 +119,10 @@ export default function ClauseCard({
               {strengthConfig.label}
             </span>
           )}
-          {acceptedVersion && acceptedVersion !== 'original' && (
-            <span className={styles.acceptedBadge} title="Version übernommen — wird beim Export verwendet">
+          {acceptedVersion === 'custom' && (
+            <span className={styles.acceptedBadge} title="Eigener Text gespeichert — wird beim Export verwendet">
               <CheckCircle size={12} />
-              Übernommen
+              Eigener Text
             </span>
           )}
           {score && (

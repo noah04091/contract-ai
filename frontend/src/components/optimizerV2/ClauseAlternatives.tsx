@@ -67,9 +67,7 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
 
   const handleAccept = (version: 'neutral' | 'proCreator' | 'proRecipient' | 'original' | 'custom', text?: string) => {
     onAcceptVersion(clauseId, version, text);
-    const modeConfig = MODE_LABELS[version as OptimizationMode];
-    const label = version === 'custom' ? 'Eigener Text' : version === 'original' ? 'Original' : modeConfig?.label || version;
-    addToast(`„${label}"-Version übernommen — wird beim Export verwendet`, 'success');
+    addToast('Eigener Text gespeichert — wird beim Export verwendet', 'success');
   };
 
   const isCustomTab = selectedTab === 'custom';
@@ -241,17 +239,16 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
         </div>
       )}
 
-      {/* Accept button */}
-      <button
-        className={styles.acceptButton}
-        onClick={() => isCustomTab
-          ? handleAccept('custom', customText)
-          : handleAccept(selectedTab as OptimizationMode)
-        }
-      >
-        <Check size={14} />
-        {isCustomTab ? 'Eigenen Text übernehmen' : 'Version übernehmen'}
-      </button>
+      {/* Save button — only for custom text (standard modes are selected in Export tab) */}
+      {isCustomTab && (
+        <button
+          className={styles.acceptButton}
+          onClick={() => handleAccept('custom', customText)}
+        >
+          <Check size={14} />
+          Text speichern
+        </button>
+      )}
     </div>
   );
 }
