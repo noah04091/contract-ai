@@ -82,7 +82,7 @@ function generateFallbackActions(clauseFindings, context) {
         ? `${f.title} — Klausel überarbeiten`
         : `${f.title} — prüfen`,
       description: f.description,
-      relatedContracts: [],
+      relatedContracts: context.contractId ? [context.contractId] : [],
       estimatedImpact: f.severity === "critical"
         ? "Hohes Risiko bei Nichthandlung"
         : f.severity === "high"
@@ -171,12 +171,14 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
   }
 
   // Filter by confidence and add IDs
+  // GPT returns relatedContractIds as filenames (unreliable) — override with actual contractId from context
+  const actualContractId = context.contractId || null;
   let actions = (result.actions || [])
     .filter(a => a.confidence >= 70)
     .map((a, idx) => ({
       id: `action_${idx + 1}`,
       ...a,
-      relatedContracts: a.relatedContractIds || [],
+      relatedContracts: actualContractId ? [actualContractId] : [],
       status: "open",
     }));
 

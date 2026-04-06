@@ -98,6 +98,7 @@ async function runContextGathering(userId, contractId) {
     : [];
 
   return {
+    contractId: contractId,
     contractName: contract.name || contract.title || contract.filename || "Unbenannt",
     contractType: toStr(contract.contractType) || toStr(contract.type) || null,
     parties: (contract.parties || []).map(p => typeof p === "string" ? p : (p?.name || p?.displayName || String(p))),

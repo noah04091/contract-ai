@@ -34,6 +34,19 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
 
+  // Resolve contract ID: relatedContracts may contain filenames (old data) instead of real IDs.
+  // Build reverse lookup: name → contractId to handle both cases.
+  const resolveContractId = (id: string): string | null => {
+    if (!contractNames) return null;
+    // If the ID is already a valid contractId in the map, use it directly
+    if (contractNames.has(id)) return id;
+    // Otherwise try reverse lookup: maybe `id` is a filename — find matching contractId by name
+    for (const [cId, name] of contractNames.entries()) {
+      if (name === id || id.includes(name) || name.includes(id)) return cId;
+    }
+    return null;
+  };
+
   return (
     <div style={{
       padding: 16,
@@ -121,19 +134,25 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
             }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>Betrifft:</span>
               {action.relatedContracts.map((id) => {
-                const name = contractNames.get(id) || id;
+                const resolvedId = resolveContractId(id);
+                const name = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id) || id;
                 return (
                   <button
                     key={id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/pulse/${id}`);
+                      if (resolvedId) {
+                        navigate(`/pulse/${resolvedId}`);
+                      }
                     }}
                     style={{
                       fontSize: 11, fontWeight: 500,
-                      color: '#3b82f6', background: '#eff6ff',
-                      border: '1px solid #bfdbfe', borderRadius: 4,
-                      padding: '2px 8px', cursor: 'pointer',
+                      color: resolvedId ? '#3b82f6' : '#9ca3af',
+                      background: resolvedId ? '#eff6ff' : '#f9fafb',
+                      border: `1px solid ${resolvedId ? '#bfdbfe' : '#e5e7eb'}`,
+                      borderRadius: 4,
+                      padding: '2px 8px',
+                      cursor: resolvedId ? 'pointer' : 'default',
                     }}
                   >
                     {name}
