@@ -2989,6 +2989,20 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
     }
   }
 
+  // V3.1: Finale Reclassification ALLER Diffs (fängt auch Schritt 0 + Cross-Area ab)
+  let reclassCount = 0;
+  for (const d of diffs) {
+    if (d._isAreaGap) continue; // Area-Level Gaps nicht reklassifizieren
+    const correctArea = inferAreaFromKeyName(d.key);
+    if (correctArea && correctArea !== d.area) {
+      d.area = correctArea;
+      reclassCount++;
+    }
+  }
+  if (reclassCount > 0) {
+    console.log(`🔄 Finale Diff-Reclassification: ${reclassCount} Diffs korrigiert`);
+  }
+
   // Schritt 7: Sortieren — payment zuerst, dann numerisch vor text, dann nach Diff-Größe
   diffs.sort((a, b) => {
     // payment-Area zuerst
