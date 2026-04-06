@@ -418,7 +418,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                         key={`hist_${action.id}`}
                         action={action}
                         contractId={result.contractId}
-                        onStatusChange={action.status === 'dismissed' ? handleActionStatusChange : undefined}
+                        onStatusChange={handleActionStatusChange}
                       />
                     ))}
                   </div>

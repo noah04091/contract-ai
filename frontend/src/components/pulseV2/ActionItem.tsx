@@ -190,11 +190,11 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
             </button>
           </div>
         )}
-        {/* Reactivate button — dismissed actions can be restored */}
-        {onStatusChange && isDismissed && (
+        {/* Reactivate button — done/dismissed actions can be restored */}
+        {onStatusChange && (isDismissed || isDone) && (
           <button
             onClick={() => onStatusChange(action.id, 'open', action.resultId)}
-            title="Wiederherstellen"
+            title="Wieder öffnen"
             style={{
               height: 28, borderRadius: 6, border: '1px solid #d1d5db',
               background: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 500,
