@@ -284,10 +284,12 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
               )}
 
               {/* Recommendation */}
-              <div className={styles.diffRecommendation}>
-                <Zap size={14} />
-                <span>{diff.recommendation}</span>
-              </div>
+              {diff.recommendation && (
+                <div className={styles.diffRecommendation}>
+                  <Zap size={14} />
+                  <span>{diff.recommendation}</span>
+                </div>
+              )}
 
               {/* PDF Preview */}
               {expandedPdfIndex === index && (file1 || file2) && (
