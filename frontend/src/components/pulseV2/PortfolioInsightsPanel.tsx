@@ -146,8 +146,6 @@ function InsightCard({
 }
 
 export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ insights, contractNames }) => {
-  if (!insights || insights.length === 0) return null;
-
   const [showInfo, setShowInfo] = useState(false);
   const infoRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +159,8 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [showInfo]);
+
+  if (!insights || insights.length === 0) return null;
 
   return (
     <div style={{
