@@ -171,36 +171,14 @@ const optimizerV2ResultSchema = new mongoose.Schema({
     }]
   },
 
-  // Stage 5b: Executive Summary
+  // Stage 5b: Executive Summary V2 (compact TL;DR)
   summary: {
     trafficLight: { type: String, enum: ['green', 'yellow', 'red'] },
     trafficLightLabel: String,
     verdict: String,
-    topRisks: [{
-      clauseId: String,
-      clauseTitle: String,
-      category: String,
-      riskLevel: Number,
-      businessImpact: String,
-      concern: String,
-      _id: false
-    }],
-    fairnessVerdict: String,
-    criticalGaps: [{
-      category: String,
-      categoryLabel: String,
-      severity: String,
-      recommendation: String,
-      _id: false
-    }],
-    negotiationPriorities: [{
-      priority: Number,
-      clauseTitle: String,
-      action: String,
-      businessImpact: String,
-      clauseId: String,
-      _id: false
-    }],
+    strengths: String,
+    weaknesses: String,
+    actionRequired: String,
     generatedAt: Date,
     gptFallback: { type: Boolean, default: false }
   },

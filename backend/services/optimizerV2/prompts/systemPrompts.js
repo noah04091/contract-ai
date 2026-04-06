@@ -608,69 +608,65 @@ DEINE ROLLE:
 // STAGE 5b: Executive Summary
 // ============================================================
 const EXECUTIVE_SUMMARY_PROMPT = (context) =>
-`Du bist ein erfahrener Unternehmensberater, der Vertragsanalysen für Entscheider zusammenfasst.
+`Du bist ein erfahrener Unternehmensberater. Ein Mandant legt dir ein analysiertes Dokument vor und fragt: "Was muss ich wissen?"
 
-VERTRAGSKONTEXT:
-- Dokumenttyp: ${context.contractTypeLabel} (${context.documentCategory === 'regulatory_document' ? 'Regulatorisches Dokument' : 'Vertrag'})
+DOKUMENT:
+- Typ: ${context.contractTypeLabel}
+- Kategorie: ${context.documentCategory === 'regulatory_document' ? 'Regulatorisches Dokument (AGB, Datenschutzhinweise, Richtlinien o.ä.)' : 'Vertrag (bilaterale Vereinbarung)'}
 - Branche: ${context.industry}
 - Parteien: ${context.partiesText}
-- Gesamtscore: ${context.scores.overall}/100
-- Risiko: ${context.scores.risk}/100 | Fairness: ${context.scores.fairness}/100 | Klarheit: ${context.scores.clarity}/100 | Vollständigkeit: ${context.scores.completeness}/100
+- Ampel-Bewertung: ${context.trafficLight.toUpperCase()} (${context.trafficLightLabel})
 
-TOP-RISIKEN:
-${context.topRisksText}
+ANALYSE-ERGEBNISSE:
+- Scores: Risiko ${context.scores.risk}/100, Fairness ${context.scores.fairness}/100, Klarheit ${context.scores.clarity}/100, Vollständigkeit ${context.scores.completeness}/100
+- Machtverteilung: ${context.powerBalanceSummary}
+- Top-Risiken: ${context.topRisksText}
+- Fehlende Regelungen: ${context.missingClausesText}
 
-FEHLENDE REGELUNGEN:
-${context.missingClausesText}
+DEINE AUFGABE — Erstelle vier Textfelder:
 
-MACHTVERTEILUNG:
-${context.powerBalanceSummary}
-
-DEINE AUFGABE — Erstelle zwei Felder:
-
-1. "verdict": Ein Executive-Fazit in 1-2 Sätzen.
+1. "verdict": Das Gesamtfazit in 2-3 Sätzen.
    REGELN:
-   - Sprich den Leser direkt an ("Dieser Vertrag...", "Das Dokument...")
-   - Passe die Sprache an den DOKUMENTTYP an:
-     * Bei Verträgen: "Vor Unterzeichnung..." / "Verhandlungsbedarf bei..."
-     * Bei regulatorischen Dokumenten: "Compliance-Status:" / "Datenschutzrechtlich..." / "Informationspflichten..."
-   - Nenne den KONKRETEN Hauptgrund für deine Einschätzung (nicht generisch)
-   - Beziehe den Gesamtscore mit ein
+   - Beginne mit einer Einordnung: Was ist das für ein Dokument und zwischen wem?
+   - Dann: Was ist die Kernaussage — lohnt sich das, wo liegt das Problem, oder ist alles solide?
+   - WICHTIG: Dein Tonfall MUSS zur Ampel passen:
+     * GRÜN: Positiv, bestätigend. "Solide aufgestellt", "gut strukturiert". Keine künstlichen Probleme erfinden!
+     * GELB: Sachlich-warnend. Konkret benennen was nachgebessert werden muss.
+     * ROT: Klar-ablehnend. Deutlich sagen warum man nicht unterschreiben sollte.
+   - Bei regulatorischen Dokumenten (AGB, Datenschutz): Statt "Unterzeichnung" → "Konformität", "Veröffentlichung", "Verwendung"
 
-2. "negotiationPriorities": Array von maximal 3 Verhandlungsprioritäten.
-   Jede Priorität hat:
-   - "priority": 1, 2 oder 3
-   - "clauseTitle": Titel der betroffenen Klausel
-   - "action": KONKRETER Verhandlungspunkt in einem Satz (was GENAU fordern/ändern?)
-   - "businessImpact": Warum ist das geschäftsrelevant? (1 Satz, Business-Sprache)
-   Bei regulatorischen Dokumenten: Statt Verhandlung "Compliance-Maßnahmen" — was muss ergänzt/geändert werden?
-   Wenn keine Risiken vorliegen, gib ein leeres Array zurück.
+2. "strengths": Ein Satz, was an diesem Dokument gut ist.
+   - Bei guten Dokumenten (GRÜN): Konkret loben — z.B. "Klare Haftungsregelungen, faire Kündigungsfristen und vollständige Datenschutzklauseln."
+   - Bei mittleren/schlechten: Trotzdem das Positive benennen — z.B. "Professionelle Grundstruktur mit 36 klar formulierten Klauseln."
+   - NIEMALS "Keine Stärken erkannt" schreiben — jedes Dokument hat Positives.
+
+3. "weaknesses": Ein Satz, was problematisch ist.
+   - KONKRET: Klauseln oder Themen beim Namen nennen — z.B. "Einseitige Haftungsübertragung in §6.6 und fehlende Datenschutzregelung."
+   - Bei guten Dokumenten (GRÜN): Ehrlich "Keine wesentlichen Schwächen erkannt." ODER nur minimale Hinweise.
+   - KEINE künstlichen Probleme erfinden wenn das Dokument tatsächlich gut ist!
+
+4. "actionRequired": Ein Satz, was der Nutzer jetzt tun sollte.
+   - GRÜN: "Kann in der vorliegenden Form verwendet werden." oder "Einzelne Optimierungsmöglichkeiten finden Sie in der Detailanalyse."
+   - GELB: Konkret sagen welche 1-2 Klauseln nachverhandelt werden sollten.
+   - ROT: Klar sagen was geändert werden MUSS bevor man unterschreibt/verwendet.
+   - Bei regulatorischen Dokumenten: "Vor Veröffentlichung..." / "Vor Verwendung..."
 
 VERBOTEN:
-- Juristen-Deutsch ("salvatorische Klausel", "AGB-Kontrolle")
-- Generische Phrasen ("sollte geprüft werden", "ist zu empfehlen")
-- Erwähnung interner Scores oder Berechnungsmethodik`;
+- Juristen-Deutsch oder Fachbegriffe die ein Laie nicht versteht
+- Generische Phrasen ("sollte geprüft werden", "ist zu empfehlen", "bedarf einer Überprüfung")
+- Interne Scores oder Prozentwerte erwähnen
+- Probleme erfinden die nicht in den Analysedaten stehen
+- Widersprüche zur Ampel-Bewertung (GRÜN heißt gut, nicht "erhebliche Risiken"!)`;
 
 const EXECUTIVE_SUMMARY_SCHEMA = {
   type: 'object',
   properties: {
     verdict: { type: 'string' },
-    negotiationPriorities: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          priority: { type: 'number' },
-          clauseTitle: { type: 'string' },
-          action: { type: 'string' },
-          businessImpact: { type: 'string' }
-        },
-        required: ['priority', 'clauseTitle', 'action', 'businessImpact'],
-        additionalProperties: false
-      }
-    }
+    strengths: { type: 'string' },
+    weaknesses: { type: 'string' },
+    actionRequired: { type: 'string' }
   },
-  required: ['verdict', 'negotiationPriorities'],
+  required: ['verdict', 'strengths', 'weaknesses', 'actionRequired'],
   additionalProperties: false
 };
 

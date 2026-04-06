@@ -1,11 +1,12 @@
 /**
- * Stage 5b: Executive Summary
+ * Stage 5b: Executive Summary V2
+ *
+ * Kompaktes "Anwalt-Freund" TL;DR — ein Block, keine Listen.
  *
  * Hybrid approach:
- *   - Deterministic: Traffic light, top risks, fairness verdict, critical gaps
- *   - GPT-4o-mini: Verdict (Gesamtfazit) + Negotiation priorities
- *
- * Falls GPT fehlschlägt → rein deterministischer Fallback.
+ *   - Deterministic: Traffic light (Ampel)
+ *   - GPT-4o-mini: Verdict + Strengths + Weaknesses + Action
+ *   - Fallback: Template-basiert wenn GPT fehlschlägt
  */
 
 const { EXECUTIVE_SUMMARY_PROMPT, EXECUTIVE_SUMMARY_SCHEMA } = require('../prompts/systemPrompts');
@@ -35,12 +36,11 @@ const TRAFFIC_LABELS = {
   fallback: { green: 'Gut aufgestellt', yellow: 'Verbesserungsbedarf', red: 'Kritisch' }
 };
 
-// ── Top 3 Risks (deterministic) ──
-function extractTopRisks(clauses, clauseAnalyses, optimizations) {
+// ── Top 3 Risks (used internally for GPT context, not stored in result) ──
+function extractTopRisks(clauses, clauseAnalyses) {
   const clauseMap = new Map(clauses.map(c => [c.id, c]));
-  const optMap = new Map(optimizations.map(o => [o.clauseId, o]));
 
-  const ranked = clauseAnalyses
+  return clauseAnalyses
     .filter(a => a.riskLevel >= 3 || a.strength === 'weak' || a.strength === 'critical')
     .map(a => {
       const w = IMPORTANCE_WEIGHTS[a.importanceLevel] || 1.0;
@@ -50,69 +50,16 @@ function extractTopRisks(clauses, clauseAnalyses, optimizations) {
       return { analysis: a, clause, compositeRisk };
     })
     .sort((a, b) => b.compositeRisk - a.compositeRisk)
-    .slice(0, 3);
-
-  return ranked.map(({ analysis, clause }) => ({
-    clauseId: analysis.clauseId,
-    clauseTitle: clause?.title || 'Unbenannte Klausel',
-    category: clause?.category || 'other',
-    riskLevel: analysis.riskLevel,
-    businessImpact: analysis.economicRiskAssessment || analysis.concerns?.[0] || 'Erhöhtes Risiko',
-    concern: analysis.concerns?.[0] || 'Verbesserungsbedarf'
-  }));
-}
-
-// ── Fairness Verdict (deterministic template) ──
-function buildFairnessVerdict(scores, clauseAnalyses) {
-  const fairness = scores.fairness;
-  const oneSidedCount = clauseAnalyses.filter(a =>
-    a.powerBalance === 'strongly_one_sided' || a.powerBalance === 'extremely_one_sided'
-  ).length;
-
-  if (fairness >= 80 && oneSidedCount === 0) {
-    return 'Die Regelungen sind weitgehend ausgewogen — keine einseitigen Klauseln erkannt.';
-  }
-  if (fairness >= 65) {
-    return oneSidedCount > 0
-      ? `Überwiegend ausgewogen, jedoch ${oneSidedCount === 1 ? 'enthält eine Klausel' : `enthalten ${oneSidedCount} Klauseln`} einseitige Formulierungen.`
-      : 'Insgesamt fair formuliert mit einzelnen Optimierungsmöglichkeiten.';
-  }
-  if (fairness >= 45) {
-    return `Teilweise einseitig formuliert — ${oneSidedCount} Klausel${oneSidedCount !== 1 ? 'n' : ''} weichen vom Marktstandard ab.`;
-  }
-  return `Deutlich einseitig formuliert — ${oneSidedCount} Klausel${oneSidedCount !== 1 ? 'n' : ''} sind stark zugunsten einer Partei gestaltet.`;
-}
-
-// ── Critical Gaps (deterministic) ──
-function extractCriticalGaps(scores) {
-  return (scores.missingClauses || [])
-    .filter(mc => !mc.foundInContent)
-    .map(mc => ({
-      category: mc.category,
-      categoryLabel: mc.categoryLabel,
-      severity: mc.severity,
-      recommendation: mc.recommendation
+    .slice(0, 3)
+    .map(({ analysis, clause }) => ({
+      clauseTitle: clause?.title || 'Unbenannte Klausel',
+      riskLevel: analysis.riskLevel,
+      concern: analysis.concerns?.[0] || 'Verbesserungsbedarf'
     }));
 }
 
-// ── Fallback Verdicts ──
-const FALLBACK_VERDICTS = {
-  green: {
-    bilateral_contract: 'Dieser Vertrag ist insgesamt solide aufgestellt. Einzelne Optimierungspunkte sind in der Detailanalyse aufgeführt.',
-    regulatory_document: 'Dieses Dokument erfüllt die wesentlichen regulatorischen Anforderungen.'
-  },
-  yellow: {
-    bilateral_contract: 'Dieser Vertrag enthält Klauseln mit Verbesserungsbedarf. Vor Unterzeichnung sollten die markierten Punkte geprüft werden.',
-    regulatory_document: 'Dieses Dokument weist Compliance-Lücken auf, die vor Veröffentlichung geschlossen werden sollten.'
-  },
-  red: {
-    bilateral_contract: 'Dieser Vertrag enthält erhebliche Risiken. Eine Unterzeichnung in der aktuellen Form wird nicht empfohlen.',
-    regulatory_document: 'Dieses Dokument weist schwere regulatorische Mängel auf und sollte grundlegend überarbeitet werden.'
-  }
-};
-
 // ── Build compressed GPT context ──
-function buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGaps) {
+function buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGaps, trafficLight, trafficLightLabel) {
   const docCategory = structure.documentCategory || 'bilateral_contract';
   const partiesText = structure.parties?.length > 0
     ? structure.parties.map(p => `${p.role}: ${p.name}`).join(', ')
@@ -123,7 +70,7 @@ function buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGa
     : 'Keine signifikanten Risiken erkannt.';
 
   const missingText = criticalGaps.length > 0
-    ? criticalGaps.map(g => `- ${g.categoryLabel}`).join('\n')
+    ? criticalGaps.map(g => `- ${g}`).join('\n')
     : 'Keine essentiellen Regelungen fehlen.';
 
   // Power balance summary
@@ -142,8 +89,9 @@ function buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGa
     documentCategory: docCategory,
     industry: structure.industry || 'nicht spezifiziert',
     partiesText,
+    trafficLight,
+    trafficLightLabel,
     scores: {
-      overall: scores.overall,
       risk: scores.risk,
       fairness: scores.fairness,
       clarity: scores.clarity,
@@ -155,26 +103,74 @@ function buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGa
   };
 }
 
+// ── Fallback Templates (deterministic, used when GPT fails) ──
+const FALLBACK = {
+  green: {
+    bilateral_contract: {
+      verdict: 'Dieser Vertrag ist insgesamt solide aufgestellt und professionell formuliert. Einzelne Optimierungsmöglichkeiten sind in der Detailanalyse aufgeführt.',
+      strengths: 'Klare Struktur, professionelle Formulierungen und ausgewogene Regelungen.',
+      weaknesses: 'Keine wesentlichen Schwächen erkannt.',
+      actionRequired: 'Kann in der vorliegenden Form verwendet werden.'
+    },
+    regulatory_document: {
+      verdict: 'Dieses Dokument erfüllt die wesentlichen regulatorischen Anforderungen und ist professionell aufgebaut.',
+      strengths: 'Vollständige Regelungen und klare Formulierungen.',
+      weaknesses: 'Keine wesentlichen Mängel erkannt.',
+      actionRequired: 'Kann in der vorliegenden Form verwendet werden.'
+    }
+  },
+  yellow: {
+    bilateral_contract: {
+      verdict: 'Dieser Vertrag enthält Klauseln mit Verbesserungsbedarf. Vor Unterzeichnung sollten die markierten Punkte geprüft werden.',
+      strengths: 'Professionelle Grundstruktur vorhanden.',
+      weaknesses: 'Einzelne Klauseln mit einseitigen Formulierungen oder erhöhtem Risiko.',
+      actionRequired: 'Die in der Detailanalyse markierten Klauseln vor Unterzeichnung nachverhandeln.'
+    },
+    regulatory_document: {
+      verdict: 'Dieses Dokument weist Lücken auf, die vor Veröffentlichung geschlossen werden sollten.',
+      strengths: 'Grundlegende Regelungen vorhanden.',
+      weaknesses: 'Einzelne Bereiche unvollständig oder nicht marktkonform.',
+      actionRequired: 'Die markierten Punkte vor Veröffentlichung überarbeiten.'
+    }
+  },
+  red: {
+    bilateral_contract: {
+      verdict: 'Dieser Vertrag enthält erhebliche Risiken. Eine Unterzeichnung in der aktuellen Form wird nicht empfohlen.',
+      strengths: 'Grundlegende Vertragsstruktur vorhanden.',
+      weaknesses: 'Mehrere kritische Klauseln mit erheblichem Risikopotential.',
+      actionRequired: 'Grundlegende Überarbeitung der kritischen Klauseln erforderlich bevor eine Unterzeichnung in Betracht kommt.'
+    },
+    regulatory_document: {
+      verdict: 'Dieses Dokument weist schwere regulatorische Mängel auf und sollte grundlegend überarbeitet werden.',
+      strengths: 'Grundstruktur vorhanden.',
+      weaknesses: 'Schwere Mängel in zentralen Bereichen.',
+      actionRequired: 'Grundlegende Überarbeitung vor Veröffentlichung oder Verwendung erforderlich.'
+    }
+  }
+};
+
 // ── Main: Run Executive Summary ──
 async function runExecutiveSummary(openai, structure, clauses, clauseAnalyses, optimizations, scores, onProgress) {
   const docCategory = structure.documentCategory || 'bilateral_contract';
 
-  // ── Deterministic parts ──
+  // ── Deterministic: Traffic Light ──
   const trafficLight = computeTrafficLight(scores, clauseAnalyses);
   const labels = TRAFFIC_LABELS[docCategory] || TRAFFIC_LABELS.fallback;
   const trafficLightLabel = labels[trafficLight];
-  const topRisks = extractTopRisks(clauses, clauseAnalyses, optimizations);
-  const fairnessVerdict = buildFairnessVerdict(scores, clauseAnalyses);
-  const criticalGaps = extractCriticalGaps(scores);
 
-  // ── GPT parts (with fallback) ──
-  let verdict;
-  let negotiationPriorities = [];
+  // Internal data for GPT context (not stored in result)
+  const topRisks = extractTopRisks(clauses, clauseAnalyses);
+  const criticalGapLabels = (scores.missingClauses || [])
+    .filter(mc => !mc.foundInContent)
+    .map(mc => mc.categoryLabel);
+
+  // ── GPT: Verdict + Strengths + Weaknesses + Action ──
+  let verdict, strengths, weaknesses, actionRequired;
   let gptFallback = false;
   let usage = null;
 
   try {
-    const context = buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGaps);
+    const context = buildGPTContext(structure, clauseAnalyses, scores, topRisks, criticalGapLabels, trafficLight, trafficLightLabel);
     const prompt = EXECUTIVE_SUMMARY_PROMPT(context);
 
     const response = await openai.chat.completions.create({
@@ -188,18 +184,14 @@ async function runExecutiveSummary(openai, structure, clauses, clauseAnalyses, o
         json_schema: { name: 'executive_summary', schema: EXECUTIVE_SUMMARY_SCHEMA, strict: true }
       },
       temperature: 0.3,
-      max_tokens: 800
+      max_tokens: 600
     });
 
     const parsed = JSON.parse(response.choices[0].message.content);
     verdict = parsed.verdict;
-    negotiationPriorities = (parsed.negotiationPriorities || []).map((np, i) => ({
-      priority: np.priority || i + 1,
-      clauseTitle: np.clauseTitle,
-      action: np.action,
-      businessImpact: np.businessImpact,
-      clauseId: topRisks[i]?.clauseId || null
-    }));
+    strengths = parsed.strengths;
+    weaknesses = parsed.weaknesses;
+    actionRequired = parsed.actionRequired;
 
     const u = response.usage;
     usage = {
@@ -212,18 +204,12 @@ async function runExecutiveSummary(openai, structure, clauses, clauseAnalyses, o
     console.warn('[OptimizerV2] Executive Summary GPT call failed (using fallback):', err.message);
     gptFallback = true;
 
-    // Fallback verdict
-    const fallbackSet = FALLBACK_VERDICTS[trafficLight] || FALLBACK_VERDICTS.yellow;
-    verdict = fallbackSet[docCategory] || fallbackSet.bilateral_contract;
-
-    // Fallback negotiation priorities from top risks
-    negotiationPriorities = topRisks.map((r, i) => ({
-      priority: i + 1,
-      clauseTitle: r.clauseTitle,
-      action: r.concern,
-      businessImpact: r.businessImpact,
-      clauseId: r.clauseId
-    }));
+    const fallbackSet = FALLBACK[trafficLight] || FALLBACK.yellow;
+    const fb = fallbackSet[docCategory] || fallbackSet.bilateral_contract;
+    verdict = fb.verdict;
+    strengths = fb.strengths;
+    weaknesses = fb.weaknesses;
+    actionRequired = fb.actionRequired;
   }
 
   onProgress(95, 'Executive Summary erstellt');
@@ -233,10 +219,9 @@ async function runExecutiveSummary(openai, structure, clauses, clauseAnalyses, o
       trafficLight,
       trafficLightLabel,
       verdict,
-      topRisks,
-      fairnessVerdict,
-      criticalGaps,
-      negotiationPriorities,
+      strengths,
+      weaknesses,
+      actionRequired,
       generatedAt: new Date(),
       gptFallback
     },

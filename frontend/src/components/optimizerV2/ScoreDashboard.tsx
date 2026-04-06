@@ -92,7 +92,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
     <div className={styles.scoreDashboard}>
       {/* Executive Summary */}
       {result.summary && (
-        <ExecutiveSummary summary={result.summary} onNavigate={onNavigate} />
+        <ExecutiveSummary summary={result.summary} />
       )}
 
       {/* Contract Summary Panel */}

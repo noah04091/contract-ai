@@ -230,39 +230,14 @@ export interface ProgressEvent {
 }
 
 // ── Full Analysis Result ──
-// ── Executive Summary (Stage 5b) ──
-export interface SummaryTopRisk {
-  clauseId: string;
-  clauseTitle: string;
-  category: string;
-  riskLevel: number;
-  businessImpact: string;
-  concern: string;
-}
-
-export interface SummaryCriticalGap {
-  category: string;
-  categoryLabel: string;
-  severity: string;
-  recommendation: string;
-}
-
-export interface NegotiationPriority {
-  priority: number;
-  clauseTitle: string;
-  action: string;
-  businessImpact: string;
-  clauseId?: string;
-}
-
+// ── Executive Summary V2 (Stage 5b) — Compact TL;DR ──
 export interface ExecutiveSummary {
   trafficLight: 'green' | 'yellow' | 'red';
   trafficLightLabel: string;
   verdict: string;
-  topRisks: SummaryTopRisk[];
-  fairnessVerdict: string;
-  criticalGaps: SummaryCriticalGap[];
-  negotiationPriorities: NegotiationPriority[];
+  strengths: string;
+  weaknesses: string;
+  actionRequired: string;
   generatedAt: string;
   gptFallback: boolean;
 }

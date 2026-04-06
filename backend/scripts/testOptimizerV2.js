@@ -455,6 +455,35 @@ async function runTests() {
         hasPerClauseScores: result.scores?.perClause?.length > 0,
       };
 
+      // Validate Executive Summary (Stage 5b)
+      const hasSummary = !!result.summary?.trafficLight;
+      if (hasSummary) {
+        const s = result.summary;
+        const summaryChecks = {
+          trafficLight: ['green', 'yellow', 'red'].includes(s.trafficLight),
+          hasVerdict: s.verdict?.length > 10,
+          hasLabel: s.trafficLightLabel?.length > 0,
+          hasFairness: s.fairnessVerdict?.length > 10,
+          hasRisks: Array.isArray(s.topRisks),
+          hasGaps: Array.isArray(s.criticalGaps),
+          hasPriorities: Array.isArray(s.negotiationPriorities),
+          prioritiesValid: s.negotiationPriorities?.every(p => p.priority && p.clauseTitle && p.action),
+        };
+        const summaryOk = Object.values(summaryChecks).every(Boolean);
+        if (summaryOk) {
+          console.log(`  ✓ Executive Summary: ${s.trafficLight.toUpperCase()} — "${s.trafficLightLabel}"`);
+          console.log(`    Risks: ${s.topRisks.length}, Gaps: ${s.criticalGaps.length}, Priorities: ${s.negotiationPriorities.length}`);
+        } else {
+          const failedChecks = Object.entries(summaryChecks).filter(([,v]) => !v).map(([k]) => k);
+          console.log(`  ⚠ Executive Summary teilweise: ${failedChecks.join(', ')}`);
+        }
+        testResult.checks.summary = summaryOk ? `✓ (${s.trafficLight})` : '⚠';
+      } else {
+        console.log(`  ✗ Keine Executive Summary`);
+        testResult.checks.summary = '✗';
+        failed++;
+      }
+
       // Validate each optimization has all 3 mode versions
       let modesOk = true;
       let missingModes = [];
@@ -551,7 +580,7 @@ async function runTests() {
   console.log();
 
   // Table
-  const header = 'Vertrag          | Struktur | Klauseln   | Optimiert  | Score  | Modi | DOCX     | Redline  | PDF';
+  const header = 'Vertrag          | Struktur | Klauseln   | Optimiert  | Score  | Summary      | Modi | DOCX     | Redline  | PDF';
   console.log(header);
   console.log('─'.repeat(header.length));
 
@@ -561,7 +590,7 @@ async function runTests() {
       console.log(`${r.name.padEnd(17)}| ✗ ERROR: ${c.error}`);
     } else {
       console.log(
-        `${r.name.padEnd(17)}| ${(c.structure || '-').padEnd(9)}| ${(c.clauses || '-').padEnd(11)}| ${(c.optimizations || '-').padEnd(11)}| ${(c.scores || '-').padEnd(7)}| ${(c.modes || '-').padEnd(5)}| ${(c.docx || '-').padEnd(9)}| ${(c.redlinePdf || '-').padEnd(9)}| ${c.analysisPdf || '-'}`
+        `${r.name.padEnd(17)}| ${(c.structure || '-').padEnd(9)}| ${(c.clauses || '-').padEnd(11)}| ${(c.optimizations || '-').padEnd(11)}| ${(c.scores || '-').padEnd(7)}| ${(c.summary || '-').padEnd(13)}| ${(c.modes || '-').padEnd(5)}| ${(c.docx || '-').padEnd(9)}| ${(c.redlinePdf || '-').padEnd(9)}| ${c.analysisPdf || '-'}`
       );
     }
   }
