@@ -289,6 +289,7 @@ export default function OptimizerV2() {
                 onToggleSort={() => setSortByImportance(s => !s)}
                 focusClauseId={focusClauseId}
                 onFocusHandled={() => setFocusClauseId(null)}
+                userSelections={state.userSelections}
               />
             )}
 
@@ -334,9 +335,10 @@ interface ClausesTabProps {
   onToggleSort: () => void;
   focusClauseId?: string | null;
   onFocusHandled?: () => void;
+  userSelections?: Map<string, { selectedVersion?: string }>;
 }
 
-function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort, focusClauseId, onFocusHandled }: ClausesTabProps) {
+function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance, onToggleSort, focusClauseId, onFocusHandled, userSelections }: ClausesTabProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const allExpanded = expandedIds.size === result.clauses.length;
@@ -466,6 +468,7 @@ function ClausesTab({ result, activeMode, clauseChats, actions, sortByImportance
               onAcceptVersion={actions.saveSelection}
               chatMessages={chatMsgs}
               onSendChat={actions.sendClauseChat}
+              acceptedVersion={userSelections?.get(clause.id)?.selectedVersion}
             />
           );
         })}
