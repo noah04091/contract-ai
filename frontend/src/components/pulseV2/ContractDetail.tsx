@@ -44,6 +44,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
     setContractNames(names);
   }, [result]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleActionStatusChange = useCallback(async (actionId: string, status: 'open' | 'done' | 'dismissed', _resultId?: string) => {
     try {
       const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/actions/${actionId}`, {
