@@ -484,6 +484,198 @@
 }
 
 /* ============================================
+   INLINE-EDIT FOR METRIC CARDS
+   (synchron mit NewContractDetailsModal Inline-Edit-Pattern)
+   ============================================ */
+
+/* + Button Wrapper im Card-Header */
+.addFieldWrapper {
+  position: relative;
+}
+
+.addFieldButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--cd-border);
+  background: var(--cd-surface);
+  color: var(--cd-text-secondary);
+  border-radius: var(--cd-radius-md);
+  cursor: pointer;
+  transition: all var(--cd-transition-fast);
+}
+
+.addFieldButton:hover:not(:disabled) {
+  background: var(--cd-primary-light);
+  color: var(--cd-primary);
+  border-color: var(--cd-primary);
+}
+
+.addFieldButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.addFieldDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  box-shadow: var(--cd-shadow-lg);
+  z-index: 100;
+  padding: 6px 0;
+}
+
+.addFieldItem {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--cd-text-primary);
+  cursor: pointer;
+  transition: background var(--cd-transition-fast);
+}
+
+.addFieldItem:hover {
+  background: var(--cd-primary-lighter, rgba(59, 130, 246, 0.08));
+  color: var(--cd-primary);
+}
+
+/* Klickbare Card im Read-Modus */
+.metricCardEditable {
+  cursor: pointer;
+  position: relative;
+}
+
+.metricCardEditable:hover .metricEditPencil {
+  opacity: 1;
+}
+
+.metricCardEditable .metricValue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.metricEditPencil {
+  opacity: 0;
+  color: var(--cd-text-tertiary);
+  flex-shrink: 0;
+  transition: opacity var(--cd-transition-fast);
+}
+
+/* Edit-Modus innerhalb einer Card */
+.metricEditWrapper {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.metricEditInput {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cd-text-primary);
+  background: var(--cd-surface);
+  border: 1px solid var(--cd-primary);
+  border-radius: var(--cd-radius-sm);
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.metricEditInput:focus {
+  box-shadow: 0 0 0 3px var(--cd-primary-lighter, rgba(59, 130, 246, 0.15));
+}
+
+.metricEditActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.metricEditSave,
+.metricEditCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--cd-radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--cd-border);
+  transition: all var(--cd-transition-fast);
+}
+
+.metricEditSave {
+  background: var(--cd-success, #10b981);
+  color: white;
+  border-color: var(--cd-success, #10b981);
+}
+
+.metricEditSave:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.metricEditSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.metricEditCancel {
+  background: var(--cd-surface);
+  color: var(--cd-text-secondary);
+}
+
+.metricEditCancel:hover {
+  background: var(--cd-bg);
+  color: var(--cd-text-primary);
+}
+
+/* Hint wenn keine Eckdaten vorhanden */
+.metricEmptyHint {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--cd-bg);
+  border: 1px dashed var(--cd-border);
+  border-radius: var(--cd-radius-md);
+  color: var(--cd-text-tertiary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.metricEmptyHint strong {
+  color: var(--cd-text-primary);
+}
+
+/* Sub-Info am Ende des Vertragsdetails-Bereichs (z.B. Restzeit) */
+.metricSubInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--cd-bg);
+  border-radius: var(--cd-radius-sm);
+  font-size: 12px;
+  color: var(--cd-text-tertiary);
+}
+
+/* ============================================
    PARTIES SECTION
    ============================================ */
 .partiesGrid {

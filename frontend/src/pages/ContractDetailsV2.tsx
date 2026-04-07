@@ -40,7 +40,11 @@ import {
   Package,
   Minimize2,
   Award,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  Check,
+  X,
+  Pencil
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
@@ -48,6 +52,41 @@ import { useAuth } from "../hooks/useAuth";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+// ============================================
+// KONSTANTEN — synchron mit NewContractDetailsModal.tsx (Zeilen 245-274)
+// Bei Änderungen: BEIDE Stellen anpassen, oder später nach utils/contractEditableFields.ts extrahieren
+// ============================================
+const KUENDIGUNG_OPTIONS = [
+  { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
+  { value: "2 Wochen", label: "2 Wochen" },
+  { value: "1 Monat", label: "1 Monat" },
+  { value: "4 Wochen", label: "4 Wochen" },
+  { value: "6 Wochen", label: "6 Wochen" },
+  { value: "2 Monate", label: "2 Monate" },
+  { value: "3 Monate", label: "3 Monate" },
+  { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
+  { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
+  { value: "6 Monate", label: "6 Monate" },
+  { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
+  { value: "12 Monate", label: "12 Monate" },
+  { value: "Unbefristet", label: "Unbefristet" },
+];
+
+const LAUFZEIT_OPTIONS = [
+  { value: "Unbefristet", label: "Unbefristet" },
+  { value: "1 Monat", label: "1 Monat" },
+  { value: "3 Monate", label: "3 Monate" },
+  { value: "6 Monate", label: "6 Monate" },
+  { value: "1 Jahr", label: "1 Jahr" },
+  { value: "2 Jahre", label: "2 Jahre" },
+  { value: "3 Jahre", label: "3 Jahre" },
+  { value: "5 Jahre", label: "5 Jahre" },
+  { value: "10 Jahre", label: "10 Jahre" },
+  { value: "24 Monate mit Verlängerung", label: "24 Monate + auto. Verlängerung" },
+  { value: "12 Monate mit Verlängerung", label: "12 Monate + auto. Verlängerung" },
+  { value: "Einmalig", label: "Einmalig (kein Abo)" },
+];
 
 // ============================================
 // INTERFACES
@@ -95,6 +134,15 @@ interface Contract {
   kosten?: number;
   vertragsnummer?: string;
   notes?: string;
+  // ✅ Editierbare Eckdaten — synchron mit NewContractDetailsModal EDITABLE_FIELDS
+  contractType?: string;
+  startDate?: string;
+  provider?: {
+    displayName?: string;
+    name?: string;
+    category?: string;
+    confidence?: number;
+  };
   // Kündigungs-Tracking
   cancellationId?: string;
   cancellationDate?: string;
@@ -216,6 +264,25 @@ export default function ContractDetailsV2() {
 
   // Chat State
   const [openingChat, setOpeningChat] = useState(false);
+
+  // ✅ Inline-Edit State (synchron mit Modal-Pattern)
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const [savingField, setSavingField] = useState(false);
+  const [showAddFieldMenu, setShowAddFieldMenu] = useState(false);
+  const addFieldMenuRef = useRef<HTMLDivElement>(null);
+
+  // Click-Outside-Handler für + Dropdown
+  useEffect(() => {
+    if (!showAddFieldMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (addFieldMenuRef.current && !addFieldMenuRef.current.contains(e.target as Node)) {
+        setShowAddFieldMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAddFieldMenu]);
 
   // Mobile Detection
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -719,6 +786,223 @@ export default function ContractDetailsV2() {
     });
   };
 
+  // ✅ Inline-Edit Handler (synchron mit Modal Zeile 739-774)
+  const handleInlineSave = async (fieldKey: string, value: string) => {
+    if (!contract) return;
+    setSavingField(true);
+    try {
+      const updateData: Record<string, unknown> = {};
+      if (fieldKey === 'kosten') {
+        updateData[fieldKey] = value ? parseFloat(value) : null;
+      } else {
+        updateData[fieldKey] = value || null;
+      }
+
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/contracts/${contract._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify(updateData),
+      });
+
+      if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+      setContract({ ...contract, ...updateData } as Contract);
+      toast.success('Gespeichert');
+    } catch (err) {
+      console.error('Inline save error:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingField(false);
+      setEditingField(null);
+    }
+  };
+
+  const startEditingField = (key: string, currentValue: string) => {
+    setEditingField(key);
+    setEditValue(currentValue);
+  };
+
+  const cancelEditingField = () => {
+    setEditingField(null);
+    setEditValue('');
+  };
+
+  // ✅ EDITABLE_FIELDS — synchron mit NewContractDetailsModal.tsx (Zeilen 944-1008)
+  // Bei Änderungen: BEIDE Stellen anpassen
+  const EDITABLE_FIELDS: Array<{
+    key: string;
+    label: string;
+    type: 'text' | 'number' | 'date' | 'dropdown';
+    icon: React.ReactNode;
+    options?: { value: string; label: string }[];
+    hasValue: () => boolean;
+    displayValue: () => string;
+    rawValue: () => string;
+  }> = !contract ? [] : [
+    {
+      key: 'anbieter', label: 'Anbieter', type: 'text', icon: <Users size={16} />,
+      hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
+      displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
+      rawValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
+    },
+    {
+      key: 'contractType', label: 'Vertragstyp', type: 'text', icon: <Package size={16} />,
+      hasValue: () => !!contract.contractType,
+      displayValue: () => contract.contractType || '',
+      rawValue: () => contract.contractType || '',
+    },
+    {
+      key: 'vertragsnummer', label: 'Vertragsnummer', type: 'text', icon: <FileText size={16} />,
+      hasValue: () => !!contract.vertragsnummer,
+      displayValue: () => contract.vertragsnummer || '',
+      rawValue: () => contract.vertragsnummer || '',
+    },
+    {
+      key: 'startDate', label: 'Vertragsbeginn', type: 'date', icon: <Calendar size={16} />,
+      hasValue: () => !!contract.startDate,
+      displayValue: () => contract.startDate ? formatDate(contract.startDate) : '',
+      rawValue: () => contract.startDate || '',
+    },
+    {
+      key: 'laufzeit', label: 'Laufzeit', type: 'dropdown', icon: <Clock size={16} />, options: LAUFZEIT_OPTIONS,
+      hasValue: () => !!contract.laufzeit,
+      displayValue: () => contract.laufzeit || '',
+      rawValue: () => contract.laufzeit || '',
+    },
+    {
+      key: 'expiryDate', label: 'Ablaufdatum', type: 'date', icon: <Calendar size={16} />,
+      hasValue: () => !!contract.expiryDate,
+      displayValue: () => contract.expiryDate ? formatDate(contract.expiryDate) : '',
+      rawValue: () => contract.expiryDate || '',
+    },
+    {
+      key: 'kuendigung', label: 'Kündigungsfrist', type: 'dropdown', icon: <AlertCircle size={16} />, options: KUENDIGUNG_OPTIONS,
+      hasValue: () => !!contract.kuendigung,
+      displayValue: () => contract.kuendigung || '',
+      rawValue: () => contract.kuendigung || '',
+    },
+    {
+      key: 'gekuendigtZum', label: 'Gekündigt zum', type: 'date', icon: <Calendar size={16} />,
+      hasValue: () => !!contract.gekuendigtZum,
+      displayValue: () => contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
+      rawValue: () => contract.gekuendigtZum || '',
+    },
+    {
+      key: 'kosten', label: 'Monatliche Kosten', type: 'number', icon: <CreditCard size={16} />,
+      hasValue: () => contract.kosten != null && contract.kosten > 0,
+      displayValue: () => contract.kosten != null && contract.kosten > 0
+        ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+        : '',
+      rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
+    },
+  ];
+
+  // ✅ Render einer einzelnen Eckdaten-Card (im Read- oder Edit-Modus)
+  const renderEditableMetricCard = (field: typeof EDITABLE_FIELDS[number]) => {
+    const isEditing = editingField === field.key;
+
+    if (isEditing) {
+      return (
+        <div key={field.key} className={styles.metricCard}>
+          <div className={styles.metricHeader}>
+            <span className={styles.metricLabel}>{field.label}</span>
+            <div className={styles.metricIconWrapper}>{field.icon}</div>
+          </div>
+          <div className={styles.metricEditWrapper}>
+            {field.type === 'dropdown' && field.options ? (
+              <select
+                className={styles.metricEditInput}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+              >
+                <option value="">— Auswählen —</option>
+                {field.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            ) : field.type === 'date' ? (
+              <input
+                type="date"
+                className={styles.metricEditInput}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleInlineSave(field.key, editValue);
+                  if (e.key === 'Escape') cancelEditingField();
+                }}
+              />
+            ) : (
+              <input
+                type={field.type === 'number' ? 'number' : 'text'}
+                className={styles.metricEditInput}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                step={field.type === 'number' ? '0.01' : undefined}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleInlineSave(field.key, editValue);
+                  if (e.key === 'Escape') cancelEditingField();
+                }}
+              />
+            )}
+          </div>
+          <div className={styles.metricEditActions}>
+            <button
+              className={styles.metricEditSave}
+              onClick={() => handleInlineSave(field.key, editValue)}
+              disabled={savingField}
+              title="Speichern"
+            >
+              <Check size={14} />
+            </button>
+            <button
+              className={styles.metricEditCancel}
+              onClick={cancelEditingField}
+              title="Abbrechen"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Read-Mode → Card ist klickbar
+    return (
+      <div
+        key={field.key}
+        className={`${styles.metricCard} ${styles.metricCardEditable}`}
+        onClick={() => {
+          if (field.type === 'date' && field.rawValue()) {
+            const d = new Date(field.rawValue());
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            startEditingField(field.key, `${yyyy}-${mm}-${dd}`);
+          } else {
+            startEditingField(field.key, field.rawValue());
+          }
+        }}
+        title="Klicken zum Bearbeiten"
+      >
+        <div className={styles.metricHeader}>
+          <span className={styles.metricLabel}>{field.label}</span>
+          <div className={styles.metricIconWrapper}>{field.icon}</div>
+        </div>
+        <div className={styles.metricValue}>
+          {field.displayValue()}
+          <Pencil size={12} className={styles.metricEditPencil} />
+        </div>
+      </div>
+    );
+  };
+
   const getRelativeTime = (dateString: string): string => {
     const date = new Date(dateString);
     date.setHours(0, 0, 0, 0);
@@ -1180,89 +1464,64 @@ export default function ContractDetailsV2() {
                           <span className={styles.cardIcon}><Info size={18} /></span>
                           Vertragsdetails
                         </h3>
+                        {/* ✅ + Button zum Hinzufügen fehlender Felder (synchron mit Modal-Pattern) */}
+                        {(() => {
+                          const fieldsMissing = EDITABLE_FIELDS.filter(f => !f.hasValue() && editingField !== f.key);
+                          return (
+                            <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
+                              <button
+                                className={styles.addFieldButton}
+                                onClick={() => setShowAddFieldMenu(!showAddFieldMenu)}
+                                title="Feld hinzufügen"
+                                disabled={fieldsMissing.length === 0}
+                              >
+                                <Plus size={16} />
+                              </button>
+                              {showAddFieldMenu && fieldsMissing.length > 0 && (
+                                <div className={styles.addFieldDropdown}>
+                                  {fieldsMissing.map((field) => (
+                                    <button
+                                      key={field.key}
+                                      className={styles.addFieldItem}
+                                      onClick={() => {
+                                        setShowAddFieldMenu(false);
+                                        startEditingField(field.key, '');
+                                      }}
+                                    >
+                                      {field.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className={styles.cardBody}>
                         <div className={styles.metricsGrid}>
-                          <div className={styles.metricCard}>
-                            <div className={styles.metricHeader}>
-                              <span className={styles.metricLabel}>Laufzeit</span>
-                              <div className={styles.metricIconWrapper}>
-                                <Clock size={16} />
-                              </div>
-                            </div>
-                            <div className={`${styles.metricValue} ${!contract.laufzeit ? styles.metricEmpty : ''}`}>
-                              {contract.laufzeit || "Nicht angegeben"}
-                            </div>
-                          </div>
+                          {/* ✅ Editierbare Felder — nur befüllte oder gerade bearbeitete werden gerendert */}
+                          {EDITABLE_FIELDS.map((field) => {
+                            const isBeingEdited = editingField === field.key;
+                            if (!field.hasValue() && !isBeingEdited) return null;
+                            return renderEditableMetricCard(field);
+                          })}
 
-                          <div className={styles.metricCard}>
-                            <div className={styles.metricHeader}>
-                              <span className={styles.metricLabel}>Ablaufdatum</span>
-                              <div className={styles.metricIconWrapper}>
-                                <Calendar size={16} />
-                              </div>
-                            </div>
-                            <div className={`${styles.metricValue} ${!contract.expiryDate ? styles.metricEmpty : ''}`}>
-                              {contract.expiryDate ? formatDate(contract.expiryDate) : "Nicht angegeben"}
-                            </div>
-                            {contract.expiryDate && (
-                              <div className={styles.metricSubtext}>{getRelativeTime(contract.expiryDate)}</div>
-                            )}
-                          </div>
-
-                          <div className={styles.metricCard}>
-                            <div className={styles.metricHeader}>
-                              <span className={styles.metricLabel}>Kündigungsfrist</span>
-                              <div className={styles.metricIconWrapper}>
-                                <AlertCircle size={16} />
-                              </div>
-                            </div>
-                            <div className={`${styles.metricValue} ${!contract.kuendigung ? styles.metricEmpty : ''}`}>
-                              {contract.kuendigung || "Nicht angegeben"}
-                            </div>
-                          </div>
-
-                          {/* NEU: Kosten */}
-                          {contract.kosten !== undefined && contract.kosten !== null && (
-                            <div className={styles.metricCard}>
-                              <div className={styles.metricHeader}>
-                                <span className={styles.metricLabel}>Kosten</span>
-                                <div className={styles.metricIconWrapper}>
-                                  <CreditCard size={16} />
-                                </div>
-                              </div>
-                              <div className={styles.metricValue}>
-                                {contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* NEU: Anbieter */}
-                          {contract.anbieter && (
-                            <div className={styles.metricCard}>
-                              <div className={styles.metricHeader}>
-                                <span className={styles.metricLabel}>Anbieter</span>
-                                <div className={styles.metricIconWrapper}>
-                                  <Users size={16} />
-                                </div>
-                              </div>
-                              <div className={styles.metricValue}>{contract.anbieter}</div>
-                            </div>
-                          )}
-
-                          {/* NEU: Vertragsnummer */}
-                          {contract.vertragsnummer && (
-                            <div className={styles.metricCard}>
-                              <div className={styles.metricHeader}>
-                                <span className={styles.metricLabel}>Vertragsnummer</span>
-                                <div className={styles.metricIconWrapper}>
-                                  <FileText size={16} />
-                                </div>
-                              </div>
-                              <div className={styles.metricValue}>{contract.vertragsnummer}</div>
+                          {/* ℹ️ Hinweis wenn KEIN Feld befüllt ist */}
+                          {EDITABLE_FIELDS.every(f => !f.hasValue()) && editingField === null && (
+                            <div className={styles.metricEmptyHint}>
+                              <Info size={16} />
+                              <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
                             </div>
                           )}
                         </div>
+
+                        {/* Sub-Info: Restzeit zum Ablaufdatum (read-only, berechnet) */}
+                        {contract.expiryDate && editingField !== 'expiryDate' && (
+                          <div className={styles.metricSubInfo}>
+                            <Clock size={14} />
+                            <span>Ablaufdatum: {getRelativeTime(contract.expiryDate)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
