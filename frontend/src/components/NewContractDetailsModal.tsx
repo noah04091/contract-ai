@@ -1978,6 +1978,17 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     const score = contractScore;
     const hasScore = score !== null && score !== undefined;
 
+    // ✅ Defensive Validation: Items ohne title/null herausfiltern, um Crashes & leere Renderings zu vermeiden
+    const validPositives = (contract.positiveAspects || []).filter(a => a && a.title);
+    const validCriticals = (contract.criticalIssues || []).filter(i => i && i.title);
+    const validRecommendations = (contract.recommendations || []).filter(r => {
+      if (typeof r === 'string') return r.length > 0;
+      return !!(r && r.title);
+    });
+    // Wenn mindestens EINS der drei strukturierten Arrays Daten hat → "neue" Analyse
+    // → alle 3 Sektionen werden angezeigt (leere mit Empty-State-Text)
+    const hasAnyStructured = validPositives.length > 0 || validCriticals.length > 0 || validRecommendations.length > 0;
+
     return (
       <div className={styles.tabContent}>
         {/* Contract Score */}
@@ -2091,118 +2102,133 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           </div>
         )}
 
-        {/* ✅ Positive Aspekte (strukturiert aus der Analyse) */}
-        {contract.positiveAspects && contract.positiveAspects.length > 0 && (
+        {/* ✅ Positive Aspekte (strukturiert) — wird nur gerendert, wenn die Analyse strukturierte Daten hat */}
+        {hasAnyStructured && (
           <div className={styles.section}>
             <h3>✅ Positive Aspekte</h3>
             <div className={styles.messageBox}>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-                {contract.positiveAspects.map((aspect, idx) => (
-                  <li key={idx} style={{ marginBottom: idx < contract.positiveAspects!.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
-                    <strong style={{ color: '#1f2937', display: 'block', marginBottom: '4px' }}>{aspect.title}</strong>
-                    {aspect.description && (
-                      <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{aspect.description}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              {validPositives.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+                  {validPositives.map((aspect, idx) => (
+                    <li key={idx} style={{ marginBottom: idx < validPositives.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
+                      <strong style={{ color: '#1f2937', display: 'block', marginBottom: '4px' }}>{aspect.title}</strong>
+                      {aspect.description && (
+                        <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{aspect.description}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p style={{ margin: 0, color: '#6b7280', fontStyle: 'italic' }}>
+                  Keine besonders positiven Aspekte identifiziert.
+                </p>
+              )}
             </div>
           </div>
         )}
 
-        {/* ⚠️ Kritische Punkte (strukturiert aus der Analyse) */}
-        {contract.criticalIssues && contract.criticalIssues.length > 0 && (
+        {/* ⚠️ Kritische Punkte (strukturiert) */}
+        {hasAnyStructured && (
           <div className={styles.section}>
             <h3>⚠️ Kritische Punkte</h3>
             <div className={styles.messageBox}>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-                {contract.criticalIssues.map((issue, idx) => {
-                  const riskColor =
-                    issue.riskLevel === 'high' ? { bg: '#fee2e2', text: '#991b1b', label: 'Hoch' } :
-                    issue.riskLevel === 'medium' ? { bg: '#fef3c7', text: '#92400e', label: 'Mittel' } :
-                    issue.riskLevel === 'low' ? { bg: '#d1fae5', text: '#065f46', label: 'Niedrig' } :
-                    null;
-                  return (
-                    <li key={idx} style={{ marginBottom: idx < contract.criticalIssues!.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <strong style={{ color: '#1f2937' }}>{issue.title}</strong>
-                        {riskColor && (
-                          <span style={{
-                            background: riskColor.bg,
-                            color: riskColor.text,
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            borderRadius: '9999px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.03em'
-                          }}>
-                            {riskColor.label}
-                          </span>
+              {validCriticals.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+                  {validCriticals.map((issue, idx) => {
+                    const riskColor =
+                      issue.riskLevel === 'high' ? { bg: '#fee2e2', text: '#991b1b', label: 'Hoch' } :
+                      issue.riskLevel === 'medium' ? { bg: '#fef3c7', text: '#92400e', label: 'Mittel' } :
+                      issue.riskLevel === 'low' ? { bg: '#d1fae5', text: '#065f46', label: 'Niedrig' } :
+                      null;
+                    return (
+                      <li key={idx} style={{ marginBottom: idx < validCriticals.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <strong style={{ color: '#1f2937' }}>{issue.title}</strong>
+                          {riskColor && (
+                            <span style={{
+                              background: riskColor.bg,
+                              color: riskColor.text,
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em'
+                            }}>
+                              {riskColor.label}
+                            </span>
+                          )}
+                        </div>
+                        {issue.description && (
+                          <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{issue.description}</p>
                         )}
-                      </div>
-                      {issue.description && (
-                        <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{issue.description}</p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p style={{ margin: 0, color: '#6b7280', fontStyle: 'italic' }}>
+                  Keine kritischen Punkte identifiziert.
+                </p>
+              )}
             </div>
           </div>
         )}
 
-        {/* 💡 Konkrete Empfehlungen (strukturiert aus der Analyse) */}
-        {contract.recommendations && contract.recommendations.length > 0 && (
+        {/* 💡 Konkrete Empfehlungen (strukturiert) */}
+        {hasAnyStructured && (
           <div className={styles.section}>
             <h3>💡 Konkrete Empfehlungen</h3>
             <div className={styles.messageBox}>
-              <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
-                {contract.recommendations.map((rec, idx) => {
-                  const isObj = typeof rec === 'object' && rec !== null;
-                  const title = isObj ? rec.title : rec;
-                  const description = isObj ? rec.description : undefined;
-                  const priority = isObj ? rec.priority : undefined;
-                  const priorityColor =
-                    priority === 'high' ? { bg: '#fee2e2', text: '#991b1b', label: 'Hoch' } :
-                    priority === 'medium' ? { bg: '#fef3c7', text: '#92400e', label: 'Mittel' } :
-                    priority === 'low' ? { bg: '#d1fae5', text: '#065f46', label: 'Niedrig' } :
-                    null;
-                  return (
-                    <li key={idx} style={{ marginBottom: idx < contract.recommendations!.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                        <strong style={{ color: '#1f2937' }}>{title}</strong>
-                        {priorityColor && (
-                          <span style={{
-                            background: priorityColor.bg,
-                            color: priorityColor.text,
-                            fontSize: '11px',
-                            fontWeight: 600,
-                            padding: '2px 8px',
-                            borderRadius: '9999px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.03em'
-                          }}>
-                            Prio: {priorityColor.label}
-                          </span>
+              {validRecommendations.length > 0 ? (
+                <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
+                  {validRecommendations.map((rec, idx) => {
+                    const isObj = typeof rec === 'object' && rec !== null;
+                    const title = isObj ? rec.title : rec;
+                    const description = isObj ? rec.description : undefined;
+                    const priority = isObj ? rec.priority : undefined;
+                    const priorityColor =
+                      priority === 'high' ? { bg: '#fee2e2', text: '#991b1b', label: 'Hoch' } :
+                      priority === 'medium' ? { bg: '#fef3c7', text: '#92400e', label: 'Mittel' } :
+                      priority === 'low' ? { bg: '#d1fae5', text: '#065f46', label: 'Niedrig' } :
+                      null;
+                    return (
+                      <li key={idx} style={{ marginBottom: idx < validRecommendations.length - 1 ? '16px' : 0, paddingLeft: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <strong style={{ color: '#1f2937' }}>{title}</strong>
+                          {priorityColor && (
+                            <span style={{
+                              background: priorityColor.bg,
+                              color: priorityColor.text,
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.03em'
+                            }}>
+                              Prio: {priorityColor.label}
+                            </span>
+                          )}
+                        </div>
+                        {description && (
+                          <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{description}</p>
                         )}
-                      </div>
-                      {description && (
-                        <p style={{ margin: 0, color: '#4b5563', lineHeight: 1.6 }}>{description}</p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p style={{ margin: 0, color: '#6b7280', fontStyle: 'italic' }}>
+                  Keine konkreten Empfehlungen vorhanden.
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {/* ℹ️ Fallback-Hinweis für alte Verträge ohne strukturierte Felder */}
-        {!contract.positiveAspects?.length &&
-         !contract.criticalIssues?.length &&
-         !contract.recommendations?.length &&
-         (contractScore || summary || legalAssessment) && (
+        {!hasAnyStructured && (contractScore || summary || legalAssessment) && (
           <div style={{
             marginTop: '20px',
             padding: '12px 16px',
