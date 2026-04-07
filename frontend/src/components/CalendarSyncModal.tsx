@@ -14,11 +14,7 @@ import {
   Monitor,
   Link2,
   Shield,
-  Zap,
-  Bug,
-  CheckCircle,
-  XCircle,
-  Loader
+  Zap
 } from 'lucide-react';
 import axios from 'axios';
 import styles from './CalendarSyncModal.module.css';
@@ -66,7 +62,7 @@ interface SyncLinks {
   yahoo: string;
 }
 
-type TabType = 'google' | 'outlook' | 'apple' | 'other' | 'test';
+type TabType = 'google' | 'outlook' | 'apple' | 'other';
 
 export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('google');
@@ -76,27 +72,6 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
   const [copied, setCopied] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [testResults, setTestResults] = useState<{
-    icsEndpoint: 'idle' | 'loading' | 'success' | 'error';
-    icsContent: 'idle' | 'loading' | 'success' | 'error';
-    eventCount: number;
-    errorMessage: string;
-    rawResponse: string;
-  }>({
-    icsEndpoint: 'idle',
-    icsContent: 'idle',
-    eventCount: 0,
-    errorMessage: '',
-    rawResponse: ''
-  });
-  const [debugInfo, setDebugInfo] = useState<{
-    contractCount: number;
-    totalEvents: number;
-    futureEvents: number;
-    contracts: Array<{ name: string; expiryDate: string; hasExpiryDate: boolean }>;
-    hint: string;
-  } | null>(null);
-  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -176,112 +151,6 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  // Test ICS Endpoint
-  const runIcsTest = async () => {
-    if (!syncLinks) return;
-
-    setTestResults(prev => ({
-      ...prev,
-      icsEndpoint: 'loading',
-      icsContent: 'idle',
-      errorMessage: '',
-      rawResponse: ''
-    }));
-
-    try {
-      // Test 1: Check if ICS endpoint responds
-      const response = await fetch(syncLinks.download);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      setTestResults(prev => ({ ...prev, icsEndpoint: 'success' }));
-
-      // Test 2: Check ICS content
-      setTestResults(prev => ({ ...prev, icsContent: 'loading' }));
-      const text = await response.text();
-
-      // Store first 500 chars for preview
-      setTestResults(prev => ({ ...prev, rawResponse: text.substring(0, 1000) }));
-
-      // Validate ICS format
-      if (!text.startsWith('BEGIN:VCALENDAR')) {
-        throw new Error('Ungültiges ICS-Format: Datei beginnt nicht mit BEGIN:VCALENDAR');
-      }
-
-      if (!text.includes('END:VCALENDAR')) {
-        throw new Error('Ungültiges ICS-Format: END:VCALENDAR fehlt');
-      }
-
-      // Count events
-      const eventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
-
-      setTestResults(prev => ({
-        ...prev,
-        icsContent: 'success',
-        eventCount
-      }));
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unbekannter Fehler';
-      setTestResults(prev => ({
-        ...prev,
-        icsEndpoint: prev.icsEndpoint === 'loading' ? 'error' : prev.icsEndpoint,
-        icsContent: prev.icsContent === 'loading' ? 'error' : prev.icsContent,
-        errorMessage
-      }));
-    }
-  };
-
-  // Fetch debug info
-  const fetchDebugInfo = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.get<{
-        success: boolean;
-        debug: {
-          contractCount: number;
-          totalEvents: number;
-          futureEvents: number;
-          contracts: Array<{ name: string; expiryDate: string; hasExpiryDate: boolean }>;
-          hint: string;
-        };
-      }>('/api/calendar/debug', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        setDebugInfo(response.data.debug);
-      }
-    } catch (err) {
-      console.error('Error fetching debug info:', err);
-    }
-  };
-
-  // Regenerate events
-  const regenerateEvents = async () => {
-    setRegenerating(true);
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await axios.post<{
-        success: boolean;
-        eventsGenerated: number;
-      }>('/api/calendar/regenerate-events', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data.success) {
-        alert(`${response.data.eventsGenerated} Events wurden generiert!`);
-        // Refresh debug info
-        await fetchDebugInfo();
-      }
-    } catch (err) {
-      console.error('Error regenerating events:', err);
-      alert('Fehler beim Regenerieren der Events');
-    } finally {
-      setRegenerating(false);
-    }
-  };
-
   if (!isOpen) return null;
 
   const tabs = [
@@ -289,7 +158,6 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     { id: 'outlook' as TabType, label: 'Outlook', icon: <OutlookIcon /> },
     { id: 'apple' as TabType, label: 'Apple', icon: <AppleIcon /> },
     { id: 'other' as TabType, label: 'Andere', icon: <ThunderbirdIcon /> },
-    { id: 'test' as TabType, label: 'Test', icon: <Bug size={20} /> },
   ];
 
   const renderTabContent = () => {
@@ -669,266 +537,6 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
           </div>
         );
 
-      case 'test':
-        return (
-          <div className={styles.tabContent}>
-            <div className={styles.instructionHeader}>
-              <Bug size={24} />
-              <h3>Test & Debug</h3>
-            </div>
-
-            <div className={styles.testSection}>
-              <div className={styles.testWarning}>
-                <AlertCircle size={18} />
-                <p>Dieser Tab ist nur für Entwickler/Admins. Hier kannst du die ICS-Integration testen.</p>
-              </div>
-
-              {/* All URLs */}
-              <div className={styles.debugUrls}>
-                <h4>Generierte URLs</h4>
-
-                <div className={styles.debugUrlItem}>
-                  <label>ICS Download URL:</label>
-                  <div className={styles.urlBox}>
-                    <code>{syncLinks.download}</code>
-                    <button
-                      onClick={() => copyToClipboard(syncLinks.download, 'download')}
-                      className={styles.copyBtn}
-                    >
-                      {copiedField === 'download' ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.debugUrlItem}>
-                  <label>Webcal URL:</label>
-                  <div className={styles.urlBox}>
-                    <code>{syncLinks.webcal}</code>
-                    <button
-                      onClick={() => copyToClipboard(syncLinks.webcal, 'webcal')}
-                      className={styles.copyBtn}
-                    >
-                      {copiedField === 'webcal' ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.debugUrlItem}>
-                  <label>Google Calendar URL:</label>
-                  <div className={styles.urlBox}>
-                    <code>{syncLinks.google}</code>
-                    <button
-                      onClick={() => copyToClipboard(syncLinks.google, 'google')}
-                      className={styles.copyBtn}
-                    >
-                      {copiedField === 'google' ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.debugUrlItem}>
-                  <label>Outlook URL:</label>
-                  <div className={styles.urlBox}>
-                    <code>{syncLinks.outlook}</code>
-                    <button
-                      onClick={() => copyToClipboard(syncLinks.outlook, 'outlook')}
-                      className={styles.copyBtn}
-                    >
-                      {copiedField === 'outlook' ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Debug & Regenerate */}
-              <div className={styles.debugSection}>
-                <h4>Events Diagnostik</h4>
-                <div className={styles.debugActions}>
-                  <motion.button
-                    className={styles.debugBtn}
-                    onClick={fetchDebugInfo}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <AlertCircle size={18} />
-                    <span>Debug-Info laden</span>
-                  </motion.button>
-
-                  <motion.button
-                    className={styles.regenerateBtn2}
-                    onClick={regenerateEvents}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={regenerating}
-                  >
-                    {regenerating ? (
-                      <>
-                        <Loader size={18} className={styles.spinner} />
-                        <span>Generiere...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw size={18} />
-                        <span>Events regenerieren</span>
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-
-                {debugInfo && (
-                  <div className={styles.debugResults}>
-                    <div className={styles.debugStat}>
-                      <strong>Verträge:</strong> {debugInfo.contractCount}
-                    </div>
-                    <div className={styles.debugStat}>
-                      <strong>Gesamt Events:</strong> {debugInfo.totalEvents}
-                    </div>
-                    <div className={styles.debugStat}>
-                      <strong>Zukünftige Events (im ICS):</strong> {debugInfo.futureEvents}
-                    </div>
-
-                    {debugInfo.futureEvents === 0 && (
-                      <div className={styles.debugWarning}>
-                        <AlertCircle size={16} />
-                        <span>{debugInfo.hint}</span>
-                      </div>
-                    )}
-
-                    <div className={styles.debugContracts}>
-                      <strong>Verträge mit Ablaufdatum:</strong>
-                      <ul>
-                        {debugInfo.contracts.map((c, i) => (
-                          <li key={i} className={c.hasExpiryDate ? styles.hasDate : styles.noDate}>
-                            {c.name}: {c.hasExpiryDate ? new Date(c.expiryDate).toLocaleDateString('de-DE') : 'KEIN DATUM'}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Test Button */}
-              <div className={styles.testActions}>
-                <motion.button
-                  className={styles.testBtn}
-                  onClick={runIcsTest}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={testResults.icsEndpoint === 'loading' || testResults.icsContent === 'loading'}
-                >
-                  {(testResults.icsEndpoint === 'loading' || testResults.icsContent === 'loading') ? (
-                    <>
-                      <Loader size={18} className={styles.spinner} />
-                      <span>Teste...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Bug size={18} />
-                      <span>ICS-Endpoint testen</span>
-                    </>
-                  )}
-                </motion.button>
-              </div>
-
-              {/* Test Results */}
-              {(testResults.icsEndpoint !== 'idle' || testResults.icsContent !== 'idle') && (
-                <div className={styles.testResults}>
-                  <h4>Test-Ergebnisse</h4>
-
-                  <div className={styles.testResultItem}>
-                    <div className={styles.testResultIcon}>
-                      {testResults.icsEndpoint === 'loading' && <Loader size={18} className={styles.spinner} />}
-                      {testResults.icsEndpoint === 'success' && <CheckCircle size={18} className={styles.successIcon} />}
-                      {testResults.icsEndpoint === 'error' && <XCircle size={18} className={styles.errorIcon} />}
-                    </div>
-                    <div className={styles.testResultText}>
-                      <strong>ICS-Endpoint erreichbar</strong>
-                      <span>{testResults.icsEndpoint === 'success' ? 'OK' : testResults.icsEndpoint === 'error' ? 'Fehler' : 'Teste...'}</span>
-                    </div>
-                  </div>
-
-                  <div className={styles.testResultItem}>
-                    <div className={styles.testResultIcon}>
-                      {testResults.icsContent === 'loading' && <Loader size={18} className={styles.spinner} />}
-                      {testResults.icsContent === 'success' && <CheckCircle size={18} className={styles.successIcon} />}
-                      {testResults.icsContent === 'error' && <XCircle size={18} className={styles.errorIcon} />}
-                      {testResults.icsContent === 'idle' && <div className={styles.idleIcon} />}
-                    </div>
-                    <div className={styles.testResultText}>
-                      <strong>ICS-Format gültig</strong>
-                      <span>
-                        {testResults.icsContent === 'success'
-                          ? `OK - ${testResults.eventCount} Event(s) gefunden`
-                          : testResults.icsContent === 'error'
-                          ? 'Fehler'
-                          : testResults.icsContent === 'loading'
-                          ? 'Prüfe...'
-                          : '-'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {testResults.errorMessage && (
-                    <div className={styles.testError}>
-                      <AlertCircle size={16} />
-                      <span>{testResults.errorMessage}</span>
-                    </div>
-                  )}
-
-                  {testResults.rawResponse && (
-                    <div className={styles.rawResponse}>
-                      <label>ICS-Inhalt (erste 1000 Zeichen):</label>
-                      <pre>{testResults.rawResponse}</pre>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Quick Links */}
-              <div className={styles.quickTestLinks}>
-                <h4>Schnelltests</h4>
-                <div className={styles.quickLinkGrid}>
-                  <motion.button
-                    className={styles.quickLinkBtn}
-                    onClick={() => openLink(syncLinks.download)}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <Calendar size={16} />
-                    <span>ICS im Browser öffnen</span>
-                  </motion.button>
-
-                  <motion.button
-                    className={styles.quickLinkBtn}
-                    onClick={() => openLink(syncLinks.google)}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <GoogleIcon />
-                    <span>Google testen</span>
-                  </motion.button>
-
-                  <motion.button
-                    className={styles.quickLinkBtn}
-                    onClick={() => openLink(syncLinks.outlook)}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <OutlookIcon />
-                    <span>Outlook testen</span>
-                  </motion.button>
-
-                  <motion.button
-                    className={styles.quickLinkBtn}
-                    onClick={() => openLink(syncLinks.apple)}
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <AppleIcon />
-                    <span>Apple testen</span>
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
     }
   };
 
