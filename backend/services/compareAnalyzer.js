@@ -2324,6 +2324,8 @@ function assignValuesToClauses(extractedValues, clauses, rawText) {
 
   let assigned = 0;
   for (const val of extractedValues) {
+    // V3.2: Blank-value-Einträge nicht an Klauseln anhängen — verwirren Frontend-Anzeige
+    if (typeof val?.value === 'string' && /Wert nicht extrahierbar/i.test(val.value)) continue;
     const approxPos = val.position;
     let targetClause = null;
 
@@ -2394,6 +2396,8 @@ function mergeRawValuesIntoAreas(areaKV, rawValues, clauses) {
 
   let merged = 0;
   for (const rv of rawValues) {
+    // V3.2: Blank-value-Einträge nicht in Areas mergen — sie verwirren den Vergleich
+    if (typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value)) continue;
     const area = rv._assignedArea || 'payment';
     if (!areaKV[area]) areaKV[area] = {};
 
@@ -2426,6 +2430,58 @@ function mergeRawValuesIntoAreas(areaKV, rawValues, clauses) {
   if (merged > 0) {
     console.log(`🔢 Layer 0→Schicht 2: ${merged} Regex-Werte in Areas gemergt`);
   }
+}
+
+/**
+ * V3.2: Prüft ob GPT-Erklärungstext mit den tatsächlich angezeigten Werten konsistent ist.
+ * Extrahiert Zahlen (EUR, %, Tage, Monate, Jahre, große Zahlen) aus der Erklärung und
+ * prüft ob sie in value1 oder value2 vorkommen. Wenn eine Zahl in der Erklärung steht,
+ * die in KEINEM der beiden Werte vorkommt → Erklärung halluziniert, nicht vertrauen.
+ *
+ * Rückgabe: true = konsistent (Erklärung darf verwendet werden), false = widersprüchlich.
+ */
+function isExplanationConsistent(explanation, value1, value2) {
+  if (!explanation || typeof explanation !== 'string') return true; // Nichts zu prüfen
+  if (explanation.length < 10) return true;
+
+  const valuePool = `${value1 || ''} ${value2 || ''}`;
+
+  // Extrahiere Zahlen aus der Erklärung: EUR-Beträge, Prozente, Zeiteinheiten, Roh-Zahlen >= 2 Ziffern
+  const numberRegex = /(\d[\d.,]*)\s*(EUR|€|Euro|%|Prozent|Tage?|Monate?|Wochen?|Jahre?)?/gi;
+  const explanationNumbers = [];
+  let match;
+  while ((match = numberRegex.exec(explanation)) !== null) {
+    const numStr = match[1];
+    const parsed = parseGermanNumber(numStr);
+    // Ignoriere sehr kleine Zahlen (Paragraphen-Nummern, Aufzählungen, etc.)
+    if (parsed === null || isNaN(parsed)) continue;
+    if (parsed < 2 && !match[2]) continue; // "1", "0.5" ohne Einheit → Aufzählung
+    if (parsed < 10 && !match[2] && numStr.length < 2) continue;
+    explanationNumbers.push(parsed);
+  }
+
+  if (explanationNumbers.length === 0) return true; // Erklärung hat keine Zahlen → nicht prüfbar
+
+  // Extrahiere Zahlen aus dem Werte-Pool
+  const poolNumbers = [];
+  const poolMatches = valuePool.match(/\d[\d.,]*/g) || [];
+  for (const pm of poolMatches) {
+    const parsed = parseGermanNumber(pm);
+    if (parsed !== null && !isNaN(parsed)) poolNumbers.push(parsed);
+  }
+
+  // Jede Zahl aus der Erklärung muss im Werte-Pool vorkommen (Toleranz 1%)
+  for (const expNum of explanationNumbers) {
+    const found = poolNumbers.some(pn => {
+      if (pn === expNum) return true;
+      if (pn === 0 || expNum === 0) return false;
+      const rel = Math.abs(pn - expNum) / Math.max(Math.abs(pn), Math.abs(expNum));
+      return rel < 0.01;
+    });
+    if (!found) return false; // Halluzinierte Zahl gefunden
+  }
+
+  return true;
 }
 
 /**
@@ -2587,11 +2643,14 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
   // Vergleicht Layer 0 rawValues V1 vs V2 direkt — immer gleiches Ergebnis.
   const directMatchedKeys = new Set(); // Track matched keys to avoid duplicates in per-area pass
   if (USE_RAW_VALUES && map1._rawValues?.length && map2._rawValues?.length) {
-    // V3: Filter rawValues from skipAreas + deduplicate (same key+value = skip)
+    // V3: Filter rawValues from skipAreas + blank-value entries + deduplicate (same key+value = skip)
+    // V3.2: Blank-value-Einträge ("Wert nicht extrahierbar") dürfen Schritt 0 nicht verschmutzen
+    const isBlankRaw = (rv) => typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value);
     const dedupRaw = (rawValues) => {
       const seen = new Set();
       return rawValues.filter(rv => {
         if (skipAreas.has(rv._assignedArea)) return false;
+        if (isBlankRaw(rv)) return false;
         const sig = `${(rv.key || '').toLowerCase()}|${(rv.value || '').toLowerCase()}`;
         if (seen.has(sig)) return false;
         seen.add(sig);
@@ -2934,8 +2993,10 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
 
     // Cross-area: match unmatched V1 rawValues against unmatched V2 rawValues
     // V3: Also filter out rawValues from skipAreas (includes docConfig.irrelevantAreas)
-    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key) && !skipAreas.has(rv._assignedArea));
-    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key) && !skipAreas.has(rv._assignedArea));
+    // V3.2: Blank-value-Einträge ausschließen
+    const isBlankRaw = (rv) => typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value);
+    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRaw(rv));
+    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRaw(rv));
     const crossMatched2 = new Set();
 
     for (const rv1 of unmatched1) {
@@ -3002,6 +3063,18 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
   if (reclassCount > 0) {
     console.log(`🔄 Finale Diff-Reclassification: ${reclassCount} Diffs korrigiert`);
   }
+
+  // V3.2: Blank-Value Filter — entferne Diffs wo "Wert nicht extrahierbar" auftaucht.
+  // Diese stammen aus OCR-Recovery-Fehlversuchen und verwirren den User.
+  // Phase A hat das Feld erkannt, konnte aber den Wert nicht parsen → besser schweigen.
+  const isBlankValue = (v) => typeof v === 'string' && /Wert nicht extrahierbar/i.test(v);
+  const beforeBlankFilter = diffs.length;
+  const cleanedDiffs = diffs.filter(d => !isBlankValue(d.value1) && !isBlankValue(d.value2));
+  if (cleanedDiffs.length < beforeBlankFilter) {
+    console.log(`🧹 Blank-Value Filter: ${beforeBlankFilter - cleanedDiffs.length} unbrauchbare Diffs entfernt`);
+  }
+  diffs.length = 0;
+  diffs.push(...cleanedDiffs);
 
   // Schritt 7: Sortieren — payment zuerst, dann numerisch vor text, dann nach Diff-Größe
   diffs.sort((a, b) => {
@@ -4759,14 +4832,29 @@ function isDuplicateOfDeterministic(clauseDiff, groups) {
  */
 function convertClauseDiffToEnhanced(diff) {
   const label = AREA_LABELS[diff._clauseArea] || diff._clauseArea || 'Sonstiges';
+  const v1 = diff.detail1 || '';
+  const v2 = diff.detail2 || '';
+
+  // V3.2 Trust-Guard: GPT-Erklärung/Impact nur übernehmen wenn Zahlen zu den Werten passen
+  let safeExplanation = diff.explanation;
+  if (safeExplanation && !isExplanationConsistent(safeExplanation, v1, v2)) {
+    console.log(`🛡️ Trust-Guard: Clause-Diff-Erklärung verworfen (Wertekonflikt) für "${diff._clauseTitle || label}"`);
+    safeExplanation = `${label}: unterschiedliche Regelungen. Siehe Originaltexte.`;
+  }
+  let safeImpact = diff.impact || (diff.legalBasis ? `Rechtsgrundlage: ${diff.legalBasis}` : '');
+  if (safeImpact && !isExplanationConsistent(safeImpact, v1, v2)) {
+    console.log(`🛡️ Trust-Guard: Clause-Diff-Impact verworfen (Wertekonflikt) für "${diff._clauseTitle || label}"`);
+    safeImpact = '';
+  }
+
   return {
     category: label,
     section: diff._clauseTitle || '',
-    contract1: diff.detail1 || '',
-    contract2: diff.detail2 || '',
+    contract1: v1,
+    contract2: v2,
     severity: diff.severity,
-    explanation: diff.explanation,
-    impact: diff.impact || (diff.legalBasis ? `Rechtsgrundlage: ${diff.legalBasis}` : ''),
+    explanation: safeExplanation,
+    impact: safeImpact,
     recommendation: diff.recommendation || '',
     clauseArea: diff._clauseArea || 'other',
     semanticType: diff.semanticType || 'different_scope',
@@ -5387,8 +5475,26 @@ function applySeverityCalibration(mergedDiffs, groupEvaluations, groups) {
 
     if (matchingDiff) {
       matchingDiff.severity = ev.severity;
-      if (ev.explanation) matchingDiff.explanation = ev.explanation;
-      if (ev.impact) matchingDiff.impact = ev.impact;
+      // V3.2 Trust-Guard: Nur GPT-Erklärung übernehmen wenn die genannten Werte
+      // mit den tatsächlich angezeigten contract1/contract2 übereinstimmen.
+      // Verhindert dass GPT-Halluzinationen die deterministischen Werte überschreiben.
+      const v1 = matchingDiff.contract1;
+      const v2 = matchingDiff.contract2;
+      if (ev.explanation) {
+        if (isExplanationConsistent(ev.explanation, v1, v2)) {
+          matchingDiff.explanation = ev.explanation;
+        } else {
+          console.log(`🛡️ Trust-Guard: GPT-Erklärung verworfen (Wertekonflikt) für "${matchingDiff.category}"`);
+        }
+      }
+      if (ev.impact) {
+        if (isExplanationConsistent(ev.impact, v1, v2)) {
+          matchingDiff.impact = ev.impact;
+        } else {
+          console.log(`🛡️ Trust-Guard: GPT-Impact verworfen (Wertekonflikt) für "${matchingDiff.category}"`);
+        }
+      }
+      // Recommendation darf abweichen — sie beschreibt einen Soll-Zustand, nicht Ist-Werte
       if (ev.recommendation) matchingDiff.recommendation = ev.recommendation;
       if (ev.semanticType) matchingDiff.semanticType = ev.semanticType;
       if (ev.financialImpact) matchingDiff.financialImpact = ev.financialImpact;
