@@ -33,6 +33,11 @@ const {
 const TEXTRACT_REGION = 'eu-central-1';
 const TEMP_BUCKET = process.env.TEXTRACT_TEMP_BUCKET || 'contract-ai-ocr-temp-eu-central';
 
+// Column-detection tuning (see assemblePageEntries)
+const COL_LEFT_TOLERANCE = 0.03;   // cluster gap: ≤ 3% of page width = same column
+const COL_MIN_CLUSTER_SIZE = 3;    // cluster must have ≥ 3 lines to count as a column
+const COL_MIN_GAP = 0.08;          // column centers must be ≥ 8% of page width apart
+
 const textractClient = new TextractClient({
   region: TEXTRACT_REGION,
   credentials: {
@@ -144,13 +149,14 @@ async function ocrSync(buf, docType) {
   });
 
   const response = await textractClient.send(command);
-  const { text, confidence, lineCount } = extractLinesFromBlocks(response.Blocks);
+  const { text, confidence, lineCount, pageCount } = assembleTextFromBlocks(response.Blocks);
   const duration = Date.now() - startTime;
+  const pages = pageCount || 1;
 
   console.log(`✅ [Textract] Sync-OCR (${docType}) in ${duration}ms: ${lineCount} Zeilen, ${text.trim().length} Zeichen, ${confidence.toFixed(1)}% Confidence`);
 
   if (text.trim().length < 200) {
-    return { success: false, text, confidence, pages: 1, lineCount, duration,
+    return { success: false, text, confidence, pages, lineCount, duration,
       error: `OCR hat nur ${text.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
   }
 
@@ -159,7 +165,7 @@ async function ocrSync(buf, docType) {
     text,
     confidence,
     lowConfidence: confidence > 0 && confidence < 70,
-    pages: 1,
+    pages,
     lineCount,
     duration
   };
@@ -248,30 +254,14 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       nextToken = nextResponse.NextToken;
     }
 
-    // 6. Text nach Seiten sortieren
-    const pageTexts = new Map();
-    let totalConfidence = 0;
-    let blockCount = 0;
-
-    for (const block of allBlocks) {
-      if (block.BlockType === 'LINE' && block.Text) {
-        const pageNum = block.Page || 1;
-        const existing = pageTexts.get(pageNum) || '';
-        pageTexts.set(pageNum, existing + (existing ? '\n' : '') + block.Text);
-        totalConfidence += block.Confidence || 0;
-        blockCount++;
-      }
-    }
-
-    const sortedPages = [...pageTexts.entries()].sort((a, b) => a[0] - b[0]);
-    const fullText = sortedPages.map(([, text]) => text).join('\n\n');
-    const avgConfidence = blockCount > 0 ? totalConfidence / blockCount : 0;
+    // 6. Column-aware Textzusammenbau (siehe assembleTextFromBlocks)
+    const { text: fullText, confidence: avgConfidence, lineCount: blockCount, pageCount } = assembleTextFromBlocks(allBlocks);
     const duration = Date.now() - startTime;
 
-    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${sortedPages.length} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
+    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${pageCount} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
 
     if (fullText.trim().length < 200) {
-      return { success: false, text: fullText, confidence: avgConfidence, pages: sortedPages.length,
+      return { success: false, text: fullText, confidence: avgConfidence, pages: pageCount,
         error: `OCR hat nur ${fullText.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
     }
 
@@ -280,7 +270,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       text: fullText,
       confidence: avgConfidence,
       lowConfidence: avgConfidence > 0 && avgConfidence < 70,
-      pages: sortedPages.length,
+      pages: pageCount,
       lineCount: blockCount,
       duration
     };
@@ -300,24 +290,130 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
 // Hilfsfunktionen
 // ════════════════════════════════════════════════════════
 
-function extractLinesFromBlocks(blocks) {
-  const lines = [];
+/**
+ * Column-aware text assembly from Textract LINE blocks.
+ *
+ * Problem: Textract's default response order reads multi-column pages
+ * row-by-row across all columns, scrambling the text.
+ *
+ * Fix: Group LINE blocks by page, cluster them into columns using
+ * BoundingBox.Left, then read each column top-to-bottom.
+ *
+ * Works for both sync (single-page) and async (multi-page) responses.
+ * Single-column pages fall through to a simple top-to-bottom sort,
+ * so this is safe for every document type.
+ *
+ * Single pass: walks the Blocks array once, filters to LINE, normalizes
+ * into {text, left, top} entries, tracks whether any block had geometry,
+ * and sums confidence — then hands clean entries to assemblePageEntries.
+ */
+function assembleTextFromBlocks(blocks) {
+  const pageMap = new Map(); // pageNum -> { entries, hasPositions }
   let totalConfidence = 0;
-  let blockCount = 0;
+  let lineCount = 0;
 
-  for (const block of blocks || []) {
-    if (block.BlockType === 'LINE' && block.Text) {
-      lines.push(block.Text);
-      totalConfidence += block.Confidence || 0;
-      blockCount++;
+  for (const b of (blocks || [])) {
+    if (b.BlockType !== 'LINE' || !b.Text) continue;
+    lineCount++;
+    totalConfidence += b.Confidence || 0;
+
+    const p = b.Page || 1;
+    let page = pageMap.get(p);
+    if (!page) {
+      page = { entries: [], hasPositions: false };
+      pageMap.set(p, page);
     }
+
+    const bbox = b.Geometry?.BoundingBox;
+    if (bbox) page.hasPositions = true;
+    page.entries.push({
+      text: b.Text,
+      left: bbox?.Left ?? 0,
+      top: bbox?.Top ?? 0
+    });
   }
 
+  const sortedPages = [...pageMap.entries()].sort((a, b) => a[0] - b[0]);
+  const pageTexts = sortedPages.map(([, page]) => assemblePageEntries(page.entries, page.hasPositions));
+
   return {
-    text: lines.join('\n'),
-    confidence: blockCount > 0 ? totalConfidence / blockCount : 0,
-    lineCount: blockCount
+    text: pageTexts.join('\n\n'),
+    confidence: lineCount > 0 ? totalConfidence / lineCount : 0,
+    lineCount,
+    pageCount: sortedPages.length
   };
+}
+
+function sortEntriesTopDown(entries) {
+  return entries.slice().sort((a, b) => a.top - b.top).map(e => e.text).join('\n');
+}
+
+/**
+ * Assemble text for a single page, detecting columns from entry positions.
+ *
+ * Algorithm:
+ *   1. Sort all left-edge x-values
+ *   2. Cluster them (gap-based, COL_LEFT_TOLERANCE) to find natural column groups
+ *   3. Keep only clusters with ≥ COL_MIN_CLUSTER_SIZE members (real columns)
+ *   4. Enforce ≥ COL_MIN_GAP horizontal distance between column centers
+ *   5. Assign each line to the nearest column center
+ *   6. Sort each column top-to-bottom, concatenate columns left-to-right
+ *
+ * Pages with < 2 detected columns fall through to a plain top-to-bottom sort,
+ * so standard single-column documents are unaffected.
+ */
+function assemblePageEntries(entries, hasPositions) {
+  if (entries.length === 0) return '';
+
+  // No geometry data at all → preserve Textract's response order
+  if (!hasPositions) return entries.map(e => e.text).join('\n');
+
+  // Cluster left edges by gap detection
+  const leftValues = entries.map(e => e.left).sort((a, b) => a - b);
+  const clusters = [];
+  let currentCluster = [leftValues[0]];
+  for (let i = 1; i < leftValues.length; i++) {
+    if (leftValues[i] - leftValues[i - 1] <= COL_LEFT_TOLERANCE) {
+      currentCluster.push(leftValues[i]);
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [leftValues[i]];
+    }
+  }
+  if (currentCluster.length) clusters.push(currentCluster);
+
+  const columnCenters = clusters
+    .filter(cl => cl.length >= COL_MIN_CLUSTER_SIZE)
+    .map(cl => cl.reduce((a, b) => a + b, 0) / cl.length);
+
+  if (columnCenters.length < 2) return sortEntriesTopDown(entries);
+
+  // Merge column centers that are too close together
+  const mergedCenters = [columnCenters[0]];
+  for (let i = 1; i < columnCenters.length; i++) {
+    if (columnCenters[i] - mergedCenters[mergedCenters.length - 1] >= COL_MIN_GAP) {
+      mergedCenters.push(columnCenters[i]);
+    }
+  }
+  if (mergedCenters.length < 2) return sortEntriesTopDown(entries);
+
+  // Assign each line to the nearest column center
+  const columns = Array.from({ length: mergedCenters.length }, () => []);
+  for (const entry of entries) {
+    let nearest = 0;
+    let minDist = Math.abs(entry.left - mergedCenters[0]);
+    for (let i = 1; i < mergedCenters.length; i++) {
+      const d = Math.abs(entry.left - mergedCenters[i]);
+      if (d < minDist) { minDist = d; nearest = i; }
+    }
+    columns[nearest].push(entry);
+  }
+
+  // Column-by-column, each top-to-bottom
+  return columns
+    .map(col => sortEntriesTopDown(col))
+    .filter(t => t.length > 0)
+    .join('\n');
 }
 
 async function getPDFPageCount(buf) {
