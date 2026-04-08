@@ -56,6 +56,57 @@ function setCache(cache, key, result) {
   cacheCleanup(cache);
 }
 
+// ============================================
+// V3.4: Key Classification Cache (lernt über alle Compare-Calls hinweg)
+// ============================================
+// Map<normalizedKey, area> — wird durch preClassifyUnknownKeys() befüllt
+// und durch loadKeyClassificationCache() lazy aus MongoDB vorgewärmt.
+const keyClassificationCache = new Map();
+let keyClassificationCacheLoaded = false;
+
+async function loadKeyClassificationCache() {
+  if (keyClassificationCacheLoaded) return;
+  keyClassificationCacheLoaded = true; // markiere VOR DB-Call → kein Retry-Storm bei Fehler
+  try {
+    const database = require('../config/database');
+    const db = await database.connect();
+    const docs = await db.collection('compare_key_classifications').find({}).toArray();
+    for (const doc of docs) {
+      if (doc?.normKey && doc?.area && VALID_CLAUSE_AREAS.includes(doc.area)) {
+        keyClassificationCache.set(doc.normKey, doc.area);
+      }
+    }
+    console.log(`📚 KeyClassification Cache: ${keyClassificationCache.size} Einträge aus MongoDB geladen`);
+  } catch (err) {
+    console.warn(`⚠️ KeyClassification Cache Load fehlgeschlagen (nicht-kritisch): ${err.message}`);
+  }
+}
+
+function saveKeyClassification(normKey, area, exampleValue) {
+  // Fire-and-forget: blockt nie die Pipeline
+  (async () => {
+    try {
+      const database = require('../config/database');
+      const db = await database.connect();
+      await db.collection('compare_key_classifications').updateOne(
+        { normKey },
+        {
+          $set: {
+            area,
+            exampleValue: String(exampleValue || '').slice(0, 200),
+            updatedAt: new Date(),
+          },
+          $inc: { useCount: 1 },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        { upsert: true }
+      );
+    } catch (err) {
+      // Silent fail — In-Memory-Cache funktioniert weiter, Persistenz ist Bonus
+    }
+  })();
+}
+
 const VALID_CLAUSE_AREAS = [
   'parties', 'subject', 'duration', 'termination', 'payment',
   'liability', 'warranty', 'confidentiality', 'ip_rights',
@@ -609,8 +660,11 @@ function deterministicSegmentation(text) {
     const sectionRawValues = extractAllValuesFromRawText(section.text);
 
     // Build deterministic keyValues from regex extraction
+    // V3.3: Blank-value-Einträge ("Wert nicht extrahierbar") nicht in keyValues aufnehmen —
+    // sie verschmutzen sonst die Vertragskarte mit halb-leerer Info.
     const keyValues = {};
     for (const rv of sectionRawValues) {
+      if (isBlankRawValue(rv)) continue;
       keyValues[rv.rawKey] = rv.value;
     }
 
@@ -682,6 +736,11 @@ Antworte NUR mit validem JSON:
 WICHTIG: "sections" Array MUSS exakt ${sections.length} Einträge haben — einen für jeden vorgegebenen Abschnitt.
 WICHTIG für keyValues: Keys IMMER auf Deutsch als lesbare Begriffe. Values IMMER mit Zahl UND Einheit.
 FORMULARFELDER: Falls ein Abschnitt "Ausgefüllte Vertragskonditionen" am Textende steht, ordne dessen Werte (z.B. Selbstbehalt, Flatrate-Gebühr, Ankauflimit) als keyValues den PASSENDEN Fachklauseln zu (liability, payment, termination etc.) — NICHT als eigene "other"-Klausel.
+ANTI-MIX (V3.4): Die Area eines Abschnitts richtet sich nach dem DOMINANTEN thematischen Inhalt, nicht danach welche Personen/Firmen erwähnt werden. Beispiele:
+- Abschnitt nennt "Anbieter X" + Außenstandsdauer/Zahlungsziel/Skonto → "payment", NICHT "parties"
+- Abschnitt beschreibt Selbstbehalt/Haftungsgrenze + nennt Versicherungsnehmer → "liability", NICHT "parties"
+- Abschnitt nennt Kündigungsfrist + Vertragspartei → "termination", NICHT "parties"
+- "parties" NUR für reine Identifikations-Abschnitte (Name, Adresse, Sitz, USt-IdNr ohne Konditionen).
 Null für fehlende Infos. NICHTS erfinden.`
   };
 }
@@ -870,9 +929,11 @@ async function structureContract(contractText) {
   enrichKeyValuesFromText(validated.clauses, contractText);
 
   // Layer 0: Regex-Werte den GPT-Klauseln zuordnen
+  // V3.3: Blank-value-Einträge zentral aussortieren bevor sie irgendwo gespeichert werden
   if (USE_RAW_VALUES && rawValues.length > 0) {
-    assignValuesToClauses(rawValues, validated.clauses, contractText);
-    validated._rawValues = rawValues;
+    const cleanRawValues = rawValues.filter(rv => !isBlankRawValue(rv));
+    assignValuesToClauses(cleanRawValues, validated.clauses, contractText);
+    validated._rawValues = cleanRawValues;
   }
 
   // V3.1: Sicherheitsnetz — wenn parties[] top-level vorhanden aber keine Klausel mit area='parties'
@@ -1769,6 +1830,12 @@ function findUncoveredValues(sourceText, allClauseText, clauses) {
 function normalizeKeyForMatch(key) {
   return (key || '')
     .toLowerCase()
+    // V3.3: Klammer-Inhalt entfernen — Paragraphen-Verweise sind Boilerplate, kein Identitätsmerkmal
+    // "Gebühr je Inkasso-Forderung (jeweils vom Rechnungsbrutto, § 4 Abs. 1 FRV)"
+    // → "gebühr je inkasso-forderung"
+    .replace(/\([^)]*\)/g, ' ')
+    // V3.3: Inline-Paragraphen-Referenzen entfernen ("§ 4 Abs. 1", "§ 6 Abs. 1 FRV")
+    .replace(/§\s*\d+(\s*abs\.?\s*\d+)?(\s*satz\s*\d+)?(\s*frv|\s*bgb|\s*hgb)?/gi, ' ')
     .replace(/[-_]/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/[^a-zäöüß0-9 ]/g, '')
@@ -1846,6 +1913,18 @@ function extractValueAndUnit(str) {
 }
 
 /**
+ * V3.3: Zentrale Prüfung auf "Wert nicht extrahierbar"-Einträge aus OCR-Recovery-Fehlversuchen.
+ * Phase A hat das Feld erkannt, konnte aber den Wert nicht parsen → solche Einträge dürfen
+ * weder in Vertragskarte noch Diffs landen, sonst verwirren sie den User.
+ */
+function isBlankValueString(v) {
+  return typeof v === 'string' && /Wert nicht extrahierbar/i.test(v);
+}
+function isBlankRawValue(rv) {
+  return isBlankValueString(rv?.value);
+}
+
+/**
  * Parse deutsche Zahl: "150.000" → 150000, "1,95" → 1.95, "150.000,50" → 150000.50
  */
 function parseGermanNumber(str) {
@@ -1884,13 +1963,24 @@ function fuzzyKeyMatch(normKey1, normKey2) {
   if (normKey1.includes(normKey2) || normKey2.includes(normKey1)) return true;
   if (normKey1.length > 4 && normKey2.length > 4 && levenshteinClose(normKey1, normKey2)) return true;
 
-  // Jaccard-Similarity der Wörter > 0.6 (für umgestellte Wörter)
-  const words1 = new Set(normKey1.split(' ').filter(w => w.length > 2));
-  const words2 = new Set(normKey2.split(' ').filter(w => w.length > 2));
+  // V3.3: Jaccard-Similarity der Wörter > 0.7 mit Stopword-Filter
+  // Bürokratische Boilerplate-Wörter rausfiltern, sonst dominieren sie über die echten Diskriminatoren
+  const STOPWORDS = new Set([
+    'der', 'die', 'das', 'den', 'des', 'ein', 'eine', 'einer', 'eines',
+    'jeweils', 'vom', 'von', 'für', 'bei', 'mit', 'nach', 'gemäß', 'laut',
+    'inkl', 'exkl', 'ohne', 'beträgt', 'höhe', 'sowie', 'oder', 'und',
+    'rechnungsbrutto', 'forderung', 'forderungen', 'vertrag', 'vertrages',
+    'abs', 'frv', 'bgb', 'hgb', 'satz',
+  ]);
+  const filterWords = (key) => new Set(
+    key.split(' ').filter(w => w.length > 2 && !STOPWORDS.has(w) && !/^\d+$/.test(w))
+  );
+  const words1 = filterWords(normKey1);
+  const words2 = filterWords(normKey2);
   if (words1.size >= 2 && words2.size >= 2) {
     const intersection = [...words1].filter(w => words2.has(w)).length;
     const union = new Set([...words1, ...words2]).size;
-    if (union > 0 && intersection / union > 0.6) return true;
+    if (union > 0 && intersection / union > 0.7) return true;
   }
 
   // Synonym group check: do both keys belong to the same synonym group?
@@ -2325,7 +2415,7 @@ function assignValuesToClauses(extractedValues, clauses, rawText) {
   let assigned = 0;
   for (const val of extractedValues) {
     // V3.2: Blank-value-Einträge nicht an Klauseln anhängen — verwirren Frontend-Anzeige
-    if (typeof val?.value === 'string' && /Wert nicht extrahierbar/i.test(val.value)) continue;
+    if (isBlankRawValue(val)) continue;
     const approxPos = val.position;
     let targetClause = null;
 
@@ -2397,7 +2487,7 @@ function mergeRawValuesIntoAreas(areaKV, rawValues, clauses) {
   let merged = 0;
   for (const rv of rawValues) {
     // V3.2: Blank-value-Einträge nicht in Areas mergen — sie verwirren den Vergleich
-    if (typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value)) continue;
+    if (isBlankRawValue(rv)) continue;
     const area = rv._assignedArea || 'payment';
     if (!areaKV[area]) areaKV[area] = {};
 
@@ -2564,7 +2654,7 @@ function inferAreaFromKeyName(key) {
   const k = (key || '').toLowerCase();
 
   // Payment-Begriffe
-  if (/gebühr|gebuehr|preis|betrag|kosten|honorar|vergütung|verguetung|entgelt|provision|rabatt|skonto|netto|brutto|mwst|umsatzsteuer|zahlung|flatrate|inkasso|einrichtung|mindest.*gebühr|ankauf.*limit|factoringvolumen|zwischensumme|gesamtbetrag|rechnungs/.test(k)) {
+  if (/gebühr|gebuehr|preis|betrag|kosten|honorar|vergütung|verguetung|entgelt|provision|rabatt|skonto|netto|brutto|mwst|umsatzsteuer|zahlung|flatrate|inkasso|einrichtung|mindest.*gebühr|ankauf.*limit|factoringvolumen|zwischensumme|gesamtbetrag|rechnungs|außenstandsdauer|aussenstandsdauer|zahlungsziel|zahlungsfrist|fälligkeit|faelligkeit|valuta|valutierung/.test(k)) {
     return 'payment';
   }
   // Sicherungseinbehalt ist auch Payment (Einbehalt vom Kaufpreis)
@@ -2592,8 +2682,129 @@ function inferAreaFromKeyName(key) {
     return 'warranty';
   }
 
+  // V3.4: Cache-Lookup als Fallback (befüllt durch preClassifyUnknownKeys via GPT).
+  // Bleibt synchron — wenn Cache leer (z.B. in Tests), exakt heutiges Verhalten.
+  const normKey = normalizeKeyForMatch(key);
+  if (normKey) {
+    const cached = keyClassificationCache.get(normKey);
+    if (cached && VALID_CLAUSE_AREAS.includes(cached)) return cached;
+  }
+
   return null; // Keine sichere Zuordnung → Clause-Area beibehalten
 }
+
+/**
+ * V3.4: Pre-Classification — sammelt unbekannte keyValue-Keys aus den
+ * Phase-A-Klauseln (parties/other/subject) und klassifiziert sie via GPT-Batch-Call.
+ * Schreibt das Ergebnis in keyClassificationCache + MongoDB-Persistenz.
+ *
+ * Wird VOR buildDeterministicDifferences aufgerufen — danach hat
+ * inferAreaFromKeyName die neuen Klassifikationen automatisch im Cache.
+ *
+ * Graceful: Bei jedem Fehler (GPT down, Timeout, JSON-Parse) → silent return,
+ * Pipeline läuft normal mit Regex-only weiter.
+ */
+async function preClassifyUnknownKeys(map1, map2) {
+  // Stelle sicher dass MongoDB-Cache geladen ist (lazy, nur 1x pro Process)
+  await loadKeyClassificationCache();
+
+  // Sammle Kandidaten: nur Klauseln die typischerweise fehlklassifiziert werden
+  const targetAreas = new Set(['parties', 'other', 'subject']);
+  const unknownKeys = new Map(); // normKey → { rawKey, exampleValue }
+
+  for (const map of [map1, map2]) {
+    if (!map?.clauses || !Array.isArray(map.clauses)) continue;
+    for (const clause of map.clauses) {
+      if (!targetAreas.has(clause.area)) continue;
+      const kv = clause.keyValues || {};
+      for (const [rawKey, value] of Object.entries(kv)) {
+        if (!rawKey || typeof rawKey !== 'string') continue;
+        const normKey = normalizeKeyForMatch(rawKey);
+        if (!normKey || normKey.length < 3) continue;
+        // Schon durch Regex ODER Cache erkannt? → kein Bedarf für GPT
+        // inferAreaFromKeyName prüft beides — wenn !=null, ist der Key bereits abgedeckt
+        if (inferAreaFromKeyName(rawKey)) continue;
+        // Blank-Values überspringen
+        if (typeof value === 'string' && /Wert nicht extrahierbar/i.test(value)) continue;
+        if (!unknownKeys.has(normKey)) {
+          unknownKeys.set(normKey, { rawKey, exampleValue: String(value || '').slice(0, 100) });
+        }
+      }
+    }
+  }
+
+  if (unknownKeys.size === 0) return;
+
+  console.log(`🤖 KeyClassification: ${unknownKeys.size} unbekannte Keys → GPT-Batch-Call`);
+
+  const itemArray = Array.from(unknownKeys.entries());
+  const itemList = itemArray.map(([_norm, info], i) =>
+    `${i + 1}. "${info.rawKey}"${info.exampleValue ? ` (Beispielwert: ${info.exampleValue})` : ''}`
+  ).join('\n');
+
+  const systemPrompt = `Du klassifizierst Schlüsselbegriffe aus Verträgen und Geschäftsdokumenten in genau eine von 14 thematischen Kategorien. Antworte ausschließlich mit validem JSON.`;
+
+  const userPrompt = `Ordne jeden der folgenden Begriffe genau einer Kategorie zu. Wähle die thematisch passendste Kategorie auf Basis von Begriff UND Beispielwert.
+
+BEGRIFFE:
+${itemList}
+
+VERFÜGBARE KATEGORIEN:
+- parties — Vertragsparteien, Beteiligte (NUR reine Identifikationsdaten: Name, Adresse, Sitz, USt-IdNr)
+- subject — Vertragsgegenstand, Leistungsbeschreibung, Produkte
+- duration — Laufzeit, Vertragsdauer, Gültigkeit, Lieferfristen, Verlängerung
+- termination — Kündigung, Kündigungsfristen, Beendigungsmodalitäten
+- payment — Preise, Gebühren, Zahlungen, Skonto, Mahnkosten, Außenstandsdauer, Verzugszinsen, Zahlungsziel/Zahlungsfrist, Fälligkeit, Provisionen, Rabatte, Anzahlung, Stundungszinsen
+- liability — Haftung, Schadensersatz, Selbstbehalt, Delkredere, Haftungsbegrenzung
+- warranty — Gewährleistung, Garantie, Mängelrüge, Mängelhaftung
+- confidentiality — Geheimhaltung, Verschwiegenheit, Vertraulichkeit
+- ip_rights — Urheberrecht, Lizenzen, Nutzungsrechte, Schutzrechte
+- data_protection — Datenschutz, DSGVO, Auftragsverarbeitung
+- non_compete — Wettbewerbsverbot, Konkurrenzklausel
+- force_majeure — Höhere Gewalt, unvorhersehbare Ereignisse
+- jurisdiction — Gerichtsstand, anwendbares Recht, Schiedsgerichtsbarkeit
+- other — Sonstiges (NUR wenn keine andere Kategorie passt)
+
+Antwortformat (NUR valides JSON, keine Kommentare):
+{"classifications": [{"index": 1, "category": "payment"}, {"index": 2, "category": "duration"}]}
+
+WICHTIG: Jeder Index muss exakt zu einem Begriff oben passen. Kategorie MUSS exakt eines der Wörter oben sein.`;
+
+  try {
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Klassifikation ist einfach, billig, schnell
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' },
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Classification Timeout 10s')), 10000)),
+    ]);
+
+    const raw = JSON.parse(completion.choices[0]?.message?.content || '{}');
+    const classifications = Array.isArray(raw?.classifications) ? raw.classifications : [];
+
+    let saved = 0;
+    for (const cls of classifications) {
+      const idx = (typeof cls?.index === 'number' ? cls.index : 0) - 1;
+      if (idx < 0 || idx >= itemArray.length) continue;
+      const category = String(cls?.category || '').toLowerCase();
+      if (!VALID_CLAUSE_AREAS.includes(category)) continue;
+      const [normKey, info] = itemArray[idx];
+      keyClassificationCache.set(normKey, category);
+      saveKeyClassification(normKey, category, info.exampleValue); // fire-and-forget
+      saved++;
+    }
+    console.log(`📚 KeyClassification: ${saved}/${unknownKeys.size} Keys klassifiziert und gecacht`);
+  } catch (err) {
+    console.warn(`⚠️ KeyClassification fehlgeschlagen (nicht-kritisch): ${err.message}`);
+  }
+}
+
 
 /**
  * V3.1: Reklassifiziert keyValues die in der falschen Area gelandet sind.
@@ -2645,12 +2856,11 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
   if (USE_RAW_VALUES && map1._rawValues?.length && map2._rawValues?.length) {
     // V3: Filter rawValues from skipAreas + blank-value entries + deduplicate (same key+value = skip)
     // V3.2: Blank-value-Einträge ("Wert nicht extrahierbar") dürfen Schritt 0 nicht verschmutzen
-    const isBlankRaw = (rv) => typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value);
     const dedupRaw = (rawValues) => {
       const seen = new Set();
       return rawValues.filter(rv => {
         if (skipAreas.has(rv._assignedArea)) return false;
-        if (isBlankRaw(rv)) return false;
+        if (isBlankRawValue(rv)) return false;
         const sig = `${(rv.key || '').toLowerCase()}|${(rv.value || '').toLowerCase()}`;
         if (seen.has(sig)) return false;
         seen.add(sig);
@@ -2994,9 +3204,8 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
     // Cross-area: match unmatched V1 rawValues against unmatched V2 rawValues
     // V3: Also filter out rawValues from skipAreas (includes docConfig.irrelevantAreas)
     // V3.2: Blank-value-Einträge ausschließen
-    const isBlankRaw = (rv) => typeof rv?.value === 'string' && /Wert nicht extrahierbar/i.test(rv.value);
-    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRaw(rv));
-    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRaw(rv));
+    const unmatched1 = map1._rawValues.filter(rv => !matchedRawKeys1.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRawValue(rv));
+    const unmatched2 = map2._rawValues.filter(rv => !matchedRawKeys2.has(rv.key) && !skipAreas.has(rv._assignedArea) && !isBlankRawValue(rv));
     const crossMatched2 = new Set();
 
     for (const rv1 of unmatched1) {
@@ -3067,9 +3276,8 @@ function buildDeterministicDifferences(map1, map2, clauseMatchResult, docConfig)
   // V3.2: Blank-Value Filter — entferne Diffs wo "Wert nicht extrahierbar" auftaucht.
   // Diese stammen aus OCR-Recovery-Fehlversuchen und verwirren den User.
   // Phase A hat das Feld erkannt, konnte aber den Wert nicht parsen → besser schweigen.
-  const isBlankValue = (v) => typeof v === 'string' && /Wert nicht extrahierbar/i.test(v);
   const beforeBlankFilter = diffs.length;
-  const cleanedDiffs = diffs.filter(d => !isBlankValue(d.value1) && !isBlankValue(d.value2));
+  const cleanedDiffs = diffs.filter(d => !isBlankValueString(d.value1) && !isBlankValueString(d.value2));
   if (cleanedDiffs.length < beforeBlankFilter) {
     console.log(`🧹 Blank-Value Filter: ${beforeBlankFilter - cleanedDiffs.length} unbrauchbare Diffs entfernt`);
   }
@@ -5546,6 +5754,15 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
     } catch (matchError) {
       console.warn(`⚠️ Clause Matching fehlgeschlagen: ${matchError.message}`);
       progress('mapping', 42, 'Clause Matching fehlgeschlagen, fahre fort...');
+    }
+
+    // V3.4: Pre-Classification — unbekannte keyValue-Keys via GPT klassifizieren
+    // Lernt mit der Zeit über alle Compare-Calls (MongoDB-persistent).
+    // Graceful: Bei Fehler läuft die Pipeline normal mit Regex-only weiter.
+    try {
+      await preClassifyUnknownKeys(map1, map2);
+    } catch (preClassErr) {
+      console.warn(`⚠️ Pre-Classification übersprungen: ${preClassErr.message}`);
     }
 
     // SCHICHT 2: Deterministischer Wertevergleich (docConfig → irrelevante Areas skippen)
