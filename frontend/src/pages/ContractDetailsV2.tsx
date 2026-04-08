@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
+import SmartContractInfo from "../components/SmartContractInfo";
 import { useAuth } from "../hooks/useAuth";
 import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
 
@@ -118,6 +119,17 @@ interface Contract {
     value: string;
     rating?: 'good' | 'neutral' | 'bad';
   }>;
+  // ✅ Eigene benutzerdefinierte Felder (z.B. "Account Manager: Max Mustermann")
+  customFields?: Array<{
+    label: string;
+    value: string;
+  }>;
+  // ✅ Payment-Tracking-Felder (für SmartContractInfo)
+  paymentMethod?: string;
+  paymentAmount?: number;
+  paymentStatus?: 'paid' | 'unpaid';
+  paymentDate?: string;
+  paymentDueDate?: string;
   // Kündigungs-Tracking
   cancellationId?: string;
   cancellationDate?: string;
@@ -253,6 +265,12 @@ export default function ContractDetailsV2() {
   const [qfLabel, setQfLabel] = useState('');
   const [qfValue, setQfValue] = useState('');
   const [qfRating, setQfRating] = useState<'good' | 'neutral' | 'bad'>('neutral');
+
+  // ✅ CustomFields State (synchron mit Modal-Pattern)
+  const [editingCustomField, setEditingCustomField] = useState<number | null>(null);
+  const [addingCustomField, setAddingCustomField] = useState(false);
+  const [customFieldLabel, setCustomFieldLabel] = useState('');
+  const [customFieldValue, setCustomFieldValue] = useState('');
 
   // Click-Outside-Handler für + Dropdown
   useEffect(() => {
@@ -843,6 +861,36 @@ export default function ContractDetailsV2() {
     }
   };
 
+  // ✅ CustomFields speichern (synchron mit Modal handleCustomFieldsSave)
+  const handleCustomFieldsSave = async (
+    updatedFields: Array<{ label: string; value: string }>
+  ) => {
+    if (!contract) return;
+    setSavingField(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/contracts/${contract._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({ customFields: updatedFields }),
+      });
+      if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+      setContract({ ...contract, customFields: updatedFields });
+      toast.success('Gespeichert');
+    } catch (err) {
+      console.error('CustomFields save error:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingField(false);
+      setEditingCustomField(null);
+      setAddingCustomField(false);
+    }
+  };
+
   // ✅ Icon-Map: V2-spezifisch (nicht Teil der Shared-Utility, weil JSX)
   const FIELD_ICONS: Record<string, React.ReactNode> = {
     contractType: <Package size={16} />,
@@ -1429,7 +1477,7 @@ export default function ContractDetailsV2() {
                           <span className={styles.cardIcon}><Info size={18} /></span>
                           Vertragsdetails
                         </h3>
-                        {/* ✅ + Button zum Hinzufügen fehlender Felder (synchron mit Modal-Pattern) */}
+                        {/* ✅ + Button: fehlende Standard-Felder ODER eigenes Feld */}
                         {(() => {
                           const fieldsMissing = EDITABLE_FIELDS.filter(f => !f.hasValue() && editingField !== f.key);
                           return (
@@ -1438,11 +1486,10 @@ export default function ContractDetailsV2() {
                                 className={styles.addFieldButton}
                                 onClick={() => setShowAddFieldMenu(!showAddFieldMenu)}
                                 title="Feld hinzufügen"
-                                disabled={fieldsMissing.length === 0}
                               >
                                 <Plus size={16} />
                               </button>
-                              {showAddFieldMenu && fieldsMissing.length > 0 && (
+                              {showAddFieldMenu && (
                                 <div className={styles.addFieldDropdown}>
                                   {fieldsMissing.map((field) => (
                                     <button
@@ -1456,6 +1503,18 @@ export default function ContractDetailsV2() {
                                       {field.label}
                                     </button>
                                   ))}
+                                  {fieldsMissing.length > 0 && <div className={styles.addFieldDivider} />}
+                                  <button
+                                    className={styles.addFieldItem}
+                                    onClick={() => {
+                                      setShowAddFieldMenu(false);
+                                      setAddingCustomField(true);
+                                      setCustomFieldLabel('');
+                                      setCustomFieldValue('');
+                                    }}
+                                  >
+                                    ✏️ Eigenes Feld hinzufügen
+                                  </button>
                                 </div>
                               )}
                             </div>
@@ -1471,8 +1530,148 @@ export default function ContractDetailsV2() {
                             return renderEditableMetricCard(field);
                           })}
 
-                          {/* ℹ️ Hinweis wenn KEIN Feld befüllt ist */}
-                          {EDITABLE_FIELDS.every(f => !f.hasValue()) && editingField === null && (
+                          {/* ✅ Custom Fields (vom User selbst angelegt) */}
+                          {(contract.customFields || []).map((cf, index) => {
+                            const isEditingCf = editingCustomField === index;
+                            if (isEditingCf) {
+                              return (
+                                <div key={`cf-${index}`} className={styles.metricCard} style={{ gridColumn: '1 / -1' }}>
+                                  <div className={styles.quickFactEditRow}>
+                                    <input
+                                      className={styles.metricEditInput}
+                                      value={customFieldLabel}
+                                      onChange={(e) => setCustomFieldLabel(e.target.value)}
+                                      placeholder="Bezeichnung"
+                                      autoFocus
+                                      style={{ flex: 1 }}
+                                    />
+                                    <input
+                                      className={styles.metricEditInput}
+                                      value={customFieldValue}
+                                      onChange={(e) => setCustomFieldValue(e.target.value)}
+                                      placeholder="Wert"
+                                      style={{ flex: 1 }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && customFieldLabel && customFieldValue) {
+                                          const updated = [...(contract.customFields || [])];
+                                          updated[index] = { label: customFieldLabel, value: customFieldValue };
+                                          handleCustomFieldsSave(updated);
+                                        }
+                                        if (e.key === 'Escape') setEditingCustomField(null);
+                                      }}
+                                    />
+                                    <button
+                                      className={styles.metricEditSave}
+                                      onClick={() => {
+                                        if (customFieldLabel && customFieldValue) {
+                                          const updated = [...(contract.customFields || [])];
+                                          updated[index] = { label: customFieldLabel, value: customFieldValue };
+                                          handleCustomFieldsSave(updated);
+                                        }
+                                      }}
+                                      disabled={!customFieldLabel || !customFieldValue || savingField}
+                                      title="Speichern"
+                                    >
+                                      <Check size={14} />
+                                    </button>
+                                    <button
+                                      className={styles.metricEditCancel}
+                                      onClick={() => setEditingCustomField(null)}
+                                      title="Abbrechen"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                    <button
+                                      className={styles.metricEditCancel}
+                                      onClick={() => {
+                                        const updated = (contract.customFields || []).filter((_, i) => i !== index);
+                                        handleCustomFieldsSave(updated);
+                                      }}
+                                      title="Löschen"
+                                      style={{ color: '#dc2626' }}
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div
+                                key={`cf-${index}`}
+                                className={`${styles.metricCard} ${styles.metricCardEditable}`}
+                                onClick={() => {
+                                  setEditingCustomField(index);
+                                  setCustomFieldLabel(cf.label);
+                                  setCustomFieldValue(cf.value);
+                                }}
+                                title="Klicken zum Bearbeiten"
+                              >
+                                <div className={styles.metricHeader}>
+                                  <span className={styles.metricLabel}>{cf.label}</span>
+                                </div>
+                                <div className={styles.metricValue}>
+                                  {cf.value}
+                                  <Pencil size={12} className={styles.metricEditPencil} />
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* ✅ Inline-Form: neues Custom Field hinzufügen */}
+                          {addingCustomField && (
+                            <div className={styles.metricCard} style={{ gridColumn: '1 / -1' }}>
+                              <div className={styles.quickFactEditRow}>
+                                <input
+                                  className={styles.metricEditInput}
+                                  value={customFieldLabel}
+                                  onChange={(e) => setCustomFieldLabel(e.target.value)}
+                                  placeholder="Bezeichnung (z.B. Account Manager)"
+                                  autoFocus
+                                  style={{ flex: 1 }}
+                                />
+                                <input
+                                  className={styles.metricEditInput}
+                                  value={customFieldValue}
+                                  onChange={(e) => setCustomFieldValue(e.target.value)}
+                                  placeholder="Wert"
+                                  style={{ flex: 1 }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && customFieldLabel && customFieldValue) {
+                                      const updated = [...(contract.customFields || []), { label: customFieldLabel, value: customFieldValue }];
+                                      handleCustomFieldsSave(updated);
+                                    }
+                                    if (e.key === 'Escape') setAddingCustomField(false);
+                                  }}
+                                />
+                                <button
+                                  className={styles.metricEditSave}
+                                  onClick={() => {
+                                    if (customFieldLabel && customFieldValue) {
+                                      const updated = [...(contract.customFields || []), { label: customFieldLabel, value: customFieldValue }];
+                                      handleCustomFieldsSave(updated);
+                                    }
+                                  }}
+                                  disabled={!customFieldLabel || !customFieldValue || savingField}
+                                  title="Hinzufügen"
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  className={styles.metricEditCancel}
+                                  onClick={() => setAddingCustomField(false)}
+                                  title="Abbrechen"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ℹ️ Hinweis wenn KEIN Feld befüllt ist (Standard + Custom) */}
+                          {EDITABLE_FIELDS.every(f => !f.hasValue()) &&
+                           (!contract.customFields || contract.customFields.length === 0) &&
+                           editingField === null && !addingCustomField && (
                             <div className={styles.metricEmptyHint}>
                               <Info size={16} />
                               <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
@@ -1690,6 +1889,34 @@ export default function ContractDetailsV2() {
                         )}
                       </div>
                     </div>
+
+                    {/* ✅ Notizen — read-only Anzeige (synchron mit Modal) */}
+                    {contract.notes && (
+                      <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.cardTitle}>
+                            <span className={styles.cardIcon}><FileText size={18} /></span>
+                            Notizen
+                          </h3>
+                        </div>
+                        <div className={styles.cardBody}>
+                          <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                            {contract.notes}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ SmartContractInfo (Payment/Cost-Tracker) — synchron mit Modal */}
+                    {(contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
+                      <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                        <div className={styles.cardBody}>
+                          <SmartContractInfo
+                            contract={contract as Parameters<typeof SmartContractInfo>[0]['contract']}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Parties */}
                     {contract.analysis?.parties && (contract.analysis.parties.provider || contract.analysis.parties.customer) && (

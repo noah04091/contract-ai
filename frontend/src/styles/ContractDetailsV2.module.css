@@ -551,6 +551,12 @@
   color: var(--cd-primary);
 }
 
+.addFieldDivider {
+  height: 1px;
+  background: var(--cd-border-light, var(--cd-border));
+  margin: 6px 0;
+}
+
 /* Klickbare Card im Read-Modus */
 .metricCardEditable {
   cursor: pointer;
