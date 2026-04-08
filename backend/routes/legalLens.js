@@ -15,6 +15,12 @@ const crypto = require('crypto');
 
 // Services
 const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
+const { parseContractWithGuidedSegmenter } = require('../services/legalLens/guidedSegmenterAdapter');
+
+// Feature-Flag: Neuer Universal-Parser (Discovery + Guided Segmentation)
+// Default: AUS — bestehende Legal Lens läuft unverändert.
+// Aktivieren über ENV: LEGAL_LENS_GUIDED_SEGMENTER=true
+const USE_GUIDED_SEGMENTER = process.env.LEGAL_LENS_GUIDED_SEGMENTER === 'true';
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
@@ -101,7 +107,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 15;
+const CACHE_VERSION = 16;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -1057,14 +1063,29 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Parsen - ZURÜCK auf schnelles Regex-Parsing (GPT dauerte zu lange)
-    // TODO: GPT-Parsing als Background-Job implementieren
-    console.log(`📋 [Legal Lens] Starte Regex-basiertes Parsing...`);
-    const parseResult = clauseParser.parseContract(text, {
-      detectRisk: true,
-      minClauseLength: 20,
-      maxClauseLength: 2000
-    });
+    // Parsen — entweder alter Regex-Parser oder neuer Universal-Parser
+    // (Discovery + Guided Segmentation) hinter Feature-Flag LEGAL_LENS_GUIDED_SEGMENTER.
+    let parseResult;
+    if (USE_GUIDED_SEGMENTER) {
+      console.log(`📋 [Legal Lens] Starte Guided-Segmenter (Universal-Parser)...`);
+      try {
+        parseResult = await parseContractWithGuidedSegmenter(text, { detectRisk: true });
+      } catch (err) {
+        console.error(`❌ [Legal Lens] Guided-Segmenter fehlgeschlagen, falle zurück auf Regex-Parser:`, err.message);
+        parseResult = clauseParser.parseContract(text, {
+          detectRisk: true,
+          minClauseLength: 20,
+          maxClauseLength: 2000
+        });
+      }
+    } else {
+      console.log(`📋 [Legal Lens] Starte Regex-basiertes Parsing...`);
+      parseResult = clauseParser.parseContract(text, {
+        detectRisk: true,
+        minClauseLength: 20,
+        maxClauseLength: 2000
+      });
+    }
 
     if (!parseResult.success) {
       return res.status(500).json({
