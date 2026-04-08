@@ -44,12 +44,15 @@ import {
   Plus,
   Check,
   X,
-  Pencil
+  Pencil,
+  Lock,
+  CalendarPlus
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
 import SmartContractInfo from "../components/SmartContractInfo";
 import { useAuth } from "../hooks/useAuth";
+import { isBusinessOrHigher } from "../utils/authUtils";
 import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
 
 // Configure PDF.js worker
@@ -75,6 +78,8 @@ interface CalendarEvent {
   type: string;
   severity: 'info' | 'warning' | 'critical';
   isManual?: boolean;
+  description?: string;
+  status?: string;
 }
 
 interface Contract {
@@ -276,6 +281,19 @@ export default function ContractDetailsV2() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
 
+  // ✅ Calendar-Event-CRUD State (Timeline-Tab)
+  const [showAddEventForm, setShowAddEventForm] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [eventFormTitle, setEventFormTitle] = useState('');
+  const [eventFormDate, setEventFormDate] = useState('');
+  const [eventFormDescription, setEventFormDescription] = useState('');
+  const [eventFormSeverity, setEventFormSeverity] = useState<'info' | 'warning' | 'critical'>('info');
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [convertingImportantDateIdx, setConvertingImportantDateIdx] = useState<number | null>(null);
+
+  // ✅ Subscription-Gate für Calendar-Event-CRUD (Backend erfordert Business+)
+  const canEditCalendarEvents = user ? isBusinessOrHigher(user) : false;
+
   // Click-Outside-Handler für + Dropdown
   useEffect(() => {
     if (!showAddFieldMenu) return;
@@ -328,27 +346,28 @@ export default function ContractDetailsV2() {
     if (id) fetchContract();
   }, [id]);
 
-  // Fetch Calendar Events
-  useEffect(() => {
-    const fetchCalendarEvents = async () => {
-      if (!id) return;
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`/api/calendar/events?contractId=${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.events) {
-            setCalendarEvents(data.events);
-          }
+  // Fetch Calendar Events — als useCallback für CRUD-Refetch wiederverwendbar
+  const fetchCalendarEvents = useCallback(async () => {
+    if (!id) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/calendar/events?contractId=${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.events) {
+          setCalendarEvents(data.events);
         }
-      } catch (err) {
-        console.error('Error fetching calendar events:', err);
       }
-    };
-    fetchCalendarEvents();
+    } catch (err) {
+      console.error('Error fetching calendar events:', err);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchCalendarEvents();
+  }, [fetchCalendarEvents]);
 
   // Fetch PDF URL for inline viewer
   useEffect(() => {
@@ -890,6 +909,216 @@ export default function ContractDetailsV2() {
     } finally {
       setSavingField(false);
       setEditingNotes(false);
+    }
+  };
+
+  // ============================================
+  // ✅ TIMELINE: Calendar-Event CRUD Handler
+  // ============================================
+  // Reset Event-Form-Felder
+  const resetEventForm = () => {
+    setEventFormTitle('');
+    setEventFormDate('');
+    setEventFormDescription('');
+    setEventFormSeverity('info');
+    setShowAddEventForm(false);
+    setEditingEventId(null);
+  };
+
+  // Edit-Mode für ein bestehendes Event starten
+  const startEditingEvent = (event: CalendarEvent) => {
+    setEditingEventId(event._id);
+    setEventFormTitle(event.title);
+    // Date in YYYY-MM-DD Format konvertieren für <input type="date">
+    const d = new Date(event.date);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    setEventFormDate(`${yyyy}-${mm}-${dd}`);
+    setEventFormDescription(event.description || '');
+    setEventFormSeverity(event.severity);
+    setShowAddEventForm(false);
+  };
+
+  // Neues Event erstellen (POST /api/calendar/events)
+  const handleCreateEvent = async () => {
+    if (!id || !eventFormTitle.trim() || !eventFormDate) return;
+    setSavingEvent(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          contractId: id,
+          title: eventFormTitle.trim(),
+          date: eventFormDate,
+          description: eventFormDescription.trim() || undefined,
+          type: 'CUSTOM',
+          severity: eventFormSeverity,
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errorData.upgradeRequired) {
+          toast.error('Calendar-Events erstellen erfordert Business+ Plan');
+        } else {
+          throw new Error(errorData.error || 'Erstellen fehlgeschlagen');
+        }
+        return;
+      }
+      await fetchCalendarEvents();
+      toast.success('Event erstellt');
+      resetEventForm();
+    } catch (err) {
+      console.error('Create event error:', err);
+      toast.error('Fehler beim Erstellen');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  // Event aktualisieren (PATCH /api/calendar/events/:id)
+  const handleUpdateEvent = async () => {
+    if (!editingEventId || !eventFormTitle.trim() || !eventFormDate) return;
+    setSavingEvent(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/calendar/events/${editingEventId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: eventFormTitle.trim(),
+          date: eventFormDate,
+          description: eventFormDescription.trim(),
+          severity: eventFormSeverity,
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errorData.upgradeRequired) {
+          toast.error('Calendar-Events bearbeiten erfordert Business+ Plan');
+        } else {
+          throw new Error(errorData.error || 'Aktualisieren fehlgeschlagen');
+        }
+        return;
+      }
+      await fetchCalendarEvents();
+      toast.success('Event aktualisiert');
+      resetEventForm();
+    } catch (err) {
+      console.error('Update event error:', err);
+      toast.error('Fehler beim Aktualisieren');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  // Event löschen (DELETE /api/calendar/events/:id)
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!eventId) return;
+    if (!window.confirm('Dieses Event wirklich löschen?')) return;
+    setSavingEvent(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/calendar/events/${eventId}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errorData.upgradeRequired) {
+          toast.error('Calendar-Events löschen erfordert Business+ Plan');
+        } else {
+          throw new Error(errorData.error || 'Löschen fehlgeschlagen');
+        }
+        return;
+      }
+      await fetchCalendarEvents();
+      toast.success('Event gelöscht');
+      resetEventForm();
+    } catch (err) {
+      console.error('Delete event error:', err);
+      toast.error('Fehler beim Löschen');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  // Heuristik: Hat der Vertrag bereits ein Calendar-Event mit gleichem Datum & ähnlichem Titel?
+  // Wird verwendet, um den "+ In Kalender übernehmen"-Button bei importantDates zu deaktivieren,
+  // wenn das Event bereits existiert (Duplikat-Schutz)
+  const isImportantDateInCalendar = (importantDate: ImportantDate): boolean => {
+    if (!calendarEvents || calendarEvents.length === 0) return false;
+    const targetDate = new Date(importantDate.date);
+    const targetTime = targetDate.getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const labelLower = (importantDate.label || '').toLowerCase();
+    return calendarEvents.some(ev => {
+      const evDate = new Date(ev.date);
+      // Datum muss innerhalb ±1 Tag sein
+      const dateDiff = Math.abs(evDate.getTime() - targetTime);
+      if (dateDiff > oneDayMs) return false;
+      // Titel-Heuristik: enthält das Label oder wird vom Label enthalten
+      const titleLower = (ev.title || '').toLowerCase();
+      if (!labelLower) return true; // gleichem Datum reicht wenn Label fehlt
+      return titleLower.includes(labelLower) || labelLower.includes(titleLower);
+    });
+  };
+
+  // ImportantDate als richtigen Calendar-Event übernehmen
+  const handleConvertImportantDate = async (importantDate: ImportantDate, idx: number) => {
+    if (!id) return;
+    if (isImportantDateInCalendar(importantDate)) {
+      toast.info('Bereits im Kalender vorhanden');
+      return;
+    }
+    setConvertingImportantDateIdx(idx);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          contractId: id,
+          title: importantDate.label,
+          date: importantDate.date,
+          description: importantDate.description || `Übernommen aus KI-extrahierten Terminen (Typ: ${importantDate.type})`,
+          type: 'DEADLINE',
+          severity: 'warning',
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errorData.upgradeRequired) {
+          toast.error('In Kalender übernehmen erfordert Business+ Plan');
+        } else {
+          throw new Error(errorData.error || 'Übernehmen fehlgeschlagen');
+        }
+        return;
+      }
+      await fetchCalendarEvents();
+      toast.success('In Kalender übernommen');
+    } catch (err) {
+      console.error('Convert importantDate error:', err);
+      toast.error('Fehler beim Übernehmen');
+    } finally {
+      setConvertingImportantDateIdx(null);
     }
   };
 
@@ -3061,79 +3290,234 @@ export default function ContractDetailsV2() {
                           <span className={styles.cardIcon}><Calendar size={18} /></span>
                           Kalender-Events
                         </h3>
-                        <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={() => navigate('/calendar')}>
-                          Zum Kalender <ChevronRight size={14} />
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {/* + Button: Business+ aktiv, Free Schloss */}
+                          {canEditCalendarEvents ? (
+                            <button
+                              className={styles.addFieldButton}
+                              onClick={() => {
+                                resetEventForm();
+                                setShowAddEventForm(true);
+                              }}
+                              title="Event hinzufügen"
+                              disabled={showAddEventForm || editingEventId !== null}
+                            >
+                              <Plus size={16} />
+                            </button>
+                          ) : (
+                            <button
+                              className={styles.addFieldButton}
+                              onClick={() => navigate('/pricing')}
+                              title="Calendar-Events erstellen ist ein Business+ Feature — klicken zum Upgraden"
+                              style={{ opacity: 0.7 }}
+                            >
+                              <Lock size={14} />
+                            </button>
+                          )}
+                          <button className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`} onClick={() => navigate('/calendar')}>
+                            Zum Kalender <ChevronRight size={14} />
+                          </button>
+                        </div>
                       </div>
                       <div className={styles.cardBody}>
+                        {/* ✅ Inline-Form: neues Event hinzufügen oder bestehendes bearbeiten */}
+                        {(showAddEventForm || editingEventId !== null) && (
+                          <div className={styles.metricCard} style={{ marginBottom: 16 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              <input
+                                className={styles.metricEditInput}
+                                value={eventFormTitle}
+                                onChange={(e) => setEventFormTitle(e.target.value)}
+                                placeholder="Titel (z.B. Quartalsmeeting)"
+                                autoFocus
+                              />
+                              <input
+                                type="date"
+                                className={styles.metricEditInput}
+                                value={eventFormDate}
+                                onChange={(e) => setEventFormDate(e.target.value)}
+                              />
+                              <textarea
+                                className={styles.metricEditInput}
+                                value={eventFormDescription}
+                                onChange={(e) => setEventFormDescription(e.target.value)}
+                                placeholder="Beschreibung (optional)"
+                                rows={3}
+                                style={{ resize: 'vertical', minHeight: 60, fontFamily: 'inherit', fontWeight: 400 }}
+                              />
+                              <select
+                                className={styles.metricEditInput}
+                                value={eventFormSeverity}
+                                onChange={(e) => setEventFormSeverity(e.target.value as 'info' | 'warning' | 'critical')}
+                              >
+                                <option value="info">ℹ️ Info</option>
+                                <option value="warning">⚠️ Warnung</option>
+                                <option value="critical">🚨 Kritisch</option>
+                              </select>
+                              <div className={styles.metricEditActions} style={{ marginTop: 4 }}>
+                                <button
+                                  className={styles.metricEditSave}
+                                  onClick={editingEventId ? handleUpdateEvent : handleCreateEvent}
+                                  disabled={!eventFormTitle.trim() || !eventFormDate || savingEvent}
+                                  title={editingEventId ? 'Speichern' : 'Erstellen'}
+                                >
+                                  <Check size={14} />
+                                </button>
+                                {editingEventId && (
+                                  <button
+                                    className={styles.metricEditCancel}
+                                    onClick={() => handleDeleteEvent(editingEventId)}
+                                    title="Löschen"
+                                    style={{ color: '#dc2626' }}
+                                    disabled={savingEvent}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                                <button
+                                  className={styles.metricEditCancel}
+                                  onClick={resetEventForm}
+                                  title="Abbrechen"
+                                  disabled={savingEvent}
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ✅ Liste der Events (existierendes Layout, ergänzt um Klick zum Bearbeiten) */}
                         {calendarEvents.length > 0 ? (
                           <div className={styles.timelineList}>
                             {calendarEvents.map((event) => (
-                              <div key={event._id} className={`${styles.timelineItem} ${styles[event.severity]}`}>
+                              <div
+                                key={event._id}
+                                className={`${styles.timelineItem} ${styles[event.severity]} ${canEditCalendarEvents && editingEventId !== event._id ? styles.metricCardEditable : ''}`}
+                                onClick={() => {
+                                  if (canEditCalendarEvents && editingEventId !== event._id && !showAddEventForm) {
+                                    startEditingEvent(event);
+                                  }
+                                }}
+                                title={canEditCalendarEvents ? 'Klicken zum Bearbeiten' : undefined}
+                              >
                                 <div className={styles.timelineIcon}>
                                   {event.severity === 'critical' && <AlertTriangle size={16} style={{ color: 'var(--cd-danger)' }} />}
                                   {event.severity === 'warning' && <AlertCircle size={16} style={{ color: 'var(--cd-warning)' }} />}
                                   {event.severity === 'info' && <Calendar size={16} style={{ color: 'var(--cd-info)' }} />}
                                 </div>
                                 <div className={styles.timelineContent}>
-                                  <div className={styles.timelineTitle}>{event.title}</div>
+                                  <div className={styles.timelineTitle}>
+                                    {event.title}
+                                    {canEditCalendarEvents && <Pencil size={11} style={{ marginLeft: 6, opacity: 0.4 }} />}
+                                  </div>
                                   <div className={styles.timelineDate}>
                                     {formatDate(event.date)} • {getRelativeTime(event.date)}
+                                    {event.description && (
+                                      <div style={{ marginTop: 4, fontSize: 13, color: 'var(--cd-text-tertiary)' }}>
+                                        {event.description}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
                             ))}
                           </div>
-                        ) : (
+                        ) : !showAddEventForm && (
                           <div className={styles.emptyState}>
                             <div className={styles.emptyIcon}>
                               <Calendar size={32} />
                             </div>
                             <h4 className={styles.emptyTitle}>Keine Events</h4>
                             <p className={styles.emptyText}>
-                              Für diesen Vertrag sind keine Kalender-Events hinterlegt.
+                              {canEditCalendarEvents
+                                ? 'Für diesen Vertrag sind keine Kalender-Events hinterlegt. Klicke oben auf + um einen Termin zu erfassen.'
+                                : 'Für diesen Vertrag sind keine Kalender-Events hinterlegt. Manuelle Termine sind ein Business+ Feature.'}
                             </p>
-                            <button
-                              className={`${styles.btn} ${styles.btnPrimary}`}
-                              style={{ marginTop: 16 }}
-                              onClick={() => navigate('/calendar')}
-                            >
-                              Event erstellen
-                            </button>
+                            {!canEditCalendarEvents && (
+                              <button
+                                className={`${styles.btn} ${styles.btnPrimary}`}
+                                style={{ marginTop: 16 }}
+                                onClick={() => navigate('/pricing')}
+                              >
+                                <Lock size={14} style={{ marginRight: 6 }} /> Upgrade auf Business+
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
 
-                    {/* Important Dates */}
-                    {contract.importantDates && contract.importantDates.length > 0 && (
-                      <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon}><Clock size={18} /></span>
-                            Wichtige Termine (KI-extrahiert)
-                          </h3>
-                        </div>
-                        <div className={styles.cardBody}>
-                          <div className={styles.timelineList}>
-                            {contract.importantDates.map((date, idx) => (
-                              <div key={idx} className={styles.timelineItem}>
-                                <div className={styles.timelineIcon}>
-                                  <Calendar size={16} style={{ color: 'var(--cd-primary)' }} />
-                                </div>
-                                <div className={styles.timelineContent}>
-                                  <div className={styles.timelineTitle}>{date.label}</div>
-                                  <div className={styles.timelineDate}>
-                                    {formatDate(date.date)}
-                                    {date.description && ` • ${date.description}`}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                    {/* ✅ Wichtige Termine (KI-extrahiert) — immer sichtbar mit Convert-Button und Duplikat-Schutz */}
+                    <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                      <div className={styles.cardHeader}>
+                        <h3 className={styles.cardTitle}>
+                          <span className={styles.cardIcon}><Clock size={18} /></span>
+                          Wichtige Termine (KI-extrahiert)
+                        </h3>
                       </div>
-                    )}
+                      <div className={styles.cardBody}>
+                        {contract.importantDates && contract.importantDates.length > 0 ? (
+                          <div className={styles.timelineList}>
+                            {contract.importantDates.map((date, idx) => {
+                              const alreadyInCalendar = isImportantDateInCalendar(date);
+                              const isConverting = convertingImportantDateIdx === idx;
+                              return (
+                                <div key={idx} className={styles.timelineItem}>
+                                  <div className={styles.timelineIcon}>
+                                    <Calendar size={16} style={{ color: 'var(--cd-primary)' }} />
+                                  </div>
+                                  <div className={styles.timelineContent} style={{ flex: 1 }}>
+                                    <div className={styles.timelineTitle}>
+                                      {date.label}
+                                    </div>
+                                    <div className={styles.timelineDate}>
+                                      {formatDate(date.date)}
+                                      {date.description && ` • ${date.description}`}
+                                    </div>
+                                  </div>
+                                  {/* Convert-Button — nur wenn Business+ und nicht schon im Kalender */}
+                                  {canEditCalendarEvents && (
+                                    alreadyInCalendar ? (
+                                      <span
+                                        style={{
+                                          fontSize: 12,
+                                          color: '#059669',
+                                          fontWeight: 500,
+                                          padding: '6px 10px',
+                                          background: '#d1fae5',
+                                          borderRadius: 6,
+                                          whiteSpace: 'nowrap',
+                                          alignSelf: 'center'
+                                        }}
+                                      >
+                                        ✓ Im Kalender
+                                      </span>
+                                    ) : (
+                                      <button
+                                        className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                                        onClick={() => handleConvertImportantDate(date, idx)}
+                                        disabled={isConverting}
+                                        style={{ alignSelf: 'center', whiteSpace: 'nowrap' }}
+                                        title="Diesen Termin in den Kalender übernehmen"
+                                      >
+                                        <CalendarPlus size={14} style={{ marginRight: 4 }} />
+                                        {isConverting ? '...' : 'In Kalender'}
+                                      </button>
+                                    )
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className={styles.metricEmptyHint}>
+                            <Info size={16} />
+                            <span>Wird beim Analysieren des Vertrags automatisch befüllt. Diese KI-extrahierten Termine erscheinen hier, sobald die Analyse läuft.</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
