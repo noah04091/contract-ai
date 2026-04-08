@@ -112,6 +112,12 @@ interface Contract {
     category?: string;
     confidence?: number;
   };
+  // ✅ Dynamische QuickFacts (Rechnungsdatum, Fälligkeit, Betrag, etc.)
+  quickFacts?: Array<{
+    label: string;
+    value: string;
+    rating?: 'good' | 'neutral' | 'bad';
+  }>;
   // Kündigungs-Tracking
   cancellationId?: string;
   cancellationDate?: string;
@@ -240,6 +246,13 @@ export default function ContractDetailsV2() {
   const [savingField, setSavingField] = useState(false);
   const [showAddFieldMenu, setShowAddFieldMenu] = useState(false);
   const addFieldMenuRef = useRef<HTMLDivElement>(null);
+
+  // ✅ QuickFacts State (synchron mit Modal-Pattern)
+  const [editingQuickFact, setEditingQuickFact] = useState<number | null>(null);
+  const [addingQuickFact, setAddingQuickFact] = useState(false);
+  const [qfLabel, setQfLabel] = useState('');
+  const [qfValue, setQfValue] = useState('');
+  const [qfRating, setQfRating] = useState<'good' | 'neutral' | 'bad'>('neutral');
 
   // Click-Outside-Handler für + Dropdown
   useEffect(() => {
@@ -798,6 +811,36 @@ export default function ContractDetailsV2() {
   const cancelEditingField = () => {
     setEditingField(null);
     setEditValue('');
+  };
+
+  // ✅ QuickFacts speichern (synchron mit Modal handleQuickFactsSave)
+  const handleQuickFactsSave = async (
+    updatedFacts: Array<{ label: string; value: string; rating?: 'good' | 'neutral' | 'bad' }>
+  ) => {
+    if (!contract) return;
+    setSavingField(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/contracts/${contract._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({ quickFacts: updatedFacts }),
+      });
+      if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+      setContract({ ...contract, quickFacts: updatedFacts });
+      toast.success('Gespeichert');
+    } catch (err) {
+      console.error('QuickFacts save error:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingField(false);
+      setEditingQuickFact(null);
+      setAddingQuickFact(false);
+    }
   };
 
   // ✅ Icon-Map: V2-spezifisch (nicht Teil der Shared-Utility, weil JSX)
@@ -1442,6 +1485,207 @@ export default function ContractDetailsV2() {
                           <div className={styles.metricSubInfo}>
                             <Clock size={14} />
                             <span>Ablaufdatum: {getRelativeTime(contract.expiryDate)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ✅ QuickFacts — Eckdaten auf einen Blick (synchron mit Modal) */}
+                    <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                      <div className={styles.cardHeader}>
+                        <h3 className={styles.cardTitle}>
+                          <span className={styles.cardIcon}><Info size={18} /></span>
+                          Eckdaten auf einen Blick
+                        </h3>
+                        <button
+                          className={styles.addFieldButton}
+                          onClick={() => {
+                            setAddingQuickFact(true);
+                            setQfLabel('');
+                            setQfValue('');
+                            setQfRating('neutral');
+                          }}
+                          title="Eckdatum hinzufügen"
+                          disabled={addingQuickFact}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                      <div className={styles.cardBody}>
+                        {/* Empty state */}
+                        {(!contract.quickFacts || contract.quickFacts.length === 0) && !addingQuickFact && (
+                          <div className={styles.metricEmptyHint}>
+                            <Info size={16} />
+                            <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
+                          </div>
+                        )}
+
+                        {/* List of QuickFacts */}
+                        {contract.quickFacts && contract.quickFacts.length > 0 && (
+                          <div className={styles.metricsGrid}>
+                            {contract.quickFacts.map((fact, index) => {
+                              const isEditing = editingQuickFact === index;
+                              if (isEditing) {
+                                return (
+                                  <div key={index} className={styles.metricCard} style={{ gridColumn: '1 / -1' }}>
+                                    <div className={styles.quickFactEditRow}>
+                                      <input
+                                        className={styles.metricEditInput}
+                                        value={qfLabel}
+                                        onChange={(e) => setQfLabel(e.target.value)}
+                                        placeholder="Bezeichnung"
+                                        autoFocus
+                                        style={{ flex: 1 }}
+                                      />
+                                      <input
+                                        className={styles.metricEditInput}
+                                        value={qfValue}
+                                        onChange={(e) => setQfValue(e.target.value)}
+                                        placeholder="Wert"
+                                        style={{ flex: 1 }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter' && qfLabel && qfValue) {
+                                            const updated = [...(contract.quickFacts || [])];
+                                            updated[index] = { label: qfLabel, value: qfValue, rating: qfRating };
+                                            handleQuickFactsSave(updated);
+                                          }
+                                          if (e.key === 'Escape') setEditingQuickFact(null);
+                                        }}
+                                      />
+                                      <select
+                                        className={styles.metricEditInput}
+                                        value={qfRating}
+                                        onChange={(e) => setQfRating(e.target.value as 'good' | 'neutral' | 'bad')}
+                                        style={{ width: 'auto', flex: '0 0 auto' }}
+                                      >
+                                        <option value="good">Gut</option>
+                                        <option value="neutral">Neutral</option>
+                                        <option value="bad">Schlecht</option>
+                                      </select>
+                                      <button
+                                        className={styles.metricEditSave}
+                                        onClick={() => {
+                                          if (qfLabel && qfValue) {
+                                            const updated = [...(contract.quickFacts || [])];
+                                            updated[index] = { label: qfLabel, value: qfValue, rating: qfRating };
+                                            handleQuickFactsSave(updated);
+                                          }
+                                        }}
+                                        disabled={!qfLabel || !qfValue || savingField}
+                                        title="Speichern"
+                                      >
+                                        <Check size={14} />
+                                      </button>
+                                      <button
+                                        className={styles.metricEditCancel}
+                                        onClick={() => setEditingQuickFact(null)}
+                                        title="Abbrechen"
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                      <button
+                                        className={styles.metricEditCancel}
+                                        onClick={() => {
+                                          const updated = (contract.quickFacts || []).filter((_, i) => i !== index);
+                                          handleQuickFactsSave(updated);
+                                        }}
+                                        title="Löschen"
+                                        style={{ color: '#dc2626' }}
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              const ratingColor =
+                                fact.rating === 'good' ? '#059669' :
+                                fact.rating === 'bad' ? '#dc2626' :
+                                undefined;
+                              return (
+                                <div
+                                  key={index}
+                                  className={`${styles.metricCard} ${styles.metricCardEditable}`}
+                                  onClick={() => {
+                                    setEditingQuickFact(index);
+                                    setQfLabel(fact.label);
+                                    setQfValue(fact.value);
+                                    setQfRating(fact.rating || 'neutral');
+                                  }}
+                                  title="Klicken zum Bearbeiten"
+                                >
+                                  <div className={styles.metricHeader}>
+                                    <span className={styles.metricLabel}>{fact.label}</span>
+                                  </div>
+                                  <div
+                                    className={styles.metricValue}
+                                    style={ratingColor ? { color: ratingColor } : undefined}
+                                  >
+                                    {fact.value}
+                                    <Pencil size={12} className={styles.metricEditPencil} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Inline-Form: neues QuickFact hinzufügen */}
+                        {addingQuickFact && (
+                          <div className={styles.quickFactEditRow} style={{ marginTop: contract.quickFacts && contract.quickFacts.length > 0 ? '12px' : 0 }}>
+                            <input
+                              className={styles.metricEditInput}
+                              value={qfLabel}
+                              onChange={(e) => setQfLabel(e.target.value)}
+                              placeholder="Bezeichnung (z.B. Rechnungsdatum)"
+                              autoFocus
+                              style={{ flex: 1 }}
+                            />
+                            <input
+                              className={styles.metricEditInput}
+                              value={qfValue}
+                              onChange={(e) => setQfValue(e.target.value)}
+                              placeholder="Wert (z.B. 04.03.2026)"
+                              style={{ flex: 1 }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && qfLabel && qfValue) {
+                                  const updated = [...(contract.quickFacts || []), { label: qfLabel, value: qfValue, rating: qfRating }];
+                                  handleQuickFactsSave(updated);
+                                }
+                                if (e.key === 'Escape') setAddingQuickFact(false);
+                              }}
+                            />
+                            <select
+                              className={styles.metricEditInput}
+                              value={qfRating}
+                              onChange={(e) => setQfRating(e.target.value as 'good' | 'neutral' | 'bad')}
+                              style={{ width: 'auto', flex: '0 0 auto' }}
+                            >
+                              <option value="good">Gut</option>
+                              <option value="neutral">Neutral</option>
+                              <option value="bad">Schlecht</option>
+                            </select>
+                            <button
+                              className={styles.metricEditSave}
+                              onClick={() => {
+                                if (qfLabel && qfValue) {
+                                  const updated = [...(contract.quickFacts || []), { label: qfLabel, value: qfValue, rating: qfRating }];
+                                  handleQuickFactsSave(updated);
+                                }
+                              }}
+                              disabled={!qfLabel || !qfValue || savingField}
+                              title="Hinzufügen"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              className={styles.metricEditCancel}
+                              onClick={() => setAddingQuickFact(false)}
+                              title="Abbrechen"
+                            >
+                              <X size={14} />
+                            </button>
                           </div>
                         )}
                       </div>

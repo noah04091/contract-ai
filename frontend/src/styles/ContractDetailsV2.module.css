@@ -662,6 +662,19 @@
   color: var(--cd-text-primary);
 }
 
+/* QuickFact Edit-Row: flex layout für Label-Input + Value-Input + Rating + Buttons */
+.quickFactEditRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quickFactEditRow > input,
+.quickFactEditRow > select {
+  min-width: 100px;
+}
+
 /* Sub-Info am Ende des Vertragsdetails-Bereichs (z.B. Restzeit) */
 .metricSubInfo {
   display: flex;
