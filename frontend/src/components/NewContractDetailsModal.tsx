@@ -10,6 +10,7 @@ import ImportantDatesSection from './ImportantDatesSection';
 import { fixUtf8Display } from "../utils/textUtils";
 import { apiCall } from "../utils/api";
 import { useToast } from "../context/ToastContext";
+import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
 
 // Signature-related interfaces
 interface Signer {
@@ -242,36 +243,8 @@ const hasAnalysisData = (contract: Contract): boolean => {
 };
 
 // Dropdown-Optionen (gleich wie ContractEditModal)
-const KUENDIGUNG_OPTIONS = [
-  { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
-  { value: "2 Wochen", label: "2 Wochen" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "4 Wochen", label: "4 Wochen" },
-  { value: "6 Wochen", label: "6 Wochen" },
-  { value: "2 Monate", label: "2 Monate" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
-  { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
-  { value: "12 Monate", label: "12 Monate" },
-  { value: "Unbefristet", label: "Unbefristet" },
-];
-
-const LAUFZEIT_OPTIONS = [
-  { value: "Unbefristet", label: "Unbefristet" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "1 Jahr", label: "1 Jahr" },
-  { value: "2 Jahre", label: "2 Jahre" },
-  { value: "3 Jahre", label: "3 Jahre" },
-  { value: "5 Jahre", label: "5 Jahre" },
-  { value: "10 Jahre", label: "10 Jahre" },
-  { value: "24 Monate mit Verlängerung", label: "24 Monate + auto. Verlängerung" },
-  { value: "12 Monate mit Verlängerung", label: "12 Monate + auto. Verlängerung" },
-  { value: "Einmalig", label: "Einmalig (kein Abo)" },
-];
+// ✅ KUENDIGUNG_OPTIONS und LAUFZEIT_OPTIONS sind jetzt in der Shared-Utility:
+// frontend/src/utils/contractEditableFields.ts
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
@@ -941,71 +914,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     return `${years} ${years === 1 ? 'Jahr' : 'Jahre'}, ${remainingMonths} ${remainingMonths === 1 ? 'Monat' : 'Monate'}`;
   };
 
-  // Definiere alle editierbaren Felder mit ihren Konfigurationen
-  const EDITABLE_FIELDS: Array<{
-    key: string;
-    label: string;
-    type: 'text' | 'number' | 'date' | 'dropdown';
-    options?: { value: string; label: string }[];
-    hasValue: () => boolean;
-    displayValue: () => string;
-    rawValue: () => string;
-  }> = [
-    {
-      key: 'contractType', label: 'Vertragstyp', type: 'text',
-      hasValue: () => !!contract.contractType,
-      displayValue: () => contract.contractType || '',
-      rawValue: () => contract.contractType || '',
-    },
-    {
-      key: 'anbieter', label: 'Anbieter', type: 'text',
-      hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
-      displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
-      rawValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
-    },
-    {
-      key: 'vertragsnummer', label: 'Vertragsnummer', type: 'text',
-      hasValue: () => !!contract.vertragsnummer,
-      displayValue: () => contract.vertragsnummer || '',
-      rawValue: () => contract.vertragsnummer || '',
-    },
-    {
-      key: 'gekuendigtZum', label: 'Gekündigt zum', type: 'date',
-      hasValue: () => !!contract.gekuendigtZum,
-      displayValue: () => contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
-      rawValue: () => contract.gekuendigtZum || '',
-    },
-    {
-      key: 'kuendigung', label: 'Kündigungsfrist', type: 'dropdown', options: KUENDIGUNG_OPTIONS,
-      hasValue: () => !!contract.kuendigung,
-      displayValue: () => contract.kuendigung || '',
-      rawValue: () => contract.kuendigung || '',
-    },
-    {
-      key: 'laufzeit', label: 'Laufzeit', type: 'dropdown', options: LAUFZEIT_OPTIONS,
-      hasValue: () => !!contract.laufzeit,
-      displayValue: () => contract.laufzeit || '',
-      rawValue: () => contract.laufzeit || '',
-    },
-    {
-      key: 'startDate', label: 'Vertragsbeginn', type: 'date',
-      hasValue: () => !!contract.startDate,
-      displayValue: () => contract.startDate ? formatDate(contract.startDate) : '',
-      rawValue: () => contract.startDate || '',
-    },
-    {
-      key: 'expiryDate', label: 'Enddatum', type: 'date',
-      hasValue: () => !!contract.expiryDate,
-      displayValue: () => contract.expiryDate ? formatDate(contract.expiryDate) : '',
-      rawValue: () => contract.expiryDate || '',
-    },
-    {
-      key: 'kosten', label: 'Monatliche Kosten', type: 'number',
-      hasValue: () => contract.kosten != null && contract.kosten > 0,
-      displayValue: () => contract.kosten != null && contract.kosten > 0 ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '',
-      rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
-    },
-  ];
+  // ✅ EDITABLE_FIELDS jetzt aus Shared-Utility — single source of truth für beide Komponenten
+  const EDITABLE_FIELDS: EditableField[] = createEditableFields(contract, formatDate);
 
   // Render Overview Tab
   const renderOverviewTab = () => {

@@ -49,44 +49,13 @@ import {
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
 import { useAuth } from "../hooks/useAuth";
+import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-// ============================================
-// KONSTANTEN — synchron mit NewContractDetailsModal.tsx (Zeilen 245-274)
-// Bei Änderungen: BEIDE Stellen anpassen, oder später nach utils/contractEditableFields.ts extrahieren
-// ============================================
-const KUENDIGUNG_OPTIONS = [
-  { value: "Keine Kündigungsfrist", label: "Keine Kündigungsfrist" },
-  { value: "2 Wochen", label: "2 Wochen" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "4 Wochen", label: "4 Wochen" },
-  { value: "6 Wochen", label: "6 Wochen" },
-  { value: "2 Monate", label: "2 Monate" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "3 Monate zum Quartalsende", label: "3 Monate zum Quartalsende" },
-  { value: "3 Monate zum Monatsende", label: "3 Monate zum Monatsende" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "6 Monate zum Jahresende", label: "6 Monate zum Jahresende" },
-  { value: "12 Monate", label: "12 Monate" },
-  { value: "Unbefristet", label: "Unbefristet" },
-];
-
-const LAUFZEIT_OPTIONS = [
-  { value: "Unbefristet", label: "Unbefristet" },
-  { value: "1 Monat", label: "1 Monat" },
-  { value: "3 Monate", label: "3 Monate" },
-  { value: "6 Monate", label: "6 Monate" },
-  { value: "1 Jahr", label: "1 Jahr" },
-  { value: "2 Jahre", label: "2 Jahre" },
-  { value: "3 Jahre", label: "3 Jahre" },
-  { value: "5 Jahre", label: "5 Jahre" },
-  { value: "10 Jahre", label: "10 Jahre" },
-  { value: "24 Monate mit Verlängerung", label: "24 Monate + auto. Verlängerung" },
-  { value: "12 Monate mit Verlängerung", label: "12 Monate + auto. Verlängerung" },
-  { value: "Einmalig", label: "Einmalig (kein Abo)" },
-];
+// ✅ KUENDIGUNG_OPTIONS, LAUFZEIT_OPTIONS und EDITABLE_FIELDS sind jetzt in:
+// frontend/src/utils/contractEditableFields.ts (Shared mit NewContractDetailsModal)
 
 // ============================================
 // INTERFACES
@@ -831,78 +800,31 @@ export default function ContractDetailsV2() {
     setEditValue('');
   };
 
-  // ✅ EDITABLE_FIELDS — synchron mit NewContractDetailsModal.tsx (Zeilen 944-1008)
-  // Bei Änderungen: BEIDE Stellen anpassen
-  const EDITABLE_FIELDS: Array<{
-    key: string;
-    label: string;
-    type: 'text' | 'number' | 'date' | 'dropdown';
-    icon: React.ReactNode;
-    options?: { value: string; label: string }[];
-    hasValue: () => boolean;
-    displayValue: () => string;
-    rawValue: () => string;
-  }> = !contract ? [] : [
-    {
-      key: 'anbieter', label: 'Anbieter', type: 'text', icon: <Users size={16} />,
-      hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
-      displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
-      rawValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
-    },
-    {
-      key: 'contractType', label: 'Vertragstyp', type: 'text', icon: <Package size={16} />,
-      hasValue: () => !!contract.contractType,
-      displayValue: () => contract.contractType || '',
-      rawValue: () => contract.contractType || '',
-    },
-    {
-      key: 'vertragsnummer', label: 'Vertragsnummer', type: 'text', icon: <FileText size={16} />,
-      hasValue: () => !!contract.vertragsnummer,
-      displayValue: () => contract.vertragsnummer || '',
-      rawValue: () => contract.vertragsnummer || '',
-    },
-    {
-      key: 'startDate', label: 'Vertragsbeginn', type: 'date', icon: <Calendar size={16} />,
-      hasValue: () => !!contract.startDate,
-      displayValue: () => contract.startDate ? formatDate(contract.startDate) : '',
-      rawValue: () => contract.startDate || '',
-    },
-    {
-      key: 'laufzeit', label: 'Laufzeit', type: 'dropdown', icon: <Clock size={16} />, options: LAUFZEIT_OPTIONS,
-      hasValue: () => !!contract.laufzeit,
-      displayValue: () => contract.laufzeit || '',
-      rawValue: () => contract.laufzeit || '',
-    },
-    {
-      key: 'expiryDate', label: 'Ablaufdatum', type: 'date', icon: <Calendar size={16} />,
-      hasValue: () => !!contract.expiryDate,
-      displayValue: () => contract.expiryDate ? formatDate(contract.expiryDate) : '',
-      rawValue: () => contract.expiryDate || '',
-    },
-    {
-      key: 'kuendigung', label: 'Kündigungsfrist', type: 'dropdown', icon: <AlertCircle size={16} />, options: KUENDIGUNG_OPTIONS,
-      hasValue: () => !!contract.kuendigung,
-      displayValue: () => contract.kuendigung || '',
-      rawValue: () => contract.kuendigung || '',
-    },
-    {
-      key: 'gekuendigtZum', label: 'Gekündigt zum', type: 'date', icon: <Calendar size={16} />,
-      hasValue: () => !!contract.gekuendigtZum,
-      displayValue: () => contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
-      rawValue: () => contract.gekuendigtZum || '',
-    },
-    {
-      key: 'kosten', label: 'Monatliche Kosten', type: 'number', icon: <CreditCard size={16} />,
-      hasValue: () => contract.kosten != null && contract.kosten > 0,
-      displayValue: () => contract.kosten != null && contract.kosten > 0
-        ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-        : '',
-      rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
-    },
-  ];
+  // ✅ Icon-Map: V2-spezifisch (nicht Teil der Shared-Utility, weil JSX)
+  const FIELD_ICONS: Record<string, React.ReactNode> = {
+    contractType: <Package size={16} />,
+    anbieter: <Users size={16} />,
+    vertragsnummer: <FileText size={16} />,
+    gekuendigtZum: <Calendar size={16} />,
+    kuendigung: <AlertCircle size={16} />,
+    laufzeit: <Clock size={16} />,
+    startDate: <Calendar size={16} />,
+    expiryDate: <Calendar size={16} />,
+    kosten: <CreditCard size={16} />,
+  };
+
+  // ✅ Felder kommen jetzt aus der Shared-Utility — single source of truth mit Modal
+  // Icons werden V2-spezifisch über die FIELD_ICONS-Map ergänzt
+  type EditableFieldWithIcon = EditableField & { icon?: React.ReactNode };
+  const EDITABLE_FIELDS: EditableFieldWithIcon[] = !contract
+    ? []
+    : createEditableFields(contract, formatDate).map(f => ({
+        ...f,
+        icon: FIELD_ICONS[f.key],
+      }));
 
   // ✅ Render einer einzelnen Eckdaten-Card (im Read- oder Edit-Modus)
-  const renderEditableMetricCard = (field: typeof EDITABLE_FIELDS[number]) => {
+  const renderEditableMetricCard = (field: EditableFieldWithIcon) => {
     const isEditing = editingField === field.key;
 
     if (isEditing) {
