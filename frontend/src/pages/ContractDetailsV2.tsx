@@ -272,6 +272,10 @@ export default function ContractDetailsV2() {
   const [customFieldLabel, setCustomFieldLabel] = useState('');
   const [customFieldValue, setCustomFieldValue] = useState('');
 
+  // ✅ Notizen-Edit State
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
+
   // Click-Outside-Handler für + Dropdown
   useEffect(() => {
     if (!showAddFieldMenu) return;
@@ -858,6 +862,34 @@ export default function ContractDetailsV2() {
       setSavingField(false);
       setEditingQuickFact(null);
       setAddingQuickFact(false);
+    }
+  };
+
+  // ✅ Notizen speichern
+  const handleNotesSave = async (value: string) => {
+    if (!contract) return;
+    setSavingField(true);
+    try {
+      const trimmed = value.trim();
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/contracts/${contract._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        credentials: 'include',
+        body: JSON.stringify({ notes: trimmed || null }),
+      });
+      if (!res.ok) throw new Error('Speichern fehlgeschlagen');
+      setContract({ ...contract, notes: trimmed || undefined });
+      toast.success('Gespeichert');
+    } catch (err) {
+      console.error('Notes save error:', err);
+      toast.error('Fehler beim Speichern');
+    } finally {
+      setSavingField(false);
+      setEditingNotes(false);
     }
   };
 
@@ -1890,22 +1922,76 @@ export default function ContractDetailsV2() {
                       </div>
                     </div>
 
-                    {/* ✅ Notizen — read-only Anzeige (synchron mit Modal) */}
-                    {contract.notes && (
-                      <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon}><FileText size={18} /></span>
-                            Notizen
-                          </h3>
-                        </div>
-                        <div className={styles.cardBody}>
+                    {/* ✅ Notizen — editierbar */}
+                    <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                      <div className={styles.cardHeader}>
+                        <h3 className={styles.cardTitle}>
+                          <span className={styles.cardIcon}><FileText size={18} /></span>
+                          Notizen
+                        </h3>
+                        {!editingNotes && (
+                          <button
+                            className={styles.addFieldButton}
+                            onClick={() => {
+                              setEditingNotes(true);
+                              setNotesValue(contract.notes || '');
+                            }}
+                            title={contract.notes ? 'Notizen bearbeiten' : 'Notizen hinzufügen'}
+                          >
+                            {contract.notes ? <Pencil size={14} /> : <Plus size={16} />}
+                          </button>
+                        )}
+                      </div>
+                      <div className={styles.cardBody}>
+                        {editingNotes ? (
+                          <div>
+                            <textarea
+                              className={styles.metricEditInput}
+                              value={notesValue}
+                              onChange={(e) => setNotesValue(e.target.value)}
+                              placeholder="Notizen zu diesem Vertrag…"
+                              autoFocus
+                              rows={6}
+                              style={{ width: '100%', resize: 'vertical', minHeight: '120px', fontFamily: 'inherit', fontWeight: 400, lineHeight: 1.6 }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                  setEditingNotes(false);
+                                  setNotesValue('');
+                                }
+                              }}
+                            />
+                            <div className={styles.metricEditActions} style={{ marginTop: '10px' }}>
+                              <button
+                                className={styles.metricEditSave}
+                                onClick={() => handleNotesSave(notesValue)}
+                                disabled={savingField}
+                                title="Speichern"
+                              >
+                                <Check size={14} />
+                              </button>
+                              <button
+                                className={styles.metricEditCancel}
+                                onClick={() => {
+                                  setEditingNotes(false);
+                                  setNotesValue('');
+                                }}
+                                title="Abbrechen"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ) : contract.notes ? (
                           <p style={{ margin: 0, lineHeight: 1.7, color: 'var(--cd-text-secondary)', whiteSpace: 'pre-wrap' }}>
                             {contract.notes}
                           </p>
-                        </div>
+                        ) : (
+                          <p style={{ margin: 0, color: 'var(--cd-text-tertiary)', fontStyle: 'italic', fontSize: '14px' }}>
+                            Noch keine Notizen vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.
+                          </p>
+                        )}
                       </div>
-                    )}
+                    </div>
 
                     {/* ✅ SmartContractInfo (Payment/Cost-Tracker) — synchron mit Modal */}
                     {(contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
