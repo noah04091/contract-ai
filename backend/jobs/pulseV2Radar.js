@@ -63,6 +63,11 @@ const MIN_RELEVANCE_SCORE = 30; // Laws below this score are skipped (no keyword
 const MAX_PER_AREA = 4; // Diversity: max laws from same primary area in top 25
 const MAX_ALERTS_PER_USER = 3; // Safety: prevent alert spam per radar run
 
+// OpenAI pricing per 1K tokens (gpt-4o-mini, 2026-04)
+const PRICES = {
+  "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
+};
+
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
 // This prevents mass false alerts from unmapped legal areas.
@@ -144,6 +149,12 @@ async function runPulseV2Radar(db, options = {}) {
   let totalAlerts = 0;
   const userAlerts = new Map(); // userId → [{ lawChange, contracts }]
 
+  // Cost tracking accumulators
+  let totalAiCalls = 0;
+  let totalTokensInput = 0;
+  let totalTokensOutput = 0;
+  let totalCostUSD = 0;
+
   for (const law of lawChanges) {
     if (totalMatches >= MAX_CONTRACT_MATCHES) break;
 
@@ -151,8 +162,14 @@ async function runPulseV2Radar(db, options = {}) {
     if (matches.length === 0) continue;
 
     // 3. Assess impact with AI
-    const confirmedImpacts = await assessImpact(law, matches);
+    const { impacts: confirmedImpacts, cost } = await assessImpact(law, matches);
     totalMatches += matches.length;
+
+    // Accumulate cost
+    totalAiCalls += cost.aiCalls || 0;
+    totalTokensInput += cost.tokensInput || 0;
+    totalTokensOutput += cost.tokensOutput || 0;
+    totalCostUSD += cost.costUSD || 0;
 
     // Group by user
     for (const impact of confirmedImpacts) {
@@ -224,16 +241,20 @@ async function runPulseV2Radar(db, options = {}) {
       usersNotified: userAlerts.size,
       durationMs: duration,
       scoped: !!options.userId,
+      aiCalls: totalAiCalls,
+      tokensInput: totalTokensInput,
+      tokensOutput: totalTokensOutput,
+      estimatedCostUSD: Number(totalCostUSD.toFixed(6)),
     });
   } catch (histErr) {
     console.warn("[PulseV2Radar] Failed to write run history:", histErr.message);
   }
 
   console.log(
-    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s`
+    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s | ${totalAiCalls} AI calls, ${totalTokensInput}in/${totalTokensOutput}out tokens, $${totalCostUSD.toFixed(4)}`
   );
 
-  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration };
+  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration, aiCalls: totalAiCalls, tokensInput: totalTokensInput, tokensOutput: totalTokensOutput, estimatedCostUSD: Number(totalCostUSD.toFixed(6)) };
 }
 
 // ═══════════════════════════════════════════════════
@@ -291,6 +312,14 @@ const NOISE_PATTERNS = [
   /arbeitsmarkt\s+(zeigt|bericht|statistik|daten)/i,
   // Regulatory body procedural
   /bundesnetzagentur\s+(leitet|stellt|benennt|begrüßt|veröffentlicht|sieht)/i,
+  // IT / website maintenance announcements from law firms / agencies
+  /wartungsarbeit/i,
+  // Photo appointments and parliamentary ceremonial items
+  /^bildtermin\b/i,
+  /^(bundestagspräsident(in)?|julia\s+klöckner)[:\s]/i,
+  /^gedenken\s+an\s+die\s+opfer/i,
+  /^konferenz\s+im\s+deutschen\s+bundestag/i,
+  /^top\s+zp\s+\d/i, // TOP ZP X (Zusatzpunkt) — not caught by /^top\s+\d/
 ];
 
 function isNoiseLaw(law) {
@@ -594,15 +623,17 @@ async function matchLawToContracts(db, lawChange, options = {}) {
 
 /**
  * Use GPT-4o-mini to assess actual impact of a law change on matched contracts.
- * Returns only confirmed impacts above confidence threshold.
+ * Returns only confirmed impacts above confidence threshold plus token usage/cost.
+ * Shape: { impacts: [...], cost: { aiCalls, tokensInput, tokensOutput, costUSD } }
  */
 async function assessImpact(lawChange, contracts) {
-  if (contracts.length === 0) return [];
+  const emptyCost = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0 };
+  if (contracts.length === 0) return { impacts: [], cost: emptyCost };
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.warn("[PulseV2Radar] No OpenAI API key — skipping AI impact assessment");
-    return [];
+    return { impacts: [], cost: emptyCost };
   }
 
   const openai = new OpenAI({ apiKey, timeout: 45000, maxRetries: 1 });
@@ -741,6 +772,15 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
     const parsed = JSON.parse(response.choices[0].message.content);
     const confirmedImpacts = [];
 
+    // Track token usage + cost from OpenAI response
+    const usage = response.usage || {};
+    const tokensInput = usage.prompt_tokens || 0;
+    const tokensOutput = usage.completion_tokens || 0;
+    const costUSD =
+      (tokensInput / 1000) * PRICES["gpt-4o-mini"].input +
+      (tokensOutput / 1000) * PRICES["gpt-4o-mini"].output;
+    const cost = { aiCalls: 1, tokensInput, tokensOutput, costUSD };
+
     // Log AI decisions for debugging (especially useful when alertsSent=0)
     let borderlineCount = 0;
     let confidentCount = 0;
@@ -793,10 +833,10 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
       });
     }
 
-    return confirmedImpacts;
+    return { impacts: confirmedImpacts, cost };
   } catch (err) {
     console.error("[PulseV2Radar] AI assessment failed:", err.message);
-    return [];
+    return { impacts: [], cost: emptyCost };
   }
 }
 
