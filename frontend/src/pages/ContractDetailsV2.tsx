@@ -3387,7 +3387,7 @@ export default function ContractDetailsV2() {
                           </div>
                         )}
 
-                        {/* ✅ Liste der Events (existierendes Layout, ergänzt um Klick zum Bearbeiten) */}
+                        {/* ✅ Liste der Events (mit Klick = Edit, sichtbarem Delete-Button) */}
                         {calendarEvents.length > 0 ? (
                           <div className={styles.timelineList}>
                             {calendarEvents.map((event) => (
@@ -3400,13 +3400,14 @@ export default function ContractDetailsV2() {
                                   }
                                 }}
                                 title={canEditCalendarEvents ? 'Klicken zum Bearbeiten' : undefined}
+                                style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}
                               >
                                 <div className={styles.timelineIcon}>
                                   {event.severity === 'critical' && <AlertTriangle size={16} style={{ color: 'var(--cd-danger)' }} />}
                                   {event.severity === 'warning' && <AlertCircle size={16} style={{ color: 'var(--cd-warning)' }} />}
                                   {event.severity === 'info' && <Calendar size={16} style={{ color: 'var(--cd-info)' }} />}
                                 </div>
-                                <div className={styles.timelineContent}>
+                                <div className={styles.timelineContent} style={{ flex: 1, minWidth: 0 }}>
                                   <div className={styles.timelineTitle}>
                                     {event.title}
                                     {canEditCalendarEvents && <Pencil size={11} style={{ marginLeft: 6, opacity: 0.4 }} />}
@@ -3420,6 +3421,21 @@ export default function ContractDetailsV2() {
                                     )}
                                   </div>
                                 </div>
+                                {/* ✅ Sichtbarer Delete-Button — nur für Business+, mit stopPropagation */}
+                                {canEditCalendarEvents && editingEventId !== event._id && (
+                                  <button
+                                    className={styles.metricEditCancel}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteEvent(event._id);
+                                    }}
+                                    disabled={savingEvent}
+                                    title="Event löschen"
+                                    style={{ color: '#dc2626', flexShrink: 0, alignSelf: 'center' }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -3448,76 +3464,78 @@ export default function ContractDetailsV2() {
                       </div>
                     </div>
 
-                    {/* ✅ Wichtige Termine (KI-extrahiert) — immer sichtbar mit Convert-Button und Duplikat-Schutz */}
-                    <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
-                      <div className={styles.cardHeader}>
-                        <h3 className={styles.cardTitle}>
-                          <span className={styles.cardIcon}><Clock size={18} /></span>
-                          Wichtige Termine (KI-extrahiert)
-                        </h3>
-                      </div>
-                      <div className={styles.cardBody}>
-                        {contract.importantDates && contract.importantDates.length > 0 ? (
-                          <div className={styles.timelineList}>
-                            {contract.importantDates.map((date, idx) => {
-                              const alreadyInCalendar = isImportantDateInCalendar(date);
-                              const isConverting = convertingImportantDateIdx === idx;
-                              return (
-                                <div key={idx} className={styles.timelineItem}>
-                                  <div className={styles.timelineIcon}>
-                                    <Calendar size={16} style={{ color: 'var(--cd-primary)' }} />
-                                  </div>
-                                  <div className={styles.timelineContent} style={{ flex: 1 }}>
-                                    <div className={styles.timelineTitle}>
-                                      {date.label}
+                    {/* ✅ KI-Vorschläge — nur die importantDates, die noch NICHT im Kalender sind */}
+                    {(() => {
+                      // Filter: nur Termine zeigen, die noch nicht im Kalender vorhanden sind
+                      const pendingImportantDates = (contract.importantDates || [])
+                        .map((date, idx) => ({ date, idx }))
+                        .filter(({ date }) => !isImportantDateInCalendar(date));
+
+                      // Sektion komplett verstecken, wenn nichts mehr zu übernehmen ist
+                      // (entweder importantDates komplett leer ODER alle bereits im Kalender)
+                      if (pendingImportantDates.length === 0) {
+                        return null;
+                      }
+
+                      return (
+                        <div className={`${styles.card} ${styles.fadeIn}`} style={{ marginTop: 24 }}>
+                          <div className={styles.cardHeader}>
+                            <h3 className={styles.cardTitle}>
+                              <span className={styles.cardIcon}><Info size={18} /></span>
+                              KI-Vorschläge
+                            </h3>
+                          </div>
+                          <div className={styles.cardBody}>
+                            <p style={{ margin: '0 0 16px 0', fontSize: 13, color: 'var(--cd-text-tertiary)', lineHeight: 1.5 }}>
+                              Diese Termine wurden bei der Vertragsanalyse erkannt, sind aber <strong>noch nicht als Kalender-Events gespeichert</strong>. Klicke auf "In Kalender" um sie zu übernehmen.
+                            </p>
+                            <div className={styles.timelineList}>
+                              {pendingImportantDates.map(({ date, idx }) => {
+                                const isConverting = convertingImportantDateIdx === idx;
+                                return (
+                                  <div key={idx} className={styles.timelineItem} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                                    <div className={styles.timelineIcon}>
+                                      <Calendar size={16} style={{ color: 'var(--cd-primary)' }} />
                                     </div>
-                                    <div className={styles.timelineDate}>
-                                      {formatDate(date.date)}
-                                      {date.description && ` • ${date.description}`}
+                                    <div className={styles.timelineContent} style={{ flex: 1, minWidth: 0 }}>
+                                      <div className={styles.timelineTitle}>
+                                        {date.label}
+                                      </div>
+                                      <div className={styles.timelineDate}>
+                                        {formatDate(date.date)}
+                                        {date.description && ` • ${date.description}`}
+                                      </div>
                                     </div>
-                                  </div>
-                                  {/* Convert-Button — nur wenn Business+ und nicht schon im Kalender */}
-                                  {canEditCalendarEvents && (
-                                    alreadyInCalendar ? (
-                                      <span
-                                        style={{
-                                          fontSize: 12,
-                                          color: '#059669',
-                                          fontWeight: 500,
-                                          padding: '6px 10px',
-                                          background: '#d1fae5',
-                                          borderRadius: 6,
-                                          whiteSpace: 'nowrap',
-                                          alignSelf: 'center'
-                                        }}
-                                      >
-                                        ✓ Im Kalender
-                                      </span>
-                                    ) : (
+                                    {canEditCalendarEvents ? (
                                       <button
                                         className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
                                         onClick={() => handleConvertImportantDate(date, idx)}
                                         disabled={isConverting}
-                                        style={{ alignSelf: 'center', whiteSpace: 'nowrap' }}
+                                        style={{ alignSelf: 'center', whiteSpace: 'nowrap', flexShrink: 0 }}
                                         title="Diesen Termin in den Kalender übernehmen"
                                       >
                                         <CalendarPlus size={14} style={{ marginRight: 4 }} />
                                         {isConverting ? '...' : 'In Kalender'}
                                       </button>
-                                    )
-                                  )}
-                                </div>
-                              );
-                            })}
+                                    ) : (
+                                      <button
+                                        className={`${styles.btn} ${styles.btnSecondary} ${styles.btnSm}`}
+                                        onClick={() => navigate('/pricing')}
+                                        style={{ alignSelf: 'center', whiteSpace: 'nowrap', flexShrink: 0, opacity: 0.7 }}
+                                        title="Business+ erforderlich"
+                                      >
+                                        <Lock size={12} style={{ marginRight: 4 }} />
+                                        Upgrade
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        ) : (
-                          <div className={styles.metricEmptyHint}>
-                            <Info size={16} />
-                            <span>Wird beim Analysieren des Vertrags automatisch befüllt. Diese KI-extrahierten Termine erscheinen hier, sobald die Analyse läuft.</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      );
+                    })()}
                   </motion.div>
                 )}
               </AnimatePresence>
