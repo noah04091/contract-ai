@@ -5717,7 +5717,726 @@ function applySeverityCalibration(mergedDiffs, groupEvaluations, groups) {
 // NEW V2 Pipeline: Klausel-für-Klausel
 // ============================================
 
+// ================================================================
+// V4 HOLISTIC COMPARE PIPELINE
+// ================================================================
+// Paradigm Shift: Statt rigider Schichten 2+3+3.5 ein ganzheitlicher
+// GPT-Pass der beide Dokumente intelligent vergleicht wie ein Mensch.
+// 3 Stufen: Compare Intent → Holistic Pass → Trust-Guard.
+// Output: dynamische Sections (kein fester Kategorien-Zwang).
+// ================================================================
+
+const HOLISTIC_MAX_SECTIONS = 8;
+const HOLISTIC_MIN_SECTIONS = 3;
+const HOLISTIC_INTENT_TIMEOUT = 20000;    // 20s für gpt-4o-mini Intent-Call
+const HOLISTIC_PASS_TIMEOUT = 120000;     // 120s für gpt-4o Haupt-Call
+
+// Section Quality Control: generische Titel IMMER verwerfen
+const GENERIC_SECTION_TITLE_REGEX = /^(sonstiges?|allgemeines?|weitere\s+unterschiede?|sonstige\s+punkte?|verschiedenes|diverses|andere\s+punkte?|übrige|weitere|restliche|misc|other)$/i;
+
+/**
+ * Baut eine kompakte Zusammenfassung eines Phase-A-Results für den Intent-Call.
+ * Kleines Payload um Token-Kosten niedrig zu halten.
+ */
+function buildDocSummaryForIntent(map) {
+  const clauses = Array.isArray(map?.clauses) ? map.clauses.slice(0, 30) : [];
+  const keyValueSamples = {};
+  for (const c of clauses) {
+    if (c?.keyValues && typeof c.keyValues === 'object') {
+      const entries = Object.entries(c.keyValues)
+        .filter(([_, v]) => !isBlankValueString(v))
+        .slice(0, 3);
+      for (const [k, v] of entries) {
+        if (Object.keys(keyValueSamples).length < 20) {
+          keyValueSamples[k] = String(v).slice(0, 80);
+        }
+      }
+    }
+  }
+  return {
+    contractType: map?.contractType || 'Unbekannt',
+    parties: Array.isArray(map?.parties)
+      ? map.parties.slice(0, 3).map(p => p?.name || p?.role || '').filter(Boolean)
+      : [],
+    subject: String(map?.subject || '').slice(0, 200),
+    clauseAreas: [...new Set(clauses.map(c => c?.area).filter(Boolean))],
+    clauseTitles: clauses.map(c => String(c?.title || '').slice(0, 60)).filter(Boolean).slice(0, 15),
+    keyValueSamples,
+  };
+}
+
+/**
+ * STUFE 1: Compare Intent Detection (gpt-4o-mini, billig)
+ * Entscheidet ob zwei Dokumente sinnvoll vergleichbar sind.
+ * Graceful Fallback bei Fehler: level='full'.
+ */
+async function detectCompareIntent(map1, map2) {
+  const doc1 = buildDocSummaryForIntent(map1);
+  const doc2 = buildDocSummaryForIntent(map2);
+
+  const systemPrompt = `Du bist Experte für Dokumentenvergleiche. Entscheide ob zwei Dokumente sinnvoll miteinander verglichen werden können.
+
+Antworte NUR in diesem JSON:
+{
+  "level": "full" | "partial" | "meta",
+  "reason": "1-2 Sätze Begründung auf Deutsch",
+  "comparableDimensions": ["payment", "duration", ...],
+  "nonComparableDimensions": ["liability", ...],
+  "userWarning": "optional: Hinweis für den User wenn level != full",
+  "suggestedFocus": "optional: worauf soll der Vergleich fokussiert werden"
+}
+
+REGELN:
+- "full": Gleicher Dokument-Typ (z.B. zwei Haftpflichtversicherungen, zwei Mietverträge, zwei identische AGBs). Alle Dimensionen vergleichbar.
+- "partial": Gleicher Überbereich aber unterschiedliche Variante (z.B. Dienstleistungsvertrag vs Werkvertrag, Vertrag vs Angebot, zwei verschiedene Versicherungen der gleichen Sparte). Manche Dimensionen sinnvoll vergleichbar, andere nicht.
+- "meta": Fundamental unterschiedliche Dokumenttypen (z.B. Privathaftpflicht vs Rechtsschutzversicherung, Vertrag vs Rechnung, Angebot vs AGB). Nur auf Meta-Ebene (Preis/Laufzeit/Parteien) vergleichbar.
+
+Gültige Dimensionen (nur diese Strings verwenden): parties, subject, duration, termination, payment, liability, warranty, confidentiality, ip_rights, data_protection, non_compete, force_majeure, jurisdiction.`;
+
+  const userPrompt = `DOKUMENT 1:
+${JSON.stringify(doc1, null, 2)}
+
+DOKUMENT 2:
+${JSON.stringify(doc2, null, 2)}
+
+Bewerte die Vergleichbarkeit.`;
+
+  try {
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0,
+        max_tokens: 600,
+        response_format: { type: 'json_object' },
+      }),
+      HOLISTIC_INTENT_TIMEOUT,
+      'Compare Intent Timeout'
+    );
+
+    const raw = JSON.parse(completion.choices[0].message.content);
+    return validateCompareIntent(raw);
+  } catch (err) {
+    console.warn(`⚠️ Compare Intent fehlgeschlagen, Fallback auf level='full': ${err.message}`);
+    return {
+      level: 'full',
+      reason: 'Automatische Vergleichbarkeits-Bewertung nicht verfügbar, Standard-Vergleich wird verwendet.',
+      comparableDimensions: VALID_CLAUSE_AREAS.filter(a => a !== 'other'),
+      nonComparableDimensions: [],
+    };
+  }
+}
+
+function validateCompareIntent(raw) {
+  const validLevels = ['full', 'partial', 'meta'];
+  const level = validLevels.includes(raw?.level) ? raw.level : 'full';
+  const comparable = Array.isArray(raw?.comparableDimensions)
+    ? raw.comparableDimensions.filter(d => VALID_CLAUSE_AREAS.includes(d))
+    : VALID_CLAUSE_AREAS.filter(a => a !== 'other');
+  const nonComparable = Array.isArray(raw?.nonComparableDimensions)
+    ? raw.nonComparableDimensions.filter(d => VALID_CLAUSE_AREAS.includes(d))
+    : [];
+  const userWarning = String(raw?.userWarning || '').slice(0, 500);
+  const suggestedFocus = String(raw?.suggestedFocus || '').slice(0, 300);
+  return {
+    level,
+    reason: String(raw?.reason || '').slice(0, 500),
+    comparableDimensions: comparable.length > 0 ? comparable : VALID_CLAUSE_AREAS.filter(a => a !== 'other'),
+    nonComparableDimensions: nonComparable,
+    userWarning: level === 'full' ? undefined : (userWarning || undefined),
+    suggestedFocus: suggestedFocus || undefined,
+  };
+}
+
+/**
+ * Komprimiert Layer-0 Zahlen zu einer kompakten Fakten-Liste für den Holistic-Prompt.
+ * Diese Liste ist der "Faktenanker" gegen den Trust-Guard später Halluzinationen prüft.
+ */
+function summarizeLayer0Facts(rawValues) {
+  if (!Array.isArray(rawValues)) return [];
+  return rawValues
+    .filter(rv => !isBlankRawValue(rv))
+    .slice(0, 80)
+    .map(rv => ({
+      key: (rv.rawKey || rv.key || '').toString().slice(0, 80),
+      value: (rv.value || '').toString().slice(0, 120),
+      unit: rv.unit || null,
+    }));
+}
+
+function buildHolisticSystemPrompt(intent, docConfig) {
+  const metaHint = intent.level === 'meta'
+    ? `\n\n⚠️ META-LEVEL: Die Dokumente sind nur auf META-EBENE vergleichbar (unterschiedliche Produkttypen). Fokussiere dich AUSSCHLIEßLICH auf: ${intent.comparableDimensions.join(', ')}. Die erste Section muss erklären, dass es sich um fundamental unterschiedliche Dokumenttypen handelt. Vergleiche KEINE Detailklauseln aus unvereinbaren Bereichen.`
+    : '';
+
+  const partialHint = intent.level === 'partial'
+    ? `\n\n⚠️ PARTIAL-LEVEL: Die Dokumente sind nur TEILWEISE vergleichbar. Konzentriere dich auf: ${intent.comparableDimensions.join(', ')}. Vermeide Vergleiche in: ${intent.nonComparableDimensions.join(', ') || '(keine explizit ausgeschlossen)'}.`
+    : '';
+
+  const docTypeHint = docConfig?.label
+    ? `\n\nDOKUMENTTYP: ${docConfig.label}. Berücksichtige typische Bewertungskriterien dieses Dokumenttyps.`
+    : '';
+
+  return `Du bist ein erfahrener Vertragsberater und vergleichst zwei Dokumente wie ein Mensch — intelligent, ganzheitlich, priorisiert.${docTypeHint}
+
+DEINE AUFGABE:
+Vergleiche die beiden Dokumente und identifiziere die WICHTIGSTEN Unterschiede (nicht jede Mini-Abweichung). Strukturiere das Ergebnis als SECTIONS — jede Section ist ein thematischer Vergleichsbereich mit konkreten Werten beider Dokumente.${metaHint}${partialHint}
+
+SECTION QUALITY CONTROL (KRITISCH — Verstöße = Abbruch):
+- Gib ${HOLISTIC_MIN_SECTIONS} bis ${HOLISTIC_MAX_SECTIONS} Sections zurück, priorisiert nach Relevanz (priority 1 = wichtigste)
+- JEDE Section MUSS einen klaren, spezifischen fachlichen Fokus haben
+- ABSOLUT VERBOTEN sind generische Titel wie: "Sonstiges", "Allgemeines", "Weitere Unterschiede", "Sonstige Punkte", "Verschiedenes", "Diverses"
+- Lieber WENIGER Sections als Füll-Sections zurückgeben. Qualität schlägt Quantität.
+- Jede Section muss echten Mehrwert für den User liefern
+- Section-Titel sollen branding-freundlich und konkret sein (z.B. "Kosten & Beitrag" statt "payment", "Absicherung & Haftung" statt "liability", "Vertragslaufzeit & Ausstieg" statt "termination")
+
+SECTION-STRUKTUR (jede Section als Objekt in "sections"):
+{
+  "title": "Kosten & Beitrag",
+  "icon": "💰",
+  "clauseArea": "payment",
+  "priority": 1,
+  "severity": "high",
+  "doc1Value": "47,88 EUR/Jahr",
+  "doc2Value": "156,00 EUR/Jahr",
+  "doc1Quote": "Jahresbeitrag in Höhe von 47,88 EUR",
+  "doc2Quote": "Gesamtbeitrag pro Jahr: 156,00 EUR",
+  "difference": "+226% bei Dokument 2",
+  "explanation": "Dokument 2 kostet 226% mehr, deckt aber auch zusätzliche Risiken ab...",
+  "recommendation": "Prüfe ob die zusätzlichen Leistungen den Mehrpreis rechtfertigen",
+  "recommendationTarget": 1
+}
+
+FELD-REGELN:
+- clauseArea: MUSS exakt einer sein von: parties, subject, duration, termination, payment, liability, warranty, confidentiality, ip_rights, data_protection, non_compete, force_majeure, jurisdiction, other
+- priority: 1-10 (1=wichtigste)
+- severity: "low" | "medium" | "high" | "critical"
+- icon: passendes Emoji (💰 Kosten, ⏱️ Zeit, ⚖️ Haftung, 🔒 Datenschutz, 📦 Leistung, 🚪 Kündigung, 🛡️ Gewährleistung, 👥 Parteien, 📍 Recht, ⚡ Sonstiges)
+- doc1Value / doc2Value: konkreter Wert oder "Nicht angegeben" (NIEMALS leerer String)
+- doc1Quote / doc2Quote: EXAKTES Zitat aus dem jeweiligen Rohtext (max 200 Zeichen, optional wenn keine passende Stelle)
+- recommendationTarget: OPTIONAL — 1 oder 2 wenn klar ist welches Dokument besser ist; sonst weglassen
+
+HARTE REGELN (Verstöße werden vom Trust-Guard erkannt und die Section wird verworfen):
+1. Zahlen AUSSCHLIEßLICH aus den "VERIFIZIERTE ZAHLEN"-Listen oder direkt aus den Rohtexten kopieren — NIEMALS erfinden oder schätzen
+2. Jedes Zitat in doc1Quote/doc2Quote MUSS wörtlich im jeweiligen Rohtext vorkommen
+3. Erklärungen dürfen NUR Zahlen nennen die auch in doc1Value/doc2Value/doc1Quote/doc2Quote stehen
+4. Wenn ein Thema strukturell nicht in einem Dokument vorkommt (z.B. Kündigungsfrist in einer Rechnung): diese Section NICHT erstellen
+5. Deutsche Sprache
+
+OUTPUT-SCHEMA (strict JSON):
+{
+  "sections": [ ... ],
+  "overallRecommendation": {
+    "recommended": 1 | 2,
+    "reasoning": "1-3 Sätze",
+    "confidence": 0-100,
+    "conditions": ["optional: Bedingungen für die Empfehlung"]
+  },
+  "summary": {
+    "tldr": "Ein kurzer Satz",
+    "detailedSummary": "2-4 Sätze",
+    "verdict": "1-2 Sätze Endurteil"
+  },
+  "contract1Strengths": ["...", "..."],
+  "contract1Weaknesses": ["...", "..."],
+  "contract2Strengths": ["...", "..."],
+  "contract2Weaknesses": ["...", "..."]
+}`;
+}
+
+function buildHolisticUserPrompt(map1, map2, intent, text1, text2, docConfig) {
+  const MAX_RAW_TEXT = 6000; // pro Dokument
+  const truncText = (t) => {
+    if (!t) return '(kein Rohtext verfügbar)';
+    const s = String(t);
+    return s.length > MAX_RAW_TEXT ? s.slice(0, MAX_RAW_TEXT) + '\n[...gekürzt...]' : s;
+  };
+
+  const compactMap = (m) => ({
+    contractType: m?.contractType,
+    parties: m?.parties,
+    subject: String(m?.subject || '').slice(0, 300),
+    metadata: m?.metadata,
+    clauses: (m?.clauses || []).map(c => ({
+      area: c.area,
+      title: String(c.title || '').slice(0, 100),
+      summary: String(c.summary || '').slice(0, 200),
+      keyValues: c.keyValues,
+      originalText: String(c.originalText || '').slice(0, 400),
+    })),
+  });
+
+  const facts1 = summarizeLayer0Facts(map1?._rawValues);
+  const facts2 = summarizeLayer0Facts(map2?._rawValues);
+
+  return `COMPATIBILITY-ANALYSE:
+Level: ${intent.level}
+Grund: ${intent.reason}
+Vergleichbare Dimensionen: ${intent.comparableDimensions.join(', ')}
+NICHT vergleichbar: ${intent.nonComparableDimensions.join(', ') || '(keine)'}
+${intent.suggestedFocus ? `Fokus-Empfehlung: ${intent.suggestedFocus}` : ''}
+
+DOKUMENT-TYP: ${docConfig?.label || 'Dokument'} (Kategorie: ${docConfig?.category || 'unbekannt'})
+
+═══════════════════════════════════════
+DOKUMENT 1 — STRUKTURIERTE DATEN
+═══════════════════════════════════════
+${JSON.stringify(compactMap(map1))}
+
+═══════════════════════════════════════
+DOKUMENT 1 — VERIFIZIERTE ZAHLEN (Layer-0 Regex, vertrauenswürdige Faktenbasis)
+═══════════════════════════════════════
+${JSON.stringify(facts1)}
+
+═══════════════════════════════════════
+DOKUMENT 1 — ROHTEXT (gekürzt)
+═══════════════════════════════════════
+${truncText(text1)}
+
+═══════════════════════════════════════
+DOKUMENT 2 — STRUKTURIERTE DATEN
+═══════════════════════════════════════
+${JSON.stringify(compactMap(map2))}
+
+═══════════════════════════════════════
+DOKUMENT 2 — VERIFIZIERTE ZAHLEN (Layer-0 Regex)
+═══════════════════════════════════════
+${JSON.stringify(facts2)}
+
+═══════════════════════════════════════
+DOKUMENT 2 — ROHTEXT (gekürzt)
+═══════════════════════════════════════
+${truncText(text2)}
+
+Erstelle jetzt die Sections für den Vergleich. Denk daran: Qualität > Quantität. Keine generischen Titel.`;
+}
+
+/**
+ * STUFE 2: Holistic Compare Pass (gpt-4o, ein einziger großer Call)
+ */
+async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig) {
+  const systemPrompt = buildHolisticSystemPrompt(intent, docConfig);
+  const userPrompt = buildHolisticUserPrompt(map1, map2, intent, text1, text2, docConfig);
+
+  console.log(`🌊 Holistic Pass: ~${Math.round((systemPrompt.length + userPrompt.length) / 4)} Tokens Input`);
+
+  const completion = await withTimeout(
+    openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0,
+      max_tokens: 6000,
+      response_format: { type: 'json_object' },
+    }),
+    HOLISTIC_PASS_TIMEOUT,
+    'Holistic Pass Timeout'
+  );
+
+  const raw = JSON.parse(completion.choices[0].message.content);
+  const sectionCount = Array.isArray(raw?.sections) ? raw.sections.length : 0;
+  console.log(`✅ Holistic Pass: ${sectionCount} Sections vom GPT erhalten`);
+  return raw;
+}
+
+/**
+ * STUFE 3: Trust-Guard — validiert Sections gegen Rohtext und Fakten.
+ * Drops ungültige Sections statt den ganzen Output zu verwerfen.
+ */
+function normalizeTextForQuoteMatch(text) {
+  return String(text || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function quoteExistsInNormText(quote, normText) {
+  if (!quote || quote.length < 15) return true; // zu kurz zum Verifizieren
+  const q = normalizeTextForQuoteMatch(quote);
+  if (normText.includes(q)) return true;
+  // Fallback: erste 25 Zeichen
+  if (q.length >= 25 && normText.includes(q.substring(0, 25))) return true;
+  // Fallback: Mittel-Substring
+  if (q.length >= 30) {
+    const midStart = Math.floor(q.length / 2) - 12;
+    const mid = q.substring(Math.max(0, midStart), Math.max(0, midStart) + 25);
+    if (mid.length >= 20 && normText.includes(mid)) return true;
+  }
+  return false;
+}
+
+function validateHolisticOutput(raw, text1, text2, intent) {
+  const normText1 = normalizeTextForQuoteMatch(text1);
+  const normText2 = normalizeTextForQuoteMatch(text2);
+
+  const rawSections = Array.isArray(raw?.sections) ? raw.sections : [];
+  const validSections = [];
+  const stats = { total: rawSections.length, droppedGeneric: 0, droppedArea: 0, droppedQuote: 0, droppedNumbers: 0, droppedDuplicate: 0 };
+
+  for (const s of rawSections) {
+    if (!s || typeof s !== 'object') continue;
+
+    const title = String(s.title || '').trim();
+    if (!title || GENERIC_SECTION_TITLE_REGEX.test(title)) {
+      stats.droppedGeneric++;
+      continue;
+    }
+
+    const clauseArea = VALID_CLAUSE_AREAS.includes(s.clauseArea) ? s.clauseArea : null;
+    if (!clauseArea) {
+      stats.droppedArea++;
+      continue;
+    }
+
+    const doc1Quote = String(s.doc1Quote || '').trim();
+    const doc2Quote = String(s.doc2Quote || '').trim();
+
+    // Quote-Verifikation: mindestens EIN Zitat muss im Rohtext vorkommen wenn beide lang genug sind
+    if (doc1Quote.length >= 15 && doc2Quote.length >= 15) {
+      const q1Valid = quoteExistsInNormText(doc1Quote, normText1);
+      const q2Valid = quoteExistsInNormText(doc2Quote, normText2);
+      if (!q1Valid && !q2Valid) {
+        stats.droppedQuote++;
+        continue;
+      }
+    } else if (doc1Quote.length >= 15) {
+      if (!quoteExistsInNormText(doc1Quote, normText1)) {
+        stats.droppedQuote++;
+        continue;
+      }
+    } else if (doc2Quote.length >= 15) {
+      if (!quoteExistsInNormText(doc2Quote, normText2)) {
+        stats.droppedQuote++;
+        continue;
+      }
+    }
+
+    const doc1Value = String(s.doc1Value || '').trim();
+    const doc2Value = String(s.doc2Value || '').trim();
+    const valuePool = `${doc1Value} ${doc2Value} ${doc1Quote} ${doc2Quote}`;
+    const explanation = String(s.explanation || '').trim();
+    const recommendation = String(s.recommendation || '').trim();
+
+    // Zahl-Konsistenz: Erklärung darf nur Zahlen enthalten die im Value-Pool vorkommen
+    if (explanation && !isExplanationConsistent(explanation, valuePool, '')) {
+      stats.droppedNumbers++;
+      continue;
+    }
+    // Recommendation: weicher — bei Verletzung nur Recommendation droppen, Section behalten
+    let finalRecommendation = recommendation;
+    let finalRecTarget = (s.recommendationTarget === 1 || s.recommendationTarget === 2) ? s.recommendationTarget : undefined;
+    if (recommendation && !isExplanationConsistent(recommendation, valuePool, '')) {
+      finalRecommendation = '';
+      finalRecTarget = undefined;
+    }
+
+    const severity = VALID_SEVERITIES.includes(s.severity) ? s.severity : 'medium';
+
+    validSections.push({
+      id: `sec_${validSections.length + 1}`,
+      title: title.slice(0, 120),
+      icon: String(s.icon || '📋').slice(0, 4),
+      clauseArea,
+      priority: Number.isFinite(s.priority) ? Math.max(1, Math.min(10, Math.floor(s.priority))) : 5,
+      severity,
+      doc1Value: doc1Value.slice(0, 300) || 'Nicht angegeben',
+      doc2Value: doc2Value.slice(0, 300) || 'Nicht angegeben',
+      doc1Quote: doc1Quote ? doc1Quote.slice(0, 500) : undefined,
+      doc2Quote: doc2Quote ? doc2Quote.slice(0, 500) : undefined,
+      difference: String(s.difference || '').slice(0, 200) || undefined,
+      explanation: explanation.slice(0, 1000),
+      recommendation: finalRecommendation ? finalRecommendation.slice(0, 800) : undefined,
+      recommendationTarget: finalRecTarget,
+    });
+  }
+
+  // Dedup by normalized title
+  const seen = new Set();
+  const deduped = [];
+  for (const s of validSections) {
+    const key = normalizeKeyForMatch(s.title);
+    if (seen.has(key)) {
+      stats.droppedDuplicate++;
+      continue;
+    }
+    seen.add(key);
+    deduped.push(s);
+  }
+
+  // Sort by priority ASC, then severity
+  const sevRank = { critical: 0, high: 1, medium: 2, low: 3 };
+  deduped.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    return (sevRank[a.severity] ?? 4) - (sevRank[b.severity] ?? 4);
+  });
+
+  // Re-assign IDs after sort
+  deduped.forEach((s, i) => { s.id = `sec_${i + 1}`; });
+
+  // Hard cap
+  const capped = deduped.slice(0, HOLISTIC_MAX_SECTIONS);
+
+  const droppedTotal = stats.total - capped.length;
+  if (droppedTotal > 0) {
+    console.log(`🛡️ Trust-Guard: ${stats.total} → ${capped.length} Sections (dropped: ${stats.droppedGeneric} generic, ${stats.droppedArea} invalid-area, ${stats.droppedQuote} bad-quotes, ${stats.droppedNumbers} hallucinated-numbers, ${stats.droppedDuplicate} duplicates)`);
+  } else {
+    console.log(`🛡️ Trust-Guard: ${stats.total} Sections validiert`);
+  }
+
+  const rec = raw?.overallRecommendation || {};
+  const overallRecommendation = {
+    recommended: (rec.recommended === 1 || rec.recommended === 2) ? rec.recommended : 1,
+    reasoning: String(rec.reasoning || '').slice(0, 800),
+    confidence: Number.isFinite(rec.confidence) ? Math.max(0, Math.min(100, Math.round(rec.confidence))) : 50,
+    conditions: Array.isArray(rec.conditions) ? rec.conditions.slice(0, 5).map(c => String(c).slice(0, 200)).filter(Boolean) : [],
+  };
+
+  const summary = {
+    tldr: String(raw?.summary?.tldr || '').slice(0, 300),
+    detailedSummary: String(raw?.summary?.detailedSummary || '').slice(0, 1500),
+    verdict: String(raw?.summary?.verdict || '').slice(0, 500),
+  };
+
+  const cleanList = (arr, max) => Array.isArray(arr)
+    ? arr.slice(0, max).map(x => String(x).slice(0, 200)).filter(Boolean)
+    : [];
+
+  return {
+    sections: capped,
+    overallRecommendation,
+    summary,
+    contract1Strengths: cleanList(raw?.contract1Strengths, 5),
+    contract1Weaknesses: cleanList(raw?.contract1Weaknesses, 5),
+    contract2Strengths: cleanList(raw?.contract2Strengths, 5),
+    contract2Weaknesses: cleanList(raw?.contract2Weaknesses, 5),
+    compatibility: {
+      level: intent.level,
+      reason: intent.reason,
+      comparableDimensions: intent.comparableDimensions,
+      nonComparableDimensions: intent.nonComparableDimensions,
+      userWarning: intent.userWarning,
+      suggestedFocus: intent.suggestedFocus,
+    },
+  };
+}
+
+/**
+ * Adapter: Holistic Sections → Legacy-Schema (differences, risks, recommendations).
+ * Nötig für (a) Score-Berechnung die auf mergedDiffs arbeitet, (b) alte Frontend-Tabs.
+ */
+function adaptSectionsToLegacySchema(sections) {
+  const differences = sections.map(s => ({
+    category: s.clauseArea,
+    clauseArea: s.clauseArea,
+    section: s.title,
+    contract1: s.doc1Quote || s.doc1Value,
+    contract2: s.doc2Quote || s.doc2Value,
+    severity: s.severity,
+    explanation: s.explanation,
+    impact: s.difference || s.explanation,
+    recommendation: s.recommendation || '',
+    semanticType: inferSemanticTypeFromSection(s),
+    financialImpact: s.clauseArea === 'payment' && s.difference ? s.difference : undefined,
+    _icon: s.icon,
+  }));
+
+  const risks = sections
+    .filter(s => s.severity === 'high' || s.severity === 'critical')
+    .map(s => ({
+      clauseArea: s.clauseArea,
+      riskType: inferRiskTypeFromSection(s),
+      severity: s.severity,
+      // Wer ist das Risiko? Das Dokument das NICHT empfohlen wird
+      contract: s.recommendationTarget === 1 ? 2 : (s.recommendationTarget === 2 ? 1 : 'both'),
+      title: s.title,
+      description: s.explanation,
+      legalBasis: undefined,
+      financialExposure: s.clauseArea === 'payment' ? s.difference : undefined,
+    }));
+
+  const recommendations = sections
+    .filter(s => s.recommendation && s.recommendationTarget)
+    .map(s => ({
+      clauseArea: s.clauseArea,
+      targetContract: s.recommendationTarget,
+      priority: (s.severity === 'critical' || s.severity === 'high') ? 'high' : (s.severity === 'medium' ? 'medium' : 'low'),
+      title: s.title,
+      reason: s.explanation,
+      currentText: s.recommendationTarget === 1 ? s.doc1Value : s.doc2Value,
+      suggestedText: s.recommendation,
+    }));
+
+  return { differences, risks, recommendations };
+}
+
+function inferSemanticTypeFromSection(s) {
+  const d1 = String(s.doc1Value || '').toLowerCase();
+  const d2 = String(s.doc2Value || '').toLowerCase();
+  const nonePattern = /nicht\s*(angegeben|vorhanden|enthalten|geregelt)|keine\s*(regelung|angabe)|^fehlt$|^—$|^-$/i;
+  const d1Missing = nonePattern.test(d1);
+  const d2Missing = nonePattern.test(d2);
+  if (d1Missing && !d2Missing) return 'missing';
+  if (d2Missing && !d1Missing) return 'missing';
+  // Konvention in calculateScoresFromDiffs:
+  //   'stronger' → c1 ist stärker → c2 verliert Punkte (disadvantaged=2)
+  //   'weaker'   → c1 ist schwächer → c1 verliert Punkte (disadvantaged=1)
+  if (s.recommendationTarget === 1) return 'stronger';  // doc1 empfohlen → doc1 stärker → c2 loses
+  if (s.recommendationTarget === 2) return 'weaker';    // doc2 empfohlen → doc1 schwächer → c1 loses
+  return 'different_scope';
+}
+
+// clauseArea → riskType (Werte müssen in VALID_RISK_TYPES sein)
+const RISK_TYPE_BY_AREA = {
+  payment: 'hidden_obligation',
+  liability: 'legal_risk',
+  termination: 'unfair_clause',
+  warranty: 'missing_protection',
+  data_protection: 'legal_risk',
+};
+function inferRiskTypeFromSection(s) {
+  const t = RISK_TYPE_BY_AREA[s.clauseArea] || 'unusual_clause';
+  return VALID_RISK_TYPES.includes(t) ? t : 'legal_risk';
+}
+
+/**
+ * V4 HAUPT-PIPELINE: Holistic Compare
+ */
+async function runCompareHolisticPipeline(text1, text2, perspective, comparisonMode, userProfile, onProgress) {
+  const progress = onProgress || (() => {});
+
+  try {
+    console.log(`🌊 V4 Holistic Pipeline gestartet`);
+
+    // SCHICHT 1 (bleibt): Phase A — Strukturierung beider Dokumente parallel
+    progress('structuring', 10, 'Dokument 1 wird strukturiert...');
+    const [map1, map2] = await withTimeout(
+      Promise.all([
+        structureContract(text1).then(r => { progress('structuring', 25, 'Dokument 1 strukturiert, Dokument 2 läuft...'); return r; }),
+        structureContract(text2),
+      ]),
+      MAX_PHASE_A_TIME * 2,
+      'Phase A Timeout'
+    );
+
+    // Document type detection (bleibt)
+    const docCategory = detectDocumentCategory(map1, map2);
+    const docConfig = getDocTypeConfig(docCategory);
+    console.log(`📋 Dokumenttyp: ${docConfig.label} (${docCategory})`);
+
+    // STUFE 1: Compare Intent
+    progress('intent', 40, 'Vergleichbarkeit wird bewertet...');
+    const intent = await detectCompareIntent(map1, map2);
+    console.log(`🎯 Compare Intent: level=${intent.level}, comparable=[${intent.comparableDimensions.join(',')}]`);
+
+    // STUFE 2: Holistic Pass
+    progress('holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...');
+    const holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
+
+    // STUFE 3: Trust-Guard
+    progress('validating', 82, 'Ergebnisse werden validiert...');
+    const validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
+
+    if (validated.sections.length < HOLISTIC_MIN_SECTIONS) {
+      console.warn(`⚠️ Holistic: nur ${validated.sections.length} Sections übrig (min=${HOLISTIC_MIN_SECTIONS}). Pipeline fährt fort, aber Qualität niedrig.`);
+    }
+
+    // Legacy-Adapter für Score-Berechnung + backward compat
+    const { differences, risks, recommendations } = adaptSectionsToLegacySchema(validated.sections);
+
+    // Scores: datenbasiert (formelbasiert wie bisher)
+    const scores = calculateScoresFromDiffs(differences, map1, map2, docConfig);
+    console.log(`📊 Holistic Scores: V1=${scores.contract1.overall}, V2=${scores.contract2.overall}`);
+
+    // Benchmark (bleibt, nur wenn docConfig es erlaubt)
+    progress('benchmark', 90, 'Marktvergleich wird erstellt...');
+    let benchmarkResult = { contractType: null, contractTypeLabel: null, benchmarks: [], enrichedDifferences: differences };
+    if (docConfig.benchmarkEnabled) {
+      try {
+        benchmarkResult = runBenchmarkComparison(map1, map2, differences);
+      } catch (benchErr) {
+        console.warn(`⚠️ Benchmark fehlgeschlagen: ${benchErr.message}`);
+      }
+    }
+
+    progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
+
+    // Final response — kompatibles Schema + neue Holistic-Felder
+    const finalResult = {
+      version: 2,
+      _pipelineVersion: 'holistic-v4',
+
+      documentType: docConfig ? {
+        category: docConfig.category,
+        label: docConfig.label,
+        scoreLabels: docConfig.scoreLabels || null,
+        labels: docConfig.labels,
+        perspectiveLabels: docConfig.perspectiveLabels || null,
+      } : null,
+
+      contractMap: { contract1: map1, contract2: map2 },
+
+      // V4 Holistic-Felder (neu)
+      sections: validated.sections,
+      compatibility: validated.compatibility,
+
+      // Legacy-kompatibel (aus Sections abgeleitet)
+      differences,
+      risks,
+      recommendations,
+      scores,
+
+      summary: validated.summary,
+      overallRecommendation: validated.overallRecommendation,
+
+      contract1Analysis: {
+        strengths: validated.contract1Strengths,
+        weaknesses: validated.contract1Weaknesses,
+        riskLevel: scores.contract1.overall >= 70 ? 'low' : scores.contract1.overall >= 50 ? 'medium' : 'high',
+        score: scores.contract1.overall,
+      },
+      contract2Analysis: {
+        strengths: validated.contract2Strengths,
+        weaknesses: validated.contract2Weaknesses,
+        riskLevel: scores.contract2.overall >= 70 ? 'low' : scores.contract2.overall >= 50 ? 'medium' : 'high',
+        score: scores.contract2.overall,
+      },
+
+      perspective,
+
+      benchmark: benchmarkResult ? {
+        contractType: benchmarkResult.contractType,
+        contractTypeLabel: benchmarkResult.contractTypeLabel || null,
+        metrics: benchmarkResult.benchmarks || [],
+      } : null,
+
+      categories: [...new Set(validated.sections.map(s => s.clauseArea))],
+
+      _contractTexts: {
+        text1: typeof text1 === 'string' ? text1.slice(0, MAX_CONTRACT_CHARS) : '',
+        text2: typeof text2 === 'string' ? text2.slice(0, MAX_CONTRACT_CHARS) : '',
+      },
+    };
+
+    console.log(`✅ V4 Holistic Pipeline komplett: ${validated.sections.length} Sections, ${risks.length} Risks, ${recommendations.length} Recs, level=${intent.level}`);
+    progress('complete', 100, 'Analyse abgeschlossen!');
+    return finalResult;
+  } catch (error) {
+    if (error.message?.includes('Timeout')) {
+      console.warn(`⚠️ V4 Holistic Pipeline Timeout: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
 async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode, userProfile, onProgress) {
+  // V4: Holistic Pipeline (Feature Flag) — intelligenter, ChatGPT-artiger Vergleich mit dynamischen Sections
+  if (process.env.COMPARE_HOLISTIC === 'true') {
+    console.log(`🌊 COMPARE_HOLISTIC=true → V4 Holistic Pipeline aktiv`);
+    return runCompareHolisticPipeline(text1, text2, perspective, comparisonMode, userProfile, onProgress);
+  }
+
   const progress = onProgress || (() => {});
 
   try {
@@ -5907,4 +6626,10 @@ module.exports = {
   DOCUMENT_TYPE_CONFIGS,
   detectDocumentCategory,
   getDocTypeConfig,
+  // V4 Holistic exports
+  runCompareHolisticPipeline,
+  detectCompareIntent,
+  runHolisticComparePass,
+  validateHolisticOutput,
+  adaptSectionsToLegacySchema,
 };

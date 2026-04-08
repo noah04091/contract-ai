@@ -200,7 +200,12 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
                       {SEMANTIC_TYPE_LABELS[v2Diff.semanticType]}
                     </span>
                   )}
-                  <h4 className={styles.diffSection}>{diff.section}</h4>
+                  <h4 className={styles.diffSection}>
+                    {(diff as EnhancedDifference)._icon && (
+                      <span style={{ marginRight: 6 }}>{(diff as EnhancedDifference)._icon}</span>
+                    )}
+                    {diff.section}
+                  </h4>
                 </div>
                 <div className={styles.diffHeaderActions}>
                   <button

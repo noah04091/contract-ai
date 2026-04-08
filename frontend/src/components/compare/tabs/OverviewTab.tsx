@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import {
   Star, AlertTriangle, AlertCircle, CheckCircle,
   ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3,
-  FileText
+  FileText, Info
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -37,6 +37,31 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
         >
           <TrendingUp size={20} />
           <p>{v2Result.summary.tldr}</p>
+        </motion.div>
+      )}
+
+      {/* V4 Holistic: Compatibility Banner (nur bei partial/meta) */}
+      {v2Result?.compatibility && v2Result.compatibility.level !== 'full' && (
+        <motion.div
+          className={`${styles.compatibilityBanner} ${
+            v2Result.compatibility.level === 'meta' ? styles.compatibilityMeta : styles.compatibilityPartial
+          }`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          {v2Result.compatibility.level === 'meta' ? <AlertCircle size={18} /> : <Info size={18} />}
+          <div>
+            <strong>
+              {v2Result.compatibility.level === 'meta'
+                ? 'Eingeschränkt vergleichbar'
+                : 'Teilweise vergleichbar'}
+            </strong>
+            <p>{v2Result.compatibility.userWarning || v2Result.compatibility.reason}</p>
+            {v2Result.compatibility.suggestedFocus && (
+              <small>Empfohlener Fokus: {v2Result.compatibility.suggestedFocus}</small>
+            )}
+          </div>
         </motion.div>
       )}
 

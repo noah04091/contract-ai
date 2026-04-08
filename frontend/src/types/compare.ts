@@ -99,6 +99,8 @@ export interface EnhancedDifference {
   semanticType: SemanticType;
   financialImpact?: string;
   marketContext?: string;
+  // V4 Holistic hint (emoji icon from the originating CompareSection)
+  _icon?: string;
 }
 
 export interface CategoryScores {
@@ -260,10 +262,44 @@ export interface DocumentTypeInfo {
 }
 
 // ============================================
+// V4 Holistic: Sections + Compatibility
+// ============================================
+export interface CompareSection {
+  id: string;
+  title: string;
+  icon: string;
+  clauseArea: ClauseArea;
+  priority: number;                                        // 1 = wichtigste
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  doc1Value: string;
+  doc2Value: string;
+  doc1Quote?: string;
+  doc2Quote?: string;
+  difference?: string;
+  explanation: string;
+  recommendation?: string;
+  recommendationTarget?: 1 | 2;
+}
+
+export type CompatibilityLevel = 'full' | 'partial' | 'meta';
+
+export interface CompatibilityInfo {
+  level: CompatibilityLevel;
+  reason: string;
+  comparableDimensions: ClauseArea[];
+  nonComparableDimensions: ClauseArea[];
+  userWarning?: string;
+  suggestedFocus?: string;
+}
+
+// ============================================
 // V2 Full Result
 // ============================================
 export interface ComparisonResultV2 {
   version: 2;
+
+  // V4 Holistic pipeline marker
+  _pipelineVersion?: string;
 
   // V3: Document type intelligence
   documentType?: DocumentTypeInfo | null;
@@ -273,6 +309,10 @@ export interface ComparisonResultV2 {
     contract1: ContractStructure;
     contract2: ContractStructure;
   };
+
+  // V4 Holistic (optional, backward compatible)
+  sections?: CompareSection[];
+  compatibility?: CompatibilityInfo;
 
   // Phase B: Comparison
   differences: EnhancedDifference[];

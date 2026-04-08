@@ -1035,6 +1035,32 @@
 .tldrBox svg { color: #0071e3; flex-shrink: 0; margin-top: 2px; }
 .tldrBox p { margin: 0; font-size: 0.95rem; line-height: 1.6; color: #1d1d1f; font-weight: 500; }
 
+/* Compatibility Banner (V4 Holistic) */
+.compatibilityBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.compatibilityBanner svg { flex-shrink: 0; margin-top: 2px; }
+.compatibilityBanner strong { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+.compatibilityBanner p { margin: 0; font-size: 0.87rem; line-height: 1.55; }
+.compatibilityBanner small { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.85; }
+.compatibilityPartial {
+  background: rgba(255, 149, 0, 0.08);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #8a4b00;
+}
+.compatibilityPartial svg { color: #ff9500; }
+.compatibilityMeta {
+  background: rgba(215, 0, 21, 0.07);
+  border-color: rgba(215, 0, 21, 0.3);
+  color: #8a0000;
+}
+.compatibilityMeta svg { color: #d70015; }
+
 .scoresGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 
 .scoreCard {
