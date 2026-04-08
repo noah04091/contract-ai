@@ -101,7 +101,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 14;
+const CACHE_VERSION = 15;
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2957,18 +2957,8 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       return batchClauses
         .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
         .map((clause, idx) => {
-          // Improve bare number titles (e.g., "6" -> "§ 6" or extract from text)
-          let processedTitle = clause.title || null;
-          if (processedTitle && /^\d+\.?$/.test(processedTitle.trim())) {
-            const num = processedTitle.trim().replace(/\.$/, '');
-            const firstLine = (clause.text || '').trim().split(/\n/)[0].trim();
-            const titleMatch = firstLine.match(/^\d+\.?\s+([A-ZÄÖÜ].{2,80})/);
-            if (titleMatch) {
-              processedTitle = firstLine.substring(0, 100).trim();
-            } else {
-              processedTitle = `§ ${num}`;
-            }
-          }
+          // Titel ableiten (verhindert bare Zahlen als Titel im Frontend)
+          const processedTitle = clauseParser.deriveClauseTitle(clause);
 
           const riskAssessment = clauseParser.assessClauseRisk(clause.text);
           const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, processedTitle);

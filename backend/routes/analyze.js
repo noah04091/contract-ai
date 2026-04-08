@@ -3141,12 +3141,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
                   const validClauses = batchClauses
                     .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
                     .map((clause, idx) => {
+                      const processedTitle = clauseParser.deriveClauseTitle(clause);
                       const riskAssessment = clauseParser.assessClauseRisk(clause.text);
-                      const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
+                      const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, processedTitle);
                       return {
                         id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
                         number: clause.number || `${allClauses.length + idx + 1}`,
-                        title: clause.title || null,
+                        title: processedTitle,
                         text: clause.text,
                         type: clause.type || 'paragraph',
                         riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,
@@ -3447,12 +3448,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
                 const validClauses = batchClauses
                   .filter(c => c && c.text && typeof c.text === 'string' && c.text.trim().length > 0)
                   .map((clause, idx) => {
+                    const processedTitle = clauseParser.deriveClauseTitle(clause);
                     const riskAssessment = clauseParser.assessClauseRisk(clause.text);
-                    const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, clause.title);
+                    const analyzableCheck = clauseParser.detectNonAnalyzable(clause.text, processedTitle);
                     return {
                       id: clause.id || `clause_pre_${allClauses.length + idx + 1}`,
                       number: clause.number || `${allClauses.length + idx + 1}`,
-                      title: clause.title || null,
+                      title: processedTitle,
                       text: clause.text,
                       type: clause.type || 'paragraph',
                       riskLevel: analyzableCheck.nonAnalyzable ? 'none' : riskAssessment.level,

@@ -83,6 +83,33 @@ export interface EditableContractShape {
 }
 
 // ----------------------------------------
+// HELPER: Placeholder-Strings als leer behandeln
+// ----------------------------------------
+/**
+ * Erkennt String-Werte, die zwar vorhanden sind, aber semantisch "kein Wert" bedeuten.
+ * Damit verschwindet z.B. "Unbekannt" oder "Nicht angegeben" automatisch aus der UI,
+ * statt als Pseudo-Wert angezeigt zu werden. Ergebnis: nur Felder mit echten Daten erscheinen.
+ */
+function isEmptyValue(value: string | undefined | null): boolean {
+  if (!value) return true;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '') return true;
+  const placeholders = [
+    'unbekannt',
+    'nicht angegeben',
+    'keine angabe',
+    'k.a.',
+    'k. a.',
+    'n/a',
+    'na',
+    '—',
+    '-',
+    '–',
+  ];
+  return placeholders.includes(normalized);
+}
+
+// ----------------------------------------
 // FACTORY
 // ----------------------------------------
 /**
@@ -99,52 +126,55 @@ export function createEditableFields(
   contract: EditableContractShape,
   formatDate: (dateString: string) => string
 ): EditableField[] {
+  // Helper für anbieter (mehrere Quellen)
+  const anbieterValue = () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '';
+
   return [
     {
       key: 'contractType', label: 'Vertragstyp', type: 'text',
-      hasValue: () => !!contract.contractType,
+      hasValue: () => !isEmptyValue(contract.contractType),
       displayValue: () => contract.contractType || '',
       rawValue: () => contract.contractType || '',
     },
     {
       key: 'anbieter', label: 'Anbieter', type: 'text',
-      hasValue: () => !!(contract.anbieter || contract.provider?.displayName || contract.provider?.name),
-      displayValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
-      rawValue: () => contract.anbieter || contract.provider?.displayName || contract.provider?.name || '',
+      hasValue: () => !isEmptyValue(anbieterValue()),
+      displayValue: () => anbieterValue(),
+      rawValue: () => anbieterValue(),
     },
     {
       key: 'vertragsnummer', label: 'Vertragsnummer', type: 'text',
-      hasValue: () => !!contract.vertragsnummer,
+      hasValue: () => !isEmptyValue(contract.vertragsnummer),
       displayValue: () => contract.vertragsnummer || '',
       rawValue: () => contract.vertragsnummer || '',
     },
     {
       key: 'gekuendigtZum', label: 'Gekündigt zum', type: 'date',
-      hasValue: () => !!contract.gekuendigtZum,
+      hasValue: () => !isEmptyValue(contract.gekuendigtZum),
       displayValue: () => contract.gekuendigtZum ? formatDate(contract.gekuendigtZum) : '',
       rawValue: () => contract.gekuendigtZum || '',
     },
     {
       key: 'kuendigung', label: 'Kündigungsfrist', type: 'dropdown', options: KUENDIGUNG_OPTIONS,
-      hasValue: () => !!contract.kuendigung,
+      hasValue: () => !isEmptyValue(contract.kuendigung),
       displayValue: () => contract.kuendigung || '',
       rawValue: () => contract.kuendigung || '',
     },
     {
       key: 'laufzeit', label: 'Laufzeit', type: 'dropdown', options: LAUFZEIT_OPTIONS,
-      hasValue: () => !!contract.laufzeit,
+      hasValue: () => !isEmptyValue(contract.laufzeit),
       displayValue: () => contract.laufzeit || '',
       rawValue: () => contract.laufzeit || '',
     },
     {
       key: 'startDate', label: 'Vertragsbeginn', type: 'date',
-      hasValue: () => !!contract.startDate,
+      hasValue: () => !isEmptyValue(contract.startDate),
       displayValue: () => contract.startDate ? formatDate(contract.startDate) : '',
       rawValue: () => contract.startDate || '',
     },
     {
       key: 'expiryDate', label: 'Enddatum', type: 'date',
-      hasValue: () => !!contract.expiryDate,
+      hasValue: () => !isEmptyValue(contract.expiryDate),
       displayValue: () => contract.expiryDate ? formatDate(contract.expiryDate) : '',
       rawValue: () => contract.expiryDate || '',
     },

@@ -942,6 +942,48 @@ class ClauseParser {
   }
 
   /**
+   * Leitet einen sinnvollen Klausel-Titel ab, wenn GPT nur eine bare Zahl ("6", "23.")
+   * oder gar nichts geliefert hat. Verhindert, dass nackte Zahlen als Titel im Frontend
+   * angezeigt werden (wo `number` als Fallback für leere Titel fungiert).
+   *
+   * Strategie:
+   *  1) Wenn title bereits ein echter String ist (nicht nur eine Zahl), behalten.
+   *  2) Wenn title eine bare Zahl ist ODER title leer aber number eine bare Zahl:
+   *     - Versuche echten Titel aus erster Textzeile zu extrahieren
+   *     - Fallback auf "§ N" (bei bare-number title) bzw. "Abschnitt N" (bei null title)
+   */
+  deriveClauseTitle(clause) {
+    const rawTitle = clause.title || null;
+    const rawNumber = clause.number != null ? String(clause.number).trim() : '';
+    const firstLine = (clause.text || '').trim().split(/\n/)[0].trim();
+
+    // Fall 1: bare-number title (z.B. "6" oder "6.")
+    if (rawTitle && /^\d+\.?$/.test(rawTitle.trim())) {
+      const num = rawTitle.trim().replace(/\.$/, '');
+      const titleMatch = firstLine.match(/^\d+\.?\s+([A-ZÄÖÜ].{2,80})/);
+      if (titleMatch) {
+        return firstLine.substring(0, 100).trim();
+      }
+      return `§ ${num}`;
+    }
+
+    // Fall 2: title fehlt, aber number ist bare Zahl → echten Titel ableiten
+    if (!rawTitle && rawNumber && /^\d+\.?$/.test(rawNumber)) {
+      const num = rawNumber.replace(/\.$/, '');
+      const titleMatch = firstLine.match(/^(?:§\s*)?\d+\.?\s+([A-ZÄÖÜ].{2,80})/);
+      if (titleMatch) {
+        return firstLine.substring(0, 100).trim();
+      }
+      if (firstLine.length > 3 && firstLine.length < 100 && /^[A-ZÄÖÜ]/.test(firstLine)) {
+        return firstLine;
+      }
+      return `Abschnitt ${num}`;
+    }
+
+    return rawTitle;
+  }
+
+  /**
    * Bewertet das Risiko einer Klausel basierend auf Keywords
    */
   assessClauseRisk(text) {
@@ -1168,7 +1210,7 @@ class ClauseParser {
       return {
         id: clause.id || `clause_${index + 1}`,
         number: clause.number || `${index + 1}`,
-        title: clause.title || null,
+        title: this.deriveClauseTitle(clause),
         text: clause.text,
         type: clause.type || 'paragraph',
         riskLevel: riskAssessment.level,
@@ -1231,12 +1273,107 @@ class ClauseParser {
   }
 
   /**
+   * STUFE 1a: Dokumenten-Kopfblock entfernen
+   * Erkennt typische Dokumenten-Header (Firmenname, Adresse, Vertragsnummer, Datum)
+   * die VOR dem ersten Paragraphen (§ 1 / Artikel 1 / 1. ...) stehen.
+   *
+   * SICHERHEITS-GUARDS (alle müssen erfüllt sein, sonst kein Stripping):
+   * 1. Es muss ein eindeutiger erster Klausel-Marker gefunden werden
+   * 2. Header-Kandidat darf max. 1500 Zeichen lang sein
+   * 3. Header-Kandidat darf KEIN § enthalten (sonst ist es schon Klausel-Inhalt)
+   * 4. Mindestens 2 Header-Indikatoren müssen vorhanden sein
+   * 5. Bei jedem Zweifel: Originaltext zurückgeben
+   *
+   * @param {string} text
+   * @returns {{ text: string, stripped: string|null }}
+   */
+  stripDocumentHeader(text) {
+    if (!text || typeof text !== 'string' || text.length < 200) {
+      return { text, stripped: null };
+    }
+
+    // Performance: Dokumenten-Header ist IMMER am Anfang (Guard 1 erlaubt max. 1500 Zeichen).
+    // Wir scannen nur die ersten 4000 Zeichen — spart bei großen Verträgen ~95% der Arbeit.
+    const scanWindow = text.substring(0, 4000);
+
+    // Suche das erste echte Klausel-Marker am Zeilenanfang.
+    // KONSERVATIV: Bevorzuge eindeutige Marker (§, Artikel) — vermeidet False-Positives
+    // wie "1. Vertragsnummer" innerhalb von Header-Blöcken.
+    // Eine kombinierte Alternation ist schneller als 4 separate Scans.
+    const strongMarkerPattern = /(?:^|\n)\s*(?:§\s*\(?\s*1\b|Artikel\s+1\b|Art\.\s*1\b|I\.\s+[A-ZÄÖÜ][a-zäöüA-ZÄÖÜ]{3,})/m;
+    const match = scanWindow.match(strongMarkerPattern);
+
+    if (!match || match.index === undefined || match.index === 0) {
+      return { text, stripped: null };
+    }
+
+    const headerCandidate = text.substring(0, match.index);
+
+    // Guard 1: Header darf nicht zu lang sein
+    if (headerCandidate.length > 1500) {
+      return { text, stripped: null };
+    }
+
+    // Guard 2: Header darf KEIN § enthalten — sonst stripen wir Klausel-Inhalt!
+    if (/§/.test(headerCandidate)) {
+      return { text, stripped: null };
+    }
+
+    // Guard 3: Header darf nicht zu viele rechtliche Schlüsselwörter enthalten
+    // (sonst ist es echter Vertragstext, kein Header)
+    const lowerHeader = headerCandidate.toLowerCase();
+    const legalSignals = [
+      'verpflichtet', 'haftet', 'haftung', 'kündigung', 'gewährleistung',
+      'vertragsstrafe', 'schadensersatz', 'gerichtsstand', 'datenschutz',
+      'verarbeitung personenbezogener'
+    ];
+    const legalSignalCount = legalSignals.filter(kw => lowerHeader.includes(kw)).length;
+    if (legalSignalCount >= 2) {
+      return { text, stripped: null };
+    }
+
+    // Header-Indikatoren zählen
+    const headerIndicators = [
+      /\b(GmbH|AG|KG|e\.V\.|UG|mbH)\b/.test(headerCandidate),                       // Rechtsform
+      /\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+/.test(headerCandidate),                         // PLZ + Stadt
+      /\b(Straße|Strasse|str\.|Weg|Platz|Gasse|Allee|Ring)\s*\d+/i.test(headerCandidate), // Adresse
+      /Vertrags(nummer|nr)\.?\s*[:#]?\s*[A-Z0-9]/i.test(headerCandidate),           // Vertragsnummer
+      /(Kunden(nummer|nr)|Mandanten(nummer|nr)|Rechnungs(nummer|nr))/i.test(headerCandidate), // Andere IDs
+      /\b\d{1,2}\.\s*\d{1,2}\.\s*\d{2,4}\b/.test(headerCandidate),                  // Datum DD.MM.YYYY
+      /(Tel(efon)?|Fax|E[\-\s]?Mail|@)/i.test(headerCandidate),                     // Kontakt
+      /(Geschäftsführer|Vorstand|Inhaber|Prokurist)/i.test(headerCandidate)         // Personen
+    ];
+    const indicatorCount = headerIndicators.filter(Boolean).length;
+
+    // Guard 4: Mindestens 2 Header-Indikatoren erforderlich
+    if (indicatorCount < 2) {
+      return { text, stripped: null };
+    }
+
+    log.info(`[stripDocumentHeader] Entferne ${headerCandidate.length} Zeichen Dokumenten-Kopf (${indicatorCount} Indikatoren)`);
+    return {
+      text: text.substring(match.index),
+      stripped: headerCandidate.substring(0, 200)
+    };
+  }
+
+  /**
    * STUFE 1b: Header/Footer erkennen und entfernen
    * Erkennt wiederkehrende Textblöcke (erscheinen auf mehreren "Seiten")
    */
   removeHeaderFooter(text) {
     const removedBlocks = [];
-    let processedText = text;
+
+    // STUFE 1a: Dokumenten-Kopfblock entfernen (vor § 1)
+    // Konservativ — strippt nur wenn alle Sicherheits-Guards passen.
+    const headerStripResult = this.stripDocumentHeader(text);
+    let processedText = headerStripResult.text;
+    if (headerStripResult.stripped) {
+      removedBlocks.push({
+        type: 'document_header',
+        text: headerStripResult.stripped
+      });
+    }
 
     // Pattern für typische Header/Footer
     const headerFooterPatterns = [
