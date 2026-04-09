@@ -6050,7 +6050,14 @@ async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfi
     'Holistic Pass Timeout'
   );
 
-  const raw = JSON.parse(completion.choices[0].message.content);
+  let raw;
+  try {
+    raw = JSON.parse(completion.choices[0].message.content);
+  } catch (parseErr) {
+    console.warn(`⚠️ Holistic Pass: GPT-Antwort war kein gültiges JSON: ${parseErr.message}`);
+    console.warn(`⚠️ Raw content (first 500 chars): ${String(completion.choices[0].message.content).slice(0, 500)}`);
+    throw new Error('Holistic Pass: GPT-Antwort konnte nicht als JSON verarbeitet werden');
+  }
   const sectionCount = Array.isArray(raw?.sections) ? raw.sections.length : 0;
   console.log(`✅ Holistic Pass: ${sectionCount} Sections vom GPT erhalten`);
   return raw;
@@ -6353,14 +6360,27 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
 
     // STUFE 2: Holistic Pass
     progress('holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...');
-    const holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
+    let holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
 
     // STUFE 3: Trust-Guard
     progress('validating', 82, 'Ergebnisse werden validiert...');
-    const validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
+    let validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
 
+    // Safety Net: Bei 0 Sections nach Trust-Guard → einmal retry
     if (validated.sections.length === 0) {
-      console.warn(`⚠️ Holistic: 0 Sections nach Trust-Guard übrig. Dokumente möglicherweise identisch oder GPT-Antwort fehlerhaft.`);
+      console.warn(`⚠️ Holistic: 0 Sections nach Trust-Guard. Einmaliger Retry...`);
+      progress('holistic', 70, 'Erneuter KI-Vergleich (Retry)...');
+      try {
+        holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
+        validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
+        if (validated.sections.length > 0) {
+          console.log(`✅ Retry erfolgreich: ${validated.sections.length} Sections`);
+        } else {
+          console.warn(`⚠️ Retry ebenfalls 0 Sections — Dokumente sind möglicherweise identisch.`);
+        }
+      } catch (retryErr) {
+        console.warn(`⚠️ Retry fehlgeschlagen: ${retryErr.message}. Fahre mit 0 Sections fort.`);
+      }
     }
 
     // Legacy-Adapter für Score-Berechnung + backward compat
