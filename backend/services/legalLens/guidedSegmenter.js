@@ -65,7 +65,13 @@ HARTE REGELN:
 5. Jeder startMarker muss WÖRTLICH aus dem Originaltext stammen. Keine Umformulierungen, keine Vereinheitlichung von Whitespace. Kopiere ihn buchstabengenau.
 6. Reihenfolge der Klauseln entspricht der Reihenfolge im Originaltext.
 7. Du erfindest KEINE Klauseln und lässt keine aus.
-8. Antworte NUR mit dem JSON-Objekt, ohne Erklärungen oder Markdown.`;
+8. Antworte NUR mit dem JSON-Objekt, ohne Erklärungen oder Markdown.
+9. Du segmentierst NUR inhaltliche Vertragsklauseln — also Abschnitte mit tatsächlichem rechtlichen oder vertraglichen Inhalt. Folgendes sind KEINE Klauseln und dürfen NICHT in deinem Output erscheinen:
+   - Adressen, Absenderangaben, Empfängerangaben, Kontaktdaten
+   - Begleitschreiben oder Anschreiben, die VOR den eigentlichen Vertragsklauseln stehen
+   - Zeilen die nur aus einer Überschrift oder Nummer bestehen, ohne inhaltlichen Text danach
+   - Reine Wiederholungen von Firmenlogos, Seitennummern, Kopf-/Fußzeilen
+10. Wenn ein Dokument verschachtelte Abschnitte mit EIGENER Nummerierung enthält (z.B. eine Widerrufsbelehrung mit eigenem § 1–§ 8 innerhalb einer Versicherungspolice), disambiguiere doppelte Nummern: Ergänze den Titel des Elternabschnitts in Klammern, damit keine Nummer doppelt vorkommt. Beispiel: '§ 1' der Widerrufsbelehrung wird zu '§ 1 (Widerrufsbelehrung)'.`;
 
 function normalizeForMatch(s) {
   if (!s || typeof s !== 'string') return '';
@@ -292,7 +298,24 @@ class GuidedSegmenter {
 
     const clausesRaw = Array.isArray(parsed.clauses) ? parsed.clauses : [];
     if (clausesRaw.length === 0) {
-      throw new Error('guidedSegmenter: Modell hat keine Klauseln zurückgegeben');
+      // Kein Fehler — kann bei Nicht-Verträgen (Rechnungen, Formulare) vorkommen.
+      console.log('[GuidedSegmenter] Modell hat keine Klauseln zurückgegeben (Dokument enthält vermutlich keine Vertragsklauseln)');
+      return {
+        clauses: [],
+        metadata: {
+          model: MODEL,
+          elapsedMs: Date.now() - startTime,
+          inputCharsTotal: rawText.length,
+          inputCharsSent: croppedText.length,
+          cropped,
+          contentStartOffset: startOffset,
+          expectedSegmentCount: discovery.segmentation?.estimatedSegmentCount ?? null,
+          actualSegmentCount: 0,
+          markersVerified: 0,
+          promptTokens: response.usage?.prompt_tokens || 0,
+          completionTokens: response.usage?.completion_tokens || 0
+        }
+      };
     }
 
     // 5. Post-Processing: Marker im Rohtext lokalisieren, Text aus Slices

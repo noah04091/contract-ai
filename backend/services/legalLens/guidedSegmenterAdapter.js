@@ -47,6 +47,32 @@ async function parseContractWithGuidedSegmenter(text, options = {}) {
   const { clauses: rawClauses, metadata: segMeta } = segmentationResult;
   console.log(`   ✓ ${segMeta.actualSegmentCount} Klauseln, ${segMeta.markersVerified} Marker verifiziert`);
 
+  // Kein Inhalt erkannt → success: true aber 0 Klauseln (Rechnungen, Formulare)
+  if (rawClauses.length === 0) {
+    console.log(`⚠️ [GuidedSegmenter] Keine Klauseln erkannt — Dokument ist vermutlich kein Vertrag`);
+    return {
+      success: true,
+      clauses: [],
+      totalClauses: 0,
+      sections: [],
+      riskSummary: { high: 0, medium: 0, low: 0 },
+      metadata: {
+        originalLength: text.length,
+        cleanedLength: text.length,
+        parsedAt: new Date().toISOString(),
+        parserVersion: '2.0.0-guided-segmenter',
+        discovery: {
+          documentType: discovery.documentType,
+          scheme: discovery.segmentation?.scheme,
+          confidence: discovery.overallConfidence,
+          expectedSegmentCount: discovery.segmentation?.estimatedSegmentCount
+        },
+        segmentation: segMeta,
+        noClausesReason: 'Dokument enthält keine erkennbaren Vertragsklauseln'
+      }
+    };
+  }
+
   // ── Adapter: V2 → V1-Shape ─────────────────────
   const adaptedClauses = rawClauses.map((c, idx) => {
     const startOffset = typeof c.startOffset === 'number' && c.startOffset >= 0 ? c.startOffset : 0;
