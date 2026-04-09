@@ -250,21 +250,41 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
       {/* Rejected: Document is not a contract */}
       {status === 'error' && rejected && (
         <div style={{
-          padding: 24,
-          background: '#fffbeb',
+          padding: '28px 32px',
+          background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
           border: '1px solid #fde68a',
-          borderRadius: 12,
+          borderRadius: 16,
           marginBottom: 16,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#b45309', marginBottom: 8 }}>
-            Kein Vertrag erkannt
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: '#fef3c7', border: '1px solid #fde68a',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L2 18h16L10 2z" stroke="#b45309" strokeWidth="1.5" fill="none"/>
+                <path d="M10 8v4M10 14v1" stroke="#b45309" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#92400e', letterSpacing: '-0.01em' }}>
+              Dokument ist kein Vertrag
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: '#78350f', marginBottom: 8 }}>
-            {rejected.reason}
+          <div style={{
+            fontSize: 13, lineHeight: 1.6, color: '#78350f',
+            padding: '12px 16px', background: 'rgba(255,255,255,0.5)',
+            borderRadius: 10, marginBottom: 14,
+          }}>
+            Legal Pulse ist auf die Analyse von Verträgen spezialisiert. Dieses Dokument wurde als
+            anderer Dokumenttyp erkannt (z.{'\u00A0'}B. Rechnung, Angebot, Formular) und kann daher
+            nicht ausgewertet werden.
           </div>
-          <div style={{ fontSize: 12, color: '#92400e' }}>
-            Legal Pulse analysiert ausschließlich Verträge. Rechnungen, Angebote, Quittungen, Formulare und ähnliche Dokumente werden automatisch abgelehnt,
-            um die Qualität der Risikoanalyse zu gewährleisten.
+          <div style={{ fontSize: 12, color: '#a16207', lineHeight: 1.5 }}>
+            Laden Sie einen Vertrag hoch, um eine vollständige Risikoanalyse mit Klauselbewertung,
+            Handlungsempfehlungen und Gesetzesmonitoring zu erhalten.
           </div>
         </div>
       )}
