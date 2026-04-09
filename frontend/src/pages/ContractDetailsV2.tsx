@@ -3474,9 +3474,24 @@ export default function ContractDetailsV2() {
                             </h3>
                           </div>
                           <div className={styles.cardBody}>
-                            <p style={{ margin: '0 0 16px 0', fontSize: 13, color: 'var(--cd-text-tertiary)', lineHeight: 1.5 }}>
-                              Diese Termine wurden bei der Vertragsanalyse erkannt, sind aber <strong>noch nicht als Kalender-Events gespeichert</strong>. Klicke auf "In Kalender" um sie zu übernehmen.
-                            </p>
+                            <div style={{
+                              margin: '0 0 16px 0',
+                              padding: '12px 14px',
+                              background: 'var(--cd-bg, #f9fafb)',
+                              border: '1px solid var(--cd-border-light, var(--cd-border))',
+                              borderRadius: 8,
+                              display: 'flex',
+                              gap: 10,
+                              alignItems: 'flex-start',
+                              fontSize: 13,
+                              color: 'var(--cd-text-tertiary)',
+                              lineHeight: 1.6
+                            }}>
+                              <HelpCircle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cd-primary)' }} />
+                              <span>
+                                Die KI erkennt bei der Analyse automatisch wichtige Termine. Einige davon (z.B. Kündigungsfristen) werden <strong>direkt als Kalender-Events</strong> angelegt. Andere (z.B. Zahlungsfristen, Garantien) werden hier als <strong>Vorschläge</strong> angezeigt — du entscheidest, welche davon in deinen Kalender übernommen werden sollen.
+                              </span>
+                            </div>
                             <div className={styles.timelineList}>
                               {pendingImportantDates.map(({ date, idx }) => {
                                 const isConverting = convertingImportantDateIdx === idx;
