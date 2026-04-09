@@ -161,6 +161,46 @@ function findFuzzy(rawText, marker, normalizedIndex = null) {
 }
 
 /**
+ * Wie findFuzzy, aber bei mehreren Fundstellen wird die dem hintOffset
+ * nächste gewählt. Wichtig für Dokumente mit doppeltem Inhalt
+ * (Original + Dokumentenkopie).
+ */
+function findFuzzyNearest(rawText, marker, hintOffset, normalizedIndex = null) {
+  if (!marker) return -1;
+  const { normalized, indexMap } = normalizedIndex || buildNormalizedIndex(rawText);
+  const needle = normalizeForMatch(marker);
+  if (!needle) return -1;
+
+  // Alle Vorkommen sammeln
+  const positions = [];
+  let searchFrom = 0;
+  while (searchFrom < normalized.length) {
+    const hit = normalized.indexOf(needle, searchFrom);
+    if (hit < 0) break;
+    positions.push(indexMap[hit] ?? -1);
+    searchFrom = hit + 1;
+  }
+
+  if (positions.length === 0) return -1;
+  if (positions.length === 1 || hintOffset == null) return positions[0];
+
+  // Nächste zum Hint wählen
+  let closest = positions[0];
+  let closestDist = Math.abs(positions[0] - hintOffset);
+  for (let i = 1; i < positions.length; i++) {
+    const dist = Math.abs(positions[i] - hintOffset);
+    if (dist < closestDist) {
+      closest = positions[i];
+      closestDist = dist;
+    }
+  }
+  if (positions.length > 1) {
+    console.log(`[findFuzzyNearest] ${positions.length} Fundstellen, hint=${hintOffset}, gewählt=${closest}`);
+  }
+  return closest;
+}
+
+/**
  * Schneidet den Rohtext auf den Content-Bereich zu, basierend auf den
  * contentStart/contentEnd-Markern aus dem Discovery-Ergebnis.
  * Falls ein Marker nicht gefunden wird, bleibt die entsprechende Grenze
@@ -172,16 +212,30 @@ function cropToContentRange(rawText, discovery) {
   let start = 0;
   let end = rawText.length;
 
+  // ── contentStart ───────────────────────────────────
   const startMarker = discovery?.contentStart?.marker;
+  const startHint = typeof discovery?.contentStart?.charOffset === 'number'
+    ? discovery.contentStart.charOffset : null;
   if (startMarker) {
-    const pos = findFuzzy(rawText, startMarker, normalizedIndex);
-    if (pos >= 0) start = pos;
+    const pos = findFuzzyNearest(rawText, startMarker, startHint, normalizedIndex);
+    if (pos >= 0) {
+      start = pos;
+    } else if (startHint != null && startHint > 0 && startHint < rawText.length) {
+      start = startHint;
+    }
   }
 
+  // ── contentEnd ─────────────────────────────────────
   const endMarker = discovery?.contentEnd?.marker;
+  const endHint = typeof discovery?.contentEnd?.charOffset === 'number'
+    ? discovery.contentEnd.charOffset : null;
   if (endMarker) {
-    const pos = findFuzzy(rawText, endMarker, normalizedIndex);
-    if (pos > start) end = pos;
+    const pos = findFuzzyNearest(rawText, endMarker, endHint, normalizedIndex);
+    if (pos > start) {
+      end = pos + endMarker.length;
+    } else if (endHint != null && endHint > start && endHint <= rawText.length) {
+      end = endHint;
+    }
   }
 
   return {
