@@ -66,11 +66,7 @@ HARTE REGELN:
 6. Reihenfolge der Klauseln entspricht der Reihenfolge im Originaltext.
 7. Du erfindest KEINE Klauseln und lässt keine aus.
 8. Antworte NUR mit dem JSON-Objekt, ohne Erklärungen oder Markdown.
-9. Du segmentierst NUR inhaltliche Vertragsklauseln — also Abschnitte mit tatsächlichem rechtlichen oder vertraglichen Inhalt. Folgendes sind KEINE Klauseln und dürfen NICHT in deinem Output erscheinen:
-   - Adressen, Absenderangaben, Empfängerangaben, Kontaktdaten
-   - Begleitschreiben oder Anschreiben, die VOR den eigentlichen Vertragsklauseln stehen
-   - Zeilen die nur aus einer Überschrift oder Nummer bestehen, ohne inhaltlichen Text danach
-   - Reine Wiederholungen von Firmenlogos, Seitennummern, Kopf-/Fußzeilen
+9. Falls nach dem Zuschnitt noch Nicht-Vertragstext übrig ist (Adressen, Grußformeln, reine Seitennummern ohne Inhalt), ignoriere diesen — er ist keine Klausel.
 10. Wenn ein Dokument verschachtelte Abschnitte mit EIGENER Nummerierung enthält (z.B. eine Widerrufsbelehrung mit eigenem § 1–§ 8 innerhalb einer Versicherungspolice), disambiguiere doppelte Nummern: Ergänze den Titel des Elternabschnitts in Klammern, damit keine Nummer doppelt vorkommt. Beispiel: '§ 1' der Widerrufsbelehrung wird zu '§ 1 (Widerrufsbelehrung)'.`;
 
 function normalizeForMatch(s) {

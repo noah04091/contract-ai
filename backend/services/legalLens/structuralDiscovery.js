@@ -112,14 +112,14 @@ Dein Output ist IMMER ein einzelnes JSON-Objekt mit genau diesen Feldern:
   "language": "ISO-639-1 Code der Hauptsprache (de, en, fr, ...). Falls mehrsprachig: primäre Sprache.",
 
   "contentStart": {
-    "charOffset": "Integer — Zeichenposition, an der der eigentliche Vertragsinhalt beginnt (nach Briefkopf, Parteien-Adressen, Titel, Präambel etc.). 0 wenn der Vertrag sofort beginnt.",
-    "marker": "Wörtliches Zitat der ersten ~80 Zeichen des eigentlichen Inhalts, damit dieser Punkt später im Originaltext wiedergefunden werden kann.",
+    "charOffset": "Integer — Zeichenposition der ERSTEN ECHTEN VERTRAGSKLAUSEL. Überspringe alles davor: Begleitschreiben, Anschreiben, Absender-/Empfänger-Adressen, Kontaktdaten, Briefköpfe, Datums-/Betreffzeilen, Begrüßungsformeln ('Sehr geehrte...'), einleitende Sätze ('anbei erhalten Sie...'). Der contentStart zeigt auf die erste Zeile, die eine nummerierte oder betitelte Vertragsklausel einleitet (z.B. '§ 1', 'Artikel 1', '1. Vertragsgegenstand', 'Präambel' als Teil des Vertrags). 0 nur wenn das Dokument direkt mit der ersten Klausel beginnt, ohne jegliches Rahmenmaterial.",
+    "marker": "Wörtliches Zitat der ersten ~80 Zeichen AB der ersten echten Vertragsklausel.",
     "reasoning": "Ein Satz: Warum beginnt hier der inhaltliche Vertragsteil?"
   },
 
   "contentEnd": {
-    "charOffset": "Integer — Zeichenposition, an der der eigentliche Vertragsinhalt endet (vor Unterschriftenblock, Anhängen, Anlagenverzeichnis).",
-    "marker": "Wörtliches Zitat der letzten ~80 Zeichen des eigentlichen Inhalts.",
+    "charOffset": "Integer — Zeichenposition, an der die LETZTE ECHTE VERTRAGSKLAUSEL endet. Schneide alles danach ab: Unterschriftenblöcke (Ort, Datum, Unterschriftszeilen), Anhänge/Anlagen, Anlagenverzeichnisse, wiederholte Firmenangaben (Geschäftsführer, Registergericht, USt-IdNr., Bankverbindung, Kontaktdaten), Fußzeilen, Seitennummern. Der contentEnd zeigt auf das LETZTE ZEICHEN der letzten inhaltlichen Klausel — nicht auf Firmeninfos oder Signaturen danach.",
+    "marker": "Wörtliches Zitat der letzten ~80 Zeichen der letzten inhaltlichen Klausel.",
     "reasoning": "Ein Satz: Warum endet hier der inhaltliche Vertragsteil?"
   },
 
