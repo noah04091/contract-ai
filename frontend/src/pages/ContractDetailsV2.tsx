@@ -282,6 +282,7 @@ export default function ContractDetailsV2() {
   const [notesValue, setNotesValue] = useState('');
 
   // ✅ Calendar-Event-CRUD State (Timeline-Tab)
+  const [showKiInfoText, setShowKiInfoText] = useState(false);
   const [showAddEventForm, setShowAddEventForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventFormTitle, setEventFormTitle] = useState('');
@@ -3323,6 +3324,9 @@ export default function ContractDetailsV2() {
                         {/* ✅ Inline-Form: neues Event hinzufügen oder bestehendes bearbeiten */}
                         {(showAddEventForm || editingEventId !== null) && (
                           <div className={styles.metricCard} style={{ marginBottom: 16 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cd-text-secondary)', marginBottom: 10 }}>
+                              {editingEventId ? '✏️ Event bearbeiten' : '➕ Neues Event erstellen'}
+                            </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                               <input
                                 className={styles.metricEditInput}
@@ -3472,24 +3476,40 @@ export default function ContractDetailsV2() {
                             </h3>
                           </div>
                           <div className={styles.cardBody}>
-                            <div style={{
-                              margin: '0 0 16px 0',
-                              padding: '12px 14px',
-                              background: 'var(--cd-bg, #f9fafb)',
-                              border: '1px solid var(--cd-border-light, var(--cd-border))',
-                              borderRadius: 8,
-                              display: 'flex',
-                              gap: 10,
-                              alignItems: 'flex-start',
-                              fontSize: 13,
-                              color: 'var(--cd-text-tertiary)',
-                              lineHeight: 1.6
-                            }}>
-                              <HelpCircle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--cd-primary)' }} />
-                              <span>
+                            {/* Zuklappbare Info-Box */}
+                            <button
+                              onClick={() => setShowKiInfoText(!showKiInfoText)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                background: 'none',
+                                border: 'none',
+                                padding: '0 0 12px 0',
+                                cursor: 'pointer',
+                                fontSize: 13,
+                                color: 'var(--cd-primary)',
+                                fontWeight: 500,
+                              }}
+                            >
+                              <HelpCircle size={14} />
+                              <span>Warum sind diese Termine nicht im Kalender?</span>
+                              {showKiInfoText ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            </button>
+                            {showKiInfoText && (
+                              <div style={{
+                                margin: '0 0 16px 0',
+                                padding: '12px 14px',
+                                background: 'var(--cd-bg, #f9fafb)',
+                                border: '1px solid var(--cd-border-light, var(--cd-border))',
+                                borderRadius: 8,
+                                fontSize: 13,
+                                color: 'var(--cd-text-tertiary)',
+                                lineHeight: 1.6
+                              }}>
                                 Die KI erkennt bei der Analyse automatisch wichtige Termine. Einige davon (z.B. Kündigungsfristen) werden <strong>direkt als Kalender-Events</strong> angelegt. Andere (z.B. Zahlungsfristen, Garantien) werden hier als <strong>Vorschläge</strong> angezeigt — du entscheidest, welche davon in deinen Kalender übernommen werden sollen.
-                              </span>
-                            </div>
+                              </div>
+                            )}
                             <div className={styles.timelineList}>
                               {pendingImportantDates.map(({ date, idx }) => {
                                 const isConverting = convertingImportantDateIdx === idx;
