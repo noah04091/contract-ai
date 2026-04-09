@@ -3425,7 +3425,21 @@ export default function ContractDetailsV2() {
                                     )}
                                   </div>
                                 </div>
-                                {/* Delete nur im Edit-Mode (innerhalb des Edit-Forms, Zeile oben) */}
+                                {/* ✅ Sichtbarer Delete-Button direkt am Event */}
+                                {canEditCalendarEvents && (
+                                  <button
+                                    className={styles.metricEditCancel}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteEvent(event._id);
+                                    }}
+                                    disabled={savingEvent}
+                                    title="Event löschen"
+                                    style={{ color: '#dc2626', flexShrink: 0, alignSelf: 'center' }}
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
                               </div>
                             ))}
                           </div>
