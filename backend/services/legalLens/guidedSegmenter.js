@@ -314,20 +314,22 @@ class GuidedSegmenter {
       };
     }
 
-    // 5. Post-Processing: Marker im Rohtext lokalisieren, Text aus Slices
-    //    zwischen aufeinanderfolgenden Markern bauen.
-    const normalizedIndex = buildNormalizedIndex(rawText);
+    // 5. Post-Processing: Marker im zugeschnittenen Text lokalisieren (GPT sieht
+    //    nur croppedText!), dann startOffset addieren um absolute Positionen im
+    //    Rohtext zu erhalten.
+    const normalizedIndex = buildNormalizedIndex(croppedText);
     const frameLines = discovery.frameElements?.repeatingPageHeaders || [];
 
-    // Erste Runde: Marker-Positionen finden
+    // Erste Runde: Marker-Positionen finden (im croppedText, dann Offset addieren)
     const markerHits = clausesRaw.map((c, idx) => {
-      const startMarker = typeof c.startMarker === 'string' ? c.startMarker : null;
-      const startOffsetAbs = startMarker ? findFuzzy(rawText, startMarker, normalizedIndex) : -1;
+      const startMarkerStr = typeof c.startMarker === 'string' ? c.startMarker : null;
+      const posInCropped = startMarkerStr ? findFuzzy(croppedText, startMarkerStr, normalizedIndex) : -1;
+      const startOffsetAbs = posInCropped >= 0 ? posInCropped + startOffset : -1;
       return {
         idx,
         number: c.number ?? null,
         title: c.title ?? null,
-        startMarker,
+        startMarker: startMarkerStr,
         startOffset: startOffsetAbs,
         found: startOffsetAbs >= 0
       };
@@ -337,9 +339,10 @@ class GuidedSegmenter {
     // Klausel der Beginn der nächsten. Für die letzte nehmen wir das
     // contentEnd oder das Text-Ende.
     const contentEndMarker = discovery.contentEnd?.marker;
-    const contentEndOffset = contentEndMarker
-      ? findFuzzy(rawText, contentEndMarker, normalizedIndex)
+    const contentEndInCropped = contentEndMarker
+      ? findFuzzy(croppedText, contentEndMarker, normalizedIndex)
       : -1;
+    const contentEndOffset = contentEndInCropped >= 0 ? contentEndInCropped + startOffset : -1;
     const effectiveEnd = contentEndOffset > 0 ? contentEndOffset : rawText.length;
 
     const clauses = markerHits.map((hit, i) => {
