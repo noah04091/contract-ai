@@ -3354,34 +3354,36 @@ export default function ContractDetailsV2() {
                                 <option value="warning">⚠️ Warnung</option>
                                 <option value="critical">🚨 Kritisch</option>
                               </select>
-                              <div className={styles.metricEditActions} style={{ marginTop: 4 }}>
-                                <button
-                                  className={styles.metricEditSave}
-                                  onClick={editingEventId ? handleUpdateEvent : handleCreateEvent}
-                                  disabled={!eventFormTitle.trim() || !eventFormDate || savingEvent}
-                                  title={editingEventId ? 'Speichern' : 'Erstellen'}
-                                >
-                                  <Check size={14} />
-                                </button>
+                              <div className={styles.metricEditActions} style={{ marginTop: 4, justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                  <button
+                                    className={styles.metricEditSave}
+                                    onClick={editingEventId ? handleUpdateEvent : handleCreateEvent}
+                                    disabled={!eventFormTitle.trim() || !eventFormDate || savingEvent}
+                                    title={editingEventId ? 'Speichern' : 'Erstellen'}
+                                  >
+                                    <Check size={14} />
+                                  </button>
+                                  <button
+                                    className={styles.metricEditCancel}
+                                    onClick={resetEventForm}
+                                    title="Abbrechen"
+                                    disabled={savingEvent}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
                                 {editingEventId && (
                                   <button
                                     className={styles.metricEditCancel}
                                     onClick={() => handleDeleteEvent(editingEventId)}
-                                    title="Löschen"
+                                    title="Event löschen"
                                     style={{ color: '#dc2626' }}
                                     disabled={savingEvent}
                                   >
                                     <Trash2 size={14} />
                                   </button>
                                 )}
-                                <button
-                                  className={styles.metricEditCancel}
-                                  onClick={resetEventForm}
-                                  title="Abbrechen"
-                                  disabled={savingEvent}
-                                >
-                                  <X size={14} />
-                                </button>
                               </div>
                             </div>
                           </div>
@@ -3421,21 +3423,7 @@ export default function ContractDetailsV2() {
                                     )}
                                   </div>
                                 </div>
-                                {/* ✅ Sichtbarer Delete-Button — nur für Business+, mit stopPropagation */}
-                                {canEditCalendarEvents && editingEventId !== event._id && (
-                                  <button
-                                    className={styles.metricEditCancel}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteEvent(event._id);
-                                    }}
-                                    disabled={savingEvent}
-                                    title="Event löschen"
-                                    style={{ color: '#dc2626', flexShrink: 0, alignSelf: 'center' }}
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                )}
+                                {/* Delete nur im Edit-Mode (innerhalb des Edit-Forms, Zeile oben) */}
                               </div>
                             ))}
                           </div>
