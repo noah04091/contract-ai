@@ -3354,25 +3354,23 @@ export default function ContractDetailsV2() {
                                 <option value="warning">⚠️ Warnung</option>
                                 <option value="critical">🚨 Kritisch</option>
                               </select>
-                              <div className={styles.metricEditActions} style={{ marginTop: 4, justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', gap: 6 }}>
-                                  <button
-                                    className={styles.metricEditSave}
-                                    onClick={editingEventId ? handleUpdateEvent : handleCreateEvent}
-                                    disabled={!eventFormTitle.trim() || !eventFormDate || savingEvent}
-                                    title={editingEventId ? 'Speichern' : 'Erstellen'}
-                                  >
-                                    <Check size={14} />
-                                  </button>
-                                  <button
-                                    className={styles.metricEditCancel}
-                                    onClick={resetEventForm}
-                                    title="Abbrechen"
-                                    disabled={savingEvent}
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                </div>
+                              <div className={styles.metricEditActions} style={{ marginTop: 4 }}>
+                                <button
+                                  className={styles.metricEditSave}
+                                  onClick={editingEventId ? handleUpdateEvent : handleCreateEvent}
+                                  disabled={!eventFormTitle.trim() || !eventFormDate || savingEvent}
+                                  title={editingEventId ? 'Speichern' : 'Erstellen'}
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  className={styles.metricEditCancel}
+                                  onClick={resetEventForm}
+                                  title="Abbrechen"
+                                  disabled={savingEvent}
+                                >
+                                  <X size={14} />
+                                </button>
                                 {editingEventId && (
                                   <button
                                     className={styles.metricEditCancel}
