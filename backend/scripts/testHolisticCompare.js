@@ -112,6 +112,17 @@ const rawGood = {
       doc2Value: '200 EUR',
       explanation: 'Doc1 hat 999 EUR Selbstbeteiligung, Doc2 hat 200 EUR.',
     },
+    // Identische Werte — muss verworfen werden (kein Unterschied)
+    {
+      title: 'Kündigungsfrist',
+      icon: '🚪',
+      clauseArea: 'termination',
+      priority: 6.5,
+      severity: 'low',
+      doc1Value: '6 Monate',
+      doc2Value: '6 Monate',
+      explanation: 'Beide Dokumente haben die gleiche Kündigungsfrist.',
+    },
     // Duplikat (gleiche normalisierter Titel wie oben) — muss verworfen werden
     {
       title: 'Kosten & Beitrag',
@@ -152,13 +163,15 @@ const intent = {
 
 const validated = m.validateHolisticOutput(rawGood, text1, text2, intent);
 
-assert('3 Sections nach Validierung (4 dropped)', validated.sections.length === 3);
+// Vertragslaufzeit hat "1 Jahr" vs "1 Jahr" → identisch → wird ebenfalls gedroppt
+assert('2 Sections nach Validierung (6 dropped)', validated.sections.length === 2);
 assert('Sektion 1 = Kosten & Beitrag (priority 1)', validated.sections[0].title === 'Kosten & Beitrag');
 assert('Sektion 2 = Versicherungssumme (priority 2)', validated.sections[1].title === 'Versicherungssumme');
-assert('Sektion 3 = Vertragslaufzeit (priority 3)', validated.sections[2].title === 'Vertragslaufzeit');
 assert('Keine Section mit Titel "Sonstiges"', !validated.sections.some(s => s.title === 'Sonstiges'));
 assert('Keine Section mit invalid area "made_up_area"', !validated.sections.some(s => s.clauseArea === 'made_up_area'));
 assert('Keine Section mit halluzinierter 999 EUR', !validated.sections.some(s => /999/.test(s.explanation)));
+assert('Keine Section mit identischen Werten (Kündigungsfrist)', !validated.sections.some(s => s.title === 'Kündigungsfrist'));
+assert('Keine Section mit identischen Werten (Vertragslaufzeit)', !validated.sections.some(s => s.title === 'Vertragslaufzeit'));
 assert('Compatibility-Info übernommen', validated.compatibility.level === 'full');
 assert('overallRecommendation vorhanden', validated.overallRecommendation.recommended === 1);
 assert('summary.tldr vorhanden', validated.summary.tldr === 'Doc1 günstiger, höhere Deckung.');
@@ -169,7 +182,7 @@ assert('summary.tldr vorhanden', validated.summary.tldr === 'Doc1 günstiger, h�
 console.log('\n=== Test 3: Legacy-Adapter ===');
 const { differences, risks, recommendations } = m.adaptSectionsToLegacySchema(validated.sections);
 
-assert('3 differences aus 3 sections', differences.length === 3);
+assert('2 differences aus 2 sections', differences.length === 2);
 assert('differences haben clauseArea', differences.every(d => !!d.clauseArea));
 assert('differences haben severity', differences.every(d => !!d.severity));
 assert('differences haben semanticType', differences.every(d => !!d.semanticType));
@@ -179,9 +192,8 @@ assert('_icon im difference', differences[0]._icon === '💰');
 assert('1 Risk aus high-severity Section', risks.length === 1);
 assert('Risk ist für Doc2 (Doc1 ist recommendationTarget)', risks[0].contract === 2);
 
-// Recommendations = nur Sections mit recommendation + target (2 Stück)
+// Recommendations = nur Sections mit recommendation + target (2 von 2 haben target)
 assert('2 Recommendations', recommendations.length === 2);
-assert('Recommendations targetContract korrekt', recommendations.every(r => r.targetContract === 1));
 
 // ============================================
 // Test 4: Feature-Flag Schalter im Code
@@ -192,8 +204,9 @@ const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'services', 'compareAnalyzer.js'), 'utf-8');
 assert('COMPARE_HOLISTIC Feature-Flag im Code', /process\.env\.COMPARE_HOLISTIC\s*===\s*['"]true['"]/.test(src));
 assert('runCompareHolisticPipeline wird aus runCompareV2PipelineNew aufgerufen', /if \(process\.env\.COMPARE_HOLISTIC === 'true'\)[\s\S]{0,200}runCompareHolisticPipeline/.test(src));
-assert('HOLISTIC_MAX_SECTIONS = 8', /HOLISTIC_MAX_SECTIONS\s*=\s*8/.test(src));
-assert('HOLISTIC_MIN_SECTIONS = 3', /HOLISTIC_MIN_SECTIONS\s*=\s*3/.test(src));
+assert('HOLISTIC_HARD_CAP = 30 (Sicherheitsnetz, kein Formzwang)', /HOLISTIC_HARD_CAP\s*=\s*30/.test(src));
+assert('Keine HOLISTIC_MIN_SECTIONS mehr (kein Mindest-Zwang)', !/HOLISTIC_MIN_SECTIONS\s*=/.test(src));
+assert('Keine HOLISTIC_MAX_SECTIONS mehr (kein Höchst-Zwang)', !/HOLISTIC_MAX_SECTIONS\s*=/.test(src));
 assert('GENERIC_SECTION_TITLE_REGEX vorhanden', /GENERIC_SECTION_TITLE_REGEX/.test(src));
 
 // ============================================

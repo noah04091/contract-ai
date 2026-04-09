@@ -5726,8 +5726,9 @@ function applySeverityCalibration(mergedDiffs, groupEvaluations, groups) {
 // Output: dynamische Sections (kein fester Kategorien-Zwang).
 // ================================================================
 
-const HOLISTIC_MAX_SECTIONS = 8;
-const HOLISTIC_MIN_SECTIONS = 3;
+// Keine starren Min/Max-Grenzen — GPT entscheidet frei wie viele Sections nötig sind.
+// Hard-Cap nur als Sicherheitsnetz gegen Token-Explosion (30 ist großzügig).
+const HOLISTIC_HARD_CAP = 30;
 const HOLISTIC_INTENT_TIMEOUT = 20000;    // 20s für gpt-4o-mini Intent-Call
 const HOLISTIC_PASS_TIMEOUT = 120000;     // 120s für gpt-4o Haupt-Call
 
@@ -5883,15 +5884,25 @@ function buildHolisticSystemPrompt(intent, docConfig) {
   return `Du bist ein erfahrener Vertragsberater und vergleichst zwei Dokumente wie ein Mensch — intelligent, ganzheitlich, priorisiert.${docTypeHint}
 
 DEINE AUFGABE:
-Vergleiche die beiden Dokumente und identifiziere die WICHTIGSTEN Unterschiede (nicht jede Mini-Abweichung). Strukturiere das Ergebnis als SECTIONS — jede Section ist ein thematischer Vergleichsbereich mit konkreten Werten beider Dokumente.${metaHint}${partialHint}
+Vergleiche die beiden Dokumente und finde ALLE echten Unterschiede. Arbeite wie ein erfahrener Anwalt: gründlich, faktenbasiert, nichts übersehen, nichts erfinden.${metaHint}${partialHint}
 
-SECTION QUALITY CONTROL (KRITISCH — Verstöße = Abbruch):
-- Gib ${HOLISTIC_MIN_SECTIONS} bis ${HOLISTIC_MAX_SECTIONS} Sections zurück, priorisiert nach Relevanz (priority 1 = wichtigste)
-- JEDE Section MUSS einen klaren, spezifischen fachlichen Fokus haben
-- ABSOLUT VERBOTEN sind generische Titel wie: "Sonstiges", "Allgemeines", "Weitere Unterschiede", "Sonstige Punkte", "Verschiedenes", "Diverses"
-- Lieber WENIGER Sections als Füll-Sections zurückgeben. Qualität schlägt Quantität.
-- Jede Section muss echten Mehrwert für den User liefern
-- Section-Titel sollen branding-freundlich und konkret sein (z.B. "Kosten & Beitrag" statt "payment", "Absicherung & Haftung" statt "liability", "Vertragslaufzeit & Ausstieg" statt "termination")
+KERNPRINZIP — Kein Formzwang:
+- Es gibt KEINE Mindest- oder Höchstzahl an Sections. Finde so viele Unterschiede wie tatsächlich existieren.
+- Zwei fast identische Dokumente mit einer Preisänderung? → 1 Section. Das ist perfekt.
+- Zwei komplett verschiedene Verträge? → 10, 15, 20 Sections. Alles was echt ist.
+- ERFINDE NIEMALS Unterschiede um eine bestimmte Anzahl zu erreichen.
+- Lasse NIEMALS echte Unterschiede weg um eine bestimmte Anzahl zu unterschreiten.
+
+BESONDERS WICHTIG — Zahlenunterschiede:
+- Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen beider Dokumente.
+- Wenn eine Zahl in Dokument 1 anders ist als in Dokument 2 (z.B. Sicherungseinbehalt 10% vs 2,3%), MUSS das eine eigene Section werden.
+- Wenn beide Dokumente den gleichen Wert haben (z.B. beide 6 Monate Kündigungsfrist), ist das KEIN Unterschied und darf KEINE Section werden.
+
+QUALITÄTSKRITERIEN:
+- JEDE Section MUSS einen echten, konkreten Unterschied zwischen den Dokumenten beschreiben
+- Generische Füll-Titel wie "Sonstiges", "Allgemeines", "Weitere Unterschiede" sind VERBOTEN
+- Section-Titel sollen branding-freundlich und konkret sein (z.B. "Kosten & Beitrag" statt "payment", "Absicherung & Haftung" statt "liability")
+- Priorisiere nach Relevanz (priority 1 = wichtigste, finanziell bedeutsamste)
 
 SECTION-STRUKTUR (jede Section als Objekt in "sections"):
 {
@@ -5924,7 +5935,8 @@ HARTE REGELN (Verstöße werden vom Trust-Guard erkannt und die Section wird ver
 2. Jedes Zitat in doc1Quote/doc2Quote MUSS wörtlich im jeweiligen Rohtext vorkommen
 3. Erklärungen dürfen NUR Zahlen nennen die auch in doc1Value/doc2Value/doc1Quote/doc2Quote stehen
 4. Wenn ein Thema strukturell nicht in einem Dokument vorkommt (z.B. Kündigungsfrist in einer Rechnung): diese Section NICHT erstellen
-5. Deutsche Sprache
+5. Wenn doc1Value und doc2Value IDENTISCH sind: diese Section NICHT erstellen — das ist kein Unterschied
+6. Deutsche Sprache
 
 OUTPUT-SCHEMA (strict JSON):
 {
@@ -6073,7 +6085,7 @@ function validateHolisticOutput(raw, text1, text2, intent) {
 
   const rawSections = Array.isArray(raw?.sections) ? raw.sections : [];
   const validSections = [];
-  const stats = { total: rawSections.length, droppedGeneric: 0, droppedArea: 0, droppedQuote: 0, droppedNumbers: 0, droppedDuplicate: 0 };
+  const stats = { total: rawSections.length, droppedGeneric: 0, droppedArea: 0, droppedQuote: 0, droppedNumbers: 0, droppedDuplicate: 0, droppedIdentical: 0 };
 
   for (const s of rawSections) {
     if (!s || typeof s !== 'object') continue;
@@ -6115,6 +6127,15 @@ function validateHolisticOutput(raw, text1, text2, intent) {
 
     const doc1Value = String(s.doc1Value || '').trim();
     const doc2Value = String(s.doc2Value || '').trim();
+
+    // Identische Werte = kein Unterschied → Section droppen
+    // Normalisiert vergleichen: Leerzeichen, Groß/Klein, Satzzeichen ignorieren
+    const norm = (v) => v.toLowerCase().replace(/[\s.,;:\-–—/]+/g, '').replace(/eur|euro|€/gi, '');
+    if (doc1Value && doc2Value && norm(doc1Value) === norm(doc2Value)) {
+      stats.droppedIdentical++;
+      continue;
+    }
+
     const valuePool = `${doc1Value} ${doc2Value} ${doc1Quote} ${doc2Quote}`;
     const explanation = String(s.explanation || '').trim();
     const recommendation = String(s.recommendation || '').trim();
@@ -6176,11 +6197,11 @@ function validateHolisticOutput(raw, text1, text2, intent) {
   deduped.forEach((s, i) => { s.id = `sec_${i + 1}`; });
 
   // Hard cap
-  const capped = deduped.slice(0, HOLISTIC_MAX_SECTIONS);
+  const capped = deduped.slice(0, HOLISTIC_HARD_CAP);
 
   const droppedTotal = stats.total - capped.length;
   if (droppedTotal > 0) {
-    console.log(`🛡️ Trust-Guard: ${stats.total} → ${capped.length} Sections (dropped: ${stats.droppedGeneric} generic, ${stats.droppedArea} invalid-area, ${stats.droppedQuote} bad-quotes, ${stats.droppedNumbers} hallucinated-numbers, ${stats.droppedDuplicate} duplicates)`);
+    console.log(`🛡️ Trust-Guard: ${stats.total} → ${capped.length} Sections (dropped: ${stats.droppedGeneric} generic, ${stats.droppedArea} invalid-area, ${stats.droppedQuote} bad-quotes, ${stats.droppedNumbers} hallucinated-numbers, ${stats.droppedDuplicate} duplicates, ${stats.droppedIdentical} identical-values)`);
   } else {
     console.log(`🛡️ Trust-Guard: ${stats.total} Sections validiert`);
   }
@@ -6338,8 +6359,8 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
     progress('validating', 82, 'Ergebnisse werden validiert...');
     const validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
 
-    if (validated.sections.length < HOLISTIC_MIN_SECTIONS) {
-      console.warn(`⚠️ Holistic: nur ${validated.sections.length} Sections übrig (min=${HOLISTIC_MIN_SECTIONS}). Pipeline fährt fort, aber Qualität niedrig.`);
+    if (validated.sections.length === 0) {
+      console.warn(`⚠️ Holistic: 0 Sections nach Trust-Guard übrig. Dokumente möglicherweise identisch oder GPT-Antwort fehlerhaft.`);
     }
 
     // Legacy-Adapter für Score-Berechnung + backward compat
