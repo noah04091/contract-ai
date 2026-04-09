@@ -141,17 +141,37 @@ router.get("/results/:id", async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 router.get("/contract/:contractId/latest", async (req, res) => {
   try {
+    // Prefer a successfully completed result
     const result = await LegalPulseV2Result.findOne({
       contractId: req.params.contractId,
       userId: req.user.userId,
       status: "completed",
     }).sort({ createdAt: -1 }).lean();
 
-    if (!result) {
-      return res.json({ result: null });
+    if (result) {
+      return res.json({ result });
     }
 
-    res.json({ result });
+    // No completed result — check if the last attempt was rejected as non-contract
+    // so the frontend can show a clear message instead of "no analysis yet".
+    const rejected = await LegalPulseV2Result.findOne({
+      contractId: req.params.contractId,
+      userId: req.user.userId,
+      status: "rejected_not_contract",
+    }).sort({ createdAt: -1 }).lean();
+
+    if (rejected) {
+      return res.json({
+        result: null,
+        rejected: {
+          status: "rejected_not_contract",
+          reason: rejected.rejectionReason || "Dokument ist kein Vertrag",
+          rejectedAt: rejected.completedAt || rejected.createdAt,
+        },
+      });
+    }
+
+    return res.json({ result: null });
   } catch (error) {
     console.error("[PulseV2] Get latest error:", error);
     res.status(500).json({ error: "Fehler beim Laden des Ergebnisses" });

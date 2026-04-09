@@ -74,7 +74,7 @@ const PulseV2: React.FC = () => {
 const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   const {
     status, progress, progressMessage, stages,
-    result, error,
+    result, error, rejected,
     partialFindings, partialClauses, contractMeta,
     startAnalysis, cancelAnalysis, loadLatest,
   } = usePulseV2();
@@ -247,8 +247,30 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         </>
       )}
 
+      {/* Rejected: Document is not a contract */}
+      {status === 'error' && rejected && (
+        <div style={{
+          padding: 24,
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: 12,
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#b45309', marginBottom: 8 }}>
+            Kein Vertrag erkannt
+          </div>
+          <div style={{ fontSize: 13, color: '#78350f', marginBottom: 8 }}>
+            {rejected.reason}
+          </div>
+          <div style={{ fontSize: 12, color: '#92400e' }}>
+            Legal Pulse analysiert ausschließlich Verträge. Rechnungen, Angebote, Quittungen, Formulare und ähnliche Dokumente werden automatisch abgelehnt,
+            um die Qualität der Risikoanalyse zu gewährleisten.
+          </div>
+        </div>
+      )}
+
       {/* Error */}
-      {status === 'error' && (
+      {status === 'error' && !rejected && (
         <div style={{
           padding: 24,
           background: '#fef2f2',

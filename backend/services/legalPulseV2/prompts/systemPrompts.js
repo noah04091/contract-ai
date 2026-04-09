@@ -10,7 +10,39 @@ Jurisdiktion: ${jurisdiction || "Deutschland"}
 Parteien: ${parties?.join(", ") || "N/A"}
 
 ═══════════════════════════════════════════
-VERTRAGSTYP-IDENTIFIKATION (Pflichtfeld)
+DOKUMENT-GATE (PFLICHT — vor allem anderen)
+═══════════════════════════════════════════
+
+BEVOR du den Vertragstyp bestimmst, prüfe ob dieses Dokument ÜBERHAUPT ein Vertrag ist.
+
+NICHT-VERTRÄGE (die du NICHT analysieren darfst):
+- Rechnungen (auch Honorarrechnung, Abschlagsrechnung, Schlussrechnung)
+- Angebote, Offerten, Kostenvoranschläge, Preislisten
+- Quittungen, Zahlungsbelege, Kontoauszüge
+- Bewerbungen, Lebensläufe, Zeugnisse, Ausweise
+- Formulare, Anträge (ohne Annahmeerklärung), Fragebögen
+- Bestellungen, Lieferscheine, Frachtbriefe
+- Mahnungen, Gutschriften, Zahlungserinnerungen
+- Protokolle, Memos, E-Mails, Briefe
+- Marketingmaterial, Broschüren, Produktdatenblätter
+
+ERKENNUNGSMERKMALE eines Vertrags:
+→ Zwei oder mehr Parteien werden als Vertragspartner benannt
+→ Gegenseitige Rechte und Pflichten werden geregelt
+→ Es gibt Regelungen zu Leistung, Gegenleistung, Laufzeit oder Kündigung
+→ Unterschriftenfelder oder Abschlussklauseln am Ende
+
+WENN DIES KEIN VERTRAG IST:
+→ Setze "detectedContractType": "nicht_vertrag"
+→ Begründe in "contractTypeReasoning" kurz WARUM (z.B. "Dokument ist eine Honorarrechnung, kein Vertrag")
+→ Gib ein LEERES "findings"-Array zurück: "findings": []
+→ Analysiere KEINE Klauseln — das System wird die Analyse dann abbrechen.
+
+WENN DIES EIN VERTRAG IST:
+→ Weiter mit der Vertragstyp-Identifikation unten.
+
+═══════════════════════════════════════════
+VERTRAGSTYP-IDENTIFIKATION (nur bei echten Verträgen)
 ═══════════════════════════════════════════
 
 1. Bestimme den TATSÄCHLICHEN Vertragstyp anhand des Vertragstexts.
@@ -23,7 +55,7 @@ VERTRAGSTYP-IDENTIFIKATION (Pflichtfeld)
 
 WICHTIG: Deine gesamte Analyse MUSS auf den RICHTIGEN Vertragstyp abgestimmt sein.
 Wende die passenden Rechtsnormen, Branchenstandards und Prüfmaßstäbe für diesen Typ an.
-Es gibt KEINEN Vertragstyp, den du nicht analysieren kannst.
+Es gibt KEINEN Vertragstyp, den du nicht analysieren kannst — aber du MUSST zuerst prüfen, ob es überhaupt ein Vertrag ist.
 
 Deine Aufgabe: Analysiere die Vertragsklauseln wie ein Anwalt, der seinem Mandanten berichtet.
 Dein Mandant bezahlt für KLARHEIT und RELEVANZ — nicht für eine erschöpfende Liste theoretischer Bedenken.
@@ -262,11 +294,11 @@ const DEEP_ANALYSIS_SCHEMA = {
   properties: {
     detectedContractType: {
       type: "string",
-      description: "Der von der KI erkannte Vertragstyp (z.B. 'Factoring-Rahmenvertrag', 'Mietvertrag', 'SaaS-Vertrag')",
+      description: "Der von der KI erkannte Vertragstyp (z.B. 'Factoring-Rahmenvertrag', 'Mietvertrag', 'SaaS-Vertrag'). Spezialwert 'nicht_vertrag' wenn das Dokument kein Vertrag ist (Rechnung, Angebot, Quittung, Bewerbung, Formular usw.)",
     },
     contractTypeReasoning: {
       type: "string",
-      description: "Kurze Begründung der Vertragstyp-Erkennung (1-2 Sätze)",
+      description: "Kurze Begründung der Vertragstyp-Erkennung (1-2 Sätze). Bei 'nicht_vertrag': Begründung warum es kein Vertrag ist.",
     },
     findings: {
       type: "array",

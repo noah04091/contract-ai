@@ -209,6 +209,58 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     const analysisResult = await runDeepAnalysis(cleanedText, context, onProgress);
 
+    // ─── Document-Gate: AI rejected this as a non-contract ───────────
+    // If Stage 2 reports that the document is not actually a contract
+    // (invoice, offer, quote, form, etc.) we stop the pipeline here.
+    // The result is persisted with status "rejected_not_contract" so
+    // the frontend can show a clear message and the radar query can
+    // filter out junk entries.
+    if (analysisResult.rejectedAsNotContract) {
+      const reason = analysisResult.aiContractTypeReasoning || "Dokument ist kein Vertrag";
+      console.log(`[PulseV2] Document rejected as non-contract: ${reason}`);
+
+      await LegalPulseV2Result.updateOne(
+        { _id: record._id },
+        {
+          $set: {
+            status: "rejected_not_contract",
+            rejectionReason: reason,
+            document: {
+              ...docMeta,
+              contractType: "nicht_vertrag",
+              contractTypeSource: "ai",
+              contractTypeReasoning: reason,
+              contractTypeConfidence: 95,
+            },
+            completedAt: new Date(),
+          },
+          $push: {
+            "costs.perStage": analysisResult.costs,
+          },
+          $inc: {
+            "costs.totalTokensInput": analysisResult.costs.inputTokens,
+            "costs.totalTokensOutput": analysisResult.costs.outputTokens,
+            "costs.totalCostUSD": analysisResult.costs.costUSD,
+          },
+        }
+      );
+
+      onProgress(100, `Analyse abgebrochen: ${reason}`, {
+        stage: 2,
+        stageName: "Document Gate",
+        complete: true,
+        error: true,
+        rejectedNotContract: true,
+        rejectionReason: reason,
+      });
+
+      return {
+        resultId: record._id.toString(),
+        rejectedNotContract: true,
+        rejectionReason: reason,
+      };
+    }
+
     // Use AI-detected contract type if available (more reliable than keyword classifier)
     if (analysisResult.aiDetectedContractType) {
       const aiType = analysisResult.aiDetectedContractType;

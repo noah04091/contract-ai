@@ -228,6 +228,29 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
         aiContractTypeReasoning = result.contractTypeReasoning;
       }
 
+      // Early abort: AI has determined this is NOT a contract (e.g. invoice, offer, form).
+      // No further batches — orchestrator will reject and refund the analysis counter.
+      if (aiDetectedContractType === "nicht_vertrag") {
+        console.log(`[PulseV2] AI rejected document as non-contract: ${aiContractTypeReasoning}`);
+        const costUSD = calculateCost("gpt-4o", totalInputTokens, totalOutputTokens);
+        return {
+          clauses,
+          clauseFindings: [],
+          coverage: { total: clauses.length, analyzed: 0, notAnalyzed: clauses.length, percentage: 0 },
+          aiDetectedContractType: "nicht_vertrag",
+          aiContractTypeReasoning,
+          rejectedAsNotContract: true,
+          costs: {
+            stage: 2,
+            stageName: "Deep Analysis",
+            model: "gpt-4o",
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            costUSD,
+          },
+        };
+      }
+
       // Mark clauses as successfully analyzed
       for (const c of batches[i]) analyzedClauseIds.add(c.id);
 

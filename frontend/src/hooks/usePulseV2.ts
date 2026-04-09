@@ -41,6 +41,11 @@ interface PartialClause {
   sectionNumber: string;
 }
 
+interface PulseV2Rejection {
+  reason: string;
+  rejectedAt?: string;
+}
+
 interface PulseV2State {
   status: PulseV2Status;
   progress: number;
@@ -49,6 +54,7 @@ interface PulseV2State {
   resultId: string | null;
   result: PulseV2Result | null;
   error: string | null;
+  rejected: PulseV2Rejection | null;
   partialFindings: PartialFinding[];
   partialClauses: PartialClause[];
   contractMeta: { name?: string; type?: string } | null;
@@ -61,6 +67,7 @@ type PulseV2Action =
   | { type: 'SET_CONTRACT_META'; name?: string; contractType?: string }
   | { type: 'ANALYSIS_COMPLETE'; result: PulseV2Result; resultId: string }
   | { type: 'ANALYSIS_ERROR'; error: string }
+  | { type: 'ANALYSIS_REJECTED'; rejection: PulseV2Rejection }
   | { type: 'SET_RESULT'; result: PulseV2Result }
   | { type: 'RESET' };
 
@@ -85,6 +92,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         resultId: null,
         result: null,
         error: null,
+        rejected: null,
         partialFindings: [],
         partialClauses: [],
         contractMeta: null,
@@ -137,6 +145,16 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         error: action.error,
       };
 
+    case 'ANALYSIS_REJECTED':
+      return {
+        ...state,
+        status: 'error',
+        progress: 0,
+        progressMessage: action.rejection.reason,
+        rejected: action.rejection,
+        error: null,
+      };
+
     case 'SET_RESULT':
       return {
         ...state,
@@ -172,6 +190,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         resultId: null,
         result: null,
         error: null,
+        rejected: null,
         partialFindings: [],
         partialClauses: [],
         contractMeta: null,
@@ -191,6 +210,7 @@ export function usePulseV2() {
     resultId: null,
     result: null,
     error: null,
+    rejected: null,
     partialFindings: [],
     partialClauses: [],
     contractMeta: null,
@@ -239,6 +259,16 @@ export function usePulseV2() {
             const event = raw as PulseV2ProgressEvent;
 
             if (event.error) {
+              // Document-Gate: Stage 2 AI rejected the document as non-contract
+              if (raw.rejectedNotContract) {
+                dispatch({
+                  type: 'ANALYSIS_REJECTED',
+                  rejection: {
+                    reason: raw.rejectionReason || event.message || 'Dokument ist kein Vertrag',
+                  },
+                });
+                return;
+              }
               dispatch({ type: 'ANALYSIS_ERROR', error: event.message });
               return;
             }
@@ -317,6 +347,16 @@ export function usePulseV2() {
     if (data.result) {
       dispatch({ type: 'SET_RESULT', result: data.result });
       return data.result;
+    }
+    // Previous attempt was rejected as non-contract — surface it to the UI
+    if (data.rejected) {
+      dispatch({
+        type: 'ANALYSIS_REJECTED',
+        rejection: {
+          reason: data.rejected.reason || 'Dokument ist kein Vertrag',
+          rejectedAt: data.rejected.rejectedAt,
+        },
+      });
     }
     return null;
   }, []);

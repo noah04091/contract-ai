@@ -435,8 +435,10 @@ async function fetchRecentLawChanges(db) {
   if (filtered.length === 0) return [];
 
   // 3. Get active contract types from V2 results
+  // Exclude "nicht_vertrag" entries (Stage 2 Document-Gate rejects)
   const contractTypes = await LegalPulseV2Result.distinct("document.contractType", {
     status: "completed",
+    "document.contractType": { $ne: "nicht_vertrag" },
   });
   const activeTypes = contractTypes
     .filter(Boolean)
@@ -510,10 +512,12 @@ async function matchLawToContracts(db, lawChange, options = {}) {
 
   if (relevantTypes.length > 0) {
     // KNOWN area(s) → fast pre-filter by contract type
+    // Exclude nicht_vertrag (Stage 2 Document-Gate rejects)
     query = {
       status: "completed",
       "document.contractType": {
         $in: relevantTypes.map((t) => new RegExp(t, "i")),
+        $ne: "nicht_vertrag",
       },
     };
     limit = 50;
@@ -522,7 +526,10 @@ async function matchLawToContracts(db, lawChange, options = {}) {
     // and let the AI decide if they're affected. Conservative limit to control cost.
     const primaryArea = uniqueAreas[0] || "(empty)";
     console.log(`[PulseV2Radar] No pre-filter mapping for area "${primaryArea}" — using AI-based matching (sample of recent contracts)`);
-    query = { status: "completed" };
+    query = {
+      status: "completed",
+      "document.contractType": { $ne: "nicht_vertrag" },
+    };
     limit = 10; // Smaller sample for unknown areas to control AI cost
   }
 
@@ -573,6 +580,7 @@ async function matchLawToContracts(db, lawChange, options = {}) {
             const semQuery = {
               status: "completed",
               contractId: { $in: newContractIds },
+              "document.contractType": { $ne: "nicht_vertrag" },
             };
             if (options.userId) semQuery.userId = options.userId;
 

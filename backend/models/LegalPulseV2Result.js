@@ -53,12 +53,15 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["pending", "running", "completed", "failed"],
+    enum: ["pending", "running", "completed", "failed", "rejected_not_contract"],
     default: "pending",
   },
   currentStage: { type: Number, default: 0 },
   error: String,
   triggeredBy: { type: String, enum: ["manual", "scheduled"], default: "manual" },
+
+  // When status === "rejected_not_contract": reason from Stage 2 AI
+  rejectionReason: String,
 
   // Stage 0 — Document Intelligence
   document: {
