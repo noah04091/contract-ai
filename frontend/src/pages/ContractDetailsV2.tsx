@@ -72,7 +72,7 @@ interface ImportantDate {
 }
 
 interface CalendarEvent {
-  _id: string;
+  id: string;  // Backend gibt 'id' zurück, nicht '_id' (calendar.js:176)
   title: string;
   date: string;
   type: string;
@@ -928,7 +928,7 @@ export default function ContractDetailsV2() {
 
   // Edit-Mode für ein bestehendes Event starten
   const startEditingEvent = (event: CalendarEvent) => {
-    setEditingEventId(event._id);
+    setEditingEventId(event.id);
     setEventFormTitle(event.title);
     // Date in YYYY-MM-DD Format konvertieren für <input type="date">
     const d = new Date(event.date);
@@ -3396,10 +3396,10 @@ export default function ContractDetailsV2() {
                           <div className={styles.timelineList}>
                             {calendarEvents.map((event) => (
                               <div
-                                key={event._id}
-                                className={`${styles.timelineItem} ${styles[event.severity]} ${canEditCalendarEvents && editingEventId !== event._id ? styles.metricCardEditable : ''}`}
+                                key={event.id}
+                                className={`${styles.timelineItem} ${styles[event.severity]} ${canEditCalendarEvents && editingEventId !== event.id ? styles.metricCardEditable : ''}`}
                                 onClick={() => {
-                                  if (canEditCalendarEvents && editingEventId !== event._id) {
+                                  if (canEditCalendarEvents && editingEventId !== event.id) {
                                     startEditingEvent(event);
                                   }
                                 }}
