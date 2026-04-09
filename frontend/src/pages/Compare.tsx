@@ -256,9 +256,10 @@ export default function EnhancedCompare() {
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
   // 📊 SSE Progress State
   const [progress, setProgress] = useState<ProgressStep | null>(null);
-  // 🆕 V2: Perspective state
+  // 🆕 V2: Perspective state + Cache
   const [perspective, setPerspective] = useState<Perspective>('neutral');
   const [reAnalyzing, setReAnalyzing] = useState(false);
+  const [perspectiveCache, setPerspectiveCache] = useState<Record<string, ComparisonResult>>({});
 
   // 📜 History State (loaded from backend API)
   const [showHistory, setShowHistory] = useState(false);
@@ -554,6 +555,7 @@ export default function EnhancedCompare() {
 
     setLoading(true);
     setResult(null);
+    setPerspectiveCache({});
     setProgress({ step: 'init', progress: 0, message: 'Starte Vergleich...' });
 
     const formData = new FormData();
@@ -620,6 +622,8 @@ export default function EnhancedCompare() {
               } else if (eventData.type === 'result') {
                 if (streamTimeout !== null) clearTimeout(streamTimeout);
                 setResult(eventData.data);
+                // Cache initiales Ergebnis unter aktueller Perspektive
+                setPerspectiveCache({ [perspective]: eventData.data });
                 setFile1Name(file1?.name || null);
                 setFile2Name(file2?.name || null);
                 setProgress(null);
@@ -661,13 +665,20 @@ export default function EnhancedCompare() {
     }
   };
 
-  // 🆕 V2: Perspective change — re-analyze Phase B only
+  // 🆕 V2: Perspective change — mit Cache (bereits geladene Perspektiven sofort verfügbar)
   const handlePerspectiveChange = async (newPerspective: Perspective) => {
     if (!result || !isV2Result(result)) return;
     const v2 = result as ComparisonResultV2;
     if (!v2.contractMap?.contract1 || !v2.contractMap?.contract2) return;
 
     setPerspective(newPerspective);
+
+    // Cache-Hit → sofort anzeigen, kein API-Call
+    if (perspectiveCache[newPerspective]) {
+      setResult(perspectiveCache[newPerspective]);
+      return;
+    }
+
     setReAnalyzing(true);
 
     try {
@@ -711,6 +722,8 @@ export default function EnhancedCompare() {
               const eventData = JSON.parse(line.slice(6));
               if (eventData.type === 'result') {
                 setResult(eventData.data);
+                // Ergebnis im Cache speichern
+                setPerspectiveCache(prev => ({ ...prev, [newPerspective]: eventData.data }));
               } else if (eventData.type === 'error') {
                 setNotification({ message: eventData.message || "Re-Analyse fehlgeschlagen", type: "error" });
               }
@@ -730,6 +743,8 @@ export default function EnhancedCompare() {
     setFile1(null);
     setFile2(null);
     setResult(null);
+    setPerspectiveCache({});
+    setPerspective('neutral');
   };
 
   const [pdfExporting, setPdfExporting] = useState(false);
