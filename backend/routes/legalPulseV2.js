@@ -9,6 +9,7 @@ const rateLimit = require("express-rate-limit");
 const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
+const verifyAdmin = require("../middleware/verifyAdmin");
 const { fixUtf8Filename } = require("../utils/fixUtf8");
 
 // Normalize fields that may be stored as object {name, displayName, ...} or string
@@ -1856,8 +1857,7 @@ router.post("/scan-now", requirePremium, scanNowRateLimiter, async (req, res) =>
 
 // ══════════════════════════════════════════════════════════════
 // ADMIN TEST ENDPOINTS — Frühwarnsystem End-to-End Testing
-// Protected by requirePremium — only premium users can access
-// TODO: Remove after successful testing
+// Protected by verifyAdmin — only admin users can access
 // ══════════════════════════════════════════════════════════════
 
 /**
@@ -1888,7 +1888,7 @@ function checkTitleCleanliness(title) {
  *  - areasAssigned: Do all recent laws have an area assigned?
  *  - processedFlagSet: Are new entries marked pulseV2Processed: false?
  */
-router.post("/admin/test-rss-sync", requirePremium, async (req, res) => {
+router.post("/admin/test-rss-sync", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2018,7 +2018,7 @@ router.post("/admin/test-rss-sync", requirePremium, async (req, res) => {
  *  - noDuplicates: Second run inserted 0 new items (or very few)
  *  - idempotent: Total law count didn't significantly increase on second run
  */
-router.post("/admin/test-rss-dedup", requirePremium, async (req, res) => {
+router.post("/admin/test-rss-dedup", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2092,7 +2092,7 @@ router.post("/admin/test-rss-dedup", requirePremium, async (req, res) => {
  *  - noOtherUsersAffected: No alerts created for other userIds
  *  - clauseIdsValid: If alerts exist, clauseIds reference real clauses
  */
-router.post("/admin/test-radar", requirePremium, async (req, res) => {
+router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2346,7 +2346,7 @@ router.post("/admin/test-radar", requirePremium, async (req, res) => {
  *  - dataQuality: Sample 20 recent laws, check for HTML artifacts in titles
  *  - userHasV2Results: Does this user have completed V2 analyses?
  */
-router.get("/admin/test-status", requirePremium, async (req, res) => {
+router.get("/admin/test-status", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2526,7 +2526,7 @@ router.get("/admin/test-status", requirePremium, async (req, res) => {
  *  - hasRecommendation: Does the email contain a recommendation?
  *  - hasDashboardLink: Does the email contain a link to the dashboard?
  */
-router.post("/admin/test-email-preview", requirePremium, async (req, res) => {
+router.post("/admin/test-email-preview", verifyAdmin, async (req, res) => {
   try {
     const {
       generateEmailTemplate,
@@ -2642,7 +2642,7 @@ router.post("/admin/test-email-preview", requirePremium, async (req, res) => {
  *  - clauseImpactsValid: clauseImpacts have clauseId, clauseTitle, impact, suggestedChange
  *  - statusTracking: Alerts have status field (unread/read/dismissed/resolved)
  */
-router.get("/admin/test-alerts-check", requirePremium, async (req, res) => {
+router.get("/admin/test-alerts-check", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2802,7 +2802,7 @@ router.get("/admin/test-alerts-check", requirePremium, async (req, res) => {
  * 3. Are there entries in the email_queue for this user?
  * 4. What status do they have?
  */
-router.get("/admin/test-email-diagnostic", requirePremium, async (req, res) => {
+router.get("/admin/test-email-diagnostic", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
@@ -2910,7 +2910,7 @@ router.get("/admin/test-email-diagnostic", requirePremium, async (req, res) => {
  * POST /admin/test-email-reactivate
  * Reactivates a bounced email and retries skipped radar emails.
  */
-router.post("/admin/test-email-reactivate", requirePremium, async (req, res) => {
+router.post("/admin/test-email-reactivate", verifyAdmin, async (req, res) => {
   try {
     const database = require("../config/database");
     const db = await database.connect();
