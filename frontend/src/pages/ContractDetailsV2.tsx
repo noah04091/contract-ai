@@ -3399,7 +3399,7 @@ export default function ContractDetailsV2() {
                                 key={event._id}
                                 className={`${styles.timelineItem} ${styles[event.severity]} ${canEditCalendarEvents && editingEventId !== event._id ? styles.metricCardEditable : ''}`}
                                 onClick={() => {
-                                  if (canEditCalendarEvents && editingEventId !== event._id && !showAddEventForm) {
+                                  if (canEditCalendarEvents && editingEventId !== event._id) {
                                     startEditingEvent(event);
                                   }
                                 }}
