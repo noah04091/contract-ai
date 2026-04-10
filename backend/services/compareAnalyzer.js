@@ -5869,59 +5869,45 @@ function summarizeLayer0Facts(rawValues) {
 }
 
 /**
- * Vergleicht Klauseln beider Dokumente nach Area und zeigt keyValues nebeneinander.
- * Gibt GPT eine konkrete Checkliste der Dimensionen, die sich unterscheiden.
+ * Kompakte Zusammenfassung der keyValues pro Area und Dokument.
+ * Zeigt GPT auf einen Blick welche Dimensionen in welchem Dokument welche Werte haben.
  */
 function computeClauseDiffHints(map1, map2) {
   const clauses1 = map1?.clauses || [];
   const clauses2 = map2?.clauses || [];
   if (!clauses1.length && !clauses2.length) return '';
 
-  // Gruppiere Klauseln nach Area
+  // Sammle alle keyValues pro Area pro Dokument
   const byArea1 = {};
   for (const c of clauses1) {
-    if (!c.area) continue;
+    if (!c.area || !c.keyValues) continue;
     if (!byArea1[c.area]) byArea1[c.area] = {};
-    if (c.keyValues) Object.assign(byArea1[c.area], c.keyValues);
+    Object.assign(byArea1[c.area], c.keyValues);
   }
   const byArea2 = {};
   for (const c of clauses2) {
-    if (!c.area) continue;
+    if (!c.area || !c.keyValues) continue;
     if (!byArea2[c.area]) byArea2[c.area] = {};
-    if (c.keyValues) Object.assign(byArea2[c.area], c.keyValues);
+    Object.assign(byArea2[c.area], c.keyValues);
   }
 
   const allAreas = new Set([...Object.keys(byArea1), ...Object.keys(byArea2)]);
-  const hints = [];
+  if (allAreas.size === 0) return '';
 
+  const lines = [];
   for (const area of allAreas) {
-    const kv1 = byArea1[area] || {};
-    const kv2 = byArea2[area] || {};
-    const allKeys = new Set([...Object.keys(kv1), ...Object.keys(kv2)]);
-
-    for (const key of allKeys) {
-      const v1 = kv1[key];
-      const v2 = kv2[key];
-      if (v1 && v2 && String(v1) !== String(v2)) {
-        hints.push(`  ⚡ [${area}] "${key}": Doc1="${v1}" vs Doc2="${v2}"`);
-      } else if (v1 && !v2) {
-        hints.push(`  📌 [${area}] "${key}": Nur in Doc1="${v1}"`);
-      } else if (!v1 && v2) {
-        hints.push(`  📌 [${area}] "${key}": Nur in Doc2="${v2}"`);
-      }
-    }
+    const kv1 = byArea1[area];
+    const kv2 = byArea2[area];
+    if (!kv1 && !kv2) continue;
+    const fmt = (kv) => kv ? Object.entries(kv).map(([k,v]) => `${k}=${v}`).join(', ') : '(leer)';
+    lines.push(`[${area}] Doc1: ${fmt(kv1)} | Doc2: ${fmt(kv2)}`);
   }
 
-  if (hints.length === 0) return '';
-
   return `\n═══════════════════════════════════════
-AUTOMATISCH ERKANNTE KLAUSEL-UNTERSCHIEDE (Pflicht-Checkliste!)
+KEYVALUES GEGENÜBERSTELLUNG (vergleiche diese Werte Punkt für Punkt!)
 ═══════════════════════════════════════
-Die folgenden Unterschiede wurden automatisch aus den strukturierten Daten erkannt.
-JEDER Punkt muss als EIGENE Section behandelt werden (sofern er einen echten Unterschied darstellt):
-${hints.slice(0, 30).join('\n')}
-${hints.length > 30 ? `(... und ${hints.length - 30} weitere)` : ''}
-Prüfe zusätzlich den Rohtext auf Unterschiede die in den strukturierten Daten nicht erfasst sind!`;
+${lines.join('\n')}
+Erstelle für JEDEN Wert der sich zwischen Doc1 und Doc2 unterscheidet eine eigene Section!`;
 }
 
 function buildHolisticSystemPrompt(intent, docConfig) {
@@ -5949,13 +5935,12 @@ KERNPRINZIP — Kein Formzwang:
 - ERFINDE NIEMALS Unterschiede um eine bestimmte Anzahl zu erreichen.
 - Lasse NIEMALS echte Unterschiede weg um eine bestimmte Anzahl zu unterschreiten.
 
-GRANULARITÄT — EIN UNTERSCHIED = EINE SECTION:
-- Prüfe JEDEN Zahlenwert, JEDE Kondition, JEDE Leistung in BEIDEN Dokumenten.
-- Jede Dimension die sich unterscheidet bekommt eine EIGENE Section:
-  Preis/Monat, Einrichtungsgebühr, Datenvolumen, Download-Geschwindigkeit, Upload-Geschwindigkeit, Telefonie-Modell (Flat vs. pro Minute), SMS-Modell, Laufzeit, Kündigungsfrist, Garantiedauer, Haftungssumme, etc.
-- NICHT zusammenfassen: "Datenvolumen & Geschwindigkeit" ist FALSCH → Zwei Sections: "Datenvolumen" + "Download-Geschwindigkeit"
-- Wenn beide Dokumente den gleichen Wert haben → KEINE Section (kein Unterschied)
-- Wenn die "KLAUSEL-UNTERSCHIEDE" Checkliste unten Punkte auflistet, MUSS jeder davon eine eigene Section bekommen.
+BESONDERS WICHTIG — Zahlenunterschiede:
+- Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen UND in den keyValues der Klauseln beider Dokumente.
+- Wenn eine Zahl in Dokument 1 anders ist als in Dokument 2 (z.B. Sicherungseinbehalt 10% vs 2,3%), MUSS das eine eigene Section werden.
+- Wenn beide Dokumente den gleichen Wert haben (z.B. beide 6 Monate Kündigungsfrist), ist das KEIN Unterschied und darf KEINE Section werden.
+- JEDER dieser Punkte muss eine EIGENE Section werden, nicht zusammengefasst: Preis pro Monat, Einrichtungsgebühr, Datenvolumen, Geschwindigkeit, Leistungsumfang (Flatrate vs. pro Nutzung), etc.
+- NICHT mehrere Zahlenunterschiede in eine Section zusammenfassen — jeder verdient Einzelbetrachtung.
 
 BESONDERS WICHTIG — recommendationTarget:
 - Wenn bei einem Unterschied KLAR ist welches Dokument besser abschneidet (z.B. niedrigerer Preis, mehr Leistung, längere Garantie), MUSS recommendationTarget gesetzt werden (1 oder 2).
