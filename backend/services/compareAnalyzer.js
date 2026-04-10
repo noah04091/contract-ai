@@ -5868,6 +5868,48 @@ function summarizeLayer0Facts(rawValues) {
     }));
 }
 
+/**
+ * Vergleicht Layer-0 Fakten beider Dokumente und erstellt eine Checkliste
+ * der Unterschiede, die GPT als Orientierung dient.
+ */
+function computeFactDiffHints(facts1, facts2) {
+  if (!facts1?.length && !facts2?.length) return '';
+
+  // Normalisiere Keys für Matching
+  const normalize = (k) => (k || '').toLowerCase().replace(/[^a-zäöüß0-9]/g, '');
+
+  const map1 = new Map();
+  for (const f of (facts1 || [])) {
+    const nk = normalize(f.key);
+    if (nk) map1.set(nk, f);
+  }
+
+  const hints = [];
+
+  // Finde Werte die in beiden Dokumenten vorkommen aber unterschiedlich sind
+  for (const f2 of (facts2 || [])) {
+    const nk = normalize(f2.key);
+    if (!nk) continue;
+    const f1 = map1.get(nk);
+    if (f1 && f1.value !== f2.value) {
+      hints.push(`  ⚡ "${f1.key}": Doc1="${f1.value}" vs Doc2="${f2.value}"`);
+      map1.delete(nk); // als bearbeitet markieren
+    } else if (f1) {
+      map1.delete(nk); // gleicher Wert, kein Hinweis
+    }
+  }
+
+  if (hints.length === 0) return '';
+
+  return `\n═══════════════════════════════════════
+AUTOMATISCH ERKANNTE ZAHLEN-UNTERSCHIEDE (Checkliste für dich!)
+═══════════════════════════════════════
+Die folgenden Unterschiede wurden automatisch aus den verifizierten Zahlen erkannt.
+Jeder dieser Punkte verdient MINDESTENS eine eigene Section:
+${hints.join('\n')}
+Prüfe zusätzlich den Rohtext auf weitere Unterschiede die hier nicht aufgelistet sind!`;
+}
+
 function buildHolisticSystemPrompt(intent, docConfig) {
   const metaHint = intent.level === 'meta'
     ? `\n\n⚠️ META-LEVEL: Die Dokumente sind nur auf META-EBENE vergleichbar (unterschiedliche Produkttypen). Fokussiere dich AUSSCHLIEßLICH auf: ${intent.comparableDimensions.join(', ')}. Die erste Section muss erklären, dass es sich um fundamental unterschiedliche Dokumenttypen handelt. Vergleiche KEINE Detailklauseln aus unvereinbaren Bereichen.`
@@ -5893,12 +5935,20 @@ KERNPRINZIP — Kein Formzwang:
 - ERFINDE NIEMALS Unterschiede um eine bestimmte Anzahl zu erreichen.
 - Lasse NIEMALS echte Unterschiede weg um eine bestimmte Anzahl zu unterschreiten.
 
+ARBEITSWEISE — Zwei Schritte (PFLICHT):
+Schritt 1: Lies BEIDE Dokumente komplett. Erstelle eine mentale Liste ALLER Unterschiede — Zahlen, Konditionen, Leistungen, Fristen, Formulierungen, fehlende Punkte.
+Schritt 2: Erstelle für JEDEN einzelnen Unterschied auf deiner Liste eine EIGENE Section.
+
+GRANULARITÄTS-REGEL (KRITISCH):
+- Ein Unterschied = Eine Section. IMMER.
+- Wenn zwei Punkte VERSCHIEDENE Dimensionen betreffen (z.B. Menge vs. Geschwindigkeit, Preis vs. Laufzeit, Garantiedauer vs. Haftungshöhe), sind das ZWEI Sections — auch wenn sie thematisch verwandt scheinen.
+- Zusammenfassen nur erlaubt wenn zwei Punkte exakt dasselbe Thema betreffen (z.B. "Grundpreis 10€ vs 15€" und "Jahreskosten 120€ vs 180€" = gleiche Dimension Kosten → eine Section).
+- Faustregel: Wenn du "&" oder "und" in einen Section-Titel schreiben willst, prüfe ob es nicht zwei Sections sein sollten.
+
 BESONDERS WICHTIG — Zahlenunterschiede:
 - Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen UND in den keyValues der Klauseln beider Dokumente.
 - Wenn eine Zahl in Dokument 1 anders ist als in Dokument 2 (z.B. Sicherungseinbehalt 10% vs 2,3%), MUSS das eine eigene Section werden.
 - Wenn beide Dokumente den gleichen Wert haben (z.B. beide 6 Monate Kündigungsfrist), ist das KEIN Unterschied und darf KEINE Section werden.
-- JEDER dieser Punkte muss eine EIGENE Section werden, nicht zusammengefasst: Preis pro Monat, Einrichtungsgebühr, Datenvolumen, Geschwindigkeit, Leistungsumfang (Flatrate vs. pro Nutzung), etc.
-- NICHT mehrere Zahlenunterschiede in eine Section zusammenfassen — jeder verdient Einzelbetrachtung.
 
 BESONDERS WICHTIG — recommendationTarget:
 - Wenn bei einem Unterschied KLAR ist welches Dokument besser abschneidet (z.B. niedrigerer Preis, mehr Leistung, längere Garantie), MUSS recommendationTarget gesetzt werden (1 oder 2).
@@ -6028,8 +6078,9 @@ ${JSON.stringify(facts2)}
 DOKUMENT 2 — ROHTEXT (gekürzt)
 ═══════════════════════════════════════
 ${truncText(text2)}
+${computeFactDiffHints(facts1, facts2)}
 
-Erstelle jetzt die Sections für den Vergleich. Denk daran: Qualität > Quantität. Keine generischen Titel.`;
+Erstelle jetzt die Sections für den Vergleich. Denk daran: Qualität > Quantität. Ein Unterschied = eine Section. Keine generischen Titel.`;
 }
 
 /**
