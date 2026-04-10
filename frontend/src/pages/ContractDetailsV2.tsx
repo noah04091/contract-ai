@@ -4052,29 +4052,31 @@ export default function ContractDetailsV2() {
         )}
       </AnimatePresence>
 
-      {/* Edit Modal */}
+      {/* Edit & Share Modals */}
       {contract && (
-        <ContractEditModal
-          contract={{
-            ...contract,
-            status: contract.status || 'Aktiv',
-            createdAt: contract.createdAt || contract.uploadedAt || new Date().toISOString()
-          }}
-          show={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={(updatedContract) => {
-            setContract({
+        <>
+          <ContractEditModal
+            contract={{
               ...contract,
-              ...updatedContract
-            });
-            toast.success('Vertrag erfolgreich aktualisiert');
-          }}
-        />
-        <ContractShareModal
-          contract={{ _id: contract._id, name: contract.name }}
-          show={showShareModal}
-          onClose={() => setShowShareModal(false)}
-        />
+              status: contract.status || 'Aktiv',
+              createdAt: contract.createdAt || contract.uploadedAt || new Date().toISOString()
+            }}
+            show={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onUpdate={(updatedContract) => {
+              setContract({
+                ...contract,
+                ...updatedContract
+              });
+              toast.success('Vertrag erfolgreich aktualisiert');
+            }}
+          />
+          <ContractShareModal
+            contract={{ _id: contract._id, name: contract.name }}
+            show={showShareModal}
+            onClose={() => setShowShareModal(false)}
+          />
+        </>
       )}
     </>
   );
