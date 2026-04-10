@@ -437,51 +437,174 @@ export default function ContractDetailsV2() {
   const handlePrint = useCallback(() => {
     if (!contract) return;
 
-    const printContent = contract.contentHTML || contract.content?.replace(/\n/g, '<br/>') || '';
-    const printWindow = window.open('', '_blank');
+    // ✅ Eckdaten sammeln (gleiche Felder wie EDITABLE_FIELDS)
+    const eckdatenRows = [
+      contract.anbieter || contract.provider?.displayName || contract.provider?.name
+        ? `<tr><td>Anbieter</td><td>${contract.anbieter || contract.provider?.displayName || contract.provider?.name}</td></tr>` : '',
+      contract.contractType ? `<tr><td>Vertragstyp</td><td>${contract.contractType}</td></tr>` : '',
+      contract.vertragsnummer ? `<tr><td>Vertragsnummer</td><td>${contract.vertragsnummer}</td></tr>` : '',
+      contract.startDate ? `<tr><td>Vertragsbeginn</td><td>${formatDate(contract.startDate)}</td></tr>` : '',
+      contract.laufzeit ? `<tr><td>Laufzeit</td><td>${contract.laufzeit}</td></tr>` : '',
+      contract.expiryDate ? `<tr><td>Enddatum</td><td>${formatDate(contract.expiryDate)}</td></tr>` : '',
+      contract.kuendigung ? `<tr><td>Kündigungsfrist</td><td>${contract.kuendigung}</td></tr>` : '',
+      contract.gekuendigtZum ? `<tr><td>Gekündigt zum</td><td>${formatDate(contract.gekuendigtZum)}</td></tr>` : '',
+      contract.kosten != null && contract.kosten > 0
+        ? `<tr><td>Monatliche Kosten</td><td>${contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td></tr>` : '',
+    ].filter(Boolean).join('');
 
+    // ✅ QuickFacts sammeln
+    const quickFactsRows = (contract.quickFacts || []).map(f =>
+      `<tr><td>${f.label}</td><td>${f.value}</td></tr>`
+    ).join('');
+
+    // ✅ Zusammenfassung
+    const summaryHtml = contract.laymanSummary?.length
+      ? `<ul>${contract.laymanSummary.map(s => `<li>${s}</li>`).join('')}</ul>`
+      : contract.summary ? `<p>${contract.summary}</p>` : '';
+
+    // ✅ Analyse-Felder
+    const legalAssessmentHtml = contract.legalAssessment
+      ? (Array.isArray(contract.legalAssessment)
+          ? `<ul>${contract.legalAssessment.map(s => `<li>${s}</li>`).join('')}</ul>`
+          : `<p>${contract.legalAssessment}</p>`)
+      : '';
+
+    const suggestionsHtml = contract.suggestions
+      ? (Array.isArray(contract.suggestions)
+          ? `<ul>${contract.suggestions.map(s => `<li>${s}</li>`).join('')}</ul>`
+          : `<p>${contract.suggestions}</p>`)
+      : '';
+
+    // ✅ Strukturierte Analyse
+    const positivesHtml = (contract as Record<string, unknown>).positiveAspects
+      ? `<ul>${((contract as Record<string, unknown>).positiveAspects as Array<{title: string; description: string}>).map(a =>
+          `<li><strong>${a.title}</strong>${a.description ? ` — ${a.description}` : ''}</li>`
+        ).join('')}</ul>` : '';
+
+    const criticalsHtml = (contract as Record<string, unknown>).criticalIssues
+      ? `<ul>${((contract as Record<string, unknown>).criticalIssues as Array<{title: string; description: string; riskLevel?: string}>).map(i =>
+          `<li><strong>${i.title}</strong>${i.riskLevel ? ` (${i.riskLevel})` : ''}${i.description ? ` — ${i.description}` : ''}</li>`
+        ).join('')}</ul>` : '';
+
+    const recsHtml = (contract as Record<string, unknown>).recommendations
+      ? `<ul>${((contract as Record<string, unknown>).recommendations as Array<string | {title: string; description?: string}>).map(r => {
+          const isObj = typeof r === 'object' && r !== null;
+          return `<li><strong>${isObj ? r.title : r}</strong>${isObj && r.description ? ` — ${r.description}` : ''}</li>`;
+        }).join('')}</ul>` : '';
+
+    // ✅ Calendar Events
+    const eventsHtml = calendarEvents.length > 0
+      ? `<ul>${calendarEvents.map(e =>
+          `<li>${e.title} — ${formatDate(e.date)}${e.description ? ` (${e.description})` : ''}</li>`
+        ).join('')}</ul>`
+      : '<p style="color:#94a3b8;">Keine Kalender-Events vorhanden.</p>';
+
+    // ✅ Wichtige Termine (KI)
+    const importantDatesHtml = contract.importantDates?.length
+      ? `<ul>${contract.importantDates.map(d =>
+          `<li>${d.label} — ${formatDate(d.date)}${d.description ? ` (${d.description})` : ''}</li>`
+        ).join('')}</ul>`
+      : '';
+
+    // ✅ Score
+    const scoreValue = contract.contractScore;
+    const scoreLabel = scoreValue != null
+      ? (scoreValue >= 70 ? 'Gut' : scoreValue >= 40 ? 'Mittel' : 'Verbesserungsbedarf')
+      : null;
+
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-          <title>${contract.name}</title>
+          <title>Vertragsübersicht — ${contract.name}</title>
           <style>
-            @page { size: A4; margin: 20mm 15mm 25mm 20mm; }
-            body {
-              font-family: 'Segoe UI', Arial, sans-serif;
-              font-size: 11pt;
-              line-height: 1.6;
-              color: #1a1a1a;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-            }
-            h1 { font-size: 18pt; text-align: center; margin-bottom: 30px; color: #1e40af; }
-            h2 { font-size: 14pt; margin-top: 20px; color: #1e40af; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
-            .meta { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-            .meta p { margin: 5px 0; font-size: 10pt; color: #64748b; }
-            .signature { margin-top: 40px; padding-top: 20px; border-top: 2px solid #1e40af; }
-            .footer { margin-top: 40px; text-align: center; font-size: 9pt; color: #94a3b8; }
+            @page { size: A4; margin: 18mm 15mm 20mm 15mm; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; line-height: 1.6; color: #1a1a1a; max-width: 800px; margin: 0 auto; padding: 20px; }
+            h1 { font-size: 16pt; color: #1e40af; margin-bottom: 5px; }
+            h2 { font-size: 12pt; color: #1e40af; margin-top: 24px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+            .subtitle { font-size: 10pt; color: #64748b; margin-bottom: 20px; }
+            .score-box { display: inline-block; background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 20px; margin: 10px 0 20px; }
+            .score-value { font-size: 24pt; font-weight: 700; color: #1e40af; }
+            .score-label { font-size: 10pt; color: #64748b; margin-left: 8px; }
+            table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+            table td { padding: 6px 10px; border-bottom: 1px solid #f1f5f9; font-size: 10pt; }
+            table td:first-child { font-weight: 600; color: #475569; width: 40%; }
+            ul { margin: 8px 0; padding-left: 20px; }
+            li { margin-bottom: 6px; }
+            .section { margin-bottom: 16px; }
+            .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #94a3b8; border-top: 1px solid #e5e7eb; padding-top: 10px; }
           </style>
         </head>
         <body>
           <h1>${contract.name}</h1>
-          <div class="meta">
-            <p><strong>Status:</strong> ${contract.status || 'Unbekannt'}</p>
-            <p><strong>Hochgeladen:</strong> ${contract.uploadedAt ? new Date(contract.uploadedAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
-            ${contract.laufzeit ? `<p><strong>Laufzeit:</strong> ${contract.laufzeit}</p>` : ''}
-            ${contract.kuendigung ? `<p><strong>Kündigungsfrist:</strong> ${contract.kuendigung}</p>` : ''}
+          <div class="subtitle">
+            Status: ${contract.status || '—'} | Hochgeladen: ${formatDate(contract.uploadedAt || contract.createdAt)}
           </div>
-          <div class="content">${printContent}</div>
-          ${contract.signature ? `
-            <div class="signature">
-              <p><strong>Digitale Unterschrift:</strong></p>
-              <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px;" />
+
+          ${scoreValue != null ? `
+            <div class="score-box">
+              <span class="score-value">${scoreValue}/100</span>
+              <span class="score-label">${scoreLabel}</span>
             </div>
           ` : ''}
+
+          ${eckdatenRows ? `
+            <h2>Vertragsdetails</h2>
+            <table>${eckdatenRows}</table>
+          ` : ''}
+
+          ${quickFactsRows ? `
+            <h2>Eckdaten auf einen Blick</h2>
+            <table>${quickFactsRows}</table>
+          ` : ''}
+
+          ${summaryHtml ? `
+            <h2>Zusammenfassung</h2>
+            <div class="section">${summaryHtml}</div>
+          ` : ''}
+
+          ${legalAssessmentHtml ? `
+            <h2>Rechtliche Bewertung</h2>
+            <div class="section">${legalAssessmentHtml}</div>
+          ` : ''}
+
+          ${suggestionsHtml ? `
+            <h2>Optimierungsvorschläge</h2>
+            <div class="section">${suggestionsHtml}</div>
+          ` : ''}
+
+          ${positivesHtml ? `
+            <h2>Positive Aspekte</h2>
+            <div class="section">${positivesHtml}</div>
+          ` : ''}
+
+          ${criticalsHtml ? `
+            <h2>Kritische Punkte</h2>
+            <div class="section">${criticalsHtml}</div>
+          ` : ''}
+
+          ${recsHtml ? `
+            <h2>Konkrete Empfehlungen</h2>
+            <div class="section">${recsHtml}</div>
+          ` : ''}
+
+          <h2>Kalender-Events</h2>
+          <div class="section">${eventsHtml}</div>
+
+          ${importantDatesHtml ? `
+            <h2>Wichtige Termine (KI-extrahiert)</h2>
+            <div class="section">${importantDatesHtml}</div>
+          ` : ''}
+
+          ${contract.notes ? `
+            <h2>Notizen</h2>
+            <div class="section"><p>${contract.notes.replace(/\n/g, '<br/>')}</p></div>
+          ` : ''}
+
           <div class="footer">
-            <p>Gedruckt am ${new Date().toLocaleDateString('de-DE')} | Contract AI</p>
+            Vertragsübersicht erstellt am ${new Date().toLocaleDateString('de-DE')} | Contract AI
           </div>
         </body>
         </html>
@@ -491,7 +614,7 @@ export default function ContractDetailsV2() {
     } else {
       toast.error('Pop-up blockiert. Bitte erlauben Sie Pop-ups für diese Seite.');
     }
-  }, [contract]);
+  }, [contract, calendarEvents]);
 
   const handleExportPDF = useCallback(async () => {
     if (!contract || exporting) return;
@@ -670,17 +793,23 @@ export default function ContractDetailsV2() {
   const handleShare = async () => {
     const url = window.location.href;
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: contract?.name || 'Vertrag',
-          url: url
-        });
-      } else {
-        await navigator.clipboard.writeText(url);
-        toast.success("Link in Zwischenablage kopiert!");
-      }
+      await navigator.clipboard.writeText(url);
+      toast.success('Link in Zwischenablage kopiert!');
     } catch {
-      // User cancelled share
+      // Fallback für ältere Browser
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        toast.success('Link kopiert!');
+      } catch {
+        toast.error('Link konnte nicht kopiert werden.');
+      }
     }
   };
 
