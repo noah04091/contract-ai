@@ -51,6 +51,7 @@ import {
 import styles from "../styles/ContractDetailsV2.module.css";
 import ContractEditModal from "../components/ContractEditModal";
 import SmartContractInfo from "../components/SmartContractInfo";
+import ContractShareModal from "../components/ContractShareModal";
 import { useAuth } from "../hooks/useAuth";
 import { isBusinessOrHigher } from "../utils/authUtils";
 import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
@@ -227,6 +228,7 @@ export default function ContractDetailsV2() {
   const [exporting, setExporting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // ESC-Taste Handler für Fullscreen-Modal
   useEffect(() => {
@@ -794,27 +796,8 @@ export default function ContractDetailsV2() {
     }
   };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success('Link in Zwischenablage kopiert!');
-    } catch {
-      // Fallback für ältere Browser
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = url;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        toast.success('Link kopiert!');
-      } catch {
-        toast.error('Link konnte nicht kopiert werden.');
-      }
-    }
+  const handleShare = () => {
+    setShowShareModal(true);
   };
 
   const handleAnalyze = () => {
@@ -4086,6 +4069,11 @@ export default function ContractDetailsV2() {
             });
             toast.success('Vertrag erfolgreich aktualisiert');
           }}
+        />
+        <ContractShareModal
+          contract={{ _id: contract._id, name: contract.name }}
+          show={showShareModal}
+          onClose={() => setShowShareModal(false)}
         />
       )}
     </>
