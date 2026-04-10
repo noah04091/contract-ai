@@ -16,10 +16,13 @@ const crypto = require('crypto');
 // Services
 const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const { parseContractWithGuidedSegmenter } = require('../services/legalLens/guidedSegmenterAdapter');
+const { parseContractUniversal } = require('../services/legalLens/universalParserAdapter');
 
-// Feature-Flag: Neuer Universal-Parser (Discovery + Guided Segmentation)
-// Default: AUS — bestehende Legal Lens läuft unverändert.
-// Aktivieren über ENV: LEGAL_LENS_GUIDED_SEGMENTER=true
+// Feature-Flags: Parser-Auswahl
+// LEGAL_LENS_UNIVERSAL_PARSER=true  -> Neuer 5-Pass Self-Correcting Parser (v3)
+// LEGAL_LENS_GUIDED_SEGMENTER=true  -> 3-Pass Guided Segmenter (v2)
+// Beide aus                         -> Legacy Regex-Parser (v1)
+const USE_UNIVERSAL_PARSER = process.env.LEGAL_LENS_UNIVERSAL_PARSER === 'true';
 const USE_GUIDED_SEGMENTER = process.env.LEGAL_LENS_GUIDED_SEGMENTER === 'true';
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
@@ -1063,11 +1066,30 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Parsen — entweder alter Regex-Parser oder neuer Universal-Parser
-    // (Discovery + Guided Segmentation) hinter Feature-Flag LEGAL_LENS_GUIDED_SEGMENTER.
+    // Parsen — 3-stufige Parser-Auswahl:
+    //   1. LEGAL_LENS_UNIVERSAL_PARSER=true -> 5-Pass Self-Correcting Pipeline (v3)
+    //   2. LEGAL_LENS_GUIDED_SEGMENTER=true -> 3-Pass Guided Segmenter (v2)
+    //   3. Default                          -> Legacy Regex-Parser (v1)
     let parseResult;
-    if (USE_GUIDED_SEGMENTER) {
-      console.log(`📋 [Legal Lens] Starte Guided-Segmenter (Universal-Parser)...`);
+    if (USE_UNIVERSAL_PARSER) {
+      console.log(`📋 [Legal Lens] Starte Universal-Parser (5-Pass Pipeline v3)...`);
+      try {
+        parseResult = await parseContractUniversal(text, { detectRisk: true });
+      } catch (err) {
+        console.error(`❌ [Legal Lens] Universal-Parser fehlgeschlagen, falle zurueck auf Guided-Segmenter:`, err.message);
+        try {
+          parseResult = await parseContractWithGuidedSegmenter(text, { detectRisk: true });
+        } catch (err2) {
+          console.error(`❌ [Legal Lens] Guided-Segmenter auch fehlgeschlagen, falle zurueck auf Regex-Parser:`, err2.message);
+          parseResult = clauseParser.parseContract(text, {
+            detectRisk: true,
+            minClauseLength: 20,
+            maxClauseLength: 2000
+          });
+        }
+      }
+    } else if (USE_GUIDED_SEGMENTER) {
+      console.log(`📋 [Legal Lens] Starte Guided-Segmenter (Universal-Parser v2)...`);
       try {
         parseResult = await parseContractWithGuidedSegmenter(text, { detectRisk: true });
       } catch (err) {

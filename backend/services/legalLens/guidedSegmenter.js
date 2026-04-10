@@ -255,7 +255,278 @@ class GuidedSegmenter {
   }
 
   /**
+   * Segmentiert einen bereits zugeschnittenen Text in Klauseln.
+   * Fuer die neue 5-Pass-Pipeline (universalParserAdapter).
+   *
+   * Unterschiede zu segment():
+   *   - Nimmt bereits zugeschnittenen Text (kein eigenes Cropping)
+   *   - Nimmt Structure-Ergebnis statt Discovery-Ergebnis
+   *   - Kein estimatedSegmentCount (kein Ziel-Anzahl-Bias)
+   *   - Batching fuer lange Texte (> 110K chars)
+   *   - Coverage-Tracking in Metadata
+   *
+   * @param {string} croppedText - Zugeschnittener Text aus Pass 1
+   * @param {object} structureResult - Ergebnis von structureAnalyzer.analyze()
+   * @param {object} [options]
+   * @param {number} [options.startOffset=0] - Offset im Rohtext (fuer absolute Positionen)
+   * @param {number} [options.rawTextLength] - Laenge des vollen Rohtexts
+   * @param {number} [options.timeoutMs=90000]
+   * @returns {Promise<object>} { clauses, metadata }
+   */
+  async segmentUniversal(croppedText, structureResult, options = {}) {
+    const { startOffset = 0, rawTextLength, timeoutMs = 90000 } = options;
+    const startTime = Date.now();
+
+    if (!croppedText || typeof croppedText !== 'string') {
+      throw new Error('guidedSegmenter.segmentUniversal: croppedText muss ein String sein');
+    }
+
+    const structure = structureResult?.structure || structureResult || {};
+
+    console.log(
+      `[GuidedSegmenter] Starte Universal-Segmentierung — ${croppedText.length} Zeichen, ` +
+      `scheme=${structure.scheme || '?'}`
+    );
+
+    // Kontext-Objekt OHNE estimatedSegmentCount
+    const context = {
+      documentType: structure.documentType,
+      language: structure.language,
+      segmentation: {
+        scheme: structure.scheme,
+        // KEIN estimatedSegmentCount — kein Bias
+        exampleMarkers: structure.exampleMarkers,
+        hasNestedStructure: structure.hasNestedStructure
+      },
+      frameElements: {
+        repeatingPageHeaders: structure.repeatingPageHeaders || []
+      }
+    };
+
+    // Batching fuer lange Texte
+    let allClausesRaw;
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+    let batchCount = 1;
+
+    if (croppedText.length > MAX_INPUT_CHARS) {
+      console.log(`[GuidedSegmenter] Text zu lang (${croppedText.length}), starte Batching...`);
+      const batchResult = await this._segmentBatched(croppedText, context, timeoutMs);
+      allClausesRaw = batchResult.clauses;
+      totalPromptTokens = batchResult.promptTokens;
+      totalCompletionTokens = batchResult.completionTokens;
+      batchCount = batchResult.batchCount;
+    } else {
+      const result = await this._singleSegmentCall(croppedText, context, timeoutMs);
+      allClausesRaw = result.clauses;
+      totalPromptTokens = result.promptTokens;
+      totalCompletionTokens = result.completionTokens;
+    }
+
+    if (allClausesRaw.length === 0) {
+      console.log('[GuidedSegmenter] Keine Klauseln erkannt');
+      return {
+        clauses: [],
+        metadata: {
+          model: MODEL, elapsedMs: Date.now() - startTime,
+          inputCharsTotal: rawTextLength || croppedText.length,
+          inputCharsSent: croppedText.length,
+          cropped: startOffset > 0, contentStartOffset: startOffset,
+          actualSegmentCount: 0, markersVerified: 0,
+          coverage: 0, batchCount,
+          promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens
+        }
+      };
+    }
+
+    // Post-Processing: Marker lokalisieren + Text slicen
+    const normalizedIndex = buildNormalizedIndex(croppedText);
+    const frameLines = structure.repeatingPageHeaders || [];
+
+    const markerHits = allClausesRaw.map((c, idx) => {
+      const startMarkerStr = typeof c.startMarker === 'string' ? c.startMarker : null;
+      const posInCropped = startMarkerStr ? findFuzzy(croppedText, startMarkerStr, normalizedIndex) : -1;
+      const startOffsetAbs = posInCropped >= 0 ? posInCropped + startOffset : -1;
+      return {
+        idx, number: c.number ?? null, title: c.title ?? null,
+        startMarker: startMarkerStr, startOffset: startOffsetAbs,
+        found: startOffsetAbs >= 0
+      };
+    });
+
+    const effectiveEnd = startOffset + croppedText.length;
+
+    const clauses = markerHits.map((hit, i) => {
+      const next = markerHits.slice(i + 1).find(h => h.found && h.startOffset > hit.startOffset);
+      const sliceStart = hit.found ? hit.startOffset : null;
+      const sliceEnd = next ? next.startOffset : effectiveEnd;
+
+      let text = '';
+      if (sliceStart != null && sliceEnd > sliceStart) {
+        // Slice aus dem croppedText (nicht rawText, da wir den nicht haben)
+        const localStart = sliceStart - startOffset;
+        const localEnd = sliceEnd - startOffset;
+        text = croppedText.substring(localStart, localEnd);
+        text = removeFrameLines(text, frameLines);
+        text = text.trim();
+      }
+
+      return {
+        id: `clause_v2_${i + 1}`, index: i,
+        number: hit.number, title: hit.title, text,
+        startMarker: hit.startMarker, startMarkerFound: hit.found,
+        startOffset: hit.found ? hit.startOffset : null,
+        charLength: text.length
+      };
+    });
+
+    // Coverage-Tracking
+    const totalClauseChars = clauses.reduce((sum, c) => sum + c.charLength, 0);
+    const coverage = croppedText.length > 0 ? totalClauseChars / croppedText.length : 0;
+
+    const elapsedMs = Date.now() - startTime;
+    const verifiedMarkers = clauses.filter(c => c.startMarkerFound).length;
+
+    console.log(
+      `[GuidedSegmenter] ${clauses.length} Klauseln in ${elapsedMs}ms — ` +
+      `${verifiedMarkers}/${clauses.length} Marker, Coverage ${(coverage * 100).toFixed(1)}%`
+    );
+
+    return {
+      clauses,
+      metadata: {
+        model: MODEL, elapsedMs,
+        inputCharsTotal: rawTextLength || croppedText.length,
+        inputCharsSent: croppedText.length,
+        cropped: startOffset > 0, contentStartOffset: startOffset,
+        actualSegmentCount: clauses.length, markersVerified: verifiedMarkers,
+        coverage, batchCount,
+        promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens
+      }
+    };
+  }
+
+  /**
+   * Einzelner GPT-Segmentierungs-Call (ohne Batching).
+   * @private
+   */
+  async _singleSegmentCall(text, context, timeoutMs) {
+    const response = await this.openai.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content:
+            `STRUKTUR-KONTEXT:\n${JSON.stringify(context, null, 2)}\n\n` +
+            `---BEGIN VERTRAGSTEXT---\n${text}\n---END VERTRAGSTEXT---\n\n` +
+            `Finde JEDE Klausel in diesem Text. Es gibt keine Ziel-Anzahl — extrahiere so viele oder wenige, wie tatsaechlich vorhanden sind.`
+        }
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: MAX_COMPLETION_TOKENS
+    }, { timeout: timeoutMs });
+
+    const rawContent = response.choices?.[0]?.message?.content;
+    if (!rawContent) throw new Error('guidedSegmenter: Leere Antwort');
+
+    const parsed = JSON.parse(rawContent);
+    return {
+      clauses: Array.isArray(parsed.clauses) ? parsed.clauses : [],
+      promptTokens: response.usage?.prompt_tokens || 0,
+      completionTokens: response.usage?.completion_tokens || 0
+    };
+  }
+
+  /**
+   * Batched Segmentierung fuer lange Texte.
+   * Splittet in ueberlappende Fenster, dedupliziert Ergebnisse.
+   * @private
+   */
+  async _segmentBatched(text, context, timeoutMs) {
+    const WINDOW_SIZE = 80000;
+    const OVERLAP = 5000;
+
+    const windows = [];
+    let pos = 0;
+    while (pos < text.length) {
+      const end = Math.min(pos + WINDOW_SIZE, text.length);
+      windows.push({ text: text.substring(pos, end), offset: pos });
+      if (end >= text.length) break;
+      pos = end - OVERLAP;
+    }
+
+    console.log(`[GuidedSegmenter] Batching: ${windows.length} Fenster`);
+
+    let allClauses = [];
+    let totalPromptTokens = 0;
+    let totalCompletionTokens = 0;
+
+    for (let i = 0; i < windows.length; i++) {
+      const win = windows[i];
+      console.log(`[GuidedSegmenter] Batch ${i + 1}/${windows.length}: ${win.text.length} chars ab Offset ${win.offset}`);
+      try {
+        const result = await this._singleSegmentCall(win.text, context, timeoutMs);
+        // Offset der Marker anpassen (relativ zum Fenster -> relativ zum Gesamttext)
+        for (const c of result.clauses) {
+          c._windowOffset = win.offset;
+        }
+        allClauses.push(...result.clauses);
+        totalPromptTokens += result.promptTokens;
+        totalCompletionTokens += result.completionTokens;
+      } catch (err) {
+        console.error(`[GuidedSegmenter] Batch ${i + 1} fehlgeschlagen:`, err.message);
+      }
+    }
+
+    // Deduplizieren: Klauseln mit gleichem Marker an aehnlicher Position zusammenfuehren
+    allClauses = this._deduplicateBatchedClauses(allClauses, text);
+
+    return {
+      clauses: allClauses,
+      promptTokens: totalPromptTokens,
+      completionTokens: totalCompletionTokens,
+      batchCount: windows.length
+    };
+  }
+
+  /**
+   * Dedupliziert Klauseln aus mehreren Batch-Fenstern.
+   * Verwendet Marker-Positionen im Gesamttext als Schluessel.
+   * @private
+   */
+  _deduplicateBatchedClauses(clauses, fullText) {
+    const normalizedIndex = buildNormalizedIndex(fullText);
+    const seen = new Map(); // offset -> clause
+
+    for (const c of clauses) {
+      if (!c.startMarker) continue;
+      const pos = findFuzzy(fullText, c.startMarker, normalizedIndex);
+      if (pos < 0) continue;
+
+      // Nur behalten, wenn nicht schon eine Klausel an aehnlicher Position existiert
+      let isDuplicate = false;
+      for (const [existingPos] of seen) {
+        if (Math.abs(existingPos - pos) < 200) {
+          isDuplicate = true;
+          break;
+        }
+      }
+      if (!isDuplicate) {
+        seen.set(pos, c);
+      }
+    }
+
+    // Nach Position sortieren
+    return Array.from(seen.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([, clause]) => clause);
+  }
+
+  /**
    * Segmentiert den Vertragstext in Klauseln.
+   * (Original-Methode fuer den bestehenden 3-Pass-Parser)
    *
    * @param {string} rawText - Der volle Vertragstext (wie ihn auch Pass 1 bekam)
    * @param {object} discoveryResult - Das Ergebnis von structuralDiscovery.discover()
