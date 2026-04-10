@@ -5894,9 +5894,15 @@ KERNPRINZIP — Kein Formzwang:
 - Lasse NIEMALS echte Unterschiede weg um eine bestimmte Anzahl zu unterschreiten.
 
 BESONDERS WICHTIG — Zahlenunterschiede:
-- Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen beider Dokumente.
+- Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen UND in den keyValues der Klauseln beider Dokumente.
 - Wenn eine Zahl in Dokument 1 anders ist als in Dokument 2 (z.B. Sicherungseinbehalt 10% vs 2,3%), MUSS das eine eigene Section werden.
 - Wenn beide Dokumente den gleichen Wert haben (z.B. beide 6 Monate Kündigungsfrist), ist das KEIN Unterschied und darf KEINE Section werden.
+- JEDER dieser Punkte muss eine EIGENE Section werden, nicht zusammengefasst: Preis pro Monat, Einrichtungsgebühr, Datenvolumen, Geschwindigkeit, Leistungsumfang (Flatrate vs. pro Nutzung), etc.
+- NICHT mehrere Zahlenunterschiede in eine Section zusammenfassen — jeder verdient Einzelbetrachtung.
+
+BESONDERS WICHTIG — recommendationTarget:
+- Wenn bei einem Unterschied KLAR ist welches Dokument besser abschneidet (z.B. niedrigerer Preis, mehr Leistung, längere Garantie), MUSS recommendationTarget gesetzt werden (1 oder 2).
+- recommendationTarget nur weglassen wenn der Unterschied NEUTRAL ist und keines der Dokumente objektiv besser ist.
 
 QUALITÄTSKRITERIEN:
 - JEDE Section MUSS einen echten, konkreten Unterschied zwischen den Dokumenten beschreiben
@@ -6401,6 +6407,16 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
       }
     }
 
+    // Score-Differenzierung: Wenn ein Dokument empfohlen wird, muss sich das in den Scores widerspiegeln
+    const scoreResult = {
+      scores,
+      differences,
+      overallRecommendation: validated.overallRecommendation,
+    };
+    enforceScoreDifferentiation(scoreResult);
+    const finalScores = scoreResult.scores;
+    console.log(`📊 Holistic Scores (nach Enforcement): V1=${finalScores.contract1.overall}, V2=${finalScores.contract2.overall}`);
+
     progress('finalizing', 95, 'Ergebnis wird zusammengestellt...');
 
     // Final response — kompatibles Schema + neue Holistic-Felder
@@ -6426,7 +6442,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
       differences,
       risks,
       recommendations,
-      scores,
+      scores: finalScores,
 
       summary: validated.summary,
       overallRecommendation: validated.overallRecommendation,
@@ -6434,14 +6450,14 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
       contract1Analysis: {
         strengths: validated.contract1Strengths,
         weaknesses: validated.contract1Weaknesses,
-        riskLevel: scores.contract1.overall >= 70 ? 'low' : scores.contract1.overall >= 50 ? 'medium' : 'high',
-        score: scores.contract1.overall,
+        riskLevel: finalScores.contract1.overall >= 70 ? 'low' : finalScores.contract1.overall >= 50 ? 'medium' : 'high',
+        score: finalScores.contract1.overall,
       },
       contract2Analysis: {
         strengths: validated.contract2Strengths,
         weaknesses: validated.contract2Weaknesses,
-        riskLevel: scores.contract2.overall >= 70 ? 'low' : scores.contract2.overall >= 50 ? 'medium' : 'high',
-        score: scores.contract2.overall,
+        riskLevel: finalScores.contract2.overall >= 70 ? 'low' : finalScores.contract2.overall >= 50 ? 'medium' : 'high',
+        score: finalScores.contract2.overall,
       },
 
       perspective,
