@@ -5869,45 +5869,59 @@ function summarizeLayer0Facts(rawValues) {
 }
 
 /**
- * Vergleicht Layer-0 Fakten beider Dokumente und erstellt eine Checkliste
- * der Unterschiede, die GPT als Orientierung dient.
+ * Vergleicht Klauseln beider Dokumente nach Area und zeigt keyValues nebeneinander.
+ * Gibt GPT eine konkrete Checkliste der Dimensionen, die sich unterscheiden.
  */
-function computeFactDiffHints(facts1, facts2) {
-  if (!facts1?.length && !facts2?.length) return '';
+function computeClauseDiffHints(map1, map2) {
+  const clauses1 = map1?.clauses || [];
+  const clauses2 = map2?.clauses || [];
+  if (!clauses1.length && !clauses2.length) return '';
 
-  // Normalisiere Keys für Matching
-  const normalize = (k) => (k || '').toLowerCase().replace(/[^a-zäöüß0-9]/g, '');
-
-  const map1 = new Map();
-  for (const f of (facts1 || [])) {
-    const nk = normalize(f.key);
-    if (nk) map1.set(nk, f);
+  // Gruppiere Klauseln nach Area
+  const byArea1 = {};
+  for (const c of clauses1) {
+    if (!c.area) continue;
+    if (!byArea1[c.area]) byArea1[c.area] = {};
+    if (c.keyValues) Object.assign(byArea1[c.area], c.keyValues);
+  }
+  const byArea2 = {};
+  for (const c of clauses2) {
+    if (!c.area) continue;
+    if (!byArea2[c.area]) byArea2[c.area] = {};
+    if (c.keyValues) Object.assign(byArea2[c.area], c.keyValues);
   }
 
+  const allAreas = new Set([...Object.keys(byArea1), ...Object.keys(byArea2)]);
   const hints = [];
 
-  // Finde Werte die in beiden Dokumenten vorkommen aber unterschiedlich sind
-  for (const f2 of (facts2 || [])) {
-    const nk = normalize(f2.key);
-    if (!nk) continue;
-    const f1 = map1.get(nk);
-    if (f1 && f1.value !== f2.value) {
-      hints.push(`  ⚡ "${f1.key}": Doc1="${f1.value}" vs Doc2="${f2.value}"`);
-      map1.delete(nk); // als bearbeitet markieren
-    } else if (f1) {
-      map1.delete(nk); // gleicher Wert, kein Hinweis
+  for (const area of allAreas) {
+    const kv1 = byArea1[area] || {};
+    const kv2 = byArea2[area] || {};
+    const allKeys = new Set([...Object.keys(kv1), ...Object.keys(kv2)]);
+
+    for (const key of allKeys) {
+      const v1 = kv1[key];
+      const v2 = kv2[key];
+      if (v1 && v2 && String(v1) !== String(v2)) {
+        hints.push(`  ⚡ [${area}] "${key}": Doc1="${v1}" vs Doc2="${v2}"`);
+      } else if (v1 && !v2) {
+        hints.push(`  📌 [${area}] "${key}": Nur in Doc1="${v1}"`);
+      } else if (!v1 && v2) {
+        hints.push(`  📌 [${area}] "${key}": Nur in Doc2="${v2}"`);
+      }
     }
   }
 
   if (hints.length === 0) return '';
 
   return `\n═══════════════════════════════════════
-AUTOMATISCH ERKANNTE ZAHLEN-UNTERSCHIEDE (Checkliste für dich!)
+AUTOMATISCH ERKANNTE KLAUSEL-UNTERSCHIEDE (Pflicht-Checkliste!)
 ═══════════════════════════════════════
-Die folgenden Unterschiede wurden automatisch aus den verifizierten Zahlen erkannt.
-Jeder dieser Punkte verdient MINDESTENS eine eigene Section:
-${hints.join('\n')}
-Prüfe zusätzlich den Rohtext auf weitere Unterschiede die hier nicht aufgelistet sind!`;
+Die folgenden Unterschiede wurden automatisch aus den strukturierten Daten erkannt.
+JEDER Punkt muss als EIGENE Section behandelt werden (sofern er einen echten Unterschied darstellt):
+${hints.slice(0, 30).join('\n')}
+${hints.length > 30 ? `(... und ${hints.length - 30} weitere)` : ''}
+Prüfe zusätzlich den Rohtext auf Unterschiede die in den strukturierten Daten nicht erfasst sind!`;
 }
 
 function buildHolisticSystemPrompt(intent, docConfig) {
@@ -5935,20 +5949,13 @@ KERNPRINZIP — Kein Formzwang:
 - ERFINDE NIEMALS Unterschiede um eine bestimmte Anzahl zu erreichen.
 - Lasse NIEMALS echte Unterschiede weg um eine bestimmte Anzahl zu unterschreiten.
 
-ARBEITSWEISE — Zwei Schritte (PFLICHT):
-Schritt 1: Lies BEIDE Dokumente komplett. Erstelle eine mentale Liste ALLER Unterschiede — Zahlen, Konditionen, Leistungen, Fristen, Formulierungen, fehlende Punkte.
-Schritt 2: Erstelle für JEDEN einzelnen Unterschied auf deiner Liste eine EIGENE Section.
-
-GRANULARITÄTS-REGEL (KRITISCH):
-- Ein Unterschied = Eine Section. IMMER.
-- Wenn zwei Punkte VERSCHIEDENE Dimensionen betreffen (z.B. Menge vs. Geschwindigkeit, Preis vs. Laufzeit, Garantiedauer vs. Haftungshöhe), sind das ZWEI Sections — auch wenn sie thematisch verwandt scheinen.
-- Zusammenfassen nur erlaubt wenn zwei Punkte exakt dasselbe Thema betreffen (z.B. "Grundpreis 10€ vs 15€" und "Jahreskosten 120€ vs 180€" = gleiche Dimension Kosten → eine Section).
-- Faustregel: Wenn du "&" oder "und" in einen Section-Titel schreiben willst, prüfe ob es nicht zwei Sections sein sollten.
-
-BESONDERS WICHTIG — Zahlenunterschiede:
-- Prüfe JEDEN Zahlenwert in den "VERIFIZIERTE ZAHLEN"-Listen UND in den keyValues der Klauseln beider Dokumente.
-- Wenn eine Zahl in Dokument 1 anders ist als in Dokument 2 (z.B. Sicherungseinbehalt 10% vs 2,3%), MUSS das eine eigene Section werden.
-- Wenn beide Dokumente den gleichen Wert haben (z.B. beide 6 Monate Kündigungsfrist), ist das KEIN Unterschied und darf KEINE Section werden.
+GRANULARITÄT — EIN UNTERSCHIED = EINE SECTION:
+- Prüfe JEDEN Zahlenwert, JEDE Kondition, JEDE Leistung in BEIDEN Dokumenten.
+- Jede Dimension die sich unterscheidet bekommt eine EIGENE Section:
+  Preis/Monat, Einrichtungsgebühr, Datenvolumen, Download-Geschwindigkeit, Upload-Geschwindigkeit, Telefonie-Modell (Flat vs. pro Minute), SMS-Modell, Laufzeit, Kündigungsfrist, Garantiedauer, Haftungssumme, etc.
+- NICHT zusammenfassen: "Datenvolumen & Geschwindigkeit" ist FALSCH → Zwei Sections: "Datenvolumen" + "Download-Geschwindigkeit"
+- Wenn beide Dokumente den gleichen Wert haben → KEINE Section (kein Unterschied)
+- Wenn die "KLAUSEL-UNTERSCHIEDE" Checkliste unten Punkte auflistet, MUSS jeder davon eine eigene Section bekommen.
 
 BESONDERS WICHTIG — recommendationTarget:
 - Wenn bei einem Unterschied KLAR ist welches Dokument besser abschneidet (z.B. niedrigerer Preis, mehr Leistung, längere Garantie), MUSS recommendationTarget gesetzt werden (1 oder 2).
@@ -6078,9 +6085,9 @@ ${JSON.stringify(facts2)}
 DOKUMENT 2 — ROHTEXT (gekürzt)
 ═══════════════════════════════════════
 ${truncText(text2)}
-${computeFactDiffHints(facts1, facts2)}
+${computeClauseDiffHints(map1, map2)}
 
-Erstelle jetzt die Sections für den Vergleich. Denk daran: Qualität > Quantität. Ein Unterschied = eine Section. Keine generischen Titel.`;
+Erstelle jetzt die Sections für den Vergleich. JEDER echte Unterschied = eine eigene Section. Prüfe die Klausel-Unterschiede-Checkliste oben!`;
 }
 
 /**
