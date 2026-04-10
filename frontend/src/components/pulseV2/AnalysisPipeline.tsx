@@ -36,6 +36,11 @@ export const AnalysisPipeline: React.FC<AnalysisPipelineProps> = ({
         </div>
         <div style={{ fontSize: 13, color: '#6b7280' }}>
           {message}
+          {progress > 0 && progress < 100 && (
+            <span style={{ marginLeft: 6, fontWeight: 600, color: '#3b82f6' }}>
+              {Math.round(progress)}%
+            </span>
+          )}
         </div>
       </div>
 

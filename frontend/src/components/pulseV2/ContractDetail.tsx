@@ -355,7 +355,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
                   Alle Ma&szlig;nahmen erledigt
                 </div>
                 <div style={{ fontSize: 13, color: '#16a34a', marginTop: 2 }}>
-                  Starten Sie eine neue Analyse, um den verbesserten Score zu sehen.
+                  Der Score wird bei der n&auml;chsten Analyse aktualisiert.
                 </div>
               </div>
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
@@ -48,6 +48,19 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
   const [quickFixLoading, setQuickFixLoading] = useState(false);
   const [quickFixError, setQuickFixError] = useState<string | null>(null);
   const [fixApplied, setFixApplied] = useState(false);
+  const reminderRef = useRef<HTMLDivElement>(null);
+
+  // Close reminder dropdown on click outside
+  useEffect(() => {
+    if (!reminderOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (reminderRef.current && !reminderRef.current.contains(e.target as Node)) {
+        setReminderOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [reminderOpen]);
 
   const handleQuickFix = useCallback(async () => {
     if (!finding.affectedText) return;
@@ -128,7 +141,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
         background: fixApplied ? '#f0fdf4' : '#fff',
         marginBottom: 12,
         overflow: 'hidden',
-        opacity: fixApplied ? 0.75 : 1,
+        opacity: 1,
         transition: 'all 0.3s ease',
       }}
     >
@@ -427,7 +440,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
 
               {/* Remind */}
               {!reminderSent ? (
-                <div style={{ position: 'relative' }}>
+                <div ref={reminderRef} style={{ position: 'relative' }}>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
