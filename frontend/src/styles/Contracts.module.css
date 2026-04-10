@@ -1981,20 +1981,24 @@
 }
 
 .gridNotAnalyzed {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: #ffffff;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0 0 11px 11px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.gridNotAnalyzed:hover {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 /* Preview Active State */
@@ -8083,28 +8087,7 @@
 }
 
 /* Grid Not Analyzed Badge - now clickable */
-.gridNotAnalyzed {
-  position: absolute;
-  bottom: 0.75rem;
-  left: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #92400e;
-  padding: 0.25rem 0.625rem;
-  border-radius: 6px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.gridNotAnalyzed:hover {
-  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.2);
-}
+/* .gridNotAnalyzed — Hauptdefinition ist weiter oben (Zeile ~1983), diese doppelte entfernt */
 
 /* ===== FULL-SCREEN ANALYSE OVERLAY ===== */
 .analyzingOverlay {

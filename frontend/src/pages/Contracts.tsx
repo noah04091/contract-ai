@@ -3812,6 +3812,33 @@ export default function Contracts() {
         {renderSignatureBadge(contract)}
 
         {/* Quick Actions */}
+        {/* Not Analyzed Banner — im normalen Flex-Flow VOR den Action-Buttons */}
+        {isContractNotAnalyzed(contract) && (
+          <div
+            className={styles.gridNotAnalyzed}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!analyzingContract[contract._id]) {
+                handleAnalyzeExistingContract(contract);
+              }
+            }}
+            style={{ cursor: analyzingContract[contract._id] ? 'wait' : 'pointer' }}
+            title="Klicken zum Analysieren"
+          >
+            {analyzingContract[contract._id] ? (
+              <>
+                <Loader size={12} className={styles.spinning} />
+                <span>Analysiert...</span>
+              </>
+            ) : (
+              <>
+                <Zap size={12} />
+                <span>Jetzt analysieren</span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className={styles.gridCardActions}>
           <button
             className={styles.gridActionBtn}
@@ -3868,32 +3895,6 @@ export default function Contracts() {
           )}
         </div>
 
-        {/* Not Analyzed Badge - jetzt mit klickbarem Text */}
-        {isContractNotAnalyzed(contract) && (
-          <div
-            className={styles.gridNotAnalyzed}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!analyzingContract[contract._id]) {
-                handleAnalyzeExistingContract(contract);
-              }
-            }}
-            style={{ cursor: analyzingContract[contract._id] ? 'wait' : 'pointer' }}
-            title="Klicken zum Analysieren"
-          >
-            {analyzingContract[contract._id] ? (
-              <>
-                <Loader size={12} className={styles.spinning} />
-                <span>Analysiert...</span>
-              </>
-            ) : (
-              <>
-                <Zap size={12} />
-                <span>Jetzt analysieren</span>
-              </>
-            )}
-          </div>
-        )}
       </motion.div>
     );
   };
