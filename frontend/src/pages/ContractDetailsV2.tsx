@@ -118,6 +118,10 @@ interface Contract {
     category?: string;
     confidence?: number;
   };
+  // ✅ Strukturierte Analyse-Felder (für Print-Übersicht)
+  positiveAspects?: Array<{ title: string; description: string }>;
+  criticalIssues?: Array<{ title: string; description: string; riskLevel?: string }>;
+  recommendations?: Array<string | { title: string; description?: string; priority?: string }>;
   // ✅ Dynamische QuickFacts (Rechnungsdatum, Fälligkeit, Betrag, etc.)
   quickFacts?: Array<{
     label: string;
@@ -476,18 +480,18 @@ export default function ContractDetailsV2() {
       : '';
 
     // ✅ Strukturierte Analyse
-    const positivesHtml = (contract as Record<string, unknown>).positiveAspects
-      ? `<ul>${((contract as Record<string, unknown>).positiveAspects as Array<{title: string; description: string}>).map(a =>
+    const positivesHtml = contract.positiveAspects?.length
+      ? `<ul>${contract.positiveAspects.map(a =>
           `<li><strong>${a.title}</strong>${a.description ? ` — ${a.description}` : ''}</li>`
         ).join('')}</ul>` : '';
 
-    const criticalsHtml = (contract as Record<string, unknown>).criticalIssues
-      ? `<ul>${((contract as Record<string, unknown>).criticalIssues as Array<{title: string; description: string; riskLevel?: string}>).map(i =>
+    const criticalsHtml = contract.criticalIssues?.length
+      ? `<ul>${contract.criticalIssues.map(i =>
           `<li><strong>${i.title}</strong>${i.riskLevel ? ` (${i.riskLevel})` : ''}${i.description ? ` — ${i.description}` : ''}</li>`
         ).join('')}</ul>` : '';
 
-    const recsHtml = (contract as Record<string, unknown>).recommendations
-      ? `<ul>${((contract as Record<string, unknown>).recommendations as Array<string | {title: string; description?: string}>).map(r => {
+    const recsHtml = contract.recommendations?.length
+      ? `<ul>${contract.recommendations.map(r => {
           const isObj = typeof r === 'object' && r !== null;
           return `<li><strong>${isObj ? r.title : r}</strong>${isObj && r.description ? ` — ${r.description}` : ''}</li>`;
         }).join('')}</ul>` : '';
