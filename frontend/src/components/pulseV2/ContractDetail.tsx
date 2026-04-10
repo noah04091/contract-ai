@@ -84,10 +84,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const topFindings = findings
     .filter(f => f.severity === 'critical' || f.severity === 'high');
 
-  // Medium findings: visible but secondary
-  const mediumFindings = findings.filter(f => f.severity === 'medium');
-
-  // Secondary findings: low + info, collapsed by default
+  // Secondary findings: low + info, collapsed by default (medium already covered by Actions)
   const secondaryFindings = findings.filter(f => f.severity === 'low' || f.severity === 'info');
 
   // Score label + context description
@@ -99,7 +96,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     : score >= 60
       ? `Solider Vertrag mit ${criticalCount + highCount > 0 ? 'einigen wichtigen Punkten' : 'einseitigen Klauseln'}. Keine akuten Risiken.`
       : score >= 40
-        ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt' : 'wichtigen Punkten'}, die geprüft werden sollten.`
+        ? (criticalCount + highCount > 0
+          ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt' : 'wichtigen Punkten'}, die geprüft werden sollten.`
+          : 'Vertrag mit Optimierungspotenzial. Siehe Empfehlungen unten.')
         : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend prüfen.'}`;
 
   return (
@@ -676,9 +675,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         contractNames={contractNames}
       />
 
-      {/* ═══ Geprüft & unauffällig — low + info + medium, collapsed ═══ */}
-      {(secondaryFindings.length > 0 || mediumFindings.length > 0) && (() => {
-        const allCheckedFindings = [...mediumFindings, ...secondaryFindings];
+      {/* ═══ Geprüft & unauffällig — low + info only, collapsed ═══ */}
+      {secondaryFindings.length > 0 && (() => {
+        const allCheckedFindings = secondaryFindings;
         const contractType = safeContractType(result.context?.contractType || result.document?.contractType);
         return (
           <div style={{
