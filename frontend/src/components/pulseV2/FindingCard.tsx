@@ -638,11 +638,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
                           setFixApplied(true);
                           return;
                         }
-                      } catch { /* fallback to clipboard */ }
+                      } catch {
+                        // Backend unreachable — don't pretend it was saved
+                      }
                     }
-                    // Fallback: copy to clipboard
-                    navigator.clipboard.writeText(quickFix.fixedText);
-                    setFixApplied(true);
+                    // Backend failed or no context — copy to clipboard as fallback
+                    try { await navigator.clipboard.writeText(quickFix.fixedText); } catch { /* clipboard not available */ }
+                    setQuickFixError('Verbesserung konnte nicht gespeichert werden. Der Text wurde in die Zwischenablage kopiert.');
                   }}
                   style={{
                     padding: '8px 20px',
