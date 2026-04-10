@@ -6151,6 +6151,16 @@ function validateHolisticOutput(raw, text1, text2, intent) {
       stats.droppedGeneric++;
       continue;
     }
+    // Filter: Titel die nur Nummern/Paragraphen sind (z.B. "1.", "11.", "§ 3")
+    if (/^[§\d\s.\-:]+$/.test(title)) {
+      stats.droppedGeneric++;
+      continue;
+    }
+    // Filter: Titel die nach Maschinen-Output aussehen (aus KeyValue-Diff-Hints)
+    if (/^\w+:\s*\d+\s*Werte?\s/i.test(title)) {
+      stats.droppedGeneric++;
+      continue;
+    }
 
     const clauseArea = VALID_CLAUSE_AREAS.includes(s.clauseArea) ? s.clauseArea : null;
     if (!clauseArea) {
