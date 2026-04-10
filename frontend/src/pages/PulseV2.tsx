@@ -80,6 +80,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   } = usePulseV2();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [monitorInfo, setMonitorInfo] = useState<{ nextRadarScan: string | null; alertCount: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -88,6 +89,29 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
       setLoading(false);
     })();
   }, [contractId, loadLatest]);
+
+  // Fetch monitoring info (next scan + alerts for this contract)
+  useEffect(() => {
+    (async () => {
+      try {
+        const [monRes, alertRes] = await Promise.all([
+          fetch('/api/legal-pulse-v2/monitoring-status', { credentials: 'include' }),
+          fetch('/api/legal-pulse-v2/legal-alerts', { credentials: 'include' }),
+        ]);
+        const monData = monRes.ok ? await monRes.json() : null;
+        const alertData = alertRes.ok ? await alertRes.json() : { alerts: [] };
+        const contractAlerts = (alertData.alerts || []).filter(
+          (a: { contractId?: string; status?: string }) => a.contractId === contractId && a.status !== 'dismissed'
+        );
+        setMonitorInfo({
+          nextRadarScan: monData?.nextRadarScan || null,
+          alertCount: contractAlerts.length,
+        });
+      } catch {
+        // Non-critical — silently ignore
+      }
+    })();
+  }, [contractId]);
 
   const handleStartAnalysis = useCallback(() => {
     startAnalysis(contractId);
@@ -340,6 +364,52 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
               Erneut analysieren
             </button>
           </div>
+
+          {/* ═══ Per-Contract Monitoring Status ═══ */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: 10,
+            padding: '12px 16px',
+            marginBottom: 20,
+            fontSize: 13,
+            color: '#15803d',
+          }}>
+            <span style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: '#22c55e',
+              boxShadow: '0 0 6px rgba(34,197,94,0.5)',
+              flexShrink: 0,
+            }} />
+            <div style={{ flex: 1 }}>
+              <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
+              <span style={{ color: '#16a34a', fontWeight: 400 }}>
+                {' \u2014 '}Letzte Analyse: {new Date(result.createdAt).toLocaleDateString('de-DE')}
+                {monitorInfo?.nextRadarScan && (
+                  <> &middot; Nächster Radar-Scan: {new Date(monitorInfo.nextRadarScan).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
+                )}
+              </span>
+            </div>
+            {monitorInfo && monitorInfo.alertCount > 0 && (
+              <span style={{
+                background: '#fef2f2',
+                color: '#dc2626',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '2px 8px',
+                borderRadius: 10,
+                border: '1px solid #fecaca',
+              }}>
+                {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
+              </span>
+            )}
+          </div>
+
           <ContractDetail result={result} />
         </>
       )}

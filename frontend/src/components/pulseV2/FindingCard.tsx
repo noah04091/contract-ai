@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
+import { getLegalReferenceUrl } from '../../utils/legalLinks';
 
 interface FindingCardProps {
   finding: PulseV2Finding;
@@ -303,16 +304,43 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>
                 Rechtsgrundlage
               </div>
-              <div style={{
-                fontSize: 13,
-                color: '#1e40af',
-                background: '#eff6ff',
-                padding: '4px 8px',
-                borderRadius: 4,
-                display: 'inline-block',
-              }}>
-                {finding.legalBasis}
-              </div>
+              {(() => {
+                const ref = getLegalReferenceUrl(finding.legalBasis!);
+                return ref.url ? (
+                  <a
+                    href={ref.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontSize: 13,
+                      color: '#1e40af',
+                      background: '#eff6ff',
+                      padding: '4px 8px',
+                      borderRadius: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {ref.text}
+                    <span style={{ fontSize: 11, opacity: 0.6 }}>↗</span>
+                  </a>
+                ) : (
+                  <div style={{
+                    fontSize: 13,
+                    color: '#1e40af',
+                    background: '#eff6ff',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    display: 'inline-block',
+                  }}>
+                    {finding.legalBasis}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -612,19 +640,45 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               </div>
 
               {/* Legal Basis */}
-              {quickFix.legalBasis && (
-                <div style={{
-                  fontSize: 12,
-                  color: '#1e40af',
-                  background: '#eff6ff',
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  display: 'inline-block',
-                  marginBottom: 12,
-                }}>
-                  {quickFix.legalBasis}
-                </div>
-              )}
+              {quickFix.legalBasis && (() => {
+                const ref = getLegalReferenceUrl(quickFix.legalBasis);
+                return ref.url ? (
+                  <a
+                    href={ref.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      fontSize: 12,
+                      color: '#1e40af',
+                      background: '#eff6ff',
+                      padding: '3px 8px',
+                      borderRadius: 4,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      textDecoration: 'none',
+                      marginBottom: 12,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {ref.text}
+                    <span style={{ fontSize: 10, opacity: 0.6 }}>↗</span>
+                  </a>
+                ) : (
+                  <div style={{
+                    fontSize: 12,
+                    color: '#1e40af',
+                    background: '#eff6ff',
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    display: 'inline-block',
+                    marginBottom: 12,
+                  }}>
+                    {quickFix.legalBasis}
+                  </div>
+                );
+              })()}
 
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>

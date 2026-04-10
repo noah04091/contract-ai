@@ -247,6 +247,95 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
         </div>
       </div>
 
+      {/* ═══ Juristische Einschätzung ═══ */}
+      <div style={{
+        background: '#fff',
+        border: '1px solid #e5e7eb',
+        borderRadius: 12,
+        padding: '20px 24px',
+        marginBottom: 20,
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>&#x2696;&#xFE0F;</span>
+          Juristische Einschätzung
+        </div>
+        <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
+          {(() => {
+            const ctx = result.context;
+            const contractType = safeContractType(ctx?.contractType || result.document?.contractType);
+            const parties = ctx?.parties || result.document?.extractedMeta?.parties || [];
+            const scores = result.scores;
+
+            // Build summary paragraphs
+            const lines: string[] = [];
+
+            // Line 1: Contract identification
+            if (contractType && parties.length >= 2) {
+              lines.push(`Bei dem vorliegenden Dokument handelt es sich um einen ${contractType} zwischen ${parties[0]} und ${parties[1]}${parties.length > 2 ? ` (sowie ${parties.length - 2} weiteren Parteien)` : ''}.`);
+            } else if (contractType) {
+              lines.push(`Bei dem vorliegenden Dokument handelt es sich um einen ${contractType}.`);
+            }
+
+            // Line 2: Duration & deadlines
+            if (ctx?.duration || ctx?.endDate) {
+              const durationParts: string[] = [];
+              if (ctx?.duration) durationParts.push(`Laufzeit: ${ctx.duration}`);
+              if (ctx?.endDate) {
+                const end = new Date(ctx.endDate);
+                durationParts.push(`Vertragsende: ${end.toLocaleDateString('de-DE')}`);
+              }
+              if (ctx?.autoRenewal) durationParts.push('mit automatischer Verlängerung');
+              if (ctx?.daysUntilExpiry !== null && ctx?.daysUntilExpiry !== undefined) {
+                if (ctx.daysUntilExpiry <= 30) {
+                  durationParts.push(`Achtung: Ablauf in ${ctx.daysUntilExpiry} Tagen`);
+                } else if (ctx.daysUntilExpiry <= 90) {
+                  durationParts.push(`Ablauf in ${ctx.daysUntilExpiry} Tagen`);
+                }
+              }
+              if (durationParts.length > 0) lines.push(durationParts.join(' \u2014 ') + '.');
+            }
+
+            // Line 3: Overall assessment
+            if (scores) {
+              const overall = scores.overall ?? 0;
+              if (overall >= 80) {
+                lines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overall}/100). ${criticalCount === 0 && highCount === 0 ? 'Es wurden keine kritischen Mängel festgestellt.' : ''}`);
+              } else if (overall >= 60) {
+                lines.push(`Die Analyse zeigt eine grundsätzlich akzeptable Vertragsgestaltung (Score: ${overall}/100), jedoch mit Optimierungsbedarf in ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'Punkt' : 'Punkten'}.`);
+              } else if (overall >= 40) {
+                lines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overall}/100). Es wurden ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wesentlicher Mangel' : 'wesentliche Mängel'} identifiziert, die einer juristischen Überprüfung bedürfen.`);
+              } else {
+                lines.push(`Die Analyse ergibt erhebliche vertragliche Risiken (Score: ${overall}/100). ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Mängel erfordern' : 'r Mangel erfordert'} sofortiges Handeln.` : 'Eine umfassende Überarbeitung wird empfohlen.'}`);
+              }
+            }
+
+            // Line 4: Key risk areas
+            const riskAreas: string[] = [];
+            if (scores && scores.compliance < 50) riskAreas.push('Compliance');
+            if (scores && scores.terms < 50) riskAreas.push('Vertragskonditionen');
+            if (scores && scores.completeness < 50) riskAreas.push('Vollständigkeit');
+            if (scores && scores.risk < 50) riskAreas.push('Risikoabsicherung');
+            if (riskAreas.length > 0) {
+              lines.push(`Besonderer Prüfungsbedarf besteht in den Bereichen: ${riskAreas.join(', ')}.`);
+            }
+
+            // Line 5: Findings breakdown
+            if (findings.length > 0) {
+              const parts: string[] = [];
+              if (criticalCount > 0) parts.push(`${criticalCount} kritisch`);
+              if (highCount > 0) parts.push(`${highCount} hoch`);
+              if (mediumCount > 0) parts.push(`${mediumCount} mittel`);
+              if (lowCount + infoCount > 0) parts.push(`${lowCount + infoCount} gering`);
+              lines.push(`Insgesamt ${findings.length} Befunde: ${parts.join(', ')}.`);
+            }
+
+            return lines.map((line, i) => (
+              <p key={i} style={{ margin: i === 0 ? 0 : '6px 0 0 0' }}>{line}</p>
+            ));
+          })()}
+        </div>
+      </div>
+
       {/* ═══ Risk Overview: compact severity bars ═══ */}
       {findings.length > 0 && (
         <div style={{
