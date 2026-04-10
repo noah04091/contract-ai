@@ -19,12 +19,14 @@ function safeContractType(ct: unknown): string {
 
 interface ContractDetailProps {
   result: PulseV2Result;
+  monitorInfo?: { nextRadarScan: string | null; alertCount: number } | null;
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo }) => {
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
+  const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
 
   // Build contract name map for portfolio insights
   const [contractNames, setContractNames] = useState<Map<string, string>>(new Map());
@@ -241,9 +243,53 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
           </div>
 
           {/* Meta */}
-          <div style={{ fontSize: 12, color: '#9ca3af' }}>
+          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: monitorInfo ? 10 : 0 }}>
             Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
           </div>
+
+          {/* Monitoring Status */}
+          {monitorInfo && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12,
+              color: '#15803d',
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              borderRadius: 6,
+              padding: '6px 10px',
+            }}>
+              <span style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: '#22c55e',
+                boxShadow: '0 0 4px rgba(34,197,94,0.5)',
+                flexShrink: 0,
+              }} />
+              <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
+              <span style={{ color: '#16a34a' }}>
+                {monitorInfo.nextRadarScan && (
+                  <>Nächster Scan: {new Date(monitorInfo.nextRadarScan).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
+                )}
+              </span>
+              {monitorInfo.alertCount > 0 && (
+                <span style={{
+                  background: '#fef2f2',
+                  color: '#dc2626',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: '1px 6px',
+                  borderRadius: 8,
+                  border: '1px solid #fecaca',
+                  marginLeft: 'auto',
+                }}>
+                  {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -255,9 +301,56 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
         padding: '20px 24px',
         marginBottom: 20,
       }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
           <span style={{ fontSize: 16 }}>&#x2696;&#xFE0F;</span>
           Juristische Einschätzung
+          <span
+            onClick={() => setShowJuristischeInfo(!showJuristischeInfo)}
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: '50%',
+              background: '#f3f4f6',
+              border: '1px solid #d1d5db',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 11,
+              color: '#6b7280',
+              cursor: 'pointer',
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
+            ?
+          </span>
+          {showJuristischeInfo && (
+            <div style={{
+              position: 'absolute',
+              top: 28,
+              left: 28,
+              background: '#fff',
+              border: '1px solid #e5e7eb',
+              borderRadius: 8,
+              padding: '12px 16px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              fontSize: 12,
+              fontWeight: 400,
+              color: '#374151',
+              lineHeight: 1.6,
+              maxWidth: 360,
+              zIndex: 10,
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>Was ist das?</div>
+              Diese Einschätzung wird automatisch aus den Analyseergebnissen generiert — basierend auf Score, Befunden und Vertragsdaten. Sie gibt eine erste Orientierung und ersetzt keine individuelle anwaltliche Beratung.
+              <div
+                onClick={() => setShowJuristischeInfo(false)}
+                style={{ marginTop: 8, color: '#3b82f6', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Verstanden
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
           {(() => {
@@ -301,9 +394,17 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result }) => {
               if (overall >= 80) {
                 lines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overall}/100). ${criticalCount === 0 && highCount === 0 ? 'Es wurden keine kritischen Mängel festgestellt.' : ''}`);
               } else if (overall >= 60) {
-                lines.push(`Die Analyse zeigt eine grundsätzlich akzeptable Vertragsgestaltung (Score: ${overall}/100), jedoch mit Optimierungsbedarf in ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'Punkt' : 'Punkten'}.`);
+                if (criticalCount + highCount > 0) {
+                  lines.push(`Die Analyse zeigt eine grundsätzlich akzeptable Vertragsgestaltung (Score: ${overall}/100), jedoch mit Optimierungsbedarf in ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'Punkt' : 'Punkten'}.`);
+                } else {
+                  lines.push(`Die Analyse zeigt eine grundsätzlich akzeptable Vertragsgestaltung (Score: ${overall}/100). Es wurden keine wesentlichen Mängel festgestellt.`);
+                }
               } else if (overall >= 40) {
-                lines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overall}/100). Es wurden ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wesentlicher Mangel' : 'wesentliche Mängel'} identifiziert, die einer juristischen Überprüfung bedürfen.`);
+                if (criticalCount + highCount > 0) {
+                  lines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overall}/100). Es wurden ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wesentlicher Mangel' : 'wesentliche Mängel'} identifiziert, die einer juristischen Überprüfung bedürfen.`);
+                } else {
+                  lines.push(`Die Analyse zeigt Optimierungspotenzial (Score: ${overall}/100). Es liegen keine kritischen Einzelmängel vor, jedoch deuten die Teilscores auf strukturelle Schwächen hin.`);
+                }
               } else {
                 lines.push(`Die Analyse ergibt erhebliche vertragliche Risiken (Score: ${overall}/100). ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Mängel erfordern' : 'r Mangel erfordert'} sofortiges Handeln.` : 'Eine umfassende Überarbeitung wird empfohlen.'}`);
               }
