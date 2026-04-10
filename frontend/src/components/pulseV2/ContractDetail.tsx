@@ -481,30 +481,38 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         </div>
       )}
 
-      {/* ═══ Handlungsbedarf (Actions) — the CORE section ═══ */}
-      {actions.length > 0 && (() => {
+      {/* ═══ Empfehlungen — Actions + kritische Findings zusammen ═══ */}
+      {(actions.length > 0 || topFindings.length > 0) && (() => {
         const openActions = actions.filter(a => a.status === 'open');
         const doneActions = actions.filter(a => a.status === 'done');
         const dismissedActions = actions.filter(a => a.status === 'dismissed');
         const doneCount = doneActions.length;
         const totalCount = actions.length;
-        const progressPct = Math.round((doneCount / totalCount) * 100);
+        const progressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
         const historyActions = [...doneActions, ...dismissedActions];
+
+        const hasCriticalFindings = topFindings.length > 0;
+        const borderColor = hasCriticalFindings
+          ? (criticalCount > 0 ? '#fecaca' : '#fed7aa')
+          : '#e5e7eb';
 
         return (
           <div style={{
             background: '#fff',
-            border: '1px solid #e5e7eb',
+            border: `1px solid ${borderColor}`,
             borderRadius: 12,
             padding: 20,
             marginBottom: 20,
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
-                Handlungsbedarf
-                <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>
-                  {openActions.length} offen
-                </span>
+                Empfehlungen
+                {openActions.length > 0 && (
+                  <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>
+                    {openActions.length} offen
+                  </span>
+                )}
               </div>
               {doneCount > 0 && (
                 <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
@@ -513,6 +521,15 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               )}
             </div>
 
+            {/* Subtext — erklärt die Sektion */}
+            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 16, lineHeight: 1.5 }}>
+              Basierend auf der Analyse aller {clauses.length} Klauseln.
+              {hasCriticalFindings
+                ? ' Kritische Punkte zuerst, gefolgt von Optimierungsvorschlägen.'
+                : ' Sortiert nach Relevanz für Ihre Vertragssituation.'}
+            </div>
+
+            {/* Progress bar */}
             {doneCount > 0 && (
               <div style={{
                 height: 4,
@@ -542,15 +559,45 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               }}>
                 <div style={{ fontSize: 24, marginBottom: 4 }}>&#127881;</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#15803d' }}>
-                  Alle Ma&szlig;nahmen erledigt
+                  Alle Empfehlungen umgesetzt
                 </div>
                 <div style={{ fontSize: 13, color: '#16a34a', marginTop: 2 }}>
-                  Der Score wird bei der n&auml;chsten Analyse aktualisiert.
+                  Der Score wird bei der nächsten Analyse aktualisiert.
                 </div>
               </div>
             )}
 
-            {/* Active (open) actions */}
+            {/* Critical + High Findings — wenn vorhanden, ganz oben */}
+            {hasCriticalFindings && (
+              <div style={{ marginBottom: openActions.length > 0 ? 16 : 0 }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginBottom: 10,
+                  padding: '6px 10px',
+                  background: criticalCount > 0 ? '#fef2f2' : '#fff7ed',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: criticalCount > 0 ? '#dc2626' : '#ea580c',
+                }}>
+                  <span style={{ fontSize: 13 }}>&#9888;</span>
+                  {topFindings.length} {topFindings.length === 1 ? 'Klausel erfordert' : 'Klauseln erfordern'} besondere Aufmerksamkeit
+                </div>
+                {topFindings.map((finding, idx) => (
+                  <FindingCard
+                    key={`top-${finding.clauseId}-${idx}`}
+                    finding={finding}
+                    clause={clauseMap.get(finding.clauseId)}
+                    contractId={result.contractId}
+                    resultId={result._id}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Actions — Optimierungsvorschläge */}
             {openActions.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[...openActions]
@@ -569,7 +616,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               </div>
             )}
 
-            {/* Historie — done + dismissed actions, collapsible */}
+            {/* Historie — done + dismissed, collapsible */}
             {historyActions.length > 0 && (
               <div style={{ marginTop: openActions.length > 0 ? 16 : 0 }}>
                 <button
@@ -590,10 +637,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   }}>
                     &#x203A;
                   </span>
-                  Historie
+                  Erledigte Empfehlungen
                   {doneActions.length > 0 && (
                     <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 500 }}>
-                      {doneActions.length} erledigt
+                      {doneActions.length} umgesetzt
                     </span>
                   )}
                   {dismissedActions.length > 0 && (
@@ -620,95 +667,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         );
       })()}
 
-      {/* ═══ Top Risiken — only critical + high, max 3 ═══ */}
-      {topFindings.length > 0 && (() => {
-        const topCritical = topFindings.filter(f => f.severity === 'critical').length;
-        const topHigh = topFindings.filter(f => f.severity === 'high').length;
-        const urgencyColor = topCritical > 0 ? '#dc2626' : '#ea580c';
-        const urgencyBg = topCritical > 0 ? '#fef2f2' : '#fff7ed';
-        const urgencyBorder = topCritical > 0 ? '#fecaca' : '#fed7aa';
-
-        // Build subline parts
-        const total = topCritical + topHigh;
-        const subParts: string[] = [];
-        if (topCritical > 0) subParts.push(`${topCritical} kritisch`);
-        if (topHigh > 0) subParts.push(`${topHigh} hoch`);
-
-        return (
-        <div style={{
-          background: '#fff',
-          border: `1px solid ${urgencyBorder}`,
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 20,
-        }}>
-          <div style={{
-            marginBottom: 14,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 8,
-          }}>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 22,
-              height: 22,
-              borderRadius: '50%',
-              background: urgencyBg,
-              fontSize: 13,
-              flexShrink: 0,
-              marginTop: 1,
-            }}>&#9888;</span>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: urgencyColor }}>
-                {total} {total === 1 ? 'Risiko erfordert' : 'Risiken erfordern'} Aufmerksamkeit
-              </div>
-              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                {subParts.join(' · ')}
-              </div>
-            </div>
-          </div>
-          {topFindings.map((finding, idx) => (
-            <FindingCard
-              key={`top-${finding.clauseId}-${idx}`}
-              finding={finding}
-              clause={clauseMap.get(finding.clauseId)}
-              contractId={result.contractId}
-              resultId={result._id}
-            />
-          ))}
-        </div>
-        );
-      })()}
-
-      {/* ═══ Weitere Hinweise (Medium) ═══ */}
-      {mediumFindings.length > 0 && (
-        <div style={{
-          background: '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 12,
-          padding: 20,
-          marginBottom: 20,
-        }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 14 }}>
-            Weitere Hinweise
-            <span style={{ fontWeight: 400, color: '#9ca3af', fontSize: 12, marginLeft: 8 }}>
-              {mediumFindings.length} {mediumFindings.length === 1 ? 'Punkt' : 'Punkte'}
-            </span>
-          </div>
-          {mediumFindings.map((finding, idx) => (
-            <FindingCard
-              key={`med-${finding.clauseId}-${idx}`}
-              finding={finding}
-              clause={clauseMap.get(finding.clauseId)}
-              contractId={result.contractId}
-              resultId={result._id}
-            />
-          ))}
-        </div>
-      )}
-
       {/* ═══ Score Timeline ═══ */}
       <ScoreTrend contractId={result.contractId} />
 
@@ -718,64 +676,76 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         contractNames={contractNames}
       />
 
-      {/* ═══ Weitere Details — low + info, collapsed ═══ */}
-      {secondaryFindings.length > 0 && (
-        <div style={{
-          background: '#fff',
-          border: '1px solid #e5e7eb',
-          borderRadius: 12,
-          overflow: 'hidden',
-          marginTop: 20,
-        }}>
-          <button
-            onClick={() => setShowAllFindings(!showAllFindings)}
-            style={{
-              width: '100%',
-              padding: '14px 20px',
-              background: showAllFindings ? '#f9fafb' : '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: 14,
-              fontWeight: 500,
-              color: '#374151',
-            }}
-          >
-            <span>
-              {secondaryFindings.length} {secondaryFindings.length === 1 ? 'weiteren Punkt' : 'weitere Punkte'} anzeigen
-              <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
-                {lowCount > 0 && `${lowCount} niedrig`}
-                {lowCount > 0 && infoCount > 0 && ' \u00b7 '}
-                {infoCount > 0 && `${infoCount} branchenüblich`}
+      {/* ═══ Geprüft & unauffällig — low + info + medium, collapsed ═══ */}
+      {(secondaryFindings.length > 0 || mediumFindings.length > 0) && (() => {
+        const allCheckedFindings = [...mediumFindings, ...secondaryFindings];
+        const contractType = safeContractType(result.context?.contractType || result.document?.contractType);
+        return (
+          <div style={{
+            background: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 12,
+            overflow: 'hidden',
+            marginTop: 20,
+          }}>
+            <button
+              onClick={() => setShowAllFindings(!showAllFindings)}
+              style={{
+                width: '100%',
+                padding: '14px 20px',
+                background: showAllFindings ? '#f9fafb' : '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: 14,
+                fontWeight: 500,
+                color: '#374151',
+                textAlign: 'left',
+              }}
+            >
+              <div>
+                <div>
+                  Geprüft &amp; unauffällig
+                  <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
+                    {allCheckedFindings.length} {allCheckedFindings.length === 1 ? 'Klausel' : 'Klauseln'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginTop: 2 }}>
+                  {contractType
+                    ? `Diese Klauseln sind für einen ${contractType} üblich und erfordern kein Handeln.`
+                    : 'Diese Klauseln wurden geprüft und erfordern kein Handeln.'}
+                </div>
+              </div>
+              <span style={{
+                fontSize: 12,
+                color: '#9ca3af',
+                transform: showAllFindings ? 'rotate(180deg)' : 'none',
+                transition: 'transform 0.2s',
+                flexShrink: 0,
+                marginLeft: 12,
+              }}>
+                &#9660;
               </span>
-            </span>
-            <span style={{
-              fontSize: 12,
-              color: '#9ca3af',
-              transform: showAllFindings ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.2s',
-            }}>
-              &#9660;
-            </span>
-          </button>
+            </button>
 
-          {showAllFindings && (
-            <div style={{ padding: '0 20px 20px' }}>
-              {secondaryFindings.map((finding, idx) => (
-                <FindingCard
-                  key={`sec-${finding.clauseId}-${idx}`}
-                  finding={finding}
-                  clause={clauseMap.get(finding.clauseId)}
-                  contractId={result.contractId}
-                  resultId={result._id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            {showAllFindings && (
+              <div style={{ padding: '0 20px 20px' }}>
+                {allCheckedFindings.map((finding, idx) => (
+                  <FindingCard
+                    key={`checked-${finding.clauseId}-${idx}`}
+                    finding={finding}
+                    clause={clauseMap.get(finding.clauseId)}
+                    contractId={result.contractId}
+                    resultId={result._id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* No findings at all */}
       {findings.length === 0 && (

@@ -10,9 +10,9 @@ interface ActionItemProps {
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
-  now: { color: '#dc2626', bg: '#fef2f2', label: 'Sofort', icon: '\u26a1', deadline: 'Innerhalb von 7 Tagen' },
-  plan: { color: '#d97706', bg: '#fffbeb', label: 'Planen', icon: '\ud83d\udcc5', deadline: 'Innerhalb von 30 Tagen' },
-  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Beobachten', icon: '\ud83d\udc41\ufe0f', deadline: 'Keine Frist' },
+  now: { color: '#dc2626', bg: '#fef2f2', label: 'Hohe Priorität', icon: '\u26a1', deadline: 'Zeitnah prüfen' },
+  plan: { color: '#d97706', bg: '#fffbeb', label: 'Empfohlen', icon: '\ud83d\udcc5', deadline: 'Bei nächster Vertragsprüfung' },
+  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Zur Kenntnis', icon: '\ud83d\udc41\ufe0f', deadline: 'Kein Handlungsbedarf' },
 };
 
 /**
