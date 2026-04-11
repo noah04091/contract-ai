@@ -6902,9 +6902,9 @@ async function answerCompareFollowUp(question, context) {
       ? 'Der User ist Auftragnehmer/Anbieter/Dienstleister.'
       : 'Der User betrachtet neutral.';
 
-  // Build compact context
-  const diffs = (context.differences || []).slice(0, 10).map(d =>
-    `${d.clause || d.category}: ${docName} 1="${d.contract1Value || '—'}" vs ${docName} 2="${d.contract2Value || '—'}" [${d.severity}]${d.explanation ? ' — ' + d.explanation.substring(0, 100) : ''}`
+  // Build compact context — include enough detail for accurate answers
+  const diffs = (context.differences || []).slice(0, 12).map(d =>
+    `${d.clause || d.category}: ${docName} 1="${d.contract1Value || '—'}" vs ${docName} 2="${d.contract2Value || '—'}" [${d.severity}]${d.explanation ? ' — ' + d.explanation.substring(0, 200) : ''}${d.recommendation ? ' → ' + d.recommendation.substring(0, 100) : ''}`
   ).join('\n');
 
   const risks = (context.risks || []).slice(0, 5).map(r =>
@@ -6931,12 +6931,13 @@ async function answerCompareFollowUp(question, context) {
         content: `Du bist ein erfahrener Vertragsberater. Der User hat gerade zwei ${docType}e verglichen und stellt eine Rückfrage.
 ${perspectiveHint}
 
-REGELN:
-1. Antworte KONKRET mit Bezug auf die Vergleichsdaten — nenne Zahlen, Klauseln, Werte
-2. Wenn du rechnen kannst (Kosten über Laufzeit, Differenzen), tu es
-3. Gib praktische Handlungsempfehlungen
-4. Halte dich kurz (3-5 Sätze), aber sei präzise
-5. Wenn die Daten nicht ausreichen um die Frage zu beantworten, sag das ehrlich`
+KRITISCHE REGELN:
+1. Nenne NUR Zahlen und Werte, die EXAKT in den Vergleichsdaten stehen. Erfinde KEINE Zahlen, runde NICHT willkürlich.
+2. Wenn du rechnest (Kosten über Laufzeit, Differenzen), zeige die Rechnung transparent und nutze nur Werte aus den Daten.
+3. Wenn die Daten nicht ausreichen um die Frage präzise zu beantworten, sag das ehrlich statt zu raten.
+4. Gib praktische Handlungsempfehlungen wo möglich.
+5. Halte dich kurz (3-5 Sätze), aber sei präzise. Lieber kurz und korrekt als lang und spekulativ.
+6. Beziehe dich immer auf "${docName} 1" und "${docName} 2" — nicht auf Dateinamen.`
       },
       {
         role: 'user',

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutGrid, GitCompareArrows, Shield, Lightbulb, Map,
   Users, Briefcase, Scale, AlertTriangle,
-  MessageCircle, Loader2, X,
+  MessageCircle, Loader2, X, Send,
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
@@ -254,6 +254,16 @@ function FollowUpSection({
   onAsk: (question: string) => void;
   onClose: () => void;
 }) {
+  const [customInput, setCustomInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleCustomSubmit = () => {
+    const q = customInput.trim();
+    if (!q || answerLoading) return;
+    onAsk(q);
+    setCustomInput('');
+  };
+
   return (
     <motion.div
       className={styles.followUpSection}
@@ -277,6 +287,28 @@ function FollowUpSection({
             {q}
           </button>
         ))}
+      </div>
+
+      {/* Custom question input */}
+      <div className={styles.followUpInputRow}>
+        <input
+          ref={inputRef}
+          type="text"
+          className={styles.followUpInput}
+          placeholder="Eigene Frage stellen..."
+          value={customInput}
+          onChange={(e) => setCustomInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
+          disabled={answerLoading}
+        />
+        <button
+          className={styles.followUpSendBtn}
+          onClick={handleCustomSubmit}
+          disabled={!customInput.trim() || answerLoading}
+          title="Frage stellen"
+        >
+          <Send size={16} />
+        </button>
       </div>
 
       <AnimatePresence>
