@@ -6,6 +6,20 @@ import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
 import { ActionItem } from './ActionItem';
 
+/** Smooth scroll to a section by id */
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Clickable text style */
+const clickableStyle: React.CSSProperties = {
+  cursor: 'pointer',
+  textDecoration: 'underline',
+  textDecorationStyle: 'dotted',
+  textUnderlineOffset: 2,
+};
+
 /** Safely extract string from contractType (may be string or object) */
 function safeContractType(ct: unknown): string {
   if (!ct) return '';
@@ -239,7 +253,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           }}>
             {scoreLabel}
             {findings.length > 0 && (
-              <span style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8 }}>
+              <span
+                onClick={() => scrollToSection('empfehlungen')}
+                style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8, ...clickableStyle }}
+              >
                 &mdash; {findings.length} Befunde in {result.coverage ? `${result.coverage.analyzed}/${result.coverage.total}` : String(clauses.length)} Klauseln
                 {result.coverage && result.coverage.percentage < 100 && (
                   <span style={{ color: '#d97706', marginLeft: 4 }}>({result.coverage.percentage}%)</span>
@@ -249,7 +266,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
 
           {/* Score context */}
-          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+          <div
+            onClick={() => scrollToSection('empfehlungen')}
+            style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, ...clickableStyle }}
+          >
             {scoreDescription}
           </div>
 
@@ -286,18 +306,23 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 )}
               </span>
               {monitorInfo.alertCount > 0 && (
-                <span style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: '1px 6px',
-                  borderRadius: 8,
-                  border: '1px solid #fecaca',
-                  marginLeft: 'auto',
-                }}>
+                <a
+                  href="/pulse#legal-alerts"
+                  style={{
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: '1px 6px',
+                    borderRadius: 8,
+                    border: '1px solid #fecaca',
+                    marginLeft: 'auto',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
                   {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
-                </span>
+                </a>
               )}
             </div>
           )}
@@ -371,7 +396,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             const scores = result.scores;
 
             // Build summary paragraphs
-            const lines: string[] = [];
+            const lines: (string | React.ReactNode)[] = [];
 
             // Line 1: Contract identification
             if (contractType && parties.length >= 2) {
@@ -428,17 +453,33 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             if (scores && scores.completeness < 50) riskAreas.push('Vollständigkeit');
             if (scores && scores.risk < 50) riskAreas.push('Risikoabsicherung');
             if (riskAreas.length > 0) {
-              lines.push(`Besonderer Prüfungsbedarf besteht in den Bereichen: ${riskAreas.join(', ')}.`);
+              lines.push(
+                <span
+                  key="risk-areas-link"
+                  onClick={() => scrollToSection('risiko-uebersicht')}
+                  style={{ ...clickableStyle, color: '#3b82f6' }}
+                >
+                  Besonderer Prüfungsbedarf besteht in den Bereichen: {riskAreas.join(', ')}.
+                </span>
+              );
             }
 
-            // Line 5: Findings breakdown
+            // Line 5: Findings breakdown — clickable
             if (findings.length > 0) {
               const parts: string[] = [];
               if (criticalCount > 0) parts.push(`${criticalCount} kritisch`);
               if (highCount > 0) parts.push(`${highCount} hoch`);
               if (mediumCount > 0) parts.push(`${mediumCount} mittel`);
               if (lowCount + infoCount > 0) parts.push(`${lowCount + infoCount} gering`);
-              lines.push(`Insgesamt ${findings.length} Befunde: ${parts.join(', ')}.`);
+              lines.push(
+                <span
+                  key="findings-link"
+                  onClick={() => scrollToSection(criticalCount + highCount > 0 ? 'empfehlungen' : 'geprueft')}
+                  style={{ ...clickableStyle, color: '#3b82f6' }}
+                >
+                  Insgesamt {findings.length} Befunde: {parts.join(', ')}.
+                </span>
+              );
             }
 
             return lines.map((line, i) => (
@@ -450,7 +491,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
       {/* ═══ Risk Overview: compact severity bars ═══ */}
       {findings.length > 0 && (
-        <div style={{
+        <div id="risiko-uebersicht" style={{
           background: '#fff',
           border: '1px solid #e5e7eb',
           borderRadius: 12,
@@ -477,17 +518,17 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {infoCount > 0 && <div style={{ width: `${(infoCount / findings.length) * 100}%`, background: '#d1d5db' }} />}
           </div>
 
-          {/* Legend */}
+          {/* Legend — clickable to scroll to section */}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12 }}>
-            {criticalCount > 0 && <SeverityDot color="#dc2626" label="Kritisch" count={criticalCount} />}
-            {highCount > 0 && <SeverityDot color="#ea580c" label="Hoch" count={highCount} />}
-            {mediumCount > 0 && <SeverityDot color="#d97706" label="Mittel" count={mediumCount} />}
-            {lowCount > 0 && <SeverityDot color="#9ca3af" label="Niedrig" count={lowCount} />}
-            {infoCount > 0 && <SeverityDot color="#d1d5db" label="Info" count={infoCount} />}
+            {criticalCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#dc2626" label="Kritisch" count={criticalCount} /></span>}
+            {highCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#ea580c" label="Hoch" count={highCount} /></span>}
+            {mediumCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#d97706" label="Mittel" count={mediumCount} /></span>}
+            {lowCount > 0 && <span onClick={() => scrollToSection('geprueft')} style={{ cursor: 'pointer' }}><SeverityDot color="#9ca3af" label="Niedrig" count={lowCount} /></span>}
+            {infoCount > 0 && <span onClick={() => scrollToSection('geprueft')} style={{ cursor: 'pointer' }}><SeverityDot color="#d1d5db" label="Info" count={infoCount} /></span>}
             <span style={{ color: '#d1d5db' }}>|</span>
-            {riskCount > 0 && <span style={{ color: '#6b7280' }}>{riskCount} Risiken</span>}
-            {complianceCount > 0 && <span style={{ color: '#6b7280' }}>{complianceCount} Compliance</span>}
-            {opportunityCount > 0 && <span style={{ color: '#16a34a' }}>{opportunityCount} Chancen</span>}
+            {riskCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ color: '#6b7280', cursor: 'pointer' }}>{riskCount} Risiken</span>}
+            {complianceCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ color: '#6b7280', cursor: 'pointer' }}>{complianceCount} Compliance</span>}
+            {opportunityCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ color: '#16a34a', cursor: 'pointer' }}>{opportunityCount} Chancen</span>}
           </div>
         </div>
       )}
@@ -508,7 +549,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           : '#e5e7eb';
 
         return (
-          <div style={{
+          <div id="empfehlungen" style={{
             background: '#fff',
             border: `1px solid ${borderColor}`,
             borderRadius: 12,
@@ -692,7 +733,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         const allCheckedFindings = secondaryFindings;
         const contractType = safeContractType(result.context?.contractType || result.document?.contractType);
         return (
-          <div style={{
+          <div id="geprueft" style={{
             background: '#fff',
             border: '1px solid #e5e7eb',
             borderRadius: 12,
