@@ -3416,7 +3416,7 @@ function groupDeterministicDiffs(rawDiffs) {
 
 function inferDiffSeverity(diff) {
   if (diff.diffType === 'numeric' && diff.numValue1 !== null && diff.numValue2 !== null && diff.numValue1 !== 0) {
-    const pctDiff = Math.abs((diff.numValue2 - diff.numValue1) / diff.numValue1);
+    const pctDiff = Math.abs(diff.numValue2 - diff.numValue1) / Math.max(Math.abs(diff.numValue1), Math.abs(diff.numValue2), 1);
     if (pctDiff > 0.5) return 'critical';
     if (pctDiff > 0.2) return 'high';
     if (pctDiff > 0.1) return 'medium';
@@ -5910,7 +5910,7 @@ ${lines.join('\n')}
 Erstelle für JEDEN Wert der sich zwischen Doc1 und Doc2 unterscheidet eine eigene Section!`;
 }
 
-function buildHolisticSystemPrompt(intent, docConfig) {
+function buildHolisticSystemPrompt(intent, docConfig, perspective) {
   const metaHint = intent.level === 'meta'
     ? `\n\n⚠️ META-LEVEL: Die Dokumente sind nur auf META-EBENE vergleichbar (unterschiedliche Produkttypen). Fokussiere dich AUSSCHLIEßLICH auf: ${intent.comparableDimensions.join(', ')}. Die erste Section muss erklären, dass es sich um fundamental unterschiedliche Dokumenttypen handelt. Vergleiche KEINE Detailklauseln aus unvereinbaren Bereichen.`
     : '';
@@ -5923,10 +5923,22 @@ function buildHolisticSystemPrompt(intent, docConfig) {
     ? `\n\nDOKUMENTTYP: ${docConfig.label}. Berücksichtige typische Bewertungskriterien dieses Dokumenttyps.`
     : '';
 
+  let perspectiveHint = '';
+  if (perspective && perspective !== 'neutral') {
+    const perspLabel = perspective === 'party1' ? 'Auftraggeber/Partei 1'
+      : perspective === 'party2' ? 'Auftragnehmer/Partei 2'
+      : perspective;
+    perspectiveHint = `\n\nPERSPEKTIVE: Analysiere aus Sicht des ${perspLabel}.
+- Bewerte jeden Unterschied danach, wie er sich auf den ${perspLabel} auswirkt.
+- Fehlende Schutzklauseln für den ${perspLabel} sind HÖHER zu bewerten (severity rauf).
+- recommendationTarget soll das Dokument empfehlen, das für den ${perspLabel} BESSER ist.
+- Stärken/Schwächen und die Gesamtempfehlung müssen die Interessen des ${perspLabel} widerspiegeln.`;
+  }
+
   return `Du bist ein erfahrener Vertragsberater und vergleichst zwei Dokumente wie ein Mensch — intelligent, ganzheitlich, priorisiert.${docTypeHint}
 
 DEINE AUFGABE:
-Vergleiche die beiden Dokumente und finde ALLE echten Unterschiede. Arbeite wie ein erfahrener Anwalt: gründlich, faktenbasiert, nichts übersehen, nichts erfinden.${metaHint}${partialHint}
+Vergleiche die beiden Dokumente und finde ALLE echten Unterschiede. Arbeite wie ein erfahrener Anwalt: gründlich, faktenbasiert, nichts übersehen, nichts erfinden.${metaHint}${partialHint}${perspectiveHint}
 
 KERNPRINZIP — Kein Formzwang:
 - Es gibt KEINE Mindest- oder Höchstzahl an Sections. Finde so viele Unterschiede wie tatsächlich existieren.
@@ -6078,11 +6090,18 @@ Erstelle jetzt die Sections für den Vergleich. JEDER echte Unterschied = eine e
 /**
  * STUFE 2: Holistic Compare Pass (gpt-4o, ein einziger großer Call)
  */
-async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig) {
-  const systemPrompt = buildHolisticSystemPrompt(intent, docConfig);
-  const userPrompt = buildHolisticUserPrompt(map1, map2, intent, text1, text2, docConfig);
+async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective) {
+  // Anti-Position-Bias: Zufällig entscheiden ob Doc1 und Doc2 im Prompt getauscht werden
+  const swapped = Math.random() < 0.5;
+  const promptMap1 = swapped ? map2 : map1;
+  const promptMap2 = swapped ? map1 : map2;
+  const promptText1 = swapped ? text2 : text1;
+  const promptText2 = swapped ? text1 : text2;
 
-  console.log(`🌊 Holistic Pass: ~${Math.round((systemPrompt.length + userPrompt.length) / 4)} Tokens Input`);
+  const systemPrompt = buildHolisticSystemPrompt(intent, docConfig, perspective);
+  const userPrompt = buildHolisticUserPrompt(promptMap1, promptMap2, intent, promptText1, promptText2, docConfig);
+
+  console.log(`🌊 Holistic Pass: ~${Math.round((systemPrompt.length + userPrompt.length) / 4)} Tokens Input${swapped ? ' (Doc-Reihenfolge getauscht)' : ''}`);
 
   const completion = await withTimeout(
     openai.chat.completions.create({
@@ -6107,8 +6126,46 @@ async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfi
     console.warn(`⚠️ Raw content (first 500 chars): ${String(completion.choices[0].message.content).slice(0, 500)}`);
     throw new Error('Holistic Pass: GPT-Antwort konnte nicht als JSON verarbeitet werden');
   }
+
+  // Wenn getauscht: GPT-Output zurückmappen auf die originale Reihenfolge
+  if (swapped) {
+    raw = remapSwappedHolisticOutput(raw);
+    console.log(`🔄 Doc-Reihenfolge zurückgemappt`);
+  }
+
   const sectionCount = Array.isArray(raw?.sections) ? raw.sections.length : 0;
   console.log(`✅ Holistic Pass: ${sectionCount} Sections vom GPT erhalten`);
+  return raw;
+}
+
+/**
+ * Mappt die GPT-Antwort zurück wenn Doc1/Doc2 im Prompt vertauscht waren.
+ * Tauscht: doc1Value↔doc2Value, doc1Quote↔doc2Quote, recommendationTarget 1↔2,
+ * overallRecommendation.recommended 1↔2, contract1/2 Strengths/Weaknesses.
+ */
+function remapSwappedHolisticOutput(raw) {
+  const swap12 = (v) => v === 1 ? 2 : v === 2 ? 1 : v;
+
+  // Sections remappen
+  if (Array.isArray(raw.sections)) {
+    for (const s of raw.sections) {
+      const tmp1 = s.doc1Value; s.doc1Value = s.doc2Value; s.doc2Value = tmp1;
+      const tmp2 = s.doc1Quote; s.doc1Quote = s.doc2Quote; s.doc2Quote = tmp2;
+      if (s.recommendationTarget === 1 || s.recommendationTarget === 2) {
+        s.recommendationTarget = swap12(s.recommendationTarget);
+      }
+    }
+  }
+
+  // Overall Recommendation remappen
+  if (raw.overallRecommendation) {
+    raw.overallRecommendation.recommended = swap12(raw.overallRecommendation.recommended);
+  }
+
+  // Strengths/Weaknesses tauschen
+  const tmp3 = raw.contract1Strengths; raw.contract1Strengths = raw.contract2Strengths; raw.contract2Strengths = tmp3;
+  const tmp4 = raw.contract1Weaknesses; raw.contract1Weaknesses = raw.contract2Weaknesses; raw.contract2Weaknesses = tmp4;
+
   return raw;
 }
 
@@ -6274,7 +6331,7 @@ function validateHolisticOutput(raw, text1, text2, intent) {
 
   const rec = raw?.overallRecommendation || {};
   const overallRecommendation = {
-    recommended: (rec.recommended === 1 || rec.recommended === 2) ? rec.recommended : 1,
+    recommended: (rec.recommended === 1 || rec.recommended === 2) ? rec.recommended : null,
     reasoning: String(rec.reasoning || '').slice(0, 800),
     confidence: Number.isFinite(rec.confidence) ? Math.max(0, Math.min(100, Math.round(rec.confidence))) : 50,
     conditions: Array.isArray(rec.conditions) ? rec.conditions.slice(0, 5).map(c => String(c).slice(0, 200)).filter(Boolean) : [],
@@ -6419,7 +6476,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
 
     // STUFE 2: Holistic Pass
     progress('holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...');
-    let holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
+    let holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective);
 
     // STUFE 3: Trust-Guard
     progress('validating', 82, 'Ergebnisse werden validiert...');
@@ -6430,7 +6487,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
       console.warn(`⚠️ Holistic: 0 Sections nach Trust-Guard. Einmaliger Retry...`);
       progress('holistic', 70, 'Erneuter KI-Vergleich (Retry)...');
       try {
-        holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig);
+        holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective);
         validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
         if (validated.sections.length > 0) {
           console.log(`✅ Retry erfolgreich: ${validated.sections.length} Sections`);
