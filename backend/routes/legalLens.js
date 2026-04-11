@@ -113,7 +113,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 16;
+const CACHE_VERSION = 17; // V4 Direct Extraction + Post-Processor
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
