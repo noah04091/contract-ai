@@ -31,6 +31,7 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
   const [showSideBySide, setShowSideBySide] = useState(true);
   const [activeDiffIndex, setActiveDiffIndex] = useState(0);
   const [expandedQuoteIndex, setExpandedQuoteIndex] = useState<number | null>(null);
+  const [allQuotesExpanded, setAllQuotesExpanded] = useState(false);
   const [expandedPdfIndex, setExpandedPdfIndex] = useState<number | null>(null);
   const [activePdfTab, setActivePdfTab] = useState<1 | 2>(1);
   const diffRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -55,6 +56,7 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
   useEffect(() => {
     setActiveDiffIndex(0);
     setExpandedQuoteIndex(null);
+    setAllQuotesExpanded(false);
   }, [selectedArea]);
 
   const scrollToActiveDiff = (index: number) => {
@@ -148,6 +150,16 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
         )}
 
         <div className={styles.viewToggles}>
+          <button
+            className={`${styles.viewToggle} ${allQuotesExpanded ? styles.viewToggleActive : ''}`}
+            onClick={() => {
+              setAllQuotesExpanded(!allQuotesExpanded);
+              setExpandedQuoteIndex(null);
+            }}
+          >
+            {allQuotesExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            <span>{allQuotesExpanded ? 'Alle zuklappen' : 'Alle aufklappen'}</span>
+          </button>
           <button
             className={styles.viewToggle}
             onClick={() => setShowSideBySide(!showSideBySide)}
@@ -264,11 +276,11 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
                   setExpandedQuoteIndex(expandedQuoteIndex === index ? null : index);
                 }}
               >
-                {expandedQuoteIndex === index ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {(expandedQuoteIndex === index || allQuotesExpanded) ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 Originaltext anzeigen
               </button>
 
-              {expandedQuoteIndex === index && (
+              {(expandedQuoteIndex === index || allQuotesExpanded) && (
                 <div className={styles.quotesPanel}>
                   {showSideBySide ? (
                     <SideBySideQuotes

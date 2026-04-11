@@ -124,6 +124,7 @@ function severityRank(s?: string): number {
 
 export default function ContractMapTab({ contract1, contract2, differences, documentType }: ContractMapTabProps) {
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
+  const allExpanded = expandedArea === '__all__';
   const rows = buildAreaRows(contract1, contract2, differences);
   const docName = documentType?.labels?.documentName || 'Vertrag';
 
@@ -149,6 +150,16 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
         </span>
       </div>
 
+      <div className={styles.expandAllBar}>
+        <button
+          className={`${styles.viewToggle} ${allExpanded ? styles.viewToggleActive : ''}`}
+          onClick={() => setExpandedArea(allExpanded ? null : '__all__')}
+        >
+          {allExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          <span>{allExpanded ? 'Alle zuklappen' : 'Alle aufklappen'}</span>
+        </button>
+      </div>
+
       {/* Header */}
       <div className={styles.mapHeader}>
         <div className={styles.mapHeaderArea}>Klauselbereich</div>
@@ -159,7 +170,7 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
       {/* Rows */}
       <div className={styles.mapRows}>
         {rows.map((row) => {
-          const isExpanded = expandedArea === row.area;
+          const isExpanded = expandedArea === row.area || allExpanded;
           return (
             <div key={row.area} className={styles.mapRowWrapper}>
               <div

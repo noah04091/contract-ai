@@ -18,6 +18,7 @@ interface RisksTabProps {
 
 export default function RisksTab({ risks, docName = 'Vertrag' }: RisksTabProps) {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const allExpanded = expandedIndex === -1;
 
   if (risks.length === 0) {
     return (
@@ -49,6 +50,15 @@ export default function RisksTab({ risks, docName = 'Vertrag' }: RisksTabProps) 
 
   return (
     <div className={styles.risksTab}>
+      <div className={styles.expandAllBar}>
+        <button
+          className={`${styles.viewToggle} ${allExpanded ? styles.viewToggleActive : ''}`}
+          onClick={() => setExpandedIndex(allExpanded ? null : -1)}
+        >
+          {allExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          <span>{allExpanded ? 'Alle zuklappen' : 'Alle aufklappen'}</span>
+        </button>
+      </div>
       {severityOrder.map((severity) => {
         const items = grouped[severity];
         if (items.length === 0) return null;
@@ -65,7 +75,7 @@ export default function RisksTab({ risks, docName = 'Vertrag' }: RisksTabProps) 
 
             {items.map((risk) => {
               const idx = globalIndex++;
-              const isExpanded = expandedIndex === idx;
+              const isExpanded = expandedIndex === idx || allExpanded;
 
               return (
                 <motion.div
