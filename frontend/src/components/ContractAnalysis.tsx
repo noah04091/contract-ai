@@ -17,6 +17,7 @@ import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
+import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -1467,6 +1468,14 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                 </div>
               )}
             </motion.div>
+          )}
+
+          {/* 📅 Wichtige Termine & Erinnerungen */}
+          {(result?.originalContractId || initialResult?.originalContractId) && (
+            <AnalysisImportantDates
+              contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
+              contractName={displayName}
+            />
           )}
 
           {/* Action Buttons */}
