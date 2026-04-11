@@ -387,7 +387,12 @@ class DirectExtractor {
   }
 }
 
+// Lazy singleton — wird erst beim Zugriff erstellt, nicht bei require()
+let _instance = null;
 module.exports = {
   DirectExtractor,
-  directExtractor: new DirectExtractor()
+  get directExtractor() {
+    if (!_instance) _instance = new DirectExtractor();
+    return _instance;
+  }
 };

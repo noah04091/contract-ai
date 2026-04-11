@@ -13,7 +13,12 @@
 const { DirectExtractor } = require('./directExtractor');
 const clauseParser = require('./clauseParser');
 
-const extractor = new DirectExtractor();
+// Lazy init — erst beim ersten Aufruf, nicht bei require()
+let _extractor = null;
+function getExtractor() {
+  if (!_extractor) _extractor = new DirectExtractor();
+  return _extractor;
+}
 
 /**
  * Parsed einen Vertragstext mit dem Direct Extraction Parser (V4)
@@ -30,7 +35,7 @@ async function parseContractDirect(text, options = {}) {
 
   console.log(`[DirectAdapter] Start — ${text.length} chars`);
 
-  const result = await extractor.extract(text);
+  const result = await getExtractor().extract(text);
 
   if (!result.clauses || result.clauses.length === 0) {
     console.log(`[DirectAdapter] Keine Klauseln erkannt`);
