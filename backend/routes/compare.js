@@ -1082,74 +1082,185 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
     console.log(`🔄 Re-Analyse: Perspektive → ${selectedPerspective}`);
     sendProgress(res, 'comparing', 30, `Re-Analyse mit Perspektive: ${selectedPerspective}...`, wantsSSE);
 
-    const { buildV2Response, buildDeterministicDifferences, groupDeterministicDiffs, mergeAllDifferences, enforceScoreDifferentiation, runClauseByClauseComparison, synthesizeComparison, extractAllValuesFromRawText } = require("../services/compareAnalyzer");
-    const { matchClauses } = require("../services/clauseMatcher");
+    const {
+      buildV2Response, buildDeterministicDifferences, groupDeterministicDiffs,
+      mergeAllDifferences, enforceScoreDifferentiation, runClauseByClauseComparison,
+      synthesizeComparison, extractAllValuesFromRawText,
+      detectDocumentCategory, getDocTypeConfig, detectCompareIntent,
+      runHolisticComparePass, validateHolisticOutput, adaptSectionsToLegacySchema,
+      calculateScoresFromDiffs,
+    } = require("../services/compareAnalyzer");
+    const { runBenchmarkComparison } = require("../services/marketBenchmarks");
 
-    // Layer 0: Nachholen der deterministischen Regex-Extraktion für Re-Analyze
-    if (contractTexts?.text1 && !contractMap.contract1._rawValues) {
-      contractMap.contract1._rawValues = extractAllValuesFromRawText(contractTexts.text1);
-    }
-    if (contractTexts?.text2 && !contractMap.contract2._rawValues) {
-      contractMap.contract2._rawValues = extractAllValuesFromRawText(contractTexts.text2);
-    }
+    const text1 = contractTexts?.text1 || '';
+    const text2 = contractTexts?.text2 || '';
+    let result;
 
-    // Schicht 2: Deterministischer Wertevergleich + Gruppierung
-    const deterministicDiffs = buildDeterministicDifferences(contractMap.contract1, contractMap.contract2, null);
-    const groups = groupDeterministicDiffs(deterministicDiffs);
+    // V4 Holistic Re-Analyze: Nutze denselben Pipeline-Pfad wie der initiale Vergleich
+    if (process.env.COMPARE_HOLISTIC === 'true') {
+      console.log(`🌊 Re-Analyze: Holistic Pipeline (Perspektive: ${selectedPerspective})`);
 
-    // Clause Matching für Re-Analyze
-    let clauseMatchResult = null;
-    try {
-      clauseMatchResult = await matchClauses(
-        contractMap.contract1.clauses || [],
-        contractMap.contract2.clauses || [],
-        { useEmbeddings: false }
+      // Document type detection from cached maps
+      const docCategory = detectDocumentCategory(contractMap.contract1, contractMap.contract2);
+      const docConfig = getDocTypeConfig(docCategory);
+      console.log(`📋 Re-Analyze Dokumenttyp: ${docConfig.label} (${docCategory})`);
+
+      // Compare Intent
+      sendProgress(res, 'intent', 40, 'Vergleichbarkeit wird bewertet...', wantsSSE);
+      const intent = await detectCompareIntent(contractMap.contract1, contractMap.contract2);
+
+      // Holistic Pass with NEW perspective
+      sendProgress(res, 'holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...', wantsSSE);
+      let holisticRaw = await runHolisticComparePass(
+        contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective
       );
-    } catch (matchError) {
-      console.warn(`⚠️ Re-Analyze Clause Matching fehlgeschlagen: ${matchError.message}`);
-    }
 
-    sendProgress(res, 'clause_comparison', 40, 'Klausel-für-Klausel-Vergleich...', wantsSSE);
+      // Trust-Guard
+      sendProgress(res, 'validating', 82, 'Ergebnisse werden validiert...', wantsSSE);
+      let validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
 
-    // Schicht 3: Klausel-für-Klausel
-    const clauseBundle = await runClauseByClauseComparison(
-      clauseMatchResult, contractMap.contract1, contractMap.contract2,
-      selectedPerspective, comparisonMode || 'standard', userProfile || 'individual'
-    );
-
-    // Schicht 3.5: Merge + Dedup
-    const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
-
-    sendProgress(res, 'synthesis', 60, 'KI-Synthese läuft...', wantsSSE);
-
-    // Schicht 4: Synthese
-    const synthesisResult = await synthesizeComparison(
-      mergedDiffs, contractMap.contract1, contractMap.contract2,
-      selectedPerspective, comparisonMode || 'standard', userProfile || 'individual', groups
-    );
-
-    // Apply calibration + set diffs
-    const groupEvaluations = synthesisResult.groupEvaluations || {};
-    for (const group of groups) {
-      const ev = groupEvaluations[group.id];
-      if (!ev) continue;
-      const matchingDiff = mergedDiffs.find(d => d._fromDeterministic && d.clauseArea === group.area && d.category === group.areaLabel);
-      if (matchingDiff) {
-        if (ev.severity) matchingDiff.severity = ev.severity;
-        if (ev.explanation) matchingDiff.explanation = ev.explanation;
-        if (ev.impact) matchingDiff.impact = ev.impact;
-        if (ev.recommendation) matchingDiff.recommendation = ev.recommendation;
-        if (ev.semanticType) matchingDiff.semanticType = ev.semanticType;
-        if (ev.financialImpact) matchingDiff.financialImpact = ev.financialImpact;
-        if (ev.marketContext) matchingDiff.marketContext = ev.marketContext;
+      // Safety Net: Retry bei 0 Sections
+      if (validated.sections.length === 0) {
+        console.warn(`⚠️ Re-Analyze Holistic: 0 Sections nach Trust-Guard. Retry...`);
+        sendProgress(res, 'holistic', 70, 'Erneuter KI-Vergleich (Retry)...', wantsSSE);
+        try {
+          holisticRaw = await runHolisticComparePass(
+            contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective
+          );
+          validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
+        } catch (retryErr) {
+          console.warn(`⚠️ Retry fehlgeschlagen: ${retryErr.message}`);
+        }
       }
+
+      // Legacy adapter + scores
+      const { differences, risks, recommendations } = adaptSectionsToLegacySchema(validated.sections);
+      const scores = calculateScoresFromDiffs(differences, contractMap.contract1, contractMap.contract2, docConfig);
+
+      // Benchmark
+      let benchmarkResult = { contractType: null, contractTypeLabel: null, benchmarks: [], enrichedDifferences: differences };
+      if (docConfig.benchmarkEnabled) {
+        try {
+          benchmarkResult = runBenchmarkComparison(contractMap.contract1, contractMap.contract2, differences);
+        } catch (benchErr) {
+          console.warn(`⚠️ Re-Analyze Benchmark fehlgeschlagen: ${benchErr.message}`);
+        }
+      }
+
+      // Score-Differenzierung
+      const scoreResult = { scores, differences, overallRecommendation: validated.overallRecommendation };
+      enforceScoreDifferentiation(scoreResult);
+
+      sendProgress(res, 'finalizing', 90, 'Ergebnis wird zusammengestellt...', wantsSSE);
+
+      result = {
+        version: 2,
+        _pipelineVersion: 'holistic-v4',
+        documentType: {
+          category: docConfig.category,
+          label: docConfig.label,
+          scoreLabels: docConfig.scoreLabels || null,
+          labels: docConfig.labels,
+          perspectiveLabels: docConfig.perspectiveLabels || null,
+        },
+        contractMap: { contract1: contractMap.contract1, contract2: contractMap.contract2 },
+        sections: validated.sections,
+        compatibility: validated.compatibility,
+        differences,
+        risks,
+        recommendations,
+        scores: scoreResult.scores,
+        summary: validated.summary,
+        overallRecommendation: validated.overallRecommendation,
+        contract1Analysis: {
+          strengths: validated.contract1Strengths,
+          weaknesses: validated.contract1Weaknesses,
+          riskLevel: scoreResult.scores.contract1.overall >= 70 ? 'low' : scoreResult.scores.contract1.overall >= 50 ? 'medium' : 'high',
+          score: scoreResult.scores.contract1.overall,
+        },
+        contract2Analysis: {
+          strengths: validated.contract2Strengths,
+          weaknesses: validated.contract2Weaknesses,
+          riskLevel: scoreResult.scores.contract2.overall >= 70 ? 'low' : scoreResult.scores.contract2.overall >= 50 ? 'medium' : 'high',
+          score: scoreResult.scores.contract2.overall,
+        },
+        perspective: selectedPerspective,
+        benchmark: benchmarkResult ? {
+          contractType: benchmarkResult.contractType,
+          contractTypeLabel: benchmarkResult.contractTypeLabel || null,
+          metrics: benchmarkResult.benchmarks || [],
+        } : null,
+        categories: [...new Set(validated.sections.map(s => s.clauseArea))],
+        _contractTexts: { text1: text1.slice(0, 50000), text2: text2.slice(0, 50000) },
+      };
+
+      console.log(`✅ Re-Analyze Holistic: ${validated.sections.length} Sections, Perspektive=${selectedPerspective}`);
+
+    } else {
+      // Legacy Clause-by-Clause Re-Analyze
+      const { matchClauses } = require("../services/clauseMatcher");
+
+      // Layer 0: Nachholen der deterministischen Regex-Extraktion
+      if (text1 && !contractMap.contract1._rawValues) {
+        contractMap.contract1._rawValues = extractAllValuesFromRawText(text1);
+      }
+      if (text2 && !contractMap.contract2._rawValues) {
+        contractMap.contract2._rawValues = extractAllValuesFromRawText(text2);
+      }
+
+      const deterministicDiffs = buildDeterministicDifferences(contractMap.contract1, contractMap.contract2, null);
+      const groups = groupDeterministicDiffs(deterministicDiffs);
+
+      let clauseMatchResult = null;
+      try {
+        clauseMatchResult = await matchClauses(
+          contractMap.contract1.clauses || [],
+          contractMap.contract2.clauses || [],
+          { useEmbeddings: false }
+        );
+      } catch (matchError) {
+        console.warn(`⚠️ Re-Analyze Clause Matching fehlgeschlagen: ${matchError.message}`);
+      }
+
+      sendProgress(res, 'clause_comparison', 40, 'Klausel-für-Klausel-Vergleich...', wantsSSE);
+
+      const clauseBundle = await runClauseByClauseComparison(
+        clauseMatchResult, contractMap.contract1, contractMap.contract2,
+        selectedPerspective, comparisonMode || 'standard', userProfile || 'individual'
+      );
+
+      const mergedDiffs = mergeAllDifferences(groups, {}, clauseBundle);
+
+      sendProgress(res, 'synthesis', 60, 'KI-Synthese läuft...', wantsSSE);
+
+      const synthesisResult = await synthesizeComparison(
+        mergedDiffs, contractMap.contract1, contractMap.contract2,
+        selectedPerspective, comparisonMode || 'standard', userProfile || 'individual', groups
+      );
+
+      const groupEvaluations = synthesisResult.groupEvaluations || {};
+      for (const group of groups) {
+        const ev = groupEvaluations[group.id];
+        if (!ev) continue;
+        const matchingDiff = mergedDiffs.find(d => d._fromDeterministic && d.clauseArea === group.area && d.category === group.areaLabel);
+        if (matchingDiff) {
+          if (ev.severity) matchingDiff.severity = ev.severity;
+          if (ev.explanation) matchingDiff.explanation = ev.explanation;
+          if (ev.impact) matchingDiff.impact = ev.impact;
+          if (ev.recommendation) matchingDiff.recommendation = ev.recommendation;
+          if (ev.semanticType) matchingDiff.semanticType = ev.semanticType;
+          if (ev.financialImpact) matchingDiff.financialImpact = ev.financialImpact;
+          if (ev.marketContext) matchingDiff.marketContext = ev.marketContext;
+        }
+      }
+      synthesisResult.differences = mergedDiffs;
+      enforceScoreDifferentiation(synthesisResult);
+
+      sendProgress(res, 'finalizing', 90, 'Ergebnis wird zusammengestellt...', wantsSSE);
+
+      result = buildV2Response(contractMap.contract1, contractMap.contract2, synthesisResult, selectedPerspective, text1, text2);
     }
-    synthesisResult.differences = mergedDiffs;
-    enforceScoreDifferentiation(synthesisResult);
 
-    sendProgress(res, 'finalizing', 90, 'Ergebnis wird zusammengestellt...', wantsSSE);
-
-    const result = buildV2Response(contractMap.contract1, contractMap.contract2, synthesisResult, selectedPerspective, contractTexts?.text1 || '', contractTexts?.text2 || '');
     result.comparisonMode = {
       id: comparisonMode || 'standard',
       name: COMPARISON_MODES[comparisonMode]?.name || 'Standard-Vergleich',
