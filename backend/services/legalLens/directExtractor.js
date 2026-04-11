@@ -23,9 +23,10 @@ REGELN:
 1. Extrahiere NUR echte Vertragsklauseln — Paragraphen, Artikel, nummerierte oder betitelte Abschnitte mit rechtlichem Inhalt.
 
 2. KEINE Klauseln fuer:
+   - Parteibezeichnungen mit Adressen, Namen, Geburtsdaten, E-Mail-Adressen (auch wenn sie am Anfang des Vertrags stehen und die Vertragsparteien benennen — das ist KEIN Klauselinhalt)
    - Briefkoepfe, Absender-/Empfaenger-Adressen, Kontaktdaten
    - Anrede ("Sehr geehrte..."), Grussformeln ("Mit freundlichen Gruessen")
-   - Unterschriftsfelder, Ort/Datum-Zeilen
+   - Unterschriftsfelder, Ort/Datum-Zeilen, Unterschriftenblocks ("Ort, Datum: ______", "Unterschrift: ______")
    - Firmenangaben (Geschaeftsfuehrer, Registergericht, Handelsregister, IBAN, USt-IdNr., Bankverbindung) — ES SEI DENN sie sind Teil einer echten Vertragsklausel (z.B. Zahlungsbedingungen)
    - Seitennummern, Kopf-/Fusszeilen
    - Anlagen-/Anhaengeverzeichnisse (nur deren Ueberschrift)
@@ -33,13 +34,17 @@ REGELN:
 
 3. Gib den VOLLSTAENDIGEN Text jeder Klausel zurueck — WOERTLICH wie im Dokument, NICHT zusammengefasst oder gekuerzt. Kein einziges Wort aendern, hinzufuegen oder weglassen.
 
-4. Wenn Klauseln verschachtelt sind (z.B. eine Widerrufsbelehrung mit eigenem § 1-§ 5 innerhalb einer Versicherungspolice), ergaenze den Eltern-Abschnitt im Titel: "§ 1 (Widerrufsbelehrung)".
+4. Wenn Klauseln verschachtelt sind (z.B. Schlussbestimmungen mit eigenem § 1-§ 5), fasse sie zu EINER Klausel zusammen oder ergaenze den Eltern-Abschnitt im Titel: "§ 1 (Schlussbestimmungen)". Nicht einzeln als Top-Level-Klauseln ausgeben.
 
 5. Reihenfolge = wie im Dokument.
 
 6. Wenn das Dokument KEIN Vertrag ist (Rechnung, Formular, Brief ohne Vertragsklauseln), gib ein leeres Array zurueck.
 
-7. Versuche groessere, zusammenhaengende juristische Einheiten zu bilden. Nicht zu fein aufsplitten — eine Klausel mit 3 Absaetzen ist EINE Klausel, nicht drei.
+7. Versuche groessere, zusammenhaengende juristische Einheiten zu bilden. Nicht zu fein aufsplitten — eine Klausel mit 3 Absaetzen ist EINE Klausel, nicht drei. Ein Paragraph mit Unterpunkten ist EINE Klausel.
+
+8. KEINE Duplikate: Wenn der gleiche Inhalt mit leicht anderem Text zweimal vorkommt, nimm nur die ERSTE Instanz.
+
+9. Eine Praeambel darf als Klausel extrahiert werden, aber NUR der inhaltliche Teil (Zweck, Hintergrund). Parteidaten (Namen, Adressen, Geburtsdaten) gehoeren NICHT dazu.
 
 Antworte NUR mit JSON:
 {
@@ -287,6 +292,13 @@ class DirectExtractor {
 
       // Reine Grussformeln
       if (/^(mit freundlichen gr[uü][sß]en|sincerely|best regards|hochachtungsvoll)/i.test(text) && text.length < 100) return false;
+
+      // Unterschriftsfelder / Unterschriftenblocks
+      const underscoreCount = (text.match(/_{3,}/g) || []).length;
+      if (underscoreCount >= 2 && /unterschrift|signature|datum|date/i.test(text)) return false;
+
+      // Reine Titel ohne Inhalt (nur Ueberschrift, kein Satz)
+      if (text.length < 60 && !/[.;:]/.test(text) && !text.includes('\n')) return false;
 
       return true;
     });
