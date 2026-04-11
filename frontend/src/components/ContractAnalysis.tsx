@@ -1568,6 +1568,18 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                 </>
               )}
             </button>
+
+            {/* 📋 Zum Vertrag öffnen — Sprung ins Contract Detail Modal */}
+            {onNavigateToContract && (result?.originalContractId || initialResult?.originalContractId) && (
+              <button
+                className={styles.secondaryButton}
+                onClick={() => onNavigateToContract((result?.originalContractId || initialResult?.originalContractId) as string)}
+              >
+                <FileText size={18} />
+                <span>Zum Vertrag öffnen</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
           </div>
 
           {/* Optimization Result */}

@@ -5037,10 +5037,19 @@ export default function Contracts() {
                     {/* ✅ DEINE BESTEHENDE ANALYSE-ANZEIGE bleibt unverändert */}
                     {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
                       <div className={styles.analysisContainer}>
-                        <ContractAnalysis 
-                          file={selectedFile} 
+                        <ContractAnalysis
+                          file={selectedFile}
                           onReset={handleReset}
                           initialResult={uploadFiles[0].result}
+                          onNavigateToContract={async (navContractId) => {
+                            const refreshedContracts = await silentRefreshContracts(navContractId);
+                            const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);
+                            if (contract) {
+                              setSelectedContract(contract);
+                              setShowDetails(true);
+                              navigate(`/contracts?view=${navContractId}`, { replace: true });
+                            }
+                          }}
                         />
                       </div>
                     )}
