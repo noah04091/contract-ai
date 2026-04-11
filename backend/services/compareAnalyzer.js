@@ -6166,6 +6166,36 @@ function remapSwappedHolisticOutput(raw) {
   const tmp3 = raw.contract1Strengths; raw.contract1Strengths = raw.contract2Strengths; raw.contract2Strengths = tmp3;
   const tmp4 = raw.contract1Weaknesses; raw.contract1Weaknesses = raw.contract2Weaknesses; raw.contract2Weaknesses = tmp4;
 
+  // Freitext-Referenzen "Dokument 1"↔"Dokument 2" in Reasoning/Summary tauschen
+  const swapDocRefs = (text) => {
+    if (typeof text !== 'string') return text;
+    // Placeholder-basierter Swap um Doppeltausch zu vermeiden
+    return text
+      .replace(/Dokument 1/g, '§§DOC2§§').replace(/Dokument 2/g, 'Dokument 1').replace(/§§DOC2§§/g, 'Dokument 2')
+      .replace(/Document 1/g, '§§DOC2§§').replace(/Document 2/g, 'Document 1').replace(/§§DOC2§§/g, 'Document 2');
+  };
+
+  if (raw.overallRecommendation) {
+    raw.overallRecommendation.reasoning = swapDocRefs(raw.overallRecommendation.reasoning);
+  }
+  if (raw.summary) {
+    if (typeof raw.summary === 'string') {
+      raw.summary = swapDocRefs(raw.summary);
+    } else if (raw.summary.tldr || raw.summary.detailedSummary) {
+      raw.summary.tldr = swapDocRefs(raw.summary.tldr);
+      raw.summary.detailedSummary = swapDocRefs(raw.summary.detailedSummary);
+    }
+  }
+
+  // Section-Texte (explanation, recommendation)
+  if (Array.isArray(raw.sections)) {
+    for (const s of raw.sections) {
+      s.explanation = swapDocRefs(s.explanation);
+      s.recommendation = swapDocRefs(s.recommendation);
+      s.financialImpact = swapDocRefs(s.financialImpact);
+    }
+  }
+
   return raw;
 }
 
