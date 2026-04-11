@@ -720,15 +720,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         );
       })()}
 
-      {/* ═══ Score Timeline ═══ */}
-      <ScoreTrend contractId={result.contractId} />
-
-      {/* ═══ Portfolio Insights ═══ */}
-      <PortfolioInsightsPanel
-        insights={result.portfolioInsights || []}
-        contractNames={contractNames}
-      />
-
       {/* ═══ Legal Radar Alerts — laws that affect this contract ═══ */}
       {contractAlerts && contractAlerts.length > 0 && (
         <div id="contract-alerts" style={{
@@ -759,11 +750,20 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
           <div style={{ padding: '12px 16px' }}>
             {contractAlerts.map(alert => (
-              <ImpactGraph key={alert._id} alert={alert} />
+              <ImpactGraph key={alert._id} alert={alert} hideContractInfo />
             ))}
           </div>
         </div>
       )}
+
+      {/* ═══ Score Timeline ═══ */}
+      <ScoreTrend contractId={result.contractId} />
+
+      {/* ═══ Portfolio Insights ═══ */}
+      <PortfolioInsightsPanel
+        insights={result.portfolioInsights || []}
+        contractNames={contractNames}
+      />
 
       {/* ═══ Geprüft & unauffällig — low + info only, collapsed ═══ */}
       {secondaryFindings.length > 0 && (() => {

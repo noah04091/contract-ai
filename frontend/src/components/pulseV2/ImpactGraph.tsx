@@ -4,6 +4,7 @@ import type { PulseV2LegalAlert, PulseV2AutoFixResult } from '../../types/pulseV
 interface ImpactGraphProps {
   alert: PulseV2LegalAlert;
   onNavigate?: (contractId: string) => void;
+  hideContractInfo?: boolean;
 }
 
 const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
@@ -15,7 +16,7 @@ const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
 
 const POSITIVE_COLORS = { color: '#059669', bg: '#ecfdf5' };
 
-export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) => {
+export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo }) => {
   const [expanded, setExpanded] = useState(false);
   const isPositive = alert.impactDirection === 'positive';
   const sev = isPositive ? POSITIVE_COLORS : (SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.low);
@@ -48,7 +49,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {alert.contractName}
+            {hideContractInfo ? alert.lawTitle : alert.contractName}
             {hasClauseImpacts && (
               <span style={{
                 fontSize: 10, fontWeight: 600,
@@ -121,18 +122,21 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate }) =
               </>
             )}
 
-            <GraphConnector />
-
-            {/* Step 3: Affected Contract */}
-            <GraphNode
-              icon="&#128196;"
-              label="Betroffener Vertrag"
-              title={alert.contractName}
-              detail={`${alert.clauseImpacts?.length || 0} Klausel(n) betroffen`}
-              color="#0891b2"
-              onClick={() => onNavigate?.(alert.contractId)}
-              clickable={!!onNavigate}
-            />
+            {/* Step 3: Affected Contract — hidden on single-contract view */}
+            {!hideContractInfo && (
+              <>
+                <GraphConnector />
+                <GraphNode
+                  icon="&#128196;"
+                  label="Betroffener Vertrag"
+                  title={alert.contractName}
+                  detail={`${alert.clauseImpacts?.length || 0} Klausel(n) betroffen`}
+                  color="#0891b2"
+                  onClick={() => onNavigate?.(alert.contractId)}
+                  clickable={!!onNavigate}
+                />
+              </>
+            )}
 
             {/* Step 4: Affected Clauses */}
             {hasClauseImpacts && alert.clauseImpacts.map((ci, idx) => (
