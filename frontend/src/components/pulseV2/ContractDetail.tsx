@@ -302,11 +302,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 flexShrink: 0,
               }} />
               <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
-              <span style={{ color: '#16a34a' }}>
-                {monitorInfo.nextRadarScan && (
-                  <>Nächster Scan: {new Date(monitorInfo.nextRadarScan).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</>
-                )}
-              </span>
+              <span style={{ color: '#16a34a', fontSize: 11 }}>Bei Änderungen werden Sie per E-Mail benachrichtigt</span>
               {monitorInfo.alertCount > 0 && (
                 <span
                   onClick={() => scrollToSection('contract-alerts')}
@@ -578,8 +574,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 16, lineHeight: 1.5 }}>
               Basierend auf der Analyse aller {clauses.length} Klauseln.
               {hasCriticalFindings
-                ? ' Kritische Punkte zuerst, gefolgt von Optimierungsvorschlägen.'
-                : ' Sortiert nach Relevanz für Ihre Vertragssituation.'}
+                ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
+                : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
             </div>
 
             {/* Progress bar */}
@@ -743,8 +739,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               </div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                 {contractAlerts.length === 1
-                  ? 'Eine aktuelle Rechtsänderung betrifft diesen Vertrag.'
-                  : `${contractAlerts.length} aktuelle Rechtsänderungen betreffen diesen Vertrag.`}
+                  ? 'Eine aktuelle Rechtsänderung betrifft diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um den Vorschlag direkt zu übernehmen.'
+                  : `${contractAlerts.length} aktuelle Rechtsänderungen betreffen diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um Vorschläge direkt zu übernehmen.`}
               </div>
             </div>
           </div>
