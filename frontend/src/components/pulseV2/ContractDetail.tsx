@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { PulseV2Result, PulseV2Action } from '../../types/pulseV2';
+import type { PulseV2Result, PulseV2Action, PulseV2LegalAlert } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
 import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
 import { ActionItem } from './ActionItem';
+import { ImpactGraph } from './ImpactGraph';
 
 /** Smooth scroll to a section by id */
 function scrollToSection(id: string) {
@@ -34,9 +35,10 @@ function safeContractType(ct: unknown): string {
 interface ContractDetailProps {
   result: PulseV2Result;
   monitorInfo?: { nextRadarScan: string | null; alertCount: number } | null;
+  contractAlerts?: PulseV2LegalAlert[];
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
@@ -306,8 +308,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 )}
               </span>
               {monitorInfo.alertCount > 0 && (
-                <a
-                  href="/pulse#legal-alerts"
+                <span
+                  onClick={() => scrollToSection('contract-alerts')}
                   style={{
                     background: '#fef2f2',
                     color: '#dc2626',
@@ -317,12 +319,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     borderRadius: 8,
                     border: '1px solid #fecaca',
                     marginLeft: 'auto',
-                    textDecoration: 'none',
                     cursor: 'pointer',
                   }}
                 >
                   {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
-                </a>
+                </span>
               )}
             </div>
           )}
@@ -727,6 +728,42 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         insights={result.portfolioInsights || []}
         contractNames={contractNames}
       />
+
+      {/* ═══ Legal Radar Alerts — laws that affect this contract ═══ */}
+      {contractAlerts && contractAlerts.length > 0 && (
+        <div id="contract-alerts" style={{
+          background: '#fff',
+          border: '1px solid #fecaca',
+          borderRadius: 12,
+          overflow: 'hidden',
+          marginTop: 20,
+        }}>
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid #fef2f2',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
+                Legal Radar — Gesetzesänderungen
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                {contractAlerts.length === 1
+                  ? 'Eine aktuelle Rechtsänderung betrifft diesen Vertrag.'
+                  : `${contractAlerts.length} aktuelle Rechtsänderungen betreffen diesen Vertrag.`}
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '12px 16px' }}>
+            {contractAlerts.map(alert => (
+              <ImpactGraph key={alert._id} alert={alert} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ═══ Geprüft & unauffällig — low + info only, collapsed ═══ */}
       {secondaryFindings.length > 0 && (() => {

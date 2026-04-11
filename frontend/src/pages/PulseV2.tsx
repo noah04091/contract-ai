@@ -81,6 +81,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [monitorInfo, setMonitorInfo] = useState<{ nextRadarScan: string | null; alertCount: number } | null>(null);
+  const [contractAlerts, setContractAlerts] = useState<PulseV2LegalAlert[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -100,12 +101,13 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         ]);
         const monData = monRes.ok ? await monRes.json() : null;
         const alertData = alertRes.ok ? await alertRes.json() : { alerts: [] };
-        const contractAlerts = (alertData.alerts || []).filter(
-          (a: { contractId?: string; status?: string }) => a.contractId === contractId && a.status !== 'dismissed'
+        const filteredAlerts = (alertData.alerts || []).filter(
+          (a: PulseV2LegalAlert) => a.contractId === contractId && a.status !== 'dismissed'
         );
+        setContractAlerts(filteredAlerts);
         setMonitorInfo({
           nextRadarScan: monData?.nextRadarScan || null,
-          alertCount: contractAlerts.length,
+          alertCount: filteredAlerts.length,
         });
       } catch {
         // Non-critical — silently ignore
@@ -365,7 +367,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
             </button>
           </div>
 
-          <ContractDetail result={result} monitorInfo={monitorInfo} />
+          <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} />
         </>
       )}
 
@@ -1047,7 +1049,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       )}
 
       {/* Legal Radar Alerts — directly below MonitoringStatusCard */}
-      <div ref={radarRef} />
+      <div ref={radarRef} id="legal-alerts" />
       <LegalAlertsPanel
         alerts={legalAlerts}
         onDismiss={async (alertId) => {
