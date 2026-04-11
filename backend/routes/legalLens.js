@@ -17,11 +17,14 @@ const crypto = require('crypto');
 const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const { parseContractWithGuidedSegmenter } = require('../services/legalLens/guidedSegmenterAdapter');
 const { parseContractUniversal } = require('../services/legalLens/universalParserAdapter');
+const { parseContractDirect } = require('../services/legalLens/extractionAdapter');
 
-// Feature-Flags: Parser-Auswahl
-// LEGAL_LENS_UNIVERSAL_PARSER=true  -> Neuer 5-Pass Self-Correcting Parser (v3)
+// Feature-Flags: Parser-Auswahl (Prioritaet: v4 > v3 > v2 > v1)
+// LEGAL_LENS_DIRECT_PARSER=true     -> Direct Extraction (v4, empfohlen)
+// LEGAL_LENS_UNIVERSAL_PARSER=true  -> 5-Pass Self-Correcting Pipeline (v3)
 // LEGAL_LENS_GUIDED_SEGMENTER=true  -> 3-Pass Guided Segmenter (v2)
-// Beide aus                         -> Legacy Regex-Parser (v1)
+// Alle aus                          -> Legacy Regex-Parser (v1)
+const USE_DIRECT_PARSER = process.env.LEGAL_LENS_DIRECT_PARSER === 'true';
 const USE_UNIVERSAL_PARSER = process.env.LEGAL_LENS_UNIVERSAL_PARSER === 'true';
 const USE_GUIDED_SEGMENTER = process.env.LEGAL_LENS_GUIDED_SEGMENTER === 'true';
 const ClauseAnalysis = require('../models/ClauseAnalysis');
@@ -1066,12 +1069,25 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Parsen — 3-stufige Parser-Auswahl:
-    //   1. LEGAL_LENS_UNIVERSAL_PARSER=true -> 5-Pass Self-Correcting Pipeline (v3)
-    //   2. LEGAL_LENS_GUIDED_SEGMENTER=true -> 3-Pass Guided Segmenter (v2)
-    //   3. Default                          -> Legacy Regex-Parser (v1)
+    // Parsen — 4-stufige Parser-Auswahl:
+    //   1. LEGAL_LENS_DIRECT_PARSER=true    -> Direct Extraction (v4)
+    //   2. LEGAL_LENS_UNIVERSAL_PARSER=true -> 5-Pass Self-Correcting Pipeline (v3)
+    //   3. LEGAL_LENS_GUIDED_SEGMENTER=true -> 3-Pass Guided Segmenter (v2)
+    //   4. Default                          -> Legacy Regex-Parser (v1)
     let parseResult;
-    if (USE_UNIVERSAL_PARSER) {
+    if (USE_DIRECT_PARSER) {
+      console.log(`📋 [Legal Lens] Starte Direct Extraction Parser (v4)...`);
+      try {
+        parseResult = await parseContractDirect(text, { detectRisk: true });
+      } catch (err) {
+        console.error(`❌ [Legal Lens] Direct-Parser fehlgeschlagen, falle zurueck auf Regex-Parser:`, err.message);
+        parseResult = clauseParser.parseContract(text, {
+          detectRisk: true,
+          minClauseLength: 20,
+          maxClauseLength: 2000
+        });
+      }
+    } else if (USE_UNIVERSAL_PARSER) {
       console.log(`📋 [Legal Lens] Starte Universal-Parser (5-Pass Pipeline v3)...`);
       try {
         parseResult = await parseContractUniversal(text, { detectRisk: true });

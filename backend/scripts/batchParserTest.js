@@ -1,7 +1,7 @@
 /**
  * Batch-Realitaetstest fuer den Universal Contract Parser.
  *
- * Unterstuetzt A/B-Vergleich: alter 3-Pass-Parser vs. neuer 5-Pass-Pipeline.
+ * Unterstuetzt A/B-Vergleich zwischen Parser-Versionen.
  *
  * Ausschlusskriterien:
  *   - Keine `extractedText`
@@ -12,7 +12,9 @@
  *   node scripts/batchParserTest.js 20           # Andere Anzahl
  *   node scripts/batchParserTest.js 10 --types   # Nach Dokumenttyp gruppiert
  *   node scripts/batchParserTest.js 10 --v3      # Neuer 5-Pass Universal-Parser
+ *   node scripts/batchParserTest.js 10 --v4      # Direct Extraction Parser (v4)
  *   node scripts/batchParserTest.js 10 --ab      # A/B-Vergleich: v2 vs. v3
+ *   node scripts/batchParserTest.js 10 --ab4     # A/B-Vergleich: v2 vs. v4
  *
  * Ausgabe:
  *   - Stdout: Live-Report waehrend des Laufs
@@ -27,6 +29,7 @@ const { MongoClient } = require('mongodb');
 const { structuralDiscovery } = require('../services/legalLens/structuralDiscovery');
 const { guidedSegmenter } = require('../services/legalLens/guidedSegmenter');
 const { parseContractUniversal } = require('../services/legalLens/universalParserAdapter');
+const { parseContractDirect } = require('../services/legalLens/extractionAdapter');
 const { validate } = require('../services/legalLens/segmentationValidator');
 
 // ── Farb-Helper ───────────────────────────────
@@ -98,8 +101,43 @@ async function runV3(text) {
   };
 }
 
-function getVerdict(verifyRatio, qualityScore) {
-  // Primaer: verifyRatio, sekundaer: qualityScore
+// ── V4 Parser (Direct Extraction) ───────────────
+async function runV4(text) {
+  const start = Date.now();
+  const result = await parseContractDirect(text, { detectRisk: false });
+  const meta = result.metadata?.extraction || {};
+
+  return {
+    parser: 'v4',
+    documentType: result.metadata?.documentType,
+    scheme: null,
+    expectedCount: null,
+    clauseCount: result.totalClauses,
+    markersVerified: result.totalClauses - (meta.lowTrustCount || 0),
+    verifyRatio: result.totalClauses > 0
+      ? (result.totalClauses - (meta.lowTrustCount || 0)) / result.totalClauses
+      : 0,
+    qualityScore: meta.coverageRatio || null,
+    coverage: meta.coverageRatio || null,
+    issues: meta.coverageWarning ? ['Coverage unter 40%'] : [],
+    lowTrustCount: meta.lowTrustCount || 0,
+    batchCount: meta.batchCount || 1,
+    removedByClean: meta.removedByClean || 0,
+    removedByDedup: meta.removedByDedup || 0,
+    elapsedMs: Date.now() - start
+  };
+}
+
+function getVerdict(verifyRatio, qualityScore, parser) {
+  if (parser === 'v4') {
+    // V4: Coverage ist primaer, Trust sekundaer
+    const cov = qualityScore || 0;
+    const trust = verifyRatio || 0;
+    if (cov >= 0.60 && trust >= 0.80) return 'PASS';
+    if (cov >= 0.40 && trust >= 0.50) return 'PARTIAL';
+    return 'FAIL';
+  }
+  // V2/V3: Marker-Verifizierung ist primaer
   if (verifyRatio >= 0.95 && (qualityScore === null || qualityScore >= 0.85)) return 'PASS';
   if (verifyRatio >= 0.70) return 'PARTIAL';
   return 'FAIL';
@@ -110,9 +148,11 @@ async function main() {
   const count = parseInt(process.argv[2], 10) || 10;
   const byTypes = process.argv.includes('--types');
   const useV3 = process.argv.includes('--v3');
-  const useAB = process.argv.includes('--ab');
+  const useV4 = process.argv.includes('--v4');
+  const useAB = process.argv.includes('--ab') && !process.argv.includes('--ab4');
+  const useAB4 = process.argv.includes('--ab4');
 
-  const mode = useAB ? 'A/B (v2 vs v3)' : useV3 ? 'v3 (5-Pass)' : 'v2 (3-Pass)';
+  const mode = useAB4 ? 'A/B (v2 vs v4)' : useAB ? 'A/B (v2 vs v3)' : useV4 ? 'v4 (Direct Extraction)' : useV3 ? 'v3 (5-Pass)' : 'v2 (3-Pass)';
   section(`Batch-Parser-Test: ${count} Vertraege [${mode}]`);
 
   const mongo = new MongoClient(process.env.MONGO_URI);
@@ -164,16 +204,17 @@ async function main() {
       name: contract.name,
       textLength: contract.extractedText.length,
       v2: null,
-      v3: null
+      v3: null,
+      v4: null
     };
 
     // ── V2 (alter Parser) ───────────
-    if (!useV3 || useAB) {
+    if ((!useV3 && !useV4) || useAB || useAB4) {
       console.log(`  ${cyan('[v2]')} Starte 3-Pass-Parser...`);
       try {
         entry.v2 = await runV2(contract.extractedText);
         const v = entry.v2;
-        v.verdict = getVerdict(v.verifyRatio, v.qualityScore);
+        v.verdict = getVerdict(v.verifyRatio, v.qualityScore, v.parser);
         const icon = v.verdict === 'PASS' ? green('PASS') : v.verdict === 'PARTIAL' ? yellow('PARTIAL') : red('FAIL');
         console.log(
           `  ${cyan('[v2]')} ${icon} — ${v.clauseCount} Klauseln, ` +
@@ -189,12 +230,12 @@ async function main() {
     }
 
     // ── V3 (neuer Parser) ───────────
-    if (useV3 || useAB) {
+    if (useV3 || (useAB && !useAB4)) {
       console.log(`  ${magenta('[v3]')} Starte 5-Pass-Pipeline...`);
       try {
         entry.v3 = await runV3(contract.extractedText);
         const v = entry.v3;
-        v.verdict = getVerdict(v.verifyRatio, v.qualityScore);
+        v.verdict = getVerdict(v.verifyRatio, v.qualityScore, v.parser);
         const icon = v.verdict === 'PASS' ? green('PASS') : v.verdict === 'PARTIAL' ? yellow('PARTIAL') : red('FAIL');
         console.log(
           `  ${magenta('[v3]')} ${icon} — ${v.clauseCount} Klauseln, ` +
@@ -212,7 +253,41 @@ async function main() {
       }
     }
 
+    // ── V4 (Direct Extraction) ───────────
+    if (useV4 || useAB4) {
+      console.log(`  ${bold('[v4]')} Starte Direct Extraction...`);
+      try {
+        entry.v4 = await runV4(contract.extractedText);
+        const v = entry.v4;
+        v.verdict = getVerdict(v.verifyRatio, v.qualityScore, v.parser);
+        const icon = v.verdict === 'PASS' ? green('PASS') : v.verdict === 'PARTIAL' ? yellow('PARTIAL') : red('FAIL');
+        console.log(
+          `  ${bold('[v4]')} ${icon} — ${v.clauseCount} Klauseln, ` +
+          `Trust ${v.markersVerified}/${v.clauseCount}, ` +
+          `Coverage=${v.coverage !== null ? (v.coverage * 100).toFixed(1) + '%' : '?'}, ` +
+          `${v.elapsedMs}ms` +
+          `${v.removedByClean > 0 ? ` [${v.removedByClean} gecleant]` : ''}` +
+          `${v.removedByDedup > 0 ? ` [${v.removedByDedup} dedup]` : ''}` +
+          `${v.batchCount > 1 ? ` [${v.batchCount} Batches]` : ''}`
+        );
+      } catch (err) {
+        entry.v4 = { parser: 'v4', verdict: 'ERROR', error: err.message, elapsedMs: 0 };
+        console.log(`  ${bold('[v4]')} ${red('ERROR')}: ${err.message}`);
+      }
+    }
+
     // ── A/B-Vergleich ───────────
+    if (useAB4 && entry.v2 && entry.v4 && entry.v2.verdict !== 'ERROR' && entry.v4.verdict !== 'ERROR') {
+      const qsDiff = (entry.v4.qualityScore || 0) - (entry.v2.qualityScore || 0);
+      const clauseDiff = entry.v4.clauseCount - entry.v2.clauseCount;
+      const icon = qsDiff > 0 ? green('+') : qsDiff < 0 ? red('-') : dim('=');
+      console.log(
+        `  ${bold('[A/B]')} Coverage: ${icon}${(qsDiff * 100).toFixed(1)}pp | ` +
+        `Klauseln: ${clauseDiff > 0 ? '+' : ''}${clauseDiff} | ` +
+        `v2=${entry.v2.verdict} vs v4=${entry.v4.verdict}`
+      );
+    }
+
     if (useAB && entry.v2 && entry.v3 && entry.v2.verdict !== 'ERROR' && entry.v3.verdict !== 'ERROR') {
       const qsDiff = (entry.v3.qualityScore || 0) - (entry.v2.qualityScore || 0);
       const clauseDiff = entry.v3.clauseCount - entry.v2.clauseCount;
@@ -231,22 +306,23 @@ async function main() {
 
   // ── Gesamtreport ───────────────────────────────
   section('Gesamtreport');
-  printSummary(results, useAB, useV3);
+  printSummary(results, useAB, useV3, useV4, useAB4);
 
   // ── Markdown-Report speichern ───────────────────────────────
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
   const reportDir = path.join(__dirname, '..', '..', 'test-contracts');
   const reportPath = path.join(reportDir, `batch_parser_report_${timestamp}.md`);
-  const report = buildMarkdownReport(results, { useAB, useV3 });
+  const report = buildMarkdownReport(results, { useAB, useV3, useV4, useAB4 });
   fs.writeFileSync(reportPath, report, 'utf8');
   console.log(`\n  ${green('OK')} Report gespeichert: ${path.relative(process.cwd(), reportPath)}`);
   console.log('');
 }
 
-function printSummary(results, useAB, useV3) {
+function printSummary(results, useAB, useV3, useV4, useAB4) {
   const versions = [];
-  if (!useV3 || useAB) versions.push('v2');
-  if (useV3 || useAB) versions.push('v3');
+  if ((!useV3 && !useV4) || useAB || useAB4) versions.push('v2');
+  if (useV3 || (useAB && !useAB4)) versions.push('v3');
+  if (useV4 || useAB4) versions.push('v4');
 
   for (const ver of versions) {
     const data = results.map(r => r[ver]).filter(Boolean);
@@ -287,14 +363,15 @@ function printSummary(results, useAB, useV3) {
   }
 }
 
-function buildMarkdownReport(results, { useAB, useV3 }) {
+function buildMarkdownReport(results, { useAB, useV3, useV4, useAB4 }) {
   const versions = [];
-  if (!useV3 || useAB) versions.push('v2');
-  if (useV3 || useAB) versions.push('v3');
+  if ((!useV3 && !useV4) || useAB || useAB4) versions.push('v2');
+  if (useV3 || (useAB && !useAB4)) versions.push('v3');
+  if (useV4 || useAB4) versions.push('v4');
 
   let md = `# Batch Parser Test Report\n\n`;
   md += `**Generiert:** ${new Date().toISOString()}\n`;
-  md += `**Modus:** ${useAB ? 'A/B-Vergleich (v2 vs v3)' : useV3 ? 'v3 (5-Pass Universal Parser)' : 'v2 (3-Pass Guided Segmenter)'}\n\n`;
+  md += `**Modus:** ${useAB4 ? 'A/B-Vergleich (v2 vs v4)' : useAB ? 'A/B-Vergleich (v2 vs v3)' : useV4 ? 'v4 (Direct Extraction)' : useV3 ? 'v3 (5-Pass Universal Parser)' : 'v2 (3-Pass Guided Segmenter)'}\n\n`;
 
   // Zusammenfassung pro Version
   for (const ver of versions) {
