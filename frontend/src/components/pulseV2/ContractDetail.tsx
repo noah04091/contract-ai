@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { PulseV2Result, PulseV2Action } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
@@ -27,6 +27,18 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
+  const juristischeInfoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showJuristischeInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (juristischeInfoRef.current && !juristischeInfoRef.current.contains(e.target as Node)) {
+        setShowJuristischeInfo(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showJuristischeInfo]);
 
   // Build contract name map for portfolio insights
   const [contractNames, setContractNames] = useState<Map<string, string>>(new Map());
@@ -324,7 +336,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             ?
           </span>
           {showJuristischeInfo && (
-            <div style={{
+            <div ref={juristischeInfoRef} style={{
               position: 'absolute',
               top: 28,
               left: 28,
