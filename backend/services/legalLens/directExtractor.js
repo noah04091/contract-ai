@@ -11,6 +11,7 @@
 
 const OpenAI = require('openai');
 const { normalizeForMatch, buildNormalizedIndex, findFuzzy } = require('./textMatching');
+const { postProcess } = require('./clausePostProcessor');
 
 const MODEL = 'gpt-4o';
 const MAX_INPUT_CHARS = 60000;
@@ -108,20 +109,14 @@ class DirectExtractor {
       batchCount = result.batchCount;
     }
 
-    // ── Clause Cleaner ──────────────────────────────────
-    const beforeClean = rawClauses.length;
-    let clauses = this._cleanClauses(rawClauses);
-    const removedByClean = beforeClean - clauses.length;
-
-    // ── Deduplizierung ──────────────────────────────────
-    const beforeDedup = clauses.length;
-    clauses = this._deduplicateClauses(clauses);
-    const removedByDedup = beforeDedup - clauses.length;
-
-    // ── Stitching (nur bei Batching) ────────────────────
+    // ── Stitching (nur bei Batching, VOR Post-Processing) ─
     if (batchCount > 1) {
-      clauses = this._stitchClauses(clauses);
+      rawClauses = this._stitchClauses(rawClauses);
     }
+
+    // ── Post-Processing (deterministisch, kein GPT) ──────
+    const { clauses, stats: ppStats } = postProcess(rawClauses, rawText);
+    const removedTotal = rawClauses.length - clauses.length;
 
     // ── Coverage Check ──────────────────────────────────
     const totalClauseChars = clauses.reduce((sum, c) => sum + (c.text || '').length, 0);
@@ -141,9 +136,12 @@ class DirectExtractor {
     }
 
     const elapsedMs = Date.now() - startTime;
+    const ppSummary = Object.entries(ppStats)
+      .filter(([k, v]) => v > 0 && k !== 'input' && k !== 'output')
+      .map(([k, v]) => `${k}=${v}`).join(', ');
     console.log(
       `[DirectExtractor] Fertig in ${elapsedMs}ms — ${clauses.length} Klauseln` +
-      ` (${removedByClean} gecleant, ${removedByDedup} dedupliziert)` +
+      ` (${removedTotal} entfernt: ${ppSummary || 'nichts'})` +
       `, Coverage ${(coverageRatio * 100).toFixed(1)}%` +
       `, Trust ${clauses.length - lowTrustCount}/${clauses.length}` +
       (batchCount > 1 ? `, ${batchCount} Batches` : '')
@@ -158,8 +156,7 @@ class DirectExtractor {
         elapsedMs,
         inputLength: rawText.length,
         clauseCount: clauses.length,
-        removedByClean,
-        removedByDedup,
+        postProcessing: ppStats,
         coverageRatio,
         coverageWarning,
         lowTrustCount,
