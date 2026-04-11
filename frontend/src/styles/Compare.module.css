@@ -1688,3 +1688,143 @@
   .mapLegendItem { font-size: 0.75rem; }
   .mapRowLabel { font-size: 0.82rem; }
 }
+
+/* ============================================
+   Follow-Up Questions Section
+   ============================================ */
+.followUpSection {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.03) 0%, rgba(88, 86, 214, 0.03) 100%);
+  border: 1px solid rgba(0, 113, 227, 0.1);
+  border-radius: 16px;
+}
+
+.followUpHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: #1d1d1f;
+}
+
+.followUpHeader h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.followUpHeader svg {
+  color: #0071e3;
+  flex-shrink: 0;
+}
+
+.followUpChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.followUpChip {
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  border-radius: 20px;
+  background: white;
+  color: #1d1d1f;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.followUpChip:hover {
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.1);
+}
+
+.followUpChip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.followUpChipActive {
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071e3;
+  font-weight: 500;
+}
+
+.followUpAnswer {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: white;
+  border: 1px solid #e8e8ed;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.followUpAnswerHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.followUpQuestion {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0071e3;
+  line-height: 1.4;
+}
+
+.followUpClose {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #86868b;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.followUpClose:hover {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+.followUpLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #86868b;
+  font-size: 0.85rem;
+}
+
+.followUpSpinner {
+  animation: followUpSpin 1s linear infinite;
+}
+
+@keyframes followUpSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.followUpAnswerText {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #1d1d1f;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 768px) {
+  .followUpSection { padding: 16px; }
+  .followUpChips { gap: 6px; }
+  .followUpChip { font-size: 0.82rem; padding: 6px 12px; }
+}

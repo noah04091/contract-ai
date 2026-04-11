@@ -15,7 +15,7 @@ const database = require("../config/database");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
-const { runCompareV2Pipeline } = require("../services/compareAnalyzer"); // 🆕 Compare V2
+const { runCompareV2Pipeline, generateCompareFollowUps, answerCompareFollowUp } = require("../services/compareAnalyzer"); // 🆕 Compare V2 + Follow-Ups
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 Cost Tracking
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
@@ -991,6 +991,17 @@ router.post("/", verifyToken, upload.fields([
 
     console.log(`✅ Comparison completed: version=${analysisResult.version || 1}, v2Fallback=${analysisResult._v2Fallback || false}, risks=${analysisResult.risks?.length || 0}, recs=${analysisResult.recommendations?.length || 0}, diffs=${analysisResult.differences?.length || 0}`);
 
+    // Generate follow-up questions (non-blocking, 3s timeout)
+    try {
+      const followUps = await Promise.race([
+        generateCompareFollowUps(analysisResult),
+        new Promise(resolve => setTimeout(() => resolve(null), 3000)),
+      ]);
+      if (followUps) analysisResult.followUpQuestions = followUps;
+    } catch (fuErr) {
+      console.warn('⚠️ Follow-up generation skipped:', fuErr.message);
+    }
+
     // Decrement active comparison counter
     const activeNow = activeComparisons.get(userId) || 1;
     if (activeNow <= 1) activeComparisons.delete(userId);
@@ -1267,6 +1278,17 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
       description: COMPARISON_MODES[comparisonMode]?.description || ''
     };
 
+    // Generate follow-up questions for new perspective (non-blocking, 3s timeout)
+    try {
+      const followUps = await Promise.race([
+        generateCompareFollowUps(result),
+        new Promise(resolve => setTimeout(() => resolve(null), 3000)),
+      ]);
+      if (followUps) result.followUpQuestions = followUps;
+    } catch (fuErr) {
+      console.warn('⚠️ Follow-up generation skipped:', fuErr.message);
+    }
+
     if (wantsSSE) {
       sendProgress(res, 'complete', 100, 'Re-Analyse abgeschlossen!', true);
       res.write(`data: ${JSON.stringify({ type: 'result', data: result })}\n\n`);
@@ -1284,6 +1306,25 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
     } else {
       res.status(500).json(errorResponse);
     }
+  }
+});
+
+// ============================================
+// Follow-Up Question Answer Endpoint
+// ============================================
+router.post("/followup-answer", verifyToken, async (req, res) => {
+  try {
+    const { question, context } = req.body;
+
+    if (!question || !context) {
+      return res.status(400).json({ message: "Frage und Kontext erforderlich" });
+    }
+
+    const answer = await answerCompareFollowUp(question, context);
+    res.json({ answer });
+  } catch (error) {
+    console.error("❌ Follow-up answer error:", error.message);
+    res.status(500).json({ message: "Fehler bei der Beantwortung: " + (error.message || "Unbekannter Fehler") });
   }
 });
 

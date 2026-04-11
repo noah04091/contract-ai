@@ -6788,6 +6788,182 @@ async function runCompareV2PipelineNew(text1, text2, perspective, comparisonMode
 }
 
 // ============================================
+// Follow-Up Questions Generator
+// ============================================
+
+async function generateCompareFollowUps(analysisResult) {
+  try {
+    const v2 = analysisResult.version === 2;
+    if (!v2) return null;
+
+    const docName = analysisResult.documentType?.labels?.documentName || 'Vertrag';
+    const docType = analysisResult.documentType?.label || 'Vertrag';
+    const perspective = analysisResult.perspective || 'neutral';
+
+    // Build compact context from comparison results
+    const diffs = (analysisResult.differences || []).slice(0, 8).map(d =>
+      `- ${d.clause || d.category}: ${docName} 1: "${d.contract1Value || '—'}" vs ${docName} 2: "${d.contract2Value || '—'}" (${d.severity})`
+    ).join('\n');
+
+    const risks = (analysisResult.risks || []).slice(0, 5).map(r =>
+      `- [${r.severity}] ${r.title}: ${r.description?.substring(0, 120) || ''}`
+    ).join('\n');
+
+    const scores1 = analysisResult.scores?.contract1;
+    const scores2 = analysisResult.scores?.contract2;
+    const scoreInfo = scores1 && scores2
+      ? `${docName} 1: ${scores1.overall}/100, ${docName} 2: ${scores2.overall}/100`
+      : '';
+
+    const rec = analysisResult.overallRecommendation;
+    const recInfo = rec ? `Empfohlen: ${docName} ${rec.recommended} (${rec.reasoning?.substring(0, 150) || ''})` : '';
+
+    const benchmarkInfo = (analysisResult.benchmark?.metrics || []).slice(0, 5).map(m =>
+      `- ${m.label}: V1=${m.contract1?.value ?? '?'} ${m.unit}, V2=${m.contract2?.value ?? '?'} ${m.unit}, Markt=${m.marketTypical} ${m.unit}`
+    ).join('\n');
+
+    const perspectiveHint = perspective === 'auftraggeber'
+      ? 'Der User betrachtet als Auftraggeber/Käufer/Kunde.'
+      : perspective === 'auftragnehmer'
+        ? 'Der User betrachtet als Auftragnehmer/Anbieter/Dienstleister.'
+        : 'Der User betrachtet neutral.';
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Du generierst 3-5 VORAUSSCHAUENDE Rückfragen für einen User, der gerade zwei ${docType}e verglichen hat.
+
+ZIEL: Der User soll nach diesen Fragen KEINE offenen Fragen mehr haben. Antizipiere, was er sich gerade fragt.
+
+${perspectiveHint}
+
+REGELN:
+1. Jede Frage muss sich auf KONKRETE Zahlen, Klauseln oder Unterschiede aus dem Vergleich beziehen
+2. Fragen sollen dem User helfen, eine ENTSCHEIDUNG zu treffen
+3. Mischung aus: Kostenrechnung, Risikobewertung, Verhandlungstipps, Praxisrelevanz
+4. Natürliche Sprache, max 12 Wörter pro Frage, mit Fragezeichen
+5. VERBOTEN: Generische Fragen die zu jedem Vergleich passen würden
+
+BEISPIELE guter Fragen (je nach Kontext):
+- "Was kostet der Stundensatz-Unterschied über die Vertragslaufzeit?"
+- "Reichen 10.000€ Haftungsgrenze für ein IT-Projekt?"
+- "Kann ich die 3-monatige Kündigungsfrist verhandeln?"
+- "Was passiert ohne Gewährleistungsregelung in Vertrag 2?"
+- "Lohnt sich der günstigere Tarif trotz weniger Leistung?"
+
+FORMAT: Eine Frage pro Zeile, keine Nummerierung, keine Bullets.`
+        },
+        {
+          role: 'user',
+          content: `VERGLEICHSERGEBNIS:
+Dokumenttyp: ${docType}
+Scores: ${scoreInfo}
+${recInfo}
+
+UNTERSCHIEDE:
+${diffs || 'Keine wesentlichen Unterschiede gefunden.'}
+
+RISIKEN:
+${risks || 'Keine Risiken identifiziert.'}
+
+${benchmarkInfo ? `MARKTVERGLEICH:\n${benchmarkInfo}` : ''}
+
+Generiere 3-5 vorausschauende Fragen, die der User jetzt wahrscheinlich hat:`
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 250,
+    });
+
+    const text = response.choices[0].message.content.trim();
+    const questions = text.split('\n')
+      .map(q => q.replace(/^[-•*\d.)\s]+/, '').trim())
+      .filter(q => q.length > 8 && q.length < 100 && q.includes('?'))
+      .slice(0, 5);
+
+    console.log(`💡 Follow-up questions generated: ${questions.length}`);
+    return questions.length > 0 ? questions : null;
+  } catch (error) {
+    console.warn('⚠️ Follow-up question generation failed:', error.message);
+    return null;
+  }
+}
+
+async function answerCompareFollowUp(question, context) {
+  const docName = context.documentType?.labels?.documentName || 'Vertrag';
+  const docType = context.documentType?.label || 'Vertrag';
+  const perspective = context.perspective || 'neutral';
+
+  const perspectiveHint = perspective === 'auftraggeber'
+    ? 'Der User ist Auftraggeber/Käufer/Kunde.'
+    : perspective === 'auftragnehmer'
+      ? 'Der User ist Auftragnehmer/Anbieter/Dienstleister.'
+      : 'Der User betrachtet neutral.';
+
+  // Build compact context
+  const diffs = (context.differences || []).slice(0, 10).map(d =>
+    `${d.clause || d.category}: ${docName} 1="${d.contract1Value || '—'}" vs ${docName} 2="${d.contract2Value || '—'}" [${d.severity}]${d.explanation ? ' — ' + d.explanation.substring(0, 100) : ''}`
+  ).join('\n');
+
+  const risks = (context.risks || []).slice(0, 5).map(r =>
+    `[${r.severity}] ${r.title}: ${r.description?.substring(0, 150) || ''}`
+  ).join('\n');
+
+  const scores1 = context.scores?.contract1;
+  const scores2 = context.scores?.contract2;
+  const scoreInfo = scores1 && scores2
+    ? `${docName} 1: Gesamt ${scores1.overall}/100, ${docName} 2: Gesamt ${scores2.overall}/100`
+    : '';
+
+  const benchmarkInfo = (context.benchmark?.metrics || []).slice(0, 5).map(m =>
+    `${m.label}: V1=${m.contract1?.value ?? '?'} ${m.unit}, V2=${m.contract2?.value ?? '?'} ${m.unit}, Markt=${m.marketTypical} ${m.unit}`
+  ).join('\n');
+
+  const rec = context.overallRecommendation;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `Du bist ein erfahrener Vertragsberater. Der User hat gerade zwei ${docType}e verglichen und stellt eine Rückfrage.
+${perspectiveHint}
+
+REGELN:
+1. Antworte KONKRET mit Bezug auf die Vergleichsdaten — nenne Zahlen, Klauseln, Werte
+2. Wenn du rechnen kannst (Kosten über Laufzeit, Differenzen), tu es
+3. Gib praktische Handlungsempfehlungen
+4. Halte dich kurz (3-5 Sätze), aber sei präzise
+5. Wenn die Daten nicht ausreichen um die Frage zu beantworten, sag das ehrlich`
+      },
+      {
+        role: 'user',
+        content: `VERGLEICHSDATEN:
+Dokumenttyp: ${docType}
+Scores: ${scoreInfo}
+Empfehlung: ${rec ? `${docName} ${rec.recommended} — ${rec.reasoning?.substring(0, 200) || ''}` : 'Keine'}
+
+UNTERSCHIEDE:
+${diffs || 'Keine'}
+
+RISIKEN:
+${risks || 'Keine'}
+
+${benchmarkInfo ? `MARKTVERGLEICH:\n${benchmarkInfo}` : ''}
+
+FRAGE: ${question}`
+      }
+    ],
+    temperature: 0.3,
+    max_tokens: 400,
+  });
+
+  return response.choices[0].message.content.trim();
+}
+
+// ============================================
 // Exports
 // ============================================
 
@@ -6829,4 +7005,7 @@ module.exports = {
   runHolisticComparePass,
   validateHolisticOutput,
   adaptSectionsToLegacySchema,
+  // V4.1: Follow-Up Questions
+  generateCompareFollowUps,
+  answerCompareFollowUp,
 };
