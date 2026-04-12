@@ -124,7 +124,7 @@ const LegalLensStart = () => {
 
     const query = searchQuery.toLowerCase();
     const filtered = contracts.filter(contract =>
-      contract.name.toLowerCase().includes(query) ||
+      contract.name?.toLowerCase().includes(query) ||
       contract.analysis?.contractType?.toLowerCase().includes(query)
     );
     setFilteredContracts(filtered);
@@ -418,7 +418,7 @@ const LegalLensStart = () => {
                           <FileText size={20} />
                         </div>
                         <div className={styles.contractRowContent}>
-                          <span className={styles.contractRowName}>{contract.name}</span>
+                          <span className={styles.contractRowName}>{contract.name || 'Unbenannter Vertrag'}</span>
                           <span className={styles.contractRowMeta}>
                             {contract.analysis?.contractType || 'Vertrag'} • {formatDate(contract.uploadedAt || contract.createdAt)}
                           </span>
