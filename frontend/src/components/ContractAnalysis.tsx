@@ -1545,10 +1545,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               title={!isBusinessOrHigher ? 'Nur für Business & Enterprise Nutzer verfügbar' : 'Vertrag mit KI-Rechtsbot besprechen'}
               style={{
                 opacity: !isBusinessOrHigher ? 0.5 : 1,
-                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer',
-                background: isBusinessOrHigher ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : undefined,
-                color: isBusinessOrHigher ? 'white' : undefined,
-                border: isBusinessOrHigher ? 'none' : undefined
+                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer'
               }}
             >
               {openingChat ? (
@@ -1574,6 +1571,11 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               <button
                 className={styles.secondaryButton}
                 onClick={() => onNavigateToContract((result?.originalContractId || initialResult?.originalContractId) as string)}
+                style={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  color: '#ffffff',
+                  border: 'none'
+                }}
               >
                 <FileText size={18} />
                 <span>Zum Vertrag öffnen</span>
