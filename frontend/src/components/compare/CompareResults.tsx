@@ -36,6 +36,14 @@ const BASE_TAB_CONFIG: { key: CompareTab; label: string; icon: React.ElementType
   { key: 'contractMap', label: 'Vertragskarte', icon: Map },
 ];
 
+interface FollowUpMessage {
+  question: string;
+  answer: string | null;
+  loading: boolean;
+}
+
+const MAX_FOLLOWUP_MESSAGES = 10;
+
 export default function CompareResults({
   result,
   file1,
@@ -48,9 +56,7 @@ export default function CompareResults({
   reAnalyzing,
 }: CompareResultsProps) {
   const [activeTab, setActiveTab] = useState<CompareTab>('overview');
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
-  const [answerLoading, setAnswerLoading] = useState(false);
+  const [followUpMessages, setFollowUpMessages] = useState<FollowUpMessage[]>([]);
   const v2 = isV2Result(result);
   const v2Result = v2 ? (result as ComparisonResultV2) : null;
 
@@ -191,13 +197,15 @@ export default function CompareResults({
       {v2Result?.followUpQuestions && v2Result.followUpQuestions.length > 0 && (
         <FollowUpSection
           questions={v2Result.followUpQuestions}
-          selectedQuestion={selectedQuestion}
-          answer={followUpAnswer}
-          answerLoading={answerLoading}
+          messages={followUpMessages}
           onAsk={async (question) => {
-            setSelectedQuestion(question);
-            setFollowUpAnswer(null);
-            setAnswerLoading(true);
+            if (followUpMessages.length >= MAX_FOLLOWUP_MESSAGES) return;
+            const isLoading = followUpMessages.some(m => m.loading);
+            if (isLoading) return;
+
+            const newMsg: FollowUpMessage = { question, answer: null, loading: true };
+            setFollowUpMessages(prev => [...prev, newMsg]);
+
             try {
               const API = import.meta.env.VITE_API_URL || '';
               const res = await fetch(`${API}/api/compare/followup-answer`, {
@@ -219,17 +227,18 @@ export default function CompareResults({
               });
               if (!res.ok) throw new Error('Fehler');
               const data = await res.json();
-              setFollowUpAnswer(data.answer);
+              setFollowUpMessages(prev =>
+                prev.map((m, i) => i === prev.length - 1 ? { ...m, answer: data.answer, loading: false } : m)
+              );
             } catch {
-              setFollowUpAnswer('Die Frage konnte leider nicht beantwortet werden. Bitte versuchen Sie es erneut.');
-            } finally {
-              setAnswerLoading(false);
+              setFollowUpMessages(prev =>
+                prev.map((m, i) => i === prev.length - 1
+                  ? { ...m, answer: 'Die Frage konnte leider nicht beantwortet werden.', loading: false }
+                  : m)
+              );
             }
           }}
-          onClose={() => {
-            setSelectedQuestion(null);
-            setFollowUpAnswer(null);
-          }}
+          onClear={() => setFollowUpMessages([])}
         />
       )}
     </div>
@@ -237,32 +246,45 @@ export default function CompareResults({
 }
 
 // ============================================
-// Follow-Up Questions Section
+// Follow-Up Questions Section (Mini-Chat)
 // ============================================
 function FollowUpSection({
   questions,
-  selectedQuestion,
-  answer,
-  answerLoading,
+  messages,
   onAsk,
-  onClose,
+  onClear,
 }: {
   questions: string[];
-  selectedQuestion: string | null;
-  answer: string | null;
-  answerLoading: boolean;
+  messages: FollowUpMessage[];
   onAsk: (question: string) => void;
-  onClose: () => void;
+  onClear: () => void;
 }) {
   const [customInput, setCustomInput] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const isLoading = messages.some(m => m.loading);
+  const limitReached = messages.length >= MAX_FOLLOWUP_MESSAGES;
+
+  // Auto-scroll to latest message
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleCustomSubmit = () => {
     const q = customInput.trim();
-    if (!q || answerLoading) return;
+    if (!q || isLoading || limitReached) return;
     onAsk(q);
     setCustomInput('');
+    setTimeout(scrollToBottom, 100);
   };
+
+  const handleChipClick = (q: string) => {
+    if (isLoading || limitReached) return;
+    onAsk(q);
+    setTimeout(scrollToBottom, 100);
+  };
+
+  // Track which chip-questions have already been asked
+  const askedQuestions = new Set(messages.map(m => m.question));
 
   return (
     <motion.div
@@ -274,69 +296,82 @@ function FollowUpSection({
       <div className={styles.followUpHeader}>
         <MessageCircle size={18} />
         <h4>Haben Sie noch Fragen zu diesem Vergleich?</h4>
+        {messages.length > 0 && (
+          <button className={styles.followUpClearBtn} onClick={onClear} title="Verlauf löschen">
+            <X size={14} />
+            <span>Verlauf löschen</span>
+          </button>
+        )}
       </div>
 
+      {/* Suggestion chips — hide already-asked ones */}
       <div className={styles.followUpChips}>
-        {questions.map((q, i) => (
+        {questions.filter(q => !askedQuestions.has(q)).map((q, i) => (
           <button
             key={i}
-            className={`${styles.followUpChip} ${selectedQuestion === q ? styles.followUpChipActive : ''}`}
-            onClick={() => onAsk(q)}
-            disabled={answerLoading}
+            className={styles.followUpChip}
+            onClick={() => handleChipClick(q)}
+            disabled={isLoading || limitReached}
           >
             {q}
           </button>
         ))}
       </div>
 
-      {/* Custom question input */}
-      <div className={styles.followUpInputRow}>
-        <input
-          ref={inputRef}
-          type="text"
-          className={styles.followUpInput}
-          placeholder="Eigene Frage stellen..."
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
-          disabled={answerLoading}
-        />
-        <button
-          className={styles.followUpSendBtn}
-          onClick={handleCustomSubmit}
-          disabled={!customInput.trim() || answerLoading}
-          title="Frage stellen"
-        >
-          <Send size={16} />
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {(selectedQuestion && (answerLoading || answer)) && (
-          <motion.div
-            className={styles.followUpAnswer}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className={styles.followUpAnswerHeader}>
-              <span className={styles.followUpQuestion}>{selectedQuestion}</span>
-              <button className={styles.followUpClose} onClick={onClose} title="Schließen">
-                <X size={14} />
-              </button>
-            </div>
-            {answerLoading ? (
-              <div className={styles.followUpLoading}>
-                <Loader2 size={16} className={styles.followUpSpinner} />
-                <span>Antwort wird generiert...</span>
+      {/* Conversation history */}
+      {messages.length > 0 && (
+        <div className={styles.followUpChat}>
+          {messages.map((msg, i) => (
+            <motion.div
+              key={i}
+              className={styles.followUpMessage}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={styles.followUpBubbleUser}>
+                <span>{msg.question}</span>
               </div>
-            ) : (
-              <p className={styles.followUpAnswerText}>{answer}</p>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {msg.loading ? (
+                <div className={styles.followUpLoading}>
+                  <Loader2 size={16} className={styles.followUpSpinner} />
+                  <span>Antwort wird generiert...</span>
+                </div>
+              ) : msg.answer && (
+                <div className={styles.followUpBubbleAi}>
+                  <p>{msg.answer}</p>
+                </div>
+              )}
+            </motion.div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+      )}
+
+      {/* Custom question input */}
+      {!limitReached ? (
+        <div className={styles.followUpInputRow}>
+          <input
+            type="text"
+            className={styles.followUpInput}
+            placeholder="Eigene Frage stellen..."
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCustomSubmit()}
+            disabled={isLoading}
+          />
+          <button
+            className={styles.followUpSendBtn}
+            onClick={handleCustomSubmit}
+            disabled={!customInput.trim() || isLoading}
+            title="Frage stellen"
+          >
+            <Send size={16} />
+          </button>
+        </div>
+      ) : (
+        <p className={styles.followUpLimitHint}>Maximale Anzahl an Fragen erreicht (10).</p>
+      )}
     </motion.div>
   );
 }

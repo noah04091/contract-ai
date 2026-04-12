@@ -1751,51 +1751,69 @@
   transform: none;
 }
 
-.followUpChipActive {
-  border-color: #0071e3;
-  background: rgba(0, 113, 227, 0.08);
-  color: #0071e3;
-  font-weight: 500;
-}
-
-.followUpAnswer {
-  margin-top: 16px;
-  padding: 16px 20px;
-  background: white;
-  border: 1px solid #e8e8ed;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.followUpAnswerHeader {
+.followUpClearBtn {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.followUpQuestion {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #0071e3;
-  line-height: 1.4;
-}
-
-.followUpClose {
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #e8e8ed;
+  border-radius: 8px;
+  background: white;
   color: #86868b;
-  border-radius: 6px;
-  flex-shrink: 0;
+  font-size: 0.78rem;
+  cursor: pointer;
   transition: all 0.15s;
 }
 
-.followUpClose:hover {
-  background: #f5f5f7;
+.followUpClearBtn:hover {
+  border-color: #ff453a;
+  color: #ff453a;
+  background: rgba(255, 69, 58, 0.04);
+}
+
+.followUpChat {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.followUpMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.followUpBubbleUser {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 10px 16px;
+  background: #0071e3;
+  color: white;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.followUpBubbleAi {
+  align-self: flex-start;
+  max-width: 90%;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e8e8ed;
+  border-radius: 4px 16px 16px 16px;
+  font-size: 0.88rem;
+  line-height: 1.7;
   color: #1d1d1f;
+}
+
+.followUpBubbleAi p {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .followUpLoading {
@@ -1804,6 +1822,7 @@
   gap: 8px;
   color: #86868b;
   font-size: 0.85rem;
+  padding: 8px 0;
 }
 
 .followUpSpinner {
@@ -1815,12 +1834,11 @@
   to { transform: rotate(360deg); }
 }
 
-.followUpAnswerText {
-  font-size: 0.88rem;
-  line-height: 1.7;
-  color: #1d1d1f;
-  margin: 0;
-  white-space: pre-wrap;
+.followUpLimitHint {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  color: #86868b;
+  text-align: center;
 }
 
 .followUpInputRow {
