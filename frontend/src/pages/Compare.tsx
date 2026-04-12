@@ -270,12 +270,26 @@ export default function EnhancedCompare() {
   const file2InputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // 📏 File size validation (10MB limit, matching backend multer config)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const validateAndSetFile = (file: File, setter: (f: File | null) => void) => {
+    if (file.size > MAX_FILE_SIZE) {
+      setNotification({
+        message: `Datei "${file.name}" ist zu groß (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum: 10 MB.`,
+        type: "error"
+      });
+      setTimeout(() => setNotification(null), 5000);
+      return;
+    }
+    setter(file);
+  };
+
   // 📸 Document Scanners for both file inputs
   const { openScanner: openScanner1, ScannerModal: ScannerModal1 } = useDocumentScanner((file) => {
-    setFile1(file);
+    validateAndSetFile(file, setFile1);
   });
   const { openScanner: openScanner2, ScannerModal: ScannerModal2 } = useDocumentScanner((file) => {
-    setFile2(file);
+    validateAndSetFile(file, setFile2);
   });
 
   // 🚨 DEBUG: Component Render Log
@@ -377,8 +391,8 @@ export default function EnhancedCompare() {
           const fileName = contract.fileName || contract.name || "vertrag.pdf";
           const file = new File([blob], fileName, { type: "application/pdf" });
 
-          // Step 5: Set as file1
-          setFile1(file);
+          // Step 5: Validate size + set as file1
+          validateAndSetFile(file, setFile1);
 
           setNotification({
             message: `Vertrag "${contract.name || contract.fileName}" wurde geladen`,
@@ -672,6 +686,16 @@ export default function EnhancedCompare() {
     if (!v2.contractMap?.contract1 || !v2.contractMap?.contract2) return;
 
     setPerspective(newPerspective);
+
+    // Texte fehlen (z.B. aus History geladen) → Re-Analyse nicht möglich
+    if (!v2._contractTexts?.text1 && !v2._contractTexts?.text2) {
+      setNotification({
+        message: 'Perspektivwechsel nicht möglich — bitte Vergleich erneut durchführen.',
+        type: 'error'
+      });
+      setTimeout(() => setNotification(null), 4000);
+      return;
+    }
 
     // Cache-Hit → sofort anzeigen, kein API-Call
     if (perspectiveCache[newPerspective]) {
@@ -1173,7 +1197,7 @@ export default function EnhancedCompare() {
                     accept=".pdf,.docx"
                     disabled={!isPremium}
                     style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && setFile1(e.target.files[0])}
+                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
                   />
 
                   {/* Decorative Background */}
@@ -1279,7 +1303,7 @@ export default function EnhancedCompare() {
                     accept=".pdf,.docx"
                     disabled={!isPremium}
                     style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && setFile2(e.target.files[0])}
+                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
                   />
 
                   {/* Decorative Background */}

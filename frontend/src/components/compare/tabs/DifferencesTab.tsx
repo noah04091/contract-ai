@@ -172,6 +172,15 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
 
       {/* Differences List */}
       <div className={styles.differencesList}>
+        {filteredDifferences.length === 0 && selectedArea === 'all' && (
+          <div style={{ textAlign: 'center', padding: '3rem 2rem', color: '#6b7280' }}>
+            <CheckCircle size={40} style={{ color: '#34c759', marginBottom: '1rem' }} />
+            <h3 style={{ margin: '0 0 0.5rem', color: '#1d1d1f', fontWeight: 600 }}>Keine Unterschiede gefunden</h3>
+            <p style={{ margin: 0, fontSize: '0.95rem' }}>
+              Die Dokumente scheinen inhaltlich identisch zu sein oder weisen keine relevanten Abweichungen auf.
+            </p>
+          </div>
+        )}
         {filteredDifferences.length === 0 && selectedArea !== 'all' && (
           <div className={styles.emptyFilterState} style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
             <p>Keine Unterschiede in der Kategorie &bdquo;{selectedArea}&ldquo; gefunden.</p>
