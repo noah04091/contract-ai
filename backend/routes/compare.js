@@ -916,6 +916,17 @@ router.post("/", verifyToken, upload.fields([
       file2S3Key = null;
     }
 
+    // Generate follow-up questions BEFORE history save so they're persisted
+    try {
+      const followUps = await Promise.race([
+        generateCompareFollowUps(analysisResult),
+        new Promise(resolve => setTimeout(() => resolve(null), 3000)),
+      ]);
+      if (followUps) analysisResult.followUpQuestions = followUps;
+    } catch (fuErr) {
+      console.warn('⚠️ Follow-up generation skipped:', fuErr.message);
+    }
+
     // Log the comparison activity with full result for history feature
     try {
       const historyDoc = {
@@ -990,17 +1001,6 @@ router.post("/", verifyToken, upload.fields([
     }
 
     console.log(`✅ Comparison completed: version=${analysisResult.version || 1}, v2Fallback=${analysisResult._v2Fallback || false}, risks=${analysisResult.risks?.length || 0}, recs=${analysisResult.recommendations?.length || 0}, diffs=${analysisResult.differences?.length || 0}`);
-
-    // Generate follow-up questions (non-blocking, 3s timeout)
-    try {
-      const followUps = await Promise.race([
-        generateCompareFollowUps(analysisResult),
-        new Promise(resolve => setTimeout(() => resolve(null), 3000)),
-      ]);
-      if (followUps) analysisResult.followUpQuestions = followUps;
-    } catch (fuErr) {
-      console.warn('⚠️ Follow-up generation skipped:', fuErr.message);
-    }
 
     // Decrement active comparison counter
     const activeNow = activeComparisons.get(userId) || 1;
