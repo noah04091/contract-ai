@@ -1123,7 +1123,8 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
       // Holistic Pass with NEW perspective
       sendProgress(res, 'holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...', wantsSSE);
       let holisticRaw = await runHolisticComparePass(
-        contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective
+        contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective,
+        userProfile || 'individual', comparisonMode || 'standard'
       );
 
       // Trust-Guard
@@ -1136,7 +1137,8 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
         sendProgress(res, 'holistic', 70, 'Erneuter KI-Vergleich (Retry)...', wantsSSE);
         try {
           holisticRaw = await runHolisticComparePass(
-            contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective
+            contractMap.contract1, contractMap.contract2, intent, text1, text2, docConfig, selectedPerspective,
+            userProfile || 'individual', comparisonMode || 'standard'
           );
           validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
         } catch (retryErr) {

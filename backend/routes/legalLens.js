@@ -2736,11 +2736,14 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     const cacheCheck = isCacheValid(contract.legalLens, isForceRefresh);
     const contractText = contract.content || contract.extractedText || contract.fullText || '';
 
-    // Zusätzlicher Sanity-Check für verdächtig kleine Caches (alte buggy Daten)
-    // Proportional: erwarte mindestens 1 Klausel pro 1500 Zeichen Text
+    // Zusätzlicher Sanity-Check NUR für alte Pre-V4 Caches (alte buggy Daten)
+    // V4-Caches (CACHE_VERSION >= 18) sind vertrauenswürdig — Post-Processor filtert aktiv
     const cachedClauses = contract.legalLens?.preParsedClauses;
-    const expectedMinClauses = Math.max(5, Math.floor(contractText.length / 1500));
-    const cacheSeemsBuggy = cachedClauses?.length > 0 &&
+    const cachedVersion = contract.legalLens?.metadata?.cacheVersion || 0;
+    const isOldCache = cachedVersion < 18;
+    const expectedMinClauses = Math.max(3, Math.floor(contractText.length / 3000));
+    const cacheSeemsBuggy = isOldCache &&
+                           cachedClauses?.length > 0 &&
                            cachedClauses.length < expectedMinClauses &&
                            contractText.length > 2000;
 

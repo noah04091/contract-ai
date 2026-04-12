@@ -5973,7 +5973,7 @@ ${lines.join('\n')}
 Erstelle für JEDEN Wert der sich zwischen Doc1 und Doc2 unterscheidet eine eigene Section!`;
 }
 
-function buildHolisticSystemPrompt(intent, docConfig, perspective) {
+function buildHolisticSystemPrompt(intent, docConfig, perspective, userProfile, comparisonMode) {
   const metaHint = intent.level === 'meta'
     ? `\n\n⚠️ META-LEVEL: Die Dokumente sind nur auf META-EBENE vergleichbar (unterschiedliche Produkttypen). Fokussiere dich AUSSCHLIEßLICH auf: ${intent.comparableDimensions.join(', ')}. Die erste Section muss erklären, dass es sich um fundamental unterschiedliche Dokumenttypen handelt. Vergleiche KEINE Detailklauseln aus unvereinbaren Bereichen.`
     : '';
@@ -5998,10 +5998,22 @@ function buildHolisticSystemPrompt(intent, docConfig, perspective) {
 - Stärken/Schwächen und die Gesamtempfehlung müssen die Interessen des ${perspLabel} widerspiegeln.`;
   }
 
+  // User profile hint (individual/freelancer/business)
+  let profileHint = '';
+  if (userProfile && SYSTEM_PROMPTS[userProfile]) {
+    profileHint = `\n\n${SYSTEM_PROMPTS[userProfile]}`;
+  }
+
+  // Comparison mode hint (standard/version/bestPractice/competition)
+  let modeHint = '';
+  if (comparisonMode && COMPARISON_MODES[comparisonMode]) {
+    modeHint = `\n\n${COMPARISON_MODES[comparisonMode].promptAddition}`;
+  }
+
   return `Du bist ein erfahrener Vertragsberater und vergleichst zwei Dokumente wie ein Mensch — intelligent, ganzheitlich, priorisiert.${docTypeHint}
 
 DEINE AUFGABE:
-Vergleiche die beiden Dokumente und finde ALLE echten Unterschiede. Arbeite wie ein erfahrener Anwalt: gründlich, faktenbasiert, nichts übersehen, nichts erfinden.${metaHint}${partialHint}${perspectiveHint}
+Vergleiche die beiden Dokumente und finde ALLE echten Unterschiede. Arbeite wie ein erfahrener Anwalt: gründlich, faktenbasiert, nichts übersehen, nichts erfinden.${metaHint}${partialHint}${perspectiveHint}${profileHint}${modeHint}
 
 KERNPRINZIP — Kein Formzwang:
 - Es gibt KEINE Mindest- oder Höchstzahl an Sections. Finde so viele Unterschiede wie tatsächlich existieren.
@@ -6153,7 +6165,7 @@ Erstelle jetzt die Sections für den Vergleich. JEDER echte Unterschied = eine e
 /**
  * STUFE 2: Holistic Compare Pass (gpt-4o, ein einziger großer Call)
  */
-async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective) {
+async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective, userProfile, comparisonMode) {
   // Anti-Position-Bias: Zufällig entscheiden ob Doc1 und Doc2 im Prompt getauscht werden
   const swapped = Math.random() < 0.5;
   const promptMap1 = swapped ? map2 : map1;
@@ -6161,7 +6173,7 @@ async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfi
   const promptText1 = swapped ? text2 : text1;
   const promptText2 = swapped ? text1 : text2;
 
-  const systemPrompt = buildHolisticSystemPrompt(intent, docConfig, perspective);
+  const systemPrompt = buildHolisticSystemPrompt(intent, docConfig, perspective, userProfile, comparisonMode);
   const userPrompt = buildHolisticUserPrompt(promptMap1, promptMap2, intent, promptText1, promptText2, docConfig);
 
   console.log(`🌊 Holistic Pass: ~${Math.round((systemPrompt.length + userPrompt.length) / 4)} Tokens Input${swapped ? ' (Doc-Reihenfolge getauscht)' : ''}`);
@@ -6544,7 +6556,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
   const progress = onProgress || (() => {});
 
   try {
-    console.log(`🌊 V4 Holistic Pipeline gestartet`);
+    console.log(`🌊 V4 Holistic Pipeline gestartet (profile=${userProfile || 'default'}, mode=${comparisonMode || 'standard'})`);
 
     // SCHICHT 1 (bleibt): Phase A — Strukturierung beider Dokumente parallel
     progress('structuring', 10, 'Dokument 1 wird strukturiert...');
@@ -6569,7 +6581,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
 
     // STUFE 2: Holistic Pass
     progress('holistic', 55, 'KI-Vergleich läuft (ganzheitliche Analyse)...');
-    let holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective);
+    let holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective, userProfile, comparisonMode);
 
     // STUFE 3: Trust-Guard
     progress('validating', 82, 'Ergebnisse werden validiert...');
@@ -6580,7 +6592,7 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
       console.warn(`⚠️ Holistic: 0 Sections nach Trust-Guard. Einmaliger Retry...`);
       progress('holistic', 70, 'Erneuter KI-Vergleich (Retry)...');
       try {
-        holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective);
+        holisticRaw = await runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective, userProfile, comparisonMode);
         validated = validateHolisticOutput(holisticRaw, text1, text2, intent);
         if (validated.sections.length > 0) {
           console.log(`✅ Retry erfolgreich: ${validated.sections.length} Sections`);

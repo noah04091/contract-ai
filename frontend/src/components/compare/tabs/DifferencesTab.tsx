@@ -331,6 +331,7 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
                     <PDFDocumentViewer
                       file={activePdfTab === 1 ? file1 : file2}
                       highlightText={activePdfTab === 1 ? diff.contract1 : diff.contract2}
+                      renderAllPages={true}
                     />
                   </div>
                 </div>

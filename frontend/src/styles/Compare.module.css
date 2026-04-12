@@ -1330,7 +1330,7 @@
 .pdfTab:hover { background: #e8e8ed; }
 .pdfTabActive { background: white; color: #0071e3; }
 .pdfTabClose { flex: none; width: 40px; display: flex; align-items: center; justify-content: center; }
-.pdfPreviewViewer { max-height: 400px; overflow-y: auto; }
+.pdfPreviewViewer { max-height: 600px; overflow-y: auto; }
 
 /* ============================================
    RISKS TAB

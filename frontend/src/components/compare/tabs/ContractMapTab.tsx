@@ -127,6 +127,7 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
   const allExpanded = expandedArea === '__all__';
   const rows = buildAreaRows(contract1, contract2, differences);
   const docName = documentType?.labels?.documentName || 'Vertrag';
+  const partiesLabel = documentType?.labels?.partiesLabel || null;
 
   // Stats
   const stats = {
@@ -180,7 +181,7 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
                 {/* Area label */}
                 <div className={styles.mapRowArea}>
                   <StatusIcon status={row.status} />
-                  <span className={styles.mapRowLabel}>{row.label}</span>
+                  <span className={styles.mapRowLabel}>{row.area === 'parties' && partiesLabel ? partiesLabel : row.label}</span>
                   {row.severity && (
                     <span className={`${styles.mapSeverity} ${styles[`mapSev_${row.severity}`]}`}>
                       {row.severity}
