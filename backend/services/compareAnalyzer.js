@@ -5613,7 +5613,7 @@ function calculateScoresFromDiffs(mergedDiffs, map1, map2, docConfig) {
 
   const clamp = (val, min, max) => Math.round(Math.max(min, Math.min(max, val)));
 
-  return {
+  const scores = {
     contract1: {
       overall: clamp(BASE_SCORE - penalty1, 40, 92),
       fairness: clamp(BASE_SCORE - fairness1 * 1.8, 35, 92),
@@ -5631,6 +5631,69 @@ function calculateScoresFromDiffs(mergedDiffs, map1, map2, docConfig) {
       clarity: clamp(BASE_SCORE - clarity2 * 1.8, 45, 92),
     },
   };
+
+  // Anti-Flat-Scores: Add natural spread when category scores are too uniform
+  // Uses contract structure (clause coverage) to create grounded differentiation
+  applyStructureSpread(scores.contract1, map1, clamp);
+  applyStructureSpread(scores.contract2, map2, clamp);
+
+  return scores;
+}
+
+/**
+ * Adds ±3-8pt spread to category scores when they're flat (all within ±3 of each other).
+ * Uses clause coverage from the contract map to make adjustments data-grounded.
+ * Overall score is kept unchanged — only sub-dimensions shift.
+ */
+function applyStructureSpread(scores, map, clamp) {
+  const cats = ['fairness', 'riskProtection', 'flexibility', 'completeness', 'clarity'];
+  const values = cats.map(c => scores[c]);
+  const range = Math.max(...values) - Math.min(...values);
+
+  // Only apply when scores are flat (spread < 4 points)
+  if (range >= 4) return;
+
+  const clauses = map?.clauses || [];
+  const totalClauses = clauses.length;
+  if (totalClauses === 0) return;
+
+  // Count clauses per relevant area
+  const areaCount = {};
+  for (const c of clauses) {
+    areaCount[c.area] = (areaCount[c.area] || 0) + 1;
+  }
+
+  // Calculate average text length for clarity signal
+  const avgTextLen = clauses.reduce((sum, c) => sum + (c.originalText?.length || c.summary?.length || 50), 0) / totalClauses;
+
+  // Dimension bonuses based on structure (each ±0 to ±6)
+  const hasPayment = (areaCount['payment'] || 0) > 0;
+  const hasParties = (areaCount['parties'] || 0) > 0;
+  const fairnessAdj = (hasPayment ? 2 : -2) + (hasParties ? 1 : -1);
+
+  const riskAreas = (areaCount['liability'] || 0) + (areaCount['warranty'] || 0) + (areaCount['force_majeure'] || 0);
+  const riskAdj = riskAreas >= 2 ? 3 : riskAreas === 1 ? 0 : -3;
+
+  const flexAreas = (areaCount['termination'] || 0) + (areaCount['duration'] || 0);
+  const flexAdj = flexAreas >= 2 ? 2 : flexAreas === 1 ? 0 : -3;
+
+  const completenessAdj = totalClauses >= 8 ? 4 : totalClauses >= 5 ? 1 : -2;
+
+  // Shorter clauses = clearer language (below 300 chars average = bonus)
+  const clarityAdj = avgTextLen < 200 ? 4 : avgTextLen < 400 ? 1 : -2;
+
+  const adjustments = { fairness: fairnessAdj, riskProtection: riskAdj, flexibility: flexAdj, completeness: completenessAdj, clarity: clarityAdj };
+
+  // Apply adjustments, but keep overall unchanged
+  const oldOverall = scores.overall;
+  for (const cat of cats) {
+    scores[cat] = clamp(scores[cat] + adjustments[cat], 35, 92);
+  }
+  scores.overall = oldOverall; // Never touch overall
+
+  const newValues = cats.map(c => scores[c]);
+  const newRange = Math.max(...newValues) - Math.min(...newValues);
+  console.log(`📊 Anti-Flat: spread ${range} → ${newRange} (adjustments: ${JSON.stringify(adjustments)})`);
 }
 
 /**
