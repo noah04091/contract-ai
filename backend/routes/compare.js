@@ -620,7 +620,7 @@ function enhanceAnalysis(analysis) {
 
 // 📡 SSE Progress Helper
 const sendProgress = (res, step, progress, message, isSSE = false) => {
-  if (isSSE) {
+  if (isSSE && !res.destroyed) {
     res.write(`data: ${JSON.stringify({ type: 'progress', step, progress, message })}\n\n`);
   }
   console.log(`📊 [${progress}%] ${step}: ${message}`);
@@ -641,6 +641,21 @@ router.post("/", verifyToken, upload.fields([
     res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
     res.flushHeaders();
   }
+
+  // 🔌 Client-Disconnect-Handling: Flag setzen + Counter aufräumen
+  let clientDisconnected = false;
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      clientDisconnected = true;
+      console.log('🔌 Client hat Verbindung getrennt (Compare)');
+      const dcUserId = req.user?.userId;
+      if (dcUserId) {
+        const active = activeComparisons.get(dcUserId) || 1;
+        if (active <= 1) activeComparisons.delete(dcUserId);
+        else activeComparisons.set(dcUserId, active - 1);
+      }
+    }
+  });
 
   try {
     req._startTime = Date.now();
@@ -1017,12 +1032,14 @@ router.post("/", verifyToken, upload.fields([
     }
 
   } catch (error) {
-    // Decrement active comparison counter on error
-    const errUserId = req.user?.userId;
-    if (errUserId) {
-      const activeNow = activeComparisons.get(errUserId) || 1;
-      if (activeNow <= 1) activeComparisons.delete(errUserId);
-      else activeComparisons.set(errUserId, activeNow - 1);
+    // Decrement active comparison counter on error (nur wenn nicht schon durch Disconnect bereinigt)
+    if (!clientDisconnected) {
+      const errUserId = req.user?.userId;
+      if (errUserId) {
+        const activeNow = activeComparisons.get(errUserId) || 1;
+        if (activeNow <= 1) activeComparisons.delete(errUserId);
+        else activeComparisons.set(errUserId, activeNow - 1);
+      }
     }
 
     console.error("❌ Comparison error:", error);
@@ -1041,10 +1058,10 @@ router.post("/", verifyToken, upload.fields([
       message: "Fehler beim Vertragsvergleich: " + (error.message || "Unbekannter Fehler")
     };
 
-    if (wantsSSE) {
+    if (wantsSSE && !res.destroyed) {
       res.write(`data: ${JSON.stringify({ type: 'error', ...errorResponse })}\n\n`);
       res.end();
-    } else {
+    } else if (!res.headersSent) {
       res.status(500).json(errorResponse);
     }
   }
@@ -1565,6 +1582,11 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="Vertragsvergleich_${new Date().toISOString().split('T')[0]}.pdf"`);
 
     // Pipe PDF to response
+    doc.on('error', (err) => {
+      console.error('❌ PDF generation stream error:', err.message);
+      if (!res.headersSent) res.status(500).json({ message: 'PDF-Generierung fehlgeschlagen' });
+      else res.end();
+    });
     doc.pipe(res);
 
     // Colors
@@ -1909,7 +1931,11 @@ router.post("/export-pdf", verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error("❌ PDF export error:", error);
-    res.status(500).json({ message: "Fehler beim PDF-Export: " + error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Fehler beim PDF-Export: " + error.message });
+    } else {
+      res.end();
+    }
   }
 });
 
