@@ -113,7 +113,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 17; // V4 Direct Extraction + Post-Processor
+const CACHE_VERSION = 18; // V4 Direct Extraction im Streaming-Endpoint
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2932,8 +2932,86 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     sendEvent('status', { message: 'Starte KI-Analyse...', progress: 10 });
 
-    // GPT-basiertes Parsing mit Progress-Updates
-    // Wir nutzen die parseContractIntelligent Funktion, aber mit Callbacks für Progress
+    // ════════════════════════════════════════════════════════════
+    // V4 DIRECT EXTRACTION (wenn Feature-Flag aktiv)
+    // Ein GPT-Call + deterministischer Post-Processor, kein Batching nötig
+    // ════════════════════════════════════════════════════════════
+    if (USE_DIRECT_PARSER) {
+      try {
+        sendEvent('status', { message: 'Direct Extraction (V4)...', progress: 20 });
+
+        const parseResult = await parseContractDirect(text, { detectRisk: true });
+
+        if (!parseResult.success || !parseResult.clauses?.length) {
+          sendEvent('error', { error: 'Keine Klauseln erkannt. Das Dokument enthält möglicherweise keinen Vertragstext.' });
+          return res.end();
+        }
+
+        const allClauses = parseResult.clauses;
+        const riskSummary = parseResult.riskSummary;
+
+        // Klauseln einzeln streamen (Frontend erwartet clause-Events)
+        sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 80 });
+        for (let i = 0; i < allClauses.length; i++) {
+          if (clientDisconnected) break;
+          sendEvent('clause', {
+            clause: allClauses[i],
+            index: i,
+            total: allClauses.length,
+            batch: 1,
+            progress: 80 + Math.round((i / allClauses.length) * 15)
+          });
+        }
+
+        // Finale Nachricht
+        sendEvent('status', { message: 'Analyse abgeschlossen', progress: 100 });
+        sendEvent('complete', {
+          success: true,
+          totalClauses: allClauses.length,
+          riskSummary,
+          source: 'direct_v4',
+          coverage: {
+            textPercent: Math.round((parseResult.metadata?.extraction?.coverageRatio || 0) * 100),
+            verified: true
+          }
+        });
+
+        // Cache speichern (Hintergrund)
+        Contract.updateOne(
+          { _id: new ObjectId(contractId) },
+          {
+            $set: {
+              'legalLens.preParsedClauses': allClauses,
+              'legalLens.riskSummary': riskSummary,
+              'legalLens.metadata': {
+                parsedAt: new Date().toISOString(),
+                parserVersion: '4.0.0-direct-extraction',
+                cacheVersion: CACHE_VERSION,
+                usedGPT: true,
+                extraction: parseResult.metadata?.extraction || {}
+              },
+              'legalLens.preprocessStatus': 'completed',
+              'legalLens.preprocessedAt': new Date()
+            }
+          }
+        ).then(() => {
+          console.log(`✅ [Legal Lens] V4 Cache gespeichert: ${allClauses.length} Klauseln`);
+        }).catch(err => {
+          console.error(`⚠️ [Legal Lens] V4 Cache-Fehler:`, err.message);
+        });
+
+        return res.end();
+
+      } catch (v4Error) {
+        console.error(`❌ [Legal Lens] V4 Direct Parser fehlgeschlagen, falle zurück auf Legacy:`, v4Error.message);
+        sendEvent('status', { message: 'Fallback auf Legacy-Parser...', progress: 15 });
+        // Weiter mit Legacy-Parser unten
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // LEGACY PARSER (Regex + GPT-Batching, Fallback)
+    // ════════════════════════════════════════════════════════════
 
     // Stufe 1: Vorverarbeitung (schnell)
     sendEvent('status', { message: 'Bereite Text auf...', progress: 15 });
