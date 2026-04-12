@@ -2937,7 +2937,8 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     // ════════════════════════════════════════════════════════════
     // V4 DIRECT EXTRACTION (wenn Feature-Flag aktiv)
-    // Ein GPT-Call + deterministischer Post-Processor, kein Batching nötig
+    // Phase 1: Extraktion + Keyword-Risk → sofort senden (~60s)
+    // Phase 2: GPT-Risk im Hintergrund → Cache anreichern
     // ════════════════════════════════════════════════════════════
     if (USE_DIRECT_PARSER) {
       try {
@@ -2951,9 +2952,10 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: heartbeatProgress });
         }, 5000);
 
+        // Phase 1: Extraktion OHNE GPT-Risk — schnelle Antwort an den User
         let parseResult;
         try {
-          parseResult = await parseContractDirect(text, { detectRisk: true });
+          parseResult = await parseContractDirect(text, { detectRisk: false });
         } finally {
           clearInterval(heartbeat);
         }
@@ -2963,10 +2965,26 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           return res.end();
         }
 
-        const allClauses = parseResult.clauses;
-        const riskSummary = parseResult.riskSummary;
+        // Keyword-basierte Risk-Bewertung als Sofort-Fallback (kein GPT, Millisekunden)
+        const allClauses = parseResult.clauses.map(clause => {
+          if (!clause.riskLevel) {
+            const risk = clauseParser.assessClauseRisk(clause.text || '');
+            clause.riskLevel = risk.level;
+            clause.riskScore = risk.score;
+            clause.riskKeywords = risk.keywords;
+            // preAnalysis für Frontend-Kompatibilität
+            clause.preAnalysis = { riskLevel: risk.level, riskScore: risk.score };
+          }
+          // riskIndicators für Frontend-Kompatibilität
+          if (!clause.riskIndicators) {
+            clause.riskIndicators = { level: clause.riskLevel || 'low', keywords: clause.riskKeywords || [], score: clause.riskScore || 0 };
+          }
+          return clause;
+        });
 
-        // Alle Klauseln auf einmal senden (Frontend erwartet 'clauses' Event)
+        const riskSummary = clauseParser.calculateRiskSummary(allClauses);
+
+        // Klauseln SOFORT an Frontend senden — User wartet nicht auf GPT-Risk
         sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 90 });
         sendEvent('clauses', {
           clauses: allClauses,
@@ -2979,32 +2997,89 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           totalClauses: allClauses.length,
           riskSummary
         });
+        res.end();
 
-        // Cache speichern (Hintergrund)
-        Contract.updateOne(
-          { _id: new ObjectId(contractId) },
-          {
-            $set: {
-              'legalLens.preParsedClauses': allClauses,
-              'legalLens.riskSummary': riskSummary,
-              'legalLens.metadata': {
-                parsedAt: new Date().toISOString(),
-                parserVersion: '4.0.0-direct-extraction',
-                cacheVersion: CACHE_VERSION,
-                usedGPT: true,
-                extraction: parseResult.metadata?.extraction || {}
-              },
-              'legalLens.preprocessStatus': 'completed',
-              'legalLens.preprocessedAt': new Date()
-            }
+        // Phase 2: GPT-Risk im Hintergrund — enriched Cache für nächstes Laden
+        // (Läuft NACH res.end() weiter, User wartet nicht darauf)
+        const { assessRiskBatch } = require('../services/legalLens/riskAssessor');
+        const rawClausesForGpt = parseResult.clauses.map(c => ({
+          number: c.number || null,
+          title: c.title || null,
+          text: c.text || ''
+        }));
+
+        assessRiskBatch(rawClausesForGpt).then(gptAssessment => {
+          if (!gptAssessment) {
+            console.log(`⚠️ [Legal Lens] GPT-Risk fehlgeschlagen — Keyword-Cache wird gespeichert`);
+            return Contract.updateOne(
+              { _id: new ObjectId(contractId) },
+              {
+                $set: {
+                  'legalLens.preParsedClauses': allClauses,
+                  'legalLens.riskSummary': riskSummary,
+                  'legalLens.metadata': {
+                    parsedAt: new Date().toISOString(),
+                    parserVersion: '4.2.0-direct-extraction',
+                    cacheVersion: CACHE_VERSION,
+                    usedGPT: false,
+                    riskSource: 'keywords',
+                    extraction: parseResult.metadata?.extraction || {}
+                  },
+                  'legalLens.preprocessStatus': 'completed',
+                  'legalLens.preprocessedAt': new Date()
+                }
+              }
+            );
           }
-        ).then(() => {
+
+          // GPT-Ergebnisse in Klauseln mergen
+          const enrichedClauses = allClauses.map((clause, idx) => {
+            const gpt = gptAssessment[idx];
+            if (gpt) {
+              return {
+                ...clause,
+                riskLevel: gpt.riskLevel,
+                riskScore: gpt.riskScore,
+                riskReason: gpt.riskReason,
+                riskKeywords: [],
+                category: gpt.category,
+                title: clause.title || gpt.suggestedTitle || clause.title,
+                sectionTitle: clause.title || gpt.suggestedTitle || clause.sectionTitle,
+                preAnalysis: { riskLevel: gpt.riskLevel, riskScore: gpt.riskScore },
+                riskIndicators: { level: gpt.riskLevel, keywords: [], score: gpt.riskScore }
+              };
+            }
+            return clause;
+          });
+
+          const enrichedRiskSummary = clauseParser.calculateRiskSummary(enrichedClauses);
+
+          return Contract.updateOne(
+            { _id: new ObjectId(contractId) },
+            {
+              $set: {
+                'legalLens.preParsedClauses': enrichedClauses,
+                'legalLens.riskSummary': enrichedRiskSummary,
+                'legalLens.metadata': {
+                  parsedAt: new Date().toISOString(),
+                  parserVersion: '4.2.0-direct-extraction',
+                  cacheVersion: CACHE_VERSION,
+                  usedGPT: true,
+                  riskSource: 'gpt',
+                  extraction: parseResult.metadata?.extraction || {}
+                },
+                'legalLens.preprocessStatus': 'completed',
+                'legalLens.preprocessedAt': new Date()
+              }
+            }
+          );
+        }).then(() => {
           console.log(`✅ [Legal Lens] V4 Cache gespeichert: ${allClauses.length} Klauseln`);
         }).catch(err => {
-          console.error(`⚠️ [Legal Lens] V4 Cache-Fehler:`, err.message);
+          console.error(`⚠️ [Legal Lens] V4 Background-Risk/Cache-Fehler:`, err.message);
         });
 
-        return res.end();
+        return; // Response bereits beendet, Background-Task läuft weiter
 
       } catch (v4Error) {
         console.error(`❌ [Legal Lens] V4 Direct Parser fehlgeschlagen, falle zurück auf Legacy:`, v4Error.message);
