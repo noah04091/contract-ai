@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Action } from '../../types/pulseV2';
 
 interface ActionItemProps {
   action: PulseV2Action;
   contractId?: string;
+  resultId?: string;
   contractNames?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
+  onCommentSave?: (actionId: string, comment: string) => void;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
@@ -28,11 +30,36 @@ function getImpactIcon(impact: string): string {
   return '\ud83d\udccc';
 }
 
-export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, contractNames, onStatusChange }) => {
+export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, onStatusChange, onCommentSave }) => {
   const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
+  const [commentText, setCommentText] = useState(action.userComment || '');
+  const [commentSaving, setCommentSaving] = useState(false);
+
+  const handleSaveComment = useCallback(async () => {
+    if (commentText === (action.userComment || '')) return;
+    if (onCommentSave) {
+      onCommentSave(action.id, commentText);
+      return;
+    }
+    // Fallback: direct API call if no handler provided
+    if (!resultId) return;
+    setCommentSaving(true);
+    try {
+      await fetch(`/api/legal-pulse-v2/results/${resultId}/actions/${action.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: commentText }),
+      });
+    } catch (err) {
+      console.error('[PulseV2] Action comment save error:', err);
+    } finally {
+      setCommentSaving(false);
+    }
+  }, [action.id, action.userComment, commentText, onCommentSave, resultId]);
 
   // Resolve contract ID: relatedContracts may contain filenames (old data) instead of real IDs.
   // Build reverse lookup: name → contractId to handle both cases.
@@ -204,6 +231,42 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, cont
           >
             &#x21A9; Aktivieren
           </button>
+        )}
+      </div>
+
+      {/* Comment field */}
+      <div style={{
+        marginTop: 10,
+        paddingTop: 10,
+        borderTop: '1px solid #f3f4f6',
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+      }}>
+        <input
+          type="text"
+          value={commentText}
+          onChange={(e) => setCommentText(e.target.value)}
+          onBlur={handleSaveComment}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); (e.target as HTMLInputElement).blur(); } }}
+          placeholder="Notiz hinzufügen..."
+          maxLength={500}
+          style={{
+            flex: 1,
+            padding: '6px 10px',
+            fontSize: 12,
+            color: '#374151',
+            background: '#f9fafb',
+            border: '1px solid #e5e7eb',
+            borderRadius: 6,
+            outline: 'none',
+          }}
+        />
+        {commentSaving && (
+          <span style={{ fontSize: 11, color: '#9ca3af' }}>Speichert...</span>
+        )}
+        {!commentSaving && commentText && commentText === action.userComment && (
+          <span style={{ fontSize: 11, color: '#059669' }}>&#10003;</span>
         )}
       </div>
     </div>

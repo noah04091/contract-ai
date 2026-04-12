@@ -715,6 +715,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     key={action.id}
                     action={action}
                     contractId={result.contractId}
+                    resultId={result._id}
                     onStatusChange={handleActionStatusChange}
                   />
                 ))}
@@ -761,6 +762,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                         key={`hist_${action.id}`}
                         action={action}
                         contractId={result.contractId}
+                        resultId={result._id}
                         onStatusChange={handleActionStatusChange}
                       />
                     ))}

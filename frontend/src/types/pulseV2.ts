@@ -111,6 +111,7 @@ export interface PulseV2Action {
   nextStep: string;
   status: 'open' | 'done' | 'dismissed';
   resultId?: string;
+  userComment?: string;
 }
 
 export interface PulseV2Result {

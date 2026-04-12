@@ -544,7 +544,7 @@ const ActionCenter: React.FC<{
       {openActions.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {displayActions.map(action => (
-            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={onStatusChange} />
+            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} onStatusChange={onStatusChange} />
           ))}
           {hiddenCount > 0 && !showAll && (
             <div style={{ textAlign: 'center', paddingTop: 4 }}>
@@ -632,7 +632,7 @@ const ActionCenter: React.FC<{
           {showHistory && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {[...doneActions, ...dismissedActions].map(action => (
-                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} contractNames={contractNames} onStatusChange={onStatusChange} />
+                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} onStatusChange={onStatusChange} />
               ))}
             </div>
           )}

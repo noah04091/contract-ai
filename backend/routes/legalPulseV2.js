@@ -473,9 +473,18 @@ router.get("/portfolio-insights", async (req, res) => {
 // ══════════════════════════════════════════════════════════════
 router.patch("/results/:id/actions/:actionId", async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!["open", "done", "dismissed"].includes(status)) {
+    const { status, comment } = req.body;
+
+    if (status && !["open", "done", "dismissed"].includes(status)) {
       return res.status(400).json({ error: "Ungültiger Status" });
+    }
+
+    const updateFields = {};
+    if (status) updateFields["actions.$.status"] = status;
+    if (comment !== undefined) updateFields["actions.$.userComment"] = (comment || "").substring(0, 500);
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "Keine Änderungen angegeben" });
     }
 
     const result = await LegalPulseV2Result.findOneAndUpdate(
@@ -484,7 +493,7 @@ router.patch("/results/:id/actions/:actionId", async (req, res) => {
         userId: req.user.userId,
         "actions.id": req.params.actionId,
       },
-      { $set: { "actions.$.status": status } },
+      { $set: updateFields },
       { new: true }
     ).lean();
 

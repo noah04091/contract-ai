@@ -133,6 +133,7 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
     confidence: Number,
     nextStep: String,
     status: { type: String, enum: ["open", "done", "dismissed"], default: "open" },
+    userComment: { type: String, maxlength: 500 },
     _id: false,
   }],
 
