@@ -1034,7 +1034,11 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     const pageRange = doc.bufferedPageRange();
     for (let i = pageRange.start; i < pageRange.start + pageRange.count; i++) {
       doc.switchToPage(i);
-      // Disclaimer on last page only — render BEFORE page number so it sits above
+      // Temporarily disable bottom margin to prevent PDFKit from creating new pages
+      const savedBottomMargin = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
+
+      // Disclaimer on last page only
       if (i === pageRange.start + pageRange.count - 1) {
         doc.fontSize(6.5).fillColor(C.light).text(
           "Dieses Dokument wurde automatisch durch Contract AI generiert. Es stellt keine Rechtsberatung dar und ersetzt nicht die individuelle Prüfung durch einen Rechtsanwalt.",
@@ -1046,6 +1050,9 @@ router.get("/results/:id/export-pdf", async (req, res) => {
         `Seite ${i + 1} von ${pageRange.count}`,
         L, doc.page.height - 30, { width: W, align: "center", lineBreak: false }
       );
+
+      // Restore margin
+      doc.page.margins.bottom = savedBottomMargin;
     }
 
     doc.end();
