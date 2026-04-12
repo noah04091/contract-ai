@@ -883,12 +883,26 @@ export function parseContractStreaming(
         }
       }
 
-      // Stream ist beendet (done = true) — falls kein 'complete' Event ankam,
-      // trotzdem als fertig markieren wenn Klauseln empfangen wurden
+      // Stream ist beendet (done = true) — falls kein 'complete' Event ankam
       if (!isComplete && clausesReceived > 0) {
         console.warn(`[Legal Lens] Stream ended without complete event. ${clausesReceived} clauses received — marking as complete.`);
         isComplete = true;
         callbacks.onComplete?.(clausesReceived);
+      }
+
+      // Stream beendet ohne Klauseln und ohne Error → Verbindung verloren während GPT arbeitete
+      // Auto-Retry: Backend hat die Klauseln wahrscheinlich im Cache gespeichert
+      if (!isComplete && clausesReceived === 0 && !isAborted && retryCount < MAX_RETRIES) {
+        retryCount++;
+        const delay = BASE_DELAY_MS * Math.pow(2, retryCount - 1);
+        console.warn(`[Legal Lens] Stream ended with 0 clauses — auto-retry in ${delay}ms (${retryCount}/${MAX_RETRIES})`);
+        callbacks.onRetrying?.(retryCount, MAX_RETRIES);
+        callbacks.onStatus?.('Verbindung wird wiederhergestellt...', lastProgress);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        if (!isAborted) {
+          executeStream();
+        }
+        return;
       }
     } catch (error) {
       // Abbruch durch User? → Kein Retry

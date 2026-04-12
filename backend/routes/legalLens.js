@@ -2966,30 +2966,18 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         const allClauses = parseResult.clauses;
         const riskSummary = parseResult.riskSummary;
 
-        // Klauseln einzeln streamen (Frontend erwartet clause-Events)
-        sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 80 });
-        for (let i = 0; i < allClauses.length; i++) {
-          if (clientDisconnected) break;
-          sendEvent('clause', {
-            clause: allClauses[i],
-            index: i,
-            total: allClauses.length,
-            batch: 1,
-            progress: 80 + Math.round((i / allClauses.length) * 15)
-          });
-        }
-
-        // Finale Nachricht
-        sendEvent('status', { message: 'Analyse abgeschlossen', progress: 100 });
+        // Alle Klauseln auf einmal senden (Frontend erwartet 'clauses' Event)
+        sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 90 });
+        sendEvent('clauses', {
+          clauses: allClauses,
+          totalClauses: allClauses.length,
+          riskSummary,
+          source: 'direct_v4'
+        });
         sendEvent('complete', {
           success: true,
           totalClauses: allClauses.length,
-          riskSummary,
-          source: 'direct_v4',
-          coverage: {
-            textPercent: Math.round((parseResult.metadata?.extraction?.coverageRatio || 0) * 100),
-            verified: true
-          }
+          riskSummary
         });
 
         // Cache speichern (Hintergrund)
