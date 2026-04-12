@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import type { PulseV2Result, PulseV2Action, PulseV2LegalAlert } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
@@ -40,7 +39,6 @@ interface ContractDetailProps {
 }
 
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
-  const navigate = useNavigate();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
@@ -867,117 +865,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         </div>
       )}
 
-      {/* Bottom padding so content isn't hidden behind floating bar */}
-      <div style={{ height: 72 }} />
-
-      {/* ═══ Floating Quick Actions Bar ═══ */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(255, 255, 255, 0.97)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #e5e7eb',
-        padding: '10px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-        zIndex: 50,
-        boxShadow: '0 -2px 12px rgba(0,0,0,0.06)',
-      }}>
-        {/* Mini Score */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 8 }}>
-          <HealthScoreGauge scores={result.scores} size="small" />
-        </div>
-
-        {/* Contextual message + CTA */}
-        {score < 60 ? (
-          <>
-            <span style={{ fontSize: 13, color: '#dc2626', fontWeight: 600 }}>
-              {criticalCount + highCount > 0
-                ? `${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'Problem' : 'Probleme'} erkannt`
-                : 'Handlungsbedarf'}
-            </span>
-            <button
-              onClick={() => navigate(`/optimizer?contractId=${result.contractId}`, {
-                state: { source: 'legal_pulse_v2', pulseFindings: actionableFindingSummaries },
-              })}
-              style={{
-                padding: '8px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              Jetzt optimieren &#8594;
-            </button>
-          </>
-        ) : score < 80 ? (
-          <>
-            <span style={{ fontSize: 13, color: '#d97706', fontWeight: 500 }}>
-              {criticalCount + highCount > 0
-                ? `${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'Verbesserung' : 'Verbesserungen'} möglich`
-                : 'Optimierungspotenzial vorhanden'}
-            </span>
-            <button
-              onClick={() => navigate(`/optimizer?contractId=${result.contractId}`, {
-                state: { source: 'legal_pulse_v2', pulseFindings: actionableFindingSummaries },
-              })}
-              style={{
-                padding: '8px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#7c3aed',
-                background: '#f5f3ff',
-                border: '1px solid #ddd6fe',
-                borderRadius: 8,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              Vertrag verbessern &#8594;
-            </button>
-          </>
-        ) : (
-          <span style={{ fontSize: 13, color: '#15803d', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-            &#10003; Guter Vertrag &mdash; wird weiter überwacht
-          </span>
-        )}
-
-        {/* Scroll to top */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          title="Nach oben"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            border: '1px solid #e5e7eb',
-            background: '#fff',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 14,
-            color: '#9ca3af',
-            flexShrink: 0,
-            marginLeft: 4,
-          }}
-        >
-          &#8593;
-        </button>
-      </div>
     </div>
   );
 };
