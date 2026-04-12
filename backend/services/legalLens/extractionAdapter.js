@@ -5,13 +5,14 @@
  * das die restliche Legal-Lens-Pipeline erwartet.
  *
  * DirectExtractor liefert: { clauses: [{number, title, text}], documentType, language, metadata }
- * V1-Shape erwartet:       { success, clauses: [{id, sectionTitle, text, number, title, position, matchingData, textHash, riskLevel, riskScore, riskKeywords}], totalClauses, sections, riskSummary, metadata }
+ * V1-Shape erwartet:       { success, clauses: [{id, sectionTitle, text, number, title, position, matchingData, textHash, riskLevel, riskScore, riskKeywords, category}], totalClauses, sections, riskSummary, metadata }
  *
- * @version 4.0.0
+ * @version 4.1.0 — GPT-basiertes Risk-Assessment + Kategorisierung + Titel-Generierung
  */
 
 const { DirectExtractor } = require('./directExtractor');
 const clauseParser = require('./clauseParser');
+const { assessRiskBatch } = require('./riskAssessor');
 
 // Lazy init — erst beim ersten Aufruf, nicht bei require()
 let _extractor = null;
@@ -49,11 +50,22 @@ async function parseContractDirect(text, options = {}) {
         originalLength: text.length,
         cleanedLength: text.length,
         parsedAt: new Date().toISOString(),
-        parserVersion: '4.0.0-direct-extraction',
+        parserVersion: '4.1.0-direct-extraction',
         extraction: result.metadata,
         noClausesReason: 'Dokument enthält keine erkennbaren Vertragsklauseln'
       }
     };
+  }
+
+  // ── GPT-basiertes Risk-Assessment + Kategorisierung (P1+P2+P4) ──
+  let gptAssessment = null;
+  if (detectRisk) {
+    gptAssessment = await assessRiskBatch(result.clauses);
+    if (gptAssessment) {
+      console.log(`[DirectAdapter] GPT Risk-Assessment erfolgreich für ${gptAssessment.length} Klauseln`);
+    } else {
+      console.log(`[DirectAdapter] GPT Risk-Assessment fehlgeschlagen — Fallback auf Keywords`);
+    }
   }
 
   // ── V4 → V1-Shape Mapping ──────────────────────────
@@ -65,14 +77,21 @@ async function parseContractDirect(text, options = {}) {
     const startOffset = textIndex >= 0 ? textIndex : 0;
     const endOffset = startOffset + clauseText.length;
 
-    const sectionTitle = c.title || c.number || `Abschnitt ${idx + 1}`;
+    // Titel: GPT-generiert wenn kein Original vorhanden (P4)
+    const gptResult = gptAssessment?.[idx];
+    const effectiveTitle = c.title || gptResult?.suggestedTitle || null;
+
+    const sectionTitle = effectiveTitle || c.number || `Abschnitt ${idx + 1}`;
 
     const clause = {
       id: `clause_v4_${idx + 1}`,
       sectionTitle,
       text: clauseText,
       number: c.number || null,
-      title: c.title || null,
+      title: effectiveTitle,
+
+      // Kategorie: GPT-basiert (P2), Fallback auf null (Frontend-Regex greift)
+      category: gptResult?.category || null,
 
       position: {
         start: startOffset,
@@ -96,11 +115,19 @@ async function parseContractDirect(text, options = {}) {
       textHash: clauseParser.generateHash(clauseText)
     };
 
+    // Risk-Assessment: GPT-basiert (P1), Fallback auf Keyword-Matching
     if (detectRisk) {
-      const riskAssessment = clauseParser.assessClauseRisk(clauseText);
-      clause.riskLevel = riskAssessment.level;
-      clause.riskScore = riskAssessment.score;
-      clause.riskKeywords = riskAssessment.keywords;
+      if (gptResult) {
+        clause.riskLevel = gptResult.riskLevel;
+        clause.riskScore = gptResult.riskScore;
+        clause.riskReason = gptResult.riskReason;
+        clause.riskKeywords = []; // GPT liefert riskReason statt Keywords
+      } else {
+        const riskAssessment = clauseParser.assessClauseRisk(clauseText);
+        clause.riskLevel = riskAssessment.level;
+        clause.riskScore = riskAssessment.score;
+        clause.riskKeywords = riskAssessment.keywords;
+      }
     }
 
     return clause;
@@ -126,10 +153,11 @@ async function parseContractDirect(text, options = {}) {
       originalLength: text.length,
       cleanedLength: text.length,
       parsedAt: new Date().toISOString(),
-      parserVersion: '4.0.0-direct-extraction',
+      parserVersion: '4.1.0-direct-extraction',
       documentType: result.documentType,
       language: result.language,
       extraction: result.metadata,
+      riskSource: gptAssessment ? 'gpt' : 'keywords',
       adapterElapsedMs: elapsedMs
     }
   };

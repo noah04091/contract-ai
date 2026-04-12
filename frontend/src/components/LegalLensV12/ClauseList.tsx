@@ -250,41 +250,76 @@ const ClauseList: React.FC<ClauseListProps> = ({
     };
   }, [safeClauses]);
 
-  // Clause Grouping — detect topic from title/number/text
+  // Clause Grouping — nutzt GPT-basierte Kategorie wenn vorhanden, sonst Regex-Fallback
+  const CATEGORY_LABELS: Record<string, string> = {
+    praembel: 'Präambel & Allgemeines',
+    leistung: 'Leistung & Gegenstand',
+    verguetung: 'Vergütung & Zahlung',
+    laufzeit: 'Laufzeit & Kündigung',
+    haftung: 'Haftung & Gewährleistung',
+    vertraulichkeit: 'Vertraulichkeit & Datenschutz',
+    ip: 'Geistiges Eigentum',
+    sanktionen: 'Sanktionen & Vertragsstrafen',
+    sicherheiten: 'Sicherheiten & Abtretung',
+    mitwirkung: 'Mitwirkungs- & Informationspflichten',
+    offenlegung: 'Offenlegung & Prüfrechte',
+    schluss: 'Schlussbestimmungen',
+    sonstiges: 'Sonstiges',
+  };
+
+  const TOPIC_PATTERNS: [RegExp, string][] = [
+    [/vertragsgegenstand|leistung|gegenstand|umfang|scope/i, 'leistung'],
+    [/vergütung|zahlung|preis|entgelt|gebühr|kosten|honorar/i, 'verguetung'],
+    [/laufzeit|dauer|beginn|vertragsbeginn|kündigung|beendigung/i, 'laufzeit'],
+    [/haftung|gewährleistung|garantie|schadenersatz|schadensersatz/i, 'haftung'],
+    [/geheimhaltung|vertraulich|datenschutz|daten|privacy/i, 'vertraulichkeit'],
+    [/schlussbestimmung|salvator|schriftform|gerichtsstand/i, 'schluss'],
+  ];
+
   const clauseGroups = useMemo(() => {
     if (filteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
 
-    const TOPIC_PATTERNS: [RegExp, string][] = [
-      [/vertragsgegenstand|leistung|gegenstand|umfang|scope/i, 'Leistung & Gegenstand'],
-      [/vergütung|zahlung|preis|entgelt|gebühr|kosten|honorar/i, 'Vergütung & Zahlung'],
-      [/laufzeit|dauer|beginn|vertragsbeginn|kündigung|beendigung/i, 'Laufzeit & Kündigung'],
-      [/haftung|gewährleistung|garantie|schadenersatz|schadensersatz/i, 'Haftung & Gewährleistung'],
-      [/geheimhaltung|vertraulich|datenschutz|daten|privacy/i, 'Vertraulichkeit & Daten'],
-      [/schlussbestimmung|sonstig|allgemein|salvator|schriftform|gerichtsstand/i, 'Schlussbestimmungen'],
-    ];
+    // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 50% der Klauseln)
+    const hasGptCategories = filteredClauses.filter((c: any) => c.category && c.category !== 'sonstiges').length > filteredClauses.length * 0.3;
 
     const groups: { label: string; clauses: typeof filteredClauses }[] = [];
     const assigned = new Set<string>();
 
-    for (const [pattern, label] of TOPIC_PATTERNS) {
-      const matches = filteredClauses.filter(c => {
-        if (assigned.has(c.id)) return false;
-        const searchText = `${c.title || ''} ${c.number || ''} ${c.text.slice(0, 200)}`;
-        return pattern.test(searchText);
-      });
-      if (matches.length > 0) {
-        groups.push({ label, clauses: matches });
-        matches.forEach(c => assigned.add(c.id));
+    if (hasGptCategories) {
+      // GPT-basierte Kategorisierung (P2)
+      const categoryMap = new Map<string, typeof filteredClauses>();
+      for (const c of filteredClauses) {
+        const cat = (c as any).category || 'sonstiges';
+        if (!categoryMap.has(cat)) categoryMap.set(cat, []);
+        categoryMap.get(cat)!.push(c);
+      }
+      // Sortierte Reihenfolge nach CATEGORY_LABELS Keys
+      const orderedKeys = Object.keys(CATEGORY_LABELS);
+      for (const key of orderedKeys) {
+        const clauses = categoryMap.get(key);
+        if (clauses && clauses.length > 0) {
+          groups.push({ label: CATEGORY_LABELS[key], clauses });
+        }
+      }
+    } else {
+      // Regex-Fallback (alter Code)
+      for (const [pattern, catKey] of TOPIC_PATTERNS) {
+        const matches = filteredClauses.filter(c => {
+          if (assigned.has(c.id)) return false;
+          const searchText = `${c.title || ''} ${c.number || ''} ${c.text.slice(0, 200)}`;
+          return pattern.test(searchText);
+        });
+        if (matches.length > 0) {
+          groups.push({ label: CATEGORY_LABELS[catKey] || catKey, clauses: matches });
+          matches.forEach(c => assigned.add(c.id));
+        }
+      }
+      const remaining = filteredClauses.filter(c => !assigned.has(c.id));
+      if (remaining.length > 0) {
+        groups.push({ label: 'Weitere Klauseln', clauses: remaining });
       }
     }
 
-    // Remaining clauses
-    const remaining = filteredClauses.filter(c => !assigned.has(c.id));
-    if (remaining.length > 0) {
-      groups.push({ label: 'Weitere Klauseln', clauses: remaining });
-    }
-
-    // Only use grouping if we have at least 2 groups
     return groups.length >= 2 ? groups : null;
   }, [filteredClauses, searchQuery, riskFilter]);
 
@@ -586,7 +621,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 >
                   <div className={styles.clauseHeader}>
                     <span className={styles.clauseNumber}>
-                      {clause.number || `#${clause.id.slice(-4)}`}
+                      {clause.number || ''}
                       {clause.title && ` - ${clause.title}`}
                     </span>
                     <span className={`${styles.clauseRisk} ${styles.none}`}>
@@ -621,13 +656,22 @@ const ClauseList: React.FC<ClauseListProps> = ({
             >
               <div className={styles.clauseHeader}>
                 <span className={styles.clauseNumber}>
-                  {clause.number || `#${clause.id.slice(-4)}`}
+                  {clause.number || ''}
                   {clause.title && ` - ${clause.title}`}
                 </span>
-                <span className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}>
+                <span
+                  className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}
+                  title={(clause as any).riskReason || ''}
+                >
                   {getRiskEmoji(effectiveRiskLevel)} {RISK_LABELS[effectiveRiskLevel]}
                 </span>
               </div>
+
+              {(clause as any).riskReason && effectiveRiskLevel !== 'low' && (
+                <div className={styles.riskReasonHint}>
+                  {(clause as any).riskReason}
+                </div>
+              )}
 
               <div className={styles.clauseTextWrapper}>
                 <div

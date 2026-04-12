@@ -113,7 +113,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 18; // V4 Direct Extraction im Streaming-Endpoint
+const CACHE_VERSION = 19; // V4.1 GPT-basiertes Risk-Assessment + Kategorisierung
 
 /**
  * Cache TTL in Millisekunden (30 Tage)
@@ -2740,7 +2740,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // V4-Caches (CACHE_VERSION >= 18) sind vertrauenswürdig — Post-Processor filtert aktiv
     const cachedClauses = contract.legalLens?.preParsedClauses;
     const cachedVersion = contract.legalLens?.metadata?.cacheVersion || 0;
-    const isOldCache = cachedVersion < 18;
+    const isOldCache = cachedVersion < 19;
     const expectedMinClauses = Math.max(3, Math.floor(contractText.length / 3000));
     const cacheSeemsBuggy = isOldCache &&
                            cachedClauses?.length > 0 &&

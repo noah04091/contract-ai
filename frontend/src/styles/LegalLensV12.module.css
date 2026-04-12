@@ -612,6 +612,14 @@
   color: #16a34a;
 }
 
+.riskReasonHint {
+  font-size: 0.78rem;
+  color: #6b7280;
+  padding: 2px 0 4px 0;
+  line-height: 1.3;
+  font-style: italic;
+}
+
 /* Nicht-analysierbare Klauseln */
 .clauseRisk.none {
   background: #f3f4f6;

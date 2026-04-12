@@ -467,7 +467,7 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
       >
         <div className={styles.cardTop}>
           <span className={styles.clauseNumber}>
-            {clause.number || `#${clause.id.slice(-4)}`}
+            {clause.number || ''}
           </span>
           <span className={styles.riskBadge}>{clause.riskScore}</span>
         </div>
@@ -506,7 +506,7 @@ const ContractOverview: React.FC<ContractOverviewProps> = ({
         onClick={() => onAnalyzeClause ? handleInlineSelect(clause) : onSelectClause(clause)}
         style={{ '--row-accent': color } as React.CSSProperties}
       >
-        <span className={styles.rowNumber}>{clause.number || `#${clause.id.slice(-4)}`}</span>
+        <span className={styles.rowNumber}>{clause.number || ''}</span>
         <span className={styles.rowTitle}>{clause.title || clause.text.slice(0, 50)}</span>
         <span className={styles.rowRisk}>{clause.preAnalysis?.mainRisk?.slice(0, 30) || '-'}</span>
         <span className={styles.rowScore}>{clause.riskScore}</span>
