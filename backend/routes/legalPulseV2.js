@@ -689,7 +689,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
       ["Risiko", scores.risk || 0],
       ["Compliance", scores.compliance || 0],
       ["Konditionen", scores.terms || 0],
-      ["Vollstaendigkeit", scores.completeness || 0],
+      ["Vollständigkeit", scores.completeness || 0],
     ];
     scoreItems.forEach(([label, val], i) => {
       const sy = cardY + 10 + i * 14;
@@ -735,10 +735,10 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     }
 
     // ════════════════════════════════════════════
-    // JURISTISCHE EINSCHAETZUNG
+    // JURISTISCHE EINSCHÄTZUNG
     // ════════════════════════════════════════════
     checkPage(80);
-    doc.fontSize(12).fillColor(C.brand).text("Juristische Einschaetzung", L);
+    doc.fontSize(12).fillColor(C.brand).text("Juristische Einschätzung", L);
     doc.moveDown(0.3);
 
     // Build assessment text (same logic as frontend)
@@ -750,13 +750,13 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     }
 
     if (overallScore >= 80) {
-      assessmentLines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overallScore}/100).${criticalCount === 0 && highCount === 0 ? " Es wurden keine kritischen Maengel festgestellt." : ""}`);
+      assessmentLines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overallScore}/100).${criticalCount === 0 && highCount === 0 ? " Es wurden keine kritischen Mängel festgestellt." : ""}`);
     } else if (overallScore >= 60) {
-      assessmentLines.push(`Die Analyse zeigt eine grundsaetzlich akzeptable Vertragsgestaltung (Score: ${overallScore}/100)${criticalCount + highCount > 0 ? `, jedoch mit Optimierungsbedarf in ${criticalCount + highCount} Punkten.` : "."}`);
+      assessmentLines.push(`Die Analyse zeigt eine grundsätzlich akzeptable Vertragsgestaltung (Score: ${overallScore}/100)${criticalCount + highCount > 0 ? `, jedoch mit Optimierungsbedarf in ${criticalCount + highCount} Punkten.` : "."}`);
     } else if (overallScore >= 40) {
-      assessmentLines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overallScore}/100).${criticalCount + highCount > 0 ? ` ${criticalCount + highCount} wesentliche Maengel erfordern juristische Ueberpruefung.` : ""}`);
+      assessmentLines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overallScore}/100).${criticalCount + highCount > 0 ? ` ${criticalCount + highCount} wesentliche Mängel erfordern juristische Überprüfung.` : ""}`);
     } else {
-      assessmentLines.push(`Die Analyse ergibt erhebliche vertragliche Risiken (Score: ${overallScore}/100). ${criticalCount > 0 ? `${criticalCount} kritische Maengel erfordern sofortiges Handeln.` : "Eine umfassende Ueberarbeitung wird empfohlen."}`);
+      assessmentLines.push(`Die Analyse ergibt erhebliche vertragliche Risiken (Score: ${overallScore}/100). ${criticalCount > 0 ? `${criticalCount} kritische Mängel erfordern sofortiges Handeln.` : "Eine umfassende Überarbeitung wird empfohlen."}`);
     }
 
     if (findings.length > 0) {
@@ -775,11 +775,11 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     doc.y += assessmentH + 16;
 
     // ════════════════════════════════════════════
-    // RISIKO-UEBERSICHT (Severity bar)
+    // RISIKO-ÜBERSICHT (Severity bar)
     // ════════════════════════════════════════════
     if (findings.length > 0) {
       checkPage(50);
-      doc.fontSize(12).fillColor(C.brand).text("Risiko-Uebersicht", L);
+      doc.fontSize(12).fillColor(C.brand).text("Risiko-Übersicht", L);
       doc.moveDown(0.3);
 
       const barY = doc.y;
@@ -825,7 +825,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
       checkPage(40);
       doc.fontSize(12).fillColor(C.brand).text("Kritische Befunde", L);
       doc.moveDown(0.15);
-      doc.fontSize(7.5).fillColor(C.muted).text(`${topFindings.length} Befunde mit hoher Prioritaet`);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${topFindings.length} Befunde mit hoher Priorität`);
       doc.moveDown(0.5);
 
       const clauseMap = new Map(clauses.map(c => [c.id, c]));
@@ -867,7 +867,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
 
         // Reasoning
         if (finding.reasoning) {
-          doc.fontSize(7).fillColor(C.muted).text("Begruendung:", L + 4);
+          doc.fontSize(7).fillColor(C.muted).text("Begründung:", L + 4);
           doc.fontSize(8).fillColor(C.text).text(finding.reasoning, L + 4, doc.y, { width: W - 8, lineGap: 2 });
           doc.moveDown(0.3);
         }
@@ -927,7 +927,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
       doc.moveDown(0.5);
 
       const PRIO = {
-        now: { label: "HOHE PRIORITAET", text: C.dangerText, bg: C.dangerBg },
+        now: { label: "HOHE PRIORITÄT", text: C.dangerText, bg: C.dangerBg },
         plan: { label: "EMPFOHLEN", text: C.warnText, bg: C.warnBg },
         watch: { label: "ZUR KENNTNIS", text: C.muted, bg: C.bg },
       };
@@ -956,7 +956,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
 
         if (action.nextStep) {
           const nsY = doc.y;
-          const nsText = `Naechster Schritt: ${action.nextStep}`;
+          const nsText = `Nächster Schritt: ${action.nextStep}`;
           const nsH = doc.fontSize(8).heightOfString(nsText, { width: W - 28 }) + 10;
           roundedRect(L + 4, nsY, W - 8, nsH, 4, C.accentLight, null);
           doc.fontSize(8).fillColor("#1e40af").text(nsText, L + 12, nsY + 5, { width: W - 28 });
@@ -988,7 +988,7 @@ router.get("/results/:id/export-pdf", async (req, res) => {
       checkPage(40);
       doc.fontSize(12).fillColor(C.brand).text("Weitere Befunde", L);
       doc.moveDown(0.15);
-      doc.fontSize(7.5).fillColor(C.muted).text(`${mediumFindings.length} Befunde mit mittlerer Prioritaet`);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${mediumFindings.length} Befunde mit mittlerer Priorität`);
       doc.moveDown(0.5);
 
       for (const finding of mediumFindings) {
@@ -1010,12 +1010,12 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     }
 
     // ════════════════════════════════════════════
-    // GEPRUEFTE KLAUSELN (low + info, kompakt)
+    // GEPRÜFTE KLAUSELN (low + info, kompakt)
     // ════════════════════════════════════════════
     const lowFindings = findings.filter(f => f.severity === "low" || f.severity === "info");
     if (lowFindings.length > 0) {
       checkPage(30);
-      doc.fontSize(12).fillColor(C.brand).text("Geprueft & unauffaellig", L);
+      doc.fontSize(12).fillColor(C.brand).text("Geprüft & unauffällig", L);
       doc.moveDown(0.15);
       doc.fontSize(7.5).fillColor(C.muted).text(`${lowFindings.length} Klauseln ohne Handlungsbedarf`);
       doc.moveDown(0.4);
@@ -1034,18 +1034,18 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     const pageRange = doc.bufferedPageRange();
     for (let i = pageRange.start; i < pageRange.start + pageRange.count; i++) {
       doc.switchToPage(i);
+      // Disclaimer on last page only — render BEFORE page number so it sits above
+      if (i === pageRange.start + pageRange.count - 1) {
+        doc.fontSize(6.5).fillColor(C.light).text(
+          "Dieses Dokument wurde automatisch durch Contract AI generiert. Es stellt keine Rechtsberatung dar und ersetzt nicht die individuelle Prüfung durch einen Rechtsanwalt.",
+          L, doc.page.height - 48, { width: W, align: "center", lineBreak: false }
+        );
+      }
       // Page number
       doc.fontSize(7).fillColor(C.light).text(
         `Seite ${i + 1} von ${pageRange.count}`,
-        L, doc.page.height - 35, { width: W, align: "center" }
+        L, doc.page.height - 30, { width: W, align: "center", lineBreak: false }
       );
-      // Disclaimer on last page only
-      if (i === pageRange.start + pageRange.count - 1) {
-        doc.fontSize(6.5).fillColor(C.light).text(
-          "Dieses Dokument wurde automatisch durch Contract AI generiert. Es stellt keine Rechtsberatung dar und ersetzt nicht die individuelle Pruefung durch einen Rechtsanwalt.",
-          L, doc.page.height - 48, { width: W, align: "center" }
-        );
-      }
     }
 
     doc.end();
