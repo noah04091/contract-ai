@@ -201,6 +201,10 @@ export interface ParsedClause {
   nonAnalyzableReason?: 'too_short' | 'contract_title' | 'date_location' | 'signature_field' | 'address_only' | 'page_number';
   /** Kategorie der Klausel */
   clauseCategory?: ClauseCategory;
+  /** GPT-basierte Freiform-Kategorie (z.B. "Haftung & Gewährleistung") */
+  category?: string;
+  /** GPT-basierter Risikogrund (1 Satz) */
+  riskReason?: string;
 }
 
 /**

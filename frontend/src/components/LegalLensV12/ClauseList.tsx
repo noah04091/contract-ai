@@ -255,7 +255,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     if (filteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
 
     // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 30% der Klauseln)
-    const withCategory = filteredClauses.filter((c: any) => c.category && c.category.trim());
+    const withCategory = filteredClauses.filter(c => c.category && c.category.trim());
     if (withCategory.length < filteredClauses.length * 0.3) return null;
 
     // Gruppiere nach dem Kategorie-String den GPT geliefert hat
@@ -263,7 +263,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     const categoryOrder: string[] = [];
 
     for (const c of filteredClauses) {
-      const cat = ((c as any).category || '').trim() || 'Sonstiges';
+      const cat = (c.category || '').trim() || 'Sonstiges';
       if (!categoryMap.has(cat)) {
         categoryMap.set(cat, []);
         categoryOrder.push(cat);
@@ -618,15 +618,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 </span>
                 <span
                   className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}
-                  title={(clause as any).riskReason || ''}
+                  title={clause.riskReason || ''}
                 >
                   {getRiskEmoji(effectiveRiskLevel)} {RISK_LABELS[effectiveRiskLevel]}
                 </span>
               </div>
 
-              {(clause as any).riskReason && effectiveRiskLevel !== 'low' && (
+              {clause.riskReason && effectiveRiskLevel !== 'low' && (
                 <div className={styles.riskReasonHint}>
-                  {(clause as any).riskReason}
+                  {clause.riskReason}
                 </div>
               )}
 
