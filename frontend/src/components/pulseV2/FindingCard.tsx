@@ -69,6 +69,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   const [clauseSaved, setClauseSaved] = useState(false);
   const [commentText, setCommentText] = useState(finding.userComment || '');
   const [commentSaving, setCommentSaving] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
   const reminderRef = useRef<HTMLDivElement>(null);
 
   const userStatus = finding.userStatus || 'open';
@@ -628,15 +629,12 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
             </div>
           )}
 
-          {/* ═══ Resolve/Dismiss + Comment ═══ */}
+          {/* ═══ Resolve/Dismiss + Edit ═══ */}
           {resultId && !disabled && (
             <div style={{
               marginTop: 14,
               paddingTop: 12,
               borderTop: '1px solid #f3f4f6',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {!isResolved && !isDismissed && (
@@ -683,67 +681,122 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                     >
                       &#10005; Nicht relevant
                     </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCommentOpen(!commentOpen);
+                      }}
+                      title="Notiz hinzufügen"
+                      style={{
+                        width: 28, height: 28, borderRadius: 6,
+                        border: `1px solid ${commentOpen || finding.userComment ? '#bfdbfe' : '#d1d5db'}`,
+                        background: commentOpen || finding.userComment ? '#eff6ff' : '#fff',
+                        cursor: 'pointer', fontSize: 13, display: 'inline-flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        color: finding.userComment ? '#3b82f6' : '#9ca3af',
+                      }}
+                    >
+                      &#9998;
+                    </button>
                   </>
                 )}
                 {(isResolved || isDismissed) && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onFindingStatusChange?.(findingIndex, 'open');
-                    }}
-                    style={{
-                      padding: '5px 12px',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: '#6b7280',
-                      background: '#fff',
-                      border: '1px solid #d1d5db',
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 5,
-                    }}
-                  >
-                    &#x21A9; Wieder öffnen
-                  </button>
-                )}
-                {finding.userStatusAt && (isResolved || isDismissed) && (
-                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
-                    {isResolved ? 'Erledigt' : 'Ausgeblendet'} am {new Date(finding.userStatusAt).toLocaleDateString('de-DE')}
-                  </span>
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFindingStatusChange?.(findingIndex, 'open');
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: '#6b7280',
+                        background: '#fff',
+                        border: '1px solid #d1d5db',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      &#x21A9; Wieder öffnen
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCommentOpen(!commentOpen);
+                      }}
+                      title="Notiz hinzufügen"
+                      style={{
+                        width: 28, height: 28, borderRadius: 6,
+                        border: `1px solid ${commentOpen || finding.userComment ? '#bfdbfe' : '#d1d5db'}`,
+                        background: commentOpen || finding.userComment ? '#eff6ff' : '#fff',
+                        cursor: 'pointer', fontSize: 13, display: 'inline-flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        color: finding.userComment ? '#3b82f6' : '#9ca3af',
+                      }}
+                    >
+                      &#9998;
+                    </button>
+                    {finding.userStatusAt && (
+                      <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                        {isResolved ? 'Erledigt' : 'Ausgeblendet'} am {new Date(finding.userStatusAt).toLocaleDateString('de-DE')}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Comment field */}
-              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <input
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onBlur={handleSaveComment}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); (e.target as HTMLInputElement).blur(); } }}
-                  onClick={(e) => e.stopPropagation()}
-                  placeholder="Notiz hinzufügen..."
-                  maxLength={500}
+              {/* Saved comment display */}
+              {finding.userComment && !commentOpen && (
+                <div
+                  onClick={(e) => { e.stopPropagation(); setCommentOpen(true); }}
                   style={{
-                    flex: 1,
-                    padding: '6px 10px',
+                    marginTop: 8,
                     fontSize: 12,
-                    color: '#374151',
-                    background: '#f9fafb',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: 6,
-                    outline: 'none',
+                    color: '#6b7280',
+                    fontStyle: 'italic',
+                    cursor: 'pointer',
                   }}
-                />
-                {commentSaving && (
-                  <span style={{ fontSize: 11, color: '#9ca3af', padding: '6px 0' }}>Speichert...</span>
-                )}
-                {!commentSaving && commentText && commentText === finding.userComment && (
-                  <span style={{ fontSize: 11, color: '#059669', padding: '6px 0' }}>&#10003;</span>
-                )}
-              </div>
+                >
+                  &#9998; {finding.userComment}
+                </div>
+              )}
+
+              {/* Inline comment input */}
+              {commentOpen && (
+                <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onBlur={() => { handleSaveComment(); setCommentOpen(false); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); setCommentOpen(false); }
+                      if (e.key === 'Escape') { setCommentText(finding.userComment || ''); setCommentOpen(false); }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    autoFocus
+                    placeholder="Notiz hinzufügen..."
+                    maxLength={500}
+                    style={{
+                      flex: 1,
+                      padding: '5px 10px',
+                      fontSize: 12,
+                      color: '#374151',
+                      background: '#fff',
+                      border: '1px solid #bfdbfe',
+                      borderRadius: 6,
+                      outline: 'none',
+                    }}
+                  />
+                  {commentSaving && (
+                    <span style={{ fontSize: 11, color: '#9ca3af' }}>...</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

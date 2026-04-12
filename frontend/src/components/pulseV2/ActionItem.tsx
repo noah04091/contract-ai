@@ -37,6 +37,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
   const isDismissed = action.status === 'dismissed';
   const [commentText, setCommentText] = useState(action.userComment || '');
   const [commentSaving, setCommentSaving] = useState(false);
+  const [commentOpen, setCommentOpen] = useState(false);
 
   const handleSaveComment = useCallback(async () => {
     if (commentText === (action.userComment || '')) return;
@@ -190,7 +191,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
           )}
         </div>
 
-        {/* Status Buttons — open actions: checkmark + dismiss */}
+        {/* Status Buttons — open actions: checkmark + dismiss + edit */}
         {onStatusChange && !isDismissed && !isDone && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
@@ -215,60 +216,109 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             >
               &#10005;
             </button>
+            <button
+              onClick={() => setCommentOpen(!commentOpen)}
+              title="Notiz hinzufügen"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                border: `1px solid ${commentOpen || action.userComment ? '#bfdbfe' : '#d1d5db'}`,
+                background: commentOpen || action.userComment ? '#eff6ff' : '#fff',
+                cursor: 'pointer', fontSize: 13, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                color: action.userComment ? '#3b82f6' : '#9ca3af',
+              }}
+            >
+              &#9998;
+            </button>
           </div>
         )}
-        {/* Reactivate button — done/dismissed actions can be restored */}
+        {/* Reactivate + edit for done/dismissed actions */}
         {onStatusChange && (isDismissed || isDone) && (
-          <button
-            onClick={() => onStatusChange(action.id, 'open', action.resultId)}
-            title="Wieder öffnen"
-            style={{
-              height: 28, borderRadius: 6, border: '1px solid #d1d5db',
-              background: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 500,
-              color: '#6b7280', padding: '0 10px', flexShrink: 0,
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}
-          >
-            &#x21A9; Aktivieren
-          </button>
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <button
+              onClick={() => onStatusChange(action.id, 'open', action.resultId)}
+              title="Wieder öffnen"
+              style={{
+                height: 28, borderRadius: 6, border: '1px solid #d1d5db',
+                background: '#fff', cursor: 'pointer', fontSize: 11, fontWeight: 500,
+                color: '#6b7280', padding: '0 10px',
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              &#x21A9; Aktivieren
+            </button>
+            <button
+              onClick={() => setCommentOpen(!commentOpen)}
+              title="Notiz hinzufügen"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                border: `1px solid ${commentOpen || action.userComment ? '#bfdbfe' : '#d1d5db'}`,
+                background: commentOpen || action.userComment ? '#eff6ff' : '#fff',
+                cursor: 'pointer', fontSize: 13, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                color: action.userComment ? '#3b82f6' : '#9ca3af',
+              }}
+            >
+              &#9998;
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Comment field */}
-      <div style={{
-        marginTop: 10,
-        paddingTop: 10,
-        borderTop: '1px solid #f3f4f6',
-        display: 'flex',
-        gap: 8,
-        alignItems: 'center',
-      }}>
-        <input
-          type="text"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
-          onBlur={handleSaveComment}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); (e.target as HTMLInputElement).blur(); } }}
-          placeholder="Notiz hinzufügen..."
-          maxLength={500}
+      {/* Saved comment display (when not editing) */}
+      {action.userComment && !commentOpen && (
+        <div
+          onClick={() => setCommentOpen(true)}
           style={{
-            flex: 1,
-            padding: '6px 10px',
+            marginTop: 8,
             fontSize: 12,
-            color: '#374151',
-            background: '#f9fafb',
-            border: '1px solid #e5e7eb',
-            borderRadius: 6,
-            outline: 'none',
+            color: '#6b7280',
+            fontStyle: 'italic',
+            cursor: 'pointer',
+            paddingLeft: 28,
           }}
-        />
-        {commentSaving && (
-          <span style={{ fontSize: 11, color: '#9ca3af' }}>Speichert...</span>
-        )}
-        {!commentSaving && commentText && commentText === action.userComment && (
-          <span style={{ fontSize: 11, color: '#059669' }}>&#10003;</span>
-        )}
-      </div>
+        >
+          &#9998; {action.userComment}
+        </div>
+      )}
+
+      {/* Inline comment input (when editing) */}
+      {commentOpen && (
+        <div style={{
+          marginTop: 8,
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          paddingLeft: 28,
+        }}>
+          <input
+            type="text"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            onBlur={() => { handleSaveComment(); setCommentOpen(false); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); setCommentOpen(false); }
+              if (e.key === 'Escape') { setCommentText(action.userComment || ''); setCommentOpen(false); }
+            }}
+            autoFocus
+            placeholder="Notiz hinzufügen..."
+            maxLength={500}
+            style={{
+              flex: 1,
+              padding: '5px 10px',
+              fontSize: 12,
+              color: '#374151',
+              background: '#fff',
+              border: '1px solid #bfdbfe',
+              borderRadius: 6,
+              outline: 'none',
+            }}
+          />
+          {commentSaving && (
+            <span style={{ fontSize: 11, color: '#9ca3af' }}>...</span>
+          )}
+        </div>
+      )}
     </div>
   );
 };
