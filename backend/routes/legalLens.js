@@ -113,7 +113,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 19; // V4.1 GPT-basiertes Risk-Assessment + Kategorisierung
+const CACHE_VERSION = 20; // V4.2 Freiform-Kategorien + universelles Risk-Assessment
 
 /**
  * Cache TTL in Millisekunden (30 Tage)

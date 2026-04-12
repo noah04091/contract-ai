@@ -250,75 +250,32 @@ const ClauseList: React.FC<ClauseListProps> = ({
     };
   }, [safeClauses]);
 
-  // Clause Grouping — nutzt GPT-basierte Kategorie wenn vorhanden, sonst Regex-Fallback
-  const CATEGORY_LABELS: Record<string, string> = {
-    praembel: 'Präambel & Allgemeines',
-    leistung: 'Leistung & Gegenstand',
-    verguetung: 'Vergütung & Zahlung',
-    laufzeit: 'Laufzeit & Kündigung',
-    haftung: 'Haftung & Gewährleistung',
-    vertraulichkeit: 'Vertraulichkeit & Datenschutz',
-    ip: 'Geistiges Eigentum',
-    sanktionen: 'Sanktionen & Vertragsstrafen',
-    sicherheiten: 'Sicherheiten & Abtretung',
-    mitwirkung: 'Mitwirkungs- & Informationspflichten',
-    offenlegung: 'Offenlegung & Prüfrechte',
-    schluss: 'Schlussbestimmungen',
-    sonstiges: 'Sonstiges',
-  };
-
-  const TOPIC_PATTERNS: [RegExp, string][] = [
-    [/vertragsgegenstand|leistung|gegenstand|umfang|scope/i, 'leistung'],
-    [/vergütung|zahlung|preis|entgelt|gebühr|kosten|honorar/i, 'verguetung'],
-    [/laufzeit|dauer|beginn|vertragsbeginn|kündigung|beendigung/i, 'laufzeit'],
-    [/haftung|gewährleistung|garantie|schadenersatz|schadensersatz/i, 'haftung'],
-    [/geheimhaltung|vertraulich|datenschutz|daten|privacy/i, 'vertraulichkeit'],
-    [/schlussbestimmung|salvator|schriftform|gerichtsstand/i, 'schluss'],
-  ];
-
+  // Clause Grouping — nutzt GPT-basierte Freiform-Kategorien
   const clauseGroups = useMemo(() => {
     if (filteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
 
-    // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 50% der Klauseln)
-    const hasGptCategories = filteredClauses.filter((c: any) => c.category && c.category !== 'sonstiges').length > filteredClauses.length * 0.3;
+    // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 30% der Klauseln)
+    const withCategory = filteredClauses.filter((c: any) => c.category && c.category.trim());
+    if (withCategory.length < filteredClauses.length * 0.3) return null;
 
-    const groups: { label: string; clauses: typeof filteredClauses }[] = [];
-    const assigned = new Set<string>();
+    // Gruppiere nach dem Kategorie-String den GPT geliefert hat
+    const categoryMap = new Map<string, typeof filteredClauses>();
+    const categoryOrder: string[] = [];
 
-    if (hasGptCategories) {
-      // GPT-basierte Kategorisierung (P2)
-      const categoryMap = new Map<string, typeof filteredClauses>();
-      for (const c of filteredClauses) {
-        const cat = (c as any).category || 'sonstiges';
-        if (!categoryMap.has(cat)) categoryMap.set(cat, []);
-        categoryMap.get(cat)!.push(c);
+    for (const c of filteredClauses) {
+      const cat = ((c as any).category || '').trim() || 'Sonstiges';
+      if (!categoryMap.has(cat)) {
+        categoryMap.set(cat, []);
+        categoryOrder.push(cat);
       }
-      // Sortierte Reihenfolge nach CATEGORY_LABELS Keys
-      const orderedKeys = Object.keys(CATEGORY_LABELS);
-      for (const key of orderedKeys) {
-        const clauses = categoryMap.get(key);
-        if (clauses && clauses.length > 0) {
-          groups.push({ label: CATEGORY_LABELS[key], clauses });
-        }
-      }
-    } else {
-      // Regex-Fallback (alter Code)
-      for (const [pattern, catKey] of TOPIC_PATTERNS) {
-        const matches = filteredClauses.filter(c => {
-          if (assigned.has(c.id)) return false;
-          const searchText = `${c.title || ''} ${c.number || ''} ${c.text.slice(0, 200)}`;
-          return pattern.test(searchText);
-        });
-        if (matches.length > 0) {
-          groups.push({ label: CATEGORY_LABELS[catKey] || catKey, clauses: matches });
-          matches.forEach(c => assigned.add(c.id));
-        }
-      }
-      const remaining = filteredClauses.filter(c => !assigned.has(c.id));
-      if (remaining.length > 0) {
-        groups.push({ label: 'Weitere Klauseln', clauses: remaining });
-      }
+      categoryMap.get(cat)!.push(c);
     }
+
+    // Reihenfolge: In der Reihenfolge wie sie im Vertrag vorkommen (erste Klausel pro Kategorie)
+    const groups = categoryOrder.map(cat => ({
+      label: cat,
+      clauses: categoryMap.get(cat)!
+    }));
 
     return groups.length >= 2 ? groups : null;
   }, [filteredClauses, searchQuery, riskFilter]);

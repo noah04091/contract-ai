@@ -1,41 +1,22 @@
 /**
  * GPT-basiertes Batch Risk-Assessment + Kategorisierung + Titel-Generierung
  *
- * Ersetzt das keyword-basierte assessClauseRisk() für die initiale Risikobewertung.
  * Ein einziger GPT-Call bewertet ALLE Klauseln eines Vertrags auf einmal.
+ * GPT bestimmt Risiko, Kategorie und Titel FREI — keine vordefinierten Listen.
  *
  * Liefert pro Klausel:
  * - riskLevel (low/medium/high)
  * - riskScore (0-100)
  * - riskReason (1 Satz, konkret)
- * - category (aus 13 definierten Kategorien)
+ * - category (frei gewählter deutscher Begriff, z.B. "Haftung & Gewährleistung")
  * - suggestedTitle (nur wenn Originalklausel keinen Titel hat)
  *
- * @version 1.0.0
+ * @version 2.0.0 — Freiform-Kategorien, keine vordefinierten Listen
  */
 
 const OpenAI = require('openai');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// Verfügbare Kategorien — Frontend mappt Keys auf deutsche Labels
-const CATEGORIES = [
-  'praembel',        // Präambel & Allgemeines
-  'leistung',        // Leistung & Gegenstand
-  'verguetung',      // Vergütung & Zahlung
-  'laufzeit',        // Laufzeit & Kündigung
-  'haftung',         // Haftung & Gewährleistung
-  'vertraulichkeit', // Vertraulichkeit & Datenschutz
-  'ip',              // Geistiges Eigentum
-  'sanktionen',      // Sanktionen & Vertragsstrafen
-  'sicherheiten',    // Sicherheiten & Abtretung
-  'mitwirkung',      // Mitwirkungs- & Informationspflichten
-  'offenlegung',     // Offenlegung & Prüfrechte
-  'schluss',         // Schlussbestimmungen
-  'sonstiges'        // Sonstiges
-];
-
-const CATEGORY_LIST_FOR_PROMPT = CATEGORIES.join(', ');
 
 /**
  * Batch-Bewertung aller Klauseln eines Vertrags.
@@ -61,20 +42,19 @@ async function assessRiskBatch(clauses) {
 
   const systemPrompt = `Du bist ein erfahrener deutscher Vertragsanwalt. Bewerte jede Klausel aus Sicht des VERTRAGSPARTNERS (nicht des Erstellers/Verwenders).
 
-RISIKO-STUFEN:
-- "high" (score 60-100): Kann erheblich schaden. Beispiele: Vertragsstrafen nach billigem Ermessen, verschuldensunabhängige Haftung/Garantien, Globalzessionen, unbeschränkte Freistellungspflichten, einseitige Änderungs-/Kündigungsrechte, Reverse-Engineering-Verbote mit Strafandrohung, Aufrechnungsverbote, Verzicht auf Einreden.
-- "medium" (score 25-59): Verdient Aufmerksamkeit. Beispiele: Lange Kündigungsfristen, automatische Verlängerungen, weitreichende Geheimhaltung >3 Jahre, Informationspflichten bei Verdacht, Sicherungsabtretungen, Wettbewerbsverbote, Rückgabe-/Löschpflichten mit Bestätigungspflicht.
-- "low" (score 0-24): Marktüblich, Standardklausel ohne besonderes Risiko. Beispiele: Präambeln, Definitionen, Gerichtsstandsvereinbarungen, Salvatorische Klauseln, Standard-Datenschutzhinweise.
+PRO KLAUSEL liefere:
+1. "riskLevel": "low", "medium" oder "high"
+2. "riskScore": 0-100 (low: 0-24, medium: 25-59, high: 60-100)
+3. "riskReason": 1 konkreter Satz, WARUM dieses Risiko besteht — beziehe dich auf den spezifischen Inhalt der Klausel
+4. "category": Ein passender deutscher Oberbegriff der das Thema der Klausel beschreibt (z.B. "Haftung & Gewährleistung", "Vergütung & Zahlung", "Vertraulichkeit", "Laufzeit & Kündigung"). Wähle frei was am besten passt — jeder Vertrag ist anders.
+5. "suggestedTitle": NUR für Klauseln mit "(KEIN TITEL)" — generiere 3-5 Wörter. Für Klauseln MIT Titel: null
 
-KATEGORIEN (wähle genau eine pro Klausel):
-${CATEGORY_LIST_FOR_PROMPT}
+BEWERTUNGSMASSSTAB:
+- "high": Klausel kann dem Vertragspartner erheblich schaden — einseitige Pflichten, unverhältnismäßige Sanktionen, Haftungsrisiken, Verzicht auf Rechte
+- "medium": Klausel verdient besondere Aufmerksamkeit — ungewöhnliche Bedingungen, lange Bindungen, weitreichende Pflichten
+- "low": Marktübliche Standardklausel ohne besonderes Risiko
 
-REGELN:
-- Bewerte JEDE Klausel einzeln
-- riskReason: 1 konkreter Satz, WARUM dieses Risiko besteht (nicht generisch!)
-- category: Wähle die passendste Kategorie
-- suggestedTitle: NUR für Klauseln mit "(KEIN TITEL)" — generiere 3-5 Wörter. Für Klauseln MIT Titel: null
-- Antworte NUR mit einem JSON-Array, keine Erklärungen`;
+Antworte NUR mit einem JSON-Array, keine Erklärungen.`;
 
   const userPrompt = `Bewerte diese ${clauses.length} Klauseln:\n\n${clauseSummaries}`;
 
@@ -86,7 +66,7 @@ REGELN:
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.2,
-      max_tokens: Math.min(clauses.length * 80 + 200, 4000),
+      max_tokens: Math.min(clauses.length * 100 + 200, 4000),
       response_format: { type: 'json_object' }
     });
 
@@ -121,7 +101,7 @@ REGELN:
       riskLevel: normalizeRiskLevel(r.riskLevel || r.risk || 'low'),
       riskScore: clampScore(r.riskScore || r.score || 0),
       riskReason: r.riskReason || r.reason || null,
-      category: normalizeCategory(r.category || r.cat || 'sonstiges'),
+      category: cleanCategory(r.category || r.cat || null),
       suggestedTitle: r.suggestedTitle || r.title || null
     }));
 
@@ -144,26 +124,18 @@ function clampScore(score) {
   return Math.min(100, Math.max(0, n));
 }
 
-function normalizeCategory(cat) {
-  const c = (cat || '').toLowerCase().trim();
-  if (CATEGORIES.includes(c)) return c;
-  // Fuzzy-Match für häufige Varianten
-  if (c.includes('präambel') || c.includes('allgemein')) return 'praembel';
-  if (c.includes('leistung') || c.includes('gegenstand')) return 'leistung';
-  if (c.includes('vergütung') || c.includes('zahlung') || c.includes('preis')) return 'verguetung';
-  if (c.includes('laufzeit') || c.includes('kündigung') || c.includes('dauer')) return 'laufzeit';
-  if (c.includes('haftung') || c.includes('gewähr')) return 'haftung';
-  if (c.includes('vertraulich') || c.includes('datenschutz') || c.includes('geheim')) return 'vertraulichkeit';
-  if (c.includes('eigentum') || c.includes('ip') || c.includes('urheberrecht') || c.includes('patent')) return 'ip';
-  if (c.includes('strafe') || c.includes('sanktion') || c.includes('buße')) return 'sanktionen';
-  if (c.includes('sicherheit') || c.includes('abtretung') || c.includes('zession') || c.includes('pfand')) return 'sicherheiten';
-  if (c.includes('mitwirkung') || c.includes('information') || c.includes('mitteilung') || c.includes('pflicht')) return 'mitwirkung';
-  if (c.includes('offenlegung') || c.includes('einsicht') || c.includes('prüf') || c.includes('audit')) return 'offenlegung';
-  if (c.includes('schluss') || c.includes('salvator') || c.includes('gericht') || c.includes('recht')) return 'schluss';
-  return 'sonstiges';
+/**
+ * Bereinigt den Kategorie-String von GPT.
+ * Kein Mapping auf vordefinierte Keys — der String wird direkt verwendet.
+ */
+function cleanCategory(cat) {
+  if (!cat) return null;
+  // Trim und erste Buchstaben groß (falls GPT lowercase liefert)
+  const cleaned = cat.trim();
+  if (!cleaned) return null;
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 module.exports = {
-  assessRiskBatch,
-  CATEGORIES
+  assessRiskBatch
 };
