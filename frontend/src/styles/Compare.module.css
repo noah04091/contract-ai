@@ -993,7 +993,7 @@
   font-weight: 600;
 }
 
-.tabContent { padding: 1.75rem; }
+.tabContent { padding: 1rem 1.75rem 1.75rem; }
 
 /* Placeholder / Empty */
 .placeholderTab,
@@ -1397,7 +1397,7 @@
   .perspectiveBtn { flex: 1; justify-content: center; }
   .tabNavigation { padding: 0 1rem; }
   .tabButton { padding: 12px 12px; font-size: 0.82rem; }
-  .tabContent { padding: 1.25rem; }
+  .tabContent { padding: 0.75rem 1.25rem 1.25rem; }
   .scoresGrid { grid-template-columns: 1fr; }
   .quickStats { flex-direction: column; }
   .quickStat { padding: 0.8rem 1rem; }
