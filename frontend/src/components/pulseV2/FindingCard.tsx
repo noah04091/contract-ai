@@ -1,8 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
 import { getLegalReferenceUrl } from '../../utils/legalLinks';
+
+const SaveClauseModal = lazy(() => import('../LegalLens/SaveClauseModal'));
 
 interface PulseFindingSummary {
   title: string;
@@ -61,6 +63,8 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
   const [quickFixLoading, setQuickFixLoading] = useState(false);
   const [quickFixError, setQuickFixError] = useState<string | null>(null);
   const [fixApplied, setFixApplied] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [clauseSaved, setClauseSaved] = useState(false);
   const reminderRef = useRef<HTMLDivElement>(null);
 
   // Close reminder dropdown on click outside
@@ -478,6 +482,36 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
                 Ganzen Vertrag optimieren &#8594;
               </button>
 
+              {/* Save to Clause Library */}
+              {(finding.affectedText || quickFix) && !clauseSaved && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowSaveModal(true);
+                  }}
+                  style={{
+                    padding: '6px 14px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#0369a1',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                >
+                  &#128218; In Bibliothek
+                </button>
+              )}
+              {clauseSaved && (
+                <span style={{ fontSize: 12, color: '#059669', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  &#10003; Gespeichert
+                </span>
+              )}
+
               {/* Remind */}
               {!reminderSent ? (
                 <div ref={reminderRef} style={{ position: 'relative' }}>
@@ -762,6 +796,27 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
             </div>
           )}
         </div>
+      )}
+
+      {/* Save to Clause Library Modal */}
+      {showSaveModal && (
+        <Suspense fallback={null}>
+          <SaveClauseModal
+            clauseText={quickFix ? quickFix.fixedText : (finding.affectedText || '')}
+            sourceContractId={contractId}
+            sourceClauseId={clause?.id}
+            originalAnalysis={{
+              riskLevel: finding.severity === 'critical' || finding.severity === 'high' ? 'high' : finding.severity === 'medium' ? 'medium' : 'low',
+              riskScore: finding.severity === 'critical' ? 90 : finding.severity === 'high' ? 75 : finding.severity === 'medium' ? 55 : 30,
+              mainRisk: finding.title,
+            }}
+            onClose={() => setShowSaveModal(false)}
+            onSaved={() => {
+              setShowSaveModal(false);
+              setClauseSaved(true);
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );
