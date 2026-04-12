@@ -2938,9 +2938,22 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     // ════════════════════════════════════════════════════════════
     if (USE_DIRECT_PARSER) {
       try {
-        sendEvent('status', { message: 'Direct Extraction (V4)...', progress: 20 });
+        sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: 20 });
 
-        const parseResult = await parseContractDirect(text, { detectRisk: true });
+        // Heartbeat alle 5s damit die SSE-Verbindung nicht vom Frontend/Proxy getrennt wird
+        let heartbeatProgress = 25;
+        const heartbeat = setInterval(() => {
+          if (clientDisconnected) { clearInterval(heartbeat); return; }
+          heartbeatProgress = Math.min(heartbeatProgress + 5, 75);
+          sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: heartbeatProgress });
+        }, 5000);
+
+        let parseResult;
+        try {
+          parseResult = await parseContractDirect(text, { detectRisk: true });
+        } finally {
+          clearInterval(heartbeat);
+        }
 
         if (!parseResult.success || !parseResult.clauses?.length) {
           sendEvent('error', { error: 'Keine Klauseln erkannt. Das Dokument enthält möglicherweise keinen Vertragstext.' });
