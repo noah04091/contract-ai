@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   LayoutGrid, GitCompareArrows, Shield, Lightbulb, Map,
   Users, Briefcase, Scale, AlertTriangle,
