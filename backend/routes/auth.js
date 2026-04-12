@@ -438,6 +438,13 @@ router.get("/me", verifyToken, async (req, res) => {
     const optimizationCount = user.optimizationCount ?? 0;
     let subscriptionActive = user.subscriptionActive ?? false;
 
+    // 🔐 Admin-Safeguard: Admins bekommen IMMER enterprise-Zugriff
+    if (user.role === 'admin' && (!user.subscriptionPlan || user.subscriptionPlan === 'free')) {
+      plan = 'enterprise';
+      subscriptionActive = true;
+      console.log(`🔐 Admin-Safeguard: ${user.email} → enterprise (war: ${user.subscriptionPlan || 'undefined'})`);
+    }
+
     // 🎁 BETA-TESTER: Prüfen ob Beta noch gültig ist
     if (user.betaTester && user.betaExpiresAt) {
       const betaExpired = new Date(user.betaExpiresAt) < new Date();

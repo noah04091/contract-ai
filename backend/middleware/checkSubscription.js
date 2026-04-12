@@ -30,6 +30,11 @@ module.exports = function createCheckSubscription(usersCollection) {
 
       let plan = (user.subscriptionPlan || "free").toLowerCase();
 
+      // 🔐 Admin-Safeguard: Admins haben immer vollen Zugriff
+      if (user.role === 'admin' && (!user.subscriptionPlan || user.subscriptionPlan === 'free')) {
+        plan = 'enterprise';
+      }
+
       // 👥 Org-Plan-Vererbung: Free-User in einer Org erben den Org-Plan
       if (plan === PLANS.FREE) {
         try {
