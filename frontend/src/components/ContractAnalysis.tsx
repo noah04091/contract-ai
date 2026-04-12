@@ -1499,6 +1499,11 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               className={`${styles.secondaryButton} ${styles.optimizeButton}`}
               onClick={handleOptimize}
               disabled={optimizing}
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: '#ffffff',
+                border: 'none'
+              }}
             >
               {optimizing ? (
                 <>
@@ -1518,6 +1523,11 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               className={`${styles.secondaryButton} ${styles.downloadButton}`}
               onClick={handleDownloadPdf}
               disabled={generatingPdf}
+              style={{
+                background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                color: '#ffffff',
+                border: 'none'
+              }}
             >
               {generatingPdf ? (
                 <>
@@ -1545,7 +1555,10 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               title={!isBusinessOrHigher ? 'Nur für Business & Enterprise Nutzer verfügbar' : 'Vertrag mit KI-Rechtsbot besprechen'}
               style={{
                 opacity: !isBusinessOrHigher ? 0.5 : 1,
-                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer'
+                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#ffffff',
+                border: 'none'
               }}
             >
               {openingChat ? (
@@ -1572,7 +1585,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                 className={styles.secondaryButton}
                 onClick={() => onNavigateToContract((result?.originalContractId || initialResult?.originalContractId) as string)}
                 style={{
-                  background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                  background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
                   color: '#ffffff',
                   border: 'none'
                 }}
