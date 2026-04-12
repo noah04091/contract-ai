@@ -136,7 +136,7 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Erstelle optimierte Versionen für diese ${batch.length} Klauseln:\n${batchIdx === 0 ? buildPulseContextHint(pulseContext) : ''}\n${clauseContexts}`
+            content: `Erstelle optimierte Versionen für diese ${batch.length} Klauseln:\n${buildPulseContextHint(pulseContext)}\n${clauseContexts}`
           }
         ]
       });

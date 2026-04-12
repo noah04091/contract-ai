@@ -128,9 +128,10 @@ export default function OptimizerV2() {
   const handleDuplicateNewAnalysis = useCallback(() => {
     if (file) {
       actions.dismissDuplicate();
-      actions.startAnalysis(file, 'neutral', true);
+      const ctx = pulseFindings ? JSON.stringify(pulseFindings) : undefined;
+      actions.startAnalysis(file, 'neutral', true, ctx);
     }
-  }, [file, actions]);
+  }, [file, actions, pulseFindings]);
 
   return (
     <>

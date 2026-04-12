@@ -117,7 +117,7 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress, pulseCo
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Analysiere diese ${batch.length} Klauseln:\n${batchIdx === 0 ? buildPulseContextHint(pulseContext) : ''}\n${clauseTexts}`
+            content: `Analysiere diese ${batch.length} Klauseln:\n${buildPulseContextHint(pulseContext)}\n${clauseTexts}`
           }
         ]
       });
