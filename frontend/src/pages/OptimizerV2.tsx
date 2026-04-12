@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { LayoutGrid, List, GitCompareArrows, Download, ArrowLeft, ArrowUpDown, History, ChevronsDownUp, ChevronsUpDown, Search, X, BarChart3, FileText, ExternalLink, Loader2 } from 'lucide-react';
 import { useOptimizerV2 } from '../hooks/useOptimizerV2';
@@ -31,8 +31,12 @@ const IMPORTANCE_RANK: Record<ImportanceLevel, number> = { critical: 3, high: 2,
 
 export default function OptimizerV2() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { state, actions } = useOptimizerV2();
+  const pulseFindings = (location.state as Record<string, unknown>)?.source === 'legal_pulse_v2'
+    ? (location.state as Record<string, unknown>).pulseFindings as { title: string; severity: string; description: string; legalBasis?: string }[]
+    : null;
   const [sortByImportance, setSortByImportance] = useState(false);
   const [focusClauseId, setFocusClauseId] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -225,12 +229,58 @@ export default function OptimizerV2() {
           </div>
         )}
 
+        {/* Pulse Findings Context Banner */}
+        {pulseFindings && pulseFindings.length > 0 && (status === 'idle' || status === 'uploading') && (
+          <div style={{
+            margin: '0 auto 16px',
+            maxWidth: 640,
+            padding: '14px 18px',
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: 10,
+            fontSize: 13,
+            color: '#1e40af',
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 15 }}>&#9878;&#65039;</span>
+              Legal Pulse — {pulseFindings.length} {pulseFindings.length === 1 ? 'Befund wird' : 'Befunde werden'} bei der Optimierung berücksichtigt
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {pulseFindings.slice(0, 5).map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: f.severity === 'critical' ? '#dc2626' : f.severity === 'high' ? '#ea580c' : '#d97706',
+                    background: f.severity === 'critical' ? '#fef2f2' : f.severity === 'high' ? '#fff7ed' : '#fffbeb',
+                    padding: '1px 5px',
+                    borderRadius: 3,
+                    textTransform: 'uppercase',
+                    flexShrink: 0,
+                  }}>
+                    {f.severity === 'critical' ? 'Kritisch' : f.severity === 'high' ? 'Hoch' : 'Mittel'}
+                  </span>
+                  <span style={{ color: '#374151' }}>{f.title}</span>
+                </div>
+              ))}
+              {pulseFindings.length > 5 && (
+                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                  + {pulseFindings.length - 5} weitere Befunde
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Upload state */}
         {(status === 'idle' || status === 'uploading') && !loadingResultRef.current && (
           <UploadSection
             file={file}
             onFileSelect={actions.setFile}
-            onStartAnalysis={actions.startAnalysis}
+            onStartAnalysis={(f, perspective) => {
+              const ctx = pulseFindings ? JSON.stringify(pulseFindings) : undefined;
+              actions.startAnalysis(f, perspective, false, ctx);
+            }}
             isAnalyzing={status === 'uploading'}
             disabled={isPremium === false}
           />
@@ -244,7 +294,7 @@ export default function OptimizerV2() {
             message={progressMessage}
             error={status === 'error' ? error : null}
             onCancel={actions.reset}
-            onRetry={status === 'error' && file ? () => actions.startAnalysis(file) : undefined}
+            onRetry={status === 'error' && file ? () => actions.startAnalysis(file, 'neutral', false, pulseFindings ? JSON.stringify(pulseFindings) : undefined) : undefined}
           />
         )}
 

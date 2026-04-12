@@ -50,7 +50,28 @@ function reinforceImportance(analysis, clause) {
   return gptLevel;
 }
 
-async function runClauseAnalysis(openai, clauses, structure, onProgress) {
+/**
+ * Build a compact pulse context string for GPT (max ~500 tokens)
+ */
+function buildPulseContextHint(pulseContext) {
+  if (!pulseContext || !Array.isArray(pulseContext) || pulseContext.length === 0) return '';
+  const severityLabel = { critical: 'KRITISCH', high: 'HOCH', medium: 'MITTEL' };
+  const lines = pulseContext.slice(0, 10).map(f =>
+    `- [${severityLabel[f.severity] || f.severity}] ${f.title}${f.legalBasis ? ` (${f.legalBasis})` : ''}`
+  );
+  return [
+    '',
+    '--- VORAB-ANALYSE (Legal Pulse) ---',
+    'Eine separate juristische Vorab-Analyse hat folgende Befunde zu diesem Vertrag ergeben.',
+    'Berücksichtige diese bei deiner Analyse — sie sind bereits verifiziert:',
+    ...lines,
+    pulseContext.length > 10 ? `(+ ${pulseContext.length - 10} weitere)` : '',
+    '---',
+    ''
+  ].join('\n');
+}
+
+async function runClauseAnalysis(openai, clauses, structure, onProgress, pulseContext) {
   onProgress(22, 'Starte Tiefenanalyse der Klauseln...');
 
   const batches = [];
@@ -96,7 +117,7 @@ async function runClauseAnalysis(openai, clauses, structure, onProgress) {
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Analysiere diese ${batch.length} Klauseln:\n\n${clauseTexts}`
+            content: `Analysiere diese ${batch.length} Klauseln:\n${batchIdx === 0 ? buildPulseContextHint(pulseContext) : ''}\n${clauseTexts}`
           }
         ]
       });

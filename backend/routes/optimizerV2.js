@@ -136,6 +136,22 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
   const requestId = `optv2_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   const perspective = req.body?.perspective || 'neutral';
 
+  // Parse pulse context from Legal Pulse V2 (optional — enriches GPT prompts with pre-identified findings)
+  let pulseContext = null;
+  try {
+    if (req.body?.pulseContext) {
+      pulseContext = JSON.parse(req.body.pulseContext);
+      if (Array.isArray(pulseContext) && pulseContext.length > 0) {
+        console.log(`[OptimizerV2] Pulse context received: ${pulseContext.length} findings from Legal Pulse`);
+      } else {
+        pulseContext = null;
+      }
+    }
+  } catch (e) {
+    console.warn('[OptimizerV2] Failed to parse pulseContext:', e.message);
+    pulseContext = null;
+  }
+
   const sendSSE = (data) => {
     try {
       res.write(`data: ${JSON.stringify({ ...data, requestId, timestamp: new Date().toISOString() })}\n\n`);
@@ -482,7 +498,8 @@ router.post('/analyze', upload.single('file'), async (req, res) => {
         s3Key,
         fileSize: req.file.size,
         ocrApplied,
-        textHash
+        textHash,
+        pulseContext
       },
       (progress, message, stageData) => {
         if (clientDisconnected) return;

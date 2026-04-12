@@ -115,6 +115,19 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   // Secondary findings: low + info, collapsed by default (medium already covered by Actions)
   const secondaryFindings = findings.filter(f => f.severity === 'low' || f.severity === 'info');
 
+  // All actionable findings (critical/high/medium) — passed to optimizer for context
+  const actionableFindingSummaries = findings
+    .filter(f => f.severity === 'critical' || f.severity === 'high' || f.severity === 'medium')
+    .map(f => ({
+      title: f.title,
+      description: f.description,
+      severity: f.severity,
+      type: f.type,
+      legalBasis: f.legalBasis,
+      affectedText: f.affectedText,
+      clauseTitle: clauseMap.get(f.clauseId)?.title,
+    }));
+
   // Score label + context description
   const score = result.scores?.overall ?? 0;
   const scoreLabel = score >= 80 ? 'Gut' : score >= 60 ? 'Akzeptabel' : score >= 40 ? 'Bedenklich' : 'Kritisch';
@@ -641,6 +654,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     clause={clauseMap.get(finding.clauseId)}
                     contractId={result.contractId}
                     resultId={result._id}
+                    allFindings={actionableFindingSummaries}
                   />
                 ))}
               </div>
@@ -824,6 +838,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     clause={clauseMap.get(finding.clauseId)}
                     contractId={result.contractId}
                     resultId={result._id}
+                    allFindings={actionableFindingSummaries}
                   />
                 ))}
               </div>

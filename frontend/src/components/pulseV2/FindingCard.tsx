@@ -4,12 +4,24 @@ import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
 import { getLegalReferenceUrl } from '../../utils/legalLinks';
 
+interface PulseFindingSummary {
+  title: string;
+  description: string;
+  severity: string;
+  type: string;
+  legalBasis?: string;
+  affectedText?: string;
+  clauseTitle?: string;
+}
+
 interface FindingCardProps {
   finding: PulseV2Finding;
   clause?: PulseV2Clause;
   contractId?: string;
   resultId?: string;
   disabled?: boolean;
+  /** All actionable findings (critical/high/medium) — passed to optimizer for context */
+  allFindings?: PulseFindingSummary[];
 }
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -34,7 +46,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
   unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, resultId, disabled }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, resultId, disabled, allFindings }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
@@ -434,18 +446,18 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/optimize/${contractId}`, {
+                  navigate(`/optimizer?contractId=${contractId}`, {
                     state: {
-                      source: 'legal_pulse',
-                      findingTitle: finding.title,
-                      findingDescription: finding.description,
-                      findingSeverity: finding.severity,
-                      findingType: finding.type,
-                      clauseId: clause?.id,
-                      clauseTitle: clause?.title,
-                      clauseSection: clause?.sectionNumber,
-                      affectedText: finding.affectedText,
-                      legalBasis: finding.legalBasis,
+                      source: 'legal_pulse_v2',
+                      pulseFindings: allFindings || [{
+                        title: finding.title,
+                        description: finding.description,
+                        severity: finding.severity,
+                        type: finding.type,
+                        legalBasis: finding.legalBasis,
+                        affectedText: finding.affectedText,
+                        clauseTitle: clause?.title,
+                      }],
                     },
                   });
                 }}

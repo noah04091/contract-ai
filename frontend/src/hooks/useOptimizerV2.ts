@@ -201,13 +201,14 @@ export function useOptimizerV2() {
   };
 
   // ── Start Analysis ──
-  const startAnalysis = useCallback(async (file: File, perspective: string = 'neutral', force: boolean = false) => {
+  const startAnalysis = useCallback(async (file: File, perspective: string = 'neutral', force: boolean = false, pulseContext?: string) => {
     dispatch({ type: 'START_ANALYSIS' });
 
     const formData = new FormData();
     formData.append('file', file);
     formData.append('perspective', perspective);
     if (force) formData.append('force', 'true');
+    if (pulseContext) formData.append('pulseContext', pulseContext);
 
     abortControllerRef.current = new AbortController();
     const token = localStorage.getItem('token');

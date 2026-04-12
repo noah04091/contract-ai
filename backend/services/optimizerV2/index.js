@@ -48,7 +48,7 @@ function getOpenAI() {
  * @param {Function} onProgress - (progress: number, message: string, stageData?: object) => void
  * @returns {Promise<Object>} Complete analysis result
  */
-async function runPipeline({ contractText, fileName, userId, requestId, perspective, s3Key, fileSize, ocrApplied, textHash }, onProgress) {
+async function runPipeline({ contractText, fileName, userId, requestId, perspective, s3Key, fileSize, ocrApplied, textHash, pulseContext }, onProgress) {
   const openai = getOpenAI();
   const startTime = Date.now();
 
@@ -124,7 +124,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
     // ═══════════════════════════════════════════════
     onProgress(22, 'Stage 3: Tiefenanalyse der Klauseln...', { stage: 3, stageName: 'Tiefenanalyse' });
 
-    const stage3 = await runClauseAnalysis(openai, stage2.result, stage1.result, onProgress);
+    const stage3 = await runClauseAnalysis(openai, stage2.result, stage1.result, onProgress, pulseContext);
     costs.push({ stage: 3, stageName: 'Tiefenanalyse', ...stage3.usage, durationMs: 0 });
 
     await OptimizerV2Result.updateOne(
@@ -142,7 +142,7 @@ async function runPipeline({ contractText, fileName, userId, requestId, perspect
     // ═══════════════════════════════════════════════
     onProgress(50, 'Stage 4: Optimierte Klauseln werden generiert...', { stage: 4, stageName: 'Optimierung' });
 
-    const stage4 = await runOptimizationGeneration(openai, stage2.result, stage3.result, stage1.result, onProgress);
+    const stage4 = await runOptimizationGeneration(openai, stage2.result, stage3.result, stage1.result, onProgress, pulseContext);
     costs.push({ stage: 4, stageName: 'Optimierung', ...stage4.usage, durationMs: 0 });
 
     await OptimizerV2Result.updateOne(

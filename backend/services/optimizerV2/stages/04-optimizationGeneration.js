@@ -13,7 +13,27 @@ const { calculateCost } = require('./01-structureRecognition');
 
 const BATCH_SIZE = 3; // Smaller batches for higher quality output
 
-async function runOptimizationGeneration(openai, clauses, clauseAnalyses, structure, onProgress) {
+/**
+ * Build a compact pulse context string for GPT
+ */
+function buildPulseContextHint(pulseContext) {
+  if (!pulseContext || !Array.isArray(pulseContext) || pulseContext.length === 0) return '';
+  const severityLabel = { critical: 'KRITISCH', high: 'HOCH', medium: 'MITTEL' };
+  const lines = pulseContext.slice(0, 10).map(f =>
+    `- [${severityLabel[f.severity] || f.severity}] ${f.title}${f.legalBasis ? ` (${f.legalBasis})` : ''}${f.affectedText ? `: "${f.affectedText.substring(0, 80)}..."` : ''}`
+  );
+  return [
+    '',
+    '--- VORAB-ANALYSE (Legal Pulse) ---',
+    'Eine juristische Vorab-Analyse hat folgende Befunde identifiziert.',
+    'Stelle sicher, dass deine Optimierungen diese Befunde ADRESSIEREN:',
+    ...lines,
+    '---',
+    ''
+  ].join('\n');
+}
+
+async function runOptimizationGeneration(openai, clauses, clauseAnalyses, structure, onProgress, pulseContext) {
   const isRegulatory = structure.documentCategory === 'regulatory_document';
   console.log(`[OptimizerV2] Stage 4: documentCategory=${structure.documentCategory || 'not set'}, using ${isRegulatory ? 'REGULATORY' : 'CONTRACT'} optimization prompt`);
   onProgress(50, 'Generiere optimierte Klauseln...');
@@ -116,7 +136,7 @@ async function runOptimizationGeneration(openai, clauses, clauseAnalyses, struct
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Erstelle optimierte Versionen für diese ${batch.length} Klauseln:\n\n${clauseContexts}`
+            content: `Erstelle optimierte Versionen für diese ${batch.length} Klauseln:\n${batchIdx === 0 ? buildPulseContextHint(pulseContext) : ''}\n${clauseContexts}`
           }
         ]
       });
