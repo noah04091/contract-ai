@@ -568,6 +568,496 @@ router.patch("/results/:id/findings/:findingIndex", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// GET /results/:id/export-pdf — Export Legal Pulse V2 analysis as PDF
+// ══════════════════════════════════════════════════════════════
+router.get("/results/:id/export-pdf", async (req, res) => {
+  try {
+    const result = await LegalPulseV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+      status: "completed",
+    }).lean();
+
+    if (!result) {
+      return res.status(404).json({ error: "Analyse nicht gefunden" });
+    }
+
+    const PDFDocument = require("pdfkit");
+    const doc = new PDFDocument({
+      size: "A4",
+      bufferPages: true,
+      margins: { top: 50, bottom: 50, left: 50, right: 50 },
+      info: {
+        Title: `Legal Pulse Analyse - ${result.context?.contractName || "Vertrag"}`,
+        Author: "Contract AI - Legal Pulse V2",
+        Creator: "Contract AI",
+      },
+    });
+
+    const contractName = result.context?.contractName || "Vertrag";
+    const safeFileName = contractName.replace(/[^a-zA-Z0-9äöüÄÖÜß _-]/g, "").substring(0, 60);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(safeFileName)}_Legal_Pulse.pdf"`);
+    doc.pipe(res);
+
+    // ── Design tokens ──
+    const C = {
+      brand: "#1e293b", brandLight: "#334155",
+      accent: "#3b82f6", accentLight: "#dbeafe",
+      danger: "#dc2626", dangerBg: "#fef2f2", dangerText: "#b91c1c",
+      warn: "#d97706", warnBg: "#fffbeb", warnText: "#92400e",
+      ok: "#16a34a", okBg: "#f0fdf4", okText: "#166534",
+      text: "#334155", muted: "#64748b", light: "#94a3b8",
+      bg: "#f8fafc", cardBg: "#ffffff", border: "#cbd5e1",
+    };
+    const L = 50, R = 545, W = R - L;
+
+    let totalPages = 1;
+    doc.on("pageAdded", () => { totalPages++; });
+
+    function roundedRect(x, y, w, h, r, fill, stroke) {
+      doc.save();
+      if (fill) doc.fillColor(fill);
+      if (stroke) doc.strokeColor(stroke).lineWidth(0.75);
+      doc.roundedRect(x, y, w, h, r);
+      if (fill && stroke) doc.fillAndStroke();
+      else if (fill) doc.fill();
+      else if (stroke) doc.stroke();
+      doc.restore();
+    }
+    function checkPage(needed = 80) { if (doc.y + needed > doc.page.height - 70) doc.addPage(); }
+    function getScoreColor(v) { return v >= 75 ? C.ok : v >= 55 ? C.accent : v >= 35 ? C.warn : C.danger; }
+    function drawScoreBar(x, y, w, h, value) {
+      roundedRect(x, y, w, h, h / 2, "#e2e8f0", null);
+      if (value > 0) roundedRect(x, y, w * (value / 100), h, h / 2, getScoreColor(value), null);
+    }
+    function drawTag(x, y, label, textColor, bgColor) {
+      const tw = doc.fontSize(6).widthOfString(label) + 10;
+      roundedRect(x, y, tw, 12, 3, bgColor || "#f1f5f9", null);
+      doc.fontSize(6).fillColor(textColor).text(label, x + 5, y + 3, { lineBreak: false });
+      return tw + 3;
+    }
+
+    // ── Data extraction ──
+    const scores = result.scores || {};
+    const findings = result.clauseFindings || [];
+    const actions = result.actions || [];
+    const clauses = result.clauses || [];
+    const context = result.context || {};
+    const overallScore = scores.overall || 0;
+    const criticalCount = findings.filter(f => f.severity === "critical").length;
+    const highCount = findings.filter(f => f.severity === "high").length;
+    const mediumCount = findings.filter(f => f.severity === "medium").length;
+    const lowCount = findings.filter(f => f.severity === "low" || f.severity === "info").length;
+
+    // ════════════════════════════════════════════
+    // PAGE 1: HEADER BAND + SCORE + CONTRACT INFO
+    // ════════════════════════════════════════════
+
+    const bandH = 76;
+    doc.save();
+    doc.rect(0, 0, 595.28, bandH).fill(C.brand);
+    doc.restore();
+
+    doc.fontSize(20).fillColor("#FFFFFF").text("Legal Pulse Analyse", L, 18, { width: W });
+    const contractType = context.contractType || result.document?.contractType || "";
+    const subtitle = contractType ? `${contractName}  ·  ${contractType}` : contractName;
+    doc.fontSize(9).fillColor("#94a3b8").text(subtitle, L, 44, { width: W });
+    const dateStr = new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+    doc.fontSize(8).fillColor("#64748b").text(`Erstellt am ${dateStr}  ·  Contract AI`, L, 58);
+
+    doc.y = bandH + 14;
+
+    // ── Score Card ──
+    const cardY = doc.y;
+    const cardH = 70;
+    roundedRect(L, cardY, W, cardH, 6, C.cardBg, C.border);
+
+    // Score circle
+    const circleX = L + 38, circleY = cardY + 35, circleR = 23;
+    const scoreClr = getScoreColor(overallScore);
+    doc.save();
+    doc.circle(circleX, circleY, circleR).lineWidth(2.5).strokeColor(scoreClr).stroke();
+    doc.circle(circleX, circleY, circleR - 2).fill("#f0f4fa");
+    doc.restore();
+    doc.fontSize(18).fillColor(scoreClr).text(`${overallScore}`, circleX - 14, circleY - 10, { width: 28, align: "center" });
+    doc.fontSize(6).fillColor(C.muted).text("/100", circleX - 10, circleY + 10, { width: 20, align: "center" });
+
+    // Sub-score bars
+    const ssX = L + 80;
+    const scoreItems = [
+      ["Risiko", scores.risk || 0],
+      ["Compliance", scores.compliance || 0],
+      ["Konditionen", scores.terms || 0],
+      ["Vollstaendigkeit", scores.completeness || 0],
+    ];
+    scoreItems.forEach(([label, val], i) => {
+      const sy = cardY + 10 + i * 14;
+      doc.fontSize(7).fillColor(C.muted).text(label, ssX, sy, { width: 80 });
+      drawScoreBar(ssX + 80, sy + 1, 100, 5, val);
+      doc.fontSize(7).fillColor(C.text).text(`${val}`, ssX + 184, sy, { width: 20 });
+    });
+
+    // Stats (right side)
+    const stX = L + 310;
+    const statGap = 48;
+    const stats = [
+      [clauses.length, "Klauseln"],
+      [findings.length, "Befunde"],
+      [criticalCount + highCount, "Kritisch"],
+      [actions.filter(a => a.status === "open").length, "Offen"],
+    ];
+    stats.forEach(([num, lbl], i) => {
+      const sx = stX + i * statGap;
+      const numColor = (i === 2 && num > 0) ? C.danger : C.text;
+      doc.fontSize(14).fillColor(numColor).text(`${num}`, sx, cardY + 18, { width: 42, align: "center" });
+      doc.fontSize(6).fillColor(C.muted).text(lbl, sx, cardY + 36, { width: 42, align: "center" });
+    });
+
+    doc.y = cardY + cardH + 8;
+
+    // ── Contract Details (compact) ──
+    const infoParts = [];
+    if (context.parties?.length > 0) infoParts.push(`Parteien: ${context.parties.join(" / ")}`);
+    if (context.duration) infoParts.push(`Laufzeit: ${context.duration}`);
+    if (context.endDate) infoParts.push(`Ende: ${new Date(context.endDate).toLocaleDateString("de-DE")}`);
+    if (context.provider) infoParts.push(`Anbieter: ${context.provider}`);
+    const analyzedAt = result.createdAt ? new Date(result.createdAt).toLocaleDateString("de-DE") : dateStr;
+    infoParts.push(`Analysiert: ${analyzedAt}`);
+
+    if (infoParts.length > 0) {
+      const infoY = doc.y;
+      const infoText = infoParts.join("  ·  ");
+      const infoH = doc.fontSize(7.5).heightOfString(infoText, { width: W - 20 }) + 14;
+      roundedRect(L, infoY, W, infoH, 4, C.bg, C.border);
+      doc.fontSize(7.5).fillColor(C.muted).text(infoText, L + 10, infoY + 7, { width: W - 20 });
+      doc.y = infoY + infoH + 16;
+    }
+
+    // ════════════════════════════════════════════
+    // JURISTISCHE EINSCHAETZUNG
+    // ════════════════════════════════════════════
+    checkPage(80);
+    doc.fontSize(12).fillColor(C.brand).text("Juristische Einschaetzung", L);
+    doc.moveDown(0.3);
+
+    // Build assessment text (same logic as frontend)
+    const assessmentLines = [];
+    if (contractType && context.parties?.length >= 2) {
+      assessmentLines.push(`Bei dem vorliegenden Dokument handelt es sich um einen ${contractType} zwischen ${context.parties[0]} und ${context.parties[1]}${context.parties.length > 2 ? ` (sowie ${context.parties.length - 2} weiteren Parteien)` : ""}.`);
+    } else if (contractType) {
+      assessmentLines.push(`Bei dem vorliegenden Dokument handelt es sich um einen ${contractType}.`);
+    }
+
+    if (overallScore >= 80) {
+      assessmentLines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overallScore}/100).${criticalCount === 0 && highCount === 0 ? " Es wurden keine kritischen Maengel festgestellt." : ""}`);
+    } else if (overallScore >= 60) {
+      assessmentLines.push(`Die Analyse zeigt eine grundsaetzlich akzeptable Vertragsgestaltung (Score: ${overallScore}/100)${criticalCount + highCount > 0 ? `, jedoch mit Optimierungsbedarf in ${criticalCount + highCount} Punkten.` : "."}`);
+    } else if (overallScore >= 40) {
+      assessmentLines.push(`Die Analyse zeigt deutlichen Handlungsbedarf (Score: ${overallScore}/100).${criticalCount + highCount > 0 ? ` ${criticalCount + highCount} wesentliche Maengel erfordern juristische Ueberpruefung.` : ""}`);
+    } else {
+      assessmentLines.push(`Die Analyse ergibt erhebliche vertragliche Risiken (Score: ${overallScore}/100). ${criticalCount > 0 ? `${criticalCount} kritische Maengel erfordern sofortiges Handeln.` : "Eine umfassende Ueberarbeitung wird empfohlen."}`);
+    }
+
+    if (findings.length > 0) {
+      const parts = [];
+      if (criticalCount > 0) parts.push(`${criticalCount} kritisch`);
+      if (highCount > 0) parts.push(`${highCount} hoch`);
+      if (mediumCount > 0) parts.push(`${mediumCount} mittel`);
+      if (lowCount > 0) parts.push(`${lowCount} gering`);
+      assessmentLines.push(`Insgesamt ${findings.length} Befunde: ${parts.join(", ")}.`);
+    }
+
+    const assessmentText = assessmentLines.join(" ");
+    const assessmentH = doc.fontSize(9).heightOfString(assessmentText, { width: W - 24, lineGap: 3 }) + 20;
+    roundedRect(L, doc.y, W, assessmentH, 6, C.bg, C.border);
+    doc.fontSize(9).fillColor(C.text).text(assessmentText, L + 12, doc.y + 10, { width: W - 24, lineGap: 3 });
+    doc.y += assessmentH + 16;
+
+    // ════════════════════════════════════════════
+    // RISIKO-UEBERSICHT (Severity bar)
+    // ════════════════════════════════════════════
+    if (findings.length > 0) {
+      checkPage(50);
+      doc.fontSize(12).fillColor(C.brand).text("Risiko-Uebersicht", L);
+      doc.moveDown(0.3);
+
+      const barY = doc.y;
+      const barH = 10;
+      const total = findings.length;
+      let barX = L;
+      const severityData = [
+        { count: criticalCount, color: C.danger, label: "Kritisch" },
+        { count: highCount, color: "#ea580c", label: "Hoch" },
+        { count: mediumCount, color: C.warn, label: "Mittel" },
+        { count: lowCount, color: "#9ca3af", label: "Gering" },
+      ];
+
+      // Draw stacked bar
+      roundedRect(L, barY, W, barH, 5, "#e2e8f0", null);
+      severityData.forEach(({ count, color }) => {
+        if (count > 0) {
+          const segW = (count / total) * W;
+          doc.save().rect(barX, barY, segW, barH).fill(color).restore();
+          barX += segW;
+        }
+      });
+
+      // Legend
+      doc.y = barY + barH + 8;
+      let legendX = L;
+      severityData.forEach(({ count, color, label }) => {
+        if (count > 0) {
+          doc.save().circle(legendX + 3, doc.y + 3, 3).fill(color).restore();
+          doc.fontSize(7).fillColor(C.text).text(`${count} ${label}`, legendX + 10, doc.y, { lineBreak: false });
+          legendX += doc.widthOfString(`${count} ${label}`) + 24;
+        }
+      });
+      doc.y += 20;
+    }
+
+    // ════════════════════════════════════════════
+    // KRITISCHE BEFUNDE (critical + high, ausführlich)
+    // ════════════════════════════════════════════
+    const topFindings = findings.filter(f => f.severity === "critical" || f.severity === "high");
+
+    if (topFindings.length > 0) {
+      checkPage(40);
+      doc.fontSize(12).fillColor(C.brand).text("Kritische Befunde", L);
+      doc.moveDown(0.15);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${topFindings.length} Befunde mit hoher Prioritaet`);
+      doc.moveDown(0.5);
+
+      const clauseMap = new Map(clauses.map(c => [c.id, c]));
+      const SEV_COLORS = {
+        critical: { text: C.dangerText, bg: C.dangerBg, border: C.danger, label: "KRITISCH" },
+        high: { text: "#9a3412", bg: "#fff7ed", border: "#ea580c", label: "HOCH" },
+      };
+
+      for (const finding of topFindings) {
+        const sev = SEV_COLORS[finding.severity] || SEV_COLORS.high;
+        const clause = clauseMap.get(finding.clauseId);
+
+        // Estimate height
+        let estH = 60;
+        if (finding.reasoning) estH += doc.fontSize(8).heightOfString(finding.reasoning, { width: W - 30 });
+        if (finding.affectedText) estH += 30;
+        if (finding.legalBasis) estH += 16;
+        checkPage(estH);
+
+        const cardStartY = doc.y;
+
+        // Severity tag
+        drawTag(L, doc.y, sev.label, sev.text, sev.bg);
+        if (finding.enforceability && finding.enforceability !== "unknown") {
+          const enfLabels = { valid: "Wirksam", questionable: "Fraglich", likely_invalid: "Wahrsch. unwirksam" };
+          const enfColors = { valid: { t: C.okText, b: C.okBg }, questionable: { t: C.warnText, b: C.warnBg }, likely_invalid: { t: C.dangerText, b: C.dangerBg } };
+          const enf = enfColors[finding.enforceability] || { t: C.muted, b: C.bg };
+          drawTag(L + 55, doc.y, enfLabels[finding.enforceability] || finding.enforceability, enf.t, enf.b);
+        }
+        doc.y += 16;
+
+        // Title
+        doc.fontSize(10).fillColor(C.brand).text(finding.title, L, doc.y, { width: W });
+        doc.moveDown(0.2);
+
+        // Description
+        doc.fontSize(8).fillColor(C.text).text(finding.description, L + 4, doc.y, { width: W - 8, lineGap: 2 });
+        doc.moveDown(0.3);
+
+        // Reasoning
+        if (finding.reasoning) {
+          doc.fontSize(7).fillColor(C.muted).text("Begruendung:", L + 4);
+          doc.fontSize(8).fillColor(C.text).text(finding.reasoning, L + 4, doc.y, { width: W - 8, lineGap: 2 });
+          doc.moveDown(0.3);
+        }
+
+        // Affected text
+        if (finding.affectedText) {
+          const atY = doc.y;
+          const atText = `"${finding.affectedText}"`;
+          const atH = doc.fontSize(8).heightOfString(atText, { width: W - 30 }) + 12;
+          roundedRect(L + 4, atY, W - 8, atH, 4, C.bg, null);
+          doc.save().rect(L + 4, atY, 3, atH).fill(sev.border).restore();
+          doc.fontSize(8).fillColor(C.muted).text(atText, L + 14, atY + 6, { width: W - 30, oblique: true });
+          doc.y = atY + atH + 4;
+        }
+
+        // Legal basis
+        if (finding.legalBasis) {
+          drawTag(L + 4, doc.y, finding.legalBasis, "#1e40af", C.accentLight);
+          doc.y += 16;
+        }
+
+        // Clause reference
+        if (clause) {
+          doc.fontSize(7).fillColor(C.light).text(`Klausel: ${clause.sectionNumber || ""} - ${clause.title}`, L + 4);
+          doc.moveDown(0.2);
+        }
+
+        // User status + comment
+        if (finding.userStatus === "resolved") {
+          drawTag(L + 4, doc.y, "ERLEDIGT", C.okText, C.okBg);
+          doc.y += 14;
+        } else if (finding.userStatus === "dismissed") {
+          drawTag(L + 4, doc.y, "NICHT RELEVANT", C.muted, C.bg);
+          doc.y += 14;
+        }
+        if (finding.userComment) {
+          doc.fontSize(7).fillColor(C.muted).text(`Notiz: ${finding.userComment}`, L + 4, doc.y, { width: W - 8, oblique: true });
+          doc.moveDown(0.2);
+        }
+
+        // Separator line
+        doc.y += 4;
+        doc.save().moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(0.5).strokeColor("#e2e8f0").stroke().restore();
+        doc.y += 8;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // EMPFEHLUNGEN (Actions)
+    // ════════════════════════════════════════════
+    const openActions = actions.filter(a => a.status === "open");
+    if (openActions.length > 0) {
+      checkPage(40);
+      doc.fontSize(12).fillColor(C.brand).text("Empfehlungen", L);
+      doc.moveDown(0.15);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${openActions.length} offene Empfehlungen`);
+      doc.moveDown(0.5);
+
+      const PRIO = {
+        now: { label: "HOHE PRIORITAET", text: C.dangerText, bg: C.dangerBg },
+        plan: { label: "EMPFOHLEN", text: C.warnText, bg: C.warnBg },
+        watch: { label: "ZUR KENNTNIS", text: C.muted, bg: C.bg },
+      };
+
+      const sortedActions = [...openActions].sort((a, b) => {
+        const order = { now: 0, plan: 1, watch: 2 };
+        return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+      });
+
+      for (const action of sortedActions) {
+        const prio = PRIO[action.priority] || PRIO.watch;
+        let estH = 50;
+        if (action.nextStep) estH += 16;
+        if (action.estimatedImpact) estH += 12;
+        if (action.userComment) estH += 12;
+        checkPage(estH);
+
+        drawTag(L, doc.y, prio.label, prio.text, prio.bg);
+        drawTag(L + doc.fontSize(6).widthOfString(prio.label) + 18, doc.y, `${action.confidence}% Konfidenz`, C.muted, C.bg);
+        doc.y += 16;
+
+        doc.fontSize(9).fillColor(C.brand).text(action.title, L, doc.y, { width: W });
+        doc.moveDown(0.15);
+        doc.fontSize(8).fillColor(C.text).text(action.description, L + 4, doc.y, { width: W - 8, lineGap: 2 });
+        doc.moveDown(0.3);
+
+        if (action.nextStep) {
+          const nsY = doc.y;
+          const nsText = `Naechster Schritt: ${action.nextStep}`;
+          const nsH = doc.fontSize(8).heightOfString(nsText, { width: W - 28 }) + 10;
+          roundedRect(L + 4, nsY, W - 8, nsH, 4, C.accentLight, null);
+          doc.fontSize(8).fillColor("#1e40af").text(nsText, L + 12, nsY + 5, { width: W - 28 });
+          doc.y = nsY + nsH + 4;
+        }
+
+        if (action.estimatedImpact) {
+          doc.fontSize(7).fillColor(C.muted).text(`Auswirkung: ${action.estimatedImpact}`, L + 4);
+          doc.moveDown(0.15);
+        }
+
+        if (action.userComment) {
+          doc.fontSize(7).fillColor(C.muted).text(`Notiz: ${action.userComment}`, L + 4, doc.y, { width: W - 8, oblique: true });
+          doc.moveDown(0.2);
+        }
+
+        // Separator
+        doc.y += 2;
+        doc.save().moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(0.5).strokeColor("#e2e8f0").stroke().restore();
+        doc.y += 8;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // MITTLERE BEFUNDE (medium, kompakt)
+    // ════════════════════════════════════════════
+    const mediumFindings = findings.filter(f => f.severity === "medium");
+    if (mediumFindings.length > 0) {
+      checkPage(40);
+      doc.fontSize(12).fillColor(C.brand).text("Weitere Befunde", L);
+      doc.moveDown(0.15);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${mediumFindings.length} Befunde mit mittlerer Prioritaet`);
+      doc.moveDown(0.5);
+
+      for (const finding of mediumFindings) {
+        checkPage(35);
+        drawTag(L, doc.y, "MITTEL", C.warnText, C.warnBg);
+        doc.y += 14;
+        doc.fontSize(9).fillColor(C.text).text(finding.title, L, doc.y, { width: W });
+        doc.moveDown(0.1);
+        doc.fontSize(8).fillColor(C.muted).text(finding.description, L + 4, doc.y, { width: W - 8 });
+        if (finding.legalBasis) {
+          doc.moveDown(0.15);
+          drawTag(L + 4, doc.y, finding.legalBasis, "#1e40af", C.accentLight);
+          doc.y += 14;
+        }
+        doc.moveDown(0.3);
+        doc.save().moveTo(L, doc.y).lineTo(R, doc.y).lineWidth(0.3).strokeColor("#e2e8f0").stroke().restore();
+        doc.y += 6;
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // GEPRUEFTE KLAUSELN (low + info, kompakt)
+    // ════════════════════════════════════════════
+    const lowFindings = findings.filter(f => f.severity === "low" || f.severity === "info");
+    if (lowFindings.length > 0) {
+      checkPage(30);
+      doc.fontSize(12).fillColor(C.brand).text("Geprueft & unauffaellig", L);
+      doc.moveDown(0.15);
+      doc.fontSize(7.5).fillColor(C.muted).text(`${lowFindings.length} Klauseln ohne Handlungsbedarf`);
+      doc.moveDown(0.4);
+
+      for (const finding of lowFindings) {
+        checkPage(14);
+        doc.save().circle(L + 4, doc.y + 4, 1.5).fill("#d1d5db").restore();
+        doc.fontSize(8).fillColor(C.muted).text(finding.title, L + 12, doc.y, { width: W - 12 });
+        doc.moveDown(0.3);
+      }
+    }
+
+    // ════════════════════════════════════════════
+    // FOOTER: Page numbers + Disclaimer
+    // ════════════════════════════════════════════
+    const pageRange = doc.bufferedPageRange();
+    for (let i = pageRange.start; i < pageRange.start + pageRange.count; i++) {
+      doc.switchToPage(i);
+      // Page number
+      doc.fontSize(7).fillColor(C.light).text(
+        `Seite ${i + 1} von ${pageRange.count}`,
+        L, doc.page.height - 35, { width: W, align: "center" }
+      );
+      // Disclaimer on last page only
+      if (i === pageRange.start + pageRange.count - 1) {
+        doc.fontSize(6.5).fillColor(C.light).text(
+          "Dieses Dokument wurde automatisch durch Contract AI generiert. Es stellt keine Rechtsberatung dar und ersetzt nicht die individuelle Pruefung durch einen Rechtsanwalt.",
+          L, doc.page.height - 48, { width: W, align: "center" }
+        );
+      }
+    }
+
+    doc.end();
+  } catch (error) {
+    console.error("[PulseV2] PDF export error:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "PDF-Export fehlgeschlagen" });
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // GET /legal-alerts — Recent legal change alerts for user
 // ══════════════════════════════════════════════════════════════
 router.get("/legal-alerts", async (req, res) => {
