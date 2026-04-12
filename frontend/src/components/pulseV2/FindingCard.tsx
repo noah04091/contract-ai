@@ -18,12 +18,14 @@ interface PulseFindingSummary {
 
 interface FindingCardProps {
   finding: PulseV2Finding;
+  findingIndex: number;
   clause?: PulseV2Clause;
   contractId?: string;
   resultId?: string;
   disabled?: boolean;
   /** All actionable findings (critical/high/medium) — passed to optimizer for context */
   allFindings?: PulseFindingSummary[];
+  onFindingStatusChange?: (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => void;
 }
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -48,7 +50,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
   unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contractId, resultId, disabled, allFindings }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, allFindings, onFindingStatusChange }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
@@ -65,7 +67,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
   const [fixApplied, setFixApplied] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [clauseSaved, setClauseSaved] = useState(false);
+  const [commentText, setCommentText] = useState(finding.userComment || '');
+  const [commentSaving, setCommentSaving] = useState(false);
   const reminderRef = useRef<HTMLDivElement>(null);
+
+  const userStatus = finding.userStatus || 'open';
+  const isResolved = userStatus === 'resolved';
+  const isDismissed = userStatus === 'dismissed';
 
   // Close reminder dropdown on click outside
   useEffect(() => {
@@ -144,6 +152,24 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
     }
   }, [contractId, finding, severity.label]);
 
+  const handleSaveComment = useCallback(async () => {
+    if (!resultId || commentText === (finding.userComment || '')) return;
+    setCommentSaving(true);
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/results/${resultId}/findings/${findingIndex}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: commentText }),
+      });
+      if (!res.ok) console.error('[PulseV2] Comment save failed');
+    } catch (err) {
+      console.error('[PulseV2] Comment save error:', err);
+    } finally {
+      setCommentSaving(false);
+    }
+  }, [resultId, findingIndex, commentText, finding.userComment]);
+
   // Estimated score improvement for visual feedback
   const scoreBoost = fixApplied
     ? finding.severity === 'critical' ? 8 : finding.severity === 'high' ? 5 : 3
@@ -152,13 +178,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
   return (
     <div
       style={{
-        border: fixApplied ? '1px solid #bbf7d0' : `1px solid ${severity.color}22`,
-        borderLeft: fixApplied ? '4px solid #22c55e' : `4px solid ${severity.color}`,
+        border: (fixApplied || isResolved) ? '1px solid #bbf7d0' : isDismissed ? '1px solid #e5e7eb' : `1px solid ${severity.color}22`,
+        borderLeft: (fixApplied || isResolved) ? '4px solid #22c55e' : isDismissed ? '4px solid #d1d5db' : `4px solid ${severity.color}`,
         borderRadius: 8,
-        background: fixApplied ? '#f0fdf4' : '#fff',
+        background: (fixApplied || isResolved) ? '#f0fdf4' : isDismissed ? '#f9fafb' : '#fff',
         marginBottom: 12,
         overflow: 'hidden',
-        opacity: 1,
+        opacity: isDismissed ? 0.6 : 1,
         transition: 'all 0.3s ease',
       }}
     >
@@ -179,13 +205,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
             <span style={{
               fontSize: 11,
               fontWeight: 600,
-              color: fixApplied ? '#059669' : severity.color,
-              background: fixApplied ? '#ecfdf5' : severity.bg,
+              color: (fixApplied || isResolved) ? '#059669' : isDismissed ? '#9ca3af' : severity.color,
+              background: (fixApplied || isResolved) ? '#ecfdf5' : isDismissed ? '#f3f4f6' : severity.bg,
               padding: '2px 8px',
               borderRadius: 4,
               textTransform: 'uppercase',
             }}>
-              {fixApplied ? '✔ Verbessert' : severity.label}
+              {fixApplied ? '✔ Verbessert' : isResolved ? '✔ Erledigt' : isDismissed ? '— Nicht relevant' : severity.label}
             </span>
             <span style={{
               fontSize: 11,
@@ -222,8 +248,8 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
             fontSize: 14,
             fontWeight: 600,
             marginTop: 4,
-            color: fixApplied ? '#6b7280' : '#111827',
-            textDecoration: fixApplied ? 'line-through' : 'none',
+            color: (fixApplied || isResolved || isDismissed) ? '#6b7280' : '#111827',
+            textDecoration: (fixApplied || isResolved) ? 'line-through' : 'none',
           }}>
             {finding.title}
             {fixApplied && scoreBoost > 0 && (
@@ -599,6 +625,125 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, clause, contr
                   &#10003; Erinnerung erstellt
                 </span>
               )}
+            </div>
+          )}
+
+          {/* ═══ Resolve/Dismiss + Comment ═══ */}
+          {resultId && !disabled && (
+            <div style={{
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: '1px solid #f3f4f6',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {!isResolved && !isDismissed && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFindingStatusChange?.(findingIndex, 'resolved');
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#059669',
+                        background: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      &#10003; Erledigt
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFindingStatusChange?.(findingIndex, 'dismissed');
+                      }}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: 12,
+                        fontWeight: 500,
+                        color: '#6b7280',
+                        background: '#f9fafb',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                      }}
+                    >
+                      &#10005; Nicht relevant
+                    </button>
+                  </>
+                )}
+                {(isResolved || isDismissed) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onFindingStatusChange?.(findingIndex, 'open');
+                    }}
+                    style={{
+                      padding: '5px 12px',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: '#6b7280',
+                      background: '#fff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                    }}
+                  >
+                    &#x21A9; Wieder öffnen
+                  </button>
+                )}
+                {finding.userStatusAt && (isResolved || isDismissed) && (
+                  <span style={{ fontSize: 11, color: '#9ca3af' }}>
+                    {isResolved ? 'Erledigt' : 'Ausgeblendet'} am {new Date(finding.userStatusAt).toLocaleDateString('de-DE')}
+                  </span>
+                )}
+              </div>
+
+              {/* Comment field */}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onBlur={handleSaveComment}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); (e.target as HTMLInputElement).blur(); } }}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Notiz hinzufügen..."
+                  maxLength={500}
+                  style={{
+                    flex: 1,
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    color: '#374151',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 6,
+                    outline: 'none',
+                  }}
+                />
+                {commentSaving && (
+                  <span style={{ fontSize: 11, color: '#9ca3af', padding: '6px 0' }}>Speichert...</span>
+                )}
+                {!commentSaving && commentText && commentText === finding.userComment && (
+                  <span style={{ fontSize: 11, color: '#059669', padding: '6px 0' }}>&#10003;</span>
+                )}
+              </div>
             </div>
           )}
 

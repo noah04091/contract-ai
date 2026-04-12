@@ -16,6 +16,10 @@ export interface PulseV2Finding {
   riskGroundedInText?: boolean;
   legalRelevanceClear?: boolean;
   actionNeeded?: boolean;
+  // User interaction (Finding-Resolve + Kommentare)
+  userStatus?: 'open' | 'resolved' | 'dismissed';
+  userComment?: string;
+  userStatusAt?: string;
 }
 
 export interface PulseV2ClauseVersion {

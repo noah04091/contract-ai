@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { PulseV2Result, PulseV2Action, PulseV2LegalAlert } from '../../types/pulseV2';
+import type { PulseV2Result, PulseV2Action, PulseV2Finding, PulseV2LegalAlert } from '../../types/pulseV2';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
 import { ScoreTrend } from './ScoreTrend';
@@ -40,6 +40,7 @@ interface ContractDetailProps {
 
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
+  const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
@@ -61,6 +62,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
   useEffect(() => {
     setActions(result.actions || []);
+    setFindingsState(result.clauseFindings || []);
   }, [result]);
 
   useEffect(() => {
@@ -92,7 +94,31 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }
   }, [result._id]);
 
-  const findings = result.clauseFindings || [];
+  const handleFindingStatusChange = useCallback(async (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => {
+    try {
+      const body: Record<string, unknown> = { status };
+      if (comment !== undefined) body.comment = comment;
+
+      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/findings/${findingIndex}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.success && data.finding) {
+        setFindingsState(prev => {
+          const updated = [...prev];
+          updated[findingIndex] = { ...updated[findingIndex], ...data.finding };
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error('[PulseV2] Finding status update failed:', err);
+    }
+  }, [result._id]);
+
+  const findings = findingsState;
   const clauses = result.clauses || [];
   const clauseMap = new Map(clauses.map(c => [c.id, c]));
 
@@ -108,12 +134,19 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const complianceCount = findings.filter(f => f.type === 'compliance').length;
   const opportunityCount = findings.filter(f => f.type === 'opportunity').length;
 
-  // Top findings: only critical + high, max 3
-  const topFindings = findings
-    .filter(f => f.severity === 'critical' || f.severity === 'high');
+  // Indexed findings — preserve original array index for PATCH endpoint
+  const indexedFindings = findings.map((f, i) => ({ finding: f, originalIndex: i }));
+
+  // Top findings: only critical + high
+  const topFindings = indexedFindings
+    .filter(({ finding: f }) => f.severity === 'critical' || f.severity === 'high');
 
   // Secondary findings: low + info, collapsed by default (medium already covered by Actions)
-  const secondaryFindings = findings.filter(f => f.severity === 'low' || f.severity === 'info');
+  const secondaryFindings = indexedFindings.filter(({ finding: f }) => f.severity === 'low' || f.severity === 'info');
+
+  // Finding progress tracking
+  const actionableFindings = findings.filter(f => f.severity === 'critical' || f.severity === 'high' || f.severity === 'medium');
+  const resolvedFindingCount = actionableFindings.filter(f => f.userStatus === 'resolved' || f.userStatus === 'dismissed').length;
 
   // All actionable findings (critical/high/medium) — passed to optimizer for context
   const actionableFindingSummaries = findings
@@ -576,11 +609,18 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   </span>
                 )}
               </div>
-              {doneCount > 0 && (
-                <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                  {doneCount}/{totalCount} erledigt
-                </span>
-              )}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                {resolvedFindingCount > 0 && (
+                  <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
+                    {resolvedFindingCount}/{actionableFindings.length} Befunde bearbeitet
+                  </span>
+                )}
+                {doneCount > 0 && (
+                  <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+                    {doneCount}/{totalCount} erledigt
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Subtext — erklärt die Sektion */}
@@ -647,14 +687,16 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   <span style={{ fontSize: 13 }}>&#9888;</span>
                   {topFindings.length} {topFindings.length === 1 ? 'Klausel erfordert' : 'Klauseln erfordern'} besondere Aufmerksamkeit
                 </div>
-                {topFindings.map((finding, idx) => (
+                {topFindings.map(({ finding, originalIndex }) => (
                   <FindingCard
-                    key={`top-${finding.clauseId}-${idx}`}
+                    key={`top-${finding.clauseId}-${originalIndex}`}
                     finding={finding}
+                    findingIndex={originalIndex}
                     clause={clauseMap.get(finding.clauseId)}
                     contractId={result.contractId}
                     resultId={result._id}
                     allFindings={actionableFindingSummaries}
+                    onFindingStatusChange={handleFindingStatusChange}
                   />
                 ))}
               </div>
@@ -831,14 +873,16 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
             {showAllFindings && (
               <div style={{ padding: '0 20px 20px' }}>
-                {allCheckedFindings.map((finding, idx) => (
+                {allCheckedFindings.map(({ finding, originalIndex }) => (
                   <FindingCard
-                    key={`checked-${finding.clauseId}-${idx}`}
+                    key={`checked-${finding.clauseId}-${originalIndex}`}
                     finding={finding}
+                    findingIndex={originalIndex}
                     clause={clauseMap.get(finding.clauseId)}
                     contractId={result.contractId}
                     resultId={result._id}
                     allFindings={actionableFindingSummaries}
+                    onFindingStatusChange={handleFindingStatusChange}
                   />
                 ))}
               </div>

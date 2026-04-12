@@ -243,6 +243,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
                         <FindingCard
                           key={`partial-${finding.clauseId}-${idx}`}
                           finding={finding}
+                          findingIndex={idx}
                           clause={clause as PulseV2Clause | undefined}
                           contractId={contractId}
                           disabled

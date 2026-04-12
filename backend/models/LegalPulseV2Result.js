@@ -35,6 +35,10 @@ const clauseFindingSchema = new mongoose.Schema({
   reasoning: String,
   isIntentional: Boolean,
   enforceability: { type: String, enum: ["valid", "questionable", "likely_invalid", "unknown"] },
+  // User interaction fields (Punkt 7: Finding-Resolve + Kommentare)
+  userStatus: { type: String, enum: ["open", "resolved", "dismissed"], default: "open" },
+  userComment: { type: String, maxlength: 500 },
+  userStatusAt: Date,
 }, { _id: false });
 
 const costStageSchema = new mongoose.Schema({

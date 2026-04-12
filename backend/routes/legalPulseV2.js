@@ -500,6 +500,65 @@ router.patch("/results/:id/actions/:actionId", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// PATCH /results/:id/findings/:findingIndex — Update finding status + comment
+// ══════════════════════════════════════════════════════════════
+router.patch("/results/:id/findings/:findingIndex", async (req, res) => {
+  try {
+    const { status, comment } = req.body;
+    const findingIndex = parseInt(req.params.findingIndex, 10);
+
+    if (isNaN(findingIndex) || findingIndex < 0) {
+      return res.status(400).json({ error: "Ungültiger Finding-Index" });
+    }
+
+    if (status && !["open", "resolved", "dismissed"].includes(status)) {
+      return res.status(400).json({ error: "Ungültiger Status. Erlaubt: open, resolved, dismissed" });
+    }
+
+    // Verify finding exists before updating
+    const existing = await LegalPulseV2Result.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+    }).lean();
+
+    if (!existing) {
+      return res.status(404).json({ error: "Ergebnis nicht gefunden" });
+    }
+    if (findingIndex >= (existing.clauseFindings || []).length) {
+      return res.status(400).json({ error: "Finding-Index außerhalb des Bereichs" });
+    }
+
+    const updateFields = {};
+    if (status) {
+      updateFields[`clauseFindings.${findingIndex}.userStatus`] = status;
+      updateFields[`clauseFindings.${findingIndex}.userStatusAt`] = new Date();
+    }
+    if (comment !== undefined) {
+      updateFields[`clauseFindings.${findingIndex}.userComment`] = (comment || "").substring(0, 500);
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: "Keine Änderungen angegeben" });
+    }
+
+    const result = await LegalPulseV2Result.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { $set: updateFields },
+      { new: true }
+    ).lean();
+
+    res.json({
+      success: true,
+      finding: result.clauseFindings[findingIndex],
+      findingIndex,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Finding update error:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren des Befunds" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // GET /legal-alerts — Recent legal change alerts for user
 // ══════════════════════════════════════════════════════════════
 router.get("/legal-alerts", async (req, res) => {
