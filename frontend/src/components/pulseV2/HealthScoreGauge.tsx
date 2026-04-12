@@ -52,7 +52,11 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ position: 'relative', display: 'inline-block', width: gaugeSize, height: gaugeSize }}>
+      <div
+        ref={scoreInfoRef}
+        style={{ position: 'relative', display: 'inline-block', width: gaugeSize, height: gaugeSize, cursor: isLarge ? 'pointer' : 'default' }}
+        onClick={() => { if (isLarge) setShowScoreInfo(!showScoreInfo); }}
+      >
         <svg width={gaugeSize} height={gaugeSize} style={{ transform: 'rotate(-90deg)' }}>
           <circle
             cx={gaugeSize / 2}
@@ -99,6 +103,48 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
             </div>
           )}
         </div>
+
+        {/* Score explanation popup — appears when clicking the score circle */}
+        {isLarge && showScoreInfo && (
+          <div style={{
+            position: 'absolute', top: gaugeSize + 8, left: '50%', transform: 'translateX(-50%)',
+            width: 300, padding: '14px 16px',
+            background: '#fff', border: '1px solid #e5e7eb',
+            borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            zIndex: 100, fontSize: 12, color: '#4b5563', lineHeight: 1.6,
+            textAlign: 'left',
+          }}>
+            <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
+              So wird Ihr Score berechnet
+            </div>
+            <p style={{ margin: '0 0 6px' }}>
+              Der Gesamtscore (0–100) setzt sich aus vier gleichgewichteten Faktoren zusammen:
+            </p>
+            <p style={{ margin: '0 0 4px' }}>
+              <strong>Risiko</strong> — Wie viele und wie schwere rechtliche Risiken wurden erkannt?
+            </p>
+            <p style={{ margin: '0 0 4px' }}>
+              <strong>Compliance</strong> — Entspricht der Vertrag den gesetzlichen Anforderungen (DSGVO, AGB-Recht etc.)?
+            </p>
+            <p style={{ margin: '0 0 4px' }}>
+              <strong>Konditionen</strong> — Sind die Vertragsbedingungen fair und marktüblich?
+            </p>
+            <p style={{ margin: '0 0 8px' }}>
+              <strong>Vollständigkeit</strong> — Fehlen wichtige Klauseln die enthalten sein sollten?
+            </p>
+            <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
+              Je höher der Score, desto besser ist Ihr Vertrag aufgestellt. Ab 80 gilt ein Vertrag als gut, unter 40 als kritisch.
+            </p>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowScoreInfo(false); }}
+              style={{
+                position: 'absolute', top: 8, right: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: '#9ca3af', fontSize: 14,
+              }}
+            >&times;</button>
+          </div>
+        )}
       </div>
 
       {isLarge && (
@@ -113,62 +159,6 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
           <SubScore label="Compliance" value={scores.compliance} />
           <SubScore label="Konditionen" value={scores.terms} />
           <SubScore label="Vollständigkeit" value={scores.completeness} />
-        </div>
-      )}
-
-      {/* Score explanation */}
-      {isLarge && (
-        <div ref={scoreInfoRef} style={{ position: 'relative', display: 'inline-block', marginTop: 8 }}>
-          <button
-            onClick={() => setShowScoreInfo(!showScoreInfo)}
-            style={{
-              fontSize: 11, color: '#9ca3af', background: 'none', border: 'none',
-              cursor: 'pointer', textDecoration: 'underline', textDecorationStyle: 'dotted',
-              textUnderlineOffset: 2,
-            }}
-          >
-            Wie wird der Score berechnet?
-          </button>
-          {showScoreInfo && (
-            <div style={{
-              position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-              width: 300, padding: '14px 16px',
-              background: '#fff', border: '1px solid #e5e7eb',
-              borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              zIndex: 100, fontSize: 12, color: '#4b5563', lineHeight: 1.6,
-              textAlign: 'left',
-            }}>
-              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
-                So wird Ihr Score berechnet
-              </div>
-              <p style={{ margin: '0 0 6px' }}>
-                Der Gesamtscore (0–100) setzt sich aus vier gleichgewichteten Faktoren zusammen:
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Risiko</strong> — Wie viele und wie schwere rechtliche Risiken wurden erkannt?
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Compliance</strong> — Entspricht der Vertrag den gesetzlichen Anforderungen (DSGVO, AGB-Recht etc.)?
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Konditionen</strong> — Sind die Vertragsbedingungen fair und marktüblich?
-              </p>
-              <p style={{ margin: '0 0 8px' }}>
-                <strong>Vollständigkeit</strong> — Fehlen wichtige Klauseln die enthalten sein sollten?
-              </p>
-              <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
-                Je höher der Score, desto besser ist Ihr Vertrag aufgestellt. Ab 80 gilt ein Vertrag als gut, unter 40 als kritisch.
-              </p>
-              <button
-                onClick={() => setShowScoreInfo(false)}
-                style={{
-                  position: 'absolute', top: 8, right: 8,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#9ca3af', fontSize: 14,
-                }}
-              >&times;</button>
-            </div>
-          )}
         </div>
       )}
     </div>
