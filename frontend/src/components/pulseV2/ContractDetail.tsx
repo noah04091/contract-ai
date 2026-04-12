@@ -44,6 +44,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,6 +94,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       console.error('[PulseV2] Action update failed:', err);
     }
   }, [result._id]);
+
+  const handlePdfExport = useCallback(async () => {
+    setPdfExporting(true);
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/export-pdf`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('PDF Export fehlgeschlagen');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Vertragsanalyse_${result.context?.contractName?.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_') || result.contractId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[PulseV2] PDF export error:', err);
+      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    } finally {
+      setPdfExporting(false);
+    }
+  }, [result._id, result.context?.contractName, result.contractId]);
 
   const handleFindingStatusChange = useCallback(async (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => {
     try {
@@ -321,9 +346,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {scoreDescription}
           </div>
 
-          {/* Meta */}
-          <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: monitorInfo ? 10 : 0 }}>
-            Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+          {/* Meta + PDF Export */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: monitorInfo ? 10 : 0 }}>
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>
+              Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <button
+              onClick={handlePdfExport}
+              disabled={pdfExporting}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '3px 10px',
+                fontSize: 11,
+                fontWeight: 500,
+                color: pdfExporting ? '#9ca3af' : '#4b5563',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: 5,
+                cursor: pdfExporting ? 'default' : 'pointer',
+              }}
+            >
+              {pdfExporting ? '\u23F3' : '\uD83D\uDCC4'} {pdfExporting ? 'Exportiert...' : 'PDF'}
+            </button>
           </div>
 
           {/* Monitoring Status */}
