@@ -788,6 +788,10 @@ export function parseContractStreaming(
    * pollt POST /parse alle 5s bis der Cache bereit ist.
    * Jeder Poll-Request dauert <1s — kein Timeout-Problem.
    */
+  // Eigener AbortController für Polling — der SSE-Controller kann durch
+  // Inactivity-Timeout bereits aborted sein
+  const pollController = new AbortController();
+
   const pollForCache = async () => {
     const POLL_INTERVAL_MS = 5000;
     const MAX_POLL_DURATION_MS = 180000; // 3 Minuten max
@@ -808,7 +812,7 @@ export function parseContractStreaming(
           },
           credentials: 'include',
           body: JSON.stringify({ contractId }),
-          signal: controller.signal
+          signal: pollController.signal
         });
 
         if (!response.ok) {
@@ -855,6 +859,12 @@ export function parseContractStreaming(
   const executeStream = async () => {
     if (isAborted) return;
 
+    // Inactivity timeout: Heartbeat kommt alle 2s vom Server.
+    // Wenn 12s lang keine Daten ankommen → Proxy hat Verbindung gekappt.
+    let lastDataAt = Date.now();
+    const INACTIVITY_TIMEOUT_MS = 12000;
+    let inactivityCheck: ReturnType<typeof setInterval> | null = null;
+
     try {
       const response = await fetch(getUrl(), {
         method: 'GET',
@@ -876,10 +886,20 @@ export function parseContractStreaming(
       const decoder = new TextDecoder();
       let buffer = '';
 
+      inactivityCheck = setInterval(() => {
+        if (isComplete || isAborted) { clearInterval(inactivityCheck); return; }
+        if (Date.now() - lastDataAt > INACTIVITY_TIMEOUT_MS) {
+          clearInterval(inactivityCheck);
+          console.warn(`[Legal Lens] Inactivity timeout (${INACTIVITY_TIMEOUT_MS}ms) — cancelling stream`);
+          controller.abort();
+        }
+      }, 3000);
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
+        lastDataAt = Date.now(); // Reset bei jedem empfangenen Chunk
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -941,6 +961,8 @@ export function parseContractStreaming(
         }
       }
 
+      if (inactivityCheck) clearInterval(inactivityCheck);
+
       // Stream ist beendet (done = true) — falls kein 'complete' Event ankam
       if (!isComplete && clausesReceived > 0) {
         console.warn(`[Legal Lens] Stream ended without complete event. ${clausesReceived} clauses received — marking as complete.`);
@@ -957,20 +979,24 @@ export function parseContractStreaming(
         return;
       }
     } catch (error) {
-      // Abbruch durch User? → Kein Retry
-      if (isAborted || (error instanceof Error && error.name === 'AbortError')) {
-        console.log('[Legal Lens] Streaming abgebrochen durch User');
-        return;
-      }
+      if (inactivityCheck) clearInterval(inactivityCheck);
 
       // Bereits complete? → Kein Retry nötig
       if (isComplete) {
         return;
       }
 
-      // Verbindungsverlust-Erkennung
+      // Abbruch durch User (nicht durch Inactivity-Timeout)? → Kein Retry
+      if (isAborted) {
+        console.log('[Legal Lens] Streaming abgebrochen durch User');
+        return;
+      }
+
+      // Verbindungsverlust-Erkennung (inkl. AbortError von Inactivity-Timeout)
       const errorMessage = error instanceof Error ? error.message : String(error);
+      const isAbortError = error instanceof Error && error.name === 'AbortError';
       const isConnectionLost =
+        isAbortError || // Inactivity-Timeout hat controller.abort() aufgerufen
         errorMessage.includes('network') ||
         errorMessage.includes('fetch') ||
         errorMessage.includes('Failed to fetch') ||
@@ -978,7 +1004,7 @@ export function parseContractStreaming(
         errorMessage.includes('connection') ||
         errorMessage.includes('timeout');
 
-      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage}`);
+      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage} (isAbort=${isAbortError}, isConnectionLost=${isConnectionLost})`);
 
       callbacks.onConnectionLost?.({
         clausesReceived,
@@ -1010,5 +1036,6 @@ export function parseContractStreaming(
   return () => {
     isAborted = true;
     controller.abort();
+    pollController.abort();
   };
 }
