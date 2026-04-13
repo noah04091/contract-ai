@@ -2714,8 +2714,9 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   const sendEvent = (type, data) => {
     if (clientDisconnected) return;
     try {
-      res.write(`event: ${type}\n`);
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+      res.write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
+      // Explizites Flush — zwingt Daten sofort durch alle Proxy-Buffer
+      if (typeof res.flush === 'function') res.flush();
     } catch {
       clientDisconnected = true;
     }
@@ -2944,13 +2945,24 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       try {
         sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: 20 });
 
-        // Heartbeat alle 5s damit die SSE-Verbindung nicht vom Frontend/Proxy getrennt wird
-        let heartbeatProgress = 25;
+        // Heartbeat alle 2s — hält SSE-Verbindung durch Proxy/CDN-Layer offen
+        // SSE-Comment ": keepalive" ist leichtgewichtig und wird vom Frontend ignoriert
+        let heartbeatProgress = 22;
+        let heartbeatCount = 0;
         const heartbeat = setInterval(() => {
           if (clientDisconnected) { clearInterval(heartbeat); return; }
-          heartbeatProgress = Math.min(heartbeatProgress + 5, 75);
-          sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: heartbeatProgress });
-        }, 5000);
+          heartbeatCount++;
+          // Jedes 3. Mal ein Status-Event (alle 6s), sonst nur SSE-Comment-Keepalive
+          if (heartbeatCount % 3 === 0) {
+            heartbeatProgress = Math.min(heartbeatProgress + 5, 80);
+            sendEvent('status', { message: 'KI analysiert Vertragsklauseln...', progress: heartbeatProgress });
+          } else {
+            try {
+              res.write(`: keepalive ${heartbeatCount}\n\n`);
+              if (typeof res.flush === 'function') res.flush();
+            } catch { clientDisconnected = true; }
+          }
+        }, 2000);
 
         // Phase 1: Extraktion OHNE GPT-Risk — schnelle Antwort an den User
         let parseResult;
@@ -3269,13 +3281,22 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         progress
       });
 
-      // SSE-Keepalive: Alle 15s ein Ping senden damit Render/Browser die Verbindung nicht killt
+      // SSE-Keepalive: Alle 3s damit Render/Proxy die Verbindung nicht killt
+      let batchKeepCount = 0;
       const keepaliveInterval = setInterval(() => {
-        sendEvent('status', {
-          message: `Analysiere Block ${batchIndex}/${batches.length}... (GPT arbeitet)`,
-          progress
-        });
-      }, 15000);
+        batchKeepCount++;
+        if (batchKeepCount % 3 === 0) {
+          sendEvent('status', {
+            message: `Analysiere Block ${batchIndex}/${batches.length}... (GPT arbeitet)`,
+            progress
+          });
+        } else {
+          try {
+            res.write(`: keepalive batch-${batchIndex}\n\n`);
+            if (typeof res.flush === 'function') res.flush();
+          } catch { /* ignore */ }
+        }
+      }, 3000);
 
       try {
         // GPT-Segmentierung mit Retry und exponentiellem Backoff
@@ -3300,13 +3321,13 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           const halves = [batch.slice(0, mid), batch.slice(mid)];
 
           for (let halfIdx = 0; halfIdx < halves.length; halfIdx++) {
-            // Keepalive auch für Split-Hälften
+            // Keepalive auch für Split-Hälften (alle 3s)
             const halfKeepalive = setInterval(() => {
-              sendEvent('status', {
-                message: `Analysiere Block ${batchIndex}/${batches.length} (Teil ${halfIdx + 1}/2)...`,
-                progress
-              });
-            }, 15000);
+              try {
+                res.write(`: keepalive half-${halfIdx}\n\n`);
+                if (typeof res.flush === 'function') res.flush();
+              } catch { /* ignore */ }
+            }, 3000);
 
             try {
               const halfClauses = await clauseParser.gptSegmentClausesBatch(halves[halfIdx], contract.name || '');
