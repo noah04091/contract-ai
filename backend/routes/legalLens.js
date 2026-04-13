@@ -2984,7 +2984,34 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
         const riskSummary = clauseParser.calculateRiskSummary(allClauses);
 
-        // Klauseln SOFORT an Frontend senden — User wartet nicht auf GPT-Risk
+        // Cache SOFORT speichern (Keyword-Risk) — damit Retries den Cache finden
+        // Falls die SSE-Verbindung schon getrennt ist, sind die Klauseln trotzdem im Cache
+        try {
+          await Contract.updateOne(
+            { _id: new ObjectId(contractId) },
+            {
+              $set: {
+                'legalLens.preParsedClauses': allClauses,
+                'legalLens.riskSummary': riskSummary,
+                'legalLens.metadata': {
+                  parsedAt: new Date().toISOString(),
+                  parserVersion: '4.3.0-direct-extraction',
+                  cacheVersion: CACHE_VERSION,
+                  usedGPT: false,
+                  riskSource: 'keywords',
+                  extraction: parseResult.metadata?.extraction || {}
+                },
+                'legalLens.preprocessStatus': 'completed',
+                'legalLens.preprocessedAt': new Date()
+              }
+            }
+          );
+          console.log(`💾 [Legal Lens] Phase-1-Cache gespeichert: ${allClauses.length} Klauseln (Keyword-Risk)`);
+        } catch (cacheErr) {
+          console.error(`⚠️ [Legal Lens] Phase-1-Cache-Fehler:`, cacheErr.message);
+        }
+
+        // Klauseln an Frontend senden — falls SSE noch verbunden
         sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 90 });
         sendEvent('clauses', {
           clauses: allClauses,

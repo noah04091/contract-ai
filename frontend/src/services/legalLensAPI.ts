@@ -774,7 +774,7 @@ export function parseContractStreaming(
 
   // Phase 5: Retry-Konfiguration
   const MAX_RETRIES = 3;
-  const BASE_DELAY_MS = 1000; // Exponential backoff: 1s, 2s, 4s
+  const BASE_DELAY_MS = 3000; // Exponential backoff: 3s, 6s, 12s
 
   // Phase 5: Fortschritts-Tracking für Resume
   let clausesReceived = 0;
