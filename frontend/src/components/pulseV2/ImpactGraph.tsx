@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import type { PulseV2LegalAlert, PulseV2AutoFixResult } from '../../types/pulseV2';
+import styles from '../../styles/PulseV2.module.css';
 
 interface ImpactGraphProps {
   alert: PulseV2LegalAlert;
@@ -90,6 +91,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
             {alert.lawSource && alert.lawSource.startsWith('http') && (
               <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
                 <a
+                  className={styles.sourceLink}
                   href={alert.lawSource}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -101,8 +103,6 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
                     alignItems: 'center',
                     gap: 4,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
                 >
                   &#128279; Originalquelle anzeigen
                 </a>
@@ -339,16 +339,14 @@ const ClauseImpactNode: React.FC<{
           </div>
           {/* Clickable clause title + impact to expand full text */}
           <div
+            className={contractId ? styles.clauseClickable : undefined}
             onClick={contractId ? handleShowClause : undefined}
             style={{
               cursor: contractId ? 'pointer' : 'default',
               borderRadius: 6,
               padding: contractId ? '4px 6px' : 0,
               margin: contractId ? '-4px -6px 0' : 0,
-              transition: 'background 0.15s',
             }}
-            onMouseEnter={(e) => { if (contractId) e.currentTarget.style.background = '#f1f5f9'; }}
-            onMouseLeave={(e) => { if (contractId) e.currentTarget.style.background = 'transparent'; }}
           >
             <div style={{ fontSize: 13, fontWeight: 500, color: '#111827', display: 'flex', alignItems: 'center', gap: 6 }}>
               {clauseImpact.clauseTitle}
@@ -384,6 +382,7 @@ const ClauseImpactNode: React.FC<{
           <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
             {clauseImpact.suggestedChange && (
               <button
+                className={styles.btnAction}
                 onClick={() => setShowFix(!showFix)}
                 style={{
                   padding: '4px 12px',
@@ -402,6 +401,7 @@ const ClauseImpactNode: React.FC<{
 
             {!autoFix && (
               <button
+                className={styles.btnAction}
                 onClick={handleAutoFix}
                 disabled={fixLoading}
                 style={{
@@ -530,6 +530,7 @@ const ClauseImpactNode: React.FC<{
                   </button>
                   {!applied ? (
                     <button
+                      className={styles.btnPrimary}
                       onClick={handleApply}
                       disabled={applyLoading}
                       style={{

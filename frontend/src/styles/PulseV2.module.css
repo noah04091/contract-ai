@@ -1,4 +1,9 @@
-/* PulseV2 Styles — minimal, most styling is inline for colocation */
+/* PulseV2 Styles — interactive layer (hover, focus, animations, responsive) */
+/* Static values (colors, spacing, backgrounds) remain as inline styles */
+
+/* ═══════════════════════════════════════════════
+   Layout
+   ═══════════════════════════════════════════════ */
 
 .pageContainer {
   max-width: 1100px;
@@ -8,9 +13,13 @@
 
 .contractGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
 }
+
+/* ═══════════════════════════════════════════════
+   Keyframe Animations
+   ═══════════════════════════════════════════════ */
 
 :global {
   @keyframes pulse {
@@ -19,6 +28,263 @@
   }
 }
 
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scoreReveal {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes expandDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   Fade-In Classes (staggered entry)
+   ═══════════════════════════════════════════════ */
+
+.fadeIn {
+  animation: fadeSlideUp 0.4s ease-out both;
+}
+
+.fadeInDelay1 {
+  animation: fadeSlideUp 0.4s ease-out 0.08s both;
+}
+
+.fadeInDelay2 {
+  animation: fadeSlideUp 0.4s ease-out 0.16s both;
+}
+
+.fadeInDelay3 {
+  animation: fadeSlideUp 0.4s ease-out 0.24s both;
+}
+
+.fadeInDelay4 {
+  animation: fadeSlideUp 0.4s ease-out 0.32s both;
+}
+
+/* ═══════════════════════════════════════════════
+   Score Number (bounce-in)
+   ═══════════════════════════════════════════════ */
+
+.scoreNumber {
+  animation: scoreReveal 0.6s ease-out 0.3s both;
+}
+
+/* ═══════════════════════════════════════════════
+   Expand Content (smooth enter)
+   ═══════════════════════════════════════════════ */
+
+.expandContent {
+  animation: expandDown 0.25s ease-out both;
+}
+
+/* ═══════════════════════════════════════════════
+   Card Hover Classes
+   ═══════════════════════════════════════════════ */
+
+.contractCard {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.contractCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+.sectionCard {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.sectionCard:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.findingCard {
+  transition: box-shadow 0.2s ease;
+}
+.findingCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.actionCard {
+  transition: box-shadow 0.2s ease;
+}
+.actionCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.lawGroupCard {
+  transition: box-shadow 0.2s ease;
+}
+.lawGroupCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.miniStatCard {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.miniStatCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.highlightChip {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.highlightChip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.insightContractRow {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.insightContractRow:hover {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.1);
+}
+
+/* ═══════════════════════════════════════════════
+   Button Hover Classes
+   ═══════════════════════════════════════════════ */
+
+.btnPrimary {
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.btnPrimary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+.btnPrimary:active {
+  transform: translateY(0);
+}
+
+.btnSecondary {
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.btnSecondary:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.btnAction {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btnAction:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.btnIcon {
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.btnIcon:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+.btnGhost {
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.btnGhost:hover {
+  color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.btnCollapse {
+  transition: background 0.12s ease;
+}
+.btnCollapse:hover {
+  background: #f1f5f9 !important;
+}
+
+.filterPill {
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.filterPill:hover {
+  border-color: #94a3b8 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.btnInfo {
+  transition: background 0.12s ease;
+}
+.btnInfo:hover {
+  background: #e5e7eb !important;
+}
+
+.btnShowMore {
+  transition: background 0.12s ease;
+}
+.btnShowMore:hover {
+  background: #eff6ff !important;
+}
+
+.dropdownOption {
+  transition: background 0.1s ease;
+}
+.dropdownOption:hover {
+  background: #f0f9ff !important;
+}
+
+.sourceLink {
+  transition: text-decoration 0.1s ease;
+}
+.sourceLink:hover {
+  text-decoration: underline !important;
+}
+
+.clauseClickable {
+  transition: background 0.15s ease;
+}
+.clauseClickable:hover {
+  background: #f1f5f9 !important;
+}
+
+.waypointLine {
+  transition: background 0.15s ease;
+}
+.waypointLine:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.searchInput {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.searchInput:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ═══════════════════════════════════════════════
+   Focus States (Accessibility)
+   ═══════════════════════════════════════════════ */
+
+.btnPrimary:focus-visible,
+.btnSecondary:focus-visible,
+.btnAction:focus-visible,
+.btnIcon:focus-visible,
+.btnGhost:focus-visible,
+.btnCollapse:focus-visible,
+.filterPill:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.contractCard:focus-visible,
+.findingCard:focus-visible,
+.actionCard:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* ═══════════════════════════════════════════════
+   Responsive Breakpoints
+   ═══════════════════════════════════════════════ */
+
 @media (max-width: 768px) {
   .contractGrid {
     grid-template-columns: 1fr;
@@ -26,5 +292,62 @@
 
   .pageContainer {
     padding: 16px 8px;
+  }
+
+  .heroSection {
+    padding: 24px 20px !important;
+  }
+
+  .heroTitle {
+    font-size: 24px !important;
+  }
+
+  .contractHealthGrid {
+    flex-direction: column !important;
+  }
+
+  .filterRow {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filterRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chartContainer {
+    height: 120px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 16px 12px;
+  }
+
+  .heroSection {
+    padding: 20px 16px !important;
+  }
+
+  .heroTitle {
+    font-size: 20px !important;
+  }
+
+  .scoreGauge {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .scoreGaugeNumber {
+    font-size: 24px !important;
+  }
+
+  .portfolioStats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sectionPadding {
+    padding: 16px !important;
   }
 }

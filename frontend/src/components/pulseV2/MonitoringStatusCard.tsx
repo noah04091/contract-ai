@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import styles from '../../styles/PulseV2.module.css';
 
 interface MonitoringStatus {
   status: 'green' | 'yellow' | 'red' | 'neutral';
@@ -141,7 +142,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
   }
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: config.bg,
       border: `1px solid ${config.border}`,
       borderRadius: 12,
@@ -200,6 +201,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
           )}
           {monitoring.contractsMonitored > 0 && (
             <button
+              className={styles.btnSecondary}
               onClick={handleScanNow}
               disabled={scanning}
               style={{
@@ -309,6 +311,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
             {summaryLines.map((line, idx) => (
               <div
                 key={idx}
+                className={line.section ? styles.waypointLine : undefined}
                 onClick={line.section && onScrollTo ? () => onScrollTo(line.section!) : undefined}
                 style={{
                   display: 'flex',
@@ -321,10 +324,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
                   padding: '4px 8px',
                   margin: '0 -8px',
                   borderRadius: 6,
-                  transition: 'background 0.15s ease',
                 }}
-                onMouseEnter={(e) => { if (line.section) e.currentTarget.style.background = `${line.color}11`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
               >
                 <span style={{ fontSize: 14, width: 20, textAlign: 'center', flexShrink: 0 }}>{line.icon}</span>
                 {line.text}

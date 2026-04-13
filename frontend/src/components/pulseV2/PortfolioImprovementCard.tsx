@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import styles from '../../styles/PulseV2.module.css';
 
 interface ContractDelta {
   contractId: string;
@@ -59,7 +60,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
   };
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       borderRadius: 12,
       border: '1px solid #e5e7eb',
@@ -265,6 +266,7 @@ const MiniStat: React.FC<{
   active?: boolean;
 }> = ({ icon, label, value, color, bg, onClick, active }) => (
   <div
+    className={styles.miniStatCard}
     onClick={onClick}
     style={{
       padding: '12px 14px',
@@ -272,7 +274,6 @@ const MiniStat: React.FC<{
       borderRadius: 8,
       border: active ? `1px solid ${color}44` : `1px solid ${color}22`,
       cursor: onClick ? 'pointer' : 'default',
-      transition: 'all 0.15s ease',
     }}
   >
     <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>
@@ -292,6 +293,7 @@ const HighlightChip: React.FC<{
   onClick?: () => void;
 }> = ({ label, name, delta, positive, onClick }) => (
   <div
+    className={styles.highlightChip}
     onClick={onClick}
     style={{
       flex: 1,

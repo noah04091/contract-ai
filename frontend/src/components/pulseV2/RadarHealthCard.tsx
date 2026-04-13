@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from '../../styles/PulseV2.module.css';
 
 interface RadarHealthData {
   feeds: { total: number; enabled: number; disabled: number };
@@ -153,7 +154,7 @@ export const RadarHealthCard: React.FC<{ embedded?: boolean }> = () => {
   const overallHealthy = feedHealthy && emailHealthy;
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid #e5e7eb',
       borderRadius: 12,

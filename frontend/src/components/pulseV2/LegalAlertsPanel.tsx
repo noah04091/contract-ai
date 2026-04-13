@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { PulseV2LegalAlert } from '../../types/pulseV2';
 import { ImpactGraph } from './ImpactGraph';
+import styles from '../../styles/PulseV2.module.css';
 
 interface LegalAlertsPanelProps {
   alerts: PulseV2LegalAlert[];
@@ -113,7 +114,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   const groups = groupAlertsByLaw(displayAlerts);
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid #e5e7eb',
       borderRadius: 12,
@@ -130,6 +131,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           {/* Info icon */}
           <div ref={infoRef} style={{ position: 'relative', display: 'inline-block' }}>
             <button
+              className={styles.btnInfo}
               onClick={() => setShowInfo(!showInfo)}
               style={{
                 width: 18, height: 18, borderRadius: '50%',
@@ -310,7 +312,7 @@ const LawGroup: React.FC<{
   const statusConf = group.lawStatus ? LAW_STATUS_LABELS[group.lawStatus] : null;
 
   return (
-    <div style={{
+    <div className={styles.lawGroupCard} style={{
       border: `1px solid ${sevColor}22`,
       borderRadius: 10,
       marginBottom: 12,
@@ -384,7 +386,7 @@ const LawGroup: React.FC<{
 
       {/* Expanded */}
       {expanded && (
-        <div style={{ padding: '0 8px 8px', background: '#fff' }}>
+        <div className={styles.expandContent} style={{ padding: '0 8px 8px', background: '#fff' }}>
           {group.alerts.map(alert => (
             <div key={alert._id} style={{ position: 'relative' }}>
               <ImpactGraph alert={alert} onNavigate={onNavigate} />

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import styles from '../../styles/PulseV2.module.css';
 
 interface TimelineEntry {
   date: string;
@@ -51,7 +52,7 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
   }));
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid #e5e7eb',
       borderRadius: 12,

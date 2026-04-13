@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Action } from '../../types/pulseV2';
+import styles from '../../styles/PulseV2.module.css';
 
 interface ActionItemProps {
   action: PulseV2Action;
@@ -76,7 +77,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
   };
 
   return (
-    <div style={{
+    <div className={styles.actionCard} style={{
       padding: 16,
       background: isDone ? '#f0fdf4' : isDismissed ? '#f9fafb' : '#fff',
       border: `1px solid ${isDone ? '#bbf7d0' : isDismissed ? '#e5e7eb' : priority.color + '33'}`,
@@ -195,6 +196,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
         {onStatusChange && !isDismissed && !isDone && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
+              className={styles.btnIcon}
               onClick={() => onStatusChange(action.id, 'done', action.resultId)}
               title="Als erledigt markieren"
               style={{
@@ -206,6 +208,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               &#10003;
             </button>
             <button
+              className={styles.btnIcon}
               onClick={() => onStatusChange(action.id, 'dismissed', action.resultId)}
               title="Ausblenden"
               style={{
@@ -217,6 +220,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               &#10005;
             </button>
             <button
+              className={styles.btnIcon}
               onClick={() => setCommentOpen(!commentOpen)}
               title="Notiz hinzufügen"
               style={{
@@ -236,6 +240,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
         {onStatusChange && (isDismissed || isDone) && (
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
             <button
+              className={styles.btnSecondary}
               onClick={() => onStatusChange(action.id, 'open', action.resultId)}
               title="Wieder öffnen"
               style={{
@@ -248,6 +253,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               &#x21A9; Aktivieren
             </button>
             <button
+              className={styles.btnIcon}
               onClick={() => setCommentOpen(!commentOpen)}
               title="Notiz hinzufügen"
               style={{

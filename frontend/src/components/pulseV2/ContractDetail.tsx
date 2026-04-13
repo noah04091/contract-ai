@@ -7,6 +7,7 @@ import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
 import { ActionItem } from './ActionItem';
 import { ImpactGraph } from './ImpactGraph';
+import styles from '../../styles/PulseV2.module.css';
 
 /** Smooth scroll to a section by id */
 function scrollToSection(id: string) {
@@ -261,7 +262,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       )}
 
       {/* ═══ Header: Score + Contract Overview ═══ */}
-      <div style={{
+      <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
         display: 'grid',
         gridTemplateColumns: 'auto 1fr',
         gap: 32,
@@ -360,6 +361,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <button
+              className={styles.btnSecondary}
               onClick={handlePdfExport}
               disabled={pdfExporting}
               style={{
@@ -427,7 +429,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       </div>
 
       {/* ═══ Juristische Einschätzung ═══ */}
-      <div style={{
+      <div className={`${styles.sectionCard} ${styles.fadeInDelay1}`} style={{
         background: '#fff',
         border: '1px solid #e5e7eb',
         borderRadius: 12,
@@ -438,6 +440,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <span style={{ fontSize: 16 }}>&#x2696;&#xFE0F;</span>
           Juristische Einschätzung
           <span
+            className={styles.btnInfo}
             onClick={() => setShowJuristischeInfo(!showJuristischeInfo)}
             style={{
               width: 18,
@@ -588,7 +591,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
       {/* ═══ Risk Overview: compact severity bars ═══ */}
       {findings.length > 0 && (
-        <div id="risiko-uebersicht" style={{
+        <div id="risiko-uebersicht" className={`${styles.sectionCard} ${styles.fadeInDelay2}`} style={{
           background: '#fff',
           border: '1px solid #e5e7eb',
           borderRadius: 12,
@@ -646,7 +649,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           : '#e5e7eb';
 
         return (
-          <div id="empfehlungen" style={{
+          <div id="empfehlungen" className={`${styles.sectionCard} ${styles.fadeInDelay3}`} style={{
             background: '#fff',
             border: `1px solid ${borderColor}`,
             borderRadius: 12,
@@ -780,6 +783,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {historyActions.length > 0 && (
               <div style={{ marginTop: openActions.length > 0 ? 16 : 0 }}>
                 <button
+                  className={styles.btnCollapse}
                   onClick={() => setShowActionHistory(!showActionHistory)}
                   style={{
                     width: '100%',
@@ -810,7 +814,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   )}
                 </button>
                 {showActionHistory && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
+                  <div className={styles.expandContent} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
                     {historyActions.map(action => (
                       <ActionItem
                         key={`hist_${action.id}`}
@@ -886,6 +890,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             marginTop: 20,
           }}>
             <button
+              className={styles.btnCollapse}
               onClick={() => setShowAllFindings(!showAllFindings)}
               style={{
                 width: '100%',
@@ -928,7 +933,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             </button>
 
             {showAllFindings && (
-              <div style={{ padding: '0 20px 20px' }}>
+              <div className={styles.expandContent} style={{ padding: '0 20px 20px' }}>
                 {allCheckedFindings.map(({ finding, originalIndex }) => (
                   <FindingCard
                     key={`checked-${finding.clauseId}-${originalIndex}`}

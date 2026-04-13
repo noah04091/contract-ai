@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2PortfolioInsight } from '../../types/pulseV2';
+import styles from '../../styles/PulseV2.module.css';
 
 interface PortfolioInsightsPanelProps {
   insights: PulseV2PortfolioInsight[];
@@ -113,6 +114,7 @@ function InsightCard({
             return (
               <div
                 key={contractId}
+                className={styles.insightContractRow}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/contracts?view=${contractId}`);
@@ -124,10 +126,7 @@ function InsightCard({
                   border: '1px solid #e5e7eb',
                   borderRadius: 6,
                   cursor: 'pointer',
-                  transition: 'border-color 0.15s ease',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3b82f6')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e5e7eb')}
               >
                 <span style={{ fontSize: 14 }}>📄</span>
                 <span style={{ fontSize: 13, fontWeight: 500, color: '#111827', flex: 1 }}>
@@ -163,7 +162,7 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
   if (!insights || insights.length === 0) return null;
 
   return (
-    <div style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid #e5e7eb',
       borderRadius: 12,
@@ -182,6 +181,7 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
         {/* Info tooltip */}
         <div ref={infoRef} style={{ position: 'relative', display: 'inline-block' }}>
           <button
+            className={styles.btnInfo}
             onClick={() => setShowInfo(!showInfo)}
             style={{
               width: 18, height: 18, borderRadius: '50%',

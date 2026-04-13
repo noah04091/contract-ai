@@ -13,7 +13,7 @@ import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard
 import { useRadarHealth, RadarHealthCompact, RadarHealthExpanded } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
 import { useToast } from '../context/ToastContext';
-import '../styles/PulseV2.module.css';
+import styles from '../styles/PulseV2.module.css';
 
 const API_BASE = '/api';
 
@@ -550,16 +550,14 @@ const ActionCenter: React.FC<{
           {hiddenCount > 0 && !showAll && (
             <div style={{ textAlign: 'center', paddingTop: 4 }}>
               <button
+                className={styles.btnShowMore}
                 onClick={() => setShowAll(true)}
                 style={{
                   fontSize: 12, color: '#3b82f6', fontWeight: 600,
                   padding: '6px 20px',
                   background: '#f8fafc', border: '1px solid #e2e8f0',
                   borderRadius: 20, cursor: 'pointer',
-                  transition: 'background 0.15s ease',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#f8fafc')}
               >
                 + {hiddenCount} weitere anzeigen
               </button>
@@ -1272,6 +1270,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               pointerEvents: 'none',
             }}>&#128269;</span>
             <input
+              className={styles.searchInput}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -1286,10 +1285,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                 color: '#0f172a',
                 background: '#fff',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-                transition: 'border-color 0.15s, box-shadow 0.15s',
               }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)'; }}
             />
             {searchQuery && (
               <button
@@ -1348,6 +1344,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           ] as [DashboardFilter, string][]).map(([key, label]) => (
             <button
               key={key}
+              className={styles.filterPill}
               onClick={() => setFilter(key)}
               style={{
                 padding: '5px 14px',
@@ -1358,7 +1355,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                 color: filter === key ? '#fff' : '#64748b',
                 cursor: 'pointer',
                 fontWeight: filter === key ? 600 : 500,
-                transition: 'all 0.15s ease',
                 boxShadow: filter === key ? '0 2px 4px rgba(59,130,246,0.2)' : 'none',
               }}
             >
@@ -1442,29 +1438,19 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
 
   return (
     <div
+      className={styles.contractCard}
       onClick={onClick}
       style={{
         padding: '18px 20px',
         background: '#fff',
         borderRadius: 16,
         cursor: 'pointer',
-        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         display: 'flex',
         gap: 16,
         alignItems: 'center',
         boxShadow: item.v2CriticalCount > 0
           ? '0 0 0 1px #fecaca, 0 1px 3px rgba(0,0,0,0.04)'
           : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'none';
-        e.currentTarget.style.boxShadow = item.v2CriticalCount > 0
-          ? '0 0 0 1px #fecaca, 0 1px 3px rgba(0,0,0,0.04)'
-          : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)';
       }}
     >
       {/* Mini SVG Score Ring */}

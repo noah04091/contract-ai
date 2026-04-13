@@ -5,6 +5,7 @@ import { ClauseHistory } from './ClauseHistory';
 import { getLegalReferenceUrl } from '../../utils/legalLinks';
 
 const SaveClauseModal = lazy(() => import('../LegalLens/SaveClauseModal'));
+import styles from '../../styles/PulseV2.module.css';
 
 interface PulseFindingSummary {
   title: string;
@@ -178,6 +179,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
 
   return (
     <div
+      className={styles.findingCard}
       style={{
         border: (fixApplied || isResolved) ? '1px solid #bbf7d0' : isDismissed ? '1px solid #e5e7eb' : `1px solid ${severity.color}22`,
         borderLeft: (fixApplied || isResolved) ? '4px solid #22c55e' : isDismissed ? '4px solid #d1d5db' : `4px solid ${severity.color}`,
@@ -279,7 +281,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
 
       {/* Expanded Details */}
       {expanded && (
-        <div style={{
+        <div className={styles.expandContent} style={{
           padding: '0 16px 16px',
           borderTop: '1px solid #f3f4f6',
           marginTop: -4,
@@ -440,6 +442,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               {/* Quick Fix */}
               {finding.affectedText && !quickFix && !fixApplied && (
                 <button
+                  className={styles.btnAction}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleQuickFix();
@@ -475,6 +478,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
 
               {/* Optimize (full) */}
               <button
+                className={styles.btnAction}
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/optimizer?contractId=${contractId}`, {
@@ -512,6 +516,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               {/* Save to Clause Library */}
               {(finding.affectedText || quickFix) && !clauseSaved && (
                 <button
+                  className={styles.btnAction}
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowSaveModal(true);
@@ -543,6 +548,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               {!reminderSent ? (
                 <div ref={reminderRef} style={{ position: 'relative' }}>
                   <button
+                    className={styles.btnAction}
                     onClick={(e) => {
                       e.stopPropagation();
                       setReminderOpen(!reminderOpen);
@@ -590,6 +596,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       ].map(opt => (
                         <button
                           key={opt.days}
+                          className={styles.dropdownOption}
                           disabled={reminderLoading}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -605,8 +612,6 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                             cursor: reminderLoading ? 'not-allowed' : 'pointer',
                             textAlign: 'left',
                           }}
-                          onMouseEnter={(e) => { if (!reminderLoading) (e.currentTarget as HTMLButtonElement).style.background = '#f0f9ff'; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; }}
                         >
                           {opt.label}
                         </button>
@@ -640,6 +645,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                 {!isResolved && !isDismissed && (
                   <>
                     <button
+                      className={styles.btnAction}
                       onClick={(e) => {
                         e.stopPropagation();
                         onFindingStatusChange?.(findingIndex, 'resolved');
@@ -661,6 +667,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       &#10003; Erledigt
                     </button>
                     <button
+                      className={styles.btnAction}
                       onClick={(e) => {
                         e.stopPropagation();
                         onFindingStatusChange?.(findingIndex, 'dismissed');
@@ -682,6 +689,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       &#10005; Nicht relevant
                     </button>
                     <button
+                      className={styles.btnIcon}
                       onClick={(e) => {
                         e.stopPropagation();
                         setCommentOpen(!commentOpen);
@@ -703,6 +711,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                 {(isResolved || isDismissed) && (
                   <>
                     <button
+                      className={styles.btnSecondary}
                       onClick={(e) => {
                         e.stopPropagation();
                         onFindingStatusChange?.(findingIndex, 'open');
@@ -724,6 +733,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       &#x21A9; Wieder öffnen
                     </button>
                     <button
+                      className={styles.btnIcon}
                       onClick={(e) => {
                         e.stopPropagation();
                         setCommentOpen(!commentOpen);
@@ -927,6 +937,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               {/* Action buttons */}
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
                 <button
+                  className={styles.btnPrimary}
                   onClick={async (e) => {
                     e.stopPropagation();
                     // Persist fix to backend if we have context
@@ -969,11 +980,13 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: 6,
+                    boxShadow: '0 2px 8px rgba(5,150,105,0.3)',
                   }}
                 >
                   &#10003; Anwenden &amp; Speichern
                 </button>
                 <button
+                  className={styles.btnSecondary}
                   onClick={(e) => {
                     e.stopPropagation();
                     setQuickFix(null);

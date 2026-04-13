@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { PulseV2Scores } from '../../types/pulseV2';
+import styles from '../../styles/PulseV2.module.css';
 
 interface HealthScoreGaugeProps {
   scores: PulseV2Scores;
@@ -86,7 +87,7 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
           transform: 'translate(-50%, -50%)',
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: isLarge ? 36 : 18, fontWeight: 700, color }}>
+          <div className={isLarge ? styles.scoreNumber : undefined} style={{ fontSize: isLarge ? 36 : 18, fontWeight: 700, color }}>
             {scores.overall}
           </div>
           {isLarge && (
@@ -166,7 +167,7 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
 };
 
 const SubScore: React.FC<{ label: string; value: number }> = ({ label, value }) => (
-  <div style={{
+  <div className={styles.miniStatCard} style={{
     padding: '6px 8px',
     background: '#f9fafb',
     borderRadius: 6,
