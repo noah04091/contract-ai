@@ -573,17 +573,18 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
 
   return (
     <div style={{ padding: '0 1.5rem' }}>
-      {/* Sammlungs-Header */}
+      {/* Sammlungs-Header — volle Breite */}
       <div style={{
-        background: '#f8fafc',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        padding: '1rem 1.25rem',
-        marginBottom: '1rem',
+        background: 'white',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '0.75rem 4rem',
+        margin: '-0 -1.5rem 0 -1.5rem',
         display: 'flex',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '1rem'
+        gap: '1rem',
+        position: 'relative',
+        zIndex: 10
       }}>
         {isEditing ? (
           <div style={{ flex: 1 }}>
@@ -637,9 +638,13 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{collection.description}</p>
               )}
             </div>
-            <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0, alignItems: 'center' }}>
+              <button onClick={() => setShowCustomForm(!showCustomForm)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', background: showCustomForm ? '#f0f9ff' : '#f8fafc', border: showCustomForm ? '1px solid #93c5fd' : '1px solid #e2e8f0', borderRadius: '8px', color: showCustomForm ? '#2563eb' : '#475569', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer' }}>
+                <PenTool size={14} /> Eigene Klausel
+              </button>
               <button onClick={() => { setEditName(collection.name); setEditDescription(collection.description || ''); setIsEditing(true); }}
-                style={{ padding: '0.375rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', cursor: 'pointer' }}
+                style={{ padding: '0.375rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', cursor: 'pointer' }}
                 title="Sammlung bearbeiten">
                 <Edit3 size={16} />
               </button>
@@ -667,17 +672,9 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
         </div>
       )}
 
-      {/* Aktionen */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button onClick={() => setShowCustomForm(!showCustomForm)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 0.875rem', background: showCustomForm ? '#f0f9ff' : 'white', border: showCustomForm ? '1px solid #93c5fd' : '1px solid #e2e8f0', borderRadius: '8px', color: showCustomForm ? '#2563eb' : '#475569', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer' }}>
-          <PenTool size={15} /> Eigene Klausel schreiben
-        </button>
-      </div>
-
       {/* Freitext-Formular */}
       {showCustomForm && (
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '1rem', marginTop: '1rem', marginBottom: '1rem' }}>
           <div style={{ marginBottom: '0.75rem' }}>
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#374151', marginBottom: '0.375rem' }}>Titel (optional)</label>
             <input type="text" value={customTitle} onChange={e => setCustomTitle(e.target.value)}
