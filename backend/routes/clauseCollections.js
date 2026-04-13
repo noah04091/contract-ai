@@ -391,6 +391,68 @@ router.post("/:id/items", verifyToken, async (req, res) => {
 });
 
 // ============================================
+// UPDATE ITEM IN COLLECTION
+// ============================================
+
+/**
+ * PUT /api/clause-collections/:id/items/:itemId
+ * Aktualisiert ein Item (customTitle, customText, notes).
+ */
+router.put("/:id/items/:itemId", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userObjId = toObjectId(userId);
+    const collectionId = toObjectId(req.params.id);
+    const itemId = toObjectId(req.params.itemId);
+
+    if (!userObjId || !collectionId || !itemId) {
+      return res.status(400).json({ success: false, error: "Ungueltige ID" });
+    }
+
+    const { customTitle, customText, notes } = req.body;
+
+    const collection = await ClauseCollection.findOne({
+      _id: collectionId,
+      userId: userObjId
+    });
+
+    if (!collection) {
+      return res.status(404).json({ success: false, error: "Sammlung nicht gefunden" });
+    }
+
+    const item = collection.items.find(i => i._id.toString() === itemId.toString());
+    if (!item) {
+      return res.status(404).json({ success: false, error: "Eintrag nicht gefunden" });
+    }
+
+    // Custom-Items: Titel und Text editierbar
+    if (item.type === "custom") {
+      if (customTitle !== undefined) item.customTitle = customTitle;
+      if (customText !== undefined) {
+        if (customText.trim().length < 5) {
+          return res.status(400).json({ success: false, error: "Text mind. 5 Zeichen" });
+        }
+        item.customText = customText.trim();
+      }
+    }
+
+    // Notizen fuer alle Typen editierbar
+    if (notes !== undefined) item.notes = notes;
+
+    await collection.save();
+
+    res.json({
+      success: true,
+      item,
+      message: "Eintrag aktualisiert"
+    });
+  } catch (error) {
+    console.error("[ClauseCollections] PUT /:id/items/:itemId error:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Aktualisieren" });
+  }
+});
+
+// ============================================
 // REMOVE ITEM FROM COLLECTION
 // ============================================
 

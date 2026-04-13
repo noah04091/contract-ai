@@ -18,9 +18,12 @@ import {
   ChevronUp,
   ExternalLink,
   AlertCircle,
-  Copy
+  Copy,
+  Save
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
+import * as clauseLibraryAPI from '../../services/clauseLibraryAPI';
+import type { ClauseCategory, ClauseArea } from '../../types/clauseLibrary';
 import type { ClauseCollection, CollectionItem } from '../../types/clauseLibrary';
 import {
   CATEGORY_INFO,
@@ -65,6 +68,14 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Sidebar-Edit fuer Items
+  const [sidebarEditMode, setSidebarEditMode] = useState(false);
+  const [sidebarEditTitle, setSidebarEditTitle] = useState('');
+  const [sidebarEditText, setSidebarEditText] = useState('');
+  const [sidebarEditNotes, setSidebarEditNotes] = useState('');
+  const [isSavingSidebar, setIsSavingSidebar] = useState(false);
+  const [sidebarSaveSuccess, setSidebarSaveSuccess] = useState(false);
 
   // Sammlung loeschen
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -786,6 +797,50 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
               'Eigene Klausel': { border: '#f59e0b', bg: '#fffbeb' }
             };
             const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
+            const isEditable = selectedItem.type === 'custom' || selectedItem.type === 'saved';
+
+            const handleStartEdit = () => {
+              if (selectedItem.type === 'custom') {
+                setSidebarEditTitle(selectedItem.customTitle || '');
+                setSidebarEditText(selectedItem.customText || '');
+              }
+              setSidebarEditNotes(selectedItem.notes || '');
+              setSidebarEditMode(true);
+              setSidebarSaveSuccess(false);
+            };
+
+            const handleCancelEdit = () => {
+              setSidebarEditMode(false);
+            };
+
+            const handleSaveEdit = async () => {
+              if (!collection) return;
+              setIsSavingSidebar(true);
+              try {
+                // Custom-Items: Titel + Text + Notiz ueber Collection-API
+                if (selectedItem.type === 'custom') {
+                  await clauseCollectionAPI.updateItem(collection._id, selectedItem._id, {
+                    customTitle: sidebarEditTitle.trim(),
+                    customText: sidebarEditText.trim(),
+                    notes: sidebarEditNotes.trim()
+                  });
+                }
+                // Saved-Items: Notiz ueber Collection-API (Kategorie/Tags ueber clauseLibrary-API)
+                if (selectedItem.type === 'saved' || selectedItem.type === 'template' || selectedItem.type === 'lexikon') {
+                  await clauseCollectionAPI.updateItem(collection._id, selectedItem._id, {
+                    notes: sidebarEditNotes.trim()
+                  });
+                }
+                setSidebarEditMode(false);
+                setSidebarSaveSuccess(true);
+                setTimeout(() => setSidebarSaveSuccess(false), 2000);
+                loadCollection(); // Reload um aktualisierte Daten zu zeigen
+              } catch (err) {
+                console.error('[SammlungTab] Save error:', err);
+              } finally {
+                setIsSavingSidebar(false);
+              }
+            };
 
             return (
               <div className={styles.detailPanel}>
@@ -800,36 +855,97 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                     }}>
                       {header.icon} {header.source}
                     </span>
-                    {header.title}
+                    {sidebarEditMode && selectedItem.type === 'custom' ? 'Bearbeiten' : header.title}
                   </h3>
-                  <button className={styles.closeDetail} onClick={() => setExpandedItem(null)}>
-                    <X size={20} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.375rem' }}>
+                    {isEditable && !sidebarEditMode && (
+                      <button
+                        onClick={handleStartEdit}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.375rem 0.625rem', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#64748b', fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        <Edit3 size={14} /> Bearbeiten
+                      </button>
+                    )}
+                    {sidebarEditMode && (
+                      <>
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={isSavingSidebar}
+                          style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.375rem 0.625rem', background: '#10b981', border: 'none', borderRadius: '8px', color: 'white', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          {isSavingSidebar ? <Loader2 size={14} className={styles.spinner} /> : <Save size={14} />} Speichern
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          style={{ padding: '0.375rem 0.625rem', background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#64748b', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          Abbrechen
+                        </button>
+                      </>
+                    )}
+                    <button className={styles.closeDetail} onClick={() => { setExpandedItem(null); setSidebarEditMode(false); }}>
+                      <X size={20} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Scrollbarer Inhalt */}
                 <div className={styles.detailContent}>
-                  {/* Typ-spezifischer Inhalt */}
-                  {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
-                  {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
-                  {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
-                  {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
+                  {sidebarSaveSuccess && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.625rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', marginBottom: '0.75rem', fontSize: '0.75rem', color: '#16a34a' }}>
+                      <Check size={12} /> Gespeichert
+                    </div>
+                  )}
 
-                  {/* Sammlungs-Notiz */}
+                  {/* Custom-Items: Editierbar */}
+                  {selectedItem.type === 'custom' && sidebarEditMode ? (
+                    <div>
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>Titel</label>
+                        <input type="text" value={sidebarEditTitle} onChange={e => setSidebarEditTitle(e.target.value)}
+                          style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem' }} />
+                      </div>
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.25rem' }}>Klauseltext</label>
+                        <textarea value={sidebarEditText} onChange={e => setSidebarEditText(e.target.value)}
+                          rows={6} style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit' }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Typ-spezifischer Inhalt (read-only) */}
+                      {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
+                      {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
+                      {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
+                      {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
+                    </>
+                  )}
+
+                  {/* Sammlungs-Notiz — editierbar */}
                   <div style={{ marginTop: '1rem' }}>
                     <h5 style={{ margin: '0 0 0.375rem 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       Sammlungs-Notiz
                     </h5>
-                    <p style={{
-                      margin: 0, fontSize: '0.85rem',
-                      color: selectedItem.notes ? '#334155' : '#94a3b8',
-                      fontStyle: selectedItem.notes ? 'normal' : 'italic'
-                    }}>
-                      {selectedItem.notes || 'Keine Notiz'}
-                    </p>
+                    {sidebarEditMode ? (
+                      <textarea
+                        value={sidebarEditNotes}
+                        onChange={e => setSidebarEditNotes(e.target.value)}
+                        placeholder="Notiz hinzufuegen..."
+                        rows={3}
+                        style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit' }}
+                      />
+                    ) : (
+                      <p style={{
+                        margin: 0, fontSize: '0.85rem',
+                        color: selectedItem.notes ? '#334155' : '#94a3b8',
+                        fontStyle: selectedItem.notes ? 'normal' : 'italic'
+                      }}>
+                        {selectedItem.notes || 'Keine Notiz — klicke "Bearbeiten"'}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Hinzugefuegt am */}
+                  {/* Historie */}
                   <div style={{ marginTop: '1rem' }}>
                     <h5 style={{ margin: '0 0 0.375rem 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       Historie

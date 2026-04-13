@@ -103,6 +103,25 @@ export async function addItem(
 }
 
 /**
+ * Item in einer Sammlung aktualisieren (customTitle, customText, notes)
+ */
+export async function updateItem(
+  collectionId: string,
+  itemId: string,
+  data: { customTitle?: string; customText?: string; notes?: string }
+): Promise<{ success: boolean; item: CollectionItem; message: string }> {
+  const response = await fetchWithAuth(`${BASE}/${collectionId}/items/${itemId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Aktualisieren');
+  }
+  return response.json();
+}
+
+/**
  * Klausel aus Sammlung entfernen
  */
 export async function removeItem(
