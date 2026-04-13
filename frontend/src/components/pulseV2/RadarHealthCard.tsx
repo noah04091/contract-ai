@@ -93,7 +93,7 @@ export const RadarHealthCompact: React.FC<{
 
 // ── Expanded details panel (renders full-width below the flex row) ──
 export const RadarHealthExpanded: React.FC<{ data: RadarHealthData }> = ({ data }) => (
-  <div style={{ marginTop: 24, borderTop: '1px solid #f1f5f9', paddingTop: 20 }}>
+  <div style={{ marginTop: 24, background: '#fafbfe', borderRadius: 12, padding: 20 }}>
     {/* Laws coverage */}
     <SectionHeader title="Rechtsquellen-Abdeckung" />
     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -155,11 +155,12 @@ export const RadarHealthCard: React.FC<{ embedded?: boolean }> = () => {
 
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
-      background: '#fff',
-      border: '1px solid #e5e7eb',
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 20,
+      background: '#ffffff',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       <div
         onClick={() => setExpanded(!expanded)}

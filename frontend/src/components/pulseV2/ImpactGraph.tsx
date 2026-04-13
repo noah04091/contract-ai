@@ -26,7 +26,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
   return (
     <div style={{
       border: `1px solid ${sev.color}22`,
-      borderRadius: 10,
+      borderRadius: 12,
       overflow: 'hidden',
       marginBottom: 12,
     }}>
@@ -187,7 +187,7 @@ const GraphNode: React.FC<{
       gap: 12,
       padding: '10px 12px',
       background: `${color}08`,
-      borderRadius: 8,
+      borderRadius: 10,
       borderLeft: `3px solid ${color}`,
       cursor: clickable ? 'pointer' : 'default',
     }}

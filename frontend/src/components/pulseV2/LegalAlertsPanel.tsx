@@ -115,15 +115,16 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
 
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
-      background: '#fff',
-      border: '1px solid #e5e7eb',
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 20,
+      background: '#ffffff',
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
           <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
           <span style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
             Legal Radar
@@ -314,7 +315,8 @@ const LawGroup: React.FC<{
   return (
     <div className={styles.lawGroupCard} style={{
       border: `1px solid ${sevColor}22`,
-      borderRadius: 10,
+      borderRadius: 12,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       marginBottom: 12,
     }}>
       {/* Group header */}

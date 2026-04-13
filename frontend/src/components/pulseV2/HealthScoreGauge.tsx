@@ -64,7 +64,7 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
             cy={gaugeSize / 2}
             r={radius}
             fill="none"
-            stroke="#e5e7eb"
+            stroke="#e2e8f0"
             strokeWidth={strokeWidth}
           />
           <circle
@@ -168,9 +168,10 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
 
 const SubScore: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className={styles.miniStatCard} style={{
-    padding: '6px 8px',
+    padding: '8px 10px',
     background: '#f9fafb',
-    borderRadius: 6,
+    borderRadius: 8,
+    border: '1px solid #f1f5f9',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',

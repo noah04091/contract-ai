@@ -82,7 +82,8 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
       background: isDone ? '#f0fdf4' : isDismissed ? '#f9fafb' : '#fff',
       border: `1px solid ${isDone ? '#bbf7d0' : isDismissed ? '#e5e7eb' : priority.color + '33'}`,
       borderLeft: `4px solid ${isDone ? '#22c55e' : isDismissed ? '#d1d5db' : priority.color}`,
-      borderRadius: 8,
+      borderRadius: 12,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       opacity: isDismissed ? 0.6 : 1,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>

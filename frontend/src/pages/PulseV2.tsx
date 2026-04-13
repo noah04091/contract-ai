@@ -867,11 +867,11 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       {!heroCollapsed ? (
         <div style={{
           position: 'relative',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #312e81 100%)',
           borderRadius: 20,
           padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
           marginBottom: 28,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 16px 48px rgba(15,23,42,0.15)',
           display: 'flex',
           alignItems: 'center',
           gap: 48,
@@ -884,8 +884,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             style={{
               position: 'absolute', top: 16, right: 16,
               width: 32, height: 32, borderRadius: '50%',
-              border: 'none', background: '#f1f5f9',
-              cursor: 'pointer', fontSize: 16, color: '#94a3b8',
+              border: 'none', background: 'rgba(255,255,255,0.1)',
+              cursor: 'pointer', fontSize: 16, color: 'rgba(255,255,255,0.6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -895,33 +895,34 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           {/* Left: Title + Subtitle */}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-              <h1 style={{ fontSize: 32, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.5px' }}>
                 Legal Pulse
               </h1>
               <span style={{
-                fontSize: 10, fontWeight: 700, color: '#15803d',
-                background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
+                fontSize: 10, fontWeight: 700, color: '#a5f3fc',
+                background: 'rgba(99,102,241,0.25)',
+                border: '1px solid rgba(165,243,252,0.3)',
                 padding: '4px 12px', borderRadius: 6,
                 letterSpacing: '0.5px', textTransform: 'uppercase',
               }}>
                 Laufende Überwachung
               </span>
             </div>
-            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
+            <p style={{ fontSize: 15, color: '#94a3b8', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
               Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
             </p>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
-              <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
+            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#94a3b8', flexWrap: 'wrap' as const }}>
+              <span><strong style={{ color: '#ffffff', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
               {alertStats.criticalContracts.length > 0 && (
-                <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+                <span><strong style={{ color: '#fca5a5', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
               )}
               {alertStats.openActions.length > 0 && (
-                <span><strong style={{ color: '#d97706', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
+                <span><strong style={{ color: '#fcd34d', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
               )}
             </div>
           </div>
 
-          {/* Right: Feature cards */}
+          {/* Right: Feature cards — Glassmorphism */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
             {[
               { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
@@ -930,20 +931,21 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             ].map((card) => (
               <div key={card.title} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                background: '#fff', padding: '14px 18px',
-                borderRadius: 12, border: '1px solid #f1f5f9',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                background: 'rgba(255,255,255,0.08)', padding: '14px 18px',
+                borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 minWidth: 0,
               }}>
                 <div style={{
                   fontSize: 20, width: 42, height: 42,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: '#f8fafc', borderRadius: 10,
+                  background: 'rgba(255,255,255,0.1)', borderRadius: 10,
                 }}>
                   {card.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1f2937' }}>{card.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9' }}>{card.title}</div>
                   <div style={{ fontSize: 12, color: '#94a3b8' }}>{card.desc}</div>
                 </div>
               </div>
@@ -955,20 +957,20 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 28px',
-          background: '#fff', borderRadius: 14,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', borderRadius: 14,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 16px 48px rgba(15,23,42,0.15)',
           marginBottom: 28,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Legal Pulse</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', margin: 0 }}>Legal Pulse</h1>
             <span style={{
-              fontSize: 10, fontWeight: 700, color: '#15803d',
-              background: '#dcfce7', padding: '2px 8px', borderRadius: 4,
+              fontSize: 10, fontWeight: 700, color: '#a5f3fc',
+              background: 'rgba(99,102,241,0.25)', padding: '2px 8px', borderRadius: 4,
               letterSpacing: '0.5px', textTransform: 'uppercase',
             }}>
               Aktiv
             </span>
-            <span style={{ fontSize: 13, color: '#94a3b8' }}>
+            <span style={{ fontSize: 13, color: '#64748b' }}>
               {stats.analyzed} / {stats.total} Verträge analysiert
             </span>
           </div>
@@ -976,8 +978,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             onClick={() => setHeroCollapsed(false)}
             style={{
               padding: '6px 14px', fontSize: 12, fontWeight: 600,
-              color: '#3b82f6', background: '#eff6ff',
-              border: '1px solid #bfdbfe', borderRadius: 8,
+              color: '#a5b4fc', background: 'rgba(99,102,241,0.15)',
+              border: '1px solid rgba(165,180,252,0.25)', borderRadius: 8,
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
@@ -988,9 +990,10 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
       {/* ══════════ Hero: Portfolio Health Score ══════════ */}
       <div style={{
-        background: '#fff',
+        background: '#ffffff',
         borderRadius: 20,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+        border: '1px solid rgba(0,0,0,0.04)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
         padding: '36px 44px',
         marginBottom: 28,
       }}>
@@ -1010,9 +1013,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           const offset = circumference * (1 - pct);
           return (
             <>
-              <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0, filter: `drop-shadow(0 0 12px ${color}33)` }}>
                 <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="60" cy="60" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                  <circle cx="60" cy="60" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
                   {score !== null && (
                     <circle
                       cx="60" cy="60" r={radius}
@@ -1037,7 +1040,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                   </span>
                 </div>
               </div>
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: 1, borderLeft: '4px solid #6366f1', paddingLeft: 16 }}>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
                   Contract Health
                 </div>
@@ -1048,10 +1051,10 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                   }
                 </div>
                 {!isFirstUse && stats.analyzed > 0 && (
-                  <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b' }}>
-                    <span><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
-                    <span><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
-                    <span><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
+                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
+                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
                   </div>
                 )}
                 {isFirstUse && items.length > 0 && (
@@ -1064,9 +1067,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                       color: '#fff',
                       background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
                       border: 'none',
-                      borderRadius: 10,
+                      borderRadius: 8,
                       cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                      boxShadow: '0 2px 8px rgba(99,102,241,0.3), 0 1px 2px rgba(0,0,0,0.08)',
                     }}
                   >
                     Erste Analyse starten
@@ -1448,13 +1451,15 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
         display: 'flex',
         gap: 16,
         alignItems: 'center',
+        border: '1px solid rgba(0,0,0,0.04)',
+        borderLeft: item.v2CriticalCount > 0 ? '4px solid #ef4444' : `4px solid ${scoreColor}`,
         boxShadow: item.v2CriticalCount > 0
-          ? '0 0 0 1px #fecaca, 0 1px 3px rgba(0,0,0,0.04)'
-          : '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
+          ? '0 1px 3px rgba(220,38,38,0.1), 0 4px 16px rgba(0,0,0,0.04)'
+          : '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
       }}
     >
       {/* Mini SVG Score Ring */}
-      <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+      <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0, filter: `drop-shadow(0 0 6px ${scoreColor}33)` }}>
         <svg width="52" height="52" viewBox="0 0 52 52" style={{ transform: 'rotate(-90deg)' }}>
           <circle cx="26" cy="26" r={r} fill="none" stroke="#f1f5f9" strokeWidth="4" />
           {score !== null && (
@@ -1488,6 +1493,7 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
           display: 'flex',
           alignItems: 'center',
           gap: 8,
+          letterSpacing: '-0.2px',
         }}>
           {cleanContractName(item.name)}
           {item.v2CriticalCount > 0 && (

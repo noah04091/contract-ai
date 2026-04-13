@@ -164,12 +164,13 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
-      border: '1px solid #e5e7eb',
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 20,
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
         Portfolio-Insights
         <span style={{
           fontSize: 12,

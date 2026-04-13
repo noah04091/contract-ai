@@ -145,9 +145,10 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: config.bg,
       border: `1px solid ${config.border}`,
-      borderRadius: 12,
-      padding: '16px 20px',
-      marginBottom: 20,
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header: Status dot + label + scan button */}
       <div style={{

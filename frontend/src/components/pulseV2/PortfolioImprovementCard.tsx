@@ -62,13 +62,14 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #e5e7eb',
-      padding: '20px 24px',
-      marginBottom: 20,
+      borderRadius: 16,
+      border: '1px solid rgba(0,0,0,0.05)',
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header */}
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16 }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
         Portfolio-Entwicklung
       </div>
 

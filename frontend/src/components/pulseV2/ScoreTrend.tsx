@@ -54,10 +54,11 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
-      border: '1px solid #e5e7eb',
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 16,
+      border: '1px solid rgba(0,0,0,0.05)',
+      borderRadius: 16,
+      padding: 24,
+      marginBottom: 28,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div>
@@ -98,7 +99,7 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
               contentStyle={{
                 background: '#fff',
                 border: '1px solid #e5e7eb',
-                borderRadius: 8,
+                borderRadius: 10,
                 fontSize: 12,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
               }}
