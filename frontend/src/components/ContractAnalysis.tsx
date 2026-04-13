@@ -1458,7 +1458,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                   <div className={styles.pulseActions}>
                     <button
                       className={styles.viewFullPulseButton}
-                      onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                      onClick={() => window.location.href = `/pulse/${result?.originalContractId || initialResult?.originalContractId}`}
                     >
                       <BarChart3 size={18} />
                       <span>Vollständige Legal Pulse Analyse anzeigen</span>
@@ -1484,7 +1484,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
             {(result?.originalContractId || initialResult?.originalContractId) && (
               <motion.button
                 className={styles.primaryActionButton}
-                onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                onClick={() => window.location.href = `/pulse/${result?.originalContractId || initialResult?.originalContractId}`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

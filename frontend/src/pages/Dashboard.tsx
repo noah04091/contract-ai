@@ -978,7 +978,7 @@ export default function Dashboard() {
               <InfoTooltip {...tooltipTexts.legalPulse} />
               <button 
                 className={`${styles.actionButton} ${styles.primaryButton}`}
-                onClick={() => navigate('/legalpulse')}
+                onClick={() => navigate('/pulse')}
               >
                 <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
@@ -1005,7 +1005,7 @@ export default function Dashboard() {
                     <div 
                       key={contract._id} 
                       className={`${styles.legalPulseCard} ${styles.clickableCard}`}
-                      onClick={() => navigate(`/legalpulse/${contract._id}`)}
+                      onClick={() => navigate(`/pulse/${contract._id}`)}
                     >
                       <div className={styles.contractHeader}>
                         <div className={styles.contractTitleSection}>
@@ -1405,7 +1405,7 @@ export default function Dashboard() {
 
             <button 
               className={styles.quickActionCard}
-              onClick={() => navigate('/legalpulse')}
+              onClick={() => navigate('/pulse')}
             >
               <div className={styles.quickActionIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

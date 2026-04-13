@@ -582,7 +582,7 @@ export default function DashboardV2() {
                 <ArrowRight size={18} className={styles.stepArrow} />
               </Link>
 
-              <Link to="/legalpulse" className={styles.onboardingStep}>
+              <Link to="/pulse" className={styles.onboardingStep}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepIcon} style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>
                   <Shield size={20} />
@@ -873,7 +873,7 @@ export default function DashboardV2() {
             <ArrowRight size={16} className={styles.quickActionArrow} />
           </Link>
 
-          <Link to="/legalpulse" className={styles.quickActionCard}>
+          <Link to="/pulse" className={styles.quickActionCard}>
             <div className={styles.quickActionIcon} style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>
               <Scale size={20} />
             </div>
@@ -1029,10 +1029,10 @@ export default function DashboardV2() {
                   <div
                     key={contract._id}
                     className={styles.featureItem}
-                    onClick={() => navigate(`/legalpulse/${contract._id}`)}
+                    onClick={() => navigate(`/pulse/${contract._id}`)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && navigate(`/legalpulse/${contract._id}`)}
+                    onKeyDown={(e) => e.key === 'Enter' && navigate(`/pulse/${contract._id}`)}
                   >
                     <Shield size={14} style={{ color }} />
                     <span>{fixUtf8Display(contract.name)}</span>
@@ -1049,7 +1049,7 @@ export default function DashboardV2() {
                     <span>Noch keine Analysen</span>
                     <p>Analysiere Verträge auf Risiken und Optimierungspotenzial</p>
                   </div>
-                  <Link to="/legalpulse" className={styles.featureEmptyCta}>
+                  <Link to="/pulse" className={styles.featureEmptyCta}>
                     Analyse starten
                     <ArrowRight size={14} />
                   </Link>
@@ -1057,7 +1057,7 @@ export default function DashboardV2() {
               )}
             </div>
             {contracts.filter(c => c.legalPulse?.riskScore != null).length > 0 && (
-              <Link to="/legalpulse" className={styles.featureSectionLink}>
+              <Link to="/pulse" className={styles.featureSectionLink}>
                 Alle Analysen <ArrowRight size={14} />
               </Link>
             )}

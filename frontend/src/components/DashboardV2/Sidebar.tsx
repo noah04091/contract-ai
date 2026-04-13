@@ -106,7 +106,7 @@ const navigation: NavSection[] = [
         label: 'Legal Pulse',
         subtitle: 'Laufende Überwachung',
         icon: Radar,
-        href: '/legalpulse',
+        href: '/pulse',
         badge: 'LIVE',
         badgeColor: 'green',
       },

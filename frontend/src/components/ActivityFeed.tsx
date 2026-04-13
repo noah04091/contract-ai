@@ -146,7 +146,7 @@ export default function ActivityFeed({ limit = 10, showHeader = true }: Activity
       {showHeader && (
         <div className={styles.headerRow}>
           <h3 className={styles.header}>📊 Aktivitäten</h3>
-          <Link to="/legalpulse" className={styles.viewAll}>
+          <Link to="/pulse" className={styles.viewAll}>
             Alle anzeigen →
           </Link>
         </div>

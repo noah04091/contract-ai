@@ -82,6 +82,7 @@ export function useAssistantContext(): AssistantContext {
       "/compare",
       "/generate",
       "/legalpulse",
+      "/pulse",
     ];
 
     const isLegalRoute = legalRoutes.some((prefix) =>

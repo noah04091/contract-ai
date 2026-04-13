@@ -315,7 +315,7 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link to="/legalpulse" className={`${styles.navLink} ${location.pathname === "/legalpulse" ? styles.activeNavLink : ""}`}>
+                    <Link to="/pulse" className={`${styles.navLink} ${location.pathname.startsWith("/pulse") ? styles.activeNavLink : ""}`}>
                       <span className={styles.navLinkIcon}>⚖️</span>
                       <span className={styles.navLinkText}>Legal Pulse</span>
                     </Link>
@@ -1103,7 +1103,7 @@ export default function Navbar() {
                     </Link>
                   ) : (
                     <>
-                      <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
+                      <Link to="/pulse" className={`${styles.mobileNavLink} ${location.pathname.startsWith("/pulse") ? styles.activeMobileNavLink : ""}`}>
                         <span className={styles.mobileNavIcon}>⚖️</span>
                         <span>Legal Pulse</span>
                       </Link>
@@ -1435,7 +1435,7 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
-                      <Link to="/legalpulse" className={`${styles.navLinkNew} ${location.pathname === '/legalpulse' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/pulse" className={`${styles.navLinkNew} ${location.pathname.startsWith('/pulse') ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Radar size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>Legal Pulse</span>
                       </Link>

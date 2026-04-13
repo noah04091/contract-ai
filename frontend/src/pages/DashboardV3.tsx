@@ -219,7 +219,7 @@ export default function DashboardV2() {
         text: `${unanalyzed} ${unanalyzed === 1 ? 'Vertrag wurde' : 'Verträge wurden'} noch nicht analysiert`,
         type: 'info',
         action: 'Analysieren',
-        link: '/legalpulse'
+        link: '/pulse'
       });
     }
 
@@ -532,7 +532,7 @@ export default function DashboardV2() {
               <ArrowRight size={18} className={styles.quickArrow} />
             </Link>
 
-            <Link to="/legalpulse" className={styles.quickCard}>
+            <Link to="/pulse" className={styles.quickCard}>
               <div className={styles.quickIcon} style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>
                 <Scale size={22} />
               </div>
