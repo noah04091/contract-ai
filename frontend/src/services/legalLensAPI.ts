@@ -863,7 +863,7 @@ export function parseContractStreaming(
     // Wenn 12s lang keine Daten ankommen → Proxy hat Verbindung gekappt.
     let lastDataAt = Date.now();
     const INACTIVITY_TIMEOUT_MS = 12000;
-    let inactivityCheck: ReturnType<typeof setInterval> | null = null;
+    let inactivityCheck: ReturnType<typeof setInterval> | undefined;
 
     try {
       const response = await fetch(getUrl(), {
