@@ -19,7 +19,8 @@ import {
   ExternalLink,
   AlertCircle,
   Copy,
-  Save
+  Save,
+  Search
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
 import type { ClauseCollection, CollectionItem } from '../../types/clauseLibrary';
@@ -54,6 +55,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Freitext-Formular
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -569,7 +571,22 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
     );
   }
 
-  const items = collection.items || [];
+  const allItems = collection.items || [];
+
+  // Suchfilter
+  const items = searchQuery.trim()
+    ? allItems.filter(item => {
+        const q = searchQuery.toLowerCase();
+        const header = getItemHeader(item);
+        if (header.title.toLowerCase().includes(q)) return true;
+        if (header.subtitle && header.subtitle.toLowerCase().includes(q)) return true;
+        if (item.customTitle?.toLowerCase().includes(q)) return true;
+        if (item.customText?.toLowerCase().includes(q)) return true;
+        if (item.notes?.toLowerCase().includes(q)) return true;
+        if (item.resolvedClause?.clauseText?.toLowerCase().includes(q)) return true;
+        return false;
+      })
+    : allItems;
 
   return (
     <div style={{ padding: '0 1.5rem' }}>
@@ -638,9 +655,40 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{collection.description}</p>
               )}
             </div>
-            <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
+              {/* Suchleiste */}
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={14} style={{ position: 'absolute', left: '0.5rem', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Suchen..."
+                  style={{
+                    padding: '0.375rem 0.625rem 0.375rem 1.75rem',
+                    border: '1px solid #e2e8f0', borderRadius: '8px',
+                    fontSize: '0.8rem', color: '#1e293b', width: '160px',
+                    background: '#f8fafc', transition: 'all 0.15s'
+                  }}
+                  onFocus={e => { e.target.style.borderColor = '#10b981'; e.target.style.width = '220px'; }}
+                  onBlur={e => { if (!searchQuery) { e.target.style.borderColor = '#e2e8f0'; e.target.style.width = '160px'; } }}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: '0.375rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.125rem' }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
               <button onClick={() => setShowCustomForm(!showCustomForm)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', background: showCustomForm ? '#f0f9ff' : '#f8fafc', border: showCustomForm ? '1px solid #93c5fd' : '1px solid #e2e8f0', borderRadius: '8px', color: showCustomForm ? '#2563eb' : '#475569', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer' }}>
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.375rem',
+                  padding: '0.375rem 0.75rem',
+                  background: showCustomForm ? '#059669' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  border: 'none', borderRadius: '8px',
+                  color: 'white', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
+                  transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)'
+                }}>
                 <PenTool size={14} /> Eigene Klausel
               </button>
               <button onClick={() => { setEditName(collection.name); setEditDescription(collection.description || ''); setIsEditing(true); }}
