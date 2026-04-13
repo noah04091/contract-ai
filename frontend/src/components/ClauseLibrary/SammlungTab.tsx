@@ -773,7 +773,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
               })}
           </div>
 
-          {/* Detail-Panel unter dem Grid */}
+          {/* Rechte Sidebar (wie bei Meine Klauseln) */}
           {expandedItem && (() => {
             const selectedItem = items.find(i => i._id === expandedItem);
             if (!selectedItem) return null;
@@ -788,59 +788,63 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
             const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
 
             return (
-              <div style={{
-                marginTop: '1.25rem',
-                background: 'white',
-                border: `1px solid #e2e8f0`,
-                borderLeft: `3px solid ${sc.border}`,
-                borderRadius: '12px',
-                padding: '1.25rem',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-              }}>
-                {/* Detail-Header */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+              <div className={styles.detailPanel}>
+                {/* Header */}
+                <div className={styles.detailHeader}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-                      fontSize: '0.75rem', padding: '0.25rem 0.625rem',
+                      fontSize: '0.7rem', padding: '0.2rem 0.5rem',
                       background: sc.bg, color: sc.border,
-                      borderRadius: '6px', fontWeight: 600
+                      borderRadius: '4px', fontWeight: 600
                     }}>
                       {header.icon} {header.source}
                     </span>
-                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>
-                      {header.title}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setExpandedItem(null)}
-                    style={{
-                      padding: '0.375rem', background: '#f8fafc', border: '1px solid #e2e8f0',
-                      borderRadius: '8px', color: '#64748b', cursor: 'pointer'
-                    }}
-                  >
-                    <X size={16} />
+                    {header.title}
+                  </h3>
+                  <button className={styles.closeDetail} onClick={() => setExpandedItem(null)}>
+                    <X size={20} />
                   </button>
                 </div>
 
-                {/* Typ-spezifischer Inhalt */}
-                {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
-                {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
-                {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
-                {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
+                {/* Scrollbarer Inhalt */}
+                <div className={styles.detailContent}>
+                  {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
+                  {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
+                  {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
+                  {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
 
-                {selectedItem.notes && (
-                  <div style={{
-                    marginTop: '0.75rem', padding: '0.5rem 0.75rem',
-                    background: '#fffbeb', border: '1px solid #fde68a',
-                    borderRadius: '6px', fontSize: '0.8rem', color: '#92400e'
-                  }}>
-                    <strong>Sammlungs-Notiz:</strong> {selectedItem.notes}
-                  </div>
-                )}
+                  {selectedItem.notes && (
+                    <div style={{
+                      marginTop: '0.75rem', padding: '0.5rem 0.75rem',
+                      background: '#fffbeb', border: '1px solid #fde68a',
+                      borderRadius: '6px', fontSize: '0.8rem', color: '#92400e'
+                    }}>
+                      <strong>Sammlungs-Notiz:</strong> {selectedItem.notes}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer mit Entfernen-Button */}
+                <div className={styles.detailActions}>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => {
+                      if (confirm('Eintrag aus Sammlung entfernen?')) {
+                        handleRemoveItem(selectedItem._id);
+                        setExpandedItem(null);
+                      }
+                    }}
+                    disabled={removingItemId === selectedItem._id}
+                  >
+                    {removingItemId === selectedItem._id ? (
+                      <Loader2 size={16} className={styles.spinner} />
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
+                    Aus Sammlung entfernen
+                  </button>
+                </div>
               </div>
             );
           })()}
