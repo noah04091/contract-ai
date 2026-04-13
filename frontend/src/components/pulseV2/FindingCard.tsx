@@ -89,7 +89,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   }, [reminderOpen]);
 
   const handleQuickFix = useCallback(async () => {
-    if (!finding.affectedText) return;
+    if (!finding.affectedText || quickFixLoading) return;
     setQuickFixLoading(true);
     setQuickFixError(null);
     try {
@@ -121,7 +121,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
     } finally {
       setQuickFixLoading(false);
     }
-  }, [finding]);
+  }, [finding, quickFixLoading]);
 
   const handleCreateReminder = useCallback(async (daysFromNow: number) => {
     if (!contractId) return;
