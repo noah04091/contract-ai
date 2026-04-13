@@ -4394,7 +4394,6 @@
 }
 
 .clauseItem.pending {
-  animation: pendingPulse 2s ease-in-out infinite;
   border-left-color: #cbd5e1;
 }
 
