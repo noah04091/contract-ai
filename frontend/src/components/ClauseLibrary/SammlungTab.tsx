@@ -561,7 +561,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   const items = collection.items || [];
 
   return (
-    <div>
+    <div style={{ padding: '0 1.5rem' }}>
       {/* Sammlungs-Header */}
       <div style={{
         background: '#f8fafc',
