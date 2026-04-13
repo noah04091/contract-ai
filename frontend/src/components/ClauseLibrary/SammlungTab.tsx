@@ -22,8 +22,6 @@ import {
   Save
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
-import * as clauseLibraryAPI from '../../services/clauseLibraryAPI';
-import type { ClauseCategory, ClauseArea } from '../../types/clauseLibrary';
 import type { ClauseCollection, CollectionItem } from '../../types/clauseLibrary';
 import {
   CATEGORY_INFO,
