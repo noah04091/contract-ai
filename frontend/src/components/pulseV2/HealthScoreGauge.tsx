@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { PulseV2Scores } from '../../types/pulseV2';
 import styles from '../../styles/PulseV2.module.css';
 
@@ -30,12 +31,43 @@ function getTrendArrow(trend?: string): string {
 
 export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, riskTrend, size = 'large' }) => {
   const [showScoreInfo, setShowScoreInfo] = useState(false);
-  const scoreInfoRef = useRef<HTMLDivElement>(null);
+  const gaugeRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [popupPos, setPopupPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
+  // Calculate popup position relative to gauge
+  const updatePosition = useCallback(() => {
+    if (!gaugeRef.current) return;
+    const rect = gaugeRef.current.getBoundingClientRect();
+    const popupWidth = 300;
+    let left = rect.left + rect.width / 2 - popupWidth / 2;
+    // Keep within viewport
+    if (left < 8) left = 8;
+    if (left + popupWidth > window.innerWidth - 8) left = window.innerWidth - popupWidth - 8;
+    setPopupPos({ top: rect.bottom + 8, left });
+  }, []);
+
+  // Update position on open, scroll, resize
+  useEffect(() => {
+    if (!showScoreInfo) return;
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [showScoreInfo, updatePosition]);
+
+  // Close on click outside (check both gauge and popup)
   useEffect(() => {
     if (!showScoreInfo) return;
     const handler = (e: MouseEvent) => {
-      if (scoreInfoRef.current && !scoreInfoRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        gaugeRef.current && !gaugeRef.current.contains(target) &&
+        popupRef.current && !popupRef.current.contains(target)
+      ) {
         setShowScoreInfo(false);
       }
     };
@@ -54,7 +86,7 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
   return (
     <div style={{ textAlign: 'center' }}>
       <div
-        ref={scoreInfoRef}
+        ref={gaugeRef}
         style={{ position: 'relative', display: 'inline-block', width: gaugeSize, height: gaugeSize, cursor: isLarge ? 'pointer' : 'default' }}
         onClick={() => { if (isLarge) setShowScoreInfo(!showScoreInfo); }}
       >
@@ -104,54 +136,61 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
             </div>
           )}
         </div>
-
-        {/* Score explanation popup — fixed position to avoid clipping by parent overflow */}
-        {isLarge && showScoreInfo && (() => {
-          const rect = scoreInfoRef.current?.getBoundingClientRect();
-          const popupTop = rect ? rect.bottom + 8 : 0;
-          const popupLeft = rect ? rect.left + rect.width / 2 - 150 : 0;
-          return (
-            <div style={{
-              position: 'fixed', top: popupTop, left: Math.max(8, popupLeft),
-              width: 300, padding: '14px 16px',
-              background: '#fff', border: '1px solid #e5e7eb',
-              borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-              zIndex: 9999, fontSize: 12, color: '#4b5563', lineHeight: 1.6,
-              textAlign: 'left',
-            }}>
-              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
-                So wird Ihr Score berechnet
-              </div>
-              <p style={{ margin: '0 0 6px' }}>
-                Der Gesamtscore (0–100) setzt sich aus vier gleichgewichteten Faktoren zusammen:
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Risiko</strong> — Wie viele und wie schwere rechtliche Risiken wurden erkannt?
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Compliance</strong> — Entspricht der Vertrag den gesetzlichen Anforderungen (DSGVO, AGB-Recht etc.)?
-              </p>
-              <p style={{ margin: '0 0 4px' }}>
-                <strong>Konditionen</strong> — Sind die Vertragsbedingungen fair und marktüblich?
-              </p>
-              <p style={{ margin: '0 0 8px' }}>
-                <strong>Vollständigkeit</strong> — Fehlen wichtige Klauseln die enthalten sein sollten?
-              </p>
-              <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
-                Je höher der Score, desto besser ist Ihr Vertrag aufgestellt. Ab 80 gilt ein Vertrag als gut, unter 40 als kritisch.
-              </p>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowScoreInfo(false); }}
-                style={{
-                  position: 'absolute', top: 8, right: 8,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#9ca3af', fontSize: 14,
-                }}
-              >&times;</button>
-            </div>
-          );
-        })()}
       </div>
+
+      {/* Score explanation popup — rendered via Portal into document.body */}
+      {isLarge && showScoreInfo && createPortal(
+        <div
+          ref={popupRef}
+          style={{
+            position: 'fixed',
+            top: popupPos.top,
+            left: popupPos.left,
+            width: 300,
+            padding: '14px 16px',
+            background: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 10,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+            zIndex: 9999,
+            fontSize: 12,
+            color: '#4b5563',
+            lineHeight: 1.6,
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
+            So wird Ihr Score berechnet
+          </div>
+          <p style={{ margin: '0 0 6px' }}>
+            Der Gesamtscore (0–100) setzt sich aus vier gleichgewichteten Faktoren zusammen:
+          </p>
+          <p style={{ margin: '0 0 4px' }}>
+            <strong>Risiko</strong> — Wie viele und wie schwere rechtliche Risiken wurden erkannt?
+          </p>
+          <p style={{ margin: '0 0 4px' }}>
+            <strong>Compliance</strong> — Entspricht der Vertrag den gesetzlichen Anforderungen (DSGVO, AGB-Recht etc.)?
+          </p>
+          <p style={{ margin: '0 0 4px' }}>
+            <strong>Konditionen</strong> — Sind die Vertragsbedingungen fair und marktüblich?
+          </p>
+          <p style={{ margin: '0 0 8px' }}>
+            <strong>Vollständigkeit</strong> — Fehlen wichtige Klauseln die enthalten sein sollten?
+          </p>
+          <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
+            Je höher der Score, desto besser ist Ihr Vertrag aufgestellt. Ab 80 gilt ein Vertrag als gut, unter 40 als kritisch.
+          </p>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowScoreInfo(false); }}
+            style={{
+              position: 'absolute', top: 8, right: 8,
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: '#9ca3af', fontSize: 14,
+            }}
+          >&times;</button>
+        </div>,
+        document.body
+      )}
 
       {isLarge && (
         <div style={{
