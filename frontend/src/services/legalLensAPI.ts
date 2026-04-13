@@ -772,15 +772,10 @@ export function parseContractStreaming(
   const token = localStorage.getItem('token');
   const controller = new AbortController();
 
-  // Phase 5: Retry-Konfiguration
-  const MAX_RETRIES = 3;
-  const BASE_DELAY_MS = 3000; // Exponential backoff: 3s, 6s, 12s
-
-  // Phase 5: Fortschritts-Tracking für Resume
+  // Fortschritts-Tracking
   let clausesReceived = 0;
   let lastProgress = 0;
   let isComplete = false;
-  let retryCount = 0;
   let isAborted = false;
 
   // URL mit optionalem forceRefresh Query-Parameter
@@ -789,7 +784,73 @@ export function parseContractStreaming(
     : `${LEGAL_LENS_BASE}/${contractId}/parse-stream`;
 
   /**
-   * Führt den Streaming-Request aus (mit Retry-Logik)
+   * Polling-Fallback: Wenn SSE durch Proxy-Timeout gekappt wird,
+   * pollt POST /parse alle 5s bis der Cache bereit ist.
+   * Jeder Poll-Request dauert <1s — kein Timeout-Problem.
+   */
+  const pollForCache = async () => {
+    const POLL_INTERVAL_MS = 5000;
+    const MAX_POLL_DURATION_MS = 180000; // 3 Minuten max
+    const pollStart = Date.now();
+    let pollCount = 0;
+
+    console.log(`[Legal Lens] Polling-Fallback gestartet für ${contractId}`);
+    callbacks.onRetrying?.(1, 1);
+
+    while (!isAborted && (Date.now() - pollStart) < MAX_POLL_DURATION_MS) {
+      pollCount++;
+      try {
+        const response = await fetch(`${LEGAL_LENS_BASE}/parse`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
+          },
+          credentials: 'include',
+          body: JSON.stringify({ contractId }),
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          console.warn(`[Legal Lens] Poll ${pollCount}: HTTP ${response.status}`);
+          await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+          continue;
+        }
+
+        const data = await response.json();
+
+        // Cache bereit → Klauseln gefunden!
+        if (data.success && data.clauses && data.clauses.length > 0) {
+          console.log(`[Legal Lens] Poll ${pollCount}: ${data.clauses.length} Klauseln aus Cache geladen`);
+          clausesReceived = data.clauses.length;
+          isComplete = true;
+          callbacks.onClausesBatch?.(data.clauses, data.clauses.length);
+          callbacks.onComplete?.(data.clauses.length, data.riskSummary || data.summary);
+          return;
+        }
+
+        // Cache noch nicht bereit → weiter pollen
+        const elapsed = Math.round((Date.now() - pollStart) / 1000);
+        const progress = Math.min(lastProgress + pollCount * 2, 85);
+        callbacks.onStatus?.(`Dokument wird analysiert... (${elapsed}s)`, progress);
+        console.log(`[Legal Lens] Poll ${pollCount}: Cache noch nicht bereit (${elapsed}s)`);
+
+      } catch (pollErr) {
+        if (isAborted) return;
+        console.warn(`[Legal Lens] Poll ${pollCount} Fehler:`, pollErr instanceof Error ? pollErr.message : pollErr);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+    }
+
+    // Polling-Timeout erreicht
+    if (!isAborted && !isComplete) {
+      callbacks.onError?.('Die Analyse dauert ungewöhnlich lange. Bitte laden Sie die Seite neu — die Klauseln sind möglicherweise bereits verfügbar.');
+    }
+  };
+
+  /**
+   * Führt den Streaming-Request aus (SSE)
    */
   const executeStream = async () => {
     if (isAborted) return;
@@ -814,9 +875,6 @@ export function parseContractStreaming(
 
       const decoder = new TextDecoder();
       let buffer = '';
-
-      // Bei erfolgreichem Connect: Retry-Counter zurücksetzen
-      retryCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -890,18 +948,12 @@ export function parseContractStreaming(
         callbacks.onComplete?.(clausesReceived);
       }
 
-      // Stream beendet ohne Klauseln und ohne Error → Verbindung verloren während GPT arbeitete
-      // Auto-Retry: Backend hat die Klauseln wahrscheinlich im Cache gespeichert
-      if (!isComplete && clausesReceived === 0 && !isAborted && retryCount < MAX_RETRIES) {
-        retryCount++;
-        const delay = BASE_DELAY_MS * Math.pow(2, retryCount - 1);
-        console.warn(`[Legal Lens] Stream ended with 0 clauses — auto-retry in ${delay}ms (${retryCount}/${MAX_RETRIES})`);
-        callbacks.onRetrying?.(retryCount, MAX_RETRIES);
-        callbacks.onStatus?.('Verbindung wird wiederhergestellt...', lastProgress);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        if (!isAborted) {
-          executeStream();
-        }
+      // Stream beendet ohne Klauseln und ohne Error → Verbindung verloren während Backend arbeitete
+      // → Auf Polling umschalten statt SSE erneut zu versuchen
+      if (!isComplete && clausesReceived === 0 && !isAborted) {
+        console.warn(`[Legal Lens] Stream ended with 0 clauses — switching to polling fallback`);
+        callbacks.onStatus?.('Großes Dokument wird analysiert...', lastProgress);
+        await pollForCache();
         return;
       }
     } catch (error) {
@@ -916,7 +968,7 @@ export function parseContractStreaming(
         return;
       }
 
-      // Phase 5: Verbindungsverlust-Erkennung
+      // Verbindungsverlust-Erkennung
       const errorMessage = error instanceof Error ? error.message : String(error);
       const isConnectionLost =
         errorMessage.includes('network') ||
@@ -926,42 +978,27 @@ export function parseContractStreaming(
         errorMessage.includes('connection') ||
         errorMessage.includes('timeout');
 
-      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage} (Retry ${retryCount}/${MAX_RETRIES})`);
+      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage}`);
 
-      // Callback für Verbindungsverlust
-      const willRetry = retryCount < MAX_RETRIES && isConnectionLost;
       callbacks.onConnectionLost?.({
         clausesReceived,
         progress: lastProgress,
-        retryCount,
-        willRetry
+        retryCount: 0,
+        willRetry: true
       });
 
-      // Retry bei Verbindungsverlust (mit exponential backoff)
-      if (willRetry) {
-        retryCount++;
-        const delay = BASE_DELAY_MS * Math.pow(2, retryCount - 1);
-        console.log(`[Legal Lens] Retry in ${delay}ms (Attempt ${retryCount}/${MAX_RETRIES})`);
-
-        callbacks.onRetrying?.(retryCount, MAX_RETRIES);
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        if (!isAborted) {
-          executeStream(); // Rekursiver Retry
-        }
+      if (isConnectionLost && clausesReceived === 0) {
+        // Kein SSE-Retry — direkt auf Polling umschalten
+        console.log(`[Legal Lens] Connection lost, switching to polling fallback`);
+        callbacks.onStatus?.('Großes Dokument wird analysiert...', lastProgress);
+        await pollForCache();
+      } else if (clausesReceived > 0 && !isComplete) {
+        // Klauseln vorhanden, aber Stream abgebrochen → als complete markieren
+        console.warn(`[Legal Lens] Connection lost after ${clausesReceived} clauses — marking as complete.`);
+        isComplete = true;
+        callbacks.onComplete?.(clausesReceived);
       } else {
-        // Kein Retry mehr möglich — aber Klauseln vorhanden? → Als complete markieren
-        if (clausesReceived > 0 && !isComplete) {
-          console.warn(`[Legal Lens] Connection lost after ${clausesReceived} clauses — marking as complete.`);
-          isComplete = true;
-          callbacks.onComplete?.(clausesReceived);
-        } else {
-          callbacks.onError?.(isConnectionLost
-            ? `Verbindung verloren nach ${MAX_RETRIES} Versuchen. Bitte prüfe deine Internetverbindung.`
-            : errorMessage
-          );
-        }
+        callbacks.onError?.(errorMessage);
       }
     }
   };
