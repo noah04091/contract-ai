@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { PulseV2Result, PulseV2Action, PulseV2Finding, PulseV2LegalAlert } from '../../types/pulseV2';
+import { useToast } from '../../context/ToastContext';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
 import { ScoreTrend } from './ScoreTrend';
@@ -39,6 +40,7 @@ interface ContractDetailProps {
 }
 
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
+  const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
   const [showAllFindings, setShowAllFindings] = useState(false);
@@ -89,11 +91,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       const data = await res.json();
       if (data.actions) {
         setActions(data.actions);
+      } else {
+        toast.error('Status-Änderung konnte nicht gespeichert werden.');
       }
     } catch (err) {
       console.error('[PulseV2] Action update failed:', err);
+      toast.error('Verbindungsfehler — bitte erneut versuchen.');
     }
-  }, [result._id]);
+  }, [result._id, toast]);
 
   const handlePdfExport = useCallback(async () => {
     setPdfExporting(true);
@@ -113,7 +118,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('[PulseV2] PDF export error:', err);
-      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      toast.error('PDF-Export fehlgeschlagen. Bitte erneut versuchen.');
     } finally {
       setPdfExporting(false);
     }
@@ -137,11 +142,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           updated[findingIndex] = { ...updated[findingIndex], ...data.finding };
           return updated;
         });
+      } else {
+        toast.error('Status-Änderung konnte nicht gespeichert werden.');
       }
     } catch (err) {
       console.error('[PulseV2] Finding status update failed:', err);
+      toast.error('Verbindungsfehler — bitte erneut versuchen.');
     }
-  }, [result._id]);
+  }, [result._id, toast]);
 
   const findings = findingsState;
   const clauses = result.clauses || [];

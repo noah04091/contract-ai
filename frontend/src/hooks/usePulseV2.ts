@@ -330,35 +330,52 @@ export function usePulseV2() {
   }, []);
 
   const loadResult = useCallback(async (resultId: string) => {
-    const res = await fetch(`${API_BASE}/legal-pulse-v2/results/${resultId}`, {
-      credentials: 'include',
-    });
-    const data = await res.json();
-    if (data.result) {
-      dispatch({ type: 'SET_RESULT', result: data.result });
+    try {
+      const res = await fetch(`${API_BASE}/legal-pulse-v2/results/${resultId}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        console.error(`[usePulseV2] loadResult failed: ${res.status}`);
+        return;
+      }
+      const data = await res.json();
+      if (data.result) {
+        dispatch({ type: 'SET_RESULT', result: data.result });
+      }
+    } catch (err) {
+      console.error('[usePulseV2] loadResult error:', err);
     }
   }, []);
 
   const loadLatest = useCallback(async (contractId: string): Promise<PulseV2Result | null> => {
-    const res = await fetch(`${API_BASE}/legal-pulse-v2/contract/${contractId}/latest`, {
-      credentials: 'include',
-    });
-    const data = await res.json();
-    if (data.result) {
-      dispatch({ type: 'SET_RESULT', result: data.result });
-      return data.result;
-    }
-    // Previous attempt was rejected as non-contract — surface it to the UI
-    if (data.rejected) {
-      dispatch({
-        type: 'ANALYSIS_REJECTED',
-        rejection: {
-          reason: data.rejected.reason || 'Dokument ist kein Vertrag',
-          rejectedAt: data.rejected.rejectedAt,
-        },
+    try {
+      const res = await fetch(`${API_BASE}/legal-pulse-v2/contract/${contractId}/latest`, {
+        credentials: 'include',
       });
+      if (!res.ok) {
+        console.error(`[usePulseV2] loadLatest failed: ${res.status}`);
+        return null;
+      }
+      const data = await res.json();
+      if (data.result) {
+        dispatch({ type: 'SET_RESULT', result: data.result });
+        return data.result;
+      }
+      // Previous attempt was rejected as non-contract — surface it to the UI
+      if (data.rejected) {
+        dispatch({
+          type: 'ANALYSIS_REJECTED',
+          rejection: {
+            reason: data.rejected.reason || 'Dokument ist kein Vertrag',
+            rejectedAt: data.rejected.rejectedAt,
+          },
+        });
+      }
+      return null;
+    } catch (err) {
+      console.error('[usePulseV2] loadLatest error:', err);
+      return null;
     }
-    return null;
   }, []);
 
   return {

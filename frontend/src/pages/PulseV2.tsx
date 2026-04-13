@@ -12,6 +12,7 @@ import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprove
 import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard';
 import { useRadarHealth, RadarHealthCompact, RadarHealthExpanded } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
+import { useToast } from '../context/ToastContext';
 import '../styles/PulseV2.module.css';
 
 const API_BASE = '/api';
@@ -649,8 +650,10 @@ type DashboardFilter = 'all' | 'critical' | 'action_needed' | 'unanalyzed';
 type SortBy = 'score_asc' | 'score_desc' | 'name' | 'recent';
 
 const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ onSelectContract }) => {
+  const toast = useToast();
   const [items, setItems] = useState<PulseV2DashboardItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState(false);
   const [stats, setStats] = useState({ total: 0, analyzed: 0 });
   const [insights, setInsights] = useState<PulseV2PortfolioInsight[]>([]);
   const [actions, setActions] = useState<PulseV2Action[]>([]);
@@ -716,6 +719,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         setMonitoringStatus(monitorData);
       } catch (err) {
         console.error('[PulseV2] Dashboard load error:', err);
+        setDashboardError(true);
       } finally {
         setLoading(false);
       }
@@ -738,11 +742,14 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         setActions(prev => prev.map(a =>
           (a.id === actionId && a.resultId === resultId) ? { ...a, status } : a
         ));
+      } else {
+        toast.error('Status-Änderung konnte nicht gespeichert werden.');
       }
     } catch (err) {
       console.error('[PulseV2] Action status update failed:', err);
+      toast.error('Verbindungsfehler — bitte erneut versuchen.');
     }
-  }, []);
+  }, [toast]);
 
   const refreshMonitoringStatus = useCallback(async () => {
     try {
@@ -832,6 +839,25 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
+  }
+
+  if (dashboardError) {
+    return (
+      <div style={{ textAlign: 'center', padding: 60, color: '#dc2626' }}>
+        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Dashboard konnte nicht geladen werden</div>
+        <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 20 }}>Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.</div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            padding: '10px 24px', fontSize: 14, fontWeight: 600,
+            color: '#fff', background: '#3b82f6', border: 'none',
+            borderRadius: 8, cursor: 'pointer',
+          }}
+        >
+          Seite neu laden
+        </button>
+      </div>
+    );
   }
 
   // First-Use: no contracts analyzed yet
@@ -1171,28 +1197,38 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         alerts={legalAlerts}
         onDismiss={async (alertId) => {
           try {
-            await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+            const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
               method: 'PATCH',
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: 'dismissed' }),
             });
-            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
+            if (res.ok) {
+              setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
+            } else {
+              toast.error('Alert konnte nicht ausgeblendet werden.');
+            }
           } catch (err) {
             console.error('[PulseV2] Alert dismiss failed:', err);
+            toast.error('Verbindungsfehler — bitte erneut versuchen.');
           }
         }}
         onRestore={async (alertId) => {
           try {
-            await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+            const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
               method: 'PATCH',
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ status: 'unread' }),
             });
-            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
+            if (res.ok) {
+              setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
+            } else {
+              toast.error('Alert konnte nicht wiederhergestellt werden.');
+            }
           } catch (err) {
             console.error('[PulseV2] Alert restore failed:', err);
+            toast.error('Verbindungsfehler — bitte erneut versuchen.');
           }
         }}
         onNavigate={(contractId) => onSelectContract(contractId)}
