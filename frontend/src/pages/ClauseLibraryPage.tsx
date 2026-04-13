@@ -341,31 +341,7 @@ const ClauseLibraryPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Statistics Bar - Only for Meine Klauseln when there are clauses */}
-      {activeTab === 'meine' && statistics && statistics.total > 0 && (
-        <div className={styles.statsBar}>
-          {([
-            { key: 'risky' as const, value: statistics.risky, label: 'Riskant' },
-            { key: 'good_practice' as const, value: statistics.goodPractice, label: 'Best Practice' },
-            { key: 'important' as const, value: statistics.important, label: 'Wichtig' },
-            { key: 'unusual' as const, value: statistics.unusual, label: 'Ungewöhnlich' }
-          ]).map(stat => (
-            <div
-              key={stat.key}
-              className={`${styles.statItem} ${categoryFilter === stat.key ? styles.statActive : ''}`}
-              onClick={() => setCategoryFilter(categoryFilter === stat.key ? '' : stat.key)}
-            >
-              <span className={styles.statIcon}>{CATEGORY_INFO[stat.key].icon}</span>
-              <div>
-                <span className={styles.statValue}>{stat.value}</span>
-                <span className={styles.statLabel}>{stat.label}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Search & Filters - Only for Meine Klauseln */}
+      {/* Search, Filters & Stats - Only for Meine Klauseln */}
       {activeTab === 'meine' && clauses.length > 0 && (
         <>
           <div className={styles.toolbar}>
@@ -396,6 +372,28 @@ const ClauseLibraryPage: React.FC = () => {
               Filter
               <ChevronDown size={16} className={showFilters ? styles.rotated : ''} />
             </button>
+
+            {/* Stats-Badges inline */}
+            {statistics && statistics.total > 0 && (
+              <div className={styles.statsInline}>
+                {([
+                  { key: 'risky' as const, value: statistics.risky, label: 'Riskant' },
+                  { key: 'good_practice' as const, value: statistics.goodPractice, label: 'Best Practice' },
+                  { key: 'important' as const, value: statistics.important, label: 'Wichtig' },
+                  { key: 'unusual' as const, value: statistics.unusual, label: 'Ungewöhnlich' }
+                ]).map(stat => (
+                  <button
+                    key={stat.key}
+                    className={`${styles.statBadge} ${categoryFilter === stat.key ? styles.statBadgeActive : ''}`}
+                    onClick={() => setCategoryFilter(categoryFilter === stat.key ? '' : stat.key)}
+                  >
+                    <span>{CATEGORY_INFO[stat.key].icon}</span>
+                    <span className={styles.statBadgeValue}>{stat.value}</span>
+                    <span className={styles.statBadgeLabel}>{stat.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Expanded Filters */}
