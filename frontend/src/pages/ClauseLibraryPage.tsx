@@ -344,34 +344,24 @@ const ClauseLibraryPage: React.FC = () => {
       {/* Statistics Bar - Only for Meine Klauseln when there are clauses */}
       {activeTab === 'meine' && statistics && statistics.total > 0 && (
         <div className={styles.statsBar}>
-          <div className={styles.statItem}>
-            <span className={styles.statIcon}>{CATEGORY_INFO.risky.icon}</span>
-            <div>
-              <span className={styles.statValue}>{statistics.risky}</span>
-              <span className={styles.statLabel}>Riskant</span>
+          {([
+            { key: 'risky' as const, value: statistics.risky, label: 'Riskant' },
+            { key: 'good_practice' as const, value: statistics.goodPractice, label: 'Best Practice' },
+            { key: 'important' as const, value: statistics.important, label: 'Wichtig' },
+            { key: 'unusual' as const, value: statistics.unusual, label: 'Ungewöhnlich' }
+          ]).map(stat => (
+            <div
+              key={stat.key}
+              className={`${styles.statItem} ${categoryFilter === stat.key ? styles.statActive : ''}`}
+              onClick={() => setCategoryFilter(categoryFilter === stat.key ? '' : stat.key)}
+            >
+              <span className={styles.statIcon}>{CATEGORY_INFO[stat.key].icon}</span>
+              <div>
+                <span className={styles.statValue}>{stat.value}</span>
+                <span className={styles.statLabel}>{stat.label}</span>
+              </div>
             </div>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statIcon}>{CATEGORY_INFO.good_practice.icon}</span>
-            <div>
-              <span className={styles.statValue}>{statistics.goodPractice}</span>
-              <span className={styles.statLabel}>Best Practice</span>
-            </div>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statIcon}>{CATEGORY_INFO.important.icon}</span>
-            <div>
-              <span className={styles.statValue}>{statistics.important}</span>
-              <span className={styles.statLabel}>Wichtig</span>
-            </div>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statIcon}>{CATEGORY_INFO.unusual.icon}</span>
-            <div>
-              <span className={styles.statValue}>{statistics.unusual}</span>
-              <span className={styles.statLabel}>Ungewöhnlich</span>
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
