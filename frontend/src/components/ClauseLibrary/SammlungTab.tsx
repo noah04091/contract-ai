@@ -561,7 +561,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   const items = collection.items || [];
 
   return (
-    <div>
+    <div className={styles.sammlungTab}>
       {/* Sammlungs-Header */}
       <div style={{
         background: '#f8fafc',

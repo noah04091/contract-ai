@@ -905,6 +905,16 @@
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
 }
 
+/* ===== SAMMLUNG TAB ===== */
+.sammlungTab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .statsBar {
