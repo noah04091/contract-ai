@@ -438,14 +438,14 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
             <textarea
               value={editNotes}
               onChange={e => setEditNotes(e.target.value)}
-              placeholder="Eigene Notizen hinzufuegen..."
+              placeholder="Eigene Notizen hinzufügen..."
               maxLength={2000}
               rows={3}
               style={{ width: '100%', padding: '0.625rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit' }}
             />
           ) : (
             <p style={{ margin: 0, fontSize: '0.85rem', color: clause.userNotes ? '#334155' : '#94a3b8', fontStyle: clause.userNotes ? 'normal' : 'italic' }}>
-              {clause.userNotes || 'Keine Notizen — klicke "Bearbeiten" um welche hinzuzufuegen'}
+              {clause.userNotes || 'Keine Notizen — klicke "Bearbeiten" um welche hinzuzufügen'}
             </p>
           )}
         </div>
@@ -564,7 +564,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
         </button>
         <button className={styles.deleteBtn} onClick={onDelete} disabled={isDeleting}>
           {isDeleting ? <Loader2 size={16} className={styles.spinner} /> : <Trash2 size={16} />}
-          Loeschen
+          Löschen
         </button>
       </div>
     </div>

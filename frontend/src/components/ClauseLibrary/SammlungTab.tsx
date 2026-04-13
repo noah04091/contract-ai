@@ -75,7 +75,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   const [isSavingSidebar, setIsSavingSidebar] = useState(false);
   const [sidebarSaveSuccess, setSidebarSaveSuccess] = useState(false);
 
-  // Sammlung loeschen
+  // Sammlung löschen
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -193,7 +193,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
 
   const renderTemplateExpanded = (templateId: string, itemId: string) => {
     const clause = templateClauses.find(t => t.id === templateId);
-    if (!clause) return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Musterklausel nicht mehr verfuegbar.</p>;
+    if (!clause) return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Musterklausel nicht mehr verfügbar.</p>;
 
     const riskInfo = RISK_LEVEL_INFO[clause.riskLevel];
     const catInfo = TEMPLATE_CLAUSE_CATEGORY_INFO[clause.category];
@@ -312,7 +312,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
 
   const renderLexikonExpanded = (termId: string) => {
     const term = legalTerms.find(t => t.id === termId);
-    if (!term) return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Begriff nicht mehr verfuegbar.</p>;
+    if (!term) return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Begriff nicht mehr verfügbar.</p>;
 
     const areaInfo = LEGAL_AREA_INFO[term.legalArea];
     const relatedTermsData = getRelatedTerms(term);
@@ -394,7 +394,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
 
   const renderSavedExpanded = (item: CollectionItem) => {
     if (!item.resolvedClause) {
-      return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Diese Klausel wurde aus "Meine Klauseln" geloescht.</p>;
+      return <p style={{ color: '#991b1b', fontSize: '0.85rem' }}>Diese Klausel wurde aus "Meine Klauseln" gelöscht.</p>;
     }
 
     const rc = item.resolvedClause;
@@ -531,7 +531,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
       };
     }
     if (item.type === 'saved' && item._deleted) {
-      return { title: 'Klausel geloescht', subtitle: '', source: 'Meine Klauseln', icon: <BookOpen size={14} />, deleted: true, hasContent: false };
+      return { title: 'Klausel gelöscht', subtitle: '', source: 'Meine Klauseln', icon: <BookOpen size={14} />, deleted: true, hasContent: false };
     }
     if (item.type === 'custom') {
       return {
@@ -608,7 +608,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 fontSize: '0.85rem', resize: 'none', minHeight: '50px'
               }}
             />
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
               <button onClick={handleSaveEdit} disabled={isSavingEdit || editName.trim().length < 2}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', background: '#10b981', border: 'none', borderRadius: '6px', color: 'white', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer' }}>
                 {isSavingEdit ? <Loader2 size={14} className={styles.spinner} /> : <Check size={14} />} Speichern
@@ -616,6 +616,10 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
               <button onClick={() => setIsEditing(false)}
                 style={{ padding: '0.375rem 0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', fontSize: '0.8rem', cursor: 'pointer' }}>
                 Abbrechen
+              </button>
+              <button onClick={() => setShowDeleteConfirm(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.375rem 0.75rem', background: 'white', border: '1px solid #fecaca', borderRadius: '6px', color: '#ef4444', fontSize: '0.8rem', cursor: 'pointer', marginLeft: 'auto' }}>
+                <Trash2 size={14} /> Löschen
               </button>
             </div>
           </div>
@@ -626,7 +630,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 <span style={{ fontSize: '1.25rem' }}>{collection.icon}</span>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{collection.name}</h3>
                 <span style={{ fontSize: '0.75rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.125rem 0.5rem', borderRadius: '10px' }}>
-                  {items.length} {items.length === 1 ? 'Eintrag' : 'Eintraege'}
+                  {items.length} {items.length === 1 ? 'Eintrag' : 'Einträge'}
                 </span>
               </div>
               {collection.description && (
@@ -639,26 +643,21 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 title="Sammlung bearbeiten">
                 <Edit3 size={16} />
               </button>
-              <button onClick={() => setShowDeleteConfirm(true)}
-                style={{ padding: '0.375rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#ef4444', cursor: 'pointer' }}
-                title="Sammlung loeschen">
-                <Trash2 size={16} />
-              </button>
             </div>
           </>
         )}
       </div>
 
-      {/* Loeschen-Bestaetigung */}
+      {/* Löschen-Bestätigung */}
       {showDeleteConfirm && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
           <p style={{ margin: 0, fontSize: '0.875rem', color: '#991b1b' }}>
-            Sammlung "{collection.name}" wirklich loeschen? Die enthaltenen Klauseln bleiben in ihren Quellen erhalten.
+            Sammlung "{collection.name}" wirklich löschen? Die enthaltenen Klauseln bleiben in ihren Quellen erhalten.
           </p>
           <div style={{ display: 'flex', gap: '0.375rem', flexShrink: 0 }}>
             <button onClick={handleDeleteCollection} disabled={isDeleting}
               style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.375rem 0.75rem', background: '#ef4444', border: 'none', borderRadius: '6px', color: 'white', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer' }}>
-              {isDeleting ? <Loader2 size={14} className={styles.spinner} /> : <Trash2 size={14} />} Loeschen
+              {isDeleting ? <Loader2 size={14} className={styles.spinner} /> : <Trash2 size={14} />} Löschen
             </button>
             <button onClick={() => setShowDeleteConfirm(false)}
               style={{ padding: '0.375rem 0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', fontSize: '0.8rem', cursor: 'pointer' }}>
@@ -694,7 +693,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button onClick={handleAddCustom} disabled={isAddingCustom || customText.trim().length < 5}
               style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.5rem 0.875rem', background: '#10b981', border: 'none', borderRadius: '8px', color: 'white', fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer', opacity: (isAddingCustom || customText.trim().length < 5) ? 0.6 : 1 }}>
-              {isAddingCustom ? <Loader2 size={15} className={styles.spinner} /> : <Plus size={15} />} Hinzufuegen
+              {isAddingCustom ? <Loader2 size={15} className={styles.spinner} /> : <Plus size={15} />} Hinzufügen
             </button>
             <button onClick={() => { setShowCustomForm(false); setCustomTitle(''); setCustomText(''); }}
               style={{ padding: '0.5rem 0.875rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#64748b', fontSize: '0.85rem', cursor: 'pointer' }}>
@@ -712,7 +711,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
           </div>
           <h3>Sammlung ist noch leer</h3>
           <p>
-            Fuege Klauseln aus "Meine Klauseln", "Musterklauseln" oder dem "Rechtslexikon" hinzu,
+            Füge Klauseln aus "Meine Klauseln", "Musterklauseln" oder dem "Rechtslexikon" hinzu,
             oder schreibe eigene Klauseln direkt hier.
           </p>
         </div>
@@ -928,7 +927,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                       <textarea
                         value={sidebarEditNotes}
                         onChange={e => setSidebarEditNotes(e.target.value)}
-                        placeholder="Notiz hinzufuegen..."
+                        placeholder="Notiz hinzufügen..."
                         rows={3}
                         style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit' }}
                       />

@@ -1,4 +1,4 @@
-// AddToCollectionModal.tsx - Modal zum Hinzufuegen einer Klausel zu einer Sammlung
+// AddToCollectionModal.tsx - Modal zum Hinzufügen einer Klausel zu einer Sammlung
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -16,7 +16,7 @@ import type {
 import styles from '../../styles/SaveClauseModal.module.css';
 
 interface AddToCollectionModalProps {
-  /** Was hinzugefuegt werden soll */
+  /** Was hinzugefügt werden soll */
   item: AddCollectionItemRequest;
   /** Anzeige-Text fuer die Vorschau */
   previewText: string;
@@ -98,7 +98,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
       });
 
       if (createResponse.success) {
-        // Direkt zur neuen Sammlung hinzufuegen
+        // Direkt zur neuen Sammlung hinzufügen
         await clauseCollectionAPI.addItem(createResponse.collection._id, item);
         setSuccess({ name: createResponse.collection.name });
         onAdded?.(createResponse.collection._id, createResponse.collection.name);
@@ -117,11 +117,11 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
         <div className={styles.modal} onClick={e => e.stopPropagation()}>
           <div className={styles.successContainer}>
             <CheckCircle size={48} className={styles.successIcon} />
-            <h3>Zur Sammlung hinzugefuegt!</h3>
-            <p>Der Eintrag wurde zu "{success.name}" hinzugefuegt.</p>
+            <h3>Zur Sammlung hinzugefügt!</h3>
+            <p>Der Eintrag wurde zu "{success.name}" hinzugefügt.</p>
             <div className={styles.successActions}>
               <button className={styles.closeSuccessBtn} onClick={onClose}>
-                Schliessen
+                Schließen
               </button>
             </div>
           </div>
@@ -138,7 +138,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
           <div className={styles.headerTitle}>
             <FolderPlus size={20} />
             <div>
-              <h2>Zur Sammlung hinzufuegen</h2>
+              <h2>Zur Sammlung hinzufügen</h2>
               {previewTitle && (
                 <span className={styles.contractName}>{previewTitle}</span>
               )}
@@ -175,7 +175,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
             <>
               {collections.length > 0 && !showCreate && (
                 <div className={styles.formGroup}>
-                  <label>Sammlung auswaehlen</label>
+                  <label>Sammlung auswählen</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                     {collections.map(col => (
                       <button
@@ -202,7 +202,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
                             {col.name}
                           </div>
                           <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                            {col.itemCount || 0} Eintraege
+                            {col.itemCount || 0} Einträge
                           </div>
                         </div>
                         {selectedId === col._id && (
@@ -309,7 +309,7 @@ const AddToCollectionModal: React.FC<AddToCollectionModalProps> = ({
               ) : (
                 <FolderPlus size={16} />
               )}
-              {isSaving ? 'Hinzufuegen...' : 'Hinzufuegen'}
+              {isSaving ? 'Hinzufügen...' : 'Hinzufügen'}
             </button>
           </div>
         )}

@@ -154,7 +154,7 @@ const ClauseLibraryPage: React.FC = () => {
 
   // Delete clause
   const handleDelete = async (clauseId: string) => {
-    if (!confirm('Klausel wirklich loeschen?')) return;
+    if (!confirm('Klausel wirklich löschen?')) return;
 
     setIsDeleting(true);
     try {
@@ -164,7 +164,7 @@ const ClauseLibraryPage: React.FC = () => {
       loadStatistics();
     } catch (err) {
       console.error('[ClauseLibrary] Delete error:', err);
-      alert('Fehler beim Loeschen');
+      alert('Fehler beim Löschen');
     } finally {
       setIsDeleting(false);
     }
@@ -195,7 +195,7 @@ const ClauseLibraryPage: React.FC = () => {
         return {
           icon: <FolderOpen size={24} />,
           title: col.name,
-          subtitle: `${col.itemCount || 0} Eintraege`
+          subtitle: `${col.itemCount || 0} Einträge`
         };
       }
     }
@@ -211,13 +211,13 @@ const ClauseLibraryPage: React.FC = () => {
         return {
           icon: <FileText size={24} />,
           title: 'Musterklauseln',
-          subtitle: `${templateClauses.length} Vorlagen verfuegbar`
+          subtitle: `${templateClauses.length} Vorlagen verfügbar`
         };
       case 'lexikon':
         return {
           icon: <Scale size={24} />,
           title: 'Rechtslexikon',
-          subtitle: `${legalTerms.length} Begriffe erklaert`
+          subtitle: `${legalTerms.length} Begriffe erklärt`
         };
       default:
         return {
@@ -369,7 +369,7 @@ const ClauseLibraryPage: React.FC = () => {
             <span className={styles.statIcon}>{CATEGORY_INFO.unusual.icon}</span>
             <div>
               <span className={styles.statValue}>{statistics.unusual}</span>
-              <span className={styles.statLabel}>Ungewoehnlich</span>
+              <span className={styles.statLabel}>Ungewöhnlich</span>
             </div>
           </div>
         </div>
@@ -448,7 +448,7 @@ const ClauseLibraryPage: React.FC = () => {
                   onChange={e => setSortBy(e.target.value as SortBy)}
                 >
                   <option value="savedAt">Neueste zuerst</option>
-                  <option value="usageCount">Haeufig verwendet</option>
+                  <option value="usageCount">Häufig verwendet</option>
                   <option value="category">Nach Kategorie</option>
                 </select>
               </div>
@@ -462,7 +462,7 @@ const ClauseLibraryPage: React.FC = () => {
                   setSearchQuery('');
                 }}
               >
-                Filter zuruecksetzen
+                Filter zurücksetzen
               </button>
             </div>
           )}
