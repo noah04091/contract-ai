@@ -113,7 +113,7 @@ async function retryWithBackoff(fn, maxRetries = 2, baseDelay = 1000) {
  * Cache-Version: Erhöhe diese Nummer, wenn sich die Parsing-Logik ändert.
  * Alte Caches werden automatisch invalidiert und neu geparsed.
  */
-const CACHE_VERSION = 21; // V4.3 clauseIndex-Mapping gegen verschobene GPT-Zuordnungen
+const CACHE_VERSION = 22; // V4.4 Anhang-Extraktion: Anlagen/Beilagen als separate Klauseln
 
 /**
  * Cache TTL in Millisekunden (30 Tage)

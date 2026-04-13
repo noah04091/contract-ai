@@ -7,12 +7,13 @@
  * DirectExtractor liefert: { clauses: [{number, title, text}], documentType, language, metadata }
  * V1-Shape erwartet:       { success, clauses: [{id, sectionTitle, text, number, title, position, matchingData, textHash, riskLevel, riskScore, riskKeywords, category}], totalClauses, sections, riskSummary, metadata }
  *
- * @version 4.1.0 — GPT-basiertes Risk-Assessment + Kategorisierung + Titel-Generierung
+ * @version 4.2.0 — GPT-basiertes Risk-Assessment + Kategorisierung + Titel-Generierung + Anhang-Extraktion
  */
 
 const { DirectExtractor } = require('./directExtractor');
 const clauseParser = require('./clauseParser');
 const { assessRiskBatch } = require('./riskAssessor');
+const { extractAttachments } = require('./attachmentExtractor');
 
 // Lazy init — erst beim ersten Aufruf, nicht bei require()
 let _extractor = null;
@@ -133,6 +134,108 @@ async function parseContractDirect(text, options = {}) {
     return clause;
   });
 
+  // ── Anhang-Extraktion (additiv, nach Hauptklauseln) ──────────
+  let attachmentCount = 0;
+  try {
+    const attachments = await extractAttachments(text, result.clauses);
+    if (attachments && attachments.length > 0) {
+      // Alle Anhang-Klauseln sammeln fuer Batch-Risk-Assessment
+      const allAttachmentRawClauses = [];
+      const attachmentMeta = []; // {attachIdx, clauseIdx, attachmentName}
+
+      for (let aIdx = 0; aIdx < attachments.length; aIdx++) {
+        const att = attachments[aIdx];
+        for (let cIdx = 0; cIdx < att.clauses.length; cIdx++) {
+          allAttachmentRawClauses.push(att.clauses[cIdx]);
+          attachmentMeta.push({ attachIdx: aIdx, clauseIdx: cIdx, attachmentName: att.name });
+        }
+      }
+
+      // GPT Risk-Assessment fuer Anhang-Klauseln (wenn detectRisk aktiv)
+      let attachRiskAssessment = null;
+      if (detectRisk && allAttachmentRawClauses.length > 0) {
+        attachRiskAssessment = await assessRiskBatch(allAttachmentRawClauses);
+        if (attachRiskAssessment) {
+          console.log(`[DirectAdapter] Anhang-Risk-Assessment: ${attachRiskAssessment.filter(x => x).length}/${allAttachmentRawClauses.length} bewertet`);
+        }
+      }
+
+      // Anhang-Klauseln auf V1-Shape mappen und an adaptedClauses anhaengen
+      for (let i = 0; i < allAttachmentRawClauses.length; i++) {
+        const c = allAttachmentRawClauses[i];
+        const meta = attachmentMeta[i];
+        const clauseText = (c.text || '').trim();
+        if (clauseText.length < 20) continue;
+
+        const mainClauseCount = adaptedClauses.length;
+        const globalIdx = mainClauseCount; // wird mit push aktualisiert
+
+        const textIndex = text.indexOf(clauseText.substring(0, 80));
+        const startOffset = textIndex >= 0 ? textIndex : 0;
+        const endOffset = startOffset + clauseText.length;
+
+        const effectiveTitle = c.title || null;
+        const sectionTitle = effectiveTitle || c.number || `Klausel ${i + 1}`;
+
+        const attachClause = {
+          id: `clause_v4_attach_${meta.attachIdx + 1}_${meta.clauseIdx + 1}`,
+          sectionTitle,
+          text: clauseText,
+          number: c.number || null,
+          title: effectiveTitle,
+          category: null, // wird durch Risk-Assessment gesetzt
+          attachment: meta.attachmentName, // NEU: Anhang-Zuordnung
+
+          position: {
+            start: startOffset,
+            end: endOffset,
+            paragraph: globalIdx + 1,
+            sentence: 0,
+            globalStart: startOffset,
+            globalEnd: endOffset,
+            estimatedPage: text.length > 0
+              ? Math.floor(startOffset / Math.max(text.length / Math.max(1, Math.ceil(text.length / 3000)), 1)) + 1
+              : 1,
+            anchorText: clauseText.substring(0, 80).trim()
+          },
+
+          matchingData: {
+            firstWords: clauseParser.extractSignificantWords(clauseText, 'first', 5),
+            lastWords: clauseParser.extractSignificantWords(clauseText, 'last', 5),
+            charLength: clauseText.length
+          },
+
+          textHash: clauseParser.generateHash(clauseText)
+        };
+
+        // Risk-Assessment fuer Anhang-Klausel
+        if (detectRisk) {
+          const riskResult = attachRiskAssessment?.[i];
+          if (riskResult) {
+            attachClause.riskLevel = riskResult.riskLevel;
+            attachClause.riskScore = riskResult.riskScore;
+            attachClause.riskReason = riskResult.riskReason;
+            attachClause.riskKeywords = [];
+            if (riskResult.category) attachClause.category = riskResult.category;
+          } else {
+            const riskAssessment = clauseParser.assessClauseRisk(clauseText);
+            attachClause.riskLevel = riskAssessment.level;
+            attachClause.riskScore = riskAssessment.score;
+            attachClause.riskKeywords = riskAssessment.keywords;
+          }
+        }
+
+        adaptedClauses.push(attachClause);
+        attachmentCount++;
+      }
+
+      console.log(`[DirectAdapter] ${attachmentCount} Anhang-Klauseln aus ${attachments.length} Anlagen hinzugefuegt`);
+    }
+  } catch (attachErr) {
+    console.warn(`[DirectAdapter] Anhang-Extraktion fehlgeschlagen (nicht kritisch):`, attachErr.message);
+    // Kein Abbruch — Hauptklauseln sind bereits extrahiert
+  }
+
   const riskSummary = clauseParser.calculateRiskSummary(adaptedClauses);
 
   const sections = adaptedClauses.map(cl => ({
@@ -141,7 +244,7 @@ async function parseContractDirect(text, options = {}) {
   }));
 
   const elapsedMs = Date.now() - startedAt;
-  console.log(`[DirectAdapter] Fertig in ${elapsedMs}ms — ${adaptedClauses.length} Klauseln`);
+  console.log(`[DirectAdapter] Fertig in ${elapsedMs}ms — ${adaptedClauses.length} Klauseln (${attachmentCount} aus Anhaengen)`);
 
   return {
     success: true,
@@ -158,6 +261,7 @@ async function parseContractDirect(text, options = {}) {
       language: result.language,
       extraction: result.metadata,
       riskSource: gptAssessment ? 'gpt' : 'keywords',
+      attachmentClauses: attachmentCount,
       adapterElapsedMs: elapsedMs
     }
   };

@@ -250,19 +250,38 @@ const ClauseList: React.FC<ClauseListProps> = ({
     };
   }, [safeClauses]);
 
-  // Clause Grouping — nutzt GPT-basierte Freiform-Kategorien
-  const clauseGroups = useMemo(() => {
-    if (filteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
-
-    // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 30% der Klauseln)
-    const withCategory = filteredClauses.filter(c => c.category && c.category.trim());
-    if (withCategory.length < filteredClauses.length * 0.3) return null;
-
-    // Gruppiere nach dem Kategorie-String den GPT geliefert hat
-    const categoryMap = new Map<string, typeof filteredClauses>();
-    const categoryOrder: string[] = [];
+  // Hauptklauseln vs. Anhang-Klauseln trennen
+  const { mainClauses: mainFilteredClauses, attachmentMap } = useMemo(() => {
+    const main: typeof filteredClauses = [];
+    const attMap = new Map<string, { firstClauseId: string; count: number }>();
 
     for (const c of filteredClauses) {
+      if (c.attachment) {
+        if (!attMap.has(c.attachment)) {
+          attMap.set(c.attachment, { firstClauseId: c.id, count: 0 });
+        }
+        attMap.get(c.attachment)!.count++;
+      } else {
+        main.push(c);
+      }
+    }
+
+    return { mainClauses: main, attachmentMap: attMap };
+  }, [filteredClauses]);
+
+  // Clause Grouping — nutzt GPT-basierte Freiform-Kategorien (NUR Hauptklauseln)
+  const clauseGroups = useMemo(() => {
+    if (mainFilteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
+
+    // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 30% der Klauseln)
+    const withCategory = mainFilteredClauses.filter(c => c.category && c.category.trim());
+    if (withCategory.length < mainFilteredClauses.length * 0.3) return null;
+
+    // Gruppiere nach dem Kategorie-String den GPT geliefert hat
+    const categoryMap = new Map<string, typeof mainFilteredClauses>();
+    const categoryOrder: string[] = [];
+
+    for (const c of mainFilteredClauses) {
       const cat = (c.category || '').trim() || 'Sonstiges';
       if (!categoryMap.has(cat)) {
         categoryMap.set(cat, []);
@@ -278,7 +297,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }));
 
     return groups.length >= 2 ? groups : null;
-  }, [filteredClauses, searchQuery, riskFilter]);
+  }, [mainFilteredClauses, searchQuery, riskFilter]);
 
   // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
   useEffect(() => {
@@ -534,9 +553,36 @@ const ClauseList: React.FC<ClauseListProps> = ({
       </div>
 
       <div className={styles.clauseList}>
-        {filteredClauses.map((clause) => {
-          // Group headers
+        {filteredClauses.map((clause, clauseIdx) => {
+          // Anhang-Section-Header: Visueller Separator wenn Anhang beginnt
+          const attachmentSectionHeader = (() => {
+            if (!clause.attachment) return null;
+            // Prüfe ob dies die erste Klausel dieses Anhangs ist
+            const info = attachmentMap.get(clause.attachment);
+            if (!info || info.firstClauseId !== clause.id) return null;
+            // Prüfe ob wir einen "Anhänge & Anlagen"-Hauptheader brauchen (erster Anhang überhaupt)
+            const isFirstAttachment = clauseIdx === 0 || !filteredClauses[clauseIdx - 1]?.attachment;
+            return (
+              <>
+                {isFirstAttachment && (
+                  <div className={styles.attachmentSectionDivider}>
+                    <span className={styles.attachmentSectionLine} />
+                    <span className={styles.attachmentSectionTitle}>Anh&auml;nge &amp; Anlagen</span>
+                    <span className={styles.attachmentSectionLine} />
+                  </div>
+                )}
+                <div className={styles.attachmentGroupHeader}>
+                  <span className={styles.attachmentGroupIcon}>&#128206;</span>
+                  <span className={styles.attachmentGroupName}>{clause.attachment}</span>
+                  <span className={styles.attachmentGroupCount}>{info.count} Klauseln</span>
+                </div>
+              </>
+            );
+          })();
+
+          // Group headers (nur für Hauptklauseln, nicht für Anhänge)
           const groupLabel = (() => {
+            if (clause.attachment) return null; // Anhang-Klauseln haben eigene Header
             if (!clauseGroups) return null;
             for (const group of clauseGroups) {
               if (group.clauses.length > 0 && group.clauses[0].id === clause.id) {
@@ -569,6 +615,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
           if (isNonAnalyzable) {
             return (
               <React.Fragment key={clause.id}>
+                {attachmentSectionHeader}
                 {groupHeaderEl}
                 <div
                   ref={(el) => {
@@ -597,6 +644,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
           return (
             <React.Fragment key={clause.id}>
+            {attachmentSectionHeader}
             {groupHeaderEl}
             <div
               ref={(el) => {

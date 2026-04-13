@@ -205,6 +205,8 @@ export interface ParsedClause {
   category?: string;
   /** GPT-basierter Risikogrund (1 Satz) */
   riskReason?: string;
+  /** Name des Anhangs (null = Hauptvertrag, z.B. "Konditionenblatt") */
+  attachment?: string;
 }
 
 /**
