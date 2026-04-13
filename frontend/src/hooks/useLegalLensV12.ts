@@ -1096,8 +1096,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setError(null);
 
     // ✅ FIX Issue #1: Content-basierter Cache-Key
-    // Finde alle Klauseln die noch nicht im Cache sind
+    // Finde alle analysierbaren Klauseln die noch nicht im Cache sind
     const uncachedClauses = clauses.filter(clause => {
+      if (clause.nonAnalyzable) return false; // Adressen, Unterschriften etc. überspringen
       const cacheKey = getCacheKey(clause, currentPerspective);
       return !analysisCache[cacheKey];
     });
@@ -1206,8 +1207,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   const autoAnalyzeHighRisk = useCallback(async () => {
     if (!contractId || clauses.length === 0) return;
 
-    // Filtere nur HIGH-Risk Klauseln
+    // Filtere nur HIGH-Risk Klauseln (nonAnalyzable ausschließen)
     const highRiskClauses = clauses.filter(clause => {
+      if (clause.nonAnalyzable) return false;
       const riskLevel = clause.riskIndicators?.level || clause.preAnalysis?.riskLevel;
       return riskLevel === 'high';
     });
