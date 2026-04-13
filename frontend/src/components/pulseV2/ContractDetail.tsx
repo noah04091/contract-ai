@@ -272,6 +272,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         borderRadius: 16,
         border: '1px solid rgba(0,0,0,0.05)',
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
+        overflow: 'visible',
       }}>
         <div style={{ position: 'relative' }}>
           <HealthScoreGauge scores={result.scores} riskTrend={result.context?.riskTrend} />
@@ -438,7 +439,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         marginBottom: 20,
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
       }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, position: 'relative', paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, position: 'relative', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
           <span style={{ fontSize: 16 }}>&#x2696;&#xFE0F;</span>
           Juristische Einschätzung
           <span
@@ -601,7 +602,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           marginBottom: 20,
           boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
         }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
             Risiko-Übersicht
           </div>
 
@@ -662,7 +663,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
                 Empfehlungen
                 {openActions.length > 0 && (
                   <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>

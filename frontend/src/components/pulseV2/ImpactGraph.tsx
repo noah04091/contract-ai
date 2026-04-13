@@ -85,7 +85,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
               icon={isPositive ? "&#9989;" : "&#128203;"}
               label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
               title={alert.impactSummary || alert.plainSummary || ''}
-              color={isPositive ? '#059669' : '#6366f1'}
+              color={isPositive ? '#059669' : '#3b82f6'}
             />
             {/* Source link — only show if it's a real URL */}
             {alert.lawSource && alert.lawSource.startsWith('http') && (
@@ -97,7 +97,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
                   rel="noopener noreferrer"
                   style={{
                     fontSize: 11,
-                    color: '#6366f1',
+                    color: '#3b82f6',
                     textDecoration: 'none',
                     display: 'inline-flex',
                     alignItems: 'center',

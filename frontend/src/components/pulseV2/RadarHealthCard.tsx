@@ -83,7 +83,7 @@ export const RadarHealthCompact: React.FC<{
       {/* Compact mini stats — 2x2 grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
         <MiniStatCompact label="Feeds" value={`${data.feeds.enabled}/${data.feeds.total}`} color={feedHealthy ? '#059669' : '#d97706'} />
-        <MiniStatCompact label="Laws" value={String(data.laws.total)} color="#6366f1" />
+        <MiniStatCompact label="Laws" value={String(data.laws.total)} color="#3b82f6" />
         <MiniStatCompact label="Alerts" value={String(data.alertsThisWeek.total)} color="#ea580c" />
         <MiniStatCompact label="Delivery" value={`${data.email.deliveryRate}%`} color={emailHealthy ? '#059669' : '#dc2626'} />
       </div>
@@ -186,7 +186,7 @@ export const RadarHealthCard: React.FC<{ embedded?: boolean }> = () => {
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 12, flexWrap: 'wrap' }}>
         <MiniStat label="Feeds aktiv" value={`${data.feeds.enabled}/${data.feeds.total}`} color={feedHealthy ? '#059669' : '#d97706'} />
-        <MiniStat label="Laws in DB" value={String(data.laws.total)} color="#6366f1" />
+        <MiniStat label="Laws in DB" value={String(data.laws.total)} color="#3b82f6" />
         <MiniStat label="Deine Alerts" value={String(data.alertsThisWeek.total)} color="#ea580c" />
         <MiniStat label="Email Delivery" value={`${data.email.deliveryRate}%`} color={emailHealthy ? '#059669' : '#dc2626'} />
       </div>

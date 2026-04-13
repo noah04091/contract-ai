@@ -170,7 +170,7 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
       marginBottom: 28,
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
         Portfolio-Insights
         <span style={{
           fontSize: 12,

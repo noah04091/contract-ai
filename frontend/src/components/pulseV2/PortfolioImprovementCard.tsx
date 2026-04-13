@@ -69,7 +69,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header */}
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
         Portfolio-Entwicklung
       </div>
 

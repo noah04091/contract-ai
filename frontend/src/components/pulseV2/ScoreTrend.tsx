@@ -111,9 +111,9 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#6366f1"
+              stroke="#3b82f6"
               strokeWidth={2.5}
-              dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+              dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
               activeDot={{ r: 6 }}
             />
           </LineChart>

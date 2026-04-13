@@ -124,7 +124,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingLeft: 14, borderLeft: '3px solid #6366f1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
           <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
           <span style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
             Legal Radar

@@ -867,11 +867,12 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       {!heroCollapsed ? (
         <div style={{
           position: 'relative',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #312e81 100%)',
+          background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%)',
           borderRadius: 20,
           padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
           marginBottom: 28,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 16px 48px rgba(15,23,42,0.15)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
+          border: '1px solid rgba(59,130,246,0.1)',
           display: 'flex',
           alignItems: 'center',
           gap: 48,
@@ -884,8 +885,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             style={{
               position: 'absolute', top: 16, right: 16,
               width: 32, height: 32, borderRadius: '50%',
-              border: 'none', background: 'rgba(255,255,255,0.1)',
-              cursor: 'pointer', fontSize: 16, color: 'rgba(255,255,255,0.6)',
+              border: 'none', background: 'rgba(59,130,246,0.08)',
+              cursor: 'pointer', fontSize: 16, color: '#94a3b8',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
@@ -895,34 +896,33 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           {/* Left: Title + Subtitle */}
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.5px' }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
                 Legal Pulse
               </h1>
               <span style={{
-                fontSize: 10, fontWeight: 700, color: '#a5f3fc',
-                background: 'rgba(99,102,241,0.25)',
-                border: '1px solid rgba(165,243,252,0.3)',
+                fontSize: 10, fontWeight: 700, color: '#1d4ed8',
+                background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
                 padding: '4px 12px', borderRadius: 6,
                 letterSpacing: '0.5px', textTransform: 'uppercase',
               }}>
                 Laufende Überwachung
               </span>
             </div>
-            <p style={{ fontSize: 15, color: '#94a3b8', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
+            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
               Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
             </p>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#94a3b8', flexWrap: 'wrap' as const }}>
-              <span><strong style={{ color: '#ffffff', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
+            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
+              <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
               {alertStats.criticalContracts.length > 0 && (
-                <span><strong style={{ color: '#fca5a5', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+                <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
               )}
               {alertStats.openActions.length > 0 && (
-                <span><strong style={{ color: '#fcd34d', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
+                <span><strong style={{ color: '#d97706', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
               )}
             </div>
           </div>
 
-          {/* Right: Feature cards — Glassmorphism */}
+          {/* Right: Feature cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
             {[
               { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
@@ -931,21 +931,20 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             ].map((card) => (
               <div key={card.title} style={{
                 display: 'flex', alignItems: 'center', gap: 14,
-                background: 'rgba(255,255,255,0.08)', padding: '14px 18px',
-                borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                background: '#ffffff', padding: '14px 18px',
+                borderRadius: 12, border: '1px solid rgba(59,130,246,0.1)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
                 minWidth: 0,
               }}>
                 <div style={{
                   fontSize: 20, width: 42, height: 42,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(255,255,255,0.1)', borderRadius: 10,
+                  background: '#f0f7ff', borderRadius: 10,
                 }}>
                   {card.icon}
                 </div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9' }}>{card.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{card.title}</div>
                   <div style={{ fontSize: 12, color: '#94a3b8' }}>{card.desc}</div>
                 </div>
               </div>
@@ -957,20 +956,21 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 28px',
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', borderRadius: 14,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 16px 48px rgba(15,23,42,0.15)',
+          background: 'linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%)', borderRadius: 14,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
+          border: '1px solid rgba(59,130,246,0.1)',
           marginBottom: 28,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#ffffff', margin: 0 }}>Legal Pulse</h1>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Legal Pulse</h1>
             <span style={{
-              fontSize: 10, fontWeight: 700, color: '#a5f3fc',
-              background: 'rgba(99,102,241,0.25)', padding: '2px 8px', borderRadius: 4,
+              fontSize: 10, fontWeight: 700, color: '#1d4ed8',
+              background: '#dbeafe', padding: '2px 8px', borderRadius: 4,
               letterSpacing: '0.5px', textTransform: 'uppercase',
             }}>
               Aktiv
             </span>
-            <span style={{ fontSize: 13, color: '#64748b' }}>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>
               {stats.analyzed} / {stats.total} Verträge analysiert
             </span>
           </div>
@@ -978,8 +978,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             onClick={() => setHeroCollapsed(false)}
             style={{
               padding: '6px 14px', fontSize: 12, fontWeight: 600,
-              color: '#a5b4fc', background: 'rgba(99,102,241,0.15)',
-              border: '1px solid rgba(165,180,252,0.25)', borderRadius: 8,
+              color: '#3b82f6', background: '#eff6ff',
+              border: '1px solid #bfdbfe', borderRadius: 8,
               cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
             }}
           >
@@ -1040,7 +1040,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                   </span>
                 </div>
               </div>
-              <div style={{ flex: 1, borderLeft: '4px solid #6366f1', paddingLeft: 16 }}>
+              <div style={{ flex: 1, borderLeft: '4px solid #3b82f6', paddingLeft: 16 }}>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
                   Contract Health
                 </div>
