@@ -708,68 +708,143 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
           </p>
         </div>
       ) : viewType === 'grid' ? (
-        /* ========== GRID-ANSICHT (Cards) ========== */
-        <div className={styles.clauseGrid}>
-          {items
-            .sort((a, b) => (a.order || 0) - (b.order || 0))
-            .map(item => {
-              const header = getItemHeader(item);
-              const sourceColors: Record<string, { border: string; bg: string }> = {
-                'Meine Klauseln': { border: '#3b82f6', bg: '#eff6ff' },
-                'Musterklausel': { border: '#10b981', bg: '#f0fdf4' },
-                'Rechtslexikon': { border: '#8b5cf6', bg: '#f5f3ff' },
-                'Eigene Klausel': { border: '#f59e0b', bg: '#fffbeb' }
-              };
-              const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
+        /* ========== GRID-ANSICHT (Cards + Detail-Panel) ========== */
+        <>
+          <div className={styles.clauseGrid}>
+            {items
+              .sort((a, b) => (a.order || 0) - (b.order || 0))
+              .map(item => {
+                const header = getItemHeader(item);
+                const isSelected = expandedItem === item._id;
+                const sourceColors: Record<string, { border: string; bg: string }> = {
+                  'Meine Klauseln': { border: '#3b82f6', bg: '#eff6ff' },
+                  'Musterklausel': { border: '#10b981', bg: '#f0fdf4' },
+                  'Rechtslexikon': { border: '#8b5cf6', bg: '#f5f3ff' },
+                  'Eigene Klausel': { border: '#f59e0b', bg: '#fffbeb' }
+                };
+                const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
 
-              return (
-                <div
-                  key={item._id}
-                  className={styles.clauseCard}
-                  onClick={() => header.hasContent && setExpandedItem(expandedItem === item._id ? null : item._id)}
-                  style={{
-                    cursor: header.hasContent ? 'pointer' : 'default',
-                    borderLeftColor: sc.border,
-                    opacity: header.deleted ? 0.5 : 1
-                  }}
-                >
-                  <div className={styles.cardHeader}>
+                return (
+                  <div
+                    key={item._id}
+                    className={`${styles.clauseCard} ${isSelected ? styles.selected : ''}`}
+                    onClick={() => header.hasContent && setExpandedItem(isSelected ? null : item._id)}
+                    style={{
+                      cursor: header.hasContent ? 'pointer' : 'default',
+                      borderLeftColor: sc.border,
+                      opacity: header.deleted ? 0.5 : 1
+                    }}
+                  >
+                    <div className={styles.cardHeader}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                        fontSize: '0.7rem', padding: '0.2rem 0.5rem',
+                        background: sc.bg, color: sc.border,
+                        borderRadius: '4px', fontWeight: 600
+                      }}>
+                        {header.icon} {header.source}
+                      </span>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          if (confirm('Eintrag aus Sammlung entfernen?')) handleRemoveItem(item._id);
+                        }}
+                        disabled={removingItemId === item._id}
+                        style={{ padding: '0.25rem', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', opacity: removingItemId === item._id ? 0.5 : 1 }}
+                        title="Entfernen"
+                      >
+                        {removingItemId === item._id ? <Loader2 size={12} className={styles.spinner} /> : <X size={14} />}
+                      </button>
+                    </div>
+
+                    <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.375rem' }}>
+                      {header.title}
+                    </div>
+
+                    <p className={styles.clausePreview}>
+                      {header.subtitle || ''}
+                    </p>
+
+                    <div className={styles.cardFooter}>
+                      <span className={styles.date}>{formatDate(item.addedAt)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Detail-Panel unter dem Grid */}
+          {expandedItem && (() => {
+            const selectedItem = items.find(i => i._id === expandedItem);
+            if (!selectedItem) return null;
+            const header = getItemHeader(selectedItem);
+            if (!header.hasContent) return null;
+            const sourceColors: Record<string, { border: string; bg: string }> = {
+              'Meine Klauseln': { border: '#3b82f6', bg: '#eff6ff' },
+              'Musterklausel': { border: '#10b981', bg: '#f0fdf4' },
+              'Rechtslexikon': { border: '#8b5cf6', bg: '#f5f3ff' },
+              'Eigene Klausel': { border: '#f59e0b', bg: '#fffbeb' }
+            };
+            const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
+
+            return (
+              <div style={{
+                marginTop: '1.25rem',
+                background: 'white',
+                border: `1px solid #e2e8f0`,
+                borderLeft: `3px solid ${sc.border}`,
+                borderRadius: '12px',
+                padding: '1.25rem',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+              }}>
+                {/* Detail-Header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid #f1f5f9'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-                      fontSize: '0.7rem', padding: '0.2rem 0.5rem',
+                      fontSize: '0.75rem', padding: '0.25rem 0.625rem',
                       background: sc.bg, color: sc.border,
-                      borderRadius: '4px', fontWeight: 600
+                      borderRadius: '6px', fontWeight: 600
                     }}>
                       {header.icon} {header.source}
                     </span>
-                    <button
-                      onClick={e => {
-                        e.stopPropagation();
-                        if (confirm('Eintrag aus Sammlung entfernen?')) handleRemoveItem(item._id);
-                      }}
-                      disabled={removingItemId === item._id}
-                      style={{ padding: '0.25rem', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', opacity: removingItemId === item._id ? 0.5 : 1 }}
-                      title="Entfernen"
-                    >
-                      {removingItemId === item._id ? <Loader2 size={12} className={styles.spinner} /> : <X size={14} />}
-                    </button>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>
+                      {header.title}
+                    </span>
                   </div>
-
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.375rem' }}>
-                    {header.title}
-                  </div>
-
-                  <p className={styles.clausePreview}>
-                    {header.subtitle || ''}
-                  </p>
-
-                  <div className={styles.cardFooter}>
-                    <span className={styles.date}>{formatDate(item.addedAt)}</span>
-                  </div>
+                  <button
+                    onClick={() => setExpandedItem(null)}
+                    style={{
+                      padding: '0.375rem', background: '#f8fafc', border: '1px solid #e2e8f0',
+                      borderRadius: '8px', color: '#64748b', cursor: 'pointer'
+                    }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-              );
-            })}
-        </div>
+
+                {/* Typ-spezifischer Inhalt */}
+                {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
+                {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
+                {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
+                {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
+
+                {selectedItem.notes && (
+                  <div style={{
+                    marginTop: '0.75rem', padding: '0.5rem 0.75rem',
+                    background: '#fffbeb', border: '1px solid #fde68a',
+                    borderRadius: '6px', fontSize: '0.8rem', color: '#92400e'
+                  }}>
+                    <strong>Sammlungs-Notiz:</strong> {selectedItem.notes}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </>
       ) : (
         /* ========== LIST-ANSICHT (aufklappbar) ========== */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
