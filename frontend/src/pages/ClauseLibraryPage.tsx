@@ -56,7 +56,6 @@ const ClauseLibraryPage: React.FC = () => {
 
   // Sammlungen
   const [collections, setCollections] = useState<ClauseCollection[]>([]);
-  const [collectionsLoaded, setCollectionsLoaded] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Meine Klauseln State
@@ -86,8 +85,6 @@ const ClauseLibraryPage: React.FC = () => {
       }
     } catch (err) {
       console.error('[ClauseLibrary] Collections load error:', err);
-    } finally {
-      setCollectionsLoaded(true);
     }
   }, []);
 

@@ -612,7 +612,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                         <div style={{
                           display: 'flex', gap: '0.375rem', marginTop: '0.5rem', flexWrap: 'wrap'
                         }}>
-                          {item.resolvedClause.area && CLAUSE_AREA_INFO[item.resolvedClause.clauseArea] && (
+                          {item.resolvedClause.clauseArea && CLAUSE_AREA_INFO[item.resolvedClause.clauseArea] && (
                             <span style={{
                               fontSize: '0.7rem', padding: '0.125rem 0.5rem',
                               background: '#f1f5f9', borderRadius: '4px', color: '#475569'

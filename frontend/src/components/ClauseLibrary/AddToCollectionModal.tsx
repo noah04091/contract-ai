@@ -6,9 +6,7 @@ import {
   FolderPlus,
   Loader2,
   CheckCircle,
-  Plus,
-  BookOpen,
-  ArrowRight
+  Plus
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
 import type {
