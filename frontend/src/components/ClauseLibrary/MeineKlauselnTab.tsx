@@ -158,6 +158,12 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
                 </span>
               </div>
 
+              {clause.title && (
+                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.25rem' }}>
+                  {clause.title}
+                </div>
+              )}
+
               <p className={styles.clausePreview}>
                 {clause.clausePreview}
               </p>
@@ -244,6 +250,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
 }) => {
   // Edit-Modus
   const [isEditingMeta, setIsEditingMeta] = useState(false);
+  const [editTitle, setEditTitle] = useState(clause.title || '');
   const [editCategory, setEditCategory] = useState<ClauseCategory>(clause.category);
   const [editArea, setEditArea] = useState<ClauseArea>(clause.clauseArea);
   const [editNotes, setEditNotes] = useState(clause.userNotes || '');
@@ -258,6 +265,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
 
   // Reset wenn clause wechselt
   useEffect(() => {
+    setEditTitle(clause.title || '');
     setEditCategory(clause.category);
     setEditArea(clause.clauseArea);
     setEditNotes(clause.userNotes || '');
@@ -283,6 +291,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
     setIsSaving(true);
     try {
       const response = await clauseLibraryAPI.updateClause(clause._id, {
+        title: editTitle.trim(),
         category: editCategory,
         clauseArea: editArea,
         userNotes: editNotes,
@@ -328,6 +337,25 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
 
       {/* Scrollbarer Inhalt */}
       <div className={styles.detailContent}>
+        {/* Titel */}
+        <div className={styles.detailSection}>
+          <h4>Titel</h4>
+          {isEditingMeta ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              placeholder="Titel vergeben (z.B. Haftungsklausel, Kündigungsfrist...)"
+              maxLength={200}
+              style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}
+            />
+          ) : (
+            <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: clause.title ? '#1e293b' : '#94a3b8', fontStyle: clause.title ? 'normal' : 'italic' }}>
+              {clause.title || 'Kein Titel — klicke "Bearbeiten"'}
+            </p>
+          )}
+        </div>
+
         {/* Kategorie & Bereich — editierbar */}
         <div className={styles.detailSection}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -349,7 +377,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
                   {isSaving ? <Loader2 size={12} className={styles.spinner} /> : <Save size={12} />} Speichern
                 </button>
                 <button
-                  onClick={() => { setIsEditingMeta(false); setEditCategory(clause.category); setEditArea(clause.clauseArea); setEditNotes(clause.userNotes || ''); setEditTags(clause.tags || []); }}
+                  onClick={() => { setIsEditingMeta(false); setEditTitle(clause.title || ''); setEditCategory(clause.category); setEditArea(clause.clauseArea); setEditNotes(clause.userNotes || ''); setEditTags(clause.tags || []); }}
                   style={{ padding: '0.25rem 0.5rem', background: 'none', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', fontSize: '0.7rem', cursor: 'pointer' }}
                 >
                   Abbrechen

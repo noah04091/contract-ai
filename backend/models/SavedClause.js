@@ -16,6 +16,13 @@ const savedClauseSchema = new mongoose.Schema({
     index: true
   },
 
+  // Titel (vom User nachträglich vergeben)
+  title: {
+    type: String,
+    maxlength: 200,
+    default: ""
+  },
+
   // Klauseltext
   clauseText: {
     type: String,

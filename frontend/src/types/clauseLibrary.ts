@@ -46,6 +46,7 @@ export interface OriginalAnalysis {
 export interface SavedClause {
   _id: string;
   userId: string;
+  title?: string;
   clauseText: string;
   clauseTextHash: string;
   clausePreview: string;
@@ -85,6 +86,7 @@ export interface SaveClauseRequest {
  * Request zum Aktualisieren einer Klausel
  */
 export interface UpdateClauseRequest {
+  title?: string;
   category?: ClauseCategory;
   clauseArea?: ClauseArea;
   userNotes?: string;

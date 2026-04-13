@@ -303,6 +303,7 @@ router.put('/:id', verifyToken, async (req, res) => {
     const userId = req.user.userId;
     const { id } = req.params;
     const {
+      title,
       category,
       clauseArea,
       userNotes,
@@ -314,6 +315,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     const updateData = { updatedAt: new Date() };
 
+    if (title !== undefined) updateData.title = title;
     if (category) updateData.category = category;
     if (clauseArea) updateData.clauseArea = clauseArea;
     if (userNotes !== undefined) updateData.userNotes = userNotes;
