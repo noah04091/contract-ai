@@ -494,4 +494,42 @@ router.put("/:id/items/reorder", verifyToken, async (req, res) => {
   }
 });
 
+// ============================================
+// GET COLLECTIONS CONTAINING A SPECIFIC CLAUSE
+// ============================================
+
+/**
+ * GET /api/clause-collections/by-clause/:clauseId
+ * Gibt alle Sammlungen zurueck, die eine bestimmte SavedClause enthalten.
+ */
+router.get("/by-clause/:clauseId", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const userObjId = toObjectId(userId);
+    const clauseId = toObjectId(req.params.clauseId);
+
+    if (!userObjId || !clauseId) {
+      return res.status(400).json({ success: false, error: "Ungueltige ID" });
+    }
+
+    const collections = await ClauseCollection.find({
+      userId: userObjId,
+      "items.savedClauseId": clauseId
+    }).select("name icon color").lean();
+
+    res.json({
+      success: true,
+      collections: collections.map(c => ({
+        _id: c._id,
+        name: c.name,
+        icon: c.icon || "📁",
+        color: c.color || "#6366f1"
+      }))
+    });
+  } catch (error) {
+    console.error("[ClauseCollections] GET /by-clause/:clauseId error:", error);
+    res.status(500).json({ success: false, error: "Fehler beim Laden" });
+  }
+});
+
 module.exports = router;

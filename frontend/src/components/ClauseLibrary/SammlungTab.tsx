@@ -773,7 +773,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
               })}
           </div>
 
-          {/* Rechte Sidebar (wie bei Meine Klauseln) */}
+          {/* Rechte Sidebar — Management-Tool */}
           {expandedItem && (() => {
             const selectedItem = items.find(i => i._id === expandedItem);
             if (!selectedItem) return null;
@@ -791,7 +791,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
               <div className={styles.detailPanel}>
                 {/* Header */}
                 <div className={styles.detailHeader}>
-                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem' }}>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
                       fontSize: '0.7rem', padding: '0.2rem 0.5rem',
@@ -809,23 +809,45 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
 
                 {/* Scrollbarer Inhalt */}
                 <div className={styles.detailContent}>
+                  {/* Typ-spezifischer Inhalt */}
                   {selectedItem.type === 'template' && selectedItem.templateClauseId && renderTemplateExpanded(selectedItem.templateClauseId, selectedItem._id)}
                   {selectedItem.type === 'lexikon' && selectedItem.legalTermId && renderLexikonExpanded(selectedItem.legalTermId)}
                   {selectedItem.type === 'saved' && renderSavedExpanded(selectedItem)}
                   {selectedItem.type === 'custom' && renderCustomExpanded(selectedItem)}
 
-                  {selectedItem.notes && (
-                    <div style={{
-                      marginTop: '0.75rem', padding: '0.5rem 0.75rem',
-                      background: '#fffbeb', border: '1px solid #fde68a',
-                      borderRadius: '6px', fontSize: '0.8rem', color: '#92400e'
+                  {/* Sammlungs-Notiz */}
+                  <div style={{ marginTop: '1rem' }}>
+                    <h5 style={{ margin: '0 0 0.375rem 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      Sammlungs-Notiz
+                    </h5>
+                    <p style={{
+                      margin: 0, fontSize: '0.85rem',
+                      color: selectedItem.notes ? '#334155' : '#94a3b8',
+                      fontStyle: selectedItem.notes ? 'normal' : 'italic'
                     }}>
-                      <strong>Sammlungs-Notiz:</strong> {selectedItem.notes}
+                      {selectedItem.notes || 'Keine Notiz'}
+                    </p>
+                  </div>
+
+                  {/* Hinzugefuegt am */}
+                  <div style={{ marginTop: '1rem' }}>
+                    <h5 style={{ margin: '0 0 0.375rem 0', fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      Historie
+                    </h5>
+                    <div style={{ fontSize: '0.8rem', color: '#475569' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                        <span style={{ color: '#94a3b8' }}>Hinzugefuegt:</span>
+                        <span>{formatDate(selectedItem.addedAt)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#94a3b8' }}>Sammlung:</span>
+                        <span>{collection?.name}</span>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Footer mit Entfernen-Button */}
+                {/* Footer */}
                 <div className={styles.detailActions}>
                   <button
                     className={styles.deleteBtn}

@@ -136,3 +136,17 @@ export async function reorderItems(
   }
   return response.json();
 }
+
+/**
+ * Sammlungen finden die eine bestimmte SavedClause enthalten
+ */
+export async function getCollectionsByClause(
+  clauseId: string
+): Promise<{ success: boolean; collections: Array<{ _id: string; name: string; icon: string; color: string }> }> {
+  const response = await fetchWithAuth(`${BASE}/by-clause/${clauseId}`);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Fehler beim Laden');
+  }
+  return response.json();
+}
