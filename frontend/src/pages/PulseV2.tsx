@@ -845,12 +845,13 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           position: 'relative',
           background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
           borderRadius: 20,
-          padding: '48px 52px',
+          padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
           marginBottom: 28,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.03)',
           display: 'flex',
           alignItems: 'center',
           gap: 48,
+          flexWrap: 'wrap' as const,
         }}>
           {/* Collapse button */}
           <button
@@ -885,7 +886,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
               Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
             </p>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b' }}>
+            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
               <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
               {alertStats.criticalContracts.length > 0 && (
                 <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
@@ -897,7 +898,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           </div>
 
           {/* Right: Feature cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
             {[
               { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
               { icon: '\uD83D\uDEE1\uFE0F', title: 'Legal Radar', desc: 'Gesetzesänderungen automatisch erkennen' },
@@ -908,7 +909,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                 background: '#fff', padding: '14px 18px',
                 borderRadius: 12, border: '1px solid #f1f5f9',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                minWidth: 280,
+                minWidth: 0,
               }}>
                 <div style={{
                   fontSize: 20, width: 42, height: 42,
