@@ -1,7 +1,6 @@
 // MusterklauselnTab.tsx - Tab für Musterklauseln-Vorlagen
 
 import React, { useState, useMemo } from 'react';
-// Navigation entfernt - Generator-Integration kommt später bei Contract Builder / Generate letzter Schritt
 import {
   Search,
   Filter,
@@ -12,15 +11,17 @@ import {
   Check,
   X,
   Scale,
-  FileText
+  FileText,
+  FolderPlus
 } from 'lucide-react';
-import type { TemplateClause, TemplateClauseCategory, IndustryTag } from '../../types/clauseLibrary';
+import type { TemplateClause, TemplateClauseCategory, IndustryTag, AddCollectionItemRequest } from '../../types/clauseLibrary';
 import {
   TEMPLATE_CLAUSE_CATEGORY_INFO,
   INDUSTRY_TAG_INFO,
   RISK_LEVEL_INFO
 } from '../../types/clauseLibrary';
 import { templateClauses } from '../../data/templateClauses';
+import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
 const MusterklauselnTab: React.FC = () => {
@@ -32,6 +33,11 @@ const MusterklauselnTab: React.FC = () => {
   const [expandedClause, setExpandedClause] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [addToCollectionData, setAddToCollectionData] = useState<{
+    item: AddCollectionItemRequest;
+    previewText: string;
+    previewTitle: string;
+  } | null>(null);
 
   // Filter clauses
   const filteredClauses = useMemo(() => {
@@ -326,6 +332,20 @@ const MusterklauselnTab: React.FC = () => {
                               {/* Actions */}
                               <div className={styles.templateActions}>
                                 <button
+                                  className={styles.collectionBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAddToCollectionData({
+                                      item: { type: 'template', templateClauseId: clause.id },
+                                      previewText: clause.clauseText,
+                                      previewTitle: clause.title
+                                    });
+                                  }}
+                                >
+                                  <FolderPlus size={16} />
+                                  Zur Sammlung
+                                </button>
+                                <button
                                   className={`${styles.copyBtn} ${isCopied ? styles.copied : ''}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -348,6 +368,17 @@ const MusterklauselnTab: React.FC = () => {
           })
         )}
       </div>
+
+      {/* Add to Collection Modal */}
+      {addToCollectionData && (
+        <AddToCollectionModal
+          item={addToCollectionData.item}
+          previewText={addToCollectionData.previewText}
+          previewTitle={addToCollectionData.previewTitle}
+          onClose={() => setAddToCollectionData(null)}
+          onAdded={() => setAddToCollectionData(null)}
+        />
+      )}
     </div>
   );
 };

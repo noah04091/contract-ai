@@ -404,3 +404,92 @@ export const LEGAL_AREA_INFO: Record<LegalArea, { label: string; icon: string; c
   gesellschaftsrecht: { label: 'Gesellschaftsrecht', icon: '🏢', color: '#06b6d4' },
   allgemein: { label: 'Allgemein', icon: '⚖️', color: '#64748b' }
 };
+
+// =============================================
+// KLAUSEL-SAMMLUNGEN (Collections)
+// =============================================
+
+/**
+ * Typ der Klausel-Quelle innerhalb einer Sammlung
+ */
+export type CollectionItemType = 'saved' | 'template' | 'lexikon' | 'custom';
+
+/**
+ * Aufgeloeste SavedClause-Daten (vom Backend populiert)
+ */
+export interface ResolvedClauseData {
+  clauseText: string;
+  clausePreview: string;
+  category: ClauseCategory;
+  clauseArea: ClauseArea;
+  tags: string[];
+  originalAnalysis?: OriginalAnalysis;
+  userNotes?: string;
+}
+
+/**
+ * Einzelner Eintrag in einer Sammlung
+ */
+export interface CollectionItem {
+  _id: string;
+  type: CollectionItemType;
+  savedClauseId?: string;
+  templateClauseId?: string;
+  legalTermId?: string;
+  customTitle?: string;
+  customText?: string;
+  notes?: string;
+  order: number;
+  addedAt: string;
+  resolvedClause?: ResolvedClauseData | null;
+  _deleted?: boolean;
+}
+
+/**
+ * Klausel-Sammlung
+ */
+export interface ClauseCollection {
+  _id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  icon: string;
+  color: string;
+  items: CollectionItem[];
+  itemCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Request zum Erstellen einer Sammlung
+ */
+export interface CreateCollectionRequest {
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
+/**
+ * Request zum Aktualisieren einer Sammlung
+ */
+export interface UpdateCollectionRequest {
+  name?: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
+/**
+ * Request zum Hinzufuegen eines Items
+ */
+export interface AddCollectionItemRequest {
+  type: CollectionItemType;
+  savedClauseId?: string;
+  templateClauseId?: string;
+  legalTermId?: string;
+  customTitle?: string;
+  customText?: string;
+  notes?: string;
+}

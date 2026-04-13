@@ -1132,6 +1132,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Clause Library API:", err);
     }
 
+    // 📂 CLAUSE COLLECTIONS API (Benutzerdefinierte Klausel-Sammlungen)
+    try {
+      const clauseCollectionsRoutes = require("./routes/clauseCollections");
+      app.use("/api/clause-collections", verifyToken, clauseCollectionsRoutes);
+      console.log("✅ Clause Collections API geladen unter /api/clause-collections");
+    } catch (err) {
+      console.error("❌ Fehler bei Clause Collections API:", err);
+    }
+
     // 💰 COST TRACKING API (OpenAI Usage & Budget Monitoring)
     try {
       const costTrackingRoutes = require("./routes/costTracking");

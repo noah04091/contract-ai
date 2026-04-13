@@ -882,6 +882,29 @@
   cursor: not-allowed;
 }
 
+/* ===== COLLECTION BUTTON ===== */
+.collectionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: white;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6366f1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.collectionBtn:hover {
+  background: #eef2ff;
+  border-color: #818cf8;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .statsBar {
@@ -1039,6 +1062,23 @@
   border-bottom: 1px solid #e2e8f0;
   position: relative;
   z-index: 10;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.tabBar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tabBar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabBar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
 }
 
 .tabBtn {
@@ -1084,6 +1124,44 @@
 .tabBtn:not(.active) .tabCount {
   background: #e2e8f0;
   color: #64748b;
+}
+
+/* Collection Tab - nimmt Farbe der Sammlung an wenn aktiv */
+.tabBtn.collectionTab {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Tab Divider - trennt feste Tabs von Sammlungen */
+.tabDivider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* Add Collection Button */
+.addTabBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.addTabBtn:hover {
+  background: #f0fdf4;
+  border-color: #10b981;
+  border-style: solid;
+  color: #10b981;
+  transform: scale(1.05);
 }
 
 /* ===== ENHANCED EMPTY STATE ===== */

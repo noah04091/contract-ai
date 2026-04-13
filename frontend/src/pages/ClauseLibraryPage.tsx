@@ -1,4 +1,4 @@
-// ClauseLibraryPage.tsx - Klausel-Bibliothek 2.0 mit 3-Tab-System
+// ClauseLibraryPage.tsx - Klausel-Bibliothek mit 3 festen Tabs + dynamische Sammlungs-Tabs
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -14,36 +14,50 @@ import {
   X,
   FileText,
   Scale,
-  Bookmark
+  Bookmark,
+  Plus,
+  FolderOpen
 } from 'lucide-react';
 import type {
   SavedClause,
   ClauseCategory,
   ClauseArea,
   ClauseLibraryFilters,
-  ClauseLibraryStatistics
+  ClauseLibraryStatistics,
+  ClauseCollection
 } from '../types/clauseLibrary';
 import {
   CATEGORY_INFO,
   CLAUSE_AREA_INFO
 } from '../types/clauseLibrary';
 import * as clauseLibraryAPI from '../services/clauseLibraryAPI';
-import { MeineKlauselnTab, MusterklauselnTab, RechtslexikonTab } from '../components/ClauseLibrary';
+import * as clauseCollectionAPI from '../services/clauseCollectionAPI';
+import {
+  MeineKlauselnTab,
+  MusterklauselnTab,
+  RechtslexikonTab,
+  SammlungTab,
+  CreateCollectionModal
+} from '../components/ClauseLibrary';
 import { templateClauses } from '../data/templateClauses';
 import { legalTerms } from '../data/legalTerms';
 import styles from '../styles/ClauseLibraryPage.module.css';
 
 type ViewType = 'grid' | 'list';
 type SortBy = 'savedAt' | 'usageCount' | 'category';
-type TabType = 'meine' | 'musterklauseln' | 'lexikon';
 
 const ClauseLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Tab State - read from URL or default to 'meine'
-  const initialTab = (searchParams.get('tab') as TabType) || 'meine';
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  // Tab State - read from URL
+  const initialTab = searchParams.get('tab') || 'meine';
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
+  // Sammlungen
+  const [collections, setCollections] = useState<ClauseCollection[]>([]);
+  const [collectionsLoaded, setCollectionsLoaded] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Meine Klauseln State
   const [clauses, setClauses] = useState<SavedClause[]>([]);
@@ -63,11 +77,29 @@ const ClauseLibraryPage: React.FC = () => {
   const [selectedClause, setSelectedClause] = useState<SavedClause | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Sammlungen laden
+  const loadCollections = useCallback(async () => {
+    try {
+      const response = await clauseCollectionAPI.getCollections();
+      if (response.success) {
+        setCollections(response.collections);
+      }
+    } catch (err) {
+      console.error('[ClauseLibrary] Collections load error:', err);
+    } finally {
+      setCollectionsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCollections();
+  }, [loadCollections]);
+
   // Update URL when tab changes
-  const handleTabChange = (tab: TabType) => {
+  const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setSearchParams({ tab });
-    setSelectedClause(null); // Close detail panel when switching tabs
+    setSelectedClause(null);
   };
 
   // Load clauses
@@ -125,7 +157,7 @@ const ClauseLibraryPage: React.FC = () => {
 
   // Delete clause
   const handleDelete = async (clauseId: string) => {
-    if (!confirm('Klausel wirklich löschen?')) return;
+    if (!confirm('Klausel wirklich loeschen?')) return;
 
     setIsDeleting(true);
     try {
@@ -135,14 +167,42 @@ const ClauseLibraryPage: React.FC = () => {
       loadStatistics();
     } catch (err) {
       console.error('[ClauseLibrary] Delete error:', err);
-      alert('Fehler beim Löschen');
+      alert('Fehler beim Loeschen');
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // Collection erstellt
+  const handleCollectionCreated = (collection: ClauseCollection) => {
+    setCollections(prev => [collection, ...prev]);
+    setShowCreateModal(false);
+    handleTabChange(`collection_${collection._id}`);
+  };
+
+  // Collection geloescht
+  const handleCollectionDeleted = (collectionId: string) => {
+    setCollections(prev => prev.filter(c => c._id !== collectionId));
+    handleTabChange('meine');
+  };
+
+  // Pruefen ob aktiver Tab eine Sammlung ist
+  const isCollectionTab = activeTab.startsWith('collection_');
+  const activeCollectionId = isCollectionTab ? activeTab.replace('collection_', '') : null;
+
   // Tab info for header
   const getTabInfo = () => {
+    if (isCollectionTab) {
+      const col = collections.find(c => c._id === activeCollectionId);
+      if (col) {
+        return {
+          icon: <FolderOpen size={24} />,
+          title: col.name,
+          subtitle: `${col.itemCount || 0} Eintraege`
+        };
+      }
+    }
+
     switch (activeTab) {
       case 'meine':
         return {
@@ -154,13 +214,19 @@ const ClauseLibraryPage: React.FC = () => {
         return {
           icon: <FileText size={24} />,
           title: 'Musterklauseln',
-          subtitle: `${templateClauses.length} Vorlagen verfügbar`
+          subtitle: `${templateClauses.length} Vorlagen verfuegbar`
         };
       case 'lexikon':
         return {
           icon: <Scale size={24} />,
           title: 'Rechtslexikon',
-          subtitle: `${legalTerms.length} Begriffe erklärt`
+          subtitle: `${legalTerms.length} Begriffe erklaert`
+        };
+      default:
+        return {
+          icon: <BookOpen size={24} />,
+          title: 'Klausel-Bibliothek',
+          subtitle: ''
         };
     }
   };
@@ -218,6 +284,7 @@ const ClauseLibraryPage: React.FC = () => {
 
       {/* Tab Bar */}
       <div className={styles.tabBar}>
+        {/* Feste Tabs */}
         <button
           className={`${styles.tabBtn} ${activeTab === 'meine' ? styles.active : ''}`}
           onClick={() => handleTabChange('meine')}
@@ -243,6 +310,37 @@ const ClauseLibraryPage: React.FC = () => {
           <Scale size={16} />
           <span>Rechtslexikon</span>
           <span className={styles.tabCount}>{legalTerms.length}+</span>
+        </button>
+
+        {/* Divider + Dynamische Sammlungs-Tabs */}
+        {collections.length > 0 && (
+          <div className={styles.tabDivider} />
+        )}
+
+        {collections.map(col => (
+          <button
+            key={col._id}
+            className={`${styles.tabBtn} ${styles.collectionTab} ${activeTab === `collection_${col._id}` ? styles.active : ''}`}
+            onClick={() => handleTabChange(`collection_${col._id}`)}
+            style={
+              activeTab === `collection_${col._id}`
+                ? { background: `linear-gradient(135deg, ${col.color || '#6366f1'} 0%, ${col.color || '#6366f1'}dd 100%)` }
+                : undefined
+            }
+          >
+            <span style={{ fontSize: '1rem' }}>{col.icon || '📁'}</span>
+            <span>{col.name}</span>
+            <span className={styles.tabCount}>{col.itemCount || 0}</span>
+          </button>
+        ))}
+
+        {/* "+" Button */}
+        <button
+          className={styles.addTabBtn}
+          onClick={() => setShowCreateModal(true)}
+          title="Neue Sammlung erstellen"
+        >
+          <Plus size={18} />
         </button>
       </div>
 
@@ -274,7 +372,7 @@ const ClauseLibraryPage: React.FC = () => {
             <span className={styles.statIcon}>{CATEGORY_INFO.unusual.icon}</span>
             <div>
               <span className={styles.statValue}>{statistics.unusual}</span>
-              <span className={styles.statLabel}>Ungewöhnlich</span>
+              <span className={styles.statLabel}>Ungewoehnlich</span>
             </div>
           </div>
         </div>
@@ -353,7 +451,7 @@ const ClauseLibraryPage: React.FC = () => {
                   onChange={e => setSortBy(e.target.value as SortBy)}
                 >
                   <option value="savedAt">Neueste zuerst</option>
-                  <option value="usageCount">Häufig verwendet</option>
+                  <option value="usageCount">Haeufig verwendet</option>
                   <option value="category">Nach Kategorie</option>
                 </select>
               </div>
@@ -367,7 +465,7 @@ const ClauseLibraryPage: React.FC = () => {
                   setSearchQuery('');
                 }}
               >
-                Filter zurücksetzen
+                Filter zuruecksetzen
               </button>
             </div>
           )}
@@ -398,7 +496,24 @@ const ClauseLibraryPage: React.FC = () => {
         {activeTab === 'lexikon' && (
           <RechtslexikonTab />
         )}
+
+        {isCollectionTab && activeCollectionId && (
+          <SammlungTab
+            key={activeCollectionId}
+            collectionId={activeCollectionId}
+            onCollectionDeleted={() => handleCollectionDeleted(activeCollectionId)}
+            onCollectionUpdated={loadCollections}
+          />
+        )}
       </main>
+
+      {/* Create Collection Modal */}
+      {showCreateModal && (
+        <CreateCollectionModal
+          onClose={() => setShowCreateModal(false)}
+          onCreated={handleCollectionCreated}
+        />
+      )}
     </div>
     </>
   );

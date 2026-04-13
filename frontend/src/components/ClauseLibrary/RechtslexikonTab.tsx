@@ -9,11 +9,13 @@ import {
   BookOpen,
   Scale,
   ExternalLink,
-  X
+  X,
+  FolderPlus
 } from 'lucide-react';
-import type { LegalTerm, LegalArea } from '../../types/clauseLibrary';
+import type { LegalTerm, LegalArea, AddCollectionItemRequest } from '../../types/clauseLibrary';
 import { LEGAL_AREA_INFO } from '../../types/clauseLibrary';
 import { legalTerms, getLetterGroups, getRelatedTerms } from '../../data/legalTerms';
+import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
 const RechtslexikonTab: React.FC = () => {
@@ -23,6 +25,11 @@ const RechtslexikonTab: React.FC = () => {
   const [expandedTerm, setExpandedTerm] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const [addToCollectionData, setAddToCollectionData] = useState<{
+    item: AddCollectionItemRequest;
+    previewText: string;
+    previewTitle: string;
+  } | null>(null);
 
   // Refs for scrolling
   const letterRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -302,6 +309,24 @@ const RechtslexikonTab: React.FC = () => {
                               </div>
                             </div>
                           )}
+
+                          {/* Zur Sammlung */}
+                          <div className={styles.termSection}>
+                            <button
+                              className={styles.collectionBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAddToCollectionData({
+                                  item: { type: 'lexikon', legalTermId: term.id },
+                                  previewText: term.simpleExplanation,
+                                  previewTitle: term.term
+                                });
+                              }}
+                            >
+                              <FolderPlus size={16} />
+                              Zur Sammlung
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -312,6 +337,17 @@ const RechtslexikonTab: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Add to Collection Modal */}
+      {addToCollectionData && (
+        <AddToCollectionModal
+          item={addToCollectionData.item}
+          previewText={addToCollectionData.previewText}
+          previewTitle={addToCollectionData.previewTitle}
+          onClose={() => setAddToCollectionData(null)}
+          onAdded={() => setAddToCollectionData(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 // MeineKlauselnTab.tsx - Tab für gespeicherte Klauseln des Benutzers
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Tag,
@@ -13,10 +13,12 @@ import {
   Plus,
   X,
   FileText,
-  Sparkles
+  Sparkles,
+  FolderPlus
 } from 'lucide-react';
-import type { SavedClause } from '../../types/clauseLibrary';
+import type { SavedClause, AddCollectionItemRequest } from '../../types/clauseLibrary';
 import { CATEGORY_INFO, CLAUSE_AREA_INFO } from '../../types/clauseLibrary';
+import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
 interface MeineKlauselnTabProps {
@@ -45,6 +47,11 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
   onNavigateToTab,
 }) => {
   const navigate = useNavigate();
+  const [addToCollectionData, setAddToCollectionData] = useState<{
+    item: AddCollectionItemRequest;
+    previewText: string;
+    previewTitle: string;
+  } | null>(null);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE', {
@@ -299,6 +306,17 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
           {/* Detail Actions */}
           <div className={styles.detailActions}>
             <button
+              className={styles.collectionBtn}
+              onClick={() => setAddToCollectionData({
+                item: { type: 'saved', savedClauseId: selectedClause._id },
+                previewText: selectedClause.clausePreview || selectedClause.clauseText,
+                previewTitle: `${CATEGORY_INFO[selectedClause.category].icon} ${CATEGORY_INFO[selectedClause.category].label}`
+              })}
+            >
+              <FolderPlus size={16} />
+              Zur Sammlung
+            </button>
+            <button
               className={styles.deleteBtn}
               onClick={() => onDeleteClause(selectedClause._id)}
               disabled={isDeleting}
@@ -312,6 +330,17 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
             </button>
           </div>
         </div>
+      )}
+
+      {/* Add to Collection Modal */}
+      {addToCollectionData && (
+        <AddToCollectionModal
+          item={addToCollectionData.item}
+          previewText={addToCollectionData.previewText}
+          previewTitle={addToCollectionData.previewTitle}
+          onClose={() => setAddToCollectionData(null)}
+          onAdded={() => setAddToCollectionData(null)}
+        />
       )}
     </>
   );
