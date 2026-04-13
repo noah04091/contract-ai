@@ -36,12 +36,14 @@ import styles from '../../styles/ClauseLibraryPage.module.css';
 
 interface SammlungTabProps {
   collectionId: string;
+  viewType: 'grid' | 'list';
   onCollectionDeleted: () => void;
   onCollectionUpdated: () => void;
 }
 
 const SammlungTab: React.FC<SammlungTabProps> = ({
   collectionId,
+  viewType,
   onCollectionDeleted,
   onCollectionUpdated
 }) => {
@@ -693,7 +695,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
         </div>
       )}
 
-      {/* Items Liste */}
+      {/* Items */}
       {items.length === 0 ? (
         <div className={styles.emptyStateEnhanced}>
           <div className={styles.emptyIconWrapper}>
@@ -705,7 +707,71 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
             oder schreibe eigene Klauseln direkt hier.
           </p>
         </div>
+      ) : viewType === 'grid' ? (
+        /* ========== GRID-ANSICHT (Cards) ========== */
+        <div className={styles.clauseGrid}>
+          {items
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map(item => {
+              const header = getItemHeader(item);
+              const sourceColors: Record<string, { border: string; bg: string }> = {
+                'Meine Klauseln': { border: '#3b82f6', bg: '#eff6ff' },
+                'Musterklausel': { border: '#10b981', bg: '#f0fdf4' },
+                'Rechtslexikon': { border: '#8b5cf6', bg: '#f5f3ff' },
+                'Eigene Klausel': { border: '#f59e0b', bg: '#fffbeb' }
+              };
+              const sc = sourceColors[header.source] || { border: '#e2e8f0', bg: '#f8fafc' };
+
+              return (
+                <div
+                  key={item._id}
+                  className={styles.clauseCard}
+                  onClick={() => header.hasContent && setExpandedItem(expandedItem === item._id ? null : item._id)}
+                  style={{
+                    cursor: header.hasContent ? 'pointer' : 'default',
+                    borderLeftColor: sc.border,
+                    opacity: header.deleted ? 0.5 : 1
+                  }}
+                >
+                  <div className={styles.cardHeader}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                      fontSize: '0.7rem', padding: '0.2rem 0.5rem',
+                      background: sc.bg, color: sc.border,
+                      borderRadius: '4px', fontWeight: 600
+                    }}>
+                      {header.icon} {header.source}
+                    </span>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (confirm('Eintrag aus Sammlung entfernen?')) handleRemoveItem(item._id);
+                      }}
+                      disabled={removingItemId === item._id}
+                      style={{ padding: '0.25rem', background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', opacity: removingItemId === item._id ? 0.5 : 1 }}
+                      title="Entfernen"
+                    >
+                      {removingItemId === item._id ? <Loader2 size={12} className={styles.spinner} /> : <X size={14} />}
+                    </button>
+                  </div>
+
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.375rem' }}>
+                    {header.title}
+                  </div>
+
+                  <p className={styles.clausePreview}>
+                    {header.subtitle || ''}
+                  </p>
+
+                  <div className={styles.cardFooter}>
+                    <span className={styles.date}>{formatDate(item.addedAt)}</span>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       ) : (
+        /* ========== LIST-ANSICHT (aufklappbar) ========== */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
           {items
             .sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -725,7 +791,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                     boxShadow: isExpanded ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
                   }}
                 >
-                  {/* Item Header — klickbar */}
+                  {/* Item Header */}
                   <div
                     style={{
                       display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -734,7 +800,6 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                     }}
                     onClick={() => header.hasContent && setExpandedItem(isExpanded ? null : item._id)}
                   >
-                    {/* Quell-Badge */}
                     <div style={{
                       display: 'flex', alignItems: 'center', gap: '0.375rem',
                       color: '#64748b', fontSize: '0.7rem',
@@ -745,7 +810,6 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                       {header.source}
                     </div>
 
-                    {/* Titel + Subtitle */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontWeight: 600, fontSize: '0.9rem',
@@ -764,16 +828,13 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                       )}
                     </div>
 
-                    {/* Datum + Actions */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexShrink: 0 }}>
                       <span style={{ fontSize: '0.7rem', color: '#cbd5e1' }}>
                         {formatDate(item.addedAt)}
                       </span>
-
                       {header.hasContent && (
                         isExpanded ? <ChevronUp size={16} style={{ color: '#94a3b8' }} /> : <ChevronDown size={16} style={{ color: '#94a3b8' }} />
                       )}
-
                       <button
                         onClick={e => {
                           e.stopPropagation();
@@ -788,20 +849,15 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                     </div>
                   </div>
 
-                  {/* Expanded: Typ-spezifische volle Detail-Ansicht */}
+                  {/* Expanded Detail */}
                   {isExpanded && header.hasContent && (
-                    <div style={{
-                      padding: '0 1rem 1.25rem 1rem',
-                      borderTop: '1px solid #f1f5f9'
-                    }}>
+                    <div style={{ padding: '0 1rem 1.25rem 1rem', borderTop: '1px solid #f1f5f9' }}>
                       <div style={{ paddingTop: '0.75rem' }}>
                         {item.type === 'template' && item.templateClauseId && renderTemplateExpanded(item.templateClauseId, item._id)}
                         {item.type === 'lexikon' && item.legalTermId && renderLexikonExpanded(item.legalTermId)}
                         {item.type === 'saved' && renderSavedExpanded(item)}
                         {item.type === 'custom' && renderCustomExpanded(item)}
                       </div>
-
-                      {/* Item-Notiz */}
                       {item.notes && (
                         <div style={{
                           marginTop: '0.75rem', padding: '0.5rem 0.75rem',

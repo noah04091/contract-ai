@@ -258,8 +258,8 @@ const ClauseLibraryPage: React.FC = () => {
           </div>
         </div>
 
-        {/* View Toggle - Only for Meine Klauseln */}
-        {activeTab === 'meine' && (
+        {/* View Toggle - for Meine Klauseln and Collection Tabs */}
+        {(activeTab === 'meine' || isCollectionTab) && (
           <div className={styles.viewToggle}>
             <button
               className={`${styles.viewBtn} ${viewType === 'grid' ? styles.active : ''}`}
@@ -498,6 +498,7 @@ const ClauseLibraryPage: React.FC = () => {
           <SammlungTab
             key={activeCollectionId}
             collectionId={activeCollectionId}
+            viewType={viewType}
             onCollectionDeleted={() => handleCollectionDeleted(activeCollectionId)}
             onCollectionUpdated={loadCollections}
           />
