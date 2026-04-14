@@ -986,7 +986,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                         color: selectedItem.notes ? '#334155' : '#94a3b8',
                         fontStyle: selectedItem.notes ? 'normal' : 'italic'
                       }}>
-                        {selectedItem.notes || 'Keine Notiz — Doppelklick oder "Bearbeiten" klicken'}
+                        {selectedItem.notes || 'Notizen hinzufügen...'}
                       </p>
                     )}
                   </div>

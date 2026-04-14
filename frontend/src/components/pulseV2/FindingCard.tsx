@@ -69,6 +69,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [clauseSaved, setClauseSaved] = useState(false);
   const [commentText, setCommentText] = useState(finding.userComment || '');
+  const [savedComment, setSavedComment] = useState(finding.userComment || '');
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const reminderRef = useRef<HTMLDivElement>(null);
@@ -155,7 +156,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   }, [contractId, finding, severity.label]);
 
   const handleSaveComment = useCallback(async () => {
-    if (!resultId || commentText === (finding.userComment || '')) return;
+    if (!resultId || commentText === savedComment) return;
     setCommentSaving(true);
     try {
       const res = await fetch(`/api/legal-pulse-v2/results/${resultId}/findings/${findingIndex}`, {
@@ -164,13 +165,17 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment: commentText }),
       });
-      if (!res.ok) console.error('[PulseV2] Comment save failed');
+      if (res.ok) {
+        setSavedComment(commentText);
+      } else {
+        console.error('[PulseV2] Comment save failed');
+      }
     } catch (err) {
       console.error('[PulseV2] Comment save error:', err);
     } finally {
       setCommentSaving(false);
     }
-  }, [resultId, findingIndex, commentText, finding.userComment]);
+  }, [resultId, findingIndex, commentText, savedComment]);
 
   // Estimated score improvement for visual feedback
   const scoreBoost = fixApplied
@@ -279,6 +284,26 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
           </span>
         )}
       </div>
+
+      {/* Comment preview when collapsed */}
+      {!expanded && savedComment && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); setCommentOpen(true); }}
+          style={{
+            padding: '4px 16px 10px',
+            fontSize: 12,
+            color: '#6b7280',
+            fontStyle: 'italic',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <span style={{ color: '#3b82f6', fontSize: 13 }}>&#9998;</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{savedComment}</span>
+        </div>
+      )}
 
       {/* Expanded Details */}
       {expanded && (
@@ -698,11 +723,11 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       title="Notiz hinzufügen"
                       style={{
                         width: 28, height: 28, borderRadius: 6,
-                        border: `1px solid ${commentOpen || finding.userComment ? '#bfdbfe' : '#d1d5db'}`,
-                        background: commentOpen || finding.userComment ? '#eff6ff' : '#fff',
+                        border: `1px solid ${commentOpen || savedComment ? '#bfdbfe' : '#d1d5db'}`,
+                        background: commentOpen || savedComment ? '#eff6ff' : '#fff',
                         cursor: 'pointer', fontSize: 13, display: 'inline-flex',
                         alignItems: 'center', justifyContent: 'center',
-                        color: finding.userComment ? '#3b82f6' : '#9ca3af',
+                        color: savedComment ? '#3b82f6' : '#9ca3af',
                       }}
                     >
                       &#9998;
@@ -742,11 +767,11 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                       title="Notiz hinzufügen"
                       style={{
                         width: 28, height: 28, borderRadius: 6,
-                        border: `1px solid ${commentOpen || finding.userComment ? '#bfdbfe' : '#d1d5db'}`,
-                        background: commentOpen || finding.userComment ? '#eff6ff' : '#fff',
+                        border: `1px solid ${commentOpen || savedComment ? '#bfdbfe' : '#d1d5db'}`,
+                        background: commentOpen || savedComment ? '#eff6ff' : '#fff',
                         cursor: 'pointer', fontSize: 13, display: 'inline-flex',
                         alignItems: 'center', justifyContent: 'center',
-                        color: finding.userComment ? '#3b82f6' : '#9ca3af',
+                        color: savedComment ? '#3b82f6' : '#9ca3af',
                       }}
                     >
                       &#9998;
@@ -761,7 +786,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               </div>
 
               {/* Saved comment display */}
-              {finding.userComment && !commentOpen && (
+              {savedComment && !commentOpen && (
                 <div
                   onClick={(e) => { e.stopPropagation(); setCommentOpen(true); }}
                   style={{
@@ -772,7 +797,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                     cursor: 'pointer',
                   }}
                 >
-                  &#9998; {finding.userComment}
+                  &#9998; {savedComment}
                 </div>
               )}
 
@@ -786,7 +811,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                     onBlur={() => { handleSaveComment(); setCommentOpen(false); }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); setCommentOpen(false); }
-                      if (e.key === 'Escape') { setCommentText(finding.userComment || ''); setCommentOpen(false); }
+                      if (e.key === 'Escape') { setCommentText(savedComment || ''); setCommentOpen(false); }
                     }}
                     onClick={(e) => e.stopPropagation()}
                     autoFocus
