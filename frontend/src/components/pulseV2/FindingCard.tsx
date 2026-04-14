@@ -157,6 +157,9 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
 
   const handleSaveComment = useCallback(async () => {
     if (!resultId || commentText === savedComment) return;
+    // Optimistic update — show immediately
+    const previousComment = savedComment;
+    setSavedComment(commentText);
     setCommentSaving(true);
     try {
       const res = await fetch(`/api/legal-pulse-v2/results/${resultId}/findings/${findingIndex}`, {
@@ -165,12 +168,14 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ comment: commentText }),
       });
-      if (res.ok) {
-        setSavedComment(commentText);
-      } else {
+      if (!res.ok) {
+        // Revert on failure
+        setSavedComment(previousComment);
         console.error('[PulseV2] Comment save failed');
       }
     } catch (err) {
+      // Revert on error
+      setSavedComment(previousComment);
       console.error('[PulseV2] Comment save error:', err);
     } finally {
       setCommentSaving(false);
