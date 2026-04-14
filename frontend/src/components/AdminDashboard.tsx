@@ -236,6 +236,43 @@ interface ActivityLogData {
   };
 }
 
+interface EmailLog {
+  _id: string;
+  to: string | null;
+  subject: string | null;
+  category: string | null;
+  userId: string | null;
+  messageId: string | null;
+  source: string | null;
+  status: 'sent' | 'failed' | string;
+  sentAt?: string;
+  failedAt?: string;
+  createdAt: string;
+  error?: string;
+}
+
+interface EmailLogsData {
+  logs: EmailLog[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  filters: {
+    categories: string[];
+  };
+}
+
+interface EmailLogsStats {
+  total: number;
+  sent24h: number;
+  sent7d: number;
+  sent30d: number;
+  byCategory: Array<{ _id: string; count: number }>;
+  byStatus: Array<{ _id: string; count: number }>;
+}
+
 interface FinanceStats {
   monthlyRevenue: Array<{ month: string; revenue: number; count: number; byPlan: { business: number; enterprise: number } }>;
   monthlyCosts: Array<{ month: string; cost: number; calls: number }>;
@@ -397,7 +434,7 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'settings'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
@@ -405,6 +442,14 @@ export default function AdminDashboard() {
   const [activityLogData, setActivityLogData] = useState<ActivityLogData | null>(null);
   const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
   const [financeLoading, setFinanceLoading] = useState(false);
+  const [emailLogsData, setEmailLogsData] = useState<EmailLogsData | null>(null);
+  const [emailLogsStats, setEmailLogsStats] = useState<EmailLogsStats | null>(null);
+  const [emailLogsLoading, setEmailLogsLoading] = useState(false);
+  const [emailLogsPage, setEmailLogsPage] = useState(1);
+  const [emailLogsSearch, setEmailLogsSearch] = useState('');
+  const [emailLogsSearchInput, setEmailLogsSearchInput] = useState('');
+  const [emailLogsCategory, setEmailLogsCategory] = useState<string>('all');
+  const [emailLogsStatus, setEmailLogsStatus] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -646,6 +691,50 @@ export default function AdminDashboard() {
       fetchFinanceData();
     }
   }, [activeTab]);
+
+  // Fetch Email Logs (paginated, filtered)
+  const fetchEmailLogs = async (
+    page = emailLogsPage,
+    search = emailLogsSearch,
+    category = emailLogsCategory,
+    status = emailLogsStatus
+  ) => {
+    try {
+      setEmailLogsLoading(true);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '50'
+      });
+      if (search) params.set('search', search);
+      if (category && category !== 'all') params.set('category', category);
+      if (status && status !== 'all') params.set('status', status);
+
+      const [logsRes, statsRes] = await Promise.all([
+        fetch(`${API_URL}/api/admin/email-logs?${params.toString()}`, { credentials: 'include' }),
+        fetch(`${API_URL}/api/admin/email-logs/stats`, { credentials: 'include' })
+      ]);
+
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        if (data.success) setEmailLogsData(data);
+      }
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        if (data.success) setEmailLogsStats(data.stats);
+      }
+    } catch (err) {
+      console.error('Error fetching email logs:', err);
+    } finally {
+      setEmailLogsLoading(false);
+    }
+  };
+
+  // Load email logs when tab is selected or filters change
+  useEffect(() => {
+    if (activeTab === 'emails') {
+      fetchEmailLogs(emailLogsPage, emailLogsSearch, emailLogsCategory, emailLogsStatus);
+    }
+  }, [activeTab, emailLogsPage, emailLogsSearch, emailLogsCategory, emailLogsStatus]);
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -1422,6 +1511,16 @@ export default function AdminDashboard() {
         >
           <TrendingUp size={20} />
           <span>Finanzen</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'emails' ? styles.active : ''}`}
+          onClick={() => setActiveTab('emails')}
+        >
+          <Mail size={20} />
+          <span>Mails</span>
+          {emailLogsStats && emailLogsStats.sent24h > 0 && (
+            <span className={styles.tabBadge}>{emailLogsStats.sent24h}</span>
+          )}
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'settings' ? styles.active : ''}`}
@@ -3465,6 +3564,207 @@ export default function AdminDashboard() {
             })() : (
               <p style={{ color: '#94a3b8', textAlign: 'center', padding: '3rem 0' }}>Keine Finanzdaten verfügbar</p>
             )}
+          </div>
+        )}
+
+        {/* EMAILS TAB - Versendete Mails */}
+        {activeTab === 'emails' && (
+          <div className={styles.activityTab}>
+            {/* Stats Row */}
+            {emailLogsStats && (
+              <div className={styles.activityStatsRow}>
+                <div className={styles.activityStatCard}>
+                  <Mail size={24} className={styles.activityIcon} />
+                  <div>
+                    <span className={styles.activityStatValue}>{emailLogsStats.total.toLocaleString('de-DE')}</span>
+                    <span className={styles.activityStatLabel}>Gesamt</span>
+                  </div>
+                </div>
+                <div className={styles.activityStatCard}>
+                  <Clock size={24} className={styles.infoIcon} />
+                  <div>
+                    <span className={styles.activityStatValue}>{emailLogsStats.sent24h.toLocaleString('de-DE')}</span>
+                    <span className={styles.activityStatLabel}>Letzte 24h</span>
+                  </div>
+                </div>
+                <div className={styles.activityStatCard}>
+                  <Calendar size={24} className={styles.infoIcon} />
+                  <div>
+                    <span className={styles.activityStatValue}>{emailLogsStats.sent7d.toLocaleString('de-DE')}</span>
+                    <span className={styles.activityStatLabel}>Letzte 7 Tage</span>
+                  </div>
+                </div>
+                <div className={styles.activityStatCard}>
+                  <Activity size={24} className={styles.infoIcon} />
+                  <div>
+                    <span className={styles.activityStatValue}>{emailLogsStats.sent30d.toLocaleString('de-DE')}</span>
+                    <span className={styles.activityStatLabel}>Letzte 30 Tage</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Filters + Table */}
+            <div className={styles.tableCard}>
+              <div className={styles.tabHeader}>
+                <h3>Versendete Mails</h3>
+                <button
+                  className={styles.exportButton}
+                  onClick={() => {
+                    setEmailLogsPage(1);
+                    fetchEmailLogs(1, emailLogsSearch, emailLogsCategory, emailLogsStatus);
+                  }}
+                  disabled={emailLogsLoading}
+                  title="Aktualisieren"
+                >
+                  <RefreshCw size={16} />
+                  Aktualisieren
+                </button>
+              </div>
+
+              {/* Filter Bar */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', padding: '1rem', borderBottom: '1px solid #e2e8f0', alignItems: 'center' }}>
+                <div style={{ position: 'relative', flex: '1 1 260px', minWidth: 0 }}>
+                  <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="text"
+                    placeholder="Empfänger oder Betreff suchen..."
+                    value={emailLogsSearchInput}
+                    onChange={(e) => setEmailLogsSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setEmailLogsPage(1);
+                        setEmailLogsSearch(emailLogsSearchInput);
+                      }
+                    }}
+                    style={{ width: '100%', padding: '0.5rem 0.75rem 0.5rem 2.25rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+                  />
+                </div>
+                <select
+                  value={emailLogsCategory}
+                  onChange={(e) => { setEmailLogsPage(1); setEmailLogsCategory(e.target.value); }}
+                  style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem', background: '#fff' }}
+                >
+                  <option value="all">Alle Kategorien</option>
+                  {emailLogsData?.filters.categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <select
+                  value={emailLogsStatus}
+                  onChange={(e) => { setEmailLogsPage(1); setEmailLogsStatus(e.target.value); }}
+                  style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem', background: '#fff' }}
+                >
+                  <option value="all">Alle Status</option>
+                  <option value="sent">Gesendet</option>
+                  <option value="failed">Fehlgeschlagen</option>
+                </select>
+                {(emailLogsSearch || emailLogsCategory !== 'all' || emailLogsStatus !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setEmailLogsSearchInput('');
+                      setEmailLogsSearch('');
+                      setEmailLogsCategory('all');
+                      setEmailLogsStatus('all');
+                      setEmailLogsPage(1);
+                    }}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                  >
+                    <X size={14} /> Filter zurücksetzen
+                  </button>
+                )}
+              </div>
+
+              {/* Table */}
+              <div className={styles.tableContainer}>
+                {emailLogsLoading && !emailLogsData ? (
+                  <div className={styles.emptyState}>
+                    <RefreshCw size={48} />
+                    <p>Lade Mail-Protokoll...</p>
+                  </div>
+                ) : emailLogsData && emailLogsData.logs.length > 0 ? (
+                  <table className={styles.userTable}>
+                    <thead>
+                      <tr>
+                        <th>Zeitpunkt</th>
+                        <th>Empfänger</th>
+                        <th>Betreff</th>
+                        <th>Kategorie</th>
+                        <th>Status</th>
+                        <th>Quelle</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emailLogsData.logs.map(log => {
+                        const ts = log.sentAt || log.failedAt || log.createdAt;
+                        const dateObj = ts ? new Date(ts) : null;
+                        return (
+                          <tr key={log._id}>
+                            <td>
+                              {dateObj ? dateObj.toLocaleDateString('de-DE') : '—'}
+                              {dateObj && (
+                                <span className={styles.timeDetail}>
+                                  {dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              <span className={styles.activityEmail}>{log.to || '—'}</span>
+                            </td>
+                            <td className={styles.activityDescription}>{log.subject || '—'}</td>
+                            <td>
+                              <span className={styles.activityTypeBadge}>{log.category || 'general'}</span>
+                            </td>
+                            <td>
+                              <span className={`${styles.severityBadge} ${styles[log.status === 'sent' ? 'info' : 'error']}`}>
+                                {log.status === 'sent' ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
+                                {log.status === 'sent' ? 'Gesendet' : 'Fehler'}
+                              </span>
+                            </td>
+                            <td>
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{log.source || '—'}</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <Mail size={48} />
+                    <p>Keine versendeten Mails</p>
+                    <span>Sobald Mails versendet werden, erscheinen sie hier</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {emailLogsData && emailLogsData.pagination.totalPages > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #e2e8f0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                    Seite {emailLogsData.pagination.page} von {emailLogsData.pagination.totalPages}
+                    {' · '}
+                    {emailLogsData.pagination.total.toLocaleString('de-DE')} Einträge
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => setEmailLogsPage(p => Math.max(1, p - 1))}
+                      disabled={emailLogsData.pagination.page <= 1 || emailLogsLoading}
+                      style={{ padding: '0.5rem 0.875rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', cursor: emailLogsData.pagination.page <= 1 ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: emailLogsData.pagination.page <= 1 ? 0.5 : 1 }}
+                    >
+                      Zurück
+                    </button>
+                    <button
+                      onClick={() => setEmailLogsPage(p => Math.min(emailLogsData.pagination.totalPages, p + 1))}
+                      disabled={emailLogsData.pagination.page >= emailLogsData.pagination.totalPages || emailLogsLoading}
+                      style={{ padding: '0.5rem 0.875rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', cursor: emailLogsData.pagination.page >= emailLogsData.pagination.totalPages ? 'not-allowed' : 'pointer', fontSize: '0.875rem', opacity: emailLogsData.pagination.page >= emailLogsData.pagination.totalPages ? 0.5 : 1 }}
+                    >
+                      Weiter
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

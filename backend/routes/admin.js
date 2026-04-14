@@ -1758,4 +1758,133 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ==================================
+// 📧 EMAIL LOGS (Versendete Mails)
+// ==================================
+
+// GET /api/admin/email-logs - Liste versendeter E-Mails mit Filter + Pagination
+router.get('/email-logs', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 50,
+      to,
+      category,
+      status,
+      source,
+      search,
+      startDate,
+      endDate
+    } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const db = await database.connect();
+    const collection = db.collection('email_logs');
+
+    const query = {};
+    if (to) query.to = to;
+    if (category) query.category = category;
+    if (status) query.status = status;
+    if (source) query.source = source;
+
+    if (search) {
+      const safeSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(safeSearch, 'i');
+      query.$or = [
+        { to: regex },
+        { subject: regex }
+      ];
+    }
+
+    if (startDate || endDate) {
+      query.sentAt = {};
+      if (startDate) query.sentAt.$gte = new Date(startDate);
+      if (endDate) query.sentAt.$lte = new Date(endDate);
+    }
+
+    const [logs, total, categories] = await Promise.all([
+      collection
+        .find(query)
+        .sort({ sentAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray(),
+      collection.countDocuments(query),
+      collection.distinct('category')
+    ]);
+
+    res.json({
+      success: true,
+      logs,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      },
+      filters: {
+        categories: categories.filter(Boolean).sort()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching email logs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden der versendeten Mails',
+      error: error.message
+    });
+  }
+});
+
+// GET /api/admin/email-logs/stats - Aggregierte Statistiken
+router.get('/email-logs/stats', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const db = await database.connect();
+    const collection = db.collection('email_logs');
+
+    const now = new Date();
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const last7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const [total, sent24h, sent7d, sent30d, byCategory, byStatus] = await Promise.all([
+      collection.countDocuments({}),
+      collection.countDocuments({ sentAt: { $gte: last24h } }),
+      collection.countDocuments({ sentAt: { $gte: last7d } }),
+      collection.countDocuments({ sentAt: { $gte: last30d } }),
+      collection.aggregate([
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ]).toArray(),
+      collection.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]).toArray()
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        total,
+        sent24h,
+        sent7d,
+        sent30d,
+        byCategory,
+        byStatus
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching email stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden der Mail-Statistiken',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

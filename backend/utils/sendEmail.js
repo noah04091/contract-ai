@@ -1,5 +1,6 @@
 // 📁 backend/utils/sendEmail.js
 const nodemailer = require("nodemailer");
+const { logSentEmail } = require("./emailLogger");
 
 // Email-Warteschlange für sequenzielle Verarbeitung
 let emailQueue = [];
@@ -46,13 +47,21 @@ const sendEmailImmediate = async ({ to, subject, html, attachments = [] }) => {
     // KEINE Timeouts - wie server.js
   });
 
-  await transporter.sendMail({
+  const result = await transporter.sendMail({
     from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
     to,
     subject,
     html,
     attachments,
   });
+
+  logSentEmail({
+    to,
+    subject,
+    category: 'general',
+    messageId: result && result.messageId,
+    source: 'utils/sendEmail.js'
+  }).catch(() => {});
 };
 
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
