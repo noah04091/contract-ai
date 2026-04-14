@@ -342,7 +342,7 @@ const ClauseLibraryPage: React.FC = () => {
       </div>
 
       {/* Search, Filters & Stats - Only for Meine Klauseln */}
-      {activeTab === 'meine' && clauses.length > 0 && (
+      {activeTab === 'meine' && (clauses.length > 0 || categoryFilter || areaFilter || searchQuery.trim()) && (
         <>
           <div className={styles.toolbar}>
             <div className={styles.searchBox}>
@@ -467,10 +467,16 @@ const ClauseLibraryPage: React.FC = () => {
             selectedClause={selectedClause}
             isDeleting={isDeleting}
             viewType={viewType}
+            hasActiveFilter={!!(categoryFilter || areaFilter || searchQuery.trim())}
             onSelectClause={setSelectedClause}
             onDeleteClause={handleDelete}
             onRetry={loadClauses}
             onNavigateToTab={(tab) => handleTabChange(tab === 'musterklauseln' ? 'musterklauseln' : 'lexikon')}
+            onClearFilters={() => {
+              setCategoryFilter('');
+              setAreaFilter('');
+              setSearchQuery('');
+            }}
           />
         )}
 

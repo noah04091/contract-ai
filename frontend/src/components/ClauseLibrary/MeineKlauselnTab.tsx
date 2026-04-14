@@ -33,10 +33,12 @@ interface MeineKlauselnTabProps {
   selectedClause: SavedClause | null;
   isDeleting: boolean;
   viewType: 'grid' | 'list';
+  hasActiveFilter: boolean;
   onSelectClause: (clause: SavedClause | null) => void;
   onDeleteClause: (clauseId: string) => void;
   onRetry: () => void;
   onNavigateToTab: (tab: 'musterklauseln' | 'lexikon') => void;
+  onClearFilters: () => void;
 }
 
 const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
@@ -46,10 +48,12 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
   selectedClause,
   isDeleting,
   viewType,
+  hasActiveFilter,
   onSelectClause,
   onDeleteClause,
   onRetry,
   onNavigateToTab,
+  onClearFilters,
 }) => {
   const navigate = useNavigate();
   const [addToCollectionData, setAddToCollectionData] = useState<{
@@ -93,6 +97,28 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
   }
 
   if (clauses.length === 0) {
+    // Filter aktiv → andere Meldung
+    if (hasActiveFilter) {
+      return (
+        <div className={styles.emptyStateEnhanced}>
+          <div className={styles.emptyIconWrapper}>
+            <BookOpen size={48} />
+          </div>
+          <h3>Keine Klauseln gefunden</h3>
+          <p>Die aktiven Filter liefern keine Treffer. Setze sie zurück um alle Klauseln zu sehen.</p>
+          <div className={styles.emptyActions}>
+            <button
+              className={styles.emptyActionPrimary}
+              onClick={onClearFilters}
+            >
+              <X size={18} />
+              Filter zurücksetzen
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.emptyStateEnhanced}>
         <div className={styles.emptyIconWrapper}>
