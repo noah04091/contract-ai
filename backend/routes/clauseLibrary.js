@@ -12,6 +12,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const mongoose = require('mongoose');
 const SavedClause = require('../models/SavedClause');
+const ClauseCollection = require('../models/ClauseCollection');
 const Contract = require('../models/Contract');
 
 // Helper für ObjectId-Konvertierung
@@ -368,12 +369,14 @@ router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { id } = req.params;
+    const clauseObjId = toObjectId(id);
+    const userObjId = toObjectId(userId);
 
     console.log(`🗑️ [ClauseLibrary] Deleting clause: ${id}`);
 
     const result = await SavedClause.findOneAndDelete({
-      _id: toObjectId(id),
-      userId: toObjectId(userId)
+      _id: clauseObjId,
+      userId: userObjId
     });
 
     if (!result) {
@@ -381,6 +384,20 @@ router.delete('/:id', verifyToken, async (req, res) => {
         success: false,
         error: 'Klausel nicht gefunden'
       });
+    }
+
+    // Cascade: Klausel-Referenzen aus allen Sammlungen des Users entfernen
+    // Schlaegt dies fehl, ist die Hauptloeschung trotzdem erfolgreich (logged aber kein 500)
+    try {
+      const cleanupResult = await ClauseCollection.updateMany(
+        { userId: userObjId, "items.savedClauseId": clauseObjId },
+        { $pull: { items: { savedClauseId: clauseObjId } } }
+      );
+      if (cleanupResult.modifiedCount > 0) {
+        console.log(`✅ [ClauseLibrary] Cascade: ${cleanupResult.modifiedCount} Sammlung(en) bereinigt`);
+      }
+    } catch (cleanupErr) {
+      console.error('⚠️ [ClauseLibrary] Cascade cleanup failed (Hauptloeschung war erfolgreich):', cleanupErr);
     }
 
     console.log(`✅ [ClauseLibrary] Clause deleted: ${id}`);

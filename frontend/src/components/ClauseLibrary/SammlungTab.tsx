@@ -23,6 +23,7 @@ import {
   Search
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
+import { useToast } from '../../context/ToastContext';
 import type { ClauseCollection, CollectionItem } from '../../types/clauseLibrary';
 import {
   CATEGORY_INFO,
@@ -49,6 +50,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   onCollectionDeleted,
   onCollectionUpdated
 }) => {
+  const toast = useToast();
   const [collection, setCollection] = useState<ClauseCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,11 +92,18 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
         setCollection(response.collection);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden');
+      const msg = err instanceof Error ? err.message : 'Fehler beim Laden';
+      // Graceful Fallback: Sammlung existiert nicht mehr (z.B. in anderem Tab geloescht)
+      if (msg.includes('nicht gefunden') || msg.includes('not found') || msg.includes('404')) {
+        toast.warning('Diese Sammlung wurde gelöscht');
+        onCollectionDeleted();
+        return;
+      }
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
-  }, [collectionId]);
+  }, [collectionId, onCollectionDeleted, toast]);
 
   useEffect(() => {
     loadCollection();
@@ -122,6 +131,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
       onCollectionUpdated();
     } catch (err) {
       console.error('[SammlungTab] Remove error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Entfernen');
     } finally {
       setRemovingItemId(null);
     }
@@ -141,8 +151,10 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
       setShowCustomForm(false);
       loadCollection();
       onCollectionUpdated();
+      toast.success('Klausel hinzugefügt');
     } catch (err) {
       console.error('[SammlungTab] Add custom error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Hinzufügen');
     } finally {
       setIsAddingCustom(false);
     }
@@ -163,6 +175,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
       }
     } catch (err) {
       console.error('[SammlungTab] Edit error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Bearbeiten der Sammlung');
     } finally {
       setIsSavingEdit(false);
     }
@@ -174,8 +187,10 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
     try {
       await clauseCollectionAPI.deleteCollection(collection._id);
       onCollectionDeleted();
+      toast.success('Sammlung gelöscht');
     } catch (err) {
       console.error('[SammlungTab] Delete error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen');
     } finally {
       setIsDeleting(false);
     }
@@ -879,6 +894,7 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 loadCollection(); // Reload um aktualisierte Daten zu zeigen
               } catch (err) {
                 console.error('[SammlungTab] Save error:', err);
+                toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
               } finally {
                 setIsSavingSidebar(false);
               }

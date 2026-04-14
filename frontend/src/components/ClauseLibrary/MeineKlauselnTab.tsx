@@ -23,6 +23,7 @@ import type { SavedClause, ClauseCategory, ClauseArea, AddCollectionItemRequest 
 import { CATEGORY_INFO, CLAUSE_AREA_INFO } from '../../types/clauseLibrary';
 import * as clauseLibraryAPI from '../../services/clauseLibraryAPI';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
+import { useToast } from '../../context/ToastContext';
 import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
@@ -274,6 +275,8 @@ interface ClauseDetailSidebarProps {
 const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
   clause, isDeleting, onClose, onDelete, onUpdated, onAddToCollection, formatDate, navigateToContract
 }) => {
+  const toast = useToast();
+
   // Edit-Modus
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const [editTitle, setEditTitle] = useState(clause.title || '');
@@ -331,6 +334,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
       }
     } catch (err) {
       console.error('[ClauseDetail] Save error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern der Klausel');
     } finally {
       setIsSaving(false);
     }

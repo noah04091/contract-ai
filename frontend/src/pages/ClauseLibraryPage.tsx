@@ -31,6 +31,7 @@ import {
 } from '../types/clauseLibrary';
 import * as clauseLibraryAPI from '../services/clauseLibraryAPI';
 import * as clauseCollectionAPI from '../services/clauseCollectionAPI';
+import { useToast } from '../context/ToastContext';
 import {
   MeineKlauselnTab,
   MusterklauselnTab,
@@ -47,6 +48,7 @@ type SortBy = 'savedAt' | 'usageCount' | 'category';
 
 const ClauseLibraryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const toast = useToast();
 
   // Tab State - read from URL
   const initialTab = searchParams.get('tab') || 'meine';
@@ -160,9 +162,10 @@ const ClauseLibraryPage: React.FC = () => {
       setClauses(prev => prev.filter(c => c._id !== clauseId));
       setSelectedClause(null);
       loadStatistics();
+      toast.success('Klausel gelöscht');
     } catch (err) {
       console.error('[ClauseLibrary] Delete error:', err);
-      alert('Fehler beim Löschen');
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen der Klausel');
     } finally {
       setIsDeleting(false);
     }
