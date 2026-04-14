@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Search,
   Filter,
   Grid,
@@ -47,7 +46,6 @@ type ViewType = 'grid' | 'list';
 type SortBy = 'savedAt' | 'usageCount' | 'category';
 
 const ClauseLibraryPage: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tab State - read from URL
@@ -241,12 +239,6 @@ const ClauseLibraryPage: React.FC = () => {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <button
-            className={styles.backButton}
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft size={20} />
-          </button>
           <div className={styles.headerTitle}>
             <div className={styles.headerIcon}>
               <BookOpen size={20} />
