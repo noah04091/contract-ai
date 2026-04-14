@@ -338,7 +338,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
       {/* Scrollbarer Inhalt */}
       <div className={styles.detailContent}>
         {/* Titel */}
-        <div className={styles.detailSection}>
+        <div className={styles.detailSection} onDoubleClick={() => !isEditingMeta && setIsEditingMeta(true)} title={!isEditingMeta ? 'Doppelklick zum Bearbeiten' : undefined}>
           <h4>Titel</h4>
           {isEditingMeta ? (
             <input
@@ -357,7 +357,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
         </div>
 
         {/* Kategorie & Bereich — editierbar */}
-        <div className={styles.detailSection}>
+        <div className={styles.detailSection} onDoubleClick={() => !isEditingMeta && setIsEditingMeta(true)} title={!isEditingMeta ? 'Doppelklick zum Bearbeiten' : undefined}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
             <h4 style={{ margin: 0 }}>Kategorie & Bereich</h4>
             {!isEditingMeta ? (
@@ -460,7 +460,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
         )}
 
         {/* Notizen — immer sichtbar, editierbar */}
-        <div className={styles.detailSection}>
+        <div className={styles.detailSection} onDoubleClick={() => !isEditingMeta && setIsEditingMeta(true)} title={!isEditingMeta ? 'Doppelklick zum Bearbeiten' : undefined}>
           <h4>Notizen</h4>
           {isEditingMeta ? (
             <textarea
@@ -479,7 +479,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
         </div>
 
         {/* Tags — editierbar */}
-        <div className={styles.detailSection}>
+        <div className={styles.detailSection} onDoubleClick={() => !isEditingMeta && setIsEditingMeta(true)} title={!isEditingMeta ? 'Doppelklick zum Bearbeiten' : undefined}>
           <h4>Tags</h4>
           {isEditingMeta ? (
             <>

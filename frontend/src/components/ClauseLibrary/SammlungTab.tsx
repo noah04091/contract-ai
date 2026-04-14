@@ -932,7 +932,11 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                 </div>
 
                 {/* Scrollbarer Inhalt */}
-                <div className={styles.detailContent}>
+                <div
+                  className={styles.detailContent}
+                  onDoubleClick={() => isEditable && !sidebarEditMode && handleStartEdit()}
+                  title={isEditable && !sidebarEditMode ? 'Doppelklick zum Bearbeiten' : undefined}
+                >
                   {sidebarSaveSuccess && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.625rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', marginBottom: '0.75rem', fontSize: '0.75rem', color: '#16a34a' }}>
                       <Check size={12} /> Gespeichert
