@@ -78,6 +78,12 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   const isResolved = userStatus === 'resolved';
   const isDismissed = userStatus === 'dismissed';
 
+  // Sync local comment state when parent props change (e.g. after status change)
+  useEffect(() => {
+    setSavedComment(finding.userComment || '');
+    if (!commentOpen) setCommentText(finding.userComment || '');
+  }, [finding.userComment, commentOpen]);
+
   // Close reminder dropdown on click outside
   useEffect(() => {
     if (!reminderOpen) return;
@@ -156,31 +162,29 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   }, [contractId, finding, severity.label]);
 
   const handleSaveComment = useCallback(async () => {
-    if (!resultId || commentText === savedComment) return;
+    if (commentText === savedComment) return;
     // Optimistic update — show immediately
-    const previousComment = savedComment;
     setSavedComment(commentText);
     setCommentSaving(true);
     try {
-      const res = await fetch(`/api/legal-pulse-v2/results/${resultId}/findings/${findingIndex}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment: commentText }),
-      });
-      if (!res.ok) {
-        // Revert on failure
-        setSavedComment(previousComment);
-        console.error('[PulseV2] Comment save failed');
+      // Use parent callback to save + update parent state
+      if (onFindingStatusChange) {
+        await onFindingStatusChange(findingIndex, userStatus as 'open' | 'resolved' | 'dismissed', commentText);
+      } else if (resultId) {
+        // Fallback: direct API call
+        await fetch(`/api/legal-pulse-v2/results/${resultId}/findings/${findingIndex}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment: commentText }),
+        });
       }
     } catch (err) {
-      // Revert on error
-      setSavedComment(previousComment);
       console.error('[PulseV2] Comment save error:', err);
     } finally {
       setCommentSaving(false);
     }
-  }, [resultId, findingIndex, commentText, savedComment]);
+  }, [resultId, findingIndex, commentText, savedComment, userStatus, onFindingStatusChange]);
 
   // Estimated score improvement for visual feedback
   const scoreBoost = fixApplied
