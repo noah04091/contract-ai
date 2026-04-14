@@ -351,7 +351,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
             />
           ) : (
             <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: clause.title ? '#1e293b' : '#94a3b8', fontStyle: clause.title ? 'normal' : 'italic' }}>
-              {clause.title || 'Kein Titel — klicke "Bearbeiten"'}
+              {clause.title || 'Kein Titel — Doppelklick oder "Bearbeiten" klicken'}
             </p>
           )}
         </div>
@@ -473,7 +473,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
             />
           ) : (
             <p style={{ margin: 0, fontSize: '0.85rem', color: clause.userNotes ? '#334155' : '#94a3b8', fontStyle: clause.userNotes ? 'normal' : 'italic' }}>
-              {clause.userNotes || 'Keine Notizen — klicke "Bearbeiten" um welche hinzuzufügen'}
+              {clause.userNotes || 'Keine Notizen — Doppelklick oder "Bearbeiten" klicken'}
             </p>
           )}
         </div>
@@ -518,7 +518,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
               {clause.tags.length > 0 ? clause.tags.map(tag => (
                 <span key={tag} className={styles.detailTag}>#{tag}</span>
               )) : (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>Keine Tags</span>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>Keine Tags — Doppelklick oder "Bearbeiten" klicken</span>
               )}
             </div>
           )}
