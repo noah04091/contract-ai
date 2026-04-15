@@ -794,7 +794,7 @@ export function parseContractStreaming(
 
   const pollForCache = async () => {
     const POLL_INTERVAL_MS = 5000;
-    const MAX_POLL_DURATION_MS = 180000; // 3 Minuten max
+    const MAX_POLL_DURATION_MS = 600000; // 10 Minuten max (große Dokumente brauchen bis zu 9 Min)
     const pollStart = Date.now();
     let pollCount = 0;
 
@@ -844,7 +844,10 @@ export function parseContractStreaming(
         // Cache noch nicht bereit → weiter pollen
         const elapsed = Math.round((Date.now() - pollStart) / 1000);
         const progress = Math.min(lastProgress + pollCount * 2, 85);
-        callbacks.onStatus?.(`Dokument wird analysiert... (${elapsed}s)`, progress);
+        const statusMsg = elapsed > 120
+          ? `Großes Dokument wird verarbeitet... (${Math.round(elapsed / 60)} Min) — bitte warten`
+          : `Dokument wird analysiert... (${elapsed}s)`;
+        callbacks.onStatus?.(statusMsg, progress);
         console.log(`[Legal Lens] Poll ${pollCount}: Cache noch nicht bereit (${elapsed}s)`);
 
       } catch (pollErr) {
@@ -857,7 +860,7 @@ export function parseContractStreaming(
 
     // Polling-Timeout erreicht
     if (!isAborted && !isComplete) {
-      callbacks.onError?.('Die Analyse dauert ungewöhnlich lange. Bitte laden Sie die Seite neu — die Klauseln sind möglicherweise bereits verfügbar.');
+      callbacks.onError?.('Das Dokument wird noch verarbeitet. Bitte öffnen Sie es in 1–2 Minuten erneut — die Klauseln werden im Hintergrund gespeichert.');
     }
   };
 
