@@ -109,6 +109,18 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
     loadCollection();
   }, [loadCollection]);
 
+  // Body-Scroll-Lock auf Mobile wenn Sidebar (expandedItem) offen
+  useEffect(() => {
+    if (!expandedItem) return;
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [expandedItem]);
+
   const handleCopy = async (text: string, id: string) => {
     try {
       await navigator.clipboard.writeText(text);

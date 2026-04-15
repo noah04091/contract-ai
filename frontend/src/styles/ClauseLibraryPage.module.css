@@ -709,6 +709,7 @@
 .detailContent {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.5rem;
 }
 
@@ -850,6 +851,9 @@
 .sourceInfo span {
   font-size: 0.95rem;
   color: #374151;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .viewSourceBtn {
@@ -997,14 +1001,16 @@
   }
 
   .searchBox {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
     max-width: none;
-    order: 2;
+    order: 1;
+    min-width: 0;
   }
 
   .filterBtn {
-    order: 1;
-    margin-left: auto;
+    order: 2;
+    margin-left: 0;
+    flex-shrink: 0;
   }
 
   .filtersPanel {

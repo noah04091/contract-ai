@@ -316,6 +316,17 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
     }
   }, [clause._id, collectionsLoaded]);
 
+  // Body-Scroll-Lock auf Mobile wenn Sidebar offen (Sidebar ist immer offen wenn Component gemountet)
+  useEffect(() => {
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
