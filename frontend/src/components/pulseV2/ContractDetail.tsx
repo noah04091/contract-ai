@@ -101,6 +101,23 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }
   }, [result._id, toast]);
 
+  const handleActionCommentSave = useCallback(async (actionId: string, comment: string) => {
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/actions/${actionId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment }),
+      });
+      const data = await res.json();
+      if (data.actions) {
+        setActions(data.actions);
+      }
+    } catch (err) {
+      console.error('[PulseV2] Action comment save failed:', err);
+    }
+  }, [result._id]);
+
   const handlePdfExport = useCallback(async () => {
     setPdfExporting(true);
     try {
@@ -779,6 +796,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     contractId={result.contractId}
                     resultId={result._id}
                     onStatusChange={handleActionStatusChange}
+                    onCommentSave={handleActionCommentSave}
                   />
                 ))}
               </div>

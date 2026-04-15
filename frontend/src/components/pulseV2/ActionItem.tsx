@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Action } from '../../types/pulseV2';
 import styles from '../../styles/PulseV2.module.css';
@@ -37,31 +37,38 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
   const isDone = action.status === 'done';
   const isDismissed = action.status === 'dismissed';
   const [commentText, setCommentText] = useState(action.userComment || '');
+  const [savedComment, setSavedComment] = useState(action.userComment || '');
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
 
+  // Sync local state when parent props change (after server response)
+  useEffect(() => {
+    setSavedComment(action.userComment || '');
+    if (!commentOpen) setCommentText(action.userComment || '');
+  }, [action.userComment, commentOpen]);
+
   const handleSaveComment = useCallback(async () => {
-    if (commentText === (action.userComment || '')) return;
-    if (onCommentSave) {
-      onCommentSave(action.id, commentText);
-      return;
-    }
-    // Fallback: direct API call if no handler provided
-    if (!resultId) return;
+    if (commentText === savedComment) return;
+    // Optimistic update
+    setSavedComment(commentText);
     setCommentSaving(true);
     try {
-      await fetch(`/api/legal-pulse-v2/results/${resultId}/actions/${action.id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment: commentText }),
-      });
+      if (onCommentSave) {
+        await onCommentSave(action.id, commentText);
+      } else if (resultId) {
+        await fetch(`/api/legal-pulse-v2/results/${resultId}/actions/${action.id}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment: commentText }),
+        });
+      }
     } catch (err) {
       console.error('[PulseV2] Action comment save error:', err);
     } finally {
       setCommentSaving(false);
     }
-  }, [action.id, action.userComment, commentText, onCommentSave, resultId]);
+  }, [action.id, savedComment, commentText, onCommentSave, resultId]);
 
   // Resolve contract ID: relatedContracts may contain filenames (old data) instead of real IDs.
   // Build reverse lookup: name → contractId to handle both cases.
@@ -226,11 +233,11 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               title="Notiz hinzufügen"
               style={{
                 width: 28, height: 28, borderRadius: 6,
-                border: `1px solid ${commentOpen || action.userComment ? '#bfdbfe' : '#d1d5db'}`,
-                background: commentOpen || action.userComment ? '#eff6ff' : '#fff',
+                border: `1px solid ${commentOpen || savedComment ? '#bfdbfe' : '#d1d5db'}`,
+                background: commentOpen || savedComment ? '#eff6ff' : '#fff',
                 cursor: 'pointer', fontSize: 13, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                color: action.userComment ? '#3b82f6' : '#9ca3af',
+                color: savedComment ? '#3b82f6' : '#9ca3af',
               }}
             >
               &#9998;
@@ -259,11 +266,11 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               title="Notiz hinzufügen"
               style={{
                 width: 28, height: 28, borderRadius: 6,
-                border: `1px solid ${commentOpen || action.userComment ? '#bfdbfe' : '#d1d5db'}`,
-                background: commentOpen || action.userComment ? '#eff6ff' : '#fff',
+                border: `1px solid ${commentOpen || savedComment ? '#bfdbfe' : '#d1d5db'}`,
+                background: commentOpen || savedComment ? '#eff6ff' : '#fff',
                 cursor: 'pointer', fontSize: 13, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                color: action.userComment ? '#3b82f6' : '#9ca3af',
+                color: savedComment ? '#3b82f6' : '#9ca3af',
               }}
             >
               &#9998;
@@ -273,7 +280,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
       </div>
 
       {/* Saved comment display (when not editing) */}
-      {action.userComment && !commentOpen && (
+      {savedComment && !commentOpen && (
         <div
           onClick={() => setCommentOpen(true)}
           style={{
@@ -285,7 +292,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             paddingLeft: 28,
           }}
         >
-          &#9998; {action.userComment}
+          &#9998; {savedComment}
         </div>
       )}
 
@@ -305,7 +312,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             onBlur={() => { handleSaveComment(); setCommentOpen(false); }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') { e.preventDefault(); handleSaveComment(); setCommentOpen(false); }
-              if (e.key === 'Escape') { setCommentText(action.userComment || ''); setCommentOpen(false); }
+              if (e.key === 'Escape') { setCommentText(savedComment || ''); setCommentOpen(false); }
             }}
             autoFocus
             placeholder="Notiz hinzufügen..."
