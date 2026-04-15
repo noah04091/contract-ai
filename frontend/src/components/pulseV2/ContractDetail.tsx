@@ -44,6 +44,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
+  const [scoresState, setScoresState] = useState(result.scores);
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
@@ -67,6 +68,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   useEffect(() => {
     setActions(result.actions || []);
     setFindingsState(result.clauseFindings || []);
+    setScoresState(result.scores);
   }, [result]);
 
   useEffect(() => {
@@ -117,6 +119,19 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       console.error('[PulseV2] Action comment save failed:', err);
     }
   }, [result._id]);
+
+  const handleQuickFixApplied = useCallback((severity: string) => {
+    const boost = severity === 'critical' ? 8 : severity === 'high' ? 5 : 3;
+    setScoresState(prev => {
+      if (!prev) return prev;
+      const riskBoost = Math.round(boost * 1.5);
+      return {
+        ...prev,
+        overall: Math.min(100, prev.overall + boost),
+        risk: Math.min(100, prev.risk + riskBoost),
+      };
+    });
+  }, []);
 
   const handlePdfExport = useCallback(async () => {
     setPdfExporting(true);
@@ -213,7 +228,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }));
 
   // Score label + context description
-  const score = result.scores?.overall ?? 0;
+  const score = scoresState?.overall ?? 0;
   const scoreLabel = score >= 80 ? 'Gut' : score >= 60 ? 'Akzeptabel' : score >= 40 ? 'Bedenklich' : 'Kritisch';
   const scoreLabelColor = score >= 80 ? '#15803d' : score >= 60 ? '#d97706' : score >= 40 ? '#ea580c' : '#dc2626';
   const scoreDescription = score >= 80
@@ -292,7 +307,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         overflow: 'visible',
       }}>
         <div style={{ position: 'relative' }}>
-          <HealthScoreGauge scores={result.scores} riskTrend={result.context?.riskTrend} />
+          <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} />
           {result.previousResultId && result.context?.riskTrend && result.context.riskTrend !== 'stable' && (() => {
             const isImproving = result.context!.riskTrend === 'improving';
             return (
@@ -513,7 +528,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             const ctx = result.context;
             const contractType = safeContractType(ctx?.contractType || result.document?.contractType);
             const parties = ctx?.parties || result.document?.extractedMeta?.parties || [];
-            const scores = result.scores;
+            const scores = scoresState;
 
             // Build summary paragraphs
             const lines: (string | React.ReactNode)[] = [];
@@ -776,6 +791,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     resultId={result._id}
                     allFindings={actionableFindingSummaries}
                     onFindingStatusChange={handleFindingStatusChange}
+                    onQuickFixApplied={handleQuickFixApplied}
                   />
                 ))}
               </div>
@@ -969,6 +985,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     resultId={result._id}
                     allFindings={actionableFindingSummaries}
                     onFindingStatusChange={handleFindingStatusChange}
+                    onQuickFixApplied={handleQuickFixApplied}
                   />
                 ))}
               </div>

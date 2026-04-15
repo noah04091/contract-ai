@@ -27,6 +27,7 @@ interface FindingCardProps {
   /** All actionable findings (critical/high/medium) — passed to optimizer for context */
   allFindings?: PulseFindingSummary[];
   onFindingStatusChange?: (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => void;
+  onQuickFixApplied?: (severity: string) => void;
 }
 
 const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
@@ -51,7 +52,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
   unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, allFindings, onFindingStatusChange }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, allFindings, onFindingStatusChange, onQuickFixApplied }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
@@ -993,6 +994,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                         });
                         if (res.ok) {
                           setFixApplied(true);
+                          onQuickFixApplied?.(finding.severity);
                           return;
                         }
                       } catch {
