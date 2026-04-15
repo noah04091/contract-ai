@@ -1042,8 +1042,22 @@
     white-space: nowrap;
   }
 
-  .tabBtn span:first-of-type {
-    display: none;
+  /* Tab-Text sichtbar lassen — Tab-Bar ist horizontal scrollbar */
+  .tabBtn span {
+    display: inline;
+  }
+
+  /* Stats-Badges: volle Breite, 2 pro Reihe */
+  .statsInline {
+    margin-left: 0;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .statBadge {
+    flex: 1 1 calc(50% - 0.2rem);
+    justify-content: center;
   }
 
   .alphabetNav {
