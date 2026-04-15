@@ -58,6 +58,8 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import { Send as SendIcon } from 'lucide-react';
+import CampaignsTab from './CampaignsTab';
 import styles from './AdminDashboard.module.css';
 
 // API URL für Backend-Calls
@@ -434,7 +436,7 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'settings'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
@@ -1521,6 +1523,13 @@ export default function AdminDashboard() {
           {emailLogsStats && emailLogsStats.sent24h > 0 && (
             <span className={styles.tabBadge}>{emailLogsStats.sent24h}</span>
           )}
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'campaigns' ? styles.active : ''}`}
+          onClick={() => setActiveTab('campaigns')}
+        >
+          <SendIcon size={20} />
+          <span>Kampagnen</span>
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'settings' ? styles.active : ''}`}
@@ -3767,6 +3776,8 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === 'campaigns' && <CampaignsTab />}
 
         {activeTab === 'settings' && (
           <div className={styles.settingsTab}>
