@@ -1630,6 +1630,21 @@ const connectDB = async () => {
         }
       });
 
+      // 📮 NEU: Campaign Processor (jede Minute) — verarbeitet 'queued'/'sending' Kampagnen
+      // Kill-Switch: env CAMPAIGN_CRON_ENABLED=false deaktiviert komplett
+      cron.schedule("*/1 * * * *", withCronLock('campaign-processor', async () => {
+        try {
+          await withCronLogging('campaign-processor', async () => {
+            const { runCampaignProcessor } = require("./jobs/campaignProcessor");
+            const result = await runCampaignProcessor();
+            return result;
+          });
+        } catch (error) {
+          console.error("❌ Campaign Processor Cron Error:", error);
+          await captureError(error, { route: 'CRON:campaign-processor', method: 'SCHEDULED', severity: 'high' });
+        }
+      }));
+
       // 🧠 NEU: Smart Status Updater (täglich um 1 Uhr nachts)
       cron.schedule("0 1 * * *", async () => {
         console.log("🧠 Starte Smart Status Update für alle Verträge...");

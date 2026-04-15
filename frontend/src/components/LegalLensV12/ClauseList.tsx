@@ -2,9 +2,10 @@
 // Komponente für die Klausel-Liste (linke Seite)
 
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import { FileText, Eye, ChevronDown, ChevronUp, Search, X, Check, MessageSquare, Ban, StickyNote, Keyboard } from 'lucide-react';
+import { FileText, Eye, ChevronDown, ChevronUp, ChevronRight, Search, X, Check, MessageSquare, Ban, StickyNote, Keyboard } from 'lucide-react';
 import type { ParsedClause, LegalLensProgress, RiskLevel, ActionLevel } from '../../types/legalLens';
 import { RISK_LABELS, NON_ANALYZABLE_LABELS } from '../../types/legalLens';
+import { detectClauseSections, type ClauseSection } from '../../utils/clauseSectionDetector';
 import HoverTooltip from './HoverTooltip';
 import styles from '../../styles/LegalLensV12.module.css';
 
@@ -250,6 +251,29 @@ const ClauseList: React.FC<ClauseListProps> = ({
     };
   }, [safeClauses]);
 
+  // ✅ Section Grouping: Collapsible Sections für große Verträge (15+ Klauseln)
+  const collapsedKey = contractId ? `legalLens_sections_${contractId}` : 'legalLens_sections';
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(collapsedKey);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
+
+  const toggleSection = useCallback((sectionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCollapsedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      localStorage.setItem(collapsedKey, JSON.stringify([...next]));
+      return next;
+    });
+  }, [collapsedKey]);
+
   // Hauptklauseln vs. Anhang-Klauseln trennen
   const { mainClauses: mainFilteredClauses, attachmentMap } = useMemo(() => {
     const main: typeof filteredClauses = [];
@@ -298,6 +322,26 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
     return groups.length >= 2 ? groups : null;
   }, [mainFilteredClauses, searchQuery, riskFilter]);
+
+  // Section Detection — erkennt Sektionen anhand Nummernschema-Wechseln (nur Hauptklauseln, ungefilter)
+  const detectedSections = useMemo((): ClauseSection[] | null => {
+    // Nur auf die ungefilterten Hauptklauseln anwenden
+    const mainOnly = safeClauses.filter(c => !c.attachment);
+    if (mainOnly.length < 15) return null;
+    return detectClauseSections(mainOnly);
+  }, [safeClauses]);
+
+  // Lookup: clauseId → sectionId (für schnellen Zugriff beim Rendern)
+  const clauseSectionMap = useMemo(() => {
+    if (!detectedSections) return null;
+    const map = new Map<string, string>();
+    for (const section of detectedSections) {
+      for (const clause of section.clauses) {
+        map.set(clause.id, section.id);
+      }
+    }
+    return map;
+  }, [detectedSections]);
 
   // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
   useEffect(() => {
@@ -440,6 +484,26 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
         <span className={styles.clauseCount}>
           {safeClauses.length} Klauseln
+          {detectedSections && detectedSections.length > 0 && !searchQuery && riskFilter === 'all' && (
+            <button
+              className={styles.sectionCollapseAll}
+              onClick={() => {
+                if (collapsedSections.size >= detectedSections.length) {
+                  // Alle aufklappen
+                  setCollapsedSections(new Set());
+                  localStorage.removeItem(collapsedKey);
+                } else {
+                  // Alle zuklappen
+                  const allIds = new Set(detectedSections.map(s => s.id));
+                  setCollapsedSections(allIds);
+                  localStorage.setItem(collapsedKey, JSON.stringify([...allIds]));
+                }
+              }}
+              title={collapsedSections.size >= (detectedSections?.length || 0) ? 'Alle aufklappen' : 'Alle zuklappen'}
+            >
+              {collapsedSections.size >= detectedSections.length ? '▶ Alle' : '▼ Alle'}
+            </button>
+          )}
         </span>
       </div>
 
@@ -553,7 +617,78 @@ const ClauseList: React.FC<ClauseListProps> = ({
       </div>
 
       <div className={styles.clauseList}>
+        {/* Section Headers + Collapsible Sections für große Verträge */}
         {filteredClauses.map((clause, clauseIdx) => {
+          // ── Section Header: Collapsible Section-Trenner ──
+          const sectionHeader = (() => {
+            if (clause.attachment) return null;
+            if (!detectedSections || !clauseSectionMap || searchQuery || riskFilter !== 'all') return null;
+
+            // Finde die Section zu dieser Klausel
+            const sectionId = clauseSectionMap.get(clause.id);
+            if (!sectionId) return null;
+
+            const section = detectedSections.find(s => s.id === sectionId);
+            if (!section || section.clauses[0]?.id !== clause.id) return null;
+
+            const isCollapsed = collapsedSections.has(sectionId);
+            const sIdx = detectedSections.indexOf(section);
+
+            return (
+              <div
+                key={`section-${sectionId}`}
+                className={`${styles.sectionHeader} ${isCollapsed ? styles.sectionCollapsed : ''}`}
+                onClick={(e) => toggleSection(sectionId, e)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSection(sectionId, e as unknown as React.MouseEvent)}
+              >
+                <span className={styles.sectionToggle}>
+                  {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                </span>
+                <span className={styles.sectionNumber}>{sIdx + 1}</span>
+                <span className={styles.sectionLabel}>{section.label}</span>
+                <span className={styles.sectionMeta}>
+                  {section.clauses.length} Klauseln
+                </span>
+                <div className={styles.sectionRiskBadges}>
+                  {section.riskCounts.high > 0 && (
+                    <span className={`${styles.sectionRiskBadge} ${styles.sectionRiskHigh}`}>
+                      {section.riskCounts.high}
+                    </span>
+                  )}
+                  {section.riskCounts.medium > 0 && (
+                    <span className={`${styles.sectionRiskBadge} ${styles.sectionRiskMedium}`}>
+                      {section.riskCounts.medium}
+                    </span>
+                  )}
+                  {section.riskCounts.low > 0 && (
+                    <span className={`${styles.sectionRiskBadge} ${styles.sectionRiskLow}`}>
+                      {section.riskCounts.low}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })();
+
+          // ── Skip collapsed section clauses ──
+          const isInCollapsedSection = (() => {
+            if (!clauseSectionMap || !detectedSections || searchQuery || riskFilter !== 'all') return false;
+            const sectionId = clauseSectionMap.get(clause.id);
+            return sectionId ? collapsedSections.has(sectionId) : false;
+          })();
+
+          if (isInCollapsedSection) {
+            // Nur den Section-Header rendern, Klauseln überspringen
+            const sectionId = clauseSectionMap?.get(clause.id);
+            const section = sectionId ? detectedSections?.find(s => s.id === sectionId) : null;
+            if (section && section.clauses[0]?.id === clause.id) {
+              return <React.Fragment key={clause.id}>{sectionHeader}</React.Fragment>;
+            }
+            return null;
+          }
+
           // Anhang-Section-Header: Visueller Separator wenn Anhang beginnt
           const attachmentSectionHeader = (() => {
             if (!clause.attachment) return null;
@@ -580,9 +715,10 @@ const ClauseList: React.FC<ClauseListProps> = ({
             );
           })();
 
-          // Group headers (nur für Hauptklauseln, nicht für Anhänge)
+          // Group headers — nur wenn KEINE Sektionen erkannt wurden (Fallback für kleine Verträge)
           const groupLabel = (() => {
-            if (clause.attachment) return null; // Anhang-Klauseln haben eigene Header
+            if (clause.attachment) return null;
+            if (detectedSections) return null; // Sektionen haben Vorrang
             if (!clauseGroups) return null;
             for (const group of clauseGroups) {
               if (group.clauses.length > 0 && group.clauses[0].id === clause.id) {
@@ -615,6 +751,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
           if (isNonAnalyzable) {
             return (
               <React.Fragment key={clause.id}>
+                {sectionHeader}
                 {attachmentSectionHeader}
                 {groupHeaderEl}
                 <div
@@ -644,6 +781,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
           return (
             <React.Fragment key={clause.id}>
+            {sectionHeader}
             {attachmentSectionHeader}
             {groupHeaderEl}
             <div

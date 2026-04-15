@@ -1887,4 +1887,104 @@ router.get('/email-logs/stats', verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ==================================
+// 📮 EMAIL CAMPAIGNS (Phase 2A)
+// ==================================
+
+// POST /api/admin/campaigns/preview — Empfängerzählung aus Filter (sendet nichts)
+router.post('/campaigns/preview', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { previewRecipients } = require('../services/campaignService');
+    const result = await previewRecipients(req.body && req.body.segmentFilter || {});
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN PREVIEW]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/admin/campaigns/test — Test-Mail an eine einzige Adresse
+router.post('/campaigns/test', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { sendTestCampaign } = require('../services/campaignService');
+    const { testEmail, campaign } = req.body || {};
+    if (!testEmail) {
+      return res.status(400).json({ success: false, message: 'testEmail fehlt' });
+    }
+    if (!campaign) {
+      return res.status(400).json({ success: false, message: 'campaign-Daten fehlen' });
+    }
+    const result = await sendTestCampaign(campaign, testEmail);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN TEST]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/admin/campaigns — Campaign erstellen (status=draft)
+router.post('/campaigns', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { createCampaign } = require('../services/campaignService');
+    const adminUser = { userId: req.user.userId, email: req.user.email };
+    const result = await createCampaign(req.body || {}, adminUser);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN CREATE]', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/admin/campaigns/:id/queue — Aktiviert Campaign (draft → queued)
+router.post('/campaigns/:id/queue', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { queueCampaign } = require('../services/campaignService');
+    const result = await queueCampaign(req.params.id);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN QUEUE]', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/admin/campaigns/:id/cancel — Stoppt laufende Campaign
+router.post('/campaigns/:id/cancel', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { cancelCampaign } = require('../services/campaignService');
+    const result = await cancelCampaign(req.params.id);
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN CANCEL]', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/admin/campaigns — Liste aller Campaigns
+router.get('/campaigns', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { listCampaigns } = require('../services/campaignService');
+    const result = await listCampaigns({ page: req.query.page, limit: req.query.limit });
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN LIST]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/admin/campaigns/:id — Details + aktuelle Stats
+router.get('/campaigns/:id', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { getCampaignDetails } = require('../services/campaignService');
+    const includeRecipients = req.query.includeRecipients === 'true';
+    const campaign = await getCampaignDetails(req.params.id, { includeRecipients });
+    if (!campaign) {
+      return res.status(404).json({ success: false, message: 'Campaign nicht gefunden' });
+    }
+    res.json({ success: true, campaign });
+  } catch (error) {
+    console.error('❌ [CAMPAIGN DETAILS]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;
