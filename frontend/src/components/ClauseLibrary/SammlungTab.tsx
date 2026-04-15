@@ -589,10 +589,11 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
           if (item.type === 'template' && item.templateClauseId) {
             const t = templateClauses.find(x => x.id === item.templateClauseId);
             if (!t) return null;
+            const riskInfo = t.riskLevel ? RISK_LEVEL_INFO[t.riskLevel] : null;
             const meta = [
               `Typ: Musterklausel`,
               t.legalBasis ? `Rechtsgrundlage: ${t.legalBasis}` : '',
-              t.riskLevel ? `Risiko: ${t.riskLevel === 'high' ? 'Hoch' : t.riskLevel === 'medium' ? 'Mittel' : 'Niedrig'}` : ''
+              riskInfo ? `Einordnung: ${riskInfo.label}` : ''
             ].filter(Boolean);
             return {
               title: t.title,
