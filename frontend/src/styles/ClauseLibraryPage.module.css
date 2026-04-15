@@ -1028,6 +1028,9 @@
 
   .detailPanel {
     width: 100%;
+    top: 0;
+    height: 100vh;
+    z-index: 1001;
   }
 
   .tabBar {
@@ -1045,6 +1048,11 @@
   /* Tab-Text sichtbar lassen — Tab-Bar ist horizontal scrollbar */
   .tabBtn span {
     display: inline;
+  }
+
+  /* Tabs nicht schrumpfen — Labels komplett sichtbar, Bar scrollt horizontal */
+  .tabBtn {
+    flex-shrink: 0;
   }
 
   /* Stats-Badges: volle Breite, 2 pro Reihe */
