@@ -80,7 +80,7 @@ const BENCHMARKS = {
   // ---- Freelancer / Dienstvertrag ----
   freelancer: {
     label: 'Freelancer-Vertrag',
-    keywords: ['freelancer', 'freier mitarbeiter', 'dienstvertrag', 'werkvertrag', 'freie mitarbeit', 'auftragnehmer'],
+    keywords: ['freelancer', 'freier mitarbeiter', 'freie mitarbeit', 'honorarvertrag', 'scheinselbständigkeit', 'werkvertrag'],
     metrics: [
       {
         id: 'hourly_rate',
@@ -142,7 +142,7 @@ const BENCHMARKS = {
   // ---- NDA / Geheimhaltungsvereinbarung ----
   nda: {
     label: 'Geheimhaltungsvereinbarung (NDA)',
-    keywords: ['nda', 'geheimhaltung', 'vertraulichkeit', 'geheimhaltungsvereinbarung', 'vertraulichkeitsvereinbarung'],
+    keywords: ['nda', 'geheimhaltungsvereinbarung', 'vertraulichkeitsvereinbarung', 'non-disclosure', 'secret', 'offenlegungsverbot'],
     metrics: [
       {
         id: 'confidentiality_duration',
@@ -326,11 +326,11 @@ function detectContractType(contractMap1, contractMap2) {
   const ct2 = (contractMap2.contractType || '').toLowerCase().trim();
 
   // Priority 1: Direct match from Phase A contractType
-  // This is the most reliable signal — GPT already identified the document type
+  // Only match unambiguous patterns — "Dienstleistungsvertrag" is too broad for freelancer
   const DIRECT_MAPPINGS = [
-    { type: 'saas', pattern: /saas|software.?vertrag|cloud.?vertrag|nutzungsvertrag/ },
-    { type: 'freelancer', pattern: /freelancer|dienstvertrag|werkvertrag|dienstleistungsvertrag|freie.?mitarbeit/ },
-    { type: 'nda', pattern: /nda|geheimhaltungsvereinbarung|vertraulichkeitsvereinbarung|non.?disclosure/ },
+    { type: 'saas', pattern: /saas|software.?vertrag|cloud.?vertrag/ },
+    { type: 'freelancer', pattern: /freelancer|freie.?mitarbeit|freier.?mitarbeiter/ },
+    { type: 'nda', pattern: /geheimhaltungsvereinbarung|vertraulichkeitsvereinbarung|non.?disclosure/ },
     { type: 'mietvertrag', pattern: /mietvertrag|mietverhältnis|wohnungsmiet/ },
     { type: 'factoring', pattern: /factoring/ },
   ];
@@ -349,6 +349,7 @@ function detectContractType(contractMap1, contractMap2) {
   }
 
   // Priority 3: Keyword matching fallback (only for generic/unknown contractType)
+  // Uses word-boundary regex to prevent substring matches (e.g. "factor" in "Sicherheitsfaktor")
   const text = [
     ct1, ct2,
     contractMap1.subject || '',
@@ -363,7 +364,14 @@ function detectContractType(contractMap1, contractMap2) {
   for (const [type, config] of Object.entries(BENCHMARKS)) {
     let score = 0;
     for (const keyword of config.keywords) {
-      if (text.includes(keyword)) score++;
+      // Word-boundary check: keyword must not be a substring of a longer word
+      const idx = text.indexOf(keyword);
+      if (idx === -1) continue;
+      const before = idx > 0 ? text[idx - 1] : ' ';
+      const after = idx + keyword.length < text.length ? text[idx + keyword.length] : ' ';
+      const isBoundary = (ch) => /[\s,.:;!?()\-/]/.test(ch);
+      if (keyword.length <= 4 && !isBoundary(before) && !isBoundary(after)) continue;
+      score++;
     }
     if (score > bestScore) {
       bestScore = score;
