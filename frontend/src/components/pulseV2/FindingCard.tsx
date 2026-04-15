@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
 import { ClauseHistory } from './ClauseHistory';
@@ -74,6 +75,8 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
   const [commentSaving, setCommentSaving] = useState(false);
   const [commentOpen, setCommentOpen] = useState(false);
   const reminderRef = useRef<HTMLDivElement>(null);
+  const reminderBtnRef = useRef<HTMLButtonElement>(null);
+  const [reminderPos, setReminderPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const userStatus = finding.userStatus || 'open';
   const isResolved = userStatus === 'resolved';
@@ -584,9 +587,14 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
               {!reminderSent ? (
                 <div ref={reminderRef} style={{ position: 'relative' }}>
                   <button
+                    ref={reminderBtnRef}
                     className={styles.btnAction}
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (!reminderOpen && reminderBtnRef.current) {
+                        const rect = reminderBtnRef.current.getBoundingClientRect();
+                        setReminderPos({ top: rect.bottom + 4, left: rect.left });
+                      }
                       setReminderOpen(!reminderOpen);
                     }}
                     style={{
@@ -606,53 +614,61 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
                     &#128276; Erinnern
                   </button>
 
-                  {/* Quick date picker */}
-                  {reminderOpen && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      marginTop: 4,
-                      background: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: 8,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      padding: 6,
-                      zIndex: 10,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                      minWidth: 160,
-                    }}>
-                      {[
-                        { days: 3, label: 'In 3 Tagen' },
-                        { days: 7, label: 'In 1 Woche' },
-                        { days: 14, label: 'In 2 Wochen' },
-                        { days: 30, label: 'In 1 Monat' },
-                      ].map(opt => (
-                        <button
-                          key={opt.days}
-                          className={styles.dropdownOption}
-                          disabled={reminderLoading}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCreateReminder(opt.days);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: 12,
-                            color: '#374151',
-                            background: reminderLoading ? '#f9fafb' : '#fff',
-                            border: 'none',
-                            borderRadius: 4,
-                            cursor: reminderLoading ? 'not-allowed' : 'pointer',
-                            textAlign: 'left',
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
+                  {/* Quick date picker — portal to escape transform clipping */}
+                  {reminderOpen && createPortal(
+                    <div
+                      style={{ position: 'fixed', inset: 0, zIndex: 1000 }}
+                      onClick={() => setReminderOpen(false)}
+                    >
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'fixed',
+                          top: reminderPos.top,
+                          left: reminderPos.left,
+                          background: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          padding: 6,
+                          zIndex: 1001,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 2,
+                          minWidth: 160,
+                        }}
+                      >
+                        {[
+                          { days: 3, label: 'In 3 Tagen' },
+                          { days: 7, label: 'In 1 Woche' },
+                          { days: 14, label: 'In 2 Wochen' },
+                          { days: 30, label: 'In 1 Monat' },
+                        ].map(opt => (
+                          <button
+                            key={opt.days}
+                            className={styles.dropdownOption}
+                            disabled={reminderLoading}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCreateReminder(opt.days);
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: 12,
+                              color: '#374151',
+                              background: reminderLoading ? '#f9fafb' : '#fff',
+                              border: 'none',
+                              borderRadius: 4,
+                              cursor: reminderLoading ? 'not-allowed' : 'pointer',
+                              textAlign: 'left',
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>,
+                    document.body,
                   )}
                 </div>
               ) : (
