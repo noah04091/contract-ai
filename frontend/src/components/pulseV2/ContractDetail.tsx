@@ -48,6 +48,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showAllFindings, setShowAllFindings] = useState(false);
   const [showActionHistory, setShowActionHistory] = useState(false);
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
+  const [showFindingsInfo, setShowFindingsInfo] = useState(false);
+  const [showActionsInfo, setShowActionsInfo] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
@@ -763,24 +765,58 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               </div>
             )}
 
-            {/* Critical + High Findings — wenn vorhanden, ganz oben */}
+            {/* ── Klauselbefunde ── */}
             {hasCriticalFindings && (
-              <div style={{ marginBottom: openActions.length > 0 ? 16 : 0 }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginBottom: 10,
-                  padding: '6px 10px',
-                  background: criticalCount > 0 ? '#fef2f2' : '#fff7ed',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: criticalCount > 0 ? '#dc2626' : '#ea580c',
-                }}>
-                  <span style={{ fontSize: 13 }}>&#9888;</span>
-                  {topFindings.length} {topFindings.length === 1 ? 'Klausel erfordert' : 'Klauseln erfordern'} besondere Aufmerksamkeit
+              <div style={{ marginBottom: openActions.length > 0 ? 20 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 10px',
+                    background: criticalCount > 0 ? '#fef2f2' : '#fff7ed',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: criticalCount > 0 ? '#dc2626' : '#ea580c',
+                  }}>
+                    <span style={{ fontSize: 13 }}>&#9888;</span>
+                    Klauselbefunde
+                    <span style={{ fontWeight: 400, fontSize: 12 }}>
+                      {topFindings.length} {topFindings.length === 1 ? 'Klausel' : 'Klauseln'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setShowFindingsInfo(!showFindingsInfo)}
+                    style={{
+                      width: 20, height: 20, borderRadius: '50%',
+                      border: '1px solid #d1d5db', background: showFindingsInfo ? '#eff6ff' : '#fff',
+                      cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                      color: showFindingsInfo ? '#3b82f6' : '#9ca3af',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                    title="Was sind Klauselbefunde?"
+                  >
+                    ?
+                  </button>
                 </div>
+                {showFindingsInfo && (
+                  <div style={{
+                    padding: '10px 14px',
+                    background: '#f0f9ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: 8,
+                    marginBottom: 12,
+                    fontSize: 12,
+                    color: '#1e40af',
+                    lineHeight: 1.6,
+                  }}>
+                    <strong>Klauselbefunde</strong> sind konkrete Probleme in einzelnen Vertragsklauseln.
+                    Hier sehen Sie den betroffenen Text, die Rechtsgrundlage und können per <strong>Quick Fix</strong> eine
+                    verbesserte Formulierung direkt anwenden. Nur Quick Fixes verbessern den Health Score.
+                  </div>
+                )}
                 {topFindings.map(({ finding, originalIndex }) => (
                   <FindingCard
                     key={`top-${finding.clauseId}-${originalIndex}`}
@@ -797,24 +833,75 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               </div>
             )}
 
-            {/* Actions — Optimierungsvorschläge */}
+            {/* ── Handlungsempfehlungen ── */}
             {openActions.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {[...openActions]
-                  .sort((a, b) => {
-                    const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
-                    return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
-                  })
-                  .map(action => (
-                  <ActionItem
-                    key={action.id}
-                    action={action}
-                    contractId={result.contractId}
-                    resultId={result._id}
-                    onStatusChange={handleActionStatusChange}
-                    onCommentSave={handleActionCommentSave}
-                  />
-                ))}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 10px',
+                    background: '#eff6ff',
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#1e40af',
+                  }}>
+                    <span style={{ fontSize: 13 }}>&#128203;</span>
+                    Handlungsempfehlungen
+                    <span style={{ fontWeight: 400, fontSize: 12 }}>
+                      {openActions.length} offen
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setShowActionsInfo(!showActionsInfo)}
+                    style={{
+                      width: 20, height: 20, borderRadius: '50%',
+                      border: '1px solid #d1d5db', background: showActionsInfo ? '#eff6ff' : '#fff',
+                      cursor: 'pointer', fontSize: 11, fontWeight: 700,
+                      color: showActionsInfo ? '#3b82f6' : '#9ca3af',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                    title="Was sind Handlungsempfehlungen?"
+                  >
+                    ?
+                  </button>
+                </div>
+                {showActionsInfo && (
+                  <div style={{
+                    padding: '10px 14px',
+                    background: '#f0f9ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: 8,
+                    marginBottom: 12,
+                    fontSize: 12,
+                    color: '#1e40af',
+                    lineHeight: 1.6,
+                  }}>
+                    <strong>Handlungsempfehlungen</strong> sind To-Dos für Sie oder Ihr Team — z.B.
+                    Rechtsabteilung kontaktieren, Klausel nachverhandeln oder Fristen prüfen.
+                    Das Abhaken dient der Nachverfolgung und ändert nicht den Health Score.
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[...openActions]
+                    .sort((a, b) => {
+                      const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
+                      return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+                    })
+                    .map(action => (
+                    <ActionItem
+                      key={action.id}
+                      action={action}
+                      contractId={result.contractId}
+                      resultId={result._id}
+                      onStatusChange={handleActionStatusChange}
+                      onCommentSave={handleActionCommentSave}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
