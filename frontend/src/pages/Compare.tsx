@@ -589,7 +589,7 @@ export default function EnhancedCompare() {
     try {
       streamTimeout = setTimeout(() => {
         controller.abort();
-      }, 180000); // 3 Minuten
+      }, 300000); // 5 Minuten (OCR-Vergleiche brauchen länger)
 
       const res = await fetch(`/api/compare?stream=true${useV2 ? '&version=2' : ''}`, {
         method: "POST",
@@ -667,7 +667,7 @@ export default function EnhancedCompare() {
       if (streamTimeout !== null) clearTimeout(streamTimeout);
       const isAbort = err instanceof DOMException && err.name === 'AbortError';
       const message = isAbort
-        ? "Die Analyse hat zu lange gedauert (> 3 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
+        ? "Die Analyse hat zu lange gedauert (> 5 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
         : err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
       setNotification({
         message: isAbort ? message : "Fehler: " + message,
