@@ -6979,7 +6979,7 @@ async function answerCompareFollowUp(question, context) {
 
   // Build compact context — include enough detail for accurate answers
   const diffs = (context.differences || []).slice(0, 12).map(d =>
-    `${d.clause || d.category}: ${docName} 1="${d.contract1Value || '—'}" vs ${docName} 2="${d.contract2Value || '—'}" [${d.severity}]${d.explanation ? ' — ' + d.explanation.substring(0, 200) : ''}${d.recommendation ? ' → ' + d.recommendation.substring(0, 100) : ''}`
+    `${d.clause || d.section || d.category}: ${docName} 1="${d.contract1 || d.contract1Value || '—'}" vs ${docName} 2="${d.contract2 || d.contract2Value || '—'}" [${d.severity}]${d.explanation ? ' — ' + d.explanation.substring(0, 200) : ''}${d.recommendation ? ' → ' + d.recommendation.substring(0, 100) : ''}`
   ).join('\n');
 
   const risks = (context.risks || []).slice(0, 5).map(r =>

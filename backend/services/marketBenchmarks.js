@@ -322,9 +322,35 @@ const BENCHMARKS = {
 // ============================================
 
 function detectContractType(contractMap1, contractMap2) {
+  const ct1 = (contractMap1.contractType || '').toLowerCase().trim();
+  const ct2 = (contractMap2.contractType || '').toLowerCase().trim();
+
+  // Priority 1: Direct match from Phase A contractType
+  // This is the most reliable signal — GPT already identified the document type
+  const DIRECT_MAPPINGS = [
+    { type: 'saas', pattern: /saas|software.?vertrag|cloud.?vertrag|nutzungsvertrag/ },
+    { type: 'freelancer', pattern: /freelancer|dienstvertrag|werkvertrag|dienstleistungsvertrag|freie.?mitarbeit/ },
+    { type: 'nda', pattern: /nda|geheimhaltungsvereinbarung|vertraulichkeitsvereinbarung|non.?disclosure/ },
+    { type: 'mietvertrag', pattern: /mietvertrag|mietverhältnis|wohnungsmiet/ },
+    { type: 'factoring', pattern: /factoring/ },
+  ];
+
+  for (const { type, pattern } of DIRECT_MAPPINGS) {
+    if (pattern.test(ct1) || pattern.test(ct2)) {
+      return type;
+    }
+  }
+
+  // Priority 2: If Phase A identified a specific contract type that doesn't match
+  // any benchmark → return null (no benchmark rather than false positive)
+  const isGeneric = (ct) => !ct || /^vertrag$/i.test(ct) || ct.length < 3;
+  if (!isGeneric(ct1) || !isGeneric(ct2)) {
+    return null;
+  }
+
+  // Priority 3: Keyword matching fallback (only for generic/unknown contractType)
   const text = [
-    contractMap1.contractType || '',
-    contractMap2.contractType || '',
+    ct1, ct2,
     contractMap1.subject || '',
     contractMap2.subject || '',
     ...(contractMap1.clauses || []).map(c => `${c.title || ''} ${c.summary || ''}`),
@@ -345,7 +371,8 @@ function detectContractType(contractMap1, contractMap2) {
     }
   }
 
-  return bestScore > 0 ? bestMatch : null;
+  // Require at least 2 keyword matches to avoid false positives
+  return bestScore >= 2 ? bestMatch : null;
 }
 
 // ============================================
