@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from 
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Finding, PulseV2Clause } from '../../types/pulseV2';
+import { useToast } from '../../context/ToastContext';
 import { ClauseHistory } from './ClauseHistory';
 import { getLegalReferenceUrl } from '../../utils/legalLinks';
 
@@ -54,6 +55,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
 };
 
 export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, allFindings, onFindingStatusChange, onQuickFixApplied }) => {
+  const toast = useToast();
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
@@ -157,13 +159,23 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
       if (res.ok) {
         setReminderSent(true);
         setReminderOpen(false);
+        const dateStr = reminderDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        toast.success(`Erinnerung für ${dateStr} erstellt`);
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+        if (res.status === 403) {
+          toast.error('Erinnerungen erfordern ein Business- oder Enterprise-Abo.');
+        } else {
+          toast.error(data.error || 'Erinnerung konnte nicht erstellt werden.');
+        }
       }
     } catch (err) {
       console.error('[PulseV2] Reminder creation failed:', err);
+      toast.error('Verbindungsfehler — bitte erneut versuchen.');
     } finally {
       setReminderLoading(false);
     }
-  }, [contractId, finding, severity.label]);
+  }, [contractId, finding, severity.label, toast]);
 
   const handleSaveComment = useCallback(async () => {
     if (commentText === savedComment) return;
