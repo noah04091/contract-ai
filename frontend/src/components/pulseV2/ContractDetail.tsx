@@ -699,11 +699,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
                 Empfehlungen
-                {openActions.length > 0 && (
-                  <span style={{ marginLeft: 8, fontSize: 12, color: '#6b7280', fontWeight: 400 }}>
-                    {openActions.length} offen
-                  </span>
-                )}
               </div>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 {resolvedFindingCount > 0 && (
