@@ -83,11 +83,17 @@ async function main() {
     // ========================================
     // Schritt 2: Verträge kategorisieren
     // ========================================
-    console.log('📋 Lade alle Verträge...');
+    console.log('📋 Lade alle Verträge (ohne Compare-History)...');
     const allContracts = await db.collection('contracts').find(
-      {},
+      { action: { $ne: 'compare_contracts' } },  // ⚠️ Compare-History NIEMALS löschen!
       { projection: { _id: 1, name: 1, userId: 1, s3Key: 1, createdAt: 1 } }
     ).toArray();
+
+    // Info: Compare-History separat zählen
+    const compareHistoryCount = await db.collection('contracts').countDocuments({ action: 'compare_contracts' });
+    if (compareHistoryCount > 0) {
+      console.log(`🛡️  ${compareHistoryCount} Compare-History Einträge werden GESCHÜTZT (nicht berührt)`);
+    }
 
     const protectedContracts = [];
     const orphanedContracts = [];
