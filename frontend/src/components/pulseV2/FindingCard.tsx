@@ -90,17 +90,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
     if (!commentOpen) setCommentText(finding.userComment || '');
   }, [finding.userComment, commentOpen]);
 
-  // Close reminder dropdown on click outside
-  useEffect(() => {
-    if (!reminderOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (reminderRef.current && !reminderRef.current.contains(e.target as Node)) {
-        setReminderOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [reminderOpen]);
+  // Click-outside for reminder is handled by the portal overlay
 
   const handleQuickFix = useCallback(async () => {
     if (!finding.affectedText || quickFixLoading) return;
