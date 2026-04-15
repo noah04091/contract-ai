@@ -255,13 +255,13 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
     }
 
     // 6. Column-aware Textzusammenbau (siehe assembleTextFromBlocks)
-    const { text: fullText, confidence: avgConfidence, lineCount: blockCount, pageCount } = assembleTextFromBlocks(allBlocks);
+    const { text: fullText, confidence: avgConfidence, lineCount: blockCount, pageCount: ocrPageCount } = assembleTextFromBlocks(allBlocks);
     const duration = Date.now() - startTime;
 
-    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${pageCount} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
+    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${ocrPageCount} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
 
     if (fullText.trim().length < 200) {
-      return { success: false, text: fullText, confidence: avgConfidence, pages: pageCount,
+      return { success: false, text: fullText, confidence: avgConfidence, pages: ocrPageCount,
         error: `OCR hat nur ${fullText.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
     }
 
@@ -270,7 +270,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       text: fullText,
       confidence: avgConfidence,
       lowConfidence: avgConfidence > 0 && avgConfidence < 70,
-      pages: pageCount,
+      pages: ocrPageCount,
       lineCount: blockCount,
       duration
     };
