@@ -106,6 +106,12 @@ function authHeaders(): Record<string, string> {
     : { 'Content-Type': 'application/json' };
 }
 
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === 'string') return e;
+  return 'Unbekannter Fehler';
+}
+
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
@@ -313,8 +319,8 @@ function ComposerModal({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Preview-Fehler');
       setPreview(data);
-    } catch (err: any) {
-      setError(err.message || 'Preview-Fehler');
+    } catch (err) {
+      setError(errMsg(err) || 'Preview-Fehler');
     } finally {
       setPreviewLoading(false);
     }
@@ -343,8 +349,8 @@ function ComposerModal({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Test-Send fehlgeschlagen');
       setTestStatus(`Test-Mail an ${testEmail} gesendet`);
-    } catch (err: any) {
-      setTestStatus('Fehler: ' + (err.message || 'Unbekannt'));
+    } catch (err) {
+      setTestStatus('Fehler: ' + (errMsg(err) || 'Unbekannt'));
     } finally {
       setTestLoading(false);
     }
@@ -391,8 +397,8 @@ function ComposerModal({
 
       onCreated();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Fehler');
+    } catch (err) {
+      setError(errMsg(err) || 'Fehler');
     } finally {
       setSubmitLoading(false);
     }
@@ -1027,8 +1033,8 @@ export default function CampaignsTab() {
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || 'Laden fehlgeschlagen');
       setCampaigns(data.campaigns || []);
-    } catch (err: any) {
-      setError(err.message || 'Fehler beim Laden');
+    } catch (err) {
+      setError(errMsg(err) || 'Fehler beim Laden');
     } finally {
       setLoading(false);
     }
@@ -1059,8 +1065,8 @@ export default function CampaignsTab() {
       if (!res.ok || !data.success) throw new Error(data.message || 'Cancel fehlgeschlagen');
       fetchCampaigns();
       if (detailsId === id) fetchDetails(id);
-    } catch (err: any) {
-      alert('Fehler: ' + (err.message || 'Unbekannt'));
+    } catch (err) {
+      alert('Fehler: ' + (errMsg(err) || 'Unbekannt'));
     }
   }
 
@@ -1081,7 +1087,6 @@ export default function CampaignsTab() {
       if (detailsId) fetchDetails(detailsId);
     }, 15000);
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasActive, detailsId]);
 
   return (
