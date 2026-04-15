@@ -1001,16 +1001,31 @@
   }
 
   .searchBox {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     max-width: none;
     order: 1;
     min-width: 0;
+  }
+
+  .searchInput {
+    padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+    font-size: 0.875rem;
+  }
+
+  .searchIcon {
+    left: 0.75rem !important;
   }
 
   .filterBtn {
     order: 2;
     margin-left: 0;
     flex-shrink: 0;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  .toolbar {
+    gap: 0.5rem;
   }
 
   .filtersPanel {
@@ -1033,10 +1048,13 @@
   }
 
   .detailPanel {
-    width: 100%;
     top: 0;
-    height: 100vh;
-    z-index: 1001;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    z-index: 9999;
   }
 
   .tabBar {
