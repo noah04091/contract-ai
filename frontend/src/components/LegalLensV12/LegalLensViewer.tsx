@@ -120,6 +120,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // ✅ Frei-Modus Hinweis-Toast
   const [showFreeModeTip, setShowFreeModeTip] = useState<boolean>(false);
 
+  // ✅ Gescanntes-PDF-Hinweis (kein Text-Layer erkannt)
+  const [showScanHint, setShowScanHint] = useState<boolean>(false);
+
   // Focus Mode — dims everything except selected clause
   const [focusMode, setFocusMode] = useState<boolean>(false);
 
@@ -1243,7 +1246,20 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
 
-    if (!textContent) return;
+    if (!textContent) {
+      // Prüfe ob überhaupt ein Text-Layer mit Spans existiert (gescanntes PDF?)
+      const anyTextLayer = document.querySelector('.react-pdf__Page__textContent');
+      const hasSpans = anyTextLayer && anyTextLayer.querySelectorAll('span').length > 0;
+      if (!hasSpans && !showScanHint) {
+        setShowScanHint(true);
+        // Nach 4 Sekunden automatisch zur Textansicht wechseln
+        setTimeout(() => {
+          setViewMode('text');
+          setShowScanHint(false);
+        }, 4000);
+      }
+      return;
+    }
 
     // ========== FREI-MODUS: Browser-Textauswahl per Drag ==========
     if (selectionMode === 'custom') {
@@ -2283,6 +2299,48 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 }}>
                   <span style={{ fontSize: '1.1rem' }}>✋</span>
                   Im Frei-Modus: Text mit Maus markieren (ziehen), dann loslassen
+                </div>
+              )}
+
+              {/* Gescanntes-PDF-Hinweis: Kein Text-Layer erkannt */}
+              {showScanHint && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '1rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'rgba(59, 130, 246, 0.95)',
+                  color: 'white',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '8px',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  zIndex: 10,
+                  maxWidth: '90%',
+                  textAlign: 'center'
+                }}>
+                  <span style={{ fontSize: '1.1rem' }}>📄</span>
+                  Gescanntes PDF — Textauswahl nicht verfügbar. Wechsel zur Textansicht...
+                  <button
+                    onClick={() => { setViewMode('text'); setShowScanHint(false); }}
+                    style={{
+                      background: 'white',
+                      color: '#3b82f6',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Jetzt wechseln
+                  </button>
                 </div>
               )}
             </div>
