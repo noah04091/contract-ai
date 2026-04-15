@@ -954,9 +954,22 @@ router.post('/parse', verifyToken, async (req, res) => {
       console.log(`🔄 [Legal Lens] Cache ungültig: ${cacheCheck.reason}`);
     }
 
-    // Preprocessing läuft gerade? → Frontend soll Streaming nutzen
+    // Keine Klauseln erkannt? → Definitives Ergebnis, KEIN Polling/Streaming
     const preprocessStatus = contract.legalLens?.preprocessStatus;
+    const cachedVersion = contract.legalLens?.metadata?.cacheVersion || 0;
 
+    if (preprocessStatus === 'no_clauses' && cachedVersion >= CACHE_VERSION && !forceRefresh) {
+      console.log(`📋 [Legal Lens] Dokument hat keine Klauseln (bereits geprüft) — kein Streaming nötig`);
+      return res.json({
+        success: true,
+        clauses: [],
+        totalClauses: 0,
+        noClausesDetected: true,
+        message: 'Keine Klauseln erkannt. Das Dokument enthält möglicherweise keinen Vertragstext.'
+      });
+    }
+
+    // Preprocessing läuft gerade? → Frontend soll Streaming nutzen
     if (preprocessStatus === 'processing') {
       console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch - empfehle Streaming`);
       return res.json({
@@ -1266,6 +1279,12 @@ router.post(
       const { contractId, clauseId } = req.params;
       const { perspective = 'contractor', clauseText, stream = false, industry } = req.body;
       const userId = req.user.userId;
+
+      // Ownership-Check: Gehört der Vertrag diesem User?
+      const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+      if (!access) {
+        return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+      }
 
       // Branchen- + Dokumenttyp-Kontext ermitteln
       let industryContext = industry || 'general';
@@ -1609,8 +1628,15 @@ router.post(
   analysisRateLimiter,
   async (req, res) => {
     try {
-      const { clauseId } = req.params;
+      const { contractId, clauseId } = req.params;
       const { clauseText, count = 2, style = 'balanced' } = req.body;
+      const userId = req.user.userId;
+
+      // Ownership-Check: Gehört der Vertrag diesem User?
+      const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+      if (!access) {
+        return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+      }
 
       console.log(`✨ [Legal Lens] Generate alternatives for ${clauseId}`);
 
@@ -1660,6 +1686,13 @@ router.post(
     try {
       const { contractId, clauseId } = req.params;
       const { clauseText } = req.body;
+      const userId = req.user.userId;
+
+      // Ownership-Check: Gehört der Vertrag diesem User?
+      const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+      if (!access) {
+        return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+      }
 
       console.log(`🎯 [Legal Lens] Generate negotiation tips for ${clauseId}`);
 
@@ -1723,6 +1756,12 @@ router.post(
       const { contractId, clauseId } = req.params;
       const { question, message, clauseText, previousMessages = [] } = req.body;
       const userId = req.user.userId;
+
+      // Ownership-Check: Gehört der Vertrag diesem User?
+      const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+      if (!access) {
+        return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+      }
 
       // Akzeptiere sowohl "question" als auch "message" für Kompatibilität
       const userQuestion = question || message;
@@ -2973,6 +3012,26 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }
 
         if (!parseResult.success || !parseResult.clauses?.length) {
+          // Cache mit "no_clauses" markieren, damit Polling nicht endlos läuft
+          try {
+            await Contract.updateOne(
+              { _id: new ObjectId(contractId) },
+              {
+                $set: {
+                  'legalLens.preParsedClauses': [],
+                  'legalLens.metadata': {
+                    parsedAt: new Date().toISOString(),
+                    parserVersion: '4.3.0-direct-extraction',
+                    cacheVersion: CACHE_VERSION
+                  },
+                  'legalLens.preprocessStatus': 'no_clauses',
+                  'legalLens.preprocessedAt': new Date()
+                }
+              }
+            );
+          } catch (cacheErr) {
+            console.warn(`[Legal Lens] Cache-Update bei 0 Klauseln fehlgeschlagen:`, cacheErr.message);
+          }
           sendEvent('error', { error: 'Keine Klauseln erkannt. Das Dokument enthält möglicherweise keinen Vertragstext.' });
           return res.end();
         }

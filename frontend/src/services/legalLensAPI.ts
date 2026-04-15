@@ -833,6 +833,14 @@ export function parseContractStreaming(
           return;
         }
 
+        // Definitiv keine Klauseln → Polling sofort stoppen
+        if (data.success && data.noClausesDetected) {
+          console.log(`[Legal Lens] Poll ${pollCount}: Dokument hat keine Klauseln — Polling gestoppt`);
+          isComplete = true;
+          callbacks.onError?.(data.message || 'Keine Klauseln erkannt.');
+          return;
+        }
+
         // Cache noch nicht bereit → weiter pollen
         const elapsed = Math.round((Date.now() - pollStart) / 1000);
         const progress = Math.min(lastProgress + pollCount * 2, 85);
@@ -943,6 +951,7 @@ export function parseContractStreaming(
                     callbacks.onComplete?.(data.totalClauses, data.riskSummary);
                     break;
                   case 'error':
+                    isComplete = true; // Kein Polling starten — Parser hat definitiv geantwortet
                     callbacks.onError?.(data.error);
                     break;
                   case 'warning':
