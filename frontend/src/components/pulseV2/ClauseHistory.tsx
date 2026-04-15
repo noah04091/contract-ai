@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { PulseV2ClauseVersion } from '../../types/pulseV2';
 
 interface ClauseHistoryProps {
@@ -61,7 +62,7 @@ export const ClauseHistory: React.FC<ClauseHistoryProps> = ({ contractId, clause
     navigator.clipboard.writeText(selectedEntry.text);
   }, [selectedEntry]);
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed',
       inset: 0,
@@ -263,6 +264,7 @@ export const ClauseHistory: React.FC<ClauseHistoryProps> = ({ contractId, clause
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
