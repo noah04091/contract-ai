@@ -308,27 +308,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
         overflow: 'visible',
       }}>
-        <div style={{ position: 'relative' }}>
+        <div>
           <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} />
-          {result.previousResultId && result.context?.riskTrend && result.context.riskTrend !== 'stable' && (() => {
-            const isImproving = result.context!.riskTrend === 'improving';
-            return (
-              <div style={{
-                position: 'absolute',
-                bottom: -4,
-                right: -4,
-                fontSize: 11,
-                fontWeight: 700,
-                color: isImproving ? '#15803d' : '#dc2626',
-                background: isImproving ? '#dcfce7' : '#fef2f2',
-                border: `1px solid ${isImproving ? '#86efac' : '#fecaca'}`,
-                padding: '1px 6px',
-                borderRadius: 6,
-              }}>
-                {isImproving ? '\u2191' : '\u2193'}
-              </div>
-            );
-          })()}
         </div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
