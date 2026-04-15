@@ -13,6 +13,27 @@ import { Search, Crown, Sparkles } from 'lucide-react';
 // Plans mit vollem Legal Lens Zugriff
 const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
 
+/** Fixt UTF-8 Mojibake in Dateinamen (z.B. "Ã¤" → "ä") und entfernt .pdf-Endung */
+function fixDisplayName(name: string): string {
+  let fixed = name;
+  // Fix UTF-8 double-encoding: Latin-1 interpretierte UTF-8 Bytes
+  if (fixed.includes('Ã')) {
+    try {
+      // TextEncoder/Decoder: String → Latin-1 Bytes → UTF-8 Decode
+      const bytes = new Uint8Array([...fixed].map(c => c.charCodeAt(0)));
+      const decoded = new TextDecoder('utf-8').decode(bytes);
+      if (!decoded.includes('\uFFFD') && decoded.length < fixed.length) {
+        fixed = decoded;
+      }
+    } catch { /* keep original */ }
+  }
+  // Entferne .pdf/.PDF Endung
+  fixed = fixed.replace(/\.pdf$/i, '');
+  // Ersetze Unterstriche durch Leerzeichen für bessere Lesbarkeit
+  fixed = fixed.replace(/_/g, ' ');
+  return fixed.trim();
+}
+
 interface Contract {
   _id: string;
   name: string;
@@ -415,13 +436,13 @@ const LegalLens = () => {
         tip="Grün = Unbedenklich, Gelb = Achtung, Rot = Risiko. Klicken Sie für Details und Verhandlungstipps."
       />
       <Helmet>
-        <title>Legal Lens: {contract?.name || 'Analyse'} | Contract AI</title>
+        <title>Legal Lens: {fixDisplayName(contract?.name || 'Analyse')} | Contract AI</title>
         <meta name="description" content="Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen, Verhandlungstipps erhalten." />
       </Helmet>
 
       <LegalLensViewer
         contractId={contractId}
-        contractName={contract?.name || contract?.title || 'Vertrag'}
+        contractName={fixDisplayName(contract?.name || contract?.title || 'Vertrag')}
       />
     </>
   );

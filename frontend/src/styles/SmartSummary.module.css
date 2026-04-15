@@ -180,6 +180,10 @@
   font-size: 0.875rem;
   opacity: 0.9;
   margin: 0.125rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 480px;
 }
 
 .closeButton {
