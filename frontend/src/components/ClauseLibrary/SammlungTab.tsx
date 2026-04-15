@@ -616,20 +616,9 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
     : allItems;
 
   return (
-    <div style={{ padding: '0 1.5rem' }}>
+    <div className={styles.sammlungWrapper}>
       {/* Sammlungs-Header — volle Breite */}
-      <div style={{
-        background: 'white',
-        borderBottom: '1px solid #e2e8f0',
-        padding: '0.75rem 4rem',
-        margin: '-0 -1.5rem 0 -1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1rem',
-        position: 'relative',
-        zIndex: 10
-      }}>
+      <div className={styles.sammlungHeader}>
         {isEditing ? (
           <div style={{ flex: 1 }}>
             <input
@@ -670,57 +659,45 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
           </div>
         ) : (
           <>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>{collection.icon}</span>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{collection.name}</h3>
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8', background: '#f1f5f9', padding: '0.125rem 0.5rem', borderRadius: '10px' }}>
+            <div className={styles.sammlungHeaderInfo}>
+              <div className={styles.sammlungTitleRow}>
+                <span className={styles.sammlungIcon}>{collection.icon}</span>
+                <h3 className={styles.sammlungTitle}>{collection.name}</h3>
+                <span className={styles.sammlungCount}>
                   {items.length} {items.length === 1 ? 'Eintrag' : 'Einträge'}
                 </span>
               </div>
               {collection.description && (
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{collection.description}</p>
+                <p className={styles.sammlungDescription}>{collection.description}</p>
               )}
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0, alignItems: 'center' }}>
-              {/* Suchleiste */}
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Search size={14} style={{ position: 'absolute', left: '0.5rem', color: '#94a3b8', pointerEvents: 'none' }} />
+            <div className={styles.sammlungActions}>
+              <div className={styles.sammlungSearchBox}>
+                <Search size={14} className={styles.sammlungSearchIcon} />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Suchen..."
-                  style={{
-                    padding: '0.375rem 0.625rem 0.375rem 1.75rem',
-                    border: '1px solid #e2e8f0', borderRadius: '8px',
-                    fontSize: '0.8rem', color: '#1e293b', width: '160px',
-                    background: '#f8fafc', transition: 'all 0.15s'
-                  }}
-                  onFocus={e => { e.target.style.borderColor = '#10b981'; e.target.style.width = '220px'; }}
-                  onBlur={e => { if (!searchQuery) { e.target.style.borderColor = '#e2e8f0'; e.target.style.width = '160px'; } }}
+                  className={styles.sammlungSearchInput}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')}
-                    style={{ position: 'absolute', right: '0.375rem', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '0.125rem' }}>
+                  <button onClick={() => setSearchQuery('')} className={styles.sammlungSearchClear}>
                     <X size={12} />
                   </button>
                 )}
               </div>
-              <button onClick={() => setShowCustomForm(!showCustomForm)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.375rem',
-                  padding: '0.375rem 0.75rem',
-                  background: showCustomForm ? '#059669' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  border: 'none', borderRadius: '8px',
-                  color: 'white', fontSize: '0.8rem', fontWeight: 500, cursor: 'pointer',
-                  transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(16, 185, 129, 0.3)'
-                }}>
+              <button
+                onClick={() => setShowCustomForm(!showCustomForm)}
+                className={`${styles.sammlungEigeneBtn} ${showCustomForm ? styles.active : ''}`}
+              >
                 <PenTool size={14} /> Eigene Klausel
               </button>
-              <button onClick={() => { setEditName(collection.name); setEditDescription(collection.description || ''); setIsEditing(true); }}
-                style={{ padding: '0.375rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', cursor: 'pointer' }}
-                title="Sammlung bearbeiten">
+              <button
+                onClick={() => { setEditName(collection.name); setEditDescription(collection.description || ''); setIsEditing(true); }}
+                className={styles.sammlungEditBtn}
+                title="Sammlung bearbeiten"
+              >
                 <Edit3 size={16} />
               </button>
             </div>
