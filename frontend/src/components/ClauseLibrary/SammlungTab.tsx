@@ -20,9 +20,11 @@ import {
   AlertCircle,
   Copy,
   Save,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import * as clauseCollectionAPI from '../../services/clauseCollectionAPI';
+import * as clauseLibraryAPI from '../../services/clauseLibraryAPI';
 import { useToast } from '../../context/ToastContext';
 import type { ClauseCollection, CollectionItem } from '../../types/clauseLibrary';
 import {
@@ -82,6 +84,9 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
   // Sammlung löschen
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // PDF-Export
+  const [isExporting, setIsExporting] = useState(false);
 
   const loadCollection = useCallback(async () => {
     setIsLoading(true);
@@ -574,6 +579,94 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
     return { title: 'Unbekannt', subtitle: '', source: '', icon: <FileText size={14} />, hasContent: false };
   };
 
+  // PDF-Export: Sammlung in Sections konvertieren + PDF anfordern
+  const handleExportPdf = async () => {
+    if (!collection) return;
+    setIsExporting(true);
+    try {
+      const sections = (collection.items || [])
+        .map((item) => {
+          if (item.type === 'template' && item.templateClauseId) {
+            const t = templateClauses.find(x => x.id === item.templateClauseId);
+            if (!t) return null;
+            const meta = [
+              `Typ: Musterklausel`,
+              t.legalBasis ? `Rechtsgrundlage: ${t.legalBasis}` : '',
+              t.riskLevel ? `Risiko: ${t.riskLevel === 'high' ? 'Hoch' : t.riskLevel === 'medium' ? 'Mittel' : 'Niedrig'}` : ''
+            ].filter(Boolean);
+            return {
+              title: t.title,
+              text: t.clauseText,
+              meta,
+              notes: item.notes
+            };
+          }
+          if (item.type === 'lexikon' && item.legalTermId) {
+            const term = legalTerms.find(x => x.id === item.legalTermId);
+            if (!term) return null;
+            const areaInfo = LEGAL_AREA_INFO[term.legalArea];
+            const textParts = [term.simpleExplanation];
+            if (term.legalDefinition) textParts.push(`\n\nJuristische Definition:\n${term.legalDefinition}`);
+            return {
+              title: term.term,
+              text: textParts.join(''),
+              meta: [
+                `Typ: Rechtsbegriff`,
+                areaInfo ? `Rechtsgebiet: ${areaInfo.label}` : '',
+                term.legalBasis ? `Rechtsgrundlage: ${term.legalBasis}` : ''
+              ].filter(Boolean),
+              notes: item.notes
+            };
+          }
+          if (item.type === 'saved' && item.resolvedClause) {
+            const rc = item.resolvedClause;
+            const catInfo = CATEGORY_INFO[rc.category];
+            const areaInfo = rc.clauseArea ? CLAUSE_AREA_INFO[rc.clauseArea] : null;
+            return {
+              title: catInfo ? catInfo.label : 'Gespeicherte Klausel',
+              category: rc.category,
+              text: rc.clauseText,
+              meta: [
+                areaInfo ? `Bereich: ${areaInfo.label}` : '',
+                rc.originalAnalysis?.riskLevel
+                  ? `Risiko: ${rc.originalAnalysis.riskLevel === 'high' ? 'Hoch' : rc.originalAnalysis.riskLevel === 'medium' ? 'Mittel' : 'Niedrig'}`
+                  : ''
+              ].filter(Boolean),
+              notes: item.notes || rc.userNotes
+            };
+          }
+          if (item.type === 'custom') {
+            return {
+              title: item.customTitle || 'Eigene Klausel',
+              text: item.customText || '',
+              meta: ['Typ: Eigene Klausel'],
+              notes: item.notes
+            };
+          }
+          return null;
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null && Boolean(s.text));
+
+      if (sections.length === 0) {
+        toast.warning('Keine exportierbaren Inhalte in dieser Sammlung');
+        return;
+      }
+
+      await clauseLibraryAPI.exportPdf({
+        title: collection.name,
+        subtitle: collection.description,
+        mode: 'collection',
+        sections
+      });
+      toast.success('PDF erfolgreich erstellt');
+    } catch (err) {
+      console.error('[SammlungTab] PDF export error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim PDF-Export');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   // Loading
   if (isLoading) {
     return (
@@ -687,6 +780,15 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
                   </button>
                 )}
               </div>
+              <button
+                onClick={handleExportPdf}
+                disabled={isExporting}
+                className={styles.sammlungPdfBtn}
+                title="Als PDF exportieren"
+              >
+                {isExporting ? <Loader2 size={14} className={styles.spinner} /> : <Download size={14} />}
+                PDF
+              </button>
               <button
                 onClick={() => setShowCustomForm(!showCustomForm)}
                 className={`${styles.sammlungEigeneBtn} ${showCustomForm ? styles.active : ''}`}

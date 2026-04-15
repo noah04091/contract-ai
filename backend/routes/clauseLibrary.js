@@ -14,6 +14,7 @@ const mongoose = require('mongoose');
 const SavedClause = require('../models/SavedClause');
 const ClauseCollection = require('../models/ClauseCollection');
 const Contract = require('../models/Contract');
+const { generateClauseLibraryPdf } = require('../services/clauseLibraryPdf');
 
 // Helper für ObjectId-Konvertierung
 const toObjectId = (id) => {
@@ -413,6 +414,66 @@ router.delete('/:id', verifyToken, async (req, res) => {
       success: false,
       error: 'Fehler beim Löschen der Klausel'
     });
+  }
+});
+
+// ============================================
+// PDF EXPORT
+// ============================================
+
+/**
+ * POST /api/clause-library/pdf-export
+ *
+ * Generiert ein PDF fuer eine einzelne Klausel oder ganze Sammlung.
+ * Frontend uebergibt vollstaendig aufgeloeste Inhalte.
+ */
+router.post('/pdf-export', verifyToken, async (req, res) => {
+  try {
+    const { title, subtitle, sections, mode } = req.body;
+
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ success: false, error: 'Titel fehlt' });
+    }
+
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return res.status(400).json({ success: false, error: 'Keine Inhalte zum Exportieren' });
+    }
+
+    // Limit: max 100 Sektionen pro PDF (Safety)
+    if (sections.length > 100) {
+      return res.status(400).json({ success: false, error: 'Maximal 100 Eintraege pro PDF' });
+    }
+
+    // Sanitize Sektionen
+    const safeSections = sections.map(s => ({
+      title: typeof s.title === 'string' ? s.title.substring(0, 300) : 'Ohne Titel',
+      category: typeof s.category === 'string' ? s.category : undefined,
+      meta: Array.isArray(s.meta) ? s.meta.filter(m => typeof m === 'string').slice(0, 5) : [],
+      text: typeof s.text === 'string' ? s.text.substring(0, 20000) : '',
+      notes: typeof s.notes === 'string' ? s.notes.substring(0, 3000) : ''
+    }));
+
+    const pdfBuffer = await generateClauseLibraryPdf({
+      title: title.substring(0, 200),
+      subtitle: typeof subtitle === 'string' ? subtitle.substring(0, 500) : undefined,
+      sections: safeSections,
+      mode: mode === 'single' ? 'single' : 'collection'
+    });
+
+    const safeFilename = title
+      .replace(/[^a-zA-Z0-9\-_äöüÄÖÜß ]/g, '')
+      .substring(0, 60)
+      .trim() || 'klausel-export';
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+    console.log(`📄 [ClauseLibrary] PDF generated: "${title}" (${sections.length} sections, ${pdfBuffer.length} bytes)`);
+  } catch (err) {
+    console.error('❌ [ClauseLibrary] PDF export error:', err);
+    res.status(500).json({ success: false, error: 'Fehler beim PDF-Export' });
   }
 });
 

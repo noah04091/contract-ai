@@ -17,7 +17,8 @@ import {
   FolderPlus,
   Edit3,
   Check,
-  Save
+  Save,
+  Download
 } from 'lucide-react';
 import type { SavedClause, ClauseCategory, ClauseArea, AddCollectionItemRequest } from '../../types/clauseLibrary';
 import { CATEGORY_INFO, CLAUSE_AREA_INFO } from '../../types/clauseLibrary';
@@ -351,6 +352,45 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
     }
   };
 
+  // PDF-Export
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExportPdf = async () => {
+    setIsExporting(true);
+    try {
+      const riskLevel = clause.originalAnalysis?.riskLevel;
+      const meta: string[] = [];
+      if (clause.clauseArea && CLAUSE_AREA_INFO[clause.clauseArea]) {
+        meta.push(`Bereich: ${CLAUSE_AREA_INFO[clause.clauseArea].label}`);
+      }
+      if (riskLevel) {
+        const riskLabel = riskLevel === 'high' ? 'Hoch' : riskLevel === 'medium' ? 'Mittel' : 'Niedrig';
+        meta.push(`Risiko: ${riskLabel}`);
+      }
+      if (clause.sourceContractName) {
+        meta.push(`Quelle: ${clause.sourceContractName}`);
+      }
+      meta.push(`Gespeichert: ${formatDate(clause.savedAt)}`);
+
+      await clauseLibraryAPI.exportPdf({
+        title: clause.title || 'Klausel',
+        mode: 'single',
+        sections: [{
+          title: clause.title || 'Ohne Titel',
+          category: clause.category,
+          meta,
+          text: clause.clauseText,
+          notes: clause.userNotes
+        }]
+      });
+      toast.success('PDF erfolgreich erstellt');
+    } catch (err) {
+      console.error('[ClauseDetail] PDF export error:', err);
+      toast.error(err instanceof Error ? err.message : 'Fehler beim PDF-Export');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleAddTag = () => {
     const tag = newTag.trim().toLowerCase();
     if (tag && !editTags.includes(tag)) {
@@ -630,6 +670,10 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
       <div className={styles.detailActions}>
         <button className={styles.collectionBtn} onClick={onAddToCollection}>
           <FolderPlus size={16} /> Zur Sammlung
+        </button>
+        <button className={styles.pdfBtn} onClick={handleExportPdf} disabled={isExporting} title="Als PDF exportieren">
+          {isExporting ? <Loader2 size={16} className={styles.spinner} /> : <Download size={16} />}
+          PDF
         </button>
         <button className={styles.deleteBtn} onClick={onDelete} disabled={isDeleting}>
           {isDeleting ? <Loader2 size={16} className={styles.spinner} /> : <Trash2 size={16} />}

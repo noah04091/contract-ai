@@ -200,3 +200,55 @@ export async function incrementUsage(clauseId: string): Promise<{ success: boole
 
   return response.json();
 }
+
+/**
+ * PDF-Export: einzelne Klausel oder ganze Sammlung
+ *
+ * Frontend erstellt die strukturierte Payload (title, sections).
+ * Backend rendert das PDF und streamt es zurueck.
+ *
+ * Triggert Browser-Download ueber Blob-URL.
+ */
+export interface PdfExportSection {
+  title: string;
+  category?: string;
+  meta?: string[];
+  text: string;
+  notes?: string;
+}
+
+export interface PdfExportPayload {
+  title: string;
+  subtitle?: string;
+  mode: 'single' | 'collection';
+  sections: PdfExportSection[];
+}
+
+export async function exportPdf(payload: PdfExportPayload): Promise<void> {
+  const response = await fetchWithAuth(`${CLAUSE_LIBRARY_BASE}/pdf-export`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    let errorMsg = 'Fehler beim PDF-Export';
+    try {
+      const errorJson = await response.json();
+      errorMsg = errorJson.error || errorMsg;
+    } catch { /* ignore */ }
+    throw new Error(errorMsg);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const safeFilename = payload.title.replace(/[^a-zA-Z0-9\-_äöüÄÖÜß ]/g, '').substring(0, 60).trim() || 'klausel-export';
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${safeFilename}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+}
