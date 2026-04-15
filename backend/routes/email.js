@@ -346,6 +346,20 @@ router.post("/test", async (req, res) => {
       }
     });
 
+    // Logging-Wrapper: deckt alle sendMail-Calls in diesem Handler transparent ab.
+    const _origSendMail = transporter.sendMail.bind(transporter);
+    transporter.sendMail = async function(mailOptions) {
+      const result = await _origSendMail(mailOptions);
+      require("../utils/emailLogger").logSentEmail({
+        to: mailOptions && mailOptions.to,
+        subject: mailOptions && mailOptions.subject,
+        category: 'test',
+        source: 'routes/email.js (test)',
+        messageId: result && result.messageId
+      }).catch(() => {});
+      return result;
+    };
+
     const unsubscribeUrl = generateUnsubscribeUrl(email, "calendar");
     const unsubHeaders = {};
     const results = [];

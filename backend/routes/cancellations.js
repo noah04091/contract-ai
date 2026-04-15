@@ -1021,6 +1021,13 @@ async function sendCancellationEmail(recipientEmail, contractName, provider, let
     html: htmlContent,
     attachments
   });
+
+  require("../utils/emailLogger").logSentEmail({
+    to: recipientEmail,
+    subject: subject,
+    category: 'cancellation_provider',
+    source: 'routes/cancellations.js'
+  }).catch(() => {});
 }
 
 // Helper: Send copy to customer
@@ -1077,13 +1084,21 @@ async function sendCancellationCopy(customerEmail, contractName, provider, lette
     }
   });
 
+  const cancellationCopySubject = `${contractName} - Kuendigung bestaetigt`;
   await transporter.sendMail({
     from: process.env.EMAIL_FROM || `"Contract AI" <noreply@contract-ai.de>`,
     to: customerEmail,
-    subject: `${contractName} - Kuendigung bestaetigt`,
+    subject: cancellationCopySubject,
     html: htmlContent,
     attachments
   });
+
+  require("../utils/emailLogger").logSentEmail({
+    to: customerEmail,
+    subject: cancellationCopySubject,
+    category: 'cancellation_copy',
+    source: 'routes/cancellations.js'
+  }).catch(() => {});
 }
 
 // POST /api/cancellations/:id/confirm - Bestätigungsdokument hochladen

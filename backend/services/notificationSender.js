@@ -335,12 +335,20 @@ async function sendGroupedEmail(userEmail, contractDetails) {
     }
   });
 
+  const contractUpdatesSubject = `Deine Vertraege - ${contractDetails.length} Updates`;
   await transporter.sendMail({
     from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
     to: userEmail,
-    subject: `Deine Vertraege - ${contractDetails.length} Updates`,
+    subject: contractUpdatesSubject,
     html: htmlContent
   });
+
+  require("../utils/emailLogger").logSentEmail({
+    to: userEmail,
+    subject: contractUpdatesSubject,
+    category: 'contract_updates_digest',
+    source: 'services/notificationSender.js'
+  }).catch(() => {});
 }
 
 /**

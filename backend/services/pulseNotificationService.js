@@ -163,6 +163,14 @@ class PulseNotificationService {
 
       await this.emailTransporter.sendMail(mailOptions);
 
+      require("../utils/emailLogger").logSentEmail({
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        category: 'legal_pulse',
+        userId: user && user._id ? String(user._id) : null,
+        source: 'services/pulseNotificationService.js'
+      }).catch(() => {});
+
       // Update delivery status
       await PulseNotification.findByIdAndUpdate(notification._id, {
         'deliveryChannels.email.sent': true,

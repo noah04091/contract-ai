@@ -522,6 +522,15 @@ router.post("/test-smtp", verifyToken, async (req, res) => {
         subject: "Contract AI — Design Test: Zentriert + Pill-Buttons",
         html: testHtml
       });
+
+      require("../utils/emailLogger").logSentEmail({
+        to: email,
+        subject: "Contract AI — Design Test: Zentriert + Pill-Buttons",
+        category: 'smtp_test',
+        userId: userId ? String(userId) : null,
+        source: 'routes/dashboardNotifications.js',
+        messageId: smtpResult && smtpResult.messageId
+      }).catch(() => {});
     } catch (error) {
       smtpError = {
         message: error.message,

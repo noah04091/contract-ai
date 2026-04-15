@@ -2003,6 +2003,14 @@ const connectDB = async () => {
                 html: reminderHtml,
               });
 
+              require("./utils/emailLogger").logSentEmail({
+                to: user.email,
+                subject: "Contract AI - Dein Feedback ist gefragt",
+                category: 'beta_reminder',
+                userId: user._id ? String(user._id) : null,
+                source: 'server.js'
+              }).catch(() => {});
+
               // Markiere User als erinnert
               await db.collection("users").updateOne(
                 { _id: user._id },
@@ -2106,6 +2114,14 @@ const connectDB = async () => {
                 subject: "Contract AI - Kurze Frage an dich",
                 html: secondReminderHtml,
               });
+
+              require("./utils/emailLogger").logSentEmail({
+                to: user.email,
+                subject: "Contract AI - Kurze Frage an dich",
+                category: 'beta_reminder_2',
+                userId: user._id ? String(user._id) : null,
+                source: 'server.js'
+              }).catch(() => {});
 
               // Markiere User als 2x erinnert
               await db.collection("users").updateOne(
@@ -2254,12 +2270,20 @@ const connectDB = async () => {
           </div>
         `;
 
+        const betaFeedbackSubject = `🎁 Beta-Feedback: ${name} (${rating}⭐) - ${wouldPay === 'ja' ? 'Würde zahlen!' : wouldPay}`;
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to: "info@contract-ai.de",
-          subject: `🎁 Beta-Feedback: ${name} (${rating}⭐) - ${wouldPay === 'ja' ? 'Würde zahlen!' : wouldPay}`,
+          subject: betaFeedbackSubject,
           html: emailHtml,
         });
+
+        require("./utils/emailLogger").logSentEmail({
+          to: "info@contract-ai.de",
+          subject: betaFeedbackSubject,
+          category: 'beta_feedback_admin',
+          source: 'server.js'
+        }).catch(() => {});
 
         console.log(`📧 [BETA] Admin-Benachrichtigung gesendet`);
 
@@ -2296,6 +2320,13 @@ const connectDB = async () => {
           html,
           attachments: processedAttachments,
         });
+
+        require("./utils/emailLogger").logSentEmail({
+          to,
+          subject,
+          category: 'stripe_webhook',
+          source: 'server.js (internal-api)'
+        }).catch(() => {});
 
         console.log(`✅ [INTERNAL API] Email gesendet: ${subject} → ${to}`);
         res.json({ success: true, message: 'Email sent' });

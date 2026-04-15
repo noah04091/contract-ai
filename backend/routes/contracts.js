@@ -3381,6 +3381,14 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
             html: emailHtml
           });
 
+          require("../utils/emailLogger").logSentEmail({
+            to: user.email,
+            subject: "Contract AI - Upload-Limit erreicht",
+            category: 'upload_limit',
+            userId: user._id ? String(user._id) : null,
+            source: 'routes/contracts.js'
+          }).catch(() => {});
+
           // Timestamp speichern (async, ohne auf Erfolg zu warten)
           usersCollection.updateOne(
             { _id: user._id },
@@ -3600,12 +3608,21 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
           cta: { text: "Verträge anzeigen", url: "https://www.contract-ai.de/contracts" }
         });
 
+        const importSuccessSubject = `Contract AI - ${successCount} ${successCount === 1 ? 'Vertrag' : 'Vertraege'} importiert`;
         await emailTransporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to: user.email,
-          subject: `Contract AI - ${successCount} ${successCount === 1 ? 'Vertrag' : 'Vertraege'} importiert`,
+          subject: importSuccessSubject,
           html: successEmailHtml
         });
+
+        require("../utils/emailLogger").logSentEmail({
+          to: user.email,
+          subject: importSuccessSubject,
+          category: 'import_success',
+          userId: user._id ? String(user._id) : null,
+          source: 'routes/contracts.js'
+        }).catch(() => {});
 
       } catch (emailError) {
         console.error(`❌ Fehler beim Senden der Success-Email:`, emailError.message);
@@ -3648,6 +3665,14 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
           subject: `Contract AI - Import-Status`,
           html: errorEmailHtml
         });
+
+        require("../utils/emailLogger").logSentEmail({
+          to: user.email,
+          subject: `Contract AI - Import-Status`,
+          category: 'import_error',
+          userId: user._id ? String(user._id) : null,
+          source: 'routes/contracts.js'
+        }).catch(() => {});
 
       } catch (emailError) {
         console.error(`❌ Fehler beim Senden der Error-Email:`, emailError.message);

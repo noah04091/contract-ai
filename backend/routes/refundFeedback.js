@@ -264,12 +264,20 @@ module.exports = function (db, transporter) {
           </div>
         `;
 
+        const refundFeedbackSubject = `Refund-Feedback: ${feedback.customerName} (${overallRating}/5) — ${cancellationReason}`;
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to: "info@contract-ai.de",
-          subject: `Refund-Feedback: ${feedback.customerName} (${overallRating}/5) — ${cancellationReason}`,
+          subject: refundFeedbackSubject,
           html: emailHtml,
         });
+
+        require("../utils/emailLogger").logSentEmail({
+          to: "info@contract-ai.de",
+          subject: refundFeedbackSubject,
+          category: 'refund_feedback',
+          source: 'routes/refundFeedback.js'
+        }).catch(() => {});
 
         console.log(`📧 [REFUND-FEEDBACK] Admin-Email gesendet`);
       } catch (emailErr) {

@@ -54,12 +54,20 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
       }
     });
 
+    const expiringSubject = `${contractName} - Frist in ${daysLeft} Tagen`;
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
-      subject: `${contractName} - Frist in ${daysLeft} Tagen`,
+      subject: expiringSubject,
       html: htmlContent
     });
+
+    require("../utils/emailLogger").logSentEmail({
+      to: userEmail,
+      subject: expiringSubject,
+      category: 'status_expiring',
+      source: 'services/statusNotifier.js'
+    }).catch(() => {});
 
     console.log(`✅ Notification sent: Expiring soon (${contractName}) to ${userEmail}`);
     return true;
@@ -111,12 +119,20 @@ async function notifyExpired(userEmail, contractName, expiryDate) {
       }
     });
 
+    const expiredSubject = `${contractName} - Vertragsstatus`;
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
-      subject: `${contractName} - Vertragsstatus`,
+      subject: expiredSubject,
       html: htmlContent
     });
+
+    require("../utils/emailLogger").logSentEmail({
+      to: userEmail,
+      subject: expiredSubject,
+      category: 'status_expired',
+      source: 'services/statusNotifier.js'
+    }).catch(() => {});
 
     console.log(`✅ Notification sent: Expired (${contractName}) to ${userEmail}`);
     return true;
@@ -169,12 +185,20 @@ async function notifyAutoRenewed(userEmail, contractName, oldExpiryDate, newExpi
       }
     });
 
+    const autoRenewedSubject = `${contractName} - Vertragsverlaengerung`;
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
-      subject: `${contractName} - Vertragsverlaengerung`,
+      subject: autoRenewedSubject,
       html: htmlContent
     });
+
+    require("../utils/emailLogger").logSentEmail({
+      to: userEmail,
+      subject: autoRenewedSubject,
+      category: 'status_auto_renewed',
+      source: 'services/statusNotifier.js'
+    }).catch(() => {});
 
     console.log(`✅ Notification sent: Auto-renewed (${contractName}) to ${userEmail}`);
     return true;
