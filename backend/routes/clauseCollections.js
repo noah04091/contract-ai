@@ -21,6 +21,11 @@ const toObjectId = (id) => {
   }
 };
 
+// SYNC WITH FRONTEND: frontend/src/components/ClauseLibrary/CreateCollectionModal.tsx
+const ALLOWED_ICONS = ["📁", "📋", "📑", "📂", "⚖️", "🏠", "💼", "🔧", "💻", "🏗️", "🛡️", "📜"];
+const isValidHexColor = (c) => typeof c === "string" && /^#[0-9A-Fa-f]{6}$/.test(c);
+const isValidIcon = (i) => typeof i === "string" && ALLOWED_ICONS.includes(i);
+
 // ============================================
 // GET ALL COLLECTIONS
 // ============================================
@@ -71,6 +76,22 @@ router.post("/", verifyToken, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Name ist erforderlich (mind. 2 Zeichen)"
+      });
+    }
+
+    // Icon-Validation (nur wenn explizit gesetzt)
+    if (icon && !isValidIcon(icon)) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültiges Icon"
+      });
+    }
+
+    // Color-Validation (nur wenn explizit gesetzt)
+    if (color && !isValidHexColor(color)) {
+      return res.status(400).json({
+        success: false,
+        error: "Ungültiges Farbformat (erwartet: #RRGGBB)"
       });
     }
 
@@ -220,8 +241,26 @@ router.put("/:id", verifyToken, async (req, res) => {
       updateData.name = name.trim();
     }
     if (description !== undefined) updateData.description = description;
-    if (icon !== undefined) updateData.icon = icon;
-    if (color !== undefined) updateData.color = color;
+
+    if (icon !== undefined) {
+      if (icon && !isValidIcon(icon)) {
+        return res.status(400).json({
+          success: false,
+          error: "Ungültiges Icon"
+        });
+      }
+      updateData.icon = icon || "📁";
+    }
+
+    if (color !== undefined) {
+      if (color && !isValidHexColor(color)) {
+        return res.status(400).json({
+          success: false,
+          error: "Ungültiges Farbformat (erwartet: #RRGGBB)"
+        });
+      }
+      updateData.color = color || "#6366f1";
+    }
 
     const collection = await ClauseCollection.findOneAndUpdate(
       { _id: collectionId, userId: userObjId },
