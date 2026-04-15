@@ -1092,9 +1092,9 @@ export default function CampaignsTab() {
   return (
     <div className={styles.activityTab}>
       <div className={styles.tableCard}>
-        <div className={styles.tabHeader}>
-          <h3>Kampagnen</h3>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={styles.tabHeader} style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+          <h3 style={{ margin: 0 }}>Kampagnen</h3>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button
               className={styles.exportButton}
               onClick={fetchCampaigns}
@@ -1116,7 +1116,8 @@ export default function CampaignsTab() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                fontWeight: 600
+                fontWeight: 600,
+                whiteSpace: 'nowrap'
               }}
             >
               <Plus size={16} />
