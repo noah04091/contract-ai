@@ -78,6 +78,7 @@ interface CalendarEvent {
     daysLeft?: number;
     cancellationId?: string;
     isFollowUp?: boolean;
+    notes?: string;
   };
   amount?: number;
   isManual?: boolean;
@@ -95,9 +96,11 @@ interface ApiResponse {
 
 // ========== Helper Functions ==========
 const formatContractName = (name: string): string => {
-  let formatted = name.replace(/\.(pdf|docx?|txt|png|jpg|jpeg)$/i, '');
+  // UTF-8 Mojibake zuerst fixen (falls Backend-Daten betroffen)
+  const fixed = fixUtf8Display(name || '');
+  let formatted = fixed.replace(/\.(pdf|docx?|txt|png|jpg|jpeg)$/i, '');
   formatted = formatted.replace(/_/g, ' ').replace(/\d{8}_?\d{6}/g, '').replace(/\s+/g, ' ').trim();
-  if (!formatted) formatted = name.split('.')[0];
+  if (!formatted) formatted = fixed.split('.')[0];
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 };
 
@@ -2501,7 +2504,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
     date: event.date ? event.date.split('T')[0] : formatLocalDate(new Date()),
     time: event.date ? new Date(event.date).toTimeString().slice(0, 5) : '09:00',
     severity: event.severity || 'info' as 'info' | 'warning' | 'critical',
-    notes: '',
+    notes: fixUtf8Display(event.metadata?.notes || ''),
     contractId: event.contractId || '',
     contractName: fixUtf8Display(event.contractName || '')
   });
@@ -2992,7 +2995,7 @@ export default function CalendarPage() {
       const contractId = searchParams.get('contractId') || '';
       const contractName = searchParams.get('contractName') || '';
       setCreateModalContractId(contractId);
-      setCreateModalContractName(decodeURIComponent(contractName));
+      setCreateModalContractName(fixUtf8Display(decodeURIComponent(contractName)));
       setShowCreateEventModal(new Date());
       setSearchParams({}, { replace: true });
     }
