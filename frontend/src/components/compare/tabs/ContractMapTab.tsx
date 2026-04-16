@@ -7,6 +7,26 @@ import {
 } from '../../../types/compare';
 import styles from '../../../styles/Compare.module.css';
 
+/**
+ * Filtert OCR-Rauschen aus keyValues bei gescannten PDFs
+ * (Dokument-Metadaten, Seitenfuß-IDs, technische Timestamps).
+ * Wirkt nur auf die Anzeige — Rohdaten/Analyse bleiben unverändert.
+ */
+const NOISE_KEY_PATTERNS = [
+  /^TD_[A-Z0-9_]+/i,              // "TD_K9001n_RIFE_SCB_Mob1 von 6Stand"
+  /^Beratungsprotokoll_/i,         // "Beratungsprotokoll_Mob_202202041 von 4Stand"
+  /\d+ von \d+\s*Stand$/i,         // Seiten-Metadaten Endung
+];
+
+function isNoiseKeyValue(key: string, value: string): boolean {
+  if (NOISE_KEY_PATTERNS.some(p => p.test(key))) return true;
+  // "DAC: 911681706366" (interne Doc-ID, 10+ stellige Zahl)
+  if (/^DAC$/i.test(key) && /^\d{10,}$/.test(value.trim())) return true;
+  // "Posteingang: 10022025" (8-stelliger Datum-Code)
+  if (/^Posteingang$/i.test(key) && /^\d{8}$/.test(value.trim())) return true;
+  return false;
+}
+
 interface ContractMapTabProps {
   contract1: ContractStructure;
   contract2: ContractStructure;
@@ -267,30 +287,35 @@ function ClauseDetail({ clauses, label }: { clauses: StructuredClause[]; label: 
   return (
     <div className={styles.mapDetailCol}>
       <h5>{label}</h5>
-      {clauses.map((clause, i) => (
-        <div key={i} className={styles.mapClauseCard}>
-          <div className={styles.mapClauseHeader}>
-            <span className={styles.mapClauseSection}>{clause.section}</span>
-            <span className={styles.mapClauseTitle}>{clause.title}</span>
-          </div>
-          <p className={styles.mapClauseSummary}>{clause.summary}</p>
-          {clause.keyValues && Object.keys(clause.keyValues).length > 0 && (
-            <div className={styles.mapKeyValues}>
-              {Object.entries(clause.keyValues).map(([key, value]) => (
-                <span key={key} className={styles.mapKV}>
-                  <strong>{key}:</strong> {value}
-                </span>
-              ))}
+      {clauses.map((clause, i) => {
+        const filteredKVs = Object.entries(clause.keyValues || {}).filter(
+          ([key, value]) => !isNoiseKeyValue(key, String(value))
+        );
+        return (
+          <div key={i} className={styles.mapClauseCard}>
+            <div className={styles.mapClauseHeader}>
+              <span className={styles.mapClauseSection}>{clause.section}</span>
+              <span className={styles.mapClauseTitle}>{clause.title}</span>
             </div>
-          )}
-          {clause.originalText && (
-            <details className={styles.mapOriginalText}>
-              <summary>Originaltext</summary>
-              <p>{clause.originalText}</p>
-            </details>
-          )}
-        </div>
-      ))}
+            <p className={styles.mapClauseSummary}>{clause.summary}</p>
+            {filteredKVs.length > 0 && (
+              <div className={styles.mapKeyValues}>
+                {filteredKVs.map(([key, value]) => (
+                  <span key={key} className={styles.mapKV}>
+                    <strong>{key}:</strong> {value}
+                  </span>
+                ))}
+              </div>
+            )}
+            {clause.originalText && (
+              <details className={styles.mapOriginalText}>
+                <summary>Originaltext</summary>
+                <p>{clause.originalText}</p>
+              </details>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
