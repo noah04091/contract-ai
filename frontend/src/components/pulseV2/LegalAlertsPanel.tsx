@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { PulseV2LegalAlert } from '../../types/pulseV2';
 import { ImpactGraph } from './ImpactGraph';
+import { cleanContractName } from '../../utils/contractName';
 import styles from '../../styles/PulseV2.module.css';
 
 interface LegalAlertsPanelProps {
@@ -8,6 +9,7 @@ interface LegalAlertsPanelProps {
   onDismiss?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string) => void;
+  lastVisit?: string | null;
 }
 
 interface AlertGroup {
@@ -19,6 +21,15 @@ interface AlertGroup {
   alerts: PulseV2LegalAlert[];
   highestSeverity: string;
   hasPositive: boolean;
+  mostRecentCreatedAt: string;
+}
+
+type ViewMode = 'timeline' | 'bylaw';
+
+interface TimeBucket {
+  key: 'today' | 'week' | 'month' | 'older';
+  label: string;
+  groups: AlertGroup[];
 }
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -57,6 +68,7 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
         alerts: [],
         highestSeverity: alert.severity,
         hasPositive: false,
+        mostRecentCreatedAt: alert.createdAt || '',
       });
     }
     const group = map.get(key)!;
@@ -66,6 +78,9 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
     }
     if (alert.impactDirection === 'positive') group.hasPositive = true;
     if (!group.plainSummary && alert.plainSummary) group.plainSummary = alert.plainSummary;
+    if (alert.createdAt && (!group.mostRecentCreatedAt || new Date(alert.createdAt) > new Date(group.mostRecentCreatedAt))) {
+      group.mostRecentCreatedAt = alert.createdAt;
+    }
   }
   return Array.from(map.values()).sort((a, b) => {
     // Primary: lawStatus urgency (In Kraft > Urteil > Verabschiedet > ...)
@@ -77,10 +92,51 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
   });
 }
 
-export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onRestore, onNavigate }) => {
+/**
+ * Group law-groups into time buckets by their most recent alert.
+ */
+function groupByTime(groups: AlertGroup[]): TimeBucket[] {
+  const now = Date.now();
+  const DAY = 1000 * 60 * 60 * 24;
+  const buckets: Record<TimeBucket['key'], AlertGroup[]> = {
+    today: [], week: [], month: [], older: [],
+  };
+
+  for (const g of groups) {
+    if (!g.mostRecentCreatedAt) {
+      buckets.older.push(g);
+      continue;
+    }
+    const ageDays = (now - new Date(g.mostRecentCreatedAt).getTime()) / DAY;
+    if (ageDays < 1) buckets.today.push(g);
+    else if (ageDays < 7) buckets.week.push(g);
+    else if (ageDays < 30) buckets.month.push(g);
+    else buckets.older.push(g);
+  }
+
+  // Sort each bucket by recency descending
+  const sortByRecent = (a: AlertGroup, b: AlertGroup) =>
+    new Date(b.mostRecentCreatedAt || 0).getTime() - new Date(a.mostRecentCreatedAt || 0).getTime();
+
+  const all: TimeBucket[] = [
+    { key: 'today', label: 'Heute', groups: buckets.today.sort(sortByRecent) },
+    { key: 'week', label: 'Diese Woche', groups: buckets.week.sort(sortByRecent) },
+    { key: 'month', label: 'Diesen Monat', groups: buckets.month.sort(sortByRecent) },
+    { key: 'older', label: 'Älter', groups: buckets.older.sort(sortByRecent) },
+  ];
+  return all.filter(b => b.groups.length > 0);
+}
+
+export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onRestore, onNavigate, lastVisit }) => {
   const [showDismissed, setShowDismissed] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('timeline');
+  const [collapsedBuckets, setCollapsedBuckets] = useState<Record<string, boolean>>({ older: true });
   const infoRef = useRef<HTMLDivElement>(null);
+
+  const lastVisitTs = lastVisit ? new Date(lastVisit).getTime() : 0;
+  const isNewAlert = (a: PulseV2LegalAlert): boolean =>
+    !!lastVisitTs && !!a.createdAt && new Date(a.createdAt).getTime() > lastVisitTs;
 
   useEffect(() => {
     if (!showInfo) return;
@@ -112,6 +168,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
 
   const displayAlerts = showDismissed ? dismissed : active;
   const groups = groupAlertsByLaw(displayAlerts);
+  const timeBuckets = viewMode === 'timeline' ? groupByTime(groups) : [];
+  const newCount = active.filter(isNewAlert).length;
 
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
@@ -165,9 +223,9 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                   EU-Amtsblatt, Fachpublikationen — &uuml;ber 26 RSS-Feeds.
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
-                  <strong>Alerts bleiben</strong> bis Sie sie als &bdquo;behoben&ldquo; markieren (Auto-Fix &uuml;bernehmen)
-                  oder ausblenden. Ausgeblendete Alerts k&ouml;nnen Sie jederzeit &uuml;ber den
-                  &bdquo;Ausgeblendete&ldquo;-Reiter wiederherstellen.
+                  <strong>Alerts bleiben sichtbar</strong>, bis Sie sie als &bdquo;behoben&ldquo; markieren (Auto-Fix &uuml;bernehmen)
+                  oder ausblenden. Es gibt <strong>keine automatische Archivierung</strong>. Ausgeblendete Alerts k&ouml;nnen Sie
+                  jederzeit &uuml;ber den &bdquo;Ausgeblendete&ldquo;-Reiter wiederherstellen.
                 </p>
                 <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
                   Neue Alerts erscheinen automatisch, sobald relevante Rechts&auml;nderungen erkannt werden.
@@ -191,6 +249,19 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               padding: '2px 8px', borderRadius: 10,
             }}>
               {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Vertrag' : 'Verträge'}
+            </span>
+          )}
+          {!showDismissed && newCount > 0 && (
+            <span
+              title={`${newCount} Alert${newCount === 1 ? '' : 's'} seit Ihrem letzten Besuch`}
+              style={{
+                fontSize: 10, fontWeight: 700, color: '#fff',
+                background: '#2563eb', padding: '2px 8px', borderRadius: 10,
+                letterSpacing: '0.5px', textTransform: 'uppercase',
+                animation: 'pulse 2s ease-in-out infinite',
+              }}
+            >
+              {newCount} NEU
             </span>
           )}
           {!showDismissed && resolvedCount > 0 && (
@@ -217,21 +288,53 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           )}
         </div>
 
-        {/* Dismissed tab */}
-        {dismissed.length > 0 && (
-          <button
-            onClick={() => setShowDismissed(!showDismissed)}
-            style={{
-              padding: '4px 12px', fontSize: 11, fontWeight: 600,
-              color: showDismissed ? '#111827' : '#9ca3af',
-              background: showDismissed ? '#f3f4f6' : 'transparent',
-              border: `1px solid ${showDismissed ? '#d1d5db' : 'transparent'}`,
-              borderRadius: 6, cursor: 'pointer',
-            }}
-          >
-            {showDismissed ? `Aktive (${active.length})` : `Ausgeblendete (${dismissed.length})`}
-          </button>
-        )}
+        {/* Right-side controls: view mode toggle + dismissed tab */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!showDismissed && groups.length > 0 && (
+            <div style={{
+              display: 'inline-flex',
+              background: '#f1f5f9',
+              borderRadius: 8,
+              padding: 2,
+              gap: 0,
+            }}>
+              {(['timeline', 'bylaw'] as ViewMode[]).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  title={mode === 'timeline' ? 'Chronologisch nach Datum gruppieren' : 'Nach Gesetz/Urteil gruppieren'}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: viewMode === mode ? '#0f172a' : '#64748b',
+                    background: viewMode === mode ? '#ffffff' : 'transparent',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    boxShadow: viewMode === mode ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                  }}
+                >
+                  {mode === 'timeline' ? 'Zeitstrahl' : 'Nach Gesetz'}
+                </button>
+              ))}
+            </div>
+          )}
+          {dismissed.length > 0 && (
+            <button
+              onClick={() => setShowDismissed(!showDismissed)}
+              style={{
+                padding: '4px 12px', fontSize: 11, fontWeight: 600,
+                color: showDismissed ? '#111827' : '#9ca3af',
+                background: showDismissed ? '#f3f4f6' : 'transparent',
+                border: `1px solid ${showDismissed ? '#d1d5db' : 'transparent'}`,
+                borderRadius: 6, cursor: 'pointer',
+              }}
+            >
+              {showDismissed ? `Aktive (${active.length})` : `Ausgeblendete (${dismissed.length})`}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Dismissed view header */}
@@ -254,6 +357,53 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
             : `Alle Alerts behoben. ${resolvedCount} Klausel(n) wurden angepasst.`
           }
         </div>
+      ) : viewMode === 'timeline' && !showDismissed ? (
+        <div>
+          {timeBuckets.map(bucket => {
+            const isCollapsed = collapsedBuckets[bucket.key];
+            return (
+              <div key={bucket.key} style={{ marginBottom: 16 }}>
+                <button
+                  onClick={() => setCollapsedBuckets(prev => ({ ...prev, [bucket.key]: !prev[bucket.key] }))}
+                  style={{
+                    width: '100%',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '6px 10px',
+                    background: 'transparent', border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 12, fontWeight: 700, color: '#64748b',
+                    textTransform: 'uppercase', letterSpacing: '0.5px',
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{
+                    fontSize: 10,
+                    transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)',
+                    transition: 'transform 0.15s ease',
+                  }}>&#x25B6;</span>
+                  {bucket.label}
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, color: '#94a3b8',
+                    background: '#f1f5f9', padding: '1px 8px', borderRadius: 10,
+                    textTransform: 'none', letterSpacing: 0,
+                  }}>
+                    {bucket.groups.length}
+                  </span>
+                </button>
+                {!isCollapsed && bucket.groups.map(group => (
+                  <LawGroup
+                    key={group.lawId}
+                    group={group}
+                    onDismiss={onDismiss}
+                    onRestore={undefined}
+                    onNavigate={onNavigate}
+                    isNew={group.alerts.some(isNewAlert)}
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div>
           {groups.slice(0, 8).map(group => (
@@ -263,6 +413,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               onDismiss={showDismissed ? undefined : onDismiss}
               onRestore={showDismissed ? onRestore : undefined}
               onNavigate={onNavigate}
+              isNew={!showDismissed && group.alerts.some(isNewAlert)}
             />
           ))}
           {groups.length > 8 && (
@@ -294,7 +445,8 @@ const LawGroup: React.FC<{
   onDismiss?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string) => void;
-}> = ({ group, onDismiss, onRestore, onNavigate }) => {
+  isNew?: boolean;
+}> = ({ group, onDismiss, onRestore, onNavigate, isNew }) => {
   const [expanded, setExpanded] = useState(false);
   const [confirmDismiss, setConfirmDismiss] = useState<string | null>(null);
   const dismissRef = useRef<HTMLDivElement>(null);
@@ -334,8 +486,24 @@ const LawGroup: React.FC<{
             width: 8, height: 8, borderRadius: '50%',
             background: sevColor, flexShrink: 0,
           }} />
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0 }}>
-            {group.lawTitle}
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {group.lawTitle}
+            </span>
+            {isNew && (
+              <span
+                title="Seit Ihrem letzten Besuch erkannt"
+                style={{
+                  fontSize: 9, fontWeight: 700, color: '#fff',
+                  background: '#2563eb', padding: '2px 6px', borderRadius: 4,
+                  letterSpacing: '0.5px', textTransform: 'uppercase',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  flexShrink: 0,
+                }}
+              >
+                NEU
+              </span>
+            )}
           </div>
           {statusConf && (
             <span style={{
@@ -352,9 +520,12 @@ const LawGroup: React.FC<{
           }}>
             {group.alerts.length} {group.alerts.length === 1 ? 'Vertrag' : 'Verträge'}
           </span>
-          {group.alerts[0]?.createdAt && (
-            <span style={{ fontSize: 10, color: '#9ca3af', flexShrink: 0 }}>
-              {formatRelativeDate(group.alerts[0].createdAt)}
+          {group.mostRecentCreatedAt && (
+            <span
+              title={`Erkannt am ${new Date(group.mostRecentCreatedAt).toLocaleDateString('de-DE')}`}
+              style={{ fontSize: 10, color: '#9ca3af', flexShrink: 0 }}
+            >
+              Erkannt {formatRelativeDate(group.mostRecentCreatedAt)}
             </span>
           )}
           <span style={{
@@ -370,20 +541,30 @@ const LawGroup: React.FC<{
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, paddingLeft: 16 }}>
-          {group.alerts.slice(0, 4).map(a => (
-            <span key={a._id} style={{
-              fontSize: 11, color: '#6b7280', background: '#f3f4f6',
-              padding: '2px 8px', borderRadius: 6, maxWidth: 200,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {a.contractName}
-            </span>
-          ))}
-          {group.alerts.length > 4 && (
-            <span style={{ fontSize: 11, color: '#9ca3af' }}>+{group.alerts.length - 4} weitere</span>
-          )}
-        </div>
+        {(() => {
+          // Dedupe pills by contractId — multiple alerts can reference the same contract.
+          const uniqueContracts = Array.from(
+            new Map(group.alerts.map(a => [a.contractId, a])).values()
+          );
+          const visible = uniqueContracts.slice(0, 4);
+          const remaining = uniqueContracts.length - visible.length;
+          return (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8, paddingLeft: 16 }}>
+              {visible.map(a => (
+                <span key={a.contractId || a._id} style={{
+                  fontSize: 11, color: '#6b7280', background: '#f3f4f6',
+                  padding: '2px 8px', borderRadius: 6, maxWidth: 200,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {cleanContractName(a.contractName)}
+                </span>
+              ))}
+              {remaining > 0 && (
+                <span style={{ fontSize: 11, color: '#9ca3af' }}>+{remaining} weitere</span>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Expanded */}

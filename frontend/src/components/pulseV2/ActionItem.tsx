@@ -8,15 +8,38 @@ interface ActionItemProps {
   contractId?: string;
   resultId?: string;
   contractNames?: Map<string, string>;
+  contractLastAnalysisMap?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
   onCommentSave?: (actionId: string, comment: string) => void;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
-  now: { color: '#dc2626', bg: '#fef2f2', label: 'Hohe Priorität', icon: '\u26a1', deadline: 'Zeitnah prüfen' },
+  now: { color: '#dc2626', bg: '#fef2f2', label: 'Diese Woche handeln', icon: '\u26a1', deadline: 'Innerhalb 7 Tagen' },
   plan: { color: '#d97706', bg: '#fffbeb', label: 'Empfohlen', icon: '\ud83d\udcc5', deadline: 'Bei nächster Vertragsprüfung' },
-  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Zur Kenntnis', icon: '\ud83d\udc41\ufe0f', deadline: 'Kein Handlungsbedarf' },
+  watch: { color: '#6b7280', bg: '#f9fafb', label: 'Nur beobachten', icon: '\ud83d\udc41\ufe0f', deadline: 'Kein Handlungsbedarf' },
 };
+
+/**
+ * Format "vor X Tagen" from an ISO date string.
+ */
+function formatAgeDe(iso: string): { text: string; days: number } {
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days < 1) return { text: 'heute erstellt', days: 0 };
+  if (days === 1) return { text: 'erstellt vor 1 Tag', days };
+  if (days < 30) return { text: `erstellt vor ${days} Tagen`, days };
+  const months = Math.floor(days / 30);
+  if (months === 1) return { text: 'erstellt vor 1 Monat', days };
+  return { text: `erstellt vor ${months} Monaten`, days };
+}
+
+/**
+ * Detect if an action was triggered by legal changes (Gesetz/BGH/DSGVO/Urteil etc.).
+ */
+function isLegallyMotivated(action: PulseV2Action): boolean {
+  const haystack = `${action.title || ''} ${action.description || ''} ${action.nextStep || ''}`.toLowerCase();
+  return /\b(gesetz|gesetzes|bgh|dsgvo|urteil|bag|eugh|bverfg|§\s*\d|paragraph)\b/i.test(haystack);
+}
 
 /**
  * Detect impact type from text and return icon
@@ -31,7 +54,7 @@ function getImpactIcon(impact: string): string {
   return '\ud83d\udccc';
 }
 
-export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, onStatusChange, onCommentSave }) => {
+export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, contractLastAnalysisMap, onStatusChange, onCommentSave }) => {
   const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
   const isDone = action.status === 'done';
@@ -83,6 +106,20 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
     return null;
   };
 
+  // Derive "age" from the contract's last analysis (best proxy for when this action was created).
+  // Uses relatedContracts[0] → contractLastAnalysisMap lookup.
+  const ageInfo = (() => {
+    if (!contractLastAnalysisMap || !action.relatedContracts || action.relatedContracts.length === 0) return null;
+    const rawId = action.relatedContracts[0];
+    const resolvedId = resolveContractId(rawId) || rawId;
+    const lastAnalysis = contractLastAnalysisMap.get(resolvedId);
+    if (!lastAnalysis) return null;
+    return formatAgeDe(lastAnalysis);
+  })();
+
+  const isStagnating = !!ageInfo && ageInfo.days > 30 && action.priority === 'now' && action.status === 'open';
+  const legallyMotivated = isLegallyMotivated(action);
+
   return (
     <div className={styles.actionCard} style={{
       padding: 16,
@@ -112,12 +149,55 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             <span style={{ fontSize: 11, color: action.priority === 'now' ? '#dc2626' : '#9ca3af', fontWeight: action.priority === 'now' ? 600 : 400 }}>
               {priority.deadline}
             </span>
+            {/* Legally motivated badge */}
+            {legallyMotivated && (
+              <span
+                title="Diese Empfehlung bezieht sich auf ein Gesetz, Urteil oder eine rechtliche Norm."
+                style={{
+                  fontSize: 10, fontWeight: 700, color: '#1d4ed8',
+                  background: '#eff6ff', border: '1px solid #bfdbfe',
+                  padding: '2px 6px', borderRadius: 4,
+                  letterSpacing: '0.3px', textTransform: 'uppercase',
+                  cursor: 'help',
+                }}
+              >
+                &#128220; Gesetzlich
+              </span>
+            )}
+            {/* Age */}
+            {ageInfo && (
+              <span
+                title="Geschätzt aus der letzten Vertragsanalyse, aus der diese Empfehlung stammt."
+                style={{ fontSize: 11, color: '#9ca3af', cursor: 'help' }}
+              >
+                &middot; {ageInfo.text}
+              </span>
+            )}
             {/* Confidence */}
             <span style={{ fontSize: 11, color: '#9ca3af' }}>
               {action.confidence}% Konfidenz
             </span>
             {isDone && <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>Erledigt</span>}
           </div>
+
+          {/* Stagnation warning */}
+          {isStagnating && ageInfo && (
+            <div style={{
+              marginTop: 4,
+              padding: '6px 10px',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 6,
+              fontSize: 12,
+              color: '#92400e',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <span>&#9888;&#65039;</span>
+              <span>
+                Diese dringende Aufgabe ist seit {ageInfo.days} Tagen offen. Bitte priorisieren.
+              </span>
+            </div>
+          )}
 
           <div style={{
             fontSize: 14,

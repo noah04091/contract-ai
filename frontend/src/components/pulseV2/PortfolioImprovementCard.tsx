@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styles from '../../styles/PulseV2.module.css';
+
+/** Format a relative "vor X Tagen" label from an ISO date */
+function formatRelativeDays(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days < 1) return 'heute analysiert';
+  if (days === 1) return 'analysiert vor 1 Tag';
+  if (days < 30) return `analysiert vor ${days} Tagen`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return 'analysiert vor 1 Monat';
+  return `analysiert vor ${months} Monaten`;
+}
 
 interface ContractDelta {
   contractId: string;
@@ -43,11 +55,23 @@ interface PortfolioSummary {
 
 interface PortfolioImprovementCardProps {
   summary: PortfolioSummary;
+  lastAnalysisMap?: Map<string, string>;
   onNavigate?: (contractId: string) => void;
 }
 
-export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> = ({ summary, onNavigate }) => {
+export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> = ({ summary, lastAnalysisMap, onNavigate }) => {
   const [expandedSection, setExpandedSection] = useState<'improved' | 'worsened' | 'actions' | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) setShowInfo(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showInfo]);
 
   if (!summary.hasData || summary.avgScorePrevious === null) return null;
 
@@ -69,8 +93,56 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header */}
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
-        Portfolio-Entwicklung
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        fontSize: 14, fontWeight: 600, color: '#374151',
+        marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #3b82f6',
+      }}>
+        <span>Portfolio-Entwicklung</span>
+        <div ref={infoRef} style={{ position: 'relative', display: 'inline-block' }}>
+          <button
+            onClick={() => setShowInfo(!showInfo)}
+            title="Wie wird die Entwicklung berechnet?"
+            style={{
+              width: 18, height: 18, borderRadius: '50%',
+              border: '1px solid #d1d5db', background: showInfo ? '#f3f4f6' : '#fff',
+              cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#9ca3af',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+            }}
+          >
+            ?
+          </button>
+          {showInfo && (
+            <div style={{
+              position: 'absolute', top: 24, left: -8,
+              width: 340, padding: '14px 16px',
+              background: '#fff', border: '1px solid #e5e7eb',
+              borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 100, fontSize: 12, color: '#4b5563', lineHeight: 1.6,
+              fontWeight: 400,
+            }}>
+              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 6 }}>
+                Wie entsteht die Entwicklung?
+              </div>
+              <p style={{ margin: '0 0 6px' }}>
+                Der Score wird bei jeder Vertragsanalyse neu berechnet. Die Entwicklung vergleicht den
+                aktuellen Durchschnitt mit dem vorherigen &mdash; Quick-Fixes, manuelle Klausel-Edits und
+                erneute Analysen fließen ein.
+              </p>
+              <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
+                Klicken Sie auf „Verbessert“ oder „Verschlechtert“, um die betroffenen Verträge mit Details zu sehen.
+              </p>
+              <button
+                onClick={() => setShowInfo(false)}
+                style={{
+                  position: 'absolute', top: 8, right: 8,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 14, color: '#9ca3af', padding: 2,
+                }}
+              >&#10005;</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Score Delta */}
@@ -161,6 +233,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
         <ContractList
           contracts={summary.improvedContracts!}
           positive
+          lastAnalysisMap={lastAnalysisMap}
           onNavigate={onNavigate}
         />
       )}
@@ -168,6 +241,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
         <ContractList
           contracts={summary.worsenedContracts!}
           positive={false}
+          lastAnalysisMap={lastAnalysisMap}
           onNavigate={onNavigate}
         />
       )}
@@ -207,8 +281,9 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
 const ContractList: React.FC<{
   contracts: ContractDelta[];
   positive: boolean;
+  lastAnalysisMap?: Map<string, string>;
   onNavigate?: (contractId: string) => void;
-}> = ({ contracts, positive, onNavigate }) => (
+}> = ({ contracts, positive, lastAnalysisMap, onNavigate }) => (
   <div style={{
     padding: '12px 0',
     marginBottom: 12,
@@ -216,44 +291,52 @@ const ContractList: React.FC<{
     flexDirection: 'column',
     gap: 6,
   }}>
-    {contracts.map(c => (
-      <div
-        key={c.contractId}
-        onClick={() => onNavigate?.(c.contractId)}
-        style={{
-          padding: '8px 12px',
-          background: positive ? '#f0fdf4' : '#fef2f2',
-          border: `1px solid ${positive ? '#bbf7d0' : '#fecaca'}`,
-          borderRadius: 8,
-          cursor: onNavigate ? 'pointer' : 'default',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{
-          fontSize: 13,
-          fontWeight: 500,
-          color: '#111827',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          flex: 1,
-          minWidth: 0,
-        }}>
-          {c.name}
-        </span>
-        <span style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: positive ? '#15803d' : '#dc2626',
-          marginLeft: 12,
-          flexShrink: 0,
-        }}>
-          {c.delta > 0 ? '+' : ''}{c.delta} &#183; Score {c.scoreNow}
-        </span>
-      </div>
-    ))}
+    {contracts.map(c => {
+      const lastAnalysis = lastAnalysisMap?.get(c.contractId);
+      return (
+        <div
+          key={c.contractId}
+          onClick={() => onNavigate?.(c.contractId)}
+          style={{
+            padding: '8px 12px',
+            background: positive ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${positive ? '#bbf7d0' : '#fecaca'}`,
+            borderRadius: 8,
+            cursor: onNavigate ? 'pointer' : 'default',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#111827',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {c.name}
+            </div>
+            {lastAnalysis && (
+              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                {formatRelativeDays(lastAnalysis)}
+              </div>
+            )}
+          </div>
+          <span style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: positive ? '#15803d' : '#dc2626',
+            flexShrink: 0,
+          }}>
+            {c.delta > 0 ? '+' : ''}{c.delta} &#183; Score {c.scoreNow}
+          </span>
+        </div>
+      );
+    })}
   </div>
 );
 

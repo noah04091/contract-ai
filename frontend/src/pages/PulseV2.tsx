@@ -9,10 +9,12 @@ import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsP
 import { ActionItem } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
-import { MonitoringStatusCard } from '../components/pulseV2/MonitoringStatusCard';
+import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
+import { SystemStatusPanel } from '../components/pulseV2/SystemStatusPanel';
 import { useRadarHealth, RadarHealthCompact, RadarHealthExpanded } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
 import { useToast } from '../context/ToastContext';
+import { cleanContractName } from '../utils/contractName';
 import styles from '../styles/PulseV2.module.css';
 
 const API_BASE = '/api';
@@ -26,24 +28,6 @@ function safeStr(val: unknown): string {
     return String(obj.displayName || obj.name || '');
   }
   return '';
-}
-
-/** Clean contract name: remove file extensions, timestamps, date prefixes, underscores */
-const UUID_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+$/i;
-function cleanContractName(name: string): string {
-  if (!name || UUID_FILE_RE.test(name)) return 'Unbenannter Vertrag';
-  let clean = name;
-  // Remove file extension (.pdf, .docx, etc.)
-  clean = clean.replace(/\.\w{2,4}$/, '');
-  // Remove leading 13-digit unix timestamp + separator
-  clean = clean.replace(/^\d{10,13}[-_]/, '');
-  // Remove leading 6-digit date prefix (YYMMDD_ or DDMMYY_)
-  clean = clean.replace(/^\d{6}_/, '');
-  // Replace underscores with spaces
-  clean = clean.replace(/_/g, ' ');
-  // Collapse whitespace and trim
-  clean = clean.replace(/\s+/g, ' ').trim();
-  return clean || 'Unbenannter Vertrag';
 }
 
 const PulseV2: React.FC = () => {
@@ -418,8 +402,9 @@ const ActionCenter: React.FC<{
   actions: PulseV2Action[];
   actionsRef: React.RefObject<HTMLDivElement | null>;
   contractNames: Map<string, string>;
+  contractLastAnalysisMap?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
-}> = ({ actions, actionsRef, contractNames, onStatusChange }) => {
+}> = ({ actions, actionsRef, contractNames, contractLastAnalysisMap, onStatusChange }) => {
   const [showAll, setShowAll] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -545,7 +530,7 @@ const ActionCenter: React.FC<{
       {openActions.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {displayActions.map(action => (
-            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} onStatusChange={onStatusChange} />
+            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
           ))}
           {hiddenCount > 0 && !showAll && (
             <div style={{ textAlign: 'center', paddingTop: 4 }}>
@@ -631,7 +616,7 @@ const ActionCenter: React.FC<{
           {showHistory && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
               {[...doneActions, ...dismissedActions].map(action => (
-                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} onStatusChange={onStatusChange} />
+                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
               ))}
             </div>
           )}
@@ -663,25 +648,29 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
   const [radarExpanded, setRadarExpanded] = useState(false);
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
+  const contractsRef = useRef<HTMLDivElement>(null);
   const { data: radarData } = useRadarHealth();
 
-  // Hero auto-collapse: first visit = open, after that = collapsed
+  // "Last visit" tracking — captured on mount, updated on unmount
+  const [lastVisit, setLastVisit] = useState<string | null>(null);
   useEffect(() => {
-    const dismissed = localStorage.getItem('pulseV2_heroDismissed') === 'true';
-    const visits = parseInt(localStorage.getItem('pulseV2_heroVisits') || '0');
-    if (dismissed || visits >= 1) {
-      setHeroCollapsed(true);
-    }
-    localStorage.setItem('pulseV2_heroVisits', String(visits + 1));
+    // Capture previous lastVisit on mount (before overwriting)
+    const previous = localStorage.getItem('legalPulse.lastVisit');
+    setLastVisit(previous);
+    // Immediately mark "now" as the new baseline, so subsequent refreshes during this session
+    // don't flood the NEU-badges. "Leave-and-return" is captured via the stored previous value.
+    const markNow = () => {
+      try { localStorage.setItem('legalPulse.lastVisit', new Date().toISOString()); } catch { /* ignore */ }
+    };
+    // Update on unmount + before unload as fallback
+    window.addEventListener('beforeunload', markNow);
+    return () => {
+      markNow();
+      window.removeEventListener('beforeunload', markNow);
+    };
   }, []);
-
-  const collapseHero = () => {
-    localStorage.setItem('pulseV2_heroDismissed', 'true');
-    setHeroCollapsed(true);
-  };
 
   // Debounce search to avoid excessive re-renders
   useEffect(() => {
@@ -748,16 +737,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       toast.error('Verbindungsfehler — bitte erneut versuchen.');
     }
   }, [toast]);
-
-  const refreshMonitoringStatus = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/legal-pulse-v2/monitoring-status`, { credentials: 'include' });
-      const data = await res.json();
-      setMonitoringStatus(data);
-    } catch (err) {
-      console.error('[PulseV2] Monitoring refresh error:', err);
-    }
-  }, []);
 
   // Derived stats
   const alertStats = useMemo(() => {
@@ -835,6 +814,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     return map;
   }, [items]);
 
+  // Last analysis timestamp per contract (used for action age / stagnation)
+  const contractLastAnalysisMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of items) {
+      if (item.v2LastAnalysis) map.set(item.contractId, item.v2LastAnalysis);
+    }
+    return map;
+  }, [items]);
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
   }
@@ -863,239 +851,35 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
   return (
     <div>
-      {/* ══════════ Hero Section ══════════ */}
-      {!heroCollapsed ? (
-        <div style={{
-          position: 'relative',
-          background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%)',
-          borderRadius: 20,
-          padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
-          marginBottom: 28,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
-          border: '1px solid rgba(59,130,246,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 48,
-          flexWrap: 'wrap' as const,
-        }}>
-          {/* Collapse button */}
-          <button
-            onClick={collapseHero}
-            title="Einklappen"
-            style={{
-              position: 'absolute', top: 16, right: 16,
-              width: 32, height: 32, borderRadius: '50%',
-              border: 'none', background: 'rgba(59,130,246,0.08)',
-              cursor: 'pointer', fontSize: 16, color: '#94a3b8',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            &times;
-          </button>
+      {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
+      <PulseCheckHero
+        stats={stats}
+        alerts={legalAlerts}
+        criticalContractCount={alertStats.criticalContracts.length}
+        openActionCount={alertStats.openActions.length}
+        renewalSoonCount={alertStats.renewalSoon.length}
+        unanalyzedCount={alertStats.unanalyzed.length}
+        severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
+        recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
+        lastVisit={lastVisit}
+        onJumpToRadar={() => {
+          if (radarRef.current) {
+            radarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }}
+        onAnalyzeFirst={() => {
+          const firstUnanalyzed = items.find(i => !i.hasV2Result);
+          if (firstUnanalyzed) {
+            onSelectContract(firstUnanalyzed.contractId);
+          } else if (contractsRef.current) {
+            contractsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }}
+      />
 
-          {/* Left: Title + Subtitle */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
-                Legal Pulse
-              </h1>
-              <span style={{
-                fontSize: 10, fontWeight: 700, color: '#1d4ed8',
-                background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-                padding: '4px 12px', borderRadius: 6,
-                letterSpacing: '0.5px', textTransform: 'uppercase',
-              }}>
-                Laufende Überwachung
-              </span>
-            </div>
-            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
-              Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
-            </p>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
-              <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
-              {alertStats.criticalContracts.length > 0 && (
-                <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
-              )}
-              {alertStats.openActions.length > 0 && (
-                <span><strong style={{ color: '#d97706', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Feature cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
-            {[
-              { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
-              { icon: '\uD83D\uDEE1\uFE0F', title: 'Legal Radar', desc: 'Gesetzesänderungen automatisch erkennen' },
-              { icon: '\uD83D\uDCCA', title: 'Portfolio Health', desc: 'Alle Verträge auf einen Blick' },
-            ].map((card) => (
-              <div key={card.title} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                background: '#ffffff', padding: '14px 18px',
-                borderRadius: 12, border: '1px solid rgba(59,130,246,0.1)',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                minWidth: 0,
-              }}>
-                <div style={{
-                  fontSize: 20, width: 42, height: 42,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: '#f0f7ff', borderRadius: 10,
-                }}>
-                  {card.icon}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{card.title}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{card.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        /* Minimized Hero */
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 28px',
-          background: 'linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%)', borderRadius: 14,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
-          border: '1px solid rgba(59,130,246,0.1)',
-          marginBottom: 28,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Legal Pulse</h1>
-            <span style={{
-              fontSize: 10, fontWeight: 700, color: '#1d4ed8',
-              background: '#dbeafe', padding: '2px 8px', borderRadius: 4,
-              letterSpacing: '0.5px', textTransform: 'uppercase',
-            }}>
-              Aktiv
-            </span>
-            <span style={{ fontSize: 13, color: '#94a3b8' }}>
-              {stats.analyzed} / {stats.total} Verträge analysiert
-            </span>
-          </div>
-          <button
-            onClick={() => setHeroCollapsed(false)}
-            style={{
-              padding: '6px 14px', fontSize: 12, fontWeight: 600,
-              color: '#3b82f6', background: '#eff6ff',
-              border: '1px solid #bfdbfe', borderRadius: 8,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            &#9432; Mehr anzeigen
-          </button>
-        </div>
-      )}
-
-      {/* ══════════ Hero: Portfolio Health Score ══════════ */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: 20,
-        border: '1px solid rgba(0,0,0,0.04)',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
-        padding: '36px 44px',
-        marginBottom: 28,
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 40,
-        }}>
-        {/* SVG Score Ring */}
-        {(() => {
-          const score = alertStats.avgScore;
-          const color = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
-          const label = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
-          const pct = score !== null ? score / 100 : 0;
-          const radius = 52;
-          const circumference = 2 * Math.PI * radius;
-          const offset = circumference * (1 - pct);
-          return (
-            <>
-              <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0, filter: `drop-shadow(0 0 12px ${color}33)` }}>
-                <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
-                  <circle cx="60" cy="60" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                  {score !== null && (
-                    <circle
-                      cx="60" cy="60" r={radius}
-                      fill="none" stroke={color} strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={circumference}
-                      strokeDashoffset={offset}
-                      style={{ transition: 'stroke-dashoffset 1s ease' }}
-                    />
-                  )}
-                </svg>
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <span style={{ fontSize: 36, fontWeight: 800, color: score !== null ? color : '#cbd5e1', lineHeight: 1 }}>
-                    {score ?? '—'}
-                  </span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
-                    Score
-                  </span>
-                </div>
-              </div>
-              <div style={{ flex: 1, borderLeft: '4px solid #3b82f6', paddingLeft: 16 }}>
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
-                  Contract Health
-                </div>
-                <div style={{ fontSize: 15, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>
-                  {isFirstUse
-                    ? 'Noch kein Vertrag analysiert. Starten Sie Ihre erste Analyse.'
-                    : label
-                  }
-                </div>
-                {!isFirstUse && stats.analyzed > 0 && (
-                  <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
-                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
-                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
-                    <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
-                  </div>
-                )}
-                {isFirstUse && items.length > 0 && (
-                  <button
-                    onClick={() => onSelectContract(items[0].contractId)}
-                    style={{
-                      padding: '10px 28px',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: '#fff',
-                      background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                      border: 'none',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(99,102,241,0.3), 0 1px 2px rgba(0,0,0,0.08)',
-                    }}
-                  >
-                    Erste Analyse starten
-                  </button>
-                )}
-              </div>
-            </>
-          );
-        })()}
-        {/* ── Radar Status (compact, right side) ── */}
-        {radarData && (
-          <RadarHealthCompact
-            data={radarData}
-            expanded={radarExpanded}
-            onToggle={() => setRadarExpanded(!radarExpanded)}
-          />
-        )}
-        </div>
-        {/* ── Radar expanded details (full width, below flex row) ── */}
-        {radarExpanded && radarData && <RadarHealthExpanded data={radarData} />}
-      </div>
-
-      {/* ══════════ First-Use: Demo Insight + Value Proposition ══════════ */}
-      {isFirstUse && (
+      {isFirstUse ? (
+        /* ══════════ First-Use: Demo Insight + Value Proposition ══════════ */
         <>
-          {/* Demo Insight — creates curiosity */}
           <div style={{
             padding: '16px 24px',
             background: '#fffbeb',
@@ -1136,7 +920,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             )}
           </div>
 
-          {/* Value Props */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -1161,97 +944,161 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             ))}
           </div>
         </>
-      )}
+      ) : (
+        <>
+          {/* ══════════ Zone 2: Legal Radar (Herzstück) ══════════ */}
+          <div ref={radarRef} id="legal-alerts" />
+          <LegalAlertsPanel
+            alerts={legalAlerts}
+            lastVisit={lastVisit}
+            onDismiss={async (alertId) => {
+              try {
+                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'dismissed' }),
+                });
+                if (res.ok) {
+                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
+                } else {
+                  toast.error('Alert konnte nicht ausgeblendet werden.');
+                }
+              } catch (err) {
+                console.error('[PulseV2] Alert dismiss failed:', err);
+                toast.error('Verbindungsfehler — bitte erneut versuchen.');
+              }
+            }}
+            onRestore={async (alertId) => {
+              try {
+                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'unread' }),
+                });
+                if (res.ok) {
+                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
+                } else {
+                  toast.error('Alert konnte nicht wiederhergestellt werden.');
+                }
+              } catch (err) {
+                console.error('[PulseV2] Alert restore failed:', err);
+                toast.error('Verbindungsfehler — bitte erneut versuchen.');
+              }
+            }}
+            onNavigate={(contractId) => onSelectContract(contractId)}
+          />
 
-      {/* Portfolio Improvement Tracking */}
-      {portfolioSummary && (
-        <PortfolioImprovementCard
-          summary={portfolioSummary}
-          onNavigate={(id) => onSelectContract(id)}
-        />
-      )}
+          {/* Action Center */}
+          {actions.length > 0 && (
+            <ActionCenter
+              actions={actions}
+              actionsRef={actionsRef}
+              contractNames={contractNames}
+              contractLastAnalysisMap={contractLastAnalysisMap}
+              onStatusChange={handleActionStatusChange}
+            />
+          )}
 
-      {/* ══════════ Monitoring Status + Legal Radar ══════════ */}
-      {monitoringStatus && (
-        <MonitoringStatusCard
-          monitoring={monitoringStatus}
-          onRefresh={refreshMonitoringStatus}
-          actionSummary={{
-            openActions: alertStats.openActions.length,
-            radarAlerts: new Set(legalAlerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved').map(a => a.lawId || a.lawTitle)).size,
-            renewalSoon: alertStats.renewalSoon.length,
-          }}
-          onScrollTo={(section) => {
-            const ref = section === 'actions' ? actionsRef : section === 'radar' ? radarRef : null;
-            if (ref?.current) {
-              ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else if (section === 'renewal' && alertStats.renewalSoon[0]) {
-              onSelectContract(alertStats.renewalSoon[0].contractId);
-            }
-          }}
-        />
-      )}
+          {/* ══════════ Zone 3: Portfolio Health + Radar Compact ══════════ */}
+          <div style={{
+            background: '#ffffff',
+            borderRadius: 20,
+            border: '1px solid rgba(0,0,0,0.04)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
+            padding: '36px 44px',
+            marginBottom: 28,
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 40,
+            }}>
+              {(() => {
+                const score = alertStats.avgScore;
+                const color = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
+                const label = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
+                const pct = score !== null ? score / 100 : 0;
+                const radius = 52;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference * (1 - pct);
+                return (
+                  <>
+                    <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0, filter: `drop-shadow(0 0 12px ${color}33)` }}>
+                      <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="60" cy="60" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                        {score !== null && (
+                          <circle
+                            cx="60" cy="60" r={radius}
+                            fill="none" stroke={color} strokeWidth="8"
+                            strokeLinecap="round"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                            style={{ transition: 'stroke-dashoffset 1s ease' }}
+                          />
+                        )}
+                      </svg>
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 36, fontWeight: 800, color: score !== null ? color : '#cbd5e1', lineHeight: 1 }}>
+                          {score ?? '—'}
+                        </span>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
+                          Score
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, borderLeft: '4px solid #3b82f6', paddingLeft: 16 }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
+                        Contract Health
+                      </div>
+                      <div style={{ fontSize: 15, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>
+                        {label}
+                      </div>
+                      {stats.analyzed > 0 && (
+                        <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
+                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
+                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+              {radarData && (
+                <RadarHealthCompact
+                  data={radarData}
+                  expanded={radarExpanded}
+                  onToggle={() => setRadarExpanded(!radarExpanded)}
+                />
+              )}
+            </div>
+            {radarExpanded && radarData && <RadarHealthExpanded data={radarData} />}
+          </div>
 
-      {/* Legal Radar Alerts — directly below MonitoringStatusCard */}
-      <div ref={radarRef} id="legal-alerts" />
-      <LegalAlertsPanel
-        alerts={legalAlerts}
-        onDismiss={async (alertId) => {
-          try {
-            const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
-              method: 'PATCH',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'dismissed' }),
-            });
-            if (res.ok) {
-              setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
-            } else {
-              toast.error('Alert konnte nicht ausgeblendet werden.');
-            }
-          } catch (err) {
-            console.error('[PulseV2] Alert dismiss failed:', err);
-            toast.error('Verbindungsfehler — bitte erneut versuchen.');
-          }
-        }}
-        onRestore={async (alertId) => {
-          try {
-            const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
-              method: 'PATCH',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'unread' }),
-            });
-            if (res.ok) {
-              setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
-            } else {
-              toast.error('Alert konnte nicht wiederhergestellt werden.');
-            }
-          } catch (err) {
-            console.error('[PulseV2] Alert restore failed:', err);
-            toast.error('Verbindungsfehler — bitte erneut versuchen.');
-          }
-        }}
-        onNavigate={(contractId) => onSelectContract(contractId)}
-      />
+          {/* Portfolio Improvement Tracking */}
+          {portfolioSummary && (
+            <PortfolioImprovementCard
+              summary={portfolioSummary}
+              lastAnalysisMap={contractLastAnalysisMap}
+              onNavigate={(id) => onSelectContract(id)}
+            />
+          )}
 
-      {/* Portfolio Insights */}
-      {insights.length > 0 && (
-        <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
-      )}
-
-      {/* Action Center */}
-      {actions.length > 0 && (
-        <ActionCenter
-          actions={actions}
-          actionsRef={actionsRef}
-          contractNames={contractNames}
-          onStatusChange={handleActionStatusChange}
-        />
+          {/* Portfolio Insights */}
+          {insights.length > 0 && (
+            <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
+          )}
+        </>
       )}
 
       {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}
-      <div style={{ marginBottom: 20 }}>
+      <div ref={contractsRef} style={{ marginBottom: 20 }}>
         {/* Row 1: Title + Search + Sort */}
         <div style={{
           display: 'flex',
@@ -1423,6 +1270,14 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           ))}
         </div>
       )}
+
+      {/* ══════════ System-Status (eingeklappt, am Ende) ══════════ */}
+      <div style={{ marginTop: 32 }}>
+        <SystemStatusPanel
+          monitoring={monitoringStatus}
+          radarData={radarData ?? null}
+        />
+      </div>
     </div>
   );
 };

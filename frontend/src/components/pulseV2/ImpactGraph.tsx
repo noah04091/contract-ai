@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import type { PulseV2LegalAlert, PulseV2AutoFixResult } from '../../types/pulseV2';
+import { cleanContractName } from '../../utils/contractName';
 import styles from '../../styles/PulseV2.module.css';
 
 interface ImpactGraphProps {
@@ -50,7 +51,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {hideContractInfo ? alert.lawTitle : alert.contractName}
+            {hideContractInfo ? alert.lawTitle : cleanContractName(alert.contractName)}
             {hasClauseImpacts && (
               <span style={{
                 fontSize: 10, fontWeight: 600,
@@ -84,33 +85,37 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
             <GraphNode
               icon={isPositive ? "&#9989;" : "&#128203;"}
               label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
-              title={alert.impactSummary || alert.plainSummary || ''}
+              title={alert.impactSummary || alert.plainSummary || alert.lawTitle || 'Änderung im Rechtsbereich'}
               color={isPositive ? '#059669' : '#3b82f6'}
             />
             {/* Source link — only show if it's a real URL */}
-            {alert.lawSource && alert.lawSource.startsWith('http') && (
-              <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
-                <a
-                  className={styles.sourceLink}
-                  href={alert.lawSource}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: 11,
-                    color: '#3b82f6',
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
-                  &#128279; Originalquelle anzeigen
-                </a>
-              </div>
-            )}
+            {alert.lawSource && alert.lawSource.startsWith('http') && (() => {
+              let host = '';
+              try { host = new URL(alert.lawSource).hostname.replace(/^www\./, ''); } catch { host = ''; }
+              return (
+                <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
+                  <a
+                    className={styles.sourceLink}
+                    href={alert.lawSource}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: 11,
+                      color: '#3b82f6',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    &#128279; {host ? `Gesetzestext auf ${host}` : 'Originalquelle anzeigen'}
+                  </a>
+                </div>
+              );
+            })()}
 
             {/* Step 2: What happens if you do nothing? */}
-            {alert.businessImpact && (
+            {alert.businessImpact ? (
               <>
                 <GraphConnector />
                 <GraphNode
@@ -118,6 +123,16 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
                   label={isPositive ? 'Ihr Vorteil' : 'Was passiert wenn Sie nichts tun?'}
                   title={alert.businessImpact}
                   color={isPositive ? '#059669' : '#dc2626'}
+                />
+              </>
+            ) : !isPositive && (
+              <>
+                <GraphConnector />
+                <GraphNode
+                  icon="&#9888;&#65039;"
+                  label="Was passiert wenn Sie nichts tun?"
+                  title="Die betroffenen Klauseln könnten nicht mehr rechtskonform sein. Eine Prüfung wird empfohlen."
+                  color="#dc2626"
                 />
               </>
             )}
@@ -129,7 +144,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
                 <GraphNode
                   icon="&#128196;"
                   label="Betroffener Vertrag"
-                  title={alert.contractName}
+                  title={cleanContractName(alert.contractName)}
                   detail={`${alert.clauseImpacts?.length || 0} Klausel(n) betroffen`}
                   color="#0891b2"
                   onClick={() => onNavigate?.(alert.contractId)}
@@ -146,18 +161,16 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
               </React.Fragment>
             ))}
 
-            {/* Step 5: Recommendation */}
-            {alert.recommendation && (
-              <>
-                <GraphConnector />
-                <GraphNode
-                  icon="&#9989;"
-                  label="Nächster Schritt"
-                  title={alert.recommendation}
-                  color="#16a34a"
-                />
-              </>
-            )}
+            {/* Step 5: Recommendation — always show (fallback if empty) */}
+            <>
+              <GraphConnector />
+              <GraphNode
+                icon="&#9989;"
+                label="Nächster Schritt"
+                title={alert.recommendation || 'Klausel prüfen und ggf. anpassen. Nutzen Sie den Auto-Fix oder kontaktieren Sie einen Anwalt.'}
+                color="#16a34a"
+              />
+            </>
 
             {/* D3: User feedback */}
             <FeedbackButtons alertId={alert._id} existingFeedback={alert.userFeedback} />

@@ -8,10 +8,14 @@ interface PortfolioInsightsPanelProps {
   contractNames?: Map<string, string>;
 }
 
-const INSIGHT_TYPE_CONFIG: Record<string, { icon: string; label: string }> = {
+const INSIGHT_TYPE_CONFIG: Record<string, { icon: string; label: string; tooltip?: string }> = {
   concentration_risk: { icon: '\u26a0\ufe0f', label: 'Konzentrationsrisiko' },
   conflict: { icon: '\u274c', label: 'Widerspruch' },
-  renewal_cluster: { icon: '\u23f0', label: 'Fristen-Cluster' },
+  renewal_cluster: {
+    icon: '\u23f0',
+    label: 'Gruppe: Verträge laufen nah beieinander aus',
+    tooltip: 'Diese Verträge laufen innerhalb eines kurzen Zeitfensters aus und sollten ggf. zusammen verhandelt oder gekündigt werden.',
+  },
   opportunity: { icon: '\ud83d\udca1', label: 'Chance' },
   benchmark_gap: { icon: '\ud83d\udcca', label: 'Benchmark-Abweichung' },
 };
@@ -63,12 +67,17 @@ function InsightCard({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 16 }}>{config.icon}</span>
-          <span style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: severityColor,
-            textTransform: 'uppercase',
-          }}>
+          <span
+            title={config.tooltip}
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: severityColor,
+              textTransform: 'uppercase',
+              cursor: config.tooltip ? 'help' : 'default',
+              borderBottom: config.tooltip ? '1px dotted currentColor' : 'none',
+            }}
+          >
             {config.label}
           </span>
           {insight.confidence < 85 && (
