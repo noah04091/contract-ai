@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
+import { fixUtf8Display } from "../utils/textUtils";
 
 // 📋 Alle verfügbaren Feldtypen mit ihren Optionen
 type FieldType = 'kuendigung' | 'laufzeit' | 'startDate' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer';
@@ -218,9 +219,9 @@ export default function ContractEditModal({
   // Formular mit Contract-Daten initialisieren
   useEffect(() => {
     if (contract && show) {
-      // Basis-Felder setzen
-      setName(contract.name || '');
-      setNotes(contract.notes || '');
+      // Basis-Felder setzen (UTF-8 Mojibake fixen falls vorhanden)
+      setName(fixUtf8Display(contract.name || ''));
+      setNotes(fixUtf8Display(contract.notes || ''));
 
       // Dynamische Felder aus Contract-Daten laden
       const initialValues: FieldValues = {};
@@ -230,7 +231,7 @@ export default function ContractEditModal({
       // Prüfe welche Felder im Contract vorhanden sind
       if (contract.kuendigung && contract.kuendigung !== 'Unbekannt' && contract.kuendigung !== 'Nicht analysiert') {
         initialActiveFields.push('kuendigung');
-        initialValues.kuendigung = contract.kuendigung;
+        initialValues.kuendigung = fixUtf8Display(contract.kuendigung);
         const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === 'kuendigung');
         if (!isInOptions(contract.kuendigung, fieldConfig?.options)) {
           initialCustomMode.kuendigung = true;
@@ -239,7 +240,7 @@ export default function ContractEditModal({
 
       if (contract.laufzeit && contract.laufzeit !== 'Unbekannt' && contract.laufzeit !== 'Nicht analysiert') {
         initialActiveFields.push('laufzeit');
-        initialValues.laufzeit = contract.laufzeit;
+        initialValues.laufzeit = fixUtf8Display(contract.laufzeit);
         const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === 'laufzeit');
         if (!isInOptions(contract.laufzeit, fieldConfig?.options)) {
           initialCustomMode.laufzeit = true;
@@ -263,7 +264,7 @@ export default function ContractEditModal({
 
       if (contract.anbieter) {
         initialActiveFields.push('anbieter');
-        initialValues.anbieter = contract.anbieter;
+        initialValues.anbieter = fixUtf8Display(contract.anbieter);
       }
 
       if (contract.kosten) {
@@ -273,7 +274,7 @@ export default function ContractEditModal({
 
       if (contract.vertragsnummer) {
         initialActiveFields.push('vertragsnummer');
-        initialValues.vertragsnummer = contract.vertragsnummer;
+        initialValues.vertragsnummer = fixUtf8Display(contract.vertragsnummer);
       }
 
       // Wenn keine Felder vorhanden, nutze Default-Felder
@@ -297,14 +298,18 @@ export default function ContractEditModal({
   useEffect(() => {
     if (!contract) return;
 
-    // Prüfe ob sich etwas geändert hat
-    const nameChanged = name !== (contract.name || '');
-    const notesChanged = notes !== (contract.notes || '');
+    // Prüfe ob sich etwas geändert hat — gegen UTF-8-gefixte Werte vergleichen,
+    // damit hasChanges nicht durch reines Mojibake-Cleanup ausgelöst wird
+    const nameChanged = name !== fixUtf8Display(contract.name || '');
+    const notesChanged = notes !== fixUtf8Display(contract.notes || '');
 
     // Felder-Änderungen prüfen (vereinfacht)
     const fieldsChanged = Object.keys(fieldValues).some(key => {
       const originalValue = (contract as unknown as Record<string, unknown>)[key];
-      return fieldValues[key] !== (originalValue || '');
+      const compareValue = typeof originalValue === 'string'
+        ? fixUtf8Display(originalValue)
+        : (originalValue || '');
+      return fieldValues[key] !== compareValue;
     });
 
     setHasChanges(nameChanged || notesChanged || fieldsChanged);
