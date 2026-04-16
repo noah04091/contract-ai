@@ -323,7 +323,11 @@ function ClauseDetail({ clauses, label }: { clauses: StructuredClause[]; label: 
           <div key={i} className={styles.mapClauseCard}>
             <div className={styles.mapClauseHeader}>
               <span className={styles.mapClauseSection}>{clause.section}</span>
-              <span className={styles.mapClauseTitle}>{clause.title}</span>
+              <span className={styles.mapClauseTitle}>
+                {clause.section && clause.title?.startsWith(clause.section)
+                  ? clause.title.slice(clause.section.length).trimStart()
+                  : clause.title}
+              </span>
             </div>
             <p className={styles.mapClauseSummary}>{clause.summary}</p>
             {filteredKVs.length > 0 && (
