@@ -293,10 +293,15 @@ Antworte NUR mit JSON in diesem Format:
 }
 
 /**
- * Sicherheitsnetz: Erzwingt eine GPT-Klassifizierung (ignoriert Keyword-Pre-Check).
+ * Sicherheitsnetz: Erzwingt eine GPT-Klassifizierung mit STARKEM Modell und
+ * MEHR Kontext (ignoriert Keyword-Pre-Check).
  *
- * Wird z.B. aufgerufen, wenn der Parser trotz "suitable" 0 Klauseln findet —
- * der Keyword-Check könnte fälschlich JA gesagt haben (False-Positive).
+ * Wird aufgerufen, wenn der Parser trotz "suitable" 0 Klauseln findet.
+ * Das ist ein starkes Indiz, dass der einfache Gate-Call (mini, 2000 chars)
+ * ein False-Positive produziert hat — hier holen wir ein verlässlicheres
+ * Urteil ein, mit dem Kontext "Extraktion fehlgeschlagen".
+ *
+ * Nutzt gpt-4o mit ~8000 chars Text und explizit gefragter Begründung.
  *
  * @param {string} text
  * @returns {Promise<{suitable: boolean, documentType: string|null, confidence: number, reason: string, source: 'gpt'|'error'|'too_short'}>}
@@ -312,8 +317,77 @@ async function forceGptClassify(text) {
     };
   }
 
+  // Für die Nachprüfung: großzügiger Textausschnitt (Anfang + Mitte + Ende)
+  // So erwischen wir Cover-Pages UND tatsächlichen Inhalt UND Signatur-Block.
+  const totalLen = text.length;
+  let sample;
+  if (totalLen <= 8000) {
+    sample = text;
+  } else {
+    const headLen = 4000;
+    const midLen = 2000;
+    const tailLen = 2000;
+    const head = text.substring(0, headLen);
+    const midStart = Math.floor(totalLen / 2 - midLen / 2);
+    const mid = text.substring(midStart, midStart + midLen);
+    const tail = text.substring(totalLen - tailLen);
+    sample = `${head}\n\n[... Ausschnitt aus der Mitte ...]\n\n${mid}\n\n[... Ende des Dokuments ...]\n\n${tail}`;
+  }
+
   try {
-    return await gptClassify(text);
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      temperature: 0,
+      max_tokens: 300,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist ein erfahrener juristischer Klassifizierer. Ein Klausel-Extraktor hat VERSUCHT, Vertragsklauseln aus dem folgenden Dokument zu extrahieren, und NICHTS gefunden. Entscheide jetzt final: Ist das ein echtes Vertragsdokument?
+
+Antworte NUR mit JSON:
+{
+  "isLegalDocument": boolean,
+  "documentType": string,
+  "confidence": number (0-1),
+  "reason": string (ein Satz auf Deutsch, was für/gegen Vertragsdokument spricht)
+}
+
+"isLegalDocument" ist TRUE NUR WENN:
+- Das Dokument enthält explizite vertragliche Regelungen (Klauseln, Paragraphen, Artikel mit rechtsverbindlichem Inhalt)
+- Beispiele: Mietvertrag, Arbeitsvertrag, AGB, Datenschutzerklärung mit Regelwerk, NDA mit Pflichten, Widerrufsbelehrung, Versicherungsbedingungen, Police mit Klauseln
+
+"isLegalDocument" ist FALSE FÜR:
+- Werbematerial, Broschüren, Flyer, Produktvorstellungen (auch wenn sie das Wort "Vertrag" enthalten)
+- Artikel, Berichte, Analysen, Blog-Posts, Whitepaper über rechtliche Themen
+- Rechnungen, Quittungen, Belege, Kontoauszüge, Gehaltsabrechnungen
+- Lieferscheine, Bestellbestätigungen ohne Vertragsklauseln
+- Briefe, Anschreiben, Infoschreiben ohne Regelwerk
+- Formulare ohne vertragliche Klausel-Struktur
+- Gescannte Bilder mit OCR-Fehlern (unlesbar/fragmentarisch)
+- Protokolle, Notizen, Zusammenfassungen
+
+WICHTIG: Wenn der Extraktor nichts fand, ist die Wahrscheinlichkeit hoch, dass es KEIN echtes Vertragsdokument ist. Sei streng — im Zweifel FALSE. Nur TRUE wenn das Dokument offensichtlich juristische Regelungen enthält.
+
+"documentType" ist ein kurzer deutscher Begriff (z.B. "Factoring-Werbung", "Mietvertrag", "Broschüre").`
+        },
+        {
+          role: 'user',
+          content: `Dokumentauszug (${totalLen} Zeichen gesamt):\n\n---\n${sample}\n---`
+        }
+      ]
+    });
+
+    const raw = completion.choices?.[0]?.message?.content || '{}';
+    const parsed = JSON.parse(raw);
+
+    return {
+      suitable: !!parsed.isLegalDocument,
+      documentType: parsed.documentType || null,
+      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.7,
+      reason: parsed.reason || (parsed.isLegalDocument ? 'Rechtsdokument erkannt' : 'Dokument enthält keine vertraglichen Regelungen'),
+      source: 'gpt'
+    };
   } catch (err) {
     console.warn('[Document Gate] forceGptClassify fehlgeschlagen, fail-open:', err.message);
     return {
