@@ -156,6 +156,15 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
   const docName = documentType?.labels?.documentName || 'Vertrag';
   const partiesLabel = documentType?.labels?.partiesLabel || null;
 
+  // Heuristik-Fallback für alte History-Einträge ohne extractionWarning-Flag:
+  // Wenn unser Filter Noise erkennt, war das Doc vermutlich gescannt / ein Formular-PDF.
+  const hasFilteredNoise =
+    extractionWarning === undefined &&
+    [...(contract1.clauses || []), ...(contract2.clauses || [])].some(
+      (c) => Object.entries(c.keyValues || {}).some(([k, v]) => isNoiseKeyValue(k, String(v)))
+    );
+  const showExtractionHint = extractionWarning === true || hasFilteredNoise;
+
   // Stats
   const stats = {
     same: rows.filter(r => r.status === 'same').length,
@@ -179,7 +188,7 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
       </div>
 
       {/* Hinweis bei gescannten PDFs / Formular-PDFs: Werteextraktion kann Formularfelder als zusätzliche Angaben enthalten */}
-      {extractionWarning && (
+      {showExtractionHint && (
         <div className={styles.mapExtractionHint}>
           <Info size={16} />
           <span>
