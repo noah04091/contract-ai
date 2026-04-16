@@ -47,6 +47,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { WelcomePopup } from "../components/Tour";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { loadCompanyProfile, getJsPDFBranding, imageUrlToBase64, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
+import { fixUtf8Display } from "../utils/textUtils";
 
 // ✅ Fetch with Retry - Enterprise-grade network resilience
 const fetchWithRetry = async (
@@ -357,7 +358,20 @@ export default function Envelopes() {
         throw new Error(data.error || "Fehler beim Laden der Signaturanfragen");
       }
 
-      const newEnvelopes = data.envelopes || [];
+      // UTF-8 Mojibake an der Datenquelle fixen — alle Display-Sites
+      // (Tabellen, Toast-Messages, PDF-Filenames, aria-labels) nutzen damit
+      // automatisch die korrigierte Version. Keine Auswirkung auf Write-Ops
+      // weil diese envelope.title nie im Body mitsenden.
+      const newEnvelopes: Envelope[] = (data.envelopes || []).map((env: Envelope) => ({
+        ...env,
+        title: fixUtf8Display(env.title || ''),
+        signers: env.signers
+          ? env.signers.map((s) => ({ ...s, name: fixUtf8Display(s.name || '') }))
+          : env.signers,
+        contract: env.contract
+          ? { ...env.contract, title: env.contract.title ? fixUtf8Display(env.contract.title) : env.contract.title }
+          : env.contract,
+      }));
 
       // Check for status changes and show notifications (only on refresh, not initial load)
       if (!isInitial && newOffset === 0 && envelopes.length > 0) {

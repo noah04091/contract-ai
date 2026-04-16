@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, FileText, Clock, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import styles from './ContractDetailModal.module.css';
+import { fixUtf8Display } from '../utils/textUtils';
 
 interface Signer {
   _id: string;
@@ -99,7 +100,16 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ envelopeId, o
         }
 
         const data = await response.json();
-        setEnvelope(data.envelope);
+        // UTF-8 Mojibake an der Datenquelle fixen — alle Display-Sites
+        // (Modal-Header, Signer-Liste, Audit-Trail) werden automatisch korrigiert.
+        const env = data.envelope;
+        setEnvelope({
+          ...env,
+          title: fixUtf8Display(env.title || ''),
+          signers: env.signers
+            ? env.signers.map((s: Signer) => ({ ...s, name: fixUtf8Display(s.name || '') }))
+            : env.signers,
+        });
 
         // Load PDF URLs
         if (data.envelope.contractId?.s3Key) {
