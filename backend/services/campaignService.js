@@ -194,13 +194,8 @@ async function previewRecipients(filter = {}) {
 // ========================================================================
 // EMAIL-HTML generieren (nutzt bestehendes Template-System)
 // ========================================================================
-// DSGVO-Hinweis der in jede Campaign-Mail unten kommt
-const DSGVO_NOTICE = `
-<div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
-  Diese Email enthält ggf. Tracking-Elemente (Öffnungs- und Klick-Messung) zur Analyse der Newsletter-Performance.
-  Du kannst diese Emails jederzeit oben über den Link abbestellen.
-</div>
-`;
+// Hinweis: Tracking-Disclosure erfolgt über Datenschutzerklärung + Marketing-Consent,
+// nicht pro Mail. Unsubscribe-Link ist ohnehin via RFC 8058 + Footer gesetzt.
 
 /**
  * Schreibt alle https-Links in HTML-Body um auf Click-Tracker.
@@ -247,9 +242,6 @@ function buildCampaignHtml(campaign, recipientEmail, recipientId) {
   if (trackClicks && recipientId && campaign._id) {
     bodyHtml = rewriteLinksForTracking(bodyHtml, campaign._id, recipientId);
   }
-
-  // DSGVO-Hinweis anhängen
-  bodyHtml += DSGVO_NOTICE;
 
   // Open-Tracking-Pixel injizieren
   if (trackOpens && recipientId) {

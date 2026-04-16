@@ -1192,7 +1192,7 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
             Klicks tracken (Links werden über Redirect umgeleitet — ab Commit 3D aktiv)
           </label>
           <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
-            Hinweis zum DSGVO-Footer wird automatisch jeder Mail angehängt.
+            Tracking ist durch Marketing-Consent + Datenschutzerklärung + Unsubscribe-Link abgedeckt.
           </div>
         </div>
       </div>
