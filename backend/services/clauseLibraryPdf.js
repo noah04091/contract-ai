@@ -23,7 +23,7 @@ const CATEGORY_LABELS = {
   risky: "Riskant",
   good_practice: "Best Practice",
   important: "Wichtig",
-  unusual: "Ungewoehnlich",
+  unusual: "Ungewöhnlich",
   standard: "Standard"
 };
 
@@ -35,12 +35,12 @@ const RISK_LABELS = {
 
 const AREA_LABELS = {
   liability: "Haftung",
-  termination: "Kuendigung",
+  termination: "Kündigung",
   payment: "Zahlung",
   confidentiality: "Vertraulichkeit",
   intellectual_property: "Geistiges Eigentum",
-  warranty: "Gewaehrleistung",
-  force_majeure: "Hoehere Gewalt",
+  warranty: "Gewährleistung",
+  force_majeure: "Höhere Gewalt",
   dispute: "Streitbeilegung",
   data_protection: "Datenschutz",
   non_compete: "Wettbewerbsverbot",
@@ -161,7 +161,7 @@ function generateClauseLibraryPdf({ title, subtitle, sections = [], mode = "coll
           .fontSize(10)
           .font("Helvetica")
           .text(
-            `${sections.length} ${sections.length === 1 ? "Eintrag" : "Eintraege"}`,
+            `${sections.length} ${sections.length === 1 ? "Eintrag" : "Einträge"}`,
             contentLeft,
             coverY
           );
@@ -295,6 +295,8 @@ function generateClauseLibraryPdf({ title, subtitle, sections = [], mode = "coll
 
       // ========================================
       // FOOTER auf allen Seiten
+      // WICHTIG: lineBreak: false verhindert dass PDFKit neue Seiten erstellt,
+      // wenn der Footer am Seitenende positioniert wird.
       // ========================================
       const range = doc.bufferedPageRange();
       for (let i = range.start; i < range.start + range.count; i++) {
@@ -310,21 +312,25 @@ function generateClauseLibraryPdf({ title, subtitle, sections = [], mode = "coll
 
         doc.fillColor(COLORS.muted)
           .fontSize(8)
-          .font("Helvetica")
-          .text(
-            "Erstellt mit Contract AI \u2022 contract-ai.de",
-            contentLeft,
-            footerY,
-            { width: contentWidth / 2, align: "left" }
-          )
-          .text(
-            `Seite ${i - range.start + 1} von ${range.count}`,
-            contentLeft + contentWidth / 2,
-            footerY,
-            { width: contentWidth / 2, align: "right" }
-          );
+          .font("Helvetica");
+
+        doc.text(
+          "Erstellt mit Contract AI \u2022 contract-ai.de",
+          contentLeft,
+          footerY,
+          { width: contentWidth / 2, align: "left", lineBreak: false }
+        );
+
+        doc.text(
+          `Seite ${i - range.start + 1} von ${range.count}`,
+          contentLeft + contentWidth / 2,
+          footerY,
+          { width: contentWidth / 2, align: "right", lineBreak: false }
+        );
       }
 
+      // flushPages bevor end() — verhindert dass durch Footer entstandene Auto-Pages noch hinzukommen
+      doc.flushPages();
       doc.end();
     } catch (err) {
       reject(err);

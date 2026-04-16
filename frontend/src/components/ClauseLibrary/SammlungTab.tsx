@@ -623,11 +623,13 @@ const SammlungTab: React.FC<SammlungTabProps> = ({
             const rc = item.resolvedClause;
             const catInfo = CATEGORY_INFO[rc.category];
             const areaInfo = rc.clauseArea ? CLAUSE_AREA_INFO[rc.clauseArea] : null;
+            const titleParts = (rc.title && rc.title.trim()) || (catInfo ? catInfo.label : 'Gespeicherte Klausel');
             return {
-              title: catInfo ? catInfo.label : 'Gespeicherte Klausel',
+              title: titleParts,
               category: rc.category,
               text: rc.clauseText,
               meta: [
+                catInfo && rc.title ? `Kategorie: ${catInfo.label}` : '',
                 areaInfo ? `Bereich: ${areaInfo.label}` : '',
                 rc.originalAnalysis?.riskLevel
                   ? `Risiko: ${rc.originalAnalysis.riskLevel === 'high' ? 'Hoch' : rc.originalAnalysis.riskLevel === 'medium' ? 'Mittel' : 'Niedrig'}`

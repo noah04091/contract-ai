@@ -180,6 +180,7 @@ router.get("/:id", verifyToken, async (req, res) => {
           const savedClause = savedClausesMap[item.savedClauseId.toString()];
           if (savedClause) {
             resolved.resolvedClause = {
+              title: savedClause.title,
               clauseText: savedClause.clauseText,
               clausePreview: savedClause.clausePreview,
               category: savedClause.category,

@@ -420,6 +420,7 @@ export type CollectionItemType = 'saved' | 'template' | 'lexikon' | 'custom';
  * Aufgeloeste SavedClause-Daten (vom Backend populiert)
  */
 export interface ResolvedClauseData {
+  title?: string;
   clauseText: string;
   clausePreview: string;
   category: ClauseCategory;
