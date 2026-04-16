@@ -122,6 +122,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ✅ Gescanntes-PDF-Hinweis (kein Text-Layer erkannt)
   const [showScanHint, setShowScanHint] = useState<boolean>(false);
+  // Proaktive Erkennung: Wird in onDocumentLoadSuccess anhand des extrahierten Textes gesetzt
+  const [isScannedPdf, setIsScannedPdf] = useState<boolean>(false);
+  // Verhindert mehrfaches Anzeigen/Autoswitch pro PDF
+  const scanHintShownRef = useRef<boolean>(false);
 
   // Focus Mode — dims everything except selected clause
   const [focusMode, setFocusMode] = useState<boolean>(false);
@@ -799,6 +803,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
     setPdfIndexReady(false); // Reset während Index erstellt wird
+    setIsScannedPdf(false); // Reset Scan-Detection für neues Dokument
+    scanHintShownRef.current = false;
 
     // ✅ Text aller Seiten extrahieren für Auto-Scroll
     if (pdfUrl) {
@@ -819,6 +825,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         }
 
         pdfTextIndexRef.current = textIndex;
+
+        // ✅ Gescanntes PDF erkennen: Wenn pdfjs keinen (oder kaum) Text liefert,
+        // hat das PDF keine Text-Ebene (OCR-Scan). Schwelle: < 50 Zeichen pro Seite im Schnitt.
+        let totalChars = 0;
+        textIndex.forEach(t => { totalChars += t.replace(/\s/g, '').length; });
+        const avgPerPage = numPages > 0 ? totalChars / numPages : 0;
+        setIsScannedPdf(avgPerPage < 50);
+
         setPdfIndexReady(true); // ✅ Signal dass Index bereit ist
         // ✅ FIX: Nach Index-Erstellung zur Klausel navigieren (wenn vorhanden)
         // NICHT vorher setPageNumber(1) aufrufen - das überschreibt die Navigation!
@@ -1078,6 +1092,23 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     }
   }, [pdfIndexReady, selectedClause, findPageForClause, scrollToPdfPage]);
 
+  // ========== EFFECT: Proaktive Scan-Erkennung ==========
+  // Sobald wir wissen, dass das PDF gescannt ist und wir in der PDF-Ansicht sind,
+  // zeigen wir EINMAL den Hinweis und wechseln automatisch zur Textansicht.
+  useEffect(() => {
+    if (viewMode !== 'pdf' || !isScannedPdf || !pdfIndexReady) return;
+    if (scanHintShownRef.current) return;
+
+    scanHintShownRef.current = true;
+    setShowScanHint(true);
+    const timer = setTimeout(() => {
+      setViewMode('text');
+      setShowScanHint(false);
+    }, 4000);
+
+    return () => clearTimeout(timer);
+  }, [viewMode, isScannedPdf, pdfIndexReady]);
+
   // ========== EFFECT 4: Highlighting v7 - Wort-basiertes Matching ==========
   useEffect(() => {
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
@@ -1247,12 +1278,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const textContent = target.closest('.react-pdf__Page__textContent');
 
     if (!textContent) {
-      // Prüfe ob überhaupt ein Text-Layer mit Spans existiert (gescanntes PDF?)
-      const anyTextLayer = document.querySelector('.react-pdf__Page__textContent');
-      const hasSpans = anyTextLayer && anyTextLayer.querySelectorAll('span').length > 0;
-      if (!hasSpans && !showScanHint) {
+      // Fallback: Wenn Klick außerhalb des Text-Layers UND wir wissen es ist gescannt → Hinweis
+      if (isScannedPdf && !scanHintShownRef.current) {
+        scanHintShownRef.current = true;
         setShowScanHint(true);
-        // Nach 4 Sekunden automatisch zur Textansicht wechseln
         setTimeout(() => {
           setViewMode('text');
           setShowScanHint(false);
