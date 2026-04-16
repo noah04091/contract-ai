@@ -11,6 +11,7 @@ import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
 import { LegalPulseExplainerBanner } from '../components/pulseV2/LegalPulseExplainerBanner';
+import { RadarSummaryCard } from '../components/pulseV2/RadarSummaryCard';
 import { SystemStatusPanel } from '../components/pulseV2/SystemStatusPanel';
 import { useRadarHealth } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
@@ -851,10 +852,12 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
   return (
     <div>
-      {/* ══════════ Zone 1a: Explainer-Banner (collapsible) ══════════ */}
+      {/* ══════════ Zone 1a: Intro Hero Banner (dismissible) ══════════ */}
       <LegalPulseExplainerBanner
         contractsMonitored={stats.analyzed}
         totalContracts={stats.total}
+        criticalCount={alertStats.criticalContracts.length}
+        openActionsCount={alertStats.openActions.length}
       />
 
       {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
@@ -1003,6 +1006,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               onStatusChange={handleActionStatusChange}
             />
           )}
+
+          {/* Radar Summary (Frühwarnsystem-Trust-Signal) */}
+          {radarData && <RadarSummaryCard data={radarData} />}
 
           {/* Portfolio Improvement Tracking */}
           {portfolioSummary && (
