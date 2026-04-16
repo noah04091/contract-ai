@@ -16,7 +16,8 @@ import {
   Ban,
   ChevronRight,
   ChevronLeft,
-  Zap
+  Zap,
+  Copy
 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 
@@ -521,11 +522,13 @@ function EmailPreview({ form }: { form: CampaignForm }) {
 function ComposerModal({
   open,
   onClose,
-  onCreated
+  onCreated,
+  prefill
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
+  prefill?: Campaign | null;
 }) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [form, setForm] = useState<CampaignForm>(defaultForm);
@@ -554,8 +557,36 @@ function ComposerModal({
         setSendMode('now');
         setScheduledAt('');
       }, 300);
+    } else if (prefill) {
+      // Vorbefüllung durch Duplicate — Emails werden BEWUSST NICHT kopiert (Sicherheit)
+      const f = defaultForm();
+      f.name = prefill.name ? `Kopie von ${prefill.name}` : '';
+      f.subject = prefill.subject || '';
+      f.preheader = prefill.preheader || '';
+      f.title = prefill.title || '';
+      f.body = prefill.body || '';
+      f.ctaText = prefill.ctaText || '';
+      f.ctaUrl = prefill.ctaUrl || '';
+
+      const sf = prefill.segmentFilter || {};
+      // Segment-Filter uebernehmen — aber NICHT userIds/emails (sicherer Re-Start)
+      if (sf.plan && sf.plan !== 'all') {
+        f.filter.usePlan = true;
+        f.filter.plan = typeof sf.plan === 'string' ? sf.plan : 'all';
+      }
+      if (sf.subscriptionActive) f.filter.subscriptionActive = true;
+      if (sf.minAnalysisCount) {
+        f.filter.useMinAnalyses = true;
+        f.filter.minAnalysisCount = sf.minAnalysisCount;
+      }
+      if (sf.createdAfter || sf.createdBefore) {
+        f.filter.useDateRange = true;
+        f.filter.createdAfter = sf.createdAfter || '';
+        f.filter.createdBefore = sf.createdBefore || '';
+      }
+      setForm(f);
     }
-  }, [open]);
+  }, [open, prefill]);
 
   const segmentFilter = useMemo(() => buildSegmentFilter(form.filter), [form.filter]);
 
@@ -1385,6 +1416,22 @@ export default function CampaignsTab() {
   const [modalOpen, setModalOpen] = useState(false);
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [detailsData, setDetailsData] = useState<Campaign | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<Campaign | null>(null);
+
+  function openNewCampaign() {
+    setDuplicateSource(null);
+    setModalOpen(true);
+  }
+
+  function openDuplicate(campaign: Campaign) {
+    setDuplicateSource(campaign);
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setDuplicateSource(null);
+  }
 
   async function fetchCampaigns() {
     setLoading(true);
@@ -1468,7 +1515,7 @@ export default function CampaignsTab() {
               Aktualisieren
             </button>
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={openNewCampaign}
               style={{
                 padding: '0.5rem 1rem',
                 borderRadius: '6px',
@@ -1551,7 +1598,7 @@ export default function CampaignsTab() {
                       )}
                     </td>
                     <td>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => fetchDetails(c._id)}
                           style={{
@@ -1564,6 +1611,25 @@ export default function CampaignsTab() {
                           }}
                         >
                           Details
+                        </button>
+                        <button
+                          onClick={() => openDuplicate(c)}
+                          title="Kampagne als Vorlage verwenden"
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '4px',
+                            border: '1px solid #bfdbfe',
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.2rem'
+                          }}
+                        >
+                          <Copy size={12} />
+                          Duplizieren
                         </button>
                         {(c.status === 'draft' || c.status === 'queued' || c.status === 'sending') && (
                           <button
@@ -1591,7 +1657,12 @@ export default function CampaignsTab() {
         </div>
       </div>
 
-      <ComposerModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={fetchCampaigns} />
+      <ComposerModal
+        open={modalOpen}
+        onClose={closeModal}
+        onCreated={fetchCampaigns}
+        prefill={duplicateSource}
+      />
 
       {/* Details Overlay */}
       {detailsId && (
