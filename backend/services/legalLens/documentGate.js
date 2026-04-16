@@ -292,7 +292,42 @@ Antworte NUR mit JSON in diesem Format:
   };
 }
 
+/**
+ * Sicherheitsnetz: Erzwingt eine GPT-Klassifizierung (ignoriert Keyword-Pre-Check).
+ *
+ * Wird z.B. aufgerufen, wenn der Parser trotz "suitable" 0 Klauseln findet —
+ * der Keyword-Check könnte fälschlich JA gesagt haben (False-Positive).
+ *
+ * @param {string} text
+ * @returns {Promise<{suitable: boolean, documentType: string|null, confidence: number, reason: string, source: 'gpt'|'error'|'too_short'}>}
+ */
+async function forceGptClassify(text) {
+  if (!text || text.length < MIN_TEXT_LENGTH) {
+    return {
+      suitable: false,
+      documentType: 'empty_or_too_short',
+      confidence: 0.95,
+      reason: 'Das Dokument enthält zu wenig analysierbaren Text.',
+      source: 'too_short'
+    };
+  }
+
+  try {
+    return await gptClassify(text);
+  } catch (err) {
+    console.warn('[Document Gate] forceGptClassify fehlgeschlagen, fail-open:', err.message);
+    return {
+      suitable: true,
+      documentType: null,
+      confidence: 0.5,
+      reason: 'Klassifizierung nicht möglich',
+      source: 'error'
+    };
+  }
+}
+
 module.exports = {
   checkDocumentSuitability,
+  forceGptClassify,
   GATE_ENABLED
 };

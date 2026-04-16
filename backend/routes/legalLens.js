@@ -18,7 +18,7 @@ const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const { parseContractWithGuidedSegmenter } = require('../services/legalLens/guidedSegmenterAdapter');
 const { parseContractUniversal } = require('../services/legalLens/universalParserAdapter');
 const { parseContractDirect } = require('../services/legalLens/extractionAdapter');
-const { checkDocumentSuitability } = require('../services/legalLens/documentGate');
+const { checkDocumentSuitability, forceGptClassify } = require('../services/legalLens/documentGate');
 
 // Feature-Flags: Parser-Auswahl (Prioritaet: v4 > v3 > v2 > v1)
 // LEGAL_LENS_DIRECT_PARSER=true     -> Direct Extraction (v4, empfohlen)
@@ -3091,7 +3091,53 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }
 
         if (!parseResult.success || !parseResult.clauses?.length) {
-          // Cache mit "no_clauses" markieren, damit Polling nicht endlos läuft
+          // ════════════════════════════════════════════════════════════
+          // SAFETY-NET: Parser fand 0 Klauseln.
+          // Möglich: Der Keyword-Gate hat ein False-Positive produziert
+          // (z.B. "Vertrag" als bloßes Wort, aber kein Vertragsdokument).
+          // Deshalb jetzt zwingend via GPT nachklassifizieren, BEVOR wir
+          // den generischen "Keine Klauseln"-Fehler senden.
+          // ════════════════════════════════════════════════════════════
+          let unsuitableByGpt = null;
+          if (!isSkipGate) {
+            try {
+              console.log(`🔍 [Legal Lens] 0 Klauseln — starte GPT-Nachprüfung (Gate-Safety-Net)`);
+              const recheck = await forceGptClassify(text);
+              console.log(`🔍 [Legal Lens] GPT-Nachprüfung: suitable=${recheck.suitable}, type=${recheck.documentType}, conf=${recheck.confidence}`);
+              if (!recheck.suitable) {
+                unsuitableByGpt = recheck;
+              }
+            } catch (recheckErr) {
+              console.warn(`[Legal Lens] GPT-Nachprüfung fehlgeschlagen:`, recheckErr.message);
+            }
+          }
+
+          if (unsuitableByGpt) {
+            // GPT bestätigt: Kein Vertragsdokument → Cache als "unsuitable" + Stop-Screen
+            try {
+              await Contract.updateOne(
+                { _id: new ObjectId(contractId) },
+                {
+                  $set: {
+                    'legalLens.documentGate': { ...unsuitableByGpt, checkedAt: new Date(), overridden: false },
+                    'legalLens.preprocessStatus': 'unsuitable',
+                    'legalLens.preprocessedAt': new Date()
+                  }
+                }
+              );
+            } catch (cacheErr) {
+              console.warn('[Legal Lens] Cache-Update (Gate-Recheck) fehlgeschlagen:', cacheErr.message);
+            }
+            sendEvent('unsuitable', {
+              documentType: unsuitableByGpt.documentType,
+              confidence: unsuitableByGpt.confidence,
+              reason: unsuitableByGpt.reason,
+              source: unsuitableByGpt.source
+            });
+            return res.end();
+          }
+
+          // GPT sagt: Ist ein Vertrag, aber Parser fand nichts → echter Extraktions-Fehler
           try {
             await Contract.updateOne(
               { _id: new ObjectId(contractId) },
