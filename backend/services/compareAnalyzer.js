@@ -6492,30 +6492,51 @@ function validateHolisticOutput(raw, text1, text2, intent) {
  * Nur informativ — erweitert compatibility.userWarning, ändert keine Scores.
  */
 function evaluateNumericCompatibility(map1, map2) {
-  // _rawValues-Einträge haben bereits numValue (Number) + unit ('EUR') direkt gesetzt —
-  // diese nutzen statt erneut zu parsen. Fallback über extractValueAndUnit nur wenn fehlt.
-  const extractMaxEur = (rawValues) => {
-    if (!Array.isArray(rawValues)) return 0;
+  // Sucht in _rawValues UND clause.keyValues nach EUR-Beträgen.
+  // _rawValues: bereits strukturiert (numValue + unit).
+  // clause.keyValues: Strings — werden via extractValueAndUnit geparst.
+  const extractMaxEurFromMap = (map) => {
     let max = 0;
-    for (const rv of rawValues) {
-      if (isBlankRawValue(rv)) continue;
-      let num = null;
-      if (rv.unit === 'EUR' && typeof rv.numValue === 'number' && Number.isFinite(rv.numValue)) {
-        num = rv.numValue;
-      } else if (rv.value) {
-        // Fallback: alte/unvollständige Einträge nachparsen
-        const parsed = extractValueAndUnit(String(rv.value));
-        if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
-          num = parsed.num;
+
+    // Quelle 1: _rawValues (strukturiert)
+    if (Array.isArray(map?._rawValues)) {
+      for (const rv of map._rawValues) {
+        if (isBlankRawValue(rv)) continue;
+        let num = null;
+        if (rv.unit === 'EUR' && typeof rv.numValue === 'number' && Number.isFinite(rv.numValue)) {
+          num = rv.numValue;
+        } else if (rv.value) {
+          const parsed = extractValueAndUnit(String(rv.value));
+          if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
+            num = parsed.num;
+          }
+        }
+        if (num !== null && num > max) max = num;
+      }
+    }
+
+    // Quelle 2: clause.keyValues (Strings) — Fallback für Fälle wo _rawValues dünn ist
+    if (Array.isArray(map?.clauses)) {
+      for (const clause of map.clauses) {
+        const kv = clause?.keyValues;
+        if (!kv || typeof kv !== 'object') continue;
+        for (const value of Object.values(kv)) {
+          if (typeof value !== 'string' || !value) continue;
+          const parsed = extractValueAndUnit(value);
+          if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
+            if (parsed.num > max) max = parsed.num;
+          }
         }
       }
-      if (num !== null && num > max) max = num;
     }
+
     return max;
   };
 
-  const max1 = extractMaxEur(map1?._rawValues);
-  const max2 = extractMaxEur(map2?._rawValues);
+  const max1 = extractMaxEurFromMap(map1);
+  const max2 = extractMaxEurFromMap(map2);
+
+  console.log(`📏 [NumCompat] maxEUR: Doc1=${max1.toFixed(0)}, Doc2=${max2.toFixed(0)}`);
 
   // Nur prüfen wenn beide Dokumente relevante Beträge haben (≥ 10.000 EUR)
   if (max1 < 10000 || max2 < 10000) return null;
