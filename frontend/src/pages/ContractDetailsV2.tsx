@@ -49,6 +49,7 @@ import {
   CalendarPlus
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
+import { fixUtf8Display } from "../utils/textUtils";
 import ContractEditModal from "../components/ContractEditModal";
 import SmartContractInfo from "../components/SmartContractInfo";
 import ContractShareModal from "../components/ContractShareModal";
@@ -341,7 +342,16 @@ export default function ContractDetailsV2() {
         }
 
         const data = await res.json();
-        setContract(data);
+        // UTF-8 Mojibake an der Datenquelle fixen — ein Spot, alle Display-Stellen
+        // (Breadcrumb, Titel, Helmet, PDF-Export, Filename, Child-Components) werden
+        // automatisch mit der korrigierten Version versorgt. fixUtf8Display hat
+        // early-return bei sauberen Strings, keine Auswirkung auf Nicht-Mojibake-Werte.
+        setContract({
+          ...data,
+          name: fixUtf8Display(data.name || ''),
+          anbieter: data.anbieter ? fixUtf8Display(data.anbieter) : data.anbieter,
+          notes: data.notes ? fixUtf8Display(data.notes) : data.notes,
+        });
       } catch (error) {
         console.error("Fehler beim Laden:", error);
         toast.error("Fehler beim Laden des Vertrags");
