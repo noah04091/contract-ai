@@ -16,6 +16,10 @@ const NOISE_KEY_PATTERNS = [
   /^TD_[A-Z0-9_]+/i,              // "TD_K9001n_RIFE_SCB_Mob1 von 6Stand"
   /^Beratungsprotokoll_/i,         // "Beratungsprotokoll_Mob_202202041 von 4Stand"
   /\d+ von \d+\s*Stand$/i,         // Seiten-Metadaten Endung
+  /^Seite\s+\d+\s+von\s+\d+/i,     // "Seite 3 von 12"
+  /^Stand\s*[:\s]\s*\d/i,          // "Stand: 01/2024", "Stand 12.2023"
+  /☐|□|▢|✓|✗|☑/,                  // Checkbox-/Formularzeichen in Keys
+  /^\[?\s*\]?$/,                   // Leere Klammern/Felder "[ ]", "[]"
 ];
 
 /**

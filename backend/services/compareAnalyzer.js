@@ -6071,7 +6071,8 @@ HARTE REGELN (Verstöße werden vom Trust-Guard erkannt und die Section wird ver
 3. Erklärungen dürfen NUR Zahlen nennen die auch in doc1Value/doc2Value/doc1Quote/doc2Quote stehen
 4. Wenn ein Thema strukturell nicht in einem Dokument vorkommt (z.B. Kündigungsfrist in einer Rechnung): diese Section NICHT erstellen
 5. Wenn doc1Value und doc2Value IDENTISCH sind: diese Section NICHT erstellen — das ist kein Unterschied
-6. Deutsche Sprache
+6. KONSISTENZ zwischen difference, explanation, recommendation und recommendationTarget: Alle Felder müssen innerhalb einer Section dasselbe Dokument als besser/schlechter bezeichnen. Wenn difference="höher in Dokument 2" dann darf explanation nicht schreiben "Dokument 1 ist teurer". Wenn recommendationTarget=1 gesetzt ist, muss explanation/recommendation Dokument 1 als besser/vorteilhafter beschreiben.
+7. Deutsche Sprache
 
 OUTPUT-SCHEMA (strict JSON):
 {
@@ -6241,13 +6242,23 @@ function remapSwappedHolisticOutput(raw) {
   const tmp3 = raw.contract1Strengths; raw.contract1Strengths = raw.contract2Strengths; raw.contract2Strengths = tmp3;
   const tmp4 = raw.contract1Weaknesses; raw.contract1Weaknesses = raw.contract2Weaknesses; raw.contract2Weaknesses = tmp4;
 
-  // Freitext-Referenzen "Dokument 1"↔"Dokument 2" in Reasoning/Summary tauschen
+  // Freitext-Referenzen "[Label] 1"↔"[Label] 2" in Reasoning/Summary tauschen.
+  // GPT verwendet je nach docConfig.label unterschiedliche Bezeichner (siehe Zeile 5465).
+  // Alle geläufigen Labels berücksichtigen, damit bei Swap keine falschen Referenzen stehen bleiben.
+  const DOC_REF_LABELS = ['Dokument', 'Document', 'Vertrag', 'Contract', 'Rechnung', 'Invoice', 'AGB', 'Angebot'];
   const swapDocRefs = (text) => {
     if (typeof text !== 'string') return text;
-    // Placeholder-basierter Swap um Doppeltausch zu vermeiden
-    return text
-      .replace(/Dokument 1/g, '§§DOC2§§').replace(/Dokument 2/g, 'Dokument 1').replace(/§§DOC2§§/g, 'Dokument 2')
-      .replace(/Document 1/g, '§§DOC2§§').replace(/Document 2/g, 'Document 1').replace(/§§DOC2§§/g, 'Document 2');
+    let result = text;
+    for (const label of DOC_REF_LABELS) {
+      // Word-Boundary verhindert Treffer in "Dokumenten", "Vertragspartei" etc.
+      // Placeholder-basierter Swap um Doppeltausch zu vermeiden.
+      const placeholder = `§§${label.toUpperCase()}2§§`;
+      const re1 = new RegExp(`\\b${label} 1\\b`, 'g');
+      const re2 = new RegExp(`\\b${label} 2\\b`, 'g');
+      const reP = new RegExp(placeholder, 'g');
+      result = result.replace(re1, placeholder).replace(re2, `${label} 1`).replace(reP, `${label} 2`);
+    }
+    return result;
   };
 
   if (raw.overallRecommendation) {
@@ -6256,17 +6267,19 @@ function remapSwappedHolisticOutput(raw) {
   if (raw.summary) {
     if (typeof raw.summary === 'string') {
       raw.summary = swapDocRefs(raw.summary);
-    } else if (raw.summary.tldr || raw.summary.detailedSummary) {
+    } else if (raw.summary.tldr || raw.summary.detailedSummary || raw.summary.verdict) {
       raw.summary.tldr = swapDocRefs(raw.summary.tldr);
       raw.summary.detailedSummary = swapDocRefs(raw.summary.detailedSummary);
+      raw.summary.verdict = swapDocRefs(raw.summary.verdict);
     }
   }
 
-  // Section-Texte (explanation, recommendation)
+  // Section-Texte (explanation, recommendation, difference, financialImpact)
   if (Array.isArray(raw.sections)) {
     for (const s of raw.sections) {
       s.explanation = swapDocRefs(s.explanation);
       s.recommendation = swapDocRefs(s.recommendation);
+      s.difference = swapDocRefs(s.difference);
       s.financialImpact = swapDocRefs(s.financialImpact);
     }
   }
@@ -6472,6 +6485,49 @@ function validateHolisticOutput(raw, text1, text2, intent) {
 }
 
 /**
+ * Prüft Layer-0 _rawValues auf stark abweichende EUR-Beträge (Faktor ≥ 3x).
+ * Hintergrund: Zwei Darlehen über 500k und 2.95M EUR sind rechnerisch vergleichbar,
+ * aber absolute Zahlen (Zinssatz × Betrag) verzerren die Aussagekraft von Differenzen.
+ * Rückgabe: { factor, max1, max2 } wenn signifikante Diskrepanz, sonst null.
+ * Nur informativ — erweitert compatibility.userWarning, ändert keine Scores.
+ */
+function evaluateNumericCompatibility(map1, map2) {
+  const extractMaxEur = (rawValues) => {
+    if (!Array.isArray(rawValues)) return 0;
+    let max = 0;
+    for (const rv of rawValues) {
+      if (isBlankRawValue(rv)) continue;
+      const parsed = extractValueAndUnit(String(rv.value || ''));
+      if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
+        if (parsed.num > max) max = parsed.num;
+      }
+    }
+    return max;
+  };
+
+  const max1 = extractMaxEur(map1?._rawValues);
+  const max2 = extractMaxEur(map2?._rawValues);
+
+  // Nur prüfen wenn beide Dokumente relevante Beträge haben (≥ 10.000 EUR)
+  if (max1 < 10000 || max2 < 10000) return null;
+
+  const factor = Math.max(max1, max2) / Math.min(max1, max2);
+  if (factor < 3) return null;
+
+  const formatEur = (n) => {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Mio. EUR`;
+    if (n >= 1000) return `${Math.round(n / 1000).toLocaleString('de-DE')}.000 EUR`;
+    return `${Math.round(n).toLocaleString('de-DE')} EUR`;
+  };
+
+  return {
+    factor: Math.round(factor * 10) / 10,
+    max1: formatEur(max1),
+    max2: formatEur(max2),
+  };
+}
+
+/**
  * Adapter: Holistic Sections → Legacy-Schema (differences, risks, recommendations).
  * Nötig für (a) Score-Berechnung die auf mergedDiffs arbeitet, (b) alte Frontend-Tabs.
  */
@@ -6610,6 +6666,17 @@ async function runCompareHolisticPipeline(text1, text2, perspective, comparisonM
     // Scores: datenbasiert (formelbasiert wie bisher)
     const scores = calculateScoresFromDiffs(differences, map1, map2, docConfig);
     console.log(`📊 Holistic Scores: V1=${scores.contract1.overall}, V2=${scores.contract2.overall}`);
+
+    // Numerische Kompatibilitäts-Prüfung: Hinweis bei stark abweichenden Beträgen.
+    // Rein informativ — ergänzt nur compatibility.userWarning, ändert keine Scores/Sections.
+    const numCompat = evaluateNumericCompatibility(map1, map2);
+    if (numCompat) {
+      const hint = `Die Dokumente enthalten stark unterschiedliche Beträge (Faktor ${numCompat.factor}× — ${numCompat.max1} vs. ${numCompat.max2}). Prozentuale Unterschiede können absolute Größenordnungen nicht voll abbilden.`;
+      validated.compatibility.userWarning = validated.compatibility.userWarning
+        ? `${validated.compatibility.userWarning} ${hint}`
+        : hint;
+      console.log(`📏 Numerische Kompatibilität: Faktor ${numCompat.factor}× (${numCompat.max1} vs. ${numCompat.max2}) — Hinweis ergänzt.`);
+    }
 
     // Benchmark (bleibt, nur wenn docConfig es erlaubt)
     progress('benchmark', 90, 'Marktvergleich wird erstellt...');
