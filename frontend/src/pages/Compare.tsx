@@ -475,6 +475,57 @@ export default function EnhancedCompare() {
     }
   };
 
+  // 🛟 Pollt die Historie nach einem kürzlich gespeicherten Ergebnis (Stream-Disconnect-Fallback).
+  // Wartet max. `maxAttempts × 3s` und sucht nach dem neuesten Eintrag, der zu den übergebenen Dateinamen passt.
+  const pollHistoryForResult = async (
+    file1Name: string | null,
+    file2Name: string | null,
+    maxAttempts = 8,
+  ): Promise<{
+    result: ComparisonResult;
+    file1Name: string;
+    file2Name: string;
+    file1S3Key: string | null;
+    file2S3Key: string | null;
+  } | null> => {
+    const startedAt = Date.now() - 5 * 60 * 1000; // 5 Min Toleranz
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const res = await fetch('/api/compare/history', { credentials: 'include' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        interface BackendHistoryItem {
+          id: string;
+          timestamp: string;
+          file1Name: string;
+          file2Name: string;
+          file1S3Key?: string | null;
+          file2S3Key?: string | null;
+          result: ComparisonResult | null;
+        }
+        const items: BackendHistoryItem[] = data.history || [];
+        const match = items
+          .filter((h) => h.result !== null)
+          .filter((h) => new Date(h.timestamp).getTime() >= startedAt)
+          .filter((h) => !file1Name || !file2Name || (h.file1Name === file1Name && h.file2Name === file2Name))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+        if (match && match.result) {
+          return {
+            result: match.result,
+            file1Name: match.file1Name,
+            file2Name: match.file2Name,
+            file1S3Key: match.file1S3Key ?? null,
+            file2S3Key: match.file2S3Key ?? null,
+          };
+        }
+      } catch (pollErr) {
+        console.warn('History-Poll-Versuch fehlgeschlagen:', pollErr);
+      }
+    }
+    return null;
+  };
+
   // Load history when premium status is confirmed
   useEffect(() => {
     if (isPremium === true) {
@@ -613,6 +664,9 @@ export default function EnhancedCompare() {
       }
 
       let buffer = '';
+      let resultReceived = false;
+      const requestFile1Name = file1?.name || null;
+      const requestFile2Name = file2?.name || null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -634,12 +688,13 @@ export default function EnhancedCompare() {
                   message: eventData.message
                 });
               } else if (eventData.type === 'result') {
+                resultReceived = true;
                 if (streamTimeout !== null) clearTimeout(streamTimeout);
                 setResult(eventData.data);
                 // Cache initiales Ergebnis unter aktueller Perspektive
                 setPerspectiveCache({ [perspective]: eventData.data });
-                setFile1Name(file1?.name || null);
-                setFile2Name(file2?.name || null);
+                setFile1Name(requestFile1Name);
+                setFile2Name(requestFile2Name);
                 setProgress(null);
                 // Backend automatically saves to history - reload to get latest
                 loadHistoryFromBackend();
@@ -661,6 +716,39 @@ export default function EnhancedCompare() {
               console.warn("SSE parse error:", parseErr, line);
             }
           }
+        }
+      }
+
+      // 🛟 Stream endete ohne 'result' Event — Proxy-Disconnect während langer OCR/GPT-Phasen.
+      // Backend läuft idR zu Ende und speichert das Ergebnis in der Historie.
+      // Wir pollen kurz die Historie und übernehmen den neuesten passenden Eintrag automatisch.
+      if (!resultReceived) {
+        if (streamTimeout !== null) clearTimeout(streamTimeout);
+        console.warn('🛟 SSE-Stream endete ohne result — starte History-Fallback');
+        setProgress({ step: 'reconnecting', progress: 95, message: 'Verbindung unterbrochen — hole Ergebnis aus der Historie...' });
+
+        const recovered = await pollHistoryForResult(requestFile1Name, requestFile2Name, 8);
+        if (recovered) {
+          setResult(recovered.result);
+          setPerspectiveCache({ [perspective]: recovered.result });
+          setFile1Name(recovered.file1Name || requestFile1Name);
+          setFile2Name(recovered.file2Name || requestFile2Name);
+          setFile1S3Key(recovered.file1S3Key || null);
+          setFile2S3Key(recovered.file2S3Key || null);
+          setProgress(null);
+          loadHistoryFromBackend();
+          setNotification({
+            message: 'Verbindung war kurz unterbrochen — Ergebnis aus Historie geladen.',
+            type: 'success',
+          });
+          setTimeout(() => setNotification(null), 5000);
+        } else {
+          setProgress(null);
+          setNotification({
+            message: 'Verbindung unterbrochen. Ergebnis ist evtl. in der Historie — bitte dort prüfen.',
+            type: 'error',
+          });
+          loadHistoryFromBackend();
         }
       }
     } catch (err) {

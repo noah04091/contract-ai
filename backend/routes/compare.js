@@ -644,7 +644,24 @@ router.post("/", verifyToken, upload.fields([
 
   // 🔌 Client-Disconnect-Handling: Flag setzen + Counter aufräumen
   let clientDisconnected = false;
+
+  // 💓 SSE-Heartbeat alle 15s — verhindert, dass Proxies (Cloudflare/Render)
+  // die Verbindung bei langen GPT-Calls (OCR + Holistic Pass) wegen Idle-Timeout killen.
+  // SSE-Kommentare (": ..."\n\n) werden vom Browser-Parser ignoriert.
+  let heartbeatInterval = null;
+  if (wantsSSE) {
+    heartbeatInterval = setInterval(() => {
+      if (!res.destroyed && !clientDisconnected && !res.writableEnded) {
+        try { res.write(': heartbeat\n\n'); } catch { /* ignore write errors */ }
+      }
+    }, 15000);
+  }
+
   res.on('close', () => {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
     if (!res.writableFinished) {
       clientDisconnected = true;
       console.log('🔌 Client hat Verbindung getrennt (Compare)');
@@ -1090,6 +1107,22 @@ router.post("/re-analyze", verifyToken, async (req, res) => {
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
   }
+
+  // 💓 SSE-Heartbeat (siehe POST /): hält Proxy-Verbindung offen während GPT-Calls
+  let heartbeatInterval = null;
+  if (wantsSSE) {
+    heartbeatInterval = setInterval(() => {
+      if (!res.destroyed && !res.writableEnded) {
+        try { res.write(': heartbeat\n\n'); } catch { /* ignore */ }
+      }
+    }, 15000);
+  }
+  res.on('close', () => {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+  });
 
   try {
     await ensureDb();
