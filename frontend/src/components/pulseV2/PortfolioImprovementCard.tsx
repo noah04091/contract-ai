@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { cleanContractName } from '../../utils/contractName';
 import styles from '../../styles/PulseV2.module.css';
 
 /** Format a relative "vor X Tagen" label from an ISO date */
@@ -170,15 +171,14 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           </span>
         </div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
-            {summary.avgScorePrevious} &#8594; {summary.avgScoreNow}
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <span>{summary.avgScorePrevious} &#8594; {summary.avgScoreNow}</span>
             <span style={{
-              marginLeft: 8,
               fontSize: 13,
               fontWeight: 700,
               color: accentColor,
             }}>
-              {isPositive ? '+' : ''}{summary.delta} Punkte
+              ({isPositive ? '+' : ''}{summary.delta} Punkte)
             </span>
           </div>
           <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
@@ -256,7 +256,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           {summary.topImprovement && (
             <HighlightChip
               label="Beste Verbesserung"
-              name={summary.topImprovement.name}
+              name={cleanContractName(summary.topImprovement.name)}
               delta={summary.topImprovement.delta}
               positive
               onClick={onNavigate ? () => onNavigate(summary.topImprovement!.contractId) : undefined}
@@ -265,7 +265,7 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
           {summary.topDecline && (
             <HighlightChip
               label="Gr&ouml;&szlig;ter R&uuml;ckgang"
-              name={summary.topDecline.name}
+              name={cleanContractName(summary.topDecline.name)}
               delta={summary.topDecline.delta}
               positive={false}
               onClick={onNavigate ? () => onNavigate(summary.topDecline!.contractId) : undefined}
@@ -318,7 +318,7 @@ const ContractList: React.FC<{
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
             }}>
-              {c.name}
+              {cleanContractName(c.name)}
             </div>
             {lastAnalysis && (
               <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
@@ -405,7 +405,7 @@ const HighlightChip: React.FC<{
         fontWeight: 700,
         color: positive ? '#15803d' : '#dc2626',
       }}>
-        {delta > 0 ? '+' : ''}{delta}
+        &#183; {delta > 0 ? '+' : ''}{delta}
       </span>
     </div>
   </div>
