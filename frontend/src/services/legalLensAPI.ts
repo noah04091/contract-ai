@@ -955,6 +955,7 @@ export function parseContractStreaming(
               try {
                 const data = JSON.parse(currentData);
 
+                console.log(`[Legal Lens] 📡 SSE event: ${currentEvent}`, data);
                 switch (currentEvent) {
                   case 'status':
                     lastProgress = data.progress || lastProgress;

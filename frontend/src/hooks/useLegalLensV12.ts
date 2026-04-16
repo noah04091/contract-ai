@@ -341,6 +341,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
    * @param forceRefresh - Force Cache-Invalidierung (neu parsen)
    */
   const parseContract = useCallback(async (id: string, forceRefresh: boolean = false, skipGate: boolean = false) => {
+    console.log(`[Legal Lens] 🚀 parseContract(${id}, forceRefresh=${forceRefresh}, skipGate=${skipGate})`);
     // FIX: Race Condition - Abort any existing streaming FIRST
     if (streamingAbortRef.current) {
       streamingAbortRef.current();
@@ -381,6 +382,15 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
 
       // Stale-Check: Wenn inzwischen ein neuer Parse gestartet wurde, verwerfen
       if (parseRequestIdRef.current !== requestId) return;
+
+      console.log(`[Legal Lens] 📨 /parse response:`, {
+        success: response.success,
+        useStreaming: response.useStreaming,
+        unsuitable: response.unsuitable,
+        hasDocumentGate: !!response.documentGate,
+        clausesCount: response.clauses?.length ?? 0,
+        noClausesDetected: (response as { noClausesDetected?: boolean }).noClausesDetected
+      });
 
       if (response.success) {
         // 🚪 DOCUMENT GATE: Cache-Hit mit unsuitable-Status → Stop-Screen
