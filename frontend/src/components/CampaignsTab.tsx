@@ -40,6 +40,8 @@ interface Campaign {
   recipientCount: number;
   status: 'draft' | 'queued' | 'sending' | 'completed' | 'cancelled' | 'failed';
   scheduledFor: string | null;
+  trackOpens?: boolean;
+  trackClicks?: boolean;
   createdBy: string | null;
   createdByEmail: string | null;
   createdAt: string;
@@ -53,6 +55,10 @@ interface Campaign {
     failed: number;
     skipped: number;
     pending?: number;
+    opens?: number;
+    uniqueOpens?: number;
+    clicks?: number;
+    uniqueClicks?: number;
   };
 }
 
@@ -84,6 +90,8 @@ interface CampaignForm {
   body: string;
   ctaText: string;
   ctaUrl: string;
+  trackOpens: boolean;
+  trackClicks: boolean;
   filter: {
     usePlan: boolean;
     plan: string;
@@ -195,6 +203,8 @@ function defaultForm(): CampaignForm {
     body: '',
     ctaText: '',
     ctaUrl: '',
+    trackOpens: true,
+    trackClicks: true,
     filter: {
       usePlan: false,
       plan: 'all',
@@ -677,6 +687,8 @@ function ComposerModal({
           body: form.body,
           ctaText: form.ctaText || null,
           ctaUrl: form.ctaUrl || null,
+          trackOpens: form.trackOpens,
+          trackClicks: form.trackClicks,
           segmentFilter
         })
       });
@@ -1155,6 +1167,32 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
             CTA-Button URL
             <input type="url" value={form.ctaUrl} onChange={(e) => setForm({ ...form, ctaUrl: e.target.value })} placeholder="https://..." style={inputStyle} />
           </label>
+        </div>
+
+        {/* Tracking-Optionen */}
+        <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '0.5rem', color: '#334155' }}>
+            📊 Tracking
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={form.trackOpens}
+              onChange={(e) => setForm({ ...form, trackOpens: e.target.checked })}
+            />
+            Öffnungen tracken (1x1-Pixel — Apple/Gmail-Proxies verfälschen die Zahl)
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', cursor: 'pointer', marginTop: '0.25rem' }}>
+            <input
+              type="checkbox"
+              checked={form.trackClicks}
+              onChange={(e) => setForm({ ...form, trackClicks: e.target.checked })}
+            />
+            Klicks tracken (Links werden über Redirect umgeleitet — ab Commit 3D aktiv)
+          </label>
+          <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
+            Hinweis zum DSGVO-Footer wird automatisch jeder Mail angehängt.
+          </div>
         </div>
       </div>
 
@@ -1713,10 +1751,37 @@ export default function CampaignsTab() {
                 {detailsData.cancelledAt && <p><strong>Abgebrochen:</strong> {formatDate(detailsData.cancelledAt)}</p>}
                 {detailsData.stats && (
                   <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '6px' }}>
-                    <div><strong>Stats:</strong></div>
+                    <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Versand</div>
                     <div>Gesendet: {detailsData.stats.sent}</div>
                     <div>Fehler: {detailsData.stats.failed}</div>
                     {detailsData.stats.pending !== undefined && <div>Offen: {detailsData.stats.pending}</div>}
+
+                    {detailsData.trackOpens !== false && (detailsData.stats.sent > 0) && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>📊 Öffnungen</div>
+                        <div>
+                          Unique: <strong>{detailsData.stats.uniqueOpens ?? 0}</strong> von {detailsData.stats.sent}
+                          {detailsData.stats.sent > 0 && (
+                            <span style={{ color: '#3b82f6', marginLeft: '0.5rem' }}>
+                              ({Math.round(((detailsData.stats.uniqueOpens ?? 0) / detailsData.stats.sent) * 100)}%)
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                          Gesamt-Öffnungen: {detailsData.stats.opens ?? 0}
+                        </div>
+                      </div>
+                    )}
+
+                    {detailsData.trackClicks !== false && (detailsData.stats.clicks ?? 0) > 0 && (
+                      <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
+                        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>🔗 Klicks</div>
+                        <div>Unique-Klicker: <strong>{detailsData.stats.uniqueClicks ?? 0}</strong></div>
+                        <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                          Gesamt-Klicks: {detailsData.stats.clicks ?? 0}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

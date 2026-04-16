@@ -9,6 +9,9 @@ const { generateEmailTemplate } = require('../utils/emailTemplate');
 const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
 const { logSentEmail } = require('../utils/emailLogger');
 const sendEmail = require('./mailer');
+const { generateOpenToken } = require('./campaignTrackingService');
+
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.contract-ai.de';
 
 // Konfiguration
 const MAX_RECIPIENTS_PER_CAMPAIGN = 5000;
@@ -190,12 +193,29 @@ async function previewRecipients(filter = {}) {
 // ========================================================================
 // EMAIL-HTML generieren (nutzt bestehendes Template-System)
 // ========================================================================
-function buildCampaignHtml(campaign, recipientEmail) {
-  const unsubscribeUrl = generateUnsubscribeUrl(recipientEmail, 'marketing');
+// DSGVO-Hinweis der in jede Campaign-Mail unten kommt
+const DSGVO_NOTICE = `
+<div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+  Diese Email enthält ggf. Tracking-Elemente (Öffnungs- und Klick-Messung) zur Analyse der Newsletter-Performance.
+  Du kannst diese Emails jederzeit oben über den Link abbestellen.
+</div>
+`;
 
-  const bodyHtml = `
-    ${campaign.body || ''}
-  `;
+function buildCampaignHtml(campaign, recipientEmail, recipientId) {
+  const unsubscribeUrl = generateUnsubscribeUrl(recipientEmail, 'marketing');
+  const trackOpens = campaign.trackOpens !== false; // default: an
+
+  let bodyHtml = campaign.body || '';
+
+  // DSGVO-Hinweis anhängen
+  bodyHtml += DSGVO_NOTICE;
+
+  // Open-Tracking-Pixel injizieren
+  if (trackOpens && recipientId) {
+    const openToken = generateOpenToken(campaign._id || 'unknown', recipientId);
+    const pixelUrl = `${API_BASE_URL}/api/track/open/${openToken}`;
+    bodyHtml += `<img src="${pixelUrl}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />`;
+  }
 
   const templateData = {
     title: campaign.title || campaign.subject || '',
@@ -222,7 +242,9 @@ async function sendTestCampaign(campaignData, testEmail) {
     throw new Error('Campaign-Daten unvollständig (subject fehlt)');
   }
 
-  const html = buildCampaignHtml(campaignData, testEmail);
+  // Test-Mail: kein Tracking (kein recipientId vorhanden, und Tests sollen Stats nicht verfälschen)
+  const testCampaignData = { ...campaignData, trackOpens: false };
+  const html = buildCampaignHtml(testCampaignData, testEmail, null);
   const subject = `[TEST] ${campaignData.subject}`;
 
   const unsubscribeUrl = generateUnsubscribeUrl(testEmail, 'marketing');
@@ -301,6 +323,8 @@ async function createCampaign(data, adminUser) {
     recipientCount: eligibleUsers.length,
     status: 'draft',
     scheduledFor: null,
+    trackOpens: data.trackOpens !== false, // default AN
+    trackClicks: data.trackClicks !== false, // default AN (für Commit 3D)
     createdBy: adminUser ? String(adminUser.userId) : null,
     createdByEmail: adminUser ? adminUser.email : null,
     createdAt: new Date(),
@@ -312,7 +336,11 @@ async function createCampaign(data, adminUser) {
       total: eligibleUsers.length,
       sent: 0,
       failed: 0,
-      skipped: 0
+      skipped: 0,
+      opens: 0,
+      uniqueOpens: 0,
+      clicks: 0,
+      uniqueClicks: 0
     }
   };
 
@@ -451,7 +479,7 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
     }
 
     try {
-      const html = buildCampaignHtml(campaign, recipient.email);
+      const html = buildCampaignHtml(campaign, recipient.email, recipient._id);
       const unsubscribeUrl = generateUnsubscribeUrl(recipient.email, 'marketing');
 
       await sendEmail(

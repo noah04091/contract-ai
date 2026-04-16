@@ -468,6 +468,9 @@ const connectDB = async () => {
     try {
       const emailRoutes = require("./routes/email");
       app.use("/api/email", emailRoutes);
+
+      // 📊 Campaign-Tracking (öffentliche Endpoints — Auth via signiertem Token)
+      app.use("/api/track", require("./routes/campaignTracking"));
       console.log("📧 E-Mail-Management-Routen geladen unter /api/email");
     } catch (err) {
       console.error("❌ Fehler beim Laden der E-Mail-Routen:", err);
