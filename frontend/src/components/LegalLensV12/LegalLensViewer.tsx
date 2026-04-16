@@ -124,8 +124,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [showScanHint, setShowScanHint] = useState<boolean>(false);
   // Proaktive Erkennung: Wird in onDocumentLoadSuccess anhand des extrahierten Textes gesetzt
   const [isScannedPdf, setIsScannedPdf] = useState<boolean>(false);
-  // Verhindert mehrfaches Anzeigen/Autoswitch pro PDF
-  const scanHintShownRef = useRef<boolean>(false);
 
   // Focus Mode — dims everything except selected clause
   const [focusMode, setFocusMode] = useState<boolean>(false);
@@ -804,7 +802,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     setNumPages(numPages);
     setPdfIndexReady(false); // Reset während Index erstellt wird
     setIsScannedPdf(false); // Reset Scan-Detection für neues Dokument
-    scanHintShownRef.current = false;
 
     // ✅ Text aller Seiten extrahieren für Auto-Scroll
     if (pdfUrl) {
@@ -1093,20 +1090,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [pdfIndexReady, selectedClause, findPageForClause, scrollToPdfPage]);
 
   // ========== EFFECT: Proaktive Scan-Erkennung ==========
-  // Sobald wir wissen, dass das PDF gescannt ist und wir in der PDF-Ansicht sind,
-  // zeigen wir EINMAL den Hinweis und wechseln automatisch zur Textansicht.
+  // Sobald das PDF als gescannt erkannt ist, zeigen wir einen PERSISTENTEN Hinweis.
+  // Kein Auto-Switch — User entscheidet selbst per Button.
   useEffect(() => {
-    if (viewMode !== 'pdf' || !isScannedPdf || !pdfIndexReady) return;
-    if (scanHintShownRef.current) return;
-
-    scanHintShownRef.current = true;
-    setShowScanHint(true);
-    const timer = setTimeout(() => {
-      setViewMode('text');
+    if (viewMode !== 'pdf' || !isScannedPdf || !pdfIndexReady) {
       setShowScanHint(false);
-    }, 4000);
-
-    return () => clearTimeout(timer);
+      return;
+    }
+    setShowScanHint(true);
   }, [viewMode, isScannedPdf, pdfIndexReady]);
 
   // ========== EFFECT 4: Highlighting v7 - Wort-basiertes Matching ==========
@@ -1278,15 +1269,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const textContent = target.closest('.react-pdf__Page__textContent');
 
     if (!textContent) {
-      // Fallback: Wenn Klick außerhalb des Text-Layers UND wir wissen es ist gescannt → Hinweis
-      if (isScannedPdf && !scanHintShownRef.current) {
-        scanHintShownRef.current = true;
-        setShowScanHint(true);
-        setTimeout(() => {
-          setViewMode('text');
-          setShowScanHint(false);
-        }, 4000);
-      }
+      // Klick außerhalb Text-Layer — Hinweis ist bereits persistent sichtbar bei Scan-PDF
       return;
     }
 
@@ -2331,44 +2314,68 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 </div>
               )}
 
-              {/* Gescanntes-PDF-Hinweis: Kein Text-Layer erkannt */}
+              {/* Gescanntes-PDF-Hinweis: Persistenter Banner oben, User entscheidet */}
               {showScanHint && (
                 <div style={{
                   position: 'absolute',
-                  bottom: '1rem',
+                  top: '1rem',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'rgba(59, 130, 246, 0.95)',
-                  color: 'white',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '8px',
+                  background: 'white',
+                  color: '#1e293b',
+                  padding: '0.875rem 1.25rem',
+                  borderRadius: '10px',
                   fontSize: '0.875rem',
-                  fontWeight: 500,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                  border: '1px solid #e2e8f0',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.75rem',
                   zIndex: 10,
-                  maxWidth: '90%',
-                  textAlign: 'center'
+                  maxWidth: '560px',
+                  width: 'calc(100% - 2rem)'
                 }}>
-                  <span style={{ fontSize: '1.1rem' }}>📄</span>
-                  Gescanntes PDF — Textauswahl nicht verfügbar. Wechsel zur Textansicht...
+                  <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>📄</span>
+                  <div style={{ flex: 1, lineHeight: 1.4 }}>
+                    <div style={{ fontWeight: 600, marginBottom: '0.125rem' }}>
+                      Gescanntes PDF erkannt
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.8125rem' }}>
+                      Textauswahl direkt im PDF ist hier nicht möglich. Die Textansicht zeigt den OCR-erkannten Inhalt mit allen Analyse-Funktionen.
+                    </div>
+                  </div>
                   <button
-                    onClick={() => { setViewMode('text'); setShowScanHint(false); }}
+                    onClick={() => setViewMode('text')}
                     style={{
-                      background: 'white',
-                      color: '#3b82f6',
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
                       border: 'none',
-                      borderRadius: '4px',
-                      padding: '0.25rem 0.5rem',
-                      fontSize: '0.75rem',
+                      borderRadius: '8px',
+                      padding: '0.5rem 0.875rem',
+                      fontSize: '0.8125rem',
                       fontWeight: 600,
                       cursor: 'pointer',
-                      whiteSpace: 'nowrap'
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
                     }}
                   >
-                    Jetzt wechseln
+                    Zur Textansicht
+                  </button>
+                  <button
+                    onClick={() => setShowScanHint(false)}
+                    aria-label="Hinweis schließen"
+                    style={{
+                      background: 'transparent',
+                      color: '#94a3b8',
+                      border: 'none',
+                      padding: '0.25rem',
+                      fontSize: '1.25rem',
+                      cursor: 'pointer',
+                      lineHeight: 1,
+                      flexShrink: 0
+                    }}
+                  >
+                    ×
                   </button>
                 </div>
               )}
