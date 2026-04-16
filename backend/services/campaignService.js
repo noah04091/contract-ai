@@ -66,6 +66,13 @@ function buildRecipientQuery(filter = {}) {
     return query;
   }
 
+  // Emails: Exakte String-Matches (Emails kommen direkt aus der DB-Suche, Case stimmt)
+  if (filter.emails && Array.isArray(filter.emails) && filter.emails.length > 0) {
+    const emails = filter.emails.filter(Boolean).slice(0, 100);
+    query.email = { $in: emails };
+    return query;
+  }
+
   if (filter.plan) {
     if (Array.isArray(filter.plan)) {
       query.subscriptionPlan = { $in: filter.plan };

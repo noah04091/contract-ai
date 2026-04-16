@@ -24,6 +24,12 @@ function isNoiseKeyValue(key: string, value: string): boolean {
   if (/^DAC$/i.test(key) && /^\d{10,}$/.test(value.trim())) return true;
   // "Posteingang: 10022025" (8-stelliger Datum-Code)
   if (/^Posteingang$/i.test(key) && /^\d{8}$/.test(value.trim())) return true;
+  // Email-Adresse als Key (z.B. "kontakt@xyz.de") — Formularfeld, nie ein legitimer Label-Key
+  if (/@/.test(key)) return true;
+  // Überlange Keys (>80 Zeichen) — echte Labels sind kurze Begriffe, >80 ist OCR-Artefakt
+  if (key.length > 80) return true;
+  // Nummerierungs-Keys (z.B. "1. 1. Art des Darlehens") — Paragraphen-Header, kein Label
+  if (/^\d+\.\s*\d+\./.test(key.trim())) return true;
   return false;
 }
 

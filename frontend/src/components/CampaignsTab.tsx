@@ -56,6 +56,7 @@ interface Campaign {
 
 interface SegmentFilter {
   userIds?: string[];
+  emails?: string[];
   plan?: string | string[];
   subscriptionActive?: boolean;
   minAnalysisCount?: number;
@@ -90,10 +91,20 @@ interface CampaignForm {
     useDateRange: boolean;
     createdAfter: string;
     createdBefore: string;
-    useUserIds: boolean;
-    userIdsText: string;
+    useEmails: boolean;
+    selectedEmails: string[];
   };
 }
+
+interface UserSearchResult {
+  _id: string;
+  email: string;
+  subscriptionPlan: string | null;
+  verified: boolean;
+  emailOptOut: boolean;
+}
+
+const MAX_SELECTED_EMAILS = 100;
 
 // ============================================================================
 // Helpers
@@ -150,12 +161,9 @@ function statusBadge(status: Campaign['status']) {
 function buildSegmentFilter(form: CampaignForm['filter']): SegmentFilter {
   const filter: SegmentFilter = {};
 
-  if (form.useUserIds && form.userIdsText.trim()) {
-    filter.userIds = form.userIdsText
-      .split(/[\s,\n]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return filter; // userIds überschreibt alles
+  if (form.useEmails && form.selectedEmails.length > 0) {
+    filter.emails = form.selectedEmails.slice(0, MAX_SELECTED_EMAILS);
+    return filter; // Email-Auswahl überschreibt alles
   }
 
   if (form.usePlan && form.plan !== 'all') filter.plan = form.plan;
@@ -186,10 +194,241 @@ function defaultForm(): CampaignForm {
       useDateRange: false,
       createdAfter: '',
       createdBefore: '',
-      useUserIds: false,
-      userIdsText: ''
+      useEmails: false,
+      selectedEmails: []
     }
   };
+}
+
+// ============================================================================
+// EmailPicker: Search + Select mit Chips
+// ============================================================================
+
+function EmailPicker({
+  value,
+  onChange,
+  disabled
+}: {
+  value: string[];
+  onChange: (emails: string[]) => void;
+  disabled?: boolean;
+}) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<UserSearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `${API_URL}/api/admin/users/search?q=${encodeURIComponent(query.trim())}&limit=20`,
+          { headers: authHeaders() }
+        );
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setResults(data.users || []);
+        } else {
+          setError(data.message || 'Suche fehlgeschlagen');
+        }
+      } catch (err) {
+        setError(errMsg(err));
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  function addEmail(email: string) {
+    if (value.includes(email)) return;
+    if (value.length >= MAX_SELECTED_EMAILS) {
+      setError(`Max ${MAX_SELECTED_EMAILS} Empfänger erreicht`);
+      return;
+    }
+    onChange([...value, email]);
+    setQuery('');
+    setResults([]);
+    setShowDropdown(false);
+  }
+
+  function removeEmail(email: string) {
+    onChange(value.filter((e) => e !== email));
+  }
+
+  return (
+    <div style={{ marginTop: '0.5rem' }}>
+      {/* Chips */}
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginBottom: '0.5rem' }}>
+          {value.map((email) => (
+            <span
+              key={email}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.5rem',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                color: '#1d4ed8',
+                maxWidth: '100%'
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {email}
+              </span>
+              {!disabled && (
+                <button
+                  onClick={() => removeEmail(email)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: '#1d4ed8'
+                  }}
+                  title="Entfernen"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search input */}
+      <div style={{ position: 'relative' }}>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+          disabled={disabled || value.length >= MAX_SELECTED_EMAILS}
+          placeholder={
+            value.length >= MAX_SELECTED_EMAILS
+              ? `Max ${MAX_SELECTED_EMAILS} erreicht`
+              : 'Email suchen (min. 2 Zeichen)...'
+          }
+          style={{
+            width: '100%',
+            padding: '0.5rem 0.75rem',
+            borderRadius: '4px',
+            border: '1px solid #cbd5e1',
+            fontSize: '0.875rem'
+          }}
+        />
+
+        {showDropdown && (results.length > 0 || loading || query.length >= 2) && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '2px',
+              background: '#fff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              maxHeight: '240px',
+              overflow: 'auto',
+              zIndex: 10
+            }}
+          >
+            {loading && (
+              <div style={{ padding: '0.5rem 0.75rem', color: '#64748b', fontSize: '0.75rem' }}>
+                Suche...
+              </div>
+            )}
+            {!loading && results.length === 0 && query.length >= 2 && (
+              <div style={{ padding: '0.5rem 0.75rem', color: '#94a3b8', fontSize: '0.75rem' }}>
+                Keine Treffer
+              </div>
+            )}
+            {results.map((u) => {
+              const already = value.includes(u.email);
+              return (
+                <button
+                  key={u._id}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addEmail(u.email)}
+                  disabled={already}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.5rem 0.75rem',
+                    background: already ? '#f1f5f9' : '#fff',
+                    border: 'none',
+                    borderBottom: '1px solid #f1f5f9',
+                    cursor: already ? 'default' : 'pointer',
+                    fontSize: '0.8125rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    opacity: already ? 0.6 : 1
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!already) (e.currentTarget as HTMLButtonElement).style.background = '#f8fafc';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!already) (e.currentTarget as HTMLButtonElement).style.background = '#fff';
+                  }}
+                >
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    {u.email}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#64748b', display: 'flex', gap: '0.25rem' }}>
+                    {u.subscriptionPlan && (
+                      <span style={{ padding: '0.1rem 0.4rem', background: '#f1f5f9', borderRadius: '3px' }}>
+                        {u.subscriptionPlan}
+                      </span>
+                    )}
+                    {!u.verified && (
+                      <span style={{ padding: '0.1rem 0.4rem', background: '#fef3c7', color: '#92400e', borderRadius: '3px' }}>
+                        unbest.
+                      </span>
+                    )}
+                    {u.emailOptOut && (
+                      <span style={{ padding: '0.1rem 0.4rem', background: '#fef2f2', color: '#991b1b', borderRadius: '3px' }}>
+                        opt-out
+                      </span>
+                    )}
+                    {already && <CheckCircle size={12} style={{ color: '#16a34a' }} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#dc2626' }}>{error}</div>
+      )}
+
+      <div style={{ marginTop: '0.25rem', fontSize: '0.7rem', color: '#64748b' }}>
+        {value.length}/{MAX_SELECTED_EMAILS} ausgewählt
+      </div>
+    </div>
+  );
 }
 
 // ============================================================================
@@ -620,39 +859,41 @@ function Step1Recipients({
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '1rem' }}>
-        {/* Individuelle User-IDs */}
+        {/* Individuelle Email-Auswahl */}
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
           <input
             type="checkbox"
-            checked={form.filter.useUserIds}
-            onChange={(e) => setForm({ ...form, filter: { ...form.filter, useUserIds: e.target.checked } })}
+            checked={form.filter.useEmails}
+            onChange={(e) => setForm({ ...form, filter: { ...form.filter, useEmails: e.target.checked } })}
             style={{ marginTop: '0.25rem' }}
           />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>Nur bestimmte User-IDs (überschreibt andere Filter)</div>
-            {form.filter.useUserIds && (
-              <textarea
-                value={form.filter.userIdsText}
-                onChange={(e) => setForm({ ...form, filter: { ...form.filter, userIdsText: e.target.value } })}
-                placeholder="User-IDs (kommagetrennt oder eine pro Zeile)"
-                rows={3}
-                style={{ width: '100%', marginTop: '0.5rem', padding: '0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'monospace', fontSize: '0.75rem' }}
+            <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+              Bestimmte User per Email auswählen (überschreibt andere Filter)
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.15rem' }}>
+              Max. {MAX_SELECTED_EMAILS} Empfänger · Suche nach Email-Teil, klicke zum Hinzufügen
+            </div>
+            {form.filter.useEmails && (
+              <EmailPicker
+                value={form.filter.selectedEmails}
+                onChange={(emails) => setForm({ ...form, filter: { ...form.filter, selectedEmails: emails } })}
               />
             )}
           </div>
         </label>
 
         {/* Plan */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useUserIds ? 0.5 : 1 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
           <input
             type="checkbox"
-            disabled={form.filter.useUserIds}
+            disabled={form.filter.useEmails}
             checked={form.filter.usePlan}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, usePlan: e.target.checked } })}
           />
           <span style={{ fontSize: '0.875rem', flex: 1 }}>Nach Plan filtern:</span>
           <select
-            disabled={!form.filter.usePlan || form.filter.useUserIds}
+            disabled={!form.filter.usePlan || form.filter.useEmails}
             value={form.filter.plan}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, plan: e.target.value } })}
             style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
@@ -665,10 +906,10 @@ function Step1Recipients({
         </label>
 
         {/* Active */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useUserIds ? 0.5 : 1 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
           <input
             type="checkbox"
-            disabled={form.filter.useUserIds}
+            disabled={form.filter.useEmails}
             checked={form.filter.subscriptionActive}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, subscriptionActive: e.target.checked } })}
           />
@@ -676,17 +917,17 @@ function Step1Recipients({
         </label>
 
         {/* Analyses */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useUserIds ? 0.5 : 1 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
           <input
             type="checkbox"
-            disabled={form.filter.useUserIds}
+            disabled={form.filter.useEmails}
             checked={form.filter.useMinAnalyses}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, useMinAnalyses: e.target.checked } })}
           />
           <span style={{ fontSize: '0.875rem', flex: 1 }}>Mindestens</span>
           <input
             type="number"
-            disabled={!form.filter.useMinAnalyses || form.filter.useUserIds}
+            disabled={!form.filter.useMinAnalyses || form.filter.useEmails}
             min={1}
             value={form.filter.minAnalysisCount}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, minAnalysisCount: Math.max(1, parseInt(e.target.value) || 1) } })}
@@ -696,10 +937,10 @@ function Step1Recipients({
         </label>
 
         {/* Date range */}
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useUserIds ? 0.5 : 1 }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
           <input
             type="checkbox"
-            disabled={form.filter.useUserIds}
+            disabled={form.filter.useEmails}
             checked={form.filter.useDateRange}
             onChange={(e) => setForm({ ...form, filter: { ...form.filter, useDateRange: e.target.checked } })}
             style={{ marginTop: '0.25rem' }}
