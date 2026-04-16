@@ -233,85 +233,86 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
           </div>
         </div>
 
-        {/* Right: Score stacked above CTA */}
+        {/* Right: Puls-Score + Trust-Line + CTA */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          gap: 14,
+          gap: 20,
           flexShrink: 0,
-          minWidth: 180,
+          flexWrap: 'wrap',
         }}>
           {!isFirstUse && avgScore !== null && (
             <ScoreRing score={avgScore} lastScan={lastScan} />
           )}
 
-          {unanalyzedCount > 0 && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#fff',
-                background: status === 'red'
-                  ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                  : 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
-            </button>
-          )}
-          {isFirstUse && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 24px',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Erste Analyse starten
-            </button>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+            {unanalyzedCount > 0 && onAnalyzeFirst && (
+              <button
+                onClick={onAnalyzeFirst}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: status === 'red'
+                    ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
+                    : 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
+              </button>
+            )}
+            {isFirstUse && onAnalyzeFirst && (
+              <button
+                onClick={onAnalyzeFirst}
+                style={{
+                  padding: '10px 24px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Erste Analyse starten
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// ── Puls-Score Ring with centered label/trust-line underneath ──
+// ── Puls-Score Ring (right side of Hero) ──
 const ScoreRing: React.FC<{ score: number; lastScan: string | null }> = ({ score, lastScan }) => {
   const color = score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
   const label = score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit' : 'Handlungsbedarf';
-  const radius = 46;
+  const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - score / 100);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
       <div style={{
         position: 'relative',
-        width: 110, height: 110,
+        width: 100, height: 100,
         flexShrink: 0,
         filter: `drop-shadow(0 0 10px ${color}33)`,
       }}>
-        <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="55" cy="55" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="7" />
+        <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="7" />
           <circle
-            cx="55" cy="55" r={radius}
+            cx="50" cy="50" r={radius}
             fill="none" stroke={color} strokeWidth="7"
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -324,23 +325,25 @@ const ScoreRing: React.FC<{ score: number; lastScan: string | null }> = ({ score
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <span style={{ fontSize: 32, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
+          <span style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
             Score
           </span>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
           {label}
         </span>
         <span style={{ fontSize: 11, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
           Überwacht
-          {lastScan && (
-            <span style={{ color: '#94a3b8' }}>· Scan {formatScanRelative(lastScan)}</span>
-          )}
         </span>
+        {lastScan && (
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>
+            Letzter Scan {formatScanRelative(lastScan)}
+          </span>
+        )}
       </div>
     </div>
   );
