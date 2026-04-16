@@ -988,6 +988,7 @@ export function parseContractStreaming(
                     break;
                   case 'unsuitable':
                     // Document Gate: Kein Rechtsdokument → Stop-Screen zeigen
+                    console.log('[Legal Lens] 🚪 Gate: unsuitable', data);
                     isComplete = true;
                     callbacks.onUnsuitable?.({
                       documentType: data.documentType ?? null,
