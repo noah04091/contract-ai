@@ -372,6 +372,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .label {
@@ -384,6 +385,9 @@
   font-size: 0.9375rem;
   color: #111827;
   font-weight: 500;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Truncated value - für potenziell lange Einzelwerte (Namen, Titel) */
@@ -885,6 +889,7 @@
   font-weight: 400;
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 /* Inline edit row - input + save/cancel buttons */
