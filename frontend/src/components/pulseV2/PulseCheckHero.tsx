@@ -11,7 +11,8 @@ interface PulseCheckHeroProps {
   severityCounts: { critical: number; high: number; medium: number; low: number };
   recentAlertsCount: number;
   lastVisit: string | null;
-  onJumpToRadar: () => void;
+  avgScore: number | null;
+  lastScan: string | null;
   onAnalyzeFirst?: () => void;
 }
 
@@ -70,7 +71,8 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
   severityCounts,
   recentAlertsCount,
   lastVisit,
-  onJumpToRadar,
+  avgScore,
+  lastScan,
   onAnalyzeFirst,
 }) => {
   // Count "new since last visit"
@@ -231,75 +233,129 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
           </div>
         </div>
 
-        {/* Right: CTAs */}
+        {/* Right: Puls-Score + Trust-Line + CTA */}
         <div style={{
           display: 'flex',
-          gap: 10,
+          alignItems: 'center',
+          gap: 20,
           flexShrink: 0,
           flexWrap: 'wrap',
         }}>
-          {!isFirstUse && (newSinceLastVisit > 0 || recentAlertsCount > 0 || openActionCount > 0) && (
-            <button
-              onClick={onJumpToRadar}
-              style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#fff',
-                background: status === 'red'
-                  ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                  : status === 'yellow'
-                  ? 'linear-gradient(135deg, #d97706, #b45309)'
-                  : 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Jetzt prüfen →
-            </button>
+          {!isFirstUse && avgScore !== null && (
+            <ScoreRing score={avgScore} lastScan={lastScan} />
           )}
-          {unanalyzedCount > 0 && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#334155',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 10,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
-            </button>
-          )}
-          {isFirstUse && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 24px',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Erste Analyse starten
-            </button>
-          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
+            {unanalyzedCount > 0 && onAnalyzeFirst && (
+              <button
+                onClick={onAnalyzeFirst}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: status === 'red'
+                    ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
+                    : 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
+              </button>
+            )}
+            {isFirstUse && onAnalyzeFirst && (
+              <button
+                onClick={onAnalyzeFirst}
+                style={{
+                  padding: '10px 24px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Erste Analyse starten
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+// ── Puls-Score Ring (right side of Hero) ──
+const ScoreRing: React.FC<{ score: number; lastScan: string | null }> = ({ score, lastScan }) => {
+  const color = score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
+  const label = score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit' : 'Handlungsbedarf';
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - score / 100);
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{
+        position: 'relative',
+        width: 100, height: 100,
+        flexShrink: 0,
+        filter: `drop-shadow(0 0 10px ${color}33)`,
+      }}>
+        <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="7" />
+          <circle
+            cx="50" cy="50" r={radius}
+            fill="none" stroke={color} strokeWidth="7"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 1s ease' }}
+          />
+        </svg>
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
+            Score
+          </span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+          {label}
+        </span>
+        <span style={{ fontSize: 11, color: '#64748b', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+          Überwacht
+        </span>
+        {lastScan && (
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>
+            Letzter Scan {formatScanRelative(lastScan)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+function formatScanRelative(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'gerade eben';
+  if (minutes < 60) return `vor ${minutes} Min.`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `vor ${hours} Std.`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'gestern' : `vor ${days} Tagen`;
+}
