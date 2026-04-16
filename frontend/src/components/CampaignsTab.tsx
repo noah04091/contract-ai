@@ -20,6 +20,7 @@ import {
   Copy
 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
+import { fixUtf8Display } from '../utils/textUtils';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
@@ -571,12 +572,12 @@ function ComposerModal({
     } else if (prefill) {
       // Vorbefüllung durch Duplicate — Emails werden BEWUSST NICHT kopiert (Sicherheit)
       const f = defaultForm();
-      f.name = prefill.name ? `Kopie von ${prefill.name}` : '';
-      f.subject = prefill.subject || '';
-      f.preheader = prefill.preheader || '';
-      f.title = prefill.title || '';
-      f.body = prefill.body || '';
-      f.ctaText = prefill.ctaText || '';
+      f.name = prefill.name ? `Kopie von ${fixUtf8Display(prefill.name)}` : '';
+      f.subject = fixUtf8Display(prefill.subject || '');
+      f.preheader = fixUtf8Display(prefill.preheader || '');
+      f.title = fixUtf8Display(prefill.title || '');
+      f.body = fixUtf8Display(prefill.body || '');
+      f.ctaText = fixUtf8Display(prefill.ctaText || '');
       f.ctaUrl = prefill.ctaUrl || '';
 
       const sf = prefill.segmentFilter || {};

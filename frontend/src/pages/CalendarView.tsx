@@ -36,6 +36,7 @@ import {
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
+import { fixUtf8Display } from "../utils/textUtils";
 
 // Type for provider
 type ProviderType = string | {
@@ -490,8 +491,8 @@ interface EventEditModalProps {
 }
 
 function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProps) {
-  const [title, setTitle] = useState(event.title);
-  const [description, setDescription] = useState(event.description);
+  const [title, setTitle] = useState(fixUtf8Display(event.title || ''));
+  const [description, setDescription] = useState(fixUtf8Display(event.description || ''));
   const [date, setDate] = useState(event.date.split('T')[0]);
   const [time, setTime] = useState(() => {
     const d = new Date(event.date);

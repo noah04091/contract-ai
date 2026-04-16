@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import styles from '../styles/FolderModal.module.css';
 import type { FolderType } from './FolderBar';
+import { fixUtf8Display } from '../utils/textUtils';
 
 interface FolderModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export default function FolderModal({ isOpen, folder, onClose, onSave }: FolderM
     if (isOpen) {
       if (folder) {
         // Edit mode
-        setName(folder.name);
+        setName(fixUtf8Display(folder.name || ''));
         setColor(folder.color);
         setIcon(folder.icon);
       } else {

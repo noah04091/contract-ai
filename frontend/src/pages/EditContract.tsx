@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import styles from "./EditContract.module.css";
+import { fixUtf8Display } from "../utils/textUtils";
 
 interface Contract {
   name: string;
@@ -86,9 +87,9 @@ export default function EditContract() {
 
         const data = await res.json();
         setContract({
-          name: data.name || "",
-          laufzeit: data.laufzeit || "",
-          kuendigung: data.kuendigung || "",
+          name: fixUtf8Display(data.name || ""),
+          laufzeit: fixUtf8Display(data.laufzeit || ""),
+          kuendigung: fixUtf8Display(data.kuendigung || ""),
         });
       } catch (err) {
         console.error("Fehler beim Abrufen:", err);

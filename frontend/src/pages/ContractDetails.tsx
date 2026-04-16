@@ -9,6 +9,7 @@ import ContractContentViewer from "../components/ContractContentViewer";
 import ReminderSettingsModal from "../components/ReminderSettingsModal";
 import ImportantDatesSection from "../components/ImportantDatesSection";
 import { useAuth } from "../context/AuthContext";
+import { fixUtf8Display } from "../utils/textUtils";
 
 // Interface für wichtige Datums aus der KI-Analyse
 interface ImportantDate {
@@ -147,9 +148,9 @@ export default function ContractDetails() {
         console.log('📅 Contract loaded - importantDates:', data.importantDates);
         setContract(data);
         setFormData({
-          name: data.name || "",
-          laufzeit: data.laufzeit || "",
-          kuendigung: data.kuendigung || "",
+          name: fixUtf8Display(data.name || ""),
+          laufzeit: fixUtf8Display(data.laufzeit || ""),
+          kuendigung: fixUtf8Display(data.kuendigung || ""),
         });
       } catch (error) {
         console.error("Fehler beim Laden:", error);

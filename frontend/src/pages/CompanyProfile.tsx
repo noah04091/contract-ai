@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import styles from '../styles/CompanyProfile.module.css';
+import { fixUtf8Display } from '../utils/textUtils';
 
 // Profile Type
 type ProfileType = 'business' | 'personal';
@@ -252,8 +253,27 @@ export default function CompanyProfile() {
       const data = await response.json();
 
       if (data.success && data.profile) {
-        setProfile(data.profile);
-        setOriginalProfile(data.profile);
+        // UTF-8 Mojibake fixen — String-Felder durchlaufen, Non-Strings unveraendert lassen
+        // Wichtig: profile UND originalProfile gleich setzen, damit hasChanges-Vergleich
+        // (JSON.stringify) nicht durch reines Mojibake-Cleanup ausgeloest wird.
+        const fixedProfile: CompanyProfileData = {
+          ...data.profile,
+          companyName: fixUtf8Display(data.profile.companyName || ''),
+          legalForm: fixUtf8Display(data.profile.legalForm || ''),
+          street: fixUtf8Display(data.profile.street || ''),
+          postalCode: fixUtf8Display(data.profile.postalCode || ''),
+          city: fixUtf8Display(data.profile.city || ''),
+          country: fixUtf8Display(data.profile.country || ''),
+          vatId: fixUtf8Display(data.profile.vatId || ''),
+          tradeRegister: fixUtf8Display(data.profile.tradeRegister || ''),
+          contactEmail: fixUtf8Display(data.profile.contactEmail || ''),
+          contactPhone: fixUtf8Display(data.profile.contactPhone || ''),
+          bankName: fixUtf8Display(data.profile.bankName || ''),
+          iban: fixUtf8Display(data.profile.iban || ''),
+          bic: fixUtf8Display(data.profile.bic || ''),
+        };
+        setProfile(fixedProfile);
+        setOriginalProfile(fixedProfile);
         // Set profile type from loaded data
         if (data.profile.profileType) {
           setProfileType(data.profile.profileType);

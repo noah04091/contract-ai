@@ -2496,14 +2496,14 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
   const [loadingContracts, setLoadingContracts] = useState(false);
   const toast = useToast();
   const [formData, setFormData] = useState({
-    title: event.title || '',
-    description: event.description || '',
+    title: fixUtf8Display(event.title || ''),
+    description: fixUtf8Display(event.description || ''),
     date: event.date ? event.date.split('T')[0] : formatLocalDate(new Date()),
     time: event.date ? new Date(event.date).toTimeString().slice(0, 5) : '09:00',
     severity: event.severity || 'info' as 'info' | 'warning' | 'critical',
     notes: '',
     contractId: event.contractId || '',
-    contractName: event.contractName || ''
+    contractName: fixUtf8Display(event.contractName || '')
   });
 
   useEffect(() => {
