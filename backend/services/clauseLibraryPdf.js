@@ -295,12 +295,18 @@ function generateClauseLibraryPdf({ title, subtitle, sections = [], mode = "coll
 
       // ========================================
       // FOOTER auf allen Seiten
-      // WICHTIG: lineBreak: false verhindert dass PDFKit neue Seiten erstellt,
-      // wenn der Footer am Seitenende positioniert wird.
+      // Trick: Margins temporaer auf 0 setzen damit Text in der
+      // unteren Margin-Zone nicht Auto-Pagination ausloest.
       // ========================================
       const range = doc.bufferedPageRange();
-      for (let i = range.start; i < range.start + range.count; i++) {
+      const totalPages = range.count;
+      for (let i = range.start; i < range.start + totalPages; i++) {
         doc.switchToPage(i);
+
+        // Margins temporaer auf 0 setzen — sonst paginiert PDFKit beim Schreiben
+        // in der unteren Margin-Zone automatisch auf eine neue Seite.
+        const originalMargins = { ...doc.page.margins };
+        doc.page.margins = { top: 0, bottom: 0, left: 0, right: 0 };
 
         const footerY = pageHeight - 35;
 
@@ -318,18 +324,20 @@ function generateClauseLibraryPdf({ title, subtitle, sections = [], mode = "coll
           "Erstellt mit Contract AI \u2022 contract-ai.de",
           contentLeft,
           footerY,
-          { width: contentWidth / 2, align: "left", lineBreak: false }
+          { width: contentWidth / 2, align: "left", lineBreak: false, height: 12 }
         );
 
         doc.text(
-          `Seite ${i - range.start + 1} von ${range.count}`,
+          `Seite ${i - range.start + 1} von ${totalPages}`,
           contentLeft + contentWidth / 2,
           footerY,
-          { width: contentWidth / 2, align: "right", lineBreak: false }
+          { width: contentWidth / 2, align: "right", lineBreak: false, height: 12 }
         );
+
+        // Margins zuruecksetzen
+        doc.page.margins = originalMargins;
       }
 
-      // flushPages bevor end() — verhindert dass durch Footer entstandene Auto-Pages noch hinzukommen
       doc.flushPages();
       doc.end();
     } catch (err) {
