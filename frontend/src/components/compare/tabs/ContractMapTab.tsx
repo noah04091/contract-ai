@@ -18,6 +18,21 @@ const NOISE_KEY_PATTERNS = [
   /\d+ von \d+\s*Stand$/i,         // Seiten-Metadaten Endung
 ];
 
+/**
+ * Entfernt die Section-Nummer aus dem Titel, wenn GPT sie dort dupliziert hat
+ * (z.B. section="1." + title="1. Name und Kontaktangaben" → "Name und Kontaktangaben").
+ * Sicherheits-Guard: Strippt nur, wenn die Section von einem Wort-Grenzzeichen gefolgt wird.
+ * Verhindert, dass z.B. section="1" aus title="123 Something" ein "23 Something" macht.
+ */
+function stripSectionPrefix(section: string, title: string): string {
+  const s = (section || '').trim();
+  const t = title || '';
+  if (!s || !t.startsWith(s)) return t;
+  const rest = t.slice(s.length);
+  if (rest === '' || /^[\s\-–—:.)]/.test(rest)) return rest.trimStart();
+  return t;
+}
+
 function isNoiseKeyValue(key: string, value: string): boolean {
   if (NOISE_KEY_PATTERNS.some(p => p.test(key))) return true;
   // "DAC: 911681706366" (interne Doc-ID, 10+ stellige Zahl)
@@ -323,11 +338,7 @@ function ClauseDetail({ clauses, label }: { clauses: StructuredClause[]; label: 
           <div key={i} className={styles.mapClauseCard}>
             <div className={styles.mapClauseHeader}>
               <span className={styles.mapClauseSection}>{clause.section}</span>
-              <span className={styles.mapClauseTitle}>
-                {clause.section && clause.title?.startsWith(clause.section)
-                  ? clause.title.slice(clause.section.length).trimStart()
-                  : clause.title}
-              </span>
+              <span className={styles.mapClauseTitle}>{stripSectionPrefix(clause.section, clause.title)}</span>
             </div>
             <p className={styles.mapClauseSummary}>{clause.summary}</p>
             {filteredKVs.length > 0 && (
