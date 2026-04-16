@@ -1451,6 +1451,31 @@
 .mapDotDiff { background: #ff9500; }
 .mapDotMissing { background: #ff453a; }
 
+.mapExtractionHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(180deg, #f0f7ff 0%, #e7f1fd 100%);
+  border: 1px solid #cfe2f8;
+  border-radius: 10px;
+  color: #1f4c82;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.mapExtractionHint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #3b82f6;
+}
+
+.mapExtractionHint strong {
+  color: #0b3b71;
+  font-weight: 600;
+}
+
 /* Header row */
 .mapHeader {
   display: grid;

@@ -787,19 +787,27 @@ router.post("/", verifyToken, upload.fields([
           });
           if (ocrResult.success && ocrResult.text.trim().length > currentText.length) {
             console.log(`✅ [Compare] OCR-Fallback erfolgreich für ${fileName}: ${ocrResult.text.length} Zeichen`);
-            return ocrResult.text.trim();
+            return { text: ocrResult.text.trim(), ocrUsed: true };
           }
         } catch (ocrErr) {
           console.warn(`⚠️ [Compare] OCR-Fallback fehlgeschlagen für ${fileName}: ${ocrErr.message}`);
         }
       }
-      return currentText;
+      return { text: currentText, ocrUsed: false };
     };
 
-    [contract1Text, contract2Text] = await Promise.all([
+    const [ocrRes1, ocrRes2] = await Promise.all([
       ocrFallback(buffer1, file1.mimetype, contract1Text, file1.originalname),
       ocrFallback(buffer2, file2.mimetype, contract2Text, file2.originalname)
     ]);
+    contract1Text = ocrRes1.text;
+    contract2Text = ocrRes2.text;
+
+    // Signal fürs Frontend: Extraktion kann Formularfelder/OCR-Artefakte als keyValues enthalten
+    // (gescannte PDFs oder Formular-PDFs mit AcroForm-Feldern).
+    const FORM_FIELDS_MARKER = '--- Ausgefüllte Vertragskonditionen (aus Formularfeldern) ---';
+    const extractionWarning = ocrRes1.ocrUsed || ocrRes2.ocrUsed
+      || contract1Text.includes(FORM_FIELDS_MARKER) || contract2Text.includes(FORM_FIELDS_MARKER);
 
     if (!contract1Text || !contract2Text) {
       const emptyFiles = [];
@@ -1016,6 +1024,10 @@ router.post("/", verifyToken, upload.fields([
     }
 
     console.log(`✅ Comparison completed: version=${analysisResult.version || 1}, v2Fallback=${analysisResult._v2Fallback || false}, risks=${analysisResult.risks?.length || 0}, recs=${analysisResult.recommendations?.length || 0}, diffs=${analysisResult.differences?.length || 0}`);
+
+    // Extraction-Warnung ans Frontend weitergeben (zeigt dezenten Hinweis im Vertragskarten-Tab,
+    // wenn gescannte PDFs / AcroForm-Felder zu möglicherweise unsauberen keyValues geführt haben).
+    analysisResult.extractionWarning = extractionWarning;
 
     // Decrement active comparison counter
     const activeNow = activeComparisons.get(userId) || 1;

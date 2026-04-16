@@ -301,6 +301,10 @@ export interface ComparisonResultV2 {
   // V4 Holistic pipeline marker
   _pipelineVersion?: string;
 
+  // Hinweis-Flag: true wenn OCR oder AcroForm-Felder verwendet wurden
+  // (Vertragskarte zeigt dann dezenten Hinweis zu möglichen Extraktions-Artefakten).
+  extractionWarning?: boolean;
+
   // V3: Document type intelligence
   documentType?: DocumentTypeInfo | null;
 

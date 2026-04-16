@@ -189,6 +189,7 @@ export default function CompareResults({
             contract2={v2Result.contractMap.contract2}
             differences={v2Result.differences}
             documentType={v2Result.documentType}
+            extractionWarning={v2Result.extractionWarning}
           />
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle, AlertTriangle, XCircle, Minus } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, AlertTriangle, XCircle, Minus, Info } from 'lucide-react';
 import {
   ContractStructure, StructuredClause,
   ClauseArea, CLAUSE_AREA_LABELS,
@@ -38,6 +38,7 @@ interface ContractMapTabProps {
   contract2: ContractStructure;
   differences: EnhancedDifference[];
   documentType?: DocumentTypeInfo | null;
+  extractionWarning?: boolean;
 }
 
 // Preferred display order for clause areas
@@ -148,7 +149,7 @@ function severityRank(s?: string): number {
   }
 }
 
-export default function ContractMapTab({ contract1, contract2, differences, documentType }: ContractMapTabProps) {
+export default function ContractMapTab({ contract1, contract2, differences, documentType, extractionWarning }: ContractMapTabProps) {
   const [expandedArea, setExpandedArea] = useState<string | null>(null);
   const allExpanded = expandedArea === '__all__';
   const rows = buildAreaRows(contract1, contract2, differences);
@@ -176,6 +177,18 @@ export default function ContractMapTab({ contract1, contract2, differences, docu
           <span className={`${styles.mapDot} ${styles.mapDotMissing}`} /> Fehlt ({stats.missing})
         </span>
       </div>
+
+      {/* Hinweis bei gescannten PDFs / Formular-PDFs: Werteextraktion kann Formularfelder als zusätzliche Angaben enthalten */}
+      {extractionWarning && (
+        <div className={styles.mapExtractionHint}>
+          <Info size={16} />
+          <span>
+            <strong>Hinweis:</strong> Bei gescannten PDFs oder Formular-PDFs kann die automatische Werteextraktion
+            vereinzelt Formularfelder oder OCR-Artefakte als zusätzliche Angaben enthalten.
+            Die <strong>Vertragsanalyse, Unterschiede und Risiken sind davon nicht betroffen</strong>.
+          </span>
+        </div>
+      )}
 
       <div className={styles.expandAllBar}>
         <button
