@@ -6492,15 +6492,24 @@ function validateHolisticOutput(raw, text1, text2, intent) {
  * Nur informativ — erweitert compatibility.userWarning, ändert keine Scores.
  */
 function evaluateNumericCompatibility(map1, map2) {
+  // _rawValues-Einträge haben bereits numValue (Number) + unit ('EUR') direkt gesetzt —
+  // diese nutzen statt erneut zu parsen. Fallback über extractValueAndUnit nur wenn fehlt.
   const extractMaxEur = (rawValues) => {
     if (!Array.isArray(rawValues)) return 0;
     let max = 0;
     for (const rv of rawValues) {
       if (isBlankRawValue(rv)) continue;
-      const parsed = extractValueAndUnit(String(rv.value || ''));
-      if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
-        if (parsed.num > max) max = parsed.num;
+      let num = null;
+      if (rv.unit === 'EUR' && typeof rv.numValue === 'number' && Number.isFinite(rv.numValue)) {
+        num = rv.numValue;
+      } else if (rv.value) {
+        // Fallback: alte/unvollständige Einträge nachparsen
+        const parsed = extractValueAndUnit(String(rv.value));
+        if (parsed.unit === 'EUR' && typeof parsed.num === 'number' && Number.isFinite(parsed.num)) {
+          num = parsed.num;
+        }
       }
+      if (num !== null && num > max) max = num;
     }
     return max;
   };
