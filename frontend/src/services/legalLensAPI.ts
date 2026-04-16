@@ -58,6 +58,7 @@ export async function parseContract(
     includeSubSentences?: boolean;
     preserveFormatting?: boolean;
     forceRefresh?: boolean; // Force Cache-Invalidierung
+    skipGate?: boolean; // Document Gate überspringen ("Trotzdem analysieren")
   }
 ): Promise<ParseContractResponse> {
   const response = await fetchWithTimeout(`${LEGAL_LENS_BASE}/parse`, {
@@ -753,6 +754,13 @@ export interface StreamingParseCallbacks {
   }) => void;
   /** Phase 5: Callback bei Retry-Versuch */
   onRetrying?: (attempt: number, maxAttempts: number) => void;
+  /** Document Gate: Dokument ist kein Vertrag/Rechtsdokument */
+  onUnsuitable?: (info: {
+    documentType: string | null;
+    confidence: number;
+    reason: string;
+    source: string;
+  }) => void;
 }
 
 /**
@@ -767,7 +775,8 @@ export interface StreamingParseCallbacks {
 export function parseContractStreaming(
   contractId: string,
   callbacks: StreamingParseCallbacks,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
+  skipGate: boolean = false
 ): () => void {
   const token = localStorage.getItem('token');
   const controller = new AbortController();
@@ -778,10 +787,14 @@ export function parseContractStreaming(
   let isComplete = false;
   let isAborted = false;
 
-  // URL mit optionalem forceRefresh Query-Parameter
-  const getUrl = () => forceRefresh
-    ? `${LEGAL_LENS_BASE}/${contractId}/parse-stream?forceRefresh=true`
-    : `${LEGAL_LENS_BASE}/${contractId}/parse-stream`;
+  // URL mit optionalen Query-Parametern
+  const getUrl = () => {
+    const params: string[] = [];
+    if (forceRefresh) params.push('forceRefresh=true');
+    if (skipGate) params.push('skipGate=true');
+    const query = params.length ? `?${params.join('&')}` : '';
+    return `${LEGAL_LENS_BASE}/${contractId}/parse-stream${query}`;
+  };
 
   /**
    * Polling-Fallback: Wenn SSE durch Proxy-Timeout gekappt wird,
@@ -838,6 +851,19 @@ export function parseContractStreaming(
           console.log(`[Legal Lens] Poll ${pollCount}: Dokument hat keine Klauseln — Polling gestoppt`);
           isComplete = true;
           callbacks.onError?.(data.message || 'Keine Klauseln erkannt.');
+          return;
+        }
+
+        // Document Gate: Dokument als unsuitable klassifiziert → Stop-Screen
+        if (data.success && data.unsuitable && data.documentGate) {
+          console.log(`[Legal Lens] Poll ${pollCount}: Document Gate — unsuitable`);
+          isComplete = true;
+          callbacks.onUnsuitable?.({
+            documentType: data.documentGate.documentType ?? null,
+            confidence: data.documentGate.confidence ?? 0,
+            reason: data.documentGate.reason ?? '',
+            source: data.documentGate.source ?? 'keyword'
+          });
           return;
         }
 
@@ -959,6 +985,16 @@ export function parseContractStreaming(
                     break;
                   case 'warning':
                     console.warn('[Legal Lens Stream]', data.message);
+                    break;
+                  case 'unsuitable':
+                    // Document Gate: Kein Rechtsdokument → Stop-Screen zeigen
+                    isComplete = true;
+                    callbacks.onUnsuitable?.({
+                      documentType: data.documentType ?? null,
+                      confidence: data.confidence ?? 0,
+                      reason: data.reason ?? '',
+                      source: data.source ?? 'keyword'
+                    });
                     break;
                 }
               } catch {

@@ -303,7 +303,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     streamingStatus,
     deselectClause,
     // ✅ Phase 1 Schritt 4: Queue-Priorisierung
-    bumpClauseInQueue
+    bumpClauseInQueue,
+    // 🚪 Document Gate
+    documentGateInfo
   } = useLegalLens();
 
   // Decision Summary — reads from same localStorage as ClauseList (scoped by contractId)
@@ -1499,6 +1501,148 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const reviewed = progress.reviewedClauses?.length || 0;
     return Math.min(100, Math.round((reviewed / clauses.length) * 100));
   }, [progress, clauses]);
+
+  // 🚪 Document Gate: Dokument ist kein Rechtsdokument → Stop-Screen
+  if (documentGateInfo && !isParsing && !isStreaming) {
+    const displayType = documentGateInfo.documentType || 'Nicht-Rechtsdokument';
+    return (
+      <div className={styles.container}>
+        {/* Header */}
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            <FileText size={24} className={styles.headerIcon} />
+            <div className={styles.titleContainer}>
+              <h1 className={styles.title}>{contractName}</h1>
+              <span className={styles.subtitle}>Dokument-Prüfung</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stop-Screen */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem',
+          background: '#f8fafc'
+        }}>
+          <div style={{
+            maxWidth: '520px',
+            width: '100%',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '2.5rem 2rem',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(15, 23, 42, 0.06)'
+          }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+              color: '#b45309',
+              margin: '0 auto 1.25rem'
+            }}>
+              <AlertTriangle size={32} />
+            </div>
+
+            <h2 style={{
+              fontSize: '1.375rem',
+              fontWeight: 700,
+              color: '#0f172a',
+              margin: '0 0 0.5rem',
+              lineHeight: 1.3
+            }}>
+              Dieses Dokument sieht nicht nach einem Vertrag aus
+            </h2>
+
+            <p style={{
+              fontSize: '0.95rem',
+              color: '#475569',
+              margin: '0 0 1.5rem',
+              lineHeight: 1.55
+            }}>
+              {documentGateInfo.reason || `Legal Lens wurde für Verträge und Rechtsdokumente entwickelt (z.B. AGBs, Datenschutzhinweise, Widerrufsbelehrungen, NDAs). Dieses Dokument wurde als „${displayType}" eingestuft.`}
+            </p>
+
+            <div style={{
+              background: '#f1f5f9',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              padding: '0.875rem 1rem',
+              margin: '0 0 1.75rem',
+              textAlign: 'left',
+              fontSize: '0.85rem',
+              color: '#334155'
+            }}>
+              <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#0f172a' }}>
+                Erkannter Dokumenttyp
+              </div>
+              <div>{displayType}</div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.625rem'
+            }}>
+              <button
+                type="button"
+                onClick={() => { window.location.href = '/contracts'; }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                }}
+              >
+                Zurück zu meinen Verträgen
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { parseContract(contractId, true, true); }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  background: '#ffffff',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '10px',
+                  fontSize: '0.9rem',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                Trotzdem analysieren
+              </button>
+            </div>
+
+            <p style={{
+              fontSize: '0.75rem',
+              color: '#94a3b8',
+              margin: '1.25rem 0 0',
+              lineHeight: 1.5
+            }}>
+              Tipp: Bei Nicht-Verträgen liefert Legal Lens keine sinnvollen Ergebnisse.
+              Die Analyse verbraucht trotzdem Budget.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading State - Skeleton UI statt Spinner
   if (isParsing) {

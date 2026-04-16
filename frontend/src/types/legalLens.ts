@@ -467,6 +467,17 @@ export interface ParseContractResponse {
   message?: string;
   /** Vertragsname */
   contractName?: string;
+  /** Document Gate: Kein Rechtsdokument — Parsing übersprungen */
+  unsuitable?: boolean;
+  documentGate?: {
+    suitable: boolean;
+    documentType: string | null;
+    confidence: number;
+    reason: string;
+    source: string;
+    checkedAt?: string;
+    overridden?: boolean;
+  };
 }
 
 /**

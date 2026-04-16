@@ -156,8 +156,16 @@ interface UseLegalLensReturn {
   streamRetryCount: number;
   streamMaxRetries: number;
 
+  // 🚪 Document Gate: Stop-Screen-Info, wenn Dokument kein Rechtsdokument ist
+  documentGateInfo: {
+    documentType: string | null;
+    confidence: number;
+    reason: string;
+    source: string;
+  } | null;
+
   // Aktionen
-  parseContract: (contractId: string, forceRefresh?: boolean) => Promise<void>;
+  parseContract: (contractId: string, forceRefresh?: boolean, skipGate?: boolean) => Promise<void>;
   selectClause: (clause: ParsedClause) => void;
   deselectClause: () => void;
   analyzeClause: (streaming?: boolean) => Promise<void>;
@@ -297,6 +305,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   const [streamRetryCount, setStreamRetryCount] = useState(0);
   const [streamMaxRetries] = useState(3);
 
+  // 🚪 Document Gate: Info wenn Dokument als Nicht-Vertrag eingestuft wurde
+  const [documentGateInfo, setDocumentGateInfo] = useState<UseLegalLensReturn['documentGateInfo']>(null);
+
   // Refs
   const abortControllerRef = useRef<(() => void) | null>(null);
   const streamingAbortRef = useRef<(() => void) | null>(null);
@@ -329,7 +340,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
    * @param id - Contract ID
    * @param forceRefresh - Force Cache-Invalidierung (neu parsen)
    */
-  const parseContract = useCallback(async (id: string, forceRefresh: boolean = false) => {
+  const parseContract = useCallback(async (id: string, forceRefresh: boolean = false, skipGate: boolean = false) => {
     // FIX: Race Condition - Abort any existing streaming FIRST
     if (streamingAbortRef.current) {
       streamingAbortRef.current();
@@ -348,6 +359,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setParseSource(null);
     setStreamingProgress(0);
     setStreamingStatus('');
+    setDocumentGateInfo(null); // Reset Gate-Info bei jedem Parse
     // Reset clauses nur bei neuem Contract, nicht bei Force-Refresh (vermeidet Flackern)
     if (!forceRefresh) {
       setClauses([]);
@@ -356,7 +368,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     try {
       // Erst normalen Parse versuchen (prüft auf vorverarbeitete Klauseln)
       const response = await withRetry(
-        () => legalLensAPI.parseContract(id, { forceRefresh }),
+        () => legalLensAPI.parseContract(id, { forceRefresh, skipGate }),
         2,
         (attempt) => {
           setIsRetrying(true);
@@ -371,6 +383,19 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       if (parseRequestIdRef.current !== requestId) return;
 
       if (response.success) {
+        // 🚪 DOCUMENT GATE: Cache-Hit mit unsuitable-Status → Stop-Screen
+        if (response.unsuitable && response.documentGate) {
+          setIsParsing(false);
+          setIsStreaming(false);
+          setDocumentGateInfo({
+            documentType: response.documentGate.documentType ?? null,
+            confidence: response.documentGate.confidence ?? 0,
+            reason: response.documentGate.reason ?? '',
+            source: response.documentGate.source ?? 'keyword'
+          });
+          return;
+        }
+
         // STREAMING PATH: Backend empfiehlt Streaming (keine Vorverarbeitung)
         if (response.useStreaming) {
           setIsParsing(false);
@@ -430,8 +455,17 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               if (parseRequestIdRef.current !== requestId) return;
               setStreamRetryCount(attempt);
               setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
+            },
+            onUnsuitable: (info) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              setIsStreaming(false);
+              setStreamingProgress(0);
+              setStreamingStatus('');
+              setConnectionLost(false);
+              setStreamRetryCount(0);
+              setDocumentGateInfo(info);
             }
-          }, forceRefresh);
+          }, forceRefresh, skipGate);
           return; // Fertig - Streaming übernimmt
         }
 
@@ -505,8 +539,17 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               if (parseRequestIdRef.current !== requestId) return;
               setStreamRetryCount(attempt);
               setStreamingStatus(`Verbindung wird wiederhergestellt... (${attempt}/${maxAttempts})`);
+            },
+            onUnsuitable: (info) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              setIsStreaming(false);
+              setStreamingProgress(0);
+              setStreamingStatus('');
+              setConnectionLost(false);
+              setStreamRetryCount(0);
+              setDocumentGateInfo(info);
             }
-          }, forceRefresh);
+          }, forceRefresh, skipGate);
         } else if (response.clauses && response.clauses.length > 0) {
           // Wenige Klauseln - normal anzeigen (könnte vorverarbeitet sein ohne Metadata)
           setClauses(response.clauses);
@@ -1329,6 +1372,7 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     setSummary(null);
     setStreamingText('');
     setError(null);
+    setDocumentGateInfo(null); // 🚪 Document Gate zurücksetzen
     setAnalysisCache({}); // ✅ NEU: Cache leeren
     cacheInsertionOrder.length = 0; // ✅ LRU-Ordnung zurücksetzen
     startedPreloadRef.current = false; // ✅ Phase 1: Preload-Flag zurücksetzen
@@ -1454,6 +1498,9 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
     connectionLost,
     streamRetryCount,
     streamMaxRetries,
+
+    // 🚪 Document Gate
+    documentGateInfo,
 
     // Aktionen
     parseContract,

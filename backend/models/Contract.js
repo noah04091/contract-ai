@@ -314,13 +314,24 @@ const contractSchema = new mongoose.Schema({
     smartSummaryGeneratedAt: Date,
     // Metadata
     metadata: mongoose.Schema.Types.Mixed,
-    // Status - 'invalid' für defekte Caches hinzugefügt
+    // Status - 'invalid' für defekte Caches hinzugefügt, 'unsuitable' für Nicht-Rechtsdokumente
     preprocessStatus: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'error', 'invalid', null],
+      enum: ['pending', 'processing', 'completed', 'error', 'invalid', 'unsuitable', null],
       default: null
     },
-    preprocessedAt: Date
+    preprocessedAt: Date,
+    // Document Gate: Prüfergebnis ob Dokument für Legal Lens geeignet ist
+    // Optionales Feld — Contracts ohne dieses Feld laufen wie bisher weiter
+    documentGate: {
+      suitable: Boolean,
+      documentType: String,
+      confidence: Number,
+      reason: String,
+      source: String, // 'keyword' | 'gpt' | 'override' | 'disabled' | 'error'
+      checkedAt: Date,
+      overridden: { type: Boolean, default: false } // true wenn User "Trotzdem analysieren" geklickt hat
+    }
   },
 
   // Legal Pulse 2.0

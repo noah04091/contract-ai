@@ -18,6 +18,7 @@ const { clauseParser, clauseAnalyzer } = require('../services/legalLens');
 const { parseContractWithGuidedSegmenter } = require('../services/legalLens/guidedSegmenterAdapter');
 const { parseContractUniversal } = require('../services/legalLens/universalParserAdapter');
 const { parseContractDirect } = require('../services/legalLens/extractionAdapter');
+const { checkDocumentSuitability } = require('../services/legalLens/documentGate');
 
 // Feature-Flags: Parser-Auswahl (Prioritaet: v4 > v3 > v2 > v1)
 // LEGAL_LENS_DIRECT_PARSER=true     -> Direct Extraction (v4, empfohlen)
@@ -966,6 +967,24 @@ router.post('/parse', verifyToken, async (req, res) => {
         totalClauses: 0,
         noClausesDetected: true,
         message: 'Keine Klauseln erkannt. Das Dokument enthält möglicherweise keinen Vertragstext.'
+      });
+    }
+
+    // 🚪 Dokument als "unsuitable" markiert? → Definitives Ergebnis, direkt an Frontend
+    if (preprocessStatus === 'unsuitable' && contract.legalLens?.documentGate && !forceRefresh) {
+      console.log(`🚫 [Legal Lens] Dokument als ungeeignet markiert (Cache) — kein Streaming nötig`);
+      const gate = contract.legalLens.documentGate;
+      return res.json({
+        success: true,
+        clauses: [],
+        totalClauses: 0,
+        unsuitable: true,
+        documentGate: {
+          documentType: gate.documentType,
+          confidence: gate.confidence,
+          reason: gate.reason,
+          source: gate.source
+        }
       });
     }
 
@@ -2729,9 +2748,10 @@ router.get('/:contractId/analyses', verifyToken, async (req, res) => {
  */
 router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
   const { contractId } = req.params;
-  const { forceRefresh } = req.query;
+  const { forceRefresh, skipGate } = req.query;
   const userId = req.user.userId;
   const isForceRefresh = forceRefresh === 'true' || forceRefresh === '1';
+  const isSkipGate = skipGate === 'true' || skipGate === '1';
 
   console.log(`🌊 [Legal Lens] Streaming parse request for contract: ${contractId}${isForceRefresh ? ' (FORCE REFRESH)' : ''}`);
 
@@ -2972,6 +2992,51 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
       });
       return res.end();
     }
+
+    // ════════════════════════════════════════════════════════════
+    // 🚪 DOCUMENT GATE — Prüft VOR dem Parsing, ob Dokument geeignet ist
+    // Fail-Open: bei Fehler oder deaktiviertem Flag wird durchgewunken
+    // skipGate=true (vom "Trotzdem analysieren"-Button) überspringt den Gate
+    // ════════════════════════════════════════════════════════════
+    sendEvent('status', { message: 'Prüfe Dokumenttyp...', progress: 8 });
+    const gateResult = await checkDocumentSuitability(text, { skipGate: isSkipGate });
+
+    if (!gateResult.suitable) {
+      console.log(`🚫 [Legal Lens] Dokument nicht geeignet: ${gateResult.documentType} (${gateResult.source}, ${gateResult.confidence})`);
+      // Cache setzen damit nicht erneut geprüft wird (bis forceRefresh)
+      try {
+        await Contract.updateOne(
+          { _id: new ObjectId(contractId) },
+          {
+            $set: {
+              'legalLens.documentGate': { ...gateResult, checkedAt: new Date(), overridden: false },
+              'legalLens.preprocessStatus': 'unsuitable',
+              'legalLens.preprocessedAt': new Date()
+            }
+          }
+        );
+      } catch (cacheErr) {
+        console.warn('[Legal Lens] Cache-Update (Gate) fehlgeschlagen:', cacheErr.message);
+      }
+      sendEvent('unsuitable', {
+        documentType: gateResult.documentType,
+        confidence: gateResult.confidence,
+        reason: gateResult.reason,
+        source: gateResult.source
+      });
+      return res.end();
+    }
+
+    // Gate hat "suitable" gesagt (oder ist Fail-Open/Override) → Ergebnis im Hintergrund cachen
+    // (nicht blockierend, Parser-Lauf läuft parallel weiter)
+    Contract.updateOne(
+      { _id: new ObjectId(contractId) },
+      {
+        $set: {
+          'legalLens.documentGate': { ...gateResult, checkedAt: new Date(), overridden: isSkipGate }
+        }
+      }
+    ).catch(err => console.warn('[Legal Lens] Gate-Cache-Update (suitable) fehlgeschlagen:', err.message));
 
     sendEvent('status', { message: 'Starte KI-Analyse...', progress: 10 });
 
