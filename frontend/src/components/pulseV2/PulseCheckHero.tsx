@@ -56,7 +56,7 @@ const STATUS_CONFIG: Record<Status, { color: string; bg: string; border: string;
     bg: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
     border: 'rgba(239,68,68,0.3)',
     dot: '#ef4444',
-    label: 'Handlungsbedarf',
+    label: 'Achtung erforderlich',
   },
 };
 
