@@ -960,6 +960,20 @@ router.post('/parse', verifyToken, async (req, res) => {
     const cachedVersion = contract.legalLens?.metadata?.cacheVersion || 0;
 
     if (preprocessStatus === 'no_clauses' && cachedVersion >= CACHE_VERSION && !forceRefresh) {
+      // 🚪 Gate-Upgrade: Alte "no_clauses"-Caches ohne Gate-Prüfung neu analysieren,
+      // damit Nicht-Verträge den Stop-Screen bekommen statt der generischen Meldung.
+      const hasGateInfo = !!contract.legalLens?.documentGate;
+      if (!hasGateInfo) {
+        console.log(`🔄 [Legal Lens] Alter "no_clauses"-Cache ohne Document-Gate-Info — empfehle Streaming für Gate-Check`);
+        return res.json({
+          success: true,
+          useStreaming: true,
+          reason: 'no_cache',
+          message: 'Dokument wird neu geprüft...',
+          contractName: contract.name || contract.title || 'Vertrag'
+        });
+      }
+
       console.log(`📋 [Legal Lens] Dokument hat keine Klauseln (bereits geprüft) — kein Streaming nötig`);
       return res.json({
         success: true,
