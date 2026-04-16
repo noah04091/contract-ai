@@ -2197,6 +2197,62 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               </div>
             </div>
 
+            {/* Gescanntes-PDF-Hinweis: Fester Balken unterhalb der Toolbar, immer sichtbar */}
+            {showScanHint && (
+              <div style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                background: 'linear-gradient(to right, #eff6ff, #dbeafe)',
+                borderBottom: '1px solid #bfdbfe'
+              }}>
+                <span style={{ fontSize: '1.25rem', flexShrink: 0 }}>📄</span>
+                <div style={{ flex: 1, minWidth: 0, lineHeight: 1.35 }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#1e3a8a', marginBottom: '0.125rem' }}>
+                    Gescanntes PDF erkannt
+                  </div>
+                  <div style={{ color: '#475569', fontSize: '0.8125rem' }}>
+                    Textauswahl direkt im PDF ist nicht möglich. Die Textansicht zeigt den OCR-erkannten Inhalt mit allen Analyse-Funktionen.
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewMode('text')}
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.5rem 0.875rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
+                  }}
+                >
+                  Zur Textansicht
+                </button>
+                <button
+                  onClick={() => setShowScanHint(false)}
+                  aria-label="Hinweis schließen"
+                  style={{
+                    background: 'transparent',
+                    color: '#64748b',
+                    border: 'none',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '1.25rem',
+                    cursor: 'pointer',
+                    lineHeight: 1,
+                    flexShrink: 0
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {/* PDF Viewer — Continuous Scroll */}
             <div
               ref={pdfScrollRef}
@@ -2314,71 +2370,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 </div>
               )}
 
-              {/* Gescanntes-PDF-Hinweis: Persistenter Banner oben, User entscheidet */}
-              {showScanHint && (
-                <div style={{
-                  position: 'absolute',
-                  top: '1rem',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: 'white',
-                  color: '#1e293b',
-                  padding: '0.875rem 1.25rem',
-                  borderRadius: '10px',
-                  fontSize: '0.875rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  border: '1px solid #e2e8f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  zIndex: 10,
-                  maxWidth: '560px',
-                  width: 'calc(100% - 2rem)'
-                }}>
-                  <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>📄</span>
-                  <div style={{ flex: 1, lineHeight: 1.4 }}>
-                    <div style={{ fontWeight: 600, marginBottom: '0.125rem' }}>
-                      Gescanntes PDF erkannt
-                    </div>
-                    <div style={{ color: '#64748b', fontSize: '0.8125rem' }}>
-                      Textauswahl direkt im PDF ist hier nicht möglich. Die Textansicht zeigt den OCR-erkannten Inhalt mit allen Analyse-Funktionen.
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setViewMode('text')}
-                    style={{
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.5rem 0.875rem',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}
-                  >
-                    Zur Textansicht
-                  </button>
-                  <button
-                    onClick={() => setShowScanHint(false)}
-                    aria-label="Hinweis schließen"
-                    style={{
-                      background: 'transparent',
-                      color: '#94a3b8',
-                      border: 'none',
-                      padding: '0.25rem',
-                      fontSize: '1.25rem',
-                      cursor: 'pointer',
-                      lineHeight: 1,
-                      flexShrink: 0
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
