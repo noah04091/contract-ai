@@ -3099,18 +3099,24 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           // den generischen "Keine Klauseln"-Fehler senden.
           // ════════════════════════════════════════════════════════════
           let unsuitableByGpt = null;
+          let recheckRan = false;
           if (!isSkipGate) {
             try {
-              console.log(`🔍 [Legal Lens] 0 Klauseln — starte GPT-Nachprüfung (Gate-Safety-Net)`);
+              console.log(`🔍 [Legal Lens] 0 Klauseln — starte GPT-Nachprüfung (Gate-Safety-Net v2)`);
+              sendEvent('status', { message: 'Prüfe Dokumenttyp (Nachkontrolle)...', progress: 92 });
               const recheck = await forceGptClassify(text);
+              recheckRan = true;
               console.log(`🔍 [Legal Lens] GPT-Nachprüfung: suitable=${recheck.suitable}, type=${recheck.documentType}, conf=${recheck.confidence}`);
+              sendEvent('status', { message: `Nachkontrolle: ${recheck.documentType || 'unbekannt'} (suitable=${recheck.suitable})`, progress: 95 });
               if (!recheck.suitable) {
                 unsuitableByGpt = recheck;
               }
             } catch (recheckErr) {
               console.warn(`[Legal Lens] GPT-Nachprüfung fehlgeschlagen:`, recheckErr.message);
+              sendEvent('status', { message: 'Nachkontrolle fehlgeschlagen', progress: 95 });
             }
           }
+          console.log(`🔍 [Legal Lens] Recheck-Summary: ran=${recheckRan}, unsuitableByGpt=${!!unsuitableByGpt}, skipGate=${isSkipGate}`);
 
           if (unsuitableByGpt) {
             // GPT bestätigt: Kein Vertragsdokument → Cache als "unsuitable" + Stop-Screen
