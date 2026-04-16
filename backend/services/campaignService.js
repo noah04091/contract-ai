@@ -15,6 +15,23 @@ const MAX_RECIPIENTS_PER_CAMPAIGN = 5000;
 const BATCH_SIZE = 10;
 const SEND_DELAY_MS = 2000;
 const MIN_INTERVAL_BETWEEN_CAMPAIGNS_MS = 5 * 60 * 1000; // 5 Minuten Rate-Limit pro Admin
+const MAX_SCHEDULE_AHEAD_MS = 365 * 24 * 60 * 60 * 1000; // 1 Jahr max. Vorlauf
+
+function parseScheduledFor(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (isNaN(date.getTime())) {
+    throw new Error('Ungültiges Datum für scheduledFor');
+  }
+  const now = Date.now();
+  if (date.getTime() <= now) {
+    throw new Error('scheduledFor muss in der Zukunft liegen');
+  }
+  if (date.getTime() > now + MAX_SCHEDULE_AHEAD_MS) {
+    throw new Error('scheduledFor max. 1 Jahr im Voraus');
+  }
+  return date;
+}
 
 const VALID_STATUSES = ['draft', 'queued', 'sending', 'completed', 'failed', 'cancelled'];
 
@@ -283,6 +300,7 @@ async function createCampaign(data, adminUser) {
     segmentFilter: data.segmentFilter || {},
     recipientCount: eligibleUsers.length,
     status: 'draft',
+    scheduledFor: null,
     createdBy: adminUser ? String(adminUser.userId) : null,
     createdByEmail: adminUser ? adminUser.email : null,
     createdAt: new Date(),
@@ -327,15 +345,25 @@ async function createCampaign(data, adminUser) {
 
 // ========================================================================
 // QUEUE CAMPAIGN: Wechselt status von 'draft' → 'queued'.
-// Ab jetzt wird Cron die Campaign verarbeiten.
+// Ab jetzt wird Cron die Campaign verarbeiten (ggf. mit scheduledFor-Verzögerung).
 // ========================================================================
-async function queueCampaign(campaignId) {
+async function queueCampaign(campaignId, options = {}) {
   const db = await database.connect();
   const _id = new ObjectId(campaignId);
 
+  const scheduledFor = parseScheduledFor(options.scheduledFor);
+
+  const update = {
+    $set: {
+      status: 'queued',
+      queuedAt: new Date(),
+      scheduledFor: scheduledFor // null = sofort, Date = geplant
+    }
+  };
+
   const result = await db.collection('email_campaigns').findOneAndUpdate(
     { _id, status: 'draft' },
-    { $set: { status: 'queued', queuedAt: new Date() } },
+    update,
     { returnDocument: 'after' }
   );
 
@@ -344,7 +372,11 @@ async function queueCampaign(campaignId) {
     throw new Error('Campaign nicht gefunden oder nicht im Draft-Status');
   }
 
-  return { campaignId: String(doc._id), status: doc.status };
+  return {
+    campaignId: String(doc._id),
+    status: doc.status,
+    scheduledFor: doc.scheduledFor ? doc.scheduledFor.toISOString() : null
+  };
 }
 
 // ========================================================================

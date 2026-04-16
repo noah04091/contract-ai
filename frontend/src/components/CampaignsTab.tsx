@@ -38,6 +38,7 @@ interface Campaign {
   segmentFilter: SegmentFilter;
   recipientCount: number;
   status: 'draft' | 'queued' | 'sending' | 'completed' | 'cancelled' | 'failed';
+  scheduledFor: string | null;
   createdBy: string | null;
   createdByEmail: string | null;
   createdAt: string;
@@ -129,16 +130,24 @@ function formatDate(iso: string | null | undefined): string {
   return `${d.toLocaleDateString('de-DE')} ${d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
-function statusBadge(status: Campaign['status']) {
-  const map: Record<Campaign['status'], { label: string; color: string; icon: React.ReactNode }> = {
+function statusBadge(campaign: Pick<Campaign, 'status' | 'scheduledFor'>) {
+  // Wenn queued + scheduledFor in der Zukunft → "Geplant" statt "Eingereiht"
+  const isScheduled =
+    campaign.status === 'queued' &&
+    campaign.scheduledFor &&
+    new Date(campaign.scheduledFor).getTime() > Date.now();
+
+  const map: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     draft: { label: 'Entwurf', color: '#64748b', icon: <Clock size={12} /> },
     queued: { label: 'Eingereiht', color: '#3b82f6', icon: <Clock size={12} /> },
+    scheduled: { label: 'Geplant', color: '#8b5cf6', icon: <Clock size={12} /> },
     sending: { label: 'Wird gesendet', color: '#f59e0b', icon: <Send size={12} /> },
     completed: { label: 'Abgeschlossen', color: '#10b981', icon: <CheckCircle size={12} /> },
     cancelled: { label: 'Abgebrochen', color: '#6b7280', icon: <Ban size={12} /> },
     failed: { label: 'Fehler', color: '#ef4444', icon: <AlertCircle size={12} /> }
   };
-  const s = map[status] || map.draft;
+  const key = isScheduled ? 'scheduled' : campaign.status;
+  const s = map[key] || map.draft;
   return (
     <span
       style={{
@@ -528,6 +537,8 @@ function ComposerModal({
   const [confirmText, setConfirmText] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
+  const [scheduledAt, setScheduledAt] = useState('');
 
   useEffect(() => {
     if (!open) {
@@ -540,6 +551,8 @@ function ComposerModal({
         setTestStatus(null);
         setConfirmText('');
         setError(null);
+        setSendMode('now');
+        setScheduledAt('');
       }, 300);
     }
   }, [open]);
@@ -600,6 +613,24 @@ function ComposerModal({
       setError('Bitte "SENDEN" exakt tippen zur Bestätigung');
       return;
     }
+    // Validate scheduled time
+    let scheduledForIso: string | null = null;
+    if (sendMode === 'scheduled') {
+      if (!scheduledAt) {
+        setError('Bitte Zeitpunkt für geplanten Versand wählen');
+        return;
+      }
+      const scheduledDate = new Date(scheduledAt);
+      if (isNaN(scheduledDate.getTime())) {
+        setError('Ungültiger Zeitpunkt');
+        return;
+      }
+      if (scheduledDate.getTime() <= Date.now()) {
+        setError('Geplanter Zeitpunkt muss in der Zukunft liegen');
+        return;
+      }
+      scheduledForIso = scheduledDate.toISOString();
+    }
     setSubmitLoading(true);
     setError(null);
     try {
@@ -624,10 +655,11 @@ function ComposerModal({
       }
       const campaignId = createData.campaignId;
 
-      // 2. Queue
+      // 2. Queue (mit oder ohne scheduledFor)
       const queueRes = await fetch(`${API_URL}/api/admin/campaigns/${campaignId}/queue`, {
         method: 'POST',
-        headers: authHeaders()
+        headers: authHeaders(),
+        body: JSON.stringify(scheduledForIso ? { scheduledFor: scheduledForIso } : {})
       });
       const queueData = await queueRes.json();
       if (!queueRes.ok || !queueData.success) {
@@ -770,6 +802,10 @@ function ComposerModal({
               setConfirmText={setConfirmText}
               onSubmit={submitCampaign}
               submitLoading={submitLoading}
+              sendMode={sendMode}
+              setSendMode={setSendMode}
+              scheduledAt={scheduledAt}
+              setScheduledAt={setScheduledAt}
             />
           )}
         </div>
@@ -1174,7 +1210,11 @@ function Step4Confirm({
   confirmText,
   setConfirmText,
   onSubmit,
-  submitLoading
+  submitLoading,
+  sendMode,
+  setSendMode,
+  scheduledAt,
+  setScheduledAt
 }: {
   form: CampaignForm;
   preview: PreviewResult;
@@ -1182,7 +1222,15 @@ function Step4Confirm({
   setConfirmText: (v: string) => void;
   onSubmit: () => void;
   submitLoading: boolean;
+  sendMode: 'now' | 'scheduled';
+  setSendMode: (m: 'now' | 'scheduled') => void;
+  scheduledAt: string;
+  setScheduledAt: (v: string) => void;
 }) {
+  // Datetime-local min: 5 Minuten in der Zukunft, max: 1 Jahr
+  const minDateTime = new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16);
+  const maxDateTime = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+
   return (
     <div>
       <h3 style={{ marginTop: 0 }}>Bestätigen & Senden</h3>
@@ -1205,6 +1253,80 @@ function Step4Confirm({
         <div style={{ fontSize: '0.75rem', color: '#78350f', marginTop: '0.5rem' }}>
           Bei ~10 Mails/Min dauert der Versand ca. <strong>{Math.ceil(preview.eligible / 10)} Minuten</strong>.
         </div>
+      </div>
+
+      {/* Zeitpunkt-Wahl */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem' }}>Versand-Zeitpunkt</div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: `2px solid ${sendMode === 'now' ? '#3b82f6' : '#cbd5e1'}`,
+              background: sendMode === 'now' ? '#eff6ff' : '#fff',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            <input
+              type="radio"
+              name="sendMode"
+              checked={sendMode === 'now'}
+              onChange={() => setSendMode('now')}
+            />
+            Jetzt senden
+          </label>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              borderRadius: '6px',
+              border: `2px solid ${sendMode === 'scheduled' ? '#8b5cf6' : '#cbd5e1'}`,
+              background: sendMode === 'scheduled' ? '#f5f3ff' : '#fff',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            <input
+              type="radio"
+              name="sendMode"
+              checked={sendMode === 'scheduled'}
+              onChange={() => setSendMode('scheduled')}
+            />
+            Später senden
+          </label>
+        </div>
+        {sendMode === 'scheduled' && (
+          <div style={{ marginTop: '0.75rem' }}>
+            <label style={{ fontSize: '0.8125rem', color: '#475569', display: 'block', marginBottom: '0.25rem' }}>
+              Zeitpunkt (frühestens in 5 Min, max. 1 Jahr voraus):
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              min={minDateTime}
+              max={maxDateTime}
+              style={{
+                padding: '0.5rem 0.75rem',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.875rem'
+              }}
+            />
+            {scheduledAt && (
+              <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#64748b' }}>
+                Geplant für: <strong>{new Date(scheduledAt).toLocaleString('de-DE')}</strong>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <p style={{ fontSize: '0.875rem', color: '#475569' }}>
@@ -1234,7 +1356,7 @@ function Step4Confirm({
             padding: '0.75rem 1.5rem',
             borderRadius: '6px',
             border: 'none',
-            background: confirmText === 'SENDEN' ? '#dc2626' : '#cbd5e1',
+            background: confirmText === 'SENDEN' ? (sendMode === 'scheduled' ? '#8b5cf6' : '#dc2626') : '#cbd5e1',
             color: '#fff',
             cursor: confirmText === 'SENDEN' && !submitLoading ? 'pointer' : 'not-allowed',
             fontWeight: 700,
@@ -1245,7 +1367,7 @@ function Step4Confirm({
           }}
         >
           {submitLoading ? <RefreshCw size={18} /> : <Zap size={18} />}
-          Kampagne jetzt starten
+          {sendMode === 'scheduled' ? 'Kampagne planen' : 'Kampagne jetzt starten'}
         </button>
       </div>
     </div>
@@ -1410,7 +1532,14 @@ export default function CampaignsTab() {
                         <Users size={14} /> {c.recipientCount}
                       </span>
                     </td>
-                    <td>{statusBadge(c.status)}</td>
+                    <td>
+                      {statusBadge(c)}
+                      {c.status === 'queued' && c.scheduledFor && new Date(c.scheduledFor).getTime() > Date.now() && (
+                        <div style={{ fontSize: '0.7rem', color: '#8b5cf6', marginTop: '2px' }}>
+                          → {formatDate(c.scheduledFor)}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ fontSize: '0.75rem' }}>
                       {c.stats ? (
                         <>
@@ -1501,7 +1630,10 @@ export default function CampaignsTab() {
               <div style={{ fontSize: '0.875rem' }}>
                 <p><strong>Name:</strong> {detailsData.name}</p>
                 <p><strong>Betreff:</strong> {detailsData.subject}</p>
-                <p><strong>Status:</strong> {statusBadge(detailsData.status)}</p>
+                <p><strong>Status:</strong> {statusBadge(detailsData)}</p>
+                {detailsData.scheduledFor && (
+                  <p><strong>Geplant für:</strong> {formatDate(detailsData.scheduledFor)}</p>
+                )}
                 <p><strong>Empfänger:</strong> {detailsData.recipientCount}</p>
                 <p><strong>Erstellt:</strong> {formatDate(detailsData.createdAt)}</p>
                 {detailsData.queuedAt && <p><strong>Eingereiht:</strong> {formatDate(detailsData.queuedAt)}</p>}

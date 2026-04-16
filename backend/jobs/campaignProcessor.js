@@ -21,9 +21,20 @@ async function runCampaignProcessor() {
     const db = await database.connect();
     const collection = db.collection('email_campaigns');
 
+    const now = new Date();
+    // Nur Campaigns verarbeiten, die JETZT dran sind:
+    // - status queued/sending
+    // - scheduledFor ist null (sofort) ODER scheduledFor <= now (Zeit erreicht)
     const active = await collection
-      .find({ status: { $in: ['queued', 'sending'] } })
-      .project({ _id: 1, status: 1, name: 1, stats: 1 })
+      .find({
+        status: { $in: ['queued', 'sending'] },
+        $or: [
+          { scheduledFor: null },
+          { scheduledFor: { $exists: false } },
+          { scheduledFor: { $lte: now } }
+        ]
+      })
+      .project({ _id: 1, status: 1, name: 1, stats: 1, scheduledFor: 1 })
       .limit(10)
       .toArray();
 

@@ -1975,10 +1975,12 @@ router.post('/campaigns', verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // POST /api/admin/campaigns/:id/queue — Aktiviert Campaign (draft → queued)
+// Body optional: { scheduledFor: "2026-04-20T09:00:00Z" } für geplanten Versand
 router.post('/campaigns/:id/queue', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { queueCampaign } = require('../services/campaignService');
-    const result = await queueCampaign(req.params.id);
+    const scheduledFor = req.body && req.body.scheduledFor ? req.body.scheduledFor : null;
+    const result = await queueCampaign(req.params.id, { scheduledFor });
     res.json({ success: true, ...result });
   } catch (error) {
     console.error('❌ [CAMPAIGN QUEUE]', error);
