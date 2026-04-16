@@ -41,6 +41,7 @@ export interface CalendarEvent {
   type: string;
   severity: 'info' | 'warning' | 'critical';
   status: string;
+  notes?: string;
   metadata?: {
     provider?: string;
     noticePeriodDays?: number;

@@ -70,6 +70,7 @@ interface CalendarEvent {
   type: string;
   severity: "info" | "warning" | "critical";
   status: string;
+  notes?: string;
   metadata?: {
     provider?: string;
     noticePeriodDays?: number;
@@ -78,7 +79,6 @@ interface CalendarEvent {
     daysLeft?: number;
     cancellationId?: string;
     isFollowUp?: boolean;
-    notes?: string;
   };
   amount?: number;
   isManual?: boolean;
@@ -2504,7 +2504,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
     date: event.date ? event.date.split('T')[0] : formatLocalDate(new Date()),
     time: event.date ? new Date(event.date).toTimeString().slice(0, 5) : '09:00',
     severity: event.severity || 'info' as 'info' | 'warning' | 'critical',
-    notes: fixUtf8Display(event.metadata?.notes || ''),
+    notes: fixUtf8Display(event.notes || ''),
     contractId: event.contractId || '',
     contractName: fixUtf8Display(event.contractName || '')
   });

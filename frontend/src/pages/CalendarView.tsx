@@ -499,7 +499,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   });
   const [severity, setSeverity] = useState(event.severity);
-  const [notes, setNotes] = useState(event.metadata?.notes || '');
+  const [notes, setNotes] = useState(event.notes || '');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = () => {

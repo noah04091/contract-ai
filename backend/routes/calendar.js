@@ -182,6 +182,7 @@ router.get("/events", verifyToken, async (req, res) => {
       type: event.type,
       severity: event.severity,
       status: event.status,
+      notes: event.notes || '',
       metadata: event.metadata,
       provider: event.metadata?.provider || event.contract?.provider,
       amount: event.contract?.amount,
