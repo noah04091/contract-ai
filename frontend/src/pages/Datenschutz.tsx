@@ -392,10 +392,11 @@ export default function Datenschutz() {
                 <div className={styles.sectionIcon}>
                   <Cookie size={22} />
                 </div>
-                <h2 className={styles.sectionTitle}>8. Cookies & Tracking</h2>
+                <h2 className={styles.sectionTitle}>8. Cookies, Newsletter & Tracking</h2>
               </div>
 
               <div className={styles.sectionContent}>
+                <h3 style={{ marginTop: 0, fontSize: '1.05rem' }}>8.1 Cookies</h3>
                 <p>Wir verwenden <strong>notwendige Cookies</strong> für:</p>
 
                 <ul className={styles.bulletList}>
@@ -417,10 +418,64 @@ export default function Datenschutz() {
                   Daten werden anonymisiert oder pseudonymisiert gespeichert.
                 </p>
 
+                <h3 style={{ marginTop: '28px', fontSize: '1.05rem' }}>8.2 Newsletter & Marketing-E-Mails</h3>
+                <p>
+                  Mit Ihrer Einwilligung (Marketing-Consent bei Registrierung oder über die
+                  E-Mail-Einstellungen in Ihrem Account) versenden wir gelegentlich Newsletter
+                  und Produkt-Informationen. Zur Analyse der Zustellung und Relevanz unserer
+                  Newsletter verwenden wir <strong>Öffnungs- und Klick-Messung</strong>:
+                </p>
+
+                <ul className={styles.bulletList}>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>
+                      <strong>Öffnungs-Tracking</strong>: Ein unsichtbares 1×1-Pixel erfasst, ob
+                      eine E-Mail geöffnet wurde (Zeitstempel, Anzahl Öffnungen).
+                    </span>
+                  </li>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>
+                      <strong>Klick-Tracking</strong>: Links in Newsletter-E-Mails werden über
+                      einen Redirect (api.contract-ai.de/api/track/click) geleitet, um zu
+                      messen, welche Inhalte relevant sind (URL, Zeitstempel).
+                    </span>
+                  </li>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>
+                      Es werden <strong>keine IP-Adressen oder User-Agents</strong> beim Tracking
+                      gespeichert — lediglich Zeitstempel und die aggregierte Statistik der
+                      Kampagne.
+                    </span>
+                  </li>
+                </ul>
+
+                <p style={{ marginTop: '16px' }}>
+                  Sie können dem Newsletter-Versand und Tracking jederzeit widersprechen:
+                </p>
+
+                <ul className={styles.bulletList}>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>Über den <strong>Abbestellen-Link</strong> am Ende jeder Marketing-E-Mail</span>
+                  </li>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>Über die <strong>E-Mail-Einstellungen</strong> in Ihrem Account</span>
+                  </li>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>Per E-Mail an info@contract-ai.de</span>
+                  </li>
+                </ul>
+
                 <div className={styles.highlightBox}>
                   <strong>Rechtsgrundlage:</strong><br />
                   Notwendige Cookies: Art. 6 Abs. 1 lit. f DSGVO<br />
-                  Optionale Cookies: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
+                  Optionale Cookies: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)<br />
+                  Newsletter &amp; Tracking: Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) in Verbindung mit § 7 Abs. 2 UWG
                 </div>
               </div>
             </section>
