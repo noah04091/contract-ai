@@ -1257,6 +1257,45 @@ router.post("/users/:userId/send-reset", verifyToken, verifyAdmin, async (req, r
   }
 });
 
+// ===== 🔎 USER SEARCH (für Campaign-Empfänger-Auswahl) =====
+// GET /api/admin/users/search?q=<query>&limit=20 — Sucht User nach Email (case-insensitive)
+// WICHTIG: MUSS VOR /users/:userId stehen, sonst matched Express 'search' als userId!
+router.get('/users/search', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit)) || 20));
+
+    if (!q || q.length < 2) {
+      return res.json({ success: true, users: [] });
+    }
+
+    const db = await database.connect();
+    const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(safeQ, 'i');
+
+    const users = await db.collection('users')
+      .find({ email: regex })
+      .project({ email: 1, subscriptionPlan: 1, verified: 1, emailOptOut: 1 })
+      .sort({ email: 1 })
+      .limit(limit)
+      .toArray();
+
+    res.json({
+      success: true,
+      users: users.map(u => ({
+        _id: String(u._id),
+        email: u.email,
+        subscriptionPlan: u.subscriptionPlan || null,
+        verified: u.verified === true,
+        emailOptOut: u.emailOptOut === true
+      }))
+    });
+  } catch (error) {
+    console.error('❌ [ADMIN USER SEARCH]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ===== 👤 GET SINGLE USER DETAILS =====
 // GET /api/admin/users/:userId
 router.get("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
@@ -1884,47 +1923,6 @@ router.get('/email-logs/stats', verifyToken, verifyAdmin, async (req, res) => {
       message: 'Fehler beim Laden der Mail-Statistiken',
       error: error.message
     });
-  }
-});
-
-// ==================================
-// 🔎 USER SEARCH (für Campaign-Empfänger-Auswahl)
-// ==================================
-
-// GET /api/admin/users/search?q=<query>&limit=20 — Sucht User nach Email (case-insensitive)
-router.get('/users/search', verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const q = String(req.query.q || '').trim();
-    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit)) || 20));
-
-    if (!q || q.length < 2) {
-      return res.json({ success: true, users: [] });
-    }
-
-    const db = await database.connect();
-    const safeQ = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(safeQ, 'i');
-
-    const users = await db.collection('users')
-      .find({ email: regex })
-      .project({ email: 1, subscriptionPlan: 1, verified: 1, emailOptOut: 1 })
-      .sort({ email: 1 })
-      .limit(limit)
-      .toArray();
-
-    res.json({
-      success: true,
-      users: users.map(u => ({
-        _id: String(u._id),
-        email: u.email,
-        subscriptionPlan: u.subscriptionPlan || null,
-        verified: u.verified === true,
-        emailOptOut: u.emailOptOut === true
-      }))
-    });
-  } catch (error) {
-    console.error('❌ [ADMIN USER SEARCH]', error);
-    res.status(500).json({ success: false, message: error.message });
   }
 });
 
