@@ -4,12 +4,13 @@
 // Erst explizites queueCampaign() aktiviert den Versand durch den Cron.
 
 const { ObjectId } = require('mongodb');
+const cheerio = require('cheerio');
 const database = require('../config/database');
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
 const { logSentEmail } = require('../utils/emailLogger');
 const sendEmail = require('./mailer');
-const { generateOpenToken } = require('./campaignTrackingService');
+const { generateOpenToken, generateClickToken } = require('./campaignTrackingService');
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://api.contract-ai.de';
 
@@ -201,11 +202,51 @@ const DSGVO_NOTICE = `
 </div>
 `;
 
+/**
+ * Schreibt alle https-Links in HTML-Body um auf Click-Tracker.
+ * - Nur https:// wird umgeschrieben (Whitelist-Prinzip)
+ * - mailto:, tel:, # (Anker), http:// werden NICHT angefasst
+ * - Bei Parse-Fehler: Original zurück (Fail-Safe)
+ */
+function rewriteLinksForTracking(html, campaignId, recipientId) {
+  if (!html || !campaignId || !recipientId) return html;
+  try {
+    const clickToken = generateClickToken(campaignId, recipientId);
+    const trackerBase = `${API_BASE_URL}/api/track/click/${clickToken}`;
+    // Fragment-Mode: cheerio fügt KEIN <html>/<body> hinzu
+    const $ = cheerio.load(html, null, false);
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href');
+      if (!href || typeof href !== 'string') return;
+      if (!/^https:\/\//i.test(href)) return; // nur https
+      const newHref = `${trackerBase}?u=${encodeURIComponent(href)}`;
+      $(el).attr('href', newHref);
+    });
+    return $.root().html() || html;
+  } catch (err) {
+    console.warn('[campaignService] Link-Rewrite fehlgeschlagen, nutze Original:', err && err.message);
+    return html;
+  }
+}
+
+function rewriteCtaUrlForTracking(url, campaignId, recipientId) {
+  if (!url || !campaignId || !recipientId) return url;
+  if (!/^https:\/\//i.test(url)) return url;
+  const clickToken = generateClickToken(campaignId, recipientId);
+  return `${API_BASE_URL}/api/track/click/${clickToken}?u=${encodeURIComponent(url)}`;
+}
+
 function buildCampaignHtml(campaign, recipientEmail, recipientId) {
   const unsubscribeUrl = generateUnsubscribeUrl(recipientEmail, 'marketing');
   const trackOpens = campaign.trackOpens !== false; // default: an
+  const trackClicks = campaign.trackClicks !== false; // default: an
 
   let bodyHtml = campaign.body || '';
+
+  // Click-Tracking: Links in body umschreiben
+  if (trackClicks && recipientId && campaign._id) {
+    bodyHtml = rewriteLinksForTracking(bodyHtml, campaign._id, recipientId);
+  }
 
   // DSGVO-Hinweis anhängen
   bodyHtml += DSGVO_NOTICE;
@@ -225,7 +266,10 @@ function buildCampaignHtml(campaign, recipientEmail, recipientId) {
   };
 
   if (campaign.ctaText && campaign.ctaUrl) {
-    templateData.cta = { text: campaign.ctaText, url: campaign.ctaUrl };
+    const finalCtaUrl = trackClicks && recipientId && campaign._id
+      ? rewriteCtaUrlForTracking(campaign.ctaUrl, campaign._id, recipientId)
+      : campaign.ctaUrl;
+    templateData.cta = { text: campaign.ctaText, url: finalCtaUrl };
   }
 
   return generateEmailTemplate(templateData);
@@ -582,7 +626,22 @@ async function getCampaignDetails(campaignId, { includeRecipients = false } = {}
   if (!campaign) return null;
 
   // Aktuelle Stats neu berechnen
-  campaign.stats = await computeStats(db, _id);
+  const deliveryStats = await computeStats(db, _id);
+  campaign.stats = { ...(campaign.stats || {}), ...deliveryStats };
+
+  // Top-Clicked URLs aus campaign_events aggregieren
+  try {
+    const topClicks = await db.collection('campaign_events').aggregate([
+      { $match: { campaignId: _id, type: 'click' } },
+      { $group: { _id: '$url', clicks: { $sum: 1 }, uniqueClickers: { $addToSet: '$recipientId' } } },
+      { $project: { url: '$_id', clicks: 1, uniqueClickers: { $size: '$uniqueClickers' }, _id: 0 } },
+      { $sort: { clicks: -1 } },
+      { $limit: 5 }
+    ]).toArray();
+    campaign.topClicks = topClicks;
+  } catch {
+    campaign.topClicks = [];
+  }
 
   if (includeRecipients) {
     campaign.recipients = await db.collection('campaign_recipients')

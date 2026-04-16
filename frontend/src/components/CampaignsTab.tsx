@@ -60,6 +60,7 @@ interface Campaign {
     clicks?: number;
     uniqueClicks?: number;
   };
+  topClicks?: Array<{ url: string; clicks: number; uniqueClickers: number }>;
 }
 
 interface SegmentFilter {
@@ -1777,9 +1778,37 @@ export default function CampaignsTab() {
                       <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
                         <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>🔗 Klicks</div>
                         <div>Unique-Klicker: <strong>{detailsData.stats.uniqueClicks ?? 0}</strong></div>
-                        <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>
+                        <div style={{ fontSize: '0.8125rem', color: '#64748b', marginBottom: '0.5rem' }}>
                           Gesamt-Klicks: {detailsData.stats.clicks ?? 0}
                         </div>
+                        {detailsData.topClicks && detailsData.topClicks.length > 0 && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '0.25rem' }}>
+                              Top-Links:
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                              {detailsData.topClicks.map((tc, idx) => (
+                                <div key={idx} style={{ fontSize: '0.7rem', display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                  <span
+                                    style={{
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      maxWidth: '300px',
+                                      color: '#475569'
+                                    }}
+                                    title={tc.url}
+                                  >
+                                    {tc.url}
+                                  </span>
+                                  <span style={{ color: '#3b82f6', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                    {tc.clicks}× ({tc.uniqueClickers} unique)
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
