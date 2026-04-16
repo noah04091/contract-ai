@@ -18,6 +18,51 @@ const MAX_INPUT_CHARS = 60000;
 const BATCH_OVERLAP = 5000;
 const MAX_COMPLETION_TOKENS = 16384;
 
+// ──────────────────────────────────────────────────────────────────
+// LENIENT MODE — Fuer "Trotzdem analysieren"-Override
+// User hat bewusst entschieden, dass das Dokument analysiert werden
+// soll, auch wenn es nicht eindeutig ein Vertrag ist (z.B. komplexe
+// Rechnung, Angebot, Formular). Hier extrahieren wir JEDEN strukturell
+// erkennbaren Abschnitt — auch ohne juristischen Klausel-Charakter.
+// ──────────────────────────────────────────────────────────────────
+const LENIENT_SYSTEM_PROMPT = `Du bist ein Experte fuer Dokumentstrukturierung. Der User hat dieses Dokument manuell zur Analyse freigegeben, auch wenn es moeglicherweise kein klassischer Vertrag ist (z.B. eine komplexe Rechnung, ein detailliertes Angebot, ein Formular mit Bestimmungen).
+
+Deine Aufgabe: Zerlege den folgenden Text in seine logisch abgegrenzten inhaltlichen Abschnitte — egal ob sie klassische Vertragsklauseln, Positionen einer Rechnung, Bestimmungen eines Angebots oder andere strukturelle Einheiten sind.
+
+REGELN:
+1. Extrahiere ALLE inhaltlichen Abschnitte, die eine eigenstaendige Aussage treffen — sei grosszuegig, nicht zu restriktiv.
+
+2. KEINE Abschnitte fuer reinen Metadaten-Ballast:
+   - Briefkoepfe, Absender/Empfaenger-Adressen (auch nicht als eigene Klausel)
+   - Seitennummern, Kopf-/Fusszeilen
+   - Unterschriftsfelder, Datum-Zeilen ("Ort, Datum: ______")
+   - Reine Firmen-Footer (USt-IdNr., HRB, Bank ohne inhaltlichen Kontext)
+
+3. Gib den VOLLSTAENDIGEN Text jedes Abschnitts zurueck — WOERTLICH wie im Dokument. Kein einziges Wort aendern, hinzufuegen oder weglassen.
+
+4. Rechnungs-/Angebotspositionen: Wenn eine Position eine eigene Beschreibung mit mehreren Saetzen hat, ist sie EIN Abschnitt. Reine Tabellenzeilen mit nur Bezeichnung+Preis sind KEINE Abschnitte (zu kurz).
+
+5. Rahmen-Bedingungen (AGB-Verweise, Liefer-/Zahlungsbedingungen, Gewaehrleistung, Garantie) sind IMMER eigene Abschnitte.
+
+6. Reihenfolge = wie im Dokument.
+
+7. KEINE Duplikate.
+
+8. Wenn absolut nichts Extrahierbares vorhanden ist (leerer Text, reine Bilder, reines Zahlenchaos ohne Struktur), gib ein leeres Array zurueck.
+
+Antworte NUR mit JSON:
+{
+  "clauses": [
+    {
+      "number": "Pos. 1" | "1." | null,
+      "title": "Kurzer Titel des Abschnitts" | null,
+      "text": "Vollstaendiger woertlicher Text..."
+    }
+  ],
+  "documentType": "Rechnung" | "Angebot" | "Formular" | "Vertrag" | null,
+  "language": "de" | "en"
+}`;
+
 const SYSTEM_PROMPT = `Du bist ein Experte fuer Vertragsanalyse. Deine Aufgabe: Zerlege den folgenden Vertragstext in seine einzelnen Klauseln.
 
 REGELN:
@@ -74,14 +119,21 @@ class DirectExtractor {
    * @param {string} rawText
    * @param {object} [options]
    * @param {number} [options.timeoutMs=120000]
+   * @param {boolean} [options.lenient=false] - Lenient-Mode fuer "Trotzdem analysieren":
+   *   Extrahiert auch Rechnungs-/Angebots-Positionen, nicht nur Vertragsklauseln.
    * @returns {Promise<object>} { clauses, documentType, language, metadata }
    */
   async extract(rawText, options = {}) {
-    const { timeoutMs = 120000 } = options;
+    const { timeoutMs = 120000, lenient = false } = options;
     const startTime = Date.now();
 
     if (!rawText || typeof rawText !== 'string' || rawText.trim().length < 100) {
       return { clauses: [], documentType: null, language: null, metadata: { reason: 'Text zu kurz', elapsedMs: 0 } };
+    }
+
+    const systemPrompt = lenient ? LENIENT_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    if (lenient) {
+      console.log(`[DirectExtractor] LENIENT MODE aktiv (Override)`);
     }
 
     let rawClauses, documentType, language;
@@ -91,7 +143,7 @@ class DirectExtractor {
     if (rawText.length <= MAX_INPUT_CHARS) {
       // Ein Call reicht
       console.log(`[DirectExtractor] Single Call — ${rawText.length} chars`);
-      const result = await this._singleCall(rawText, timeoutMs);
+      const result = await this._singleCall(rawText, timeoutMs, systemPrompt);
       rawClauses = result.clauses;
       documentType = result.documentType;
       language = result.language;
@@ -100,7 +152,7 @@ class DirectExtractor {
     } else {
       // Batching
       console.log(`[DirectExtractor] Batching — ${rawText.length} chars`);
-      const result = await this._batchedExtraction(rawText, timeoutMs);
+      const result = await this._batchedExtraction(rawText, timeoutMs, systemPrompt);
       rawClauses = result.clauses;
       documentType = result.documentType;
       language = result.language;
@@ -171,14 +223,14 @@ class DirectExtractor {
    * Ein einzelner GPT-Call.
    * @private
    */
-  async _singleCall(text, timeoutMs) {
+  async _singleCall(text, timeoutMs, systemPrompt = SYSTEM_PROMPT) {
     const response = await this.openai.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `Hier ist der Vertragstext. Zerlege ihn in Klauseln.\n\n---BEGIN VERTRAG---\n${text}\n---END VERTRAG---`
+          content: `Hier ist der Dokumenttext. Zerlege ihn in seine logischen Abschnitte.\n\n---BEGIN DOKUMENT---\n${text}\n---END DOKUMENT---`
         }
       ],
       response_format: { type: 'json_object' },
@@ -203,7 +255,7 @@ class DirectExtractor {
    * Batched Extraction fuer lange Texte.
    * @private
    */
-  async _batchedExtraction(text, timeoutMs) {
+  async _batchedExtraction(text, timeoutMs, systemPrompt = SYSTEM_PROMPT) {
     const windows = [];
     let pos = 0;
     while (pos < text.length) {
@@ -225,13 +277,13 @@ class DirectExtractor {
       console.log(`[DirectExtractor] Batch ${i + 1}/${windows.length}: ${win.text.length} chars`);
       try {
         const batchPrompt = i === 0
-          ? `Hier ist der ERSTE TEIL eines langen Vertrags. Zerlege ihn in Klauseln. Wenn eine Klausel am Ende abgeschnitten wirkt, extrahiere trotzdem alles was da ist.\n\n---BEGIN VERTRAG (Teil ${i + 1})---\n${win.text}\n---END VERTRAG---`
-          : `Hier ist ein WEITERER TEIL desselben Vertrags (Fortsetzung). Zerlege ihn in Klauseln. Es kann sein, dass der Text mitten in einer Klausel beginnt — wenn ja, extrahiere sie trotzdem.\n\n---BEGIN VERTRAG (Teil ${i + 1})---\n${win.text}\n---END VERTRAG---`;
+          ? `Hier ist der ERSTE TEIL eines langen Dokuments. Zerlege ihn in Abschnitte. Wenn ein Abschnitt am Ende abgeschnitten wirkt, extrahiere trotzdem alles was da ist.\n\n---BEGIN DOKUMENT (Teil ${i + 1})---\n${win.text}\n---END DOKUMENT---`
+          : `Hier ist ein WEITERER TEIL desselben Dokuments (Fortsetzung). Zerlege ihn in Abschnitte. Es kann sein, dass der Text mitten in einem Abschnitt beginnt — wenn ja, extrahiere ihn trotzdem.\n\n---BEGIN DOKUMENT (Teil ${i + 1})---\n${win.text}\n---END DOKUMENT---`;
 
         const response = await this.openai.chat.completions.create({
           model: MODEL,
           messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'system', content: systemPrompt },
             { role: 'user', content: batchPrompt }
           ],
           response_format: { type: 'json_object' },

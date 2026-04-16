@@ -29,15 +29,16 @@ function getExtractor() {
  * @param {string} text - Der rohe Vertragstext
  * @param {object} [options]
  * @param {boolean} [options.detectRisk=true]
+ * @param {boolean} [options.lenient=false] - Lenient-Mode fuer "Trotzdem analysieren"
  * @returns {Promise<{success, clauses, totalClauses, sections, riskSummary, metadata}>}
  */
 async function parseContractDirect(text, options = {}) {
-  const { detectRisk = true } = options;
+  const { detectRisk = true, lenient = false } = options;
   const startedAt = Date.now();
 
-  console.log(`[DirectAdapter] Start — ${text.length} chars`);
+  console.log(`[DirectAdapter] Start — ${text.length} chars${lenient ? ' (LENIENT)' : ''}`);
 
-  const result = await getExtractor().extract(text);
+  const result = await getExtractor().extract(text, { lenient });
 
   if (!result.clauses || result.clauses.length === 0) {
     console.log(`[DirectAdapter] Keine Klauseln erkannt`);

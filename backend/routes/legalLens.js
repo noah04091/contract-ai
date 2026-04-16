@@ -3083,9 +3083,11 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }, 2000);
 
         // Phase 1: Extraktion OHNE GPT-Risk — schnelle Antwort an den User
+        // Lenient-Mode: Wenn User "Trotzdem analysieren" geklickt hat, Extractor
+        // grosszuegiger machen (auch Rechnungspositionen, Angebotsabschnitte etc.)
         let parseResult;
         try {
-          parseResult = await parseContractDirect(text, { detectRisk: false });
+          parseResult = await parseContractDirect(text, { detectRisk: false, lenient: isSkipGate });
         } finally {
           clearInterval(heartbeat);
         }
