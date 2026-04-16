@@ -275,6 +275,33 @@ interface EmailLogsStats {
   byStatus: Array<{ _id: string; count: number }>;
 }
 
+interface UpcomingCampaign {
+  _id: string;
+  name: string;
+  subject: string;
+  scheduledFor: string | null;
+  status: 'queued' | 'sending';
+  recipientCount: number;
+  segmentFilter?: {
+    userIds?: string[];
+    emails?: string[];
+    plan?: string;
+    subscriptionActive?: boolean;
+    minAnalysisCount?: number;
+    createdAfter?: string;
+    createdBefore?: string;
+  };
+  stats?: {
+    total: number;
+    sent: number;
+    failed: number;
+    skipped: number;
+  };
+  startedAt?: string | null;
+  queuedAt?: string | null;
+  createdByEmail?: string | null;
+}
+
 interface FinanceStats {
   monthlyRevenue: Array<{ month: string; revenue: number; count: number; byPlan: { business: number; enterprise: number } }>;
   monthlyCosts: Array<{ month: string; cost: number; calls: number }>;
@@ -452,6 +479,7 @@ export default function AdminDashboard() {
   const [emailLogsSearchInput, setEmailLogsSearchInput] = useState('');
   const [emailLogsCategory, setEmailLogsCategory] = useState<string>('all');
   const [emailLogsStatus, setEmailLogsStatus] = useState<string>('all');
+  const [upcomingCampaigns, setUpcomingCampaigns] = useState<UpcomingCampaign[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -737,6 +765,27 @@ export default function AdminDashboard() {
       fetchEmailLogs(emailLogsPage, emailLogsSearch, emailLogsCategory, emailLogsStatus);
     }
   }, [activeTab, emailLogsPage, emailLogsSearch, emailLogsCategory, emailLogsStatus]);
+
+  // Fetch geplante + laufende Kampagnen (für "Geplant & Laufend" Sektion in Mails-Tab)
+  const fetchUpcomingCampaigns = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/email-logs/upcoming`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) setUpcomingCampaigns(data.upcoming || []);
+      }
+    } catch (err) {
+      console.error('Error fetching upcoming campaigns:', err);
+    }
+  };
+
+  // Initial-Fetch + Auto-Refresh alle 30s solange Mails-Tab aktiv
+  useEffect(() => {
+    if (activeTab !== 'emails') return;
+    fetchUpcomingCampaigns();
+    const timer = setInterval(fetchUpcomingCampaigns, 30000);
+    return () => clearInterval(timer);
+  }, [activeTab]);
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -3609,6 +3658,127 @@ export default function AdminDashboard() {
                     <span className={styles.activityStatValue}>{emailLogsStats.sent30d.toLocaleString('de-DE')}</span>
                     <span className={styles.activityStatLabel}>Letzte 30 Tage</span>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Geplant & Laufend (Upcoming Campaigns) */}
+            {upcomingCampaigns !== null && (
+              <div className={styles.tableCard} style={{ marginBottom: '1.5rem' }}>
+                <div className={styles.tabHeader}>
+                  <h3 style={{ margin: 0 }}>
+                    📅 Geplant &amp; Laufend
+                    {upcomingCampaigns.length > 0 && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem', color: '#64748b', fontWeight: 400 }}>
+                        ({upcomingCampaigns.length})
+                      </span>
+                    )}
+                  </h3>
+                </div>
+                <div style={{ padding: '1rem' }}>
+                  {upcomingCampaigns.length === 0 ? (
+                    <div style={{ padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.875rem' }}>
+                      Keine geplanten oder laufenden Kampagnen — alles abgearbeitet ✓
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {upcomingCampaigns.map(c => {
+                        const isScheduled = c.status === 'queued' && c.scheduledFor;
+                        const isSendingNow = c.status === 'sending';
+                        const isImmediateQueued = c.status === 'queued' && !c.scheduledFor;
+                        const scheduledMs = c.scheduledFor ? new Date(c.scheduledFor).getTime() - Date.now() : 0;
+
+                        // Relative time
+                        let relTime = '';
+                        if (isScheduled && scheduledMs > 0) {
+                          const min = Math.round(scheduledMs / 60000);
+                          if (min < 60) relTime = `in ${min} Min`;
+                          else if (min < 1440) relTime = `in ${Math.round(min / 60)} Std`;
+                          else relTime = `in ${Math.round(min / 1440)} Tagen`;
+                        }
+
+                        // Segment-Beschreibung
+                        const sf = c.segmentFilter || {};
+                        let segmentDesc: string;
+                        if (sf.userIds?.length) segmentDesc = `${sf.userIds.length} spezifische User`;
+                        else if (sf.emails?.length) segmentDesc = `${sf.emails.length} spezifische Emails`;
+                        else {
+                          const parts: string[] = [];
+                          if (sf.plan) parts.push(`Plan: ${sf.plan}`);
+                          if (sf.subscriptionActive) parts.push('aktive Abos');
+                          if (sf.minAnalysisCount) parts.push(`≥ ${sf.minAnalysisCount} Analysen`);
+                          if (sf.createdAfter || sf.createdBefore) parts.push('Datums-Range');
+                          segmentDesc = parts.length > 0 ? parts.join(' + ') : 'Alle Marketing-User';
+                        }
+
+                        // Progress for sending
+                        const sentSoFar = c.stats?.sent ?? 0;
+                        const failedSoFar = c.stats?.failed ?? 0;
+                        const totalCount = c.stats?.total ?? c.recipientCount;
+                        const remainingCount = Math.max(0, totalCount - sentSoFar - failedSoFar);
+                        const progressPct = totalCount > 0 ? Math.round((sentSoFar / totalCount) * 100) : 0;
+
+                        return (
+                          <div
+                            key={c._id}
+                            style={{
+                              padding: '0.75rem 1rem',
+                              borderRadius: '8px',
+                              border: `1px solid ${isSendingNow ? '#fbbf24' : isScheduled ? '#c4b5fd' : '#bfdbfe'}`,
+                              background: isSendingNow ? '#fffbeb' : isScheduled ? '#f5f3ff' : '#eff6ff'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1e293b', marginBottom: '0.25rem' }}>
+                                  {isSendingNow ? '⏳ ' : '📅 '}
+                                  {c.name || c.subject}
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '0.15rem' }}>
+                                  Betreff: {c.subject}
+                                </div>
+                                {isScheduled && c.scheduledFor && (
+                                  <div style={{ fontSize: '0.8rem', color: '#7c3aed', fontWeight: 500 }}>
+                                    Geplant: {new Date(c.scheduledFor).toLocaleString('de-DE')}
+                                    {relTime && <span style={{ marginLeft: '0.5rem', color: '#64748b', fontWeight: 400 }}>({relTime})</span>}
+                                  </div>
+                                )}
+                                {isSendingNow && c.startedAt && (
+                                  <div style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: 500 }}>
+                                    Läuft seit: {new Date(c.startedAt).toLocaleString('de-DE')}
+                                  </div>
+                                )}
+                                {isImmediateQueued && (
+                                  <div style={{ fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 500 }}>
+                                    Wird beim nächsten Cron-Tick gestartet (max. 1 Min)
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '0.8rem', color: '#475569', marginTop: '0.25rem' }}>
+                                  An: <strong>{c.recipientCount}</strong> Empfänger ({segmentDesc})
+                                  {c.createdByEmail && (
+                                    <span style={{ marginLeft: '0.5rem', color: '#94a3b8' }}>
+                                      · von {c.createdByEmail}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {isSendingNow && totalCount > 0 && (
+                              <div style={{ marginTop: '0.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginBottom: '0.2rem' }}>
+                                  <span>{sentSoFar} / {totalCount} versendet ({remainingCount} ausstehend{failedSoFar > 0 ? `, ${failedSoFar} Fehler` : ''})</span>
+                                  <span>{progressPct}%</span>
+                                </div>
+                                <div style={{ height: '6px', background: '#fef3c7', borderRadius: '3px', overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${progressPct}%`, background: '#f59e0b', transition: 'width 0.3s' }} />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

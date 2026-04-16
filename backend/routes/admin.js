@@ -1879,6 +1879,47 @@ router.get('/email-logs', verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/email-logs/upcoming - Geplante + laufende Kampagnen
+// Zeigt im Mails-Tab welche Mails in der Zukunft versendet werden
+router.get('/email-logs/upcoming', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const db = await database.connect();
+    const now = new Date();
+
+    const upcoming = await db.collection('email_campaigns')
+      .find({
+        $or: [
+          // Geplant: queued + scheduledFor in der Zukunft
+          { status: 'queued', scheduledFor: { $gt: now } },
+          // Sofort eingereiht (kein scheduledFor) — wird beim naechsten Cron-Tick gesendet
+          { status: 'queued', scheduledFor: null },
+          { status: 'queued', scheduledFor: { $exists: false } },
+          // Aktuell laufend
+          { status: 'sending' }
+        ]
+      })
+      .project({
+        _id: 1, name: 1, subject: 1, scheduledFor: 1, status: 1,
+        recipientCount: 1, segmentFilter: 1, stats: 1,
+        startedAt: 1, queuedAt: 1, createdByEmail: 1
+      })
+      .sort({ scheduledFor: 1, queuedAt: 1 })
+      .limit(50)
+      .toArray();
+
+    res.json({
+      success: true,
+      upcoming: upcoming.map(c => ({
+        ...c,
+        _id: String(c._id)
+      }))
+    });
+  } catch (error) {
+    console.error('❌ [ADMIN UPCOMING]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // GET /api/admin/email-logs/stats - Aggregierte Statistiken
 router.get('/email-logs/stats', verifyToken, verifyAdmin, async (req, res) => {
   try {
