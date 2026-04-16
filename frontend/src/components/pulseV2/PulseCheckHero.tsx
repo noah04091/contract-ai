@@ -222,9 +222,9 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
                 </span>
               )}
               {criticalContractCount > 0 && (
-                <span>
+                <span title="Verträge mit mindestens einem kritischen Befund">
                   <strong style={{ color: '#dc2626' }}>{criticalContractCount}</strong>
-                  {' '}kritisch
+                  {' '}{criticalContractCount === 1 ? 'kritischer Vertrag' : 'kritische Verträge'}
                 </span>
               )}
             </div>

@@ -30,11 +30,12 @@ function detectRelationships(portfolio) {
   for (const cluster of portfolio.renewalClusters) {
     const names = cluster.map(c => c.name).slice(0, 3);
     const minDays = Math.min(...cluster.map(c => c.daysUntilExpiry || 999));
+    const maxDays = Math.max(...cluster.map(c => c.daysUntilExpiry || 0));
     patterns.push({
       type: "renewal_cluster",
       severity: minDays <= 30 ? "critical" : minDays <= 60 ? "high" : "medium",
       title: `${cluster.length} Verträge laufen gleichzeitig aus`,
-      description: `${names.join(", ")}${cluster.length > 3 ? ` und ${cluster.length - 3} weitere` : ""} laufen innerhalb von 60 Tagen aus. Frühester Ablauf in ${minDays} Tagen.`,
+      description: `${names.join(", ")}${cluster.length > 3 ? ` und ${cluster.length - 3} weitere` : ""} laufen innerhalb von ${maxDays} Tagen aus. Frühester Ablauf in ${minDays} Tagen.`,
       relatedContracts: cluster.map(c => c.id),
       confidence: 95,
     });
