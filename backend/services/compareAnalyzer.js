@@ -12,8 +12,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MAX_CLAUSES = 40;
 const MAX_CONTRACT_CHARS = 100000; // ~25K tokens
 const MAX_DIFFERENCES = 30;
-const MAX_PHASE_A_TIME = 90000; // 90s (complex contracts need more time)
-const MAX_PHASE_B_TIME = 120000; // 120s (deep comparison of long contracts)
+const MAX_PHASE_A_TIME = 150000; // 150s (OCR-PDFs mit 400K chars brauchen mehr Zeit für GPT-4o)
+const MAX_PHASE_B_TIME = 150000; // 150s (deep comparison of long contracts)
 
 // Schicht 3: Klausel-für-Klausel Constants
 const MAX_CONCURRENT_CLAUSE_CALLS = 15;
