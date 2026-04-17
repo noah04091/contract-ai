@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import type { PulseV2LegalAlert } from '../../types/pulseV2';
 
+interface RadarSummary {
+  feeds: { enabled: number; total: number };
+  laws: { total: number };
+  alertsThisWeek: { total: number };
+  email: { deliveryRate: number };
+}
+
 interface PulseCheckHeroProps {
   stats: { total: number; analyzed: number };
   alerts: PulseV2LegalAlert[];
@@ -11,7 +18,8 @@ interface PulseCheckHeroProps {
   severityCounts: { critical: number; high: number; medium: number; low: number };
   recentAlertsCount: number;
   lastVisit: string | null;
-  onJumpToRadar: () => void;
+  avgScore: number | null;
+  radarData?: RadarSummary | null;
   onAnalyzeFirst?: () => void;
 }
 
@@ -70,7 +78,8 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
   severityCounts,
   recentAlertsCount,
   lastVisit,
-  onJumpToRadar,
+  avgScore,
+  radarData,
   onAnalyzeFirst,
 }) => {
   // Count "new since last visit"
@@ -95,16 +104,12 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
   const config = STATUS_CONFIG[status];
   const isFirstUse = stats.analyzed === 0;
 
-  // Build status message — greeting depends on usage state, not on localStorage
-  // (returning users without lastVisit should NOT see the first-use text).
   const greeting = isFirstUse ? 'Legal Pulse startbereit' : 'Willkommen zurück';
   let statusMessage: React.ReactNode;
 
   if (isFirstUse) {
     statusMessage = (
-      <>
-        Analysieren Sie Ihre Verträge, um die automatische Überwachung zu aktivieren.
-      </>
+      <>Analysieren Sie Ihre Verträge, um die automatische Überwachung zu aktivieren.</>
     );
   } else if (status === 'red') {
     const critCount = severityCounts?.critical ?? 0;
@@ -126,13 +131,23 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
       statusMessage = <>{recentAlertsCount} aktuelle Warnung{recentAlertsCount === 1 ? '' : 'en'} im Legal Radar.</>;
     }
   } else {
-    // green
     if (lastVisit) {
       statusMessage = <>Alles im Griff — keine neuen Warnungen seit {formatRelativeTime(lastVisit)}.</>;
     } else {
       statusMessage = <>Keine kritischen Befunde. Ihre Verträge werden überwacht.</>;
     }
   }
+
+  // Score ring calculation
+  const score = avgScore;
+  const scoreColor = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
+  const scoreLabel = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
+  const pct = score !== null ? score / 100 : 0;
+  const radius = 44;
+  const circumference = 2 * Math.PI * radius;
+  const strokeOffset = circumference * (1 - pct);
+
+  const showRightPanel = !isFirstUse && (avgScore !== null || radarData);
 
   return (
     <div style={{
@@ -147,10 +162,10 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 24,
+        gap: 28,
         flexWrap: 'wrap',
       }}>
-        {/* Left: Status dot + title */}
+        {/* ── Left: Status dot + text ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 320px', minWidth: 0 }}>
           {/* Pulsing dot */}
           <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
@@ -231,75 +246,161 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
           </div>
         </div>
 
-        {/* Right: CTAs */}
-        <div style={{
-          display: 'flex',
-          gap: 10,
-          flexShrink: 0,
-          flexWrap: 'wrap',
-        }}>
-          {!isFirstUse && (newSinceLastVisit > 0 || recentAlertsCount > 0 || openActionCount > 0) && (
-            <button
-              onClick={onJumpToRadar}
-              style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#fff',
-                background: status === 'red'
-                  ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                  : status === 'yellow'
-                  ? 'linear-gradient(135deg, #d97706, #b45309)'
-                  : 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Jetzt prüfen →
-            </button>
-          )}
-          {unanalyzedCount > 0 && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#334155',
-                background: '#ffffff',
-                border: '1px solid #e2e8f0',
-                borderRadius: 10,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
-            </button>
-          )}
-          {isFirstUse && onAnalyzeFirst && (
-            <button
-              onClick={onAnalyzeFirst}
-              style={{
-                padding: '10px 24px',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#fff',
-                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
-                border: 'none',
-                borderRadius: 10,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Erste Analyse starten
-            </button>
-          )}
-        </div>
+        {/* ── Right: Score + Radar glass panel ── */}
+        {showRightPanel && (
+          <div style={{
+            background: 'rgba(255,255,255,0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            borderRadius: 16,
+            border: '1px solid rgba(255,255,255,0.85)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+            padding: '20px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 24,
+            flexShrink: 0,
+            minWidth: 0,
+          }}>
+            {/* Score Ring */}
+            {score !== null && (
+              <div style={{
+                position: 'relative',
+                width: 96, height: 96,
+                flexShrink: 0,
+                filter: `drop-shadow(0 0 10px ${scoreColor}25)`,
+              }}>
+                <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="7" />
+                  <circle
+                    cx="48" cy="48" r={radius}
+                    fill="none" stroke={scoreColor} strokeWidth="7"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeOffset}
+                    style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+                  />
+                </svg>
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: 30, fontWeight: 800, color: scoreColor, lineHeight: 1 }}>
+                    {score}
+                  </span>
+                  <span style={{
+                    fontSize: 8.5, fontWeight: 700, color: '#94a3b8',
+                    textTransform: 'uppercase', letterSpacing: '0.6px', marginTop: 3,
+                  }}>
+                    Score
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Score label + Radar */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+              {/* Contract Health label */}
+              {score !== null && (
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.2px' }}>
+                    Contract Health
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 1 }}>
+                    {scoreLabel}
+                  </div>
+                </div>
+              )}
+
+              {/* Radar 2×2 grid */}
+              {radarData && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '4px 18px',
+                  borderTop: score !== null ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                  paddingTop: score !== null ? 10 : 0,
+                }}>
+                  <RadarStat
+                    value={`${radarData.feeds.enabled}/${radarData.feeds.total}`}
+                    label="Feeds"
+                    color={radarData.feeds.enabled > 0 ? '#059669' : '#d97706'}
+                  />
+                  <RadarStat
+                    value={radarData.laws.total.toLocaleString('de-DE')}
+                    label="Laws"
+                    color="#3b82f6"
+                  />
+                  <RadarStat
+                    value={String(radarData.alertsThisWeek.total)}
+                    label="Alerts"
+                    color={radarData.alertsThisWeek.total > 0 ? '#ea580c' : '#64748b'}
+                  />
+                  <RadarStat
+                    value={`${radarData.email.deliveryRate}%`}
+                    label="Delivery"
+                    color={radarData.email.deliveryRate >= 90 ? '#059669' : '#dc2626'}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── CTA (only analyze button, no "Jetzt prüfen") ── */}
+        {unanalyzedCount > 0 && onAnalyzeFirst && !isFirstUse && (
+          <button
+            onClick={onAnalyzeFirst}
+            style={{
+              padding: '10px 20px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#334155',
+              background: 'rgba(255,255,255,0.75)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 10,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap' as const,
+              flexShrink: 0,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'box-shadow 0.15s, background 0.15s',
+            }}
+          >
+            {unanalyzedCount} Vertr{unanalyzedCount === 1 ? 'ag' : 'äge'} analysieren
+          </button>
+        )}
+        {isFirstUse && onAnalyzeFirst && (
+          <button
+            onClick={onAnalyzeFirst}
+            style={{
+              padding: '10px 24px',
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#fff',
+              background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+              border: 'none',
+              borderRadius: 10,
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+              whiteSpace: 'nowrap' as const,
+              flexShrink: 0,
+            }}
+          >
+            Erste Analyse starten
+          </button>
+        )}
       </div>
     </div>
   );
 };
+
+// ── Radar stat: compact value + label ──
+const RadarStat: React.FC<{ value: string; label: string; color: string }> = ({ value, label, color }) => (
+  <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+    <span style={{ fontSize: 14, fontWeight: 700, color, lineHeight: 1.4 }}>{value}</span>
+    <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 500 }}>{label}</span>
+  </div>
+);

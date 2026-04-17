@@ -1003,11 +1003,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
         recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
         lastVisit={lastVisit}
-        onJumpToRadar={() => {
-          if (radarRef.current) {
-            radarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }}
+        avgScore={alertStats.avgScore}
+        radarData={radarData ?? null}
         onAnalyzeFirst={() => {
           const firstUnanalyzed = items.find(i => !i.hasV2Result);
           if (firstUnanalyzed) {
