@@ -30,6 +30,9 @@ interface PulseCheckHeroProps {
   lastVisit: string | null;
   avgScore: number | null;
   radarData?: RadarData | null;
+  lastScan?: string | null;
+  lastRadarScan?: string | null;
+  nextRadarScan?: string | null;
   onAnalyzeFirst?: () => void;
 }
 
@@ -89,9 +92,13 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
   lastVisit,
   avgScore,
   radarData,
+  lastScan,
+  lastRadarScan,
+  nextRadarScan,
   onAnalyzeFirst,
 }) => {
   const [radarExpanded, setRadarExpanded] = useState(false);
+  const [scoreInfoExpanded, setScoreInfoExpanded] = useState(false);
 
   const newSinceLastVisit = useMemo(() => {
     if (!lastVisit) return 0;
@@ -217,6 +224,56 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
                 </span>
               )}
             </div>
+
+            {/* Monitoring pulse line — shows the system is alive */}
+            {!isFirstUse && (lastScan || lastRadarScan || nextRadarScan) && (
+              <div style={{
+                display: 'flex', gap: 12, marginTop: 8, fontSize: 11.5, color: '#94a3b8',
+                flexWrap: 'wrap', alignItems: 'center',
+              }}>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                }}>
+                  <span style={{
+                    width: 6, height: 6, borderRadius: '50%', background: '#22c55e',
+                    display: 'inline-block', boxShadow: '0 0 4px #22c55e88',
+                  }} />
+                  Legal Pulse aktiv
+                </span>
+                <span style={{ color: '#d1d5db' }}>·</span>
+                {(lastScan || lastRadarScan) && (
+                  <>
+                    <span>
+                      Letzte Prüfung: <strong style={{ color: '#64748b', fontWeight: 600 }}>
+                        {formatRelativeTime(lastRadarScan || lastScan || '')}
+                      </strong>
+                    </span>
+                    <span style={{ color: '#d1d5db' }}>·</span>
+                  </>
+                )}
+                {nextRadarScan && (
+                  <>
+                    <span>
+                      Nächste: <strong style={{ color: '#64748b', fontWeight: 600 }}>
+                        {(() => {
+                          const diff = new Date(nextRadarScan).getTime() - Date.now();
+                          if (diff < 0) return 'In Kürze';
+                          const hours = Math.floor(diff / (1000 * 60 * 60));
+                          if (hours < 1) return 'In Kürze';
+                          if (hours < 24) return `in ${hours}h`;
+                          return `in ${Math.floor(hours / 24)}d`;
+                        })()}
+                      </strong>
+                      <span style={{ color: '#94a3b8' }}> (Radar)</span>
+                    </span>
+                    <span style={{ color: '#d1d5db' }}>·</span>
+                  </>
+                )}
+                <span>
+                  Überwacht: <strong style={{ color: '#64748b', fontWeight: 600 }}>{stats.analyzed} Verträge</strong>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -236,12 +293,20 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
             flexShrink: 0,
             minWidth: 0,
           }}>
-            {/* Score Ring */}
+            {/* Score Ring — clickable */}
             {score !== null && (
-              <div style={{
-                position: 'relative', width: 96, height: 96, flexShrink: 0,
-                filter: `drop-shadow(0 0 10px ${scoreColor}25)`,
-              }}>
+              <div
+                onClick={() => setScoreInfoExpanded(!scoreInfoExpanded)}
+                title="Klicken für Score-Details"
+                style={{
+                  position: 'relative', width: 96, height: 96, flexShrink: 0,
+                  filter: `drop-shadow(0 0 10px ${scoreColor}25)`,
+                  cursor: 'pointer',
+                  transition: 'transform 0.15s ease',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+              >
                 <svg width="96" height="96" viewBox="0 0 96 96" style={{ transform: 'rotate(-90deg)' }}>
                   <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="7" />
                   <circle
@@ -326,6 +391,109 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
           </button>
         )}
       </div>
+
+      {/* ── Score Info Expanded ── */}
+      {scoreInfoExpanded && score !== null && (
+        <div style={{
+          marginTop: 20,
+          background: 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.8)',
+          padding: '24px 28px',
+          boxShadow: '0 1px 6px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 16,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%',
+                background: `${scoreColor}14`, border: `2px solid ${scoreColor}33`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16, fontWeight: 800, color: scoreColor,
+              }}>
+                {score}
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>
+                  So wird Ihr Score berechnet
+                </div>
+                <div style={{ fontSize: 12, color: '#64748b', marginTop: 1 }}>
+                  Durchschnitt über {stats.analyzed} analysierte{stats.analyzed === 1 ? 'n' : ''} Vertrag{stats.analyzed === 1 ? '' : ' Verträge'}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setScoreInfoExpanded(false); }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 18, color: '#94a3b8', padding: '2px 6px', lineHeight: 1,
+              }}
+            >&#10005;</button>
+          </div>
+
+          <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.65, margin: '0 0 18px' }}>
+            Der Gesamtscore (0–100) setzt sich aus vier gleichgewichteten Faktoren zusammen, die bei jeder Vertragsanalyse automatisch bewertet werden:
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 12,
+            marginBottom: 18,
+          }}>
+            <ScoreFactor
+              icon="⚠"
+              title="Risiko"
+              description="Wie viele und wie schwere rechtliche Risiken wurden erkannt? Fehlende Haftungsbegrenzungen, unwirksame Klauseln und einseitige Regelungen senken den Score."
+              color="#dc2626"
+            />
+            <ScoreFactor
+              icon="§"
+              title="Compliance"
+              description="Entspricht der Vertrag den gesetzlichen Anforderungen? DSGVO, AGB-Recht, Verbraucherschutz und branchenspezifische Vorgaben werden geprüft."
+              color="#2563eb"
+            />
+            <ScoreFactor
+              icon="⚖"
+              title="Konditionen"
+              description="Sind die Vertragsbedingungen fair und marktüblich? Laufzeiten, Kündigungsfristen, Zahlungsbedingungen und Preisanpassungsklauseln werden bewertet."
+              color="#d97706"
+            />
+            <ScoreFactor
+              icon="✓"
+              title="Vollständigkeit"
+              description="Fehlen wichtige Klauseln, die enthalten sein sollten? Geheimhaltung, Haftung, Gewährleistung und Streitbeilegung werden auf Vorhandensein geprüft."
+              color="#059669"
+            />
+          </div>
+
+          <div style={{
+            background: 'rgba(255,255,255,0.6)',
+            borderRadius: 10,
+            border: '1px solid rgba(0,0,0,0.04)',
+            padding: '12px 16px',
+            display: 'flex', gap: 24, flexWrap: 'wrap',
+            fontSize: 12, color: '#64748b',
+          }}>
+            <span>
+              <strong style={{ color: '#22c55e' }}>80+</strong>{' '}Gut aufgestellt
+            </span>
+            <span>
+              <strong style={{ color: '#d97706' }}>50–79</strong>{' '}Prüfungsbedarf
+            </span>
+            <span>
+              <strong style={{ color: '#dc2626' }}>&lt;50</strong>{' '}Handlungsbedarf
+            </span>
+            <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: 11 }}>
+              Quick-Fixes und Klausel-Edits verbessern den Score bei erneuter Analyse
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* ── Radar Expanded Details ── */}
       {radarExpanded && radarData && (
@@ -412,6 +580,26 @@ const DetailStat: React.FC<{ label: string; value: string; color: string }> = ({
   <div style={{ textAlign: 'center', minWidth: 70 }}>
     <div style={{ fontSize: 18, fontWeight: 700, color }}>{value}</div>
     <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{label}</div>
+  </div>
+);
+
+const ScoreFactor: React.FC<{ icon: string; title: string; description: string; color: string }> = ({ icon, title, description, color }) => (
+  <div style={{
+    background: 'rgba(255,255,255,0.65)',
+    borderRadius: 10,
+    border: '1px solid rgba(0,0,0,0.04)',
+    padding: '14px 16px',
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+      <span style={{
+        width: 26, height: 26, borderRadius: 7,
+        background: `${color}10`, border: `1px solid ${color}22`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 13,
+      }}>{icon}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>{title}</span>
+    </div>
+    <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.55 }}>{description}</div>
   </div>
 );
 

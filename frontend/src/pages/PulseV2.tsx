@@ -11,7 +11,7 @@ import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
 import { SystemStatusPanel } from '../components/pulseV2/SystemStatusPanel';
-import { useRadarHealth, RadarHealthCompact, RadarHealthExpanded } from '../components/pulseV2/RadarHealthCard';
+import { useRadarHealth } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
 import { useToast } from '../context/ToastContext';
 import { cleanContractName } from '../utils/contractName';
@@ -647,7 +647,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
-  const [radarExpanded, setRadarExpanded] = useState(false);
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
@@ -1005,6 +1004,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         lastVisit={lastVisit}
         avgScore={alertStats.avgScore}
         radarData={radarData ?? null}
+        lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
+        lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
+        nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
         onAnalyzeFirst={() => {
           const firstUnanalyzed = items.find(i => !i.hasV2Result);
           if (firstUnanalyzed) {
@@ -1139,85 +1141,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             />
           )}
 
-          {/* ══════════ Zone 3: Portfolio Health + Radar Compact ══════════ */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: 20,
-            border: '1px solid rgba(0,0,0,0.04)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04)',
-            padding: '36px 44px',
-            marginBottom: 28,
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 40,
-            }}>
-              {(() => {
-                const score = alertStats.avgScore;
-                const color = score === null ? '#d1d5db' : score >= 70 ? '#22c55e' : score >= 50 ? '#d97706' : '#dc2626';
-                const label = score === null ? 'Keine Daten' : score >= 70 ? 'Stabil' : score >= 50 ? 'Aufmerksamkeit nötig' : 'Handlungsbedarf';
-                const pct = score !== null ? score / 100 : 0;
-                const radius = 52;
-                const circumference = 2 * Math.PI * radius;
-                const offset = circumference * (1 - pct);
-                return (
-                  <>
-                    <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0, filter: `drop-shadow(0 0 12px ${color}33)` }}>
-                      <svg width="120" height="120" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="60" cy="60" r={radius} fill="none" stroke="#e2e8f0" strokeWidth="8" />
-                        {score !== null && (
-                          <circle
-                            cx="60" cy="60" r={radius}
-                            fill="none" stroke={color} strokeWidth="8"
-                            strokeLinecap="round"
-                            strokeDasharray={circumference}
-                            strokeDashoffset={offset}
-                            style={{ transition: 'stroke-dashoffset 1s ease' }}
-                          />
-                        )}
-                      </svg>
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <span style={{ fontSize: 36, fontWeight: 800, color: score !== null ? color : '#cbd5e1', lineHeight: 1 }}>
-                          {score ?? '—'}
-                        </span>
-                        <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 2 }}>
-                          Score
-                        </span>
-                      </div>
-                    </div>
-                    <div style={{ flex: 1, borderLeft: '4px solid #3b82f6', paddingLeft: 16 }}>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: '#0f172a', marginBottom: 6, letterSpacing: '-0.3px' }}>
-                        Contract Health
-                      </div>
-                      <div style={{ fontSize: 15, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>
-                        {label}
-                      </div>
-                      {stats.analyzed > 0 && (
-                        <div style={{ display: 'flex', gap: 12, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
-                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{stats.analyzed}</strong> analysiert</span>
-                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: alertStats.criticalContracts.length > 0 ? '#dc2626' : '#0f172a' }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
-                          <span style={{ background: '#f8fafc', padding: '6px 12px', borderRadius: 8, border: '1px solid #f1f5f9' }}><strong style={{ color: '#0f172a' }}>{alertStats.renewalSoon.length}</strong> bald ablaufend</span>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                );
-              })()}
-              {radarData && (
-                <RadarHealthCompact
-                  data={radarData}
-                  expanded={radarExpanded}
-                  onToggle={() => setRadarExpanded(!radarExpanded)}
-                />
-              )}
-            </div>
-            {radarExpanded && radarData && <RadarHealthExpanded data={radarData} />}
-          </div>
+          {/* Zone 3: Contract Health + Radar — now consolidated into PulseCheckHero above */}
 
           {/* Portfolio Improvement Tracking */}
           {portfolioSummary && (
