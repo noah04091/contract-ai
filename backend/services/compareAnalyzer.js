@@ -6167,8 +6167,10 @@ Erstelle jetzt die Sections für den Vergleich. JEDER echte Unterschied = eine e
  * STUFE 2: Holistic Compare Pass (gpt-4o, ein einziger großer Call)
  */
 async function runHolisticComparePass(map1, map2, intent, text1, text2, docConfig, perspective, userProfile, comparisonMode) {
-  // Anti-Position-Bias: Zufällig entscheiden ob Doc1 und Doc2 im Prompt getauscht werden
-  const swapped = Math.random() < 0.5;
+  // Anti-Position-Bias: Deterministische Entscheidung basierend auf Dokumentinhalt
+  // Gleiche Dokumente → immer gleiche Reihenfolge → konsistente Ergebnisse
+  const swapKey = (text1 || '').slice(0, 2000) + '||' + (text2 || '').slice(0, 2000);
+  const swapped = parseInt(crypto.createHash('sha256').update(swapKey).digest('hex').charAt(0), 16) < 8;
   const promptMap1 = swapped ? map2 : map1;
   const promptMap2 = swapped ? map1 : map2;
   const promptText1 = swapped ? text2 : text1;
@@ -6373,8 +6375,24 @@ function validateHolisticOutput(raw, text1, text2, intent) {
     // Normalisiert vergleichen: Leerzeichen, Groß/Klein, Satzzeichen ignorieren
     const norm = (v) => v.toLowerCase().replace(/[\s.,;:\-–—/]+/g, '').replace(/eur|euro|€/gi, '');
     if (doc1Value && doc2Value && norm(doc1Value) === norm(doc2Value)) {
-      stats.droppedIdentical++;
-      continue;
+      // Sicherheitscheck: Numerische Werte semantisch vergleichen, da Text-Normalisierung
+      // Dezimaltrennzeichen strippt und z.B. "10,00" vs "1.000" fälschlich als identisch erkennt
+      const numRe = /(\d[\d.,]*)/;
+      const m1 = doc1Value.match(numRe);
+      const m2 = doc2Value.match(numRe);
+      let numericMismatch = false;
+      if (m1 && m2) {
+        const n1 = parseGermanNumber(m1[1]);
+        const n2 = parseGermanNumber(m2[1]);
+        if (n1 !== null && n2 !== null && !isNaN(n1) && !isNaN(n2) && n1 > 0 && n2 > 0) {
+          numericMismatch = Math.abs(n1 - n2) / Math.max(n1, n2) > 0.01;
+        }
+      }
+      if (!numericMismatch) {
+        stats.droppedIdentical++;
+        continue;
+      }
+      // Zahlen weichen >1% ab → Section behalten (echter Wertunterschied trotz identischem Text)
     }
 
     const valuePool = `${doc1Value} ${doc2Value} ${doc1Quote} ${doc2Quote}`;
