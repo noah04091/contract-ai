@@ -828,6 +828,25 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             <p>{currentEvent.description}</p>
           </div>
 
+          {currentEvent.notes && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px',
+              padding: '12px 14px',
+              background: '#f0f9ff',
+              borderRadius: '10px',
+              marginBottom: '16px',
+              borderLeft: '3px solid #3b82f6'
+            }}>
+              <FileText size={15} style={{ color: '#3b82f6', marginTop: '1px', flexShrink: 0 }} />
+              <div>
+                <span style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6b7280', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Notizen</span>
+                <p style={{ margin: 0, fontSize: '13px', color: '#374151', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{currentEvent.notes}</p>
+              </div>
+            </div>
+          )}
+
           <div className="event-meta-grid">
             <div className="meta-card">
               <CalendarIcon size={18} className="meta-icon" />
@@ -2584,6 +2603,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
         description: formData.description,
         date: eventDate.toISOString(),
         severity: formData.severity,
+        notes: formData.notes,
         contractId: formData.contractId || event.contractId,
         contractName: formData.contractName || event.contractName,
         // If contract was assigned, it's no longer manual
