@@ -648,6 +648,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
   const [radarExpanded, setRadarExpanded] = useState(false);
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const contractsRef = useRef<HTMLDivElement>(null);
@@ -671,6 +672,21 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       window.removeEventListener('beforeunload', markNow);
     };
   }, []);
+
+  // Hero auto-collapse: first visit = open, after that = collapsed
+  useEffect(() => {
+    const dismissed = localStorage.getItem('pulseV2_heroDismissed') === 'true';
+    const visits = parseInt(localStorage.getItem('pulseV2_heroVisits') || '0');
+    if (dismissed || visits >= 1) {
+      setHeroCollapsed(true);
+    }
+    localStorage.setItem('pulseV2_heroVisits', String(visits + 1));
+  }, []);
+
+  const collapseHero = () => {
+    localStorage.setItem('pulseV2_heroDismissed', 'true');
+    setHeroCollapsed(true);
+  };
 
   // Debounce search to avoid excessive re-renders
   useEffect(() => {
@@ -851,6 +867,131 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
   return (
     <div>
+      {/* ══════════ Intro Hero Banner (original) ══════════ */}
+      {!heroCollapsed ? (
+        <div style={{
+          position: 'relative',
+          background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%)',
+          borderRadius: 20,
+          padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
+          marginBottom: 28,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
+          border: '1px solid rgba(59,130,246,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 48,
+          flexWrap: 'wrap' as const,
+        }}>
+          {/* Collapse button */}
+          <button
+            onClick={collapseHero}
+            title="Einklappen"
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              width: 32, height: 32, borderRadius: '50%',
+              border: 'none', background: 'rgba(59,130,246,0.08)',
+              cursor: 'pointer', fontSize: 16, color: '#94a3b8',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            &times;
+          </button>
+
+          {/* Left: Title + Subtitle */}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
+                Legal Pulse
+              </h1>
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: '#1d4ed8',
+                background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+                padding: '4px 12px', borderRadius: 6,
+                letterSpacing: '0.5px', textTransform: 'uppercase',
+              }}>
+                Laufende Überwachung
+              </span>
+            </div>
+            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
+              Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
+            </p>
+            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
+              <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
+              {alertStats.criticalContracts.length > 0 && (
+                <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
+              )}
+              {alertStats.openActions.length > 0 && (
+                <span><strong style={{ color: '#d97706', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Feature cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
+            {[
+              { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
+              { icon: '\uD83D\uDEE1\uFE0F', title: 'Legal Radar', desc: 'Gesetzesänderungen automatisch erkennen' },
+              { icon: '\uD83D\uDCCA', title: 'Portfolio Health', desc: 'Alle Verträge auf einen Blick' },
+            ].map((card) => (
+              <div key={card.title} style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                background: '#ffffff', padding: '14px 18px',
+                borderRadius: 12, border: '1px solid rgba(59,130,246,0.1)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                minWidth: 0,
+              }}>
+                <div style={{
+                  fontSize: 20, width: 42, height: 42,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: '#f0f7ff', borderRadius: 10,
+                }}>
+                  {card.icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{card.title}</div>
+                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{card.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Minimized Hero */
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 28px',
+          background: 'linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%)', borderRadius: 14,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
+          border: '1px solid rgba(59,130,246,0.1)',
+          marginBottom: 28,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Legal Pulse</h1>
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: '#1d4ed8',
+              background: '#dbeafe', padding: '2px 8px', borderRadius: 4,
+              letterSpacing: '0.5px', textTransform: 'uppercase',
+            }}>
+              Aktiv
+            </span>
+            <span style={{ fontSize: 13, color: '#94a3b8' }}>
+              {stats.analyzed} / {stats.total} Verträge analysiert
+            </span>
+          </div>
+          <button
+            onClick={() => setHeroCollapsed(false)}
+            style={{
+              padding: '6px 14px', fontSize: 12, fontWeight: 600,
+              color: '#3b82f6', background: '#eff6ff',
+              border: '1px solid #bfdbfe', borderRadius: 8,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+            }}
+          >
+            &#9432; Mehr anzeigen
+          </button>
+        </div>
+      )}
+
       {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
       <PulseCheckHero
         stats={stats}
