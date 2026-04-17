@@ -71,6 +71,7 @@ interface ClauseListProps {
   currentPerspective?: string;
   focusMode?: boolean;
   contractId?: string;
+  onRetry?: () => void;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -86,7 +87,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   analysisCache = {},
   currentPerspective = 'contractor',
   focusMode = false,
-  contractId = ''
+  contractId = '',
+  onRetry
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -998,15 +1000,37 @@ const ClauseList: React.FC<ClauseListProps> = ({
               </>
             ) : (
               <>
-                {/* Wirklich keine Klauseln gefunden */}
+                {/* Keine Klauseln gefunden — mögliche Ursachen: Timeout, Nicht-Vertrag, OCR-Problem */}
                 <FileText size={48} strokeWidth={1} className={styles.emptyIconSvg} />
                 <h4 className={styles.emptyTitle}>Keine Klauseln erkannt</h4>
-                <p className={styles.emptyText}>Versuchen Sie:</p>
+                <p className={styles.emptyText}>
+                  Die Analyse konnte keine Klauseln extrahieren. Mögliche Ursachen:
+                </p>
                 <ul className={styles.emptyHintList}>
-                  <li>Das Dokument erneut hochzuladen</li>
-                  <li>Eine bessere Scan-Qualität (mind. 300 DPI)</li>
-                  <li>Die PDF-Ansicht zu nutzen und Klauseln manuell zu markieren</li>
+                  <li>Verbindung unterbrochen bei großen Dokumenten</li>
+                  <li>Dokument enthält keinen Vertragstext</li>
+                  <li>Gescanntes PDF ohne Texterkennung</li>
                 </ul>
+                {onRetry && (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.625rem 1.5rem',
+                      background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                    }}
+                  >
+                    Erneut versuchen
+                  </button>
+                )}
               </>
             )}
           </div>

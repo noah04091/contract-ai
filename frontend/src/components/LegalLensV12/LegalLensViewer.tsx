@@ -2088,6 +2088,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 currentPerspective={currentPerspective}
                 focusMode={focusMode}
                 contractId={contractId}
+                onRetry={() => parseContract(contractId, true)}
               />
             </div>
           ) : (
@@ -2193,6 +2194,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               currentPerspective={currentPerspective}
               focusMode={focusMode}
               contractId={contractId}
+              onRetry={() => parseContract(contractId, true)}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
