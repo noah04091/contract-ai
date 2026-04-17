@@ -3054,6 +3054,13 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
 
     sendEvent('status', { message: 'Starte KI-Analyse...', progress: 10 });
 
+    // preprocessStatus auf 'processing' setzen, damit POST /parse während des
+    // Parsens korrekt "useStreaming: true" zurückgibt (für Polling-Fallback).
+    Contract.updateOne(
+      { _id: new ObjectId(contractId) },
+      { $set: { 'legalLens.preprocessStatus': 'processing', 'legalLens.preprocessedAt': new Date() } }
+    ).catch(err => console.warn('[Legal Lens] preprocessStatus→processing fehlgeschlagen:', err.message));
+
     // ════════════════════════════════════════════════════════════
     // V4 DIRECT EXTRACTION (wenn Feature-Flag aktiv)
     // Phase 1: Extraktion + Keyword-Risk → sofort senden (~60s)

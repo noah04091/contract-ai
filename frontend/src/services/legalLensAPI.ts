@@ -1042,19 +1042,12 @@ export function parseContractStreaming(
         return;
       }
 
-      // Verbindungsverlust-Erkennung (inkl. AbortError von Inactivity-Timeout)
+      // SSE ist der schnelle Weg, aber nicht zuverlässig bei langen Parses
+      // (Proxy-Timeouts, Browser-Throttling, Netzwerk-Wechsel).
+      // Wenn SSE scheitert → IMMER auf Polling umschalten (egal welcher Fehler).
+      // Das Backend cached die Ergebnisse, Polling findet sie garantiert.
       const errorMessage = error instanceof Error ? error.message : String(error);
-      const isAbortError = error instanceof Error && error.name === 'AbortError';
-      const isConnectionLost =
-        isAbortError || // Inactivity-Timeout hat controller.abort() aufgerufen
-        errorMessage.includes('network') ||
-        errorMessage.includes('fetch') ||
-        errorMessage.includes('Failed to fetch') ||
-        errorMessage.includes('NetworkError') ||
-        errorMessage.includes('connection') ||
-        errorMessage.includes('timeout');
-
-      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage} (isAbort=${isAbortError}, isConnectionLost=${isConnectionLost})`);
+      console.warn(`[Legal Lens] Streaming-Fehler: ${errorMessage} — Fallback auf Polling`);
 
       callbacks.onConnectionLost?.({
         clausesReceived,
@@ -1063,18 +1056,16 @@ export function parseContractStreaming(
         willRetry: true
       });
 
-      if (isConnectionLost && clausesReceived === 0) {
-        // Kein SSE-Retry — direkt auf Polling umschalten
-        console.log(`[Legal Lens] Connection lost, switching to polling fallback`);
+      if (clausesReceived === 0) {
+        // Keine Klauseln via SSE empfangen → Polling holt sie aus dem Cache
+        console.log(`[Legal Lens] 0 Klauseln via SSE — starte Polling-Fallback`);
         callbacks.onStatus?.('Großes Dokument wird analysiert...', lastProgress);
         await pollForCache();
-      } else if (clausesReceived > 0 && !isComplete) {
-        // Klauseln vorhanden, aber Stream abgebrochen → als complete markieren
-        console.warn(`[Legal Lens] Connection lost after ${clausesReceived} clauses — marking as complete.`);
+      } else if (!isComplete) {
+        // Klauseln teilweise empfangen, Stream abgebrochen → als complete markieren
+        console.warn(`[Legal Lens] Stream abgebrochen nach ${clausesReceived} Klauseln — markiere als complete`);
         isComplete = true;
         callbacks.onComplete?.(clausesReceived);
-      } else {
-        callbacks.onError?.(errorMessage);
       }
     }
   };
