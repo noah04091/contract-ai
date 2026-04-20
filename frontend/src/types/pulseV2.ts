@@ -227,6 +227,7 @@ export interface PulseV2LegalAlert {
   recommendation: string;
   affectedClauseIds: string[];
   clauseImpacts: PulseV2ClauseImpact[];
+  legislationFingerprint?: string;
   status: 'unread' | 'read' | 'dismissed' | 'resolved';
   resolvedClauseIds?: string[];
   lastFixAppliedAt?: string;

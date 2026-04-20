@@ -68,6 +68,47 @@ const PRICES = {
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
 };
 
+/**
+ * Extract a canonical fingerprint from a law/ruling title.
+ * Used to detect cross-source duplicates (same legislation from different RSS feeds).
+ * Returns null if no recognizable pattern is found (conservative — no dedup for unknowns).
+ */
+function extractLegislationFingerprint(title) {
+  if (!title) return null;
+  const t = title.trim();
+
+  // 1. EU Directives: (EU) 2023/2225, Richtlinie 2023/2225
+  const euDir = t.match(/(?:richtlinie|directive)\s*\(?(?:EU|EG|EWG)\)?\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i)
+             || t.match(/\((?:EU|EG|EWG)\)\s*(\d{4})[\/\-](\d+)/i);
+  if (euDir) return `eu_rl_${euDir[1]}_${euDir[2]}`;
+
+  // 2. EU Regulations: Verordnung (EU) 2024/1689
+  const euReg = t.match(/(?:verordnung|regulation)\s*\(?(?:EU|EG|EWG)\)?\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i);
+  if (euReg) return `eu_vo_${euReg[1]}_${euReg[2]}`;
+
+  // 3. Generic EU number (catch-all for EU acts not caught above)
+  const euGeneric = t.match(/\((?:EU|EG|EWG)\)\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i);
+  if (euGeneric) return `eu_${euGeneric[1]}_${euGeneric[2]}`;
+
+  // 4. Bundestag Drucksachen: 21/1851, BT-Drs. 21/1851
+  const btDs = t.match(/(?:drucksache|bt[\-\s]*drs\.?)\s*(\d{1,2})[\/\-](\d+)/i);
+  if (btDs) return `bt_ds_${btDs[1]}_${btDs[2]}`;
+
+  // 5. Bundesrat Drucksachen: BR-Drs. 209/26, Bundesrat 209/26
+  const brDs = t.match(/(?:bundesrat|br[\-\s]*drs\.?)\s*(\d+)[\/\-](\d{2,4})/i);
+  if (brDs) return `br_ds_${brDs[1]}_${brDs[2]}`;
+
+  // 6. BGBl references: BGBl. I 2024, 1234
+  const bgbl = t.match(/BGBl\.?\s*(I{1,3}|[12])\s*(\d{4})\s*,?\s*(\d+)/i);
+  if (bgbl) return `bgbl_${bgbl[1]}_${bgbl[2]}_${bgbl[3]}`;
+
+  // 7. Court case numbers: II ZB 2/25, VIII ZR 123/24, XII ZB 45/23
+  const courtCase = t.match(/\b([IVX]+)\s+(Z[RB]|AR|StR|BLw)\s+(\d+)[\/\-](\d{2,4})\b/);
+  if (courtCase) return `court_${courtCase[1]}_${courtCase[2]}_${courtCase[3]}_${courtCase[4]}`;
+
+  return null; // No fingerprint → no dedup (conservative)
+}
+
 // Legal area → contract type mapping for fast pre-filtering.
 // IMPORTANT: Areas NOT listed here will be SKIPPED (no broad match).
 // This prevents mass false alerts from unmapped legal areas.
@@ -134,6 +175,11 @@ async function runPulseV2Radar(db, options = {}) {
   await db.collection("pulse_v2_legal_alerts").createIndex(
     { userId: 1, lawId: 1, contractId: 1 },
     { unique: true, background: true }
+  );
+  // Sparse index for cross-source fingerprint dedup queries
+  await db.collection("pulse_v2_legal_alerts").createIndex(
+    { userId: 1, legislationFingerprint: 1, contractId: 1 },
+    { background: true, sparse: true }
   );
 
   // 1. Find recent law changes (from V1 RSS sync)
@@ -480,7 +526,34 @@ async function fetchRecentLawChanges(db) {
     console.log(`[PulseV2Radar] Top scores: ${topScores.join(" | ")}`);
   }
 
-  return topItems.map((s) => s.law);
+  // 7. Fingerprint dedup — keep highest-scored law per fingerprint (cross-source dedup)
+  const fingerprintBest = new Map();
+  const dedupedItems = [];
+  let fpDedupCount = 0;
+
+  for (const item of topItems) {
+    const fp = extractLegislationFingerprint(item.law.title);
+    if (!fp) {
+      dedupedItems.push(item);
+      continue;
+    }
+    if (!fingerprintBest.has(fp) || item.score > fingerprintBest.get(fp).score) {
+      if (fingerprintBest.has(fp)) fpDedupCount++;
+      fingerprintBest.set(fp, item);
+    } else {
+      fpDedupCount++;
+    }
+  }
+
+  for (const item of fingerprintBest.values()) {
+    dedupedItems.push(item);
+  }
+
+  if (fpDedupCount > 0) {
+    console.log(`[PulseV2Radar] Fingerprint dedup: removed ${fpDedupCount} cross-source duplicates from ${topItems.length} laws`);
+  }
+
+  return dedupedItems.map((s) => s.law);
 }
 
 /**
@@ -853,7 +926,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
  */
 async function storeAndNotify(db, userId, alerts) {
   // Store in pulse_v2_legal_alerts
-  const alertDocs = alerts.map((a) => ({
+  let alertDocs = alerts.map((a) => ({
     userId,
     contractId: a.contractId,
     contractName: a.contractName,
@@ -870,9 +943,44 @@ async function storeAndNotify(db, userId, alerts) {
     recommendation: a.recommendation,
     affectedClauseIds: a.affectedClauseIds || [],
     clauseImpacts: a.clauseImpacts || [],
+    legislationFingerprint: extractLegislationFingerprint(a.lawChange.title) || null,
     status: "unread",
     createdAt: new Date(),
   }));
+
+  // Cross-run fingerprint dedup: check if similar alert already exists
+  const fingerprints = {};
+  for (const doc of alertDocs) {
+    if (doc.legislationFingerprint) {
+      fingerprints[doc.legislationFingerprint] = fingerprints[doc.legislationFingerprint] || [];
+      fingerprints[doc.legislationFingerprint].push(doc);
+    }
+  }
+
+  const fpValues = Object.keys(fingerprints);
+  if (fpValues.length > 0) {
+    const existing = await db.collection("pulse_v2_legal_alerts").find({
+      userId,
+      legislationFingerprint: { $in: fpValues },
+      status: { $nin: ["dismissed", "resolved"] },
+    }, { projection: { legislationFingerprint: 1, contractId: 1 } }).toArray();
+
+    const existingSet = new Set(existing.map(e => `${e.legislationFingerprint}_${e.contractId}`));
+
+    const beforeCount = alertDocs.length;
+    alertDocs = alertDocs.filter(doc => {
+      if (!doc.legislationFingerprint) return true;
+      const key = `${doc.legislationFingerprint}_${doc.contractId}`;
+      return !existingSet.has(key);
+    });
+
+    const fpSkipped = beforeCount - alertDocs.length;
+    if (fpSkipped > 0) {
+      console.log(`[PulseV2Radar] Cross-run fingerprint dedup: skipped ${fpSkipped} duplicate alerts for user ${userId}`);
+    }
+  }
+
+  if (alertDocs.length === 0) return; // All duplicates — skip insert + email
 
   // Insert with ordered:false to skip duplicates (unique index prevents re-alerts)
   try {

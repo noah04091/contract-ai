@@ -32,6 +32,39 @@ interface TimeBucket {
   groups: AlertGroup[];
 }
 
+/**
+ * Extract a canonical fingerprint from a law/ruling title (client-side fallback
+ * for alerts created before backend fingerprinting was added).
+ */
+function extractFingerprintFromTitle(title: string): string | null {
+  if (!title) return null;
+  const t = title.trim();
+
+  const euDir = t.match(/(?:richtlinie|directive)\s*\(?(?:EU|EG|EWG)\)?\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i)
+             || t.match(/\((?:EU|EG|EWG)\)\s*(\d{4})[\/\-](\d+)/i);
+  if (euDir) return `eu_rl_${euDir[1]}_${euDir[2]}`;
+
+  const euReg = t.match(/(?:verordnung|regulation)\s*\(?(?:EU|EG|EWG)\)?\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i);
+  if (euReg) return `eu_vo_${euReg[1]}_${euReg[2]}`;
+
+  const euGeneric = t.match(/\((?:EU|EG|EWG)\)\s*(?:Nr\.?\s*)?(\d{4})[\/\-](\d+)/i);
+  if (euGeneric) return `eu_${euGeneric[1]}_${euGeneric[2]}`;
+
+  const btDs = t.match(/(?:drucksache|bt[\-\s]*drs\.?)\s*(\d{1,2})[\/\-](\d+)/i);
+  if (btDs) return `bt_ds_${btDs[1]}_${btDs[2]}`;
+
+  const brDs = t.match(/(?:bundesrat|br[\-\s]*drs\.?)\s*(\d+)[\/\-](\d{2,4})/i);
+  if (brDs) return `br_ds_${brDs[1]}_${brDs[2]}`;
+
+  const bgbl = t.match(/BGBl\.?\s*(I{1,3}|[12])\s*(\d{4})\s*,?\s*(\d+)/i);
+  if (bgbl) return `bgbl_${bgbl[1]}_${bgbl[2]}_${bgbl[3]}`;
+
+  const courtCase = t.match(/\b([IVX]+)\s+(Z[RB]|AR|StR|BLw)\s+(\d+)[\/\-](\d{2,4})\b/);
+  if (courtCase) return `court_${courtCase[1]}_${courtCase[2]}_${courtCase[3]}_${courtCase[4]}`;
+
+  return null;
+}
+
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 const URGENCY_ORDER: Record<string, number> = {
   effective: 0,       // In Kraft — sofort handeln
@@ -57,7 +90,9 @@ function formatRelativeDate(dateStr: string): string {
 function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
   const map = new Map<string, AlertGroup>();
   for (const alert of alerts) {
-    const key = alert.lawId || alert.lawTitle;
+    const fp = alert.legislationFingerprint
+            || extractFingerprintFromTitle(alert.lawTitle);
+    const key = fp || alert.lawId || alert.lawTitle;
     if (!map.has(key)) {
       map.set(key, {
         lawId: alert.lawId,
