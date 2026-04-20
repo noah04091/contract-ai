@@ -597,7 +597,7 @@ function detectDocumentType(text) {
  * Generiert eine Executive Summary sofort nach Upload.
  * Zeigt Top-3 Risiken, Gesamtbewertung und konkrete Handlungsempfehlungen.
  */
-router.post('/smart-summary', verifyToken, async (req, res) => {
+router.post('/smart-summary', verifyToken, analysisRateLimiter, async (req, res) => {
   try {
     const { contractId, stream = false } = req.body;
     const userId = req.user.userId;
@@ -3094,7 +3094,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         // grosszuegiger machen (auch Rechnungspositionen, Angebotsabschnitte etc.)
         let parseResult;
         try {
-          parseResult = await parseContractDirect(text, { detectRisk: false, lenient: isSkipGate });
+          parseResult = await parseContractDirect(text, { detectRisk: true, lenient: isSkipGate });
         } finally {
           clearInterval(heartbeat);
         }
@@ -3206,8 +3206,8 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
                   parsedAt: new Date().toISOString(),
                   parserVersion: '4.3.0-direct-extraction',
                   cacheVersion: CACHE_VERSION,
-                  usedGPT: false,
-                  riskSource: 'keywords',
+                  usedGPT: parseResult.metadata?.riskSource === 'gpt',
+                  riskSource: parseResult.metadata?.riskSource || 'keywords',
                   extraction: parseResult.metadata?.extraction || {}
                 },
                 'legalLens.preprocessStatus': 'completed',
@@ -3215,7 +3215,7 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
               }
             }
           );
-          console.log(`💾 [Legal Lens] Phase-1-Cache gespeichert: ${allClauses.length} Klauseln (Keyword-Risk)`);
+          console.log(`💾 [Legal Lens] Phase-1-Cache gespeichert: ${allClauses.length} Klauseln (${parseResult.metadata?.riskSource || 'keywords'})`);
         } catch (cacheErr) {
           console.error(`⚠️ [Legal Lens] Phase-1-Cache-Fehler:`, cacheErr.message);
         }
