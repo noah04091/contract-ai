@@ -372,6 +372,12 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
   prompt += `- Unklare Datumsangaben (z.B. "Juli 2025") in eindeutige Form bringen (TT.MM.JJJJ) oder klarstellend formulieren.\n`;
   prompt += `- Vermeide Wiederholungen - integriere verwandte Inhalte in bestehende Paragraphen.\n`;
 
+  // 🆕 VERTRAGSTYP-SPEZIFISCHE HINWEISE (notes) an Phase 1 übergeben
+  if (typeProfile.notes && typeProfile.notes.trim()) {
+    prompt += `\nSPEZIFISCHE HINWEISE FÜR DIESEN VERTRAGSTYP (UNBEDINGT BEACHTEN!):\n`;
+    prompt += `${typeProfile.notes}\n`;
+  }
+
   // ===== INTELLIGENTE FILTERUNG: Forbidden Topics =====
   // 🆕 INDIVIDUELL: forbiddenTopics/Synonyms-Override aus Input
   let baseForbiddenTopics = typeProfile.forbiddenTopics;
@@ -1648,7 +1654,8 @@ function loadContractTypeProfile(contractType) {
     'aufhebungsvertrag': '../contractTypes/aufhebungsvertrag',
     'pacht': '../contractTypes/pacht',
     'kooperation': '../contractTypes/kooperation',
-    'berater': '../contractTypes/berater'
+    'berater': '../contractTypes/berater',
+    'softwareVertrieb': '../contractTypes/softwareVertrieb'
   };
 
   const modulePath = typeMap[contractType];

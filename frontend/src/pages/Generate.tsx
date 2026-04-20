@@ -2677,6 +2677,348 @@ const CONTRACT_TYPES: ContractType[] = [
     ]
   },
   {
+    id: 'softwareVertrieb',
+    name: 'SaaS & Software Reseller Vertrag',
+    description: 'B2B Software-Vertrieb, Reselling & Partnerschaften',
+    icon: '💻',
+    jurisdiction: 'DE',
+    category: 'Geschäftsbeziehung',
+    estimatedDuration: '12-18 Minuten',
+    popularity: 65,
+    isNew: true,
+    fields: [
+      // === GRUPPE: Geschäftsmodell (Kern-Logiksteuerung) ===
+      {
+        name: 'distributionModel',
+        label: 'Vertriebsmodell',
+        type: 'select',
+        placeholder: 'Wie vertreibt der Reseller die Software?',
+        required: true,
+        group: 'Geschäftsmodell',
+        options: ['Reseller (Weiterverkauf im eigenen Namen)', 'Vermittler (Referral/Provision)', 'White-Label (eigene Marke des Resellers)', 'Sub-Distributor (Weitervertrieb an Partner)'],
+        helpText: 'Bestimmt die gesamte Vertragslogik und Haftungsstruktur'
+      },
+      {
+        name: 'softwareType',
+        label: 'Art der Software',
+        type: 'select',
+        placeholder: 'Was wird vertrieben?',
+        required: true,
+        group: 'Geschäftsmodell',
+        options: ['SaaS / Cloud-Lösung', 'On-Premise Software', 'Mobile App', 'API-Service / Platform', 'Hybrid (Cloud + On-Premise)']
+      },
+      {
+        name: 'endCustomerRelation',
+        label: 'Vertragsbeziehung zum Endkunden',
+        type: 'select',
+        placeholder: 'Wer ist Vertragspartner des Endkunden?',
+        required: true,
+        group: 'Geschäftsmodell',
+        options: ['Reseller ist Vertragspartner (verkauft im eigenen Namen)', 'Hersteller ist Vertragspartner (Reseller vermittelt nur)', 'White-Label (Reseller tritt als Anbieter auf, Hersteller unsichtbar)', 'Dreiseitig (Hersteller + Reseller + Endkunde)'],
+        helpText: 'ENTSCHEIDEND: Steuert Haftung, Support-Pflicht und Lizenzlogik'
+      },
+      {
+        name: 'contractStructure',
+        label: 'Vertragsstruktur',
+        type: 'select',
+        placeholder: 'Einzelvertrag oder modular mit Anlagen?',
+        required: true,
+        group: 'Geschäftsmodell',
+        options: ['Einzelvertrag (kompakt, alles in einem Dokument)', 'Modular (Hauptvertrag + Anlage Leistungsbeschreibung + SLA + AVV)'],
+        helpText: 'Modular = professioneller Standard bei Enterprise-Deals'
+      },
+      {
+        name: 'exclusivity',
+        label: 'Exklusivität',
+        type: 'select',
+        placeholder: 'Exklusiver oder nicht-exklusiver Vertrieb?',
+        required: true,
+        group: 'Geschäftsmodell',
+        options: ['Nicht-exklusiv (Hersteller kann weitere Reseller ernennen)', 'Exklusiv im definierten Gebiet', 'Exklusiv für bestimmte Kundensegmente', 'Co-exklusiv (max. 2-3 Reseller im Gebiet)']
+      },
+      {
+        name: 'territory',
+        label: 'Vertriebsgebiet',
+        type: 'text',
+        placeholder: 'z.B. DACH-Region, Deutschland, EU, weltweit',
+        required: true,
+        group: 'Geschäftsmodell'
+      },
+
+      // === GRUPPE: Vertragsparteien ===
+      {
+        name: 'vendorName',
+        label: 'Hersteller / Software-Anbieter (Name)',
+        type: 'text',
+        placeholder: 'Firma des Software-Herstellers',
+        required: true,
+        group: 'Vertragsparteien'
+      },
+      {
+        name: 'vendorAddress',
+        label: 'Adresse Hersteller',
+        type: 'textarea',
+        placeholder: 'Straße, PLZ, Ort',
+        required: true,
+        group: 'Vertragsparteien'
+      },
+      {
+        name: 'resellerName',
+        label: 'Reseller / Vertriebspartner (Name)',
+        type: 'text',
+        placeholder: 'Firma des Resellers / Vertriebspartners',
+        required: true,
+        group: 'Vertragsparteien'
+      },
+      {
+        name: 'resellerAddress',
+        label: 'Adresse Reseller',
+        type: 'textarea',
+        placeholder: 'Straße, PLZ, Ort',
+        required: true,
+        group: 'Vertragsparteien'
+      },
+
+      // === GRUPPE: Software & Lizenzen ===
+      {
+        name: 'softwareName',
+        label: 'Software-Bezeichnung',
+        type: 'text',
+        placeholder: 'z.B. "CloudSuite Pro", "DataManager Enterprise"',
+        required: true,
+        group: 'Software & Lizenzen'
+      },
+      {
+        name: 'softwareDescription',
+        label: 'Leistungsbeschreibung der Software',
+        type: 'textarea',
+        placeholder: 'Kernfunktionen, Zielgruppe, technische Basis der Software...',
+        required: true,
+        group: 'Software & Lizenzen',
+        helpText: 'Je detaillierter, desto präziser der Vertrag'
+      },
+      {
+        name: 'licenseModel',
+        label: 'Lizenzmodell',
+        type: 'select',
+        placeholder: 'Wie wird die Software lizenziert?',
+        required: true,
+        group: 'Software & Lizenzen',
+        options: ['Subscription (monatlich/jährlich)', 'Einmallizenz (perpetual)', 'Pay-per-Use / nutzungsbasiert', 'Seat-basiert (pro Nutzer)', 'Volumen-Lizenz (Staffel)', 'Kombination (Basis + Usage)']
+      },
+      {
+        name: 'sublicensing',
+        label: 'Unterlizenzierung an Endkunden',
+        type: 'select',
+        placeholder: 'Darf der Reseller Unterlizenzen vergeben?',
+        required: true,
+        group: 'Software & Lizenzen',
+        options: ['Ja, eigenständig an Endkunden', 'Ja, aber nur mit Genehmigung des Herstellers', 'Nein (Hersteller lizenziert direkt an Endkunden)', 'Automatisch via Reseller-Portal'],
+        helpText: 'Kernfrage bei Reselling: Wer vergibt die Nutzungsrechte?'
+      },
+      {
+        name: 'minimumCommitment',
+        label: 'Mindestabnahme / Minimum Commitment',
+        type: 'text',
+        placeholder: 'z.B. "10 Lizenzen/Monat", "50.000€/Jahr", "Keine"',
+        required: false,
+        group: 'Software & Lizenzen'
+      },
+
+      // === GRUPPE: Vergütung & Konditionen ===
+      {
+        name: 'revenueModel',
+        label: 'Vergütungsmodell',
+        type: 'select',
+        placeholder: 'Wie verdient der Reseller?',
+        required: true,
+        group: 'Vergütung & Konditionen',
+        options: ['Marge auf Listenpreis (Einkauf günstiger, Verkauf zu UVP)', 'Provision auf vermittelte Umsätze (%)', 'Einkaufsrabatt (fester Discount)', 'Staffelrabatt (volumenabhängig)', 'Revenue Share (Umsatzbeteiligung)']
+      },
+      {
+        name: 'revenueAmount',
+        label: 'Vergütungshöhe',
+        type: 'text',
+        placeholder: 'z.B. "30% Marge", "20% Provision", "40% Rabatt auf Listenpreis"',
+        required: true,
+        group: 'Vergütung & Konditionen'
+      },
+      {
+        name: 'billingCycle',
+        label: 'Abrechnungszyklus',
+        type: 'select',
+        placeholder: 'Wie oft wird abgerechnet?',
+        required: true,
+        group: 'Vergütung & Konditionen',
+        options: ['Monatlich', 'Quartalsweise', 'Jährlich', 'Bei jeder Lizenzaktivierung', 'Nach Zahlungseingang vom Endkunden']
+      },
+      {
+        name: 'paymentTerms',
+        label: 'Zahlungsbedingungen',
+        type: 'select',
+        placeholder: 'Zahlungsfrist',
+        required: true,
+        group: 'Vergütung & Konditionen',
+        options: ['14 Tage netto', '30 Tage netto', '60 Tage netto', 'Vorkasse', 'Bei Lizenzaktivierung']
+      },
+
+      // === GRUPPE: Support & SLA ===
+      {
+        name: 'supportResponsibility',
+        label: 'Support-Verantwortung',
+        type: 'select',
+        placeholder: 'Wer macht den Support für Endkunden?',
+        required: true,
+        group: 'Support & SLA',
+        options: ['Komplett beim Hersteller', '1st-Level beim Reseller, 2nd/3rd beim Hersteller', 'Komplett beim Reseller', 'Aufgeteilt nach Vereinbarung'],
+        helpText: 'Bei White-Label meist komplett beim Reseller'
+      },
+      {
+        name: 'slaUptime',
+        label: 'Verfügbarkeit (SLA)',
+        type: 'select',
+        placeholder: 'Garantierte Verfügbarkeit der Software',
+        required: true,
+        group: 'Support & SLA',
+        options: ['99,9% (Enterprise-Standard)', '99,5% (Business-Standard)', '99,0% (Basic)', 'Keine Verfügbarkeitsgarantie', 'Best Effort']
+      },
+      {
+        name: 'responseTime',
+        label: 'Reaktionszeiten bei Störungen',
+        type: 'select',
+        placeholder: 'Wie schnell reagiert der Hersteller?',
+        required: true,
+        group: 'Support & SLA',
+        options: ['Kritisch: 1h / Hoch: 4h / Normal: 8h', 'Kritisch: 4h / Hoch: 8h / Normal: 24h', 'Kritisch: 8h / Hoch: 24h / Normal: 48h', 'Nur während Geschäftszeiten (Mo-Fr 9-17)']
+      },
+      {
+        name: 'downtimeLiability',
+        label: 'Haftung bei Systemausfall',
+        type: 'select',
+        placeholder: 'Was passiert bei SLA-Verletzung?',
+        required: true,
+        group: 'Support & SLA',
+        options: ['Service Credits (Gutschriften bei SLA-Verletzung)', 'Sonderkündigungsrecht bei wiederholtem Ausfall', 'Schadensersatz begrenzt auf Monatsvergütung', 'Keine Haftung für Ausfälle (nur Best Effort)', 'Kombination: Credits + Sonderkündigung bei >3 Ausfällen/Quartal'],
+        helpText: 'Service Credits sind Enterprise-Standard und marktüblich'
+      },
+      {
+        name: 'updatesUpgrades',
+        label: 'Updates & Upgrades',
+        type: 'select',
+        placeholder: 'Sind Updates für Reseller/Endkunden inklusive?',
+        required: true,
+        group: 'Support & SLA',
+        options: ['Alle Updates und Upgrades inklusive', 'Patches/Bugfixes inklusive, Major-Upgrades kostenpflichtig', 'Nur Sicherheitsupdates inklusive', 'Updates kostenpflichtig', 'Nach separater Wartungsvereinbarung']
+      },
+
+      // === GRUPPE: Datenschutz & Compliance ===
+      {
+        name: 'dataProcessing',
+        label: 'Personenbezogene Daten',
+        type: 'select',
+        placeholder: 'Werden personenbezogene Daten verarbeitet?',
+        required: true,
+        group: 'Datenschutz & Compliance',
+        options: ['Ja, AVV/DPA ist zwingend erforderlich', 'Nein, keine personenbezogenen Daten', 'Sicherheitshalber regeln (empfohlen)'],
+        helpText: 'Bei SaaS mit Endkunden-Accounts fast immer "Ja"'
+      },
+      {
+        name: 'dataLocation',
+        label: 'Datenverarbeitungsort',
+        type: 'select',
+        placeholder: 'Wo werden Daten gespeichert/verarbeitet?',
+        required: true,
+        group: 'Datenschutz & Compliance',
+        options: ['Nur Deutschland', 'EU/EWR', 'EU + USA (mit Angemessenheitsbeschluss)', 'Weltweit (mit Standardvertragsklauseln)', 'Nach Wahl des Kunden']
+      },
+      {
+        name: 'auditRights',
+        label: 'Audit-Rechte',
+        type: 'select',
+        placeholder: 'Darf der Reseller den Hersteller prüfen?',
+        required: false,
+        group: 'Datenschutz & Compliance',
+        options: ['Jährliches Audit-Recht', 'Auf Anfrage mit 30 Tagen Vorlauf', 'Zertifikatsbasiert (ISO 27001 / SOC 2)', 'Kein Audit-Recht']
+      },
+
+      // === GRUPPE: Laufzeit & Kündigung ===
+      {
+        name: 'contractDuration',
+        label: 'Vertragslaufzeit',
+        type: 'select',
+        placeholder: 'Wie lange läuft der Vertrag?',
+        required: true,
+        group: 'Laufzeit & Kündigung',
+        options: ['1 Jahr mit automatischer Verlängerung', '2 Jahre mit automatischer Verlängerung', '3 Jahre fest', 'Unbefristet', 'Projektbezogen / befristet']
+      },
+      {
+        name: 'terminationPeriod',
+        label: 'Kündigungsfrist',
+        type: 'select',
+        placeholder: 'Wie kann gekündigt werden?',
+        required: true,
+        group: 'Laufzeit & Kündigung',
+        options: ['3 Monate zum Vertragsende', '6 Monate zum Vertragsende', '1 Monat zum Monatsende', '90 Tage jederzeit', 'Nur aus wichtigem Grund']
+      },
+      {
+        name: 'terminationEffects',
+        label: 'Folgen bei Vertragsende',
+        type: 'select',
+        placeholder: 'Was passiert mit bestehenden Endkunden?',
+        required: true,
+        group: 'Laufzeit & Kündigung',
+        options: ['Übergangsfrist 90 Tage (Endkunden-Migration)', 'Bestehende Endkunden-Lizenzen laufen bis Ablauf weiter', 'Sofortige Lizenzsperre für alle Endkunden', 'Hersteller übernimmt Endkunden direkt', 'Individuelle Regelung pro Endkunde'],
+        helpText: 'Kritisch für Vertrauenswürdigkeit gegenüber Endkunden'
+      },
+
+      // === GRUPPE: Haftung & Rechte ===
+      {
+        name: 'generalLiability',
+        label: 'Allgemeine Haftungsbegrenzung',
+        type: 'select',
+        placeholder: 'Wie wird die Haftung begrenzt?',
+        required: true,
+        group: 'Haftung & Rechte',
+        options: ['Auf Jahresvergütung begrenzt', 'Auf doppelte Jahresvergütung begrenzt', 'Unbegrenzt bei Vorsatz/grober Fahrlässigkeit, sonst auf Jahresvergütung', 'Gesetzliche Haftung (keine Begrenzung)']
+      },
+      {
+        name: 'brandUsage',
+        label: 'Markennutzung',
+        type: 'select',
+        placeholder: 'Darf der Reseller die Marke des Herstellers nutzen?',
+        required: true,
+        group: 'Haftung & Rechte',
+        options: ['Hersteller-Marke darf für Vertrieb genutzt werden', 'White-Label (Reseller nutzt eigene Marke)', 'Co-Branding (beide Marken sichtbar)', 'Keine Markennutzung (nur Produktname)']
+      },
+      {
+        name: 'nonCompete',
+        label: 'Wettbewerbsverbot',
+        type: 'select',
+        placeholder: 'Darf der Reseller Konkurrenzprodukte vertreiben?',
+        required: true,
+        group: 'Haftung & Rechte',
+        options: ['Kein Wettbewerbsverbot', 'Keine direkten Konkurrenzprodukte während Laufzeit', 'Keine Konkurrenzprodukte + 6 Monate nach Ende', 'Nur Information an Hersteller (kein Verbot)']
+      },
+      {
+        name: 'governingLaw',
+        label: 'Anwendbares Recht',
+        type: 'select',
+        placeholder: 'Welches Recht gilt?',
+        required: true,
+        group: 'Haftung & Rechte',
+        options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht']
+      },
+      {
+        name: 'jurisdiction',
+        label: 'Gerichtsstand',
+        type: 'text',
+        placeholder: 'z.B. Berlin, München, Hamburg',
+        required: true,
+        group: 'Haftung & Rechte'
+      }
+    ]
+  },
+  {
     id: 'berater',
     name: 'Beratervertrag',
     description: 'Für Consulting und Beratungsleistungen',
