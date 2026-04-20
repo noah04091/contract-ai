@@ -663,7 +663,7 @@ export const ACTION_LABELS: Record<ActionLevel, { text: string; emoji: string; c
     bgColor: '#fffbeb'
   },
   reject: {
-    text: 'Dealbreaker',
+    text: 'Kritisch',
     emoji: '🔴',
     color: '#dc2626',
     bgColor: '#fef2f2'

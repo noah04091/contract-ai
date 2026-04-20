@@ -503,7 +503,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
 
         {/* TL;DR */}
         <div className={styles.tldrSection}>
-          <h3 className={styles.tldrTitle}>📝 TL;DR</h3>
+          <h3 className={styles.tldrTitle}>📝 Kurz & knapp</h3>
           <p className={styles.tldrText}>{summary.tldr}</p>
         </div>
       </div>

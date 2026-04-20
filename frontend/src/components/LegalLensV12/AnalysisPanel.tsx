@@ -259,7 +259,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <div className={styles.loadingSpinner} />
               <span className={styles.loadingText}>
                 {elapsedSec >= 8
-                  ? 'GPT-4 analysiert gerade — komplexe Klauseln brauchen etwas länger'
+                  ? 'Komplexe Klausel — Analyse benötigt etwas mehr Zeit'
                   : `${perspInfo.name}-Perspektive wird analysiert`
                 }
               </span>
@@ -488,7 +488,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     ⏰ Zeitliche Bindung
                   </div>
                   <div className={styles.riskCardValueYellow}>
-                    {worstCase.timeRisk || 'Keine Angabe'}
+                    {worstCase.timeRisk || 'Nicht bezifferbar'}
                   </div>
                 </div>
               </div>
@@ -870,7 +870,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     <span className={styles.typingDot}></span>
                     <span className={styles.typingDot}></span>
                     <span className={styles.typingDot}></span>
-                    <span className={styles.typingText}>KI denkt nach...</span>
+                    <span className={styles.typingText}>Antwort wird erstellt...</span>
                   </div>
                 </div>
               </div>

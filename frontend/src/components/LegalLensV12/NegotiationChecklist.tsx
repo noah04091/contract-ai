@@ -190,7 +190,7 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
                 Erneut versuchen
               </button>
               <button onClick={onClose} className={styles.closeButton}>
-                Schliessen
+                Schließen
               </button>
             </div>
           </div>
