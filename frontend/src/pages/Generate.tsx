@@ -3019,6 +3019,249 @@ const CONTRACT_TYPES: ContractType[] = [
     ]
   },
   {
+    id: 'softwareEndkunde',
+    name: 'Software-Endkundenvertrag (Reseller-Schutz)',
+    description: 'Drittsoftware weiterverkaufen & eigene Haftung begrenzen',
+    icon: '🛡️',
+    jurisdiction: 'DE',
+    category: 'Geschäftsbeziehung',
+    estimatedDuration: '8-12 Minuten',
+    popularity: 70,
+    isNew: true,
+    fields: [
+      // === GRUPPE: Vertragsparteien ===
+      {
+        name: 'providerName',
+        label: 'Anbieter / Reseller (Ihr Firmenname)',
+        type: 'text',
+        placeholder: 'Ihre Firma (die die Software weiterverkauft)',
+        required: true,
+        group: 'Vertragsparteien',
+        helpText: 'Sie als Wiederverkäufer der Software'
+      },
+      {
+        name: 'providerAddress',
+        label: 'Adresse Anbieter',
+        type: 'textarea',
+        placeholder: 'Straße, PLZ, Ort',
+        required: false,
+        group: 'Vertragsparteien'
+      },
+      {
+        name: 'customerName',
+        label: 'Kunde / Endkunde (Name)',
+        type: 'text',
+        placeholder: 'Firma des Kunden, an den Sie verkaufen',
+        required: true,
+        group: 'Vertragsparteien'
+      },
+      {
+        name: 'customerAddress',
+        label: 'Adresse Kunde',
+        type: 'textarea',
+        placeholder: 'Straße, PLZ, Ort',
+        required: false,
+        group: 'Vertragsparteien'
+      },
+
+      // === GRUPPE: Software & Hersteller ===
+      {
+        name: 'softwareName',
+        label: 'Software-Bezeichnung',
+        type: 'text',
+        placeholder: 'z.B. "Salesforce", "HubSpot", "Jira"',
+        required: true,
+        group: 'Software & Hersteller'
+      },
+      {
+        name: 'manufacturerName',
+        label: 'Hersteller / Drittsoftware-Anbieter',
+        type: 'text',
+        placeholder: 'z.B. "Salesforce Inc., USA" oder "Atlassian Pty Ltd, Australien"',
+        required: true,
+        group: 'Software & Hersteller',
+        helpText: 'Name und Land des eigentlichen Software-Herstellers'
+      },
+      {
+        name: 'softwareType',
+        label: 'Art der Bereitstellung',
+        type: 'select',
+        placeholder: 'Wie wird die Software bereitgestellt?',
+        required: true,
+        group: 'Software & Hersteller',
+        options: ['SaaS / Cloud-Lösung', 'On-Premise Software (Installation beim Kunden)', 'Hybrid (Cloud + lokale Komponenten)', 'API-Service / Platform', 'Mobile App']
+      },
+      {
+        name: 'softwareDescription',
+        label: 'Kurzbeschreibung der Software',
+        type: 'textarea',
+        placeholder: 'Was macht die Software? Kernfunktionen...',
+        required: false,
+        group: 'Software & Hersteller'
+      },
+
+      // === GRUPPE: Eigene Leistungen vs. Fremdleistung (Optimierung 2) ===
+      {
+        name: 'ownServices',
+        label: 'Erbringen Sie eigene Leistungen zusätzlich?',
+        type: 'select',
+        placeholder: 'Bieten Sie neben der Software eigene Services an?',
+        required: true,
+        group: 'Eigene Leistungen',
+        options: ['Ja (z.B. Einrichtung, Beratung, Support, Integration)', 'Nein (reiner Weiterverkauf der Software)', 'Teilweise (nur initialer Setup/Onboarding)'],
+        helpText: 'WICHTIG: Für eigene Leistungen haften Sie anders als für die Drittsoftware'
+      },
+      {
+        name: 'ownServicesDescription',
+        label: 'Welche eigenen Leistungen bieten Sie an?',
+        type: 'textarea',
+        placeholder: 'z.B. Einrichtung, Konfiguration, Schulung, laufender Support, Integration mit anderen Systemen...',
+        required: false,
+        group: 'Eigene Leistungen',
+        helpText: 'Nur ausfüllen wenn Sie eigene Leistungen erbringen'
+      },
+
+      // === GRUPPE: Herstellerbedingungen (Optimierung 3) ===
+      {
+        name: 'manufacturerTerms',
+        label: 'Geltung der Hersteller-AGB/Nutzungsbedingungen',
+        type: 'select',
+        placeholder: 'Wie werden die Bedingungen des Herstellers eingebunden?',
+        required: false,
+        group: 'Herstellerbedingungen',
+        options: ['Hersteller-AGB gelten ergänzend zu diesem Vertrag', 'Hersteller-AGB haben Vorrang bei Widersprüchen', 'Kunde muss Hersteller-AGB separat akzeptieren', 'Hersteller-AGB werden als Anlage beigefügt', 'Keine direkte Einbindung (nur Verweis)'],
+        helpText: 'Bei US-Software oft wichtig: Hersteller hat eigene Terms of Service'
+      },
+      {
+        name: 'manufacturerTermsUrl',
+        label: 'Link zu Hersteller-AGB (optional)',
+        type: 'text',
+        placeholder: 'z.B. https://www.hersteller.com/terms',
+        required: false,
+        group: 'Herstellerbedingungen'
+      },
+
+      // === GRUPPE: Haftung & Risiko (Herzstück!) ===
+      {
+        name: 'liabilityMode',
+        label: 'Haftung für Softwarefehler/Ausfälle',
+        type: 'select',
+        placeholder: 'Wie weit haften Sie für Probleme der Drittsoftware?',
+        required: false,
+        group: 'Haftung & Risiko',
+        options: ['Keine Haftung für Drittanbieter-Software (nur für eigene Leistungen)', 'Begrenzt auf typische, vorhersehbare Schäden', 'Nur bei Vorsatz und grober Fahrlässigkeit', 'Durchreichung der Herstellergewährleistung (sofern vorhanden)'],
+        helpText: 'Empfehlung: "Keine Haftung für Drittsoftware" ist marktüblich bei Resellern'
+      },
+      {
+        name: 'liabilityCap',
+        label: 'Haftungsdeckel (Obergrenze)',
+        type: 'select',
+        placeholder: 'Maximale Haftungssumme',
+        required: false,
+        group: 'Haftung & Risiko',
+        options: ['Auf monatliche Vergütung begrenzt', 'Auf Vergütung der letzten 12 Monate begrenzt', 'Auf jährliche Vergütung begrenzt', 'Individueller Betrag', 'Gesetzliche Haftung (keine Begrenzung)'],
+        helpText: 'Standard: Vergütung der letzten 12 Monate'
+      },
+      {
+        name: 'warrantyScope',
+        label: 'Gewährleistung',
+        type: 'select',
+        placeholder: 'Wofür leisten Sie Gewähr?',
+        required: false,
+        group: 'Haftung & Risiko',
+        options: ['Nur für eigene Leistungen (nicht für Drittsoftware)', 'Durchreichung der Herstellergewährleistung', 'Gesetzlich, aber auf 12 Monate verkürzt', 'Keine Gewährleistung (nur bei reinem Weiterverkauf)'],
+        helpText: 'Für Drittsoftware ist Gewährleistungsausschluss marktüblich'
+      },
+      {
+        name: 'slaLevel',
+        label: 'Verfügbarkeit / SLA',
+        type: 'select',
+        placeholder: 'Garantieren Sie eine Verfügbarkeit?',
+        required: false,
+        group: 'Haftung & Risiko',
+        options: ['Best Effort (keine eigene Garantie)', 'Im Rahmen der Hersteller-SLA (Durchreichung)', '99,5% mit Einschränkung auf Herstellerverantwortung', 'Eigene SLA für eigene Leistungen, Hersteller-SLA für Software'],
+        helpText: 'Vorsicht: Keine Uptime garantieren die Sie nicht kontrollieren!'
+      },
+
+      // === GRUPPE: Vergütung ===
+      {
+        name: 'pricingModel',
+        label: 'Preismodell',
+        type: 'select',
+        placeholder: 'Wie berechnen Sie dem Kunden?',
+        required: false,
+        group: 'Vergütung',
+        options: ['Monatliche Lizenzgebühr', 'Jährliche Lizenzgebühr', 'Einmalzahlung', 'Pro Nutzer/Seat', 'Nutzungsbasiert (Pay-per-Use)', 'Paketpreis (Software + eigene Leistungen)']
+      },
+      {
+        name: 'price',
+        label: 'Preis / Vergütung',
+        type: 'text',
+        placeholder: 'z.B. "499€/Monat", "89€/Nutzer/Monat", "5.000€ einmalig"',
+        required: false,
+        group: 'Vergütung'
+      },
+      {
+        name: 'paymentTerms',
+        label: 'Zahlungsbedingungen',
+        type: 'select',
+        placeholder: 'Zahlungsfrist',
+        required: false,
+        group: 'Vergütung',
+        options: ['14 Tage netto', '30 Tage netto', 'Vorkasse', 'Jährliche Vorauszahlung', 'Bei Bereitstellung']
+      },
+
+      // === GRUPPE: Laufzeit & Kündigung ===
+      {
+        name: 'contractDuration',
+        label: 'Vertragslaufzeit',
+        type: 'select',
+        placeholder: 'Wie lange läuft der Vertrag?',
+        required: false,
+        group: 'Laufzeit & Kündigung',
+        options: ['1 Jahr mit automatischer Verlängerung', '2 Jahre mit automatischer Verlängerung', 'Monatlich kündbar', 'Unbefristet', 'Projektbezogen / einmalig']
+      },
+      {
+        name: 'terminationPeriod',
+        label: 'Kündigungsfrist',
+        type: 'select',
+        placeholder: 'Wie kann gekündigt werden?',
+        required: false,
+        group: 'Laufzeit & Kündigung',
+        options: ['1 Monat zum Monatsende', '3 Monate zum Vertragsende', '30 Tage jederzeit', 'Nur zum Laufzeitende', 'Sonderkündigung bei Herstellerausfall']
+      },
+      {
+        name: 'terminationEffects',
+        label: 'Was passiert bei Vertragsende?',
+        type: 'select',
+        placeholder: 'Zugang und Daten bei Beendigung',
+        required: false,
+        group: 'Laufzeit & Kündigung',
+        options: ['Zugang wird gesperrt, Datenexport 30 Tage möglich', 'Sofortige Sperrung', 'Übergangsfrist 90 Tage', 'Daten werden nach 30 Tagen gelöscht', 'Kunde muss Daten selbst exportieren']
+      },
+
+      // === GRUPPE: Rechtliches ===
+      {
+        name: 'governingLaw',
+        label: 'Anwendbares Recht',
+        type: 'select',
+        placeholder: 'Welches Recht gilt?',
+        required: false,
+        group: 'Rechtliches',
+        options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht'],
+        helpText: 'Empfehlung: Deutsches Recht (auch bei US-Software)'
+      },
+      {
+        name: 'jurisdiction',
+        label: 'Gerichtsstand',
+        type: 'text',
+        placeholder: 'z.B. München, Berlin, Hamburg',
+        required: false,
+        group: 'Rechtliches'
+      }
+    ]
+  },
+  {
     id: 'berater',
     name: 'Beratervertrag',
     description: 'Für Consulting und Beratungsleistungen',

@@ -1655,7 +1655,8 @@ function loadContractTypeProfile(contractType) {
     'pacht': '../contractTypes/pacht',
     'kooperation': '../contractTypes/kooperation',
     'berater': '../contractTypes/berater',
-    'softwareVertrieb': '../contractTypes/softwareVertrieb'
+    'softwareVertrieb': '../contractTypes/softwareVertrieb',
+    'softwareEndkunde': '../contractTypes/softwareEndkunde'
   };
 
   const modulePath = typeMap[contractType];

@@ -2120,7 +2120,7 @@ router.post("/", verifyToken, async (req, res) => {
     'individuell', 'darlehen', 'kaufvertrag', 'mietvertrag',
     'freelancer', 'arbeitsvertrag', 'nda', 'aufhebungsvertrag',
     'gesellschaft', 'lizenzvertrag', 'pacht', 'werkvertrag',
-    'kooperation', 'berater', 'softwareVertrieb'
+    'kooperation', 'berater', 'softwareVertrieb', 'softwareEndkunde'
   ];
 
   const shouldUseV2 = V2_SUPPORTED_TYPES.includes(type);
@@ -2146,6 +2146,7 @@ router.post("/", verifyToken, async (req, res) => {
         kooperation:      { a: 'partnerA', aAddr: 'partnerAAddress', b: 'partnerB', bAddr: 'partnerBAddress' },
         berater:          { a: 'clientName', aAddr: 'clientAddress', b: 'consultantName', bAddr: 'consultantAddress' },
         softwareVertrieb: { a: 'vendorName', aAddr: 'vendorAddress', b: 'resellerName', bAddr: 'resellerAddress' },
+        softwareEndkunde: { a: 'providerName', aAddr: 'providerAddress', b: 'customerName', bAddr: 'customerAddress' },
         individuell:      { a: 'partyAName', aAddr: 'partyAAddress', b: 'partyBName', bAddr: 'partyBAddress' },
       };
 
