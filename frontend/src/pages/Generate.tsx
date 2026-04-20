@@ -2732,7 +2732,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Exklusivität',
         type: 'select',
         placeholder: 'Exklusiver oder nicht-exklusiver Vertrieb?',
-        required: true,
+        required: false,
         group: 'Geschäftsmodell',
         options: ['Nicht-exklusiv (Hersteller kann weitere Reseller ernennen)', 'Exklusiv im definierten Gebiet', 'Exklusiv für bestimmte Kundensegmente', 'Co-exklusiv (max. 2-3 Reseller im Gebiet)']
       },
@@ -2741,7 +2741,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Vertriebsgebiet',
         type: 'text',
         placeholder: 'z.B. DACH-Region, Deutschland, EU, weltweit',
-        required: true,
+        required: false,
         group: 'Geschäftsmodell'
       },
 
@@ -2759,7 +2759,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Adresse Hersteller',
         type: 'textarea',
         placeholder: 'Straße, PLZ, Ort',
-        required: true,
+        required: false,
         group: 'Vertragsparteien'
       },
       {
@@ -2775,7 +2775,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Adresse Reseller',
         type: 'textarea',
         placeholder: 'Straße, PLZ, Ort',
-        required: true,
+        required: false,
         group: 'Vertragsparteien'
       },
 
@@ -2793,7 +2793,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Leistungsbeschreibung der Software',
         type: 'textarea',
         placeholder: 'Kernfunktionen, Zielgruppe, technische Basis der Software...',
-        required: true,
+        required: false,
         group: 'Software & Lizenzen',
         helpText: 'Je detaillierter, desto präziser der Vertrag'
       },
@@ -2802,7 +2802,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Lizenzmodell',
         type: 'select',
         placeholder: 'Wie wird die Software lizenziert?',
-        required: true,
+        required: false,
         group: 'Software & Lizenzen',
         options: ['Subscription (monatlich/jährlich)', 'Einmallizenz (perpetual)', 'Pay-per-Use / nutzungsbasiert', 'Seat-basiert (pro Nutzer)', 'Volumen-Lizenz (Staffel)', 'Kombination (Basis + Usage)']
       },
@@ -2811,7 +2811,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Unterlizenzierung an Endkunden',
         type: 'select',
         placeholder: 'Darf der Reseller Unterlizenzen vergeben?',
-        required: true,
+        required: false,
         group: 'Software & Lizenzen',
         options: ['Ja, eigenständig an Endkunden', 'Ja, aber nur mit Genehmigung des Herstellers', 'Nein (Hersteller lizenziert direkt an Endkunden)', 'Automatisch via Reseller-Portal'],
         helpText: 'Kernfrage bei Reselling: Wer vergibt die Nutzungsrechte?'
@@ -2831,7 +2831,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Vergütungsmodell',
         type: 'select',
         placeholder: 'Wie verdient der Reseller?',
-        required: true,
+        required: false,
         group: 'Vergütung & Konditionen',
         options: ['Marge auf Listenpreis (Einkauf günstiger, Verkauf zu UVP)', 'Provision auf vermittelte Umsätze (%)', 'Einkaufsrabatt (fester Discount)', 'Staffelrabatt (volumenabhängig)', 'Revenue Share (Umsatzbeteiligung)']
       },
@@ -2840,7 +2840,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Vergütungshöhe',
         type: 'text',
         placeholder: 'z.B. "30% Marge", "20% Provision", "40% Rabatt auf Listenpreis"',
-        required: true,
+        required: false,
         group: 'Vergütung & Konditionen'
       },
       {
@@ -2848,7 +2848,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Abrechnungszyklus',
         type: 'select',
         placeholder: 'Wie oft wird abgerechnet?',
-        required: true,
+        required: false,
         group: 'Vergütung & Konditionen',
         options: ['Monatlich', 'Quartalsweise', 'Jährlich', 'Bei jeder Lizenzaktivierung', 'Nach Zahlungseingang vom Endkunden']
       },
@@ -2857,7 +2857,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Zahlungsbedingungen',
         type: 'select',
         placeholder: 'Zahlungsfrist',
-        required: true,
+        required: false,
         group: 'Vergütung & Konditionen',
         options: ['14 Tage netto', '30 Tage netto', '60 Tage netto', 'Vorkasse', 'Bei Lizenzaktivierung']
       },
@@ -2868,7 +2868,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Support-Verantwortung',
         type: 'select',
         placeholder: 'Wer macht den Support für Endkunden?',
-        required: true,
+        required: false,
         group: 'Support & SLA',
         options: ['Komplett beim Hersteller', '1st-Level beim Reseller, 2nd/3rd beim Hersteller', 'Komplett beim Reseller', 'Aufgeteilt nach Vereinbarung'],
         helpText: 'Bei White-Label meist komplett beim Reseller'
@@ -2878,7 +2878,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Verfügbarkeit (SLA)',
         type: 'select',
         placeholder: 'Garantierte Verfügbarkeit der Software',
-        required: true,
+        required: false,
         group: 'Support & SLA',
         options: ['99,9% (Enterprise-Standard)', '99,5% (Business-Standard)', '99,0% (Basic)', 'Keine Verfügbarkeitsgarantie', 'Best Effort']
       },
@@ -2887,7 +2887,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Reaktionszeiten bei Störungen',
         type: 'select',
         placeholder: 'Wie schnell reagiert der Hersteller?',
-        required: true,
+        required: false,
         group: 'Support & SLA',
         options: ['Kritisch: 1h / Hoch: 4h / Normal: 8h', 'Kritisch: 4h / Hoch: 8h / Normal: 24h', 'Kritisch: 8h / Hoch: 24h / Normal: 48h', 'Nur während Geschäftszeiten (Mo-Fr 9-17)']
       },
@@ -2896,7 +2896,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Haftung bei Systemausfall',
         type: 'select',
         placeholder: 'Was passiert bei SLA-Verletzung?',
-        required: true,
+        required: false,
         group: 'Support & SLA',
         options: ['Service Credits (Gutschriften bei SLA-Verletzung)', 'Sonderkündigungsrecht bei wiederholtem Ausfall', 'Schadensersatz begrenzt auf Monatsvergütung', 'Keine Haftung für Ausfälle (nur Best Effort)', 'Kombination: Credits + Sonderkündigung bei >3 Ausfällen/Quartal'],
         helpText: 'Service Credits sind Enterprise-Standard und marktüblich'
@@ -2906,7 +2906,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Updates & Upgrades',
         type: 'select',
         placeholder: 'Sind Updates für Reseller/Endkunden inklusive?',
-        required: true,
+        required: false,
         group: 'Support & SLA',
         options: ['Alle Updates und Upgrades inklusive', 'Patches/Bugfixes inklusive, Major-Upgrades kostenpflichtig', 'Nur Sicherheitsupdates inklusive', 'Updates kostenpflichtig', 'Nach separater Wartungsvereinbarung']
       },
@@ -2917,7 +2917,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Personenbezogene Daten',
         type: 'select',
         placeholder: 'Werden personenbezogene Daten verarbeitet?',
-        required: true,
+        required: false,
         group: 'Datenschutz & Compliance',
         options: ['Ja, AVV/DPA ist zwingend erforderlich', 'Nein, keine personenbezogenen Daten', 'Sicherheitshalber regeln (empfohlen)'],
         helpText: 'Bei SaaS mit Endkunden-Accounts fast immer "Ja"'
@@ -2927,7 +2927,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Datenverarbeitungsort',
         type: 'select',
         placeholder: 'Wo werden Daten gespeichert/verarbeitet?',
-        required: true,
+        required: false,
         group: 'Datenschutz & Compliance',
         options: ['Nur Deutschland', 'EU/EWR', 'EU + USA (mit Angemessenheitsbeschluss)', 'Weltweit (mit Standardvertragsklauseln)', 'Nach Wahl des Kunden']
       },
@@ -2947,7 +2947,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Vertragslaufzeit',
         type: 'select',
         placeholder: 'Wie lange läuft der Vertrag?',
-        required: true,
+        required: false,
         group: 'Laufzeit & Kündigung',
         options: ['1 Jahr mit automatischer Verlängerung', '2 Jahre mit automatischer Verlängerung', '3 Jahre fest', 'Unbefristet', 'Projektbezogen / befristet']
       },
@@ -2956,7 +2956,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Kündigungsfrist',
         type: 'select',
         placeholder: 'Wie kann gekündigt werden?',
-        required: true,
+        required: false,
         group: 'Laufzeit & Kündigung',
         options: ['3 Monate zum Vertragsende', '6 Monate zum Vertragsende', '1 Monat zum Monatsende', '90 Tage jederzeit', 'Nur aus wichtigem Grund']
       },
@@ -2965,7 +2965,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Folgen bei Vertragsende',
         type: 'select',
         placeholder: 'Was passiert mit bestehenden Endkunden?',
-        required: true,
+        required: false,
         group: 'Laufzeit & Kündigung',
         options: ['Übergangsfrist 90 Tage (Endkunden-Migration)', 'Bestehende Endkunden-Lizenzen laufen bis Ablauf weiter', 'Sofortige Lizenzsperre für alle Endkunden', 'Hersteller übernimmt Endkunden direkt', 'Individuelle Regelung pro Endkunde'],
         helpText: 'Kritisch für Vertrauenswürdigkeit gegenüber Endkunden'
@@ -2977,7 +2977,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Allgemeine Haftungsbegrenzung',
         type: 'select',
         placeholder: 'Wie wird die Haftung begrenzt?',
-        required: true,
+        required: false,
         group: 'Haftung & Rechte',
         options: ['Auf Jahresvergütung begrenzt', 'Auf doppelte Jahresvergütung begrenzt', 'Unbegrenzt bei Vorsatz/grober Fahrlässigkeit, sonst auf Jahresvergütung', 'Gesetzliche Haftung (keine Begrenzung)']
       },
@@ -2986,7 +2986,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Markennutzung',
         type: 'select',
         placeholder: 'Darf der Reseller die Marke des Herstellers nutzen?',
-        required: true,
+        required: false,
         group: 'Haftung & Rechte',
         options: ['Hersteller-Marke darf für Vertrieb genutzt werden', 'White-Label (Reseller nutzt eigene Marke)', 'Co-Branding (beide Marken sichtbar)', 'Keine Markennutzung (nur Produktname)']
       },
@@ -2995,7 +2995,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Wettbewerbsverbot',
         type: 'select',
         placeholder: 'Darf der Reseller Konkurrenzprodukte vertreiben?',
-        required: true,
+        required: false,
         group: 'Haftung & Rechte',
         options: ['Kein Wettbewerbsverbot', 'Keine direkten Konkurrenzprodukte während Laufzeit', 'Keine Konkurrenzprodukte + 6 Monate nach Ende', 'Nur Information an Hersteller (kein Verbot)']
       },
@@ -3004,7 +3004,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Anwendbares Recht',
         type: 'select',
         placeholder: 'Welches Recht gilt?',
-        required: true,
+        required: false,
         group: 'Haftung & Rechte',
         options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht']
       },
@@ -3013,7 +3013,7 @@ const CONTRACT_TYPES: ContractType[] = [
         label: 'Gerichtsstand',
         type: 'text',
         placeholder: 'z.B. Berlin, München, Hamburg',
-        required: true,
+        required: false,
         group: 'Haftung & Rechte'
       }
     ]
