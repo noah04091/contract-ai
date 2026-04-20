@@ -1475,9 +1475,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </h3>
 
         {(!contract.quickFacts || contract.quickFacts.length === 0) && !addingQuickFact ? (
-          <p style={{ color: '#9ca3af', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
-            Keine Eckdaten vorhanden. Klicke + um welche hinzuzufügen.
-          </p>
+          <div style={{ color: '#9ca3af', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
+            <span>Keine Eckdaten vorhanden. Klicke + um welche hinzuzufügen.</span>
+            {!hasAnalysisData(contract) && (
+              <span style={{ display: 'block', marginTop: '6px', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'normal' }}>
+                💡 Tipp: Eckdaten werden auch automatisch erkannt, wenn du den Vertrag analysierst.
+              </span>
+            )}
+          </div>
         ) : (
           <div className={styles.detailsGrid}>
             {(contract.quickFacts || []).map((fact, index) => {

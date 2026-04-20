@@ -2062,7 +2062,14 @@ export default function ContractDetailsV2() {
                            editingField === null && !addingCustomField && (
                             <div className={styles.metricEmptyHint}>
                               <Info size={16} />
-                              <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
+                              <div>
+                                <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
+                                {!hasAnalysis && (
+                                  <span style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: '#94a3b8' }}>
+                                    💡 Tipp: Viele Felder werden automatisch befüllt, wenn du den Vertrag analysierst.
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -2103,7 +2110,14 @@ export default function ContractDetailsV2() {
                         {(!contract.quickFacts || contract.quickFacts.length === 0) && !addingQuickFact && (
                           <div className={styles.metricEmptyHint}>
                             <Info size={16} />
-                            <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
+                            <div>
+                              <span>Noch keine Eckdaten vorhanden. Klicke oben auf <strong>+</strong>, um welche hinzuzufügen.</span>
+                              {!hasAnalysis && (
+                                <span style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: '#94a3b8' }}>
+                                  💡 Tipp: Eckdaten werden auch automatisch erkannt, wenn du den Vertrag analysierst.
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
 
