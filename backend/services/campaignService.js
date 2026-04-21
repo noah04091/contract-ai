@@ -238,6 +238,40 @@ function buildCampaignHtml(campaign, recipientEmail, recipientId) {
 
   let bodyHtml = campaign.body || '';
 
+  // Auto-Detect: Ist der Body ein komplettes HTML-Dokument?
+  // Wenn ja → "Raw-Mode": kein Template-Wrapper, nur Tracking + Unsubscribe injizieren.
+  const isRawHtml = bodyHtml.trim().toLowerCase().startsWith('<!doctype') ||
+                    bodyHtml.trim().toLowerCase().startsWith('<html');
+
+  if (isRawHtml) {
+    // --- RAW HTML MODE ---
+    // Click-Tracking: Links umschreiben (funktioniert auch in komplettem HTML)
+    if (trackClicks && recipientId && campaign._id) {
+      bodyHtml = rewriteLinksForTracking(bodyHtml, campaign._id, recipientId);
+    }
+
+    // Unsubscribe-Link + Tracking-Pixel vor </body> injizieren
+    const injectParts = [];
+    injectParts.push(
+      `<div style="text-align:center;padding:16px 20px 8px;font-size:11px;color:#94a3b8;"><a href="${unsubscribeUrl}" style="color:#94a3b8;text-decoration:underline;">Benachrichtigungen abmelden</a></div>`
+    );
+    if (trackOpens && recipientId) {
+      const openToken = generateOpenToken(campaign._id || 'unknown', recipientId);
+      const pixelUrl = `${API_BASE_URL}/api/track/open/${openToken}`;
+      injectParts.push(`<img src="${pixelUrl}" width="1" height="1" alt="" style="display:block;width:1px;height:1px;border:0;" />`);
+    }
+
+    const injectHtml = injectParts.join('');
+    if (bodyHtml.toLowerCase().includes('</body>')) {
+      bodyHtml = bodyHtml.replace(/<\/body>/i, injectHtml + '</body>');
+    } else {
+      bodyHtml += injectHtml;
+    }
+
+    return bodyHtml;
+  }
+
+  // --- STANDARD MODE ---
   // Click-Tracking: Links in body umschreiben
   if (trackClicks && recipientId && campaign._id) {
     bodyHtml = rewriteLinksForTracking(bodyHtml, campaign._id, recipientId);

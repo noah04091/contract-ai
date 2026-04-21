@@ -458,6 +458,26 @@ function EmailPicker({
 // ============================================================================
 
 function EmailPreview({ form }: { form: CampaignForm }) {
+  const isRawHtml = form.body.trim().toLowerCase().startsWith('<!doctype') ||
+                    form.body.trim().toLowerCase().startsWith('<html');
+
+  // Raw-HTML-Mode: zeige in iframe (eigenes Design, kein Template-Wrapper)
+  if (isRawHtml) {
+    return (
+      <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ padding: '0.5rem 1rem', background: '#f0fdf4', borderBottom: '1px solid #bbf7d0', fontSize: '0.7rem', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <CheckCircle size={12} /> Eigenes HTML erkannt — wird ohne Template-Wrapper gesendet
+        </div>
+        <iframe
+          srcDoc={form.body}
+          title="Email-Preview"
+          style={{ width: '100%', height: '600px', border: 'none' }}
+          sandbox=""
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
