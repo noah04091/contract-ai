@@ -1,0 +1,745 @@
+/* PlaybookWizard.module.css — Smart Playbook Wizard */
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  min-height: 100vh;
+  background: #fafbfc;
+}
+
+/* Step Indicator */
+.stepIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.stepDotActive {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+}
+
+.stepDotCompleted {
+  background: #22c55e;
+  color: white;
+}
+
+.stepDotPending {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+.stepLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.stepLabelActive {
+  color: #111827;
+  font-weight: 600;
+}
+
+.stepDivider {
+  width: 40px;
+  height: 2px;
+  background: #e5e7eb;
+  border-radius: 1px;
+}
+
+.stepDividerDone {
+  background: #22c55e;
+}
+
+/* Back Button */
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: #111827;
+}
+
+/* Step Header */
+.stepHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.stepTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.stepSubtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════ */
+/* STEP 1: Modus-Auswahl                      */
+/* ═══════════════════════════════════════════ */
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.modeCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.modeCard:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+.modeCardSelected {
+  border-color: #6366f1;
+  background: #faf5ff;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.modeIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  font-size: 22px;
+}
+
+.modeTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.modeDescription {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Role Selection */
+.roleSection {
+  margin-top: 32px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.roleSectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+}
+
+.roleCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.roleCard {
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.roleCard:hover {
+  border-color: #c7d2fe;
+}
+
+.roleCardSelected {
+  border-color: #6366f1;
+  background: #faf5ff;
+}
+
+.roleLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.roleDescription {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* NDA Info */
+.infoBox {
+  margin-top: 32px;
+  padding: 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+}
+
+.infoBoxTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.infoBoxText {
+  font-size: 13px;
+  color: #3b82f6;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════ */
+/* STEP 2: Parteien                            */
+/* ═══════════════════════════════════════════ */
+
+.partySection {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.partySectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.partySectionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ede9fe;
+  color: #6366f1;
+}
+
+.partySectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.fieldRequired {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.fieldInput {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #111827;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fieldInput:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.fieldInput::placeholder {
+  color: #9ca3af;
+}
+
+textarea.fieldInput {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.fieldSelect {
+  composes: fieldInput;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* ═══════════════════════════════════════════ */
+/* STEP 3: Entscheidungen                      */
+/* ═══════════════════════════════════════════ */
+
+.sectionCard {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.sectionCardActive {
+  border-color: #c7d2fe;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sectionHeader:hover {
+  background: #fafbfc;
+}
+
+.sectionHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sectionParagraph {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  background: #ede9fe;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.sectionHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.riskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.riskLow {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.riskMedium {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.riskHigh {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.chevron {
+  color: #9ca3af;
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Section Body */
+.sectionBody {
+  padding: 0 24px 24px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.sectionDescription {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 16px 0;
+  line-height: 1.5;
+}
+
+/* Options */
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.optionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover {
+  border-color: #c7d2fe;
+  background: #fafbfc;
+}
+
+.optionCardSelected {
+  border-color: #6366f1;
+  background: #faf5ff;
+}
+
+.optionRadio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s;
+}
+
+.optionRadioSelected {
+  border-color: #6366f1;
+  background: #6366f1;
+}
+
+.optionRadioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+}
+
+.optionContent {
+  flex: 1;
+}
+
+.optionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.optionLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.recommendedBadge {
+  font-size: 10px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optionDescription {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Detail Tabs */
+.detailTabs {
+  display: flex;
+  gap: 4px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+
+.detailTab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.detailTab:hover {
+  color: #111827;
+}
+
+.detailTabActive {
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.detailContent {
+  padding: 16px;
+  background: #fafbfc;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.detailIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.detailWarning {
+  color: #d97706;
+}
+
+.detailTip {
+  color: #6366f1;
+}
+
+.detailRisk {
+  color: #dc2626;
+}
+
+/* ═══════════════════════════════════════════ */
+/* Navigation Footer                           */
+/* ═══════════════════════════════════════════ */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.footerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnSecondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnPrimary:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  transform: translateY(-1px);
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+/* Progress Summary */
+.progressSummary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+}
+
+.progressItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.progressValue {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .roleCards {
+    grid-template-columns: 1fr;
+  }
+
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .stepIndicator {
+    flex-wrap: wrap;
+  }
+
+  .detailTabs {
+    flex-wrap: wrap;
+  }
+}

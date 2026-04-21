@@ -673,6 +673,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Contract Builder Routen:", err);
     }
 
+    // ✅ 6.7 PLAYBOOKS - Smart Playbook System (geführte Vertragserstellung)
+    try {
+      const playbookRoutes = require("./routes/playbooks");
+      app.use("/api/playbooks", playbookRoutes);
+      console.log("✅ Playbook Routen geladen unter /api/playbooks (Smart Playbook System)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Playbook Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {
