@@ -463,65 +463,79 @@ function EmailPreview({ form }: { form: CampaignForm }) {
       style={{
         border: '1px solid #e2e8f0',
         borderRadius: '8px',
-        background: '#f8fafc',
-        padding: '1rem',
-        fontSize: '0.875rem'
+        background: '#ffffff',
+        fontSize: '0.875rem',
+        overflow: 'hidden'
       }}
     >
-      <div style={{ color: '#64748b', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
+      {/* Betreff-Zeile (Postfach-Simulation) */}
+      <div style={{ padding: '0.5rem 1rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.75rem', color: '#64748b' }}>
         Betreff: <strong style={{ color: '#1e293b' }}>{form.subject || '(leer)'}</strong>
+        {form.preheader && (
+          <span style={{ marginLeft: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>
+            – {form.preheader}
+          </span>
+        )}
       </div>
-      {form.preheader && (
-        <div style={{ color: '#94a3b8', fontStyle: 'italic', marginBottom: '1rem', fontSize: '0.75rem' }}>
-          {form.preheader}
-        </div>
-      )}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #cbd5e1',
-          borderRadius: '6px',
-          padding: '1.5rem',
-          maxWidth: '600px'
-        }}
-      >
-        <div style={{ borderTop: '4px solid #3b82f6', marginBottom: '1rem', marginTop: '-1.5rem', marginLeft: '-1.5rem', marginRight: '-1.5rem' }} />
-        <h2 style={{ margin: '0 0 1rem 0', color: '#1e293b', fontSize: '1.25rem' }}>
+
+      {/* Email-Body Preview (matched neues generateCampaignTemplate Design) */}
+      <div style={{ padding: '2rem 1.5rem 1rem', textAlign: 'center' }}>
+        {/* Logo */}
+        <img
+          src="https://www.contract-ai.de/logo.png"
+          alt="Contract AI"
+          style={{ height: '24px', marginBottom: '1rem' }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+
+        {/* Titel */}
+        <h2 style={{ margin: '0 0 0.5rem', color: '#0f172a', fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.35 }}>
           {form.title || '(Titel)'}
         </h2>
+
+        {/* Blauer Akzent-Strich */}
+        <div style={{ width: '48px', height: '3px', background: '#3b82f6', borderRadius: '2px', margin: '0.75rem auto 1.25rem' }} />
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '0 1.5rem 1.5rem', textAlign: 'left' }}>
         <div
-          style={{ color: '#334155', lineHeight: 1.6 }}
-          dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#94a3b8">(Body)</p>' }}
+          style={{ color: '#334155', lineHeight: 1.7, fontSize: '0.875rem' }}
+          dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#94a3b8">(Body-Inhalt hier eingeben)</p>' }}
         />
+
+        {/* CTA Button */}
         {form.ctaText && form.ctaUrl && (
-          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <div style={{ marginTop: '1.25rem', textAlign: 'center' }}>
             <span
               style={{
                 display: 'inline-block',
                 background: '#3b82f6',
                 color: '#fff',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '6px',
+                padding: '0.7rem 1.5rem',
+                borderRadius: '25px',
                 fontWeight: 600,
-                textDecoration: 'none'
+                fontSize: '0.85rem'
               }}
             >
               {form.ctaText}
             </span>
           </div>
         )}
-        <div
-          style={{
-            marginTop: '2rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid #e2e8f0',
-            fontSize: '0.7rem',
-            color: '#94a3b8',
-            textAlign: 'center'
-          }}
-        >
-          Contract AI · <a href="#" style={{ color: '#94a3b8' }}>Abbestellen</a>
-        </div>
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          padding: '0.75rem 1.5rem',
+          borderTop: '1px solid #e2e8f0',
+          fontSize: '0.65rem',
+          color: '#94a3b8',
+          textAlign: 'center',
+          lineHeight: 1.5
+        }}
+      >
+        &copy; {new Date().getFullYear()} Contract AI &middot; Website &middot; Datenschutz &middot; Abmelden
       </div>
     </div>
   );
