@@ -10,12 +10,32 @@ import HoverTooltip from './HoverTooltip';
 import styles from '../../styles/LegalLensV12.module.css';
 
 /**
+ * Hebt Suchbegriffe im Text gelb hervor
+ */
+const highlightMatch = (text: string, query: string): React.ReactNode => {
+  if (!query || !text) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if (parts.length <= 1) return text;
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1
+          ? <mark key={i} style={{ backgroundColor: '#fef08a', padding: '0 1px', borderRadius: '2px' }}>{part}</mark>
+          : part
+      )}
+    </>
+  );
+};
+
+/**
  * Formatiert Klausel-Text für bessere Lesbarkeit
  * - Fügt Zeilenumbrüche nach Satzenden ein
  * - Erkennt §-Paragraphen und Aufzählungen
  * - Begrenzt auf max. 3 Absätze für Vorschau
+ * - Optional: Suchbegriffe gelb hervorheben
  */
-const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactNode => {
+const formatClauseText = (text: string, maxParagraphs: number = 3, highlightQuery?: string): React.ReactNode => {
   if (!text) return null;
 
   // Normalisiere Whitespace
@@ -46,7 +66,7 @@ const formatClauseText = (text: string, maxParagraphs: number = 3): React.ReactN
     <>
       {displayParagraphs.map((paragraph, index) => (
         <span key={index} className={styles.clauseParagraph}>
-          {paragraph.trim()}
+          {highlightQuery ? highlightMatch(paragraph.trim(), highlightQuery) : paragraph.trim()}
           {index < displayParagraphs.length - 1 && <br />}
         </span>
       ))}
@@ -387,6 +407,23 @@ const ClauseList: React.FC<ClauseListProps> = ({
     const timer = setTimeout(checkOverflow, 100);
     return () => clearTimeout(timer);
   }, [safeClauses]);
+
+  // Auto-expand: Klauseln aufklappen wenn Suchtreffer im Text steckt
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    const query = searchQuery.toLowerCase().trim();
+    setExpandedClauses(prev => {
+      const toExpand = filteredClauses.filter(c =>
+        !c.nonAnalyzable &&
+        !prev.has(c.id) &&
+        c.text.toLowerCase().includes(query)
+      );
+      if (toExpand.length === 0) return prev;
+      const next = new Set(prev);
+      toExpand.forEach(c => next.add(c.id));
+      return next;
+    });
+  }, [searchQuery, filteredClauses]);
 
   // Toggle expand/collapse für eine Klausel
   const toggleExpand = useCallback((clauseId: string, e: React.MouseEvent) => {
@@ -774,7 +811,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                     </span>
                   </div>
                   <p className={`${styles.clauseText} ${styles.nonAnalyzableText}`}>
-                    {clause.text}
+                    {searchQuery ? highlightMatch(clause.text, searchQuery) : clause.text}
                   </p>
                 </div>
               </React.Fragment>
@@ -826,8 +863,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   className={`${styles.clauseText} ${expandedClauses.has(clause.id) ? styles.expanded : ''}`}
                 >
                   {expandedClauses.has(clause.id)
-                    ? formatClauseText(clause.text, 999) // Alle Absätze wenn expanded
-                    : formatClauseText(clause.text, 3)   // Max 3 Absätze für Vorschau
+                    ? formatClauseText(clause.text, 999, searchQuery || undefined)
+                    : formatClauseText(clause.text, 3, searchQuery || undefined)
                   }
                 </div>
                 {/* Expand/Collapse Button - nur wenn Text überläuft */}
