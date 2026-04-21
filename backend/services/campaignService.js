@@ -6,7 +6,7 @@
 const { ObjectId } = require('mongodb');
 const cheerio = require('cheerio');
 const database = require('../config/database');
-const { generateEmailTemplate } = require('../utils/emailTemplate');
+const { generateCampaignTemplate } = require('../utils/emailTemplate');
 const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
 const { logSentEmail } = require('../utils/emailLogger');
 const sendEmail = require('./mailer');
@@ -264,7 +264,7 @@ function buildCampaignHtml(campaign, recipientEmail, recipientId) {
     templateData.cta = { text: campaign.ctaText, url: finalCtaUrl };
   }
 
-  return generateEmailTemplate(templateData);
+  return generateCampaignTemplate(templateData);
 }
 
 // ========================================================================

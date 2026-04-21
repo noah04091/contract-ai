@@ -283,8 +283,118 @@ function generateDivider() {
               </table>`;
 }
 
+/**
+ * Campaign-spezifisches Template — clean, minimal, kein Box-in-Box.
+ * Wird NUR von campaignService.buildCampaignHtml() verwendet.
+ * Bestehende Mails (Verifizierung, Digest etc.) nutzen weiterhin generateEmailTemplate().
+ */
+function generateCampaignTemplate({
+  title,
+  body,
+  preheader = '',
+  cta = null,
+  unsubscribeUrl = null
+}) {
+  const ctaHtml = cta ? `
+          <tr>
+            <td style="padding: 8px 40px 36px; text-align: center;">
+              <a href="${cta.url}" style="display: inline-block; padding: 14px 36px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 25px; letter-spacing: 0.2px;">
+                ${cta.text}
+              </a>
+            </td>
+          </tr>` : '';
+
+  const preheaderHtml = preheader ? `
+  <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+    ${preheader}
+  </div>` : '';
+
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title || 'Contract AI'}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  ${preheaderHtml}
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+    <tr>
+      <td align="center" style="padding: 0;">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Logo (zentriert, clean) -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center;">
+              <img src="${logoUrl}" alt="Contract AI" style="height: 30px; max-width: 160px;" />
+            </td>
+          </tr>
+
+          <!-- Titel -->
+          <tr>
+            <td style="padding: 0 40px 8px; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px; color: #0f172a; font-weight: 700; line-height: 1.35;">
+                ${title || ''}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Subtiler Akzent-Strich -->
+          <tr>
+            <td style="padding: 16px 40px 24px;">
+              <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                <tr>
+                  <td style="width: 48px; height: 3px; background-color: #3b82f6; border-radius: 2px;"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 0 40px 32px; font-size: 15px; line-height: 1.7; color: #334155;">
+              ${body || ''}
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          ${ctaHtml}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 32px 40px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+                    <p style="margin: 0 0 6px; font-size: 12px; color: #94a3b8;">
+                      &copy; ${new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.
+                    </p>
+                    <p style="margin: 0; font-size: 11px; line-height: 1.6;">
+                      <a href="${FRONTEND_URL}" style="color: #64748b; text-decoration: none;">Website</a>
+                      <span style="color: #cbd5e1; margin: 0 6px;">&middot;</span>
+                      <a href="${FRONTEND_URL}/datenschutz" style="color: #64748b; text-decoration: none;">Datenschutz</a>
+                      <span style="color: #cbd5e1; margin: 0 6px;">&middot;</span>
+                      <a href="${FRONTEND_URL}/impressum" style="color: #64748b; text-decoration: none;">Impressum</a>
+                      ${unsubscribeUrl ? `<span style="color: #cbd5e1; margin: 0 6px;">&middot;</span>
+                      <a href="${unsubscribeUrl}" style="color: #64748b; text-decoration: none;">Abmelden</a>` : ''}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 module.exports = {
   generateEmailTemplate,
+  generateCampaignTemplate,
   generateInfoBox,
   generateAlertBox,
   generateStatsRow,
