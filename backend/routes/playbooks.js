@@ -100,10 +100,11 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
 
     await db.collection("contracts").insertOne({
       _id: contractId,
-      userId: req.user.userId,
+      userId: new ObjectId(req.user.userId),
       name: `NDA — ${partyData.partyA_name} & ${partyData.partyB_name}`,
       content: contractText,
-      contractType: type,
+      contractType: "nda",
+      isGenerated: true,
       source: "playbook",
       playbook: {
         type,
@@ -112,7 +113,8 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
         decisions: engineResult.resolvedDecisions,
         riskProfile: engineResult.riskProfile
       },
-      status: "draft",
+      formData: partyData,
+      status: "active",
       createdAt: new Date(),
       updatedAt: new Date()
     });
