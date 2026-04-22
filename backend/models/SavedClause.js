@@ -197,36 +197,37 @@ savedClauseSchema.pre("save", function(next) {
   next();
 });
 
-// Helper: Auto-Titel aus Klauseltext generieren
+// Helper: Auto-Titel aus Klauseltext generieren (kurz & prägnant, max ~40 Zeichen)
 function generateAutoTitle(text) {
   let clean = text
+    .replace(/---+/g, "")               // Horizontal rules
     .replace(/^[-–—#*\s]+/g, "")        // Leading markdown/whitespace
     .replace(/\*\*/g, "")                // Bold markers
     .replace(/^\(\d+\)\s*/g, "")         // Leading (1) etc.
     .replace(/^\d+[\.\)]\s*/g, "")       // Leading 1. or 1) etc.
-    .replace(/\|[^|]*\|/g, "")           // Pipe-delimited metadata
+    .replace(/\|[^|]*\|/g, " ")          // Pipe-delimited metadata → space
     .replace(/\s+/g, " ")               // Normalize whitespace
     .trim();
 
   if (!clean) return "";
 
-  // If starts with § reference, extract it as title prefix
-  const sectionMatch = clean.match(/^(§\s*\d+[a-z]?\s+\S+(?:\s+\S+)?)/i);
-  if (sectionMatch && sectionMatch[1].length <= 40) {
-    return sectionMatch[1];
+  // § Referenz mit Titel extrahieren (z.B. "§ 9 Haftung", "§ 7 Gewährleistung")
+  const sectionMatch = clean.match(/^(§\s*\d+[a-z]?\s+[A-ZÄÖÜ]\S*(?:\s+[A-ZÄÖÜ/]\S*){0,2})/);
+  if (sectionMatch) {
+    return sectionMatch[1].substring(0, 40);
   }
 
-  // Take first sentence if short enough
+  // Kurzen ersten Satz nehmen (max 40 Zeichen)
   const sentenceEnd = clean.search(/[.!?]\s/);
-  if (sentenceEnd > 0 && sentenceEnd < 80) {
+  if (sentenceEnd > 0 && sentenceEnd <= 40) {
     return clean.substring(0, sentenceEnd + 1);
   }
 
-  // Otherwise truncate at word boundary around 60 chars
-  if (clean.length <= 65) return clean;
-  const truncated = clean.substring(0, 70);
+  // An Wortgrenze bei ~35 Zeichen kürzen
+  if (clean.length <= 40) return clean;
+  const truncated = clean.substring(0, 38);
   const lastSpace = truncated.lastIndexOf(" ");
-  return (lastSpace > 25 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + "…";
+  return (lastSpace > 15 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + "…";
 }
 
 // Helper: Keywords extrahieren

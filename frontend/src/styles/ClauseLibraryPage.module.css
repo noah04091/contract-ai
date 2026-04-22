@@ -530,6 +530,17 @@
   font-size: 0.9rem;
   color: #1e293b;
   margin-bottom: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Preview kürzer wenn Titel vorhanden — vermeidet Redundanz */
+.clausePreviewShort {
+  -webkit-line-clamp: 2 !important;
+  font-size: 0.85rem !important;
+  color: #64748b !important;
 }
 
 /* ===== CLAUSE CARD - Premium Light ===== */

@@ -67,30 +67,31 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
     previewTitle: string;
   } | null>(null);
 
-  // Fallback-Titel für Klauseln ohne Titel generieren
+  // Fallback-Titel für Klauseln ohne Titel generieren (kurz & prägnant, max ~40 Zeichen)
   const getDisplayTitle = (clause: SavedClause): string | null => {
     if (clause.title && clause.title.trim()) return clause.title;
     // Fallback: Klauseltext bereinigen und kürzen
     let text = (clause.clauseText || clause.clausePreview || '')
+      .replace(/---+/g, '')
       .replace(/^[-–—#*\s]+/g, '')
       .replace(/\*\*/g, '')
       .replace(/^\(\d+\)\s*/g, '')
       .replace(/^\d+[.)]\s*/g, '')
-      .replace(/\|[^|]*\|/g, '')
+      .replace(/\|[^|]*\|/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
     if (!text) return null;
-    // § Referenz als Titel
-    const sectionMatch = text.match(/^(§\s*\d+[a-z]?\s+\S+(?:\s+\S+)?)/i);
-    if (sectionMatch && sectionMatch[1].length <= 40) return sectionMatch[1];
-    // Erster Satz wenn kurz genug
+    // § Referenz mit Titel extrahieren
+    const sectionMatch = text.match(/^(§\s*\d+[a-z]?\s+[A-ZÄÖÜ]\S*(?:\s+[A-ZÄÖÜ/]\S*){0,2})/);
+    if (sectionMatch) return sectionMatch[1].substring(0, 40);
+    // Kurzer erster Satz
     const sentenceEnd = text.search(/[.!?]\s/);
-    if (sentenceEnd > 0 && sentenceEnd < 80) return text.substring(0, sentenceEnd + 1);
-    // Sonst an Wortgrenze kürzen
-    if (text.length <= 65) return text;
-    const truncated = text.substring(0, 70);
+    if (sentenceEnd > 0 && sentenceEnd <= 40) return text.substring(0, sentenceEnd + 1);
+    // An Wortgrenze bei ~35 Zeichen kürzen
+    if (text.length <= 40) return text;
+    const truncated = text.substring(0, 38);
     const lastSpace = truncated.lastIndexOf(' ');
-    return (lastSpace > 25 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + '…';
+    return (lastSpace > 15 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + '…';
   };
 
   const formatDate = (dateString: string) => {
@@ -224,7 +225,7 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
                 ) : null;
               })()}
 
-              <p className={styles.clausePreview}>
+              <p className={`${styles.clausePreview} ${(clause.title || getDisplayTitle(clause)) ? styles.clausePreviewShort : ''}`}>
                 {clause.clausePreview}
               </p>
 
