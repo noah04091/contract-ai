@@ -380,10 +380,26 @@ async function createCampaign(data, adminUser) {
     }
   }
 
-  // Recipients ermitteln
-  const query = buildRecipientQuery(data.segmentFilter || {});
+  // Recipients ermitteln — OHNE Consent-Filter, damit abgemeldete User
+  // als 'skipped' sichtbar werden (statt komplett unsichtbar).
+  const filter = data.segmentFilter || {};
+  const baseQuery = { email: { $exists: true, $nin: [null, ''] } };
+
+  if (filter.emails && Array.isArray(filter.emails) && filter.emails.length > 0) {
+    baseQuery.email = { $in: filter.emails.filter(Boolean).slice(0, 100) };
+  } else if (filter.userIds && Array.isArray(filter.userIds) && filter.userIds.length > 0) {
+    const ids = filter.userIds.map((id) => { try { return new ObjectId(id); } catch { return id; } });
+    baseQuery._id = { $in: ids };
+  } else {
+    if (filter.plan && filter.plan !== 'all') baseQuery.subscriptionPlan = Array.isArray(filter.plan) ? { $in: filter.plan } : filter.plan;
+    if (filter.subscriptionActive === true) baseQuery.subscriptionActive = true;
+    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { $gte: Number(filter.minAnalysisCount) };
+    if (filter.createdAfter) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$gte = new Date(filter.createdAfter); }
+    if (filter.createdBefore) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$lte = new Date(filter.createdBefore); }
+  }
+
   const users = await db.collection('users')
-    .find(query, { projection: { _id: 1, email: 1 } })
+    .find(baseQuery, { projection: { _id: 1, email: 1, verified: 1, emailOptOut: 1, emailPreferences: 1 } })
     .limit(MAX_RECIPIENTS_PER_CAMPAIGN + 1)
     .toArray();
 
@@ -397,27 +413,34 @@ async function createCampaign(data, adminUser) {
     filterByUnsubscribes(db, emails)
   ]);
 
-  // Dedup by email + Status zuweisen (pending vs skipped)
+  // Dedup by email + Status zuweisen (pending vs skipped mit Grund)
   const seen = new Set();
   const recipientDocs = [];
   let eligibleCount = 0;
   let skippedCount = 0;
 
   for (const u of users) {
-    if (!u.email || seen.has(u.email.toLowerCase())) continue; // Dedup
+    if (!u.email || seen.has(u.email.toLowerCase())) continue;
     seen.add(u.email.toLowerCase());
 
-    if (unhealthyEmails.has(u.email)) {
-      recipientDocs.push({
-        userId: u._id, email: u.email,
-        status: 'skipped', skippedReason: 'Email inaktiv/quarantine',
-        sentAt: null, messageId: null, error: null, createdAt: new Date()
-      });
-      skippedCount++;
+    // Consent-Prüfung in JavaScript (nicht in DB-Query) → skipped-User bleiben sichtbar
+    let skipReason = null;
+    if (u.verified !== true) {
+      skipReason = 'Email nicht verifiziert';
+    } else if (u.emailOptOut === true) {
+      skipReason = 'Globaler Email-Opt-Out';
+    } else if (u.emailPreferences && u.emailPreferences.marketing === false) {
+      skipReason = 'Newsletter abbestellt';
+    } else if (unhealthyEmails.has(u.email)) {
+      skipReason = 'Email inaktiv/quarantine';
     } else if (unsubscribedEmails.has(u.email)) {
+      skipReason = 'Newsletter abbestellt (Unsubscribe-Link)';
+    }
+
+    if (skipReason) {
       recipientDocs.push({
         userId: u._id, email: u.email,
-        status: 'skipped', skippedReason: 'Newsletter abbestellt',
+        status: 'skipped', skippedReason: skipReason,
         sentAt: null, messageId: null, error: null, createdAt: new Date()
       });
       skippedCount++;
@@ -431,6 +454,9 @@ async function createCampaign(data, adminUser) {
     }
   }
 
+  if (eligibleCount === 0 && skippedCount > 0) {
+    throw new Error(`Alle ${skippedCount} Empfänger wurden übersprungen (abbestellt/nicht verifiziert). Keine berechtigten Empfänger.`);
+  }
   if (eligibleCount === 0) {
     throw new Error('Keine berechtigten Empfänger gefunden');
   }
