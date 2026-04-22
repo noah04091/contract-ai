@@ -1601,3 +1601,473 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
 }
+
+/* ═══════════════════════════════════════════════════════ */
+/* GALLERY PHASE — Vorlagen-Übersicht als Step 1          */
+/* ═══════════════════════════════════════════════════════ */
+
+.galleryPage {
+  min-height: 100vh;
+  background: #fafbfc;
+  overflow-y: auto;
+}
+
+.galleryInner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+
+/* Gallery Header */
+.galleryHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.galleryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.galleryTitle {
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px 0;
+}
+
+.gallerySubtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin: 0 auto;
+  max-width: 560px;
+  line-height: 1.5;
+}
+
+/* Gallery Search */
+.gallerySearch {
+  max-width: 440px;
+  margin: 0 auto 24px;
+  position: relative;
+}
+
+.gallerySearchIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.gallerySearchInput {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: white;
+}
+
+.gallerySearchInput:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.gallerySearchInput::placeholder {
+  color: #9ca3af;
+}
+
+/* Gallery Filter */
+.galleryFilterRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 32px;
+  padding: 4px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+
+.galleryFilterBtn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.galleryFilterBtn:hover {
+  color: #374151;
+}
+
+.galleryFilterBtnActive {
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.galleryFilterCount {
+  font-size: 11px;
+  background: #e5e7eb;
+  padding: 1px 6px;
+  border-radius: 8px;
+  color: #6b7280;
+}
+
+/* Gallery Section Headers */
+.gallerySectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.gallerySectionTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gallerySectionBadge {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Gallery Grid */
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+/* Gallery Card */
+.galleryCard {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  padding: 22px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.galleryCard:hover {
+  border-color: #6366f1;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.galleryCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.galleryCardIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+  color: #6366f1;
+}
+
+.galleryCardIconBlank {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  color: #16a34a;
+}
+
+.galleryCardBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.galleryCardBadgeSystem {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.galleryCardBadgeUser {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.galleryCardBadgeDraft {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.galleryCardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 6px 0;
+}
+
+.galleryCardDesc {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 14px 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.galleryCardMeta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.galleryCardMetaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Gallery Card Actions (3-dot menu) */
+.galleryCardActions {
+  position: relative;
+}
+
+.galleryCardActionsBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.galleryCardActionsBtn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.galleryCardMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.galleryCardMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.galleryCardMenuItem:hover {
+  background: #f3f4f6;
+}
+
+.galleryCardMenuItemDanger {
+  color: #dc2626;
+}
+
+.galleryCardMenuItemDanger:hover {
+  background: #fef2f2;
+}
+
+/* Drafts Section */
+.galleryDraftsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.galleryDraftCard {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.galleryDraftCard:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.1);
+}
+
+.galleryDraftIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef3c7;
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+.galleryDraftInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.galleryDraftName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 3px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.galleryDraftMeta {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.galleryDraftActions {
+  flex-shrink: 0;
+}
+
+/* Gallery Empty State */
+.galleryEmpty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #6b7280;
+}
+
+.galleryEmptyIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  color: #9ca3af;
+}
+
+/* Gallery Loading */
+.galleryLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* Gallery Confirm Delete Inline */
+.galleryConfirmDelete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.galleryConfirmDeleteBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.galleryConfirmDeleteYes {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.galleryConfirmDeleteYes:hover {
+  background: #fecaca;
+}
+
+.galleryConfirmDeleteNo {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.galleryConfirmDeleteNo:hover {
+  background: #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .galleryInner { padding: 24px 16px; }
+  .galleryTitle { font-size: 24px; }
+  .galleryGrid { grid-template-columns: 1fr; }
+  .galleryDraftsRow { grid-template-columns: 1fr; }
+  .galleryFilterRow { gap: 2px; }
+  .galleryFilterBtn { padding: 6px 10px; font-size: 12px; }
+}

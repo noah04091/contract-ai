@@ -107,9 +107,9 @@ const LegalLensV2Start = lazy(() => import("./pages/LegalLensV2Start")); // 🔍
 const LegalLensV2 = lazy(() => import("./pages/LegalLensV2")); // 🔍 Legal Lens V2 — Interaktiver Vertrags-Explorer
 const ClauseLibraryPage = lazy(() => import("./pages/ClauseLibraryPage")); // 📚 NEU: Klausel-Bibliothek
 const ContractBuilder = lazy(() => import("./pages/ContractBuilder")); // 🔧 NEU: ContractForge - Visueller Vertragsbaukasten
-// PlaybookLibrary: /playbooks redirects to /vorlagen now
+// PlaybookLibrary: /playbooks and /vorlagen redirect to /contract-builder (Gallery Phase)
 const PlaybookWizard = lazy(() => import("./pages/PlaybookWizard")); // 🧠 Smart Playbook System - Wizard
-const Vorlagen = lazy(() => import("./pages/Vorlagen")); // 📄 Vorlagen-Bibliothek
+// Vorlagen.tsx still exists but /vorlagen now redirects to /contract-builder (Gallery Phase)
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 const NewSignatureRequest = lazy(() => import("./pages/NewSignatureRequest")); // ✉️ NEU: Neue Signaturanfrage
@@ -286,9 +286,9 @@ function AppWithLoader() {
             <Route path="/Generate" element={<Navigate to="/generate" replace />} /> {/* SEO: Redirect uppercase */}
 
             {/* 🧠 Smart Playbook System */}
-            <Route path="/playbooks" element={<Navigate to="/vorlagen" replace />} />
+            <Route path="/playbooks" element={<Navigate to="/contract-builder" replace />} />
             <Route path="/playbooks/:type" element={<RequireAuth><PlaybookWizard /></RequireAuth>} />
-            <Route path="/vorlagen" element={<RequireAuth><Vorlagen /></RequireAuth>} />
+            <Route path="/vorlagen" element={<Navigate to="/contract-builder" replace />} />
             <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
             <Route path="/integrations" element={<RequireAuth><Integrations /></RequireAuth>} />

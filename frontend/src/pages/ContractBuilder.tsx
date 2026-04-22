@@ -50,8 +50,26 @@ import {
   CheckCircle,
   TrendingUp,
   Palette,
+  Search,
+  Briefcase,
+  Home,
+  Banknote,
+  User,
+  Building,
+  Handshake,
+  PenTool,
+  Layers,
+  Shield,
+  BookOpen,
+  Scale,
+  Lock,
+  Clock,
+  Star,
+  FolderOpen,
 } from 'lucide-react';
-import { createUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { contractTemplates, templateCategories } from '../data/contractTemplates';
+// ContractTemplate type used implicitly via contractTemplates array
 import { WelcomePopup } from '../components/Tour';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/ContractBuilder.module.css';
@@ -112,6 +130,14 @@ const ContractBuilder: React.FC = () => {
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  // ─── Gallery Phase State ───
+  const [gallerySearch, setGallerySearch] = useState('');
+  const [galleryCategory, setGalleryCategory] = useState<string>('all');
+  const [galleryUserTemplates, setGalleryUserTemplates] = useState<UserTemplate[]>([]);
+  // isLoadingGalleryUserTemplates - Loading state tracked internally in useEffect
+  const [galleryActiveMenu, setGalleryActiveMenu] = useState<string | null>(null);
+  const [galleryConfirmDeleteId, setGalleryConfirmDeleteId] = useState<string | null>(null);
 
   // Confirm Dialog (ersetzt window.confirm)
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -196,7 +222,7 @@ const ContractBuilder: React.FC = () => {
     return () => clearInterval(autoSaveInterval);
   }, [currentDocument]);
 
-  // Dokument laden oder Typ-Auswahl zeigen
+  // Dokument laden wenn ID vorhanden
   // WICHTIG: loadedIdRef verhindert eine Endlosschleife - loadDocument ändert currentDocument,
   // was ohne Guard den useEffect erneut triggern und loadDocument endlos aufrufen würde.
   // Das würde ALLE lokalen Änderungen (Blöcke löschen, Text bearbeiten, etc.) sofort rückgängig machen.
@@ -208,15 +234,13 @@ const ContractBuilder: React.FC = () => {
         loadedIdRef.current = id;
         loadDocument(id);
       }
-    } else if (!currentDocument) {
-      // Bei neuem Dokument ohne existierendes Dokument: Typ-Auswahl Modal zeigen
-      setShowTypeSelector(true);
     }
-  }, [id, loadDocument, currentDocument]);
+    // Kein else: Wenn kein id → Gallery-Phase wird gerendert (kein Modal nötig)
+  }, [id, loadDocument]);
 
-  // Gespeicherte Entwürfe laden wenn Modal geöffnet wird
+  // Gespeicherte Entwürfe laden wenn Gallery angezeigt wird oder Modal geöffnet wird
   useEffect(() => {
-    if (showTypeSelector) {
+    if (!id || showTypeSelector) {
       const fetchSavedDrafts = async () => {
         setIsLoadingDrafts(true);
         try {
@@ -243,7 +267,16 @@ const ContractBuilder: React.FC = () => {
 
       fetchSavedDrafts();
     }
-  }, [showTypeSelector]);
+  }, [id, showTypeSelector]);
+
+  // User-Vorlagen laden für Gallery
+  useEffect(() => {
+    if (!id && isPremiumUser) {
+      fetchUserTemplates()
+        .then(templates => setGalleryUserTemplates(templates))
+        .catch(() => { /* Free-Plan User — OK */ });
+    }
+  }, [id, isPremiumUser]);
 
   // Automatisch zum Variables-Panel wechseln wenn eine Variable ausgewählt wird
   useEffect(() => {
@@ -1302,6 +1335,423 @@ const ContractBuilder: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo, view, selectedBlockId, currentDocument, zoom, duplicateBlock, deleteBlock, selectBlock, addBlock, setView, setZoom]);
 
+  // ═══════════════════════════════════════════════════════════
+  // GALLERY PHASE: Vorlagen-Übersicht wenn keine ID in URL
+  // ═══════════════════════════════════════════════════════════
+
+  // Icon-Map für System-Vorlagen
+  const GALLERY_ICON_MAP: Record<string, React.ReactNode> = {
+    FileEdit: <PenTool size={20} />, Briefcase: <Briefcase size={20} />,
+    Handshake: <Handshake size={20} />, Hammer: <Building size={20} />,
+    ShoppingCart: <Layers size={20} />, Home: <Home size={20} />,
+    Banknote: <Banknote size={20} />, Lock: <Lock size={20} />,
+    ShieldCheck: <Shield size={20} />, Users: <BookOpen size={20} />,
+    Award: <Scale size={20} />, Building: <Building size={20} />,
+    FileText: <FileText size={20} />, User: <User size={20} />,
+    FileKey: <Lock size={20} />, GraduationCap: <BookOpen size={20} />,
+    Store: <Building size={20} />,
+  };
+
+  const GALLERY_CAT_ICONS: Record<string, React.ReactNode> = {
+    business: <Building size={14} />, employment: <Briefcase size={14} />,
+    property: <Home size={14} />, finance: <Banknote size={14} />,
+    personal: <User size={14} />,
+  };
+
+  // Gefilterte Templates berechnen
+  const galleryFilteredSystemTemplates = contractTemplates.filter(t => {
+    if (t.id === 'individuell') return false;
+    const matchesCat = galleryCategory === 'all' || t.category === galleryCategory;
+    const matchesSearch = !gallerySearch ||
+      t.name.toLowerCase().includes(gallerySearch.toLowerCase()) ||
+      t.description.toLowerCase().includes(gallerySearch.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  const galleryFilteredUserTemplates = galleryUserTemplates.filter(t => {
+    if (!gallerySearch) return true;
+    return t.name.toLowerCase().includes(gallerySearch.toLowerCase()) ||
+      t.description?.toLowerCase().includes(gallerySearch.toLowerCase());
+  });
+
+  const galleryFilteredDrafts = savedDrafts.filter(d => {
+    if (!gallerySearch) return true;
+    return d.metadata.name.toLowerCase().includes(gallerySearch.toLowerCase());
+  });
+
+  // Gallery Handler
+  const handleGallerySelectTemplate = async (templateId: string) => {
+    try {
+      const newDocId = await createDocumentFromTemplate(templateId);
+      if (newDocId) {
+        navigate(`/contract-builder/${newDocId}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Erstellen des Dokuments:', err);
+    }
+  };
+
+  const handleGalleryLoadDraft = async (draftId: string) => {
+    try {
+      await loadDocument(draftId);
+      navigate(`/contract-builder/${draftId}`);
+    } catch (err) {
+      console.error('Fehler beim Laden des Entwurfs:', err);
+    }
+  };
+
+  const handleGallerySelectUserTemplate = async (template: UserTemplate) => {
+    try {
+      const templateData = template.defaultValues as {
+        blocks?: Block[];
+        design?: Record<string, unknown>;
+        variables?: Record<string, unknown>[];
+        metadata?: { contractType?: string };
+      };
+      const newDocId = await createDocument(
+        template.name,
+        templateData.metadata?.contractType || template.contractType || 'individuell'
+      );
+      if (templateData.blocks && templateData.blocks.length > 0) {
+        const store = useContractBuilderStore.getState();
+        const currentBlocks = store.document?.content.blocks || [];
+        currentBlocks.forEach(block => store.deleteBlock(block.id));
+        templateData.blocks.forEach((block, index) => {
+          store.addBlock({
+            type: block.type,
+            content: block.content,
+            style: block.style || {},
+            locked: block.locked || false,
+            aiGenerated: block.aiGenerated || false,
+          }, index);
+        });
+      }
+      if (newDocId) {
+        navigate(`/contract-builder/${newDocId}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Laden der Vorlage:', err);
+    }
+  };
+
+  const handleGalleryDeleteDraft = async (draftId: string) => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/contract-builder/${draftId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        setSavedDrafts(prev => prev.filter(d => d._id !== draftId));
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+    }
+    setGalleryConfirmDeleteId(null);
+    setGalleryActiveMenu(null);
+  };
+
+  const handleGalleryDeleteUserTemplate = async (templateId: string) => {
+    try {
+      await deleteUserTemplate(templateId);
+      setGalleryUserTemplates(prev => prev.filter(t => t.id !== templateId));
+    } catch (error) {
+      console.error('Fehler beim Löschen der Vorlage:', error);
+    }
+    setGalleryConfirmDeleteId(null);
+    setGalleryActiveMenu(null);
+  };
+
+  const formatGalleryDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+    });
+  };
+
+  // ─── GALLERY RENDER ───
+  if (!id) {
+    return (
+      <>
+        <Helmet>
+          <title>Contract Builder | Contract AI</title>
+          <meta name="description" content="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie eine Vorlage oder starten Sie von Grund auf." />
+        </Helmet>
+        <div className={styles.galleryPage}>
+          <div className={styles.galleryInner}>
+            {/* Header */}
+            <div className={styles.galleryHeader}>
+              <div className={styles.galleryBadge}>
+                <Edit3 size={13} />
+                Contract Builder
+              </div>
+              <h1 className={styles.galleryTitle}>Vertrag erstellen</h1>
+              <p className={styles.gallerySubtitle}>
+                Wählen Sie eine Vorlage als Ausgangspunkt oder starten Sie mit einem leeren Dokument.
+                Alle Vorlagen können vollständig angepasst werden.
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className={styles.gallerySearch}>
+              <Search size={16} className={styles.gallerySearchIcon} />
+              <input
+                type="text"
+                className={styles.gallerySearchInput}
+                placeholder="Vorlage suchen..."
+                value={gallerySearch}
+                onChange={e => setGallerySearch(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            {/* Category Filter */}
+            <div className={styles.galleryFilterRow}>
+              <button
+                className={`${styles.galleryFilterBtn} ${galleryCategory === 'all' ? styles.galleryFilterBtnActive : ''}`}
+                onClick={() => setGalleryCategory('all')}
+              >
+                Alle
+                <span className={styles.galleryFilterCount}>{contractTemplates.length - 1}</span>
+              </button>
+              {templateCategories.map(cat => {
+                const count = contractTemplates.filter(t => t.category === cat.id && t.id !== 'individuell').length;
+                return (
+                  <button
+                    key={cat.id}
+                    className={`${styles.galleryFilterBtn} ${galleryCategory === cat.id ? styles.galleryFilterBtnActive : ''}`}
+                    onClick={() => setGalleryCategory(cat.id)}
+                  >
+                    {GALLERY_CAT_ICONS[cat.id]} {cat.name}
+                    <span className={styles.galleryFilterCount}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* ─── Gespeicherte Entwürfe ─── */}
+            {galleryFilteredDrafts.length > 0 && (
+              <>
+                <div className={styles.gallerySectionHeader}>
+                  <h2 className={styles.gallerySectionTitle}>
+                    <FolderOpen size={18} />
+                    Gespeicherte Entwürfe
+                  </h2>
+                  <span className={styles.gallerySectionBadge}>{galleryFilteredDrafts.length} Entwürfe</span>
+                </div>
+                <div className={styles.galleryDraftsRow}>
+                  {galleryFilteredDrafts.map(draft => (
+                    <div
+                      key={draft._id}
+                      className={styles.galleryDraftCard}
+                      onClick={() => handleGalleryLoadDraft(draft._id)}
+                    >
+                      <div className={styles.galleryDraftIcon}>
+                        <FileText size={18} />
+                      </div>
+                      <div className={styles.galleryDraftInfo}>
+                        <p className={styles.galleryDraftName}>{draft.metadata.name}</p>
+                        <span className={styles.galleryDraftMeta}>
+                          {formatGalleryDate(draft.updatedAt)} · {draft.blockCount || 0} Blöcke
+                        </span>
+                      </div>
+                      <div className={styles.galleryDraftActions}>
+                        <div className={styles.galleryCardActions}>
+                          <button
+                            className={styles.galleryCardActionsBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setGalleryActiveMenu(galleryActiveMenu === `draft-${draft._id}` ? null : `draft-${draft._id}`);
+                            }}
+                          >
+                            <MoreVertical size={14} />
+                          </button>
+                          {galleryActiveMenu === `draft-${draft._id}` && (
+                            <div className={styles.galleryCardMenu}>
+                              <button
+                                className={styles.galleryCardMenuItem}
+                                onClick={(e) => { e.stopPropagation(); handleGalleryLoadDraft(draft._id); }}
+                              >
+                                <Edit3 size={14} /> Fortsetzen
+                              </button>
+                              {galleryConfirmDeleteId === `draft-${draft._id}` ? (
+                                <div className={styles.galleryConfirmDelete}>
+                                  <span>Löschen?</span>
+                                  <button
+                                    className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteYes}`}
+                                    onClick={(e) => { e.stopPropagation(); handleGalleryDeleteDraft(draft._id); }}
+                                  >Ja</button>
+                                  <button
+                                    className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteNo}`}
+                                    onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(null); }}
+                                  >Nein</button>
+                                </div>
+                              ) : (
+                                <button
+                                  className={`${styles.galleryCardMenuItem} ${styles.galleryCardMenuItemDanger}`}
+                                  onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(`draft-${draft._id}`); }}
+                                >
+                                  <Trash2 size={14} /> Löschen
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* ─── Meine Vorlagen (Premium+) ─── */}
+            {isPremiumUser && galleryFilteredUserTemplates.length > 0 && (
+              <>
+                <div className={styles.gallerySectionHeader}>
+                  <h2 className={styles.gallerySectionTitle}>
+                    <Star size={18} />
+                    Meine Vorlagen
+                  </h2>
+                  <span className={styles.gallerySectionBadge}>{galleryFilteredUserTemplates.length} Vorlagen</span>
+                </div>
+                <div className={styles.galleryGrid}>
+                  {galleryFilteredUserTemplates.map(template => (
+                    <div
+                      key={template.id}
+                      className={styles.galleryCard}
+                      onClick={() => handleGallerySelectUserTemplate(template)}
+                    >
+                      <div className={styles.galleryCardHeader}>
+                        <div className={styles.galleryCardIcon}>
+                          <User size={20} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeUser}`}>Eigene Vorlage</span>
+                          <div className={styles.galleryCardActions}>
+                            <button
+                              className={styles.galleryCardActionsBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setGalleryActiveMenu(galleryActiveMenu === `user-${template.id}` ? null : `user-${template.id}`);
+                              }}
+                            >
+                              <MoreVertical size={14} />
+                            </button>
+                            {galleryActiveMenu === `user-${template.id}` && (
+                              <div className={styles.galleryCardMenu}>
+                                <button
+                                  className={styles.galleryCardMenuItem}
+                                  onClick={(e) => { e.stopPropagation(); handleGallerySelectUserTemplate(template); }}
+                                >
+                                  <Edit3 size={14} /> Verwenden
+                                </button>
+                                {galleryConfirmDeleteId === `user-${template.id}` ? (
+                                  <div className={styles.galleryConfirmDelete}>
+                                    <span>Löschen?</span>
+                                    <button
+                                      className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteYes}`}
+                                      onClick={(e) => { e.stopPropagation(); handleGalleryDeleteUserTemplate(template.id); }}
+                                    >Ja</button>
+                                    <button
+                                      className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteNo}`}
+                                      onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(null); }}
+                                    >Nein</button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    className={`${styles.galleryCardMenuItem} ${styles.galleryCardMenuItemDanger}`}
+                                    onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(`user-${template.id}`); }}
+                                  >
+                                    <Trash2 size={14} /> Löschen
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className={styles.galleryCardTitle}>{template.name}</h3>
+                      <p className={styles.galleryCardDesc}>{template.description || 'Benutzerdefinierte Vorlage'}</p>
+                      <div className={styles.galleryCardMeta}>
+                        <span className={styles.galleryCardMetaItem}><FileText size={12} /> {template.contractType}</span>
+                        <span className={styles.galleryCardMetaItem}><Clock size={12} /> {formatGalleryDate(template.createdAt)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* ─── Leeres Dokument + System-Vorlagen ─── */}
+            <div className={styles.gallerySectionHeader}>
+              <h2 className={styles.gallerySectionTitle}>Musterverträge</h2>
+              <span className={styles.gallerySectionBadge}>{galleryFilteredSystemTemplates.length + 1} Vorlagen</span>
+            </div>
+            <div className={styles.galleryGrid}>
+              {/* Leeres Dokument — immer erste Card */}
+              {(galleryCategory === 'all' || galleryCategory === 'personal') && (
+                <div
+                  className={styles.galleryCard}
+                  onClick={() => handleGallerySelectTemplate('individuell')}
+                >
+                  <div className={styles.galleryCardHeader}>
+                    <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconBlank}`}>
+                      <PenTool size={20} />
+                    </div>
+                    <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Blanko</span>
+                  </div>
+                  <h3 className={styles.galleryCardTitle}>Leeres Dokument</h3>
+                  <p className={styles.galleryCardDesc}>Starten Sie mit einem leeren Dokument und bauen Sie Ihren Vertrag Schritt für Schritt auf.</p>
+                  <div className={styles.galleryCardMeta}>
+                    <span className={styles.galleryCardMetaItem}><Sparkles size={12} /> Komplett individuell</span>
+                  </div>
+                </div>
+              )}
+
+              {/* System-Vorlagen */}
+              {galleryFilteredSystemTemplates.map(template => (
+                <div
+                  key={template.id}
+                  className={styles.galleryCard}
+                  onClick={() => handleGallerySelectTemplate(template.id)}
+                >
+                  <div className={styles.galleryCardHeader}>
+                    <div className={styles.galleryCardIcon}>
+                      {GALLERY_ICON_MAP[template.icon] || <FileText size={20} />}
+                    </div>
+                    <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Mustervertrag</span>
+                  </div>
+                  <h3 className={styles.galleryCardTitle}>{template.name}</h3>
+                  <p className={styles.galleryCardDesc}>{template.description}</p>
+                  <div className={styles.galleryCardMeta}>
+                    <span className={styles.galleryCardMetaItem}><Layers size={12} /> {template.suggestedClauses.length} Klauseln</span>
+                    <span className={styles.galleryCardMetaItem}><PenTool size={12} /> {template.defaultVariables.length} Felder</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {galleryFilteredSystemTemplates.length === 0 && galleryFilteredUserTemplates.length === 0 && (
+              <div className={styles.galleryEmpty}>
+                <div className={styles.galleryEmptyIcon}><Search size={24} /></div>
+                <p>Keine Vorlagen gefunden für &ldquo;{gallerySearch}&rdquo;</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Click-Outside: Menü schließen */}
+        {galleryActiveMenu && (
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+            onClick={() => { setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); }}
+          />
+        )}
+      </>
+    );
+  }
+
   // Loading State - nur anzeigen wenn NICHT das TypeSelector Modal offen ist
   if (isLoading && !currentDocument && !showTypeSelector) {
     return (
@@ -1370,8 +1820,24 @@ const ContractBuilder: React.FC = () => {
             {/* Vorlagen-Button */}
             <button
               className={styles.templateButton}
-              onClick={() => setShowTypeSelector(true)}
-              title="Vorlage wechseln"
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  setConfirmDialog({
+                    isOpen: true,
+                    title: 'Ungespeicherte Änderungen',
+                    message: 'Sie haben ungespeicherte Änderungen. Möchten Sie zur Vorlagen-Übersicht zurückkehren?',
+                    confirmText: 'Zur Übersicht',
+                    confirmStyle: 'warning',
+                    onConfirm: () => {
+                      setConfirmDialog(null);
+                      navigate('/contract-builder');
+                    },
+                  });
+                  return;
+                }
+                navigate('/contract-builder');
+              }}
+              title="Zur Vorlagen-Übersicht"
             >
               <FileText size={16} />
             </button>
