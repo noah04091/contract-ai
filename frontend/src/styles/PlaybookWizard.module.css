@@ -824,28 +824,25 @@ textarea.fieldInput {
   font-weight: 600;
 }
 
-.resultContractText {
+.resultContractTextarea {
+  width: 100%;
+  min-height: 500px;
   padding: 24px;
-  max-height: 600px;
-  overflow-y: auto;
+  border: none;
+  border-top: 1px solid #f3f4f6;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: #374151;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  background: #fafbfc;
 }
 
-.resultParagraphTitle {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
-  margin: 24px 0 8px 0;
-}
-
-.resultParagraphTitle:first-child {
-  margin-top: 0;
-}
-
-.resultParagraphText {
-  margin: 0 0 6px 0;
+.resultContractTextarea:focus {
+  background: white;
+  box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.1);
 }
 
 /* New Contract */

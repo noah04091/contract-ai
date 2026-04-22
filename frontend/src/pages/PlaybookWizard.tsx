@@ -97,7 +97,14 @@ const PlaybookWizard: React.FC = () => {
   // State
   const [playbook, setPlaybook] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(() => {
+    // If we have a saved result, jump to Step 4
+    try {
+      const saved = sessionStorage.getItem(`playbook_result_${type}`);
+      if (saved) return 4;
+    } catch { /* ignore */ }
+    return 1;
+  });
 
   // Step 1: Modus + Rolle
   const [selectedMode, setSelectedMode] = useState<string>('ausgewogen');
@@ -122,8 +129,24 @@ const PlaybookWizard: React.FC = () => {
       averageScore: number;
       sections: Array<{ title: string; risk: string; chosenLabel: string; paragraph: string }>;
     };
-  } | null>(null);
+  } | null>(() => {
+    // Restore result from sessionStorage (survives navigation)
+    try {
+      const saved = sessionStorage.getItem(`playbook_result_${type}`);
+      if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return null;
+  });
+  const [editedText, setEditedText] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [importingToBuilder, setImportingToBuilder] = useState(false);
+
+  // ─── Restore editedText from result ───
+  useEffect(() => {
+    if (result && !editedText) {
+      setEditedText(result.contractText);
+    }
+  }, [result]);
 
   // ─── Playbook laden ───
   useEffect(() => {
@@ -254,12 +277,16 @@ const PlaybookWizard: React.FC = () => {
       };
 
       if (response.success) {
-        setResult({
+        const newResult = {
           contractId: response.contractId,
           contractText: response.contractText,
           modeLabel: response.modeLabel,
           riskProfile: response.riskProfile
-        });
+        };
+        setResult(newResult);
+        setEditedText(response.contractText);
+        // Persist in sessionStorage so it survives navigation
+        try { sessionStorage.setItem(`playbook_result_${type}`, JSON.stringify(newResult)); } catch { /* ignore */ }
         setCurrentStep(4);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -272,21 +299,46 @@ const PlaybookWizard: React.FC = () => {
 
   // ─── Copy to Clipboard ───
   const handleCopy = async () => {
-    if (!result) return;
+    const text = editedText || result?.contractText;
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(result.contractText);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const textarea = document.createElement('textarea');
-      textarea.value = result.contractText;
+      textarea.value = text;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  // ─── Import to Contract Builder ───
+  const handleOpenInBuilder = async () => {
+    if (!result || importingToBuilder) return;
+    setImportingToBuilder(true);
+    try {
+      const response = await apiCall('/contract-builder/import-from-generator', {
+        method: 'POST',
+        body: JSON.stringify({
+          contractText: editedText || result.contractText,
+          contractType: type || 'nda',
+          name: `NDA — Playbook (${result.modeLabel})`,
+          contractId: result.contractId
+        })
+      }) as { success: boolean; documentId: string; blockCount: number };
+
+      if (response.success) {
+        navigate(`/contract-builder/${response.documentId}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Import in Builder:', err);
+    } finally {
+      setImportingToBuilder(false);
     }
   };
 
@@ -737,9 +789,8 @@ const PlaybookWizard: React.FC = () => {
           <button className={styles.btnPrimary} onClick={handleCopy}>
             {copied ? <><Check size={16} /> Kopiert!</> : <><Copy size={16} /> Vertrag kopieren</>}
           </button>
-          <button className={styles.btnSecondary} onClick={() => navigate(`/contract-builder`)}>
-            <ExternalLink size={16} />
-            Im Builder öffnen
+          <button className={styles.btnSecondary} onClick={handleOpenInBuilder} disabled={importingToBuilder}>
+            {importingToBuilder ? <><Loader2 size={16} className={styles.spinner} /> Importiere...</> : <><ExternalLink size={16} /> Im Builder öffnen</>}
           </button>
           <button className={styles.btnSecondary} onClick={() => navigate(`/contracts/${result.contractId}`)}>
             <FileText size={16} />
@@ -747,33 +798,29 @@ const PlaybookWizard: React.FC = () => {
           </button>
         </div>
 
-        {/* Contract Text */}
+        {/* Contract Text — editable */}
         <div className={styles.resultContract}>
           <div className={styles.resultContractHeader}>
-            <h3>Vertragstext</h3>
+            <h3>Vertragstext bearbeiten</h3>
             <span className={styles.resultContractBadge}>
               <BarChart3 size={12} />
               Modus: {result.modeLabel}
             </span>
           </div>
-          <div className={styles.resultContractText}>
-            {result.contractText.split('\n').map((line, i) => {
-              // Paragraph-Überschriften bold machen
-              if (line.match(/^§\s*\d+/)) {
-                return <p key={i} className={styles.resultParagraphTitle}>{line}</p>;
-              }
-              if (line.trim() === '') {
-                return <br key={i} />;
-              }
-              return <p key={i} className={styles.resultParagraphText}>{line}</p>;
-            })}
-          </div>
+          <textarea
+            className={styles.resultContractTextarea}
+            value={editedText}
+            onChange={e => setEditedText(e.target.value)}
+            spellCheck={false}
+          />
         </div>
 
         {/* Neuen Vertrag erstellen */}
         <div className={styles.resultNewContract}>
           <button className={styles.btnSecondary} onClick={() => {
             setResult(null);
+            setEditedText('');
+            try { sessionStorage.removeItem(`playbook_result_${type}`); } catch { /* ignore */ }
             setCurrentStep(1);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}>
