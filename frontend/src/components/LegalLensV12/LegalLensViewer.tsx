@@ -1267,6 +1267,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ✅ PDF Selection Handler - Direktes Klicken in der PDF-Ansicht
   const handlePdfTextClick = (event: React.MouseEvent) => {
+    // Fix: Im Frei-Modus nur auf mouseup reagieren, nicht doppelt auf click
+    if (selectionMode === 'custom' && event.type === 'click') return;
+
     const target = event.target as HTMLElement;
     const textContent = target.closest('.react-pdf__Page__textContent');
 
@@ -1290,9 +1293,24 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           const allSpans = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
           const selectedSpans: HTMLElement[] = [];
 
+          // Visuellen Bereich der Selektion berechnen (verhindert "alles unten drunter")
+          const rangeRects = range.getClientRects();
+          let minY = Infinity, maxY = -Infinity;
+          for (let r = 0; r < rangeRects.length; r++) {
+            minY = Math.min(minY, rangeRects[r].top);
+            maxY = Math.max(maxY, rangeRects[r].bottom);
+          }
+          if (minY === Infinity) { minY = 0; maxY = Infinity; } // Fallback
+          minY -= 5; // Toleranz
+          maxY += 5;
+
           for (const span of allSpans) {
             if (range.intersectsNode(span)) {
-              selectedSpans.push(span);
+              const rect = span.getBoundingClientRect();
+              // Nur Spans akzeptieren die visuell im Selektions-Bereich liegen
+              if (rect.top >= minY && rect.bottom <= maxY) {
+                selectedSpans.push(span);
+              }
             }
           }
           // ✅ NEUE METHODE: Overlay-Divs statt CSS-Klassen
@@ -1356,6 +1374,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     let startIdx = clickedIndex;
     let endIdx = clickedIndex;
 
+    // Visuelle Position des geklickten Spans für Grenz-Checks
+    const clickedRect = allSpans[clickedIndex].getBoundingClientRect();
+    const lineHeight = clickedRect.height || 14;
+
     // Adaptive span search windows based on page size
     const totalSpans = allSpans.length;
     const sentenceBackward = Math.min(Math.max(30, Math.floor(totalSpans * 0.05)), 60);
@@ -1368,6 +1390,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Suche Satzanfang (rückwärts bis . ! ? oder Anfang)
       for (let i = clickedIndex - 1; i >= 0; i--) {
         const text = spanData[i].text;
+        // Visueller Break: Span zu weit weg = anderer Bereich (Tabelle, Absatz)
+        const spanRect = allSpans[i].getBoundingClientRect();
+        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 2) break;
         // Satzende im vorherigen Span = dieser Span ist Satzanfang
         if (/[.!?]\s*$/.test(text)) {
           startIdx = i + 1;
@@ -1384,8 +1409,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       // Suche Satzende (vorwärts bis . ! ?)
       for (let i = clickedIndex; i < allSpans.length; i++) {
-        endIdx = i;
         const text = spanData[i].text;
+        // Visueller Break: Span zu weit weg
+        const spanRect = allSpans[i].getBoundingClientRect();
+        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 2) {
+          endIdx = Math.max(clickedIndex, i - 1);
+          break;
+        }
+        endIdx = i;
         // Echtes Satzende (nicht bei Abkürzungen)
         if (/[.!?]\s*$/.test(text)) {
           if (!GERMAN_LEGAL_ABBREVIATIONS.test(text)) break;
@@ -1406,6 +1437,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       for (let i = clickedIndex - 1; i >= 0; i--) {
         const text = spanData[i].text;
 
+        // Visueller Break: Großer Y-Abstand = anderer Abschnitt
+        const spanRect = allSpans[i].getBoundingClientRect();
+        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 8) break;
+
         if (isParagraphStart(text)) {
           startIdx = i;
           break;
@@ -1419,6 +1454,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       let consecutiveShort = 0;
       for (let i = clickedIndex + 1; i < allSpans.length; i++) {
         const text = spanData[i].text;
+
+        // Visueller Break: Großer Y-Abstand = anderer Abschnitt
+        const spanRect = allSpans[i].getBoundingClientRect();
+        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 8) {
+          endIdx = Math.max(clickedIndex, i - 1);
+          break;
+        }
 
         // 3+ consecutive empty/very short spans = paragraph break
         if (text.trim().length < 2) {
