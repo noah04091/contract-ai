@@ -1257,6 +1257,32 @@ router.post("/users/:userId/send-reset", verifyToken, verifyAdmin, async (req, r
   }
 });
 
+// ===== 📧 VERIFICATION REMINDERS =====
+
+// GET /api/admin/verification-reminder-stats — Stats über nicht-verifizierte User
+router.get('/verification-reminder-stats', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { getUnverifiedStats } = require('../services/verificationReminderService');
+    const stats = await getUnverifiedStats();
+    res.json({ success: true, ...stats });
+  } catch (error) {
+    console.error('❌ [ADMIN VERIFICATION STATS]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/admin/verification-reminder-trigger — Manuell Erinnerungen senden
+router.post('/verification-reminder-trigger', verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const { sendVerificationReminders } = require('../services/verificationReminderService');
+    const result = await sendVerificationReminders();
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error('❌ [ADMIN VERIFICATION TRIGGER]', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ===== 🔎 USER SEARCH (für Campaign-Empfänger-Auswahl) =====
 // GET /api/admin/users/search?q=<query>&limit=20 — Sucht User nach Email (case-insensitive)
 // WICHTIG: MUSS VOR /users/:userId stehen, sonst matched Express 'search' als userId!

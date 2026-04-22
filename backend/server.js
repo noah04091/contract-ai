@@ -2204,8 +2204,8 @@ const connectDB = async () => {
         console.log("📧 [VERIFICATION] Starte Erinnerungs-E-Mails für nicht verifizierte Accounts...");
         try {
           const { sendVerificationReminders } = require("./services/verificationReminderService");
-          const result = await sendVerificationReminders(2); // 2 Tage nach Registrierung
-          console.log(`📧 [VERIFICATION] Ergebnis: ${result.sent} Erinnerungen gesendet`);
+          const result = await sendVerificationReminders(); // V2: Wiederkehrend alle 30 Tage
+          console.log(`📧 [VERIFICATION] Ergebnis: ${result.sent} gesendet, ${result.optedOut || 0} opted-out, ${result.skipped || 0} übersprungen`);
         } catch (error) {
           console.error("❌ [VERIFICATION] Reminder Cron Error:", error);
           await captureError(error, { route: 'CRON:verification-reminder', method: 'SCHEDULED', severity: 'medium' });
