@@ -21,7 +21,6 @@ import {
   Sparkles,
   Loader2,
   Copy,
-  Download,
   ExternalLink,
   BarChart3,
   CheckCircle2
