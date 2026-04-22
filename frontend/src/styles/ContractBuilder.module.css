@@ -1934,6 +1934,59 @@
   background: #fef2f2;
 }
 
+/* Drafts Toggle Button */
+.galleryDraftsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.galleryDraftsToggle:hover {
+  border-color: #3B82F6;
+  color: #1d4ed8;
+  background: #f8fafc;
+}
+
+.galleryDraftsToggleActive {
+  border-color: #3B82F6;
+  color: #2563EB;
+  background: #eff6ff;
+}
+
+.galleryDraftsToggleCount {
+  font-size: 12px;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+.galleryDraftsToggleActive .galleryDraftsToggleCount {
+  background: #dbeafe;
+  color: #2563EB;
+}
+
+.galleryDraftsChevron {
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+}
+
+.galleryDraftsChevronOpen {
+  transform: rotate(90deg);
+}
+
 /* Drafts Section */
 .galleryDraftsRow {
   display: grid;

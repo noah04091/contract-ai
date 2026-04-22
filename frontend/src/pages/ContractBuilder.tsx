@@ -137,6 +137,7 @@ const ContractBuilder: React.FC = () => {
   const [galleryUserTemplates, setGalleryUserTemplates] = useState<UserTemplate[]>([]);
   // isLoadingGalleryUserTemplates - Loading state tracked internally in useEffect
   const [galleryActiveMenu, setGalleryActiveMenu] = useState<string | null>(null);
+  const [showGalleryDrafts, setShowGalleryDrafts] = useState(false);
   const [galleryConfirmDeleteId, setGalleryConfirmDeleteId] = useState<string | null>(null);
   const [galleryCreating, setGalleryCreating] = useState<string | null>(null); // templateId being created
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
@@ -1590,17 +1591,19 @@ const ContractBuilder: React.FC = () => {
               })}
             </div>
 
-            {/* ─── Gespeicherte Entwürfe ─── */}
+            {/* ─── Gespeicherte Entwürfe (Toggle) ─── */}
             {galleryFilteredDrafts.length > 0 && (
               <>
-                <div className={styles.gallerySectionHeader}>
-                  <h2 className={styles.gallerySectionTitle}>
-                    <FolderOpen size={18} />
-                    Gespeicherte Entwürfe
-                  </h2>
-                  <span className={styles.gallerySectionBadge}>{galleryFilteredDrafts.length} Entwürfe</span>
-                </div>
-                <div className={styles.galleryDraftsRow}>
+                <button
+                  className={`${styles.galleryDraftsToggle} ${showGalleryDrafts ? styles.galleryDraftsToggleActive : ''}`}
+                  onClick={() => setShowGalleryDrafts(!showGalleryDrafts)}
+                >
+                  <FolderOpen size={16} />
+                  <span>Gespeicherte Entwürfe</span>
+                  <span className={styles.galleryDraftsToggleCount}>{galleryFilteredDrafts.length}</span>
+                  <ChevronLeft size={14} className={`${styles.galleryDraftsChevron} ${showGalleryDrafts ? styles.galleryDraftsChevronOpen : ''}`} />
+                </button>
+                {showGalleryDrafts && <div className={styles.galleryDraftsRow}>
                   {galleryFilteredDrafts.map(draft => (
                     <div
                       key={draft._id}
@@ -1661,7 +1664,7 @@ const ContractBuilder: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
               </>
             )}
 
