@@ -386,7 +386,7 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
             const dTab = activeDetailTab[section.key] || 'explanation';
             return (
               <div key={section.key} style={S.sCard(isExp)}>
-                <div style={S.sHeader} onClick={() => setExpandedSections(prev => { const n = new Set(prev); n.has(section.key) ? n.delete(section.key) : n.add(section.key); return n; })}>
+                <div style={S.sHeader} onClick={() => setExpandedSections(prev => { const n = new Set(prev); if (n.has(section.key)) { n.delete(section.key); } else { n.add(section.key); } return n; })}>
                   <div style={S.sHeaderLeft}>
                     <span style={S.sParagraph}>{section.paragraph}</span>
                     <h4 style={S.sTitle}>{section.title}</h4>
