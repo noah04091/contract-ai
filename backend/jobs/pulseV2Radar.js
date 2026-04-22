@@ -1010,10 +1010,36 @@ async function storeAndNotify(db, userId, alerts) {
 
   const userName = user.firstName || user.name || "Nutzer";
 
+  // -- Helpers for email formatting --
+  const plural = (n, singular, pluralForm) => n === 1 ? singular : pluralForm;
+  const cleanName = (name) => {
+    if (!name) return "Unbenannter Vertrag";
+    return name
+      .replace(/\.\w{2,4}$/, "")     // .pdf, .docx entfernen
+      .replace(/^\d{10,13}[-_]/, "")  // Unix-Timestamp-Prefix
+      .replace(/^\d{6}_/, "")         // YYMMDD_ Prefix
+      .replace(/_/g, " ")             // Unterstriche → Leerzeichen
+      .trim() || "Unbenannter Vertrag";
+  };
+  const cleanLawTitle = (title) => {
+    if (!title) return "Gesetzesänderung";
+    return title
+      .replace(/\s*\(PDF\)\s*$/i, "")            // "(PDF)" am Ende
+      .replace(/\s*\[PDF\]\s*$/i, "")             // "[PDF]" am Ende
+      .replace(/^zu der \w+ Beratung des /i, "")  // "zu der dritten Beratung des " Prefix
+      .trim();
+  };
+  const cleanRecommendation = (text) => {
+    if (!text) return "";
+    // [clause_4] → §4, [clause_12] → §12
+    return text.replace(/\[clause[_\s]*(\d+)\]/gi, "§$1");
+  };
+
   // Build email
+  const alertCount = alerts.length;
   let body = generateParagraph(`Hallo ${userName},`);
   body += generateParagraph(
-    `Legal Pulse Radar hat <strong>${alerts.length} Gesetzesänderung(en)</strong> erkannt, die Ihre Verträge betreffen könnten.`
+    `der Legal Radar hat <strong>${alertCount} ${plural(alertCount, "Gesetzesänderung", "Gesetzesänderungen")}</strong> erkannt, die Ihre Verträge betreffen ${plural(alertCount, "könnte", "könnten")}.`
   );
 
   const criticalAlerts = alerts.filter((a) => a.severity === "critical");
@@ -1022,33 +1048,35 @@ async function storeAndNotify(db, userId, alerts) {
   const negativeAlerts = alerts.filter((a) => a.impactDirection !== "positive");
 
   body += generateStatsRow([
-    { value: String(alerts.length), label: "Betroffene Verträge", color: "#ea580c" },
+    { value: String(alertCount), label: plural(alertCount, "Betroffener Vertrag", "Betroffene Verträge"), color: "#ea580c" },
     ...(criticalAlerts.length > 0 ? [{ value: String(criticalAlerts.length), label: "Kritisch", color: "#dc2626" }] : []),
     ...(highAlerts.length > 0 ? [{ value: String(highAlerts.length), label: "Hoch", color: "#ea580c" }] : []),
-    ...(positiveAlerts.length > 0 ? [{ value: String(positiveAlerts.length), label: "Chancen", color: "#059669" }] : []),
+    ...(positiveAlerts.length > 0 ? [{ value: String(positiveAlerts.length), label: plural(positiveAlerts.length, "Chance", "Chancen"), color: "#059669" }] : []),
   ]);
 
   body += generateDivider();
 
-  // Group alerts by law change
+  // Group alerts by law change (use fingerprint for dedup if available)
   const byLaw = new Map();
   for (const alert of alerts) {
-    const key = alert.lawChange.title;
+    const fp = extractLegislationFingerprint(alert.lawChange.title);
+    const key = fp || alert.lawChange.title;
     if (!byLaw.has(key)) {
       byLaw.set(key, { law: alert.lawChange, contracts: [] });
     }
     byLaw.get(key).contracts.push(alert);
   }
 
-  for (const [lawTitle, group] of byLaw.entries()) {
+  for (const [, group] of byLaw.entries()) {
     const hasPositive = group.contracts.some((c) => c.impactDirection === "positive");
     const hasCritical = group.contracts.some((c) => c.severity === "critical" && c.impactDirection !== "positive");
     const allPositive = group.contracts.every((c) => c.impactDirection === "positive");
+    const contractCount = group.contracts.length;
 
     body += generateEventCard({
-      title: lawTitle,
-      subtitle: `${group.law.area || "Recht"} · ${group.contracts.length} Vertrag/Verträge betroffen`,
-      badge: allPositive ? "Chance" : hasCritical ? "Kritisch" : hasPositive ? "Chance & Prüfen" : "Prüfen",
+      title: cleanLawTitle(group.law.title),
+      subtitle: `${group.law.area || "Recht"} \u00B7 ${contractCount} ${plural(contractCount, "Vertrag", "Verträge")} betroffen`,
+      badge: allPositive ? "Chance" : hasCritical ? "Kritisch" : hasPositive ? "Chance & Pr\u00FCfen" : "Pr\u00FCfen",
       badgeColor: allPositive ? "success" : hasCritical ? "critical" : "warning",
       icon: allPositive ? "\u2705" : "\u2696\ufe0f",
     });
@@ -1057,37 +1085,48 @@ async function storeAndNotify(db, userId, alerts) {
       const isPositive = contract.impactDirection === "positive";
       const sevColor = isPositive ? "#059669" : contract.severity === "critical" ? "#dc2626" : contract.severity === "high" ? "#ea580c" : "#d97706";
       const bgColor = isPositive ? "#f0fdf4" : "#f9fafb";
-      body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${sevColor}; background: ${bgColor}; border-radius: 0 6px 6px 0;">
-        <div style="font-size: 13px; font-weight: 600; color: #111827;">${isPositive ? "\u2705 " : ""}${contract.contractName}</div>
-        <div style="font-size: 12px; color: #4b5563; margin-top: 2px;">${contract.plainSummary || contract.impactSummary}</div>
-        ${contract.businessImpact ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#dc2626"}; margin-top: 3px; font-weight: 500;">${isPositive ? "Vorteil" : "Risiko"}: ${contract.businessImpact}</div>` : ""}
-        <div style="font-size: 12px; color: ${isPositive ? "#059669" : "#1e40af"}; margin-top: 4px; font-style: italic;">${contract.recommendation}</div>
+      const displayName = cleanName(contract.contractName);
+      const summary = contract.plainSummary || contract.impactSummary || "";
+      const impact = contract.businessImpact || "";
+      const recommendation = cleanRecommendation(contract.recommendation || "");
+
+      body += `<div style="padding: 10px 16px; margin: 6px 0; border-left: 3px solid ${sevColor}; background: ${bgColor}; border-radius: 0 6px 6px 0;">
+        <div style="font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 6px;">${isPositive ? "\u2705 " : ""}${displayName}</div>
+        ${summary ? `<div style="font-size: 12px; color: #4b5563; line-height: 1.5;">${summary}</div>` : ""}
+        ${impact ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#dc2626"}; margin-top: 6px; font-weight: 500;">${isPositive ? "\u2705 Vorteil" : "\u26A0\uFE0F Risiko"}: ${impact}</div>` : ""}
+        ${recommendation ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#1e40af"}; margin-top: 6px;"><strong>Empfehlung:</strong> ${recommendation}</div>` : ""}
       </div>`;
     }
 
-    if (group.contracts.length > 3) {
-      body += generateParagraph(`+ ${group.contracts.length - 3} weitere Verträge`, { muted: true });
+    if (contractCount > 3) {
+      body += generateParagraph(`+ ${contractCount - 3} weitere ${plural(contractCount - 3, "Vertrag", "Verträge")}`, { muted: true });
     }
 
     body += "<br/>";
   }
 
   const html = generateEmailTemplate({
-    title: "\u2696\ufe0f Legal Pulse Radar: Gesetzesänderung erkannt",
+    title: "\u2696\ufe0f Legal Radar: Gesetzesänderung erkannt",
     body,
-    preheader: `${alerts.length} Verträge von Gesetzesänderungen betroffen`,
+    preheader: `${alertCount} ${plural(alertCount, "Vertrag", "Verträge")} von Gesetzesänderungen betroffen`,
     cta: {
-      text: "Im Dashboard ansehen \u2192",
+      text: "Alerts im Legal Radar ansehen \u2192",
       url: "https://contract-ai.de/pulse",
     },
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
+  // Subject line — specific when possible
+  const lawTitles = [...byLaw.values()].map((g) => cleanLawTitle(g.law.title));
+  const shortLawTitle = lawTitles.length === 1 && lawTitles[0].length <= 60 ? lawTitles[0] : null;
+
   const emailSubject = positiveAlerts.length > 0 && negativeAlerts.length === 0
-    ? `\u2705 Legal Radar: ${positiveAlerts.length} Chance(n) erkannt`
-    : positiveAlerts.length > 0
-      ? `\u2696\ufe0f Legal Radar: ${negativeAlerts.length} Handlungsbedarf + ${positiveAlerts.length} Chance(n)`
-      : `\u2696\ufe0f Legal Radar: ${alerts.length} Verträge von Gesetzesänderung betroffen`;
+    ? `\u2705 Legal Radar: ${positiveAlerts.length} ${plural(positiveAlerts.length, "Chance", "Chancen")} erkannt`
+    : shortLawTitle
+      ? `\u2696\ufe0f Legal Radar: ${shortLawTitle}`
+      : positiveAlerts.length > 0
+        ? `\u2696\ufe0f Legal Radar: ${negativeAlerts.length}x Handlungsbedarf + ${positiveAlerts.length} ${plural(positiveAlerts.length, "Chance", "Chancen")}`
+        : `\u2696\ufe0f Legal Radar: ${alertCount} ${plural(alertCount, "Vertrag betroffen", "Verträge betroffen")}`;
 
   await queueEmail(db, {
     to: user.email,
