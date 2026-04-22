@@ -245,6 +245,26 @@ function buildCampaignHtml(campaign, recipientEmail, recipientId) {
 
   if (isRawHtml) {
     // --- RAW HTML MODE ---
+
+    // Email-Client-Kompatibilitaet: linear-gradient wird von WEB.DE, Gmail, Outlook gestripped.
+    // Auto-Fixer: Fuer jedes Element mit background:linear-gradient(...) wird ein
+    // background-color Fallback VOR dem Gradient eingefuegt (erste Farbe des Gradients).
+    try {
+      const $ = cheerio.load(bodyHtml, null, false);
+      $('[style]').each((_, el) => {
+        const style = $(el).attr('style') || '';
+        // Suche nach background: linear-gradient(...) OHNE vorheriges background-color
+        const gradientMatch = style.match(/linear-gradient\s*\(\s*[^,]*,\s*(#[0-9a-fA-F]{3,8})/);
+        if (gradientMatch && !style.includes('background-color')) {
+          const fallbackColor = gradientMatch[1];
+          $(el).attr('style', `background-color:${fallbackColor};${style}`);
+        }
+      });
+      bodyHtml = $.root().html() || bodyHtml;
+    } catch (fixErr) {
+      console.warn('[campaignService] Gradient-Fallback-Fixer fehlgeschlagen:', fixErr && fixErr.message);
+    }
+
     // Click-Tracking: Links umschreiben (funktioniert auch in komplettem HTML)
     if (trackClicks && recipientId && campaign._id) {
       bodyHtml = rewriteLinksForTracking(bodyHtml, campaign._id, recipientId);
