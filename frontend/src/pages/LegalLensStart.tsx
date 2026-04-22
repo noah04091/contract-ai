@@ -12,9 +12,7 @@ import {
 import styles from '../styles/LegalLensStart.module.css';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
-
-// Plans mit vollem Legal Lens Zugriff
-const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
+import { useAuth } from '../context/AuthContext';
 
 interface Contract {
   _id: string;
@@ -38,17 +36,15 @@ const LegalLensStart = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [userPlan, setUserPlan] = useState<string>('free');
-  const [planLoading, setPlanLoading] = useState(true);
+  // 🔒 Premium Access — direkt aus AuthContext (kein eigener API-Call nötig)
+  const { user: authUser, isLoading: planLoading } = useAuth();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const hasAccess = authUser?.isPremium || authUser?.isBusiness || authUser?.isEnterprise || false;
 
   // 📸 Document Scanner
   const { openScanner, ScannerModal } = useDocumentScanner((file) => {
     handleFileUpload(file);
   });
-
-  // Prüfen ob User Zugriff hat
-  const hasAccess = LEGAL_LENS_ACCESS_PLANS.includes(userPlan);
 
   const getApiUrl = () => {
     if (import.meta.env.VITE_API_URL) {
@@ -60,31 +56,6 @@ const LegalLensStart = () => {
     }
     return 'https://api.contract-ai.de';
   };
-
-  // User Plan laden
-  useEffect(() => {
-    const fetchUserPlan = async () => {
-      try {
-        const apiUrl = getApiUrl();
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${apiUrl}/api/auth/me`, {
-          credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (response.ok) {
-          const data = await response.json();
-          // API gibt { user: { subscriptionPlan: ... } } zurück
-          const user = data.user || data;
-          setUserPlan((user.subscriptionPlan || user.plan || 'free').toLowerCase());
-        }
-      } catch {
-        // User plan fetch failed silently
-      } finally {
-        setPlanLoading(false);
-      }
-    };
-    fetchUserPlan();
-  }, []);
 
   useEffect(() => {
     const fetchContracts = async () => {

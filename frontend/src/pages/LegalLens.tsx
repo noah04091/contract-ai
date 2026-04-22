@@ -8,10 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LegalLensViewer } from '../components/LegalLensV12';
 import { WelcomePopup } from '../components/Tour';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
+import { useAuth } from '../context/AuthContext';
 import { Search, Crown, Sparkles } from 'lucide-react';
-
-// Plans mit vollem Legal Lens Zugriff
-const LEGAL_LENS_ACCESS_PLANS = ['business', 'enterprise'];
 
 /** Fixt UTF-8 Mojibake in Dateinamen (z.B. "Ã¤" → "ä") und entfernt .pdf-Endung */
 function fixDisplayName(name: string): string {
@@ -47,11 +45,10 @@ const LegalLens = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔒 Premium Access State
-  const [userPlan, setUserPlan] = useState<string>('free');
-  const [planLoading, setPlanLoading] = useState(true);
+  // 🔒 Premium Access — direkt aus AuthContext (kein eigener API-Call nötig)
+  const { user: authUser, isLoading: planLoading } = useAuth();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const hasAccess = LEGAL_LENS_ACCESS_PLANS.includes(userPlan);
+  const hasAccess = authUser?.isPremium || authUser?.isBusiness || authUser?.isEnterprise || false;
 
   // Vertrag laden um den Namen zu bekommen
   useEffect(() => {
@@ -103,45 +100,6 @@ const LegalLens = () => {
   }, [contractId]);
 
   // 🔒 Fetch user plan for premium access check
-  useEffect(() => {
-    const fetchUserPlan = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setPlanLoading(false);
-          return;
-        }
-
-        const getApiUrl = () => {
-          if (import.meta.env.VITE_API_URL) {
-            return import.meta.env.VITE_API_URL;
-          }
-          const hostname = window.location.hostname;
-          if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:5000';
-          }
-          return 'https://api.contract-ai.de';
-        };
-
-        const apiUrl = getApiUrl();
-        const response = await fetch(`${apiUrl}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          // API gibt { user: { subscriptionPlan: ... } } zurück
-          const user = data.user || data;
-          setUserPlan((user.subscriptionPlan || user.plan || 'free').toLowerCase());
-        }
-      } catch {
-        // User plan fetch failed silently
-      } finally {
-        setPlanLoading(false);
-      }
-    };
-    fetchUserPlan();
-  }, []);
-
   // Error State
   if (error) {
     return (
