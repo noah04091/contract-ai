@@ -177,14 +177,14 @@
 .statBadge {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.625rem;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s;
-  font-size: 0.8rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.85rem;
   color: #64748b;
   white-space: nowrap;
 }
@@ -192,6 +192,8 @@
 .statBadge:hover {
   background: white;
   border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .statBadgeActive {
@@ -202,6 +204,7 @@
 
 .statBadgeValue {
   font-weight: 700;
+  font-size: 1rem;
   color: #1e293b;
 }
 
@@ -210,7 +213,7 @@
 }
 
 .statBadgeLabel {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
 .statIcon {
@@ -520,6 +523,13 @@
 .clauseList .clauseCard .clausePreview {
   flex: 1;
   -webkit-line-clamp: 2;
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
 }
 
 /* ===== CLAUSE CARD - Premium Light ===== */
@@ -992,6 +1002,13 @@
   border-color: #818cf8;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+/* ===== TABLET RESPONSIVE ===== */
+@media (min-width: 769px) and (max-width: 1200px) {
+  .detailPanel {
+    width: 380px;
+  }
 }
 
 /* ===== MOBILE RESPONSIVE ===== */
@@ -1931,7 +1948,8 @@
   justify-content: center;
   border-radius: 10px;
   font-size: 1.1rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 
 .categorySectionTitle {
@@ -2209,6 +2227,41 @@
   background: #f0fdf4;
   border-color: #10b981;
   color: #10b981;
+}
+
+/* Save to Library Button (Musterklauseln) */
+.saveToLibraryBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #10b981;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saveToLibraryBtn:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+.saveToLibraryBtn.saved {
+  background: #f0fdf4;
+  border-color: #10b981;
+  color: #059669;
+  cursor: default;
+}
+
+.saveToLibraryBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .useInGeneratorBtn {
@@ -2791,5 +2844,311 @@
 
   .sammlungEditBtn {
     padding: 0.4375rem;
+  }
+}
+
+/* ===== DETAIL SIDEBAR - Edit Mode (migrated from inline styles) ===== */
+
+.detailEditInput {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.detailEditInput:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.detailTitleDisplay {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.detailTitleDisplay.placeholder {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.detailSectionHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.detailSectionHeaderRow h4 {
+  margin: 0;
+}
+
+.detailEditBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detailEditBtn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.detailEditActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.detailSaveBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #10b981;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detailSaveBtn:hover {
+  background: #059669;
+}
+
+.detailSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detailCancelBtn {
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detailCancelBtn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.detailSuccessMsg {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: #16a34a;
+}
+
+.detailEditLabel {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailEditFieldGroup {
+  margin-bottom: 0.625rem;
+}
+
+.detailEditSelect {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1e293b;
+}
+
+.detailEditSelect:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.detailEditTextarea {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  resize: vertical;
+  font-family: inherit;
+  color: #1e293b;
+}
+
+.detailEditTextarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.detailPlaceholderText {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.detailNotesText {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.detailTagEditRow {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.detailTagEditInput {
+  flex: 1;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #1e293b;
+}
+
+.detailTagEditInput:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.detailTagAddBtn {
+  padding: 0.375rem 0.625rem;
+  background: #10b981;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.detailTagAddBtn:hover {
+  background: #059669;
+}
+
+.detailTagAddBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.detailEditTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.detailEditTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #475569;
+}
+
+.detailEditTagRemove {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.detailEditTagRemove:hover {
+  color: #991b1b;
+}
+
+.detailEmptyHint {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.detailLoadingText {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.detailCollectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detailCollectionItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+/* Mobile overrides for edit mode */
+@media (max-width: 768px) {
+  .detailEditInput {
+    padding: 0.4375rem;
+    font-size: 0.85rem;
+  }
+
+  .detailEditSelect {
+    padding: 0.4375rem;
+    font-size: 0.8rem;
+  }
+
+  .detailEditTextarea {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .detailSaveBtn,
+  .detailCancelBtn,
+  .detailEditBtn {
+    min-height: 36px;
+  }
+
+  .detailTagEditRow {
+    gap: 0.25rem;
+  }
+
+  .detailTagEditInput {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.75rem;
   }
 }

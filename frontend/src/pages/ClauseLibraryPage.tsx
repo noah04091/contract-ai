@@ -97,6 +97,11 @@ const ClauseLibraryPage: React.FC = () => {
     setActiveTab(tab);
     setSearchParams({ tab });
     setSelectedClause(null);
+    // Reload data when returning to Meine Klauseln (e.g. after saving from Musterklauseln)
+    if (tab === 'meine') {
+      loadClauses();
+      loadStatistics();
+    }
   };
 
   // Load clauses
@@ -317,7 +322,7 @@ const ClauseLibraryPage: React.FC = () => {
             style={
               activeTab === `collection_${col._id}`
                 ? { background: `linear-gradient(135deg, ${col.color || '#6366f1'} 0%, ${col.color || '#6366f1'}dd 100%)` }
-                : undefined
+                : { borderBottom: `3px solid ${col.color || '#6366f1'}` }
             }
           >
             <span style={{ fontSize: '1rem' }}>{col.icon || '📁'}</span>

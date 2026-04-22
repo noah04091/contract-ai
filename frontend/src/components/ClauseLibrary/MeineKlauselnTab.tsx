@@ -187,7 +187,7 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
               </div>
 
               {clause.title && (
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', marginBottom: '0.25rem' }}>
+                <div className={styles.cardTitle}>
                   {clause.title}
                 </div>
               )}
@@ -428,10 +428,10 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
               onChange={e => setEditTitle(e.target.value)}
               placeholder="Titel vergeben (z.B. Haftungsklausel, Kündigungsfrist...)"
               maxLength={200}
-              style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}
+              className={styles.detailEditInput}
             />
           ) : (
-            <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: clause.title ? '#1e293b' : '#94a3b8', fontStyle: clause.title ? 'normal' : 'italic' }}>
+            <p className={`${styles.detailTitleDisplay} ${!clause.title ? styles.placeholder : ''}`}>
               {clause.title || 'Titel hinzufügen...'}
             </p>
           )}
@@ -439,27 +439,27 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
 
         {/* Kategorie & Bereich — editierbar */}
         <div className={styles.detailSection} onDoubleClick={() => !isEditingMeta && setIsEditingMeta(true)} title={!isEditingMeta ? 'Doppelklick zum Bearbeiten' : undefined}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <h4 style={{ margin: 0 }}>Kategorie & Bereich</h4>
+          <div className={styles.detailSectionHeaderRow}>
+            <h4>Kategorie & Bereich</h4>
             {!isEditingMeta ? (
               <button
                 onClick={() => setIsEditingMeta(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: 'none', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', fontSize: '0.7rem', cursor: 'pointer' }}
+                className={styles.detailEditBtn}
               >
                 <Edit3 size={12} /> Bearbeiten
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <div className={styles.detailEditActions}>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', background: '#10b981', border: 'none', borderRadius: '6px', color: 'white', fontSize: '0.7rem', cursor: 'pointer' }}
+                  className={styles.detailSaveBtn}
                 >
                   {isSaving ? <Loader2 size={12} className={styles.spinner} /> : <Save size={12} />} Speichern
                 </button>
                 <button
                   onClick={() => { setIsEditingMeta(false); setEditTitle(clause.title || ''); setEditCategory(clause.category); setEditArea(clause.clauseArea); setEditNotes(clause.userNotes || ''); setEditTags(clause.tags || []); }}
-                  style={{ padding: '0.25rem 0.5rem', background: 'none', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#64748b', fontSize: '0.7rem', cursor: 'pointer' }}
+                  className={styles.detailCancelBtn}
                 >
                   Abbrechen
                 </button>
@@ -468,19 +468,19 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
           </div>
 
           {saveSuccess && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.625rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', marginBottom: '0.5rem', fontSize: '0.75rem', color: '#16a34a' }}>
+            <div className={styles.detailSuccessMsg}>
               <Check size={12} /> Gespeichert
             </div>
           )}
 
           {isEditingMeta ? (
             <>
-              <div style={{ marginBottom: '0.625rem' }}>
-                <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kategorie</label>
+              <div className={styles.detailEditFieldGroup}>
+                <label className={styles.detailEditLabel}>Kategorie</label>
                 <select
                   value={editCategory}
                   onChange={e => setEditCategory(e.target.value as ClauseCategory)}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem' }}
+                  className={styles.detailEditSelect}
                 >
                   {(Object.keys(CATEGORY_INFO) as ClauseCategory[]).map(cat => (
                     <option key={cat} value={cat}>{CATEGORY_INFO[cat].icon} {CATEGORY_INFO[cat].label}</option>
@@ -488,11 +488,11 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 600, color: '#64748b', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Bereich</label>
+                <label className={styles.detailEditLabel}>Bereich</label>
                 <select
                   value={editArea}
                   onChange={e => setEditArea(e.target.value as ClauseArea)}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem' }}
+                  className={styles.detailEditSelect}
                 >
                   {(Object.keys(CLAUSE_AREA_INFO) as ClauseArea[]).map(area => (
                     <option key={area} value={area}>{CLAUSE_AREA_INFO[area].icon} {CLAUSE_AREA_INFO[area].label}</option>
@@ -550,10 +550,10 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
               placeholder="Eigene Notizen hinzufügen..."
               maxLength={2000}
               rows={3}
-              style={{ width: '100%', padding: '0.625rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.85rem', resize: 'vertical', fontFamily: 'inherit' }}
+              className={styles.detailEditTextarea}
             />
           ) : (
-            <p style={{ margin: 0, fontSize: '0.85rem', color: clause.userNotes ? '#334155' : '#94a3b8', fontStyle: clause.userNotes ? 'normal' : 'italic' }}>
+            <p className={clause.userNotes ? styles.detailNotesText : styles.detailPlaceholderText}>
               {clause.userNotes || 'Notizen hinzufügen...'}
             </p>
           )}
@@ -564,32 +564,28 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
           <h4>Tags</h4>
           {isEditingMeta ? (
             <>
-              <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '0.375rem' }}>
+              <div className={styles.detailTagEditRow}>
                 <input
                   type="text"
                   value={newTag}
                   onChange={e => setNewTag(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTag(); } }}
                   placeholder="Neuen Tag eingeben..."
-                  style={{ flex: 1, padding: '0.375rem 0.625rem', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.8rem' }}
+                  className={styles.detailTagEditInput}
                 />
                 <button
                   onClick={handleAddTag}
                   disabled={!newTag.trim()}
-                  style={{ padding: '0.375rem 0.625rem', background: '#10b981', border: 'none', borderRadius: '6px', color: 'white', fontSize: '0.8rem', cursor: 'pointer', opacity: newTag.trim() ? 1 : 0.5 }}
+                  className={styles.detailTagAddBtn}
                 >
                   <Plus size={14} />
                 </button>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+              <div className={styles.detailEditTagList}>
                 {editTags.map(tag => (
-                  <span key={tag} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-                    padding: '0.2rem 0.5rem', background: '#f1f5f9', borderRadius: '4px',
-                    fontSize: '0.75rem', color: '#475569'
-                  }}>
+                  <span key={tag} className={styles.detailEditTag}>
                     #{tag}
-                    <button onClick={() => handleRemoveTag(tag)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: 0, fontSize: '0.85rem', lineHeight: 1 }}>x</button>
+                    <button onClick={() => handleRemoveTag(tag)} className={styles.detailEditTagRemove}>x</button>
                   </span>
                 ))}
               </div>
@@ -599,7 +595,7 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
               {clause.tags.length > 0 ? clause.tags.map(tag => (
                 <span key={tag} className={styles.detailTag}>#{tag}</span>
               )) : (
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>Tags hinzufügen...</span>
+                <span className={styles.detailEmptyHint}>Tags hinzufügen...</span>
               )}
             </div>
           )}
@@ -609,20 +605,17 @@ const ClauseDetailSidebar: React.FC<ClauseDetailSidebarProps> = ({
         <div className={styles.detailSection}>
           <h4>In Sammlungen</h4>
           {!collectionsLoaded ? (
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Laden...</span>
+            <span className={styles.detailLoadingText}>Laden...</span>
           ) : collections.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div className={styles.detailCollectionList}>
               {collections.map(col => (
-                <span key={col._id} style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
-                  fontSize: '0.8rem', color: '#475569'
-                }}>
+                <span key={col._id} className={styles.detailCollectionItem}>
                   {col.icon} {col.name}
                 </span>
               ))}
             </div>
           ) : (
-            <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>In keiner Sammlung</span>
+            <span className={styles.detailEmptyHint}>In keiner Sammlung</span>
           )}
         </div>
 

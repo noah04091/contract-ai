@@ -12,19 +12,42 @@ import {
   X,
   Scale,
   FileText,
-  FolderPlus
+  FolderPlus,
+  Bookmark,
+  Loader2
 } from 'lucide-react';
-import type { TemplateClause, TemplateClauseCategory, IndustryTag, AddCollectionItemRequest } from '../../types/clauseLibrary';
+import type { TemplateClause, TemplateClauseCategory, IndustryTag, ClauseCategory, ClauseArea, AddCollectionItemRequest } from '../../types/clauseLibrary';
 import {
   TEMPLATE_CLAUSE_CATEGORY_INFO,
   INDUSTRY_TAG_INFO,
   RISK_LEVEL_INFO
 } from '../../types/clauseLibrary';
 import { templateClauses } from '../../data/templateClauses';
+import * as clauseLibraryAPI from '../../services/clauseLibraryAPI';
+import { useToast } from '../../context/ToastContext';
 import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
+const RISK_TO_CATEGORY: Record<string, ClauseCategory> = {
+  neutral: 'standard',
+  arbeitnehmerfreundlich: 'good_practice',
+  arbeitgeberfreundlich: 'risky'
+};
+
+const TEMPLATE_TO_AREA: Partial<Record<TemplateClauseCategory, ClauseArea>> = {
+  termination: 'termination',
+  liability: 'liability',
+  payment: 'payment',
+  confidentiality: 'confidentiality',
+  data_protection: 'data_protection',
+  warranty: 'warranty',
+  force_majeure: 'force_majeure',
+  non_compete: 'non_compete',
+  jurisdiction: 'dispute'
+};
+
 const MusterklauselnTab: React.FC = () => {
+  const toast = useToast();
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,6 +61,10 @@ const MusterklauselnTab: React.FC = () => {
     previewText: string;
     previewTitle: string;
   } | null>(null);
+
+  // Save to Library state
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   // Filter clauses
   const filteredClauses = useMemo(() => {
@@ -78,6 +105,31 @@ const MusterklauselnTab: React.FC = () => {
     }
   };
 
+  // Save template to "Meine Klauseln"
+  const handleSaveToLibrary = async (clause: TemplateClause) => {
+    setSavingId(clause.id);
+    try {
+      await clauseLibraryAPI.saveClause({
+        clauseText: clause.clauseText,
+        category: RISK_TO_CATEGORY[clause.riskLevel] || 'standard',
+        clauseArea: TEMPLATE_TO_AREA[clause.category] || 'other',
+        tags: ['musterklausel', clause.category],
+        userNotes: `Aus Musterklauseln: ${clause.title}`
+      });
+      setSavedIds(prev => new Set(prev).add(clause.id));
+      toast.success('Klausel in "Meine Klauseln" gespeichert');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.startsWith('DUPLICATE:')) {
+        toast.warning('Diese Klausel ist bereits gespeichert');
+        setSavedIds(prev => new Set(prev).add(clause.id));
+      } else {
+        toast.error('Fehler beim Speichern');
+      }
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   // Get category counts
   const categoryCounts = useMemo(() => {
@@ -102,7 +154,7 @@ const MusterklauselnTab: React.FC = () => {
 
   // State for expanded categories
   const [expandedCategories, setExpandedCategories] = useState<Set<TemplateClauseCategory>>(
-    new Set(Object.keys(TEMPLATE_CLAUSE_CATEGORY_INFO) as TemplateClauseCategory[])
+    new Set()
   );
 
   const toggleCategory = (category: TemplateClauseCategory) => {
@@ -344,6 +396,25 @@ const MusterklauselnTab: React.FC = () => {
                                 >
                                   <FolderPlus size={16} />
                                   Zur Sammlung
+                                </button>
+                                <button
+                                  className={`${styles.saveToLibraryBtn} ${savedIds.has(clause.id) ? styles.saved : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!savedIds.has(clause.id)) {
+                                      handleSaveToLibrary(clause);
+                                    }
+                                  }}
+                                  disabled={savingId === clause.id || savedIds.has(clause.id)}
+                                >
+                                  {savingId === clause.id ? (
+                                    <Loader2 size={16} className={styles.spinner} />
+                                  ) : savedIds.has(clause.id) ? (
+                                    <Check size={16} />
+                                  ) : (
+                                    <Bookmark size={16} />
+                                  )}
+                                  {savedIds.has(clause.id) ? 'Gespeichert' : 'Speichern'}
                                 </button>
                                 <button
                                   className={`${styles.copyBtn} ${isCopied ? styles.copied : ''}`}
