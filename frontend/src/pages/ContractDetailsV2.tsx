@@ -3030,8 +3030,8 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Empty State */}
-                    {!hasAnalysis && !contract.legalPulse && (
+                    {/* Empty State — shown when no real analysis exists */}
+                    {!hasAnalysis && (
                       <div className={styles.card}>
                         <div className={styles.emptyState}>
                           <div className={styles.emptyIcon}>
@@ -3039,7 +3039,7 @@ export default function ContractDetailsV2() {
                           </div>
                           <h4 className={styles.emptyTitle}>Keine Analyse vorhanden</h4>
                           <p className={styles.emptyText}>
-                            Dieser Vertrag wurde noch nicht analysiert. Starte eine Analyse, um detaillierte Einblicke zu erhalten.
+                            Dieser Vertrag wurde noch nicht analysiert. Starte eine Analyse, um detaillierte Einblicke in Risiken, Empfehlungen und Optimierungspotenzial zu erhalten.
                           </p>
                           <button
                             className={`${styles.btn} ${styles.btnPrimary}`}
