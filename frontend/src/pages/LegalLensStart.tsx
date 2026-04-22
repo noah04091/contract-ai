@@ -75,7 +75,7 @@ const LegalLensStart = () => {
           const data = await response.json();
           // API gibt { user: { subscriptionPlan: ... } } zurück
           const user = data.user || data;
-          setUserPlan(user.subscriptionPlan || user.plan || 'free');
+          setUserPlan((user.subscriptionPlan || user.plan || 'free').toLowerCase());
         }
       } catch {
         // User plan fetch failed silently
