@@ -297,8 +297,8 @@ function generateCampaignTemplate({
 }) {
   const ctaHtml = cta ? `
           <tr>
-            <td style="padding: 8px 40px 36px; text-align: center;">
-              <a href="${cta.url}" style="display: inline-block; padding: 14px 36px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; border-radius: 25px; letter-spacing: 0.2px;">
+            <td style="padding: 8px 40px 40px; text-align: center;">
+              <a href="${cta.url}" style="display: inline-block; padding: 16px 42px; background-color: #3b82f6; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 25px; letter-spacing: 0.3px;">
                 ${cta.text}
               </a>
             </td>
@@ -325,8 +325,8 @@ function generateCampaignTemplate({
 
           <!-- Logo (zentriert, clean) -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center;">
-              <img src="${logoUrl}" alt="Contract AI" style="height: 30px; max-width: 160px;" />
+            <td style="padding: 44px 40px 20px; text-align: center;">
+              <img src="${logoUrl}" alt="Contract AI" style="height: 36px; max-width: 180px;" />
             </td>
           </tr>
 
@@ -352,7 +352,7 @@ function generateCampaignTemplate({
 
           <!-- Body Content -->
           <tr>
-            <td style="padding: 0 40px 32px; font-size: 15px; line-height: 1.7; color: #334155;">
+            <td style="padding: 0 40px 36px; font-size: 15px; line-height: 1.7; color: #334155;">
               ${body || ''}
             </td>
           </tr>
