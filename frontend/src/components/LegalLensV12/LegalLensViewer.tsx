@@ -1374,9 +1374,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     let startIdx = clickedIndex;
     let endIdx = clickedIndex;
 
-    // Visuelle Position des geklickten Spans für Grenz-Checks
-    const clickedRect = allSpans[clickedIndex].getBoundingClientRect();
-    const lineHeight = clickedRect.height || 14;
+    // Vorberechnung: Alle Span-Positionen einmalig (statt pro Loop-Iteration)
+    const spanRects = allSpans.map(s => s.getBoundingClientRect());
+    const lineHeight = spanRects[clickedIndex].height || 14;
 
     // Adaptive span search windows based on page size
     const totalSpans = allSpans.length;
@@ -1390,9 +1390,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Suche Satzanfang (rückwärts bis . ! ? oder Anfang)
       for (let i = clickedIndex - 1; i >= 0; i--) {
         const text = spanData[i].text;
-        // Visueller Break: Span zu weit weg = anderer Bereich (Tabelle, Absatz)
-        const spanRect = allSpans[i].getBoundingClientRect();
-        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 2) break;
+        // Gap-Detection: Lücke zwischen span[i] und span[i+1] = Absatzgrenze
+        if (spanRects[i].bottom + lineHeight * 1.2 < spanRects[i + 1].top) break;
         // Satzende im vorherigen Span = dieser Span ist Satzanfang
         if (/[.!?]\s*$/.test(text)) {
           startIdx = i + 1;
@@ -1410,9 +1409,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       // Suche Satzende (vorwärts bis . ! ?)
       for (let i = clickedIndex; i < allSpans.length; i++) {
         const text = spanData[i].text;
-        // Visueller Break: Span zu weit weg
-        const spanRect = allSpans[i].getBoundingClientRect();
-        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 2) {
+        // Gap-Detection: Lücke zwischen span[i-1] und span[i] = Absatzgrenze
+        if (i > clickedIndex && spanRects[i - 1].bottom + lineHeight * 1.2 < spanRects[i].top) {
           endIdx = Math.max(clickedIndex, i - 1);
           break;
         }
@@ -1437,11 +1435,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       for (let i = clickedIndex - 1; i >= 0; i--) {
         const text = spanData[i].text;
 
-        // Visueller Break: Großer Y-Abstand = anderer Abschnitt
-        const spanRect = allSpans[i].getBoundingClientRect();
-        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 8) break;
+        // Gap-Detection: Lücke zwischen span[i] und span[i+1] = Absatzgrenze
+        if (spanRects[i].bottom + lineHeight * 1.8 < spanRects[i + 1].top) break;
 
-        if (isParagraphStart(text)) {
+        // Multi-Span Paragraph-Start: span[i] allein ODER span[i]+span[i+1] zusammen
+        const combinedText = (text + ' ' + (spanData[i + 1]?.text || '')).trim();
+        if (isParagraphStart(text) || isParagraphStart(combinedText)) {
           startIdx = i;
           break;
         }
@@ -1455,9 +1454,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       for (let i = clickedIndex + 1; i < allSpans.length; i++) {
         const text = spanData[i].text;
 
-        // Visueller Break: Großer Y-Abstand = anderer Abschnitt
-        const spanRect = allSpans[i].getBoundingClientRect();
-        if (Math.abs(spanRect.top - clickedRect.top) > lineHeight * 8) {
+        // Gap-Detection: Lücke zwischen span[i-1] und span[i] = Absatzgrenze
+        if (spanRects[i - 1].bottom + lineHeight * 1.8 < spanRects[i].top) {
           endIdx = Math.max(clickedIndex, i - 1);
           break;
         }
@@ -1470,8 +1468,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           consecutiveShort = 0;
         }
 
-        // Nächster Hauptparagraph = Ende dieses Paragraphen
-        if (isParagraphStart(text)) {
+        // Nächster Hauptparagraph = Ende dieses Paragraphen (Multi-Span)
+        const combinedTextFwd = (text + ' ' + (spanData[i + 1]?.text || '')).trim();
+        if (isParagraphStart(text) || isParagraphStart(combinedTextFwd)) {
           endIdx = i - 1;
           break;
         }
