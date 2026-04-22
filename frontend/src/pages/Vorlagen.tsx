@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, Briefcase, Home, Banknote, User, Handshake,
   Building, Layers, Shield, BookOpen, PenTool, Scale,
-  Clock, Copy, Check, X, Sparkles, Search,
-  Loader2, ExternalLink
+  Clock, X, Sparkles, Search,
+  Loader2
 } from 'lucide-react';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 import type { ContractTemplate } from '../data/contractTemplates';
@@ -43,9 +43,6 @@ const Vorlagen: React.FC = () => {
   const [selectedUserTemplate, setSelectedUserTemplate] = useState<UserTemplate | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [generating, setGenerating] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [generatedText, setGeneratedText] = useState('');
-  const [generatedContractId, setGeneratedContractId] = useState('');
 
   useEffect(() => {
     loadUserTemplates();
@@ -85,14 +82,11 @@ const Vorlagen: React.FC = () => {
     setSelectedTemplate(template);
     setSelectedUserTemplate(null);
     setFormValues({});
-    setGeneratedText('');
-    setGeneratedContractId('');
   };
 
   const openUserTemplate = (template: UserTemplate) => {
     setSelectedUserTemplate(template);
     setSelectedTemplate(null);
-    // Pre-fill from saved default values
     const vals: Record<string, string> = {};
     if (template.defaultValues) {
       for (const [k, v] of Object.entries(template.defaultValues)) {
@@ -100,18 +94,15 @@ const Vorlagen: React.FC = () => {
       }
     }
     setFormValues(vals);
-    setGeneratedText('');
-    setGeneratedContractId('');
   };
 
   const closeModal = () => {
     setSelectedTemplate(null);
     setSelectedUserTemplate(null);
     setFormValues({});
-    setGeneratedText('');
   };
 
-  // ─── Generate Contract from Template ───
+  // ─── Generate Contract from Template → direkt in Contract Builder ───
   const handleGenerate = async () => {
     if (!selectedTemplate || generating) return;
     setGenerating(true);
@@ -119,52 +110,38 @@ const Vorlagen: React.FC = () => {
     try {
       // Build contract text from template clauses + filled variables
       let fullText = `${selectedTemplate.name}\n\n`;
-      fullText += `zwischen\n${formValues[selectedTemplate.parties.party1.defaultName.replace(/\{\{|\}\}/g, '')] || selectedTemplate.parties.party1.role} (nachfolgend "${selectedTemplate.parties.party1.role}")\n\n`;
-      fullText += `und\n${formValues[selectedTemplate.parties.party2.defaultName.replace(/\{\{|\}\}/g, '')] || selectedTemplate.parties.party2.role} (nachfolgend "${selectedTemplate.parties.party2.role}")\n\n`;
+      const party1Name = formValues[selectedTemplate.parties.party1.defaultName.replace(/\{\{|\}\}/g, '')] || selectedTemplate.parties.party1.role;
+      const party2Name = formValues[selectedTemplate.parties.party2.defaultName.replace(/\{\{|\}\}/g, '')] || selectedTemplate.parties.party2.role;
+      fullText += `zwischen\n${party1Name} (nachfolgend "${selectedTemplate.parties.party1.role}")\n\n`;
+      fullText += `und\n${party2Name} (nachfolgend "${selectedTemplate.parties.party2.role}")\n\n`;
 
       // Replace variables in clauses
       for (let i = 0; i < selectedTemplate.suggestedClauses.length; i++) {
         const clause = selectedTemplate.suggestedClauses[i];
         let body = clause.body;
-        // Replace all {{variable}} with user values
         body = body.replace(/\{\{(\w+)\}\}/g, (_, varName) => {
           return formValues[varName] || `[${varName}]`;
         });
         fullText += `§ ${i + 1} ${clause.title}\n${body}\n\n`;
       }
 
-      // Save to DB via API
-      const response = await apiCall('/contracts', {
+      // Import direkt in den Contract Builder
+      const response = await apiCall('/contract-builder/import-from-generator', {
         method: 'POST',
         body: JSON.stringify({
-          name: `${selectedTemplate.name} — Vorlage`,
-          content: fullText,
+          contractText: fullText,
           contractType: selectedTemplate.id,
-          isGenerated: true,
-          source: 'template',
-          status: 'Aktiv',
-          formData: formValues
+          name: `${selectedTemplate.name} — ${party1Name} & ${party2Name}`
         })
-      }) as { contractId?: string; _id?: string };
+      }) as { success: boolean; documentId: string };
 
-      const contractId = response.contractId || response._id || '';
-      setGeneratedContractId(contractId);
-      setGeneratedText(fullText);
+      if (response.success && response.documentId) {
+        navigate(`/contract-builder/${response.documentId}`);
+      }
     } catch (err) {
-      console.error('Fehler bei Vorlagen-Generierung:', err);
+      console.error('Fehler bei Vorlagen-Erstellung:', err);
     } finally {
       setGenerating(false);
-    }
-  };
-
-  // ─── Copy generated text ───
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(generatedText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* fallback */
     }
   };
 
@@ -297,8 +274,6 @@ const Vorlagen: React.FC = () => {
             </div>
             <p className={styles.modalSubtitle}>{modalTemplate.description} — Felder ausfüllen und Vertrag erstellen.</p>
 
-            {!generatedText ? (
-              <>
                 <div className={styles.modalBody}>
                   {/* Group variables by group */}
                   {(() => {
@@ -350,45 +325,9 @@ const Vorlagen: React.FC = () => {
                     onClick={handleGenerate}
                     disabled={generating || !modalTemplate.defaultVariables.filter(v => v.required).every(v => formValues[v.name]?.trim())}
                   >
-                    {generating ? <><Loader2 size={16} /> Erstelle...</> : <><Sparkles size={16} /> Vertrag erstellen</>}
+                    {generating ? <><Loader2 size={16} /> Erstelle...</> : <><Sparkles size={16} /> Im Builder erstellen</>}
                   </button>
                 </div>
-              </>
-            ) : (
-              <>
-                {/* Generated Result */}
-                <div className={styles.modalBody}>
-                  <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                    <button className={styles.btnPrimary} onClick={handleCopy}>
-                      {copied ? <><Check size={15} /> Kopiert!</> : <><Copy size={15} /> Kopieren</>}
-                    </button>
-                    <button className={styles.btnSecondary} onClick={() => navigate(`/contract-builder`)}>
-                      <ExternalLink size={15} /> Im Builder öffnen
-                    </button>
-                    {generatedContractId && (
-                      <button className={styles.btnSecondary} onClick={() => navigate(`/contracts/${generatedContractId}`)}>
-                        <FileText size={15} /> In Verträgen
-                      </button>
-                    )}
-                  </div>
-                  <textarea
-                    value={generatedText}
-                    onChange={e => setGeneratedText(e.target.value)}
-                    style={{
-                      width: '100%', minHeight: '350px', padding: '16px', border: '1px solid #e5e7eb',
-                      borderRadius: '11px', fontSize: '14px', lineHeight: 1.7, fontFamily: 'inherit',
-                      resize: 'vertical', boxSizing: 'border-box'
-                    }}
-                  />
-                </div>
-                <div className={styles.modalFooter}>
-                  <button className={styles.btnSecondary} onClick={() => { setGeneratedText(''); setGeneratedContractId(''); }}>
-                    ← Zurück bearbeiten
-                  </button>
-                  <button className={styles.btnSecondary} onClick={closeModal}>Schließen</button>
-                </div>
-              </>
-            )}
           </div>
         </div>
       )}
