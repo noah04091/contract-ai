@@ -52,10 +52,12 @@ interface Campaign {
   cancelledAt: string | null;
   stats: {
     total: number;
+    eligible?: number;
     sent: number;
     failed: number;
     skipped: number;
     pending?: number;
+    processing?: number;
     opens?: number;
     uniqueOpens?: number;
     clicks?: number;
