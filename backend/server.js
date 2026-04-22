@@ -1812,20 +1812,25 @@ const connectDB = async () => {
         }
       });
 
-      // BESTEHENDER Legal Pulse Scan (mit Retry + Overlap-Lock)
-      cron.schedule("0 6 * * *", withCronLock('legal-pulse-scan', async () => {
-        console.log("🧠 Starte täglichen AI-powered Legal Pulse Scan...");
-        try {
-          await withCronLogging('legal-pulse-scan', async () => {
-            const runLegalPulseScan = require("./services/legalPulseScan");
-            const result = await runLegalPulseScan();
-            return result || { scanned: true };
-          });
-        } catch (error) {
-          console.error("❌ Legal Pulse Scan Error:", error);
-          await captureError(error, { route: 'CRON:legal-pulse-scan', method: 'SCHEDULED', severity: 'high' });
-        }
-      }));
+      // V1 Legal Pulse Scan — DEAKTIVIERT (22.04.2026)
+      // Grund: V2 Pipeline hat V1 vollständig ersetzt. Auto-Scan erzeugte
+      // unnötige OpenAI-Kosten für Daten die nirgends mehr angezeigt werden.
+      // V2-Crons (rss-sync, monitor, radar) laufen weiter unberührt.
+      // Bei Bedarf manuell auslösbar via POST /api/legal-pulse/analyze/:contractId
+      //
+      // cron.schedule("0 6 * * *", withCronLock('legal-pulse-scan', async () => {
+      //   console.log("Starte täglichen AI-powered Legal Pulse Scan...");
+      //   try {
+      //     await withCronLogging('legal-pulse-scan', async () => {
+      //       const runLegalPulseScan = require("./services/legalPulseScan");
+      //       const result = await runLegalPulseScan();
+      //       return result || { scanned: true };
+      //     });
+      //   } catch (error) {
+      //     console.error("Legal Pulse Scan Error:", error);
+      //     await captureError(error, { route: 'CRON:legal-pulse-scan', method: 'SCHEDULED', severity: 'high' });
+      //   }
+      // }));
 
       // Legal Pulse V2 — Täglicher RSS→Laws Sync (03:15 UTC, VOR Radar um 07:00)
       cron.schedule("15 3 * * *", withCronLock('pulse-v2-rss-sync', async () => {
