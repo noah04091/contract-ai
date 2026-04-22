@@ -15,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
+import GuidedContractWizard from "../components/GuidedContractWizard";
 import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
@@ -3514,6 +3515,7 @@ export default function Generate() {
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
+  const [inputMode, setInputMode] = useState<'detailed' | 'guided'>('detailed');
 
   // Usage tracking for Business plan
   const [usageData, setUsageData] = useState<{
@@ -6028,11 +6030,48 @@ export default function Generate() {
                         </motion.button>
                       ))}
                     </div>
+
+                    {/* Mode Toggle — nur sichtbar wenn Typ gewählt */}
+                    {selectedType && userPlan !== 'free' && (
+                      <div style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: '4px', marginTop: '24px', padding: '4px',
+                        background: '#f3f4f6', borderRadius: '12px', width: 'fit-content',
+                        marginLeft: 'auto', marginRight: 'auto'
+                      }}>
+                        <button
+                          onClick={() => setInputMode('detailed')}
+                          style={{
+                            padding: '10px 20px', border: 'none', borderRadius: '10px',
+                            fontSize: '14px', fontWeight: inputMode === 'detailed' ? 600 : 400,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            background: inputMode === 'detailed' ? 'white' : 'transparent',
+                            color: inputMode === 'detailed' ? '#111827' : '#6b7280',
+                            boxShadow: inputMode === 'detailed' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                          }}
+                        >
+                          Detailliert
+                        </button>
+                        <button
+                          onClick={() => setInputMode('guided')}
+                          style={{
+                            padding: '10px 20px', border: 'none', borderRadius: '10px',
+                            fontSize: '14px', fontWeight: inputMode === 'guided' ? 600 : 400,
+                            cursor: 'pointer', transition: 'all 0.2s',
+                            background: inputMode === 'guided' ? 'white' : 'transparent',
+                            color: inputMode === 'guided' ? '#111827' : '#6b7280',
+                            boxShadow: inputMode === 'guided' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                          }}
+                        >
+                          Geführt
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
-                {/* Step 2: Form Fields */}
-                {currentStep === 2 && selectedType && (
+                {/* Step 2: Form Fields (Detailliert) */}
+                {currentStep === 2 && selectedType && inputMode === 'detailed' && (
                   <motion.div
                     key="step2"
                     initial={{ opacity: 0, x: -20 }}
@@ -6461,6 +6500,46 @@ export default function Generate() {
                         onClick={() => setSidebarOpen(false)}
                       />
                     )}
+                  </motion.div>
+                )}
+
+                {/* Step 2b: Geführter Modus (Playbook-Wizard) */}
+                {currentStep === 2 && selectedType && inputMode === 'guided' && (
+                  <motion.div
+                    key="step2guided"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className={styles.stepContent}
+                  >
+                    {/* Header mit Zurück-Button */}
+                    <div className={styles.step2Header}>
+                      <motion.button
+                        className={`${styles.headerButton} ${styles.secondaryButton} ${styles.backButtonAbsolute}`}
+                        onClick={() => setCurrentStep(1)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <ArrowLeft size={18} />
+                        <span>Zurück</span>
+                      </motion.button>
+                      <div className={styles.step2HeaderCenter}>
+                        <h2>{selectedType.name} erstellen</h2>
+                        <p>Geführte Erstellung mit strategischen Entscheidungen</p>
+                      </div>
+                    </div>
+
+                    {/* Eingebetteter Playbook-Wizard */}
+                    <GuidedContractWizard
+                      contractType={selectedType.id}
+                      contractTypeName={selectedType.name}
+                      onComplete={(generatedResult) => {
+                        // Ergebnis in Generate-State übernehmen
+                        setContractText(generatedResult.contractText);
+                        setSavedContractId(generatedResult.contractId);
+                        setCurrentStep(3);
+                      }}
+                    />
                   </motion.div>
                 )}
 
