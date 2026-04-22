@@ -1788,9 +1788,18 @@ export default function CampaignsTab() {
                 {detailsData.stats && (
                   <div style={{ marginTop: '1rem', padding: '1rem', background: '#f8fafc', borderRadius: '6px' }}>
                     <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Versand</div>
-                    <div>Gesendet: {detailsData.stats.sent}</div>
-                    <div>Fehler: {detailsData.stats.failed}</div>
-                    {detailsData.stats.pending !== undefined && <div>Offen: {detailsData.stats.pending}</div>}
+                    <div>Empfänger gesamt: {detailsData.stats.total}</div>
+                    {(detailsData.stats.skipped ?? 0) > 0 && (
+                      <div style={{ color: '#f59e0b' }}>
+                        Übersprungen: {detailsData.stats.skipped} (abbestellt/inaktiv)
+                      </div>
+                    )}
+                    <div>Berechtigt: {detailsData.stats.eligible ?? (detailsData.stats.total - (detailsData.stats.skipped ?? 0))}</div>
+                    <div style={{ color: '#16a34a' }}>Gesendet: {detailsData.stats.sent}</div>
+                    {(detailsData.stats.failed ?? 0) > 0 && (
+                      <div style={{ color: '#dc2626' }}>Fehler: {detailsData.stats.failed}</div>
+                    )}
+                    {(detailsData.stats.pending ?? 0) > 0 && <div>Ausstehend: {detailsData.stats.pending}</div>}
 
                     {detailsData.trackOpens !== false && (detailsData.stats.sent > 0) && (
                       <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>

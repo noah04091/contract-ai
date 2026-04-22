@@ -48,7 +48,12 @@ async function ensureIndexes(db) {
       db.collection('email_campaigns').createIndex({ status: 1, createdAt: -1 }),
       db.collection('email_campaigns').createIndex({ createdBy: 1, createdAt: -1 }),
       db.collection('campaign_recipients').createIndex({ campaignId: 1, status: 1 }),
-      db.collection('campaign_recipients').createIndex({ campaignId: 1 })
+      db.collection('campaign_recipients').createIndex({ campaignId: 1 }),
+      // Unique-Index: verhindert doppelte Empfänger pro Campaign
+      db.collection('campaign_recipients').createIndex(
+        { campaignId: 1, email: 1 },
+        { unique: true, background: true }
+      )
     ]);
     indexesEnsured = true;
   } catch (err) {
@@ -64,7 +69,7 @@ async function ensureIndexes(db) {
 function buildRecipientQuery(filter = {}) {
   const query = {
     // Hartcodierte Safety-Filter — können NICHT deaktiviert werden
-    email: { $exists: true, $ne: null, $ne: '' },
+    email: { $exists: true, $nin: [null, ''] },
     verified: true,
     emailOptOut: { $ne: true },
     $and: [
@@ -392,11 +397,41 @@ async function createCampaign(data, adminUser) {
     filterByUnsubscribes(db, emails)
   ]);
 
-  const eligibleUsers = users.filter(
-    (u) => u.email && !unhealthyEmails.has(u.email) && !unsubscribedEmails.has(u.email)
-  );
+  // Dedup by email + Status zuweisen (pending vs skipped)
+  const seen = new Set();
+  const recipientDocs = [];
+  let eligibleCount = 0;
+  let skippedCount = 0;
 
-  if (eligibleUsers.length === 0) {
+  for (const u of users) {
+    if (!u.email || seen.has(u.email.toLowerCase())) continue; // Dedup
+    seen.add(u.email.toLowerCase());
+
+    if (unhealthyEmails.has(u.email)) {
+      recipientDocs.push({
+        userId: u._id, email: u.email,
+        status: 'skipped', skippedReason: 'Email inaktiv/quarantine',
+        sentAt: null, messageId: null, error: null, createdAt: new Date()
+      });
+      skippedCount++;
+    } else if (unsubscribedEmails.has(u.email)) {
+      recipientDocs.push({
+        userId: u._id, email: u.email,
+        status: 'skipped', skippedReason: 'Newsletter abbestellt',
+        sentAt: null, messageId: null, error: null, createdAt: new Date()
+      });
+      skippedCount++;
+    } else {
+      recipientDocs.push({
+        userId: u._id, email: u.email,
+        status: 'pending', skippedReason: null,
+        sentAt: null, messageId: null, error: null, createdAt: new Date()
+      });
+      eligibleCount++;
+    }
+  }
+
+  if (eligibleCount === 0) {
     throw new Error('Keine berechtigten Empfänger gefunden');
   }
 
@@ -410,11 +445,11 @@ async function createCampaign(data, adminUser) {
     ctaText: data.ctaText || null,
     ctaUrl: data.ctaUrl || null,
     segmentFilter: data.segmentFilter || {},
-    recipientCount: eligibleUsers.length,
+    recipientCount: eligibleCount,
     status: 'draft',
     scheduledFor: null,
-    trackOpens: data.trackOpens !== false, // default AN
-    trackClicks: data.trackClicks !== false, // default AN (für Commit 3D)
+    trackOpens: data.trackOpens !== false,
+    trackClicks: data.trackClicks !== false,
     createdBy: adminUser ? String(adminUser.userId) : null,
     createdByEmail: adminUser ? adminUser.email : null,
     createdAt: new Date(),
@@ -423,10 +458,11 @@ async function createCampaign(data, adminUser) {
     completedAt: null,
     cancelledAt: null,
     stats: {
-      total: eligibleUsers.length,
+      total: eligibleCount + skippedCount,
+      eligible: eligibleCount,
       sent: 0,
       failed: 0,
-      skipped: 0,
+      skipped: skippedCount,
       opens: 0,
       uniqueOpens: 0,
       clicks: 0,
@@ -437,26 +473,16 @@ async function createCampaign(data, adminUser) {
   const campaignResult = await db.collection('email_campaigns').insertOne(campaignDoc);
   const campaignId = campaignResult.insertedId;
 
-  // Recipients-Liste anlegen
-  const recipientDocs = eligibleUsers.map((u) => ({
-    campaignId,
-    userId: u._id,
-    email: u.email,
-    status: 'pending',
-    sentAt: null,
-    messageId: null,
-    error: null,
-    skippedReason: null,
-    createdAt: new Date()
-  }));
-
-  if (recipientDocs.length > 0) {
-    await db.collection('campaign_recipients').insertMany(recipientDocs);
+  // Recipients-Liste anlegen (mit campaignId + Unique-Index-Safety)
+  const docsWithCampaign = recipientDocs.map((d) => ({ ...d, campaignId }));
+  if (docsWithCampaign.length > 0) {
+    await db.collection('campaign_recipients').insertMany(docsWithCampaign, { ordered: false });
   }
 
   return {
     campaignId: String(campaignId),
-    recipientCount: eligibleUsers.length,
+    recipientCount: eligibleCount,
+    skippedCount,
     status: 'draft'
   };
 }
@@ -568,6 +594,18 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
       break;
     }
 
+    // ATOMARES CLAIMING: Verhindert doppelte Sends bei Race-Conditions.
+    // Nur wenn status noch 'pending' ist → auf 'processing' setzen.
+    const claimed = await db.collection('campaign_recipients').findOneAndUpdate(
+      { _id: recipient._id, status: 'pending' },
+      { $set: { status: 'processing' } },
+      { returnDocument: 'after' }
+    );
+    const claimedDoc = claimed.value || claimed;
+    if (!claimedDoc || claimedDoc.status !== 'processing') {
+      continue; // Bereits verarbeitet — skip
+    }
+
     try {
       const html = buildCampaignHtml(campaign, recipient.email, recipient._id);
       const unsubscribeUrl = generateUnsubscribeUrl(recipient.email, 'marketing');
@@ -624,11 +662,12 @@ async function computeStats(db, campaignId) {
     { $group: { _id: '$status', count: { $sum: 1 } } }
   ]).toArray();
 
-  const stats = { total: 0, sent: 0, failed: 0, skipped: 0, pending: 0 };
+  const stats = { total: 0, eligible: 0, sent: 0, failed: 0, skipped: 0, pending: 0, processing: 0 };
   for (const c of counts) {
     if (c._id in stats) stats[c._id] = c.count;
     stats.total += c.count;
   }
+  stats.eligible = stats.total - stats.skipped;
   return stats;
 }
 
