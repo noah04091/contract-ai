@@ -3067,53 +3067,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           console.warn(`⚠️ Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }
 
-        // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job) for existing contract
-        // 🔐 NUR für Business/Enterprise User - Free User bekommen kein Legal Pulse
-        // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Array
-        const canAccessLegalPulse = isBusinessOrHigher(plan);
-
-        if (canAccessLegalPulse) {
-          (async () => {
-            try {
-              console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for existing contract in background...`);
-
-              const contractInfo = {
-              name: existingContract.name,
-              provider: extractedProvider?.displayName || 'Unknown',
-              type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
-              startDate: extractedStartDate,
-              expiryDate: extractedEndDate,
-              userId: req.user.userId, // 💰 For cost tracking
-              contractId: existingContract._id // 💰 For cost tracking
-            };
-
-            console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);
-
-            const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
-              fullTextContent,
-              contractInfo
-            );
-
-            // Update contract with Legal Pulse analysis
-            await contractsCollection.updateOne(
-              { _id: existingContract._id },
-              {
-                $set: {
-                  legalPulse: legalPulseAnalysis,
-                  legalPulseLastChecked: new Date()
-                }
-              }
-            );
-
-            console.log(`✅ [${requestId}] Legal Pulse risk analysis completed for existing contract ${existingContract._id} (Risk Score: ${legalPulseAnalysis.riskScore})`);
-          } catch (analysisError) {
-            console.error(`❌ [${requestId}] Legal Pulse risk analysis failed:`, analysisError.message);
-            // Don't throw - this is a background job
-          }
-        })();
-        } else {
-          console.log(`⏭️ [${requestId}] Skipping Legal Pulse for existing contract - User plan "${plan}" does not include Legal Pulse`);
-        }
+        // V1 Legal Pulse Background-Analyse — DEAKTIVIERT (22.04.2026)
+        // V2 Pipeline hat V1 vollständig ersetzt. Spart OpenAI-Kosten pro Analyse.
+        // V2-Analyse läuft separat über die Legal Pulse Seite.
 
         // 🔍 LEGAL LENS PRE-PROCESSING für existierenden Vertrag (Background Job)
         // Nur wenn noch keine vorverarbeiteten Klauseln existieren
@@ -3369,54 +3325,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
         }
 
-        // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job)
-        // This runs in the background and updates the contract with full risk analysis
-        // 🔐 NUR für Business/Enterprise User - Free User bekommen kein Legal Pulse
-        // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Plan-Array
-        const canAccessLegalPulseNew = isBusinessOrHigher(plan);
-
-        if (canAccessLegalPulseNew) {
-          (async () => {
-            try {
-              console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis in background...`);
-
-              const contractInfo = {
-                name: savedContract.name,
-              provider: extractedProvider?.displayName || 'Unknown',
-              type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
-              startDate: extractedStartDate,
-              expiryDate: extractedEndDate,
-              userId: req.user.userId, // 💰 For cost tracking
-              contractId: savedContract._id // 💰 For cost tracking
-            };
-
-            console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);
-
-            const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
-              fullTextContent,
-              contractInfo
-            );
-
-            // Update contract with Legal Pulse analysis
-            await contractsCollection.updateOne(
-              { _id: savedContract._id },
-              {
-                $set: {
-                  legalPulse: legalPulseAnalysis,
-                  legalPulseLastChecked: new Date()
-                }
-              }
-            );
-
-            console.log(`✅ [${requestId}] Legal Pulse risk analysis completed for contract ${savedContract._id} (Risk Score: ${legalPulseAnalysis.riskScore})`);
-          } catch (analysisError) {
-            console.error(`❌ [${requestId}] Legal Pulse risk analysis failed:`, analysisError.message);
-            // Don't throw - this is a background job
-          }
-        })();
-        } else {
-          console.log(`⏭️ [${requestId}] Skipping Legal Pulse for new contract - User plan "${plan}" does not include Legal Pulse`);
-        }
+        // V1 Legal Pulse Background-Analyse — DEAKTIVIERT (22.04.2026)
+        // V2 Pipeline hat V1 vollständig ersetzt. Spart OpenAI-Kosten pro Analyse.
+        // V2-Analyse läuft separat über die Legal Pulse Seite.
 
         // 🔍 LEGAL LENS PRE-PROCESSING (Background Job für alle User)
         // Parsed Klauseln im Hintergrund für schnelles Laden bei Legal Lens
