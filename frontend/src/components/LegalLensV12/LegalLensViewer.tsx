@@ -1106,16 +1106,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   useEffect(() => {
     if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
 
-    // Skip wenn User gerade in PDF geklickt hat
+    // Skip wenn User gerade in PDF geklickt hat (direkt nach Klick, nicht nach Zoom)
     if (pdfClickActiveRef.current) {
       devLog('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
       pdfClickActiveRef.current = false;
-      return;
-    }
-
-    // Skip für PDF-erstellte Klauseln (die sind bereits markiert)
-    if (selectedClause.id.startsWith('pdf-')) {
-      devLog('[Legal Lens] PDF highlight: Skipping - clause from PDF click');
       return;
     }
 
