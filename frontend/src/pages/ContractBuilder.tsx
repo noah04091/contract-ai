@@ -138,6 +138,7 @@ const ContractBuilder: React.FC = () => {
   // isLoadingGalleryUserTemplates - Loading state tracked internally in useEffect
   const [galleryActiveMenu, setGalleryActiveMenu] = useState<string | null>(null);
   const [galleryConfirmDeleteId, setGalleryConfirmDeleteId] = useState<string | null>(null);
+  const [galleryCreating, setGalleryCreating] = useState<string | null>(null); // templateId being created
 
   // Confirm Dialog (ersetzt window.confirm)
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -1381,6 +1382,8 @@ const ContractBuilder: React.FC = () => {
 
   // Gallery Handler
   const handleGallerySelectTemplate = async (templateId: string) => {
+    if (galleryCreating) return; // Prevent double-click
+    setGalleryCreating(templateId);
     try {
       const newDocId = await createDocumentFromTemplate(templateId);
       if (newDocId) {
@@ -1388,6 +1391,8 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Erstellen des Dokuments:', err);
+    } finally {
+      setGalleryCreating(null);
     }
   };
 
@@ -1693,10 +1698,13 @@ const ContractBuilder: React.FC = () => {
                 <div
                   className={styles.galleryCard}
                   onClick={() => handleGallerySelectTemplate('individuell')}
+                  style={galleryCreating === 'individuell' ? { opacity: 0.6, pointerEvents: 'none' } : undefined}
                 >
                   <div className={styles.galleryCardHeader}>
                     <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconBlank}`}>
-                      <PenTool size={20} />
+                      {galleryCreating === 'individuell'
+                        ? <Loader2 size={20} className={styles.spinner} />
+                        : <PenTool size={20} />}
                     </div>
                     <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Blanko</span>
                   </div>
@@ -1714,10 +1722,13 @@ const ContractBuilder: React.FC = () => {
                   key={template.id}
                   className={styles.galleryCard}
                   onClick={() => handleGallerySelectTemplate(template.id)}
+                  style={galleryCreating === template.id ? { opacity: 0.6, pointerEvents: 'none' } : undefined}
                 >
                   <div className={styles.galleryCardHeader}>
                     <div className={styles.galleryCardIcon}>
-                      {GALLERY_ICON_MAP[template.icon] || <FileText size={20} />}
+                      {galleryCreating === template.id
+                        ? <Loader2 size={20} className={styles.spinner} />
+                        : (GALLERY_ICON_MAP[template.icon] || <FileText size={20} />)}
                     </div>
                     <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Mustervertrag</span>
                   </div>
