@@ -84,7 +84,8 @@ interface PreviewResult {
   excludedByConsent?: number;
   overLimit: boolean;
   maxAllowed: number;
-  sample: Array<{ _id: string; email: string; subscriptionPlan: string | null }>;
+  recipients: Array<{ _id: string; email: string; subscriptionPlan: string | null; status: string }>;
+  sample?: Array<{ _id: string; email: string; subscriptionPlan: string | null }>;
 }
 
 interface CampaignForm {
@@ -591,6 +592,7 @@ function ComposerModal({
   const [error, setError] = useState<string | null>(null);
   const [sendMode, setSendMode] = useState<'now' | 'scheduled'>('now');
   const [scheduledAt, setScheduledAt] = useState('');
+  const [excludedEmails, setExcludedEmails] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open) {
@@ -605,6 +607,7 @@ function ComposerModal({
         setError(null);
         setSendMode('now');
         setScheduledAt('');
+        setExcludedEmails([]);
       }, 300);
     } else if (prefill) {
       // Vorbefüllung durch Duplicate — Emails werden BEWUSST NICHT kopiert (Sicherheit)
@@ -728,7 +731,8 @@ function ComposerModal({
           ctaUrl: form.ctaUrl || null,
           trackOpens: form.trackOpens,
           trackClicks: form.trackClicks,
-          segmentFilter
+          segmentFilter,
+          excludeEmails: excludedEmails.length > 0 ? excludedEmails : undefined
         })
       });
       const createData = await createRes.json();
@@ -759,7 +763,8 @@ function ComposerModal({
 
   if (!open) return null;
 
-  const canProceedStep1 = !!preview && preview.eligible > 0 && !preview.overLimit;
+  const effectiveEligible = preview ? Math.max(0, preview.eligible - excludedEmails.length) : 0;
+  const canProceedStep1 = !!preview && effectiveEligible > 0 && !preview.overLimit;
   const canProceedStep2 = !!form.subject && !!form.title && !!form.body;
 
   return (
@@ -860,6 +865,8 @@ function ComposerModal({
               preview={preview}
               previewLoading={previewLoading}
               onFetchPreview={fetchPreview}
+              excludedEmails={excludedEmails}
+              setExcludedEmails={setExcludedEmails}
             />
           )}
 
@@ -961,14 +968,19 @@ function Step1Recipients({
   setForm,
   preview,
   previewLoading,
-  onFetchPreview
+  onFetchPreview,
+  excludedEmails,
+  setExcludedEmails
 }: {
   form: CampaignForm;
   setForm: (f: CampaignForm) => void;
   preview: PreviewResult | null;
   previewLoading: boolean;
   onFetchPreview: () => void;
+  excludedEmails: string[];
+  setExcludedEmails: (v: string[]) => void;
 }) {
+  const [recipientSearch, setRecipientSearch] = useState('');
   return (
     <div>
       <h3 style={{ marginTop: 0 }}>Empfänger wählen</h3>
@@ -1131,17 +1143,72 @@ function Step1Recipients({
                 ⚠️ Über Limit ({preview.maxAllowed}). Filter enger fassen.
               </div>
             )}
-            {preview.sample.length > 0 && (
-              <details style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}>
-                <summary style={{ cursor: 'pointer', color: '#64748b' }}>Sample anzeigen</summary>
-                <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem' }}>
-                  {preview.sample.map((u) => (
-                    <li key={u._id} style={{ color: '#475569' }}>
-                      {u.email} ({u.subscriptionPlan || '—'})
-                    </li>
-                  ))}
-                </ul>
-              </details>
+            {/* Volle Empfänger-Liste mit Suche + Exclude-Button */}
+            {(preview.recipients || []).length > 0 && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155' }}>
+                    Empfänger-Liste ({preview.recipients.length - excludedEmails.length} aktiv{excludedEmails.length > 0 && `, ${excludedEmails.length} ausgeschlossen`})
+                  </span>
+                  <input
+                    type="text"
+                    value={recipientSearch}
+                    onChange={(e) => setRecipientSearch(e.target.value)}
+                    placeholder="Liste durchsuchen..."
+                    style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.75rem', width: '180px' }}
+                  />
+                </div>
+                <div style={{ maxHeight: '240px', overflow: 'auto', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  {preview.recipients
+                    .filter((u) => !recipientSearch || u.email.toLowerCase().includes(recipientSearch.toLowerCase()))
+                    .map((u) => {
+                      const isExcluded = excludedEmails.includes(u.email);
+                      return (
+                        <div
+                          key={u._id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '0.35rem 0.75rem',
+                            borderBottom: '1px solid #f1f5f9',
+                            fontSize: '0.75rem',
+                            opacity: isExcluded ? 0.5 : 1,
+                            background: isExcluded ? '#fef2f2' : '#fff',
+                            textDecoration: isExcluded ? 'line-through' : 'none'
+                          }}
+                        >
+                          <span style={{ color: '#334155', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {u.email}
+                            <span style={{ color: '#94a3b8', marginLeft: '0.5rem' }}>({u.subscriptionPlan || '—'})</span>
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (isExcluded) {
+                                setExcludedEmails(excludedEmails.filter((e) => e !== u.email));
+                              } else {
+                                setExcludedEmails([...excludedEmails, u.email]);
+                              }
+                            }}
+                            style={{
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '4px',
+                              border: `1px solid ${isExcluded ? '#bbf7d0' : '#fecaca'}`,
+                              background: isExcluded ? '#f0fdf4' : '#fef2f2',
+                              color: isExcluded ? '#16a34a' : '#dc2626',
+                              cursor: 'pointer',
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {isExcluded ? '↩ Zurück' : '✕ Exclude'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
             )}
           </div>
         )}

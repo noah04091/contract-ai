@@ -221,11 +221,13 @@ async function previewRecipients(filter = {}) {
     excludedByConsent,
     overLimit: totalUnique > MAX_RECIPIENTS_PER_CAMPAIGN,
     maxAllowed: MAX_RECIPIENTS_PER_CAMPAIGN,
-    sample: eligibleUsers.slice(0, 5).map((u) => ({
+    // Volle Liste (max 500) statt nur 5er-Sample — Admin will alle sehen
+    recipients: [...eligibleUsers.map((u) => ({
       _id: String(u._id),
       email: u.email,
-      subscriptionPlan: u.subscriptionPlan || null
-    }))
+      subscriptionPlan: u.subscriptionPlan || null,
+      status: 'eligible'
+    }))]
   };
 }
 
@@ -446,6 +448,11 @@ async function createCampaign(data, adminUser) {
     filterByUnsubscribes(db, emails)
   ]);
 
+  // Manuell ausgeschlossene Emails (Admin hat im UI "Exclude" geklickt)
+  const excludeEmails = new Set(
+    (data.excludeEmails || []).map((e) => String(e).toLowerCase())
+  );
+
   // Dedup by email + Status zuweisen (pending vs skipped mit Grund)
   const seen = new Set();
   const recipientDocs = [];
@@ -458,7 +465,9 @@ async function createCampaign(data, adminUser) {
 
     // Consent-Prüfung in JavaScript (nicht in DB-Query) → skipped-User bleiben sichtbar
     let skipReason = null;
-    if (u.verified !== true) {
+    if (excludeEmails.has(u.email.toLowerCase())) {
+      skipReason = 'Manuell ausgeschlossen';
+    } else if (u.verified !== true) {
       skipReason = 'Email nicht verifiziert';
     } else if (u.emailOptOut === true) {
       skipReason = 'Globaler Email-Opt-Out';
