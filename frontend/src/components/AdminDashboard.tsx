@@ -481,7 +481,6 @@ export default function AdminDashboard() {
   const [emailLogsStatus, setEmailLogsStatus] = useState<string>('all');
   const [upcomingCampaigns, setUpcomingCampaigns] = useState<UpcomingCampaign[] | null>(null);
   const [verificationStats, setVerificationStats] = useState<{ totalUnverified: number; eligibleForReminder: number; optedOutCount: number; intervalDays: number; maxAgeDays: number } | null>(null);
-  const [verificationTriggerLoading, setVerificationTriggerLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -792,24 +791,7 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, [activeTab]);
 
-  const triggerVerificationReminders = async () => {
-    if (!window.confirm('Verifizierungs-Erinnerungen jetzt an alle berechtigten User senden?')) return;
-    setVerificationTriggerLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/admin/verification-reminder-trigger`, {
-        method: 'POST', credentials: 'include'
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`Ergebnis: ${data.sent} gesendet, ${data.optedOut || 0} opted-out, ${data.skipped || 0} übersprungen`);
-        // Stats neu laden
-        const statsRes = await fetch(`${API_URL}/api/admin/verification-reminder-stats`, { credentials: 'include' });
-        const statsData = await statsRes.json();
-        if (statsData.success) setVerificationStats(statsData);
-      }
-    } catch (err) { console.error(err); }
-    finally { setVerificationTriggerLoading(false); }
-  };
+  // triggerVerificationReminders entfernt — Cron läuft vollautomatisch (täglich 10:20)
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
@@ -3810,39 +3792,18 @@ export default function AdminDashboard() {
             {/* Verification Reminders */}
             {verificationStats && (
               <div className={styles.tableCard} style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
-                      📧 Verifizierungs-Erinnerungen
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                      <strong>{verificationStats.totalUnverified}</strong> nicht verifiziert
-                      {' · '}<strong>{verificationStats.eligibleForReminder}</strong> bereit für Erinnerung
-                      {verificationStats.optedOutCount > 0 && (
-                        <span> · {verificationStats.optedOutCount} abbestellt</span>
-                      )}
-                      <span style={{ marginLeft: '0.5rem', color: '#94a3b8' }}>
-                        (alle {verificationStats.intervalDays} Tage, Cron 10:20 Uhr)
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={triggerVerificationReminders}
-                    disabled={verificationTriggerLoading || verificationStats.eligibleForReminder === 0}
-                    style={{
-                      padding: '0.4rem 0.8rem',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      background: verificationStats.eligibleForReminder > 0 ? '#eff6ff' : '#f8fafc',
-                      color: verificationStats.eligibleForReminder > 0 ? '#1d4ed8' : '#94a3b8',
-                      cursor: verificationStats.eligibleForReminder > 0 ? 'pointer' : 'not-allowed',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {verificationTriggerLoading ? 'Sende...' : 'Jetzt senden'}
-                  </button>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+                  📧 Verifizierungs-Erinnerungen
+                  <span style={{ fontWeight: 400, fontSize: '0.75rem', color: '#94a3b8', marginLeft: '0.5rem' }}>
+                    (automatisch alle {verificationStats.intervalDays} Tage · Cron 10:20 Uhr · Stop nach {verificationStats.maxAgeDays / 30} Monaten)
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  <strong>{verificationStats.totalUnverified}</strong> nicht verifiziert
+                  {' · '}<strong>{verificationStats.eligibleForReminder}</strong> bereit für nächste Erinnerung
+                  {verificationStats.optedOutCount > 0 && (
+                    <span style={{ color: '#f59e0b' }}> · {verificationStats.optedOutCount} abbestellt</span>
+                  )}
                 </div>
               </div>
             )}
