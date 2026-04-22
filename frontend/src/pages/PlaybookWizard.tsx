@@ -1,5 +1,5 @@
 // PlaybookWizard.tsx — Smart Playbook System: Geführte Vertragserstellung
-// Steps 1-3: Modus → Parteien → Entscheidungen
+// Steps 1-4: Modus → Parteien → Entscheidungen → Ergebnis
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -19,7 +19,12 @@ import {
   Building2,
   FileText,
   Sparkles,
-  Loader2
+  Loader2,
+  Copy,
+  Download,
+  ExternalLink,
+  BarChart3,
+  CheckCircle2
 } from 'lucide-react';
 import { apiCall } from '../utils/api';
 import styles from '../styles/PlaybookWizard.module.css';
@@ -107,8 +112,19 @@ const PlaybookWizard: React.FC = () => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [activeDetailTab, setActiveDetailTab] = useState<Record<string, string>>({});
 
-  // Generierung
+  // Generierung + Ergebnis (Step 4)
   const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState<{
+    contractId: string;
+    contractText: string;
+    modeLabel: string;
+    riskProfile: {
+      overall: string;
+      averageScore: number;
+      sections: Array<{ title: string; risk: string; chosenLabel: string; paragraph: string }>;
+    };
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // ─── Playbook laden ───
   useEffect(() => {
@@ -207,7 +223,7 @@ const PlaybookWizard: React.FC = () => {
   };
 
   const goBack = () => {
-    if (currentStep > 1) {
+    if (currentStep > 1 && currentStep < 4) {
       setCurrentStep(prev => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -230,17 +246,48 @@ const PlaybookWizard: React.FC = () => {
         success: boolean;
         contractId: string;
         contractText: string;
-        riskProfile: { overall: string; averageScore: number };
+        modeLabel: string;
+        riskProfile: {
+          overall: string;
+          averageScore: number;
+          sections: Array<{ title: string; risk: string; chosenLabel: string; paragraph: string }>;
+        };
       };
 
       if (response.success) {
-        // Navigiere zur Vertragsdetail-Seite
-        navigate(`/contracts/${response.contractId}`);
+        setResult({
+          contractId: response.contractId,
+          contractText: response.contractText,
+          modeLabel: response.modeLabel,
+          riskProfile: response.riskProfile
+        });
+        setCurrentStep(4);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
       console.error('Fehler bei der Generierung:', err);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // ─── Copy to Clipboard ───
+  const handleCopy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result.contractText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const textarea = document.createElement('textarea');
+      textarea.value = result.contractText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -628,13 +675,126 @@ const PlaybookWizard: React.FC = () => {
   };
 
   // ═══════════════════════════════════════════════
+  // STEP 4: Ergebnis
+  // ═══════════════════════════════════════════════
+
+  const renderStep4 = () => {
+    if (!result || !playbook) return null;
+
+    const RISK_COLORS: Record<string, string> = {
+      low: '#22c55e',
+      medium: '#f59e0b',
+      high: '#ef4444'
+    };
+
+    const OVERALL_LABELS: Record<string, string> = {
+      low: 'Geringes Gesamtrisiko',
+      medium: 'Mittleres Gesamtrisiko',
+      high: 'Hohes Gesamtrisiko'
+    };
+
+    return (
+      <>
+        {/* Success Header */}
+        <div className={styles.resultHeader}>
+          <div className={styles.resultIcon}>
+            <CheckCircle2 size={32} />
+          </div>
+          <h2 className={styles.stepTitle}>Dein Vertrag ist fertig!</h2>
+          <p className={styles.stepSubtitle}>
+            Erstellt im Modus "{result.modeLabel}" mit {playbook.sections.length} strategischen Entscheidungen.
+          </p>
+        </div>
+
+        {/* Risk Profile Summary */}
+        <div className={styles.resultRiskProfile}>
+          <div className={styles.resultScoreBox}>
+            <div className={styles.resultScore} style={{ color: RISK_COLORS[result.riskProfile.overall] }}>
+              {result.riskProfile.averageScore}/100
+            </div>
+            <div className={styles.resultScoreLabel}>
+              {OVERALL_LABELS[result.riskProfile.overall] || 'Risikoprofil'}
+            </div>
+          </div>
+          <div className={styles.resultRiskSections}>
+            {result.riskProfile.sections.map((s) => (
+              <div key={s.title} className={styles.resultRiskRow}>
+                <span className={styles.resultRiskParagraph}>{s.paragraph}</span>
+                <span className={styles.resultRiskTitle}>{s.title}</span>
+                <span className={`${styles.riskBadge} ${
+                  s.risk === 'low' ? styles.riskLow :
+                  s.risk === 'medium' ? styles.riskMedium :
+                  styles.riskHigh
+                }`}>
+                  {s.risk === 'low' ? 'Gering' : s.risk === 'medium' ? 'Mittel' : 'Hoch'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className={styles.resultActions}>
+          <button className={styles.btnPrimary} onClick={handleCopy}>
+            {copied ? <><Check size={16} /> Kopiert!</> : <><Copy size={16} /> Vertrag kopieren</>}
+          </button>
+          <button className={styles.btnSecondary} onClick={() => navigate(`/contract-builder`)}>
+            <ExternalLink size={16} />
+            Im Builder öffnen
+          </button>
+          <button className={styles.btnSecondary} onClick={() => navigate(`/contracts/${result.contractId}`)}>
+            <FileText size={16} />
+            In Verträgen anzeigen
+          </button>
+        </div>
+
+        {/* Contract Text */}
+        <div className={styles.resultContract}>
+          <div className={styles.resultContractHeader}>
+            <h3>Vertragstext</h3>
+            <span className={styles.resultContractBadge}>
+              <BarChart3 size={12} />
+              Modus: {result.modeLabel}
+            </span>
+          </div>
+          <div className={styles.resultContractText}>
+            {result.contractText.split('\n').map((line, i) => {
+              // Paragraph-Überschriften bold machen
+              if (line.match(/^§\s*\d+/)) {
+                return <p key={i} className={styles.resultParagraphTitle}>{line}</p>;
+              }
+              if (line.trim() === '') {
+                return <br key={i} />;
+              }
+              return <p key={i} className={styles.resultParagraphText}>{line}</p>;
+            })}
+          </div>
+        </div>
+
+        {/* Neuen Vertrag erstellen */}
+        <div className={styles.resultNewContract}>
+          <button className={styles.btnSecondary} onClick={() => {
+            setResult(null);
+            setCurrentStep(1);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}>
+            <Sparkles size={16} />
+            Neuen Vertrag erstellen
+          </button>
+        </div>
+      </>
+    );
+  };
+
+  // ═══════════════════════════════════════════════
   // Step Indicator
   // ═══════════════════════════════════════════════
 
   const steps = [
     { num: 1, label: 'Strategie' },
     { num: 2, label: 'Parteien' },
-    { num: 3, label: 'Entscheidungen' }
+    { num: 3, label: 'Entscheidungen' },
+    { num: 4, label: 'Ergebnis' }
   ];
 
   return (
@@ -677,8 +837,10 @@ const PlaybookWizard: React.FC = () => {
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
 
-        {/* Footer Navigation */}
+        {/* Footer Navigation — nur Steps 1-3 */}
+        {currentStep < 4 && (
         <div className={styles.footer}>
           <div className={styles.footerLeft}>
             {currentStep > 1 && (
@@ -718,6 +880,7 @@ const PlaybookWizard: React.FC = () => {
             </button>
           )}
         </div>
+        )}
       </div>
     </>
   );
