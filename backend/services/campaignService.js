@@ -164,10 +164,24 @@ async function previewRecipients(filter = {}) {
   const db = await database.connect();
   await ensureIndexes(db);
 
-  const query = buildRecipientQuery(filter);
+  // Base-Query OHNE Consent-Filter — damit abgemeldete User sichtbar sind
+  const baseQuery = { email: { $exists: true, $nin: [null, ''] } };
+
+  if (filter.emails && Array.isArray(filter.emails) && filter.emails.length > 0) {
+    baseQuery.email = { $in: filter.emails.filter(Boolean).slice(0, 100) };
+  } else if (filter.userIds && Array.isArray(filter.userIds) && filter.userIds.length > 0) {
+    const ids = filter.userIds.map((id) => { try { return new ObjectId(id); } catch { return id; } });
+    baseQuery._id = { $in: ids };
+  } else {
+    if (filter.plan && filter.plan !== 'all') baseQuery.subscriptionPlan = Array.isArray(filter.plan) ? { $in: filter.plan } : filter.plan;
+    if (filter.subscriptionActive === true) baseQuery.subscriptionActive = true;
+    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { $gte: Number(filter.minAnalysisCount) };
+    if (filter.createdAfter) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$gte = new Date(filter.createdAfter); }
+    if (filter.createdBefore) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$lte = new Date(filter.createdBefore); }
+  }
 
   const users = await db.collection('users')
-    .find(query, { projection: { _id: 1, email: 1, subscriptionPlan: 1, verified: 1 } })
+    .find(baseQuery, { projection: { _id: 1, email: 1, subscriptionPlan: 1, verified: 1, emailOptOut: 1, emailPreferences: 1 } })
     .limit(MAX_RECIPIENTS_PER_CAMPAIGN + 1)
     .toArray();
 
@@ -177,16 +191,35 @@ async function previewRecipients(filter = {}) {
     filterByUnsubscribes(db, emails)
   ]);
 
-  const eligibleUsers = users.filter(
-    (u) => !unhealthyEmails.has(u.email) && !unsubscribedEmails.has(u.email)
-  );
+  // Consent-Prüfung in JavaScript → zeigt warum wer ausgeschlossen ist
+  let excludedByConsent = 0;
+  let excludedByHealth = 0;
+  let excludedByUnsubscribe = 0;
+  const eligibleUsers = [];
+
+  const seen = new Set();
+  for (const u of users) {
+    if (!u.email || seen.has(u.email.toLowerCase())) continue;
+    seen.add(u.email.toLowerCase());
+
+    if (u.verified !== true) { excludedByConsent++; continue; }
+    if (u.emailOptOut === true) { excludedByConsent++; continue; }
+    if (u.emailPreferences && u.emailPreferences.marketing === false) { excludedByUnsubscribe++; continue; }
+    if (unhealthyEmails.has(u.email)) { excludedByHealth++; continue; }
+    if (unsubscribedEmails.has(u.email)) { excludedByUnsubscribe++; continue; }
+
+    eligibleUsers.push(u);
+  }
+
+  const totalUnique = seen.size;
 
   return {
-    total: users.length,
+    total: totalUnique,
     eligible: eligibleUsers.length,
-    excludedByHealth: unhealthyEmails.size,
-    excludedByUnsubscribe: unsubscribedEmails.size,
-    overLimit: users.length > MAX_RECIPIENTS_PER_CAMPAIGN,
+    excludedByHealth,
+    excludedByUnsubscribe,
+    excludedByConsent,
+    overLimit: totalUnique > MAX_RECIPIENTS_PER_CAMPAIGN,
     maxAllowed: MAX_RECIPIENTS_PER_CAMPAIGN,
     sample: eligibleUsers.slice(0, 5).map((u) => ({
       _id: String(u._id),

@@ -81,6 +81,7 @@ interface PreviewResult {
   eligible: number;
   excludedByHealth: number;
   excludedByUnsubscribe: number;
+  excludedByConsent?: number;
   overLimit: boolean;
   maxAllowed: number;
   sample: Array<{ _id: string; email: string; subscriptionPlan: string | null }>;
@@ -1120,7 +1121,10 @@ function Step1Recipients({
               {preview.eligible.toLocaleString('de-DE')} Empfänger
             </div>
             <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>
-              {preview.total} Treffer · {preview.excludedByHealth} wegen Email-Health · {preview.excludedByUnsubscribe} Abbestellungen
+              {preview.total} Treffer
+              {preview.excludedByUnsubscribe > 0 && <span style={{ color: '#f59e0b' }}> · {preview.excludedByUnsubscribe} abbestellt</span>}
+              {preview.excludedByHealth > 0 && <span> · {preview.excludedByHealth} Email-Health</span>}
+              {(preview.excludedByConsent ?? 0) > 0 && <span> · {preview.excludedByConsent} nicht verifiziert/opt-out</span>}
             </div>
             {preview.overLimit && (
               <div style={{ fontSize: '0.875rem', color: '#dc2626', marginTop: '0.5rem' }}>
