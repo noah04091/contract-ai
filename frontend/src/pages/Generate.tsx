@@ -6031,46 +6031,46 @@ export default function Generate() {
                       ))}
                     </div>
 
-                    {/* Mode Toggle — nur sichtbar wenn Typ gewählt */}
-                    {selectedType && userPlan !== 'free' && (
-                      <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        gap: '4px', marginTop: '24px', padding: '4px',
-                        background: '#f3f4f6', borderRadius: '12px', width: 'fit-content',
-                        marginLeft: 'auto', marginRight: 'auto'
-                      }}>
-                        <button
-                          onClick={() => setInputMode('detailed')}
-                          style={{
-                            padding: '10px 20px', border: 'none', borderRadius: '10px',
-                            fontSize: '14px', fontWeight: inputMode === 'detailed' ? 600 : 400,
-                            cursor: 'pointer', transition: 'all 0.2s',
-                            background: inputMode === 'detailed' ? 'white' : 'transparent',
-                            color: inputMode === 'detailed' ? '#111827' : '#6b7280',
-                            boxShadow: inputMode === 'detailed' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
-                          }}
-                        >
-                          Detailliert
-                        </button>
-                        <button
-                          onClick={() => setInputMode('guided')}
-                          style={{
-                            padding: '10px 20px', border: 'none', borderRadius: '10px',
-                            fontSize: '14px', fontWeight: inputMode === 'guided' ? 600 : 400,
-                            cursor: 'pointer', transition: 'all 0.2s',
-                            background: inputMode === 'guided' ? 'white' : 'transparent',
-                            color: inputMode === 'guided' ? '#111827' : '#6b7280',
-                            boxShadow: inputMode === 'guided' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
-                          }}
-                        >
-                          Geführt
-                        </button>
-                      </div>
-                    )}
                   </motion.div>
                 )}
 
-                {/* Step 2: Form Fields (Detailliert) */}
+                {/* Step 2: Mode Toggle (shared between Detailliert & Geführt) */}
+                {currentStep === 2 && selectedType && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '4px', margin: '-8px auto 16px', padding: '4px',
+                    background: '#f3f4f6', borderRadius: '12px', width: 'fit-content'
+                  }}>
+                    <button
+                      onClick={() => setInputMode('detailed')}
+                      style={{
+                        padding: '9px 18px', border: 'none', borderRadius: '10px',
+                        fontSize: '13px', fontWeight: inputMode === 'detailed' ? 600 : 400,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: inputMode === 'detailed' ? 'white' : 'transparent',
+                        color: inputMode === 'detailed' ? '#111827' : '#6b7280',
+                        boxShadow: inputMode === 'detailed' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                      }}
+                    >
+                      Detailliert
+                    </button>
+                    <button
+                      onClick={() => setInputMode('guided')}
+                      style={{
+                        padding: '9px 18px', border: 'none', borderRadius: '10px',
+                        fontSize: '13px', fontWeight: inputMode === 'guided' ? 600 : 400,
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: inputMode === 'guided' ? 'white' : 'transparent',
+                        color: inputMode === 'guided' ? '#111827' : '#6b7280',
+                        boxShadow: inputMode === 'guided' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                      }}
+                    >
+                      Geführt
+                    </button>
+                  </div>
+                )}
+
+                {/* Step 2a: Form Fields (Detailliert) */}
                 {currentStep === 2 && selectedType && inputMode === 'detailed' && (
                   <motion.div
                     key="step2"
