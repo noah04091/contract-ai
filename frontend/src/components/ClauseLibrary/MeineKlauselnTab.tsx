@@ -71,7 +71,7 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
   const getDisplayTitle = (clause: SavedClause): string | null => {
     if (clause.title && clause.title.trim()) return clause.title;
     // Fallback: Klauseltext bereinigen und kürzen
-    let text = (clause.clauseText || clause.clausePreview || '')
+    const text = (clause.clauseText || clause.clausePreview || '')
       .replace(/---+/g, '')
       .replace(/^[-–—#*\s]+/g, '')
       .replace(/\*\*/g, '')
