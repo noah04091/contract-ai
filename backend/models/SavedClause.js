@@ -184,6 +184,11 @@ savedClauseSchema.pre("save", function(next) {
       (this.clauseText.length > 200 ? "..." : "");
   }
 
+  // Auto-Titel generieren wenn nicht vorhanden
+  if ((!this.title || this.title.trim() === "") && this.clauseText) {
+    this.title = generateAutoTitle(this.clauseText);
+  }
+
   // Keywords extrahieren wenn nicht vorhanden
   if ((!this.keywords || this.keywords.length === 0) && this.clauseText) {
     this.keywords = extractKeywords(this.clauseText);
@@ -191,6 +196,38 @@ savedClauseSchema.pre("save", function(next) {
 
   next();
 });
+
+// Helper: Auto-Titel aus Klauseltext generieren
+function generateAutoTitle(text) {
+  let clean = text
+    .replace(/^[-–—#*\s]+/g, "")        // Leading markdown/whitespace
+    .replace(/\*\*/g, "")                // Bold markers
+    .replace(/^\(\d+\)\s*/g, "")         // Leading (1) etc.
+    .replace(/^\d+[\.\)]\s*/g, "")       // Leading 1. or 1) etc.
+    .replace(/\|[^|]*\|/g, "")           // Pipe-delimited metadata
+    .replace(/\s+/g, " ")               // Normalize whitespace
+    .trim();
+
+  if (!clean) return "";
+
+  // If starts with § reference, extract it as title prefix
+  const sectionMatch = clean.match(/^(§\s*\d+[a-z]?\s+\S+(?:\s+\S+)?)/i);
+  if (sectionMatch && sectionMatch[1].length <= 40) {
+    return sectionMatch[1];
+  }
+
+  // Take first sentence if short enough
+  const sentenceEnd = clean.search(/[.!?]\s/);
+  if (sentenceEnd > 0 && sentenceEnd < 80) {
+    return clean.substring(0, sentenceEnd + 1);
+  }
+
+  // Otherwise truncate at word boundary around 60 chars
+  if (clean.length <= 65) return clean;
+  const truncated = clean.substring(0, 70);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > 25 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + "…";
+}
 
 // Helper: Keywords extrahieren
 function extractKeywords(text) {

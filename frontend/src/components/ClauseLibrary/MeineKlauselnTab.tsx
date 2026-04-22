@@ -41,6 +41,7 @@ interface MeineKlauselnTabProps {
   onRetry: () => void;
   onNavigateToTab: (tab: 'musterklauseln' | 'lexikon') => void;
   onClearFilters: () => void;
+  onCollectionsChanged?: () => void;
 }
 
 const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
@@ -56,13 +57,41 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
   onRetry,
   onNavigateToTab,
   onClearFilters,
+  onCollectionsChanged,
 }) => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [addToCollectionData, setAddToCollectionData] = useState<{
     item: AddCollectionItemRequest;
     previewText: string;
     previewTitle: string;
   } | null>(null);
+
+  // Fallback-Titel für Klauseln ohne Titel generieren
+  const getDisplayTitle = (clause: SavedClause): string | null => {
+    if (clause.title && clause.title.trim()) return clause.title;
+    // Fallback: Klauseltext bereinigen und kürzen
+    let text = (clause.clauseText || clause.clausePreview || '')
+      .replace(/^[-–—#*\s]+/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/^\(\d+\)\s*/g, '')
+      .replace(/^\d+[.)]\s*/g, '')
+      .replace(/\|[^|]*\|/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text) return null;
+    // § Referenz als Titel
+    const sectionMatch = text.match(/^(§\s*\d+[a-z]?\s+\S+(?:\s+\S+)?)/i);
+    if (sectionMatch && sectionMatch[1].length <= 40) return sectionMatch[1];
+    // Erster Satz wenn kurz genug
+    const sentenceEnd = text.search(/[.!?]\s/);
+    if (sentenceEnd > 0 && sentenceEnd < 80) return text.substring(0, sentenceEnd + 1);
+    // Sonst an Wortgrenze kürzen
+    if (text.length <= 65) return text;
+    const truncated = text.substring(0, 70);
+    const lastSpace = truncated.lastIndexOf(' ');
+    return (lastSpace > 25 ? truncated.substring(0, lastSpace) : truncated).trimEnd() + '…';
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE', {
@@ -186,11 +215,14 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
                 </span>
               </div>
 
-              {clause.title && (
-                <div className={styles.cardTitle}>
-                  {clause.title}
-                </div>
-              )}
+              {(() => {
+                const displayTitle = getDisplayTitle(clause);
+                return displayTitle ? (
+                  <div className={styles.cardTitle}>
+                    {displayTitle}
+                  </div>
+                ) : null;
+              })()}
 
               <p className={styles.clausePreview}>
                 {clause.clausePreview}
@@ -251,7 +283,11 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
           previewText={addToCollectionData.previewText}
           previewTitle={addToCollectionData.previewTitle}
           onClose={() => setAddToCollectionData(null)}
-          onAdded={() => setAddToCollectionData(null)}
+          onAdded={(_id, name) => {
+            setAddToCollectionData(null);
+            toast.success(`Zur Sammlung "${name}" hinzugefügt`);
+            onCollectionsChanged?.();
+          }}
         />
       )}
     </>

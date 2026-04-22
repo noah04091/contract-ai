@@ -477,15 +477,16 @@ const ClauseLibraryPage: React.FC = () => {
               setAreaFilter('');
               setSearchQuery('');
             }}
+            onCollectionsChanged={loadCollections}
           />
         )}
 
         {activeTab === 'musterklauseln' && (
-          <MusterklauselnTab />
+          <MusterklauselnTab onCollectionsChanged={loadCollections} />
         )}
 
         {activeTab === 'lexikon' && (
-          <RechtslexikonTab />
+          <RechtslexikonTab onCollectionsChanged={loadCollections} />
         )}
 
         {isCollectionTab && activeCollectionId && (

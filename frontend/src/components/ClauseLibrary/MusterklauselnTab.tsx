@@ -46,7 +46,11 @@ const TEMPLATE_TO_AREA: Partial<Record<TemplateClauseCategory, ClauseArea>> = {
   jurisdiction: 'dispute'
 };
 
-const MusterklauselnTab: React.FC = () => {
+interface MusterklauselnTabProps {
+  onCollectionsChanged?: () => void;
+}
+
+const MusterklauselnTab: React.FC<MusterklauselnTabProps> = ({ onCollectionsChanged }) => {
   const toast = useToast();
 
   // State
@@ -447,7 +451,11 @@ const MusterklauselnTab: React.FC = () => {
           previewText={addToCollectionData.previewText}
           previewTitle={addToCollectionData.previewTitle}
           onClose={() => setAddToCollectionData(null)}
-          onAdded={() => setAddToCollectionData(null)}
+          onAdded={(_id, name) => {
+            setAddToCollectionData(null);
+            toast.success(`Zur Sammlung "${name}" hinzugefügt`);
+            onCollectionsChanged?.();
+          }}
         />
       )}
     </div>

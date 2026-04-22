@@ -18,7 +18,11 @@ import { legalTerms, getLetterGroups, getRelatedTerms } from '../../data/legalTe
 import AddToCollectionModal from './AddToCollectionModal';
 import styles from '../../styles/ClauseLibraryPage.module.css';
 
-const RechtslexikonTab: React.FC = () => {
+interface RechtslexikonTabProps {
+  onCollectionsChanged?: () => void;
+}
+
+const RechtslexikonTab: React.FC<RechtslexikonTabProps> = ({ onCollectionsChanged }) => {
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [areaFilter, setAreaFilter] = useState<LegalArea | ''>('');
@@ -345,7 +349,10 @@ const RechtslexikonTab: React.FC = () => {
           previewText={addToCollectionData.previewText}
           previewTitle={addToCollectionData.previewTitle}
           onClose={() => setAddToCollectionData(null)}
-          onAdded={() => setAddToCollectionData(null)}
+          onAdded={() => {
+            setAddToCollectionData(null);
+            onCollectionsChanged?.();
+          }}
         />
       )}
     </div>
