@@ -68,7 +68,7 @@ import {
   FolderOpen,
   Upload,
 } from 'lucide-react';
-import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, updateUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 // ContractTemplate type used implicitly via contractTemplates array
 import { SYSTEM_VARIABLES_MAP } from '../utils/smartVariables';
@@ -153,6 +153,11 @@ const ContractBuilder: React.FC = () => {
   const [showCustomCreator, setShowCustomCreator] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customDescription, setCustomDescription] = useState('');
+
+  // ─── User-Template Edit State ───
+  const [editingUserTemplate, setEditingUserTemplate] = useState<UserTemplate | null>(null);
+  const [editTemplateName, setEditTemplateName] = useState('');
+  const [editTemplateDesc, setEditTemplateDesc] = useState('');
 
   // ─── Import State ───
   const [showImportModal, setShowImportModal] = useState(false);
@@ -1715,6 +1720,46 @@ const ContractBuilder: React.FC = () => {
     setGalleryActiveMenu(null);
   };
 
+  // User-Template bearbeiten (Name + Beschreibung)
+  const handleOpenEditTemplate = (template: UserTemplate) => {
+    setEditingUserTemplate(template);
+    setEditTemplateName(template.name);
+    setEditTemplateDesc(template.description || '');
+    setGalleryActiveMenu(null);
+  };
+
+  const handleSaveEditTemplate = async () => {
+    if (!editingUserTemplate || !editTemplateName.trim()) return;
+    try {
+      const updated = await updateUserTemplate(editingUserTemplate.id, {
+        name: editTemplateName.trim(),
+        description: editTemplateDesc.trim(),
+      });
+      setGalleryUserTemplates(prev => prev.map(t =>
+        t.id === editingUserTemplate.id ? { ...t, name: updated.name, description: updated.description } : t
+      ));
+      setEditingUserTemplate(null);
+    } catch (error) {
+      console.error('Fehler beim Bearbeiten der Vorlage:', error);
+    }
+  };
+
+  // User-Template duplizieren
+  const handleDuplicateUserTemplate = async (template: UserTemplate) => {
+    setGalleryActiveMenu(null);
+    try {
+      const duplicate = await createUserTemplate({
+        name: `${template.name} (Kopie)`,
+        description: template.description || '',
+        contractType: template.contractType,
+        defaultValues: template.defaultValues,
+      });
+      setGalleryUserTemplates(prev => [duplicate, ...prev]);
+    } catch (error) {
+      console.error('Fehler beim Duplizieren der Vorlage:', error);
+    }
+  };
+
   const formatGalleryDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-DE', {
       day: '2-digit', month: '2-digit', year: 'numeric',
@@ -1899,6 +1944,18 @@ const ContractBuilder: React.FC = () => {
                                 >
                                   <Edit3 size={14} /> Verwenden
                                 </button>
+                                <button
+                                  className={styles.galleryCardMenuItem}
+                                  onClick={(e) => { e.stopPropagation(); handleOpenEditTemplate(template); }}
+                                >
+                                  <Settings size={14} /> Bearbeiten
+                                </button>
+                                <button
+                                  className={styles.galleryCardMenuItem}
+                                  onClick={(e) => { e.stopPropagation(); handleDuplicateUserTemplate(template); }}
+                                >
+                                  <Copy size={14} /> Duplizieren
+                                </button>
                                 {galleryConfirmDeleteId === `user-${template.id}` ? (
                                   <div className={styles.galleryConfirmDelete}>
                                     <span>Löschen?</span>
@@ -2043,6 +2100,65 @@ const ContractBuilder: React.FC = () => {
             style={{ position: 'fixed', inset: 0, zIndex: 40 }}
             onClick={() => { setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); }}
           />
+        )}
+
+        {/* ═══ User-Template Bearbeiten Modal ═══ */}
+        {editingUserTemplate && (
+          <div className={styles.modalOverlay} onClick={() => setEditingUserTemplate(null)}>
+            <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalTitle}>
+                  <Settings size={20} />
+                  <span>Vorlage bearbeiten</span>
+                </div>
+                <button className={styles.modalClose} onClick={() => setEditingUserTemplate(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className={styles.quickFillBody}>
+                <div className={styles.quickFillGroup}>
+                  <div className={styles.quickFillFieldGrid}>
+                    <div className={styles.quickFillField}>
+                      <label className={styles.quickFillLabel}>
+                        Name <span className={styles.quickFillRequired}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={editTemplateName}
+                        onChange={e => setEditTemplateName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && editTemplateName.trim()) handleSaveEditTemplate(); }}
+                        autoFocus
+                      />
+                    </div>
+                    <div className={styles.quickFillField}>
+                      <label className={styles.quickFillLabel}>Beschreibung</label>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={editTemplateDesc}
+                        onChange={e => setEditTemplateDesc(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && editTemplateName.trim()) handleSaveEditTemplate(); }}
+                        placeholder="Kurze Beschreibung (optional)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className={styles.quickFillFooter}>
+                <button className={styles.quickFillSkipBtn} onClick={() => setEditingUserTemplate(null)}>
+                  Abbrechen
+                </button>
+                <button
+                  className={styles.quickFillCreateBtn}
+                  onClick={handleSaveEditTemplate}
+                  disabled={!editTemplateName.trim()}
+                >
+                  <Check size={16} /> Speichern
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ═══ Custom Template Creator Modal (vereinfacht) ═══ */}
