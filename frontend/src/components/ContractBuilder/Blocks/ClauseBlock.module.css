@@ -215,3 +215,116 @@
   padding: 12px;
   margin-top: 16px;
 }
+
+/* ─── Variable einfügen ─── */
+.bodyEditWrapper {
+  position: relative;
+}
+
+.insertVarBtn {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563EB;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  z-index: 5;
+}
+
+.insertVarBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.varPopup {
+  position: absolute;
+  top: -76px;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 10px 12px;
+  z-index: 10;
+  min-width: 280px;
+}
+
+.varPopupLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.varPopupRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.varPopupPrefix {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3B82F6;
+  font-family: monospace;
+  user-select: none;
+}
+
+.varPopupInput {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  color: #111827;
+}
+
+.varPopupInput:focus {
+  outline: none;
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.varPopupConfirm {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: #3B82F6;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.varPopupConfirm:hover:not(:disabled) {
+  background: #2563EB;
+}
+
+.varPopupConfirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.varPopupHint {
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 5px 0 0;
+}

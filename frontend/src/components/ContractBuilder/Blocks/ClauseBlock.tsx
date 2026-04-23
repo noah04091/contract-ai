@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X } from 'lucide-react';
+import { X, Braces, Check } from 'lucide-react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './ClauseBlock.module.css';
@@ -34,8 +34,12 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
 
   const [editingField, setEditingField] = useState<EditingField>(null);
   const [editValue, setEditValue] = useState('');
+  const [showVarPopup, setShowVarPopup] = useState(false);
+  const [varName, setVarName] = useState('');
+  const [varSelectionRange, setVarSelectionRange] = useState<{ start: number; end: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const varInputRef = useRef<HTMLInputElement>(null);
 
   // Paragraphen-Nummer formatieren
   const formatNumber = (num: string | undefined) => {
@@ -116,6 +120,65 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     setEditValue('');
   }, []);
 
+  // ─── Variable einfügen ───
+  const handleOpenVarPopup = useCallback(() => {
+    if (!textareaRef.current) return;
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    const selectedText = editValue.substring(start, end);
+    setVarSelectionRange({ start, end });
+    // Selektierter Text als Vorschlag für den Variable-Namen
+    const suggested = selectedText.trim()
+      ? selectedText.trim().toLowerCase()
+          .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/[ß]/g, 'ss')
+          .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+      : '';
+    setVarName(suggested);
+    setShowVarPopup(true);
+    setTimeout(() => varInputRef.current?.focus(), 50);
+  }, [editValue]);
+
+  const handleInsertVariable = useCallback(() => {
+    if (!varName.trim() || !varSelectionRange) return;
+    const cleanName = varName.trim().toLowerCase()
+      .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/[ß]/g, 'ss')
+      .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    if (!cleanName) return;
+
+    const before = editValue.substring(0, varSelectionRange.start);
+    const after = editValue.substring(varSelectionRange.end);
+    const variableSyntax = `{{${cleanName}}}`;
+    const newText = before + variableSyntax + after;
+
+    setEditValue(newText);
+    updateBlockContent(blockId, { body: newText });
+    syncVariables();
+
+    setShowVarPopup(false);
+    setVarName('');
+    setVarSelectionRange(null);
+
+    // Cursor nach der Variable positionieren
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPos = varSelectionRange.start + variableSyntax.length;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 50);
+  }, [varName, varSelectionRange, editValue, blockId, updateBlockContent, syncVariables]);
+
+  const handleVarPopupKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleInsertVariable();
+    } else if (e.key === 'Escape') {
+      setShowVarPopup(false);
+      setVarName('');
+      textareaRef.current?.focus();
+    }
+  }, [handleInsertVariable]);
+
   // Tastatur-Handler
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -173,15 +236,55 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
       {/* Klausel-Body */}
       <div className={styles.clauseBody}>
         {editingField === 'body' ? (
-          <textarea
-            ref={textareaRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleTextareaKeyDown}
-            className={styles.inlineTextarea}
-            rows={Math.max(3, editValue.split('\n').length)}
-          />
+          <div className={styles.bodyEditWrapper}>
+            <textarea
+              ref={textareaRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={(e) => {
+                // Nicht speichern wenn Klick auf Variable-Popup
+                if (showVarPopup || (e.relatedTarget as HTMLElement)?.closest(`.${styles.varPopup}`)) return;
+                handleSave();
+              }}
+              onKeyDown={handleTextareaKeyDown}
+              className={styles.inlineTextarea}
+              rows={Math.max(3, editValue.split('\n').length)}
+            />
+            {/* Variable-einfügen Button */}
+            <button
+              className={styles.insertVarBtn}
+              onClick={(e) => { e.preventDefault(); handleOpenVarPopup(); }}
+              onMouseDown={(e) => e.preventDefault()}
+              title="Variable einfügen — Text markieren und klicken"
+              type="button"
+            >
+              <Braces size={13} />
+              <span>Variable</span>
+            </button>
+            {/* Variable-Name Popup */}
+            {showVarPopup && (
+              <div className={styles.varPopup} onMouseDown={e => e.preventDefault()}>
+                <label className={styles.varPopupLabel}>Variable-Name:</label>
+                <div className={styles.varPopupRow}>
+                  <span className={styles.varPopupPrefix}>{'{{' }</span>
+                  <input
+                    ref={varInputRef}
+                    type="text"
+                    className={styles.varPopupInput}
+                    value={varName}
+                    onChange={e => setVarName(e.target.value)}
+                    onKeyDown={handleVarPopupKeyDown}
+                    placeholder="z.B. auftragnehmer"
+                  />
+                  <span className={styles.varPopupPrefix}>{'}}'}</span>
+                  <button className={styles.varPopupConfirm} onClick={handleInsertVariable} disabled={!varName.trim()} type="button">
+                    <Check size={14} />
+                  </button>
+                </div>
+                <p className={styles.varPopupHint}>Enter zum Bestätigen · Esc zum Abbrechen</p>
+              </div>
+            )}
+          </div>
         ) : body ? (
           <VariableHighlight
             text={body}
