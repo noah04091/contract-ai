@@ -2669,6 +2669,10 @@ const ContractBuilder: React.FC = () => {
 
             {showMoreMenu && (
               <div className={styles.moreMenu}>
+                <button onClick={() => { setShowMoreMenu(false); setShowImportModal(true); }}>
+                  <Upload size={14} />
+                  <span>Dokument importieren</span>
+                </button>
                 <button onClick={handleDuplicate}>
                   <Copy size={14} />
                   <span>Dokument duplizieren</span>
@@ -3289,6 +3293,72 @@ const ContractBuilder: React.FC = () => {
                 onClick={confirmDialog.onConfirm}
               >
                 {confirmDialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal (auch im Editor verfügbar via Mehr-Menü) */}
+      {showImportModal && (
+        <div className={styles.modalOverlay} onClick={() => { if (!isImporting) { setShowImportModal(false); setImportFile(null); setImportError(null); } }}>
+          <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <Upload size={20} />
+                <span>Dokument importieren</span>
+              </div>
+              <button className={styles.modalClose} onClick={() => { if (!isImporting) { setShowImportModal(false); setImportFile(null); setImportError(null); } }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.quickFillBody}>
+              <div
+                className={styles.importDropZone}
+                onDrop={handleImportDrop}
+                onDragOver={e => e.preventDefault()}
+                onDragEnter={e => e.preventDefault()}
+                onClick={() => document.getElementById('import-file-input-editor')?.click()}
+              >
+                {importFile ? (
+                  <div className={styles.importFileInfo}>
+                    <FileText size={32} style={{ color: '#3B82F6' }} />
+                    <p className={styles.importFileName}>{importFile.name}</p>
+                    <p className={styles.importFileSize}>{(importFile.size / 1024).toFixed(0)} KB</p>
+                    <button className={styles.importFileChange} onClick={(e) => { e.stopPropagation(); setImportFile(null); setImportError(null); }}>
+                      Andere Datei wählen
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.importDropContent}>
+                    <Upload size={32} style={{ color: '#9ca3af' }} />
+                    <p style={{ margin: '10px 0 4px', fontWeight: 600, color: '#374151' }}>PDF oder Word-Datei hierher ziehen</p>
+                    <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>oder klicken zum Auswählen</p>
+                  </div>
+                )}
+                <input
+                  id="import-file-input-editor"
+                  type="file"
+                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleImportFileSelect}
+                  style={{ display: 'none' }}
+                />
+              </div>
+              {importError && (
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginTop: 12, fontSize: 13, color: '#dc2626' }}>
+                  {importError}
+                </div>
+              )}
+              <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '12px 16px', marginTop: 14, fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
+                <strong>Hinweis:</strong> Es wird ein neues Dokument mit der importierten Struktur erstellt.
+              </div>
+            </div>
+            <div className={styles.quickFillFooter}>
+              <button className={styles.quickFillSkipBtn} onClick={() => { setShowImportModal(false); setImportFile(null); setImportError(null); }} disabled={isImporting}>
+                Abbrechen
+              </button>
+              <button className={styles.quickFillCreateBtn} onClick={handleImportDocument} disabled={!importFile || isImporting}>
+                {isImporting ? (<><Loader2 size={16} className={styles.spinner} /> Importiere...</>) : (<><Upload size={16} /> Importieren</>)}
               </button>
             </div>
           </div>
