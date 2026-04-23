@@ -3220,6 +3220,49 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           console.error(`⚠️ [Legal Lens] Phase-1-Cache-Fehler:`, cacheErr.message);
         }
 
+        // 🏢 AUTO-BRANCHENERKENNUNG + 📄 DOKUMENTTYP-ERKENNUNG (Stream-Pfad V4)
+        try {
+          const industryDetection = detectIndustryFromText(text);
+          const docTypeDetection = detectDocumentType(text);
+          console.log(`🏢 [Legal Lens Stream V4] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}%)`);
+          console.log(`📄 [Legal Lens Stream V4] Auto-detected document type: ${docTypeDetection.documentType} (${docTypeDetection.confidence}%)`);
+
+          await LegalLensProgress.findOneAndUpdate(
+            { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+            {
+              $set: {
+                totalClauses: allClauses.length,
+                status: 'in_progress',
+                updatedAt: new Date(),
+                // Auto-erkannte Branche (nur setzen wenn Confidence > 50%)
+                ...(industryDetection.confidence > 50 ? {
+                  industryContext: industryDetection.industry,
+                  industrySetAt: new Date(),
+                  industryAutoDetected: true,
+                  industryConfidence: industryDetection.confidence,
+                  industryKeywords: industryDetection.detectedKeywords
+                } : {}),
+                // Auto-erkannter Dokumenttyp (immer setzen wenn Confidence > 30%)
+                ...(docTypeDetection.confidence > 30 ? {
+                  documentType: docTypeDetection.documentType,
+                  documentTypeConfidence: docTypeDetection.confidence,
+                  documentTypeAutoDetected: true
+                } : {})
+              },
+              $setOnInsert: {
+                reviewedClauses: [],
+                percentComplete: 0,
+                currentSessionStart: new Date(),
+                createdAt: new Date()
+              }
+            },
+            { upsert: true }
+          );
+        } catch (industryErr) {
+          // Nicht kritisch — Industry Detection darf den Parse nicht blockieren
+          console.warn(`⚠️ [Legal Lens Stream V4] Industry detection fehlgeschlagen:`, industryErr.message);
+        }
+
         // Klauseln an Frontend senden — falls SSE noch verbunden
         sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 90 });
         sendEvent('clauses', {
@@ -3675,6 +3718,49 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
     });
 
     console.log(`✅ [Legal Lens] Streaming complete: ${allClauses.length} Klauseln`);
+
+    // 🏢 AUTO-BRANCHENERKENNUNG + 📄 DOKUMENTTYP-ERKENNUNG (Stream-Pfad Legacy)
+    try {
+      const industryDetection = detectIndustryFromText(text);
+      const docTypeDetection = detectDocumentType(text);
+      console.log(`🏢 [Legal Lens Stream Legacy] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}%)`);
+      console.log(`📄 [Legal Lens Stream Legacy] Auto-detected document type: ${docTypeDetection.documentType} (${docTypeDetection.confidence}%)`);
+
+      await LegalLensProgress.findOneAndUpdate(
+        { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+        {
+          $set: {
+            totalClauses: allClauses.length,
+            status: 'in_progress',
+            updatedAt: new Date(),
+            // Auto-erkannte Branche (nur setzen wenn Confidence > 50%)
+            ...(industryDetection.confidence > 50 ? {
+              industryContext: industryDetection.industry,
+              industrySetAt: new Date(),
+              industryAutoDetected: true,
+              industryConfidence: industryDetection.confidence,
+              industryKeywords: industryDetection.detectedKeywords
+            } : {}),
+            // Auto-erkannter Dokumenttyp (immer setzen wenn Confidence > 30%)
+            ...(docTypeDetection.confidence > 30 ? {
+              documentType: docTypeDetection.documentType,
+              documentTypeConfidence: docTypeDetection.confidence,
+              documentTypeAutoDetected: true
+            } : {})
+          },
+          $setOnInsert: {
+            reviewedClauses: [],
+            percentComplete: 0,
+            currentSessionStart: new Date(),
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    } catch (industryErr) {
+      // Nicht kritisch — Industry Detection darf den Parse nicht blockieren
+      console.warn(`⚠️ [Legal Lens Stream Legacy] Industry detection fehlgeschlagen:`, industryErr.message);
+    }
 
     // Ergebnis in DB cachen (im Hintergrund, blockiert den User nicht)
     Contract.updateOne(
