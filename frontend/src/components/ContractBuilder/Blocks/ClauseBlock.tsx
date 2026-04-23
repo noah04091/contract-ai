@@ -53,13 +53,30 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     if (editingField) {
       if (editingField === 'body') {
         textareaRef.current?.focus();
-        textareaRef.current?.select();
+        // Cursor ans Ende setzen statt alles zu selektieren — verhindert
+        // dass der gesamte Text als Variable übernommen wird
+        const len = textareaRef.current?.value.length || 0;
+        textareaRef.current?.setSelectionRange(len, len);
       } else {
         inputRef.current?.focus();
         inputRef.current?.select();
       }
     }
   }, [editingField]);
+
+  // Var-Popup schließen wenn außerhalb geklickt wird
+  useEffect(() => {
+    if (!showVarPopup) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.varPopup}`) && !target.closest(`.${styles.insertVarBtn}`) && !target.closest(`.${styles.inlineTextarea}`)) {
+        setShowVarPopup(false);
+        setVarName('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showVarPopup]);
 
   // Doppelklick-Handler zum Starten des Editings
   const handleDoubleClick = useCallback((field: EditingField, currentValue: string) => {
@@ -116,6 +133,8 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
 
   // Abbrechen des Editings
   const handleCancel = useCallback(() => {
+    setShowVarPopup(false);
+    setVarName('');
     setEditingField(null);
     setEditValue('');
   }, []);
@@ -123,10 +142,18 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
   // ─── Variable einfügen ───
   const handleOpenVarPopup = useCallback(() => {
     if (!textareaRef.current) return;
-    const start = textareaRef.current.selectionStart;
-    const end = textareaRef.current.selectionEnd;
-    const selectedText = editValue.substring(start, end);
+    let start = textareaRef.current.selectionStart;
+    let end = textareaRef.current.selectionEnd;
+
+    // Wenn alles oder nichts selektiert → nur Cursor-Position (einfügen, nicht ersetzen)
+    if (start === 0 && end === editValue.length) {
+      // Gesamter Text selektiert → nur Cursor-Position
+      start = end;
+    }
+
+    const selectedText = start !== end ? editValue.substring(start, end) : '';
     setVarSelectionRange({ start, end });
+
     // Selektierter Text als Vorschlag für den Variable-Namen
     const suggested = selectedText.trim()
       ? selectedText.trim().toLowerCase()
@@ -242,8 +269,14 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onBlur={(e) => {
-                // Nicht speichern wenn Klick auf Variable-Popup
-                if (showVarPopup || (e.relatedTarget as HTMLElement)?.closest(`.${styles.varPopup}`)) return;
+                // Wenn Klick auf Variable-Button oder Popup → nicht speichern
+                const related = e.relatedTarget as HTMLElement;
+                if (related?.closest(`.${styles.varPopup}`) || related?.closest(`.${styles.insertVarBtn}`)) return;
+                // Wenn Popup offen → schließen und speichern
+                if (showVarPopup) {
+                  setShowVarPopup(false);
+                  setVarName('');
+                }
                 handleSave();
               }}
               onKeyDown={handleTextareaKeyDown}
