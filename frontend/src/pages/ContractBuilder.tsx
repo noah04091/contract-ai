@@ -295,6 +295,21 @@ const ContractBuilder: React.FC = () => {
     }
   }, [id, showTypeSelector]);
 
+  // Gallery-Menü schließen bei Klick außerhalb
+  useEffect(() => {
+    if (!galleryActiveMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(`.${styles.galleryCardMenu}`) && !target.closest(`.${styles.galleryCardActionsBtn}`)) {
+        setGalleryActiveMenu(null);
+        setGalleryConfirmDeleteId(null);
+      }
+    };
+    // setTimeout damit der aktuelle Klick nicht sofort das Menü schließt
+    const timer = setTimeout(() => document.addEventListener('mousedown', handleClickOutside), 0);
+    return () => { clearTimeout(timer); document.removeEventListener('mousedown', handleClickOutside); };
+  }, [galleryActiveMenu]);
+
   // User-Vorlagen laden für Gallery
   useEffect(() => {
     if (!id && isPremiumUser) {
@@ -2124,13 +2139,8 @@ const ContractBuilder: React.FC = () => {
           </div>
         </div>
 
-        {/* Click-Outside: Menü schließen */}
-        {galleryActiveMenu && (
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 40 }}
-            onClick={() => { setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); }}
-          />
-        )}
+        {/* Click-Outside: Menü schließen — kein Overlay, sondern Event-Listener
+            damit Menü-Klicks nicht blockiert werden */}
 
         {/* ═══ User-Template Bearbeiten Modal ═══ */}
         {editingUserTemplate && (
