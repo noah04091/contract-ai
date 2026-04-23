@@ -14,6 +14,7 @@ import {
   Hammer,
   PenTool,
   BookOpen,
+  Shield,
   User,
   Building2,
   Users,
@@ -128,6 +129,14 @@ const navigation: NavSection[] = [
         href: '/contract-builder',
         badge: 'NEU',
         badgeColor: 'green',
+      },
+      {
+        id: 'playbook-review',
+        label: 'Playbook Review',
+        icon: Shield,
+        href: '/playbook-review',
+        badge: 'NEU',
+        badgeColor: 'blue' as const,
       },
       {
         id: 'clause-library',

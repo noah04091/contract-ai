@@ -109,6 +109,7 @@ const ClauseLibraryPage = lazy(() => import("./pages/ClauseLibraryPage")); // �
 const ContractBuilder = lazy(() => import("./pages/ContractBuilder")); // 🔧 NEU: ContractForge - Visueller Vertragsbaukasten
 // PlaybookLibrary: /playbooks and /vorlagen redirect to /contract-builder (Gallery Phase)
 const PlaybookWizard = lazy(() => import("./pages/PlaybookWizard")); // 🧠 Smart Playbook System - Wizard
+const PlaybookReview = lazy(() => import("./pages/PlaybookReview")); // 🎯 Playbook Review - Regelbasierte Vertragspruefung
 // Vorlagen.tsx still exists but /vorlagen now redirects to /contract-builder (Gallery Phase)
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
@@ -288,6 +289,10 @@ function AppWithLoader() {
             {/* 🧠 Smart Playbook System */}
             <Route path="/playbooks" element={<Navigate to="/contract-builder" replace />} />
             <Route path="/playbooks/:type" element={<RequireAuth><PlaybookWizard /></RequireAuth>} />
+
+            {/* 🎯 Playbook Review - Regelbasierte Vertragspruefung */}
+            <Route path="/playbook-review" element={<RequireAuth><PlaybookReview /></RequireAuth>} />
+            <Route path="/playbook-review/:playbookId" element={<RequireAuth><PlaybookReview /></RequireAuth>} />
             <Route path="/vorlagen" element={<Navigate to="/contract-builder" replace />} />
             <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />

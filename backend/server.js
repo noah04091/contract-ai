@@ -682,6 +682,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Playbook Routen:", err);
     }
 
+    // ✅ 6.8 PLAYBOOK REVIEW - Regelbasierte Vertragspruefung
+    try {
+      const playbookReviewRoutes = require("./routes/playbookReview");
+      app.use("/api/playbook-review", playbookReviewRoutes);
+      console.log("✅ Playbook Review Routen geladen unter /api/playbook-review");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Playbook Review Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {
