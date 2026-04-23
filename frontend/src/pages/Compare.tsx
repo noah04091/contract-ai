@@ -1235,7 +1235,7 @@ export default function EnhancedCompare() {
                 </div>
                 <div className="upload-header-text">
                   <h3>Verträge hochladen</h3>
-                  <p>Wählen Sie zwei PDF-Dateien für den Vergleich aus</p>
+                  <p>Wählen Sie zwei Dokumente (PDF oder Word) für den Vergleich aus</p>
                 </div>
               </div>
               {historyItems.length > 0 && (
@@ -1327,7 +1327,7 @@ export default function EnhancedCompare() {
                       <Upload size={24} />
                       <div className="upload-icon-ring" />
                     </div>
-                    <span className="upload-text">PDF auswählen</span>
+                    <span className="upload-text">Dokument auswählen</span>
                     <span className="upload-hint">oder hierher ziehen</span>
                     {/* 📸 Scan Button inside card */}
                     {isPremium && (
@@ -1433,7 +1433,7 @@ export default function EnhancedCompare() {
                       <Upload size={24} />
                       <div className="upload-icon-ring" />
                     </div>
-                    <span className="upload-text">PDF auswählen</span>
+                    <span className="upload-text">Dokument auswählen</span>
                     <span className="upload-hint">oder hierher ziehen</span>
                     {/* 📸 Scan Button inside card */}
                     {isPremium && (

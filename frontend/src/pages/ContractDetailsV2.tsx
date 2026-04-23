@@ -3658,7 +3658,7 @@ export default function ContractDetailsV2() {
                     </button>
                     {(contract.filePath || contract.s3Key) && (
                       <button onClick={handleOpenOriginalPDF} className={styles.quickActionBtn}>
-                        <ExternalLink size={18} /> Original PDF
+                        <ExternalLink size={18} /> {isDocx ? 'Original Word' : 'Original PDF'}
                       </button>
                     )}
                     {contract.optimizedPdfS3Key && (
@@ -3916,7 +3916,38 @@ export default function ContractDetailsV2() {
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {pdfUrl ? (
+              {isDocx && pdfUrl ? (
+                /* DOCX: Download-Bereich im Fullscreen */
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <FileText size={64} style={{ color: '#6b9fff', marginBottom: 16 }} />
+                  <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>Word-Dokument</p>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 400, lineHeight: 1.6, marginBottom: 24 }}>
+                    Word-Dokumente können nicht direkt im Browser angezeigt werden.
+                    Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+                  </p>
+                  <a
+                    href={pdfUrl}
+                    download={contract.name || 'Vertrag.docx'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '12px 24px',
+                      background: '#2b579a',
+                      color: '#fff',
+                      borderRadius: 8,
+                      textDecoration: 'none',
+                      fontSize: 15,
+                      fontWeight: 500,
+                    }}
+                  >
+                    <Download size={18} />
+                    Dokument herunterladen
+                  </a>
+                </div>
+              ) : pdfUrl ? (
                 <>
                   <Document
                     file={pdfUrl}
@@ -4005,7 +4036,7 @@ export default function ContractDetailsV2() {
                   color: 'rgba(255,255,255,0.7)'
                 }}>
                   <FileText size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
-                  <p>Keine PDF verfügbar</p>
+                  <p>{isDocx ? 'Kein Dokument verfügbar' : 'Keine PDF verfügbar'}</p>
                 </div>
               )}
             </div>
