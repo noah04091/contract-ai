@@ -143,6 +143,10 @@ const ContractBuilder: React.FC = () => {
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
   const [quickFillValues, setQuickFillValues] = useState<Record<string, string>>({});
 
+  // ─── User Template Quick-Fill State ───
+  const [quickFillUserTemplate, setQuickFillUserTemplate] = useState<UserTemplate | null>(null);
+  const [quickFillUserValues, setQuickFillUserValues] = useState<Record<string, string>>({});
+
   // ─── Custom Template Creator State ───
   const [showCustomCreator, setShowCustomCreator] = useState(false);
   const [customName, setCustomName] = useState('');
@@ -1532,7 +1536,25 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
-  const handleGallerySelectUserTemplate = async (template: UserTemplate) => {
+  // User-Template Klick → Quick-Fill öffnen wenn Variablen vorhanden
+  const handleGallerySelectUserTemplate = (template: UserTemplate) => {
+    const templateData = template.defaultValues as {
+      variables?: Array<{ id?: string; name?: string; displayName?: string; type?: string; group?: string }>;
+    };
+    const vars = templateData.variables || [];
+    if (vars.length > 0) {
+      setQuickFillUserTemplate(template);
+      setQuickFillUserValues({});
+      return;
+    }
+    // Keine Variablen → direkt erstellen
+    handleUserTemplateCreateDirect(template);
+  };
+
+  // User-Template direkt erstellen (ohne Quick-Fill)
+  const handleUserTemplateCreateDirect = async (template: UserTemplate) => {
+    if (galleryCreating) return;
+    setGalleryCreating(`user-${template.id}`);
     try {
       const templateData = template.defaultValues as {
         blocks?: Block[];
@@ -1563,7 +1585,70 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Laden der Vorlage:', err);
+    } finally {
+      setGalleryCreating(null);
     }
+  };
+
+  // User-Template Quick-Fill: Erstellen mit Werten
+  const handleUserTemplateQuickFillCreate = async () => {
+    if (!quickFillUserTemplate || galleryCreating) return;
+    const template = quickFillUserTemplate;
+    setGalleryCreating(`user-${template.id}`);
+    try {
+      const templateData = template.defaultValues as {
+        blocks?: Block[];
+        variables?: Array<{ id?: string; name?: string; displayName?: string; type?: string; group?: string }>;
+        metadata?: { contractType?: string };
+      };
+      const newDocId = await createDocument(
+        template.name,
+        templateData.metadata?.contractType || template.contractType || 'individuell'
+      );
+      if (templateData.blocks && templateData.blocks.length > 0) {
+        const store = useContractBuilderStore.getState();
+        const currentBlocks = store.document?.content.blocks || [];
+        currentBlocks.forEach(block => store.deleteBlock(block.id));
+        templateData.blocks.forEach((block, index) => {
+          store.addBlock({
+            type: block.type,
+            content: block.content,
+            style: block.style || {},
+            locked: block.locked || false,
+            aiGenerated: block.aiGenerated || false,
+          }, index);
+        });
+      }
+      // Variablen mit Quick-Fill-Werten füllen
+      if (newDocId) {
+        const store = useContractBuilderStore.getState();
+        const docVars = store.document?.content.variables || [];
+        for (const docVar of docVars) {
+          const varName = docVar.name.replace(/\{\{|\}\}/g, '');
+          if (quickFillUserValues[varName]?.trim()) {
+            store.updateVariable(docVar.id, quickFillUserValues[varName].trim());
+          }
+        }
+      }
+      setQuickFillUserTemplate(null);
+      setQuickFillUserValues({});
+      if (newDocId) {
+        navigate(`/contract-builder/${newDocId}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Laden der Vorlage:', err);
+    } finally {
+      setGalleryCreating(null);
+    }
+  };
+
+  // User-Template Quick-Fill: Überspringen
+  const handleUserTemplateQuickFillSkip = () => {
+    if (!quickFillUserTemplate) return;
+    const template = quickFillUserTemplate;
+    setQuickFillUserTemplate(null);
+    setQuickFillUserValues({});
+    handleUserTemplateCreateDirect(template);
   };
 
   const handleGalleryDeleteDraft = async (draftId: string) => {
@@ -2044,6 +2129,80 @@ const ContractBuilder: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* ═══ User-Template Quick-Fill Modal ═══ */}
+        {quickFillUserTemplate && (() => {
+          const tplData = quickFillUserTemplate.defaultValues as {
+            variables?: Array<{ id?: string; name?: string; displayName?: string; type?: string; group?: string }>;
+          };
+          const vars = tplData.variables || [];
+          // Variablen nach Gruppen sortieren
+          const groups: Record<string, typeof vars> = {};
+          for (const v of vars) {
+            const g = v.group || 'Allgemein';
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(v);
+          }
+          return (
+            <div className={styles.modalOverlay} onClick={() => { setQuickFillUserTemplate(null); setQuickFillUserValues({}); }}>
+              <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHeader}>
+                  <div className={styles.modalTitle}>
+                    <Star size={20} />
+                    <span>{quickFillUserTemplate.name}</span>
+                  </div>
+                  <button className={styles.modalClose} onClick={() => { setQuickFillUserTemplate(null); setQuickFillUserValues({}); }}>
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <div className={styles.quickFillInfo}>
+                  <p className={styles.quickFillInfoText}>
+                    {quickFillUserTemplate.description || 'Eigene Vorlage'} — Füllen Sie die Felder aus oder überspringen Sie diesen Schritt.
+                  </p>
+                </div>
+
+                <div className={styles.quickFillBody}>
+                  {Object.entries(groups).map(([groupName, groupVars]) => (
+                    <div key={groupName} className={styles.quickFillGroup}>
+                      <p className={styles.quickFillGroupTitle}>{groupName}</p>
+                      <div className={styles.quickFillFieldGrid}>
+                        {groupVars.map(v => {
+                          const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
+                          return (
+                            <div key={v.id || varName} className={styles.quickFillField}>
+                              <label className={styles.quickFillLabel}>{v.displayName || varName}</label>
+                              <input
+                                type={v.type === 'date' ? 'date' : v.type === 'number' || v.type === 'currency' ? 'number' : 'text'}
+                                className={styles.quickFillInput}
+                                value={quickFillUserValues[varName] || ''}
+                                onChange={e => setQuickFillUserValues(p => ({ ...p, [varName]: e.target.value }))}
+                                placeholder={v.displayName || varName}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className={styles.quickFillFooter}>
+                  <button className={styles.quickFillSkipBtn} onClick={handleUserTemplateQuickFillSkip} disabled={!!galleryCreating}>
+                    Überspringen
+                  </button>
+                  <button className={styles.quickFillCreateBtn} onClick={handleUserTemplateQuickFillCreate} disabled={!!galleryCreating}>
+                    {galleryCreating ? (
+                      <><Loader2 size={16} className={styles.spinner} /> Erstelle...</>
+                    ) : (
+                      <><Sparkles size={16} /> Im Builder erstellen</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ═══ Quick-Fill Modal ═══ */}
         {quickFillTemplate && (
