@@ -2258,6 +2258,67 @@
   transform: none;
 }
 
+/* Import Drop Zone */
+.importDropZone {
+  border: 2px dashed #d1d5db;
+  border-radius: 14px;
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafbfc;
+}
+
+.importDropZone:hover {
+  border-color: #3B82F6;
+  background: #eff6ff;
+}
+
+.importFileInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.importFileName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin: 6px 0 0;
+  word-break: break-all;
+}
+
+.importFileSize {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.importFileChange {
+  margin-top: 8px;
+  padding: 4px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: white;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.importFileChange:hover {
+  border-color: #3B82F6;
+  color: #2563EB;
+}
+
+.importDropContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Custom Create Card */
 .galleryCardCreate {
   border-style: dashed;

@@ -66,6 +66,7 @@ import {
   Clock,
   Star,
   FolderOpen,
+  Upload,
 } from 'lucide-react';
 import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
@@ -151,6 +152,13 @@ const ContractBuilder: React.FC = () => {
   const [showCustomCreator, setShowCustomCreator] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customDescription, setCustomDescription] = useState('');
+
+  // ─── Import State ───
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+
   // Confirm Dialog (ersetzt window.confirm)
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -1492,6 +1500,61 @@ const ContractBuilder: React.FC = () => {
     }
   };
 
+  // ─── Import Handler ───
+  const handleImportDocument = async () => {
+    if (!importFile || isImporting) return;
+    setIsImporting(true);
+    setImportError(null);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const response = await fetch(`${API_BASE}/api/contract-builder/import-from-document`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        setImportError(data.error || 'Fehler beim Import');
+        return;
+      }
+
+      if (data.success && data.documentId) {
+        setShowImportModal(false);
+        setImportFile(null);
+        navigate(`/contract-builder/${data.documentId}`);
+      }
+    } catch (err) {
+      console.error('Import-Fehler:', err);
+      setImportError('Netzwerkfehler. Bitte versuchen Sie es erneut.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleImportDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && (file.type === 'application/pdf' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
+      setImportFile(file);
+      setImportError(null);
+    } else {
+      setImportError('Nur PDF und Word (DOCX) Dateien werden unterstützt.');
+    }
+  };
+
+  const handleImportFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImportFile(file);
+      setImportError(null);
+    }
+  };
+
   const handleGalleryLoadDraft = async (draftId: string) => {
     try {
       await loadDocument(draftId);
@@ -1895,6 +1958,24 @@ const ContractBuilder: React.FC = () => {
                 </div>
               )}
 
+              {/* Vertrag importieren — Card */}
+              <div
+                className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
+                onClick={() => setShowImportModal(true)}
+              >
+                <div className={styles.galleryCardHeader}>
+                  <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconCreate}`}>
+                    <Upload size={20} />
+                  </div>
+                  <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Import</span>
+                </div>
+                <h3 className={styles.galleryCardTitle}>Vertrag importieren</h3>
+                <p className={styles.galleryCardDesc}>PDF oder Word-Datei hochladen — Struktur wird automatisch erkannt und in Blöcke umgewandelt.</p>
+                <div className={styles.galleryCardMeta}>
+                  <span className={styles.galleryCardMetaItem}><FileText size={12} /> PDF &amp; DOCX</span>
+                </div>
+              </div>
+
               {/* Eigene Vorlage erstellen — Card */}
               <div
                 className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
@@ -2025,6 +2106,96 @@ const ContractBuilder: React.FC = () => {
                     <><Loader2 size={16} className={styles.spinner} /> Erstelle...</>
                   ) : (
                     <><Sparkles size={16} /> Im Builder erstellen</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ Import Modal ═══ */}
+        {showImportModal && (
+          <div className={styles.modalOverlay} onClick={() => { if (!isImporting) { setShowImportModal(false); setImportFile(null); setImportError(null); } }}>
+            <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalTitle}>
+                  <Upload size={20} />
+                  <span>Vertrag importieren</span>
+                </div>
+                <button className={styles.modalClose} onClick={() => { if (!isImporting) { setShowImportModal(false); setImportFile(null); setImportError(null); } }}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className={styles.quickFillBody}>
+                {/* Drop Zone */}
+                <div
+                  className={styles.importDropZone}
+                  onDrop={handleImportDrop}
+                  onDragOver={e => e.preventDefault()}
+                  onDragEnter={e => e.preventDefault()}
+                  onClick={() => document.getElementById('import-file-input')?.click()}
+                >
+                  {importFile ? (
+                    <div className={styles.importFileInfo}>
+                      <FileText size={32} style={{ color: '#3B82F6' }} />
+                      <p className={styles.importFileName}>{importFile.name}</p>
+                      <p className={styles.importFileSize}>{(importFile.size / 1024).toFixed(0)} KB</p>
+                      <button
+                        className={styles.importFileChange}
+                        onClick={(e) => { e.stopPropagation(); setImportFile(null); setImportError(null); }}
+                      >
+                        Andere Datei wählen
+                      </button>
+                    </div>
+                  ) : (
+                    <div className={styles.importDropContent}>
+                      <Upload size={32} style={{ color: '#9ca3af' }} />
+                      <p style={{ margin: '10px 0 4px', fontWeight: 600, color: '#374151' }}>
+                        PDF oder Word-Datei hierher ziehen
+                      </p>
+                      <p style={{ margin: 0, fontSize: 13, color: '#9ca3af' }}>
+                        oder klicken zum Auswählen
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    id="import-file-input"
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={handleImportFileSelect}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+
+                {importError && (
+                  <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '10px 14px', marginTop: 12, fontSize: 13, color: '#dc2626' }}>
+                    {importError}
+                  </div>
+                )}
+
+                <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '12px 16px', marginTop: 14, fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
+                  <strong>Was passiert:</strong> Text wird extrahiert, Struktur erkannt (Titel, Parteien, Klauseln, Unterschriften) und automatisch in Builder-Blöcke umgewandelt. Danach können Sie alles bearbeiten.
+                </div>
+              </div>
+
+              <div className={styles.quickFillFooter}>
+                <button
+                  className={styles.quickFillSkipBtn}
+                  onClick={() => { setShowImportModal(false); setImportFile(null); setImportError(null); }}
+                  disabled={isImporting}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  className={styles.quickFillCreateBtn}
+                  onClick={handleImportDocument}
+                  disabled={!importFile || isImporting}
+                >
+                  {isImporting ? (
+                    <><Loader2 size={16} className={styles.spinner} /> Importiere...</>
+                  ) : (
+                    <><Upload size={16} /> Importieren</>
                   )}
                 </button>
               </div>

@@ -612,6 +612,225 @@ router.post('/import-from-generator', auth, async (req, res) => {
 });
 
 /**
+ * POST /api/contract-builder/import-from-document
+ * Importiert eine PDF/DOCX-Datei direkt in den Contract Builder
+ * Extrahiert Text, erkennt Struktur (Titel, Parteien, Klauseln), erstellt Blöcke
+ */
+const multer = require('multer');
+const { extractTextFromBuffer, isSupportedMimetype } = require('../services/textExtractor');
+
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter: (req, file, cb) => {
+    if (isSupportedMimetype(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Nur PDF und Word (DOCX) Dateien werden unterstützt'));
+    }
+  }
+});
+
+router.post('/import-from-document', auth, importUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Keine Datei hochgeladen' });
+    }
+
+    // 1. Text extrahieren
+    const { text: contractText } = await extractTextFromBuffer(req.file.buffer, req.file.mimetype);
+
+    if (!contractText || contractText.trim().length < 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'Zu wenig Text erkannt. Bitte stellen Sie sicher, dass das Dokument lesbaren Text enthält (kein gescanntes Bild).'
+      });
+    }
+
+    // 2. Text in Sections parsen
+    const sections = parseContractText(contractText);
+
+    // 3. Parteien aus Text extrahieren
+    const textParties = extractPartiesFromText(contractText);
+    const partyAName = textParties?.partyAName || '';
+    const partyBName = textParties?.partyBName || '';
+    const partyAAddress = textParties?.partyAAddress || '';
+    const partyBAddress = textParties?.partyBAddress || '';
+
+    // 4. Vertragstyp versuchen zu erkennen (aus Titel)
+    const contractType = req.body.contractType || 'individuell';
+    const partyLabels = getPartyLabels(contractType);
+
+    // 5. Titel aus Text extrahieren
+    const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
+    const originalFileName = req.file.originalname.replace(/\.(pdf|docx)$/i, '').replace(/[_-]+/g, ' ');
+    let title = originalFileName || 'Importierter Vertrag';
+    const isDecorativeLine = (line) => /^[\s═=─\-_*~#•·.,:;|/\\<>+^]+$/.test(line);
+    for (const line of lines) {
+      if (isDecorativeLine(line)) continue;
+      if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
+          !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
+        title = line;
+        break;
+      }
+    }
+
+    // 6. Sections → Builder-Blöcke (identische Logik wie import-from-generator)
+    const blocks = [];
+    let order = 0;
+
+    const CHARS_PER_LINE = 85;
+    const LINE_HEIGHT = 22;
+    const estimateBlockHeight = (block) => {
+      if (block.type === 'header') return 120;
+      if (block.type === 'parties') return 160;
+      if (block.type === 'signature') return 220;
+      if (block.type === 'page-break') return 0;
+      if (block.type === 'preamble') {
+        const text = block.content?.preambleText || '';
+        const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+        return Math.max(lineCount * LINE_HEIGHT, 50) + 60;
+      }
+      const text = block.content?.body || '';
+      const lineCount = Math.max(text.split('\n').length, Math.ceil(text.length / CHARS_PER_LINE));
+      const titleHeight = (block.content?.clauseTitle) ? 40 : 0;
+      return titleHeight + Math.max(lineCount * LINE_HEIGHT, 40) + 16;
+    };
+
+    const PAGE_HEIGHT = 920;
+    let currentPageHeight = 0;
+
+    const addBlock = (block) => {
+      const height = estimateBlockHeight(block);
+      if (blocks.length > 0 && currentPageHeight + height > PAGE_HEIGHT) {
+        blocks.push({
+          id: uuidv4(), type: 'page-break', order: order++,
+          content: {}, style: {}, locked: false, aiGenerated: false
+        });
+        currentPageHeight = 0;
+      }
+      block.order = order++;
+      blocks.push(block);
+      currentPageHeight += height;
+    };
+
+    // Header-Block
+    addBlock({
+      id: uuidv4(), type: 'header',
+      content: { title, subtitle: '', showDivider: false },
+      style: {}, locked: false, aiGenerated: true
+    });
+
+    // Parties-Block
+    if (partyAName || partyBName) {
+      addBlock({
+        id: uuidv4(), type: 'parties',
+        content: {
+          party1: { role: partyLabels.partyA || 'Partei A', name: partyAName, address: partyAAddress },
+          party2: { role: partyLabels.partyB || 'Partei B', name: partyBName, address: partyBAddress },
+          partiesLayout: 'classic'
+        },
+        style: {}, locked: false, aiGenerated: true
+      });
+    }
+
+    // Sections → Clause/Preamble Blöcke
+    let clauseNumber = 1;
+    for (const section of sections) {
+      if (section.type === 'preamble') {
+        const preambleText = section.content.map(c => c.text || '').filter(Boolean).join('\n');
+        addBlock({
+          id: uuidv4(), type: 'preamble',
+          content: { preambleText, preambleLayout: 'bordered' },
+          style: {}, locked: false, aiGenerated: true
+        });
+      } else if (section.type === 'section') {
+        const bodyParts = [];
+        for (const item of section.content) {
+          if (item.type === 'numbered') {
+            bodyParts.push(`(${bodyParts.filter(p => p.startsWith('(')).length + 1}) ${item.text}`);
+          } else if (item.type === 'letter') {
+            bodyParts.push(`${item.letter}) ${item.text}`);
+          } else if (item.type === 'bullet') {
+            bodyParts.push(`• ${item.text}`);
+          } else {
+            bodyParts.push(item.text);
+          }
+        }
+        const rawTitle = section.title || '';
+        const clauseTitle = rawTitle.replace(/^§\s*\d+\s*/, '').trim() || `Klausel ${clauseNumber}`;
+        addBlock({
+          id: uuidv4(), type: 'clause',
+          content: { clauseTitle, number: String(clauseNumber), body: bodyParts.join('\n') },
+          style: {}, locked: false, aiGenerated: true
+        });
+        clauseNumber++;
+      }
+    }
+
+    // Falls keine Sections erkannt → gesamter Text als ein Clause-Block
+    if (sections.length === 0) {
+      addBlock({
+        id: uuidv4(), type: 'clause',
+        content: { clauseTitle: 'Vertragsinhalt', number: '1', body: contractText.substring(0, 50000) },
+        style: {}, locked: false, aiGenerated: true
+      });
+    }
+
+    // Signature-Block
+    addBlock({
+      id: uuidv4(), type: 'signature',
+      content: {
+        signatureFields: [
+          { partyIndex: 0, label: `${partyLabels.partyA || 'Partei A'}${partyAName ? ': ' + partyAName : ''}`, showDate: true, showPlace: true },
+          { partyIndex: 1, label: `${partyLabels.partyB || 'Partei B'}${partyBName ? ': ' + partyBName : ''}`, showDate: true, showPlace: true }
+        ],
+        witnesses: 0, signatureLayout: 'classic'
+      },
+      style: {}, locked: false, aiGenerated: true
+    });
+
+    // 7. Dokument speichern
+    const document = new ContractBuilder({
+      userId: req.user.userId,
+      metadata: {
+        name: title,
+        contractType,
+        status: 'draft',
+        description: `Importiert aus ${req.file.originalname}`
+      },
+      content: { blocks, variables: [] },
+      design: {
+        preset: 'executive',
+        primaryColor: '#1a1a1a', secondaryColor: '#333333', accentColor: '#4a4a4a',
+        fontFamily: "'Times New Roman', Times, serif",
+        pageSize: 'A4', marginTop: 25, marginRight: 20, marginBottom: 25, marginLeft: 20
+      }
+    });
+
+    await document.save();
+
+    const pageCount = blocks.filter(b => b.type === 'page-break').length + 1;
+    console.log(`[ContractBuilder] Import aus Dokument: ${document._id} (${req.file.originalname}, ${blocks.length} Blöcke, ${pageCount} Seiten)`);
+
+    res.status(201).json({
+      success: true,
+      documentId: document._id,
+      blockCount: blocks.length,
+      pageCount,
+      fileName: req.file.originalname,
+      redirectUrl: `/contract-builder/${document._id}`
+    });
+  } catch (error) {
+    console.error('[ContractBuilder] POST /import-from-document Error:', error);
+    if (error.message?.includes('unterstützt')) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+    res.status(500).json({ success: false, error: 'Fehler beim Importieren des Dokuments' });
+  }
+});
+
+/**
  * POST /api/contract-builder/import-from-optimizer
  * Importiert einen optimierten Vertrag (Optimizer V2) als Builder-Dokument
  */
