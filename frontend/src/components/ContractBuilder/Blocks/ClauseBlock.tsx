@@ -142,12 +142,11 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
   // ─── Variable einfügen ───
   const handleOpenVarPopup = useCallback(() => {
     if (!textareaRef.current) return;
+    const end = textareaRef.current.selectionEnd;
     let start = textareaRef.current.selectionStart;
-    let end = textareaRef.current.selectionEnd;
 
     // Wenn alles oder nichts selektiert → nur Cursor-Position (einfügen, nicht ersetzen)
     if (start === 0 && end === editValue.length) {
-      // Gesamter Text selektiert → nur Cursor-Position
       start = end;
     }
 
