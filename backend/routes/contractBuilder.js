@@ -623,7 +623,16 @@ const importUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
   fileFilter: (req, file, cb) => {
-    if (isSupportedMimetype(file.mimetype)) {
+    // Breitere MIME-Type Erkennung für DOCX (Browser senden manchmal unterschiedliche Types)
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'application/octet-stream' // Fallback — wird über Dateiendung validiert
+    ];
+    const isAllowedMime = allowed.includes(file.mimetype);
+    const isAllowedExt = /\.(pdf|docx|doc)$/i.test(file.originalname);
+    if (isAllowedMime || isAllowedExt) {
       cb(null, true);
     } else {
       cb(new Error('Nur PDF und Word (DOCX) Dateien werden unterstützt'));
@@ -631,14 +640,33 @@ const importUpload = multer({
   }
 });
 
-router.post('/import-from-document', auth, importUpload.single('file'), async (req, res) => {
+router.post('/import-from-document', auth, (req, res, next) => {
+  // Multer-Error-Handler Wrapper
+  importUpload.single('file')(req, res, (err) => {
+    if (err) {
+      console.error('[ContractBuilder] Multer Error:', err.message);
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'Keine Datei hochgeladen' });
     }
 
+    // MIME-Type normalisieren (octet-stream → basierend auf Dateiendung)
+    let mimetype = req.file.mimetype;
+    if (mimetype === 'application/octet-stream' || mimetype === 'application/msword') {
+      if (/\.docx$/i.test(req.file.originalname)) {
+        mimetype = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      } else if (/\.pdf$/i.test(req.file.originalname)) {
+        mimetype = 'application/pdf';
+      }
+    }
+
     // 1. Text extrahieren
-    const { text: contractText } = await extractTextFromBuffer(req.file.buffer, req.file.mimetype);
+    const { text: contractText } = await extractTextFromBuffer(req.file.buffer, mimetype);
 
     if (!contractText || contractText.trim().length < 50) {
       return res.status(400).json({
@@ -822,11 +850,11 @@ router.post('/import-from-document', auth, importUpload.single('file'), async (r
       redirectUrl: `/contract-builder/${document._id}`
     });
   } catch (error) {
-    console.error('[ContractBuilder] POST /import-from-document Error:', error);
+    console.error('[ContractBuilder] POST /import-from-document Error:', error?.message || error, error?.stack);
     if (error.message?.includes('unterstützt')) {
       return res.status(400).json({ success: false, error: error.message });
     }
-    res.status(500).json({ success: false, error: 'Fehler beim Importieren des Dokuments' });
+    res.status(500).json({ success: false, error: `Import-Fehler: ${error?.message || 'Unbekannter Fehler'}` });
   }
 });
 
