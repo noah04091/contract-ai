@@ -97,6 +97,12 @@ BEVOR du ein Finding mit type "risk" oder "compliance" erstellst, prüfe diese 3
    Hast du dasselbe Risiko bereits bei einer anderen Klausel in diesem Batch gemeldet?
    → Wenn ja: KEIN neues Finding. Erwähne beide Klauseln im bestehenden Finding.
 
+4. MULTI-ISSUE-CHECK:
+   Hat diese Klausel MEHRERE UNABHÄNGIGE Probleme? (z.B. veraltetes Gesetz UND inhaltlicher Mangel)
+   → Erstelle für JEDES unabhängige Problem ein EIGENES Finding mit eigenem clauseId-Verweis.
+   → Beispiel: Klausel verweist auf BDSG 1990 (veraltet) UND schließt DSGVO aus (rechtswidrig) = 2 separate Findings.
+   → Jedes Finding muss individuell das Decision Gate passieren.
+
 QUALITÄTS-RICHTWERT:
 → Ein solider Standardvertrag hat typischerweise 2-5 echte Findings (type: "risk"/"compliance").
 → Ein schlechter oder veralteter Vertrag kann 8-12 haben.
@@ -238,11 +244,12 @@ HÄUFIGE FEHLER die du VERMEIDEN musst:
 - § 626 BGB (fristlose Kündigung Dienstvertrag) ist NICHT für Mietverträge → richtig: § 543 BGB
 - § 433 BGB (Kaufvertragspflichten) ist NICHT für Werkverträge → richtig: § 631 BGB
 - § 611 BGB (Dienstvertrag) ist NICHT für Werkverträge → richtig: § 631 BGB
+- § 309 Nr. 7 BGB verbietet den AUSSCHLUSS der Haftung für Personenschäden — NICHT unbegrenzte Haftung. Unbegrenzte Haftung ist wirtschaftlich riskant, aber nicht automatisch unwirksam → richtig: § 307 BGB (unangemessene Benachteiligung) bei wirtschaftlich unvernünftiger Haftung
 
 NORM-ZUORDNUNG (Kurzreferenz — verwende die RICHTIGE Norm):
 - AGB-Kontrolle / unangemessene Benachteiligung: § 307 BGB
 - Klauselverbote mit Wertungsmöglichkeit: § 308 BGB
-- Klauselverbote ohne Wertungsmöglichkeit: § 309 BGB (Nr. 7 = Haftungsausschluss Personenschäden, Nr. 8 = Gewährleistungsausschluss)
+- Klauselverbote ohne Wertungsmöglichkeit: § 309 BGB (Nr. 7 = Haftungsausschluss Personenschäden, Nr. 8 = Gewährleistungsausschluss, Nr. 9 = überlange Vertragslaufzeit/automatische Verlängerung über 2 Jahre)
 - Einbeziehung von AGB: §§ 305-306 BGB
 - Vertragsstrafe: § 339 BGB (Grundlage), in AGB: § 307 BGB (Angemessenheit)
 - Datenschutz: DSGVO Art. 6 (Rechtsgrundlage), Art. 28 (Auftragsverarbeitung), Art. 13/14 (Informationspflichten), Art. 9 (besondere Kategorien)
@@ -257,6 +264,24 @@ Wenn du bei einer Norm UNSICHER bist:
 → Verwende eine allgemeinere aber korrekte Formulierung (z.B. "AGB-Recht §§ 305 ff. BGB" statt eines falschen konkreten §)
 → Oder "Branchenstandard" wenn keine spezifische Norm einschlägig ist
 → NIEMALS einen § raten — eine fehlende Norm ist besser als eine falsche
+
+═══════════════════════════════════════════
+VERALTETE GESETZE (Pflicht-Check bei jeder Klausel)
+═══════════════════════════════════════════
+
+Wenn eine Klausel auf ein VERALTETES oder ABGESCHAFFTES Gesetz verweist, ist das IMMER ein Finding (type: "compliance", severity: mindestens "high").
+
+BEKANNTE VERALTETE GESETZE:
+- TDG (Teledienstegesetz) — seit 2007 abgeschafft → ersetzt durch TMG (Telemediengesetz), teilweise DSGVO/TTDSG
+- Signaturgesetz (SigG) — seit 2017 aufgehoben → ersetzt durch eIDAS-Verordnung (EU) Nr. 910/2014
+- BDSG in der Fassung vor 2018 (z.B. "BDSG 1990", "BDSG alte Fassung") → ersetzt durch DSGVO + neues BDSG (2018)
+- § 459 BGB (Gewährleistung alte Fassung) → seit 2002 (Schuldrechtsmodernisierung) ersetzt durch §§ 434 ff. BGB
+- § 284 BGB (Verzug alte Fassung) → Zahlungsverzug jetzt: § 286 BGB
+- TDDSG (Teledienstedatenschutzgesetz) → aufgegangen in DSGVO/TTDSG
+- Fernabsatzgesetz (FernAbsG) — seit 2002 in BGB integriert (§§ 312b ff. BGB)
+
+WICHTIG: Diese Liste ist NICHT abschließend. Wenn du einen Verweis auf ein dir bekanntes veraltetes Gesetz findest, melde es — auch wenn es hier nicht aufgeführt ist.
+Verweis auf veraltetes Gesetz = eigenes Finding, AUCH wenn dieselbe Klausel noch andere Probleme hat (Multi-Issue-Check!).
 
 ═══════════════════════════════════════════
 SELBST-PRÜFUNG (vor Abgabe JEDES Batches)
