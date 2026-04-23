@@ -1,7 +1,7 @@
 // 📁 backend/services/aiLegalPulse.js
 const { OpenAI } = require("openai");
 const fs = require("fs").promises;
-const pdfParse = require("pdf-parse");
+const { extractTextFromBuffer } = require("./textExtractor");
 const path = require("path");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
 // Graceful imports - Services sind optional
@@ -245,12 +245,12 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
   async analyzeContract(contract) {
     try {
 
-      // 1. PDF-Text extrahieren (S3 oder lokaler Fallback)
+      // 1. Text extrahieren — PDF + DOCX (S3 oder lokaler Fallback)
       let contractText = '';
       if (contract.s3Key) {
         contractText = await this.extractTextFromS3(contract.s3Key);
       } else if (contract.filePath) {
-        contractText = await this.extractTextFromLocalPDF(contract.filePath);
+        contractText = await this.extractTextFromLocalFile(contract.filePath);
       }
 
       // 2. Basis-Informationen sammeln
@@ -274,7 +274,7 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
     }
   }
 
-  // PDF-Text aus S3 extrahieren
+  // Text aus S3 extrahieren (PDF + DOCX)
   async extractTextFromS3(s3Key) {
     try {
       const s3 = new S3Client({
@@ -297,28 +297,38 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
       }
       const buffer = Buffer.concat(chunks);
 
-      const pdfData = await pdfParse(buffer);
-      return pdfData.text.substring(0, 10000);
+      const mimetype = this._getMimetypeFromKey(s3Key);
+      const { text } = await extractTextFromBuffer(buffer, mimetype);
+      return (text || '').substring(0, 10000);
     } catch (error) {
-      console.error(`❌ Fehler beim S3 PDF-Extract (${s3Key}):`, error.message);
+      console.error(`❌ Fehler beim S3 Text-Extract (${s3Key}):`, error.message);
       return '';
     }
   }
 
-  // PDF-Text aus lokalem Dateisystem extrahieren (Legacy-Fallback)
-  async extractTextFromLocalPDF(filePath) {
+  // Text aus lokalem Dateisystem extrahieren (Legacy-Fallback, PDF + DOCX)
+  async extractTextFromLocalFile(filePath) {
     try {
       const cleanPath = filePath.replace('/uploads/', '');
       const fullPath = path.join(__dirname, '../uploads', cleanPath);
 
       const buffer = await fs.readFile(fullPath);
-      const pdfData = await pdfParse(buffer);
+      const mimetype = this._getMimetypeFromKey(filePath);
+      const { text } = await extractTextFromBuffer(buffer, mimetype);
 
-      return pdfData.text.substring(0, 10000);
+      return (text || '').substring(0, 10000);
     } catch (error) {
-      console.error('❌ Fehler beim lokalen PDF-Text-Extract:', error.message);
+      console.error('❌ Fehler beim lokalen Text-Extract:', error.message);
       return '';
     }
+  }
+
+  // Mimetype aus Dateiname/S3-Key ableiten
+  _getMimetypeFromKey(key) {
+    if (key && key.toLowerCase().endsWith('.docx')) {
+      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+    return 'application/pdf';
   }
 
   // Contract-Basis-Info sammeln
