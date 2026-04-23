@@ -1731,13 +1731,26 @@ const ContractBuilder: React.FC = () => {
   const handleSaveEditTemplate = async () => {
     if (!editingUserTemplate || !editTemplateName.trim()) return;
     try {
-      const updated = await updateUserTemplate(editingUserTemplate.id, {
-        name: editTemplateName.trim(),
-        description: editTemplateDesc.trim(),
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/user-templates/${editingUserTemplate.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editTemplateName.trim(),
+          description: editTemplateDesc.trim(),
+        }),
       });
-      setGalleryUserTemplates(prev => prev.map(t =>
-        t.id === editingUserTemplate.id ? { ...t, name: updated.name, description: updated.description } : t
-      ));
+      if (response.ok) {
+        const data = await response.json();
+        const updated = data.template;
+        setGalleryUserTemplates(prev => prev.map(t =>
+          t.id === editingUserTemplate.id ? { ...t, name: updated.name, description: updated.description } : t
+        ));
+      }
       setEditingUserTemplate(null);
     } catch (error) {
       console.error('Fehler beim Bearbeiten der Vorlage:', error);
@@ -1748,13 +1761,30 @@ const ContractBuilder: React.FC = () => {
   const handleDuplicateUserTemplate = async (template: UserTemplate) => {
     setGalleryActiveMenu(null);
     try {
-      const duplicate = await createUserTemplate({
-        name: `${template.name} (Kopie)`,
-        description: template.description || '',
-        contractType: template.contractType,
-        defaultValues: template.defaultValues,
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/user-templates`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: `${template.name} (Kopie)`,
+          description: template.description || '',
+          contractType: template.contractType,
+          defaultValues: template.defaultValues,
+        }),
       });
-      setGalleryUserTemplates(prev => [duplicate, ...prev]);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.template) {
+          setGalleryUserTemplates(prev => [data.template, ...prev]);
+        }
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        console.error('Fehler beim Duplizieren:', errData.message || response.status);
+      }
     } catch (error) {
       console.error('Fehler beim Duplizieren der Vorlage:', error);
     }
