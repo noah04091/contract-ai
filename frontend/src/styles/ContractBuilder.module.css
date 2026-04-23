@@ -1792,6 +1792,13 @@
   transform: translateY(-2px);
 }
 
+/* Kein Transform wenn Menü offen — verhindert Flackern */
+.galleryCardMenuOpen {
+  transform: none !important;
+  border-color: #3B82F6;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+}
+
 .galleryCardHeader {
   display: flex;
   align-items: flex-start;
@@ -1917,6 +1924,7 @@
   background: transparent;
   font-size: 13px;
   color: #374151;
+  text-align: left;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;

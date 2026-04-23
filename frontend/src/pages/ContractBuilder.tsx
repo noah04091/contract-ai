@@ -1917,7 +1917,7 @@ const ContractBuilder: React.FC = () => {
                   {galleryFilteredUserTemplates.map(template => (
                     <div
                       key={template.id}
-                      className={styles.galleryCard}
+                      className={`${styles.galleryCard} ${galleryActiveMenu === `user-${template.id}` ? styles.galleryCardMenuOpen : ''}`}
                       onClick={() => handleGallerySelectUserTemplate(template)}
                     >
                       <div className={styles.galleryCardHeader}>
