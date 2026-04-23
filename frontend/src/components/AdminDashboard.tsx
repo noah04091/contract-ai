@@ -66,7 +66,7 @@ import styles from './AdminDashboard.module.css';
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
 // USD to EUR conversion rate (approximate)
-const USD_TO_EUR = 0.92;
+const USD_TO_EUR = 0.88; // Stand April 2026 — bei Bedarf aktualisieren
 
 interface User {
   _id: string;
@@ -369,7 +369,7 @@ interface AdminStats {
     total: number;
     free: number;
     business: number;
-    premium: number;
+    enterprise: number;
     activeSubscriptions: number;
     verified: number;
     newLast30Days: number;
@@ -1248,9 +1248,9 @@ export default function AdminDashboard() {
   // Extract statistics from adminStats or use fallback values
   const stats = adminStats || {
     costs: { today: { spent: 0, limit: 100, remaining: 100, percentUsed: 0, isLimitReached: false }, month: { total: 0, calls: 0, tokens: 0, byModel: {}, byFeature: {} }, trend: [], topUsers: [] },
-    users: { total: 0, free: 0, business: 0, premium: 0, activeSubscriptions: 0, verified: 0, newLast30Days: 0, dailyRegistrations: [] },
+    users: { total: 0, free: 0, business: 0, enterprise: 0, activeSubscriptions: 0, verified: 0, newLast30Days: 0, dailyRegistrations: [] },
     conversion: { rate: 0, premiumUpgradeRate: 0, totalPaidUsers: 0 },
-    revenue: { mrr: 0, arr: 0, arpu: 0, breakdown: { business: 0, premium: 0 } },
+    revenue: { mrr: 0, arr: 0, arpu: 0, breakdown: { business: 0, enterprise: 0 } },
     usage: { totalAnalyses: 0, totalOptimizations: 0, totalContracts: 0, avgAnalysesPerUser: 0, byPlan: [], mostActive: [] },
     system: { mongoStatus: 'Unknown', uptime: 0, memoryUsage: { rss: 0, heapTotal: 0, heapUsed: 0, external: 0 }, nodeVersion: 'Unknown' }
   };
@@ -1259,7 +1259,7 @@ export default function AdminDashboard() {
   const planDistribution = [
     { name: 'Free', value: stats.users.free, color: '#94a3b8' },
     { name: 'Business', value: stats.users.business, color: '#3b82f6' },
-    { name: 'Premium', value: stats.users.premium, color: '#10b981' }
+    { name: 'Premium', value: stats.users.enterprise, color: '#10b981' }
   ];
 
   // Format cost trend data for charts (converted to EUR)
@@ -1872,9 +1872,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className={styles.statContent}>
                   <h3>Premium Upgrade Rate</h3>
-                  <p className={styles.statValue}>{(stats.conversion.premiumUpgradeRate ?? stats.conversion.enterpriseUpgradeRate ?? 0).toFixed(1)}%</p>
+                  <p className={styles.statValue}>{(stats.conversion.enterpriseUpgradeRate ?? 0).toFixed(1)}%</p>
                   <span className={styles.statSubtext}>
-                    {stats.users.premium} Premium User
+                    {stats.users.enterprise} Premium User
                   </span>
                 </div>
               </div>
@@ -1966,7 +1966,7 @@ export default function AdminDashboard() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={[
                     { name: 'Business', revenue: stats.revenue.breakdown.business, users: stats.users.business },
-                    { name: 'Enterprise', revenue: stats.revenue.breakdown.enterprise ?? stats.revenue.breakdown.premium ?? 0, users: stats.users.premium }
+                    { name: 'Enterprise', revenue: stats.revenue.breakdown.enterprise ?? 0, users: stats.users.enterprise }
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
@@ -2170,7 +2170,7 @@ export default function AdminDashboard() {
                 <span className={styles.userStatLabel}>Gesamt</span>
               </div>
               <div className={styles.userStat}>
-                <span className={`${styles.userStatValue} ${styles.premium}`}>{stats.users.premium}</span>
+                <span className={`${styles.userStatValue} ${styles.premium}`}>{stats.users.enterprise}</span>
                 <span className={styles.userStatLabel}>Premium</span>
               </div>
               <div className={styles.userStat}>
