@@ -63,6 +63,7 @@
     "supertest": "^7.1.4"
   },
   "overrides": {
-    "fast-xml-parser": "5.4.2"
+    "fast-xml-parser": "5.4.2",
+    "@xmldom/xmldom": ">=0.8.13"
   }
 }
