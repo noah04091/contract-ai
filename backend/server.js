@@ -1864,9 +1864,9 @@ const connectDB = async () => {
         }
       }));
 
-      // Legal Pulse V2 Radar — 2x täglich Legal Source Scan (07:00 + 19:00 UTC)
+      // Legal Pulse V2 Radar — Täglicher Legal Source Scan (07:00 UTC)
       // Läuft NACH RSS-Sync (03:15) damit neue Laws in der DB verfügbar sind
-      cron.schedule("0 7,19 * * *", withCronLock('pulse-v2-radar', async () => {
+      cron.schedule("0 7 * * *", withCronLock('pulse-v2-radar', async () => {
         console.log("[PulseV2Radar] Starte Legal Source Scan...");
         try {
           await withCronLogging('pulse-v2-radar', async () => {

@@ -12,8 +12,8 @@
  *   4. Store alerts in `pulse_v2_legal_alerts` collection
  *   5. Queue consolidated email notifications
  *
- * Schedule: Mondays 05:30 UTC (after V1 RSS sync at 03:15, before digest at 08:10)
- * Limits: max 10 law changes per run, max 50 contract matches
+ * Schedule: Daily 07:00 UTC (after RSS sync at 03:15)
+ * Limits: max 25 law changes per run, max 150 contract matches
  */
 
 const OpenAI = require("openai");
@@ -948,35 +948,31 @@ async function storeAndNotify(db, userId, alerts) {
     createdAt: new Date(),
   }));
 
-  // Cross-run fingerprint dedup: check if similar alert already exists
-  const fingerprints = {};
-  for (const doc of alertDocs) {
-    if (doc.legislationFingerprint) {
-      fingerprints[doc.legislationFingerprint] = fingerprints[doc.legislationFingerprint] || [];
-      fingerprints[doc.legislationFingerprint].push(doc);
-    }
-  }
-
-  const fpValues = Object.keys(fingerprints);
+  // Cross-run fingerprint dedup: skip alerts if user already has a recent alert
+  // for the same legislation (same fingerprint) within the last 30 days.
+  // Ignores contractId — all affected contracts are grouped in a single email per run,
+  // so a re-alert for the same law across runs is always a duplicate.
+  const fpValues = [...new Set(alertDocs.map(d => d.legislationFingerprint).filter(Boolean))];
   if (fpValues.length > 0) {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const existing = await db.collection("pulse_v2_legal_alerts").find({
       userId,
       legislationFingerprint: { $in: fpValues },
-      status: { $nin: ["dismissed", "resolved"] },
-    }, { projection: { legislationFingerprint: 1, contractId: 1 } }).toArray();
+      createdAt: { $gte: thirtyDaysAgo },
+    }, { projection: { legislationFingerprint: 1 } }).toArray();
 
-    const existingSet = new Set(existing.map(e => `${e.legislationFingerprint}_${e.contractId}`));
+    const existingFPs = new Set(existing.map(e => e.legislationFingerprint));
 
-    const beforeCount = alertDocs.length;
-    alertDocs = alertDocs.filter(doc => {
-      if (!doc.legislationFingerprint) return true;
-      const key = `${doc.legislationFingerprint}_${doc.contractId}`;
-      return !existingSet.has(key);
-    });
-
-    const fpSkipped = beforeCount - alertDocs.length;
-    if (fpSkipped > 0) {
-      console.log(`[PulseV2Radar] Cross-run fingerprint dedup: skipped ${fpSkipped} duplicate alerts for user ${userId}`);
+    if (existingFPs.size > 0) {
+      const beforeCount = alertDocs.length;
+      alertDocs = alertDocs.filter(doc => {
+        if (!doc.legislationFingerprint) return true;
+        return !existingFPs.has(doc.legislationFingerprint);
+      });
+      const fpSkipped = beforeCount - alertDocs.length;
+      if (fpSkipped > 0) {
+        console.log(`[PulseV2Radar] Cross-run fingerprint dedup: skipped ${fpSkipped} duplicate alerts for user ${userId} (fingerprints: ${[...existingFPs].join(", ")})`);
+      }
     }
   }
 
@@ -1027,6 +1023,8 @@ async function storeAndNotify(db, userId, alerts) {
       .replace(/\s*\(PDF\)\s*$/i, "")            // "(PDF)" am Ende
       .replace(/\s*\[PDF\]\s*$/i, "")             // "[PDF]" am Ende
       .replace(/^zu der \w+ Beratung des /i, "")  // "zu der dritten Beratung des " Prefix
+      .replace(/^\d+\/\d+\s*\|\s*/, "")           // "209/26 | " Drucksachen-Prefix
+      .replace(/\s*\|\s*\d{1,2}\.\s*[A-Za-zäöüÄÖÜ]+\s+\d{4}\s*$/, "") // " | 21. April 2026" Datum-Suffix
       .trim();
   };
   const cleanRecommendation = (text) => {

@@ -2260,7 +2260,7 @@ router.get("/monitoring-status", async (req, res) => {
 /**
  * Calculate next cron occurrence
  * Monitor: Sunday 05:00 UTC ("0 5 * * 0")
- * Radar: Daily 07:00 and 19:00 UTC ("0 7,19 * * *")
+ * Radar: Daily 07:00 UTC ("0 7 * * *")
  */
 function getNextCronOccurrence(type, now) {
   const next = new Date(now);
@@ -2275,12 +2275,10 @@ function getNextCronOccurrence(type, now) {
     next.setUTCDate(next.getUTCDate() + daysUntilSunday);
     next.setUTCHours(5, 0, 0, 0);
   } else {
-    // Next 07:00 or 19:00 UTC
+    // Next 07:00 UTC
     const hour = now.getUTCHours();
     if (hour < 7) {
       next.setUTCHours(7, 0, 0, 0);
-    } else if (hour < 19) {
-      next.setUTCHours(19, 0, 0, 0);
     } else {
       next.setUTCDate(next.getUTCDate() + 1);
       next.setUTCHours(7, 0, 0, 0);

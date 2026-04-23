@@ -65,6 +65,18 @@ function extractFingerprintFromTitle(title: string): string | null {
   return null;
 }
 
+/** Clean RSS metadata from law titles for display (mirrors backend cleanLawTitle) */
+function cleanLawTitle(title: string): string {
+  if (!title) return 'Gesetzesänderung';
+  return title
+    .replace(/\s*\(PDF\)\s*$/i, '')
+    .replace(/\s*\[PDF\]\s*$/i, '')
+    .replace(/^zu der \w+ Beratung des /i, '')
+    .replace(/^\d+\/\d+\s*\|\s*/, '')                                     // "209/26 | " Drucksachen-Prefix
+    .replace(/\s*\|\s*\d{1,2}\.\s*[A-Za-zäöüÄÖÜ]+\s+\d{4}\s*$/, '')     // " | 21. April 2026" Datum-Suffix
+    .trim() || 'Gesetzesänderung';
+}
+
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 const URGENCY_ORDER: Record<string, number> = {
   effective: 0,       // In Kraft — sofort handeln
@@ -523,7 +535,7 @@ const LawGroup: React.FC<{
           }} />
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {group.lawTitle}
+              {cleanLawTitle(group.lawTitle)}
             </span>
             {isNew && (
               <span

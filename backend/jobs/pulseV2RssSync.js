@@ -9,7 +9,7 @@
  *   2. Normalize items for Legal Pulse format
  *   3. Deduplicate and insert/update into `laws` collection
  *
- * Schedule: Daily 03:15 UTC (before Radar at 07:00/19:00)
+ * Schedule: Daily 03:15 UTC (before Radar at 07:00)
  * Uses: Native MongoDB driver (shared connection), rssService
  */
 
