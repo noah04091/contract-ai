@@ -178,15 +178,21 @@ savedClauseSchema.pre("save", function(next) {
       .digest("hex");
   }
 
-  // Preview generieren
+  // Preview generieren (Markdown bereinigt)
   if (this.clauseText && !this.clausePreview) {
-    this.clausePreview = this.clauseText.substring(0, 200) +
-      (this.clauseText.length > 200 ? "..." : "");
+    const cleanText = stripMarkdown(this.clauseText);
+    this.clausePreview = cleanText.substring(0, 200) +
+      (cleanText.length > 200 ? "..." : "");
   }
 
   // Auto-Titel generieren wenn nicht vorhanden
   if ((!this.title || this.title.trim() === "") && this.clauseText) {
     this.title = generateAutoTitle(this.clauseText);
+  }
+
+  // Auto-detect clauseArea wenn 'other' oder nicht gesetzt
+  if ((!this.clauseArea || this.clauseArea === "other") && this.clauseText) {
+    this.clauseArea = detectClauseArea(this.clauseText);
   }
 
   // Keywords extrahieren wenn nicht vorhanden
@@ -196,6 +202,57 @@ savedClauseSchema.pre("save", function(next) {
 
   next();
 });
+
+// Helper: Markdown-Syntax aus Text entfernen (für Preview und Anzeige)
+function stripMarkdown(text) {
+  return text
+    .replace(/---+/g, " ")                    // Horizontal rules
+    .replace(/===+/g, " ")                    // Alt horizontal rules
+    .replace(/^#{1,6}\s*/gm, "")              // Headers (## § 7 → § 7)
+    .replace(/\*\*([^*]+)\*\*/g, "$1")        // **bold** → bold
+    .replace(/\*([^*]+)\*/g, "$1")            // *italic* → italic
+    .replace(/\|[^|\n]*\|/g, " ")             // Table cells
+    .replace(/^\s*[-*+]\s/gm, "")             // List markers (- item)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")  // Links [text](url) → text
+    .replace(/\n{2,}/g, " ")                  // Multiple newlines → space
+    .replace(/\n/g, " ")                      // Single newlines → space
+    .replace(/\s{2,}/g, " ")                  // Multiple spaces → single
+    .trim();
+}
+
+// Helper: Klausel-Bereich automatisch aus Text erkennen (Keyword-Matching)
+function detectClauseArea(text) {
+  const lower = text.toLowerCase();
+
+  const areaKeywords = {
+    liability:             ["haftung", "haftet", "haften", "haftbar", "schadensersatz", "freistellung", "freigestellt"],
+    termination:           ["kündigung", "kündigen", "kündigungsfrist", "beendigung", "vertragsende", "laufzeit"],
+    payment:               ["zahlung", "vergütung", "preis", "betrag", "rechnung", "zahlungsfrist", "fälligkeit", "skonto"],
+    confidentiality:       ["vertraulich", "geheimhaltung", "verschwiegenheit", "geheim", "offenlegung"],
+    intellectual_property: ["urheberrecht", "patent", "markenrecht", "geistiges eigentum", "nutzungsrecht", "lizenz"],
+    warranty:              ["gewährleistung", "mängel", "nacherfüllung", "garantie", "mangel", "sachmangel", "mängelrüge"],
+    force_majeure:         ["höhere gewalt", "force majeure", "unvorhersehbar", "naturkatastroph"],
+    dispute:               ["gerichtsstand", "schlichtung", "schiedsgericht", "streitbeilegung", "zuständig"],
+    data_protection:       ["datenschutz", "dsgvo", "personenbezogen", "auftragsverarbeitung", "datenverarbeitung"],
+    non_compete:           ["wettbewerbsverbot", "konkurrenz", "wettbewerb", "abwerbeverbot", "konkurrenzverbot"]
+  };
+
+  let bestArea = "other";
+  let bestScore = 0;
+
+  for (const [area, keywords] of Object.entries(areaKeywords)) {
+    let score = 0;
+    for (const kw of keywords) {
+      if (lower.includes(kw)) score++;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestArea = area;
+    }
+  }
+
+  return bestArea;
+}
 
 // Helper: Auto-Titel aus Klauseltext generieren (kurz & prägnant, max ~40 Zeichen)
 function generateAutoTitle(text) {

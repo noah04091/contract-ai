@@ -67,6 +67,58 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
     previewTitle: string;
   } | null>(null);
 
+  // Klausel-Bereich automatisch erkennen (Frontend-Fallback für bestehende Klauseln mit "other")
+  const detectClauseArea = (text: string): ClauseArea => {
+    const lower = text.toLowerCase();
+    const areaKeywords: Record<string, string[]> = {
+      liability:             ['haftung', 'haftet', 'haften', 'haftbar', 'schadensersatz', 'freistellung'],
+      termination:           ['kündigung', 'kündigen', 'kündigungsfrist', 'beendigung', 'vertragsende'],
+      payment:               ['zahlung', 'vergütung', 'preis', 'betrag', 'rechnung', 'zahlungsfrist'],
+      confidentiality:       ['vertraulich', 'geheimhaltung', 'verschwiegenheit', 'geheim'],
+      intellectual_property: ['urheberrecht', 'patent', 'markenrecht', 'geistiges eigentum', 'nutzungsrecht'],
+      warranty:              ['gewährleistung', 'mängel', 'nacherfüllung', 'garantie', 'mangel', 'sachmangel'],
+      force_majeure:         ['höhere gewalt', 'force majeure', 'unvorhersehbar'],
+      dispute:               ['gerichtsstand', 'schlichtung', 'schiedsgericht', 'streitbeilegung'],
+      data_protection:       ['datenschutz', 'dsgvo', 'personenbezogen', 'auftragsverarbeitung'],
+      non_compete:           ['wettbewerbsverbot', 'konkurrenz', 'abwerbeverbot']
+    };
+    let bestArea: ClauseArea = 'other';
+    let bestScore = 0;
+    for (const [area, keywords] of Object.entries(areaKeywords)) {
+      let score = 0;
+      for (const kw of keywords) {
+        if (lower.includes(kw)) score++;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestArea = area as ClauseArea;
+      }
+    }
+    return bestArea;
+  };
+
+  const getDisplayArea = (clause: SavedClause): ClauseArea => {
+    if (clause.clauseArea && clause.clauseArea !== 'other') return clause.clauseArea;
+    return detectClauseArea(clause.clauseText || clause.clausePreview || '');
+  };
+
+  // Markdown-Syntax aus Preview entfernen (für bestehende Klauseln in DB)
+  const cleanPreview = (preview: string): string => {
+    return preview
+      .replace(/---+/g, ' ')
+      .replace(/===+/g, ' ')
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/\|[^|\n]*\|/g, ' ')
+      .replace(/^\s*[-*+]\s/gm, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/\n{2,}/g, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  };
+
   // Fallback-Titel für Klauseln ohne Titel generieren (kurz & prägnant, max ~40 Zeichen)
   const getDisplayTitle = (clause: SavedClause): string | null => {
     if (clause.title && clause.title.trim()) return clause.title;
@@ -198,7 +250,8 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
       <div className={viewType === 'grid' ? styles.clauseGrid : styles.clauseList}>
         {clauses.map(clause => {
           const catInfo = CATEGORY_INFO[clause.category];
-          const areaInfo = CLAUSE_AREA_INFO[clause.clauseArea];
+          const displayArea = getDisplayArea(clause);
+          const areaInfo = CLAUSE_AREA_INFO[displayArea];
 
           return (
             <div
@@ -226,7 +279,7 @@ const MeineKlauselnTab: React.FC<MeineKlauselnTabProps> = ({
               })()}
 
               <p className={`${styles.clausePreview} ${(clause.title || getDisplayTitle(clause)) ? styles.clausePreviewShort : ''}`}>
-                {clause.clausePreview}
+                {cleanPreview(clause.clausePreview)}
               </p>
 
               {clause.tags.length > 0 && (
