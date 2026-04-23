@@ -51,11 +51,29 @@ async function extractTextFromBuffer(buffer, mimetype) {
 
   // DOCX
   if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    const result = await mammoth.extractRawText({ buffer });
-    return {
-      text: result.value || '',
-      pageCount: null // DOCX hat kein natives Seitenkonzept
-    };
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      if (result.value && result.value.trim().length > 0) {
+        return {
+          text: result.value,
+          pageCount: null
+        };
+      }
+    } catch (mammothError) {
+      console.warn('[TextExtractor] mammoth failed, trying fallback:', mammothError.message);
+    }
+
+    // Fallback: DOCX ist ein ZIP — document.xml manuell extrahieren
+    try {
+      const text = extractDocxFallback(buffer);
+      if (text && text.trim().length > 0) {
+        return { text, pageCount: null };
+      }
+    } catch (fallbackError) {
+      console.warn('[TextExtractor] DOCX fallback also failed:', fallbackError.message);
+    }
+
+    throw new Error('DOCX-Text konnte nicht extrahiert werden. Bitte versuchen Sie es mit einer PDF-Datei.');
   }
 
   throw new Error(`Nicht unterstütztes Format: ${mimetype}`);
@@ -128,6 +146,76 @@ async function extractPdfFormFields(buffer) {
   }
 
   return lines.length > 0 ? lines.join('\n') : null;
+}
+
+/**
+ * Fallback DOCX-Textextraktion ohne mammoth.
+ * DOCX = ZIP mit word/document.xml. Wir suchen die XML-Datei im Buffer
+ * und strippen die XML-Tags um reinen Text zu extrahieren.
+ */
+function extractDocxFallback(buffer) {
+  const zlib = require('zlib');
+
+  // DOCX ist ein ZIP — PK-Signatur prüfen
+  if (buffer[0] !== 0x50 || buffer[1] !== 0x4b) {
+    throw new Error('Keine gültige DOCX-Datei (kein ZIP-Format)');
+  }
+
+  // Einfacher ZIP-Parser: Local File Headers durchsuchen
+  let offset = 0;
+  const files = [];
+
+  while (offset < buffer.length - 30) {
+    // Local File Header Signature: PK\x03\x04
+    if (buffer[offset] === 0x50 && buffer[offset + 1] === 0x4b &&
+        buffer[offset + 2] === 0x03 && buffer[offset + 3] === 0x04) {
+
+      const compressionMethod = buffer.readUInt16LE(offset + 8);
+      const compressedSize = buffer.readUInt32LE(offset + 18);
+      const uncompressedSize = buffer.readUInt32LE(offset + 22);
+      const fileNameLength = buffer.readUInt16LE(offset + 26);
+      const extraFieldLength = buffer.readUInt16LE(offset + 28);
+      const fileName = buffer.toString('utf8', offset + 30, offset + 30 + fileNameLength);
+      const dataStart = offset + 30 + fileNameLength + extraFieldLength;
+
+      if (fileName === 'word/document.xml' && compressedSize > 0) {
+        const compressedData = buffer.slice(dataStart, dataStart + compressedSize);
+        let xmlContent;
+        if (compressionMethod === 8) { // Deflate
+          xmlContent = zlib.inflateRawSync(compressedData).toString('utf8');
+        } else if (compressionMethod === 0) { // Stored
+          xmlContent = compressedData.toString('utf8');
+        }
+        if (xmlContent) {
+          files.push(xmlContent);
+        }
+      }
+
+      offset = dataStart + (compressedSize > 0 ? compressedSize : 0);
+    } else {
+      offset++;
+    }
+  }
+
+  if (files.length === 0) {
+    throw new Error('word/document.xml nicht in DOCX gefunden');
+  }
+
+  // XML → reiner Text: Tags entfernen, Absätze erhalten
+  let text = files[0];
+  // Paragraph-Ends (</w:p>) und Zeilenumbrüche (</w:br>) als \n
+  text = text.replace(/<\/w:p>/g, '\n');
+  text = text.replace(/<w:br[^>]*\/>/g, '\n');
+  // Tab-Elemente
+  text = text.replace(/<w:tab\/>/g, '\t');
+  // Alle XML-Tags entfernen
+  text = text.replace(/<[^>]+>/g, '');
+  // HTML-Entities decodieren
+  text = text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+  // Mehrfache Leerzeilen reduzieren
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+  return text;
 }
 
 module.exports = {
