@@ -332,7 +332,7 @@ const PlaybookReview: React.FC = () => {
     try {
       const data = await playbookAPI.getContractsList();
       setContracts(data.contracts || []);
-    } catch (err) {
+    } catch {
       toast.error('Fehler beim Laden der Vertraege');
     }
   };
