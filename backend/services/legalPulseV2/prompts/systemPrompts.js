@@ -269,7 +269,12 @@ Wenn du bei einer Norm UNSICHER bist:
 VERALTETE GESETZE (Pflicht-Check bei jeder Klausel)
 ═══════════════════════════════════════════
 
-Wenn eine Klausel auf ein VERALTETES oder ABGESCHAFFTES Gesetz verweist, ist das IMMER ein Finding (type: "compliance", severity: mindestens "high").
+Wenn eine Klausel auf ein VERALTETES oder ABGESCHAFFTES Gesetz verweist, ist das IMMER ein Finding (type: "compliance").
+
+SEVERITY-LOGIK:
+→ Gesetz KOMPLETT ABGESCHAFFT (z.B. TDG, SigG, TDDSG, FernAbsG): severity "high" oder "critical" — das gesamte Regelwerk existiert nicht mehr.
+→ Norm-Referenz VERALTET, aber Nachfolgeregelung existiert (z.B. § 284 → § 286, § 459 → §§ 434 ff.): severity "medium" — der Vertrag funktioniert, aber die Referenz sollte aktualisiert werden.
+→ Wenn der veraltete Verweis zentrale Auswirkungen auf die Vertragsdurchführung hat: severity kann auf "high" erhöht werden.
 
 BEKANNTE VERALTETE GESETZE:
 - TDG (Teledienstegesetz) — seit 2007 abgeschafft → ersetzt durch TMG (Telemediengesetz), teilweise DSGVO/TTDSG
