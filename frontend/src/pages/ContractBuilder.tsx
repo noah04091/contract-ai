@@ -143,6 +143,14 @@ const ContractBuilder: React.FC = () => {
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
   const [quickFillValues, setQuickFillValues] = useState<Record<string, string>>({});
 
+  // ─── Custom Template Creator State ───
+  const [showCustomCreator, setShowCustomCreator] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customDescription, setCustomDescription] = useState('');
+  const [customVariables, setCustomVariables] = useState<Array<{
+    id: string; displayName: string; type: 'text' | 'date' | 'number' | 'currency'; group: string;
+  }>>([]);
+
   // Confirm Dialog (ersetzt window.confirm)
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
@@ -1453,6 +1461,68 @@ const ContractBuilder: React.FC = () => {
     await handleGalleryCreateDirect(templateId);
   };
 
+  // ─── Custom Template Creator ───
+  const handleAddCustomVariable = () => {
+    setCustomVariables(prev => [...prev, {
+      id: `cv_${Date.now()}`,
+      displayName: '',
+      type: 'text',
+      group: 'Allgemein',
+    }]);
+  };
+
+  const handleRemoveCustomVariable = (id: string) => {
+    setCustomVariables(prev => prev.filter(v => v.id !== id));
+  };
+
+  const handleUpdateCustomVariable = (id: string, field: string, value: string) => {
+    setCustomVariables(prev => prev.map(v =>
+      v.id === id ? { ...v, [field]: value } : v
+    ));
+  };
+
+  const handleCreateCustomTemplate = async () => {
+    if (!customName.trim() || galleryCreating) return;
+    setGalleryCreating('custom');
+    try {
+      // Leeres Dokument erstellen
+      const newDocId = await createDocument(customName.trim(), 'individuell');
+
+      if (newDocId && customVariables.length > 0) {
+        // Custom-Variablen im Store hinzufügen
+        const store = useContractBuilderStore.getState();
+        for (const cv of customVariables) {
+          if (!cv.displayName.trim()) continue;
+          const varName = cv.displayName.toLowerCase()
+            .replace(/[äÄ]/g, 'ae').replace(/[öÖ]/g, 'oe').replace(/[üÜ]/g, 'ue').replace(/[ß]/g, 'ss')
+            .replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+          store.addVariable({
+            name: `{{${varName}}}`,
+            displayName: cv.displayName.trim(),
+            type: cv.type,
+            value: undefined,
+            required: false,
+            linkedBlocks: [],
+            group: cv.group || 'Allgemein',
+          });
+        }
+      }
+
+      // Modal schließen + navigieren
+      setShowCustomCreator(false);
+      setCustomName('');
+      setCustomDescription('');
+      setCustomVariables([]);
+      if (newDocId) {
+        navigate(`/contract-builder/${newDocId}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Erstellen:', err);
+    } finally {
+      setGalleryCreating(null);
+    }
+  };
+
   const handleGalleryLoadDraft = async (draftId: string) => {
     try {
       await loadDocument(draftId);
@@ -1775,6 +1845,24 @@ const ContractBuilder: React.FC = () => {
                 </div>
               )}
 
+              {/* Eigene Vorlage erstellen — Card */}
+              <div
+                className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
+                onClick={() => setShowCustomCreator(true)}
+              >
+                <div className={styles.galleryCardHeader}>
+                  <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconCreate}`}>
+                    <FolderPlus size={20} />
+                  </div>
+                  <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeUser}`}>Individuell</span>
+                </div>
+                <h3 className={styles.galleryCardTitle}>Vorlage erstellen</h3>
+                <p className={styles.galleryCardDesc}>Erstellen Sie eine eigene Vorlage mit individuellen Feldern und Variablen.</p>
+                <div className={styles.galleryCardMeta}>
+                  <span className={styles.galleryCardMetaItem}><PenTool size={12} /> Eigene Felder definieren</span>
+                </div>
+              </div>
+
               {/* System-Vorlagen */}
               {galleryFilteredSystemTemplates.map(template => (
                 <div
@@ -1817,6 +1905,144 @@ const ContractBuilder: React.FC = () => {
             style={{ position: 'fixed', inset: 0, zIndex: 40 }}
             onClick={() => { setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); }}
           />
+        )}
+
+        {/* ═══ Custom Template Creator Modal ═══ */}
+        {showCustomCreator && (
+          <div className={styles.modalOverlay} onClick={() => setShowCustomCreator(false)}>
+            <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className={styles.modalHeader}>
+                <div className={styles.modalTitle}>
+                  <FolderPlus size={20} />
+                  <span>Eigene Vorlage erstellen</span>
+                </div>
+                <button className={styles.modalClose} onClick={() => setShowCustomCreator(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className={styles.quickFillInfo}>
+                <p className={styles.quickFillInfoText}>
+                  Definieren Sie Name und Felder für Ihre Vorlage. Im Builder können Sie dann Klauseln und Inhalte hinzufügen.
+                </p>
+              </div>
+
+              <div className={styles.quickFillBody}>
+                {/* Name + Beschreibung */}
+                <div className={styles.quickFillGroup}>
+                  <p className={styles.quickFillGroupTitle}>Grunddaten</p>
+                  <div className={styles.quickFillFieldGrid}>
+                    <div className={styles.quickFillField}>
+                      <label className={styles.quickFillLabel}>
+                        Vorlagen-Name <span className={styles.quickFillRequired}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={customName}
+                        onChange={e => setCustomName(e.target.value)}
+                        placeholder="z.B. Freelancer-Vertrag"
+                        autoFocus
+                      />
+                    </div>
+                    <div className={styles.quickFillField}>
+                      <label className={styles.quickFillLabel}>Beschreibung</label>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={customDescription}
+                        onChange={e => setCustomDescription(e.target.value)}
+                        placeholder="Kurze Beschreibung (optional)"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Variablen */}
+                <div className={styles.quickFillGroup}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <p className={styles.quickFillGroupTitle} style={{ margin: 0 }}>Felder / Variablen</p>
+                    <button
+                      className={styles.customAddVarBtn}
+                      onClick={handleAddCustomVariable}
+                      type="button"
+                    >
+                      <FolderPlus size={13} /> Feld hinzufügen
+                    </button>
+                  </div>
+
+                  {customVariables.length === 0 && (
+                    <p style={{ fontSize: 13, color: '#9ca3af', textAlign: 'center', padding: '16px 0' }}>
+                      Noch keine Felder. Klicken Sie auf &ldquo;Feld hinzufügen&rdquo; um Variablen wie Name, Datum oder Betrag zu definieren.
+                    </p>
+                  )}
+
+                  {customVariables.map((cv, idx) => (
+                    <div key={cv.id} className={styles.customVarRow}>
+                      <span className={styles.customVarNum}>{idx + 1}</span>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={cv.displayName}
+                        onChange={e => handleUpdateCustomVariable(cv.id, 'displayName', e.target.value)}
+                        placeholder="Feldname (z.B. Auftragnehmer)"
+                        style={{ flex: 2 }}
+                      />
+                      <select
+                        className={styles.quickFillInput}
+                        value={cv.type}
+                        onChange={e => handleUpdateCustomVariable(cv.id, 'type', e.target.value)}
+                        style={{ flex: 1 }}
+                      >
+                        <option value="text">Text</option>
+                        <option value="date">Datum</option>
+                        <option value="number">Zahl</option>
+                        <option value="currency">Betrag (EUR)</option>
+                      </select>
+                      <input
+                        type="text"
+                        className={styles.quickFillInput}
+                        value={cv.group}
+                        onChange={e => handleUpdateCustomVariable(cv.id, 'group', e.target.value)}
+                        placeholder="Gruppe"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className={styles.customVarRemoveBtn}
+                        onClick={() => handleRemoveCustomVariable(cv.id)}
+                        title="Feld entfernen"
+                        type="button"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className={styles.quickFillFooter}>
+                <button
+                  className={styles.quickFillSkipBtn}
+                  onClick={() => setShowCustomCreator(false)}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  className={styles.quickFillCreateBtn}
+                  onClick={handleCreateCustomTemplate}
+                  disabled={!customName.trim() || !!galleryCreating}
+                >
+                  {galleryCreating === 'custom' ? (
+                    <><Loader2 size={16} className={styles.spinner} /> Erstelle...</>
+                  ) : (
+                    <><Sparkles size={16} /> Im Builder erstellen</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ═══ Quick-Fill Modal ═══ */}
