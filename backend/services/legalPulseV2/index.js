@@ -38,11 +38,11 @@ async function loadContractText(contract) {
     return contract.contractText;
   }
 
-  // If S3 key exists, try to download and extract via pdf-parse
+  // If S3 key exists, try to download and extract (PDF + DOCX)
   if (contract.s3Key) {
     try {
       const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-      const pdfParse = require("pdf-parse");
+      const { extractTextFromBuffer } = require("../textExtractor");
       const s3 = new S3Client({
         region: process.env.AWS_REGION || "eu-central-1",
         credentials: {
@@ -58,8 +58,11 @@ async function loadContractText(contract) {
       const chunks = [];
       for await (const chunk of response.Body) { chunks.push(chunk); }
       const buffer = Buffer.concat(chunks);
-      const pdfData = await pdfParse(buffer);
-      if (pdfData.text && pdfData.text.length > 100) return pdfData.text;
+      const mimetype = contract.s3Key.toLowerCase().endsWith('.docx')
+        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        : 'application/pdf';
+      const { text } = await extractTextFromBuffer(buffer, mimetype);
+      if (text && text.length > 100) return text;
     } catch (err) {
       console.error("[PulseV2] S3 text extraction failed:", err.message);
     }
