@@ -665,13 +665,36 @@ router.post('/import-from-document', auth, (req, res, next) => {
       }
     }
 
-    // 1. Text extrahieren
-    const { text: contractText } = await extractTextFromBuffer(req.file.buffer, mimetype);
+    // 1. Text extrahieren (pdf-parse/mammoth → bei zu wenig Text: Textract OCR)
+    let contractText = '';
+    let usedOcr = false;
+
+    const extracted = await extractTextFromBuffer(req.file.buffer, mimetype);
+    contractText = extracted.text || '';
+
+    // Bei zu wenig Text aus digitalem PDF → OCR-Fallback für gescannte PDFs
+    if (contractText.trim().length < 50 && mimetype === 'application/pdf') {
+      try {
+        const { isTextractAvailable, extractTextWithOCR } = require('../services/textractService');
+        const textractStatus = await isTextractAvailable();
+        if (textractStatus.available) {
+          console.log('[ContractBuilder] PDF hat zu wenig Text, versuche OCR via Textract...');
+          const ocrResult = await extractTextWithOCR(req.file.buffer);
+          if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 50) {
+            contractText = ocrResult.text;
+            usedOcr = true;
+            console.log(`[ContractBuilder] OCR erfolgreich: ${contractText.length} Zeichen, Konfidenz: ${ocrResult.confidence?.toFixed(1)}%`);
+          }
+        }
+      } catch (ocrError) {
+        console.warn('[ContractBuilder] OCR-Fallback fehlgeschlagen:', ocrError.message);
+      }
+    }
 
     if (!contractText || contractText.trim().length < 50) {
       return res.status(400).json({
         success: false,
-        error: 'Zu wenig Text erkannt. Bitte stellen Sie sicher, dass das Dokument lesbaren Text enthält (kein gescanntes Bild).'
+        error: 'Zu wenig Text erkannt. Das Dokument scheint ein gescanntes Bild ohne lesbaren Text zu sein. Bitte versuchen Sie ein digitales PDF oder Word-Dokument.'
       });
     }
 
@@ -895,7 +918,7 @@ ${truncatedText}`
         name: title,
         contractType,
         status: 'draft',
-        description: `Importiert aus ${req.file.originalname}`
+        description: `Importiert aus ${req.file.originalname}${usedOcr ? ' (OCR)' : ''}${gptStructure ? ' (GPT)' : ''}`
       },
       content: { blocks, variables: [] },
       design: {
