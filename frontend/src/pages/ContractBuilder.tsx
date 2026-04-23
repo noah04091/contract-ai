@@ -1609,6 +1609,9 @@ const ContractBuilder: React.FC = () => {
         });
       }
       if (newDocId) {
+        // WICHTIG: Speichern bevor navigiert wird, sonst lädt der Editor die leere Server-Version
+        const store = useContractBuilderStore.getState();
+        await store.saveDocument();
         navigate(`/contract-builder/${newDocId}`);
       }
     } catch (err) {
@@ -1657,6 +1660,9 @@ const ContractBuilder: React.FC = () => {
             store.updateVariable(docVar.id, quickFillUserValues[varName].trim());
           }
         }
+        // WICHTIG: Dokument mit Template-Blöcken speichern BEVOR navigiert wird,
+        // sonst lädt der Editor die leere Server-Version
+        await store.saveDocument();
       }
       setQuickFillUserTemplate(null);
       setQuickFillUserValues({});
