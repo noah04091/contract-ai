@@ -2038,7 +2038,10 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               state.aiOperation = null;
             });
           } catch (error) {
-            set({ isAiGenerating: false, aiOperation: null, error: (error as Error).message });
+            // Legal Score Fehler sind nicht kritisch — NICHT als globalen Error anzeigen
+            // (z.B. "Keine Klauseln zum Analysieren gefunden" bei leeren Dokumenten)
+            console.warn('[Legal Score]', (error as Error).message);
+            set({ isAiGenerating: false, aiOperation: null });
           }
         },
 

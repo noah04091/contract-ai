@@ -308,11 +308,21 @@ const ContractBuilder: React.FC = () => {
   useEffect(() => {
     if (!currentDocument?.content?.blocks || currentDocument.content.blocks.length === 0) return;
 
+    // Nur Klauseln mit echtem Text (nicht nur Platzhalter) analysieren
+    const clausesWithContent = currentDocument.content.blocks
+      .filter(b => b.type === 'clause')
+      .filter(b => {
+        const body = b.content?.body || '';
+        // Mindestens 20 Zeichen echter Text (keine leeren Templates)
+        return body.replace(/\{\{[^}]*\}\}/g, '').trim().length >= 20;
+      });
+
+    // Keine echten Klauseln → nicht berechnen
+    if (clausesWithContent.length === 0) return;
+
     // Hash der Blöcke berechnen um unnötige Neuberechnungen zu vermeiden
     const blocksHash = JSON.stringify(
-      currentDocument.content.blocks
-        .filter(b => b.type === 'clause')
-        .map(b => b.content?.body || '')
+      clausesWithContent.map(b => b.content?.body || '')
     );
 
     // Wenn sich nichts geändert hat, nicht neu berechnen
