@@ -68,7 +68,7 @@ import {
   FolderOpen,
   Upload,
 } from 'lucide-react';
-import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, updateUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 // ContractTemplate type used implicitly via contractTemplates array
 import { SYSTEM_VARIABLES_MAP } from '../utils/smartVariables';
