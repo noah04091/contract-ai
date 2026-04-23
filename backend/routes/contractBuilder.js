@@ -675,33 +675,103 @@ router.post('/import-from-document', auth, (req, res, next) => {
       });
     }
 
-    // 2. Text in Sections parsen
-    const sections = parseContractText(contractText);
+    // 2. GPT-Strukturerkennung (mit Regex-Fallback)
+    let gptStructure = null;
+    try {
+      const truncatedText = contractText.substring(0, 12000); // Max ~3K Tokens
+      const gptResponse = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [{
+          role: 'system',
+          content: 'Du bist ein Vertrags-Struktur-Analyst. Analysiere den Vertragstext und extrahiere die Struktur als JSON. Antworte NUR mit validem JSON.'
+        }, {
+          role: 'user',
+          content: `Analysiere diesen Vertragstext und gib folgendes JSON zurück:
+{
+  "title": "Vertragstitel",
+  "contractType": "z.B. Dienstleistungsvertrag, Mietvertrag, NDA, etc.",
+  "partyA": { "role": "z.B. Auftraggeber", "name": "Name oder leer", "address": "Adresse oder leer" },
+  "partyB": { "role": "z.B. Auftragnehmer", "name": "Name oder leer", "address": "Adresse oder leer" },
+  "preamble": "Präambel-Text oder null",
+  "clauses": [
+    { "title": "Klauseltitel", "body": "Klauselinhalt mit Unterabschnitten" }
+  ]
+}
 
-    // 3. Parteien aus Text extrahieren
-    const textParties = extractPartiesFromText(contractText);
-    const partyAName = textParties?.partyAName || '';
-    const partyBName = textParties?.partyBName || '';
-    const partyAAddress = textParties?.partyAAddress || '';
-    const partyBAddress = textParties?.partyBAddress || '';
+Regeln:
+- Jede § Klausel oder nummerierter Abschnitt wird eine eigene clause
+- Unterabschnitte (1), (2), a), b) gehören zum Body der Klausel
+- Wenn du Parteien erkennst, extrahiere Namen und Rollen
+- Wenn kein Titel erkennbar, verwende den Dateinamen
+- Clauses sollen den VOLLSTÄNDIGEN Text enthalten, nichts weglassen
 
-    // 4. Vertragstyp versuchen zu erkennen (aus Titel)
-    const contractType = req.body.contractType || 'individuell';
-    const partyLabels = getPartyLabels(contractType);
+Vertragstext:
+${truncatedText}`
+        }]
+      });
 
-    // 5. Titel aus Text extrahieren
-    const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
-    const originalFileName = req.file.originalname.replace(/\.(pdf|docx)$/i, '').replace(/[_-]+/g, ' ');
-    let title = originalFileName || 'Importierter Vertrag';
-    const isDecorativeLine = (line) => /^[\s═=─\-_*~#•·.,:;|/\\<>+^]+$/.test(line);
-    for (const line of lines) {
-      if (isDecorativeLine(line)) continue;
-      if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
-          !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
-        title = line;
-        break;
+      const parsed = JSON.parse(gptResponse.choices[0].message.content || '{}');
+      if (parsed.clauses && Array.isArray(parsed.clauses) && parsed.clauses.length > 0) {
+        gptStructure = parsed;
+        console.log(`[ContractBuilder] GPT-Struktur erkannt: ${parsed.clauses.length} Klauseln, Typ: ${parsed.contractType}`);
+      }
+    } catch (gptError) {
+      console.warn('[ContractBuilder] GPT-Strukturerkennung fehlgeschlagen, nutze Regex-Fallback:', gptError.message);
+    }
+
+    // Daten aus GPT oder Regex-Fallback extrahieren
+    let sections, partyAName, partyBName, partyAAddress, partyBAddress, contractType, title;
+    const partyLabelsFromType = (type) => getPartyLabels(type);
+
+    if (gptStructure) {
+      // GPT-Ergebnis nutzen
+      title = gptStructure.title || req.file.originalname.replace(/\.(pdf|docx)$/i, '').replace(/[_-]+/g, ' ');
+      contractType = gptStructure.contractType || req.body.contractType || 'individuell';
+      partyAName = gptStructure.partyA?.name || '';
+      partyBName = gptStructure.partyB?.name || '';
+      partyAAddress = gptStructure.partyA?.address || '';
+      partyBAddress = gptStructure.partyB?.address || '';
+
+      // GPT-Klauseln in das sections-Format konvertieren (für bestehende Block-Erstellung)
+      sections = [];
+      if (gptStructure.preamble) {
+        sections.push({ type: 'preamble', title: 'Präambel', content: [{ type: 'text', text: gptStructure.preamble }] });
+      }
+      for (const clause of gptStructure.clauses) {
+        sections.push({
+          type: 'section',
+          title: clause.title || '',
+          content: [{ type: 'text', text: clause.body || '' }]
+        });
+      }
+    } else {
+      // Regex-Fallback
+      sections = parseContractText(contractText);
+      const textParties = extractPartiesFromText(contractText);
+      partyAName = textParties?.partyAName || '';
+      partyBName = textParties?.partyBName || '';
+      partyAAddress = textParties?.partyAAddress || '';
+      partyBAddress = textParties?.partyBAddress || '';
+      contractType = req.body.contractType || 'individuell';
+
+      // Titel aus Text extrahieren
+      const lines = contractText.split('\n').map(l => l.trim().replace(/\*\*/g, '')).filter(Boolean);
+      const originalFileName = req.file.originalname.replace(/\.(pdf|docx)$/i, '').replace(/[_-]+/g, ' ');
+      title = originalFileName || 'Importierter Vertrag';
+      const isDecorativeLine = (line) => /^[\s═=─\-_*~#•·.,:;|/\\<>+^]+$/.test(line);
+      for (const line of lines) {
+        if (isDecorativeLine(line)) continue;
+        if (line === line.toUpperCase() && line.length > 5 && !line.startsWith('§') &&
+            !['PRÄAMBEL', 'ZWISCHEN', 'UND', 'ANLAGEN'].includes(line)) {
+          title = line;
+          break;
+        }
       }
     }
+
+    const partyLabels = partyLabelsFromType(contractType);
 
     // 6. Sections → Builder-Blöcke (identische Logik wie import-from-generator)
     const blocks = [];
