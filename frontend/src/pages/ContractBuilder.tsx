@@ -71,6 +71,7 @@ import {
 import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 // ContractTemplate type used implicitly via contractTemplates array
+import { SYSTEM_VARIABLES_MAP } from '../utils/smartVariables';
 import { WelcomePopup } from '../components/Tour';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/ContractBuilder.module.css';
@@ -2242,28 +2243,59 @@ const ContractBuilder: React.FC = () => {
                 </div>
 
                 <div className={styles.quickFillBody}>
-                  {Object.entries(groups).map(([groupName, groupVars]) => (
-                    <div key={groupName} className={styles.quickFillGroup}>
-                      <p className={styles.quickFillGroupTitle}>{groupName}</p>
-                      <div className={styles.quickFillFieldGrid}>
-                        {groupVars.map(v => {
-                          const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
-                          return (
-                            <div key={v.id || varName} className={styles.quickFillField}>
-                              <label className={styles.quickFillLabel}>{v.displayName || varName}</label>
-                              <input
-                                type={v.type === 'date' ? 'date' : v.type === 'number' || v.type === 'currency' ? 'number' : 'text'}
-                                className={styles.quickFillInput}
-                                value={quickFillUserValues[varName] || ''}
-                                onChange={e => setQuickFillUserValues(p => ({ ...p, [varName]: e.target.value }))}
-                                placeholder={v.displayName || varName}
-                              />
-                            </div>
-                          );
-                        })}
+                  {Object.entries(groups).map(([groupName, groupVars]) => {
+                    // Smart-Variablen von normalen trennen
+                    const normalVars = groupVars.filter(v => {
+                      const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
+                      return !SYSTEM_VARIABLES_MAP.has(varName);
+                    });
+                    const smartVars = groupVars.filter(v => {
+                      const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
+                      return SYSTEM_VARIABLES_MAP.has(varName);
+                    });
+
+                    return (
+                      <div key={groupName} className={styles.quickFillGroup}>
+                        <p className={styles.quickFillGroupTitle}>{groupName}</p>
+                        <div className={styles.quickFillFieldGrid}>
+                          {normalVars.map(v => {
+                            const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
+                            return (
+                              <div key={v.id || varName} className={styles.quickFillField}>
+                                <label className={styles.quickFillLabel}>{v.displayName || varName}</label>
+                                <input
+                                  type={v.type === 'date' ? 'date' : v.type === 'number' || v.type === 'currency' ? 'number' : 'text'}
+                                  className={styles.quickFillInput}
+                                  value={quickFillUserValues[varName] || ''}
+                                  onChange={e => setQuickFillUserValues(p => ({ ...p, [varName]: e.target.value }))}
+                                  placeholder={v.displayName || varName}
+                                />
+                              </div>
+                            );
+                          })}
+                          {smartVars.map(v => {
+                            const varName = (v.name || '').replace(/\{\{|\}\}/g, '');
+                            const smartVar = SYSTEM_VARIABLES_MAP.get(varName);
+                            return (
+                              <div key={v.id || varName} className={styles.quickFillField}>
+                                <label className={styles.quickFillLabel} style={{ color: '#9ca3af' }}>
+                                  {smartVar?.displayName || v.displayName || varName}
+                                  <span style={{ fontSize: 10, marginLeft: 4, color: '#3B82F6' }}>automatisch</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  className={styles.quickFillInput}
+                                  value={smartVar?.getValue() || ''}
+                                  disabled
+                                  style={{ background: '#f9fafb', color: '#6b7280', cursor: 'default' }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className={styles.quickFillFooter}>
