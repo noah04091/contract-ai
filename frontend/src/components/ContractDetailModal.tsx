@@ -329,6 +329,11 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ envelopeId, o
     </div>
   );
 
+  // Dateityp-Erkennung: PDF vs. Word (aus Envelope-Contract-Daten)
+  const contractS3Key = envelope?.contractId?.s3Key || '';
+  const contractName = envelope?.contractId?.name || envelope?.title || '';
+  const isDocx = contractS3Key.toLowerCase().endsWith('.docx') || (!contractS3Key && contractName.toLowerCase().endsWith('.docx'));
+
   // 🎨 Render PDF Viewer Tab
   const renderPdfTab = (url: string | null, type: 'original' | 'signed') => {
     if (!url) {
@@ -336,10 +341,29 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ envelopeId, o
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>
             <FileText size={64} />
-            <p>{type === 'signed' ? 'Kein signiertes PDF verfügbar' : 'PDF nicht gefunden'}</p>
+            <p>{type === 'signed' ? 'Kein signiertes PDF verfügbar' : (isDocx ? 'Dokument nicht gefunden' : 'PDF nicht gefunden')}</p>
             {type === 'signed' && envelope.status !== 'COMPLETED' && (
               <span className={styles.hint}>Das signierte PDF wird erstellt, sobald alle Parteien signiert haben.</span>
             )}
+          </div>
+        </div>
+      );
+    }
+
+    // DOCX Original: Download-Bereich statt iframe
+    if (type === 'original' && isDocx) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <FileText size={64} style={{ color: '#2b579a' }} />
+            <p style={{ fontSize: '18px', fontWeight: 600 }}>Word-Dokument</p>
+            <span className={styles.hint} style={{ maxWidth: '400px', lineHeight: '1.6' }}>
+              Word-Dokumente können nicht direkt im Browser angezeigt werden.
+              Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+            </span>
+            <a href={url} download={contractName || 'Vertrag.docx'} className={styles.downloadButton} style={{ marginTop: '16px' }}>
+              📥 Original-Dokument herunterladen
+            </a>
           </div>
         </div>
       );
@@ -449,7 +473,7 @@ const ContractDetailModal: React.FC<ContractDetailModalProps> = ({ envelopeId, o
             onClick={() => setActiveTab('original')}
           >
             <FileText size={18} />
-            <span>Original PDF</span>
+            <span>{isDocx ? 'Original Word' : 'Original PDF'}</span>
           </button>
           <button
             className={`${styles.tabButton} ${activeTab === 'signed' ? styles.tabActive : ''}`}

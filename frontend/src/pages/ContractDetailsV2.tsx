@@ -251,6 +251,9 @@ export default function ContractDetailsV2() {
     };
   }, [isFullscreen]);
 
+  // Dateityp-Erkennung: PDF vs. Word
+  const isDocx = !!(contract?.s3Key?.toLowerCase().endsWith('.docx') || (!contract?.s3Key && contract?.name?.toLowerCase().endsWith('.docx')));
+
   // PDF Viewer State
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -3206,7 +3209,38 @@ export default function ContractDetailsV2() {
                         {pdfLoading ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60, color: 'white' }}>
                             <div className={styles.loadingSpinner} style={{ width: 40, height: 40, marginBottom: 16 }} />
-                            <p>PDF wird geladen...</p>
+                            <p>{isDocx ? 'Dokument wird geladen...' : 'PDF wird geladen...'}</p>
+                          </div>
+                        ) : isDocx && pdfUrl ? (
+                          /* DOCX: Download-Bereich statt PDF-Viewer */
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60 }}>
+                            <FileText size={64} style={{ color: '#6b9fff', marginBottom: 16 }} />
+                            <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>Word-Dokument</p>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 400, lineHeight: 1.6, marginBottom: 24 }}>
+                              Word-Dokumente können nicht direkt im Browser angezeigt werden.
+                              Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+                            </p>
+                            <a
+                              href={pdfUrl}
+                              download={contract.name || 'Vertrag.docx'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                padding: '12px 24px',
+                                background: '#2b579a',
+                                color: '#fff',
+                                borderRadius: 8,
+                                textDecoration: 'none',
+                                fontSize: 15,
+                                fontWeight: 500,
+                              }}
+                            >
+                              <Download size={18} />
+                              Dokument herunterladen
+                            </a>
                           </div>
                         ) : pdfUrl ? (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
@@ -3280,9 +3314,9 @@ export default function ContractDetailsV2() {
                             <div className={styles.emptyIcon}>
                               <FileText size={32} />
                             </div>
-                            <h4 className={styles.emptyTitle}>Keine PDF verfügbar</h4>
+                            <h4 className={styles.emptyTitle}>{isDocx ? 'Kein Dokument verfügbar' : 'Keine PDF verfügbar'}</h4>
                             <p className={styles.emptyText}>
-                              Für diesen Vertrag ist keine PDF-Datei hinterlegt.
+                              {isDocx ? 'Für diesen Vertrag ist kein Dokument hinterlegt.' : 'Für diesen Vertrag ist keine PDF-Datei hinterlegt.'}
                             </p>
                           </div>
                         )}

@@ -423,6 +423,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose, editingField, editingQuickFact, addingQuickFact, showAddFieldMenu, addingCustomField, editingCustomField]);
 
+  // Dateityp-Erkennung: PDF vs. Word
+  const isDocx = !!(contract.s3Key?.toLowerCase().endsWith('.docx') || (!contract.s3Key && contract.name?.toLowerCase().endsWith('.docx')));
+
   // Load PDF URL when PDF tab is opened
   const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
   useEffect(() => {
@@ -1783,8 +1786,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>
             <FileText size={64} />
-            <p>Kein PDF verfügbar</p>
-            <span className={styles.hint}>Für diesen Vertrag ist kein PDF verfügbar.</span>
+            <p>{isDocx ? 'Kein Dokument verfügbar' : 'Kein PDF verfügbar'}</p>
+            <span className={styles.hint}>Für diesen Vertrag ist kein Dokument verfügbar.</span>
           </div>
         </div>
       );
@@ -1795,7 +1798,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.tabContent}>
           <div className={styles.loadingContainer}>
             <div className={styles.spinner}></div>
-            <p>Lade PDF...</p>
+            <p>{isDocx ? 'Lade Dokument...' : 'Lade PDF...'}</p>
           </div>
         </div>
       );
@@ -1806,10 +1809,51 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>
             <AlertCircle size={64} />
-            <p>Fehler beim Laden des PDFs</p>
+            <p>{isDocx ? 'Fehler beim Laden des Dokuments' : 'Fehler beim Laden des PDFs'}</p>
             <span className={styles.hint}>
-              Das PDF konnte nicht geladen werden. Bitte versuchen Sie es später erneut.
+              Das Dokument konnte nicht geladen werden. Bitte versuchen Sie es später erneut.
             </span>
+          </div>
+        </div>
+      );
+    }
+
+    // DOCX: Download-Bereich (Browser kann Word-Dateien nicht im iframe anzeigen)
+    if (isDocx) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <FileText size={64} style={{ color: '#2b579a' }} />
+            <p style={{ fontSize: '18px', fontWeight: 600 }}>Word-Dokument</p>
+            <span className={styles.hint} style={{ maxWidth: '400px', lineHeight: '1.6' }}>
+              Word-Dokumente können nicht direkt im Browser angezeigt werden.
+              Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+            </span>
+            <a
+              href={pdfUrl}
+              download={contract.name || 'Vertrag.docx'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                marginTop: '20px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 24px',
+                background: '#2b579a',
+                color: '#fff',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '15px',
+                fontWeight: 500,
+                transition: 'background 0.2s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#1e3f73')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#2b579a')}
+            >
+              <Download size={18} />
+              Dokument herunterladen
+            </a>
           </div>
         </div>
       );
@@ -2699,7 +2743,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 disabled={!hasPdfSource}
               >
                 <Eye size={18} />
-                <span>PDF</span>
+                <span>{isDocx ? 'Word' : 'PDF'}</span>
                 {!hasPdfSource && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
               </button>
               <button
