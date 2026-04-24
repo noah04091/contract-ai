@@ -131,6 +131,11 @@ async function checkContract(contractText, rules, context = {}) {
     if (r.threshold) parts.push(`   Schwellenwert: ${r.threshold}`);
     parts.push(`   Prioritaet: ${r.priority}`);
     parts.push(`   Kategorie: ${r.category}`);
+    // Standardtext als Referenz-Klausel (max 500 Zeichen im Prompt)
+    if (r.standardText) {
+      const truncated = r.standardText.length > 500 ? r.standardText.substring(0, 500) + "..." : r.standardText;
+      parts.push(`   Referenz-Klausel (Standardtext): "${truncated}"`);
+    }
     return parts.join("\n");
   }).join("\n\n");
 
@@ -154,8 +159,9 @@ Pruefe JEDE Anforderung einzeln gegen den Vertragstext. Fuer jede Anforderung:
 
 1. Suche die relevante Klausel/Passage im Vertrag
 2. Bewerte ob die Anforderung erfuellt ist
-3. Bei Abweichung: Formuliere eine bessere Klausel
-4. Gib einen konkreten Verhandlungstipp
+3. Wenn eine Referenz-Klausel (Standardtext) angegeben ist: Vergleiche die gefundene Klausel direkt mit diesem Standardtext und beschreibe Abweichungen praezise
+4. Bei Abweichung: Formuliere eine bessere Klausel
+5. Gib einen konkreten Verhandlungstipp
 
 Antworte NUR mit einem JSON-Objekt:
 {

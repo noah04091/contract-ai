@@ -56,6 +56,18 @@ const playbookRuleSchema = new mongoose.Schema({
     type: String,
     maxlength: 200
   },
+  // Notiz: Warum ist diese Regel wichtig? (nur fuer Menschen, nicht fuer KI)
+  note: {
+    type: String,
+    maxlength: 500,
+    default: ""
+  },
+  // Standardtext: Ideale Referenz-Klausel (wird bei Pruefung an KI gesendet)
+  standardText: {
+    type: String,
+    maxlength: 2000,
+    default: ""
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -45,6 +45,8 @@ export async function createPlaybook(data: {
     category?: string;
     priority?: string;
     threshold?: string;
+    note?: string;
+    standardText?: string;
   }>;
   isDefault?: boolean;
   isGlobal?: boolean;
@@ -75,6 +77,8 @@ export async function updatePlaybook(id: string, data: {
     category?: string;
     priority?: string;
     threshold?: string;
+    note?: string;
+    standardText?: string;
   }>;
   isDefault?: boolean;
   status?: string;

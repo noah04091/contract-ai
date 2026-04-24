@@ -39,6 +39,8 @@ interface PlaybookRule {
   category: string;
   priority: string;
   threshold: string;
+  note?: string;
+  standardText?: string;
 }
 
 interface Playbook {
@@ -202,6 +204,12 @@ const PlaybookReview: React.FC = () => {
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
 
+  // Expandable rule cards in detail view
+  const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
+  const [editingRule, setEditingRule] = useState<PlaybookRule | null>(null);
+  const [isRuleDirty, setIsRuleDirty] = useState(false);
+  const [isSavingRule, setIsSavingRule] = useState(false);
+
   // ============================================
   // DATA LOADING
   // ============================================
@@ -242,6 +250,16 @@ const PlaybookReview: React.FC = () => {
       loadDashboard();
     }
   }, [playbookId, loadDashboard, loadPlaybookDetail]);
+
+  // Playbook laden wenn Check-Ergebnis vom Dashboard kommt (für Standardtext/Notiz)
+  useEffect(() => {
+    if (view === 'check-result' && checkResult && !selectedPlaybook) {
+      const pbId = typeof checkResult.playbookId === 'object'
+        ? checkResult.playbookId._id
+        : checkResult.playbookId;
+      if (pbId) loadPlaybookDetail(pbId);
+    }
+  }, [view, checkResult, selectedPlaybook, loadPlaybookDetail]);
 
   // ============================================
   // BUILDER ACTIONS
@@ -362,6 +380,61 @@ const PlaybookReview: React.FC = () => {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Fehler');
     }
+  };
+
+  // ============================================
+  // RULE EXPAND/EDIT ACTIONS
+  // ============================================
+  const toggleRuleExpanded = (ruleId: string) => {
+    if (expandedRuleId === ruleId) {
+      if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+      setExpandedRuleId(null);
+      setEditingRule(null);
+      setIsRuleDirty(false);
+    } else {
+      if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+      setExpandedRuleId(ruleId);
+      const rule = selectedPlaybook?.rules.find(r => r._id === ruleId);
+      setEditingRule(rule ? { ...rule } : null);
+      setIsRuleDirty(false);
+    }
+  };
+
+  const handleRuleFieldChange = (field: keyof PlaybookRule, value: string) => {
+    if (!editingRule) return;
+    setEditingRule({ ...editingRule, [field]: value });
+    setIsRuleDirty(true);
+  };
+
+  const handleSaveRule = async () => {
+    if (!selectedPlaybook || !editingRule || !expandedRuleId) return;
+    setIsSavingRule(true);
+    try {
+      const updatedRules = selectedPlaybook.rules.map(r =>
+        r._id === expandedRuleId ? { ...editingRule } : r
+      );
+      await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
+      setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      setIsRuleDirty(false);
+      toast.success('Regel gespeichert');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern');
+    } finally {
+      setIsSavingRule(false);
+    }
+  };
+
+  // Helper: Lookup rule note/standardText for check results
+  const getRuleNote = (ruleId: string): string => {
+    if (!selectedPlaybook) return '';
+    const rule = selectedPlaybook.rules.find(r => r._id === ruleId);
+    return rule?.note || '';
+  };
+
+  const getRuleStandardText = (ruleId: string): string => {
+    if (!selectedPlaybook) return '';
+    const rule = selectedPlaybook.rules.find(r => r._id === ruleId);
+    return rule?.standardText || '';
   };
 
   // ============================================
@@ -901,28 +974,152 @@ const PlaybookReview: React.FC = () => {
           <h3>Anforderungen ({selectedPlaybook.rules.length})</h3>
         </div>
         <div className={styles.rulesList}>
-          {selectedPlaybook.rules.map((rule, index) => (
-            <div key={rule._id || index} className={styles.ruleCard}>
-              <div className={styles.ruleHeader}>
-                <span
-                  className={styles.priorityBadge}
-                  style={{ backgroundColor: PRIORITY_LABELS[rule.priority]?.color || '#6b7280' }}
+          {selectedPlaybook.rules.map((rule, index) => {
+            const ruleId = rule._id || String(index);
+            const isExpanded = expandedRuleId === ruleId;
+            const currentData = isExpanded && editingRule ? editingRule : rule;
+
+            return (
+              <div key={ruleId} className={`${styles.ruleCard} ${isExpanded ? styles.ruleCardExpanded : ''}`}>
+                {/* Klickbarer Header */}
+                <div
+                  className={styles.ruleHeader}
+                  onClick={() => toggleRuleExpanded(ruleId)}
+                  style={{ cursor: 'pointer' }}
                 >
-                  {PRIORITY_LABELS[rule.priority]?.label || rule.priority}
-                </span>
-                <strong>{rule.title}</strong>
-              </div>
-              <p className={styles.ruleDescText}>{rule.description}</p>
-              <div className={styles.ruleFooter}>
-                <span className={styles.ruleCategory}>
-                  {CATEGORY_LABELS[rule.category] || rule.category}
-                </span>
-                {rule.threshold && (
-                  <span className={styles.ruleThreshold}>{rule.threshold}</span>
+                  <span
+                    className={styles.priorityBadge}
+                    style={{ backgroundColor: PRIORITY_LABELS[rule.priority]?.color || '#6b7280' }}
+                  >
+                    {PRIORITY_LABELS[rule.priority]?.label || rule.priority}
+                  </span>
+                  <strong style={{ flex: 1 }}>{rule.title}</strong>
+                  <ChevronRight size={16} className={isExpanded ? styles.chevronOpen : ''} />
+                </div>
+
+                {/* Zugeklappt: Beschreibung + Badges */}
+                {!isExpanded && (
+                  <>
+                    <p className={styles.ruleDescText}>{rule.description}</p>
+                    <div className={styles.ruleFooter}>
+                      <span className={styles.ruleCategory}>
+                        {CATEGORY_LABELS[rule.category] || rule.category}
+                      </span>
+                      {rule.threshold && <span className={styles.ruleThreshold}>{rule.threshold}</span>}
+                      {rule.note && <span className={styles.ruleNoteIndicator} title={rule.note}>Notiz</span>}
+                      {rule.standardText && <span className={styles.ruleStandardIndicator}>Standardtext</span>}
+                    </div>
+                  </>
+                )}
+
+                {/* Aufgeklappt: Editierbare Felder */}
+                {isExpanded && editingRule && (
+                  <div className={styles.ruleExpandedContent}>
+                    <label className={styles.fieldLabel}>Titel</label>
+                    <input
+                      className={styles.input}
+                      value={currentData.title}
+                      onChange={e => handleRuleFieldChange('title', e.target.value)}
+                      maxLength={200}
+                    />
+
+                    <label className={styles.fieldLabel}>Beschreibung</label>
+                    <textarea
+                      className={styles.textarea}
+                      value={currentData.description}
+                      onChange={e => handleRuleFieldChange('description', e.target.value)}
+                      rows={3}
+                      maxLength={1000}
+                    />
+
+                    <div className={styles.ruleEditRow}>
+                      <div>
+                        <label className={styles.fieldLabel}>Priorität</label>
+                        <select
+                          className={styles.selectSmall}
+                          value={currentData.priority}
+                          onChange={e => handleRuleFieldChange('priority', e.target.value)}
+                        >
+                          <option value="muss">Pflicht</option>
+                          <option value="soll">Empfohlen</option>
+                          <option value="kann">Optional</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={styles.fieldLabel}>Kategorie</label>
+                        <select
+                          className={styles.selectSmall}
+                          value={currentData.category}
+                          onChange={e => handleRuleFieldChange('category', e.target.value)}
+                        >
+                          {Object.entries(CATEGORY_LABELS).map(([val, label]) => (
+                            <option key={val} value={val}>{label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <label className={styles.fieldLabel}>Schwellenwert</label>
+                    <input
+                      className={styles.input}
+                      value={currentData.threshold}
+                      onChange={e => handleRuleFieldChange('threshold', e.target.value)}
+                      placeholder="z.B. max. 30 Tage, nicht über 5%"
+                      maxLength={200}
+                    />
+
+                    <hr className={styles.ruleDivider} />
+
+                    <label className={styles.fieldLabel}>
+                      Notiz <span className={styles.fieldLabelOptional}>(optional)</span>
+                    </label>
+                    <textarea
+                      className={styles.textarea}
+                      value={currentData.note || ''}
+                      onChange={e => handleRuleFieldChange('note', e.target.value)}
+                      placeholder="Warum ist diese Regel wichtig? z.B. Hatten 2024 Probleme mit 90-Tage-Zahlungsfristen"
+                      rows={2}
+                      maxLength={500}
+                    />
+                    <span className={styles.charCount}>{(currentData.note || '').length}/500</span>
+
+                    <label className={styles.fieldLabel}>
+                      Standardtext <span className={styles.fieldLabelOptional}>(optional)</span>
+                    </label>
+                    <p className={styles.fieldHint}>
+                      Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
+                    </p>
+                    <textarea
+                      className={`${styles.textarea} ${styles.standardTextArea}`}
+                      value={currentData.standardText || ''}
+                      onChange={e => handleRuleFieldChange('standardText', e.target.value)}
+                      placeholder='z.B. "Die Zahlungsfrist beträgt 14 Tage nach Rechnungseingang. Bei Zahlungsverzug werden Verzugszinsen in Höhe von 5 Prozentpunkten über dem Basiszinssatz erhoben."'
+                      rows={4}
+                      maxLength={2000}
+                    />
+                    <span className={styles.charCount}>{(currentData.standardText || '').length}/2000</span>
+
+                    <div className={styles.ruleEditActions}>
+                      <button
+                        className={styles.btnOutline}
+                        onClick={() => { setExpandedRuleId(null); setEditingRule(null); setIsRuleDirty(false); }}
+                      >
+                        Abbrechen
+                      </button>
+                      <button
+                        className={styles.btnPrimary}
+                        onClick={handleSaveRule}
+                        disabled={!isRuleDirty || isSavingRule}
+                      >
+                        {isSavingRule ? <Loader2 size={14} className={styles.spinner} /> : <CheckCircle2 size={14} />}
+                        Speichern
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Check-Historie */}
@@ -1076,8 +1273,13 @@ const PlaybookReview: React.FC = () => {
               >
                 <StatusIcon status={result.status} />
                 <div className={styles.resultTitle}>
-                  <strong>{result.ruleTitle}</strong>
-                  {result.isGlobalRule && <span className={styles.globalTag}>Global</span>}
+                  <div>
+                    <strong>{result.ruleTitle}</strong>
+                    {result.isGlobalRule && <span className={styles.globalTag}>Global</span>}
+                    {getRuleNote(result.ruleId) && (
+                      <span className={styles.resultNoteHint}>{getRuleNote(result.ruleId)}</span>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={styles.priorityBadge}
@@ -1093,6 +1295,20 @@ const PlaybookReview: React.FC = () => {
 
               {expandedResults.has(result._id || String(index)) && (
                 <div className={styles.resultDetails}>
+                  {/* Ihr Standard (Standardtext aus Regel) */}
+                  {getRuleStandardText(result.ruleId) && (
+                    <div className={`${styles.detailBlock} ${styles.standardBlock}`}>
+                      <label>Ihr Standard:</label>
+                      <p>{getRuleStandardText(result.ruleId)}</p>
+                      <button
+                        className={styles.copyBtn}
+                        onClick={() => copyToClipboard(getRuleStandardText(result.ruleId))}
+                      >
+                        <Copy size={14} /> Kopieren
+                      </button>
+                    </div>
+                  )}
+
                   {result.finding && (
                     <div className={styles.detailBlock}>
                       <label>Im Vertrag gefunden:</label>
