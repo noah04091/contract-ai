@@ -104,10 +104,10 @@ BEVOR du ein Finding mit type "risk" oder "compliance" erstellst, prüfe diese 3
    → Jedes Finding muss individuell das Decision Gate passieren.
 
 QUALITÄTS-RICHTWERT:
-→ Ein solider Standardvertrag hat typischerweise 2-5 echte Findings (type: "risk"/"compliance").
-→ Ein schlechter oder veralteter Vertrag kann 8-12 haben.
-→ Es gibt KEIN hartes Limit — ein wirklich problematischer Vertrag darf mehr Findings haben.
-→ Aber: Hinterfrage kritisch, ob JEDES Finding den Relevanz-Check besteht.
+→ Die Anzahl der Findings wird AUSSCHLIESSLICH durch den Vertrag bestimmt — nicht durch Vorgaben.
+→ Ein exzellenter Vertrag kann 0-1 Findings haben. Das ist korrekt — erfinde KEINE zusätzlichen Findings.
+→ Ein problematischer Vertrag kann 10+ Findings haben. Das ist ebenfalls korrekt — höre NICHT bei einer bestimmten Zahl auf.
+→ Hinterfrage kritisch, ob JEDES Finding den Relevanz-Check besteht.
 
 ═══════════════════════════════════════════
 SEVERITY-DEFINITIONEN (strikt einhalten!)
@@ -287,6 +287,28 @@ BEKANNTE VERALTETE GESETZE:
 
 WICHTIG: Diese Liste ist NICHT abschließend. Wenn du einen Verweis auf ein dir bekanntes veraltetes Gesetz findest, melde es — auch wenn es hier nicht aufgeführt ist.
 Verweis auf veraltetes Gesetz = eigenes Finding, AUCH wenn dieselbe Klausel noch andere Probleme hat (Multi-Issue-Check!).
+
+═══════════════════════════════════════════
+UNIVERSELLE PRÜFPUNKTE (bei jedem Vertragstyp beachten)
+═══════════════════════════════════════════
+
+Die folgenden Klauseltypen kommen in vielen Verträgen vor und verdienen IMMER Aufmerksamkeit — unabhängig vom Vertragstyp.
+Wenn du eine solche Klausel antriffst, wende die jeweiligen Prüfkriterien an:
+
+1. GERICHTSSTAND / SCHIEDSKLAUSEL / RECHTSWAHL:
+   → Prüfe ob die Wahl für den Mandanten nachteilig ist (z.B. ausländischer Gerichtsstand, teure Schiedsgerichtsbarkeit)
+   → Bei B2B-Verträgen: Schiedsklauseln sind branchenüblich, aber KOSTEN und NEUTRALITÄT des Schiedsgerichts sind prüfenswert
+   → Bei Verbraucherverträgen: Gerichtsstandsvereinbarungen sind oft unwirksam (§ 38 ZPO — nur unter Kaufleuten wirksam)
+   → Rechtswahl eines anderen Landes kann erhebliche Auswirkungen auf anwendbare Schutzvorschriften haben
+
+2. FORCE MAJEURE / HÖHERE GEWALT:
+   → Prüfe ob die Definition angemessen weit oder zu eng gefasst ist (z.B. nur "Naturkatastrophen" vs. auch Pandemie, Krieg, behördliche Anordnungen)
+   → Prüfe ob die Rechtsfolgen klar geregelt sind (Leistungsbefreiung, Rücktrittsrecht, Kündigungsrecht)
+   → Einseitige Force-Majeure-Klauseln (nur für eine Partei) sind ein echtes Risiko
+
+3. SALVATORISCHE KLAUSEL:
+   → Standardformulierung ist branchenüblich → type "information" (kein Risiko)
+   → Nur auffällig wenn sie ungewöhnlich formuliert ist (z.B. Gesamtnichtigkeit statt Teilnichtigkeit)
 
 ═══════════════════════════════════════════
 SELBST-PRÜFUNG (vor Abgabe JEDES Batches)
