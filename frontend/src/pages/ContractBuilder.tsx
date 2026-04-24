@@ -155,7 +155,8 @@ const ContractBuilder: React.FC = () => {
   const [bulkEntries, setBulkEntries] = useState<Array<{ id: string; values: Record<string, string>; expanded: boolean }>>([]);
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkProgress, setBulkProgress] = useState(0);
-  const [, setBulkDocIds] = useState<string[]>([]); // Created doc IDs for tab navigation
+  const [, setBulkDocIds] = useState<string[]>([]);
+  const [bulkSuccessModal, setBulkSuccessModal] = useState<{ ids: string[]; templateName: string } | null>(null);
 
   // ─── User Template Quick-Fill State ───
   const [quickFillUserTemplate, setQuickFillUserTemplate] = useState<UserTemplate | null>(null);
@@ -1559,7 +1560,8 @@ const ContractBuilder: React.FC = () => {
         createdIds.push(newDocId);
       }
 
-      // Aufräumen und zum ersten Vertrag navigieren
+      // Aufräumen und Erfolgs-Modal zeigen
+      const templateName = quickFillTemplate.name;
       setBulkDocIds(createdIds);
       setQuickFillTemplate(null);
       setQuickFillValues({});
@@ -1568,7 +1570,7 @@ const ContractBuilder: React.FC = () => {
       setBulkCreating(false);
 
       if (createdIds.length > 0) {
-        navigate(`/contract-builder/${createdIds[0]}?bulk=${createdIds.join(',')}`);
+        setBulkSuccessModal({ ids: createdIds, templateName });
       }
     } catch (err) {
       console.error('Bulk-Erstellung Fehler:', err);
@@ -1912,6 +1914,28 @@ const ContractBuilder: React.FC = () => {
                 Alle Vorlagen können vollständig angepasst werden.
               </p>
             </div>
+
+            {/* Zuletzt verwendet — Top 3 */}
+            {savedDrafts.length > 0 && !gallerySearch && (
+              <div className={styles.recentSection}>
+                <span className={styles.recentLabel}><Clock size={13} /> Zuletzt bearbeitet</span>
+                <div className={styles.recentRow}>
+                  {savedDrafts.slice(0, 3).map(draft => (
+                    <button
+                      key={draft._id}
+                      className={styles.recentCard}
+                      onClick={() => handleGalleryLoadDraft(draft._id)}
+                    >
+                      <FileText size={15} style={{ color: '#3B82F6', flexShrink: 0 }} />
+                      <div style={{ minWidth: 0 }}>
+                        <p className={styles.recentCardName}>{draft.metadata.name}</p>
+                        <span className={styles.recentCardMeta}>{formatGalleryDate(draft.updatedAt)}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Search */}
             <div className={styles.gallerySearch}>
@@ -2324,6 +2348,67 @@ const ContractBuilder: React.FC = () => {
             </div>
           );
         })()}
+
+        {/* ═══ Bulk Erfolgs-Modal ═══ */}
+        {bulkSuccessModal && (
+          <div className={styles.modalOverlay} onClick={() => setBulkSuccessModal(null)}>
+            <div className={`${styles.modal} ${styles.quickFillModal}`} onClick={e => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div className={styles.modalTitle}>
+                  <CheckCircle size={20} style={{ color: '#10b981' }} />
+                  <span>Massenerstellung abgeschlossen</span>
+                </div>
+                <button className={styles.modalClose} onClick={() => setBulkSuccessModal(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className={styles.quickFillBody}>
+                <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+                  <p style={{ fontSize: 28, fontWeight: 700, color: '#10b981', margin: '0 0 4px' }}>{bulkSuccessModal.ids.length}</p>
+                  <p style={{ fontSize: 15, color: '#374151', margin: 0 }}>Verträge erfolgreich erstellt</p>
+                  <p style={{ fontSize: 13, color: '#9ca3af', margin: '4px 0 0' }}>{bulkSuccessModal.templateName}</p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {bulkSuccessModal.ids.map((docId, idx) => (
+                    <button
+                      key={docId}
+                      className={styles.galleryDraftCard}
+                      onClick={() => {
+                        setBulkSuccessModal(null);
+                        navigate(`/contract-builder/${docId}?bulk=${bulkSuccessModal.ids.join(',')}`);
+                      }}
+                      style={{ cursor: 'pointer', border: '1px solid #e5e7eb' }}
+                    >
+                      <div className={styles.galleryDraftIcon}>
+                        <FileText size={16} />
+                      </div>
+                      <div className={styles.galleryDraftInfo}>
+                        <p className={styles.galleryDraftName}>Vertrag {idx + 1}</p>
+                        <span className={styles.galleryDraftMeta}>Im Builder öffnen</span>
+                      </div>
+                      <ChevronLeft size={14} style={{ transform: 'rotate(180deg)', color: '#9ca3af' }} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.quickFillFooter}>
+                <button className={styles.quickFillSkipBtn} onClick={() => setBulkSuccessModal(null)}>
+                  Schließen
+                </button>
+                <button
+                  className={styles.quickFillCreateBtn}
+                  onClick={() => {
+                    const ids = bulkSuccessModal.ids;
+                    setBulkSuccessModal(null);
+                    navigate(`/contract-builder/${ids[0]}?bulk=${ids.join(',')}`);
+                  }}
+                >
+                  <Edit3 size={16} /> Ersten Vertrag öffnen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ═══ User-Template Bearbeiten Modal ═══ */}
         {editingUserTemplate && (
