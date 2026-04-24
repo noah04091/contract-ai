@@ -955,26 +955,34 @@ const ContractBuilder: React.FC = () => {
 
   // Mehr-Menü Actions
   const handleDuplicate = async () => {
+    if (!currentDocument) return;
+
+    // Erst speichern falls nötig
     if (hasUnsavedChanges) {
-      setConfirmDialog({
-        isOpen: true,
-        title: 'Ungespeicherte Änderungen',
-        message: 'Sie haben ungespeicherte Änderungen. Diese gehen verloren wenn Sie ein neues Dokument erstellen. Fortfahren?',
-        confirmText: 'Fortfahren',
-        confirmStyle: 'warning',
-        onConfirm: async () => {
-          setConfirmDialog(null);
-          setShowMoreMenu(false);
-          if (currentDocument) {
-            await createDocument(`${currentDocument.metadata.name} (Kopie)`, currentDocument.metadata.contractType);
-          }
-        },
-      });
-      return;
+      await saveDocument();
     }
+
     setShowMoreMenu(false);
-    if (currentDocument) {
-      await createDocument(`${currentDocument.metadata.name} (Kopie)`, currentDocument.metadata.contractType);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/contract-builder/${currentDocument._id}/duplicate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: `${currentDocument.metadata.name} (Kopie)` }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.document?._id) {
+          navigate(`/contract-builder/${data.document._id}`);
+        }
+      }
+    } catch (err) {
+      console.error('Fehler beim Duplizieren:', err);
     }
   };
 
