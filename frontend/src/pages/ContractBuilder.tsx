@@ -158,8 +158,6 @@ const ContractBuilder: React.FC = () => {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [, setBulkDocIds] = useState<string[]>([]);
   const [bulkSuccessModal, setBulkSuccessModal] = useState<{ ids: string[]; templateName: string } | null>(null);
-  const [_editingTemplateId, _setEditingTemplateId] = useState<string | null>(null); // User-Template das im Editor bearbeitet wird (vorbereitet für Vorlagen-Bearbeitung)
-
   // ─── User Template Quick-Fill State ───
   const [quickFillUserTemplate, setQuickFillUserTemplate] = useState<UserTemplate | null>(null);
   const [quickFillUserValues, setQuickFillUserValues] = useState<Record<string, string>>({});
