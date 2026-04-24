@@ -1555,26 +1555,39 @@ router.patch('/:id', auth, async (req, res) => {
 router.post('/:id/duplicate', auth, async (req, res) => {
   try {
     const { name } = req.body;
+    const userId = req.user.userId;
 
+    // userId kann String oder ObjectId sein — beides matchen
     const original = await ContractBuilder.findOne({
       _id: req.params.id,
-      userId: req.user.userId
+      $or: [
+        { userId: userId },
+        { userId: new mongoose.Types.ObjectId(userId) }
+      ]
     });
 
     if (!original) {
       return res.status(404).json({ success: false, error: 'Dokument nicht gefunden' });
     }
 
-    const duplicate = await original.duplicate();
-    duplicate.userId = req.user.userId;
+    // Manuell duplizieren statt schema.methods.duplicate (vermeidet doppeltes save)
+    const docObj = original.toObject();
+    delete docObj._id;
+    delete docObj.__v;
+    docObj.userId = userId;
+    docObj.metadata = {
+      ...docObj.metadata,
+      name: name || `${original.metadata.name} (Kopie)`,
+      status: 'draft',
+      version: 1,
+    };
+    docObj.createdAt = new Date();
+    docObj.updatedAt = new Date();
 
-    // Custom Name falls übergeben
-    if (name) {
-      duplicate.metadata.name = name;
-    }
-
+    const duplicate = new ContractBuilder(docObj);
     await duplicate.save();
 
+    console.log(`[ContractBuilder] Dokument dupliziert: ${original._id} → ${duplicate._id}`);
     res.status(201).json({ success: true, document: duplicate });
   } catch (error) {
     console.error('[ContractBuilder] POST /:id/duplicate Error:', error);
