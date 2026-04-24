@@ -26,6 +26,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import * as playbookAPI from '../services/playbookReviewAPI';
+import { playbookTemplates } from '../data/playbookTemplates';
 import { useToast } from '../context/ToastContext';
 import styles from '../styles/PlaybookReview.module.css';
 
@@ -203,6 +204,7 @@ const PlaybookReview: React.FC = () => {
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // Expandable rule cards in detail view
   const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
@@ -757,47 +759,91 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.wizardContent}>
           <h3>Wie möchten Sie die Regeln erstellen?</h3>
 
-          <div className={styles.genOptionsTriple}>
-            <button
-              className={styles.genOptionCard}
-              onClick={handleGenerateRules}
-              disabled={isGenerating || isExtracting}
-            >
-              <Sparkles size={24} />
-              <strong>KI generiert Regeln</strong>
-              <span>
-                Basierend auf Vertragstyp, Rolle und Branche
-              </span>
-              {isGenerating && <Loader2 size={20} className={styles.spinner} />}
-            </button>
+          {!showTemplates ? (
+            <>
+              <div className={styles.genOptionsGrid}>
+                <button
+                  className={styles.genOptionCard}
+                  onClick={handleGenerateRules}
+                  disabled={isGenerating || isExtracting}
+                >
+                  <Sparkles size={24} />
+                  <strong>KI generiert Regeln</strong>
+                  <span>Basierend auf Vertragstyp, Rolle und Branche</span>
+                  {isGenerating && <Loader2 size={20} className={styles.spinner} />}
+                </button>
 
-            <button
-              className={styles.genOptionCard}
-              onClick={handleOpenExtractModal}
-              disabled={isGenerating || isExtracting}
-            >
-              <FileText size={24} />
-              <strong>Aus Vertrag lernen</strong>
-              <span>
-                Regeln aus einem Mustervertrag extrahieren
-              </span>
-              {isExtracting && <Loader2 size={20} className={styles.spinner} />}
-            </button>
+                <button
+                  className={styles.genOptionCard}
+                  onClick={handleOpenExtractModal}
+                  disabled={isGenerating || isExtracting}
+                >
+                  <FileText size={24} />
+                  <strong>Aus Vertrag lernen</strong>
+                  <span>Regeln aus einem Mustervertrag extrahieren</span>
+                  {isExtracting && <Loader2 size={20} className={styles.spinner} />}
+                </button>
 
-            <button
-              className={styles.genOptionCard}
-              onClick={() => { setGeneratedRules([]); setBuilderStep(3); }}
-              disabled={isGenerating || isExtracting}
-            >
-              <Edit3 size={24} />
-              <strong>Manuell erstellen</strong>
-              <span>Regeln selbst definieren</span>
-            </button>
-          </div>
+                <button
+                  className={styles.genOptionCard}
+                  onClick={() => setShowTemplates(true)}
+                  disabled={isGenerating || isExtracting}
+                >
+                  <BookOpen size={24} />
+                  <strong>Aus Vorlage starten</strong>
+                  <span>{playbookTemplates.length} fertige Regelsets für gängige Vertragstypen</span>
+                </button>
 
-          <button className={styles.backBtn} onClick={() => setBuilderStep(1)}>
-            <ArrowLeft size={16} /> Zurück
-          </button>
+                <button
+                  className={styles.genOptionCard}
+                  onClick={() => { setGeneratedRules([]); setBuilderStep(3); }}
+                  disabled={isGenerating || isExtracting}
+                >
+                  <Edit3 size={24} />
+                  <strong>Manuell erstellen</strong>
+                  <span>Regeln selbst definieren</span>
+                </button>
+              </div>
+
+              <button className={styles.backBtn} onClick={() => setBuilderStep(1)}>
+                <ArrowLeft size={16} /> Zurück
+              </button>
+            </>
+          ) : (
+            <>
+              <p className={styles.hint}>Wählen Sie eine Vorlage. Die Regeln können Sie danach anpassen.</p>
+              <div className={styles.templateGrid}>
+                {playbookTemplates.map(tpl => (
+                  <div
+                    key={tpl.id}
+                    className={styles.templateCard}
+                    onClick={() => {
+                      setBuilderData(d => ({
+                        ...d,
+                        name: d.name || tpl.name,
+                        contractType: tpl.contractType,
+                        role: tpl.role,
+                        industry: tpl.industry
+                      }));
+                      setGeneratedRules(tpl.rules.map(r => ({ ...r })));
+                      setShowTemplates(false);
+                      setBuilderStep(3);
+                    }}
+                  >
+                    <strong>{tpl.name}</strong>
+                    <p>{tpl.description}</p>
+                    <div className={styles.templateMeta}>
+                      <span>{tpl.rules.length} Regeln</span>
+                      <span>{ROLE_LABELS[tpl.role]}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className={styles.backBtn} onClick={() => setShowTemplates(false)}>
+                <ArrowLeft size={16} /> Zurück zur Auswahl
+              </button>
+            </>
+          )}
 
           {/* Extract Modal */}
           {showExtractModal && (
