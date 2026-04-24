@@ -376,6 +376,15 @@ const NOISE_PATTERNS = [
   /^gedenken\s+an\s+die\s+opfer/i,
   /^konferenz\s+im\s+deutschen\s+bundestag/i,
   /^top\s+zp\s+\d/i, // TOP ZP X (Zusatzpunkt) — not caught by /^top\s+\d/
+  // Events / conferences / workshops (not law changes)
+  /save\s+the\s+date/i,
+  /\bstakeholder\s+event\b/i,
+  /\b(conference|workshop|webinar|symposium)\b/i,
+  /\b(tagung|veranstaltung|fachtagung|jahrestagung)\b/i,
+  /\beinladung\s+(zur|zum)\b/i,
+  /\bregistration\s+(is\s+)?open\b/i,
+  /\bjoin\s+us\s+(for|at)\b/i,
+  /\bcall\s+for\s+(papers|abstracts|applications)\b/i,
 ];
 
 function isNoiseLaw(law) {
@@ -809,6 +818,12 @@ KERNREGEL — RELEVANZ:
 - Wenn die Verbindung nur auf einem gemeinsamen Schlagwort basiert (z.B. beide erwähnen "Daten" aber in völlig verschiedenen Kontexten) → affected=false
 - Ein Gesetz über Medizinregister betrifft KEINEN Factoring-Vertrag, auch wenn beide "Datenweitergabe" erwähnen
 - Lieber 1 relevanter Alert als 10 vage — im Zweifel affected=false
+
+KONTEXT-MATCHING (wichtig!):
+- Urteile über PRIVATE Sachverhalte (Familie, Nachbarn, Privatpersonen) sind NICHT automatisch relevant für GEWERBLICHE Verträge, auch wenn sie dasselbe Rechtsgebiet betreffen
+- Beispiel: Ein BGH-Urteil über heimliches Filmen in der Wohnung betrifft KEINEN SaaS- oder B2B-Vertrag, auch wenn beide "Datenschutz" betreffen — der Regelungskontext ist völlig verschieden
+- Prüfe IMMER: Betrifft die Entscheidung/das Gesetz denselben SACHLICHEN Kontext wie der Vertrag (gewerblich↔gewerblich, Verbraucher↔Verbraucher)?
+- Wenn Sachkontext nicht übereinstimmt → affected=false, egal wie ähnlich das Rechtsgebiet klingt
 - confidence >80 NUR wenn du den GENAUEN Regelungsinhalt des Gesetzes benennen kannst, der die GENAUE Klausel im Vertrag betrifft
 - confidence 60-79: Vertrag ist nur indirekt oder am Rande betroffen
 
