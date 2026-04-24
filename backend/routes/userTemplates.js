@@ -209,7 +209,7 @@ router.post("/", requireBusinessPlan, async (req, res) => {
 
     // Template-Limit für Free-User (z.B. max 5 Templates)
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-    const userPlan = user?.subscription?.plan || "free";
+    const userPlan = user?.subscriptionPlan || "free";
 
     const existingTemplatesCount = await userTemplatesCollection.countDocuments({
       userId: new ObjectId(userId)
@@ -219,6 +219,7 @@ router.post("/", requireBusinessPlan, async (req, res) => {
       free: 3,
       premium: 15,
       business: 50,
+      enterprise: 999,
       legendary: 999
     };
 
