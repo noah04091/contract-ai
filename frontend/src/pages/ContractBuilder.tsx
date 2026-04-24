@@ -140,6 +140,7 @@ const ContractBuilder: React.FC = () => {
   // isLoadingGalleryUserTemplates - Loading state tracked internally in useEffect
   const [galleryActiveMenu, setGalleryActiveMenu] = useState<string | null>(null);
   const [showGalleryDrafts, setShowGalleryDrafts] = useState(false);
+  const [showGalleryUserTemplates, setShowGalleryUserTemplates] = useState(true); // Standardmäßig offen
   const [galleryConfirmDeleteId, setGalleryConfirmDeleteId] = useState<string | null>(null);
   const [galleryCreating, setGalleryCreating] = useState<string | null>(null); // templateId being created
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
@@ -1939,14 +1940,16 @@ const ContractBuilder: React.FC = () => {
             {/* ─── Meine Vorlagen (Premium+) ─── */}
             {isPremiumUser && galleryFilteredUserTemplates.length > 0 && (
               <>
-                <div className={styles.gallerySectionHeader}>
-                  <h2 className={styles.gallerySectionTitle}>
-                    <Star size={18} />
-                    Meine Vorlagen
-                  </h2>
-                  <span className={styles.gallerySectionBadge}>{galleryFilteredUserTemplates.length} Vorlagen</span>
-                </div>
-                <div className={styles.galleryGrid}>
+                <button
+                  className={`${styles.gallerySectionToggle} ${showGalleryUserTemplates ? styles.gallerySectionToggleOpen : ''}`}
+                  onClick={() => setShowGalleryUserTemplates(!showGalleryUserTemplates)}
+                >
+                  <Star size={18} />
+                  <span>Meine Vorlagen</span>
+                  <span className={styles.gallerySectionToggleBadge}>{galleryFilteredUserTemplates.length}</span>
+                  <ChevronLeft size={14} className={`${styles.gallerySectionChevron} ${showGalleryUserTemplates ? styles.gallerySectionChevronOpen : ''}`} />
+                </button>
+                {showGalleryUserTemplates && <div className={styles.galleryGrid}>
                   {galleryFilteredUserTemplates.map(template => (
                     <div
                       key={template.id}
@@ -2027,7 +2030,7 @@ const ContractBuilder: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+                </div>}
               </>
             )}
 
@@ -2066,7 +2069,7 @@ const ContractBuilder: React.FC = () => {
                 onClick={() => setShowImportModal(true)}
               >
                 <div className={styles.galleryCardHeader}>
-                  <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconCreate}`}>
+                  <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconImport}`}>
                     <Upload size={20} />
                   </div>
                   <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Import</span>
