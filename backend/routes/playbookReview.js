@@ -355,7 +355,7 @@ router.get("/contracts/list", verifyToken, async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const db = await database.connect();
 
-    // Vertraege laden — prüfe alle 3 Text-Felder (extractedText, content, fullText)
+    // Vertraege laden — prüfe alle 4 Text-Felder
     const rawContracts = await db.collection("contracts").find(
       {
         $or: [
@@ -371,7 +371,8 @@ router.get("/contracts/list", verifyToken, async (req, res) => {
           createdAt: 1,
           extractedText: { $strLenCP: { $ifNull: ["$extractedText", ""] } },
           content: { $strLenCP: { $ifNull: ["$content", ""] } },
-          fullText: { $strLenCP: { $ifNull: ["$fullText", ""] } }
+          fullText: { $strLenCP: { $ifNull: ["$fullText", ""] } },
+          contractHTML: { $strLenCP: { $ifNull: ["$contractHTML", ""] } }
         }
       }
     )
@@ -385,7 +386,7 @@ router.get("/contracts/list", verifyToken, async (req, res) => {
       name: c.name,
       contractType: c.contractType,
       createdAt: c.createdAt,
-      hasExtractedText: (c.extractedText > 50) || (c.content > 50) || (c.fullText > 50)
+      hasExtractedText: (c.extractedText > 50) || (c.content > 50) || (c.fullText > 50) || (c.contractHTML > 50)
     }));
 
     res.json({ success: true, contracts });
@@ -411,7 +412,7 @@ router.get("/contracts/:contractId/text", verifyToken, async (req, res) => {
           { userId: new ObjectId(userId) }
         ]
       },
-      { projection: { extractedText: 1, content: 1, fullText: 1, name: 1, contractType: 1 } }
+      { projection: { extractedText: 1, content: 1, fullText: 1, contractHTML: 1, name: 1, contractType: 1 } }
     );
 
     if (!contract) {
@@ -419,10 +420,15 @@ router.get("/contracts/:contractId/text", verifyToken, async (req, res) => {
     }
 
     // Bestes verfuegbares Text-Feld waehlen (laengstes gewinnt)
+    // contractHTML: HTML-Tags entfernen fuer sauberen Text
+    const htmlText = contract.contractHTML
+      ? contract.contractHTML.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim()
+      : "";
     const candidates = [
       contract.extractedText,
       contract.content,
-      contract.fullText
+      contract.fullText,
+      htmlText
     ].filter(t => t && t.trim().length > 50);
 
     if (candidates.length === 0) {
