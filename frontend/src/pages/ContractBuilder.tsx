@@ -96,6 +96,7 @@ const ContractBuilder: React.FC = () => {
   const { id } = useParams<{ id?: string }>();
   const [searchParams] = useSearchParams();
   const bulkIdsFromUrl = searchParams.get('bulk')?.split(',').filter(Boolean) || [];
+  const editTemplateIdFromUrl = searchParams.get('editTemplate') || null;
 
   // User-Daten für Plan-Prüfung
   const { user } = useAuth();
@@ -157,6 +158,7 @@ const ContractBuilder: React.FC = () => {
   const [bulkProgress, setBulkProgress] = useState(0);
   const [, setBulkDocIds] = useState<string[]>([]);
   const [bulkSuccessModal, setBulkSuccessModal] = useState<{ ids: string[]; templateName: string } | null>(null);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null); // User-Template das im Editor bearbeitet wird
 
   // ─── User Template Quick-Fill State ───
   const [quickFillUserTemplate, setQuickFillUserTemplate] = useState<UserTemplate | null>(null);
@@ -1821,6 +1823,40 @@ const ContractBuilder: React.FC = () => {
     setGalleryActiveMenu(null);
   };
 
+  // Vorlage-Inhalt bearbeiten → im Builder öffnen, danach "Vorlage aktualisieren"
+  const handleEditTemplateContent = async (template: UserTemplate) => {
+    setGalleryActiveMenu(null);
+    try {
+      const templateData = template.defaultValues as {
+        blocks?: Block[];
+        metadata?: { contractType?: string };
+      };
+      const newDocId = await createDocument(
+        `${template.name} (Bearbeitung)`,
+        templateData.metadata?.contractType || template.contractType || 'individuell'
+      );
+      if (templateData.blocks && templateData.blocks.length > 0) {
+        const store = useContractBuilderStore.getState();
+        const currentBlocks = store.document?.content.blocks || [];
+        currentBlocks.forEach(block => store.deleteBlock(block.id));
+        templateData.blocks.forEach((block, index) => {
+          store.addBlock({
+            type: block.type, content: block.content,
+            style: block.style || {}, locked: block.locked || false,
+            aiGenerated: block.aiGenerated || false,
+          }, index);
+        });
+      }
+      if (newDocId) {
+        const store = useContractBuilderStore.getState();
+        await store.saveDocument();
+        navigate(`/contract-builder/${newDocId}?editTemplate=${template.id}`);
+      }
+    } catch (err) {
+      console.error('Fehler beim Öffnen der Vorlage:', err);
+    }
+  };
+
   const handleSaveEditTemplate = async () => {
     if (!editingUserTemplate || !editTemplateName.trim()) return;
     try {
@@ -2103,7 +2139,13 @@ const ContractBuilder: React.FC = () => {
                                   className={styles.galleryCardMenuItem}
                                   onClick={(e) => { e.stopPropagation(); handleOpenEditTemplate(template); }}
                                 >
-                                  <Settings size={14} /> Bearbeiten
+                                  <Settings size={14} /> Name bearbeiten
+                                </button>
+                                <button
+                                  className={styles.galleryCardMenuItem}
+                                  onClick={(e) => { e.stopPropagation(); handleEditTemplateContent(template); }}
+                                >
+                                  <Edit3 size={14} /> Inhalt bearbeiten
                                 </button>
                                 <button
                                   className={styles.galleryCardMenuItem}
@@ -3258,6 +3300,41 @@ const ContractBuilder: React.FC = () => {
                   <Copy size={14} />
                   <span>Dokument duplizieren</span>
                 </button>
+                {/* Vorlage aktualisieren — wenn aus Template-Editor geöffnet */}
+                {editTemplateIdFromUrl && (
+                  <button onClick={async () => {
+                    setShowMoreMenu(false);
+                    if (!currentDocument) return;
+                    try {
+                      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+                      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+                      const response = await fetch(`${API_BASE}/api/user-templates/${editTemplateIdFromUrl}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          defaultValues: {
+                            blocks: currentDocument.content.blocks,
+                            design: currentDocument.design,
+                            variables: currentDocument.content.variables,
+                            metadata: { contractType: currentDocument.metadata.contractType },
+                            version: '1.0',
+                          },
+                        }),
+                      });
+                      if (response.ok) {
+                        alert('Vorlage erfolgreich aktualisiert!');
+                      } else {
+                        const err = await response.json().catch(() => ({}));
+                        alert(`Fehler: ${err.message || 'Aktualisierung fehlgeschlagen'}`);
+                      }
+                    } catch (err) {
+                      alert('Netzwerkfehler beim Aktualisieren der Vorlage');
+                    }
+                  }}>
+                    <Check size={14} />
+                    <span>Vorlage aktualisieren</span>
+                  </button>
+                )}
                 {/* "Als Vorlage speichern" nur für Premium+ User */}
                 {isPremiumUser && (
                   <button onClick={handleOpenSaveTemplateModal}>
