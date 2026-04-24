@@ -12,6 +12,7 @@ export type TourId =
   | 'optimizer'
   | 'legal-lens'
   | 'contract-builder'
+  | 'contract-builder-gallery'
   | 'generator'
   | 'compare'
   | 'chat'
@@ -244,6 +245,47 @@ export const legalLensTour: TourConfig = {
 // CONTRACT BUILDER TOUR
 // ============================================================
 // 🎯 Interaktive Tour mit Element-Highlighting
+// ── Contract Builder Gallery Tour (Vorlagen-Übersicht) ──
+export const contractBuilderGalleryTour: TourConfig = {
+  id: 'contract-builder-gallery',
+  name: 'Vorlagen-Übersicht',
+  description: 'Erste Schritte im Contract Builder',
+  steps: [
+    {
+      target: '[data-tour="gallery-header"]',
+      content: 'Willkommen im Contract Builder! Hier erstellen und verwalten Sie Ihre Verträge. Wählen Sie eine Vorlage als Ausgangspunkt — oder starten Sie von Grund auf.',
+      title: 'Contract Builder',
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
+      target: '[data-tour="gallery-templates"]',
+      content: 'Über 17 professionelle Musterverträge stehen bereit — Arbeitsvertrag, Kaufvertrag, NDA und mehr. Klicken Sie auf eine Vorlage, füllen Sie die Details aus, und Ihr Vertrag wird automatisch erstellt.',
+      title: 'Musterverträge',
+      placement: 'top',
+    },
+    {
+      target: '[data-tour="gallery-import"]',
+      content: 'Haben Sie schon einen Vertrag als PDF oder Word? Importieren Sie ihn hier — die Struktur wird automatisch erkannt und in bearbeitbare Blöcke umgewandelt.',
+      title: 'Vertrag importieren',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="gallery-create"]',
+      content: 'Erstellen Sie eigene Vorlagen von Grund auf. Schreiben Sie Ihren Vertrag, markieren Sie Variablen, und speichern Sie ihn als wiederverwendbare Vorlage.',
+      title: 'Eigene Vorlage',
+      placement: 'bottom',
+    },
+    {
+      target: '[data-tour="gallery-search"]',
+      content: 'Nutzen Sie die Suche und Filter um schnell die richtige Vorlage zu finden.',
+      title: 'Suche & Filter',
+      placement: 'bottom',
+    },
+  ],
+};
+
+// ── Contract Builder Editor Tour ──
 export const contractBuilderTour: TourConfig = {
   id: 'contract-builder',
   name: 'Contract Builder Tour',
@@ -251,27 +293,27 @@ export const contractBuilderTour: TourConfig = {
   steps: [
     {
       target: '[data-tour="builder-toolbar"]',
-      content: 'Die Toolbar enthält alle Bausteine: Überschriften, Absätze, Klauseln, Tabellen, und mehr. Ziehe sie auf die Arbeitsfläche!',
-      title: '🧱 Bausteine',
+      content: 'Hier finden Sie alle Bausteine: Klauseln, Überschriften, Tabellen, Unterschriften und mehr. Ziehen Sie sie auf die Arbeitsfläche oder klicken Sie zum Hinzufügen.',
+      title: 'Bausteine',
       placement: 'right',
       disableBeacon: true,
     },
     {
       target: '[data-tour="builder-canvas"]',
-      content: 'Das ist deine Arbeitsfläche. Ziehe Bausteine hierher und ordne sie per Drag & Drop an.',
-      title: '📄 Arbeitsfläche',
+      content: 'Das ist Ihre Arbeitsfläche. Doppelklicken Sie auf eine Klausel zum Bearbeiten. Tipp: Markieren Sie Text und klicken Sie den Variable-Button, um Platzhalter wie Name oder Datum einzuf��gen.',
+      title: 'Arbeitsfläche',
       placement: 'left',
     },
     {
       target: '[data-tour="builder-properties"]',
-      content: 'Wenn du einen Baustein auswählst, erscheint hier das Eigenschaften-Panel. Text, Styling, und Variablen anpassen.',
-      title: '⚙️ Eigenschaften',
+      content: 'Wählen Sie einen Baustein aus und passen Sie hier Schrift, Farbe und Layout an. Im Variablen-Tab sehen Sie alle eingefügten Platzhalter.',
+      title: 'Eigenschaften & Variablen',
       placement: 'left',
     },
     {
       target: '[data-tour="builder-export"]',
-      content: 'Wenn du fertig bist, exportiere den Vertrag als PDF oder speichere ihn als wiederverwendbare Vorlage.',
-      title: '📤 Export',
+      content: 'Exportieren Sie als PDF, speichern Sie als wiederverwendbare Vorlage (Mehr-Menü), oder wechseln Sie zur Vorschau. Tipp: Strg+S zum schnellen Speichern.',
+      title: 'Speichern & Export',
       placement: 'bottom',
     },
   ],
@@ -434,6 +476,7 @@ export const ALL_TOURS: TourConfig[] = [
   calendarTour,
   optimizerTour,
   legalLensTour,
+  contractBuilderGalleryTour,
   contractBuilderTour,
   generatorTour,
   compareTour,

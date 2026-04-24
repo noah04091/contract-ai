@@ -73,7 +73,7 @@ import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplat
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 // ContractTemplate type used implicitly via contractTemplates array
 import { SYSTEM_VARIABLES_MAP } from '../utils/smartVariables';
-import { WelcomePopup } from '../components/Tour';
+import { WelcomePopup, ProductTour } from '../components/Tour';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/ContractBuilder.module.css';
 
@@ -1945,7 +1945,7 @@ const ContractBuilder: React.FC = () => {
         <div className={styles.galleryPage}>
           <div className={styles.galleryInner}>
             {/* Header */}
-            <div className={styles.galleryHeader}>
+            <div className={styles.galleryHeader} data-tour="gallery-header">
               <div className={styles.galleryBadge}>
                 <Edit3 size={13} />
                 Contract Builder
@@ -1980,7 +1980,7 @@ const ContractBuilder: React.FC = () => {
             )}
 
             {/* Search */}
-            <div className={styles.gallerySearch}>
+            <div className={styles.gallerySearch} data-tour="gallery-search">
               <Search size={16} className={styles.gallerySearchIcon} />
               <input
                 type="text"
@@ -2210,7 +2210,7 @@ const ContractBuilder: React.FC = () => {
               <h2 className={styles.gallerySectionTitle}>Musterverträge</h2>
               <span className={styles.gallerySectionBadge}>{galleryFilteredSystemTemplates.length + 1} Vorlagen</span>
             </div>
-            <div className={styles.galleryGrid}>
+            <div className={styles.galleryGrid} data-tour="gallery-templates">
               {/* Leeres Dokument — immer erste Card */}
               {(galleryCategory === 'all' || galleryCategory === 'personal') && (
                 <div
@@ -2238,6 +2238,7 @@ const ContractBuilder: React.FC = () => {
               <div
                 className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
                 onClick={() => setShowImportModal(true)}
+                data-tour="gallery-import"
               >
                 <div className={styles.galleryCardHeader}>
                   <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconImport}`}>
@@ -2256,6 +2257,7 @@ const ContractBuilder: React.FC = () => {
               <div
                 className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
                 onClick={() => setShowCustomCreator(true)}
+                data-tour="gallery-create"
               >
                 <div className={styles.galleryCardHeader}>
                   <div className={`${styles.galleryCardIcon} ${styles.galleryCardIconCreate}`}>
@@ -2315,6 +2317,9 @@ const ContractBuilder: React.FC = () => {
             )}
           </div>
         </div>
+
+        {/* Gallery Onboarding Tour */}
+        <ProductTour tourId="contract-builder-gallery" autoStart />
 
         {/* Click-Outside: Menü schließen — kein Overlay, sondern Event-Listener
             damit Menü-Klicks nicht blockiert werden */}
@@ -3008,10 +3013,11 @@ const ContractBuilder: React.FC = () => {
       <WelcomePopup
         featureId="contract-builder"
         icon={<Edit3 size={32} />}
-        title="Contract Builder - Visueller Vertragsbaukasten"
-        description="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie Bausteine aus der Toolbar, ordnen Sie sie an und exportieren Sie als PDF."
-        tip="Nutzen Sie die Variablen-Funktion, um Platzhalter wie {{Name}} automatisch auszufüllen."
+        title="Contract Builder"
+        description="Willkommen im visuellen Vertragsbaukasten. Ziehen Sie Bausteine auf die Arbeitsfläche, bearbeiten Sie Klauseln per Doppelklick, und fügen Sie Variablen ein."
+        tip="Tipp: Markieren Sie Text in einer Klausel und klicken Sie den {{ }} Variable-Button, um Platzhalter zu erstellen. Strg+S zum Speichern."
       />
+      <ProductTour tourId="contract-builder" />
       {/* Bulk-Tabs */}
       {bulkIdsFromUrl.length > 1 && (
         <div className={styles.bulkTabBar}>
@@ -3240,7 +3246,7 @@ const ContractBuilder: React.FC = () => {
           </button>
 
           {/* Actions */}
-          <div className={styles.mainActions}>
+          <div className={styles.mainActions} data-tour="builder-export">
             <button
               className={styles.iconButton}
               onClick={() => setShowDesignGallery(true)}
@@ -3371,7 +3377,7 @@ const ContractBuilder: React.FC = () => {
       <div className={styles.mainContent}>
         {/* Left Sidebar - Block Toolbar */}
         {showLeftPanel && view === 'edit' && (
-          <aside className={styles.leftSidebar}>
+          <aside className={styles.leftSidebar} data-tour="builder-toolbar">
             <BlockToolbar />
           </aside>
         )}
@@ -3399,7 +3405,7 @@ const ContractBuilder: React.FC = () => {
         )}
 
         {/* Canvas */}
-        <main className={styles.canvasWrapper}>
+        <main className={styles.canvasWrapper} data-tour="builder-canvas">
           <BuilderErrorBoundary>
             <BuilderCanvas />
           </BuilderErrorBoundary>
@@ -3407,7 +3413,7 @@ const ContractBuilder: React.FC = () => {
 
         {/* Right Sidebar */}
         {view === 'edit' && (
-          <aside className={styles.rightSidebar}>
+          <aside className={styles.rightSidebar} data-tour="builder-properties">
             {/* Panel Tabs */}
             <div className={styles.panelTabs}>
               <button
