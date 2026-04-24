@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { PDFDocument } from 'pdf-lib';
@@ -94,6 +94,8 @@ interface SavedDraft {
 const ContractBuilder: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
+  const [searchParams] = useSearchParams();
+  const bulkIdsFromUrl = searchParams.get('bulk')?.split(',').filter(Boolean) || [];
 
   // User-Daten für Plan-Prüfung
   const { user } = useAuth();
@@ -147,6 +149,13 @@ const ContractBuilder: React.FC = () => {
   const [galleryInfoId, setGalleryInfoId] = useState<string | null>(null); // Template-Info Popup
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
   const [quickFillValues, setQuickFillValues] = useState<Record<string, string>>({});
+
+  // ─── Bulk Creation State ───
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkEntries, setBulkEntries] = useState<Array<{ id: string; values: Record<string, string>; expanded: boolean }>>([]);
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [, setBulkDocIds] = useState<string[]>([]); // Created doc IDs for tab navigation
 
   // ─── User Template Quick-Fill State ───
   const [quickFillUserTemplate, setQuickFillUserTemplate] = useState<UserTemplate | null>(null);
@@ -1488,6 +1497,85 @@ const ContractBuilder: React.FC = () => {
     await handleGalleryCreateDirect(templateId);
   };
 
+  // ─── Bulk Creation ───
+  const handleBulkModeToggle = () => {
+    if (!bulkMode) {
+      // Aktivieren: Aktuellen Quick-Fill als Vertrag 1 übernehmen
+      setBulkEntries([{ id: `bulk_${Date.now()}`, values: { ...quickFillValues }, expanded: true }]);
+      setBulkMode(true);
+    } else {
+      setBulkMode(false);
+      setBulkEntries([]);
+    }
+  };
+
+  const handleBulkAddEntry = () => {
+    setBulkEntries(prev => [...prev, { id: `bulk_${Date.now()}`, values: {}, expanded: true }]);
+  };
+
+  const handleBulkRemoveEntry = (entryId: string) => {
+    setBulkEntries(prev => prev.filter(e => e.id !== entryId));
+  };
+
+  const handleBulkToggleExpand = (entryId: string) => {
+    setBulkEntries(prev => prev.map(e => e.id === entryId ? { ...e, expanded: !e.expanded } : e));
+  };
+
+  const handleBulkUpdateValue = (entryId: string, varName: string, value: string) => {
+    setBulkEntries(prev => prev.map(e =>
+      e.id === entryId ? { ...e, values: { ...e.values, [varName]: value } } : e
+    ));
+  };
+
+  const handleBulkCreate = async () => {
+    if (!quickFillTemplate || bulkEntries.length === 0 || bulkCreating) return;
+    setBulkCreating(true);
+    setBulkProgress(0);
+    const createdIds: string[] = [];
+
+    try {
+      for (let i = 0; i < bulkEntries.length; i++) {
+        const entry = bulkEntries[i];
+        setBulkProgress(i + 1);
+
+        // Dokument erstellen
+        const newDocId = await createDocumentFromTemplate(quickFillTemplate.id);
+        if (!newDocId) continue;
+
+        // Variablen füllen
+        const store = useContractBuilderStore.getState();
+        if (store.document?.content.variables) {
+          for (const variable of store.document.content.variables) {
+            const varName = variable.name.replace(/\{\{|\}\}/g, '');
+            if (entry.values[varName]?.trim()) {
+              store.updateVariable(variable.id, entry.values[varName].trim());
+            }
+          }
+        }
+
+        // Dokument umbenennen (Vertrag 1, 2, 3...)
+        store.updateMetadata({ name: `${quickFillTemplate.name} — Vertrag ${i + 1}` });
+        await store.saveDocument();
+        createdIds.push(newDocId);
+      }
+
+      // Aufräumen und zum ersten Vertrag navigieren
+      setBulkDocIds(createdIds);
+      setQuickFillTemplate(null);
+      setQuickFillValues({});
+      setBulkMode(false);
+      setBulkEntries([]);
+      setBulkCreating(false);
+
+      if (createdIds.length > 0) {
+        navigate(`/contract-builder/${createdIds[0]}?bulk=${createdIds.join(',')}`);
+      }
+    } catch (err) {
+      console.error('Bulk-Erstellung Fehler:', err);
+      setBulkCreating(false);
+    }
+  };
+
   // ─── Custom Template Creator ───
   const handleCreateCustomTemplate = async () => {
     if (!customName.trim() || galleryCreating) return;
@@ -2638,26 +2726,116 @@ const ContractBuilder: React.FC = () => {
                 })()}
               </div>
 
+              {/* Bulk Entries */}
+              {bulkMode && (
+                <div className={styles.quickFillBody} style={{ paddingTop: 0, borderTop: '1px solid #e5e7eb' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>
+                      Massenerstellung — {bulkEntries.length} {bulkEntries.length === 1 ? 'Vertrag' : 'Verträge'}
+                    </span>
+                    <button className={styles.customAddVarBtn} onClick={handleBulkAddEntry} type="button">
+                      <FolderPlus size={13} /> Vertrag hinzufügen
+                    </button>
+                  </div>
+                  {bulkEntries.map((entry, idx) => (
+                    <div key={entry.id} className={styles.bulkEntry}>
+                      <button
+                        className={styles.bulkEntryHeader}
+                        onClick={() => handleBulkToggleExpand(entry.id)}
+                        type="button"
+                      >
+                        <ChevronLeft size={14} className={entry.expanded ? styles.gallerySectionChevronOpen : styles.gallerySectionChevron} style={{ transform: entry.expanded ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                        <span>Vertrag {idx + 1}</span>
+                        <span style={{ fontSize: 11, color: '#9ca3af', marginLeft: 'auto' }}>
+                          {Object.values(entry.values).filter(v => v.trim()).length} Felder
+                        </span>
+                        {bulkEntries.length > 1 && (
+                          <button
+                            className={styles.customVarRemoveBtn}
+                            onClick={(e) => { e.stopPropagation(); handleBulkRemoveEntry(entry.id); }}
+                            title="Vertrag entfernen"
+                            type="button"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </button>
+                      {entry.expanded && quickFillTemplate && (
+                        <div className={styles.quickFillFieldGrid} style={{ padding: '10px 0' }}>
+                          {quickFillTemplate.defaultVariables.filter(v => !SYSTEM_VARIABLES_MAP.has(v.name)).map(v => (
+                            <div key={v.name} className={styles.quickFillField}>
+                              <label className={styles.quickFillLabel}>
+                                {v.displayName}
+                                {v.required && <span className={styles.quickFillRequired}> *</span>}
+                              </label>
+                              <input
+                                type={v.type === 'date' ? 'date' : v.type === 'number' || v.type === 'currency' ? 'number' : 'text'}
+                                className={styles.quickFillInput}
+                                value={entry.values[v.name] || ''}
+                                onChange={e => handleBulkUpdateValue(entry.id, v.name, e.target.value)}
+                                placeholder={v.displayName}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {bulkCreating && (
+                    <div className={styles.galleryLoading}>
+                      <Loader2 size={18} className={styles.spinner} />
+                      <span>Erstelle Vertrag {bulkProgress} von {bulkEntries.length}...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Footer */}
               <div className={styles.quickFillFooter}>
                 <button
                   className={styles.quickFillSkipBtn}
                   onClick={handleQuickFillSkip}
-                  disabled={!!galleryCreating}
+                  disabled={!!galleryCreating || bulkCreating}
                 >
                   Überspringen
                 </button>
-                <button
-                  className={styles.quickFillCreateBtn}
-                  onClick={handleQuickFillCreate}
-                  disabled={!!galleryCreating}
-                >
-                  {galleryCreating ? (
-                    <><Loader2 size={16} className={styles.spinner} /> Erstelle...</>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {!bulkMode ? (
+                    <>
+                      <button
+                        className={styles.quickFillSkipBtn}
+                        onClick={handleBulkModeToggle}
+                        disabled={!!galleryCreating}
+                        title="Mehrere Verträge auf einmal erstellen"
+                      >
+                        <Layers size={14} /> Massenerstellung
+                      </button>
+                      <button
+                        className={styles.quickFillCreateBtn}
+                        onClick={handleQuickFillCreate}
+                        disabled={!!galleryCreating}
+                      >
+                        {galleryCreating ? (
+                          <><Loader2 size={16} className={styles.spinner} /> Erstelle...</>
+                        ) : (
+                          <><Sparkles size={16} /> Im Builder erstellen</>
+                        )}
+                      </button>
+                    </>
                   ) : (
-                    <><Sparkles size={16} /> Im Builder erstellen</>
+                    <button
+                      className={styles.quickFillCreateBtn}
+                      onClick={handleBulkCreate}
+                      disabled={bulkCreating || bulkEntries.length === 0}
+                    >
+                      {bulkCreating ? (
+                        <><Loader2 size={16} className={styles.spinner} /> {bulkProgress}/{bulkEntries.length}...</>
+                      ) : (
+                        <><Sparkles size={16} /> {bulkEntries.length} Verträge erstellen</>
+                      )}
+                    </button>
                   )}
-                </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2701,6 +2879,35 @@ const ContractBuilder: React.FC = () => {
         description="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie Bausteine aus der Toolbar, ordnen Sie sie an und exportieren Sie als PDF."
         tip="Nutzen Sie die Variablen-Funktion, um Platzhalter wie {{Name}} automatisch auszufüllen."
       />
+      {/* Bulk-Tabs */}
+      {bulkIdsFromUrl.length > 1 && (
+        <div className={styles.bulkTabBar}>
+          {bulkIdsFromUrl.map((docId, idx) => (
+            <button
+              key={docId}
+              className={`${styles.bulkTab} ${id === docId ? styles.bulkTabActive : ''}`}
+              onClick={() => navigate(`/contract-builder/${docId}?bulk=${bulkIdsFromUrl.join(',')}`)}
+            >
+              Vertrag {idx + 1}
+            </button>
+          ))}
+          <button
+            className={styles.bulkDownloadAll}
+            onClick={async () => {
+              for (const docId of bulkIdsFromUrl) {
+                navigate(`/contract-builder/${docId}?bulk=${bulkIdsFromUrl.join(',')}`);
+                // Kurz warten damit das Dokument lädt
+                await new Promise(r => setTimeout(r, 500));
+              }
+              alert(`${bulkIdsFromUrl.length} Verträge erstellt. Exportieren Sie jeden einzeln über den PDF-Button oder öffnen Sie sie über die Tabs.`);
+            }}
+            title="Info zu allen Verträgen"
+          >
+            <Download size={14} /> Alle ({bulkIdsFromUrl.length})
+          </button>
+        </div>
+      )}
+
       {/* Top Toolbar */}
       <header className={styles.topBar}>
         {/* Left Section */}
