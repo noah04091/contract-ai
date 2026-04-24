@@ -1804,7 +1804,7 @@ const ContractBuilder: React.FC = () => {
           <title>Contract Builder | Contract AI</title>
           <meta name="description" content="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie eine Vorlage oder starten Sie von Grund auf." />
         </Helmet>
-        <div className={styles.galleryPage} onClick={() => { if (galleryActiveMenu) { setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); } }}>
+        <div className={styles.galleryPage}>
           <div className={styles.galleryInner}>
             {/* Header */}
             <div className={styles.galleryHeader}>
@@ -1966,23 +1966,28 @@ const ContractBuilder: React.FC = () => {
                             >
                               <MoreVertical size={14} />
                             </button>
-                            {galleryActiveMenu === `user-${template.id}` && (
-                              <div className={styles.galleryCardMenu} onClick={e => e.stopPropagation()}>
+                            {galleryActiveMenu === `user-${template.id}` && (<>
+                              {/* Backdrop: schließt Menü bei Klick außerhalb */}
+                              <div
+                                style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'transparent' }}
+                                onClick={(e) => { e.stopPropagation(); setGalleryActiveMenu(null); setGalleryConfirmDeleteId(null); }}
+                              />
+                              <div className={styles.galleryCardMenu} style={{ zIndex: 50, position: 'relative' }}>
                                 <button
                                   className={styles.galleryCardMenuItem}
-                                  onClick={() => handleGallerySelectUserTemplate(template)}
+                                  onClick={(e) => { e.stopPropagation(); handleGallerySelectUserTemplate(template); }}
                                 >
                                   <Edit3 size={14} /> Verwenden
                                 </button>
                                 <button
                                   className={styles.galleryCardMenuItem}
-                                  onClick={() => handleOpenEditTemplate(template)}
+                                  onClick={(e) => { e.stopPropagation(); handleOpenEditTemplate(template); }}
                                 >
                                   <Settings size={14} /> Bearbeiten
                                 </button>
                                 <button
                                   className={styles.galleryCardMenuItem}
-                                  onClick={() => handleDuplicateUserTemplate(template)}
+                                  onClick={(e) => { e.stopPropagation(); handleDuplicateUserTemplate(template); }}
                                 >
                                   <Copy size={14} /> Duplizieren
                                 </button>
@@ -1991,23 +1996,23 @@ const ContractBuilder: React.FC = () => {
                                     <span>Löschen?</span>
                                     <button
                                       className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteYes}`}
-                                      onClick={() => handleGalleryDeleteUserTemplate(template.id)}
+                                      onClick={(e) => { e.stopPropagation(); handleGalleryDeleteUserTemplate(template.id); }}
                                     >Ja</button>
                                     <button
                                       className={`${styles.galleryConfirmDeleteBtn} ${styles.galleryConfirmDeleteNo}`}
-                                      onClick={() => setGalleryConfirmDeleteId(null)}
+                                      onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(null); }}
                                     >Nein</button>
                                   </div>
                                 ) : (
                                   <button
                                     className={`${styles.galleryCardMenuItem} ${styles.galleryCardMenuItemDanger}`}
-                                    onClick={() => setGalleryConfirmDeleteId(`user-${template.id}`)}
+                                    onClick={(e) => { e.stopPropagation(); setGalleryConfirmDeleteId(`user-${template.id}`); }}
                                   >
                                     <Trash2 size={14} /> Löschen
                                   </button>
                                 )}
                               </div>
-                            )}
+                            </>)}
                           </div>
                         </div>
                       </div>
