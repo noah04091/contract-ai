@@ -7,7 +7,7 @@ import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
-  Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown
+  Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -6621,6 +6621,17 @@ export default function Generate() {
                             <Wrench size={16} />
                           )}
                           <span>Im Builder</span>
+                        </motion.button>
+                        <motion.button
+                          onClick={() => setIsTemplateModalOpen(true)}
+                          disabled={!contractText}
+                          className={`${styles.step3HeaderBtn} ${styles.template}`}
+                          whileHover={contractText ? { scale: 1.02 } : {}}
+                          whileTap={contractText ? { scale: 0.98 } : {}}
+                          title="Als wiederverwendbare Vorlage speichern"
+                        >
+                          <FolderPlus size={16} />
+                          <span>Als Vorlage</span>
                         </motion.button>
                       </div>
                     </div>
