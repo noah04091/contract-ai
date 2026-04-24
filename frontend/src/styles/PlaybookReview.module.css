@@ -1253,10 +1253,46 @@
   transition: transform 0.15s;
 }
 
-/* ===== RESULT DETAILS ===== */
+/* ===== RESULT DETAILS — 2-Spalten Layout ===== */
 .resultDetails {
   padding: 0 1rem 1rem 1rem;
   border-top: 1px solid #f1f5f9;
+}
+
+.resultColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.resultLeft {
+  border-right: 1px solid #f1f5f9;
+  padding-right: 1.5rem;
+}
+
+.resultRight {
+  padding-left: 0;
+}
+
+.columnLabel {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #3b82f6;
+}
+
+.resultRight .columnLabel {
+  color: #64748b;
+}
+
+.notFoundHint {
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.85rem;
 }
 
 .detailBlock {
@@ -1306,6 +1342,17 @@
 @media (max-width: 1024px) {
   .rulesList {
     grid-template-columns: 1fr;
+  }
+
+  .resultColumns {
+    grid-template-columns: 1fr;
+  }
+
+  .resultLeft {
+    border-right: none;
+    padding-right: 0;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 1rem;
   }
 }
 

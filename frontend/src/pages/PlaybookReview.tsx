@@ -1466,64 +1466,75 @@ const PlaybookReview: React.FC = () => {
               </div>
 
               {expandedResults.has(result._id || String(index)) && (
-                <div className={styles.resultDetails}>
-                  {/* Ihr Standard (Standardtext aus Regel) */}
-                  {getRuleStandardText(result.ruleId) && (
-                    <div className={`${styles.detailBlock} ${styles.standardBlock}`}>
-                      <label>Ihr Standard:</label>
-                      <p>{getRuleStandardText(result.ruleId)}</p>
-                      <button
-                        className={styles.copyBtn}
-                        onClick={() => copyToClipboard(getRuleStandardText(result.ruleId))}
-                      >
-                        <Copy size={14} /> Kopieren
-                      </button>
-                    </div>
-                  )}
-
-                  {result.finding && (
+                <div className={styles.resultColumns}>
+                  {/* LINKS: Ihre Anforderung */}
+                  <div className={styles.resultLeft}>
+                    <h4 className={styles.columnLabel}>Ihre Anforderung</h4>
                     <div className={styles.detailBlock}>
-                      <label>Im Vertrag gefunden:</label>
-                      <p>{result.finding}</p>
-                      {result.clauseReference && (
-                        <span className={styles.clauseRef}>{result.clauseReference}</span>
-                      )}
+                      <label>Regel:</label>
+                      <p>{result.ruleTitle}</p>
                     </div>
-                  )}
+                    {getRuleStandardText(result.ruleId) && (
+                      <div className={`${styles.detailBlock} ${styles.standardBlock}`}>
+                        <label>Ihr Standard:</label>
+                        <p>{getRuleStandardText(result.ruleId)}</p>
+                        <button
+                          className={styles.copyBtn}
+                          onClick={() => copyToClipboard(getRuleStandardText(result.ruleId))}
+                        >
+                          <Copy size={14} /> Kopieren
+                        </button>
+                      </div>
+                    )}
+                    {result.riskExplanation && (
+                      <div className={styles.detailBlock}>
+                        <label>Risiko:</label>
+                        <p>{result.riskExplanation}</p>
+                      </div>
+                    )}
+                  </div>
 
-                  {result.deviation && (
-                    <div className={styles.detailBlock}>
-                      <label>Abweichung:</label>
-                      <p>{result.deviation}</p>
-                    </div>
-                  )}
-
-                  {result.riskExplanation && (
-                    <div className={styles.detailBlock}>
-                      <label>Risiko:</label>
-                      <p>{result.riskExplanation}</p>
-                    </div>
-                  )}
-
-                  {result.alternativeText && (
-                    <div className={styles.detailBlock + ' ' + styles.alternativeBlock}>
-                      <label>Empfohlene Formulierung:</label>
-                      <p>{result.alternativeText}</p>
-                      <button
-                        className={styles.copyBtn}
-                        onClick={() => copyToClipboard(result.alternativeText)}
-                      >
-                        <Copy size={14} /> Kopieren
-                      </button>
-                    </div>
-                  )}
-
-                  {result.negotiationTip && (
-                    <div className={styles.detailBlock}>
-                      <label>Verhandlungstipp:</label>
-                      <p>{result.negotiationTip}</p>
-                    </div>
-                  )}
+                  {/* RECHTS: Im Vertrag */}
+                  <div className={styles.resultRight}>
+                    <h4 className={styles.columnLabel}>Im Vertrag</h4>
+                    {result.finding ? (
+                      <div className={styles.detailBlock}>
+                        <label>Gefunden:</label>
+                        <p>{result.finding}</p>
+                        {result.clauseReference && (
+                          <span className={styles.clauseRef}>{result.clauseReference}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className={styles.detailBlock}>
+                        <p className={styles.notFoundHint}>Keine entsprechende Klausel im Vertrag gefunden.</p>
+                      </div>
+                    )}
+                    {result.deviation && (
+                      <div className={styles.detailBlock}>
+                        <label>Abweichung:</label>
+                        <p>{result.deviation}</p>
+                      </div>
+                    )}
+                    {result.alternativeText && (
+                      <div className={styles.detailBlock + ' ' + styles.alternativeBlock}>
+                        <label>Empfohlene Formulierung:</label>
+                        <p>{result.alternativeText}</p>
+                        <button
+                          className={styles.copyBtn}
+                          onClick={() => copyToClipboard(result.alternativeText)}
+                        >
+                          <Copy size={14} /> Kopieren
+                        </button>
+                      </div>
+                    )}
+                    {result.negotiationTip && (
+                      <div className={styles.detailBlock}>
+                        <label>Verhandlungstipp:</label>
+                        <p>{result.negotiationTip}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
