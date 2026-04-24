@@ -1763,30 +1763,33 @@ const ContractBuilder: React.FC = () => {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+
+      // Payload vorbereiten — contractType Fallback sicherstellen
+      const payload = {
+        name: `${template.name} (Kopie)`,
+        description: template.description || '',
+        contractType: template.contractType || 'individuell',
+        defaultValues: template.defaultValues || {},
+      };
+
       const response = await fetch(`${API_BASE}/api/user-templates`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: `${template.name} (Kopie)`,
-          description: template.description || '',
-          contractType: template.contractType,
-          defaultValues: template.defaultValues,
-        }),
+        body: JSON.stringify(payload),
       });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.template) {
-          setGalleryUserTemplates(prev => [data.template, ...prev]);
-        }
+
+      const data = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
+
+      if (response.ok && data.template) {
+        setGalleryUserTemplates(prev => [data.template, ...prev]);
       } else {
-        const errData = await response.json().catch(() => ({}));
-        console.error('Fehler beim Duplizieren:', errData.message || response.status);
+        alert(`Duplizieren fehlgeschlagen: ${data.message || data.error || 'Unbekannter Fehler'}`);
       }
     } catch (error) {
-      console.error('Fehler beim Duplizieren der Vorlage:', error);
+      alert(`Netzwerkfehler: ${error instanceof Error ? error.message : 'Verbindung fehlgeschlagen'}`);
     }
   };
 
