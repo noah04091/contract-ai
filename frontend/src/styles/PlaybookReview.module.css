@@ -669,8 +669,8 @@
 
 /* ===== RULES LIST ===== */
 .rulesList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -762,6 +762,7 @@
 .ruleCardExpanded {
   border-color: #3b82f6;
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+  grid-column: 1 / -1;
 }
 
 .ruleExpandedContent {
@@ -869,7 +870,7 @@
 
 /* ===== DETAIL ===== */
 .detail {
-  max-width: 900px;
+  width: 100%;
 }
 
 .detailHeader {
@@ -1074,7 +1075,7 @@
 
 /* ===== CHECK RESULT ===== */
 .checkResultPage {
-  max-width: 900px;
+  width: 100%;
 }
 
 .resultSummary {
@@ -1302,6 +1303,12 @@
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .rulesList {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 1rem 1.5rem;
