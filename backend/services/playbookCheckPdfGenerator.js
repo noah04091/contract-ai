@@ -28,14 +28,24 @@ function generateCheckReportPdf({ check, playbookName }) {
     try {
       const doc = new PDFDocument({
         margin: 50,
-        size: "A4",
-        bufferPages: true
+        size: "A4"
       });
       const buffers = [];
 
       doc.on("data", buffers.push.bind(buffers));
       doc.on("end", () => resolve(Buffer.concat(buffers)));
       doc.on("error", reject);
+
+      // Footer auf jeder Seite automatisch
+      let pageNum = 1;
+      const drawFooter = () => {
+        doc.fillColor(lightGray).fontSize(7).font("Helvetica")
+          .text(`Erstellt mit Contract AI — www.contract-ai.de — Seite ${pageNum}`, 50, 810, { width: pageWidth, align: "center", lineBreak: false });
+      };
+      doc.on("pageAdded", () => {
+        drawFooter();
+        pageNum++;
+      });
 
       const blue = "#3b82f6";
       const darkGray = "#1e293b";
@@ -167,16 +177,8 @@ function generateCheckReportPdf({ check, playbookName }) {
         y += 12;
       }
 
-      // === FOOTER auf allen Seiten ===
-      const pages = doc.bufferedPageRange();
-      for (let i = pages.start; i < pages.start + pages.count; i++) {
-        doc.switchToPage(i);
-        doc.fillColor(lightGray).fontSize(7).font("Helvetica")
-          .text(
-            `Erstellt mit Contract AI — www.contract-ai.de — Seite ${i + 1} von ${pages.count}`,
-            50, 800, { width: pageWidth, align: "center" }
-          );
-      }
+      // Footer auf letzter Seite
+      drawFooter();
 
       doc.end();
     } catch (err) {
