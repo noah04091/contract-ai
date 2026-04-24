@@ -2680,8 +2680,8 @@ const ContractBuilder: React.FC = () => {
                 </p>
               </div>
 
-              {/* Form Body */}
-              <div className={styles.quickFillBody}>
+              {/* Form Body — nur im Einzel-Modus, NICHT bei Massenerstellung */}
+              {!bulkMode && <div className={styles.quickFillBody}>
                 {(() => {
                   // Variablen nach Gruppen sortieren
                   const groups: Record<string, typeof quickFillTemplate.defaultVariables> = {};
@@ -2724,7 +2724,7 @@ const ContractBuilder: React.FC = () => {
                     </div>
                   ));
                 })()}
-              </div>
+              </div>}
 
               {/* Bulk Entries */}
               {bulkMode && (
