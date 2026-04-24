@@ -74,8 +74,8 @@ function postProcess(clauses, rawText = '') {
   // 10. Verwaiste Unterpunkte an Eltern-Klausel anhaengen
   result = mergeOrphans(result, stats);
 
-  // 11. Erweiterte Deduplizierung
-  result = enhancedDedup(result, stats);
+  // 11. Erweiterte Deduplizierung (mit Positions-Check gegen Originaltext)
+  result = enhancedDedup(result, stats, rawText);
 
   stats.output = result.length;
   return { clauses: result, stats };
@@ -461,16 +461,40 @@ function mergeOrphans(clauses, stats) {
 // 11. ERWEITERTE DEDUPLIZIERUNG
 // ══════════════════════════════════════════════════════════════
 
-function enhancedDedup(clauses, stats) {
-  const result = [];
+function enhancedDedup(clauses, stats, rawText = '') {
+  // Index-Abstand: Klauseln die in der Extraktions-Reihenfolge weit auseinander
+  // stehen, werden NIE als Duplikate behandelt — sie stammen aus verschiedenen
+  // Dokumentteilen (z.B. Safe Plus Versicherung vs RSV Plus Versicherung).
+  //
+  // Warum Index statt Text-Position: GPT reformuliert Text beim Extrahieren,
+  // daher ist Text-Matching gegen den Rohtext unzuverlaessig. Aber die
+  // Reihenfolge bleibt erhalten — Klausel #5 kommt immer vor Klausel #60.
+  //
+  // Schwellenwert 5: Batch-Overlap-Duplikate sind 1-2 Positionen auseinander
+  // (5K Overlap bei 60K Batch = ~8% = ~1-2 Klauseln pro Grenze).
+  // Verschiedene Versicherungsprodukte sind 3-6+ Positionen auseinander.
+  // 5 gibt genug Spielraum fuer echte Overlap-Duplikate.
+  const MIN_INDEX_DISTANCE = 5;
 
-  for (const clause of clauses) {
+  const result = [];
+  const resultOriginalIndices = []; // Original-Index jeder akzeptierten Klausel
+
+  for (let i = 0; i < clauses.length; i++) {
+    const clause = clauses[i];
     const normText = normalizeForMatch((clause.text || '').toLowerCase());
     const normTitle = normalizeForMatch(((clause.title || '') + ' ' + (clause.number || '')).toLowerCase());
 
     let isDuplicate = false;
 
-    for (const existing of result) {
+    for (let j = 0; j < result.length; j++) {
+      const existing = result[j];
+      const originalIdx = resultOriginalIndices[j];
+
+      // INDEX-ABSTAND-CHECK: Weit auseinander → verschiedene Dokumentteile → kein Duplikat
+      if (Math.abs(i - originalIdx) > MIN_INDEX_DISTANCE) {
+        continue; // Naechsten Kandidaten pruefen
+      }
+
       const existingNormText = normalizeForMatch((existing.text || '').toLowerCase());
       const existingNormTitle = normalizeForMatch(((existing.title || '') + ' ' + (existing.number || '')).toLowerCase());
 
@@ -526,6 +550,7 @@ function enhancedDedup(clauses, stats) {
 
     if (!isDuplicate) {
       result.push(clause);
+      resultOriginalIndices.push(i);
     } else {
       stats.duplicatesRemoved++;
     }
