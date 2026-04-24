@@ -256,6 +256,7 @@ class DirectExtractor {
    * @private
    */
   async _batchedExtraction(text, timeoutMs, systemPrompt = SYSTEM_PROMPT) {
+    const CONCURRENCY = 3;
     const windows = [];
     let pos = 0;
     while (pos < text.length) {
@@ -265,45 +266,76 @@ class DirectExtractor {
       pos = end - BATCH_OVERLAP;
     }
 
-    console.log(`[DirectExtractor] ${windows.length} Batch-Fenster`);
+    console.log(`[DirectExtractor] ${windows.length} Batch-Fenster (Concurrency: ${CONCURRENCY})`);
 
+    // Ergebnisse pro Fenster-Index — damit Reihenfolge garantiert bleibt
+    const windowResults = new Array(windows.length).fill(null);
+    let totalPromptTokens = 0, totalCompletionTokens = 0;
+
+    // Parallele Verarbeitung mit Concurrency-Limit (Pattern aus batchAnalyzer.js)
+    for (let i = 0; i < windows.length; i += CONCURRENCY) {
+      const chunk = windows.slice(i, i + CONCURRENCY);
+      const chunkStartTime = Date.now();
+
+      console.log(`[DirectExtractor] Runde ${Math.floor(i / CONCURRENCY) + 1}/${Math.ceil(windows.length / CONCURRENCY)}: Batch ${i + 1}-${Math.min(i + CONCURRENCY, windows.length)} parallel`);
+
+      const results = await Promise.allSettled(
+        chunk.map((win, j) => {
+          const batchIdx = i + j;
+          const batchPrompt = batchIdx === 0
+            ? `Hier ist der ERSTE TEIL eines langen Dokuments. Zerlege ihn in Abschnitte. Wenn ein Abschnitt am Ende abgeschnitten wirkt, extrahiere trotzdem alles was da ist.\n\n---BEGIN DOKUMENT (Teil ${batchIdx + 1})---\n${win.text}\n---END DOKUMENT---`
+            : `Hier ist ein WEITERER TEIL desselben Dokuments (Fortsetzung). Zerlege ihn in Abschnitte. Es kann sein, dass der Text mitten in einem Abschnitt beginnt — wenn ja, extrahiere ihn trotzdem.\n\n---BEGIN DOKUMENT (Teil ${batchIdx + 1})---\n${win.text}\n---END DOKUMENT---`;
+
+          return this.openai.chat.completions.create({
+            model: MODEL,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: batchPrompt }
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.1,
+            max_tokens: MAX_COMPLETION_TOKENS
+          }, { timeout: timeoutMs });
+        })
+      );
+
+      // Ergebnisse in der richtigen Reihenfolge verarbeiten
+      for (let j = 0; j < results.length; j++) {
+        const batchIdx = i + j;
+        const result = results[j];
+
+        if (result.status === 'fulfilled') {
+          const content = result.value.choices?.[0]?.message?.content;
+          if (content) {
+            const parsed = JSON.parse(content);
+            windowResults[batchIdx] = {
+              clauses: Array.isArray(parsed.clauses) ? parsed.clauses : [],
+              documentType: parsed.documentType || null,
+              language: parsed.language || null
+            };
+            totalPromptTokens += result.value.usage?.prompt_tokens || 0;
+            totalCompletionTokens += result.value.usage?.completion_tokens || 0;
+          }
+        } else {
+          console.error(`[DirectExtractor] Batch ${batchIdx + 1} fehlgeschlagen:`, result.reason?.message || result.reason);
+        }
+      }
+
+      const chunkElapsed = Math.round((Date.now() - chunkStartTime) / 1000);
+      const completedBatches = Math.min(i + CONCURRENCY, windows.length);
+      console.log(`[DirectExtractor] Runde fertig in ${chunkElapsed}s (${completedBatches}/${windows.length} Batches)`);
+    }
+
+    // Klauseln in Dokumentreihenfolge zusammenfuehren
     let allClauses = [];
     let documentType = null;
     let language = null;
-    let totalPromptTokens = 0, totalCompletionTokens = 0;
 
-    for (let i = 0; i < windows.length; i++) {
-      const win = windows[i];
-      console.log(`[DirectExtractor] Batch ${i + 1}/${windows.length}: ${win.text.length} chars`);
-      try {
-        const batchPrompt = i === 0
-          ? `Hier ist der ERSTE TEIL eines langen Dokuments. Zerlege ihn in Abschnitte. Wenn ein Abschnitt am Ende abgeschnitten wirkt, extrahiere trotzdem alles was da ist.\n\n---BEGIN DOKUMENT (Teil ${i + 1})---\n${win.text}\n---END DOKUMENT---`
-          : `Hier ist ein WEITERER TEIL desselben Dokuments (Fortsetzung). Zerlege ihn in Abschnitte. Es kann sein, dass der Text mitten in einem Abschnitt beginnt — wenn ja, extrahiere ihn trotzdem.\n\n---BEGIN DOKUMENT (Teil ${i + 1})---\n${win.text}\n---END DOKUMENT---`;
-
-        const response = await this.openai.chat.completions.create({
-          model: MODEL,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: batchPrompt }
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.1,
-          max_tokens: MAX_COMPLETION_TOKENS
-        }, { timeout: timeoutMs });
-
-        const content = response.choices?.[0]?.message?.content;
-        if (content) {
-          const parsed = JSON.parse(content);
-          const batchClauses = Array.isArray(parsed.clauses) ? parsed.clauses : [];
-          allClauses.push(...batchClauses);
-          if (!documentType && parsed.documentType) documentType = parsed.documentType;
-          if (!language && parsed.language) language = parsed.language;
-          totalPromptTokens += response.usage?.prompt_tokens || 0;
-          totalCompletionTokens += response.usage?.completion_tokens || 0;
-        }
-      } catch (err) {
-        console.error(`[DirectExtractor] Batch ${i + 1} fehlgeschlagen:`, err.message);
-      }
+    for (const wr of windowResults) {
+      if (!wr) continue;
+      allClauses.push(...wr.clauses);
+      if (!documentType && wr.documentType) documentType = wr.documentType;
+      if (!language && wr.language) language = wr.language;
     }
 
     return {
