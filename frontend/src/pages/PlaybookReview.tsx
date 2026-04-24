@@ -291,7 +291,12 @@ const PlaybookReview: React.FC = () => {
       setBuilderStep(3);
       toast.success(`${data.rules?.length || 0} Regeln aus Vertrag extrahiert`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler bei der Extraktion');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Text') || msg.includes('text') || msg.includes('kurz')) {
+        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wählen Sie einen anderen Vertrag oder laden Sie eine neue PDF hoch.');
+      } else {
+        toast.error(msg || 'Fehler bei der Extraktion');
+      }
     } finally {
       setIsExtracting(false);
     }
@@ -392,7 +397,12 @@ const PlaybookReview: React.FC = () => {
       setView('check-result');
       toast.success('Prüfung abgeschlossen!');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler bei der Prüfung');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Text') || msg.includes('text') || msg.includes('kurz')) {
+        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wählen Sie einen Vertrag mit extrahiertem Text.');
+      } else {
+        toast.error(msg || 'Fehler bei der Prüfung');
+      }
     } finally {
       setIsChecking(false);
     }
@@ -738,12 +748,13 @@ const PlaybookReview: React.FC = () => {
                     .map(c => (
                       <div
                         key={c._id}
-                        className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''}`}
-                        onClick={() => setSelectedContractId(c._id)}
+                        className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
+                        onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
                       >
                         <FileText size={16} />
                         <span>{c.name || 'Unbenannt'}</span>
-                        {c.contractType && <span className={styles.contractType}>{c.contractType}</span>}
+                        {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
+                        {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
                       </div>
                     ))}
                   {contracts.length === 0 && (
@@ -972,12 +983,13 @@ const PlaybookReview: React.FC = () => {
                   .map(c => (
                     <div
                       key={c._id}
-                      className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''}`}
-                      onClick={() => setSelectedContractId(c._id)}
+                      className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
+                      onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
                     >
                       <FileText size={16} />
                       <span>{c.name || 'Unbenannt'}</span>
-                      {c.contractType && <span className={styles.contractType}>{c.contractType}</span>}
+                      {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
+                      {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
                     </div>
                   ))}
                 {contracts.length === 0 && (
