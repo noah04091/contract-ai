@@ -181,6 +181,16 @@ async function runPulseV2Radar(db, options = {}) {
     { userId: 1, legislationFingerprint: 1, contractId: 1 },
     { background: true, sparse: true }
   );
+  // Compound index for efficient Radar law-fetch query (pulseV2Processed + updatedAt)
+  await db.collection("laws").createIndex(
+    { pulseV2Processed: 1, updatedAt: -1 },
+    { background: true }
+  );
+  // TTL index: auto-delete alerts older than 180 days (keeps DB lean as user base grows)
+  await db.collection("pulse_v2_legal_alerts").createIndex(
+    { createdAt: 1 },
+    { expireAfterSeconds: 15552000, background: true }
+  );
 
   // 1. Find recent law changes (from V1 RSS sync)
   const lawChanges = await fetchRecentLawChanges(db);
