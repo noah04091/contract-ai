@@ -83,7 +83,7 @@ export default function HomePricingCards() {
         yearly: { price: "0", currency: "€", original: null, discount: null, note: "Für immer kostenlos" }
       },
       features: [
-        "3 KI-Vertragsanalysen",
+        "3 KI-Analysen",
         "Verträge hochladen & speichern",
         "Kalender & Fristen (Ansicht)",
         "Legal Pulse Feed",
@@ -111,7 +111,7 @@ export default function HomePricingCards() {
         "25 KI-Analysen pro Monat",
         "15 Optimierungen & 20 Vergleiche",
         "Unbegrenzte digitale Signaturen",
-        "Email-Erinnerungen & Alerts",
+        "Legal Lens & Legal Radar",
         "Priority Support (24h)",
       ],
       limitations: null,
