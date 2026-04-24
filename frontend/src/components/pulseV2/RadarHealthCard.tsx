@@ -33,9 +33,9 @@ export function useRadarHealth() {
 
   useEffect(() => {
     fetch('/api/legal-pulse-v2/radar-health-detail', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => setData(d))
-      .catch(() => null)
+      .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, []);
 

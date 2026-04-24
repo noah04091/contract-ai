@@ -262,10 +262,14 @@ const ClauseImpactNode: React.FC<{
       if (res.ok) {
         const data = await res.json();
         setClauseText(data.text || 'Kein Text verfügbar');
-        setShowClauseText(true);
+      } else {
+        setClauseText('Klausel konnte nicht geladen werden.');
       }
-    } catch { /* silent */ }
-    finally { setClauseTextLoading(false); }
+      setShowClauseText(true);
+    } catch {
+      setClauseText('Verbindungsfehler beim Laden der Klausel.');
+      setShowClauseText(true);
+    } finally { setClauseTextLoading(false); }
   }, [contractId, clauseImpact.clauseId, clauseText, showClauseText]);
 
   const handleAutoFix = useCallback(async () => {

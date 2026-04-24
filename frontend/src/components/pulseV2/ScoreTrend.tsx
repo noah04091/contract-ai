@@ -27,6 +27,7 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
         const res = await fetch(`${API_BASE}/legal-pulse-v2/contract/${contractId}/timeline`, {
           credentials: 'include',
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setTimeline(data.timeline || []);
       } catch (err) {

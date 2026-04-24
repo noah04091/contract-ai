@@ -77,6 +77,7 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
   const config = STATUS_CONFIG[monitoring.status] || STATUS_CONFIG.neutral;
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   // Determine which "next scan" is sooner
   const nextRadar = new Date(monitoring.nextRadarScan).getTime();
@@ -87,18 +88,22 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
   const handleScanNow = useCallback(async () => {
     setScanning(true);
     setScanResult(null);
+    setScanError(null);
     try {
       const res = await fetch('/api/legal-pulse-v2/scan-now', {
         method: 'POST',
         credentials: 'include',
       });
-      const data = await res.json();
       if (res.ok) {
+        const data = await res.json();
         setScanResult(data);
         onRefresh?.();
+      } else {
+        setScanError('Prüfung fehlgeschlagen. Bitte versuchen Sie es später erneut.');
       }
     } catch (err) {
       console.error('[PulseV2] Scan now failed:', err);
+      setScanError('Verbindung fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung.');
     } finally {
       setScanning(false);
     }
@@ -259,6 +264,41 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
             <span style={{ color: '#9ca3af' }}>Überwacht: </span>
             <span style={{ fontWeight: 500 }}>{monitoring.contractsMonitored} Verträge</span>
           </div>
+        </div>
+      )}
+
+      {/* Scan Error: red banner */}
+      {scanError && !scanning && (
+        <div style={{
+          padding: '8px 12px',
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: 8,
+          marginBottom: 4,
+          fontSize: 13,
+          color: '#991b1b',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}>
+          <span style={{ fontSize: 14 }}>&#x26A0;&#xFE0F;</span>
+          <span style={{ flex: 1 }}>{scanError}</span>
+          <button
+            onClick={() => setScanError(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#9ca3af',
+              fontSize: 16,
+              padding: '0 2px',
+              lineHeight: 1,
+            }}
+            title="Schließen"
+          >
+            &times;
+          </button>
         </div>
       )}
 

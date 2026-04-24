@@ -72,22 +72,23 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
 
   const handleSaveComment = useCallback(async () => {
     if (commentText === savedComment) return;
-    // Optimistic update
-    setSavedComment(commentText);
     setCommentSaving(true);
     try {
       if (onCommentSave) {
         await onCommentSave(action.id, commentText);
       } else if (resultId) {
-        await fetch(`/api/legal-pulse-v2/results/${resultId}/actions/${action.id}`, {
+        const res = await fetch(`/api/legal-pulse-v2/results/${resultId}/actions/${action.id}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ comment: commentText }),
         });
+        if (!res.ok) throw new Error('Save failed');
       }
+      setSavedComment(commentText);
     } catch (err) {
       console.error('[PulseV2] Action comment save error:', err);
+      setCommentText(savedComment);
     } finally {
       setCommentSaving(false);
     }
