@@ -221,6 +221,7 @@ export default function Pricing() {
     // Erstellung & Vorlagen
     { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt" },
     { feature: "Contract Builder", free: "✓ Basis", business: "✓ + Vorlagen speichern", premium: "✓ + Vorlagen speichern" },
+    { feature: "Playbook Review", free: "–", business: "✓", premium: "✓" },
     { feature: "Klausel-Bibliothek", free: "✓", business: "✓", premium: "✓" },
     { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
     // Verwaltung & Organisation
@@ -230,8 +231,8 @@ export default function Pricing() {
     { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
     { feature: "Email-Erinnerungen", free: "–", business: "✓", premium: "✓" },
     { feature: "Kalender-Sync", free: "–", business: "–", premium: "✓ Google/Outlook" },
-    { feature: "SMS-Fristenwarnungen", free: "–", business: "–", premium: "✓" },
     { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
+    { feature: "Legal Radar", free: "–", business: "✓", premium: "✓" },
     // Export & Extras
     { feature: "PDF-Download", free: "✓ Nur ansehen", business: "✓ + Analyse-Reports", premium: "✓ White-Label" },
     { feature: "Excel-Export", free: "–", business: "–", premium: "✓" },
@@ -265,23 +266,23 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€</title>
-        <meta name="description" content="Vergleiche unsere Preise: Business (19€/Monat) und Enterprise (29€/Monat). KI-gestützte Vertragsanalyse, Risikoerkennung & Optimierung. 14 Tage Geld-zurück-Garantie. Jetzt kostenlos starten!" />
-        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Kosten, KI Vertragsanalyse Preis, Legal Tech Preise, Vertragsmanagement Software Preise, Vertrag prüfen Kosten" />
+        <title>Preise & Tarife – Contract AI | KI-Vertragsmanagement ab 0€</title>
+        <meta name="description" content="Vergleiche unsere Preise: Business (19€/Monat) und Enterprise (29€/Monat). KI-gestütztes Vertragsmanagement, Risikoerkennung & Optimierung. 14 Tage Geld-zurück-Garantie. Jetzt kostenlos starten!" />
+        <meta name="keywords" content="Preise Contract AI, Vertragsmanagement Kosten, KI Vertragsmanagement Preis, Legal Tech Preise, Vertragsmanagement Software Preise, Vertrag prüfen Kosten" />
         <link rel="canonical" href="https://www.contract-ai.de/pricing" />
         <meta name="robots" content="index, follow" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€" />
-        <meta property="og:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
+        <meta property="og:title" content="Preise & Tarife – Contract AI | KI-Vertragsmanagement ab 0€" />
+        <meta property="og:description" content="Transparente Preise für KI-gestütztes Vertragsmanagement. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
         <meta property="og:url" content="https://www.contract-ai.de/pricing" />
         <meta property="og:site_name" content="Contract AI" />
         <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Preise & Tarife – Contract AI | KI-Vertragsanalyse ab 0€" />
-        <meta name="twitter:description" content="Transparente Preise für KI-gestützte Vertragsanalyse. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
+        <meta name="twitter:title" content="Preise & Tarife – Contract AI | KI-Vertragsmanagement ab 0€" />
+        <meta name="twitter:description" content="Transparente Preise für KI-gestütztes Vertragsmanagement. Starter kostenlos, Business 19€/Monat, Enterprise 29€/Monat. Jetzt testen!" />
 
         <script type="application/ld+json">
           {JSON.stringify({
@@ -314,7 +315,7 @@ export default function Pricing() {
               {
                 "@type": "Offer",
                 "name": "Starter",
-                "description": "3 KI-Vertragsanalysen kostenlos. Basis-Vertragsverwaltung, Contract Builder und Klausel-Bibliothek.",
+                "description": "3 KI-Analysen kostenlos. Basis-Vertragsverwaltung, Contract Builder und Klausel-Bibliothek.",
                 "price": "0",
                 "priceCurrency": "EUR",
                 "priceValidUntil": "2026-12-31",
@@ -371,7 +372,7 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            KI-Vertragsanalyse – Preise & Tarife<br />
+            Preise & Tarife<br />
             <span className={styles.heroHighlight}>Transparent. Flexibel. Fair.</span>
           </motion.h1>
           <motion.div
