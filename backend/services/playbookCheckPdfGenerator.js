@@ -36,16 +36,13 @@ function generateCheckReportPdf({ check, playbookName }) {
       doc.on("end", () => resolve(Buffer.concat(buffers)));
       doc.on("error", reject);
 
-      // Footer auf jeder Seite automatisch
-      let pageNum = 1;
-      const drawFooter = () => {
-        doc.fillColor(lightGray).fontSize(7).font("Helvetica")
-          .text(`Erstellt mit Contract AI — www.contract-ai.de — Seite ${pageNum}`, 50, 810, { width: pageWidth, align: "center", lineBreak: false });
+      // Footer-Funktion (Position innerhalb des druckbaren Bereichs)
+      const drawFooter = (num) => {
+        doc.save();
+        doc.fillColor("#94a3b8").fontSize(7).font("Helvetica")
+          .text(`Erstellt mit Contract AI — www.contract-ai.de — Seite ${num}`, 50, 780, { width: pageWidth, align: "center", lineBreak: false });
+        doc.restore();
       };
-      doc.on("pageAdded", () => {
-        drawFooter();
-        pageNum++;
-      });
 
       const blue = "#3b82f6";
       const darkGray = "#1e293b";
@@ -116,10 +113,13 @@ function generateCheckReportPdf({ check, playbookName }) {
       y += 25;
 
       const results = check.results || [];
+      let currentPage = 1;
       for (const result of results) {
         // Seitenumbruch wenn nötig
         if (y > 720) {
+          drawFooter(currentPage);
           doc.addPage();
+          currentPage++;
           y = 50;
         }
 
@@ -178,7 +178,7 @@ function generateCheckReportPdf({ check, playbookName }) {
       }
 
       // Footer auf letzter Seite
-      drawFooter();
+      drawFooter(currentPage);
 
       doc.end();
     } catch (err) {
