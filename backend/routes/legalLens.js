@@ -1002,16 +1002,46 @@ router.post('/parse', verifyToken, async (req, res) => {
       });
     }
 
-    // Preprocessing läuft gerade? → Frontend soll Streaming nutzen
+    // Preprocessing läuft gerade? → Prüfe ob noch aktiv oder stuck
     if (preprocessStatus === 'processing') {
-      console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch - empfehle Streaming`);
-      return res.json({
-        success: true,
-        useStreaming: true,
-        reason: 'preprocessing_in_progress',
-        message: 'Vorverarbeitung läuft - bitte Streaming nutzen für Live-Updates',
-        contractName: contract.name || contract.title || 'Vertrag'
-      });
+      const MAX_PROCESSING_MS = 30 * 60 * 1000; // 30 Minuten
+      const processingStarted = contract.legalLens?.preprocessedAt;
+      const processingAge = processingStarted
+        ? Date.now() - new Date(processingStarted).getTime()
+        : Infinity; // Kein Timestamp → definitiv stale
+
+      if (processingAge < MAX_PROCESSING_MS) {
+        // Parse läuft noch aktiv → wie bisher
+        console.log(`⏳ [Legal Lens] Vorverarbeitung läuft noch (${Math.round(processingAge / 60000)} min) - empfehle Streaming`);
+        return res.json({
+          success: true,
+          useStreaming: true,
+          reason: 'preprocessing_in_progress',
+          message: 'Vorverarbeitung läuft - bitte Streaming nutzen für Live-Updates',
+          contractName: contract.name || contract.title || 'Vertrag'
+        });
+      }
+
+      // Stale processing: > 30 Minuten ohne Abschluss
+      const cachedClauses = contract.legalLens?.preParsedClauses;
+
+      if (cachedClauses?.length > 0) {
+        // Parse hat Klauseln gespeichert aber Status nicht aktualisiert → Status fixen
+        console.log(`🔧 [Legal Lens] Stale processing (${Math.round(processingAge / 60000)} min) mit ${cachedClauses.length} gecachten Klauseln → Status wird auf completed gesetzt`);
+        await Contract.updateOne(
+          { _id: new ObjectId(contractId) },
+          { $set: { 'legalLens.preprocessStatus': 'completed', 'legalLens.preprocessedAt': new Date() } }
+        );
+        // Cache ist jetzt gültig → nächster Request wird ihn servieren
+        // Wir leiten direkt weiter zum Cache-Serving
+      } else {
+        // Kein Cache vorhanden → Status zurücksetzen für frischen Parse
+        console.log(`🔧 [Legal Lens] Stale processing (${Math.round(processingAge / 60000)} min) ohne Klauseln → Status wird zurückgesetzt`);
+        await Contract.updateOne(
+          { _id: new ObjectId(contractId) },
+          { $set: { 'legalLens.preprocessStatus': null } }
+        );
+      }
     }
 
     // Cache ungültig oder nicht vorhanden → Frontend soll Streaming nutzen
