@@ -2038,49 +2038,7 @@ const ContractBuilder: React.FC = () => {
                           <Info size={13} />
                         </button>
                       </div>
-                      {/* Info-Popup für User-Vorlage */}
-                      {galleryInfoId === `user-${template.id}` && (() => {
-                        const tplData = template.defaultValues as {
-                          blocks?: Array<{ type?: string; content?: { clauseTitle?: string; body?: string; preambleText?: string; title?: string } }>;
-                          variables?: Array<{ displayName?: string; name?: string }>;
-                        };
-                        const blocks = tplData.blocks || [];
-                        const clauses = blocks.filter(b => b.type === 'clause');
-                        const vars = tplData.variables || [];
-                        return (
-                          <div className={styles.galleryInfoPopup} onClick={e => e.stopPropagation()}>
-                            <div className={styles.galleryInfoHeader}>
-                              <strong>{template.name}</strong>
-                              <button className={styles.galleryInfoClose} onClick={(e) => { e.stopPropagation(); setGalleryInfoId(null); }}>
-                                <X size={14} />
-                              </button>
-                            </div>
-                            {clauses.length > 0 && (
-                              <div className={styles.galleryInfoSection}>
-                                <span className={styles.galleryInfoLabel}>Klauseln ({clauses.length})</span>
-                                <ul className={styles.galleryInfoList}>
-                                  {clauses.map((c, i) => (
-                                    <li key={i}>§ {i + 1} {c.content?.clauseTitle || 'Klausel'}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {vars.length > 0 && (
-                              <div className={styles.galleryInfoSection}>
-                                <span className={styles.galleryInfoLabel}>Variablen ({vars.length})</span>
-                                <div className={styles.galleryInfoTags}>
-                                  {vars.map((v, i) => (
-                                    <span key={i} className={styles.galleryInfoTag}>{v.displayName || (v.name || '').replace(/\{\{|\}\}/g, '')}</span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {clauses.length === 0 && vars.length === 0 && (
-                              <p style={{ fontSize: 13, color: '#9ca3af', padding: '8px 0' }}>Keine Details verfügbar</p>
-                            )}
-                          </div>
-                        );
-                      })()}
+                      {/* Info wird als zentrales Modal gerendert (s.u.) */}
                     </div>
                   ))}
                 </div>}
@@ -2183,37 +2141,7 @@ const ContractBuilder: React.FC = () => {
                     <span className={styles.galleryCardMetaItem}><Layers size={12} /> {template.suggestedClauses.length} Klauseln</span>
                     <span className={styles.galleryCardMetaItem}><PenTool size={12} /> {template.defaultVariables.length} Felder</span>
                   </div>
-                  {/* Info-Popup */}
-                  {galleryInfoId === template.id && (
-                    <div className={styles.galleryInfoPopup} onClick={e => e.stopPropagation()}>
-                      <div className={styles.galleryInfoHeader}>
-                        <strong>{template.name}</strong>
-                        <button className={styles.galleryInfoClose} onClick={(e) => { e.stopPropagation(); setGalleryInfoId(null); }}>
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <div className={styles.galleryInfoSection}>
-                        <span className={styles.galleryInfoLabel}>Parteien</span>
-                        <p className={styles.galleryInfoText}>{template.parties.party1.role} &amp; {template.parties.party2.role}</p>
-                      </div>
-                      <div className={styles.galleryInfoSection}>
-                        <span className={styles.galleryInfoLabel}>Klauseln ({template.suggestedClauses.length})</span>
-                        <ul className={styles.galleryInfoList}>
-                          {template.suggestedClauses.map((c, i) => (
-                            <li key={i}>§ {i + 1} {c.title}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className={styles.galleryInfoSection}>
-                        <span className={styles.galleryInfoLabel}>Felder ({template.defaultVariables.length})</span>
-                        <div className={styles.galleryInfoTags}>
-                          {template.defaultVariables.map(v => (
-                            <span key={v.name} className={styles.galleryInfoTag}>{v.displayName}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Info wird als zentrales Modal gerendert (s.u.) */}
                 </div>
               ))}
             </div>
@@ -2230,6 +2158,84 @@ const ContractBuilder: React.FC = () => {
 
         {/* Click-Outside: Menü schließen — kein Overlay, sondern Event-Listener
             damit Menü-Klicks nicht blockiert werden */}
+
+        {/* ═══ Template Info Modal ═══ */}
+        {galleryInfoId && (() => {
+          // System-Vorlage?
+          const sysTemplate = contractTemplates.find(t => t.id === galleryInfoId);
+          // User-Vorlage?
+          const userTemplate = !sysTemplate ? galleryUserTemplates.find(t => `user-${t.id}` === galleryInfoId) : null;
+
+          if (!sysTemplate && !userTemplate) return null;
+
+          const name = sysTemplate?.name || userTemplate?.name || '';
+          const description = sysTemplate?.description || userTemplate?.description || '';
+
+          // Klauseln + Variablen ermitteln
+          let clauses: Array<{ title: string }> = [];
+          let variables: Array<{ displayName: string }> = [];
+          let partyA = '', partyB = '';
+
+          if (sysTemplate) {
+            clauses = sysTemplate.suggestedClauses.map(c => ({ title: c.title }));
+            variables = sysTemplate.defaultVariables.map(v => ({ displayName: v.displayName }));
+            partyA = sysTemplate.parties.party1.role;
+            partyB = sysTemplate.parties.party2.role;
+          } else if (userTemplate) {
+            const tplData = userTemplate.defaultValues as {
+              blocks?: Array<{ type?: string; content?: { clauseTitle?: string } }>;
+              variables?: Array<{ displayName?: string; name?: string }>;
+            };
+            clauses = (tplData.blocks || []).filter(b => b.type === 'clause').map(b => ({ title: b.content?.clauseTitle || 'Klausel' }));
+            variables = (tplData.variables || []).map(v => ({ displayName: v.displayName || (v.name || '').replace(/\{\{|\}\}/g, '') }));
+          }
+
+          return (
+            <div className={styles.galleryInfoOverlay} onClick={() => setGalleryInfoId(null)}>
+              <div className={styles.galleryInfoPopup} onClick={e => e.stopPropagation()}>
+                <div className={styles.galleryInfoHeader}>
+                  <strong>{name}</strong>
+                  <button className={styles.galleryInfoClose} onClick={() => setGalleryInfoId(null)}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className={styles.galleryInfoBody}>
+                  {description && (
+                    <div className={styles.galleryInfoSection}>
+                      <p className={styles.galleryInfoText}>{description}</p>
+                    </div>
+                  )}
+                  {partyA && (
+                    <div className={styles.galleryInfoSection}>
+                      <span className={styles.galleryInfoLabel}>Parteien</span>
+                      <p className={styles.galleryInfoText}>{partyA} &amp; {partyB}</p>
+                    </div>
+                  )}
+                  {clauses.length > 0 && (
+                    <div className={styles.galleryInfoSection}>
+                      <span className={styles.galleryInfoLabel}>Klauseln ({clauses.length})</span>
+                      <ul className={styles.galleryInfoList}>
+                        {clauses.map((c, i) => (
+                          <li key={i}>§ {i + 1} {c.title}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {variables.length > 0 && (
+                    <div className={styles.galleryInfoSection}>
+                      <span className={styles.galleryInfoLabel}>Variablen ({variables.length})</span>
+                      <div className={styles.galleryInfoTags}>
+                        {variables.map((v, i) => (
+                          <span key={i} className={styles.galleryInfoTag}>{v.displayName}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ═══ User-Template Bearbeiten Modal ═══ */}
         {editingUserTemplate && (
