@@ -111,7 +111,7 @@ export default function HomePricingCards() {
         "25 KI-Analysen pro Monat",
         "15 Optimierungen & 20 Vergleiche",
         "Unbegrenzte digitale Signaturen",
-        "Legal Lens & Legal Radar",
+        "Klauseln verstehen & Gesetzesänderungen erkennen",
         "Priority Support (24h)",
       ],
       limitations: null,
@@ -130,6 +130,7 @@ export default function HomePricingCards() {
         yearly: { price: "24", currency: "€", original: "39", discount: "38%", note: "/Monat", yearlyTotal: "290€/Jahr", saving: "Sie sparen 178€" }
       },
       features: [
+        "Alles aus Business, plus:",
         "Unbegrenzte Analysen & Optimierungen",
         "Kalender-Synchronisierung (Google/Outlook)",
         "Automatische Fristenwarnungen",
