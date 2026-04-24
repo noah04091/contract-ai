@@ -212,6 +212,12 @@ const PlaybookReview: React.FC = () => {
   const [isRuleDirty, setIsRuleDirty] = useState(false);
   const [isSavingRule, setIsSavingRule] = useState(false);
 
+  // PDF + Negotiation Letter
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [negotiationLetter, setNegotiationLetter] = useState<string>('');
+  const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+  const [showLetterModal, setShowLetterModal] = useState(false);
+
   // ============================================
   // DATA LOADING
   // ============================================
@@ -480,6 +486,81 @@ const PlaybookReview: React.FC = () => {
       }
     } finally {
       setIsChecking(false);
+    }
+  };
+
+  // ============================================
+  // PDF + LETTER ACTIONS
+  // ============================================
+  const handleExportPdf = async () => {
+    if (!checkResult) return;
+    setIsExportingPdf(true);
+    try {
+      const response = await fetch(`/api/playbook-review/checks/${checkResult._id}/export-pdf`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('PDF-Export fehlgeschlagen');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Pruefbericht_${checkResult.contractName || 'Vertrag'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF heruntergeladen');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'PDF-Export fehlgeschlagen');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleGenerateLetter = async () => {
+    if (!checkResult) return;
+    setIsGeneratingLetter(true);
+    setShowLetterModal(true);
+    try {
+      const response = await fetch(`/api/playbook-review/checks/${checkResult._id}/negotiation-letter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Brief konnte nicht generiert werden');
+      const data = await response.json();
+      setNegotiationLetter(data.letterText || '');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler bei der Generierung');
+      setShowLetterModal(false);
+    } finally {
+      setIsGeneratingLetter(false);
+    }
+  };
+
+  const handleDownloadLetterPdf = async () => {
+    if (!checkResult) return;
+    try {
+      const response = await fetch(`/api/playbook-review/checks/${checkResult._id}/negotiation-letter/pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        },
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('PDF-Export fehlgeschlagen');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Verhandlungsbrief_${checkResult.contractName || 'Vertrag'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'PDF-Export fehlgeschlagen');
     }
   };
 
@@ -1291,9 +1372,9 @@ const PlaybookReview: React.FC = () => {
             <h2>Prüfung: {checkResult.contractName}</h2>
             <p>Playbook: {playbookName} &middot; {new Date(checkResult.checkedAt).toLocaleDateString('de-DE')}</p>
             <div className={styles.summaryStats}>
-              <span className={styles.statPassed}><CheckCircle2 size={14} /> {summary.passed} Erfuellt</span>
+              <span className={styles.statPassed}><CheckCircle2 size={14} /> {summary.passed} Erfüllt</span>
               <span className={styles.statWarning}><AlertTriangle size={14} /> {summary.warnings} Warnung</span>
-              <span className={styles.statFailed}><XCircle size={14} /> {summary.failed} Nicht erfuellt</span>
+              <span className={styles.statFailed}><XCircle size={14} /> {summary.failed} Nicht erfüllt</span>
               <span className={styles.statNotFound}><HelpCircle size={14} /> {summary.notFound} Nicht gefunden</span>
             </div>
           </div>
@@ -1303,6 +1384,51 @@ const PlaybookReview: React.FC = () => {
         {summary.recommendation && (
           <div className={`${styles.recommendation} ${styles[`risk${summary.overallRisk.charAt(0).toUpperCase() + summary.overallRisk.slice(1)}`]}`}>
             <strong>Empfehlung:</strong> {summary.recommendation}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className={styles.resultActions}>
+          <button className={styles.btnPrimary} onClick={handleExportPdf} disabled={isExportingPdf}>
+            {isExportingPdf ? <Loader2 size={14} className={styles.spinner} /> : <FileText size={14} />}
+            Als PDF exportieren
+          </button>
+          {(summary.failed > 0 || summary.warnings > 0) && (
+            <button className={styles.btnOutline} onClick={handleGenerateLetter} disabled={isGeneratingLetter}>
+              {isGeneratingLetter ? <Loader2 size={14} className={styles.spinner} /> : <Edit3 size={14} />}
+              Nachverhandlung vorbereiten
+            </button>
+          )}
+        </div>
+
+        {/* Verhandlungsbrief Modal */}
+        {showLetterModal && (
+          <div className={styles.modalOverlay} onClick={() => setShowLetterModal(false)}>
+            <div className={`${styles.modal} ${styles.letterModal}`} onClick={e => e.stopPropagation()}>
+              <h3>Verhandlungsbrief</h3>
+              {isGeneratingLetter ? (
+                <div className={styles.loading} style={{ minHeight: '200px' }}>
+                  <Loader2 size={24} className={styles.spinner} />
+                  <p>Brief wird generiert...</p>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.letterPreview}>
+                    {negotiationLetter.split('\n').map((line, i) => (
+                      <p key={i}>{line || '\u00A0'}</p>
+                    ))}
+                  </div>
+                  <div className={styles.modalActions}>
+                    <button className={styles.btnOutline} onClick={() => { copyToClipboard(negotiationLetter); }}>
+                      <Copy size={14} /> Brief kopieren
+                    </button>
+                    <button className={styles.btnPrimary} onClick={handleDownloadLetterPdf}>
+                      <FileText size={14} /> Als PDF herunterladen
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 

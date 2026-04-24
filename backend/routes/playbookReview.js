@@ -6,6 +6,8 @@ const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
 const Playbook = require("../models/Playbook");
 const PlaybookCheck = require("../models/PlaybookCheck");
+const { generateCheckReportPdf } = require("../services/playbookCheckPdfGenerator");
+const { generateNegotiationLetter, generateNegotiationLetterPdf } = require("../services/negotiationLetterGenerator");
 const playbookChecker = require("../services/playbookChecker");
 const database = require("../config/database");
 const { ObjectId } = require("mongodb");
@@ -450,6 +452,118 @@ router.get("/contracts/:contractId/text", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ [PLAYBOOK-REVIEW] Fehler beim Laden des Vertragstexts:", err);
     res.status(500).json({ success: false, message: "Fehler beim Laden des Vertragstexts" });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// GET /api/playbook-review/checks/:checkId/export-pdf — Prüfbericht als PDF
+// ═══════════════════════════════════════════════
+router.get("/checks/:checkId/export-pdf", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const check = await PlaybookCheck.findOne({ _id: req.params.checkId, userId })
+      .populate("playbookId", "name");
+
+    if (!check) {
+      return res.status(404).json({ success: false, message: "Prüfung nicht gefunden" });
+    }
+
+    const playbookName = check.playbookId?.name || "Playbook";
+
+    console.log(`📄 [PLAYBOOK-PDF] Generiere Prüfbericht für "${check.contractName}"`);
+
+    const pdfBuffer = await generateCheckReportPdf({
+      check: check.toObject(),
+      playbookName
+    });
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="Pruefbericht_${check.contractName?.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_") || "Vertrag"}.pdf"`,
+      "Content-Length": pdfBuffer.length
+    });
+    res.send(pdfBuffer);
+
+    console.log(`✅ [PLAYBOOK-PDF] Prüfbericht gesendet (${pdfBuffer.length} Bytes)`);
+  } catch (err) {
+    console.error("❌ [PLAYBOOK-PDF] Fehler:", err);
+    res.status(500).json({ success: false, message: "Fehler beim Erstellen des PDF-Berichts" });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// POST /api/playbook-review/checks/:checkId/negotiation-letter — Verhandlungsbrief generieren
+// ═══════════════════════════════════════════════
+router.post("/checks/:checkId/negotiation-letter", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const check = await PlaybookCheck.findOne({ _id: req.params.checkId, userId })
+      .populate("playbookId", "name role");
+
+    if (!check) {
+      return res.status(404).json({ success: false, message: "Prüfung nicht gefunden" });
+    }
+
+    const playbookName = check.playbookId?.name || "Playbook";
+    const role = check.playbookId?.role || "neutral";
+
+    console.log(`📝 [PLAYBOOK-LETTER] Generiere Verhandlungsbrief für "${check.contractName}"`);
+
+    const letterText = await generateNegotiationLetter({
+      check: check.toObject(),
+      playbookName,
+      role
+    });
+
+    console.log(`✅ [PLAYBOOK-LETTER] Brief generiert (${letterText.length} Zeichen)`);
+    res.json({ success: true, letterText });
+  } catch (err) {
+    console.error("❌ [PLAYBOOK-LETTER] Fehler:", err);
+    res.status(500).json({ success: false, message: "Fehler beim Generieren des Verhandlungsbriefs" });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// POST /api/playbook-review/checks/:checkId/negotiation-letter/pdf — Brief als PDF
+// ═══════════════════════════════════════════════
+router.post("/checks/:checkId/negotiation-letter/pdf", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+
+    const check = await PlaybookCheck.findOne({ _id: req.params.checkId, userId })
+      .populate("playbookId", "name role");
+
+    if (!check) {
+      return res.status(404).json({ success: false, message: "Prüfung nicht gefunden" });
+    }
+
+    const playbookName = check.playbookId?.name || "Playbook";
+    const role = check.playbookId?.role || "neutral";
+
+    // Brief generieren (oder aus Cache wenn schon vorhanden)
+    const letterText = await generateNegotiationLetter({
+      check: check.toObject(),
+      playbookName,
+      role
+    });
+
+    // PDF generieren
+    const pdfBuffer = await generateNegotiationLetterPdf({
+      letterText,
+      contractName: check.contractName
+    });
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="Verhandlungsbrief_${check.contractName?.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, "_") || "Vertrag"}.pdf"`,
+      "Content-Length": pdfBuffer.length
+    });
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error("❌ [PLAYBOOK-LETTER-PDF] Fehler:", err);
+    res.status(500).json({ success: false, message: "Fehler beim Erstellen des PDF-Briefs" });
   }
 });
 
