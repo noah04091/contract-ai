@@ -563,6 +563,13 @@
   margin-bottom: 1.5rem;
 }
 
+.genOptionsTriple {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .genOptionCard {
   display: flex;
   flex-direction: column;
@@ -1101,7 +1108,8 @@
     grid-template-columns: 1fr;
   }
 
-  .genOptions {
+  .genOptions,
+  .genOptionsTriple {
     grid-template-columns: 1fr;
   }
 

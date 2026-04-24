@@ -199,6 +199,8 @@ const PlaybookReview: React.FC = () => {
   const [contractSearch, setContractSearch] = useState('');
   const [checkResult, setCheckResult] = useState<PlaybookCheck | null>(null);
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+  const [showExtractModal, setShowExtractModal] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   // ============================================
   // DATA LOADING
@@ -259,6 +261,39 @@ const PlaybookReview: React.FC = () => {
       toast.error(err instanceof Error ? err.message : 'Fehler bei der Generierung');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleOpenExtractModal = async () => {
+    setShowExtractModal(true);
+    setSelectedContractId('');
+    setContractSearch('');
+    try {
+      const data = await playbookAPI.getContractsList();
+      setContracts(data.contracts || []);
+    } catch {
+      toast.error('Fehler beim Laden der Verträge');
+    }
+  };
+
+  const handleExtractFromContract = async () => {
+    if (!selectedContractId) return;
+    setIsExtracting(true);
+    setShowExtractModal(false);
+
+    try {
+      const contractData = await playbookAPI.getContractText(selectedContractId);
+      const data = await playbookAPI.extractRules({
+        contractText: contractData.text,
+        role: builderData.role
+      });
+      setGeneratedRules(data.rules || []);
+      setBuilderStep(3);
+      toast.success(`${data.rules?.length || 0} Regeln aus Vertrag extrahiert`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler bei der Extraktion');
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -639,24 +674,37 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.wizardContent}>
           <h3>Wie möchten Sie die Regeln erstellen?</h3>
 
-          <div className={styles.genOptions}>
+          <div className={styles.genOptionsTriple}>
             <button
               className={styles.genOptionCard}
               onClick={handleGenerateRules}
-              disabled={isGenerating}
+              disabled={isGenerating || isExtracting}
             >
               <Sparkles size={24} />
               <strong>KI generiert Regeln</strong>
               <span>
-                Basierend auf Vertragstyp "{builderData.contractType}",
-                Rolle "{ROLE_LABELS[builderData.role]}" und Branche
+                Basierend auf Vertragstyp, Rolle und Branche
               </span>
               {isGenerating && <Loader2 size={20} className={styles.spinner} />}
             </button>
 
             <button
               className={styles.genOptionCard}
+              onClick={handleOpenExtractModal}
+              disabled={isGenerating || isExtracting}
+            >
+              <FileText size={24} />
+              <strong>Aus Vertrag lernen</strong>
+              <span>
+                Regeln aus einem Mustervertrag extrahieren
+              </span>
+              {isExtracting && <Loader2 size={20} className={styles.spinner} />}
+            </button>
+
+            <button
+              className={styles.genOptionCard}
               onClick={() => { setGeneratedRules([]); setBuilderStep(3); }}
+              disabled={isGenerating || isExtracting}
             >
               <Edit3 size={24} />
               <strong>Manuell erstellen</strong>
@@ -667,6 +715,56 @@ const PlaybookReview: React.FC = () => {
           <button className={styles.backBtn} onClick={() => setBuilderStep(1)}>
             <ArrowLeft size={16} /> Zurück
           </button>
+
+          {/* Extract Modal */}
+          {showExtractModal && (
+            <div className={styles.modalOverlay} onClick={() => setShowExtractModal(false)}>
+              <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                <h3>Mustervertrag auswählen</h3>
+                <p className={styles.hint} style={{ margin: '0 0 1rem 0' }}>
+                  Wählen Sie einen bestehenden Vertrag aus. Die KI extrahiert daraus automatisch Regeln für Ihr Playbook.
+                </p>
+                <div className={styles.searchBox}>
+                  <Search size={16} />
+                  <input
+                    placeholder="Vertrag suchen..."
+                    value={contractSearch}
+                    onChange={e => setContractSearch(e.target.value)}
+                  />
+                </div>
+                <div className={styles.contractList}>
+                  {contracts
+                    .filter(c => !contractSearch || c.name?.toLowerCase().includes(contractSearch.toLowerCase()))
+                    .map(c => (
+                      <div
+                        key={c._id}
+                        className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''}`}
+                        onClick={() => setSelectedContractId(c._id)}
+                      >
+                        <FileText size={16} />
+                        <span>{c.name || 'Unbenannt'}</span>
+                        {c.contractType && <span className={styles.contractType}>{c.contractType}</span>}
+                      </div>
+                    ))}
+                  {contracts.length === 0 && (
+                    <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                  )}
+                </div>
+                <div className={styles.modalActions}>
+                  <button className={styles.btnOutline} onClick={() => setShowExtractModal(false)}>
+                    Abbrechen
+                  </button>
+                  <button
+                    className={styles.btnPrimary}
+                    onClick={handleExtractFromContract}
+                    disabled={!selectedContractId}
+                  >
+                    <Sparkles size={16} /> Regeln extrahieren
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
