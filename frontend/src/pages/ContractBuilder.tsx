@@ -67,6 +67,7 @@ import {
   Star,
   FolderOpen,
   Upload,
+  Info,
 } from 'lucide-react';
 import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
@@ -143,6 +144,7 @@ const ContractBuilder: React.FC = () => {
   const [showGalleryUserTemplates, setShowGalleryUserTemplates] = useState(true); // Standardmäßig offen
   const [galleryConfirmDeleteId, setGalleryConfirmDeleteId] = useState<string | null>(null);
   const [galleryCreating, setGalleryCreating] = useState<string | null>(null); // templateId being created
+  const [galleryInfoId, setGalleryInfoId] = useState<string | null>(null); // Template-Info Popup
   const [quickFillTemplate, setQuickFillTemplate] = useState<typeof contractTemplates[0] | null>(null);
   const [quickFillValues, setQuickFillValues] = useState<Record<string, string>>({});
 
@@ -2027,7 +2029,58 @@ const ContractBuilder: React.FC = () => {
                       <div className={styles.galleryCardMeta}>
                         <span className={styles.galleryCardMetaItem}><FileText size={12} /> {template.contractType}</span>
                         <span className={styles.galleryCardMetaItem}><Clock size={12} /> {formatGalleryDate(template.createdAt)}</span>
+                        <button
+                          className={styles.galleryInfoBtn}
+                          onClick={(e) => { e.stopPropagation(); setGalleryInfoId(galleryInfoId === `user-${template.id}` ? null : `user-${template.id}`); }}
+                          title="Inhalt anzeigen"
+                          style={{ marginLeft: 'auto' }}
+                        >
+                          <Info size={13} />
+                        </button>
                       </div>
+                      {/* Info-Popup für User-Vorlage */}
+                      {galleryInfoId === `user-${template.id}` && (() => {
+                        const tplData = template.defaultValues as {
+                          blocks?: Array<{ type?: string; content?: { clauseTitle?: string; body?: string; preambleText?: string; title?: string } }>;
+                          variables?: Array<{ displayName?: string; name?: string }>;
+                        };
+                        const blocks = tplData.blocks || [];
+                        const clauses = blocks.filter(b => b.type === 'clause');
+                        const vars = tplData.variables || [];
+                        return (
+                          <div className={styles.galleryInfoPopup} onClick={e => e.stopPropagation()}>
+                            <div className={styles.galleryInfoHeader}>
+                              <strong>{template.name}</strong>
+                              <button className={styles.galleryInfoClose} onClick={(e) => { e.stopPropagation(); setGalleryInfoId(null); }}>
+                                <X size={14} />
+                              </button>
+                            </div>
+                            {clauses.length > 0 && (
+                              <div className={styles.galleryInfoSection}>
+                                <span className={styles.galleryInfoLabel}>Klauseln ({clauses.length})</span>
+                                <ul className={styles.galleryInfoList}>
+                                  {clauses.map((c, i) => (
+                                    <li key={i}>§ {i + 1} {c.content?.clauseTitle || 'Klausel'}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {vars.length > 0 && (
+                              <div className={styles.galleryInfoSection}>
+                                <span className={styles.galleryInfoLabel}>Variablen ({vars.length})</span>
+                                <div className={styles.galleryInfoTags}>
+                                  {vars.map((v, i) => (
+                                    <span key={i} className={styles.galleryInfoTag}>{v.displayName || (v.name || '').replace(/\{\{|\}\}/g, '')}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {clauses.length === 0 && vars.length === 0 && (
+                              <p style={{ fontSize: 13, color: '#9ca3af', padding: '8px 0' }}>Keine Details verfügbar</p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>}
@@ -2113,7 +2166,16 @@ const ContractBuilder: React.FC = () => {
                         ? <Loader2 size={20} className={styles.spinner} />
                         : (GALLERY_ICON_MAP[template.icon] || <FileText size={20} />)}
                     </div>
-                    <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Mustervertrag</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Mustervertrag</span>
+                      <button
+                        className={styles.galleryInfoBtn}
+                        onClick={(e) => { e.stopPropagation(); setGalleryInfoId(galleryInfoId === template.id ? null : template.id); }}
+                        title="Klauseln anzeigen"
+                      >
+                        <Info size={14} />
+                      </button>
+                    </div>
                   </div>
                   <h3 className={styles.galleryCardTitle}>{template.name}</h3>
                   <p className={styles.galleryCardDesc}>{template.description}</p>
@@ -2121,6 +2183,37 @@ const ContractBuilder: React.FC = () => {
                     <span className={styles.galleryCardMetaItem}><Layers size={12} /> {template.suggestedClauses.length} Klauseln</span>
                     <span className={styles.galleryCardMetaItem}><PenTool size={12} /> {template.defaultVariables.length} Felder</span>
                   </div>
+                  {/* Info-Popup */}
+                  {galleryInfoId === template.id && (
+                    <div className={styles.galleryInfoPopup} onClick={e => e.stopPropagation()}>
+                      <div className={styles.galleryInfoHeader}>
+                        <strong>{template.name}</strong>
+                        <button className={styles.galleryInfoClose} onClick={(e) => { e.stopPropagation(); setGalleryInfoId(null); }}>
+                          <X size={14} />
+                        </button>
+                      </div>
+                      <div className={styles.galleryInfoSection}>
+                        <span className={styles.galleryInfoLabel}>Parteien</span>
+                        <p className={styles.galleryInfoText}>{template.parties.party1.role} &amp; {template.parties.party2.role}</p>
+                      </div>
+                      <div className={styles.galleryInfoSection}>
+                        <span className={styles.galleryInfoLabel}>Klauseln ({template.suggestedClauses.length})</span>
+                        <ul className={styles.galleryInfoList}>
+                          {template.suggestedClauses.map((c, i) => (
+                            <li key={i}>§ {i + 1} {c.title}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className={styles.galleryInfoSection}>
+                        <span className={styles.galleryInfoLabel}>Felder ({template.defaultVariables.length})</span>
+                        <div className={styles.galleryInfoTags}>
+                          {template.defaultVariables.map(v => (
+                            <span key={v.name} className={styles.galleryInfoTag}>{v.displayName}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

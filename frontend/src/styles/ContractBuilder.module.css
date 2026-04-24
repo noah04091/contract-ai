@@ -2319,6 +2319,122 @@
   transform: none;
 }
 
+/* Info Button + Popup */
+.galleryInfoBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.galleryInfoBtn:hover {
+  border-color: #3B82F6;
+  color: #3B82F6;
+  background: #eff6ff;
+}
+
+.galleryInfoPopup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  z-index: 30;
+  padding: 14px 16px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.galleryInfoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.galleryInfoClose {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.galleryInfoClose:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.galleryInfoSection {
+  margin-bottom: 10px;
+}
+
+.galleryInfoLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3B82F6;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.galleryInfoText {
+  font-size: 13px;
+  color: #374151;
+  margin: 0;
+}
+
+.galleryInfoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.galleryInfoList li {
+  font-size: 12px;
+  color: #374151;
+  padding: 3px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.galleryInfoList li:last-child {
+  border-bottom: none;
+}
+
+.galleryInfoTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.galleryInfoTag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  color: #6b7280;
+}
+
 /* Import Drop Zone */
 .importDropZone {
   border: 2px dashed #d1d5db;
