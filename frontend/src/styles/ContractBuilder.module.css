@@ -2341,28 +2341,37 @@
   background: #eff6ff;
 }
 
+.galleryInfoOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
 .galleryInfoPopup {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 8px;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  z-index: 30;
-  padding: 14px 16px;
-  max-height: 320px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
   overflow-y: auto;
+  animation: modalSlideIn 0.2s ease;
 }
 
 .galleryInfoHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 14px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 16px;
   color: #111827;
 }
 
@@ -2384,8 +2393,16 @@
   color: #374151;
 }
 
+.galleryInfoBody {
+  padding: 16px 20px;
+}
+
 .galleryInfoSection {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.galleryInfoSection:last-child {
+  margin-bottom: 0;
 }
 
 .galleryInfoLabel {
