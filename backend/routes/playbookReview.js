@@ -355,8 +355,8 @@ router.get("/contracts/list", verifyToken, async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const db = await database.connect();
 
-    // Vertraege laden (nur Name + ID + extractedText-Verfuegbarkeit)
-    const contracts = await db.collection("contracts").find(
+    // Vertraege laden — prüfe alle 3 Text-Felder (extractedText, content, fullText)
+    const rawContracts = await db.collection("contracts").find(
       {
         $or: [
           { userId: userId },
@@ -369,13 +369,24 @@ router.get("/contracts/list", verifyToken, async (req, res) => {
           name: 1,
           contractType: 1,
           createdAt: 1,
-          hasExtractedText: { $cond: [{ $gt: [{ $strLenCP: { $ifNull: ["$extractedText", ""] } }, 50] }, true, false] }
+          extractedText: { $strLenCP: { $ifNull: ["$extractedText", ""] } },
+          content: { $strLenCP: { $ifNull: ["$content", ""] } },
+          fullText: { $strLenCP: { $ifNull: ["$fullText", ""] } }
         }
       }
     )
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
+
+    // hasExtractedText = true wenn mindestens ein Text-Feld > 50 Zeichen hat
+    const contracts = rawContracts.map(c => ({
+      _id: c._id,
+      name: c.name,
+      contractType: c.contractType,
+      createdAt: c.createdAt,
+      hasExtractedText: (c.extractedText > 50) || (c.content > 50) || (c.fullText > 50)
+    }));
 
     res.json({ success: true, contracts });
   } catch (err) {
@@ -400,22 +411,35 @@ router.get("/contracts/:contractId/text", verifyToken, async (req, res) => {
           { userId: new ObjectId(userId) }
         ]
       },
-      { projection: { extractedText: 1, name: 1, contractType: 1 } }
+      { projection: { extractedText: 1, content: 1, fullText: 1, name: 1, contractType: 1 } }
     );
 
     if (!contract) {
       return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
     }
 
-    if (!contract.extractedText || contract.extractedText.trim().length < 50) {
-      return res.status(400).json({ success: false, message: "Kein extrahierter Text verfuegbar" });
+    // Bestes verfuegbares Text-Feld waehlen (laengstes gewinnt)
+    const candidates = [
+      contract.extractedText,
+      contract.content,
+      contract.fullText
+    ].filter(t => t && t.trim().length > 50);
+
+    if (candidates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Dieser Vertrag hat keinen lesbaren Text. Bitte laden Sie den Vertrag erneut hoch."
+      });
     }
+
+    // Laengsten Text verwenden (meiste Informationen)
+    const bestText = candidates.sort((a, b) => b.length - a.length)[0];
 
     res.json({
       success: true,
       contractName: contract.name,
       contractType: contract.contractType,
-      text: contract.extractedText
+      text: bestText
     });
   } catch (err) {
     console.error("❌ [PLAYBOOK-REVIEW] Fehler beim Laden des Vertragstexts:", err);
