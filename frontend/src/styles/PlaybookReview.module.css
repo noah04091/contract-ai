@@ -15,7 +15,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
     radial-gradient(circle at 100% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
   pointer-events: none;
 }
@@ -40,7 +40,7 @@
   width: 36px;
   height: 36px;
   padding: 8px;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-radius: 12px;
   color: white;
 }
@@ -106,7 +106,7 @@
 }
 
 .statCard svg {
-  color: #6366f1;
+  color: #3b82f6;
 }
 
 .statValue {
@@ -131,7 +131,7 @@
 }
 
 .sectionHeader svg {
-  color: #6366f1;
+  color: #3b82f6;
 }
 
 .sectionHeader h3 {
@@ -150,8 +150,8 @@
 
 /* ===== BADGES ===== */
 .badge {
-  background: #ede9fe;
-  color: #6366f1;
+  background: #dbeafe;
+  color: #3b82f6;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -217,8 +217,8 @@
 }
 
 .playbookCard:hover {
-  border-color: #6366f1;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
   transform: translateY(-2px);
 }
 
@@ -288,7 +288,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -299,7 +299,7 @@
 }
 
 .btnPrimary:hover {
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transform: translateY(-1px);
 }
 
@@ -316,8 +316,8 @@
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   background: white;
-  color: #6366f1;
-  border: 1px solid #c7d2fe;
+  color: #3b82f6;
+  border: 1px solid #93c5fd;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -326,8 +326,8 @@
 }
 
 .btnOutline:hover {
-  background: #f5f3ff;
-  border-color: #6366f1;
+  background: #eff6ff;
+  border-color: #3b82f6;
 }
 
 .btnDanger {
@@ -370,7 +370,7 @@
   padding: 0.5rem 0.75rem;
   background: none;
   border: none;
-  color: #6366f1;
+  color: #3b82f6;
   font-size: 0.875rem;
   cursor: pointer;
   margin-bottom: 1rem;
@@ -385,10 +385,10 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.375rem 0.75rem;
-  background: #f5f3ff;
-  border: 1px solid #c7d2fe;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
   border-radius: 6px;
-  color: #6366f1;
+  color: #3b82f6;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.15s;
@@ -396,7 +396,7 @@
 }
 
 .copyBtn:hover {
-  background: #ede9fe;
+  background: #dbeafe;
 }
 
 /* ===== WIZARD ===== */
@@ -426,8 +426,8 @@
 
 .wizardStepActive {
   opacity: 1;
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .wizardStepNum {
@@ -436,7 +436,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #6366f1;
+  background: #3b82f6;
   color: white;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -492,8 +492,8 @@
 
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .textarea {
@@ -537,12 +537,12 @@
 }
 
 .roleCard:hover {
-  border-color: #c7d2fe;
+  border-color: #93c5fd;
 }
 
 .roleCardActive {
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .roleCard strong {
@@ -578,8 +578,8 @@
 }
 
 .genOptionCard:hover:not(:disabled) {
-  border-color: #6366f1;
-  background: #f5f3ff;
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .genOptionCard:disabled {
@@ -588,7 +588,7 @@
 }
 
 .genOptionCard svg {
-  color: #6366f1;
+  color: #3b82f6;
 }
 
 .genOptionCard strong {
@@ -618,7 +618,7 @@
 }
 
 .ruleCard:hover {
-  border-color: #c7d2fe;
+  border-color: #93c5fd;
 }
 
 .ruleHeader {
@@ -640,7 +640,7 @@
 
 .ruleTitle:focus {
   outline: none;
-  border-bottom: 2px solid #6366f1;
+  border-bottom: 2px solid #3b82f6;
 }
 
 .ruleDesc {
@@ -658,7 +658,7 @@
 
 .ruleDesc:focus {
   outline: none;
-  border-color: #c7d2fe;
+  border-color: #93c5fd;
   background: white;
 }
 
@@ -678,8 +678,8 @@
 
 .ruleCategory {
   font-size: 0.75rem;
-  color: #6366f1;
-  background: #ede9fe;
+  color: #3b82f6;
+  background: #dbeafe;
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
 }
@@ -741,7 +741,7 @@
 }
 
 .checkRow:hover {
-  border-color: #c7d2fe;
+  border-color: #93c5fd;
   background: #fafaff;
 }
 
@@ -848,8 +848,8 @@
 }
 
 .contractItemActive {
-  background: #f5f3ff;
-  border-color: #6366f1;
+  background: #eff6ff;
+  border-color: #3b82f6;
   color: #1e293b;
 }
 
@@ -1061,8 +1061,8 @@
   display: inline-block;
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #6366f1;
-  background: #ede9fe;
+  color: #3b82f6;
+  background: #dbeafe;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
 }

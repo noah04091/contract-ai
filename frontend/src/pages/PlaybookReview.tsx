@@ -109,12 +109,12 @@ type View = 'dashboard' | 'builder' | 'detail' | 'check-result';
 const CATEGORY_LABELS: Record<string, string> = {
   zahlung: 'Zahlung',
   haftung: 'Haftung',
-  kuendigung: 'Kuendigung',
-  gewaehrleistung: 'Gewaehrleistung',
+  kuendigung: 'Kündigung',
+  gewaehrleistung: 'Gewährleistung',
   vertraulichkeit: 'Vertraulichkeit',
   datenschutz: 'Datenschutz',
   eigentum: 'Eigentum',
-  force_majeure: 'Hoehere Gewalt',
+  force_majeure: 'Höhere Gewalt',
   vertragsstrafe: 'Vertragsstrafe',
   laufzeit: 'Laufzeit',
   abnahme: 'Abnahme',
@@ -268,7 +268,7 @@ const PlaybookReview: React.FC = () => {
       return;
     }
     if (generatedRules.length === 0) {
-      toast.error('Bitte fuegen Sie mindestens eine Regel hinzu');
+      toast.error('Bitte fügen Sie mindestens eine Regel hinzu');
       return;
     }
 
@@ -333,7 +333,7 @@ const PlaybookReview: React.FC = () => {
       const data = await playbookAPI.getContractsList();
       setContracts(data.contracts || []);
     } catch {
-      toast.error('Fehler beim Laden der Vertraege');
+      toast.error('Fehler beim Laden der Verträge');
     }
   };
 
@@ -346,7 +346,7 @@ const PlaybookReview: React.FC = () => {
       // Vertragstext laden
       const contractData = await playbookAPI.getContractText(selectedContractId);
 
-      // Pruefung durchfuehren
+      // Prüfung durchfuehren
       const result = await playbookAPI.checkContract(selectedPlaybook._id, {
         contractText: contractData.text,
         contractName: contractData.contractName,
@@ -355,9 +355,9 @@ const PlaybookReview: React.FC = () => {
 
       setCheckResult(result.check);
       setView('check-result');
-      toast.success('Pruefung abgeschlossen!');
+      toast.success('Prüfung abgeschlossen!');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler bei der Pruefung');
+      toast.error(err instanceof Error ? err.message : 'Fehler bei der Prüfung');
     } finally {
       setIsChecking(false);
     }
@@ -426,7 +426,7 @@ const PlaybookReview: React.FC = () => {
           <CheckCircle2 size={20} />
           <div>
             <span className={styles.statValue}>{stats.totalChecks}</span>
-            <span className={styles.statLabel}>Pruefungen</span>
+            <span className={styles.statLabel}>Prüfungen</span>
           </div>
         </div>
       </div>
@@ -440,7 +440,7 @@ const PlaybookReview: React.FC = () => {
             <span className={styles.badge}>{globalPlaybook.rules.length} Regeln</span>
           </div>
           <p className={styles.sectionDesc}>
-            Diese Regeln werden bei jeder Pruefung automatisch mitgeprueft.
+            Diese Regeln werden bei jeder Prüfung automatisch mitgeprüft.
           </p>
         </div>
       )}
@@ -459,7 +459,7 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.emptyState}>
           <Shield size={48} />
           <h3>Noch keine Playbooks</h3>
-          <p>Erstellen Sie Ihr erstes Playbook, um Vertraege systematisch zu pruefen.</p>
+          <p>Erstellen Sie Ihr erstes Playbook, um Verträge systematisch zu prüfen.</p>
           <button className={styles.btnPrimary} onClick={() => { setView('builder'); setBuilderStep(1); }}>
             <Sparkles size={16} />
             Erstes Playbook erstellen
@@ -486,7 +486,7 @@ const PlaybookReview: React.FC = () => {
               </p>
               {pb.description && <p className={styles.cardDesc}>{pb.description}</p>}
               <div className={styles.cardFooter}>
-                <span>{pb.checksCount} Pruefungen</span>
+                <span>{pb.checksCount} Prüfungen</span>
                 {pb.lastCheckAt && (
                   <span>Letzte: {new Date(pb.lastCheckAt).toLocaleDateString('de-DE')}</span>
                 )}
@@ -496,19 +496,27 @@ const PlaybookReview: React.FC = () => {
         </div>
       )}
 
-      {/* Letzte Pruefungen */}
+      {/* Letzte Prüfungen */}
       {recentChecks.length > 0 && (
         <>
           <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
             <FileText size={18} />
-            <h3>Letzte Pruefungen</h3>
+            <h3>Letzte Prüfungen</h3>
           </div>
           <div className={styles.recentChecks}>
             {recentChecks.map(check => (
               <div
                 key={check._id}
                 className={styles.checkRow}
-                onClick={() => { setCheckResult(check); setView('check-result'); }}
+                onClick={async () => {
+                  try {
+                    const data = await playbookAPI.getCheck(check._id);
+                    setCheckResult(data.check);
+                    setView('check-result');
+                  } catch {
+                    toast.error('Prüfung konnte nicht geladen werden');
+                  }
+                }}
               >
                 <span className={styles.checkName}>{check.contractName}</span>
                 <span
@@ -540,7 +548,7 @@ const PlaybookReview: React.FC = () => {
   const renderBuilder = () => (
     <div className={styles.builder}>
       <button className={styles.backBtn} onClick={() => { setView('dashboard'); navigate('/playbook-review'); }}>
-        <ArrowLeft size={16} /> Zurueck
+        <ArrowLeft size={16} /> Zurück
       </button>
 
       {/* Progress */}
@@ -566,7 +574,7 @@ const PlaybookReview: React.FC = () => {
           <label className={styles.fieldLabel}>Name des Playbooks</label>
           <input
             className={styles.input}
-            placeholder="z.B. Lieferanten-Vertraege pruefen"
+            placeholder="z.B. Lieferanten-Verträge prüfen"
             value={builderData.name}
             onChange={e => setBuilderData(d => ({ ...d, name: e.target.value }))}
           />
@@ -629,7 +637,7 @@ const PlaybookReview: React.FC = () => {
       {/* Step 2: KI-Generierung */}
       {builderStep === 2 && (
         <div className={styles.wizardContent}>
-          <h3>Wie moechten Sie die Regeln erstellen?</h3>
+          <h3>Wie möchten Sie die Regeln erstellen?</h3>
 
           <div className={styles.genOptions}>
             <button
@@ -657,7 +665,7 @@ const PlaybookReview: React.FC = () => {
           </div>
 
           <button className={styles.backBtn} onClick={() => setBuilderStep(1)}>
-            <ArrowLeft size={16} /> Zurueck
+            <ArrowLeft size={16} /> Zurück
           </button>
         </div>
       )}
@@ -665,7 +673,7 @@ const PlaybookReview: React.FC = () => {
       {/* Step 3: Regeln anpassen */}
       {builderStep === 3 && (
         <div className={styles.wizardContent}>
-          <h3>Regeln pruefen & anpassen</h3>
+          <h3>Regeln prüfen & anpassen</h3>
           <p className={styles.hint}>
             {generatedRules.length} Regeln erstellt. Passen Sie Titel, Schwellenwerte und Prioritaeten an.
           </p>
@@ -714,19 +722,19 @@ const PlaybookReview: React.FC = () => {
             ))}
           </div>
 
-          {/* Neue Regel hinzufuegen */}
+          {/* Neue Regel hinzufügen */}
           <button
             className={styles.btnOutline}
             onClick={() => setGeneratedRules(prev => [...prev, {
               title: '', description: '', category: 'sonstiges', priority: 'soll', threshold: ''
             }])}
           >
-            <Plus size={16} /> Regel hinzufuegen
+            <Plus size={16} /> Regel hinzufügen
           </button>
 
           <div className={styles.wizardActions}>
             <button className={styles.backBtn} onClick={() => setBuilderStep(2)}>
-              <ArrowLeft size={16} /> Zurueck
+              <ArrowLeft size={16} /> Zurück
             </button>
             <button
               className={styles.btnPrimary}
@@ -765,7 +773,7 @@ const PlaybookReview: React.FC = () => {
           <div className={styles.detailActions}>
             <button className={styles.btnPrimary} onClick={handleOpenCheck} disabled={isChecking}>
               {isChecking ? <Loader2 size={16} className={styles.spinner} /> : <Play size={16} />}
-              Vertrag pruefen
+              Vertrag prüfen
             </button>
             {!selectedPlaybook.isDefault && (
               <button className={styles.btnOutline} onClick={() => handleSetDefault(selectedPlaybook._id)}>
@@ -813,14 +821,22 @@ const PlaybookReview: React.FC = () => {
           <>
             <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
               <FileText size={18} />
-              <h3>Pruefungshistorie</h3>
+              <h3>Prüfungshistorie</h3>
             </div>
             <div className={styles.recentChecks}>
               {playbookChecks.map(check => (
                 <div
                   key={check._id}
                   className={styles.checkRow}
-                  onClick={() => { setCheckResult(check); setView('check-result'); }}
+                  onClick={async () => {
+                  try {
+                    const data = await playbookAPI.getCheck(check._id);
+                    setCheckResult(data.check);
+                    setView('check-result');
+                  } catch {
+                    toast.error('Prüfung konnte nicht geladen werden');
+                  }
+                }}
                 >
                   <span className={styles.checkName}>{check.contractName}</span>
                   <span
@@ -843,7 +859,7 @@ const PlaybookReview: React.FC = () => {
         {showCheckModal && (
           <div className={styles.modalOverlay} onClick={() => setShowCheckModal(false)}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
-              <h3>Vertrag zur Pruefung auswaehlen</h3>
+              <h3>Vertrag zur Prüfung auswählen</h3>
               <div className={styles.searchBox}>
                 <Search size={16} />
                 <input
@@ -867,7 +883,7 @@ const PlaybookReview: React.FC = () => {
                     </div>
                   ))}
                 {contracts.length === 0 && (
-                  <p className={styles.emptyHint}>Keine Vertraege gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                  <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
                 )}
               </div>
               <div className={styles.modalActions}>
@@ -879,7 +895,7 @@ const PlaybookReview: React.FC = () => {
                   onClick={handleRunCheck}
                   disabled={!selectedContractId}
                 >
-                  <Play size={16} /> Pruefung starten
+                  <Play size={16} /> Prüfung starten
                 </button>
               </div>
             </div>
@@ -895,7 +911,8 @@ const PlaybookReview: React.FC = () => {
   const renderCheckResult = () => {
     if (!checkResult) return null;
 
-    const { summary, results } = checkResult;
+    const summary = checkResult.summary || { passed: 0, warnings: 0, failed: 0, notFound: 0, totalRules: 0, overallScore: 0, overallRisk: 'low', recommendation: '' };
+    const results = checkResult.results || [];
     const playbookName = typeof checkResult.playbookId === 'object'
       ? checkResult.playbookId.name
       : selectedPlaybook?.name || 'Playbook';
@@ -906,7 +923,7 @@ const PlaybookReview: React.FC = () => {
           setView(selectedPlaybook ? 'detail' : 'dashboard');
           setCheckResult(null);
         }}>
-          <ArrowLeft size={16} /> Zurueck
+          <ArrowLeft size={16} /> Zurück
         </button>
 
         {/* Summary Header */}
@@ -918,7 +935,7 @@ const PlaybookReview: React.FC = () => {
             <span className={styles.scoreLabel}>von 100</span>
           </div>
           <div className={styles.summaryInfo}>
-            <h2>Pruefung: {checkResult.contractName}</h2>
+            <h2>Prüfung: {checkResult.contractName}</h2>
             <p>Playbook: {playbookName} &middot; {new Date(checkResult.checkedAt).toLocaleDateString('de-DE')}</p>
             <div className={styles.summaryStats}>
               <span className={styles.statPassed}><CheckCircle2 size={14} /> {summary.passed} Erfuellt</span>
@@ -1036,10 +1053,10 @@ const PlaybookReview: React.FC = () => {
   if (isChecking) {
     return (
       <div className={styles.container}>
-        <Helmet><title>Pruefung laeuft... | Contract AI</title></Helmet>
+        <Helmet><title>Prüfung läuft... | Contract AI</title></Helmet>
         <div className={styles.loading}>
           <Loader2 size={32} className={styles.spinner} />
-          <p>Vertrag wird geprueft... Dies kann bis zu 30 Sekunden dauern.</p>
+          <p>Vertrag wird geprüft... Dies kann bis zu 30 Sekunden dauern.</p>
         </div>
       </div>
     );
@@ -1060,7 +1077,7 @@ const PlaybookReview: React.FC = () => {
           <h1>Playbook Review</h1>
         </div>
         <p className={styles.headerSubtitle}>
-          Definieren Sie Ihre Vertrags-Standards und pruefen Sie neue Vertraege automatisch dagegen.
+          Definieren Sie Ihre Vertrags-Standards und prüfen Sie neue Verträge automatisch dagegen.
         </p>
       </div>
 
