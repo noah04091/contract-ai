@@ -3325,7 +3325,7 @@ const ContractBuilder: React.FC = () => {
                         const err = await response.json().catch(() => ({}));
                         alert(`Fehler: ${err.message || 'Aktualisierung fehlgeschlagen'}`);
                       }
-                    } catch (err) {
+                    } catch {
                       alert('Netzwerkfehler beim Aktualisieren der Vorlage');
                     }
                   }}>
