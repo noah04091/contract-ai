@@ -108,6 +108,28 @@ const ContractBuilder: React.FC = () => {
   );
   const userPlan = user?.subscriptionPlan || 'free';
 
+  // Benutzerfreundliche Fehlermeldung für Plan-Beschränkungen
+  const showUpgradeHint = (feature: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Upgrade erforderlich',
+      message: `${feature} ist in Ihrem aktuellen Plan (${userPlan === 'free' ? 'Free' : userPlan}) nicht verfügbar. Upgraden Sie auf Business oder Enterprise um diese Funktion zu nutzen.`,
+      confirmText: 'Pläne ansehen',
+      confirmStyle: 'primary',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        navigate('/pricing');
+      },
+    });
+  };
+
+  const isUpgradeError = (error: unknown): boolean => {
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('403') || msg.includes('Abo') || msg.includes('Plan') ||
+           msg.includes('Business') || msg.includes('Enterprise') || msg.includes('Upgrade') ||
+           msg.includes('verfügbar') || msg.includes('Limit') || msg.includes('erfordern');
+  };
+
   const [rightPanel, setRightPanel] = useState<RightPanel>('properties');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -1108,8 +1130,12 @@ const ContractBuilder: React.FC = () => {
       alert('Vorlage erfolgreich gespeichert!');
     } catch (error) {
       console.error('Fehler beim Speichern der Vorlage:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      alert(`Fehler beim Speichern der Vorlage: ${errorMessage}`);
+      if (isUpgradeError(error)) {
+        showUpgradeHint('Eigene Vorlagen speichern');
+      } else {
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        alert(`Fehler beim Speichern: ${errorMessage}`);
+      }
     } finally {
       setIsSavingTemplate(false);
     }
@@ -1169,10 +1195,12 @@ const ContractBuilder: React.FC = () => {
 
       // Benutzerfreundliche Fehlermeldung
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      if (errorMessage.includes('abgelaufen') || errorMessage.includes('anmelden')) {
+      if (isUpgradeError(error)) {
+        showUpgradeHint('KI-Klausel-Generierung');
+      } else if (errorMessage.includes('abgelaufen') || errorMessage.includes('anmelden')) {
         alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
       } else if (errorMessage.includes('Netzwerk') || errorMessage.includes('fetch')) {
-        alert('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.');
+        alert('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung.');
       } else {
         alert(`Fehler bei der KI-Generierung: ${errorMessage}`);
       }
@@ -1191,7 +1219,11 @@ const ContractBuilder: React.FC = () => {
       setShowLegalScoreModal(true);
     } catch (error) {
       console.error('Fehler bei Rechtsprüfung:', error);
-      alert('Fehler bei der Rechtsprüfung. Bitte versuchen Sie es erneut.');
+      if (isUpgradeError(error)) {
+        showUpgradeHint('Rechtsprüfung (Legal Score)');
+      } else {
+        alert('Fehler bei der Rechtsprüfung. Bitte versuchen Sie es erneut.');
+      }
     } finally {
       setIsCalculatingScore(false);
     }
@@ -1230,7 +1262,11 @@ const ContractBuilder: React.FC = () => {
       setShowOptimizeModal(true);
     } catch (error) {
       console.error('Fehler bei Optimierung:', error);
-      alert('Fehler bei der Optimierung. Bitte versuchen Sie es erneut.');
+      if (isUpgradeError(error)) {
+        showUpgradeHint('KI-Optimierung');
+      } else {
+        alert('Fehler bei der Optimierung. Bitte versuchen Sie es erneut.');
+      }
     } finally {
       setIsOptimizing(false);
     }
@@ -1923,7 +1959,12 @@ const ContractBuilder: React.FC = () => {
       if (response.ok && data.template) {
         setGalleryUserTemplates(prev => [data.template, ...prev]);
       } else {
-        alert(`Duplizieren fehlgeschlagen: ${data.message || data.error || 'Unbekannter Fehler'}`);
+        const errMsg = data.message || data.error || '';
+        if (errMsg.includes('Limit') || errMsg.includes('Plan') || errMsg.includes('FREE') || data.requiresUpgrade) {
+          showUpgradeHint('Vorlagen duplizieren');
+        } else {
+          alert(`Duplizieren fehlgeschlagen: ${errMsg || 'Unbekannter Fehler'}`);
+        }
       }
     } catch (error) {
       alert(`Netzwerkfehler: ${error instanceof Error ? error.message : 'Verbindung fehlgeschlagen'}`);
@@ -3339,7 +3380,11 @@ const ContractBuilder: React.FC = () => {
                         alert('Vorlage erfolgreich aktualisiert!');
                       } else {
                         const err = await response.json().catch(() => ({}));
-                        alert(`Fehler: ${err.message || 'Aktualisierung fehlgeschlagen'}`);
+                        if (response.status === 403 || err.requiresUpgrade) {
+                          showUpgradeHint('Vorlagen aktualisieren');
+                        } else {
+                          alert(`Fehler: ${err.message || 'Aktualisierung fehlgeschlagen'}`);
+                        }
                       }
                     } catch {
                       alert('Netzwerkfehler beim Aktualisieren der Vorlage');
