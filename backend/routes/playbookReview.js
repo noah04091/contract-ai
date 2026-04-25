@@ -12,6 +12,18 @@ const playbookChecker = require("../services/playbookChecker");
 const database = require("../config/database");
 const { ObjectId } = require("mongodb");
 
+// S3 fuer PDF-Presigned-URLs
+let s3Client, GetObjectCommand, getSignedUrl;
+try {
+  const { S3Client, GetObjectCommand: _GetObjectCommand } = require("@aws-sdk/client-s3");
+  const { getSignedUrl: _getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+  s3Client = new S3Client({ region: process.env.AWS_REGION || "eu-north-1" });
+  GetObjectCommand = _GetObjectCommand;
+  getSignedUrl = _getSignedUrl;
+} catch {
+  console.warn("⚠️ [PLAYBOOK-REVIEW] S3 SDK nicht verfuegbar — PDF-Preview deaktiviert");
+}
+
 // ═══════════════════════════════════════════════
 // GET /api/playbook-review — Alle Playbooks des Users
 // ═══════════════════════════════════════════════
@@ -564,6 +576,42 @@ router.post("/checks/:checkId/negotiation-letter/pdf", verifyToken, async (req, 
   } catch (err) {
     console.error("❌ [PLAYBOOK-LETTER-PDF] Fehler:", err);
     res.status(500).json({ success: false, message: "Fehler beim Erstellen des PDF-Briefs" });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// GET /api/playbook-review/contracts/:contractId/pdf-url — Presigned PDF URL
+// ═══════════════════════════════════════════════
+router.get("/contracts/:contractId/pdf-url", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const db = await database.connect();
+
+    const contract = await db.collection("contracts").findOne(
+      {
+        _id: new ObjectId(req.params.contractId),
+        $or: [{ userId: userId }, { userId: new ObjectId(userId) }]
+      },
+      { projection: { s3Key: 1, filePath: 1, name: 1 } }
+    );
+
+    if (!contract) {
+      return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+    }
+
+    if (contract.s3Key && s3Client && GetObjectCommand && getSignedUrl) {
+      const command = new GetObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: contract.s3Key
+      });
+      const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+      return res.json({ success: true, pdfUrl: url, contractName: contract.name });
+    }
+
+    return res.status(404).json({ success: false, message: "Keine PDF verfuegbar" });
+  } catch (err) {
+    console.error("❌ [PLAYBOOK-REVIEW] PDF-URL Fehler:", err);
+    res.status(500).json({ success: false, message: "Fehler beim Laden der PDF" });
   }
 });
 

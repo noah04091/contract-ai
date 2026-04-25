@@ -218,6 +218,8 @@ const PlaybookReview: React.FC = () => {
   const [negotiationLetter, setNegotiationLetter] = useState<string>('');
   const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
   const [showLetterModal, setShowLetterModal] = useState(false);
+  const [contractPdfUrl, setContractPdfUrl] = useState<string>('');
+  const [showPdfPreview, setShowPdfPreview] = useState<string | null>(null);
 
   // ============================================
   // DATA LOADING
@@ -270,6 +272,24 @@ const PlaybookReview: React.FC = () => {
       if (pbId) loadPlaybookDetail(pbId);
     }
   }, [view, checkResult, selectedPlaybook, loadPlaybookDetail]);
+
+  // PDF-URL laden wenn Check-Ergebnis angezeigt wird
+  useEffect(() => {
+    if (view === 'check-result' && checkResult?.contractId && !contractPdfUrl) {
+      fetch(`/api/playbook-review/contracts/${checkResult.contractId}/pdf-url`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        credentials: 'include'
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.pdfUrl) setContractPdfUrl(data.pdfUrl); })
+        .catch(() => {});
+    }
+    if (view !== 'check-result') {
+      setContractPdfUrl('');
+      setShowPdfPreview(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, checkResult?.contractId]);
 
   // ============================================
   // BUILDER ACTIONS
@@ -1379,16 +1399,6 @@ const PlaybookReview: React.FC = () => {
               <span className={styles.statFailed}><XCircle size={14} /> {summary.failed} Nicht erfüllt</span>
               <span className={styles.statNotFound}><HelpCircle size={14} /> {summary.notFound} Nicht gefunden</span>
             </div>
-            {checkResult.contractId && (
-              <a
-                href={`/contracts/${checkResult.contractId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.contractLink}
-              >
-                <FileText size={14} /> Vertrag öffnen
-              </a>
-            )}
           </div>
         </div>
 
@@ -1544,6 +1554,38 @@ const PlaybookReview: React.FC = () => {
                       <div className={styles.detailBlock}>
                         <label>Verhandlungstipp:</label>
                         <p>{result.negotiationTip}</p>
+                      </div>
+                    )}
+
+                    {/* PDF-Vorschau + Vertrag öffnen */}
+                    {contractPdfUrl && (
+                      <div className={styles.pdfActions}>
+                        <button
+                          className={styles.pdfToggleBtn}
+                          onClick={() => setShowPdfPreview(
+                            showPdfPreview === (result._id || String(index)) ? null : (result._id || String(index))
+                          )}
+                        >
+                          <FileText size={14} />
+                          {showPdfPreview === (result._id || String(index)) ? 'Vorschau schließen' : 'PDF-Vorschau'}
+                        </button>
+                        <a
+                          href={contractPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.pdfOpenBtn}
+                        >
+                          <ChevronRight size={14} /> Vertrag öffnen
+                        </a>
+                      </div>
+                    )}
+                    {showPdfPreview === (result._id || String(index)) && contractPdfUrl && (
+                      <div className={styles.pdfPreview}>
+                        <iframe
+                          src={contractPdfUrl}
+                          title="Vertrag PDF"
+                          className={styles.pdfFrame}
+                        />
                       </div>
                     )}
                   </div>
