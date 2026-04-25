@@ -932,6 +932,14 @@ export function parseContractStreaming(
         }
       }, 3000);
 
+      // SSE-State AUSSERHALB der while-Schleife:
+      // Grosse Events (z.B. 198 Klauseln) werden ueber mehrere reader.read()-Calls
+      // verteilt. currentEvent muss zwischen Reads erhalten bleiben, damit die
+      // data:-Zeile dem richtigen event:-Typ zugeordnet wird.
+      // Reset passiert korrekt am Event-Ende (leere Zeile, Zeile 1006-1009).
+      let currentEvent = '';
+      let currentData = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -940,9 +948,6 @@ export function parseContractStreaming(
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        let currentData = '';
 
         for (const line of lines) {
           if (line.startsWith('event: ')) {
@@ -977,8 +982,15 @@ export function parseContractStreaming(
                     callbacks.onClausesMerged?.(data.clauses, data.totalClauses);
                     break;
                   case 'complete':
-                    isComplete = true;
-                    callbacks.onComplete?.(data.totalClauses, data.riskSummary);
+                    if (data.totalClauses > 0 && clausesReceived === 0) {
+                      // Safety-Net: Backend meldet Klauseln, aber keine kamen via SSE an
+                      // (z.B. Proxy hat grossen clauses-Event abgeschnitten).
+                      // isComplete bleibt false → Post-Loop-Logik startet Polling-Fallback.
+                      console.warn(`[Legal Lens] Complete meldet ${data.totalClauses} Klauseln aber 0 empfangen — Polling-Fallback`);
+                    } else {
+                      isComplete = true;
+                      callbacks.onComplete?.(data.totalClauses, data.riskSummary);
+                    }
                     break;
                   case 'error':
                     isComplete = true; // Kein Polling starten — Parser hat definitiv geantwortet
