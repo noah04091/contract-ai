@@ -56,6 +56,18 @@ async function checkAndSendNotifications(db) {
     let queuedCount = 0;
 
     for (const event of upcomingEvents) {
+      // Envelope-Reminder nur am geplanten Tag versenden (nicht durch Lookahead vorziehen)
+      if (event.sourceType === "ENVELOPE") {
+        const eventDateOnly = new Date(event.date);
+        eventDateOnly.setHours(0, 0, 0, 0);
+        const todayOnly = new Date();
+        todayOnly.setHours(0, 0, 0, 0);
+        if (eventDateOnly > todayOnly) {
+          console.log(`⏳ Envelope-Event "${event.title}" noch nicht fällig (geplant: ${eventDateOnly.toISOString().split('T')[0]})`);
+          continue;
+        }
+      }
+
       if (!event.user?.email) {
         console.warn(`Keine E-Mail fuer User ${event.userId}`);
         continue;
@@ -224,6 +236,31 @@ async function queueEventNotification(event, db) {
       ];
       break;
 
+    case "SIGNATURE_REMINDER_3DAY":
+    case "SIGNATURE_REMINDER_1DAY":
+    case "SIGNATURE_EXPIRING": {
+      const envelopeTitle = event.metadata?.envelopeTitle || event.title;
+      const sigExpiresAt = event.metadata?.expiresAt ? new Date(event.metadata.expiresAt) : null;
+      const daysUntilExpiry = sigExpiresAt
+        ? Math.max(0, Math.ceil((sigExpiresAt - new Date()) / (1000 * 60 * 60 * 24)))
+        : (event.metadata?.daysUntilExpiry || 0);
+
+      if (daysUntilExpiry === 0) {
+        subject = `${envelopeTitle} — Signatur läuft heute ab`;
+      } else if (daysUntilExpiry === 1) {
+        subject = `${envelopeTitle} — Signatur läuft morgen ab`;
+      } else {
+        subject = `${envelopeTitle} — Signatur läuft in ${daysUntilExpiry} Tagen ab`;
+      }
+
+      emailContent = generateSignatureReminderEmail(event, daysUntilExpiry);
+      ctaButtons = [
+        { text: "Signaturanfrage ansehen", url: `${baseUrl}/envelopes`, style: "primary" },
+        { text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?eventId=${event._id}`, style: "secondary" }
+      ];
+      break;
+    }
+
     default:
       subject = `${event.metadata?.contractName || event.title} - Vertragsinformation`;
       emailContent = generateGenericEmail(event, actionToken, baseUrl);
@@ -372,6 +409,47 @@ function generateCancellationConfirmationCheckEmail(event, token, baseUrl) {
     </div>
     ${isFollowUp ? '<p style="color: #92400e; font-size: 13px;">Dies ist eine Folge-Erinnerung. Sie haben zuvor angegeben, keine Bestätigung erhalten zu haben.</p>' : ''}
     <p style="text-align: center;">Öffnen Sie Ihren Kalender in Contract AI, um direkt zu reagieren.</p>
+  `;
+}
+
+function generateSignatureReminderEmail(event, daysUntilExpiry) {
+  const envelopeTitle = event.metadata?.envelopeTitle || event.title;
+  const pendingSigners = event.metadata?.pendingSigners || 0;
+  const totalSigners = event.metadata?.totalSigners || 0;
+  const expiresAtFormatted = event.metadata?.expiresAt
+    ? new Date(event.metadata.expiresAt).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+    : 'Unbekannt';
+
+  let urgencyColor, urgencyText, urgencyBg;
+  if (daysUntilExpiry === 0) {
+    urgencyColor = '#dc2626';
+    urgencyText = 'Läuft heute ab!';
+    urgencyBg = '#fef2f2';
+  } else if (daysUntilExpiry === 1) {
+    urgencyColor = '#f59e0b';
+    urgencyText = 'Läuft morgen ab';
+    urgencyBg = '#fffbeb';
+  } else {
+    urgencyColor = '#3b82f6';
+    urgencyText = `Läuft in ${daysUntilExpiry} Tagen ab`;
+    urgencyBg = '#eff6ff';
+  }
+
+  return `
+    <h2 style="color: ${urgencyColor}; text-align: center;">Signaturanfrage: ${urgencyText}</h2>
+    <div style="background: ${urgencyBg}; border-left: 4px solid ${urgencyColor}; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 8px;"><strong>Dokument:</strong> ${envelopeTitle}</li>
+        <li style="margin-bottom: 8px;"><strong>Ablaufdatum:</strong> ${expiresAtFormatted}</li>
+        <li><strong>Ausstehende Signaturen:</strong> ${pendingSigners} von ${totalSigners}</li>
+      </ul>
+    </div>
+    <p style="text-align: center; color: #4b5563;">
+      ${daysUntilExpiry === 0
+        ? 'Bitte prüfen Sie den Status der Signaturanfrage umgehend.'
+        : `Noch ${daysUntilExpiry} Tag${daysUntilExpiry > 1 ? 'e' : ''} bis zum Ablauf. Erinnern Sie ausstehende Unterzeichner rechtzeitig.`
+      }
+    </p>
   `;
 }
 

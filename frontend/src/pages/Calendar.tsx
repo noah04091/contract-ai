@@ -79,6 +79,8 @@ interface CalendarEvent {
     daysLeft?: number;
     cancellationId?: string;
     isFollowUp?: boolean;
+    expiresAt?: string;
+    envelopeTitle?: string;
   };
   amount?: number;
   isManual?: boolean;
@@ -115,6 +117,14 @@ const getDaysRemaining = (date: string) => {
   if (diffDays < 0) return { text: "Abgelaufen", urgent: true };
   if (diffDays <= 7) return { text: `${diffDays} Tage`, urgent: true };
   return { text: `${diffDays} Tage`, urgent: false };
+};
+
+// Für Signatur-Events: echtes Ablaufdatum statt Event-Datum verwenden
+const getEventDisplayDate = (event: CalendarEvent): string => {
+  if (event.type?.startsWith('SIGNATURE_') && event.metadata?.expiresAt) {
+    return event.metadata.expiresAt;
+  }
+  return event.date;
 };
 
 // German weekday names (Monday first)
@@ -703,7 +713,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   };
 
   const severityStyle = getSeverityStyle();
-  const daysInfo = getDaysRemaining(currentEvent.date);
+  const daysInfo = getDaysRemaining(getEventDisplayDate(currentEvent));
 
   // Check if this event has a contract associated
   // Show "Vertrag anzeigen" if: has contractId AND (isManual is false OR contractName is not 'Manuelles Ereignis')
@@ -1480,7 +1490,7 @@ function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalP
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {events.map((event, index) => {
-                const daysInfo = getDaysRemaining(event.date);
+                const daysInfo = getDaysRemaining(getEventDisplayDate(event));
                 return (
                   <motion.div
                     key={event.id}
@@ -3603,7 +3613,7 @@ export default function CalendarPage() {
                   <>
                     <div className="urgent-events-list" data-tour="calendar-event">
                       {paginatedUrgent.map(event => {
-                        const daysInfo = getDaysRemaining(event.date);
+                        const daysInfo = getDaysRemaining(getEventDisplayDate(event));
                         return (
                           <div
                             key={event.id}
@@ -3817,7 +3827,7 @@ export default function CalendarPage() {
                           {formatContractName(event.contractName)}
                         </div>
                         <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                          {event.title} • {getDaysRemaining(event.date).text}
+                          {event.title} • {getDaysRemaining(getEventDisplayDate(event)).text}
                         </div>
                       </div>
                     ))}
