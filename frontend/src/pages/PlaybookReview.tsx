@@ -721,7 +721,10 @@ const PlaybookReview: React.FC = () => {
       <div className={styles.sectionHeader}>
         <Shield size={18} />
         <h3>Meine Playbooks</h3>
-        <button className={styles.btnPrimary} onClick={() => { setView('builder'); setBuilderStep(1); }}>
+        <button
+          className={styles.btnPrimary}
+          onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
+        >
           <Plus size={16} />
           Neues Playbook
         </button>
@@ -732,7 +735,10 @@ const PlaybookReview: React.FC = () => {
           <Shield size={48} />
           <h3>Noch keine Playbooks</h3>
           <p>Erstellen Sie Ihr erstes Playbook, um Verträge systematisch zu prüfen.</p>
-          <button className={styles.btnPrimary} onClick={() => { setView('builder'); setBuilderStep(1); }}>
+          <button
+            className={styles.btnPrimary}
+            onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
+          >
             <Sparkles size={16} />
             Erstes Playbook erstellen
           </button>
@@ -1160,7 +1166,7 @@ const PlaybookReview: React.FC = () => {
             </p>
           </div>
           <div className={styles.detailActions}>
-            <button className={styles.btnPrimary} onClick={handleOpenCheck} disabled={isChecking}>
+            <button className={styles.btnPrimary} onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } handleOpenCheck(); }} disabled={isChecking}>
               {isChecking ? <Loader2 size={16} className={styles.spinner} /> : <Play size={16} />}
               Vertrag prüfen
             </button>
