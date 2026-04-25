@@ -1025,8 +1025,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       />
 
       {isFirstUse ? (
-        /* ══════════ First-Use: Subtle tip toast (appears after 10s, fades after 20s) ══════════ */
+        /* ══════════ First-Use: Feature cards + subtle tip toast ══════════ */
         <>
+          {/* Tipp-Toast: appears after 10s, disappears after 20s */}
           {showFirstUseTip && (
             <div className={styles.fadeIn} style={{
               padding: '14px 20px',
@@ -1053,6 +1054,31 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               >&times;</button>
             </div>
           )}
+
+          {/* Feature cards */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 16,
+            marginBottom: 24,
+          }}>
+            {[
+              { icon: '\u2696\uFE0F', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse pr\u00FCft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
+              { icon: '\uD83D\uDCB0', title: 'Kostenfallen vermeiden', desc: 'Erkennt automatische Verl\u00E4ngerungen, versteckte Geb\u00FChren und \u00FCberh\u00F6hte Preise.' },
+              { icon: '\uD83D\uDCCA', title: 'Portfolio \u00FCberwachen', desc: 'Alle Vertr\u00E4ge auf einen Blick \u2014 mit Fristen, Scores und Handlungsempfehlungen.' },
+            ].map(card => (
+              <div key={card.title} style={{
+                padding: 24,
+                background: '#fff',
+                borderRadius: 12,
+                border: '1px solid #e5e7eb',
+              }}>
+                <div style={{ fontSize: 28, marginBottom: 12 }}>{card.icon}</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>{card.title}</div>
+                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{card.desc}</div>
+              </div>
+            ))}
+          </div>
         </>
       ) : (
         <>
