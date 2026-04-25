@@ -2135,7 +2135,7 @@ export default function Contracts() {
       if (uploadedContracts.length > 0) {
         // 🎉 Celebration NUR beim ERSTEN Upload! (nicht bei jedem)
         if (!onboardingState?.checklist?.firstContractUploaded) {
-          celebrate('first-upload');
+          celebrate('first-upload', false);
         }
 
         // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
