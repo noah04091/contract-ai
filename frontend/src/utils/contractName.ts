@@ -8,14 +8,18 @@
 
 const UUID_FILE_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+$/i;
 
-/** Repair common UTF-8-as-Latin-1 mojibake (Ã¼ → ü, Ã¶ → ö, ÃŸ → ß, …). */
+/** Repair common UTF-8-as-Latin-1 mojibake (Ã¼ → ü, Ã¶ → ö, ÃŸ → ß, â€" → –, …). */
 function fixMojibake(s: string): string {
-  if (!s || !s.includes('Ã')) return s;
+  if (!s || (!s.includes('Ã') && !s.includes('â'))) return s;
   return s
     .replace(/Ã¼/g, 'ü').replace(/Ã„/g, 'Ä').replace(/Ã¤/g, 'ä')
     .replace(/Ã–/g, 'Ö').replace(/Ã¶/g, 'ö')
     .replace(/Ãœ/g, 'Ü')
-    .replace(/ÃŸ/g, 'ß');
+    .replace(/ÃŸ/g, 'ß')
+    .replace(/â€"/g, '–').replace(/â€"/g, '—')
+    .replace(/â€˜/g, '\u2018').replace(/â€™/g, '\u2019')
+    .replace(/â€œ/g, '\u201C').replace(/â€¦/g, '…')
+    .replace(/ â /g, ' – ').replace(/ â$/g, ' –').replace(/^â /g, '– ');
 }
 
 /** Clean contract name: remove file extensions, timestamps, date prefixes, underscores. */
