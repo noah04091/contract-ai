@@ -17,7 +17,8 @@ export type TourId =
   | 'compare'
   | 'chat'
   | 'legal-pulse'
-  | 'envelopes';
+  | 'envelopes'
+  | 'playbook-review';
 
 // Tour configuration type
 export interface TourConfig {

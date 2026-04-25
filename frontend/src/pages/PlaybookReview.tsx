@@ -28,6 +28,7 @@ import {
 import * as playbookAPI from '../services/playbookReviewAPI';
 import { playbookTemplates } from '../data/playbookTemplates';
 import { useToast } from '../context/ToastContext';
+import { WelcomePopup } from '../components/Tour';
 import styles from '../styles/PlaybookReview.module.css';
 
 // ============================================
@@ -1709,6 +1710,14 @@ const PlaybookReview: React.FC = () => {
           Definieren Sie Ihre Vertrags-Standards und prüfen Sie neue Verträge automatisch dagegen.
         </p>
       </div>
+
+      <WelcomePopup
+        featureId="playbook-review"
+        icon={<Shield size={32} />}
+        title="Willkommen beim Playbook Review"
+        description="Definieren Sie Ihre Vertrags-Standards als Playbook und prüfen Sie eingehende Verträge automatisch dagegen. Die KI zeigt Ihnen sofort, was passt, was fehlt und was nachverhandelt werden muss."
+        tip="Tipp: Starten Sie mit 'Neues Playbook' und wählen Sie eine fertige Vorlage — in 30 Sekunden ist Ihr erstes Playbook einsatzbereit."
+      />
 
       <div className={styles.content}>
         {view === 'dashboard' && renderDashboard()}
