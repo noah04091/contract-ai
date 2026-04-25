@@ -966,7 +966,8 @@ const ContractBuilder: React.FC = () => {
     } catch (error) {
       console.error('[PDF Export] Failed:', error);
       setView('edit');
-      alert(`PDF-Export fehlgeschlagen: ${(error as Error).message}`);
+      console.error('PDF-Export Fehler:', error);
+      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     } finally {
       setIsExporting(false);
     }
@@ -1531,6 +1532,8 @@ const ContractBuilder: React.FC = () => {
             }
           }
         }
+        // WICHTIG: Speichern bevor navigiert wird
+        await store.saveDocument();
         setQuickFillTemplate(null);
         setQuickFillValues({});
         navigate(`/contract-builder/${newDocId}`);
@@ -2871,9 +2874,10 @@ const ContractBuilder: React.FC = () => {
               {/* Form Body — nur im Einzel-Modus, NICHT bei Massenerstellung */}
               {!bulkMode && <div className={styles.quickFillBody}>
                 {(() => {
-                  // Variablen nach Gruppen sortieren
+                  // Variablen nach Gruppen sortieren, Smart-Vars filtern
                   const groups: Record<string, typeof quickFillTemplate.defaultVariables> = {};
                   for (const v of quickFillTemplate.defaultVariables) {
+                    if (SYSTEM_VARIABLES_MAP.has(v.name)) continue; // Smart-Vars überspringen
                     const g = v.group || 'Allgemein';
                     if (!groups[g]) groups[g] = [];
                     groups[g].push(v);

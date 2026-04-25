@@ -627,11 +627,10 @@ const importUpload = multer({
     const allowed = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
       'application/octet-stream' // Fallback — wird über Dateiendung validiert
     ];
     const isAllowedMime = allowed.includes(file.mimetype);
-    const isAllowedExt = /\.(pdf|docx|doc)$/i.test(file.originalname);
+    const isAllowedExt = /\.(pdf|docx)$/i.test(file.originalname);
     if (isAllowedMime || isAllowedExt) {
       cb(null, true);
     } else {
