@@ -385,6 +385,31 @@ const NOISE_PATTERNS = [
   /\bregistration\s+(is\s+)?open\b/i,
   /\bjoin\s+us\s+(for|at)\b/i,
   /\bcall\s+for\s+(papers|abstracts|applications)\b/i,
+  // Blog posts / educational / informational content
+  /in\s+a\s+nutshell/i,
+  /\b(blogartikel|blogbeitrag|gastbeitrag|blog\s*post)\b/i,
+  /\b(podcast|video|webcast|livestream)\b/i,
+  /\b(interview\s+mit|im\s+gespräch\s+mit)\b/i,
+  /\b(buchvorstellung|buchrezension|buchtipp|lesetipp)\b/i,
+  /\brückblick\s+\d{4}/i,
+  /\bjahresrückblick\b/i,
+  /\bpressespiegel\b/i,
+  /\btätigkeitsbericht\b/i,
+  // Newsletter / promotional content
+  /\bnewsletter\b/i,
+  /\brundschreiben\b/i,
+  /\b(folgen\s+sie\s+uns|follow\s+us)\b/i,
+  /\b(jetzt\s+anmelden|jetzt\s+registrieren)\b/i,
+  /\babonnieren\b/i,
+  // Personnel / organizational (not law changes)
+  /\b(ernennung|ernannt|bestellung|bestellt)\s+(von|des|der|zum|zur)\b/i,
+  /\b(personalie|personalwechsel|stellenausschreibung)\b/i,
+  /\bnachfolger(in)?\s+(von|für)\b/i,
+  // Rhetorical / journalistic headlines (opinion pieces, not laws)
+  /^(neu|new):\s/i,
+  /\bkolumne\b/i,
+  /\bkommentar\s+(von|zum|zur)\b/i,
+  /\b(das\s+bedeutet|was\s+sie\s+wissen\s+müssen)\b/i,
 ];
 
 function isNoiseLaw(law) {
@@ -826,6 +851,13 @@ KONTEXT-MATCHING (wichtig!):
 - Wenn Sachkontext nicht übereinstimmt → affected=false, egal wie ähnlich das Rechtsgebiet klingt
 - confidence >80 NUR wenn du den GENAUEN Regelungsinhalt des Gesetzes benennen kannst, der die GENAUE Klausel im Vertrag betrifft
 - confidence 60-79: Vertrag ist nur indirekt oder am Rande betroffen
+
+QUELLENTYP-PRÜFUNG (vor jeder Bewertung!):
+- Prüfe den TITEL der Gesetzesänderung: Ist es ein ECHTES Gesetz, eine Verordnung, ein Gerichtsurteil oder eine behördliche Leitlinie? Oder ist es ein Nachrichtenartikel, Blogpost, Bildungsbeitrag oder Pressemitteilung ÜBER ein Gesetz?
+- Nachrichtenartikel und Blogposts ÜBER Gesetze sind KEINE eigenständigen Gesetzesänderungen — ein Artikel der ein Gesetz erklärt, ändert nichts am Recht
+- Journalistische Titel (Fragen, Serien wie "Teil 3", "in a nutshell", Meinungen) → mit höchster Wahrscheinlichkeit kein echtes Gesetz → affected=false
+- Nur wenn eine KONKRETE, NEUE gesetzliche Regelung identifizierbar ist (Gesetzesnummer, EU-Verordnungsnummer, Paragraf, Aktenzeichen wie "II ZB 2/25") → affected=true möglich
+- Wenn du keinen konkreten Gesetzestext, keine Norm und kein Aktenzeichen benennen kannst → affected=false
 
 VERTRAGSTYP-INTELLIGENZ:
 - Verstehe den Vertrag BEVOR du das Gesetz anwendest: Was ist der Geschäftszweck? Was sind die Kernmechanismen?
