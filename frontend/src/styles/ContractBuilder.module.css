@@ -2598,6 +2598,95 @@
   background: #f3f4f6;
 }
 
+/* Variablen-Guide Banner */
+.variableGuide {
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+  border-bottom: 1px solid #bfdbfe;
+  padding: 0 16px;
+}
+
+.variableGuideInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+}
+
+.variableGuideSteps {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+}
+
+.variableGuideStep {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.variableGuideStep strong {
+  font-size: 13px;
+  color: #1e40af;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.variableGuideStep p {
+  font-size: 12px;
+  color: #3b82f6;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.variableGuideNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #3B82F6;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.variableGuideTag {
+  font-family: monospace;
+  background: #dbeafe;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.variableGuideClose {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #93c5fd;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.variableGuideClose:hover {
+  background: #dbeafe;
+  color: #2563EB;
+}
+
+@media (max-width: 768px) {
+  .variableGuideSteps { flex-direction: column; gap: 10px; }
+}
+
 /* Import Drop Zone */
 .importDropZone {
   border: 2px dashed #d1d5db;

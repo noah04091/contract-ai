@@ -97,6 +97,8 @@ const ContractBuilder: React.FC = () => {
   const [searchParams] = useSearchParams();
   const bulkIdsFromUrl = searchParams.get('bulk')?.split(',').filter(Boolean) || [];
   const editTemplateIdFromUrl = searchParams.get('editTemplate') || null;
+  const showVariableGuide = searchParams.get('guide') === 'variables';
+  const [variableGuideDismissed, setVariableGuideDismissed] = useState(false);
 
   // User-Daten für Plan-Prüfung
   const { user } = useAuth();
@@ -1593,12 +1595,12 @@ const ContractBuilder: React.FC = () => {
     try {
       const newDocId = await createDocument(customName.trim(), 'individuell');
 
-      // Modal schließen + navigieren
+      // Modal schließen + navigieren mit Variablen-Guide
       setShowCustomCreator(false);
       setCustomName('');
       setCustomDescription('');
       if (newDocId) {
-        navigate(`/contract-builder/${newDocId}`);
+        navigate(`/contract-builder/${newDocId}?guide=variables`);
       }
     } catch (err) {
       console.error('Fehler beim Erstellen:', err);
@@ -3372,6 +3374,40 @@ const ContractBuilder: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Variablen-Guide Banner */}
+      {showVariableGuide && !variableGuideDismissed && (
+        <div className={styles.variableGuide}>
+          <div className={styles.variableGuideInner}>
+            <div className={styles.variableGuideSteps}>
+              <div className={styles.variableGuideStep}>
+                <span className={styles.variableGuideNum}>1</span>
+                <div>
+                  <strong>Vertrag schreiben</strong>
+                  <p>Fügen Sie Klauseln hinzu und schreiben Sie Ihren Vertragstext. Doppelklick auf eine Klausel zum Bearbeiten.</p>
+                </div>
+              </div>
+              <div className={styles.variableGuideStep}>
+                <span className={styles.variableGuideNum}>2</span>
+                <div>
+                  <strong>Variablen markieren</strong>
+                  <p>Text markieren (z.B. einen Namen) → <span className={styles.variableGuideTag}>{'{{ }}'} Variable</span> Button klicken → Name eingeben → Enter.</p>
+                </div>
+              </div>
+              <div className={styles.variableGuideStep}>
+                <span className={styles.variableGuideNum}>3</span>
+                <div>
+                  <strong>Als Vorlage speichern</strong>
+                  <p>Mehr-Menü (⋮ oben rechts) → &ldquo;Als Vorlage speichern&rdquo;. Beim nächsten Mal: Quick-Fill mit Ihren Variablen.</p>
+                </div>
+              </div>
+            </div>
+            <button className={styles.variableGuideClose} onClick={() => setVariableGuideDismissed(true)}>
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className={styles.mainContent}>
