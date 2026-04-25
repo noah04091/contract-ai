@@ -3109,19 +3109,19 @@ const ContractBuilder: React.FC = () => {
                 setConfirmDialog({
                   isOpen: true,
                   title: 'Ungespeicherte Änderungen',
-                  message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zum Dashboard zurückkehren?',
+                  message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zur Vorlagen-Übersicht zurückkehren?',
                   confirmText: 'Zurückkehren',
                   confirmStyle: 'warning',
                   onConfirm: () => {
                     setConfirmDialog(null);
-                    navigate('/dashboard');
+                    navigate('/contract-builder');
                   },
                 });
                 return;
               }
-              navigate('/dashboard');
+              navigate('/contract-builder');
             }}
-            title="Zurück zum Dashboard"
+            title="Zurück zur Vorlagen-Übersicht"
           >
             <ChevronLeft size={18} />
           </button>
