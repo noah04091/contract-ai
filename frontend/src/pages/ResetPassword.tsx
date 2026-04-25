@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import { Key, Lock, CheckCircle, AlertCircle, ChevronLeft } from "lucide-react";
+import { Key, Lock, CheckCircle, AlertCircle, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import styles from "./ResetPassword.module.css";
 
 // API URL für Backend-Calls
@@ -39,6 +39,8 @@ const Notification: React.FC<NotificationProps> = ({ message, type = "success", 
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -248,7 +250,7 @@ export default function ResetPassword() {
                   <div className={styles.inputWrapper}>
                     <Lock size={18} className={styles.inputIcon} />
                     <input
-                      type="password"
+                      type={showNewPassword ? "text" : "password"}
                       className={styles.input}
                       placeholder="Neues Passwort"
                       value={newPassword}
@@ -257,6 +259,14 @@ export default function ResetPassword() {
                       minLength={8}
                       autoComplete="new-password"
                     />
+                    <button
+                      type="button"
+                      className={styles.passwordToggle}
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      tabIndex={-1}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
                 
@@ -264,7 +274,7 @@ export default function ResetPassword() {
                   <div className={styles.inputWrapper}>
                     <Lock size={18} className={styles.inputIcon} />
                     <input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       className={styles.input}
                       placeholder="Passwort bestätigen"
                       value={confirmPassword}
@@ -273,6 +283,14 @@ export default function ResetPassword() {
                       minLength={8}
                       autoComplete="new-password"
                     />
+                    <button
+                      type="button"
+                      className={styles.passwordToggle}
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
                 

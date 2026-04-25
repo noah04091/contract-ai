@@ -4,7 +4,8 @@ import { Helmet } from "react-helmet-async";
 import {
   Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut,
   FileText, Download, Users, Link2, RefreshCw,
-  Edit3, Camera, CheckCircle2, Star, Settings, ChevronDown
+  Edit3, Camera, CheckCircle2, Star, Settings, ChevronDown,
+  Eye, EyeOff
 } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";
@@ -50,6 +51,10 @@ export default function Profile() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -703,13 +708,23 @@ export default function Profile() {
                           placeholder="Neue E-Mail-Adresse"
                           className={styles.input}
                         />
-                        <input
-                          type="password"
-                          value={emailPassword}
-                          onChange={(e) => setEmailPassword(e.target.value)}
-                          placeholder="Aktuelles Passwort zur Bestätigung"
-                          className={styles.input}
-                        />
+                        <div className={styles.passwordInputWrapper}>
+                          <input
+                            type={showEmailPassword ? "text" : "password"}
+                            value={emailPassword}
+                            onChange={(e) => setEmailPassword(e.target.value)}
+                            placeholder="Aktuelles Passwort zur Bestätigung"
+                            className={styles.input}
+                          />
+                          <button
+                            type="button"
+                            className={styles.passwordToggle}
+                            onClick={() => setShowEmailPassword(!showEmailPassword)}
+                            tabIndex={-1}
+                          >
+                            {showEmailPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                         <div className={styles.editNameButtons}>
                           <button onClick={handleChangeEmail} disabled={isSavingEmail} className={styles.saveButton}>
                             {isSavingEmail ? 'Senden...' : 'Bestätigen'}
@@ -1121,27 +1136,47 @@ export default function Profile() {
                     <div className={styles.passwordForm}>
                       <div className={styles.inputGroup}>
                         <label htmlFor="oldPassword">Aktuelles Passwort</label>
-                        <input
-                          id="oldPassword"
-                          type="password"
-                          placeholder="••••••••"
-                          value={oldPassword}
-                          onChange={(e) => setOldPassword(e.target.value)}
-                          className={styles.input}
-                        />
+                        <div className={styles.passwordInputWrapper}>
+                          <input
+                            id="oldPassword"
+                            type={showOldPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            className={styles.input}
+                          />
+                          <button
+                            type="button"
+                            className={styles.passwordToggle}
+                            onClick={() => setShowOldPassword(!showOldPassword)}
+                            tabIndex={-1}
+                          >
+                            {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </div>
 
                       <div className={styles.inputGroup}>
                         <label htmlFor="newPassword">Neues Passwort</label>
-                        <input
-                          id="newPassword"
-                          type="password"
-                          placeholder="••••••••"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className={styles.input}
-                          minLength={8}
-                        />
+                        <div className={styles.passwordInputWrapper}>
+                          <input
+                            id="newPassword"
+                            type={showNewPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className={styles.input}
+                            minLength={8}
+                          />
+                          <button
+                            type="button"
+                            className={styles.passwordToggle}
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            tabIndex={-1}
+                          >
+                            {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                         <p className={styles.passwordHint}>
                           Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
                         </p>
@@ -1149,14 +1184,24 @@ export default function Profile() {
 
                       <div className={styles.inputGroup}>
                         <label htmlFor="confirmPassword">Passwort bestätigen</label>
-                        <input
-                          id="confirmPassword"
-                          type="password"
-                          placeholder="••••••••"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className={styles.input}
-                        />
+                        <div className={styles.passwordInputWrapper}>
+                          <input
+                            id="confirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={styles.input}
+                          />
+                          <button
+                            type="button"
+                            className={styles.passwordToggle}
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            tabIndex={-1}
+                          >
+                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
                       </div>
 
                       <motion.button
