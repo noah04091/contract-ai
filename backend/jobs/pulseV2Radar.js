@@ -210,6 +210,7 @@ async function runPulseV2Radar(db, options = {}) {
   let totalTokensInput = 0;
   let totalTokensOutput = 0;
   let totalCostUSD = 0;
+  const failedLawIds = []; // Track laws where AI assessment failed (for retry on next run)
 
   for (const law of lawChanges) {
     if (totalMatches >= MAX_CONTRACT_MATCHES) break;
@@ -218,7 +219,11 @@ async function runPulseV2Radar(db, options = {}) {
     if (matches.length === 0) continue;
 
     // 3. Assess impact with AI
-    const { impacts: confirmedImpacts, cost } = await assessImpact(law, matches);
+    const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
+    if (aiError) {
+      failedLawIds.push(law._id);
+      continue; // Don't count matches — will be retried on next run
+    }
     totalMatches += matches.length;
 
     // Accumulate cost
@@ -266,8 +271,12 @@ async function runPulseV2Radar(db, options = {}) {
     }
   }
 
-  // 5. Mark processed law changes
-  const lawIds = lawChanges.map((l) => l._id);
+  // 5. Mark processed law changes (exclude laws where AI assessment failed — they will be retried)
+  const failedSet = new Set(failedLawIds.map(id => id.toString()));
+  const lawIds = lawChanges.filter(l => !failedSet.has(l._id.toString())).map(l => l._id);
+  if (failedLawIds.length > 0) {
+    console.log(`[PulseV2Radar] ${failedLawIds.length} laws NOT marked as processed (AI failure) — will retry on next run`);
+  }
   await db.collection("laws").updateMany(
     { _id: { $in: lawIds } },
     { $set: { pulseV2Processed: true, pulseV2ProcessedAt: new Date() } }
@@ -301,16 +310,17 @@ async function runPulseV2Radar(db, options = {}) {
       tokensInput: totalTokensInput,
       tokensOutput: totalTokensOutput,
       estimatedCostUSD: Number(totalCostUSD.toFixed(6)),
+      aiFailures: failedLawIds.length,
     });
   } catch (histErr) {
     console.warn("[PulseV2Radar] Failed to write run history:", histErr.message);
   }
 
   console.log(
-    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s | ${totalAiCalls} AI calls, ${totalTokensInput}in/${totalTokensOutput}out tokens, $${totalCostUSD.toFixed(4)}`
+    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}${failedLawIds.length > 0 ? `, ${failedLawIds.length} AI failures` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s | ${totalAiCalls} AI calls, ${totalTokensInput}in/${totalTokensOutput}out tokens, $${totalCostUSD.toFixed(4)}`
   );
 
-  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration, aiCalls: totalAiCalls, tokensInput: totalTokensInput, tokensOutput: totalTokensOutput, estimatedCostUSD: Number(totalCostUSD.toFixed(6)) };
+  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration, aiCalls: totalAiCalls, tokensInput: totalTokensInput, tokensOutput: totalTokensOutput, estimatedCostUSD: Number(totalCostUSD.toFixed(6)), aiFailures: failedLawIds.length };
 }
 
 // ═══════════════════════════════════════════════════
@@ -758,7 +768,7 @@ async function assessImpact(lawChange, contracts) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.warn("[PulseV2Radar] No OpenAI API key — skipping AI impact assessment");
-    return { impacts: [], cost: emptyCost };
+    return { impacts: [], cost: emptyCost, aiError: true };
   }
 
   const openai = new OpenAI({ apiKey, timeout: 45000, maxRetries: 1 });
@@ -974,7 +984,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
     return { impacts: confirmedImpacts, cost };
   } catch (err) {
     console.error("[PulseV2Radar] AI assessment failed:", err.message);
-    return { impacts: [], cost: emptyCost };
+    return { impacts: [], cost: emptyCost, aiError: true };
   }
 }
 
