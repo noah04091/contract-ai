@@ -725,7 +725,7 @@ const PlaybookReview: React.FC = () => {
           className={styles.btnPrimary}
           onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus size={18} strokeWidth={2.5} color="white" />
           Neues Playbook
         </button>
       </div>
