@@ -28,7 +28,9 @@ import {
 import * as playbookAPI from '../services/playbookReviewAPI';
 import { playbookTemplates } from '../data/playbookTemplates';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { WelcomePopup } from '../components/Tour';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 import styles from '../styles/PlaybookReview.module.css';
 
 // ============================================
@@ -180,6 +182,13 @@ const PlaybookReview: React.FC = () => {
   const { playbookId } = useParams<{ playbookId?: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+
+  // Premium Check
+  const isPremium = user?.isPremium === true ||
+    user?.subscriptionPlan === 'business' ||
+    user?.subscriptionPlan === 'enterprise' ||
+    user?.subscriptionActive === true;
 
   // View State
   const [view, setView] = useState<View>('dashboard');
@@ -1700,6 +1709,13 @@ const PlaybookReview: React.FC = () => {
       <Helmet>
         <title>Playbook Review | Contract AI</title>
       </Helmet>
+
+      {!isPremium && (
+        <UnifiedPremiumNotice
+          featureName="Playbook Review"
+          variant="fullWidth"
+        />
+      )}
 
       <div className={styles.header}>
         <div className={styles.headerTitle}>
