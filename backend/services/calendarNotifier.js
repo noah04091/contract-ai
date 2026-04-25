@@ -335,12 +335,12 @@ function generateCancelWindowEmail(event, token, baseUrl) {
   const daysUntilExpiry = Math.ceil((new Date(event.metadata.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
   return `
     <h2 style="color: #34c759; text-align: center;">Gute Nachrichten!</h2>
-    <p style="text-align: center;">Das Kuendigungsfenster fuer <strong>${event.metadata.contractName}</strong> ist jetzt geoeffnet.</p>
+    <p style="text-align: center;">Das Kündigungsfenster für <strong>${event.metadata.contractName}</strong> ist jetzt geöffnet.</p>
     <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
       <h3>Wichtige Informationen:</h3>
       <ul style="list-style: none; padding: 0;">
         <li><strong>Vertragsende:</strong> ${new Date(event.metadata.expiryDate).toLocaleDateString('de-DE')}</li>
-        <li><strong>Kuendigungsfrist:</strong> ${event.metadata.noticePeriodDays} Tage</li>
+        <li><strong>Kündigungsfrist:</strong> ${event.metadata.noticePeriodDays} Tage</li>
         <li><strong>Anbieter:</strong> ${event.metadata.provider || 'Unbekannt'}</li>
         <li><strong>Verbleibende Zeit:</strong> ${daysUntilExpiry} Tage</li>
       </ul>
@@ -367,28 +367,28 @@ function generateLastCancelDayEmail(event, token, baseUrl) {
 function generateCancelWarningEmail(event, token, baseUrl) {
   return `
     <h2 style="color: #ff9500; text-align: center;">Wichtige Erinnerung</h2>
-    <p style="text-align: center;">In <strong>${event.metadata.daysLeft} Tagen</strong> endet die Kuendigungsfrist fuer "${event.metadata.contractName}".</p>
+    <p style="text-align: center;">In <strong>${event.metadata.daysLeft} Tagen</strong> endet die Kündigungsfrist für "${event.metadata.contractName}".</p>
   `;
 }
 
 function generatePriceIncreaseEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #ff6b35; text-align: center;">Preiserhoehung angekuendigt</h2>
-    <p style="text-align: center;">Der Preis fuer "${event.metadata.contractName}" wird erhoeht.</p>
+    <h2 style="color: #ff6b35; text-align: center;">Preiserhöhung angekündigt</h2>
+    <p style="text-align: center;">Der Preis für "${event.metadata.contractName}" wird erhöht.</p>
   `;
 }
 
 function generateAutoRenewalEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #5c7cfa; text-align: center;">Automatische Verlaengerung steht bevor</h2>
-    <p style="text-align: center;">"${event.metadata.contractName}" verlaengert sich automatisch.</p>
+    <h2 style="color: #5c7cfa; text-align: center;">Automatische Verlängerung steht bevor</h2>
+    <p style="text-align: center;">"${event.metadata.contractName}" verlängert sich automatisch.</p>
   `;
 }
 
 function generateReviewEmail(event, token, baseUrl) {
   return `
-    <h2 style="color: #10b981; text-align: center;">Zeit fuer einen Vertrags-Check!</h2>
-    <p style="text-align: center;">Ihr Vertrag "${event.metadata.contractName}" laeuft seit laengerer Zeit.</p>
+    <h2 style="color: #10b981; text-align: center;">Zeit für einen Vertrags-Check!</h2>
+    <p style="text-align: center;">Ihr Vertrag "${event.metadata.contractName}" läuft seit längerer Zeit.</p>
   `;
 }
 

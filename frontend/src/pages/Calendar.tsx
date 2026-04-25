@@ -833,10 +833,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
         )}
 
         <div className="modal-content-premium">
+          {currentEvent.description && (
           <div className="event-description-premium">
             <Sparkles size={16} className="description-icon" />
             <p>{currentEvent.description}</p>
           </div>
+          )}
 
           {currentEvent.notes && (
             <div style={{
@@ -1656,6 +1658,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           }
         } catch (err) {
           console.error('Error fetching contracts:', err);
+          toast.error('Verträge konnten nicht geladen werden');
         } finally {
           setLoadingContracts(false);
         }
@@ -3524,7 +3527,7 @@ export default function CalendarPage() {
                   <div
                     key={severity}
                     className="legend-item"
-                    onClick={() => setFilterSeverity(prev => prev === severity ? 'all' : severity)}
+                    onClick={() => { setFilterSeverity(prev => prev === severity ? 'all' : severity); setUrgentPage(0); }}
                     style={{
                       cursor: 'pointer',
                       opacity: filterSeverity !== 'all' && filterSeverity !== severity ? 0.4 : 1,
@@ -3542,7 +3545,7 @@ export default function CalendarPage() {
                 {filterSeverity !== 'all' && (
                   <div
                     className="legend-item"
-                    onClick={() => setFilterSeverity('all')}
+                    onClick={() => { setFilterSeverity('all'); setUrgentPage(0); }}
                     style={{
                       cursor: 'pointer',
                       fontSize: '11px',

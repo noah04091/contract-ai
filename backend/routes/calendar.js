@@ -841,6 +841,67 @@ router.post("/quick-action", verifyToken, async (req, res) => {
   }
 });
 
+// GET /api/calendar/quick-action - Quick Actions aus E-Mail-Links (snooze/dismiss)
+router.get("/quick-action", async (req, res) => {
+  try {
+    const { token, action, days } = req.query;
+    const baseUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
+
+    if (!token || !action) {
+      return res.redirect(`${baseUrl}/calendar?error=invalid_link`);
+    }
+
+    // Nur snooze und dismiss via E-Mail-Link erlaubt
+    if (!["snooze", "dismiss"].includes(action)) {
+      return res.redirect(`${baseUrl}/calendar?error=invalid_action`);
+    }
+
+    // JWT aus Query-Param verifizieren (nicht aus Authorization Header)
+    const jwt = require("jsonwebtoken");
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtErr) {
+      return res.redirect(`${baseUrl}/calendar?error=token_expired`);
+    }
+
+    const { eventId, userId } = payload;
+    const db = req.db;
+    const event = await db.collection("contract_events").findOne({
+      _id: new ObjectId(eventId),
+      userId: new ObjectId(userId)
+    });
+
+    if (!event) {
+      return res.redirect(`${baseUrl}/calendar?error=event_not_found`);
+    }
+
+    if (action === "snooze") {
+      const snoozeDays = parseInt(days) || 7;
+      const newDate = new Date(event.date);
+      newDate.setDate(newDate.getDate() + snoozeDays);
+      await db.collection("contract_events").updateOne(
+        { _id: event._id },
+        { $set: { date: newDate, status: "snoozed", snoozedUntil: newDate, updatedAt: new Date() } }
+      );
+      return res.redirect(`${baseUrl}/calendar?success=snoozed&days=${snoozeDays}`);
+    }
+
+    if (action === "dismiss") {
+      await db.collection("contract_events").updateOne(
+        { _id: event._id },
+        { $set: { status: "dismissed", dismissedAt: new Date(), updatedAt: new Date() } }
+      );
+      return res.redirect(`${baseUrl}/calendar?success=dismissed`);
+    }
+
+  } catch (error) {
+    console.error("❌ Error in email quick action:", error);
+    const baseUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
+    return res.redirect(`${baseUrl}/calendar?error=server_error`);
+  }
+});
+
 // GET /api/calendar/sync-links - Sync-Links für externe Kalender abrufen
 router.get("/sync-links", verifyToken, async (req, res) => {
   try {
