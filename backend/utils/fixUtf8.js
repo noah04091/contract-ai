@@ -7,11 +7,9 @@ function fixUtf8Filename(filename) {
   if (!filename) return filename;
 
   try {
-    // Schnelle Prüfung: Enthält der String "Ã" (Latin-1 Fehlinterpretation von UTF-8)?
-    // Alle UTF-8 Multibyte-Zeichen beginnen mit C3 (= Ã in Latin-1) wenn falsch dekodiert
-    if (!filename.includes('Ã')) return filename;
-
     // Versuche Latin-1 -> UTF-8 Konvertierung
+    // Fängt ALLE Multi-Byte-Zeichen ab (Umlaute, Em-Dash, etc.)
+    // Safeguards: \uFFFD-Check, Gleichheits-Check, Längen-Check
     const fixed = Buffer.from(filename, 'latin1').toString('utf8');
 
     // Prüfe ob das Ergebnis valide UTF-8 ist (keine Replacement-Zeichen)

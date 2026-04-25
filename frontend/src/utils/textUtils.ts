@@ -12,9 +12,6 @@
 export function fixUtf8Display(str: string): string {
   if (!str) return str;
 
-  // Schnelle Prüfung: Enthält "Ã" (Latin-1 Fehlinterpretation von UTF-8)?
-  if (!str.includes('Ã')) return str;
-
   try {
     // Konvertiere jeden Charakter zu seinem Latin-1 Byte-Wert
     const bytes = new Uint8Array(str.length);
