@@ -162,6 +162,16 @@ const INDUSTRIES = [
   { value: 'logistik', label: 'Logistik' }
 ];
 
+// Helper: UTF-8 Encoding-Artefakte in Vertragsnamen reparieren
+const fixEncoding = (text: string): string => {
+  if (!text) return text;
+  return text
+    .replace(/Ã¤/g, 'ä').replace(/Ã¶/g, 'ö').replace(/Ã¼/g, 'ü')
+    .replace(/Ã„/g, 'Ä').replace(/Ã–/g, 'Ö').replace(/Ãœ/g, 'Ü')
+    .replace(/ÃŸ/g, 'ß').replace(/Ã©/g, 'é').replace(/Ã¨/g, 'è')
+    .replace(/Ã /g, 'à').replace(/Ã¢/g, 'â');
+};
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -741,7 +751,7 @@ const PlaybookReview: React.FC = () => {
                   }
                 }}
               >
-                <span className={styles.checkName}>{check.contractName}</span>
+                <span className={styles.checkName}>{fixEncoding(check.contractName)}</span>
                 <span
                   className={styles.checkScore}
                   style={{ color: getScoreColor(check.summary.overallScore) }}
@@ -974,7 +984,7 @@ const PlaybookReview: React.FC = () => {
                         onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
                       >
                         <FileText size={16} />
-                        <span>{c.name || 'Unbenannt'}</span>
+                        <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
                         {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
                         {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
                       </div>
@@ -1293,7 +1303,7 @@ const PlaybookReview: React.FC = () => {
                   }
                 }}
                 >
-                  <span className={styles.checkName}>{check.contractName}</span>
+                  <span className={styles.checkName}>{fixEncoding(check.contractName)}</span>
                   <span
                     className={styles.checkScore}
                     style={{ color: getScoreColor(check.summary.overallScore) }}
@@ -1333,7 +1343,7 @@ const PlaybookReview: React.FC = () => {
                       onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
                     >
                       <FileText size={16} />
-                      <span>{c.name || 'Unbenannt'}</span>
+                      <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
                       {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
                       {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
                     </div>
@@ -1391,7 +1401,7 @@ const PlaybookReview: React.FC = () => {
             <span className={styles.scoreLabel}>von 100</span>
           </div>
           <div className={styles.summaryInfo}>
-            <h2>Prüfung: {checkResult.contractName}</h2>
+            <h2>Prüfung: {fixEncoding(checkResult.contractName)}</h2>
             <p>Playbook: {playbookName} &middot; {new Date(checkResult.checkedAt).toLocaleDateString('de-DE')}</p>
             <div className={styles.summaryStats}>
               <span className={styles.statPassed}><CheckCircle2 size={14} /> {summary.passed} Erfüllt</span>
