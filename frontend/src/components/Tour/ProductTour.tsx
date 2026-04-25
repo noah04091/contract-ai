@@ -160,14 +160,14 @@ export function ProductTour({
         options: {
           zIndex: 99999,
           primaryColor: '#3B82F6',
-          overlayColor: 'rgba(0, 0, 0, 0.5)',
+          overlayColor: 'rgba(0, 0, 0, 0.3)',
         },
         spotlight: {
-          borderRadius: 8,
-          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)',
+          borderRadius: 12,
+          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
         },
         overlay: {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
           mixBlendMode: 'normal' as const,
         },
         tooltip: {
