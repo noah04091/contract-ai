@@ -3349,13 +3349,11 @@ const ContractBuilder: React.FC = () => {
                     <span>Vorlage aktualisieren</span>
                   </button>
                 )}
-                {/* "Als Vorlage speichern" nur für Premium+ User */}
-                {isPremiumUser && (
-                  <button onClick={handleOpenSaveTemplateModal}>
-                    <FolderPlus size={14} />
-                    <span>Als Vorlage speichern</span>
-                  </button>
-                )}
+                {/* "Als Vorlage speichern" — für alle User sichtbar, Backend prüft Plan */}
+                <button onClick={handleOpenSaveTemplateModal}>
+                  <FolderPlus size={14} />
+                  <span>Als Vorlage speichern</span>
+                </button>
                 <button onClick={handleExportTemplate}>
                   <FileOutput size={14} />
                   <span>Als Vorlage exportieren</span>
