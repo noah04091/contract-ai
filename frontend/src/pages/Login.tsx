@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import "../styles/SplitAuth.css";
 
@@ -23,6 +24,7 @@ interface AuthResponse {
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "warning" | "info" } | null>(null);
   const navigate = useNavigate();
@@ -278,16 +280,26 @@ export default function Login() {
                         Passwort vergessen?
                       </Link>
                     </div>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="split-auth-input"
-                      placeholder="••••••••"
-                      required
-                      autoComplete="current-password"
-                    />
+                    <div className="split-auth-password-wrapper">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="split-auth-input"
+                        placeholder="••••••••"
+                        required
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        className="split-auth-password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
 
                   <button

@@ -482,6 +482,35 @@
   color: #9ca3af;
 }
 
+/* Password Toggle (Eye Icon) */
+.split-auth-password-wrapper {
+  position: relative;
+}
+
+.split-auth-password-wrapper .split-auth-input {
+  padding-right: 44px;
+}
+
+.split-auth-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.split-auth-password-toggle:hover {
+  color: #374151;
+}
+
 /* Password Hint */
 .split-auth-password-hint {
   font-size: 12px;

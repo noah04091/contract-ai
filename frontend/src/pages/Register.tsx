@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { Eye, EyeOff } from "lucide-react";
 import "../styles/SplitAuth.css";
 
 // Back Arrow Icon SVG
@@ -17,6 +18,7 @@ export default function Register() {
   const [companyName, setCompanyName] = useState(""); // Optional
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
 
@@ -288,17 +290,27 @@ export default function Register() {
                     <label htmlFor="password" className="split-auth-label">
                       Passwort
                     </label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="split-auth-input"
-                      placeholder="Sicheres Passwort erstellen"
-                      required
-                      autoComplete="new-password"
-                      minLength={8}
-                    />
+                    <div className="split-auth-password-wrapper">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="split-auth-input"
+                        placeholder="Sicheres Passwort erstellen"
+                        required
+                        autoComplete="new-password"
+                        minLength={8}
+                      />
+                      <button
+                        type="button"
+                        className="split-auth-password-toggle"
+                        onClick={() => setShowPassword(!showPassword)}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     <p className="split-auth-password-hint">
                       Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
                     </p>
