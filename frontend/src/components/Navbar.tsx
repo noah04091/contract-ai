@@ -25,7 +25,8 @@ import {
   Star,
   X,
   TrendingUp,
-  XCircle
+  XCircle,
+  Shield
 } from "lucide-react";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
@@ -133,7 +134,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations", "/playbook-review"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -1458,6 +1459,13 @@ export default function Navbar() {
                         <span className={styles.navIconNew}><Hammer size={20} strokeWidth={1.75} /></span>
                         <span className={styles.navLabelNew}>ContractForge</span>
                         <span className={`${styles.navBadgeNew} ${styles.navBadgeGreen}`}>NEU</span>
+                      </Link>
+                    </li>
+                    <li className={styles.navItemNew}>
+                      <Link to="/playbook-review" className={`${styles.navLinkNew} ${location.pathname.startsWith('/playbook-review') ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.navIconNew}><Shield size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Playbook Review</span>
+                        <span className={`${styles.navBadgeNew} ${styles.navBadgeBlue}`}>NEU</span>
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
