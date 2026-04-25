@@ -496,6 +496,9 @@ function generateCalendarEmailTemplate(params) {
     `<a href="${action.url}" style="display: inline-block; margin: 0 10px; color: #6b7280; text-decoration: none; font-size: 14px;">${action.text}</a>`
   ).join(' | ');
 
+  const baseUrlForUnsub = process.env.FRONTEND_URL || "https://contract-ai.de";
+  const unsubscribeUrl = `${baseUrlForUnsub}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
+
   return generateEmailTemplate({
     title: title,
     preheader: preheader,
@@ -508,7 +511,8 @@ function generateCalendarEmailTemplate(params) {
       </div>
     `,
     recipientEmail: recipientEmail,
-    emailCategory: 'calendar'
+    emailCategory: 'calendar',
+    unsubscribeUrl: unsubscribeUrl
   });
 }
 
