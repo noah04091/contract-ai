@@ -1,6 +1,7 @@
 // 📁 frontend/src/components/Tour/ProductTour.tsx
 // 🎯 Product Tour Component - Wraps react-joyride with custom styling
 
+import React from 'react';
 import { createPortal } from 'react-dom';
 import Joyride, { TooltipRenderProps } from 'react-joyride';
 import { motion } from 'framer-motion';
@@ -133,6 +134,29 @@ export function ProductTour({
     onSkip,
   });
 
+  // Highlight-Effekt auf das aktuelle Ziel-Element
+  React.useEffect(() => {
+    if (!isRunning || !tour) return;
+    const step = tour.steps[stepIndex];
+    if (!step?.target || typeof step.target !== 'string') return;
+
+    const el = document.querySelector(step.target) as HTMLElement;
+    if (!el) return;
+
+    // Style injizieren
+    el.style.outline = '2px solid #3B82F6';
+    el.style.outlineOffset = '4px';
+    el.style.borderRadius = '12px';
+    el.style.transition = 'outline 0.3s ease';
+
+    return () => {
+      el.style.outline = '';
+      el.style.outlineOffset = '';
+      el.style.borderRadius = '';
+      el.style.transition = '';
+    };
+  }, [isRunning, stepIndex, tour]);
+
   // Don't render if loading or no tour
   if (isLoading || !tour) {
     return null;
@@ -146,29 +170,20 @@ export function ProductTour({
       continuous
       showSkipButton
       showProgress
-      disableOverlayClose
+      disableOverlay
       spotlightClicks
       callback={handleJoyrideCallback}
       tooltipComponent={CustomTooltip}
       scrollOffset={100}
       floaterProps={{
         disableAnimation: false,
-        hideArrow: true,
-        offset: 0,
+        hideArrow: false,
+        offset: 12,
       }}
       styles={{
         options: {
           zIndex: 99999,
           primaryColor: '#3B82F6',
-          overlayColor: 'rgba(0, 0, 0, 0.3)',
-        },
-        spotlight: {
-          borderRadius: 12,
-          boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.3)',
-        },
-        overlay: {
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          mixBlendMode: 'normal' as const,
         },
         tooltip: {
           borderRadius: 12,
