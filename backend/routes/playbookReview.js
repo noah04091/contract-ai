@@ -329,7 +329,7 @@ router.post("/:id/check", verifyToken, async (req, res) => {
 router.get("/checks/recent", verifyToken, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50);
 
     const checks = await PlaybookCheck.findByUser(userId, { limit });
 

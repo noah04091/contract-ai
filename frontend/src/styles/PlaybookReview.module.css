@@ -556,20 +556,6 @@
 }
 
 /* ===== GEN OPTIONS ===== */
-.genOptions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.genOptionsTriple {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
 .genOptionsGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

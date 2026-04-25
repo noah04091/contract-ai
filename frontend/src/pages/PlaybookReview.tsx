@@ -216,6 +216,7 @@ const PlaybookReview: React.FC = () => {
   const [showExtractModal, setShowExtractModal] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [isLoadingContracts, setIsLoadingContracts] = useState(false);
 
   // Expandable rule cards in detail view
   const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
@@ -326,11 +327,14 @@ const PlaybookReview: React.FC = () => {
     setShowExtractModal(true);
     setSelectedContractId('');
     setContractSearch('');
+    setIsLoadingContracts(true);
     try {
       const data = await playbookAPI.getContractsList();
       setContracts(data.contracts || []);
     } catch {
       toast.error('Fehler beim Laden der Verträge');
+    } finally {
+      setIsLoadingContracts(false);
     }
   };
 
@@ -400,13 +404,13 @@ const PlaybookReview: React.FC = () => {
   // DETAIL ACTIONS
   // ============================================
   const handleDeletePlaybook = async (id: string) => {
-    if (!window.confirm('Playbook wirklich loeschen?')) return;
+    if (!window.confirm('Playbook wirklich löschen?')) return;
     try {
       await playbookAPI.deletePlaybook(id);
       toast.success('Playbook geloescht');
       navigate('/playbook-review');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Fehler beim Loeschen');
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Löschen');
     }
   };
 
@@ -464,6 +468,26 @@ const PlaybookReview: React.FC = () => {
     }
   };
 
+  const handleDeleteRule = async (ruleId: string) => {
+    if (!selectedPlaybook) return;
+    if (selectedPlaybook.rules.length <= 1) {
+      toast.error('Ein Playbook muss mindestens eine Regel haben.');
+      return;
+    }
+    if (!window.confirm('Regel wirklich entfernen?')) return;
+    try {
+      const updatedRules = selectedPlaybook.rules.filter(r => r._id !== ruleId);
+      await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
+      setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      setExpandedRuleId(null);
+      setEditingRule(null);
+      setIsRuleDirty(false);
+      toast.success('Regel entfernt');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Fehler beim Entfernen');
+    }
+  };
+
   // Helper: Lookup rule note/standardText for check results
   const getRuleNote = (ruleId: string): string => {
     if (!selectedPlaybook) return '';
@@ -482,11 +506,16 @@ const PlaybookReview: React.FC = () => {
   // ============================================
   const handleOpenCheck = async () => {
     setShowCheckModal(true);
+    setSelectedContractId('');
+    setContractSearch('');
+    setIsLoadingContracts(true);
     try {
       const data = await playbookAPI.getContractsList();
       setContracts(data.contracts || []);
     } catch {
       toast.error('Fehler beim Laden der Verträge');
+    } finally {
+      setIsLoadingContracts(false);
     }
   };
 
@@ -975,22 +1004,31 @@ const PlaybookReview: React.FC = () => {
                   />
                 </div>
                 <div className={styles.contractList}>
-                  {contracts
-                    .filter(c => !contractSearch || c.name?.toLowerCase().includes(contractSearch.toLowerCase()))
-                    .map(c => (
-                      <div
-                        key={c._id}
-                        className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
-                        onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
-                      >
-                        <FileText size={16} />
-                        <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
-                        {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
-                        {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
-                      </div>
-                    ))}
-                  {contracts.length === 0 && (
-                    <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                  {isLoadingContracts ? (
+                    <div className={styles.loading} style={{ minHeight: '120px' }}>
+                      <Loader2 size={20} className={styles.spinner} />
+                      <p>Verträge werden geladen...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {contracts
+                        .filter(c => !contractSearch || c.name?.toLowerCase().includes(contractSearch.toLowerCase()))
+                        .map(c => (
+                          <div
+                            key={c._id}
+                            className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
+                            onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
+                          >
+                            <FileText size={16} />
+                            <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
+                            {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
+                            {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
+                          </div>
+                        ))}
+                      {contracts.length === 0 && (
+                        <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                      )}
+                    </>
                   )}
                 </div>
                 <div className={styles.modalActions}>
@@ -1259,6 +1297,15 @@ const PlaybookReview: React.FC = () => {
                     <span className={styles.charCount}>{(currentData.standardText || '').length}/2000</span>
 
                     <div className={styles.ruleEditActions}>
+                      {selectedPlaybook.rules.length > 1 && (
+                        <button
+                          className={styles.btnDanger}
+                          onClick={() => handleDeleteRule(ruleId)}
+                          style={{ marginRight: 'auto' }}
+                        >
+                          <Trash2 size={14} /> Entfernen
+                        </button>
+                      )}
                       <button
                         className={styles.btnOutline}
                         onClick={() => { setExpandedRuleId(null); setEditingRule(null); setIsRuleDirty(false); }}
@@ -1282,12 +1329,11 @@ const PlaybookReview: React.FC = () => {
         </div>
 
         {/* Check-Historie */}
-        {playbookChecks.length > 0 && (
-          <>
-            <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
-              <FileText size={18} />
-              <h3>Prüfungshistorie</h3>
-            </div>
+        <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
+          <FileText size={18} />
+          <h3>Prüfungshistorie</h3>
+        </div>
+        {playbookChecks.length > 0 ? (
             <div className={styles.recentChecks}>
               {playbookChecks.map(check => (
                 <div
@@ -1317,7 +1363,8 @@ const PlaybookReview: React.FC = () => {
                 </div>
               ))}
             </div>
-          </>
+        ) : (
+          <p className={styles.emptyHint}>Noch keine Prüfungen durchgeführt. Klicken Sie oben auf "Vertrag prüfen".</p>
         )}
 
         {/* Check Modal */}
@@ -1334,22 +1381,31 @@ const PlaybookReview: React.FC = () => {
                 />
               </div>
               <div className={styles.contractList}>
-                {contracts
-                  .filter(c => !contractSearch || c.name?.toLowerCase().includes(contractSearch.toLowerCase()))
-                  .map(c => (
-                    <div
-                      key={c._id}
-                      className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
-                      onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
-                    >
-                      <FileText size={16} />
-                      <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
-                      {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
-                      {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
-                    </div>
-                  ))}
-                {contracts.length === 0 && (
-                  <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                {isLoadingContracts ? (
+                  <div className={styles.loading} style={{ minHeight: '120px' }}>
+                    <Loader2 size={20} className={styles.spinner} />
+                    <p>Verträge werden geladen...</p>
+                  </div>
+                ) : (
+                  <>
+                    {contracts
+                      .filter(c => !contractSearch || c.name?.toLowerCase().includes(contractSearch.toLowerCase()))
+                      .map(c => (
+                        <div
+                          key={c._id}
+                          className={`${styles.contractItem} ${selectedContractId === c._id ? styles.contractItemActive : ''} ${c.hasExtractedText === false ? styles.contractItemDisabled : ''}`}
+                          onClick={() => c.hasExtractedText !== false && setSelectedContractId(c._id)}
+                        >
+                          <FileText size={16} />
+                          <span>{fixEncoding(c.name) || 'Unbenannt'}</span>
+                          {c.hasExtractedText === false && <span className={styles.noTextBadge}>Kein Text</span>}
+                          {c.contractType && c.hasExtractedText !== false && <span className={styles.contractType}>{c.contractType}</span>}
+                        </div>
+                      ))}
+                    {contracts.length === 0 && (
+                      <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                    )}
+                  </>
                 )}
               </div>
               <div className={styles.modalActions}>
