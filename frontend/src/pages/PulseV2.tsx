@@ -839,6 +839,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     return map;
   }, [items]);
 
+  // First-use tip toast: appear after 10s, disappear after 20s
+  const isFirstUse = stats.analyzed === 0;
+  useEffect(() => {
+    if (!isFirstUse) return;
+    const show = setTimeout(() => setShowFirstUseTip(true), 10000);
+    const hide = setTimeout(() => setShowFirstUseTip(false), 20000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, [isFirstUse]);
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
   }
@@ -861,17 +870,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       </div>
     );
   }
-
-  // First-Use: no contracts analyzed yet
-  const isFirstUse = stats.analyzed === 0;
-
-  // First-use tip toast: appear after 10s, disappear after 20s
-  useEffect(() => {
-    if (!isFirstUse) return;
-    const show = setTimeout(() => setShowFirstUseTip(true), 10000);
-    const hide = setTimeout(() => setShowFirstUseTip(false), 20000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, [isFirstUse]);
 
   return (
     <div>
