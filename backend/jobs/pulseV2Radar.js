@@ -61,7 +61,7 @@ const MAX_CONTRACT_MATCHES = 150;
 const IMPACT_CONFIDENCE_THRESHOLD = 60;
 const MIN_RELEVANCE_SCORE = 30; // Laws below this score are skipped (no keyword match, no specific area)
 const MAX_PER_AREA = 4; // Diversity: max laws from same primary area in top 25
-const MAX_ALERTS_PER_USER = 3; // Safety: prevent alert spam per radar run
+const MAX_ALERTS_PER_USER = 10; // Email cap: max alerts shown in email per run (all alerts stored in DB)
 
 // OpenAI pricing per 1K tokens (gpt-4o-mini, 2026-04)
 const PRICES = {
@@ -254,21 +254,17 @@ async function runPulseV2Radar(db, options = {}) {
     }
   }
 
-  // 4. Store alerts + send emails (with per-user cap to prevent spam)
+  // 4. Store ALL alerts in DB + send email (email body capped to MAX_ALERTS_PER_USER)
   let cappedCount = 0;
   for (const [userId, alerts] of userAlerts.entries()) {
+    // Sort by severity (highest first) for email prioritization
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    alerts.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
     if (alerts.length > MAX_ALERTS_PER_USER) {
-      // Keep highest severity first, then by confidence
-      const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      alerts.sort((a, b) => (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3));
-      const capped = alerts.slice(0, MAX_ALERTS_PER_USER);
-      const dropped = alerts.length - capped.length;
-      cappedCount += dropped;
-      console.log(`[PulseV2Radar] Alert cap: user ${userId} has ${alerts.length} alerts, keeping top ${MAX_ALERTS_PER_USER} (dropped ${dropped} lower-priority)`);
-      await storeAndNotify(db, userId, capped);
-    } else {
-      await storeAndNotify(db, userId, alerts);
+      cappedCount += alerts.length - MAX_ALERTS_PER_USER;
+      console.log(`[PulseV2Radar] User ${userId}: ${alerts.length} alerts, all stored in DB, email shows top ${MAX_ALERTS_PER_USER}`);
     }
+    await storeAndNotify(db, userId, alerts);
   }
 
   // 5. Mark processed law changes (exclude laws where AI assessment failed — they will be retried)
@@ -1100,7 +1096,9 @@ async function storeAndNotify(db, userId, alerts) {
     return text.replace(/\[clause[_\s]*(\d+)\]/gi, "§$1");
   };
 
-  // Build email
+  // Build email — cap detail blocks but show total stats
+  const emailAlerts = alerts.length > MAX_ALERTS_PER_USER ? alerts.slice(0, MAX_ALERTS_PER_USER) : alerts;
+  const emailCappedCount = alerts.length - emailAlerts.length;
   const alertCount = alerts.length;
   let body = generateParagraph(`Hallo ${userName},`);
   body += generateParagraph(
@@ -1123,7 +1121,7 @@ async function storeAndNotify(db, userId, alerts) {
 
   // Group alerts by law change (use fingerprint for dedup if available)
   const byLaw = new Map();
-  for (const alert of alerts) {
+  for (const alert of emailAlerts) {
     const fp = extractLegislationFingerprint(alert.lawChange.title);
     const key = fp || alert.lawChange.title;
     if (!byLaw.has(key)) {
@@ -1168,6 +1166,10 @@ async function storeAndNotify(db, userId, alerts) {
     }
 
     body += "<br/>";
+  }
+
+  if (emailCappedCount > 0) {
+    body += generateParagraph(`+ ${emailCappedCount} weitere ${plural(emailCappedCount, "Alert", "Alerts")} \u2014 im Dashboard einsehbar`, { muted: true });
   }
 
   const html = generateEmailTemplate({
