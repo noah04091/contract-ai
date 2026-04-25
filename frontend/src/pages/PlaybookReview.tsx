@@ -257,7 +257,8 @@ const PlaybookReview: React.FC = () => {
     } else {
       loadDashboard();
     }
-  }, [playbookId, loadDashboard, loadPlaybookDetail]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playbookId]);
 
   // Playbook laden wenn Check-Ergebnis vom Dashboard kommt (für Standardtext/Notiz)
   useEffect(() => {
