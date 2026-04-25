@@ -648,6 +648,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
   const [heroCollapsed, setHeroCollapsed] = useState(false);
+  const [showFirstUseTip, setShowFirstUseTip] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const contractsRef = useRef<HTMLDivElement>(null);
@@ -864,6 +865,14 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   // First-Use: no contracts analyzed yet
   const isFirstUse = stats.analyzed === 0;
 
+  // First-use tip toast: appear after 10s, disappear after 20s
+  useEffect(() => {
+    if (!isFirstUse) return;
+    const show = setTimeout(() => setShowFirstUseTip(true), 10000);
+    const hide = setTimeout(() => setShowFirstUseTip(false), 20000);
+    return () => { clearTimeout(show); clearTimeout(hide); };
+  }, [isFirstUse]);
+
   return (
     <div>
       {/* ══════════ Intro Hero Banner (original) ══════════ */}
@@ -1018,71 +1027,34 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       />
 
       {isFirstUse ? (
-        /* ══════════ First-Use: Demo Insight + Value Proposition ══════════ */
+        /* ══════════ First-Use: Subtle tip toast (appears after 10s, fades after 20s) ══════════ */
         <>
-          <div style={{
-            padding: '16px 24px',
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
-            borderLeft: '4px solid #d97706',
-            borderRadius: 12,
-            marginBottom: 20,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>
-                Wussten Sie?
+          {showFirstUseTip && (
+            <div className={styles.fadeIn} style={{
+              padding: '14px 20px',
+              background: 'linear-gradient(135deg, #f0f7ff, #eff6ff)',
+              border: '1px solid #bfdbfe',
+              borderRadius: 12,
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 2px 8px rgba(59,130,246,0.1)',
+            }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>&#128161;</span>
+              <div style={{ flex: 1, fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
+                <strong>Tipp:</strong> Starten Sie Ihre erste Analyse, um die automatische Vertrags&uuml;berwachung zu aktivieren.
+                Legal Pulse pr&uuml;ft dann jede Klausel auf Risiken und &uuml;berwacht Gesetzes&auml;nderungen f&uuml;r Sie.
               </div>
-              <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.5 }}>
-                Haftungsklauseln in deutschen Verträgen enthalten häufig unwirksame Formulierungen (§307 BGB). Legal Pulse prüft jede Klausel auf Durchsetzbarkeit.
-              </div>
-            </div>
-            {items.length > 0 && (
               <button
-                onClick={() => onSelectContract(items[0].contractId)}
+                onClick={() => setShowFirstUseTip(false)}
                 style={{
-                  padding: '8px 16px',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: '#92400e',
-                  background: '#fef3c7',
-                  border: '1px solid #fde68a',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: 16, color: '#93c5fd', padding: 4, flexShrink: 0,
                 }}
-              >
-                Jetzt prüfen
-              </button>
-            )}
-          </div>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 16,
-            marginBottom: 24,
-          }}>
-            {[
-              { icon: '\u2696️', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse prüft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
-              { icon: '\ud83d\udcb0', title: 'Kostenfallen vermeiden', desc: 'Erkennt automatische Verlängerungen, versteckte Gebühren und überhöhte Preise.' },
-              { icon: '\ud83d\udcca', title: 'Portfolio überwachen', desc: 'Alle Verträge auf einen Blick — mit Fristen, Scores und Handlungsempfehlungen.' },
-            ].map(card => (
-              <div key={card.title} style={{
-                padding: 24,
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e5e7eb',
-              }}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{card.icon}</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>{card.title}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{card.desc}</div>
-              </div>
-            ))}
-          </div>
+              >&times;</button>
+            </div>
+          )}
         </>
       ) : (
         <>
