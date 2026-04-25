@@ -3071,7 +3071,8 @@ const ContractBuilder: React.FC = () => {
         description="Willkommen im visuellen Vertragsbaukasten. Ziehen Sie Bausteine auf die Arbeitsfläche, bearbeiten Sie Klauseln per Doppelklick, und fügen Sie Variablen ein."
         tip="Tipp: Markieren Sie Text in einer Klausel und klicken Sie den {{ }} Variable-Button, um Platzhalter zu erstellen. Strg+S zum Speichern."
       />
-      <ProductTour tourId="contract-builder" />
+      {/* Editor-Tour deaktiviert — WelcomePopup + Variable-Guide reichen als Onboarding.
+          Die Tour flackerte am Seitenende wegen Fullscreen-Layout + Scroll-Konflikten. */}
       {/* Bulk-Tabs */}
       {bulkIdsFromUrl.length > 1 && (
         <div className={styles.bulkTabBar}>
