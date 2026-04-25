@@ -53,6 +53,19 @@ async function checkCalendarAccess(db, userId) {
   }
 }
 
+// ============================================
+// 🛡️ INPUT VALIDATION HELPERS
+// ============================================
+
+const VALID_SEVERITIES = ["info", "warning", "critical"];
+const VALID_EVENT_STATUSES = ["scheduled", "queued", "notified", "snoozed", "dismissed", "completed"];
+const VALID_RECURRENCE_TYPES = ["none", "daily", "weekly", "monthly", "yearly"];
+
+function safeObjectId(id) {
+  if (!id || !ObjectId.isValid(id)) return null;
+  return new ObjectId(id);
+}
+
 /**
  * Helper: Generiert alle Instanzen eines wiederkehrenden Events im Zeitraum
  */
@@ -135,7 +148,9 @@ router.get("/events", verifyToken, async (req, res) => {
 
     // Filter by contractId if provided
     if (contractId) {
-      filter.contractId = new ObjectId(contractId);
+      const validContractId = safeObjectId(contractId);
+      if (!validContractId) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
+      filter.contractId = validContractId;
     }
 
     // Fetch events with contract details
@@ -227,7 +242,8 @@ router.get("/events", verifyToken, async (req, res) => {
 // POST /api/calendar/generate/:contractId - Events für einen Vertrag generieren
 router.post("/generate/:contractId", verifyToken, async (req, res) => {
   try {
-    const contractId = new ObjectId(req.params.contractId);
+    const contractId = safeObjectId(req.params.contractId);
+    if (!contractId) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
     const userId = new ObjectId(req.user.userId);
     
     // Verify contract ownership
@@ -307,7 +323,8 @@ router.post("/regenerate-all", verifyToken, async (req, res) => {
 // PATCH /api/calendar/events/:eventId - Event aktualisieren (ERWEITERT für Manual Edit)
 router.patch("/events/:eventId", verifyToken, async (req, res) => {
   try {
-    const eventId = new ObjectId(req.params.eventId);
+    const eventId = safeObjectId(req.params.eventId);
+    if (!eventId) return res.status(400).json({ success: false, error: "Ungültige Event-ID" });
     const userId = new ObjectId(req.user.userId);
     const { status, notes, snoozeDays, date, title, description, type, severity, recurrence, deleteRecurrence } = req.body;
     
@@ -376,7 +393,9 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     // ✅ Vertrag zuordnen bei manuellen Events
     if (req.body.contractId !== undefined) {
       if (req.body.contractId) {
-        updateData.contractId = new ObjectId(req.body.contractId);
+        const validCid = safeObjectId(req.body.contractId);
+        if (!validCid) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
+        updateData.contractId = validCid;
         updateData.isManual = false; // Nicht mehr manuell wenn Vertrag zugeordnet
       } else {
         // Vertrag entfernen
@@ -451,8 +470,11 @@ router.post("/events", verifyToken, async (req, res) => {
 
     // If contractId is provided and not 'NO_CONTRACT', verify contract ownership
     if (contractId && contractId !== 'NO_CONTRACT') {
+      const validCid = safeObjectId(contractId);
+      if (!validCid) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
+
       contract = await req.db.collection("contracts").findOne({
-        _id: new ObjectId(contractId),
+        _id: validCid,
         userId
       });
 
@@ -463,7 +485,7 @@ router.post("/events", verifyToken, async (req, res) => {
         });
       }
 
-      eventContractId = new ObjectId(contractId);
+      eventContractId = validCid;
       contractName = contract.name;
       metadata = {
         contractName: contract.name,
@@ -527,7 +549,8 @@ router.post("/events", verifyToken, async (req, res) => {
 // 🔒 Erfordert Business/Enterprise Abo
 router.delete("/events/:eventId", verifyToken, async (req, res) => {
   try {
-    const eventId = new ObjectId(req.params.eventId);
+    const eventId = safeObjectId(req.params.eventId);
+    if (!eventId) return res.status(400).json({ success: false, error: "Ungültige Event-ID" });
     const userId = new ObjectId(req.user.userId);
 
     // 🔒 Subscription Check - Free User können keine Events löschen
@@ -737,8 +760,11 @@ router.post("/quick-action", verifyToken, async (req, res) => {
     }
 
     // Verify event ownership
+    const validEventId = safeObjectId(eventId);
+    if (!validEventId) return res.status(400).json({ success: false, error: "Ungültige Event-ID" });
+
     const event = await req.db.collection("contract_events").findOne({
-      _id: new ObjectId(eventId),
+      _id: validEventId,
       userId
     });
 
@@ -867,9 +893,14 @@ router.get("/quick-action", async (req, res) => {
 
     const { eventId, userId } = payload;
     const db = req.db;
+    const validEventId = safeObjectId(eventId);
+    const validUserId = safeObjectId(userId);
+    if (!validEventId || !validUserId) {
+      return res.redirect(`${baseUrl}/calendar?error=invalid_link`);
+    }
     const event = await db.collection("contract_events").findOne({
-      _id: new ObjectId(eventId),
-      userId: new ObjectId(userId)
+      _id: validEventId,
+      userId: validUserId
     });
 
     if (!event) {

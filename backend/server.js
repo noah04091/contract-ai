@@ -1619,7 +1619,7 @@ const connectDB = async () => {
     // ⏰ ERWEITERTE Cron Jobs mit Calendar Integration
     try {
       // ✅ BESTEHENDER Reminder-Cronjob ERWEITERT mit Calendar Notifications
-      cron.schedule("0 8 * * *", async () => {
+      cron.schedule("0 8 * * *", withCronLock('reminder-calendar', async () => {
         console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
           await withCronLogging('reminder-calendar', async () => {
@@ -1636,7 +1636,7 @@ const connectDB = async () => {
           console.error("❌ Reminder/Calendar Cron Error:", error);
           await captureError(error, { route: 'CRON:reminder-calendar', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {

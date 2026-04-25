@@ -114,20 +114,18 @@ async function checkAndSendNotifications(db) {
       }
 
       try {
-        // Fuege E-Mail zur Queue hinzu (mit Retry-Mechanismus)
-        await queueEventNotification(event, db);
-
-        // Markiere Event als "queued" (wird nach erfolgreichem Versand zu "notified")
-        await db.collection("contract_events").updateOne(
-          { _id: event._id },
-          {
-            $set: {
-              status: "queued",
-              queuedAt: new Date(),
-              updatedAt: new Date()
-            }
-          }
+        // Atomar: Status nur ändern wenn noch "scheduled" (verhindert doppelte E-Mails)
+        const claimed = await db.collection("contract_events").findOneAndUpdate(
+          { _id: event._id, status: "scheduled" },
+          { $set: { status: "queued", queuedAt: new Date(), updatedAt: new Date() } }
         );
+        if (!claimed.value) {
+          console.log(`⏭️ Event ${event._id} bereits verarbeitet, überspringe`);
+          continue;
+        }
+
+        // E-Mail zur Queue hinzufügen (nur wenn erfolgreich beansprucht)
+        await queueEventNotification(event, db);
 
         queuedCount++;
 
