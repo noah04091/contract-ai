@@ -82,6 +82,7 @@ interface CheckResult {
 interface PlaybookCheck {
   _id: string;
   playbookId: string | { _id: string; name: string };
+  contractId?: string;
   contractName: string;
   results: CheckResult[];
   summary: {
@@ -1378,6 +1379,16 @@ const PlaybookReview: React.FC = () => {
               <span className={styles.statFailed}><XCircle size={14} /> {summary.failed} Nicht erfüllt</span>
               <span className={styles.statNotFound}><HelpCircle size={14} /> {summary.notFound} Nicht gefunden</span>
             </div>
+            {checkResult.contractId && (
+              <a
+                href={`/contracts/${checkResult.contractId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.contractLink}
+              >
+                <FileText size={14} /> Vertrag öffnen
+              </a>
+            )}
           </div>
         </div>
 
