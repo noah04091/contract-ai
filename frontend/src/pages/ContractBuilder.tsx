@@ -69,7 +69,7 @@ import {
   Upload,
   Info,
 } from 'lucide-react';
-import { createUserTemplate, fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
+import { fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../services/userTemplatesAPI';
 import { contractTemplates, templateCategories } from '../data/contractTemplates';
 // ContractTemplate type used implicitly via contractTemplates array
 import { SYSTEM_VARIABLES_MAP } from '../utils/smartVariables';
@@ -1120,22 +1120,29 @@ const ContractBuilder: React.FC = () => {
         },
       };
 
-      await createUserTemplate(templateData);
+      const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/user-templates`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(templateData),
+      });
 
-      setShowSaveTemplateModal(false);
-      setTemplateName('');
-      setTemplateDescription('');
-
-      // Erfolgsmeldung
-      alert('Vorlage erfolgreich gespeichert!');
-    } catch (error) {
-      console.error('Fehler beim Speichern der Vorlage:', error);
-      if (isUpgradeError(error)) {
+      if (response.ok) {
+        setShowSaveTemplateModal(false);
+        setTemplateName('');
+        setTemplateDescription('');
+        alert('Vorlage erfolgreich gespeichert!');
+      } else if (response.status === 403) {
+        setShowSaveTemplateModal(false);
         showUpgradeHint('Eigene Vorlagen speichern');
       } else {
-        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-        alert(`Fehler beim Speichern: ${errorMessage}`);
+        const errData = await response.json().catch(() => ({}));
+        alert(`Fehler: ${errData.message || errData.error || 'Speichern fehlgeschlagen'}`);
       }
+    } catch (error) {
+      console.error('Fehler beim Speichern der Vorlage:', error);
+      alert('Netzwerkfehler beim Speichern der Vorlage.');
     } finally {
       setIsSavingTemplate(false);
     }
