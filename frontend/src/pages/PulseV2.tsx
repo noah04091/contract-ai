@@ -301,8 +301,43 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         </div>
       )}
 
+      {/* Premium Required */}
+      {status === 'error' && !rejected && error === 'PREMIUM_REQUIRED' && (
+        <div style={{
+          padding: 32,
+          background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)',
+          border: '1px solid #c7d2fe',
+          borderRadius: 12,
+          marginBottom: 16,
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>&#x1f512;</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#1e1b4b', marginBottom: 8 }}>
+            Premium-Funktion
+          </div>
+          <div style={{ fontSize: 14, color: '#4338ca', marginBottom: 20, maxWidth: 420, margin: '0 auto 20px' }}>
+            Die Legal Pulse Analyse ist ab dem Business-Plan verfügbar. Upgraden Sie jetzt, um Ihre Verträge tiefgehend analysieren zu lassen.
+          </div>
+          <button
+            onClick={() => navigate('/pricing')}
+            style={{
+              padding: '12px 32px',
+              fontSize: 15,
+              fontWeight: 600,
+              color: '#fff',
+              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              border: 'none',
+              borderRadius: 10,
+              cursor: 'pointer',
+            }}
+          >
+            Pläne ansehen
+          </button>
+        </div>
+      )}
+
       {/* Error */}
-      {status === 'error' && !rejected && (
+      {status === 'error' && !rejected && error !== 'PREMIUM_REQUIRED' && (
         <div style={{
           padding: 24,
           background: '#fef2f2',
