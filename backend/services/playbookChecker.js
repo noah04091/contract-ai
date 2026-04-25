@@ -143,7 +143,7 @@ async function checkContract(contractText, rules, context = {}) {
     : context.role === "auftragnehmer" ? "Auftragnehmer"
     : "Neutral";
 
-  const prompt = `Du bist ein erfahrener deutscher Wirtschaftsjurist und pruefst einen Vertrag systematisch gegen vorgegebene Anforderungen.
+  const prompt = `Du bist ein erfahrener deutscher Wirtschaftsjurist. Deine Aufgabe ist es, einen Vertrag gruendlich und systematisch gegen vorgegebene Anforderungen zu pruefen.
 
 PERSPEKTIVE: ${roleLabel}
 VERTRAGSNAME: ${context.contractName || "Unbenannt"}
@@ -155,12 +155,13 @@ ${rulesForPrompt}
 ${truncatedText}
 
 ===== AUFGABE =====
-Pruefe JEDE Anforderung einzeln gegen den Vertragstext. Fuer jede Anforderung:
+Pruefe JEDE Anforderung einzeln gegen den GESAMTEN Vertragstext. Durchsuche den kompletten Text sorgfaeltig — nicht nur die ersten Absaetze.
 
-1. Suche die relevante Klausel/Passage im Vertrag
-2. Bewerte ob die Anforderung erfuellt ist
+Fuer jede Anforderung:
+1. Durchsuche den gesamten Vertragstext nach relevanten Klauseln, Paragraphen oder Passagen
+2. Bewerte ob die Anforderung erfuellt ist (auch wenn die Formulierung anders ist aber inhaltlich passt)
 3. Wenn eine Referenz-Klausel (Standardtext) angegeben ist: Vergleiche die gefundene Klausel direkt mit diesem Standardtext und beschreibe Abweichungen praezise
-4. Bei Abweichung: Formuliere eine bessere Klausel
+4. Bei Abweichung: Formuliere eine konkrete bessere Klausel
 5. Gib einen konkreten Verhandlungstipp
 
 Antworte NUR mit einem JSON-Objekt:
@@ -170,11 +171,11 @@ Antworte NUR mit einem JSON-Objekt:
       "ruleIndex": 1,
       "status": "passed|warning|failed|not_found",
       "confidence": 0-100,
-      "finding": "Was im Vertrag steht (Zitat oder Zusammenfassung)",
-      "clauseReference": "Wo im Vertrag (z.B. Paragraph 5, Abschnitt 3)",
+      "finding": "Was im Vertrag steht — IMMER ausfuellen, auch bei passed (Zitat oder Zusammenfassung der gefundenen Klausel)",
+      "clauseReference": "Wo im Vertrag (z.B. Paragraph 5, Abschnitt 3, Seite 2)",
       "deviation": "Wie die Abweichung aussieht (leer wenn passed)",
       "riskLevel": "low|medium|high",
-      "riskExplanation": "Warum das ein Risiko ist (1-2 Saetze)",
+      "riskExplanation": "Warum das ein Risiko ist (1-2 Saetze, leer wenn passed)",
       "alternativeText": "Konkrete bessere Formulierung (leer wenn passed)",
       "negotiationTip": "Wie man das beim Vertragspartner anspricht (leer wenn passed)"
     }
@@ -184,11 +185,12 @@ Antworte NUR mit einem JSON-Objekt:
 
 WICHTIG:
 - Fuer JEDE Anforderung genau EIN Ergebnis (gleiche Reihenfolge wie Anforderungen)
-- "passed" = Klausel vorhanden UND Schwellenwert eingehalten
-- "warning" = Klausel vorhanden aber Wert weicht ab oder ist unklar
-- "failed" = Klausel widerspricht der Anforderung direkt
-- "not_found" = Keine relevante Klausel im Vertrag gefunden
-- alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel die der User dem Vertragspartner vorschlagen kann
+- "passed" = Klausel vorhanden UND Schwellenwert eingehalten. Beschreibe im finding WAS gefunden wurde.
+- "warning" = Klausel vorhanden aber Wert weicht ab, ist unklar oder nur teilweise erfuellt
+- "failed" = Klausel widerspricht der Anforderung direkt oder ist nachteilig
+- "not_found" = ERST wenn du den GESAMTEN Vertragstext durchsucht hast und SICHER bist, dass keine relevante Klausel existiert. Pruefe auch Synonyme und alternative Formulierungen.
+- finding: IMMER ausfuellen — bei passed zeige was gefunden wurde, bei not_found erklaere was fehlt
+- alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel nach deutschem Recht
 - negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}`;
 
   const response = await openai.chat.completions.create({
@@ -198,7 +200,7 @@ WICHTIG:
       { role: "user", content: prompt }
     ],
     temperature: 0.2,
-    max_tokens: 6000
+    max_tokens: 8000
   });
 
   const content = response.choices[0]?.message?.content || "{}";
