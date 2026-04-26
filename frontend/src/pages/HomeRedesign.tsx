@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
+import { Shield, MapPin, Lock, Scale } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";;
 import HomePricingCards from "../components/HomePricingCards";
 import AutoPlayVideo from "../components/AutoPlayVideo";
@@ -762,8 +763,20 @@ const HomeRedesign = () => {
               {/* Trust Hint with Enhanced Glass Effect */}
               <div className="trust-hint-enhanced-wrapper">
                 <div className="sophisticated-hero-trust-hint sophisticated-fade-up-delay-2">
-                  <span className="trust-hint-icon">🔐</span>
-                  <span className="trust-hint-text">Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.</span>
+                  <span className="trust-hint-item">
+                    <Shield className="trust-hint-svg" strokeWidth={1.9} aria-hidden="true" />
+                    <span>DSGVO</span>
+                  </span>
+                  <span className="trust-hint-divider" aria-hidden="true" />
+                  <span className="trust-hint-item">
+                    <MapPin className="trust-hint-svg" strokeWidth={1.9} aria-hidden="true" />
+                    <span>Server in Frankfurt</span>
+                  </span>
+                  <span className="trust-hint-divider" aria-hidden="true" />
+                  <span className="trust-hint-item">
+                    <Lock className="trust-hint-svg" strokeWidth={1.9} aria-hidden="true" />
+                    <span>SSL-verschlüsselt</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -832,25 +845,44 @@ const HomeRedesign = () => {
           </div>
         </section>
 
-        {/* Trustbar Section */}
+        {/* Trustbar Section V2 - Premium Trust Cards */}
         <section className="trustbar-section">
           <div className="section-container">
-            <div className="trustbar">
-              <div className="trust-item reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
-                <span className="trust-icon">✅</span>
-                <span className="trust-text">DSGVO-konform</span>
+            <div className="trustbar-v2__header">
+              <span className="trustbar-v2__eyebrow">Sicherheit &amp; Datenschutz</span>
+              <h2 className="trustbar-v2__headline">
+                Ihre Verträge bleiben Ihre Verträge —{" "}
+                <span className="text-gradient">geschützt in Deutschland</span>
+              </h2>
+            </div>
+            <div className="trustbar-v2">
+              <div className="trust-card reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
+                <div className="trust-card__icon-wrap">
+                  <Shield className="trust-card__icon" strokeWidth={1.75} aria-hidden="true" />
+                </div>
+                <div className="trust-card__title">DSGVO-konform</div>
+                <div className="trust-card__detail">Art. 6 DSGVO</div>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
-                <span className="trust-icon">🇩🇪</span>
-                <span className="trust-text">Serverstandort: Frankfurt (EU-Cloud)</span>
+              <div className="trust-card reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
+                <div className="trust-card__icon-wrap">
+                  <MapPin className="trust-card__icon" strokeWidth={1.75} aria-hidden="true" />
+                </div>
+                <div className="trust-card__title">Server in Frankfurt</div>
+                <div className="trust-card__detail">AWS · eu-central-1</div>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
-                <span className="trust-icon">🧠</span>
-                <span className="trust-text">KI-gestützt & juristisch geprüft</span>
+              <div className="trust-card reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
+                <div className="trust-card__icon-wrap">
+                  <Lock className="trust-card__icon" strokeWidth={1.75} aria-hidden="true" />
+                </div>
+                <div className="trust-card__title">SSL/TLS-verschlüsselt</div>
+                <div className="trust-card__detail">Übertragung &amp; Speicherung</div>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
-                <span className="trust-icon">🔒</span>
-                <span className="trust-text">Verschlüsselte Datenübertragung</span>
+              <div className="trust-card reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
+                <div className="trust-card__icon-wrap">
+                  <Scale className="trust-card__icon" strokeWidth={1.75} aria-hidden="true" />
+                </div>
+                <div className="trust-card__title">Juristisch geprüft</div>
+                <div className="trust-card__detail">KI-gestützt · Anwalts-validiert</div>
               </div>
             </div>
           </div>

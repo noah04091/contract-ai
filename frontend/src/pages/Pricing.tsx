@@ -4,6 +4,7 @@ import { Check, X, Zap, Star, Shield, ChevronDown, TrendingUp, Users, Calendar, 
 import { useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
+import TrustBadgeRow from "../components/TrustBadgeRow";
 import styles from "../styles/Pricing.module.css";
 import "../styles/landing.css";
 
@@ -557,6 +558,8 @@ export default function Pricing() {
                   </>
                 )}
               </motion.button>
+
+              <TrustBadgeRow />
             </div>
           </motion.div>
 
@@ -649,6 +652,8 @@ export default function Pricing() {
                   </>
                 )}
               </motion.button>
+
+              <TrustBadgeRow />
             </div>
           </motion.div>
         </section>
