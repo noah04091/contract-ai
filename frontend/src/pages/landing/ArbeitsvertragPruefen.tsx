@@ -1166,6 +1166,17 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
+              <Link to="/kaufvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#f97316' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
               <Link to="/blog/arbeitsvertrag-rechte-verstehen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>

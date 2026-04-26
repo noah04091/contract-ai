@@ -1651,6 +1651,11 @@ export const articles: Article[] = [
     icon: '🚗',
     image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Kaufvertrag jetzt rechtssicher prüfen lassen</h4>
+        <p>Lass deinen Kaufvertrag von einer KI prüfen — auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung in unter 60 Sekunden. Pauschale Gewährleistungsausschlüsse, vage Beschaffenheitsangaben und versteckte Stornofallen werden sofort erkannt. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Der Autokauf ist für viele eine große Investition. Umso wichtiger ist es, den Kaufvertrag genau zu prüfen und seine Rechte zu kennen.</p>
 
       <h2>Gewährleistung beim Autokauf</h2>

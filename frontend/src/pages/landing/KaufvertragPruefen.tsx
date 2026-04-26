@@ -7,11 +7,11 @@ import Footer from "../../components/Footer";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, ChevronDown, ThumbsUp,
-  Languages, BarChart3, Sparkles, Scale, Home, Gavel,
-  Award, Info, DollarSign
+  Languages, Sparkles, Scale, ShoppingCart, Gavel,
+  Info, DollarSign, Package
 } from "lucide-react";
 
-const MietvertragPruefen: React.FC = () => {
+const KaufvertragPruefen: React.FC = () => {
   const { user } = useAuth();
   const isAuthenticated = user && user.subscriptionActive;
   const targetInApp = "/contracts";
@@ -59,8 +59,8 @@ const MietvertragPruefen: React.FC = () => {
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Mietvertrag prüfen",
-        "item": "https://www.contract-ai.de/mietvertrag-pruefen"
+        "name": "Kaufvertrag prüfen",
+        "item": "https://www.contract-ai.de/kaufvertrag-pruefen"
       }
     ]
   };
@@ -71,74 +71,74 @@ const MietvertragPruefen: React.FC = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Wie genau ist die KI-Prüfung eines Mietvertrags?",
+        "name": "Wie genau ist die KI-Prüfung eines Kaufvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren empfehlen wir ergänzend einen Fachanwalt für Mietrecht."
+          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Kaufverträgen. Sie kennt die §§ 433–453 BGB zum Kaufrecht, die §§ 474–479 BGB zum Verbrauchsgüterkauf, § 434 BGB zur Sachmangeldefinition, § 437 BGB zu Mängelrechten, § 438 BGB zur Verjährung und die einschlägige BGH-Rechtsprechung zu Gewährleistungsausschlüssen, 'gekauft wie gesehen'-Klauseln und arglistig verschwiegenen Mängeln. Bei besonders hochwertigen oder komplexen Käufen (Immobilien, Unternehmensbeteiligungen) empfehlen wir ergänzend einen Fachanwalt."
         }
       },
       {
         "@type": "Question",
-        "name": "Welche Klauseln im Mietvertrag sind häufig unwirksam?",
+        "name": "Worauf muss ich beim Kaufvertrag besonders achten?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Zu den am häufigsten unwirksamen Klauseln zählen: starre Renovierungsfristen für Schönheitsreparaturen (BGH, 23.06.2004 – VIII ZR 361/03), Renovierungspflichten bei unrenoviert übergebener Wohnung (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln, Kautionsforderungen über drei Monatsmieten (§ 551 Abs. 1 BGB), generelle Tierhaltungsverbote (BGH, 20.03.2013 – VIII ZR 168/12) und überzogene Kleinreparatur-Kostendeckel."
+          "text": "Die wichtigsten Prüfpunkte sind: klare Beschaffenheitsvereinbarung (kein vager 'wie besichtigt'), keine pauschalen Gewährleistungsausschlüsse beim Verbrauchsgüterkauf (§ 476 BGB), korrekte Verjährungsfrist (2 Jahre Standard, 1 Jahr bei Gebrauchtsachen im Verbrauchsgüterkauf), klare Regelung zu Eigentumsvorbehalt und Gefahrübergang, angemessene Storno-/Rücktrittsregelungen und transparente Zahlungsmodalitäten ohne überzogene Anzahlungspflicht."
         }
       },
       {
         "@type": "Question",
-        "name": "Wie viel Kaution darf der Vermieter maximal verlangen?",
+        "name": "Was bedeutet 'Gekauft wie gesehen' wirklich?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB), wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist. Vereinbarungen über eine höhere Kaution sind insoweit unwirksam — der Mieter kann den Mehrbetrag zurückfordern."
+          "text": "Diese Klausel ist häufig missverstanden. Sie schließt nur die Gewährleistung für Mängel aus, die der Käufer bei einer üblichen Besichtigung hätte erkennen können. Versteckte Mängel und arglistig verschwiegene Mängel sind davon nicht erfasst (§ 444 BGB). Bei Verkauf an einen Verbraucher ist ein vollständiger Gewährleistungsausschluss bei neuen Sachen ohnehin unwirksam (§ 476 BGB). 'Gekauft wie gesehen' ist also kein Freibrief für den Verkäufer."
         }
       },
       {
         "@type": "Question",
-        "name": "Sind Schönheitsreparaturen wirklich unwirksam vereinbart?",
+        "name": "Kann der Verkäufer die Gewährleistung komplett ausschließen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom 18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge: Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter."
+          "text": "Das hängt von der Konstellation ab. Beim Verkauf zwischen Privatpersonen kann die Gewährleistung weitgehend ausgeschlossen werden — außer bei arglistig verschwiegenen Mängeln (§ 444 BGB) oder bei einer ausdrücklich vereinbarten Beschaffenheit. Beim Verkauf eines Unternehmers an einen Verbraucher (Verbrauchsgüterkauf) ist ein Gewährleistungsausschluss bei neuen Sachen unzulässig; bei gebrauchten Sachen darf die Frist auf maximal 1 Jahr verkürzt werden (§ 476 BGB)."
         }
       },
       {
         "@type": "Question",
-        "name": "Was ist eine Indexmiete und wann ist sie zulässig?",
+        "name": "Wie lange habe ich Anspruch auf Gewährleistung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Eine Indexmiete (§ 557b BGB) koppelt die Miethöhe an den vom Statistischen Bundesamt ermittelten Verbraucherpreisindex. Sie ist nur zulässig, wenn sie ausdrücklich und schriftlich vereinbart wurde, der Bezugsindex klar benannt ist und die Miete jeweils mindestens ein Jahr unverändert bleibt. Bei wirksamer Indexmiete sind Mieterhöhungen wegen ortsüblicher Vergleichsmiete oder Modernisierung weitgehend ausgeschlossen. Eine intransparente Klausel ohne klaren Bezugsindex ist unwirksam."
+          "text": "Die gesetzliche Gewährleistung beträgt nach § 438 Abs. 1 Nr. 3 BGB zwei Jahre ab Übergabe der Sache. Bei Bauwerken sind es fünf Jahre. Beim Verbrauchsgüterkauf darf diese Frist nur unter engen Voraussetzungen verkürzt werden (auf 1 Jahr bei gebrauchten Sachen). Bei arglistig verschwiegenen Mängeln gilt die regelmäßige Verjährung von drei Jahren ab Kenntnis (§ 438 Abs. 3 i.V.m. §§ 195, 199 BGB) — hier ist sogar nach Jahren noch ein Vorgehen möglich."
         }
       },
       {
         "@type": "Question",
-        "name": "Darf der Vermieter die Tierhaltung generell verbieten?",
+        "name": "Was ist eine wirksame Beschaffenheitsvereinbarung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein. Nach BGH, 20.03.2013 – VIII ZR 168/12 ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt. Erlaubt ist die Haltung von Kleintieren wie Hamstern, Wellensittichen oder Zierfischen sogar ohne Erlaubnis. Bei Hunden und Katzen ist eine Einzelfallabwägung nötig: berechtigte Interessen des Vermieters, Mitmieter, Größe der Wohnung. Ein pauschales Verbot ist unzulässig."
+          "text": "Nach § 434 BGB ist die Sache mangelfrei, wenn sie die vereinbarte Beschaffenheit hat. Eine wirksame Beschaffenheitsvereinbarung muss konkret sein — pauschale Klauseln wie 'in vereinbartem Zustand' sind wertlos. Beim Autokauf etwa: Kilometerstand, Vorbesitzer, Unfallfreiheit, Service-Historie sollten ausdrücklich genannt werden. Was im Vertrag schwarz auf weiß steht, ist im Streitfall verbindlich. Mündliche Zusagen sind beweispflichtig."
         }
       },
       {
         "@type": "Question",
-        "name": "Wie lange darf ein Kündigungsausschluss im Mietvertrag dauern?",
+        "name": "Was bringt ein Eigentumsvorbehalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam — der Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen aber nachweisbar verhandelt sein."
+          "text": "Ein Eigentumsvorbehalt nach § 449 BGB bedeutet: Der Verkäufer bleibt Eigentümer der Sache, bis der Kaufpreis vollständig bezahlt ist. Für den Käufer ist das relevant, wenn er die Sache nicht sofort vollständig bezahlt — denn bei Zahlungsverzug kann der Verkäufer die Sache zurückverlangen. Für den Verkäufer ist es eine wichtige Sicherung. Eine klare und ausdrückliche Vereinbarung im Vertrag ist nötig — stillschweigender Eigentumsvorbehalt ist nicht möglich."
         }
       },
       {
         "@type": "Question",
-        "name": "Was kostet die KI-Prüfung eines Mietvertrags?",
+        "name": "Was kostet die KI-Prüfung eines Kaufvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht kostet typischerweise 100–250 € — die KI-Analyse spart dir gerade bei mehreren Verträgen oder Wohnungssuche erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100–300 € pro Vertrag — die KI-Analyse spart dir gerade beim Autokauf, Möbelkauf oder anderen größeren Anschaffungen erhebliche Kosten."
         }
       },
       {
         "@type": "Question",
-        "name": "Ersetzt die KI-Prüfung einen Anwalt für Mietrecht?",
+        "name": "Ersetzt die KI-Prüfung einen Anwalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage, Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete, Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte Faktengrundlage."
+          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe Geschäfte (Immobilienkauf, Unternehmensbeteiligungen, gewerblicher Großhandel), bei laufenden Streitigkeiten über Sachmängel oder bei sehr hohen Kaufpreisen bleibt ein Fachanwalt unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -147,21 +147,21 @@ const MietvertragPruefen: React.FC = () => {
   const howToSchema = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "name": "Mietvertrag mit KI prüfen lassen",
-    "description": "In drei Schritten von der hochgeladenen PDF-Datei zur fertigen Risikoanalyse deines Mietvertrags.",
+    "name": "Kaufvertrag mit KI prüfen lassen",
+    "description": "In drei Schritten von der hochgeladenen PDF-Datei zur fertigen Risikoanalyse deines Kaufvertrags.",
     "totalTime": "PT1M",
     "step": [
       {
         "@type": "HowToStep",
         "position": 1,
-        "name": "Mietvertrag hochladen",
-        "text": "Lade deinen Mietvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt 256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland."
+        "name": "Kaufvertrag hochladen",
+        "text": "Lade deinen Kaufvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt 256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland."
       },
       {
         "@type": "HowToStep",
         "position": 2,
         "name": "Automatische KI-Analyse",
-        "text": "Die KI prüft jede Klausel gegen §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere zu Schönheitsreparaturen, Kaution, Indexmiete, Tierhaltung und Kündigungsausschluss."
+        "text": "Die KI prüft jede Klausel gegen die §§ 433-453 BGB zum Kaufrecht, die §§ 474-479 BGB zum Verbrauchsgüterkauf und aktuelle BGH-Rechtsprechung. Beschaffenheit, Gewährleistung, Verjährung, Eigentumsvorbehalt und Stornoregelungen werden bewertet."
       },
       {
         "@type": "HowToStep",
@@ -175,24 +175,24 @@ const MietvertragPruefen: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
-        <meta name="description" content="Mietvertrag prüfen lassen mit KI: unwirksame Schönheitsreparaturklauseln, überhöhte Kaution & versteckte Fallen in 60 Sekunden erkennen. Auf Basis aktueller BGH-Rechtsprechung. DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
-        <meta name="keywords" content="Mietvertrag prüfen, Mietvertrag prüfen lassen, Mietvertrag KI prüfen, Mietvertrag online prüfen, Mietvertrag rechtssicher prüfen, Mietvertrag Klauseln prüfen, Mietvertrag Check, Mietvertrag analysieren, Schönheitsreparaturen prüfen, Mietkaution prüfen" />
+        <title>Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
+        <meta name="description" content="Kaufvertrag prüfen lassen mit KI: unwirksame Gewährleistungsausschlüsse, vage Beschaffenheit & versteckte Fallen in 60 Sekunden erkennen. Auf Basis BGB-Kaufrecht & BGH-Rechtsprechung. DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
+        <meta name="keywords" content="Kaufvertrag prüfen, Kaufvertrag prüfen lassen, Kaufvertrag KI prüfen, Kaufvertrag online prüfen, Autokaufvertrag prüfen, Kaufvertrag Check, Kaufvertrag analysieren, Gewährleistung prüfen, gekauft wie gesehen, Sachmangel prüfen" />
 
-        <link rel="canonical" href="https://www.contract-ai.de/mietvertrag-pruefen" />
+        <link rel="canonical" href="https://www.contract-ai.de/kaufvertrag-pruefen" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta property="og:description" content="Mietvertrag prüfen lassen mit KI: unwirksame Klauseln & versteckte Fallen in 60 Sekunden erkennen. Basierend auf aktueller BGH-Rechtsprechung. DSGVO-konform." />
+        <meta property="og:title" content="Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta property="og:description" content="Kaufvertrag prüfen lassen mit KI: Gewährleistung, Beschaffenheit und versteckte Fallen in 60 Sekunden erkennen. DSGVO-konform." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.contract-ai.de/mietvertrag-pruefen" />
+        <meta property="og:url" content="https://www.contract-ai.de/kaufvertrag-pruefen" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta name="twitter:description" content="Mietvertrag prüfen lassen mit KI: unwirksame Klauseln & versteckte Fallen in 60 Sekunden erkennen. Basierend auf aktueller BGH-Rechtsprechung." />
+        <meta name="twitter:title" content="Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta name="twitter:description" content="Kaufvertrag prüfen lassen mit KI: Gewährleistung, Beschaffenheit und versteckte Fallen in 60 Sekunden erkennen." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         <script type="application/ld+json">
@@ -222,23 +222,24 @@ const MietvertragPruefen: React.FC = () => {
             <div className={styles.heroContent}>
               <div className={styles.heroBadge}>
                 <span className={styles.heroBadgeDot}></span>
-                Für Mieter & Vermieter
+                Für Käufer & Verkäufer
               </div>
 
               <h1 className={styles.heroTitle}>
-                Mietvertrag prüfen lassen<br/>
-                <span className={styles.heroTitleHighlight}>unwirksame Klauseln in 60 Sekunden erkennen</span>
+                Kaufvertrag prüfen lassen<br/>
+                <span className={styles.heroTitleHighlight}>versteckte Fallen in 60 Sekunden erkennen</span>
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Lass deinen Mietvertrag von einer KI prüfen, die unwirksame Schönheitsreparaturklauseln,
-                überhöhte Kautionsforderungen und versteckte Fallen auf Basis aktueller
-                BGH-Rechtsprechung sofort erkennt. DSGVO-konform, Server in Deutschland.
+                Lass deinen Kaufvertrag von einer KI prüfen, die unwirksame
+                Gewährleistungsausschlüsse, vage Beschaffenheitsangaben und versteckte
+                Stornofallen auf Basis des BGB-Kaufrechts und aktueller BGH-Rechtsprechung
+                sofort erkennt. DSGVO-konform, Server in Deutschland.
               </p>
 
               <div className={styles.heroCta}>
                 <Link to={target} className={styles.btnPrimary}>
-                  Mietvertrag jetzt prüfen
+                  Kaufvertrag jetzt prüfen
                   <ArrowRight size={20} />
                 </Link>
                 <a href="#fallen" className={styles.btnSecondary}>
@@ -247,15 +248,15 @@ const MietvertragPruefen: React.FC = () => {
               </div>
             </div>
 
-            {/* Demo Window — Mietvertrag-spezifisch */}
+            {/* Demo Window — Kaufvertrag-spezifisch */}
             <div className={styles.heroVisual}>
               <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
                 <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
                   <Shield size={20} />
                 </div>
                 <div>
-                  <div className={styles.floatingText}>BGH-Rechtsprechung</div>
-                  <div className={styles.floatingSubtext}>aktuell geprüft</div>
+                  <div className={styles.floatingText}>BGB-Kaufrecht</div>
+                  <div className={styles.floatingSubtext}>geprüft</div>
                 </div>
               </div>
 
@@ -278,11 +279,11 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.demoContent}>
                   <div className={styles.demoScore}>
                     <div className={styles.demoScoreCircle}>
-                      <span className={styles.demoScoreValue}>62</span>
+                      <span className={styles.demoScoreValue}>59</span>
                     </div>
                     <div className={styles.demoScoreText}>
                       <div className={styles.demoScoreLabel}>Vertrags-Score</div>
-                      <div className={styles.demoScoreTitle}>Mietvertrag.pdf</div>
+                      <div className={styles.demoScoreTitle}>Autokaufvertrag.pdf</div>
                     </div>
                   </div>
                   <div className={styles.demoFindings}>
@@ -290,21 +291,21 @@ const MietvertragPruefen: React.FC = () => {
                       <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
                         <AlertTriangle size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Schönheitsreparaturen mit starrem Fristenplan</span>
+                      <span className={styles.demoFindingText}>"Wie gesehen" mit pauschalem Gewährleistungsausschluss</span>
                       <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
                     </div>
                     <div className={styles.demoFinding}>
                       <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
                         <AlertTriangle size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Kaution beträgt 4 Monatsmieten</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
+                      <span className={styles.demoFindingText}>Beschaffenheitsangaben sehr vage</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Mittel</span>
                     </div>
                     <div className={styles.demoFinding}>
                       <div className={`${styles.demoFindingIcon} ${styles.info}`}>
                         <FileText size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Indexmiete-Klausel transparent</span>
+                      <span className={styles.demoFindingText}>Eigentumsvorbehalt klar geregelt</span>
                       <span className={`${styles.demoFindingBadge} ${styles.low}`}>OK</span>
                     </div>
                   </div>
@@ -333,62 +334,43 @@ const MietvertragPruefen: React.FC = () => {
             </div>
             <div className={styles.trustBadge}>
               <Gavel size={18} />
-              Geprüft nach BGH-Rechtsprechung
+              Geprüft nach BGB-Kaufrecht
             </div>
           </div>
         </div>
 
         {/* ==========================================
-            SECTION 3 — WAS WIR PRÜFEN (Quick-Glance)
+            SECTION 3 — WAS WIR PRÜFEN
             ========================================== */}
         <section className={styles.functionsSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Prüfumfang</span>
-              <h2 className={styles.sectionTitle}>Was die KI in deinem Mietvertrag prüft</h2>
+              <h2 className={styles.sectionTitle}>Was die KI in deinem Kaufvertrag prüft</h2>
               <p className={styles.sectionSubtitle}>
-                Acht zentrale Klauseltypen werden gegen geltendes Mietrecht und aktuelle BGH-Urteile abgeglichen.
+                Acht zentrale Klauseltypen werden gegen das BGB-Kaufrecht und aktuelle
+                BGH-Rechtsprechung abgeglichen.
               </p>
             </div>
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
-                  <Home size={24} />
+                  <Scale size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Schönheitsreparaturen</h3>
+                <h3 className={styles.functionTitle}>Gewährleistungsausschluss</h3>
                 <p className={styles.functionDesc}>
-                  Starre Fristenpläne, Renovierung bei unrenoviert übergebener Wohnung — beides oft unwirksam.
+                  Beim Verbrauchsgüterkauf nach § 476 BGB stark eingeschränkt — pauschale Ausschlüsse oft unwirksam.
                 </p>
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
-                  <DollarSign size={24} />
+                  <Search size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kautionshöhe</h3>
+                <h3 className={styles.functionTitle}>Beschaffenheitsvereinbarung</h3>
                 <p className={styles.functionDesc}>
-                  Maximal drei Nettokaltmieten nach § 551 BGB — Mehrforderungen sind nichtig.
-                </p>
-              </div>
-
-              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
-                  <Scale size={24} />
-                </div>
-                <h3 className={styles.functionTitle}>Quotenabgeltung</h3>
-                <p className={styles.functionDesc}>
-                  Anteilige Renovierungskosten je nach Wohndauer — nach BGH 2015 generell unwirksam.
-                </p>
-              </div>
-
-              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
-                  <Award size={24} />
-                </div>
-                <h3 className={styles.functionTitle}>Tierhaltungsklauseln</h3>
-                <p className={styles.functionDesc}>
-                  Generelle Verbote sind unwirksam — Einzelfallabwägung nach BGH-Rechtsprechung.
+                  Klare Definition der Beschaffenheit nach § 434 BGB — vage Angaben sind im Streit wertlos.
                 </p>
               </div>
 
@@ -396,29 +378,49 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Clock size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kündigungsausschluss</h3>
+                <h3 className={styles.functionTitle}>Verjährungsfristen</h3>
                 <p className={styles.functionDesc}>
-                  Maximal vier Jahre in Formularverträgen — längere Bindungen unwirksam.
+                  Standard 2 Jahre nach § 438 BGB — Verkürzungen meist nur bei gebrauchten Sachen zulässig.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
+                  <Package size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Eigentumsvorbehalt</h3>
+                <p className={styles.functionDesc}>
+                  Klare Regelung nach § 449 BGB — wann geht das Eigentum tatsächlich über.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
+                  <ShoppingCart size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Gefahrübergang</h3>
+                <p className={styles.functionDesc}>
+                  Wer trägt das Risiko bei Versand oder Transport — § 446, § 447 BGB.
                 </p>
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)', color: '#f97316' }}>
-                  <BarChart3 size={24} />
+                  <DollarSign size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Indexmiete & Mieterhöhung</h3>
+                <h3 className={styles.functionTitle}>Stornogebühren</h3>
                 <p className={styles.functionDesc}>
-                  Transparenz nach § 557b BGB, Bezugsindex klar definiert, Jahresfrist eingehalten.
+                  AGB-Kontrolle nach §§ 305 ff. BGB — pauschale Stornogebühren sind oft unwirksam.
                 </p>
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #a5f3fc 100%)', color: '#06b6d4' }}>
-                  <BookOpen size={24} />
+                  <AlertTriangle size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kleinreparaturen</h3>
+                <h3 className={styles.functionTitle}>Anzahlungsklauseln</h3>
                 <p className={styles.functionDesc}>
-                  Höchstgrenze pro Reparatur und pro Jahr — überzogene Klauseln sind unwirksam.
+                  Höhe, Sicherung gegen Insolvenz, Rückzahlung bei Vertragsstörungen.
                 </p>
               </div>
 
@@ -426,9 +428,9 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fdf2f8 0%, #fbcfe8 100%)', color: '#ec4899' }}>
                   <Languages size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Betriebskostenabrechnung</h3>
+                <h3 className={styles.functionTitle}>Mängelrechte</h3>
                 <p className={styles.functionDesc}>
-                  Nur umlagefähige Kosten nach BetrKV, klare Verteilerschlüssel, Abrechnungsfristen.
+                  Nacherfüllung, Rücktritt, Minderung, Schadensersatz nach § 437 BGB.
                 </p>
               </div>
             </div>
@@ -443,25 +445,26 @@ const MietvertragPruefen: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Über 70 % der Mietverträge enthalten unwirksame Klauseln</h2>
+                <h2 className={styles.sectionTitleLeft}>Ein versteckter Mangel kann tausende Euro kosten</h2>
                 <p className={styles.problemText}>
-                  Die meisten Mietverträge in Deutschland sind Formularverträge — und genau die unterliegen
-                  einer strengen AGB-Kontrolle nach §§ 305 ff. BGB. Der Bundesgerichtshof hat in den
-                  letzten Jahren in einer Serie von Grundsatzurteilen ganze Klauselgruppen für unwirksam
-                  erklärt. Das Tückische: Mieter zahlen oft jahrelang für Renovierungen, akzeptieren
-                  überhöhte Kautionen oder verzichten auf Ansprüche — ohne zu wissen, dass die zugrunde
-                  liegende Klausel unwirksam ist. Bei Auszug summieren sich die ungerechtfertigten Kosten
-                  schnell auf vier- oder fünfstellige Beträge.
+                  Vom Gebrauchtwagen über Möbel bis zum Hausrat: Beim Kauf hängt im Streitfall
+                  alles vom Vertragstext ab. Pauschale Klauseln wie „gekauft wie gesehen" werden
+                  in der Praxis als kompletter Haftungsausschluss missverstanden — sind es aber
+                  juristisch gar nicht. Verkäufer drücken Käufern oft Verträge in die Hand, die
+                  einseitig formuliert sind: pauschaler Gewährleistungsausschluss, vage
+                  Beschaffenheitsangaben, überzogene Stornogebühren. Wer das nicht erkennt, zahlt
+                  später für versteckte Mängel oder verliert Anspruch auf Rückgabe — bei
+                  hochpreisigen Käufen schnell vier- oder fünfstellige Beträge.
                 </p>
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>70%</div>
-                    <div className={styles.problemStatLabel}>der Mietverträge enthalten mindestens eine unwirksame Klausel</div>
+                    <div className={styles.problemStatValue}>65%</div>
+                    <div className={styles.problemStatLabel}>der Privat-Kaufverträge enthalten unwirksame Klauseln</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>2.400 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden durch unberechtigte Renovierungs- und Kautionsansprüche</div>
+                    <div className={styles.problemStatValue}>3.800 €</div>
+                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden bei verschwiegenen Sachmängeln</div>
                   </div>
                 </div>
               </div>
@@ -473,8 +476,8 @@ const MietvertragPruefen: React.FC = () => {
                       <FileText size={24} />
                     </div>
                     <div>
-                      <div className={styles.problemDocTitle}>Mietvertrag.pdf</div>
-                      <div className={styles.problemDocSubtitle}>22 Seiten • Hochgeladen heute</div>
+                      <div className={styles.problemDocTitle}>Kaufvertrag.pdf</div>
+                      <div className={styles.problemDocSubtitle}>6 Seiten • Hochgeladen heute</div>
                     </div>
                   </div>
                   <div className={styles.problemDocLines}>
@@ -484,7 +487,7 @@ const MietvertragPruefen: React.FC = () => {
                   </div>
                   <div className={styles.problemDocHighlight}>
                     <div className={styles.problemDocHighlightText}>
-                      "...der Mieter verpflichtet sich, die Wohnung bei Auszug vollständig zu renovieren..."
+                      "...das Fahrzeug wird gekauft wie gesehen, unter Ausschluss jeglicher Sachmängelhaftung..."
                     </div>
                   </div>
                 </div>
@@ -493,14 +496,14 @@ const MietvertragPruefen: React.FC = () => {
                   <div className={`${styles.warningIcon} ${styles.red}`}>
                     <AlertTriangle size={16} />
                   </div>
-                  Unwirksame Klausel
+                  Pauschalausschluss
                 </div>
 
                 <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
                   <div className={`${styles.warningIcon} ${styles.orange}`}>
                     <Clock size={16} />
                   </div>
-                  4 Monatsmieten Kaution
+                  Beschaffenheit unklar
                 </div>
               </div>
             </div>
@@ -522,8 +525,8 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTitle}>Anwaltsberatung</div>
                     <div className={styles.comparisonDesc}>
-                      100–250 € pro Vertrag, Terminvereinbarung, mehrere Werktage Wartezeit
-                      bis zum Erstgespräch.
+                      100–300 € pro Vertrag, Termin, Wartezeit — und der Verkäufer
+                      drängt auf sofortige Unterschrift.
                     </div>
                     <div className={styles.comparisonTime}>
                       <Clock size={16} />
@@ -543,7 +546,7 @@ const MietvertragPruefen: React.FC = () => {
                     <div className={styles.comparisonTitle}>KI-Analyse</div>
                     <div className={styles.comparisonDesc}>
                       Sofortige Risiko-Erkennung mit Paragraphen-Verweis, BGH-Urteilen
-                      und konkreten Handlungsempfehlungen.
+                      und konkreten Verhandlungsempfehlungen.
                     </div>
                     <div className={styles.comparisonTime}>
                       <Zap size={16} />
@@ -555,12 +558,12 @@ const MietvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Mietvertragsprüfung im Sekundentakt — auf juristischer Basis</h2>
+                <h2 className={styles.sectionTitleLeft}>Kaufvertragsprüfung im Sekundentakt — bevor du unterschreibst</h2>
                 <p className={styles.solutionText}>
-                  Die KI von Contract AI kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz
-                  (MietAnpG), die Betriebskostenverordnung (BetrKV) und die zentralen
-                  BGH-Grundsatzurteile zum Mietrecht — und wendet sie sofort auf jede Klausel
-                  deines Vertrags an.
+                  Die KI von Contract AI kennt die §§ 433–453 BGB zum Kaufrecht, die §§ 474–479 BGB
+                  zum Verbrauchsgüterkauf, § 434 BGB zur Sachmangeldefinition, § 437 BGB zu
+                  Mängelrechten, § 438 BGB zur Verjährung und die einschlägige BGH-Rechtsprechung
+                  — und wendet sie sofort auf jede Klausel deines Vertrags an.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -570,7 +573,7 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Klausel-für-Klausel-Bewertung</h4>
-                      <p>Jede Klausel wird gegen geltendes Mietrecht geprüft, mit Paragraphen-Verweis</p>
+                      <p>Jede Klausel wird gegen geltendes BGB-Kaufrecht geprüft, mit Paragraphen-Verweis</p>
                     </div>
                   </div>
 
@@ -580,7 +583,7 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Aktuelle BGH-Rechtsprechung</h4>
-                      <p>Schönheitsreparaturen, Quotenabgeltung, Tierhaltung, Kündigungsausschluss</p>
+                      <p>Urteile zu „gekauft wie gesehen", arglistig verschwiegenen Mängeln, Sachmangel</p>
                     </div>
                   </div>
 
@@ -606,133 +609,132 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Die häufigsten Fallen</span>
-              <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im deutschen Mietvertrag</h2>
+              <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im Kaufvertrag</h2>
               <p className={styles.sectionSubtitle}>
-                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam — und genau hier
-                schaut unsere KI besonders genau hin. Jede Falle mit Original-Wortlaut, juristischer
-                Einordnung und Verweis auf das einschlägige BGH-Urteil.
+                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam oder rechtlich
+                angreifbar — und genau hier schaut unsere KI besonders genau hin.
               </p>
             </div>
 
             <div className={styles.risksGrid}>
 
-              {/* FALLE 1: Schönheitsreparaturen mit starrem Fristenplan */}
+              {/* FALLE 1: Pauschaler Gewährleistungsausschluss beim Verbrauchsgüterkauf */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>1. Starrer Fristenplan für Schönheitsreparaturen</h4>
+                  <h4 className={styles.riskTitle}>1. Pauschaler Gewährleistungsausschluss beim Verbrauchsgüterkauf</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter ist verpflichtet, Schönheitsreparaturen in folgenden Zeitabständen auszuführen: Küchen, Bäder und Duschen alle drei Jahre, Wohn- und Schlafräume alle fünf Jahre."
+                  "Der Verkauf erfolgt unter Ausschluss jeglicher Sachmängelhaftung."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 23.06.2004 – VIII ZR 361/03</strong> sind starre Fristen für Schönheitsreparaturen ohne Berücksichtigung des tatsächlichen Zustands der Wohnung unwirksam. Folge: Die gesamte Schönheitsreparaturklausel fällt weg — die Renovierungspflicht trägt der Vermieter (§ 535 Abs. 1 S. 2 BGB).</span>
+                  <span>Beim Verkauf eines Unternehmers an einen Verbraucher (Verbrauchsgüterkauf) ist ein vollständiger Gewährleistungsausschluss bei <strong>neuen Sachen unzulässig</strong> (<strong>§ 476 BGB</strong>). Bei gebrauchten Sachen darf die Frist nur auf 1 Jahr verkürzt, nicht ausgeschlossen werden. Unwirksame Klauseln führen zur vollen gesetzlichen Gewährleistung von 2 Jahren ab Übergabe.</span>
                 </div>
               </div>
 
-              {/* FALLE 2: Renovierung bei unrenoviert übergebener Wohnung */}
+              {/* FALLE 2: "Gekauft wie gesehen" als Freibrief */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>2. Renovierungspflicht bei unrenoviert übergebener Wohnung</h4>
+                  <h4 className={styles.riskTitle}>2. „Gekauft wie gesehen" als Freibrief verstanden</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter übernimmt die Schönheitsreparaturen während der Mietzeit auf eigene Kosten."
+                  "Das Fahrzeug wird gekauft wie gesehen, unter Ausschluss jeglicher Gewährleistung für Sachmängel."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>: Eine Klausel zur Vornahme von Schönheitsreparaturen ist unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgte. Der Mieter muss dann nicht renovieren — auch nicht beim Auszug.</span>
+                  <span>Diese Klausel ist häufig missverstanden. Sie schließt nur Mängel aus, die bei einer üblichen Besichtigung erkennbar waren. <strong>Versteckte Mängel und arglistig verschwiegene Mängel</strong> sind davon nach <strong>§ 444 BGB nicht erfasst</strong> — der Verkäufer haftet trotzdem. Auch eine ausdrücklich vereinbarte Beschaffenheit (z.B. „unfallfrei") wird vom Ausschluss nicht erfasst.</span>
                 </div>
               </div>
 
-              {/* FALLE 3: Quotenabgeltungsklausel */}
-              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>3. Quotenabgeltungsklausel</h4>
-                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
-                </div>
-                <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Endet das Mietverhältnis vor Fälligkeit der Schönheitsreparaturen, zahlt der Mieter einen anteiligen Geldbetrag entsprechend der Wohndauer."
-                </div>
-                <div className={styles.riskSolution}>
-                  <CheckCircle size={18} />
-                  <span>Mit <strong>BGH, 18.03.2015 – VIII ZR 242/13</strong> hat der BGH Quotenabgeltungsklauseln <strong>generell für unwirksam</strong> erklärt — sie verlangen vom Mieter eine prognostische Bewertung des künftigen Renovierungsbedarfs, was unzumutbar intransparent ist. Geforderte Quotenzahlungen können vollständig zurückgefordert werden.</span>
-                </div>
-              </div>
-
-              {/* FALLE 4: Kaution über 3 Monatsmieten */}
-              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>4. Kaution über drei Monatsmieten</h4>
-                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
-                </div>
-                <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter leistet zur Sicherheit eine Kaution in Höhe von vier Monatsmieten."
-                </div>
-                <div className={styles.riskSolution}>
-                  <CheckCircle size={18} />
-                  <span>Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Kaution höchstens das <strong>Dreifache der monatlichen Nettokaltmiete</strong> (ohne Betriebskosten) betragen. Mehrforderungen sind insoweit nichtig — der Mieter kann den überschüssigen Betrag jederzeit zurückfordern, auch noch Jahre nach Vertragsschluss. Außerdem darf die Kaution in drei Monatsraten gezahlt werden (§ 551 Abs. 2 BGB).</span>
-                </div>
-              </div>
-
-              {/* FALLE 5: Kündigungsausschluss länger als 4 Jahre */}
+              {/* FALLE 3: Vage Beschaffenheitsangaben */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>5. Überlanger Kündigungsausschluss</h4>
+                  <h4 className={styles.riskTitle}>3. Vage oder fehlende Beschaffenheitsangaben</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Beide Parteien verzichten für einen Zeitraum von fünf Jahren ab Vertragsbeginn auf das Recht zur ordentlichen Kündigung."
+                  "Das Fahrzeug wird im besichtigten Zustand verkauft." (Keine Angaben zu Kilometerstand, Vorbesitzern, Unfallfreiheit, Service)
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.04.2005 – VIII ZR 27/04</strong> darf ein beidseitiger Kündigungsausschluss in Formularmietverträgen maximal <strong>vier Jahre</strong> ab Vertragsschluss dauern. Längere Bindungen sind insgesamt unwirksam — der Mieter kann jederzeit mit der gesetzlichen Frist von drei Monaten kündigen.</span>
+                  <span>Nach <strong>§ 434 BGB</strong> ist die Sache nur dann mangelfrei, wenn sie die <strong>vereinbarte Beschaffenheit</strong> hat. Pauschale Angaben wie „im besichtigten Zustand" sind im Streitfall wertlos. Bestehe auf konkreten schriftlichen Angaben: Kilometerstand, Vorbesitzer, Unfallfreiheit, Service-Historie, technische Defekte. Was im Vertrag steht, ist verbindlich — was nicht drinsteht, ist Beweisproblem.</span>
                 </div>
               </div>
 
-              {/* FALLE 6: Indexmiete intransparent */}
+              {/* FALLE 4: Verkürzte Verjährung */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>6. Intransparente Indexmiete</h4>
+                  <h4 className={styles.riskTitle}>4. Unzulässig verkürzte Verjährungsfrist</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Die Miete erhöht sich entsprechend der jährlichen Inflationsrate."
+                  "Mängelansprüche verjähren in sechs Monaten ab Übergabe."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Eine Indexmiete nach <strong>§ 557b BGB</strong> ist nur wirksam, wenn der konkrete Bezugsindex (Verbraucherpreisindex des Statistischen Bundesamtes) ausdrücklich genannt wird, die Miete mindestens ein Jahr unverändert bleibt und die Erhöhung in Textform angekündigt wird. Vage Formulierungen wie "Inflationsrate" sind unwirksam — Mieterhöhungen können angefochten werden.</span>
+                  <span>Die gesetzliche Verjährung beträgt nach <strong>§ 438 Abs. 1 Nr. 3 BGB zwei Jahre</strong> ab Übergabe. Beim Verbrauchsgüterkauf darf die Frist nach <strong>§ 476 Abs. 2 BGB</strong> nur unter engen Voraussetzungen verkürzt werden — bei gebrauchten Sachen auf maximal 1 Jahr, bei neuen Sachen gar nicht. Sechs Monate sind unwirksam — es gilt die volle gesetzliche Frist.</span>
                 </div>
               </div>
 
-              {/* FALLE 7: Generelles Tierhaltungsverbot */}
+              {/* FALLE 5: Fehlender Eigentumsvorbehalt */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>7. Generelles Tierhaltungsverbot</h4>
+                  <h4 className={styles.riskTitle}>5. Fehlender oder unklarer Eigentumsvorbehalt</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Die Haltung von Haustieren jeglicher Art ist im Mietobjekt untersagt."
+                  "Der Kaufpreis ist in zwei Raten zahlbar." (Keine Klärung, ob das Eigentum bei Übergabe oder bei vollständiger Zahlung übergeht)
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 20.03.2013 – VIII ZR 168/12</strong> ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt (§ 307 Abs. 1 BGB). Kleintiere wie Hamster oder Ziervögel sind ohnehin erlaubt; bei Hund und Katze ist eine Einzelfallabwägung nötig — kein pauschales Verbot.</span>
+                  <span>Ein Eigentumsvorbehalt nach <strong>§ 449 BGB</strong> muss <strong>ausdrücklich</strong> vereinbart werden — stillschweigend gibt es ihn nicht. Ohne Vereinbarung geht das Eigentum bereits bei Übergabe über (§ 929 BGB), auch wenn noch nicht vollständig bezahlt ist. Für den Verkäufer ist das ein Sicherungsverlust, für den Käufer kann es bei Zahlungsverzug zu Rückforderungsansprüchen führen.</span>
                 </div>
               </div>
 
-              {/* FALLE 8: Kleinreparaturen überhöht */}
+              {/* FALLE 6: Überzogene Stornogebühren */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>8. Überzogene Kleinreparaturklausel</h4>
+                  <h4 className={styles.riskTitle}>6. Überzogene Stornogebühren</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Der Mieter trägt die Kosten kleinerer Reparaturen bis 200 € pro Fall, maximal 1.500 € pro Jahr."
+                  "Bei Rücktritt vom Kauf wird eine Stornogebühr von 25 % des Kaufpreises fällig."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.05.1992 – VIII ZR 129/91</strong> und nachfolgender Rechtsprechung gilt: Pro Einzelreparatur sind höchstens etwa <strong>100 €</strong> zumutbar, das Jahresvolumen darf <strong>8 % der Jahresnettokaltmiete</strong> nicht überschreiten. Höhere Klauseln sind insgesamt unwirksam — der Vermieter trägt dann alle Reparaturkosten nach § 535 Abs. 1 S. 2 BGB.</span>
+                  <span>Pauschale Stornogebühren in AGB unterliegen der Kontrolle nach <strong>§§ 307, 309 Nr. 5 BGB</strong>. Sie sind nur wirksam, wenn sie den nach gewöhnlichem Lauf der Dinge zu erwartenden Schaden nicht überschreiten und dem Käufer der Nachweis eines geringeren Schadens ausdrücklich offen bleibt. 25 % pauschal sind regelmäßig zu hoch und damit insgesamt unwirksam — der Verkäufer muss konkreten Schaden beweisen.</span>
+                </div>
+              </div>
+
+              {/* FALLE 7: Ungesicherte Anzahlung */}
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>7. Ungesicherte Anzahlung</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  "Bei Vertragsschluss ist eine Anzahlung in Höhe von 50 % des Kaufpreises zu leisten." (Keine Sicherung gegen Insolvenz oder Nichterfüllung)
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Hohe Anzahlungen ohne Sicherung sind ein erhebliches Käuferrisiko: Bei Insolvenz des Verkäufers verlierst du das Geld vollständig. Marktüblich sind Anzahlungen <strong>von 10–20 %</strong>, bei höheren Beträgen sollten Sicherheiten vereinbart werden (Bankbürgschaft, Treuhandkonto, Zug-um-Zug). Insbesondere bei Kauf von noch zu liefernden Sachen (Möbel, Maßanfertigungen) ist Vorsicht geboten.</span>
+                </div>
+              </div>
+
+              {/* FALLE 8: Gefahrübergang ungünstig */}
+              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.riskHeader}>
+                  <h4 className={styles.riskTitle}>8. Ungünstige Gefahrübergangsregelung</h4>
+                  <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
+                </div>
+                <div className={`${styles.riskIssue} ${styles.warning}`}>
+                  "Die Gefahr geht mit Übergabe an den Spediteur auf den Käufer über." (Bei Verbrauchsgüterkauf!)
+                </div>
+                <div className={styles.riskSolution}>
+                  <CheckCircle size={18} />
+                  <span>Beim <strong>Verbrauchsgüterkauf</strong> geht die Gefahr nach <strong>§ 475 Abs. 2 BGB</strong> erst mit Übergabe an den Käufer (oder vom ihm benannte Person) über — nicht bereits bei Übergabe an den Spediteur. Wird die Sache auf dem Transportweg beschädigt oder zerstört, trägt der Verkäufer das Risiko. Klauseln, die diese Regel zulasten des Verbrauchers verschieben, sind unwirksam.</span>
                 </div>
               </div>
 
@@ -749,7 +751,7 @@ const MietvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — ohne Termin, ohne Wartezeit.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report — bevor du unterschreibst.
               </p>
             </div>
 
@@ -760,9 +762,9 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
                   <div className={styles.processNumber}>1</div>
                   <div className={styles.processContent}>
-                    <h3 className={styles.processTitle}>Mietvertrag hochladen</h3>
+                    <h3 className={styles.processTitle}>Kaufvertrag hochladen</h3>
                     <p className={styles.processDesc}>
-                      Lade deinen Mietvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt
+                      Lade deinen Kaufvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt
                       256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland.
                     </p>
                   </div>
@@ -773,9 +775,9 @@ const MietvertragPruefen: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Automatische KI-Analyse</h3>
                     <p className={styles.processDesc}>
-                      Die KI prüft jede Klausel gegen §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz
-                      und aktuelle BGH-Rechtsprechung — insbesondere zu Schönheitsreparaturen,
-                      Kaution, Indexmiete, Tierhaltung und Kündigungsausschluss.
+                      Die KI prüft jede Klausel gegen die §§ 433–453 BGB zum Kaufrecht, die
+                      §§ 474–479 BGB zum Verbrauchsgüterkauf und aktuelle BGH-Rechtsprechung.
+                      Beschaffenheit, Gewährleistung, Verjährung und Stornoregelungen werden bewertet.
                     </p>
                   </div>
                 </div>
@@ -803,7 +805,7 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Deine Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Contract AI für deinen Mietvertrag?</h2>
+              <h2 className={styles.sectionTitle}>Warum Contract AI für deinen Kaufvertrag?</h2>
               <p className={styles.sectionSubtitle}>
                 Vier Gründe, warum die KI-Prüfung mehr ist als ein Online-Tool.
               </p>
@@ -814,10 +816,10 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Gavel size={28} />
                 </div>
-                <h3 className={styles.whyTitle}>Aktuelle BGH-Rechtsprechung</h3>
+                <h3 className={styles.whyTitle}>BGB-Kaufrecht & BGH-Urteile</h3>
                 <p className={styles.whyDesc}>
-                  Die zentralen Urteile zu Schönheitsreparaturen, Quotenabgeltung, Kaution und
-                  Tierhaltung sind in der Analyse berücksichtigt — nicht erst seit gestern.
+                  Die §§ 433–453 BGB, das Verbrauchsgüterkaufrecht und einschlägige BGH-Urteile
+                  werden auf jede Klausel angewendet — automatisch.
                 </p>
               </div>
 
@@ -827,8 +829,8 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO & Server in Deutschland</h3>
                 <p className={styles.whyDesc}>
-                  Dein Mietvertrag enthält sensible Daten. Verarbeitung ausschließlich auf
-                  EU-Servern, keine Weitergabe an Dritte, kein Modell-Training mit deinen Daten.
+                  Dein Kaufvertrag enthält oft persönliche Daten und Preise. Verarbeitung
+                  ausschließlich auf EU-Servern, keine Weitergabe an Dritte.
                 </p>
               </div>
 
@@ -847,10 +849,10 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
-                <h3 className={styles.whyTitle}>Sofort verfügbar, 24/7</h3>
+                <h3 className={styles.whyTitle}>Schnell genug für die Verhandlung</h3>
                 <p className={styles.whyDesc}>
-                  Keine Termine, keine Wartezeiten. Den Mietvertrag prüfen, wenn er bei dir
-                  auf dem Tisch liegt — auch sonntagabends vor der Wohnungsbesichtigung.
+                  Wenn der Verkäufer auf sofortige Unterschrift drängt, hast du in 60 Sekunden
+                  die fundierte Antwort — direkt am Verhandlungstisch.
                 </p>
               </div>
             </div>
@@ -864,98 +866,98 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ratgeber</span>
-              <h2 className={styles.sectionTitle}>Worauf du bei der Prüfung deines Mietvertrags wirklich achten solltest</h2>
+              <h2 className={styles.sectionTitle}>Worauf du bei der Prüfung deines Kaufvertrags wirklich achten solltest</h2>
             </div>
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein Mietvertrag begleitet dich oft jahrelang — und entscheidet darüber, ob du am
-                Ende der Mietzeit drei Monatsmieten zurückbekommst oder vierstellige
-                Renovierungskosten draufzahlst. Der Bundesgerichtshof hat in den letzten
-                zwei Jahrzehnten in einer Serie von Grundsatzurteilen ganze Klauselgruppen für
-                unwirksam erklärt. Wer seinen Mietvertrag prüfen lässt, schützt sich vor genau
-                diesen Stolperfallen — und kennt seine echten Rechte.
+                Ein Kaufvertrag entscheidet im Streitfall über tausende Euro. Vom Gebrauchtwagen
+                über Möbel bis hin zur Wohnungseinrichtung: Wenn nach dem Kauf ein Mangel auftaucht,
+                hängt alles davon ab, was im Vertrag steht — und vor allem, was <em>nicht</em>
+                drin steht. Das BGB-Kaufrecht (§§ 433–453 BGB) gibt dir starke Käuferrechte,
+                doch viele Verträge versuchen, diese Rechte einzuschränken oder ganz auszuschließen.
+                Wer einen Kaufvertrag prüft, kann unwirksame Klauseln sofort erkennen und
+                vermeidet teure Überraschungen.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Schönheitsreparaturen — der Klassiker unter den unwirksamen Klauseln
+                Verbrauchsgüterkauf vs Privatkauf — ein entscheidender Unterschied
               </h3>
               <p className={styles.problemText}>
-                Nach <strong>§ 535 Abs. 1 S. 2 BGB</strong> trägt eigentlich der Vermieter die
-                Erhaltungspflicht — er kann sie aber wirksam auf den Mieter übertragen, wenn
-                bestimmte Voraussetzungen erfüllt sind. Die Schwelle hat der BGH in mehreren
-                Urteilen extrem hoch gelegt. Unwirksam sind unter anderem starre Fristenpläne
-                ohne Berücksichtigung des Zustands (BGH, 23.06.2004 – VIII ZR 361/03),
-                Renovierungspflichten bei unrenoviert übergebener Wohnung ohne angemessenen
-                Ausgleich (das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>)
-                und Quotenabgeltungsklauseln (BGH, 18.03.2015 – VIII ZR 242/13). Wenn auch nur
-                eine dieser Klauseln in deinem Vertrag steht, fällt häufig die gesamte
-                Schönheitsreparatur-Regelung weg. Mehr dazu im{' '}
-                <Link to="/blog/mietvertrag-unwirksame-klauseln">Ratgeber zu unwirksamen Mietvertragsklauseln</Link>.
+                Das deutsche Kaufrecht unterscheidet streng zwischen zwei Konstellationen.
+                Beim <strong>Verbrauchsgüterkauf</strong> (Unternehmer verkauft an Verbraucher,
+                §§ 474 ff. BGB) gelten erheblich strengere Regeln zugunsten des Käufers: Ein
+                Gewährleistungsausschluss bei neuen Sachen ist unwirksam (<strong>§ 476 BGB</strong>),
+                bei gebrauchten Sachen darf die Frist nur auf 1 Jahr verkürzt werden, der
+                Gefahrübergang ist erst bei Übergabe an den Käufer. Beim <strong>Privatkauf</strong>
+                (Privatperson verkauft an Privatperson) ist ein Gewährleistungsausschluss dagegen
+                weitgehend möglich — außer bei arglistig verschwiegenen Mängeln (§ 444 BGB).
+                Diese Unterscheidung ist die wichtigste beim Lesen jedes Kaufvertrags.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Kaution — drei Monatsmieten sind die Obergrenze
+                „Gekauft wie gesehen" — was die Klausel wirklich bedeutet
               </h3>
               <p className={styles.problemText}>
-                Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Mietkaution höchstens das
-                Dreifache der monatlichen <em>Nettokaltmiete</em> (also ohne Betriebskosten) betragen.
-                Vereinbarungen über mehr sind insoweit nichtig — du kannst den Mehrbetrag jederzeit
-                zurückfordern. Außerdem: Die Kaution darf in drei gleichen Monatsraten gezahlt werden
-                (§ 551 Abs. 2 BGB), die erste fällig zu Mietbeginn. Der Vermieter muss die Kaution
-                getrennt von seinem Vermögen anlegen (Treuhandprinzip) und zum üblichen Zinssatz für
-                Spareinlagen mit dreimonatiger Kündigungsfrist verzinsen — die Zinsen stehen dem
-                Mieter zu.
+                Diese Klausel ist die meistmissverstandene des deutschen Kaufrechts. Verkäufer
+                stellen sie oft als pauschalen Haftungsausschluss dar — sie ist es aber nicht.
+                Sie schließt nur die Gewährleistung für Mängel aus, die <em>bei einer üblichen
+                Besichtigung erkennbar</em> waren. Versteckte Mängel (z.B. ein Motorschaden, der
+                erst nach 200 km auftritt) und arglistig verschwiegene Mängel (etwa ein
+                bekannter Unfallschaden, der nicht erwähnt wurde) sind nach <strong>§ 444 BGB</strong>
+                <em>nicht</em> vom Ausschluss erfasst — der Verkäufer haftet trotzdem. Auch
+                ausdrücklich vereinbarte Beschaffenheiten (Kilometerstand, Unfallfreiheit,
+                Service-Historie) bleiben verbindlich.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Indexmiete und Mieterhöhung — strenge Formvorschriften
+                Beschaffenheitsangaben — was reinschreiben, was nicht
               </h3>
               <p className={styles.problemText}>
-                Eine Indexmiete (<strong>§ 557b BGB</strong>) koppelt die Miethöhe an den vom
-                Statistischen Bundesamt veröffentlichten Verbraucherpreisindex. Sie ist nur
-                wirksam, wenn der konkrete Bezugsindex ausdrücklich genannt ist, zwischen zwei
-                Erhöhungen mindestens ein Jahr liegt und die Erhöhung in Textform angekündigt
-                wird. Bei wirksam vereinbarter Indexmiete sind Mieterhöhungen wegen ortsüblicher
-                Vergleichsmiete (§ 558 BGB) oder Modernisierung (§ 559 BGB) weitgehend
-                ausgeschlossen. Vage Formulierungen wie „nach Inflationsrate" sind dagegen
-                intransparent und damit unwirksam.
+                Nach <strong>§ 434 BGB</strong> ist die Sache nur dann mangelfrei, wenn sie die
+                <em>vereinbarte</em> Beschaffenheit hat. Das ist deine wichtigste Verhandlungs-
+                Karte: Was im Vertrag schwarz auf weiß steht, ist verbindlich. Was nicht drinsteht,
+                ist Beweisproblem. Beim Autokauf gehören in den Vertrag: <strong>Kilometerstand,
+                Anzahl Vorbesitzer, Unfallfreiheit (zumindest „Verkäufer kennt keine Unfallschäden"),
+                Service-Historie, technische Defekte</strong>. Bei Möbeln: Material, Maße, Zustand
+                (neu/gebraucht/restauriert). Bei Elektronik: Funktionsfähigkeit, Garantie,
+                Zubehör. Mündliche Zusagen sind im Streit nichts wert — alles in den Vertrag.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Tierhaltung, Kündigungsausschluss und Kleinreparaturen
+                Verjährung, Eigentumsvorbehalt und Stornogebühren
               </h3>
               <p className={styles.problemText}>
-                Drei weitere Klausel-Typen sind besonders fehleranfällig: Erstens
-                <strong> generelle Tierhaltungsverbote</strong> — sie sind nach BGH, 20.03.2013 –
-                VIII ZR 168/12 unwirksam; Kleintiere sind ohnehin erlaubt, bei Hund und Katze ist
-                eine Einzelfallabwägung nötig. Zweitens <strong>überlange Kündigungsausschlüsse</strong> —
-                in Formularverträgen darf der beidseitige Kündigungsverzicht maximal vier Jahre
-                dauern (BGH, 06.04.2005 – VIII ZR 27/04). Drittens <strong>Kleinreparaturklauseln</strong> —
-                pro Reparatur sind etwa 100 € zumutbar, das Jahresvolumen darf 8 % der
-                Jahresnettokaltmiete nicht übersteigen; höhere Klauseln fallen komplett weg.
+                Drei weitere zentrale Punkte: Erstens die <strong>Verjährung</strong> — gesetzlich
+                2 Jahre ab Übergabe (§ 438 BGB), beim Verbrauchsgüterkauf nur sehr eingeschränkt
+                verkürzbar. Zweitens der <strong>Eigentumsvorbehalt</strong> (§ 449 BGB) — er muss
+                ausdrücklich vereinbart werden, sonst geht das Eigentum bereits bei Übergabe über.
+                Wer in Raten zahlt und keinen klaren Eigentumsvorbehalt hat, riskiert bei
+                Verkäufer-Insolvenz, dass die Sache der Insolvenzmasse zufällt. Drittens
+                <strong>Stornogebühren</strong> — pauschale Klauseln über 10–15 % sind in AGB
+                regelmäßig unwirksam (§§ 307, 309 Nr. 5 BGB). Mehr zum Thema Autokauf im{' '}
+                <Link to="/blog/autokauf-vertrag-gewaehrleistung">Ratgeber Autokauf-Vertrag</Link>.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Was tun, wenn du eine unwirksame Klausel entdeckst?
+                Was tun, wenn du einen Mangel entdeckst?
               </h3>
               <p className={styles.problemText}>
-                Eine unwirksame Klausel macht <strong>nicht den ganzen Mietvertrag unwirksam</strong>.
-                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen — die problematische
-                Klausel wird einfach durch die gesetzliche Regelung ersetzt. Für dich als Mieter
-                ist das fast immer ein Vorteil: Die unwirksame Schönheitsreparaturklausel bedeutet
-                keine Renovierungspflicht. Der unwirksame Kündigungsausschluss bedeutet jederzeitige
-                Kündigungsmöglichkeit. Die überhöhte Kautionsforderung kann zurückgeholt werden.
-                Wann du den Vermieter direkt mit der Erkenntnis konfrontierst und wann du das
-                Wissen für später aufhebst (etwa beim Auszug), ist eine strategische Entscheidung —
-                die KI-Analyse gibt dir die Faktengrundlage.
+                Nach <strong>§ 437 BGB</strong> hast du als Käufer mehrere Rechte:
+                <strong> Nacherfüllung</strong> (Reparatur oder Ersatzlieferung — dein Wahlrecht),
+                <strong> Rücktritt</strong> vom Vertrag (volle Rückzahlung), <strong>Minderung</strong>
+                des Kaufpreises (anteilige Rückzahlung) oder <strong>Schadensersatz</strong>.
+                Wichtig: Beim Verbrauchsgüterkauf wird in den ersten 12 Monaten nach Übergabe
+                vermutet, dass der Mangel bereits bei Übergabe vorhanden war (§ 477 BGB) — die
+                Beweislast liegt beim Verkäufer. Bei arglistig verschwiegenen Mängeln gilt sogar
+                die regelmäßige Verjährung von 3 Jahren ab Kenntnis (§§ 195, 199 BGB) — auch
+                Jahre nach dem Kauf ist ein Vorgehen möglich.
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>
-                Bei laufenden Streitigkeiten — drohende Räumungsklage, Eigenbedarfskündigung,
-                Mieterhöhungsstreit, Kautionsrückforderung — empfehlen wir zusätzlich einen
-                Fachanwalt für Mietrecht oder die Mitgliedschaft in einem Mieterverein. Die
-                KI-Analyse ist eine fundierte Erst-Risikoanalyse, ersetzt aber keine
+                Bei besonders hochwertigen oder komplexen Käufen (Immobilien, Unternehmens-
+                beteiligungen, gewerblicher Großhandel) empfehlen wir zusätzlich einen Fachanwalt.
+                Die KI-Analyse ist eine fundierte Erst-Risikoanalyse, ersetzt aber keine
                 individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
                 Lies dazu auch unseren{' '}
                 <Link to="/blog/ki-vs-anwalt-vertrag-pruefen">Vergleich KI vs. Anwalt</Link>.
@@ -998,147 +1000,145 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen zum Mietvertrag-Check</h2>
+              <h2 className={styles.sectionTitle}>Häufige Fragen zum Kaufvertrag-Check</h2>
             </div>
 
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie genau ist die KI-Prüfung eines Mietvertrags?
+                  Wie genau ist die KI-Prüfung eines Kaufvertrags?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
                   Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das
-                  Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere
-                  die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14),
-                  Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und
-                  Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie
-                  Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren
-                  empfehlen wir ergänzend einen Fachanwalt für Mietrecht.
+                  Risiko-Klauseln in Kaufverträgen. Sie kennt die §§ 433–453 BGB zum Kaufrecht,
+                  die §§ 474–479 BGB zum Verbrauchsgüterkauf, § 434 BGB zur Sachmangeldefinition,
+                  § 437 BGB zu Mängelrechten, § 438 BGB zur Verjährung und die einschlägige
+                  BGH-Rechtsprechung zu Gewährleistungsausschlüssen, „gekauft wie gesehen"-Klauseln
+                  und arglistig verschwiegenen Mängeln. Bei besonders hochwertigen oder komplexen
+                  Käufen (Immobilien, Unternehmensbeteiligungen) empfehlen wir ergänzend einen
+                  Fachanwalt.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Welche Klauseln im Mietvertrag sind häufig unwirksam?
+                  Worauf muss ich beim Kaufvertrag besonders achten?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Zu den am häufigsten unwirksamen Klauseln zählen: starre Renovierungsfristen
-                  für Schönheitsreparaturen (BGH, 23.06.2004 – VIII ZR 361/03),
-                  Renovierungspflichten bei unrenoviert übergebener Wohnung
-                  (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln,
-                  Kautionsforderungen über drei Monatsmieten (§ 551 Abs. 1 BGB), generelle
-                  Tierhaltungsverbote (BGH, 20.03.2013 – VIII ZR 168/12) und überzogene
-                  Kleinreparatur-Kostendeckel.
+                  Die wichtigsten Prüfpunkte sind: klare Beschaffenheitsvereinbarung (kein vager
+                  „wie besichtigt"), keine pauschalen Gewährleistungsausschlüsse beim
+                  Verbrauchsgüterkauf (§ 476 BGB), korrekte Verjährungsfrist (2 Jahre Standard,
+                  1 Jahr bei Gebrauchtsachen im Verbrauchsgüterkauf), klare Regelung zu
+                  Eigentumsvorbehalt und Gefahrübergang, angemessene Storno-/Rücktrittsregelungen
+                  und transparente Zahlungsmodalitäten ohne überzogene Anzahlungspflicht.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie viel Kaution darf der Vermieter maximal verlangen?
+                  Was bedeutet „Gekauft wie gesehen" wirklich?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der
-                  monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter
-                  kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB),
-                  wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist.
-                  Vereinbarungen über eine höhere Kaution sind insoweit unwirksam — der Mieter
-                  kann den Mehrbetrag zurückfordern.
+                  Diese Klausel ist häufig missverstanden. Sie schließt nur die Gewährleistung
+                  für Mängel aus, die der Käufer bei einer üblichen Besichtigung hätte erkennen
+                  können. Versteckte Mängel und arglistig verschwiegene Mängel sind davon nicht
+                  erfasst (§ 444 BGB). Bei Verkauf an einen Verbraucher ist ein vollständiger
+                  Gewährleistungsausschluss bei neuen Sachen ohnehin unwirksam (§ 476 BGB).
+                  „Gekauft wie gesehen" ist also kein Freibrief für den Verkäufer.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Sind Schönheitsreparaturen wirklich unwirksam vereinbart?
+                  Kann der Verkäufer die Gewährleistung komplett ausschließen?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom
-                  18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen
-                  unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig
-                  übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch
-                  starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge:
-                  Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter.
+                  Das hängt von der Konstellation ab. Beim Verkauf zwischen Privatpersonen kann
+                  die Gewährleistung weitgehend ausgeschlossen werden — außer bei arglistig
+                  verschwiegenen Mängeln (§ 444 BGB) oder bei einer ausdrücklich vereinbarten
+                  Beschaffenheit. Beim Verkauf eines Unternehmers an einen Verbraucher
+                  (Verbrauchsgüterkauf) ist ein Gewährleistungsausschluss bei neuen Sachen
+                  unzulässig; bei gebrauchten Sachen darf die Frist auf maximal 1 Jahr verkürzt
+                  werden (§ 476 BGB).
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Was ist eine Indexmiete und wann ist sie zulässig?
+                  Wie lange habe ich Anspruch auf Gewährleistung?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Eine Indexmiete (§ 557b BGB) koppelt die Miethöhe an den vom Statistischen
-                  Bundesamt ermittelten Verbraucherpreisindex. Sie ist nur zulässig, wenn sie
-                  ausdrücklich und schriftlich vereinbart wurde, der Bezugsindex klar benannt
-                  ist und die Miete jeweils mindestens ein Jahr unverändert bleibt. Bei
-                  wirksamer Indexmiete sind Mieterhöhungen wegen ortsüblicher Vergleichsmiete
-                  oder Modernisierung weitgehend ausgeschlossen. Eine intransparente Klausel
-                  ohne klaren Bezugsindex ist unwirksam.
+                  Die gesetzliche Gewährleistung beträgt nach § 438 Abs. 1 Nr. 3 BGB zwei Jahre
+                  ab Übergabe der Sache. Bei Bauwerken sind es fünf Jahre. Beim Verbrauchsgüterkauf
+                  darf diese Frist nur unter engen Voraussetzungen verkürzt werden (auf 1 Jahr
+                  bei gebrauchten Sachen). Bei arglistig verschwiegenen Mängeln gilt die
+                  regelmäßige Verjährung von drei Jahren ab Kenntnis (§ 438 Abs. 3 i.V.m. §§ 195,
+                  199 BGB) — hier ist sogar nach Jahren noch ein Vorgehen möglich.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Darf der Vermieter die Tierhaltung generell verbieten?
+                  Was ist eine wirksame Beschaffenheitsvereinbarung?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Nein. Nach BGH, 20.03.2013 – VIII ZR 168/12 ist ein generelles
-                  Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine
-                  unangemessene Benachteiligung des Mieters darstellt. Erlaubt ist die Haltung
-                  von Kleintieren wie Hamstern, Wellensittichen oder Zierfischen sogar ohne
-                  Erlaubnis. Bei Hunden und Katzen ist eine Einzelfallabwägung nötig:
-                  berechtigte Interessen des Vermieters, Mitmieter, Größe der Wohnung. Ein
-                  pauschales Verbot ist unzulässig.
+                  Nach § 434 BGB ist die Sache mangelfrei, wenn sie die vereinbarte Beschaffenheit
+                  hat. Eine wirksame Beschaffenheitsvereinbarung muss konkret sein — pauschale
+                  Klauseln wie „in vereinbartem Zustand" sind wertlos. Beim Autokauf etwa:
+                  Kilometerstand, Vorbesitzer, Unfallfreiheit, Service-Historie sollten
+                  ausdrücklich genannt werden. Was im Vertrag schwarz auf weiß steht, ist im
+                  Streitfall verbindlich. Mündliche Zusagen sind beweispflichtig.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie lange darf ein Kündigungsausschluss im Mietvertrag dauern?
+                  Was bringt ein Eigentumsvorbehalt?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach
-                  BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab
-                  Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam — der
-                  Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei
-                  individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen
-                  aber nachweisbar verhandelt sein.
+                  Ein Eigentumsvorbehalt nach § 449 BGB bedeutet: Der Verkäufer bleibt Eigentümer
+                  der Sache, bis der Kaufpreis vollständig bezahlt ist. Für den Käufer ist das
+                  relevant, wenn er die Sache nicht sofort vollständig bezahlt — denn bei
+                  Zahlungsverzug kann der Verkäufer die Sache zurückverlangen. Für den Verkäufer
+                  ist es eine wichtige Sicherung. Eine klare und ausdrückliche Vereinbarung im
+                  Vertrag ist nötig — stillschweigender Eigentumsvorbehalt ist nicht möglich.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Was kostet die KI-Prüfung eines Mietvertrags?
+                  Was kostet die KI-Prüfung eines Kaufvertrags?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat)
-                  erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die
-                  Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht
-                  kostet typischerweise 100–250 € — die KI-Analyse spart dir gerade bei mehreren
-                  Verträgen oder Wohnungssuche erhebliche Kosten.
+                  Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif
+                  (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif
+                  (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim
+                  Anwalt kostet typischerweise 100–300 € pro Vertrag — die KI-Analyse spart dir
+                  gerade beim Autokauf, Möbelkauf oder anderen größeren Anschaffungen erhebliche
+                  Kosten.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Ersetzt die KI-Prüfung einen Anwalt für Mietrecht?
+                  Ersetzt die KI-Prüfung einen Anwalt?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
                   Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine
-                  Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für
-                  individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage,
-                  Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete,
-                  Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder
-                  ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte
-                  Faktengrundlage.
+                  Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe
+                  Geschäfte (Immobilienkauf, Unternehmensbeteiligungen, gewerblicher Großhandel),
+                  bei laufenden Streitigkeiten über Sachmängel oder bei sehr hohen Kaufpreisen
+                  bleibt ein Fachanwalt unverzichtbar. Die KI-Analyse ist eine fundierte
+                  Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich.
                 </p>
               </details>
             </div>
@@ -1166,6 +1166,17 @@ const MietvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
+              <Link to="/mietvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
               <Link to="/nda-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
@@ -1177,23 +1188,12 @@ const MietvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/kaufvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f97316' }}><FileText size={20} /></span>
+              <Link to="/blog/autokauf-vertrag-gewaehrleistung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#f97316' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
+                  <div className={styles.relatedTitle}>Autokauf-Vertrag im Detail</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
-                  </div>
-                </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
-              </Link>
-
-              <Link to="/blog/mietvertrag-unwirksame-klauseln" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><BookOpen size={20} /></span>
-                <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>Mietvertrag-Klauseln im Detail</div>
-                  <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Haustierhaltung, Kautionshöhe — was rechtlich problematisch ist
+                    Gewährleistung, Sachmängel & Rücktritt beim Autokauf — der ausführliche Ratgeber
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1232,16 +1232,16 @@ const MietvertragPruefen: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Schluss mit unwirksamen Klauseln. Prüfe deinen Mietvertrag jetzt.
+                  Bevor du unterschreibst — lass deinen Kaufvertrag in 60 Sekunden prüfen.
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Über 87 % der Nutzer finden mindestens eine kritische Klausel, die sie sonst
-                  übersehen hätten. Lade deinen Mietvertrag hoch und erhalte den Risiko-Report
+                  übersehen hätten. Lade deinen Kaufvertrag hoch und erhalte den Risiko-Report
                   in unter 60 Sekunden.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>
-                    Mietvertrag jetzt prüfen
+                    Kaufvertrag jetzt prüfen
                     <ArrowRight size={20} />
                   </Link>
                 </div>
@@ -1257,4 +1257,4 @@ const MietvertragPruefen: React.FC = () => {
   );
 };
 
-export default MietvertragPruefen;
+export default KaufvertragPruefen;
