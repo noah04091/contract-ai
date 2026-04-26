@@ -124,7 +124,7 @@ class DirectExtractor {
    * @returns {Promise<object>} { clauses, documentType, language, metadata }
    */
   async extract(rawText, options = {}) {
-    const { timeoutMs = 120000, lenient = false } = options;
+    const { timeoutMs = 120000, lenient = false, onProgress } = options;
     const startTime = Date.now();
 
     if (!rawText || typeof rawText !== 'string' || rawText.trim().length < 100) {
@@ -152,7 +152,7 @@ class DirectExtractor {
     } else {
       // Batching
       console.log(`[DirectExtractor] Batching — ${rawText.length} chars`);
-      const result = await this._batchedExtraction(rawText, timeoutMs, systemPrompt);
+      const result = await this._batchedExtraction(rawText, timeoutMs, systemPrompt, onProgress);
       rawClauses = result.clauses;
       documentType = result.documentType;
       language = result.language;
@@ -255,7 +255,7 @@ class DirectExtractor {
    * Batched Extraction fuer lange Texte.
    * @private
    */
-  async _batchedExtraction(text, timeoutMs, systemPrompt = SYSTEM_PROMPT) {
+  async _batchedExtraction(text, timeoutMs, systemPrompt = SYSTEM_PROMPT, onProgress = null) {
     const CONCURRENCY = 3;
     const windows = [];
     let pos = 0;
@@ -323,7 +323,24 @@ class DirectExtractor {
 
       const chunkElapsed = Math.round((Date.now() - chunkStartTime) / 1000);
       const completedBatches = Math.min(i + CONCURRENCY, windows.length);
+      const round = Math.floor(i / CONCURRENCY) + 1;
+      const totalRounds = Math.ceil(windows.length / CONCURRENCY);
       console.log(`[DirectExtractor] Runde fertig in ${chunkElapsed}s (${completedBatches}/${windows.length} Batches)`);
+
+      // Progressive Callback: neue Klauseln dieser Runde an Aufrufer melden
+      if (onProgress) {
+        const newClauses = [];
+        for (let j = 0; j < chunk.length; j++) {
+          const wr = windowResults[i + j];
+          if (wr) newClauses.push(...wr.clauses);
+        }
+        const totalSoFar = windowResults.filter(Boolean).reduce((sum, wr) => sum + wr.clauses.length, 0);
+        try {
+          onProgress({ newClauses, totalSoFar, round, totalRounds });
+        } catch (cbErr) {
+          console.warn(`[DirectExtractor] onProgress callback error:`, cbErr.message);
+        }
+      }
     }
 
     // Klauseln in Dokumentreihenfolge zusammenfuehren

@@ -3123,9 +3123,36 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         // GPT-Risk läuft in Phase 2 im Hintergrund (nach res.end())
         // Lenient-Mode: Wenn User "Trotzdem analysieren" geklickt hat, Extractor
         // grosszuegiger machen (auch Rechnungspositionen, Angebotsabschnitte etc.)
+        // Progressive Klausel-Anzeige: Nach jeder Batch-Runde Preview an Frontend senden
+        const onProgress = ({ newClauses, totalSoFar, round, totalRounds }) => {
+          if (clientDisconnected) return;
+
+          const previewClauses = newClauses.map((c, idx) => {
+            const clauseText = (c.text || '').trim();
+            const risk = clauseParser.assessClauseRisk(clauseText);
+            return {
+              id: `clause_v4_preview_${totalSoFar - newClauses.length + idx}`,
+              sectionTitle: c.title || c.number || 'Abschnitt',
+              text: clauseText,
+              number: c.number || null,
+              title: c.title || null,
+              riskIndicators: { level: risk.level, keywords: risk.keywords, score: risk.score },
+              preAnalysis: { riskLevel: risk.level, riskScore: risk.score },
+              matchingData: { charLength: clauseText.length },
+              textHash: clauseParser.generateHash(clauseText)
+            };
+          });
+
+          sendEvent('clauses_batch', { newClauses: previewClauses, totalSoFar });
+          sendEvent('status', {
+            message: `Runde ${round}/${totalRounds} — ${totalSoFar} Klauseln gefunden...`,
+            progress: 20 + Math.round(60 * (round / totalRounds))
+          });
+        };
+
         let parseResult;
         try {
-          parseResult = await parseContractDirect(text, { detectRisk: false, lenient: isSkipGate });
+          parseResult = await parseContractDirect(text, { detectRisk: false, lenient: isSkipGate, onProgress });
         } finally {
           clearInterval(heartbeat);
         }
@@ -3294,13 +3321,12 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
           console.warn(`⚠️ [Legal Lens Stream V4] Industry detection fehlgeschlagen:`, industryErr.message);
         }
 
-        // Klauseln an Frontend senden — falls SSE noch verbunden
+        // Finale Klauseln an Frontend senden (clauses_merged = REPLACE, ersetzt Preview-Klauseln)
         sendEvent('status', { message: `${allClauses.length} Klauseln erkannt`, progress: 90 });
-        sendEvent('clauses', {
+        sendEvent('clauses_merged', {
           clauses: allClauses,
           totalClauses: allClauses.length,
-          riskSummary,
-          source: 'direct_v4'
+          mergedCount: 0
         });
         sendEvent('complete', {
           success: true,

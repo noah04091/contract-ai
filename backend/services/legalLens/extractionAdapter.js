@@ -33,12 +33,12 @@ function getExtractor() {
  * @returns {Promise<{success, clauses, totalClauses, sections, riskSummary, metadata}>}
  */
 async function parseContractDirect(text, options = {}) {
-  const { detectRisk = true, lenient = false } = options;
+  const { detectRisk = true, lenient = false, onProgress } = options;
   const startedAt = Date.now();
 
   console.log(`[DirectAdapter] Start — ${text.length} chars${lenient ? ' (LENIENT)' : ''}`);
 
-  const result = await getExtractor().extract(text, { lenient });
+  const result = await getExtractor().extract(text, { lenient, onProgress });
 
   if (!result.clauses || result.clauses.length === 0) {
     console.log(`[DirectAdapter] Keine Klauseln erkannt`);
