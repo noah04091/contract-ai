@@ -37,9 +37,7 @@ function getToken(): string | null {
 }
 
 // API Base URL
-const API_BASE = typeof window !== 'undefined' && (window as Record<string, unknown>).__VITE_API_URL
-  ? String((window as Record<string, unknown>).__VITE_API_URL)
-  : (import.meta.env?.VITE_API_URL || 'https://api.contract-ai.de');
+const API_BASE = import.meta.env?.VITE_API_URL || 'https://api.contract-ai.de';
 
 interface UseTourOptions {
   tourId: TourId;
