@@ -215,42 +215,47 @@ async function runPulseV2Radar(db, options = {}) {
   for (const law of lawChanges) {
     if (totalMatches >= MAX_CONTRACT_MATCHES) break;
 
-    const matches = await matchLawToContracts(db, law, options);
-    if (matches.length === 0) continue;
+    try {
+      const matches = await matchLawToContracts(db, law, options);
+      if (matches.length === 0) continue;
 
-    // 3. Assess impact with AI
-    const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
-    if (aiError) {
-      failedLawIds.push(law._id);
-      continue; // Don't count matches — will be retried on next run
-    }
-    totalMatches += matches.length;
-
-    // Accumulate cost
-    totalAiCalls += cost.aiCalls || 0;
-    totalTokensInput += cost.tokensInput || 0;
-    totalTokensOutput += cost.tokensOutput || 0;
-    totalCostUSD += cost.costUSD || 0;
-
-    // Group by user
-    for (const impact of confirmedImpacts) {
-      if (!userAlerts.has(impact.userId)) {
-        userAlerts.set(impact.userId, []);
+      // 3. Assess impact with AI
+      const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
+      if (aiError) {
+        failedLawIds.push(law._id);
+        continue; // Don't count matches — will be retried on next run
       }
-      userAlerts.get(impact.userId).push({
-        lawChange: law,
-        contractId: impact.contractId,
-        contractName: impact.contractName,
-        impactSummary: impact.summary,
-        plainSummary: impact.plainSummary || "",
-        businessImpact: impact.businessImpact || "",
-        severity: impact.severity,
-        impactDirection: impact.impactDirection || "negative",
-        recommendation: impact.recommendation,
-        affectedClauseIds: impact.affectedClauseIds,
-        clauseImpacts: impact.clauseImpacts,
-      });
-      totalAlerts++;
+      totalMatches += matches.length;
+
+      // Accumulate cost
+      totalAiCalls += cost.aiCalls || 0;
+      totalTokensInput += cost.tokensInput || 0;
+      totalTokensOutput += cost.tokensOutput || 0;
+      totalCostUSD += cost.costUSD || 0;
+
+      // Group by user
+      for (const impact of confirmedImpacts) {
+        if (!userAlerts.has(impact.userId)) {
+          userAlerts.set(impact.userId, []);
+        }
+        userAlerts.get(impact.userId).push({
+          lawChange: law,
+          contractId: impact.contractId,
+          contractName: impact.contractName,
+          impactSummary: impact.summary,
+          plainSummary: impact.plainSummary || "",
+          businessImpact: impact.businessImpact || "",
+          severity: impact.severity,
+          impactDirection: impact.impactDirection || "negative",
+          recommendation: impact.recommendation,
+          affectedClauseIds: impact.affectedClauseIds,
+          clauseImpacts: impact.clauseImpacts,
+        });
+        totalAlerts++;
+      }
+    } catch (lawErr) {
+      console.error(`[PulseV2Radar] Failed to process law "${(law.title || '').substring(0, 60)}":`, lawErr.message);
+      failedLawIds.push(law._id);
     }
   }
 
@@ -264,7 +269,11 @@ async function runPulseV2Radar(db, options = {}) {
       cappedCount += alerts.length - MAX_ALERTS_PER_USER;
       console.log(`[PulseV2Radar] User ${userId}: ${alerts.length} alerts, all stored in DB, email shows top ${MAX_ALERTS_PER_USER}`);
     }
-    await storeAndNotify(db, userId, alerts);
+    try {
+      await storeAndNotify(db, userId, alerts);
+    } catch (notifyErr) {
+      console.error(`[PulseV2Radar] storeAndNotify failed for user ${userId}:`, notifyErr.message);
+    }
   }
 
   // 5. Mark processed law changes (exclude laws where AI assessment failed — they will be retried)

@@ -739,21 +739,21 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           fetch(`${API_BASE}/legal-pulse-v2/portfolio-summary`, { credentials: 'include' }),
           fetch(`${API_BASE}/legal-pulse-v2/monitoring-status`, { credentials: 'include' }),
         ]);
-        const dashData = await dashRes.json();
+        const dashData = dashRes.ok ? await dashRes.json() : { items: [], totalContracts: 0, analyzedContracts: 0 };
         setItems(dashData.items || []);
         setStats({ total: dashData.totalContracts || 0, analyzed: dashData.analyzedContracts || 0 });
 
-        const insightsData = await insightsRes.json();
+        const insightsData = insightsRes.ok ? await insightsRes.json() : { insights: [], actions: [] };
         setInsights(insightsData.insights || []);
         setActions(insightsData.actions || []);
 
-        const alertsData = await alertsRes.json();
+        const alertsData = alertsRes.ok ? await alertsRes.json() : { alerts: [] };
         setLegalAlerts(alertsData.alerts || []);
 
-        const summaryData = await summaryRes.json();
+        const summaryData = summaryRes.ok ? await summaryRes.json() : {};
         setPortfolioSummary(summaryData);
 
-        const monitorData = await monitorRes.json();
+        const monitorData = monitorRes.ok ? await monitorRes.json() : {};
         setMonitoringStatus(monitorData);
       } catch (err) {
         console.error('[PulseV2] Dashboard load error:', err);
