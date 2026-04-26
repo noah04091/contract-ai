@@ -1485,6 +1485,11 @@ export const articles: Article[] = [
     icon: '🏠',
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Mietvertrag jetzt rechtssicher prüfen lassen</h4>
+        <p>Lass deinen Mietvertrag von einer KI prüfen — auf Basis aktueller BGH-Rechtsprechung in unter 60 Sekunden. Unwirksame Schönheitsreparaturklauseln, überhöhte Kaution und versteckte Fallen werden sofort erkannt. <a href="/mietvertrag-pruefen"><strong>Jetzt Mietvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Mietverträge enthalten oft Klauseln, die zu Gunsten des Vermieters formuliert sind. Doch nicht alles, was im Vertrag steht, ist auch rechtlich wirksam. Wir zeigen Ihnen, welche Klauseln problematisch sind.</p>
 
       <h2>Schönheitsreparaturen: Wann sie unwirksam sind</h2>
