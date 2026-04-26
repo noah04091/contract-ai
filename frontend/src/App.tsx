@@ -77,6 +77,7 @@ const KiVertragsanalyse = lazy(() => import("./pages/KiVertragsanalyse")); // �
 // 🎯 SEO Long-Tail Landing Pages (Vertragstypen)
 const ArbeitsvertragPruefen = lazy(() => import("./pages/landing/ArbeitsvertragPruefen"));
 const MietvertragPruefen = lazy(() => import("./pages/landing/MietvertragPruefen"));
+const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
@@ -214,6 +215,7 @@ function AppWithLoader() {
             {/* 🎯 SEO Long-Tail Landing Pages (Vertragstypen) */}
             <Route path="/arbeitsvertrag-pruefen" element={<ArbeitsvertragPruefen />} />
             <Route path="/mietvertrag-pruefen" element={<MietvertragPruefen />} />
+            <Route path="/nda-pruefen" element={<NdaPruefen />} />
 
             {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />

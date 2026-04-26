@@ -1155,6 +1155,17 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
+              <Link to="/nda-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>NDA prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
               <Link to="/blog/arbeitsvertrag-rechte-verstehen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>

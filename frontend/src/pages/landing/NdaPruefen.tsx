@@ -7,11 +7,11 @@ import Footer from "../../components/Footer";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, ChevronDown, ThumbsUp,
-  Languages, BarChart3, Sparkles, Scale, Home, Gavel,
-  Award, Info, DollarSign
+  Languages, Sparkles, Scale, Lock, Gavel,
+  Info, Users
 } from "lucide-react";
 
-const MietvertragPruefen: React.FC = () => {
+const NdaPruefen: React.FC = () => {
   const { user } = useAuth();
   const isAuthenticated = user && user.subscriptionActive;
   const targetInApp = "/contracts";
@@ -59,8 +59,8 @@ const MietvertragPruefen: React.FC = () => {
       {
         "@type": "ListItem",
         "position": 2,
-        "name": "Mietvertrag prüfen",
-        "item": "https://www.contract-ai.de/mietvertrag-pruefen"
+        "name": "NDA prüfen",
+        "item": "https://www.contract-ai.de/nda-pruefen"
       }
     ]
   };
@@ -71,74 +71,74 @@ const MietvertragPruefen: React.FC = () => {
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Wie genau ist die KI-Prüfung eines Mietvertrags?",
+        "name": "Wie genau ist die KI-Prüfung eines NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren empfehlen wir ergänzend einen Fachanwalt für Mietrecht."
+          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Geheimhaltungsvereinbarungen. Sie kennt das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle, § 343 BGB zur Vertragsstrafenherabsetzung sowie die einschlägige Rechtsprechung zu Wettbewerbsverboten in Geheimhaltungsvereinbarungen. Bei komplexen internationalen NDAs (Cross-Border, US-Common-Law-Klauseln) empfehlen wir ergänzend einen Fachanwalt für IT- und Wirtschaftsrecht."
         }
       },
       {
         "@type": "Question",
-        "name": "Welche Klauseln im Mietvertrag sind häufig unwirksam?",
+        "name": "Worauf muss ich bei einem NDA besonders achten?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Zu den am häufigsten unwirksamen Klauseln zählen: starre Renovierungsfristen für Schönheitsreparaturen (BGH, 23.06.2004 – VIII ZR 361/03), Renovierungspflichten bei unrenoviert übergebener Wohnung (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln, Kautionsforderungen über drei Monatsmieten (§ 551 Abs. 1 BGB), generelle Tierhaltungsverbote (BGH, 20.03.2013 – VIII ZR 168/12) und überzogene Kleinreparatur-Kostendeckel."
+          "text": "Die wichtigsten Prüfpunkte sind: angemessene Geheimhaltungsdauer (Standard 2-3 Jahre, max. 5), verhältnismäßige Vertragsstrafe (kein pauschaler Mondpreis), klare Definition der vertraulichen Informationen (nicht 'alles ist vertraulich'), die fünf Standard-Carve-Outs (öffentlich bekannt, vorher bekannt, unabhängig entwickelt, von Dritten erhalten, gesetzlich vorgeschrieben), kein verstecktes Wettbewerbsverbot, und ein praktikabler Gerichtsstand (bei deutschen Parteien deutsches Recht und deutscher Gerichtsstand)."
         }
       },
       {
         "@type": "Question",
-        "name": "Wie viel Kaution darf der Vermieter maximal verlangen?",
+        "name": "Wie lange darf ein NDA gelten?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB), wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist. Vereinbarungen über eine höhere Kaution sind insoweit unwirksam — der Mieter kann den Mehrbetrag zurückfordern."
+          "text": "Es gibt keine gesetzlich starre Höchstgrenze, aber die Bindungsdauer muss nach Treu und Glauben (§ 242 BGB) verhältnismäßig sein. Marktüblich sind 2-3 Jahre nach Beendigung des Vertragsverhältnisses, in einzelnen Branchen bis zu 5 Jahre. Unbefristete Geheimhaltungsklauseln werden von Gerichten regelmäßig als unverhältnismäßig angesehen und können nach AGB-Kontrolle (§§ 307 ff. BGB) unwirksam sein. Eine Ausnahme sind echte Geschäftsgeheimnisse i.S.d. § 2 Nr. 1 GeschGehG, deren Schutz so lange währt, wie sie geheim bleiben."
         }
       },
       {
         "@type": "Question",
-        "name": "Sind Schönheitsreparaturen wirklich unwirksam vereinbart?",
+        "name": "Was ist eine angemessene Vertragsstrafe in einem NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom 18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge: Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter."
+          "text": "Eine Vertragsstrafe muss in einem angemessenen Verhältnis zum geschützten Interesse und zum potenziellen Schaden stehen. Pauschale Mondbeträge wie '100.000 € pro Verstoß' sind häufig unwirksam. Nach § 343 BGB kann das Gericht eine unverhältnismäßig hohe Vertragsstrafe auf das angemessene Maß herabsetzen. Übliche Größenordnungen liegen zwischen 5.000 € und 50.000 € pro Einzelfall, abhängig vom Wert der Information und der Marktposition der Parteien."
         }
       },
       {
         "@type": "Question",
-        "name": "Was ist eine Indexmiete und wann ist sie zulässig?",
+        "name": "Was sind die fünf Standard-Carve-Outs in einem NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Eine Indexmiete (§ 557b BGB) koppelt die Miethöhe an den vom Statistischen Bundesamt ermittelten Verbraucherpreisindex. Sie ist nur zulässig, wenn sie ausdrücklich und schriftlich vereinbart wurde, der Bezugsindex klar benannt ist und die Miete jeweils mindestens ein Jahr unverändert bleibt. Bei wirksamer Indexmiete sind Mieterhöhungen wegen ortsüblicher Vergleichsmiete oder Modernisierung weitgehend ausgeschlossen. Eine intransparente Klausel ohne klaren Bezugsindex ist unwirksam."
+          "text": "In jedem professionellen NDA müssen fünf Ausnahmen von der Geheimhaltungspflicht stehen: (1) Informationen, die ohne Verschulden des Empfangenden öffentlich bekannt werden, (2) Informationen, die dem Empfangenden bereits vor Erhalt bekannt waren, (3) Informationen, die der Empfangende unabhängig und nachweislich selbst entwickelt, (4) Informationen, die der Empfangende rechtmäßig von Dritten ohne Geheimhaltungspflicht erhält, (5) Informationen, deren Offenlegung gesetzlich oder behördlich vorgeschrieben ist. Fehlt auch nur einer dieser Carve-Outs, kann das gesamte NDA unangemessen benachteiligend sein."
         }
       },
       {
         "@type": "Question",
-        "name": "Darf der Vermieter die Tierhaltung generell verbieten?",
+        "name": "Mutual NDA oder einseitiges NDA — was ist besser?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein. Nach BGH, 20.03.2013 – VIII ZR 168/12 ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt. Erlaubt ist die Haltung von Kleintieren wie Hamstern, Wellensittichen oder Zierfischen sogar ohne Erlaubnis. Bei Hunden und Katzen ist eine Einzelfallabwägung nötig: berechtigte Interessen des Vermieters, Mitmieter, Größe der Wohnung. Ein pauschales Verbot ist unzulässig."
+          "text": "Das hängt von der konkreten Situation ab. Wenn nur eine Partei vertrauliche Informationen weitergibt (z.B. ein Investor erhält Pitchdeck-Daten von einem Startup), ist ein einseitiges (one-way) NDA ausreichend. Wenn beide Parteien vertrauliche Informationen austauschen — was in den meisten B2B-Verhandlungen der Fall ist — sollte ein gegenseitiges (mutual) NDA verwendet werden. Wenn dir ein einseitiges NDA vorgelegt wird, obwohl du selbst sensible Informationen einbringen wirst, fordere die Umstellung auf mutual."
         }
       },
       {
         "@type": "Question",
-        "name": "Wie lange darf ein Kündigungsausschluss im Mietvertrag dauern?",
+        "name": "Darf in einem NDA ein Wettbewerbsverbot versteckt sein?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam — der Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen aber nachweisbar verhandelt sein."
+          "text": "Hier ist Vorsicht geboten. Klauseln, die dem Empfangenden über die Geheimhaltung hinaus die Tätigkeit in einem bestimmten Geschäftsfeld untersagen, sind häufig unwirksam — entweder wegen Sittenwidrigkeit (§ 138 BGB), wegen unangemessener Benachteiligung (§ 307 BGB) oder kartellrechtlich (§ 1 GWB). Echte Wettbewerbsverbote sind separat zu vereinbaren und nur unter engen Voraussetzungen zulässig. Ein versteckter Wettbewerbsausschluss in einem NDA wird von Gerichten regelmäßig kritisch beurteilt."
         }
       },
       {
         "@type": "Question",
-        "name": "Was kostet die KI-Prüfung eines Mietvertrags?",
+        "name": "Was kostet die KI-Prüfung eines NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht kostet typischerweise 100–250 € — die KI-Analyse spart dir gerade bei mehreren Verträgen oder Wohnungssuche erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für IT- und Wirtschaftsrecht kostet typischerweise 200–500 € pro NDA — die KI-Analyse spart dir gerade bei häufigen Verhandlungen erhebliche Kosten."
         }
       },
       {
         "@type": "Question",
-        "name": "Ersetzt die KI-Prüfung einen Anwalt für Mietrecht?",
+        "name": "Ersetzt die KI-Prüfung einen Fachanwalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage, Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete, Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte Faktengrundlage."
+          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe internationale NDAs (Cross-Border, US-Common-Law), bei laufenden Streitigkeiten über Geheimnisverletzung oder bei strategisch hochwertigen Geschäften (M&A, Investorenrunden) bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -147,27 +147,27 @@ const MietvertragPruefen: React.FC = () => {
   const howToSchema = {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    "name": "Mietvertrag mit KI prüfen lassen",
-    "description": "In drei Schritten von der hochgeladenen PDF-Datei zur fertigen Risikoanalyse deines Mietvertrags.",
+    "name": "NDA mit KI prüfen lassen",
+    "description": "In drei Schritten von der hochgeladenen PDF-Datei zur fertigen Risikoanalyse deiner Geheimhaltungsvereinbarung.",
     "totalTime": "PT1M",
     "step": [
       {
         "@type": "HowToStep",
         "position": 1,
-        "name": "Mietvertrag hochladen",
-        "text": "Lade deinen Mietvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt 256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland."
+        "name": "NDA hochladen",
+        "text": "Lade dein NDA als PDF oder DOCX hoch. Die Übertragung erfolgt 256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland."
       },
       {
         "@type": "HowToStep",
         "position": 2,
         "name": "Automatische KI-Analyse",
-        "text": "Die KI prüft jede Klausel gegen §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere zu Schönheitsreparaturen, Kaution, Indexmiete, Tierhaltung und Kündigungsausschluss."
+        "text": "Die KI prüft jede Klausel gegen das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle und § 343 BGB zur Vertragsstrafenherabsetzung. Geheimhaltungsdauer, Vertragsstrafe, Schutzbereich, Carve-Outs und versteckte Wettbewerbsverbote werden bewertet."
       },
       {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -175,24 +175,24 @@ const MietvertragPruefen: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
-        <meta name="description" content="Mietvertrag prüfen lassen mit KI: unwirksame Schönheitsreparaturklauseln, überhöhte Kaution & versteckte Fallen in 60 Sekunden erkennen. Auf Basis aktueller BGH-Rechtsprechung. DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
-        <meta name="keywords" content="Mietvertrag prüfen, Mietvertrag prüfen lassen, Mietvertrag KI prüfen, Mietvertrag online prüfen, Mietvertrag rechtssicher prüfen, Mietvertrag Klauseln prüfen, Mietvertrag Check, Mietvertrag analysieren, Schönheitsreparaturen prüfen, Mietkaution prüfen" />
+        <title>NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
+        <meta name="description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen, fehlende Carve-Outs, verstecktes Wettbewerbsverbot in 60 Sekunden erkennen. Auf Basis Geschäftsgeheimnisgesetz (GeschGehG). DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
+        <meta name="keywords" content="NDA prüfen, NDA prüfen lassen, NDA Check, Geheimhaltungsvereinbarung prüfen, NDA online prüfen, NDA KI prüfen, Non Disclosure Agreement prüfen, Geheimhaltungsvertrag prüfen, NDA analysieren, Mutual NDA prüfen" />
 
-        <link rel="canonical" href="https://www.contract-ai.de/mietvertrag-pruefen" />
+        <link rel="canonical" href="https://www.contract-ai.de/nda-pruefen" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta property="og:description" content="Mietvertrag prüfen lassen mit KI: unwirksame Klauseln & versteckte Fallen in 60 Sekunden erkennen. Basierend auf aktueller BGH-Rechtsprechung. DSGVO-konform." />
+        <meta property="og:title" content="NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta property="og:description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen & versteckte Klauseln in 60 Sekunden erkennen. Basierend auf GeschGehG. DSGVO-konform." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.contract-ai.de/mietvertrag-pruefen" />
+        <meta property="og:url" content="https://www.contract-ai.de/nda-pruefen" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Mietvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta name="twitter:description" content="Mietvertrag prüfen lassen mit KI: unwirksame Klauseln & versteckte Fallen in 60 Sekunden erkennen. Basierend auf aktueller BGH-Rechtsprechung." />
+        <meta name="twitter:title" content="NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
+        <meta name="twitter:description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen & versteckte Klauseln in 60 Sekunden erkennen. Basierend auf GeschGehG." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         <script type="application/ld+json">
@@ -222,23 +222,24 @@ const MietvertragPruefen: React.FC = () => {
             <div className={styles.heroContent}>
               <div className={styles.heroBadge}>
                 <span className={styles.heroBadgeDot}></span>
-                Für Mieter & Vermieter
+                Für Startups, Freelancer & Unternehmen
               </div>
 
               <h1 className={styles.heroTitle}>
-                Mietvertrag prüfen lassen<br/>
-                <span className={styles.heroTitleHighlight}>unwirksame Klauseln in 60 Sekunden erkennen</span>
+                NDA prüfen lassen<br/>
+                <span className={styles.heroTitleHighlight}>überzogene Klauseln in 60 Sekunden erkennen</span>
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Lass deinen Mietvertrag von einer KI prüfen, die unwirksame Schönheitsreparaturklauseln,
-                überhöhte Kautionsforderungen und versteckte Fallen auf Basis aktueller
-                BGH-Rechtsprechung sofort erkennt. DSGVO-konform, Server in Deutschland.
+                Lass deine Geheimhaltungsvereinbarung von einer KI prüfen, die überzogene
+                Vertragsstrafen, fehlende Carve-Outs und verstecktes Wettbewerbsverbot
+                auf Basis des Geschäftsgeheimnisgesetzes (GeschGehG) sofort erkennt.
+                DSGVO-konform, Server in Deutschland.
               </p>
 
               <div className={styles.heroCta}>
                 <Link to={target} className={styles.btnPrimary}>
-                  Mietvertrag jetzt prüfen
+                  NDA jetzt prüfen
                   <ArrowRight size={20} />
                 </Link>
                 <a href="#fallen" className={styles.btnSecondary}>
@@ -247,15 +248,15 @@ const MietvertragPruefen: React.FC = () => {
               </div>
             </div>
 
-            {/* Demo Window — Mietvertrag-spezifisch */}
+            {/* Demo Window — NDA-spezifisch */}
             <div className={styles.heroVisual}>
               <div className={`${styles.floatingElement} ${styles.floatingElement1}`}>
                 <div className={`${styles.floatingIcon} ${styles.floatingIconBlue}`}>
                   <Shield size={20} />
                 </div>
                 <div>
-                  <div className={styles.floatingText}>BGH-Rechtsprechung</div>
-                  <div className={styles.floatingSubtext}>aktuell geprüft</div>
+                  <div className={styles.floatingText}>GeschGehG-konform</div>
+                  <div className={styles.floatingSubtext}>geprüft</div>
                 </div>
               </div>
 
@@ -278,11 +279,11 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.demoContent}>
                   <div className={styles.demoScore}>
                     <div className={styles.demoScoreCircle}>
-                      <span className={styles.demoScoreValue}>62</span>
+                      <span className={styles.demoScoreValue}>54</span>
                     </div>
                     <div className={styles.demoScoreText}>
-                      <div className={styles.demoScoreLabel}>Vertrags-Score</div>
-                      <div className={styles.demoScoreTitle}>Mietvertrag.pdf</div>
+                      <div className={styles.demoScoreLabel}>NDA-Score</div>
+                      <div className={styles.demoScoreTitle}>NDA-Investor.pdf</div>
                     </div>
                   </div>
                   <div className={styles.demoFindings}>
@@ -290,21 +291,21 @@ const MietvertragPruefen: React.FC = () => {
                       <div className={`${styles.demoFindingIcon} ${styles.risk}`}>
                         <AlertTriangle size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Schönheitsreparaturen mit starrem Fristenplan</span>
+                      <span className={styles.demoFindingText}>Vertragsstrafe von 100.000 € unverhältnismäßig</span>
                       <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
                     </div>
                     <div className={styles.demoFinding}>
                       <div className={`${styles.demoFindingIcon} ${styles.warning}`}>
                         <AlertTriangle size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Kaution beträgt 4 Monatsmieten</span>
-                      <span className={`${styles.demoFindingBadge} ${styles.high}`}>Kritisch</span>
+                      <span className={styles.demoFindingText}>Carve-Out für unabhängige Entwicklung fehlt</span>
+                      <span className={`${styles.demoFindingBadge} ${styles.medium}`}>Mittel</span>
                     </div>
                     <div className={styles.demoFinding}>
                       <div className={`${styles.demoFindingIcon} ${styles.info}`}>
                         <FileText size={14} />
                       </div>
-                      <span className={styles.demoFindingText}>Indexmiete-Klausel transparent</span>
+                      <span className={styles.demoFindingText}>Geheimhaltungsdauer 3 Jahre — angemessen</span>
                       <span className={`${styles.demoFindingBadge} ${styles.low}`}>OK</span>
                     </div>
                   </div>
@@ -333,62 +334,43 @@ const MietvertragPruefen: React.FC = () => {
             </div>
             <div className={styles.trustBadge}>
               <Gavel size={18} />
-              Geprüft nach BGH-Rechtsprechung
+              Geprüft nach GeschGehG
             </div>
           </div>
         </div>
 
         {/* ==========================================
-            SECTION 3 — WAS WIR PRÜFEN (Quick-Glance)
+            SECTION 3 — WAS WIR PRÜFEN
             ========================================== */}
         <section className={styles.functionsSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Prüfumfang</span>
-              <h2 className={styles.sectionTitle}>Was die KI in deinem Mietvertrag prüft</h2>
+              <h2 className={styles.sectionTitle}>Was die KI in deinem NDA prüft</h2>
               <p className={styles.sectionSubtitle}>
-                Acht zentrale Klauseltypen werden gegen geltendes Mietrecht und aktuelle BGH-Urteile abgeglichen.
+                Acht zentrale Klauseltypen werden gegen das Geschäftsgeheimnisgesetz
+                und die marktüblichen Standards abgeglichen.
               </p>
             </div>
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
-                  <Home size={24} />
+                  <Lock size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Schönheitsreparaturen</h3>
+                <h3 className={styles.functionTitle}>Schutzumfang</h3>
                 <p className={styles.functionDesc}>
-                  Starre Fristenpläne, Renovierung bei unrenoviert übergebener Wohnung — beides oft unwirksam.
+                  Klare Definition der vertraulichen Informationen nach § 2 GeschGehG.
                 </p>
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
-                  <DollarSign size={24} />
+                  <AlertTriangle size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kautionshöhe</h3>
+                <h3 className={styles.functionTitle}>Vertragsstrafe</h3>
                 <p className={styles.functionDesc}>
-                  Maximal drei Nettokaltmieten nach § 551 BGB — Mehrforderungen sind nichtig.
-                </p>
-              </div>
-
-              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
-                  <Scale size={24} />
-                </div>
-                <h3 className={styles.functionTitle}>Quotenabgeltung</h3>
-                <p className={styles.functionDesc}>
-                  Anteilige Renovierungskosten je nach Wohndauer — nach BGH 2015 generell unwirksam.
-                </p>
-              </div>
-
-              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
-                  <Award size={24} />
-                </div>
-                <h3 className={styles.functionTitle}>Tierhaltungsklauseln</h3>
-                <p className={styles.functionDesc}>
-                  Generelle Verbote sind unwirksam — Einzelfallabwägung nach BGH-Rechtsprechung.
+                  Verhältnismäßigkeit nach § 343 BGB — pauschale Mondbeträge sind oft unwirksam.
                 </p>
               </div>
 
@@ -396,19 +378,39 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Clock size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kündigungsausschluss</h3>
+                <h3 className={styles.functionTitle}>Geheimhaltungsdauer</h3>
                 <p className={styles.functionDesc}>
-                  Maximal vier Jahre in Formularverträgen — längere Bindungen unwirksam.
+                  Marktüblich 2-3 Jahre, max. 5 — unbefristete Klauseln häufig unwirksam.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
+                  <CheckCircle size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Carve-Outs</h3>
+                <p className={styles.functionDesc}>
+                  Die fünf Standard-Ausnahmen (öffentlich bekannt, vorher bekannt etc.).
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
+                  <Users size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Mutual vs einseitig</h3>
+                <p className={styles.functionDesc}>
+                  Beidseitige Geheimhaltung bei zwei-seitigem Informationsaustausch.
                 </p>
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)', color: '#f97316' }}>
-                  <BarChart3 size={24} />
+                  <Scale size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Indexmiete & Mieterhöhung</h3>
+                <h3 className={styles.functionTitle}>Verstecktes Wettbewerbsverbot</h3>
                 <p className={styles.functionDesc}>
-                  Transparenz nach § 557b BGB, Bezugsindex klar definiert, Jahresfrist eingehalten.
+                  Knebelnde Klauseln nach § 138 BGB / § 1 GWB werden erkannt.
                 </p>
               </div>
 
@@ -416,9 +418,9 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfeff 0%, #a5f3fc 100%)', color: '#06b6d4' }}>
                   <BookOpen size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kleinreparaturen</h3>
+                <h3 className={styles.functionTitle}>Gerichtsstand & Recht</h3>
                 <p className={styles.functionDesc}>
-                  Höchstgrenze pro Reparatur und pro Jahr — überzogene Klauseln sind unwirksam.
+                  Bei deutschen Parteien sollten deutsches Recht und Gerichtsstand vereinbart sein.
                 </p>
               </div>
 
@@ -426,9 +428,9 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fdf2f8 0%, #fbcfe8 100%)', color: '#ec4899' }}>
                   <Languages size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Betriebskostenabrechnung</h3>
+                <h3 className={styles.functionTitle}>Rückgabe & Löschung</h3>
                 <p className={styles.functionDesc}>
-                  Nur umlagefähige Kosten nach BetrKV, klare Verteilerschlüssel, Abrechnungsfristen.
+                  Pflichten zur Rückgabe oder Vernichtung von Unterlagen nach Beendigung.
                 </p>
               </div>
             </div>
@@ -443,25 +445,26 @@ const MietvertragPruefen: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Über 70 % der Mietverträge enthalten unwirksame Klauseln</h2>
+                <h2 className={styles.sectionTitleLeft}>Über 60 % der NDAs benachteiligen den Empfangenden unangemessen</h2>
                 <p className={styles.problemText}>
-                  Die meisten Mietverträge in Deutschland sind Formularverträge — und genau die unterliegen
-                  einer strengen AGB-Kontrolle nach §§ 305 ff. BGB. Der Bundesgerichtshof hat in den
-                  letzten Jahren in einer Serie von Grundsatzurteilen ganze Klauselgruppen für unwirksam
-                  erklärt. Das Tückische: Mieter zahlen oft jahrelang für Renovierungen, akzeptieren
-                  überhöhte Kautionen oder verzichten auf Ansprüche — ohne zu wissen, dass die zugrunde
-                  liegende Klausel unwirksam ist. Bei Auszug summieren sich die ungerechtfertigten Kosten
-                  schnell auf vier- oder fünfstellige Beträge.
+                  NDAs werden in den meisten B2B-Verhandlungen ungelesen unterschrieben. Was harmlos
+                  als „Standard-Geheimhaltungsvereinbarung" daherkommt, enthält in über sechs von zehn
+                  Fällen Klauseln, die einer rechtlichen Überprüfung nicht standhalten oder dich
+                  unverhältnismäßig binden. Vertragsstrafen in fünfstelliger Höhe ohne klaren Bezug
+                  zum Schaden, unbefristete Geheimhaltungsdauern, fehlende Carve-Outs für unabhängig
+                  entwickeltes Wissen — und manchmal sogar versteckte Wettbewerbsverbote, die dich
+                  jahrelang aus deinem Markt drängen können. Das Tückische: Einmal unterschrieben,
+                  ist die Verhandlungsmacht weg.
                 </p>
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>70%</div>
-                    <div className={styles.problemStatLabel}>der Mietverträge enthalten mindestens eine unwirksame Klausel</div>
+                    <div className={styles.problemStatValue}>60%</div>
+                    <div className={styles.problemStatLabel}>der NDAs enthalten unverhältnismäßige Klauseln</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>2.400 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden durch unberechtigte Renovierungs- und Kautionsansprüche</div>
+                    <div className={styles.problemStatValue}>15.000 €</div>
+                    <div className={styles.problemStatLabel}>durchschnittlicher Streitwert bei NDA-Auseinandersetzungen</div>
                   </div>
                 </div>
               </div>
@@ -473,8 +476,8 @@ const MietvertragPruefen: React.FC = () => {
                       <FileText size={24} />
                     </div>
                     <div>
-                      <div className={styles.problemDocTitle}>Mietvertrag.pdf</div>
-                      <div className={styles.problemDocSubtitle}>22 Seiten • Hochgeladen heute</div>
+                      <div className={styles.problemDocTitle}>NDA-Investor.pdf</div>
+                      <div className={styles.problemDocSubtitle}>8 Seiten • Hochgeladen heute</div>
                     </div>
                   </div>
                   <div className={styles.problemDocLines}>
@@ -484,7 +487,7 @@ const MietvertragPruefen: React.FC = () => {
                   </div>
                   <div className={styles.problemDocHighlight}>
                     <div className={styles.problemDocHighlightText}>
-                      "...der Mieter verpflichtet sich, die Wohnung bei Auszug vollständig zu renovieren..."
+                      "...bei jedem Verstoß gegen die Geheimhaltungspflicht eine Vertragsstrafe in Höhe von 100.000 €..."
                     </div>
                   </div>
                 </div>
@@ -493,14 +496,14 @@ const MietvertragPruefen: React.FC = () => {
                   <div className={`${styles.warningIcon} ${styles.red}`}>
                     <AlertTriangle size={16} />
                   </div>
-                  Unwirksame Klausel
+                  Unverhältnismäßig
                 </div>
 
                 <div className={`${styles.problemWarning} ${styles.problemWarning2}`}>
                   <div className={`${styles.warningIcon} ${styles.orange}`}>
                     <Clock size={16} />
                   </div>
-                  4 Monatsmieten Kaution
+                  Unbefristete Bindung
                 </div>
               </div>
             </div>
@@ -522,8 +525,8 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTitle}>Anwaltsberatung</div>
                     <div className={styles.comparisonDesc}>
-                      100–250 € pro Vertrag, Terminvereinbarung, mehrere Werktage Wartezeit
-                      bis zum Erstgespräch.
+                      200–500 € pro NDA, Terminvereinbarung, mehrere Werktage Wartezeit —
+                      während die Verhandlung weiterläuft.
                     </div>
                     <div className={styles.comparisonTime}>
                       <Clock size={16} />
@@ -542,8 +545,8 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTitle}>KI-Analyse</div>
                     <div className={styles.comparisonDesc}>
-                      Sofortige Risiko-Erkennung mit Paragraphen-Verweis, BGH-Urteilen
-                      und konkreten Handlungsempfehlungen.
+                      Sofortige Risiko-Erkennung mit Paragraphen-Verweis, GeschGehG-Konformitätscheck
+                      und konkreten Verhandlungspunkten.
                     </div>
                     <div className={styles.comparisonTime}>
                       <Zap size={16} />
@@ -555,12 +558,12 @@ const MietvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Mietvertragsprüfung im Sekundentakt — auf juristischer Basis</h2>
+                <h2 className={styles.sectionTitleLeft}>NDA-Prüfung im Sekundentakt — direkt vor der Verhandlung</h2>
                 <p className={styles.solutionText}>
-                  Die KI von Contract AI kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz
-                  (MietAnpG), die Betriebskostenverordnung (BetrKV) und die zentralen
-                  BGH-Grundsatzurteile zum Mietrecht — und wendet sie sofort auf jede Klausel
-                  deines Vertrags an.
+                  Die KI von Contract AI kennt das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff.
+                  BGB zur AGB-Kontrolle, § 343 BGB zur Vertragsstrafenherabsetzung und die marktüblichen
+                  Standards für professionelle NDAs. Sie wendet sie sofort auf jede Klausel deiner
+                  Geheimhaltungsvereinbarung an.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -570,7 +573,7 @@ const MietvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Klausel-für-Klausel-Bewertung</h4>
-                      <p>Jede Klausel wird gegen geltendes Mietrecht geprüft, mit Paragraphen-Verweis</p>
+                      <p>Jede Klausel wird gegen GeschGehG und BGB-AGB-Kontrolle geprüft</p>
                     </div>
                   </div>
 
@@ -579,8 +582,8 @@ const MietvertragPruefen: React.FC = () => {
                       <Gavel size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Aktuelle BGH-Rechtsprechung</h4>
-                      <p>Schönheitsreparaturen, Quotenabgeltung, Tierhaltung, Kündigungsausschluss</p>
+                      <h4>Verhandlungs-Hebel erkennen</h4>
+                      <p>Wo du nachverhandeln kannst — und wo du standfest bleiben solltest</p>
                     </div>
                   </div>
 
@@ -589,8 +592,8 @@ const MietvertragPruefen: React.FC = () => {
                       <ThumbsUp size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Verständliche Empfehlung</h4>
-                      <p>Klartext statt Juristendeutsch, mit konkretem Handlungsvorschlag</p>
+                      <h4>Klartext für Geschäftsleute</h4>
+                      <p>Keine juristische Vorbildung nötig — die Empfehlungen sind direkt umsetzbar</p>
                     </div>
                   </div>
                 </div>
@@ -606,133 +609,132 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Die häufigsten Fallen</span>
-              <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im deutschen Mietvertrag</h2>
+              <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen in einem NDA</h2>
               <p className={styles.sectionSubtitle}>
-                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam — und genau hier
-                schaut unsere KI besonders genau hin. Jede Falle mit Original-Wortlaut, juristischer
-                Einordnung und Verweis auf das einschlägige BGH-Urteil.
+                Diese acht Klauseltypen sind in der Praxis am häufigsten unverhältnismäßig oder
+                rechtlich angreifbar — und genau hier schaut unsere KI besonders genau hin.
               </p>
             </div>
 
             <div className={styles.risksGrid}>
 
-              {/* FALLE 1: Schönheitsreparaturen mit starrem Fristenplan */}
+              {/* FALLE 1: Unbegrenzte Geheimhaltungsdauer */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>1. Starrer Fristenplan für Schönheitsreparaturen</h4>
+                  <h4 className={styles.riskTitle}>1. Unbegrenzte Geheimhaltungsdauer</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter ist verpflichtet, Schönheitsreparaturen in folgenden Zeitabständen auszuführen: Küchen, Bäder und Duschen alle drei Jahre, Wohn- und Schlafräume alle fünf Jahre."
+                  "Die Geheimhaltungsverpflichtung gilt zeitlich unbegrenzt fort."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 23.06.2004 – VIII ZR 361/03</strong> sind starre Fristen für Schönheitsreparaturen ohne Berücksichtigung des tatsächlichen Zustands der Wohnung unwirksam. Folge: Die gesamte Schönheitsreparaturklausel fällt weg — die Renovierungspflicht trägt der Vermieter (§ 535 Abs. 1 S. 2 BGB).</span>
+                  <span>Eine zeitlich unbegrenzte Geheimhaltungspflicht in einem Formular-NDA wird von Gerichten regelmäßig als unangemessene Benachteiligung nach <strong>§ 307 Abs. 1 BGB</strong> bewertet und ist häufig unwirksam. Marktüblich sind <strong>2-3 Jahre</strong> nach Ende der Geschäftsbeziehung, in Ausnahmefällen bis 5 Jahre. Echte Geschäftsgeheimnisse i.S.d. § 2 Nr. 1 GeschGehG sind ohnehin auch ohne NDA so lange geschützt, wie sie geheim bleiben.</span>
                 </div>
               </div>
 
-              {/* FALLE 2: Renovierung bei unrenoviert übergebener Wohnung */}
+              {/* FALLE 2: Überzogene Vertragsstrafe */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>2. Renovierungspflicht bei unrenoviert übergebener Wohnung</h4>
+                  <h4 className={styles.riskTitle}>2. Überzogene Vertragsstrafe</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter übernimmt die Schönheitsreparaturen während der Mietzeit auf eigene Kosten."
+                  "Bei jedem Verstoß gegen die Geheimhaltungspflicht zahlt der Empfangende eine Vertragsstrafe in Höhe von 100.000 €."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>: Eine Klausel zur Vornahme von Schönheitsreparaturen ist unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgte. Der Mieter muss dann nicht renovieren — auch nicht beim Auszug.</span>
+                  <span>Pauschale Mondbeträge ohne Bezug zum konkreten Schaden sind nach <strong>§ 343 BGB</strong> regelmäßig unwirksam — das Gericht kann unverhältnismäßig hohe Vertragsstrafen herabsetzen. Marktüblich liegen NDA-Vertragsstrafen bei 5.000–50.000 € pro Einzelfall, gestaffelt nach Schwere und Wert der Information. Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB.</span>
                 </div>
               </div>
 
-              {/* FALLE 3: Quotenabgeltungsklausel */}
+              {/* FALLE 3: Zu weiter Schutzbereich */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>3. Quotenabgeltungsklausel</h4>
+                  <h4 className={styles.riskTitle}>3. Zu weit gefasster Schutzbereich</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Endet das Mietverhältnis vor Fälligkeit der Schönheitsreparaturen, zahlt der Mieter einen anteiligen Geldbetrag entsprechend der Wohndauer."
+                  "Sämtliche Informationen jeglicher Art, die der Empfangende erhält, gelten als vertraulich."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Mit <strong>BGH, 18.03.2015 – VIII ZR 242/13</strong> hat der BGH Quotenabgeltungsklauseln <strong>generell für unwirksam</strong> erklärt — sie verlangen vom Mieter eine prognostische Bewertung des künftigen Renovierungsbedarfs, was unzumutbar intransparent ist. Geforderte Quotenzahlungen können vollständig zurückgefordert werden.</span>
+                  <span>Pauschale Klauseln, die <em>alle</em> Informationen für vertraulich erklären, sind häufig zu unbestimmt. Nach <strong>§ 2 Nr. 1 GeschGehG</strong> ist ein Geschäftsgeheimnis nur eine Information, die nicht allgemein bekannt oder ohne Weiteres zugänglich ist, einen wirtschaftlichen Wert hat und durch angemessene Geheimhaltungsmaßnahmen geschützt wird. Eine NDA-Definition muss diesem Maßstab folgen — sonst läuft der vermeintliche Schutz ins Leere.</span>
                 </div>
               </div>
 
-              {/* FALLE 4: Kaution über 3 Monatsmieten */}
+              {/* FALLE 4: Fehlende Carve-Outs */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>4. Kaution über drei Monatsmieten</h4>
+                  <h4 className={styles.riskTitle}>4. Fehlende Standard-Carve-Outs</h4>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  "Der Mieter leistet zur Sicherheit eine Kaution in Höhe von vier Monatsmieten."
+                  "Der Empfangende verpflichtet sich zur uneingeschränkten Geheimhaltung aller erhaltenen Informationen." (Ohne Ausnahmen-Klausel)
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Kaution höchstens das <strong>Dreifache der monatlichen Nettokaltmiete</strong> (ohne Betriebskosten) betragen. Mehrforderungen sind insoweit nichtig — der Mieter kann den überschüssigen Betrag jederzeit zurückfordern, auch noch Jahre nach Vertragsschluss. Außerdem darf die Kaution in drei Monatsraten gezahlt werden (§ 551 Abs. 2 BGB).</span>
+                  <span>Ein professionelles NDA enthält <strong>fünf Standard-Ausnahmen</strong>: (1) öffentlich bekannt, (2) bereits vor Erhalt bekannt, (3) unabhängig entwickelt, (4) rechtmäßig von Dritten erhalten, (5) gesetzlich oder behördlich zur Offenlegung verpflichtet. Fehlen diese Carve-Outs, ist die Klausel typischerweise nach <strong>§ 307 BGB</strong> unangemessen benachteiligend — und das gesamte NDA verlierte ggf. seine Wirksamkeit.</span>
                 </div>
               </div>
 
-              {/* FALLE 5: Kündigungsausschluss länger als 4 Jahre */}
+              {/* FALLE 5: Einseitige Geheimhaltung trotz mutual exchange */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>5. Überlanger Kündigungsausschluss</h4>
+                  <h4 className={styles.riskTitle}>5. Einseitige Geheimhaltung trotz beidseitigem Austausch</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Beide Parteien verzichten für einen Zeitraum von fünf Jahren ab Vertragsbeginn auf das Recht zur ordentlichen Kündigung."
+                  "Der Empfangende ist zur Geheimhaltung verpflichtet." (Nur eine Partei genannt, obwohl beide sensibel Informationen austauschen)
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.04.2005 – VIII ZR 27/04</strong> darf ein beidseitiger Kündigungsausschluss in Formularmietverträgen maximal <strong>vier Jahre</strong> ab Vertragsschluss dauern. Längere Bindungen sind insgesamt unwirksam — der Mieter kann jederzeit mit der gesetzlichen Frist von drei Monaten kündigen.</span>
+                  <span>Wenn beide Parteien vertrauliche Informationen einbringen — typisch in Joint Ventures, M&A-Verhandlungen oder Beratungsmandaten — sollte ein <strong>Mutual NDA</strong> vereinbart werden. Eine einseitige Klausel ist Verhandlungssache und kein Naturgesetz: Verlange die Umstellung auf gegenseitige Geheimhaltung. Andernfalls bist du gebunden, deine Gegenseite aber frei.</span>
                 </div>
               </div>
 
-              {/* FALLE 6: Indexmiete intransparent */}
-              <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
+              {/* FALLE 6: Verstecktes Wettbewerbsverbot */}
+              <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>6. Intransparente Indexmiete</h4>
-                  <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
+                  <h4 className={styles.riskTitle}>6. Verstecktes Wettbewerbsverbot</h4>
+                  <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
-                <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Die Miete erhöht sich entsprechend der jährlichen Inflationsrate."
+                <div className={`${styles.riskIssue} ${styles.critical}`}>
+                  "Der Empfangende verpflichtet sich, für 5 Jahre nach Vertragsende keine Geschäftstätigkeit im Bereich [...] auszuüben."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Eine Indexmiete nach <strong>§ 557b BGB</strong> ist nur wirksam, wenn der konkrete Bezugsindex (Verbraucherpreisindex des Statistischen Bundesamtes) ausdrücklich genannt wird, die Miete mindestens ein Jahr unverändert bleibt und die Erhöhung in Textform angekündigt wird. Vage Formulierungen wie "Inflationsrate" sind unwirksam — Mieterhöhungen können angefochten werden.</span>
+                  <span>Wettbewerbsverbote, die als Geheimhaltungspflicht getarnt sind, werden von Gerichten kritisch geprüft. Sie können wegen Sittenwidrigkeit (<strong>§ 138 BGB</strong>), unangemessener Benachteiligung (<strong>§ 307 BGB</strong>) oder kartellrechtlich (<strong>§ 1 GWB</strong>) unwirksam sein. Echte Wettbewerbsverbote sind separat zu vereinbaren und nur unter engen Voraussetzungen zulässig.</span>
                 </div>
               </div>
 
-              {/* FALLE 7: Generelles Tierhaltungsverbot */}
+              {/* FALLE 7: Ungünstiger Gerichtsstand & Recht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>7. Generelles Tierhaltungsverbot</h4>
+                  <h4 className={styles.riskTitle}>7. Ungünstiger Gerichtsstand und anwendbares Recht</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Die Haltung von Haustieren jeglicher Art ist im Mietobjekt untersagt."
+                  "Anwendbares Recht: Recht des Staates Delaware (USA). Gerichtsstand: New York."
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 20.03.2013 – VIII ZR 168/12</strong> ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt (§ 307 Abs. 1 BGB). Kleintiere wie Hamster oder Ziervögel sind ohnehin erlaubt; bei Hund und Katze ist eine Einzelfallabwägung nötig — kein pauschales Verbot.</span>
+                  <span>Wenn beide Vertragsparteien deutsche Unternehmen oder Privatpersonen sind, sollten <strong>deutsches Recht und ein deutscher Gerichtsstand</strong> vereinbart werden. Bei Verbrauchergeschäften ist die Wahl eines ausländischen Gerichtsstands nach <strong>§ 38 ZPO</strong> meist sogar unzulässig. Ein Verfahren in den USA kann je nach Streitwert sechsstellige Anwaltskosten verursachen — auch bei Recht-Bekommen.</span>
                 </div>
               </div>
 
-              {/* FALLE 8: Kleinreparaturen überhöht */}
+              {/* FALLE 8: Fehlende Rückgabe-/Löschpflicht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>8. Überzogene Kleinreparaturklausel</h4>
+                  <h4 className={styles.riskTitle}>8. Fehlende Rückgabe- und Löschpflicht</h4>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "Der Mieter trägt die Kosten kleinerer Reparaturen bis 200 € pro Fall, maximal 1.500 € pro Jahr."
+                  "Bei Beendigung des Vertragsverhältnisses endet die Geheimhaltungspflicht." (Keine Aussage zu Rückgabe/Löschung)
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.05.1992 – VIII ZR 129/91</strong> und nachfolgender Rechtsprechung gilt: Pro Einzelreparatur sind höchstens etwa <strong>100 €</strong> zumutbar, das Jahresvolumen darf <strong>8 % der Jahresnettokaltmiete</strong> nicht überschreiten. Höhere Klauseln sind insgesamt unwirksam — der Vermieter trägt dann alle Reparaturkosten nach § 535 Abs. 1 S. 2 BGB.</span>
+                  <span>Ein professionelles NDA regelt, was nach Vertragsende mit den vertraulichen Unterlagen passiert: vollständige <strong>Rückgabe oder Vernichtung</strong> aller Dokumente, einschließlich digitaler Kopien, Backups und E-Mail-Archive — innerhalb einer angemessenen Frist (üblich 14-30 Tage). Mit DSGVO-Bezug auch dokumentierte Löschbestätigung. Fehlt diese Pflicht, bleiben deine sensiblen Daten dauerhaft beim Empfangenden.</span>
                 </div>
               </div>
 
@@ -747,9 +749,9 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen NDA-Analyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — ohne Termin, ohne Wartezeit.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report — bevor du unterschreibst.
               </p>
             </div>
 
@@ -760,9 +762,9 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
                   <div className={styles.processNumber}>1</div>
                   <div className={styles.processContent}>
-                    <h3 className={styles.processTitle}>Mietvertrag hochladen</h3>
+                    <h3 className={styles.processTitle}>NDA hochladen</h3>
                     <p className={styles.processDesc}>
-                      Lade deinen Mietvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt
+                      Lade dein NDA als PDF oder DOCX hoch. Die Übertragung erfolgt
                       256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland.
                     </p>
                   </div>
@@ -773,9 +775,10 @@ const MietvertragPruefen: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Automatische KI-Analyse</h3>
                     <p className={styles.processDesc}>
-                      Die KI prüft jede Klausel gegen §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz
-                      und aktuelle BGH-Rechtsprechung — insbesondere zu Schönheitsreparaturen,
-                      Kaution, Indexmiete, Tierhaltung und Kündigungsausschluss.
+                      Die KI prüft jede Klausel gegen das Geschäftsgeheimnisgesetz (GeschGehG),
+                      §§ 305 ff. BGB zur AGB-Kontrolle und § 343 BGB. Geheimhaltungsdauer,
+                      Vertragsstrafe, Schutzbereich, Carve-Outs und versteckte Wettbewerbsverbote
+                      werden bewertet.
                     </p>
                   </div>
                 </div>
@@ -786,7 +789,7 @@ const MietvertragPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter
-                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen
+                      Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen
                       — als interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
@@ -803,7 +806,7 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Deine Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Contract AI für deinen Mietvertrag?</h2>
+              <h2 className={styles.sectionTitle}>Warum Contract AI für dein NDA?</h2>
               <p className={styles.sectionSubtitle}>
                 Vier Gründe, warum die KI-Prüfung mehr ist als ein Online-Tool.
               </p>
@@ -814,10 +817,10 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Gavel size={28} />
                 </div>
-                <h3 className={styles.whyTitle}>Aktuelle BGH-Rechtsprechung</h3>
+                <h3 className={styles.whyTitle}>GeschGehG & BGB-AGB-Kontrolle</h3>
                 <p className={styles.whyDesc}>
-                  Die zentralen Urteile zu Schönheitsreparaturen, Quotenabgeltung, Kaution und
-                  Tierhaltung sind in der Analyse berücksichtigt — nicht erst seit gestern.
+                  Geschäftsgeheimnisgesetz, §§ 305 ff. BGB und § 343 BGB werden auf jede
+                  Klausel angewendet — automatisch.
                 </p>
               </div>
 
@@ -827,8 +830,8 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO & Server in Deutschland</h3>
                 <p className={styles.whyDesc}>
-                  Dein Mietvertrag enthält sensible Daten. Verarbeitung ausschließlich auf
-                  EU-Servern, keine Weitergabe an Dritte, kein Modell-Training mit deinen Daten.
+                  Dein NDA enthält oft sensible Geschäftsdaten. Verarbeitung ausschließlich auf
+                  EU-Servern, keine Weitergabe, kein Modell-Training mit deinen Daten.
                 </p>
               </div>
 
@@ -836,10 +839,10 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <BookOpen size={28} />
                 </div>
-                <h3 className={styles.whyTitle}>Klartext statt Juristendeutsch</h3>
+                <h3 className={styles.whyTitle}>Verhandlungs-Hebel statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
-                  Jede Erkenntnis kommt mit verständlicher Erklärung und konkreter
-                  Handlungsempfehlung — auch ohne Jura-Studium sofort umsetzbar.
+                  Du bekommst nicht nur „Klausel X ist problematisch", sondern „Verhandle Punkt Y
+                  zu Punkt Z" — direkt umsetzbar.
                 </p>
               </div>
 
@@ -847,10 +850,10 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fefce8 0%, #fef08a 100%)', color: '#eab308' }}>
                   <Zap size={28} />
                 </div>
-                <h3 className={styles.whyTitle}>Sofort verfügbar, 24/7</h3>
+                <h3 className={styles.whyTitle}>Schnell genug für die Verhandlung</h3>
                 <p className={styles.whyDesc}>
-                  Keine Termine, keine Wartezeiten. Den Mietvertrag prüfen, wenn er bei dir
-                  auf dem Tisch liegt — auch sonntagabends vor der Wohnungsbesichtigung.
+                  Wenn das NDA mittags ankommt und nachmittags unterschrieben werden soll, hast
+                  du in 60 Sekunden die fundierte Antwort.
                 </p>
               </div>
             </div>
@@ -864,100 +867,98 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ratgeber</span>
-              <h2 className={styles.sectionTitle}>Worauf du bei der Prüfung deines Mietvertrags wirklich achten solltest</h2>
+              <h2 className={styles.sectionTitle}>Worauf du bei der Prüfung deines NDA wirklich achten solltest</h2>
             </div>
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein Mietvertrag begleitet dich oft jahrelang — und entscheidet darüber, ob du am
-                Ende der Mietzeit drei Monatsmieten zurückbekommst oder vierstellige
-                Renovierungskosten draufzahlst. Der Bundesgerichtshof hat in den letzten
-                zwei Jahrzehnten in einer Serie von Grundsatzurteilen ganze Klauselgruppen für
-                unwirksam erklärt. Wer seinen Mietvertrag prüfen lässt, schützt sich vor genau
-                diesen Stolperfallen — und kennt seine echten Rechte.
+                Ein NDA — Non-Disclosure Agreement, auf Deutsch Geheimhaltungsvereinbarung — ist
+                der Standardvertrag, bevor in B2B-Verhandlungen sensible Informationen ausgetauscht
+                werden. Was als „Formalität" daherkommt, kann dich jahrelang binden, in
+                fünfstellige Vertragsstrafen treiben oder dir komplette Geschäftsfelder verschließen.
+                Seit Inkrafttreten des Geschäftsgeheimnisgesetzes (GeschGehG) im April 2019 sind
+                die rechtlichen Anforderungen gestiegen — und gleichzeitig sind viele am Markt
+                kursierende NDA-Vorlagen nicht mehr auf dem aktuellen Stand.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Schönheitsreparaturen — der Klassiker unter den unwirksamen Klauseln
+                Was nach GeschGehG ein Geschäftsgeheimnis ist — und was nicht
               </h3>
               <p className={styles.problemText}>
-                Nach <strong>§ 535 Abs. 1 S. 2 BGB</strong> trägt eigentlich der Vermieter die
-                Erhaltungspflicht — er kann sie aber wirksam auf den Mieter übertragen, wenn
-                bestimmte Voraussetzungen erfüllt sind. Die Schwelle hat der BGH in mehreren
-                Urteilen extrem hoch gelegt. Unwirksam sind unter anderem starre Fristenpläne
-                ohne Berücksichtigung des Zustands (BGH, 23.06.2004 – VIII ZR 361/03),
-                Renovierungspflichten bei unrenoviert übergebener Wohnung ohne angemessenen
-                Ausgleich (das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>)
-                und Quotenabgeltungsklauseln (BGH, 18.03.2015 – VIII ZR 242/13). Wenn auch nur
-                eine dieser Klauseln in deinem Vertrag steht, fällt häufig die gesamte
-                Schönheitsreparatur-Regelung weg. Mehr dazu im{' '}
-                <Link to="/blog/mietvertrag-unwirksame-klauseln">Ratgeber zu unwirksamen Mietvertragsklauseln</Link>.
+                Nach <strong>§ 2 Nr. 1 GeschGehG</strong> ist ein Geschäftsgeheimnis eine Information,
+                die (a) weder allgemein bekannt noch ohne Weiteres zugänglich ist, (b) einen
+                wirtschaftlichen Wert besitzt und (c) durch <em>angemessene Geheimhaltungsmaßnahmen</em>
+                geschützt wird. Genau dieser dritte Punkt ist neu und entscheidend: Wenn du selbst
+                deine Informationen nicht aktiv schützt (Zugriffskontrollen, Verschlüsselung,
+                Awareness der Mitarbeiter), genießt du auch über ein NDA hinaus keinen rechtlichen
+                Schutz. Eine NDA-Klausel, die pauschal „alle Informationen jeglicher Art" für
+                vertraulich erklärt, läuft am Maßstab des Gesetzes vorbei und ist in vielen
+                Streitfällen wertlos.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Kaution — drei Monatsmieten sind die Obergrenze
+                Geheimhaltungsdauer — kürzer ist meistens besser
               </h3>
               <p className={styles.problemText}>
-                Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Mietkaution höchstens das
-                Dreifache der monatlichen <em>Nettokaltmiete</em> (also ohne Betriebskosten) betragen.
-                Vereinbarungen über mehr sind insoweit nichtig — du kannst den Mehrbetrag jederzeit
-                zurückfordern. Außerdem: Die Kaution darf in drei gleichen Monatsraten gezahlt werden
-                (§ 551 Abs. 2 BGB), die erste fällig zu Mietbeginn. Der Vermieter muss die Kaution
-                getrennt von seinem Vermögen anlegen (Treuhandprinzip) und zum üblichen Zinssatz für
-                Spareinlagen mit dreimonatiger Kündigungsfrist verzinsen — die Zinsen stehen dem
-                Mieter zu.
+                Marktüblich sind NDA-Geheimhaltungsdauern von <strong>2 bis 3 Jahren</strong> nach
+                Beendigung der Geschäftsbeziehung. In bestimmten Branchen (Pharma, Defense,
+                strategische Forschung) sind 5 Jahre vertretbar. Unbefristete Klauseln sind in
+                Formularverträgen nach AGB-Kontrolle (§ 307 Abs. 1 BGB) regelmäßig unwirksam.
+                Wichtig zu wissen: Echte Geschäftsgeheimnisse sind nach GeschGehG ohnehin so lange
+                geschützt, wie sie geheim bleiben — du brauchst dafür keine ewige NDA-Klausel.
+                Eine kürzere Frist gibt dir und der Gegenseite Planungssicherheit, ohne den Schutz
+                wirklich zu schwächen.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Indexmiete und Mieterhöhung — strenge Formvorschriften
+                Vertragsstrafe — angemessen und gestaffelt
               </h3>
               <p className={styles.problemText}>
-                Eine Indexmiete (<strong>§ 557b BGB</strong>) koppelt die Miethöhe an den vom
-                Statistischen Bundesamt veröffentlichten Verbraucherpreisindex. Sie ist nur
-                wirksam, wenn der konkrete Bezugsindex ausdrücklich genannt ist, zwischen zwei
-                Erhöhungen mindestens ein Jahr liegt und die Erhöhung in Textform angekündigt
-                wird. Bei wirksam vereinbarter Indexmiete sind Mieterhöhungen wegen ortsüblicher
-                Vergleichsmiete (§ 558 BGB) oder Modernisierung (§ 559 BGB) weitgehend
-                ausgeschlossen. Vage Formulierungen wie „nach Inflationsrate" sind dagegen
-                intransparent und damit unwirksam.
+                Pauschale Vertragsstrafen wie „100.000 € pro Verstoß" sind häufig unverhältnismäßig
+                und können nach <strong>§ 343 BGB</strong> vom Gericht herabgesetzt werden.
+                Angemessen sind Beträge zwischen 5.000 € und 50.000 € pro Einzelfall, die in einem
+                erkennbaren Verhältnis zum potenziellen Schaden stehen. Eine professionelle
+                Vertragsstrafenklausel staffelt nach Schwere des Verstoßes und enthält ein
+                ausdrückliches Recht auf Geltendmachung weitergehender Schadensersatzansprüche.
+                Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB —
+                ein gestalterischer Spielraum für Mondbeträge besteht praktisch nicht.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Tierhaltung, Kündigungsausschluss und Kleinreparaturen
+                Die fünf Standard-Carve-Outs — pflichtlektüre für jedes NDA
               </h3>
               <p className={styles.problemText}>
-                Drei weitere Klausel-Typen sind besonders fehleranfällig: Erstens
-                <strong> generelle Tierhaltungsverbote</strong> — sie sind nach BGH, 20.03.2013 –
-                VIII ZR 168/12 unwirksam; Kleintiere sind ohnehin erlaubt, bei Hund und Katze ist
-                eine Einzelfallabwägung nötig. Zweitens <strong>überlange Kündigungsausschlüsse</strong> —
-                in Formularverträgen darf der beidseitige Kündigungsverzicht maximal vier Jahre
-                dauern (BGH, 06.04.2005 – VIII ZR 27/04). Drittens <strong>Kleinreparaturklauseln</strong> —
-                pro Reparatur sind etwa 100 € zumutbar, das Jahresvolumen darf 8 % der
-                Jahresnettokaltmiete nicht übersteigen; höhere Klauseln fallen komplett weg.
+                Jedes professionelle NDA enthält fünf Ausnahmen, in denen die Geheimhaltungspflicht
+                <em>nicht</em> greift: (1) Informationen, die ohne Verschulden des Empfangenden
+                öffentlich bekannt werden; (2) Informationen, die dem Empfangenden bereits vor
+                Erhalt nachweislich bekannt waren; (3) Informationen, die der Empfangende
+                <em>unabhängig</em> entwickelt; (4) Informationen, die der Empfangende rechtmäßig
+                von Dritten ohne Geheimhaltungspflicht erhält; (5) Informationen, deren Offenlegung
+                gesetzlich, behördlich oder gerichtlich vorgeschrieben ist. Wenn diese Carve-Outs
+                fehlen, gerät der Empfangende in eine unmögliche Situation: Er weiß nie sicher,
+                ob eine bestimmte Information überhaupt vom NDA erfasst ist — und dann gilt im
+                Zweifel die strenge Klausel.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Was tun, wenn du eine unwirksame Klausel entdeckst?
+                Mutual NDA vs einseitiges NDA — wann was?
               </h3>
               <p className={styles.problemText}>
-                Eine unwirksame Klausel macht <strong>nicht den ganzen Mietvertrag unwirksam</strong>.
-                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen — die problematische
-                Klausel wird einfach durch die gesetzliche Regelung ersetzt. Für dich als Mieter
-                ist das fast immer ein Vorteil: Die unwirksame Schönheitsreparaturklausel bedeutet
-                keine Renovierungspflicht. Der unwirksame Kündigungsausschluss bedeutet jederzeitige
-                Kündigungsmöglichkeit. Die überhöhte Kautionsforderung kann zurückgeholt werden.
-                Wann du den Vermieter direkt mit der Erkenntnis konfrontierst und wann du das
-                Wissen für später aufhebst (etwa beim Auszug), ist eine strategische Entscheidung —
-                die KI-Analyse gibt dir die Faktengrundlage.
+                Wenn nur eine Partei vertrauliche Informationen weitergibt — etwa ein Startup an
+                einen potenziellen Investor — ist ein einseitiges (one-way) NDA passend. In den
+                meisten B2B-Verhandlungen tauschen aber <em>beide</em> Parteien Informationen aus:
+                der Kunde nennt Anforderungen und Budget, der Anbieter zeigt Lösungsansätze und
+                Preise. In diesen Fällen ist ein gegenseitiges (mutual) NDA der Standard. Wenn dir
+                jemand ein einseitiges NDA vorlegt, du aber selbst sensible Informationen einbringen
+                wirst, ist die Umstellung auf mutual eine vernünftige und gut begründbare Forderung.
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>
-                Bei laufenden Streitigkeiten — drohende Räumungsklage, Eigenbedarfskündigung,
-                Mieterhöhungsstreit, Kautionsrückforderung — empfehlen wir zusätzlich einen
-                Fachanwalt für Mietrecht oder die Mitgliedschaft in einem Mieterverein. Die
-                KI-Analyse ist eine fundierte Erst-Risikoanalyse, ersetzt aber keine
-                individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
-                Lies dazu auch unseren{' '}
+                Bei strategisch hochwertigen Geschäften — M&A-Verhandlungen, Investorenrunden,
+                internationalen Joint Ventures — empfehlen wir zusätzlich einen Fachanwalt für
+                Wirtschaftsrecht oder IT-Recht. Die KI-Analyse ist eine fundierte Erst-Risikoanalyse,
+                ersetzt aber keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes
+                (RDG). Lies dazu auch unseren{' '}
                 <Link to="/blog/ki-vs-anwalt-vertrag-pruefen">Vergleich KI vs. Anwalt</Link>.
               </p>
             </div>
@@ -981,7 +982,7 @@ const MietvertragPruefen: React.FC = () => {
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.statNumber}>&lt; 60 s</div>
-                <div className={styles.statLabel}>Analysezeit pro Vertrag</div>
+                <div className={styles.statLabel}>Analysezeit pro NDA</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.statNumber}>10.000+</div>
@@ -998,147 +999,149 @@ const MietvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen zum Mietvertrag-Check</h2>
+              <h2 className={styles.sectionTitle}>Häufige Fragen zum NDA-Check</h2>
             </div>
 
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie genau ist die KI-Prüfung eines Mietvertrags?
+                  Wie genau ist die KI-Prüfung eines NDA?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
                   Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das
-                  Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere
-                  die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14),
-                  Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und
-                  Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie
-                  Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren
-                  empfehlen wir ergänzend einen Fachanwalt für Mietrecht.
+                  Risiko-Klauseln in Geheimhaltungsvereinbarungen. Sie kennt das
+                  Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle,
+                  § 343 BGB zur Vertragsstrafenherabsetzung sowie die einschlägige Rechtsprechung
+                  zu Wettbewerbsverboten in Geheimhaltungsvereinbarungen. Bei komplexen
+                  internationalen NDAs (Cross-Border, US-Common-Law-Klauseln) empfehlen wir
+                  ergänzend einen Fachanwalt für IT- und Wirtschaftsrecht.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Welche Klauseln im Mietvertrag sind häufig unwirksam?
+                  Worauf muss ich bei einem NDA besonders achten?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Zu den am häufigsten unwirksamen Klauseln zählen: starre Renovierungsfristen
-                  für Schönheitsreparaturen (BGH, 23.06.2004 – VIII ZR 361/03),
-                  Renovierungspflichten bei unrenoviert übergebener Wohnung
-                  (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln,
-                  Kautionsforderungen über drei Monatsmieten (§ 551 Abs. 1 BGB), generelle
-                  Tierhaltungsverbote (BGH, 20.03.2013 – VIII ZR 168/12) und überzogene
-                  Kleinreparatur-Kostendeckel.
+                  Die wichtigsten Prüfpunkte sind: angemessene Geheimhaltungsdauer (Standard
+                  2-3 Jahre, max. 5), verhältnismäßige Vertragsstrafe (kein pauschaler Mondpreis),
+                  klare Definition der vertraulichen Informationen (nicht "alles ist vertraulich"),
+                  die fünf Standard-Carve-Outs (öffentlich bekannt, vorher bekannt, unabhängig
+                  entwickelt, von Dritten erhalten, gesetzlich vorgeschrieben), kein verstecktes
+                  Wettbewerbsverbot, und ein praktikabler Gerichtsstand (bei deutschen Parteien
+                  deutsches Recht und deutscher Gerichtsstand).
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie viel Kaution darf der Vermieter maximal verlangen?
+                  Wie lange darf ein NDA gelten?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der
-                  monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter
-                  kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB),
-                  wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist.
-                  Vereinbarungen über eine höhere Kaution sind insoweit unwirksam — der Mieter
-                  kann den Mehrbetrag zurückfordern.
+                  Es gibt keine gesetzlich starre Höchstgrenze, aber die Bindungsdauer muss nach
+                  Treu und Glauben (§ 242 BGB) verhältnismäßig sein. Marktüblich sind 2-3 Jahre
+                  nach Beendigung des Vertragsverhältnisses, in einzelnen Branchen bis zu 5 Jahre.
+                  Unbefristete Geheimhaltungsklauseln werden von Gerichten regelmäßig als
+                  unverhältnismäßig angesehen und können nach AGB-Kontrolle (§§ 307 ff. BGB)
+                  unwirksam sein. Eine Ausnahme sind echte Geschäftsgeheimnisse i.S.d. § 2 Nr. 1
+                  GeschGehG, deren Schutz so lange währt, wie sie geheim bleiben.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Sind Schönheitsreparaturen wirklich unwirksam vereinbart?
+                  Was ist eine angemessene Vertragsstrafe in einem NDA?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom
-                  18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen
-                  unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig
-                  übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch
-                  starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge:
-                  Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter.
+                  Eine Vertragsstrafe muss in einem angemessenen Verhältnis zum geschützten
+                  Interesse und zum potenziellen Schaden stehen. Pauschale Mondbeträge wie
+                  "100.000 € pro Verstoß" sind häufig unwirksam. Nach § 343 BGB kann das Gericht
+                  eine unverhältnismäßig hohe Vertragsstrafe auf das angemessene Maß herabsetzen.
+                  Übliche Größenordnungen liegen zwischen 5.000 € und 50.000 € pro Einzelfall,
+                  abhängig vom Wert der Information und der Marktposition der Parteien.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Was ist eine Indexmiete und wann ist sie zulässig?
+                  Was sind die fünf Standard-Carve-Outs in einem NDA?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Eine Indexmiete (§ 557b BGB) koppelt die Miethöhe an den vom Statistischen
-                  Bundesamt ermittelten Verbraucherpreisindex. Sie ist nur zulässig, wenn sie
-                  ausdrücklich und schriftlich vereinbart wurde, der Bezugsindex klar benannt
-                  ist und die Miete jeweils mindestens ein Jahr unverändert bleibt. Bei
-                  wirksamer Indexmiete sind Mieterhöhungen wegen ortsüblicher Vergleichsmiete
-                  oder Modernisierung weitgehend ausgeschlossen. Eine intransparente Klausel
-                  ohne klaren Bezugsindex ist unwirksam.
+                  In jedem professionellen NDA müssen fünf Ausnahmen von der Geheimhaltungspflicht
+                  stehen: (1) Informationen, die ohne Verschulden des Empfangenden öffentlich
+                  bekannt werden, (2) Informationen, die dem Empfangenden bereits vor Erhalt
+                  bekannt waren, (3) Informationen, die der Empfangende unabhängig und nachweislich
+                  selbst entwickelt, (4) Informationen, die der Empfangende rechtmäßig von Dritten
+                  ohne Geheimhaltungspflicht erhält, (5) Informationen, deren Offenlegung
+                  gesetzlich oder behördlich vorgeschrieben ist. Fehlt auch nur einer dieser
+                  Carve-Outs, kann das gesamte NDA unangemessen benachteiligend sein.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Darf der Vermieter die Tierhaltung generell verbieten?
+                  Mutual NDA oder einseitiges NDA — was ist besser?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Nein. Nach BGH, 20.03.2013 – VIII ZR 168/12 ist ein generelles
-                  Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine
-                  unangemessene Benachteiligung des Mieters darstellt. Erlaubt ist die Haltung
-                  von Kleintieren wie Hamstern, Wellensittichen oder Zierfischen sogar ohne
-                  Erlaubnis. Bei Hunden und Katzen ist eine Einzelfallabwägung nötig:
-                  berechtigte Interessen des Vermieters, Mitmieter, Größe der Wohnung. Ein
-                  pauschales Verbot ist unzulässig.
+                  Das hängt von der konkreten Situation ab. Wenn nur eine Partei vertrauliche
+                  Informationen weitergibt (z.B. ein Investor erhält Pitchdeck-Daten von einem
+                  Startup), ist ein einseitiges (one-way) NDA ausreichend. Wenn beide Parteien
+                  vertrauliche Informationen austauschen — was in den meisten B2B-Verhandlungen
+                  der Fall ist — sollte ein gegenseitiges (mutual) NDA verwendet werden. Wenn dir
+                  ein einseitiges NDA vorgelegt wird, obwohl du selbst sensible Informationen
+                  einbringen wirst, fordere die Umstellung auf mutual.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Wie lange darf ein Kündigungsausschluss im Mietvertrag dauern?
+                  Darf in einem NDA ein Wettbewerbsverbot versteckt sein?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach
-                  BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab
-                  Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam — der
-                  Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei
-                  individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen
-                  aber nachweisbar verhandelt sein.
+                  Hier ist Vorsicht geboten. Klauseln, die dem Empfangenden über die Geheimhaltung
+                  hinaus die Tätigkeit in einem bestimmten Geschäftsfeld untersagen, sind häufig
+                  unwirksam — entweder wegen Sittenwidrigkeit (§ 138 BGB), wegen unangemessener
+                  Benachteiligung (§ 307 BGB) oder kartellrechtlich (§ 1 GWB). Echte
+                  Wettbewerbsverbote sind separat zu vereinbaren und nur unter engen
+                  Voraussetzungen zulässig. Ein versteckter Wettbewerbsausschluss in einem NDA
+                  wird von Gerichten regelmäßig kritisch beurteilt.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Was kostet die KI-Prüfung eines Mietvertrags?
+                  Was kostet die KI-Prüfung eines NDA?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat)
-                  erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die
-                  Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht
-                  kostet typischerweise 100–250 € — die KI-Analyse spart dir gerade bei mehreren
-                  Verträgen oder Wohnungssuche erhebliche Kosten.
+                  Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif
+                  (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif
+                  (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim
+                  Anwalt für IT- und Wirtschaftsrecht kostet typischerweise 200–500 € pro NDA —
+                  die KI-Analyse spart dir gerade bei häufigen Verhandlungen erhebliche Kosten.
                 </p>
               </details>
 
               <details className={styles.faqItem}>
                 <summary className={styles.faqQuestion}>
-                  Ersetzt die KI-Prüfung einen Anwalt für Mietrecht?
+                  Ersetzt die KI-Prüfung einen Fachanwalt?
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
                   Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine
-                  Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für
-                  individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage,
-                  Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete,
-                  Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder
-                  ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte
-                  Faktengrundlage.
+                  Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe
+                  internationale NDAs (Cross-Border, US-Common-Law), bei laufenden Streitigkeiten
+                  über Geheimnisverletzung oder bei strategisch hochwertigen Geschäften (M&A,
+                  Investorenrunden) bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die
+                  KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die
+                  Beratungskosten erheblich.
                 </p>
               </details>
             </div>
@@ -1166,23 +1169,12 @@ const MietvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/nda-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>
+              <Link to="/mietvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>NDA prüfen</div>
+                  <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
-                  </div>
-                </div>
-                <ArrowRight size={20} className={styles.relatedArrow} />
-              </Link>
-
-              <Link to="/blog/mietvertrag-unwirksame-klauseln" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><BookOpen size={20} /></span>
-                <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>Mietvertrag-Klauseln im Detail</div>
-                  <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Haustierhaltung, Kautionshöhe — was rechtlich problematisch ist
+                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1221,16 +1213,16 @@ const MietvertragPruefen: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Schluss mit unwirksamen Klauseln. Prüfe deinen Mietvertrag jetzt.
+                  Bevor du unterschreibst — lass dein NDA in 60 Sekunden prüfen.
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Über 87 % der Nutzer finden mindestens eine kritische Klausel, die sie sonst
-                  übersehen hätten. Lade deinen Mietvertrag hoch und erhalte den Risiko-Report
-                  in unter 60 Sekunden.
+                  übersehen hätten. Lade dein NDA hoch und erhalte den Risiko-Report in unter
+                  60 Sekunden.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>
-                    Mietvertrag jetzt prüfen
+                    NDA jetzt prüfen
                     <ArrowRight size={20} />
                   </Link>
                 </div>
@@ -1246,4 +1238,4 @@ const MietvertragPruefen: React.FC = () => {
   );
 };
 
-export default MietvertragPruefen;
+export default NdaPruefen;
