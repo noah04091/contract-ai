@@ -234,7 +234,7 @@ class DirectExtractor {
         }
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.1,
+      temperature: 0,
       max_tokens: MAX_COMPLETION_TOKENS
     }, { timeout: timeoutMs });
 
@@ -293,7 +293,7 @@ class DirectExtractor {
               { role: 'user', content: batchPrompt }
             ],
             response_format: { type: 'json_object' },
-            temperature: 0.1,
+            temperature: 0,
             max_tokens: MAX_COMPLETION_TOKENS
           }, { timeout: timeoutMs });
         })
