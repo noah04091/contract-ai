@@ -1,4 +1,4 @@
-import { Shield, Lock, MapPin, Check } from "lucide-react";
+import { Shield, Lock, MapPin } from "lucide-react";
 import styles from "./TrustBadgeRow.module.css";
 
 export default function TrustBadgeRow() {
@@ -8,17 +8,15 @@ export default function TrustBadgeRow() {
         <Shield size={14} className={styles.icon} aria-hidden="true" />
         <span>DSGVO</span>
       </div>
+      <span className={styles.divider} aria-hidden="true" />
       <div className={styles.item} role="listitem">
         <Lock size={14} className={styles.icon} aria-hidden="true" />
         <span>SSL</span>
       </div>
+      <span className={styles.divider} aria-hidden="true" />
       <div className={styles.item} role="listitem">
         <MapPin size={14} className={styles.icon} aria-hidden="true" />
         <span>Server DE</span>
-      </div>
-      <div className={styles.item} role="listitem">
-        <Check size={14} className={styles.icon} aria-hidden="true" />
-        <span>14-Tage Garantie</span>
       </div>
     </div>
   );
