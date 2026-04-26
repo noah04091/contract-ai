@@ -2181,6 +2181,7 @@ export default function Contracts() {
 
         if (!uploadFileItem) {
           console.error(`❌ File not found in uploadFiles for: ${contract.name}`);
+          toast.error('Analyse konnte nicht gestartet werden. Bitte über die Vertragsliste analysieren.');
           continue;
         }
 
@@ -2291,6 +2292,13 @@ export default function Contracts() {
           }
         }
       }
+
+      // ✅ Cleanup: Falls Dateien bei "analyzing" hängengeblieben sind, zurücksetzen
+      setUploadFiles(prev => prev.map(item =>
+        item.status === 'analyzing'
+          ? { ...item, status: 'completed', progress: 100 }
+          : item
+      ));
 
       // ✅ Refresh contracts list
       await fetchContracts();
