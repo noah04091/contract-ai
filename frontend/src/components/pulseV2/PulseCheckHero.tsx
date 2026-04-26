@@ -129,7 +129,7 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
     const critCount = severityCounts?.critical ?? 0;
     const parts: string[] = [];
     if (critCount > 0) parts.push(`${critCount} kritische Warnung${critCount === 1 ? '' : 'en'}`);
-    if (criticalContractCount > 0 && critCount === 0) parts.push(`${criticalContractCount} kritischer Vertrag${criticalContractCount === 1 ? '' : 'e'}`);
+    if (criticalContractCount > 0 && critCount === 0) parts.push(`${criticalContractCount} ${criticalContractCount === 1 ? 'kritischer Vertrag' : 'kritische Verträge'}`);
     if (openActionCount > 0) parts.push(`${openActionCount} offene Aufgabe${openActionCount === 1 ? '' : 'n'}`);
     statusMessage = <>Achtung: {parts.join(' + ')} warten.</>;
   } else if (status === 'yellow') {
