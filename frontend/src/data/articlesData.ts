@@ -1541,6 +1541,11 @@ export const articles: Article[] = [
     icon: '💼',
     image: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Arbeitsvertrag jetzt rechtssicher prüfen lassen</h4>
+        <p>Lass deinen Arbeitsvertrag von einer KI prüfen — auf Basis aktueller BAG-Rechtsprechung in unter 60 Sekunden. Unwirksame Klauseln, überzogene Wettbewerbsverbote und versteckte Nachteile werden sofort erkannt. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Ihr Arbeitsvertrag regelt mehr als nur Gehalt und Arbeitszeit. Wir erklären die wichtigsten Klauseln und Ihre Rechte als Arbeitnehmer.</p>
 
       <h2>Arbeitszeit und Überstunden</h2>
@@ -1810,6 +1815,11 @@ export const articles: Article[] = [
     icon: '📋',
     image: 'https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Arbeitsvertrag vor der Kündigung prüfen lassen</h4>
+        <p>Bevor du kündigst oder gekündigt wirst: Lass deinen Arbeitsvertrag in 60 Sekunden auf unwirksame Wettbewerbsverbote, überhöhte Vertragsstrafen und Rückzahlungsklauseln prüfen — Wissen, das in Verhandlungen entscheidend ist. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Eine Kündigung ist ein wichtiger rechtlicher Schritt. Dabei gibt es viele Fallstricke und Formvorschriften zu beachten.</p>
 
       <h2>Kündigungsfristen im Überblick</h2>

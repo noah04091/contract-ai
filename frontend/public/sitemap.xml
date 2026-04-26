@@ -63,6 +63,17 @@
   </url>
 
   <!-- ========================================== -->
+  <!-- SEO LONG-TAIL LANDINGPAGES (Vertragstypen) -->
+  <!-- ========================================== -->
+
+  <url>
+    <loc>https://www.contract-ai.de/arbeitsvertrag-pruefen</loc>
+    <lastmod>2026-04-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- ========================================== -->
   <!-- FEATURE-LANDINGPAGES                       -->
   <!-- ========================================== -->
 

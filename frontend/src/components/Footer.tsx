@@ -47,6 +47,13 @@ const Footer: React.FC = () => {
             </div>
             
             <div className="footer-column">
+              <h4>Verträge prüfen</h4>
+              <ul>
+                <li><Link to="/arbeitsvertrag-pruefen">Arbeitsvertrag prüfen</Link></li>
+              </ul>
+            </div>
+
+            <div className="footer-column">
               <h4>Unternehmen</h4>
               <ul>
                 <li><a href="mailto:info@contract-ai.de">Kontakt</a></li>

@@ -74,6 +74,9 @@ const LegalLensFeature = lazy(() => import("./pages/features/LegalLens"));
 const Features = lazy(() => import("./pages/Features")); // 📋 Features Übersichtsseite
 const KiVertragsanalyse = lazy(() => import("./pages/KiVertragsanalyse")); // 🎯 SEO Pillar Page
 
+// 🎯 SEO Long-Tail Landing Pages (Vertragstypen)
+const ArbeitsvertragPruefen = lazy(() => import("./pages/landing/ArbeitsvertragPruefen"));
+
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
 const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes Dashboard (Backup)
@@ -206,6 +209,9 @@ function AppWithLoader() {
 
             {/* 🎯 SEO Pillar Page */}
             <Route path="/ki-vertragsanalyse" element={<KiVertragsanalyse />} />
+
+            {/* 🎯 SEO Long-Tail Landing Pages (Vertragstypen) */}
+            <Route path="/arbeitsvertrag-pruefen" element={<ArbeitsvertragPruefen />} />
 
             {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
