@@ -36,6 +36,11 @@ function getToken(): string | null {
   return localStorage.getItem('authToken') || localStorage.getItem('token');
 }
 
+// API Base URL
+const API_BASE = typeof window !== 'undefined' && (window as Record<string, unknown>).__VITE_API_URL
+  ? String((window as Record<string, unknown>).__VITE_API_URL)
+  : (import.meta.env?.VITE_API_URL || 'https://api.contract-ai.de');
+
 interface UseTourOptions {
   tourId: TourId;
   autoStart?: boolean; // Start automatically if not seen
@@ -91,7 +96,7 @@ export function useTour({
           return;
         }
 
-        const response = await fetch('/api/onboarding/status', {
+        const response = await fetch(`${API_BASE}/api/onboarding/status`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -145,8 +150,8 @@ export function useTour({
       const token = getToken();
       if (!token) return;
 
-      await fetch(`/api/onboarding/feature/${tourId}`, {
-        method: 'POST',  // Backend expects POST, not PUT!
+      await fetch(`${API_BASE}/api/onboarding/feature/${tourId}`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -178,7 +183,7 @@ export function useTour({
       if (!token) return;
 
       // Remove from seenFeatures via API
-      await fetch('/api/onboarding/reset-feature', {
+      await fetch(`${API_BASE}/api/onboarding/reset-feature`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
