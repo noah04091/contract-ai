@@ -832,25 +832,28 @@ const HomeRedesign = () => {
           </div>
         </section>
 
-        {/* Trustbar Section */}
+        {/* Trustbar Section - Inline Compliance Strip */}
         <section className="trustbar-section">
           <div className="section-container">
-            <div className="trustbar">
-              <div className="trust-item reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
-                <span className="trust-icon">✅</span>
-                <span className="trust-text">DSGVO-konform</span>
+            <div className="trust-strip">
+              <div className="trust-strip__item reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
+                <span className="trust-strip__icon">✅</span>
+                <span>DSGVO-konform</span>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
-                <span className="trust-icon">🇩🇪</span>
-                <span className="trust-text">Serverstandort: Frankfurt (EU-Cloud)</span>
+              <span className="trust-strip__divider" aria-hidden="true" />
+              <div className="trust-strip__item reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
+                <span className="trust-strip__icon">🇩🇪</span>
+                <span>Serverstandort: Frankfurt (EU-Cloud)</span>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
-                <span className="trust-icon">🧠</span>
-                <span className="trust-text">KI-gestützt & juristisch geprüft</span>
+              <span className="trust-strip__divider" aria-hidden="true" />
+              <div className="trust-strip__item reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
+                <span className="trust-strip__icon">🧠</span>
+                <span>KI-gestützt & juristisch geprüft</span>
               </div>
-              <div className="trust-item reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
-                <span className="trust-icon">🔒</span>
-                <span className="trust-text">Verschlüsselte Datenübertragung</span>
+              <span className="trust-strip__divider" aria-hidden="true" />
+              <div className="trust-strip__item reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
+                <span className="trust-strip__icon">🔒</span>
+                <span>Verschlüsselte Datenübertragung</span>
               </div>
             </div>
           </div>
