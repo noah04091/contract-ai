@@ -35,6 +35,8 @@ import { templateClauses } from '../../../data/templateClauses';
 import { TEMPLATE_CLAUSE_CATEGORY_INFO } from '../../../types/clauseLibrary';
 import type { TemplateClause, SavedClause, TemplateClauseCategory } from '../../../types/clauseLibrary';
 import * as clauseLibraryAPI from '../../../services/clauseLibraryAPI';
+import * as clauseCollectionAPI from '../../../services/clauseCollectionAPI';
+import type { ClauseCollection } from '../../../types/clauseLibrary';
 
 interface BlockToolbarProps {
   className?: string;
@@ -90,19 +92,28 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
 
   // Library Modal State
   const [showLibraryModal, setShowLibraryModal] = useState(false);
-  const [libraryTab, setLibraryTab] = useState<'muster' | 'meine'>('muster');
+  const [libraryTab, setLibraryTab] = useState<'muster' | 'meine' | 'sammlungen'>('muster');
   const [librarySearch, setLibrarySearch] = useState('');
   const [libraryCategory, setLibraryCategory] = useState<TemplateClauseCategory | ''>('');
   const [savedClauses, setSavedClauses] = useState<SavedClause[]>([]);
   const [isLoadingSavedClauses, setIsLoadingSavedClauses] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
+  // Sammlungen State
+  const [collections, setCollections] = useState<ClauseCollection[]>([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false);
+  const [expandedCollection, setExpandedCollection] = useState<string | null>(null);
+  const [collectionClauses, setCollectionClauses] = useState<Record<string, SavedClause[]>>({});
+
   const { addBlock, generateClause, addVariable } = useContractBuilderStore();
 
-  // Lade gespeicherte Klauseln wenn Tab gewechselt wird
+  // Lade gespeicherte Klauseln / Sammlungen wenn Tab gewechselt wird
   useEffect(() => {
     if (showLibraryModal && libraryTab === 'meine') {
       loadSavedClauses();
+    }
+    if (showLibraryModal && libraryTab === 'sammlungen') {
+      loadCollections();
     }
   }, [showLibraryModal, libraryTab]);
 
@@ -115,6 +126,47 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
       // Fehler beim Laden wird still behandelt
     } finally {
       setIsLoadingSavedClauses(false);
+    }
+  };
+
+  const loadCollections = async () => {
+    setIsLoadingCollections(true);
+    try {
+      const response = await clauseCollectionAPI.getCollections();
+      setCollections(response.collections || []);
+    } catch {
+      // Fehler beim Laden wird still behandelt
+    } finally {
+      setIsLoadingCollections(false);
+    }
+  };
+
+  const loadCollectionClauses = async (collectionId: string) => {
+    if (collectionClauses[collectionId]) return; // Bereits geladen
+    try {
+      const response = await clauseCollectionAPI.getCollection(collectionId);
+      const items = response.collection?.items || [];
+      // Klauseln aus den Collection-Items extrahieren
+      const clauses: SavedClause[] = items
+        .filter((item: { resolvedClause?: { clauseText?: string } }) => item.resolvedClause?.clauseText)
+        .map((item: { resolvedClause: SavedClause; notes?: string; customTitle?: string }) => ({
+          ...item.resolvedClause,
+          // Custom-Titel aus Collection übernehmen falls vorhanden
+          title: item.customTitle || item.resolvedClause.title,
+          userNotes: item.notes || item.resolvedClause.userNotes,
+        }));
+      setCollectionClauses(prev => ({ ...prev, [collectionId]: clauses }));
+    } catch {
+      // Fehler beim Laden wird still behandelt
+    }
+  };
+
+  const handleExpandCollection = (collectionId: string) => {
+    if (expandedCollection === collectionId) {
+      setExpandedCollection(null);
+    } else {
+      setExpandedCollection(collectionId);
+      loadCollectionClauses(collectionId);
     }
   };
 
@@ -357,6 +409,12 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
               >
                 Meine Klauseln
               </button>
+              <button
+                className={`${styles.libraryTab} ${libraryTab === 'sammlungen' ? styles.active : ''}`}
+                onClick={() => setLibraryTab('sammlungen')}
+              >
+                Sammlungen
+              </button>
             </div>
 
             {/* Search & Filter */}
@@ -389,7 +447,7 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
 
             {/* Klausel-Liste */}
             <div className={styles.libraryClauseList}>
-              {libraryTab === 'muster' ? (
+              {libraryTab === 'muster' && (
                 filteredTemplateClauses.length > 0 ? (
                   filteredTemplateClauses.map(clause => {
                     const categoryInfo = TEMPLATE_CLAUSE_CATEGORY_INFO[clause.category];
@@ -427,7 +485,9 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
                     Keine Musterklauseln gefunden
                   </div>
                 )
-              ) : (
+              )}
+
+              {libraryTab === 'meine' && (
                 isLoadingSavedClauses ? (
                   <div className={styles.libraryLoading}>
                     <Loader2 size={20} className={styles.spinner} />
@@ -468,6 +528,69 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
                   <div className={styles.libraryEmpty}>
                     <p>Noch keine Klauseln gespeichert</p>
                     <span>Speichern Sie Klauseln aus der Vertragsanalyse, um sie hier wiederzuverwenden.</span>
+                  </div>
+                )
+              )}
+
+              {libraryTab === 'sammlungen' && (
+                isLoadingCollections ? (
+                  <div className={styles.libraryLoading}>
+                    <Loader2 size={20} className={styles.spinner} />
+                    <span>Lade Sammlungen...</span>
+                  </div>
+                ) : collections.length > 0 ? (
+                  collections.map(collection => (
+                    <div key={collection._id} className={styles.collectionItem}>
+                      <button
+                        className={styles.collectionHeader}
+                        onClick={() => handleExpandCollection(collection._id)}
+                      >
+                        <span className={styles.collectionIcon}>{collection.icon || '📁'}</span>
+                        <span className={styles.collectionName}>{collection.name}</span>
+                        <span className={styles.collectionCount}>{collection.itemCount || collection.items?.length || 0}</span>
+                        <ChevronRight size={14} style={{ transform: expandedCollection === collection._id ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                      </button>
+                      {expandedCollection === collection._id && (
+                        <div className={styles.collectionClauses}>
+                          {collectionClauses[collection._id] ? (
+                            collectionClauses[collection._id].length > 0 ? (
+                              collectionClauses[collection._id].map((clause, idx) => (
+                                <div key={clause._id || idx} className={styles.libraryClauseCard}>
+                                  <div className={styles.libraryClauseHeader}>
+                                    <span className={styles.libraryClauseTitle}>
+                                      {clause.title || clause.clausePreview?.substring(0, 50) || 'Klausel'}
+                                    </span>
+                                    <button
+                                      className={styles.libraryInsertBtn}
+                                      onClick={() => handleInsertFromLibrary(clause)}
+                                    >
+                                      Einfügen
+                                    </button>
+                                  </div>
+                                  <p className={styles.libraryClausePreview}>
+                                    {clause.clauseText.substring(0, 120)}...
+                                  </p>
+                                </div>
+                              ))
+                            ) : (
+                              <div className={styles.libraryEmpty} style={{ padding: '12px' }}>
+                                Keine Klauseln in dieser Sammlung
+                              </div>
+                            )
+                          ) : (
+                            <div className={styles.libraryLoading} style={{ padding: '12px' }}>
+                              <Loader2 size={16} className={styles.spinner} />
+                              <span>Lade...</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.libraryEmpty}>
+                    <p>Noch keine Sammlungen erstellt</p>
+                    <span>Erstellen Sie Sammlungen in der Klauselbibliothek, um sie hier zu nutzen.</span>
                   </div>
                 )
               )}
