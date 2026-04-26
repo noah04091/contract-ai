@@ -449,7 +449,7 @@ router.get("/portfolio-insights", async (req, res) => {
         allActions.push({
           ...a,
           resultId: r.resultDocId.toString(),
-          relatedContracts: [r.contractId],
+          relatedContracts: [String(r.contractId)],
         });
       }
     }
