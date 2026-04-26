@@ -147,14 +147,17 @@ export const BlockToolbar: React.FC<BlockToolbarProps> = ({ className }) => {
       const response = await clauseCollectionAPI.getCollection(collectionId);
       const items = response.collection?.items || [];
       // Klauseln aus den Collection-Items extrahieren
-      const clauses: SavedClause[] = items
-        .filter((item: { resolvedClause?: { clauseText?: string } }) => item.resolvedClause?.clauseText)
-        .map((item: { resolvedClause: SavedClause; notes?: string; customTitle?: string }) => ({
-          ...item.resolvedClause,
-          // Custom-Titel aus Collection übernehmen falls vorhanden
-          title: item.customTitle || item.resolvedClause.title,
-          userNotes: item.notes || item.resolvedClause.userNotes,
-        }));
+      const clauses: SavedClause[] = [];
+      for (const item of items) {
+        const resolved = item.resolvedClause;
+        if (resolved?.clauseText) {
+          clauses.push({
+            ...resolved as unknown as SavedClause,
+            title: item.customTitle || (resolved as { title?: string }).title,
+            userNotes: item.notes || (resolved as { userNotes?: string }).userNotes,
+          });
+        }
+      }
       setCollectionClauses(prev => ({ ...prev, [collectionId]: clauses }));
     } catch {
       // Fehler beim Laden wird still behandelt
