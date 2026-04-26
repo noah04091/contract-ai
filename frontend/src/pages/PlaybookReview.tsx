@@ -896,7 +896,7 @@ const PlaybookReview: React.FC = () => {
           <label className={styles.fieldLabel}>Beschreibung (optional)</label>
           <textarea
             className={styles.textarea}
-            placeholder="Wofuer ist dieses Playbook gedacht?"
+            placeholder="Wofür ist dieses Playbook gedacht?"
             value={builderData.description}
             onChange={e => setBuilderData(d => ({ ...d, description: e.target.value }))}
             rows={3}

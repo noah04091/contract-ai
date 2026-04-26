@@ -131,7 +131,7 @@ function generateNegotiationLetterPdf({ letterText, contractName }) {
 
       // Footer
       doc.fillColor(lightGray).fontSize(7).font("Helvetica")
-        .text("Erstellt mit Contract AI — www.contract-ai.de", 50, 810, { width: 495, align: "center" });
+        .text("Erstellt mit Contract AI — www.contract-ai.de", 50, 780, { width: 495, align: "center" });
 
       doc.end();
     } catch (err) {
