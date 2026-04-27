@@ -26,3 +26,6 @@ tmpclaude-*
 *.backup
 *.OLD
 *-before-*
+
+# Customer-data test fixtures (never commit real user files!)
+backend/scripts/_test-fixtures/
