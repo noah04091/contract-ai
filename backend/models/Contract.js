@@ -25,6 +25,14 @@ const contractSchema = new mongoose.Schema({
   // Analysis Data
   analyzed: { type: Boolean, default: false },
   contractScore: Number,
+  // 🌐 Phase-1-Redesign (27.04.2026): adaptive Standard-Vertragsanalyse.
+  // Recognition-Felder werden bei NEUEN Analysen befüllt; alte Records bleiben
+  // unverändert (Felder einfach undefined). Frontend rendert per render-if-present.
+  // Mixed-Type, weil Inhalte AI-getrieben und structurally adaptive sind.
+  documentCharacterization: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  completeness: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  asymmetryAssessment: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  scoreReasoning: { type: String, default: undefined },
   summary: String,
   legalAssessment: String,
   suggestions: String,

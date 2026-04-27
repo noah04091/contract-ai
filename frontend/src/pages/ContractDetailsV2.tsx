@@ -153,6 +153,23 @@ interface Contract {
   comparison?: string | string[];
   laymanSummary?: string[];
   detailedLegalOpinion?: string;
+  // 🌐 Phase-1-Redesign: Recognition-Felder + holistisches Score-Reasoning.
+  // Alle optional — bei alten Analysen sind diese Felder undefined.
+  documentCharacterization?: {
+    description?: string;
+    rationale?: string;
+  };
+  completeness?: {
+    isComplete?: boolean;
+    observation?: string;
+    openItems?: string[];
+  };
+  asymmetryAssessment?: {
+    rating?: 'balanced' | 'mostly-fair' | 'one-sided' | 'heavily-one-sided';
+    favoredParty?: string | null;
+    explanation?: string;
+  };
+  scoreReasoning?: string;
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -1809,6 +1826,57 @@ export default function ContractDetailsV2() {
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.2 }}
                   >
+                    {/* 🌐 Phase-1-Redesign: Recognition-Banner für non-finale Dokumente.
+                        Erscheint vor dem Score, damit der User sofort versteht, in welchem
+                        Zustand der Vertrag ist (Mustervertrag, Entwurf, Vorvertrag, etc.).
+                        Ausgelöst, wenn die KI explizit auf einen nicht-finalen Status hinweist
+                        ODER wenn die Vollständigkeits-Beobachtung das Dokument als unvollständig markiert. */}
+                    {(() => {
+                      const desc = contract.documentCharacterization?.description || '';
+                      const lowerDesc = desc.toLowerCase();
+                      const nonFinalSignals = [
+                        'muster', 'mustervertrag', 'template', 'vorlage',
+                        'entwurf', 'draft',
+                        'vorvertrag', 'letter of intent', 'loi',
+                        'term sheet', 'memorandum of understanding', 'mou',
+                        'side letter',
+                        'unvollständ', 'incomplete', 'noch nicht ausgefüllt', 'placeholder',
+                      ];
+                      const isNonFinal = nonFinalSignals.some(s => lowerDesc.includes(s))
+                        || contract.completeness?.isComplete === false;
+                      if (!isNonFinal || !desc) return null;
+                      return (
+                        <div className={`${styles.card} ${styles.fadeIn}`} style={{
+                          background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                          border: '1px solid #fde68a',
+                          padding: '20px 24px',
+                          marginBottom: 16,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                            <AlertTriangle size={22} style={{ color: '#b45309', flexShrink: 0, marginTop: 2 }} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: '#92400e', marginBottom: 6 }}>
+                                Hinweis zum Dokument-Status
+                              </div>
+                              <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.5, marginBottom: contract.documentCharacterization?.rationale ? 8 : 0 }}>
+                                {desc}
+                              </div>
+                              {contract.documentCharacterization?.rationale && (
+                                <div style={{ fontSize: 12, color: '#a16207', lineHeight: 1.5, fontStyle: 'italic' }}>
+                                  {contract.documentCharacterization.rationale}
+                                </div>
+                              )}
+                              {contract.completeness?.openItems && contract.completeness.openItems.length > 0 && (
+                                <div style={{ marginTop: 10, fontSize: 12, color: '#78350f' }}>
+                                  <strong>Noch offen:</strong> {contract.completeness.openItems.join(' • ')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Contract Score Hero Card */}
                     {hasContractScore && (
                       <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
@@ -1856,10 +1924,84 @@ export default function ContractDetailsV2() {
                                 </div>
                               )}
                             </div>
+                            {/* 🌐 Phase-1-Redesign: Score-Reasoning direkt unter dem Score.
+                                Zeigt dem User WARUM dieser Wert — Gesamtbild-Begründung statt Black-Box. */}
+                            {contract.scoreReasoning && (
+                              <div style={{
+                                marginTop: 14,
+                                padding: '12px 14px',
+                                background: 'rgba(255,255,255,0.6)',
+                                border: '1px solid rgba(0,0,0,0.06)',
+                                borderRadius: 10,
+                                fontSize: 13,
+                                lineHeight: 1.55,
+                                color: '#374151',
+                              }}>
+                                <div style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 6 }}>
+                                  Bewertungsbegründung
+                                </div>
+                                {contract.scoreReasoning}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     )}
+
+                    {/* 🌐 Phase-1-Redesign: Asymmetrie-Card.
+                        Zeigt, ob der Vertrag ausgewogen oder einseitig strukturiert ist.
+                        Wird nur gerendert, wenn die KI ein Rating gegeben hat UND es nicht "balanced" ist. */}
+                    {contract.asymmetryAssessment?.rating && contract.asymmetryAssessment.rating !== 'balanced' && (() => {
+                      const rating = contract.asymmetryAssessment.rating;
+                      const palette =
+                        rating === 'heavily-one-sided'
+                          ? { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', label: 'Stark einseitig' }
+                          : rating === 'one-sided'
+                            ? { bg: '#fff7ed', border: '#fed7aa', text: '#9a3412', label: 'Einseitig' }
+                            : { bg: '#fefce8', border: '#fef08a', text: '#854d0e', label: 'Größtenteils ausgewogen' };
+                      return (
+                        <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`} style={{
+                          background: palette.bg,
+                          border: `1px solid ${palette.border}`,
+                          padding: '18px 22px',
+                          marginBottom: 16,
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                            <Shield size={20} style={{ color: palette.text, flexShrink: 0, marginTop: 2 }} />
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: palette.text }}>
+                                  Vertrags-Ausgewogenheit
+                                </h3>
+                                <span style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: palette.text,
+                                  background: 'rgba(255,255,255,0.6)',
+                                  border: `1px solid ${palette.border}`,
+                                  borderRadius: 4,
+                                  padding: '2px 8px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: 0.4,
+                                }}>
+                                  {palette.label}
+                                </span>
+                              </div>
+                              {contract.asymmetryAssessment.favoredParty && (
+                                <div style={{ fontSize: 13, color: palette.text, marginBottom: 8 }}>
+                                  <strong>Begünstigte Partei:</strong> {contract.asymmetryAssessment.favoredParty}
+                                </div>
+                              )}
+                              {contract.asymmetryAssessment.explanation && (
+                                <div style={{ fontSize: 13, color: palette.text, lineHeight: 1.55 }}>
+                                  {contract.asymmetryAssessment.explanation}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Key Metrics - Extended */}
                     <div className={`${styles.card} ${styles.fadeIn} ${hasContractScore ? styles.stagger1 : ''}`}>

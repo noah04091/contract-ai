@@ -890,44 +890,37 @@ function validateAndNormalizeLawyerAnalysis(result, documentType, requestId) {
     }
   }
 
-  // ✅ FIXED: Very relaxed field checking - only ensure they exist
-  const requiredFields = ['summary', 'legalAssessment', 'suggestions', 'comparison'];
-  
-  for (const field of requiredFields) {
-    if (!result[field] || (Array.isArray(result[field]) && result[field].length === 0)) {
-      console.warn(`⚠️ [${requestId}] Missing field ${field}, adding default`);
-      result[field] = [`Analyse für ${field} wird verarbeitet...`];
+  // 🌐 ADAPTIVE-OUTPUT POLICY (Phase-1-Redesign):
+  // Felder dürfen FEHLEN oder LEER sein, wenn der Vertrag dazu nichts hergibt.
+  // Wir füllen NICHT mehr mit generischen Floskel-Defaults auf — das wäre genau
+  // die Schema-F-Logik, die wir bewusst abgeschafft haben. Frontend rendert
+  // render-if-present.
+  //
+  // PFLICHTFELDER (vom neuen Prompt verlangt): documentCharacterization,
+  // completeness, asymmetryAssessment, contractScore, scoreReasoning,
+  // detailedLegalOpinion. Bei diesen warnen wir, wenn sie fehlen, brechen aber
+  // nicht ab — Robustheit gegen kurzzeitige GPT-Schwankungen.
+
+  const recognitionRequired = [
+    'documentCharacterization',
+    'completeness',
+    'asymmetryAssessment',
+    'scoreReasoning',
+  ];
+  for (const field of recognitionRequired) {
+    if (result[field] === undefined || result[field] === null) {
+      console.warn(`⚠️ [${requestId}] Recognition field missing: ${field} — leaving undefined, frontend will render-if-present`);
     }
   }
-  
-  // ✅ FIXED: Ensure structured fields exist with simple fallbacks
-  if (!result.positiveAspects || !Array.isArray(result.positiveAspects)) {
-    result.positiveAspects = [{
-      title: "Dokumentenstruktur",
-      description: "Das Dokument zeigt eine erkennbare rechtliche Struktur und ist grundsätzlich nachvollziehbar."
-    }];
-  }
-  
-  if (!result.criticalIssues || !Array.isArray(result.criticalIssues)) {
-    result.criticalIssues = [{
-      title: "Detailprüfung empfohlen",
-      description: "Eine eingehende rechtliche Detailprüfung wird empfohlen, um potentielle Risiken zu bewerten.",
-      riskLevel: "medium"
-    }];
-  }
-  
-  if (!result.recommendations || !Array.isArray(result.recommendations)) {
-    result.recommendations = [{
-      title: "Rechtliche Beratung",
-      description: "Eine Konsultation mit einem spezialisierten Fachanwalt wird für eine umfassende Bewertung empfohlen.",
-      priority: "medium"
-    }];
-  }
-  
-  // ✅ FIXED: Ensure score exists
+
+  // Score: weiterhin Pflicht. Fallback nur wenn AI nichts brauchbares geliefert hat.
   if (!result.contractScore || result.contractScore < 1 || result.contractScore > 100) {
+    console.warn(`⚠️ [${requestId}] contractScore missing or out-of-range — calculating heuristic fallback`);
     result.contractScore = calculateDeepLawyerScore(result, documentType);
   }
+
+  // Optionale Felder NICHT mehr auto-fillen. Wenn AI sie weglässt, bleiben sie weg.
+  // Das ist der Kern des Adaptive-Output-Designs.
   
   // ✅ FIXED: Simple text completion check (no complex validation)
   validateTextCompletenessAndDepth(result, requestId);
@@ -1313,6 +1306,25 @@ ${awareness.commonTraps}
 ❌ NIEMALS vage Formulierungen - sei präzise und konkret!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌐 UNIVERSALITÄTS-PRINZIP (KRITISCH FÜR DEN OUTPUT):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Du bekommst gleich ein Output-Schema mit vielen Feldern. Befolge dabei diese Regel:
+
+✅ Felder sind ADAPTIV: Lasse Felder WEG (gib sie GAR NICHT aus oder leeres Array []),
+   wenn dieser konkrete Vertrag dazu nichts inhaltlich Substanzielles hergibt.
+✅ Beispiel: Ein leerer Mustervertrag hat keine "positiveAspects" → das Feld weglassen.
+✅ Beispiel: Ein Letter of Intent hat keine "criticalIssues" im klassischen Sinn → leer lassen.
+✅ Beispiel: Ein Vertrag ohne Marktvergleichspunkte → "comparison" weglassen.
+
+❌ NIEMALS leere Floskel-Einträge produzieren, nur damit ein Feld "gefüllt" wirkt.
+❌ NIEMALS erfundene Inhalte zur Schema-Vervollständigung.
+
+PFLICHTFELDER (immer ausgeben): documentCharacterization, completeness,
+asymmetryAssessment, contractScore, scoreReasoning, detailedLegalOpinion.
+Alle anderen sind ADAPTIV.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📏 TIEFE DER ANALYSE (FLEXIBEL):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1341,6 +1353,60 @@ ${awareness.commonTraps}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 ANALYSE-STRUKTUR (JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔍 RECOGNITION-FELDER (PFLICHT — IMMER AUSGEBEN):
+─────────────────────────────────────────────
+
+A. **documentCharacterization** (Object, PFLICHTFELD):
+   Schema: {
+     "description": "Freier Text — was ist dieses Dokument WIRKLICH?",
+     "rationale": "1-2 Sätze: woran erkennst du das?"
+   }
+   → Charakterisiere das Dokument in deinen eigenen Worten — KEINE feste Liste!
+   → Nutze die Bezeichnung, die juristisch am genauesten passt:
+      Beispiele: "Mustervertrag (Vorlage, Parteien noch nicht ausgefüllt)" |
+                 "Vorvertrag (Letter of Intent, kein bindender Hauptvertrag)" |
+                 "Term Sheet als Verhandlungsgrundlage" |
+                 "Aktiver, beidseitig unterzeichneter Mietvertrag" |
+                 "Hybridzustand: teilweise unterzeichnet, einzelne Klauseln noch leer" |
+                 "Side Letter / Anhang zu einem Hauptvertrag" |
+                 "Memorandum of Understanding" |
+                 "Rechnung mit AGB-Verweis (kein eigenständiger Vertrag)" |
+                 "Allgemeine Geschäftsbedingungen (AGB) — keine Individualvereinbarung"
+   → SEI ECHRLICH: Wenn Parteien fehlen, Unterschrift fehlt, Datum fehlt, Platzhalter im Text stehen → SAGE DAS!
+   → rationale: konkrete Belege ("Felder '[NAME]' und '____' im Header", "kein Unterschriftenblock am Ende", "explizit als 'Muster' bezeichnet")
+
+B. **completeness** (Object, PFLICHTFELD):
+   Schema: {
+     "isComplete": true | false,
+     "observation": "Freier Text: was ist drin, was fehlt?",
+     "openItems": ["Liste der offenen/leeren/fehlenden Punkte"] // optional, kann [] sein
+   }
+   → Prüfe inhaltlich: Sind alle für DIESEN Dokumenttyp essenziellen Elemente ausgefüllt?
+   → KEINE starre Checkliste — beurteile relativ zu dem, was das Dokument zu sein vorgibt
+   → Beispiel komplett: { "isComplete": true, "observation": "Alle Parteien benannt, Datum vorhanden, beidseitig unterzeichnet, alle Konditionen ausgefüllt", "openItems": [] }
+   → Beispiel unvollständig: { "isComplete": false, "observation": "Mustervertrag — Lieferanten-Adresse, Unterschriften und Datum fehlen", "openItems": ["Adresse Supplier", "Unterschriftenblock", "Vertragsdatum"] }
+
+C. **asymmetryAssessment** (Object, PFLICHTFELD):
+   Schema: {
+     "rating": "balanced" | "mostly-fair" | "one-sided" | "heavily-one-sided",
+     "favoredParty": "string oder null (z.B. 'Käufer', 'Vermieter', 'Auftraggeber')",
+     "explanation": "2-4 Sätze: woran festgemacht, mit konkreten Klausel-Verweisen"
+   }
+   → Bewerte, ob der Vertrag ausgewogen oder einseitig strukturiert ist
+   → "balanced" nur bei wirklich beidseitig fairer Verteilung von Pflichten/Rechten/Risiken
+   → "heavily-one-sided" wenn eine Partei fast nur Pflichten/Risiken trägt (Beispiel: Recall-Kosten + Vertragsstrafe + uneingeschränkte Compliance-Last bei einer Partei)
+   → favoredParty: Wer profitiert? Bei "balanced" → null
+   → explanation MIT konkreten Klausel-Verweisen aus DIESEM Vertrag
+
+D. **scoreReasoning** (String, PFLICHTFELD — gehört zu contractScore):
+   → 3-5 Sätze: warum genau dieser Score und nicht 5 Punkte höher/niedriger?
+   → Holistische Bewertung: was zieht runter, was hebt, wie ist das Gesamtbild?
+   → Beispiel: "Score 67/100 — der Vertrag ist juristisch solide aufgesetzt und enthält klare Verzugsregelungen, wird aber durch eine deutlich einseitige Haftungsverteilung zugunsten des Recipients gedrückt. Die fehlende Haftungsbegrenzung und die uneingeschränkte Compliance-Last für den Supplier sind wesentliche Verhandlungspunkte. Ohne diese Schieflagen wäre der Vertrag im Bereich 80-85."
+
+─────────────────────────────────────────────
+ADAPTIVE FELDER (nur ausgeben wenn substanziell):
+─────────────────────────────────────────────
 
 1. **laymanSummary** (String[], FLEXIBEL 2-5 Punkte):
    → ALLTAGSSPRACHE ohne Jura-Fachbegriffe!
@@ -2981,18 +3047,26 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           analyzed: true, // 🔧 FIX: Flag setzen damit Status "Aktiv" statt "Neu" angezeigt wird
           analyzedAt: new Date(), // Zeitpunkt der Analyse
           contractScore: result.contractScore || 0,
-          laymanSummary: result.laymanSummary || [],
-          summary: result.summary || [],
-          legalAssessment: result.legalAssessment || [],
-          suggestions: result.suggestions || [],
-          comparison: result.comparison || [],
-          positiveAspects: result.positiveAspects || [],
-          criticalIssues: result.criticalIssues || [],
-          risiken: result.criticalIssues || [], // ✅ Alias für Frontend-Kompatibilität
-          recommendations: result.recommendations || [],
-          quickFacts: result.quickFacts || [],
-          legalPulseHooks: result.legalPulseHooks || [],
-          detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
+          // 🌐 Phase-1-Redesign: Recognition-Felder + Adaptive-Output.
+          // Bei adaptiven Feldern verwenden wir undefined statt [] / '' damit das
+          // Frontend per render-if-present sauber unterscheiden kann zwischen
+          // "AI hat bewusst weggelassen" und "leerer Default".
+          documentCharacterization: result.documentCharacterization,  // PFLICHT-Recognition-Feld
+          completeness: result.completeness,                          // PFLICHT-Recognition-Feld
+          asymmetryAssessment: result.asymmetryAssessment,            // PFLICHT-Recognition-Feld
+          scoreReasoning: result.scoreReasoning,                      // PFLICHT — gehört zu contractScore
+          laymanSummary: result.laymanSummary,                        // adaptiv
+          summary: result.summary,                                    // adaptiv
+          legalAssessment: result.legalAssessment,                    // adaptiv
+          suggestions: result.suggestions,                            // adaptiv
+          comparison: result.comparison,                              // adaptiv
+          positiveAspects: result.positiveAspects,                    // adaptiv
+          criticalIssues: result.criticalIssues,                      // adaptiv
+          risiken: result.criticalIssues,                             // Alias für FE-Kompat
+          recommendations: result.recommendations,                    // adaptiv
+          quickFacts: result.quickFacts,                              // adaptiv
+          legalPulseHooks: result.legalPulseHooks,                    // adaptiv
+          detailedLegalOpinion: result.detailedLegalOpinion || '',    // PFLICHT (default ''  ok)
           // 🔒 importantDates werden validiert bevor sie gespeichert werden
           importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId)
         };
@@ -3282,18 +3356,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               analyzed: true, // 🔧 FIX: Flag setzen damit Status "Aktiv" statt "Neu" angezeigt wird
               analyzedAt: new Date(), // Zeitpunkt der Analyse
               contractScore: result.contractScore || 0,
-              laymanSummary: result.laymanSummary || [],
-              summary: result.summary || [],
-              legalAssessment: result.legalAssessment || [],
-              suggestions: result.suggestions || [],
-              comparison: result.comparison || [],
-              positiveAspects: result.positiveAspects || [],
-              criticalIssues: result.criticalIssues || [],
-              risiken: result.criticalIssues || [], // ✅ Alias für Frontend-Kompatibilität
-              recommendations: result.recommendations || [],
-              quickFacts: result.quickFacts || [],
-              legalPulseHooks: result.legalPulseHooks || [],
-              detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
+              // 🌐 Phase-1-Redesign: Recognition-Felder + Adaptive-Output (siehe oben)
+              documentCharacterization: result.documentCharacterization,
+              completeness: result.completeness,
+              asymmetryAssessment: result.asymmetryAssessment,
+              scoreReasoning: result.scoreReasoning,
+              laymanSummary: result.laymanSummary,
+              summary: result.summary,
+              legalAssessment: result.legalAssessment,
+              suggestions: result.suggestions,
+              comparison: result.comparison,
+              positiveAspects: result.positiveAspects,
+              criticalIssues: result.criticalIssues,
+              risiken: result.criticalIssues,
+              recommendations: result.recommendations,
+              quickFacts: result.quickFacts,
+              legalPulseHooks: result.legalPulseHooks,
+              detailedLegalOpinion: result.detailedLegalOpinion || '',
               // 🔒 importantDates werden validiert bevor sie gespeichert werden
               importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId),
 
