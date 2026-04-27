@@ -660,7 +660,11 @@ export default function Pricing() {
 
         {/* FEATURE COMPARISON TABLE */}
         <section className={styles.comparisonSection}>
-          <h2 className={styles.sectionTitle}>Alle Features im Vergleich</h2>
+          <div className="section-title features-title">
+            <span className="section-badge">VERGLEICH</span>
+            <h2>Alle Features<br /><span className="text-gradient">im Vergleich</span></h2>
+            <p>Was steckt in welchem Plan?</p>
+          </div>
           <div className={styles.scrollHint}>
             <span>← Wische um mehr zu sehen →</span>
           </div>
@@ -723,7 +727,11 @@ export default function Pricing() {
 
         {/* FAQ SECTION */}
         <section className={styles.faqSection}>
-          <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+          <div className="section-title features-title">
+            <span className="section-badge">FAQ</span>
+            <h2>Häufige <span className="text-gradient">Fragen</span></h2>
+            <p>Antworten auf die wichtigsten Fragen rund um Contract AI</p>
+          </div>
           <div className={styles.faqList}>
             {faqs.map((faq, i) => (
               <motion.div
