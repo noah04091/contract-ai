@@ -913,6 +913,25 @@ function validateAndNormalizeLawyerAnalysis(result, documentType, requestId) {
     }
   }
 
+  // 🌐 Phase-2 (Pilot-Type-Spezialisierung): typeSpecificFindings ist OPTIONAL.
+  // Wird nur erwartet, wenn der Vertragstyp ein Pilot-Typ ist (Mietvertrag, Arbeitsvertrag, NDA).
+  // Bei anderen Typen oder bei "other" lassen wir das Feld einfach weg — render-if-present.
+  // Validation: wenn vorhanden, muss es ein Array sein. Falsch geformte Werte → entfernen.
+  if (result.typeSpecificFindings !== undefined && result.typeSpecificFindings !== null) {
+    if (!Array.isArray(result.typeSpecificFindings)) {
+      console.warn(`⚠️ [${requestId}] typeSpecificFindings is not an array — removing`);
+      delete result.typeSpecificFindings;
+    } else {
+      // Filter: nur Items mit checkpoint + status durchlassen
+      result.typeSpecificFindings = result.typeSpecificFindings.filter(item =>
+        item && typeof item === 'object' && item.checkpoint && item.status
+      );
+      if (result.typeSpecificFindings.length === 0) {
+        delete result.typeSpecificFindings;
+      }
+    }
+  }
+
   // Score: weiterhin Pflicht. Fallback nur wenn AI nichts brauchbares geliefert hat.
   if (!result.contractScore || result.contractScore < 1 || result.contractScore > 100) {
     console.warn(`⚠️ [${requestId}] contractScore missing or out-of-range — calculating heuristic fallback`);
@@ -1114,7 +1133,27 @@ Wenn es ein kurzer Standard-Vertrag ist → fokussiere auf das Wesentliche.`,
 • Pauschalabgeltung von Überstunden ohne Höchstgrenze (unwirksam)
 • Einseitige Kündigungsfristverlängerung nur für Arbeitnehmer (unwirksam)
 • Zu weitgehende Versetzungsklauseln (§ 106 GewO)
-• Mindestlohn-Unterschreitung (aktuell 12,41€/Std., ab 2025: 12,82€/Std.)`
+• Mindestlohn-Unterschreitung (aktuell 12,41€/Std., ab 2025: 12,82€/Std.)`,
+
+      // 🌐 Phase-2-Pilot: Pflicht-Prüfpunkte für arbeitsrechtliche Tiefenanalyse.
+      // Werden zusätzlich zur Universal-Analyse als typeSpecificFindings ausgegeben.
+      pilotChecklist: `ARBEITSVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" (das ist OK!).
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Probezeit-Länge (max. 6 Monate § 622 Abs. 3 BGB)
+2. Wettbewerbsverbot — nur wirksam mit Karenzentschädigung ≥ 50% Bruttogehalt (§ 74 Abs. 2 HGB)
+3. Überstundenregelung — Pauschalabgeltung nur mit klarer Höchstgrenze wirksam (BAG-Rspr.)
+4. Befristung — Sachgrund nach § 14 TzBfG erforderlich, sonst max. 24 Monate sachgrundlos
+5. Mindestlohn-Konformität (12,41 €/h aktuell, 12,82 €/h ab 2025) bzw. branchenspezifische Tariflöhne
+6. Ausschlussfristen — mind. 3 Monate, beidseitig (sonst unwirksam)
+7. Versetzungsklausel — Reichweite nach § 106 GewO (zumutbar?)
+8. Urlaubsanspruch (mind. 20 Tage bei 5-Tage-Woche § 3 BUrlG)
+9. Kündigungsfristen — beidseitig, mind. § 622 BGB-Niveau
+10. Verschwiegenheits- und Geheimhaltungsklausel — Reichweite und nachvertragliche Wirksamkeit`
     },
 
     rental: {
@@ -1135,7 +1174,27 @@ Wenn es ein Standard-Formular ist → fokussiere auf typische Problemklauseln.`,
 • Pauschale Nebenkostenumlage ohne Abrechnungspflicht
 • Indexmiete ohne Kappungsgrenze
 • Kündigungsfristen unter gesetzlichem Minimum (§ 573c BGB: 3 Monate)
-• Unwirksame Tierhaltungsverbote (BGH: Kleintiere immer erlaubt)`
+• Unwirksame Tierhaltungsverbote (BGH: Kleintiere immer erlaubt)`,
+
+      pilotChecklist: `MIETVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable".
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Schönheitsreparatur-Klausel — starre Fristen / Quotenabgeltung sind nach BGH-Rspr. häufig unwirksam (§ 307 BGB)
+2. Kaution-Höhe (max. 3 Nettokaltmieten § 551 BGB) und Verzinsung
+3. Kleinreparaturklausel — Einzelfall max. ~110 €, Jahresgrenze max. ~6-8% Jahresmiete (BGH)
+4. Nebenkosten-Umlageschlüssel — klar definiert? Heizkostenverordnung beachtet?
+5. Indexmiete — mit Kappungsgrenze (§ 557b BGB)? Mindestmietdauer?
+6. Staffelmiete — Bedingungen klar, Kündigungsausschluss max. 4 Jahre § 557a Abs. 3
+7. Kündigungsfrist — bei Wohnraum mind. 3 Monate (§ 573c BGB), Sperrfrist beachten
+8. Tierhaltungsklausel — Generalverbot unwirksam, Einzelabwägung (BGH)
+9. Untervermietungsverbot — pauschal unwirksam, berechtigtes Interesse (§ 553 BGB)
+10. Mietminderungsausschluss — formularrechtlich unwirksam (§ 536 Abs. 4 BGB)
+11. Mietpreisbremse (in angespannten Wohnungsmärkten) — Auskunftspflicht erfüllt?
+12. Übergabeprotokoll und Anfangsrenovierung — Pflichten klar geregelt?`
     },
 
     telecom: {
@@ -1218,6 +1277,49 @@ Wenn Haftungsausschlüsse zu weit gehen → prüfe § 309 BGB.`,
 • Unzureichende SLA-Penalties bei Ausfall`
     },
 
+    // 🔒 NDA / Geheimhaltungsvereinbarung — Pilot-Typ Phase 2
+    nda: {
+      title: "Fachanwalt für IT-Recht & Geheimnisschutz",
+      expertise: `Als Fachanwalt mit Schwerpunkt Geheimnisschutz und Geschäftsgeheimnisgesetz (GeschGehG) weißt du:
+
+Bei Geheimhaltungsvereinbarungen (NDAs) sind typischerweise relevant: Definition vertraulicher Informationen, Reichweite/Zweckbindung, Laufzeit, Standard-Carve-Outs (öffentlich bekannt, eigenständig entwickelt, behördlich angeordnet), Rückgabe-/Vernichtungspflicht, Vertragsstrafe, Geltungsbereich (auch Mitarbeiter/Berater?).
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Vertragsstrafe drin steht → erwähne es nicht (kann sogar positiv sein).
+Wenn die Definition vertraulicher Informationen sehr weit oder sehr eng ist → bewerte konkret.
+Wenn es ein einseitiges (one-way) NDA ist → benenne das.`,
+
+      commonTraps: `Häufige Fallen bei NDAs (falls im Vertrag vorhanden):
+• Definition vertraulicher Informationen zu weit (= alles ist vertraulich = nichts ist durchsetzbar)
+• Definition zu eng (z.B. nur "schriftlich gekennzeichnet") = praktisch wirkungslos
+• Fehlende Standard-Carve-Outs (öffentlich bekannt, eigenständig entwickelt, gesetzlich offenzulegen) → Klausel kann unangemessen sein § 307 BGB
+• Vertragsstrafe-Höhe unverhältnismäßig (in AGB unwirksam § 307 BGB; faustregel: nicht mehr als realistisch zu erwartender Schaden)
+• Unbegrenzte Laufzeit der Geheimhaltung — bei nicht-Geschäftsgeheimnissen oft unangemessen, marktüblich 2-5 Jahre
+• Fehlende Regelung zu Mitarbeitern/Beratern (Empfänger-Kreis)
+• Fehlende Rückgabe-/Vernichtungspflicht bei Vertragsende
+• One-way NDA ohne sachlichen Grund — bei beidseitigem Informationsaustausch sollte beidseitig sein
+• Gerichtsstand / Rechtswahl ungünstig (z.B. Sitz der offenlegenden Partei in nicht-EU-Land)`,
+
+      pilotChecklist: `NDA-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" oder "issue" je nach Wichtigkeit.
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Definition vertraulicher Informationen — angemessen weit/eng? Klar abgegrenzt?
+2. Standard-Carve-Outs vorhanden? (öffentlich bekannt, eigenständig entwickelt, behördlich angeordnet, vorbekannt)
+3. Laufzeit der Geheimhaltung — branchenüblich 2-5 Jahre, unbegrenzt nur bei echten Geschäftsgeheimnissen
+4. Vertragsstrafe — Höhe verhältnismäßig? In AGB-Form (§ 307 BGB)?
+5. Schadensersatz-Regelung neben Vertragsstrafe (kumulativ?)
+6. Empfänger-Kreis — Mitarbeiter, Berater, verbundene Unternehmen einbezogen?
+7. Rückgabe-/Vernichtungspflicht bei Vertragsende — geregelt?
+8. Einseitig (one-way) oder beidseitig (mutual)? Sachgerecht für die Konstellation?
+9. Geltungsbereich (territorial) und Rechtswahl/Gerichtsstand
+10. Verhältnis zum GeschGehG — angemessene Schutzmaßnahmen vorausgesetzt (§ 2 Nr. 1 b GeschGehG)
+11. Reichweite Zweckbindung — Empfänger darf Informationen nur für den vereinbarten Zweck nutzen`
+    },
+
     other: {
       title: "Fachanwalt für allgemeines Vertragsrecht",
       expertise: `Als Fachanwalt für allgemeines Vertragsrecht mit 20+ Jahren Erfahrung weißt du:
@@ -1287,6 +1389,19 @@ Der Mandant erwartet KEINE oberflächliche Durchsicht, sondern eine TIEFE, PROFE
 ${awareness.expertise}
 
 ${awareness.commonTraps}
+
+${awareness.pilotChecklist ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 PILOT-TIEFENANALYSE (zusätzlich zur Universal-Analyse):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${awareness.pilotChecklist}
+
+→ Diese Pflicht-Prüfung läuft ZUSÄTZLICH zur normalen Analyse, nicht als Ersatz.
+→ Gib das Ergebnis als typeSpecificFindings-Array im JSON zurück (siehe Output-Schema).
+→ Sei adaptiv: Wenn ein Punkt nicht relevant für DIESEN Vertrag ist (z.B. ein Pendelvertrag ohne Wettbewerbsverbot) → status "not_applicable" reicht, keine erfundenen Findings.
+→ Diese Prüfung ergänzt die Standardfelder, sie ersetzt sie nicht.` : ''}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🚫 UNIVERSELLE ANWALTS-PRINZIPIEN (NON-NEGOTIABLE):
@@ -1717,8 +1832,18 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
     {"type": "cancellation_deadline", "date": "2024-12-15", "label": "Kündigungsfrist", "description": "Nächster Termin für Kündigung", "calculated": true, "source": "§ 5: 1 Monat zum Jahresende"}
   ],
   "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."],
-  "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext auf Fachanwaltsniveau: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach INHALT: 300-500 Wörter wenn wenig zu sagen, 500-800 Wörter bei moderater Analyse, 800-1500 Wörter wenn viel zu besprechen. Seitenzahl IRRELEVANT! Nur tatsächlicher Analyse-Bedarf zählt!]"
-}`;
+  "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext auf Fachanwaltsniveau: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach INHALT: 300-500 Wörter wenn wenig zu sagen, 500-800 Wörter bei moderater Analyse, 800-1500 Wörter wenn viel zu besprechen. Seitenzahl IRRELEVANT! Nur tatsächlicher Analyse-Bedarf zählt!]",
+  "typeSpecificFindings": [
+    { "checkpoint": "Probezeit-Länge", "status": "ok", "finding": "Probezeit von 4 Monaten ist innerhalb des gesetzlichen Maximums von 6 Monaten (§ 622 Abs. 3 BGB).", "legalBasis": "§ 622 Abs. 3 BGB" },
+    { "checkpoint": "Wettbewerbsverbot mit Karenzentschädigung", "status": "issue", "finding": "Nachvertragliches Wettbewerbsverbot in § 14 ohne Karenzentschädigung — nach § 74 Abs. 2 HGB unverbindlich.", "legalBasis": "§ 74 Abs. 2 HGB", "clauseRef": "§ 14 Wettbewerbsverbot" },
+    { "checkpoint": "Mindestlohn-Konformität", "status": "not_applicable", "finding": "Vertrag enthält keine Stundenlohnregelung, sondern Festgehalt deutlich über Mindestlohn." }
+  ]
+}
+
+NUR FÜR PILOT-TYPEN (Mietvertrag, Arbeitsvertrag, NDA): typeSpecificFindings ist die strukturierte
+Antwort auf die PILOT-TIEFENANALYSE oben. Für alle anderen Vertragstypen: Feld weglassen oder leeres
+Array []. Status-Werte: "ok" | "issue" | "not_applicable". Bei "issue" möglichst klauselReferenz
+mitgeben.`;
 
   return professionalPrompt;
 }
@@ -3055,6 +3180,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           completeness: result.completeness,                          // PFLICHT-Recognition-Feld
           asymmetryAssessment: result.asymmetryAssessment,            // PFLICHT-Recognition-Feld
           scoreReasoning: result.scoreReasoning,                      // PFLICHT — gehört zu contractScore
+          typeSpecificFindings: result.typeSpecificFindings,          // Phase 2: optional, nur bei Pilot-Typen
           laymanSummary: result.laymanSummary,                        // adaptiv
           summary: result.summary,                                    // adaptiv
           legalAssessment: result.legalAssessment,                    // adaptiv
@@ -3361,6 +3487,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               completeness: result.completeness,
               asymmetryAssessment: result.asymmetryAssessment,
               scoreReasoning: result.scoreReasoning,
+              typeSpecificFindings: result.typeSpecificFindings,
               laymanSummary: result.laymanSummary,
               summary: result.summary,
               legalAssessment: result.legalAssessment,

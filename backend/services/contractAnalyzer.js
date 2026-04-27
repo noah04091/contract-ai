@@ -1545,6 +1545,15 @@ class ContractAnalyzer {
         strong: ['dienstleistungsvertrag', 'werkvertrag', 'dienstleistung', 'beauftragung', 'auftraggeber', 'auftragnehmer'],
         medium: ['honorar', 'vergütung', 'leistungsumfang', 'werklohn', 'abnahme', 'fertigstellung'],
         weak: ['erbringung', 'ausführung']
+      },
+
+      // 🔒 GEHEIMHALTUNGSVEREINBARUNG (nda) — Pilot-Typ Phase 2
+      // Fängt sowohl deutsche als auch englische Bezeichnungen ab, damit auch
+      // Köhnlein-ähnliche Fälle (englisch) sauber gemappt werden.
+      nda: {
+        strong: ['geheimhaltungsvereinbarung', 'vertraulichkeitsvereinbarung', 'non-disclosure agreement', 'nda', 'confidentiality agreement'],
+        medium: ['vertrauliche informationen', 'geheimhaltung', 'offenlegende partei', 'empfangende partei', 'confidential information', 'non-disclosure', 'disclosing party', 'receiving party', 'trade secret'],
+        weak: ['vertraulich', 'confidential', 'geheim']
       }
     };
 

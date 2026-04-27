@@ -73,6 +73,15 @@ interface AnalysisResult {
     explanation?: string;
   };
   scoreReasoning?: string;
+  // 🌐 Phase-2-Redesign: typeSpecificFindings nur bei Pilot-Typen
+  // (Mietvertrag, Arbeitsvertrag, NDA). Optional, render-if-present.
+  typeSpecificFindings?: Array<{
+    checkpoint: string;
+    status: 'ok' | 'issue' | 'not_applicable';
+    finding?: string;
+    legalBasis?: string;
+    clauseRef?: string;
+  }>;
 
   usage?: {
     count: number;
@@ -1488,6 +1497,104 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               </div>
             </div>
           )}
+
+          {/* 🌐 Phase-2-Redesign: Pilot-Typ-spezifische Tiefenanalyse-Card.
+              Render-if-present: erscheint nur, wenn typeSpecificFindings vorhanden ist
+              UND mindestens ein Item enthält. Bei nicht-Pilot-Verträgen (Kaufvertrag,
+              Versicherung, exotisch, etc.) bleibt die Card unsichtbar — Universal-Pfad
+              pur. Status-Indikatoren: ok=grün, issue=rot, not_applicable=grau. */}
+          {(() => {
+            const findings = result?.typeSpecificFindings || initialResult?.typeSpecificFindings;
+            if (!findings || !Array.isArray(findings) || findings.length === 0) return null;
+            return (
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #e5e7eb',
+                borderRadius: 12,
+                padding: '20px 24px',
+                marginBottom: 20,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <span style={{ fontSize: 18 }}>🎯</span>
+                  <h5 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#111827' }}>
+                    Spezifische Tiefenprüfung
+                  </h5>
+                  <span style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#4338ca',
+                    background: '#eef2ff',
+                    border: '1px solid #c7d2fe',
+                    borderRadius: 4,
+                    padding: '2px 6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.4,
+                  }}>
+                    Pilot
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>
+                  Zusätzliche Pflicht-Prüfpunkte für diesen Vertragstyp — ergänzt die allgemeine Analyse oben.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {findings.map((item, idx) => {
+                    const palette =
+                      item.status === 'ok'
+                        ? { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534', icon: '✓', label: 'OK' }
+                        : item.status === 'issue'
+                          ? { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', icon: '⚠️', label: 'Hinweis' }
+                          : { bg: '#f9fafb', border: '#e5e7eb', text: '#6b7280', icon: '○', label: 'Nicht zutreffend' };
+                    return (
+                      <div key={idx} style={{
+                        background: palette.bg,
+                        border: `1px solid ${palette.border}`,
+                        borderRadius: 8,
+                        padding: '10px 14px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                          <span style={{ fontSize: 16, flexShrink: 0, color: palette.text, lineHeight: 1.2 }}>
+                            {palette.icon}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: palette.text }}>
+                                {item.checkpoint}
+                              </span>
+                              <span style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: palette.text,
+                                background: 'rgba(255,255,255,0.6)',
+                                border: `1px solid ${palette.border}`,
+                                borderRadius: 4,
+                                padding: '1px 6px',
+                                textTransform: 'uppercase',
+                                letterSpacing: 0.4,
+                              }}>
+                                {palette.label}
+                              </span>
+                            </div>
+                            {item.finding && (
+                              <div style={{ fontSize: 12, color: palette.text, lineHeight: 1.5, marginBottom: (item.legalBasis || item.clauseRef) ? 4 : 0 }}>
+                                {item.finding}
+                              </div>
+                            )}
+                            {(item.legalBasis || item.clauseRef) && (
+                              <div style={{ fontSize: 11, color: palette.text, opacity: 0.8 }}>
+                                {item.legalBasis && <span><strong>Grundlage:</strong> {item.legalBasis}</span>}
+                                {item.legalBasis && item.clauseRef && <span> · </span>}
+                                {item.clauseRef && <span><strong>Klausel:</strong> {item.clauseRef}</span>}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ✅ NEU: Ausführliches Rechtsgutachten */}
           {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion) && (

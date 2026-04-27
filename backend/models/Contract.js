@@ -33,6 +33,11 @@ const contractSchema = new mongoose.Schema({
   completeness: { type: mongoose.Schema.Types.Mixed, default: undefined },
   asymmetryAssessment: { type: mongoose.Schema.Types.Mixed, default: undefined },
   scoreReasoning: { type: String, default: undefined },
+  // 🌐 Phase-2-Redesign: Pilot-Type-spezifische Tiefenanalyse-Findings.
+  // Optional, Array of { checkpoint, status, finding, legalBasis?, clauseRef? }.
+  // Wird nur befüllt, wenn der erkannte Vertragstyp ein Pilot-Typ ist (Mietvertrag,
+  // Arbeitsvertrag, NDA). Bei anderen Typen / "other" bleibt das Feld undefined.
+  typeSpecificFindings: { type: mongoose.Schema.Types.Mixed, default: undefined },
   summary: String,
   legalAssessment: String,
   suggestions: String,
