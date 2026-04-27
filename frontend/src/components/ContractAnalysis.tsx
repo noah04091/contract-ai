@@ -56,6 +56,24 @@ interface AnalysisResult {
   // ✅ NEU: Ausführliches Rechtsgutachten
   detailedLegalOpinion?: string;
 
+  // 🌐 Phase-1-Redesign: Recognition-Felder + holistisches Score-Reasoning.
+  // Optional, da alte Analysen ohne diese Felder bestehen bleiben (render-if-present).
+  documentCharacterization?: {
+    description?: string;
+    rationale?: string;
+  };
+  completeness?: {
+    isComplete?: boolean;
+    observation?: string;
+    openItems?: string[];
+  };
+  asymmetryAssessment?: {
+    rating?: 'balanced' | 'mostly-fair' | 'one-sided' | 'heavily-one-sided';
+    favoredParty?: string | null;
+    explanation?: string;
+  };
+  scoreReasoning?: string;
+
   usage?: {
     count: number;
     limit: number;
@@ -1152,35 +1170,158 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
             )}
           </div>
 
+          {/* 🌐 Phase-1-Redesign: Recognition-Banner für non-finale Dokumente.
+              Erscheint VOR dem Score, damit der User sofort versteht in welchem
+              Zustand der Vertrag ist. Render-if-present: erscheint nur, wenn die
+              KI eine documentCharacterization geliefert UND auf einen nicht-finalen
+              Status hingewiesen hat — bei "Aktiver, unterzeichneter Vertrag" bleibt
+              der Banner unsichtbar. */}
+          {(() => {
+            const docChar = result?.documentCharacterization || initialResult?.documentCharacterization;
+            const completeness = result?.completeness || initialResult?.completeness;
+            const desc = docChar?.description || '';
+            const lowerDesc = desc.toLowerCase();
+            const nonFinalSignals = [
+              'muster', 'mustervertrag', 'template', 'vorlage',
+              'entwurf', 'draft',
+              'vorvertrag', 'letter of intent', 'loi',
+              'term sheet', 'memorandum of understanding', 'mou',
+              'side letter',
+              'unvollständ', 'incomplete', 'noch nicht ausgefüllt', 'placeholder',
+            ];
+            const isNonFinal = nonFinalSignals.some(s => lowerDesc.includes(s))
+              || completeness?.isComplete === false;
+            if (!isNonFinal || !desc) return null;
+            return (
+              <div style={{
+                background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+                border: '1px solid #fde68a',
+                borderRadius: 12,
+                padding: '20px 24px',
+                marginBottom: 20,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+              }}>
+                <span style={{ fontSize: 22, lineHeight: 1, marginTop: 2 }}>⚠️</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#92400e', marginBottom: 6 }}>
+                    Hinweis zum Dokument-Status
+                  </div>
+                  <div style={{ fontSize: 14, color: '#78350f', lineHeight: 1.5, marginBottom: docChar?.rationale ? 8 : 0 }}>
+                    {desc}
+                  </div>
+                  {docChar?.rationale && (
+                    <div style={{ fontSize: 12, color: '#a16207', lineHeight: 1.5, fontStyle: 'italic' }}>
+                      {docChar.rationale}
+                    </div>
+                  )}
+                  {completeness?.openItems && completeness.openItems.length > 0 && (
+                    <div style={{ marginTop: 10, fontSize: 12, color: '#78350f' }}>
+                      <strong>Noch offen:</strong> {completeness.openItems.join(' • ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ✅ CRITICAL FIX: Contract Score - zeige wenn Score vorhanden (auch 0) */}
           {(result?.contractScore != null || initialResult?.contractScore != null) && (
             <div className={styles.scoreSection}>
               <h5 className={styles.scoreSectionTitle}>
-                {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) 
-                  ? 'Anwaltliche Gesamtbewertung' 
+                {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis)
+                  ? 'Anwaltliche Gesamtbewertung'
                   : 'Contract Score'
                 }
               </h5>
-              
+
               <div className={styles.scoreSectionContent}>
                 <ScoreCircle score={result?.contractScore ?? initialResult?.contractScore ?? 0} />
               </div>
-              
+
               <div className={styles.scoreInfoContainer}>
                 {getScoreIcon(result?.contractScore ?? initialResult?.contractScore ?? 0)}
                 <span className={styles.scoreLabel} style={{ color: getScoreColor(result?.contractScore ?? initialResult?.contractScore ?? 0) }}>
                   {getScoreLabel(result?.contractScore ?? initialResult?.contractScore ?? 0)}
                 </span>
               </div>
-              
-              <p className={styles.scoreDescription}>
-                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
-                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 60 && (result?.contractScore ?? initialResult?.contractScore ?? 0) < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
-                {(result?.contractScore ?? initialResult?.contractScore ?? 0) >= 40 && (result?.contractScore ?? initialResult?.contractScore ?? 0) < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
-                {(result?.contractScore ?? initialResult?.contractScore ?? 0) < 40 && "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden."}
-              </p>
+
+              {/* 🌐 Phase-1-Redesign: scoreReasoning aus der KI bevorzugt — holistische
+                  Begründung statt generische Schwellwert-Texte. Nur wenn nicht vorhanden,
+                  fallen wir auf die alten Score-Range-Texte zurück (Backwards-Compat). */}
+              {(() => {
+                const reasoning = result?.scoreReasoning || initialResult?.scoreReasoning;
+                if (reasoning) {
+                  return <p className={styles.scoreDescription}>{reasoning}</p>;
+                }
+                const score = result?.contractScore ?? initialResult?.contractScore ?? 0;
+                let fallback = "";
+                if (score >= 80) fallback = "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen.";
+                else if (score >= 60) fallback = "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential.";
+                else if (score >= 40) fallback = "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden.";
+                else fallback = "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden.";
+                return <p className={styles.scoreDescription}>{fallback}</p>;
+              })()}
             </div>
           )}
+
+          {/* 🌐 Phase-1-Redesign: Asymmetry-Card. Wird nur gerendert, wenn die KI
+              einen Asymmetry-Rating gegeben hat UND es nicht "balanced" ist. */}
+          {(() => {
+            const asym = result?.asymmetryAssessment || initialResult?.asymmetryAssessment;
+            if (!asym?.rating || asym.rating === 'balanced') return null;
+            const palette =
+              asym.rating === 'heavily-one-sided'
+                ? { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', label: 'Stark einseitig' }
+                : asym.rating === 'one-sided'
+                  ? { bg: '#fff7ed', border: '#fed7aa', text: '#9a3412', label: 'Einseitig' }
+                  : { bg: '#fefce8', border: '#fef08a', text: '#854d0e', label: 'Größtenteils ausgewogen' };
+            return (
+              <div style={{
+                background: palette.bg,
+                border: `1px solid ${palette.border}`,
+                borderRadius: 12,
+                padding: '18px 22px',
+                marginBottom: 20,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+              }}>
+                <span style={{ fontSize: 20, lineHeight: 1, marginTop: 2 }}>⚖️</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <h5 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: palette.text }}>
+                      Vertrags-Ausgewogenheit
+                    </h5>
+                    <span style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: palette.text,
+                      background: 'rgba(255,255,255,0.6)',
+                      border: `1px solid ${palette.border}`,
+                      borderRadius: 4,
+                      padding: '2px 8px',
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.4,
+                    }}>
+                      {palette.label}
+                    </span>
+                  </div>
+                  {asym.favoredParty && (
+                    <div style={{ fontSize: 13, color: palette.text, marginBottom: 8 }}>
+                      <strong>Begünstigte Partei:</strong> {asym.favoredParty}
+                    </div>
+                  )}
+                  {asym.explanation && (
+                    <div style={{ fontSize: 13, color: palette.text, lineHeight: 1.55 }}>
+                      {asym.explanation}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ✅ ENHANCED: 7-Punkte-Analyse Details Grid */}
           <div className={styles.detailsGrid}>
