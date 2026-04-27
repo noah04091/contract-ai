@@ -541,39 +541,46 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             >
               {pdfExporting ? '\u23F3' : '\uD83D\uDCC4'} {pdfExporting ? 'Exportiert...' : 'PDF'}
             </button>
-            {/* Language toggle (PR 4): cached server-side after first click. */}
-            <button
-              type="button"
-              onClick={handleToggleLanguage}
-              disabled={translating}
-              title={
-                displayLang === 'original'
-                  ? (otherLang === 'en' ? 'Show findings in English' : 'Befunde auf Deutsch anzeigen')
-                  : (sourceLang === 'en' ? 'Show original (English)' : 'Originalsprache anzeigen (Deutsch)')
-              }
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '3px 10px',
-                fontSize: 11,
-                fontWeight: 500,
-                color: translating ? '#9ca3af' : '#4b5563',
-                background: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: 5,
-                cursor: translating ? 'default' : 'pointer',
-              }}
-            >
-              {translating
-                ? (sourceLang === 'en' ? 'Translating...' : 'Übersetze...')
-                : displayLang === 'original'
-                  ? (otherLang === 'en' ? 'Show in English' : 'Auf Deutsch anzeigen')
-                  : (sourceLang === 'en' ? 'Show original' : 'Original anzeigen')
-              }
-            </button>
-            {translationError && (
-              <span style={{ fontSize: 11, color: '#dc2626' }}>{translationError}</span>
+            {/* Language toggle (PR 4): only rendered for English-language contracts.
+                German contracts are the main customer base — the German UI is the
+                correct default and a toggle would only add visual noise. English
+                contracts (rare today) get a way to read findings in German. */}
+            {sourceLang === 'en' && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleToggleLanguage}
+                  disabled={translating}
+                  title={
+                    displayLang === 'original'
+                      ? 'Befunde auf Deutsch anzeigen'
+                      : 'Show original (English)'
+                  }
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '3px 10px',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: translating ? '#9ca3af' : '#4b5563',
+                    background: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 5,
+                    cursor: translating ? 'default' : 'pointer',
+                  }}
+                >
+                  {translating
+                    ? 'Übersetze...'
+                    : displayLang === 'original'
+                      ? 'Auf Deutsch anzeigen'
+                      : 'Show original'
+                  }
+                </button>
+                {translationError && (
+                  <span style={{ fontSize: 11, color: '#dc2626' }}>{translationError}</span>
+                )}
+              </>
             )}
           </div>
 
