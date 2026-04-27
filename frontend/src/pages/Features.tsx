@@ -222,6 +222,66 @@ const Features: React.FC = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Alle Funktionen | Contract AI — KI-Vertragsmanagement" />
         <meta name="twitter:description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.contract-ai.de" },
+              { "@type": "ListItem", "position": 2, "name": "Funktionen", "item": "https://www.contract-ai.de/features" }
+            ]
+          })}
+        </script>
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Welche Vertragstypen kann Contract AI analysieren?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Contract AI analysiert alle gängigen deutschen Vertragstypen: Arbeitsverträge, Mietverträge, NDAs, Kaufverträge, Freelancer-Verträge, SaaS-Verträge, Werkverträge, Kooperationsverträge, Gesellschaftsverträge und mehr. Die KI erkennt den Vertragstyp automatisch und passt die Analyse entsprechend an."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Wie funktioniert die KI-Vertragsanalyse?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Sie laden Ihren Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp, prüft jede Klausel gegen geltendes Recht und aktuelle BGH/BAG-Rechtsprechung und liefert in unter 60 Sekunden einen detaillierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Ist Contract AI DSGVO-konform?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Ja. Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet, mit 256-bit-Verschlüsselung übertragen und nicht für KI-Training verwendet. Sie können Ihre Daten jederzeit löschen lassen."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Was kostet Contract AI?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Im Free-Tier sind 3 Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhalten Sie 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100-400 € pro Vertrag."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Brauche ich technische Vorkenntnisse?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Sie laden den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen — kein Juristendeutsch."
+                }
+              }
+            ]
+          })}
+        </script>
       </Helmet>
 
       <div className="features-page-v3">
@@ -429,6 +489,141 @@ const Features: React.FC = () => {
         ))}
 
         {/* Bottom CTA */}
+        {/* SEO Cross-Link Section: Spezialisierte Vertrags-Prüfungen */}
+        <section style={{ padding: '80px 24px', background: 'transparent' }}>
+          <style>{`
+            .features-seo-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              max-width: 1200px;
+              margin: 0 auto;
+            }
+            @media (max-width: 1024px) {
+              .features-seo-grid { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 560px) {
+              .features-seo-grid { grid-template-columns: 1fr; }
+            }
+            .features-seo-card {
+              display: block;
+              padding: 24px;
+              background: rgba(255,255,255,0.7);
+              backdrop-filter: blur(10px);
+              border-radius: 16px;
+              border: 1px solid rgba(0,0,0,0.06);
+              text-decoration: none;
+              color: inherit;
+              transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            }
+            .features-seo-card:hover {
+              transform: translateY(-4px);
+              box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+              border-color: rgba(59, 130, 246, 0.3);
+            }
+            .features-faq-container {
+              max-width: 800px;
+              margin: 0 auto;
+            }
+            .features-faq-item {
+              background: rgba(255,255,255,0.7);
+              backdrop-filter: blur(10px);
+              border-radius: 12px;
+              border: 1px solid rgba(0,0,0,0.06);
+              margin-bottom: 12px;
+              overflow: hidden;
+            }
+            .features-faq-item summary {
+              padding: 20px 24px;
+              cursor: pointer;
+              font-weight: 600;
+              color: #1f2937;
+              font-size: 1.05rem;
+              list-style: none;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .features-faq-item summary::-webkit-details-marker { display: none; }
+            .features-faq-item[open] summary { border-bottom: 1px solid rgba(0,0,0,0.06); }
+            .features-faq-item p {
+              padding: 16px 24px 20px;
+              color: #4b5563;
+              line-height: 1.65;
+              margin: 0;
+            }
+          `}</style>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', color: '#1f2937' }}>
+              Spezialisierte Vertrags-Prüfungen
+            </h2>
+            <p style={{ fontSize: '1.05rem', color: '#6b7280', maxWidth: '640px', margin: '0 auto' }}>
+              Für die wichtigsten Vertragstypen — auf Basis aktueller BGH- und BAG-Rechtsprechung.
+            </p>
+          </div>
+          <div className="features-seo-grid">
+            <Link to="/arbeitsvertrag-pruefen" className="features-seo-card">
+              <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>💼</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px', color: '#1f2937' }}>Arbeitsvertrag prüfen</h3>
+              <p style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>BAG-Rechtsprechung, Wettbewerbsverbot, Probezeit</p>
+            </Link>
+            <Link to="/mietvertrag-pruefen" className="features-seo-card">
+              <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>🏠</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px', color: '#1f2937' }}>Mietvertrag prüfen</h3>
+              <p style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>Schönheitsreparaturen, Kaution, Indexmiete</p>
+            </Link>
+            <Link to="/nda-pruefen" className="features-seo-card">
+              <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>🔒</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px', color: '#1f2937' }}>NDA prüfen</h3>
+              <p style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>Vertragsstrafe, Carve-Outs, GeschGehG</p>
+            </Link>
+            <Link to="/kaufvertrag-pruefen" className="features-seo-card">
+              <div style={{ fontSize: '1.75rem', marginBottom: '8px' }}>🛒</div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '6px', color: '#1f2937' }}>Kaufvertrag prüfen</h3>
+              <p style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: 1.5, margin: 0 }}>Gewährleistung, Beschaffenheit, BGB</p>
+            </Link>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '32px' }}>
+            <Link to="/ki-vertragsanalyse" style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }}>
+              Mehr über KI-Vertragsanalyse erfahren →
+            </Link>
+          </div>
+        </section>
+
+        {/* FAQ Section — Sichtbare Variante des FAQPage-Schemas */}
+        <section style={{ padding: '60px 24px 100px', background: 'transparent' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '12px', color: '#1f2937' }}>
+              Häufige Fragen
+            </h2>
+            <p style={{ fontSize: '1.05rem', color: '#6b7280' }}>
+              Alles, was Sie über Contract AI wissen müssen.
+            </p>
+          </div>
+          <div className="features-faq-container">
+            <details className="features-faq-item">
+              <summary>Welche Vertragstypen kann Contract AI analysieren?<span style={{ color: '#3b82f6' }}>+</span></summary>
+              <p>Contract AI analysiert alle gängigen deutschen Vertragstypen: Arbeitsverträge, Mietverträge, NDAs, Kaufverträge, Freelancer-Verträge, SaaS-Verträge, Werkverträge, Kooperationsverträge, Gesellschaftsverträge und mehr. Die KI erkennt den Vertragstyp automatisch und passt die Analyse entsprechend an.</p>
+            </details>
+            <details className="features-faq-item">
+              <summary>Wie funktioniert die KI-Vertragsanalyse?<span style={{ color: '#3b82f6' }}>+</span></summary>
+              <p>Sie laden Ihren Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp, prüft jede Klausel gegen geltendes Recht und aktuelle BGH/BAG-Rechtsprechung und liefert in unter 60 Sekunden einen detaillierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen.</p>
+            </details>
+            <details className="features-faq-item">
+              <summary>Ist Contract AI DSGVO-konform?<span style={{ color: '#3b82f6' }}>+</span></summary>
+              <p>Ja. Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet, mit 256-bit-Verschlüsselung übertragen und nicht für KI-Training verwendet. Sie können Ihre Daten jederzeit löschen lassen.</p>
+            </details>
+            <details className="features-faq-item">
+              <summary>Was kostet Contract AI?<span style={{ color: '#3b82f6' }}>+</span></summary>
+              <p>Im Free-Tier sind 3 Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhalten Sie 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100-400 € pro Vertrag.</p>
+            </details>
+            <details className="features-faq-item">
+              <summary>Brauche ich technische Vorkenntnisse?<span style={{ color: '#3b82f6' }}>+</span></summary>
+              <p>Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Sie laden den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen — kein Juristendeutsch.</p>
+            </details>
+          </div>
+        </section>
+
         <section className="fp3-cta" data-section-id="cta">
           <div className={`fp3-cta-container ${visibleSections.has('cta') ? 'fp3-visible' : ''}`}>
             <div className="fp3-cta-content">

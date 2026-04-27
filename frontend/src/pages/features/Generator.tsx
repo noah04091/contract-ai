@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
+import SeoCrossLinks from "../../components/SeoCrossLinks";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   FileText, Shield, Zap, PenTool, CheckCircle,
@@ -697,6 +698,8 @@ const Generator: React.FC = () => {
         {/* ==========================================
             CTA SECTION
             ========================================== */}
+        <SeoCrossLinks />
+
         <section className={styles.ctaSection}>
           <div className={styles.container}>
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>

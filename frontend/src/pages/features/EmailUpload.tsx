@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
+import SeoCrossLinks from "../../components/SeoCrossLinks";
 // import AutoPlayVideo from "../../components/AutoPlayVideo"; // Auskommentiert bis Video erstellt wird
 import {
   Mail, CheckCircle, Shield, Zap, Play,
@@ -435,6 +436,8 @@ const EmailUpload: React.FC = () => {
         </section>
 
         {/* CTA Section */}
+        <SeoCrossLinks />
+
         <section className={`${styles.ctaSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>
             <div className={styles.ctaCard}>
