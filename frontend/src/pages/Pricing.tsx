@@ -367,14 +367,22 @@ export default function Pricing() {
       <div className={styles.pricingPage}>
         {/* HERO SECTION - Like About Page */}
         <section className={styles.heroSection}>
+          <motion.span
+            className="section-badge"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            PREISE & TARIFE
+          </motion.span>
           <motion.h1
             className={styles.heroTitle}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ delay: 0.15, duration: 0.6 }}
           >
-            Preise & Tarife<br />
-            <span className={styles.heroHighlight}>Transparent. Flexibel. Fair.</span>
+            Transparent.<br />
+            <span className={styles.heroHighlight}>Flexibel. Fair.</span>
           </motion.h1>
           <motion.div
             className={styles.heroLine}
