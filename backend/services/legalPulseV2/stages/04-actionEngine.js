@@ -17,17 +17,29 @@ const PRICES = {
 };
 
 /**
- * Build action context from findings + insights
+ * Build action context from findings + insights.
+ * Language affects only labels in the GPT context; underlying data is identical.
  */
-function buildActionContext(clauseFindings, portfolioInsights, context) {
+function buildActionContext(clauseFindings, portfolioInsights, context, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
+  const L = lang === "en"
+    ? { contract: "CONTRACT", unnamed: "Unnamed", type: "Type", provider: "Provider",
+        expiresIn: "Expires in", days: "days", autoRenewal: "AUTO-RENEWAL: YES",
+        findingsHdr: "FINDINGS:", legalBasis: "Legal basis", enforceability: "Enforceability",
+        portfolioHdr: "PORTFOLIO INSIGHTS:" }
+    : { contract: "VERTRAG", unnamed: "Unbenannt", type: "Typ", provider: "Anbieter",
+        expiresIn: "Ablauf in", days: "Tagen", autoRenewal: "AUTO-RENEWAL: JA",
+        findingsHdr: "BEFUNDE:", legalBasis: "Rechtsgrundlage", enforceability: "Durchsetzbarkeit",
+        portfolioHdr: "PORTFOLIO-INSIGHTS:" };
+
   const lines = [];
 
   // Contract context
-  lines.push(`VERTRAG: ${context.contractName || "Unbenannt"}`);
-  if (context.contractType) lines.push(`Typ: ${context.contractType}`);
-  if (context.provider) lines.push(`Anbieter: ${context.provider}`);
-  if (context.daysUntilExpiry !== null) lines.push(`Ablauf in: ${context.daysUntilExpiry} Tagen`);
-  if (context.autoRenewal) lines.push("AUTO-RENEWAL: JA");
+  lines.push(`${L.contract}: ${context.contractName || L.unnamed}`);
+  if (context.contractType) lines.push(`${L.type}: ${context.contractType}`);
+  if (context.provider) lines.push(`${L.provider}: ${context.provider}`);
+  if (context.daysUntilExpiry !== null) lines.push(`${L.expiresIn}: ${context.daysUntilExpiry} ${L.days}`);
+  if (context.autoRenewal) lines.push(L.autoRenewal);
   lines.push("");
 
   // Critical, high, and medium findings
@@ -36,12 +48,12 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
   );
 
   if (actionableFindings.length > 0) {
-    lines.push("BEFUNDE:");
+    lines.push(L.findingsHdr);
     for (const f of actionableFindings) {
       lines.push(`  [${f.severity}] ${f.title}: ${f.description}`);
-      if (f.legalBasis) lines.push(`    Rechtsgrundlage: ${f.legalBasis}`);
+      if (f.legalBasis) lines.push(`    ${L.legalBasis}: ${f.legalBasis}`);
       if (f.enforceability && f.enforceability !== "valid" && f.enforceability !== "unknown") {
-        lines.push(`    Durchsetzbarkeit: ${f.enforceability}`);
+        lines.push(`    ${L.enforceability}: ${f.enforceability}`);
       }
     }
     lines.push("");
@@ -49,7 +61,7 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
 
   // Portfolio insights
   if (portfolioInsights && portfolioInsights.length > 0) {
-    lines.push("PORTFOLIO-INSIGHTS:");
+    lines.push(L.portfolioHdr);
     for (const i of portfolioInsights) {
       lines.push(`  [${i.severity}] ${i.title}: ${i.description}`);
     }
@@ -60,9 +72,11 @@ function buildActionContext(clauseFindings, portfolioInsights, context) {
 }
 
 /**
- * Generate deterministic fallback actions from findings when GPT returns none
+ * Generate deterministic fallback actions from findings when GPT returns none.
+ * Language affects only the title/impact/nextStep wording; structure is identical.
  */
-function generateFallbackActions(clauseFindings, context) {
+function generateFallbackActions(clauseFindings, context, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
   const actions = [];
   const severityOrder = { critical: 0, high: 1, medium: 2 };
 
@@ -75,23 +89,31 @@ function generateFallbackActions(clauseFindings, context) {
     const priority = f.severity === "critical" ? "now" : f.severity === "high" ? "plan" : "watch";
     const isInvalid = f.enforceability === "likely_invalid" || f.enforceability === "questionable";
 
+    const title = lang === "en"
+      ? (isInvalid ? `${f.title} — revise clause` : `${f.title} — review`)
+      : (isInvalid ? `${f.title} — Klausel überarbeiten` : `${f.title} — prüfen`);
+
+    const estimatedImpact = lang === "en"
+      ? (f.severity === "critical" ? "High risk if not addressed" : f.severity === "high" ? "Medium risk" : "Improvement potential")
+      : (f.severity === "critical" ? "Hohes Risiko bei Nichthandlung" : f.severity === "high" ? "Mittleres Risiko" : "Verbesserungspotential");
+
+    const nextStep = lang === "en"
+      ? (isInvalid
+          ? `Revise clause "${f.title}" with legal counsel. Legal basis: ${f.legalBasis || "to be reviewed"}`
+          : `Review clause "${f.title}" internally and renegotiate if appropriate`)
+      : (isInvalid
+          ? `Klausel "${f.title}" mit Rechtsberater überarbeiten. Rechtsgrundlage: ${f.legalBasis || "prüfen"}`
+          : `Klausel "${f.title}" intern prüfen und ggf. nachverhandeln`);
+
     actions.push({
       id: `fallback_${actions.length + 1}`,
       priority,
-      title: isInvalid
-        ? `${f.title} — Klausel überarbeiten`
-        : `${f.title} — prüfen`,
+      title,
       description: f.description,
       relatedContracts: context.contractId ? [context.contractId] : [],
-      estimatedImpact: f.severity === "critical"
-        ? "Hohes Risiko bei Nichthandlung"
-        : f.severity === "high"
-          ? "Mittleres Risiko"
-          : "Verbesserungspotential",
+      estimatedImpact,
       confidence: f.confidence,
-      nextStep: isInvalid
-        ? `Klausel "${f.title}" mit Rechtsberater überarbeiten. Rechtsgrundlage: ${f.legalBasis || "prüfen"}`
-        : `Klausel "${f.title}" intern prüfen und ggf. nachverhandeln`,
+      nextStep,
       status: "open",
     });
   }
@@ -108,6 +130,9 @@ function generateFallbackActions(clauseFindings, context) {
  * @returns {object} { actions, costs }
  */
 async function runActionEngine(clauseFindings, portfolioInsights, context, onProgress) {
+  // Language for downstream prompts/fallbacks; "de" preserves existing behavior when unset.
+  const language = context.language || "de";
+
   // Count actionable findings (critical + high + medium)
   const actionableCount = (clauseFindings || []).filter(f =>
     f.severity === "critical" || f.severity === "high" || f.severity === "medium"
@@ -125,8 +150,10 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
 
   onProgress(82, "Generiere Handlungsempfehlungen...", { stage: 4, stageName: "Action Engine" });
 
-  const actionContext = buildActionContext(clauseFindings, portfolioInsights, context);
-  const userPrompt = `Basierend auf den folgenden Befunden und Insights, erstelle konkrete Handlungsempfehlungen:\n\n${actionContext}`;
+  const actionContext = buildActionContext(clauseFindings, portfolioInsights, context, language);
+  const userPrompt = language === "en"
+    ? `Based on the following findings and insights, generate concrete action recommendations in ENGLISH:\n\n${actionContext}`
+    : `Basierend auf den folgenden Befunden und Insights, erstelle konkrete Handlungsempfehlungen:\n\n${actionContext}`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -157,7 +184,7 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
     const costUSD = ((usage.prompt_tokens || 0) / 1000) * PRICES["gpt-4o"].input +
       ((usage.completion_tokens || 0) / 1000) * PRICES["gpt-4o"].output;
     return {
-      actions: generateFallbackActions(clauseFindings, context),
+      actions: generateFallbackActions(clauseFindings, context, language),
       parseError: true,
       costs: {
         stage: 4,
@@ -185,7 +212,7 @@ async function runActionEngine(clauseFindings, portfolioInsights, context, onPro
   // Fallback: if GPT returned no actions but we have actionable findings, generate deterministic ones
   if (actions.length === 0 && actionableCount > 0) {
     console.log(`[PulseV2] Action Engine: GPT returned 0 actions, generating ${Math.min(actionableCount, 5)} fallback actions`);
-    actions = generateFallbackActions(clauseFindings, context);
+    actions = generateFallbackActions(clauseFindings, context, language);
   }
 
   const costUSD = (usage.prompt_tokens / 1000) * PRICES["gpt-4o"].input +

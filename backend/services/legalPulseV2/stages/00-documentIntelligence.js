@@ -35,6 +35,31 @@ const CONTRACT_TYPE_PATTERNS = {
   maklervertrag: ["makler", "maklerprovision", "maklervertrag", "courtage", "alleinauftrag", "nachweispflicht"],
 };
 
+// English keyword lists — keys are the SAME internal type IDs as the German map above
+// so downstream stages (CONTRACT_TYPE_HINTS lookup, scoring) work without translation.
+const CONTRACT_TYPE_PATTERNS_EN = {
+  factoring: ["factoring", "receivables purchase", "receivables sale", "del credere", "advance rate", "purchase factor", "factor", "debtor", "factoring fee", "holdback", "tender obligation", "credit risk transfer", "non-recourse factoring", "recourse factoring", "framework agreement"],
+  leasing: ["leasing", "lessor", "lessee", "lease rate", "lease agreement", "leased asset", "residual value", "lease term", "mileage", "lease prepayment"],
+  darlehen: ["loan", "loan agreement", "lender", "borrower", "interest rate", "amortization", "credit agreement", "interest period", "prepayment", "euribor", "base rate", "apr", "effective rate"],
+  buergschaft: ["surety", "suretyship", "guarantee", "guarantor", "default surety", "first-demand", "maximum-amount surety", "surety document"],
+  bauvertrag: ["construction contract", "construction agreement", "contractor", "principal", "construction works", "acceptance", "defects", "warranty period", "subcontractor", "construction period"],
+  pachtvertrag: ["lease (commercial)", "ground lease", "agricultural lease", "tenant farmer", "lessor (lease)", "leased premises", "lease rent"],
+  mietvertrag: ["lease agreement", "rental agreement", "tenant", "landlord", "rent", "leased property", "tenancy", "ancillary costs", "security deposit", "cosmetic repair"],
+  arbeitsvertrag: ["employment agreement", "employment contract", "employee", "employer", "salary", "compensation", "working hours", "vacation", "notice period", "probation period", "social security"],
+  nda: ["confidentiality", "non-disclosure", "nda", "non-disclosure agreement", "confidentiality agreement", "disclosing party", "receiving party", "confidential information"],
+  dienstleistung: ["service agreement", "services", "contractor", "client", "statement of work", "service level", "work product"],
+  saas: ["software as a service", "saas", "cloud", "availability", "uptime", "sla", "service level agreement", "api", "data storage", "subscription"],
+  versicherung: ["insurance", "policy", "insured", "insurer", "premium", "coverage", "claim", "deductible", "exclusion"],
+  kaufvertrag: ["sale agreement", "purchase agreement", "buyer", "seller", "purchase price", "subject of sale", "retention of title", "warranty", "delivery", "supply agreement", "supplier", "purchaser"],
+  lizenz: ["license", "licensor", "licensee", "right of use", "license fee", "royalty", "copyright", "sub-license"],
+  freelancer: ["freelance", "freelancer", "independent contractor", "consultant", "fee", "work product", "contractor", "project"],
+  gesellschaftsvertrag: ["partnership agreement", "shareholder agreement", "shareholder", "share capital", "managing director", "profit distribution", "limited liability", "general partnership"],
+  handelsvertreter: ["commercial agent", "agency agreement", "commission", "commission claim", "indemnity", "territory", "exclusive agency"],
+  franchisevertrag: ["franchise", "franchisee", "franchisor", "franchise fee", "system requirements", "franchise agreement", "manual"],
+  rahmenvertrag: ["master agreement", "framework agreement", "individual order", "call-off order", "framework", "supplier agreement", "master service agreement"],
+  maklervertrag: ["broker", "brokerage", "broker commission", "brokerage agreement", "exclusive mandate", "introduction obligation"],
+};
+
 // Title/header patterns that give high-confidence type detection
 // These match the contract title (first 500 chars) and override keyword frequency
 const TITLE_PATTERNS = [
@@ -62,17 +87,50 @@ const TITLE_PATTERNS = [
   { pattern: /maklervertrag/i, type: "maklervertrag" },
 ];
 
+// English title patterns — same internal type IDs as the German list.
+const TITLE_PATTERNS_EN = [
+  { pattern: /factoring\s+(framework\s+)?agreement/i, type: "factoring" },
+  { pattern: /receivables\s+purchase/i, type: "factoring" },
+  { pattern: /lease\s+agreement/i, type: "mietvertrag" },
+  { pattern: /rental\s+agreement/i, type: "mietvertrag" },
+  { pattern: /leasing\s+agreement/i, type: "leasing" },
+  { pattern: /loan\s+agreement|credit\s+agreement/i, type: "darlehen" },
+  { pattern: /suretyship|guarantee\s+agreement/i, type: "buergschaft" },
+  { pattern: /construction\s+(contract|agreement)/i, type: "bauvertrag" },
+  { pattern: /employment\s+(agreement|contract)/i, type: "arbeitsvertrag" },
+  { pattern: /(non[\s-]?disclosure|confidentiality)\s+agreement|^nda$/im, type: "nda" },
+  { pattern: /service\s+(level\s+)?agreement|services?\s+agreement/i, type: "dienstleistung" },
+  { pattern: /(software\s+as\s+a\s+service|saas)\s+agreement/i, type: "saas" },
+  { pattern: /insurance\s+(policy|contract|agreement)/i, type: "versicherung" },
+  { pattern: /(sale|purchase|supply)\s+agreement/i, type: "kaufvertrag" },
+  { pattern: /supplier\s+agreement/i, type: "rahmenvertrag" },
+  { pattern: /master\s+(service|services|supply|purchase)?\s*agreement/i, type: "rahmenvertrag" },
+  { pattern: /framework\s+agreement/i, type: "rahmenvertrag" },
+  { pattern: /licen[cs]e\s+agreement/i, type: "lizenz" },
+  { pattern: /(partnership|shareholder|joint\s+venture)\s+agreement/i, type: "gesellschaftsvertrag" },
+  { pattern: /(commercial\s+agent|agency)\s+agreement/i, type: "handelsvertreter" },
+  { pattern: /franchise\s+agreement/i, type: "franchisevertrag" },
+  { pattern: /broker(age)?\s+agreement/i, type: "maklervertrag" },
+  { pattern: /(consulting|consultancy|freelance|independent\s+contractor)\s+agreement/i, type: "freelancer" },
+];
+
 /**
  * Classify contract type based on:
  * 1. Title/header pattern match (high confidence)
  * 2. Keyword frequency (fallback)
+ *
+ * @param {string} text
+ * @param {string} [language="de"] - "de" uses German lists (existing behavior). "en" uses English lists.
  */
-function classifyContractType(text) {
+function classifyContractType(text, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
+  const PATTERNS = lang === "en" ? CONTRACT_TYPE_PATTERNS_EN : CONTRACT_TYPE_PATTERNS;
+  const TITLES = lang === "en" ? TITLE_PATTERNS_EN : TITLE_PATTERNS;
   const lowerText = text.toLowerCase();
 
   // PASS 1: Check document title (first 500 chars) for explicit type
   const header = text.substring(0, 500);
-  for (const { pattern, type } of TITLE_PATTERNS) {
+  for (const { pattern, type } of TITLES) {
     if (pattern.test(header)) {
       return { type, confidence: 95 };
     }
@@ -81,7 +139,7 @@ function classifyContractType(text) {
   // PASS 2: Keyword frequency scoring
   const scores = {};
 
-  for (const [type, keywords] of Object.entries(CONTRACT_TYPE_PATTERNS)) {
+  for (const [type, keywords] of Object.entries(PATTERNS)) {
     let count = 0;
     for (const kw of keywords) {
       const regex = new RegExp(kw, "gi");
@@ -123,6 +181,7 @@ function cleanText(rawText) {
   // Remove page numbers (common pattern: standalone numbers on a line)
   text = text.replace(/^\s*-?\s*\d{1,3}\s*-?\s*$/gm, "");
   text = text.replace(/^Seite\s+\d+\s*(von\s+\d+)?\s*$/gim, "");
+  text = text.replace(/^Page\s+\d+\s*(of\s+\d+)?\s*$/gim, "");
 
   // Remove excessive blank lines (more than 2 -> 2)
   text = text.replace(/\n{4,}/g, "\n\n\n");
@@ -137,7 +196,7 @@ function cleanText(rawText) {
  * Detect document structure (headings, paragraphs, numbering)
  */
 function detectStructure(text) {
-  const hasNumberedSections = /^(§\s*\d+|Artikel\s+\d+|\d+\.\s+[A-ZÄÖÜ])/m.test(text);
+  const hasNumberedSections = /^(§\s*\d+|Artikel\s+\d+|Article\s+\d+|Section\s+\d+|Clause\s+\d+|\d+\.\s+[A-ZÄÖÜ])/m.test(text);
   const hasSubSections = /^\d+\.\d+\s+/m.test(text);
   const hasParagraphs = (text.match(/\n\n/g) || []).length > 3;
 
@@ -220,16 +279,22 @@ function runDocumentIntelligence(rawText) {
   const cleanedText = cleanText(rawText);
   const truncatedText = smartTruncate(cleanedText, 50000);
   const structure = detectStructure(cleanedText);
-  const { type: contractType, confidence: contractTypeConfidence } = classifyContractType(cleanedText);
+
+  // Detect language FIRST so contract-type classification uses the correct keyword list.
+  // Heuristic — defaults to "de" for safety. Counts German AND English stopwords.
+  // Only switches to "en" when English clearly dominates AND has sufficient absolute count.
+  // Mixed-language or low-quality OCR documents stay on the German path (existing,
+  // well-tested behavior).
+  const germanCount = (cleanedText.match(/\b(der|die|das|und|oder|ist|wird|hat|ein|eine|für|mit|auf|von|zu|den|dem|des|nicht|werden|sind|bei|nach|auch|nur)\b/gi) || []).length;
+  const englishCount = (cleanedText.match(/\b(the|of|and|to|in|that|is|was|for|on|with|as|by|this|be|are|from|or|an|will|shall|hereby|herein|whereas|party|parties|agreement)\b/gi) || []).length;
+  const language = (englishCount > germanCount * 2 && englishCount > 30) ? "en" : "de";
+
+  const { type: contractType, confidence: contractTypeConfidence } = classifyContractType(cleanedText, language);
   const extractedMeta = extractDocumentMeta(cleanedText);
   const qualityScore = calculateQualityScore(rawText, cleanedText);
 
   // Estimate page count (rough: ~3000 chars per page)
   const pageCount = Math.max(1, Math.round(rawText.length / 3000));
-
-  // Detect language (simple heuristic)
-  const germanIndicators = (cleanedText.match(/\b(der|die|das|und|oder|ist|wird|hat|ein|eine|für|mit|auf|von|zu|den|dem|des|nicht|werden|sind|bei|nach|auch|nur)\b/gi) || []).length;
-  const language = germanIndicators > 20 ? "de" : "en";
 
   return {
     cleanedText: truncatedText,

@@ -5,7 +5,7 @@
 
 const OpenAI = require("openai");
 const { preSplitClauses } = require("../../optimizerV2/utils/clauseSplitter");
-const { DEEP_ANALYSIS_SYSTEM_PROMPT, DEEP_ANALYSIS_SCHEMA, getContractTypeHint } = require("../prompts/systemPrompts");
+const { DEEP_ANALYSIS_SYSTEM_PROMPT, DEEP_ANALYSIS_SCHEMA, getContractTypeHint, getDeepAnalysisPrompt } = require("../prompts/systemPrompts");
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -26,41 +26,53 @@ function calculateCost(model, inputTokens, outputTokens) {
 }
 
 /**
- * Split text into clauses with IDs
+ * Split text into clauses with IDs.
+ * @param {string} cleanedText
+ * @param {string} [language="de"] — only affects title-fallback and category keywords; the
+ *   returned category is ALWAYS one of the German tag strings so downstream scoring works.
  */
-function buildClauseList(cleanedText) {
+function buildClauseList(cleanedText, language = "de") {
   const rawClauses = preSplitClauses(cleanedText);
 
   return rawClauses.map((clause, idx) => ({
     id: `clause_${idx + 1}`,
-    title: extractClauseTitle(clause.text),
+    title: extractClauseTitle(clause.text, language),
     originalText: clause.text,
-    category: categorizeClause(clause.text, clause.sectionNumber),
+    category: categorizeClause(clause.text, clause.sectionNumber, language),
     sectionNumber: clause.sectionNumber || `${idx + 1}`,
   }));
 }
 
 /**
- * Extract title from first line of clause text
+ * Extract title from first line of clause text.
+ * Strips both German (§, Artikel) and English (Article, Section, Clause) section markers.
+ * Fallback label depends on language ("Abschnitt" vs. "Section").
  */
-function extractClauseTitle(text) {
+function extractClauseTitle(text, language = "de") {
   const firstLine = text.split("\n")[0].trim();
-  // Remove section numbers from title
+  // Remove section numbers from title — both German and English markers
   const cleaned = firstLine
     .replace(/^(§\s*\d+[a-z]?\s*[.:\-–]\s*)/i, "")
     .replace(/^(\d+\.?\d*\s*[.:\-–]?\s*)/i, "")
     .replace(/^(Artikel\s+\d+\s*[.:\-–]\s*)/i, "")
+    .replace(/^(Article\s+\d+\s*[.:\-–]?\s*)/i, "")
+    .replace(/^(Section\s+\d+(\.\d+)?\s*[.:\-–]?\s*)/i, "")
+    .replace(/^(Clause\s+\d+\s*[.:\-–]?\s*)/i, "")
     .trim();
   // Truncate long titles
-  return cleaned.length > 80 ? cleaned.substring(0, 77) + "..." : cleaned || "Abschnitt";
+  const fallback = language === "en" ? "Section" : "Abschnitt";
+  return cleaned.length > 80 ? cleaned.substring(0, 77) + "..." : cleaned || fallback;
 }
 
 /**
- * Clause categorization based on keywords
- * Recognizes legal AND commercial/financial content
+ * Clause categorization based on keywords.
+ * Recognizes legal AND commercial/financial content.
+ * Returns ONE of the fixed German tag strings (haftung, kuendigung, ...) regardless of
+ * input language — these are technical IDs used by Stage 5 scoring, not display labels.
  */
-function categorizeClause(text, sectionNumber) {
+function categorizeClause(text, sectionNumber, language = "de") {
   const lower = text.toLowerCase();
+  // German keywords (preserved verbatim — German behavior unchanged)
   if (/haftung|schadenersatz|gewährleistung|garantie|freistellung/i.test(lower)) return "haftung";
   if (/kündigung|beendigung|laufzeit|vertragsdauer/i.test(lower)) return "kuendigung";
   if (/datenschutz|dsgvo|personenbezogen|daten/i.test(lower)) return "datenschutz";
@@ -71,6 +83,21 @@ function categorizeClause(text, sectionNumber) {
   if (/wettbewerb|konkurrenz|wettbewerbsverbot/i.test(lower)) return "wettbewerb";
   if (/compliance|gesetz|vorschrift|regulierung/i.test(lower)) return "compliance";
   if (/präambel|vorbemerkung|gegenstand|zweck/i.test(lower)) return "vertragsbedingungen";
+
+  // English keyword fallbacks — only checked if no German keyword matched.
+  // These map English content onto the SAME German tag IDs so Stage 5 scoring is stable.
+  if (language === "en") {
+    if (/liabilit|indemnif|warrant|damages|hold harmless/i.test(lower)) return "haftung";
+    if (/terminat|expir|notice period|term of (this )?agreement|duration|renewal/i.test(lower)) return "kuendigung";
+    if (/data protection|privacy|personal data|gdpr|ccpa/i.test(lower)) return "datenschutz";
+    if (/intellectual property|copyright|trademark|patent|licen[cs]e/i.test(lower)) return "geistiges_eigentum";
+    if (/fee|price|payment|invoic|interest rate|libor|sofr|euribor|royalty|commission|charge|cost/i.test(lower)) return "zahlungen";
+    if (/confidential|non-disclosure|trade secret|proprietary information/i.test(lower)) return "geheimhaltung";
+    if (/non-compete|noncompete|competition|exclusivity|restrictive covenant/i.test(lower)) return "wettbewerb";
+    if (/complian|regulator|governing law|applicable law|statute/i.test(lower)) return "compliance";
+    if (/preamble|recital|whereas|purpose|scope|definitions/i.test(lower)) return "vertragsbedingungen";
+  }
+
   return "sonstiges";
 }
 
@@ -107,14 +134,27 @@ function validateAffectedText(finding, clauseOriginalTexts) {
 /**
  * Run deep analysis on a batch of clauses
  */
-async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, totalBatches) {
+async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, totalBatches, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
+
+  // Clause headers are language-aware. German behavior preserved verbatim when lang === "de".
   const clauseTexts = clauses.map(c =>
-    `[Klausel ID: ${c.id}] [Abschnitt: ${c.sectionNumber}]\n${c.originalText}`
+    lang === "en"
+      ? `[Clause ID: ${c.id}] [Section: ${c.sectionNumber}]\n${c.originalText}`
+      : `[Klausel ID: ${c.id}] [Abschnitt: ${c.sectionNumber}]\n${c.originalText}`
   ).join("\n\n---\n\n");
 
-  const typeHint = getContractTypeHint(contractType);
-  const systemPrompt = DEEP_ANALYSIS_SYSTEM_PROMPT(contractType, "Deutschland", parties);
-  const userPrompt = `${typeHint ? `\nSPEZIFISCHER KONTEXT: ${typeHint}\n\n` : ""}Analysiere die folgenden ${clauses.length} Klauseln (Batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`;
+  // Jurisdiction label: "Deutschland" preserved as default for German contracts.
+  // For English contracts we instruct the model to use the contract's stated governing law.
+  const jurisdictionLabel = lang === "en"
+    ? "as stated in the contract — otherwise apply general contract-law principles"
+    : "Deutschland";
+
+  const typeHint = getContractTypeHint(contractType, lang);
+  const systemPrompt = getDeepAnalysisPrompt(lang, contractType, jurisdictionLabel, parties);
+  const userPrompt = lang === "en"
+    ? `${typeHint ? `\nSPECIFIC CONTEXT: ${typeHint}\n\n` : ""}Analyze the following ${clauses.length} clauses (batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`
+    : `${typeHint ? `\nSPEZIFISCHER KONTEXT: ${typeHint}\n\n` : ""}Analysiere die folgenden ${clauses.length} Klauseln (Batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -167,10 +207,14 @@ async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, to
  * @returns {object} { clauses, clauseFindings, costs }
  */
 async function runDeepAnalysis(cleanedText, context, onProgress) {
-  // Build clause list
-  const clauses = buildClauseList(cleanedText);
+  // Language for downstream prompts; "de" preserves existing behavior when unset.
+  const language = context.language || "de";
+
+  // Build clause list (language affects title fallback + English keyword recognition only;
+  // category tags are always German for stable downstream scoring)
+  const clauses = buildClauseList(cleanedText, language);
   if (clauses.length === 0) {
-    throw new Error("Keine Klauseln im Vertrag gefunden");
+    throw new Error(language === "en" ? "No clauses found in the contract" : "Keine Klauseln im Vertrag gefunden");
   }
 
   onProgress(25, `${clauses.length} Klauseln erkannt, starte Analyse...`, {
@@ -212,7 +256,7 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
     });
 
     try {
-      const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length);
+      const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length, language);
       totalInputTokens += result.inputTokens;
       totalOutputTokens += result.outputTokens;
 

@@ -19,26 +19,38 @@ const PRICES = {
 };
 
 /**
- * Build compact portfolio summary for GPT (keep tokens low)
+ * Build compact portfolio summary for GPT (keep tokens low).
+ * Language affects only the labels in the summary; the underlying data is identical.
  */
-function buildPortfolioSummary(portfolio, deterministicPatterns) {
+function buildPortfolioSummary(portfolio, deterministicPatterns, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
+  const L = lang === "en"
+    ? { portfolio: "PORTFOLIO", contracts: "contracts", analyzed: "analyzed", avgScore: "Average score",
+        contractsHdr: "CONTRACTS:", type: "Type", provider: "Provider", score: "Score", expiry: "Expires in",
+        autoRenewal: "AUTO-RENEWAL", critical: "critical findings", topRisks: "Top risks",
+        providerGroups: "PROVIDER GROUPS:", patterns: "ALREADY DETECTED PATTERNS (deterministic):" }
+    : { portfolio: "PORTFOLIO", contracts: "Verträge", analyzed: "analysiert", avgScore: "Durchschnittsscore",
+        contractsHdr: "VERTRÄGE:", type: "Typ", provider: "Anbieter", score: "Score", expiry: "Ablauf",
+        autoRenewal: "AUTO-RENEWAL", critical: "kritische Befunde", topRisks: "Top-Risiken",
+        providerGroups: "ANBIETER-GRUPPEN:", patterns: "BEREITS ERKANNTE MUSTER (deterministisch):" };
+
   const lines = [];
 
-  lines.push(`PORTFOLIO: ${portfolio.totalContracts} Verträge, ${portfolio.analyzedContracts} analysiert, Durchschnittsscore: ${portfolio.averageScore || "N/A"}`);
+  lines.push(`${L.portfolio}: ${portfolio.totalContracts} ${L.contracts}, ${portfolio.analyzedContracts} ${L.analyzed}, ${L.avgScore}: ${portfolio.averageScore || "N/A"}`);
   lines.push("");
 
   // Contracts summary
-  lines.push("VERTRÄGE:");
+  lines.push(L.contractsHdr);
   for (const c of portfolio.contracts) {
     const parts = [`[${c.id}] ${c.name}`];
-    if (c.contractType !== "unbekannt") parts.push(`Typ: ${c.contractType}`);
-    if (c.provider) parts.push(`Anbieter: ${c.provider}`);
-    if (c.score !== null) parts.push(`Score: ${c.score}/100`);
-    if (c.daysUntilExpiry !== null) parts.push(`Ablauf: ${c.daysUntilExpiry}d`);
-    if (c.autoRenewal) parts.push("AUTO-RENEWAL");
-    if (c.criticalFindings > 0) parts.push(`${c.criticalFindings} kritische Befunde`);
+    if (c.contractType !== "unbekannt") parts.push(`${L.type}: ${c.contractType}`);
+    if (c.provider) parts.push(`${L.provider}: ${c.provider}`);
+    if (c.score !== null) parts.push(`${L.score}: ${c.score}/100`);
+    if (c.daysUntilExpiry !== null) parts.push(`${L.expiry}: ${c.daysUntilExpiry}d`);
+    if (c.autoRenewal) parts.push(L.autoRenewal);
+    if (c.criticalFindings > 0) parts.push(`${c.criticalFindings} ${L.critical}`);
     if (c.topFindings.length > 0) {
-      parts.push(`Top-Risiken: ${c.topFindings.map(f => f.title).join(", ")}`);
+      parts.push(`${L.topRisks}: ${c.topFindings.map(f => f.title).join(", ")}`);
     }
     lines.push(parts.join(" | "));
   }
@@ -46,16 +58,16 @@ function buildPortfolioSummary(portfolio, deterministicPatterns) {
   // Provider groups
   if (portfolio.byProvider.length > 0) {
     lines.push("");
-    lines.push("ANBIETER-GRUPPEN:");
+    lines.push(L.providerGroups);
     for (const g of portfolio.byProvider) {
-      lines.push(`  ${g.provider}: ${g.contracts.length} Verträge (${g.contracts.map(c => c.name).join(", ")})`);
+      lines.push(`  ${g.provider}: ${g.contracts.length} ${L.contracts} (${g.contracts.map(c => c.name).join(", ")})`);
     }
   }
 
   // Already detected patterns (deterministic)
   if (deterministicPatterns.length > 0) {
     lines.push("");
-    lines.push("BEREITS ERKANNTE MUSTER (deterministisch):");
+    lines.push(L.patterns);
     for (const p of deterministicPatterns) {
       lines.push(`  [${p.severity}] ${p.title}: ${p.description}`);
     }
@@ -68,9 +80,12 @@ function buildPortfolioSummary(portfolio, deterministicPatterns) {
  * Stage 3: Cross-Contract Intelligence
  * @param {string} userId
  * @param {function} onProgress
+ * @param {string} [language="de"] - Language of the contract being analyzed; "de" preserves existing behavior
  * @returns {object} { portfolioInsights, costs }
  */
-async function runCrossContractIntelligence(userId, onProgress) {
+async function runCrossContractIntelligence(userId, onProgress, language = "de") {
+  const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
+
   // Step 1: Aggregate portfolio (no AI)
   onProgress(72, "Aggregiere Portfolio-Daten...", { stage: 3, stageName: "Portfolio Intelligence" });
   const portfolio = await aggregatePortfolio(userId);
@@ -90,8 +105,10 @@ async function runCrossContractIntelligence(userId, onProgress) {
   // Step 3: GPT analysis for deeper insights (conflicts, opportunities)
   onProgress(76, "Analysiere Portfolio-Zusammenhänge...", { stage: 3, stageName: "Portfolio Intelligence" });
 
-  const summary = buildPortfolioSummary(portfolio, deterministicPatterns);
-  const userPrompt = `Analysiere das folgende Vertragsportfolio und identifiziere Zusammenhänge, die über die bereits erkannten Muster hinausgehen.\n\nFokus auf:\n- Widersprüche zwischen Verträgen\n- Verbesserungspotential bei Konditionen\n- Risiken, die nur im Portfolio-Kontext sichtbar sind\n\n${summary}`;
+  const summary = buildPortfolioSummary(portfolio, deterministicPatterns, lang);
+  const userPrompt = lang === "en"
+    ? `Analyze the following contract portfolio and identify connections beyond the already detected patterns.\n\nFocus on:\n- Contradictions between contracts\n- Improvement potential in commercial terms\n- Risks visible only in portfolio context\n\n${summary}`
+    : `Analysiere das folgende Vertragsportfolio und identifiziere Zusammenhänge, die über die bereits erkannten Muster hinausgehen.\n\nFokus auf:\n- Widersprüche zwischen Verträgen\n- Verbesserungspotential bei Konditionen\n- Risiken, die nur im Portfolio-Kontext sichtbar sind\n\n${summary}`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",

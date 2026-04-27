@@ -199,6 +199,10 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       context.contractType = docMeta.contractType;
     }
 
+    // Propagate detected language to downstream stages.
+    // Default "de" preserves existing behavior for any path where docMeta is missing the field.
+    context.language = docMeta.language || "de";
+
     // ═══════════════════════════════════════════
     // STAGE 2: Deep Analysis (GPT-4o)
     // ═══════════════════════════════════════════
@@ -334,7 +338,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     let portfolioInsights = [];
     try {
       onProgress(71, "Starte Portfolio-Analyse...", { stage: 3, stageName: "Portfolio Intelligence" });
-      const crossResult = await runCrossContractIntelligence(userId, onProgress);
+      const crossResult = await runCrossContractIntelligence(userId, onProgress, context.language);
       portfolioInsights = crossResult.portfolioInsights;
 
       await LegalPulseV2Result.updateOne(
