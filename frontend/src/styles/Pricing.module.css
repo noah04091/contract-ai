@@ -17,9 +17,9 @@
 }
 
 .heroTitle {
-  font-size: 42px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.15;
   max-width: 700px;
   margin: 0 auto 20px;
@@ -27,7 +27,7 @@
 }
 
 .heroHighlight {
-  background: linear-gradient(90deg, #0066FF 0%, #409CFF 100%);
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1044,7 +1044,7 @@
   }
 
   .heroTitle {
-    font-size: 30px;
+    font-size: 2rem;
   }
 
   .heroTrust {
