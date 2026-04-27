@@ -817,6 +817,50 @@ const Vertragsanalyse: React.FC = () => {
             </div>
 
             <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+              <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Spezialisierte KI-Prüfung auf Basis aktueller BAG-Rechtsprechung
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/mietvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#10b981' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/nda-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>NDA prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Vertragsstrafe, Carve-Outs, Wettbewerbsverbot — KI-Check auf Basis GeschGehG
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              <Link to="/kaufvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#f97316' }}><FileText size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
+                  <div className={styles.relatedDescription}>
+                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
               <Link to="/features/optimierung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#8b5cf6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>

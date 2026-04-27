@@ -828,7 +828,7 @@ const KiVertragsanalyse: React.FC = () => {
             </div>
 
             <div className={styles.whyGrid}>
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <Link to="/mietvertrag-pruefen" className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.whyIcon}><Building2 size={28} /></div>
                 <h3 className={styles.whyTitle}>Mietverträge</h3>
                 <p className={styles.whyDesc}>
@@ -836,9 +836,12 @@ const KiVertragsanalyse: React.FC = () => {
                   unzulässige Kündigungsausschlüsse und versteckte Nebenkosten. Besonders relevant
                   in angespannten Wohnungsmärkten.
                 </p>
-              </div>
+                <div style={{ marginTop: '12px', color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem' }}>
+                  Mietvertrag jetzt prüfen →
+                </div>
+              </Link>
 
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <Link to="/arbeitsvertrag-pruefen" className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.whyIcon}><Users size={28} /></div>
                 <h3 className={styles.whyTitle}>Arbeitsverträge</h3>
                 <p className={styles.whyDesc}>
@@ -846,9 +849,12 @@ const KiVertragsanalyse: React.FC = () => {
                   Kündigungsfristen und Bonusvereinbarungen. Die KI erkennt Klauseln,
                   die gesetzliche Mindeststandards unterschreiten.
                 </p>
-              </div>
+                <div style={{ marginTop: '12px', color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem' }}>
+                  Arbeitsvertrag jetzt prüfen →
+                </div>
+              </Link>
 
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <Link to="/kaufvertrag-pruefen" className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.whyIcon}><FileText size={28} /></div>
                 <h3 className={styles.whyTitle}>Kaufverträge</h3>
                 <p className={styles.whyDesc}>
@@ -856,9 +862,12 @@ const KiVertragsanalyse: React.FC = () => {
                   Eigentumsvorbehalten und Zahlungsbedingungen. Ideal für Immobilien-,
                   Fahrzeug- und Unternehmenskäufe.
                 </p>
-              </div>
+                <div style={{ marginTop: '12px', color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem' }}>
+                  Kaufvertrag jetzt prüfen →
+                </div>
+              </Link>
 
-              <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              <Link to="/nda-pruefen" className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className={styles.whyIcon}><Lock size={28} /></div>
                 <h3 className={styles.whyTitle}>NDAs & Geheimhaltung</h3>
                 <p className={styles.whyDesc}>
@@ -866,7 +875,10 @@ const KiVertragsanalyse: React.FC = () => {
                   Ausnahmen. Besonders wichtig für Startups, Freelancer und bei
                   Geschäftsanbahnung.
                 </p>
-              </div>
+                <div style={{ marginTop: '12px', color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem' }}>
+                  NDA jetzt prüfen →
+                </div>
+              </Link>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon}><Globe size={28} /></div>

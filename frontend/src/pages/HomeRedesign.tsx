@@ -1793,7 +1793,56 @@ const HomeRedesign = () => {
           </div>
         </section>
 
-{/* Testimonials Section */}
+{/* Beliebte Vertragstypen — SEO Internal Linking Hub */}
+        <section className="contract-types-section" style={{ padding: '100px 0', background: 'transparent', position: 'relative' }}>
+          <div className="section-container">
+            <div className="section-title features-title">
+              <span className="section-badge reveal-text">VERTRAGSTYPEN</span>
+              <h2 className="reveal-text">Beliebte <span className="text-gradient">Vertrags-Prüfungen</span></h2>
+              <p className="reveal-text">Spezialisierte Analysen für die wichtigsten deutschen Vertragstypen — auf Basis aktueller BGH- und BAG-Rechtsprechung.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginTop: '48px' }}>
+              <Link to="/arbeitsvertrag-pruefen" style={{ display: 'block', padding: '32px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none', color: 'inherit', transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)'; e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'; }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>💼</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>Arbeitsvertrag prüfen</h3>
+                <p style={{ fontSize: '0.95rem', color: '#6b7280', lineHeight: 1.6, marginBottom: '16px' }}>Wettbewerbsverbot, Probezeit, Überstunden und Kündigungsfristen — KI-Check auf Basis aktueller BAG-Rechtsprechung.</p>
+                <div style={{ color: '#3b82f6', fontWeight: 600, fontSize: '0.95rem' }}>Jetzt prüfen →</div>
+              </Link>
+
+              <Link to="/mietvertrag-pruefen" style={{ display: 'block', padding: '32px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none', color: 'inherit', transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(16, 185, 129, 0.15)'; e.currentTarget.style.borderColor = 'rgba(16, 185, 129, 0.3)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'; }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🏠</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>Mietvertrag prüfen</h3>
+                <p style={{ fontSize: '0.95rem', color: '#6b7280', lineHeight: 1.6, marginBottom: '16px' }}>Schönheitsreparaturen, Kaution, Indexmiete und Kündigungsausschluss — KI-Check auf Basis aktueller BGH-Rechtsprechung.</p>
+                <div style={{ color: '#10b981', fontWeight: 600, fontSize: '0.95rem' }}>Jetzt prüfen →</div>
+              </Link>
+
+              <Link to="/nda-pruefen" style={{ display: 'block', padding: '32px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none', color: 'inherit', transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(239, 68, 68, 0.15)'; e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'; }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔒</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>NDA prüfen</h3>
+                <p style={{ fontSize: '0.95rem', color: '#6b7280', lineHeight: 1.6, marginBottom: '16px' }}>Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs und verstecktes Wettbewerbsverbot — KI-Check auf Basis GeschGehG.</p>
+                <div style={{ color: '#ef4444', fontWeight: 600, fontSize: '0.95rem' }}>Jetzt prüfen →</div>
+              </Link>
+
+              <Link to="/kaufvertrag-pruefen" style={{ display: 'block', padding: '32px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none', color: 'inherit', transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(249, 115, 22, 0.15)'; e.currentTarget.style.borderColor = 'rgba(249, 115, 22, 0.3)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'; }}>
+                <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🛒</div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#1f2937' }}>Kaufvertrag prüfen</h3>
+                <p style={{ fontSize: '0.95rem', color: '#6b7280', lineHeight: 1.6, marginBottom: '16px' }}>Gewährleistung, Beschaffenheit, „gekauft wie gesehen" und Stornogebühren — KI-Check auf Basis BGB-Kaufrecht.</p>
+                <div style={{ color: '#f97316', fontWeight: 600, fontSize: '0.95rem' }}>Jetzt prüfen →</div>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
         <section className="testimonials-section" ref={(el) => registerSection('testimonials', el)}>
           {/* Contract Theme: Stamp Effects */}
           <div className="stamp-effect stamp-effect-1"></div>

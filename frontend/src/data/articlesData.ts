@@ -1150,6 +1150,11 @@ export const articles: Article[] = [
     icon: '💰',
     image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Eigenen Vertrag jetzt rechtssicher prüfen lassen</h4>
+        <p>Lass deinen Vertrag in 60 Sekunden auf teure Klauseln analysieren — auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
+      </div>
+
       <p>Jeden Tag fallen Millionen Deutsche auf teure Vertragsklauseln herein. Oft sind es nur wenige Wörter, die den Unterschied zwischen einem fairen Deal und einer kostspieligen Falle ausmachen. Wir haben die teuersten Vertragsklauseln Deutschlands analysiert und zeigen dir, wie du sie erkennst.</p>
 
       <h2>1. Die "Bearbeitungsgebühr"-Falle (Durchschnittskosten: 250€ pro Jahr)</h2>
@@ -1393,6 +1398,11 @@ export const articles: Article[] = [
     icon: '📋',
     image: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Verdacht auf einen problematischen Vertrag? Jetzt prüfen lassen</h4>
+        <p>Lass deinen Vertrag in 60 Sekunden auf Warnsignale und unwirksame Klauseln analysieren — auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
+      </div>
+
       <p>Täglich schließen wir Verträge ab – beim Online-Shopping, der Wohnungssuche oder beim neuen Mobilfunkvertrag. Doch nicht alle Verträge sind fair gestaltet. Einige enthalten Fallen, die später teuer werden können.</p>
 
       <p>Als Verbraucherschutz-Experte und Entwickler von Contract AI habe ich tausende Verträge analysiert. Dabei sind mir immer wieder dieselben Warnsignale aufgefallen, die auf problematische Vertragsbedingungen hindeuten.</p>
@@ -1606,6 +1616,11 @@ export const articles: Article[] = [
     icon: '📜',
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Kaufvertrag oder AGB jetzt rechtssicher prüfen lassen</h4>
+        <p>Lass deinen Kaufvertrag inkl. AGB in 60 Sekunden auf versteckte Kosten, unwirksame Gewährleistungsausschlüsse und Stornofallen prüfen — auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Beim Online-Shopping klicken wir oft schnell auf "AGB akzeptieren" – doch das kann teuer werden. Wir zeigen, worauf Sie achten müssen.</p>
 
       <h2>Versteckte Kosten erkennen</h2>
@@ -1711,6 +1726,11 @@ export const articles: Article[] = [
     icon: '⚖️',
     image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Vor der Verhandlung: Vertrag prüfen lassen</h4>
+        <p>Bevor du verhandelst — kenne die Schwachstellen. Lass deinen Vertrag in 60 Sekunden analysieren und gehe mit klaren Verhandlungspunkten ins Gespräch. Speziell für B2B-Verhandlungen: <a href="/nda-pruefen"><strong>NDA prüfen →</strong></a></p>
+      </div>
+
       <p>Viele glauben, Verträge seien in Stein gemeißelt. Doch oft lassen sich auch als Privatperson bessere Konditionen aushandeln.</p>
 
       <h2>Vorbereitung ist alles</h2>
@@ -1768,6 +1788,11 @@ export const articles: Article[] = [
     icon: '↩️',
     image: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&q=80',
     content: `
+      <div class="highlight-box">
+        <h4>📄 Damit Widerruf gar nicht erst nötig wird: Kaufvertrag jetzt prüfen</h4>
+        <p>Lass deinen Kaufvertrag vor Abschluss in 60 Sekunden auf unwirksame Klauseln, vage Beschaffenheitsangaben und überzogene Stornogebühren prüfen — auf Basis BGB-Kaufrecht und BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+      </div>
+
       <p>Das 14-tägige Widerrufsrecht ist ein wichtiger Verbraucherschutz. Doch es gibt Ausnahmen und Regeln, die Sie kennen sollten.</p>
 
       <h2>Wo gilt das Widerrufsrecht?</h2>
