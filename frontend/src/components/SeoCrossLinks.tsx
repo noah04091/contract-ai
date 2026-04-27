@@ -11,9 +11,11 @@ const SeoCrossLinks: React.FC = () => {
     <div
       style={{
         textAlign: 'center',
-        padding: '0 24px 80px',
+        marginTop: '40px',
+        padding: '0 24px',
         maxWidth: '900px',
-        margin: '0 auto',
+        marginLeft: 'auto',
+        marginRight: 'auto',
         fontSize: '0.95rem',
         color: '#6b7280',
         lineHeight: 1.8,

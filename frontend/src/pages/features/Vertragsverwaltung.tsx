@@ -506,10 +506,10 @@ const Vertragsverwaltung: React.FC = () => {
               </Link>
             </div>
           </div>
+          <SeoCrossLinks />
         </section>
 
         {/* CTA Section */}
-        <SeoCrossLinks />
 
         <section className={`${styles.ctaSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>

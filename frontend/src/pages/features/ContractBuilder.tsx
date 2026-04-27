@@ -722,12 +722,12 @@ const ContractBuilder: React.FC = () => {
               </Link>
             </div>
           </div>
+          <SeoCrossLinks />
         </section>
 
         {/* ==========================================
             CTA SECTION
             ========================================== */}
-        <SeoCrossLinks />
 
         <section className={styles.ctaSection}>
           <div className={styles.container}>
