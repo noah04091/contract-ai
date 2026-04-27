@@ -272,7 +272,7 @@ const Vergleich: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Der Vertragsvergleich in Aktion</h2>
+              <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Vertragsvergleich</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie Contract AI zwei Verträge analysiert und die
                 Unterschiede verständlich aufbereitet.
@@ -454,7 +454,7 @@ const Vergleich: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
+              <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Objektive Analyse statt Bauchgefühl – mit klarer Entscheidungsgrundlage.
               </p>
@@ -515,7 +515,7 @@ const Vergleich: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 einfachen Schritten</h2>
+              <h2 className={styles.sectionTitle}>In 3 einfachen <span className={styles.sectionTitleAccent}>Schritten</span></h2>
             </div>
 
             <div className={styles.processContainer}>
@@ -563,7 +563,7 @@ const Vergleich: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Objektive Entscheidungsgrundlage</h2>
+              <h2 className={styles.sectionTitle}>Objektive <span className={styles.sectionTitleAccent}>Entscheidungsgrundlage</span></h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -590,7 +590,7 @@ const Vergleich: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -658,7 +658,8 @@ const Vergleich: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

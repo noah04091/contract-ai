@@ -2748,6 +2748,21 @@
   line-height: 1.7;
 }
 
+.sectionHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.sectionHeader .sectionTitle::after {
+  display: none;
+}
+
+.sectionTitleAccent {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .sectionTitleLeft {
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;

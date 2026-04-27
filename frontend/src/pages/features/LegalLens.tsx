@@ -263,7 +263,7 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Legal Lens in Aktion</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Lens</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie einfach Sie jede Klausel verstehen können.
               </p>
@@ -289,7 +289,7 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Bei jedem Klick</span>
-              <h2 className={styles.sectionTitle}>Das erfahren Sie sofort</h2>
+              <h2 className={styles.sectionTitle}>Das erfahren Sie <span className={styles.sectionTitleAccent}>sofort</span></h2>
               <p className={styles.sectionSubtitle}>
                 Klicken Sie auf eine Klausel und erhalten Sie alle wichtigen Informationen.
               </p>
@@ -501,7 +501,7 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zum Verständnis</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum <span className={styles.sectionTitleAccent}>Verständnis</span></h2>
               <p className={styles.sectionSubtitle}>
                 Nie wieder Verträge unterschreiben, die Sie nicht verstehen.
               </p>
@@ -552,7 +552,7 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Legal Lens in Zahlen</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Lens</span> in Zahlen</h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -579,7 +579,7 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -636,7 +636,8 @@ const LegalLens: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Weitere Analyse-Tools</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Weitere <span className={styles.sectionTitleAccent}>Analyse-Tools</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

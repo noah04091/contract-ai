@@ -259,7 +259,7 @@ const Generator: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Der Vertragsgenerator in Aktion</h2>
+              <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Vertragsgenerator</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie Sie in wenigen Minuten einen vollständigen, rechtssicheren
                 Vertrag erstellen können.
@@ -441,7 +441,7 @@ const Generator: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
+              <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Schneller, günstiger und flexibler als traditionelle Wege.
               </p>
@@ -502,7 +502,7 @@ const Generator: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 4 einfachen Schritten</h2>
+              <h2 className={styles.sectionTitle}>In 4 einfachen <span className={styles.sectionTitleAccent}>Schritten</span></h2>
             </div>
 
             <div className={styles.processContainer}>
@@ -560,7 +560,7 @@ const Generator: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Geprüft und bewährt</h2>
+              <h2 className={styles.sectionTitle}>Geprüft und <span className={styles.sectionTitleAccent}>bewährt</span></h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -587,7 +587,7 @@ const Generator: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -655,7 +655,8 @@ const Generator: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

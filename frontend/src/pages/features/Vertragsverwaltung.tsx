@@ -272,7 +272,7 @@ const Vertragsverwaltung: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Was die Vertragsverwaltung kann</h2>
+              <h2 className={styles.sectionTitle}>Was die <span className={styles.sectionTitleAccent}>Vertragsverwaltung</span> kann</h2>
             </div>
 
             <div className={styles.functionsGrid}>
@@ -344,7 +344,7 @@ const Vertragsverwaltung: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zur Ordnung</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zur <span className={styles.sectionTitleAccent}>Ordnung</span></h2>
             </div>
 
             <div className={styles.processContainer}>
@@ -412,7 +412,8 @@ const Vertragsverwaltung: React.FC = () => {
         <section className={`${styles.faqSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <span className={styles.sectionEyebrow}>FAQ</span>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -466,7 +467,8 @@ const Vertragsverwaltung: React.FC = () => {
         <section className={`${styles.relatedSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

@@ -264,7 +264,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Legal Pulse in Aktion</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Pulse</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie Legal Pulse Ihre Verträge überwacht und Sie bei relevanten
                 Änderungen proaktiv informiert.
@@ -290,7 +290,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Was Legal Pulse für Sie leistet</h2>
+              <h2 className={styles.sectionTitle}>Was <span className={styles.sectionTitleAccent}>Legal Pulse</span> für Sie leistet</h2>
               <p className={styles.sectionSubtitle}>
                 Proaktives Vertragsmanagement statt reaktiver Feuerwehr – mit intelligenter Überwachung.
               </p>
@@ -524,7 +524,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zum proaktiven Monitoring</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum <span className={styles.sectionTitleAccent}>proaktiven Monitoring</span></h2>
               <p className={styles.sectionSubtitle}>
                 Vom Vertragsbestand zum intelligenten Risikomanagement – einfach und automatisch.
               </p>
@@ -578,7 +578,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Legal Pulse in Zahlen</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Pulse</span> in Zahlen</h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -605,7 +605,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -674,7 +674,8 @@ const LegalPulse: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

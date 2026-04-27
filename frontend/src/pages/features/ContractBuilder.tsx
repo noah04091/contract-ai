@@ -275,7 +275,7 @@ const ContractBuilder: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Contract Builder in Aktion</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Contract Builder</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie einfach Sie Verträge per Drag & Drop erstellen können.
               </p>
@@ -301,7 +301,7 @@ const ContractBuilder: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Alles für professionelle Verträge</h2>
+              <h2 className={styles.sectionTitle}>Alles für <span className={styles.sectionTitleAccent}>professionelle Verträge</span></h2>
               <p className={styles.sectionSubtitle}>
                 Der Contract Builder bietet alle Werkzeuge für die Erstellung rechtssicherer Verträge.
               </p>
@@ -534,7 +534,7 @@ const ContractBuilder: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 4 Schritten zum fertigen Vertrag</h2>
+              <h2 className={styles.sectionTitle}>In 4 Schritten zum <span className={styles.sectionTitleAccent}>fertigen Vertrag</span></h2>
               <p className={styles.sectionSubtitle}>
                 Von der leeren Seite zum professionellen Dokument.
               </p>
@@ -599,7 +599,7 @@ const ContractBuilder: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Contract Builder in Zahlen</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Contract Builder</span> in Zahlen</h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -626,7 +626,7 @@ const ContractBuilder: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -683,7 +683,8 @@ const ContractBuilder: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

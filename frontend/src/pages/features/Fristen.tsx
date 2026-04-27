@@ -297,7 +297,7 @@ const Fristen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Der Fristenkalender in Aktion</h2>
+              <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Fristenkalender</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie Contract AI Fristen automatisch erkennt und Sie
                 rechtzeitig erinnert.
@@ -479,7 +479,7 @@ const Fristen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Was der Fristenkalender bietet</h2>
+              <h2 className={styles.sectionTitle}>Was der <span className={styles.sectionTitleAccent}>Fristenkalender</span> bietet</h2>
               <p className={styles.sectionSubtitle}>
                 Nie wieder wichtige Termine verpassen – automatisch und zuverlässig.
               </p>
@@ -540,7 +540,7 @@ const Fristen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zum Fristenkalender</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum <span className={styles.sectionTitleAccent}>Fristenkalender</span></h2>
               <p className={styles.sectionSubtitle}>
                 Automatische Fristenerkennung und Erinnerungen – kinderleicht eingerichtet.
               </p>
@@ -591,7 +591,7 @@ const Fristen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Zuverlässige Fristenerkennung</h2>
+              <h2 className={styles.sectionTitle}>Zuverlässige <span className={styles.sectionTitleAccent}>Fristenerkennung</span></h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -618,7 +618,7 @@ const Fristen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -687,7 +687,8 @@ const Fristen: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>

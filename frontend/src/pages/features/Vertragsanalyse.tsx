@@ -272,7 +272,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Die Vertragsanalyse in Aktion</h2>
+              <h2 className={styles.sectionTitle}>Die <span className={styles.sectionTitleAccent}>Vertragsanalyse</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie in 2 Minuten, wie Contract AI Ihren Vertrag analysiert und
                 versteckte Risiken aufdeckt.
@@ -298,7 +298,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Alles was Sie für sichere Verträge brauchen</h2>
+              <h2 className={styles.sectionTitle}>Alles was Sie für <span className={styles.sectionTitleAccent}>sichere Verträge</span> brauchen</h2>
               <p className={styles.sectionSubtitle}>
                 Modernste KI-Technologie analysiert jeden Aspekt Ihrer Verträge und liefert klare, verständliche Ergebnisse.
               </p>
@@ -532,7 +532,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
+              <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Mehr als nur ein Analyse-Tool - Ihr zuverlässiger Partner für sichere Vertragsentscheidungen.
               </p>
@@ -593,7 +593,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zur Vertragsanalyse</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zur <span className={styles.sectionTitleAccent}>Vertragsanalyse</span></h2>
               <p className={styles.sectionSubtitle}>
                 Einfacher Prozess, professionelles Ergebnis. Keine technischen Kenntnisse erforderlich.
               </p>
@@ -644,7 +644,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Risikoerkennung</span>
-              <h2 className={styles.sectionTitle}>Typische Vertragsrisiken die wir finden</h2>
+              <h2 className={styles.sectionTitle}>Typische <span className={styles.sectionTitleAccent}>Vertragsrisiken</span> die wir finden</h2>
               <p className={styles.sectionSubtitle}>
                 Unsere KI erkennt kritische Klauseln und erklärt, warum sie problematisch sind.
               </p>
@@ -717,7 +717,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Vertrauen Sie den Ergebnissen</h2>
+              <h2 className={styles.sectionTitle}>Vertrauen Sie den <span className={styles.sectionTitleAccent}>Ergebnissen</span></h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -744,7 +744,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -813,7 +813,8 @@ const Vertragsanalyse: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>

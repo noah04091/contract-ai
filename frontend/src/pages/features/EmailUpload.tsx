@@ -242,7 +242,7 @@ const EmailUpload: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionEyebrow}>So einfach geht's</span>
-              <h2 className={styles.sectionTitle}>3 Schritte – mehr nicht</h2>
+              <h2 className={styles.sectionTitle}>3 <span className={styles.sectionTitleAccent}>Schritte</span> – mehr nicht</h2>
             </div>
             <div className={styles.processContainer}>
               <div className={styles.processLine}></div>
@@ -287,7 +287,7 @@ const EmailUpload: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionEyebrow}>Vorteile</span>
-              <h2 className={styles.sectionTitle}>Warum E-Mail-Upload?</h2>
+              <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>E-Mail-Upload</span>?</h2>
             </div>
             <div className={styles.whyGrid}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
@@ -348,7 +348,8 @@ const EmailUpload: React.FC = () => {
         <section className={`${styles.faqSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <span className={styles.sectionEyebrow}>FAQ</span>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
             <div className={styles.faqContainer}>
               <details className={styles.faqItem}>
@@ -398,7 +399,8 @@ const EmailUpload: React.FC = () => {
         <section className={`${styles.relatedSection} ${styles.animateOnScroll}`} ref={addToRefs}>
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Das passiert mit Ihren Verträgen</h2>
+              <span className={styles.sectionEyebrow}>Prozess</span>
+              <h2 className={styles.sectionTitle}>Das passiert mit Ihren <span className={styles.sectionTitleAccent}>Verträgen</span></h2>
             </div>
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>

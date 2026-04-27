@@ -255,7 +255,7 @@ const DigitaleSignatur: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
-              <h2 className={styles.sectionTitle}>Digitale Signatur in Aktion</h2>
+              <h2 className={styles.sectionTitle}>Digitale <span className={styles.sectionTitleAccent}>Signatur</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
                 Sehen Sie, wie einfach Sie Verträge digital signieren lassen können.
               </p>
@@ -280,7 +280,7 @@ const DigitaleSignatur: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Was die digitale Signatur bietet</h2>
+              <h2 className={styles.sectionTitle}>Was die digitale <span className={styles.sectionTitleAccent}>Signatur</span> bietet</h2>
               <p className={styles.sectionSubtitle}>
                 Professionelle E-Signatur mit allen wichtigen Funktionen.
               </p>
@@ -513,7 +513,7 @@ const DigitaleSignatur: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
-              <h2 className={styles.sectionTitle}>In 3 Schritten zum signierten Vertrag</h2>
+              <h2 className={styles.sectionTitle}>In 3 Schritten zum <span className={styles.sectionTitleAccent}>signierten Vertrag</span></h2>
               <p className={styles.sectionSubtitle}>
                 Von der Vertragsvorbereitung zum versiegelten PDF.
               </p>
@@ -567,7 +567,7 @@ const DigitaleSignatur: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Digitale Signatur in Zahlen</h2>
+              <h2 className={styles.sectionTitle}>Digitale <span className={styles.sectionTitleAccent}>Signatur</span> in Zahlen</h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -594,7 +594,7 @@ const DigitaleSignatur: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Fragen & Antworten</span>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+              <h2 className={styles.sectionTitle}>Häufige <span className={styles.sectionTitleAccent}>Fragen</span></h2>
             </div>
 
             <div className={styles.faqContainer}>
@@ -666,7 +666,8 @@ const DigitaleSignatur: React.FC = () => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <h2 className={styles.sectionTitle}>Verwandte Funktionen</h2>
+              <span className={styles.sectionEyebrow}>Mehr entdecken</span>
+              <h2 className={styles.sectionTitle}>Verwandte <span className={styles.sectionTitleAccent}>Funktionen</span></h2>
             </div>
 
             <div className={styles.relatedGrid}>
