@@ -265,27 +265,39 @@
   }
 }
 
-.sectionTitle {
+.sectionHeader {
   text-align: center;
   margin-bottom: 12px;
-  font-size: 36px;
+}
+
+.sectionEyebrow {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #0066FF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.sectionTitle {
+  text-align: center;
+  margin: 0 0 12px;
+  font-size: 3rem;
   font-weight: 700;
   color: #1a1a1a;
   letter-spacing: -0.02em;
-  position: relative;
-  padding-bottom: 20px;
+  line-height: 1.15;
 }
 
-.sectionTitle::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc);
-  border-radius: 2px;
+.sectionTitleAccent {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .sectionSubtitle {
@@ -905,7 +917,7 @@
   }
 
   .sectionTitle {
-    font-size: 28px;
+    font-size: 2rem;
   }
 
   .sectionSubtitle {
@@ -1063,7 +1075,7 @@
   }
 
   .sectionTitle {
-    font-size: 24px;
+    font-size: 1.7rem;
   }
 
   /* Category Sections - Mobile */
@@ -1140,7 +1152,7 @@
   }
 
   .sectionTitle {
-    font-size: 22px;
+    font-size: 1.5rem;
   }
 
   /* Category Sections - Small Mobile */

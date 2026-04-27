@@ -262,9 +262,15 @@ const Blog: React.FC = () => {
         {/* Articles Section */}
         <section className={styles.articlesSection}>
           <div className={styles.containerWide}>
-            <h2 className={styles.sectionTitle}>
-              {activeCategory === 'alle' ? 'Neueste Artikel' : getCategoryDisplayName(activeCategory)}
-            </h2>
+            <div className={styles.sectionHeader}>
+              <span className={styles.sectionEyebrow}>ARTIKEL</span>
+              <h2 className={styles.sectionTitle}>
+                <span className={styles.sectionTitleAccent}>
+                  {activeCategory === 'alle' ? 'Neueste Artikel' : getCategoryDisplayName(activeCategory)}
+                </span>
+              </h2>
+              <p className={styles.sectionSubtitle}>Aktuelle Beiträge rund um Verträge, KI und Recht.</p>
+            </div>
             
             {remainingArticles.length === 0 ? (
               <div className={styles.noResults}>

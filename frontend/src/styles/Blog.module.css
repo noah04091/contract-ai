@@ -326,17 +326,50 @@
   background: linear-gradient(180deg, #fafafa 0%, #f0f5ff 100%);
 }
 
-.sectionTitle {
+.sectionHeader {
   text-align: center;
-  font-size: 32px;
-  font-weight: 600;
   margin-bottom: 40px;
-  color: #1a1a1a;
-  position: relative;
-  padding-bottom: 20px;
 }
 
-.sectionTitle::after {
+.sectionEyebrow {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #0066FF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.sectionTitle {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.sectionTitleAccent {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sectionSubtitle {
+  font-size: 1.15rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 1rem auto 0;
+  line-height: 1.5;
+}
+
+.sectionTitleLegacy::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -817,7 +850,11 @@
   }
 
   .sectionTitle {
-    font-size: 28px;
+    font-size: 2rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 1rem;
   }
 
   .ctaTitle {
@@ -906,7 +943,7 @@
   }
 
   .sectionTitle {
-    font-size: 24px;
+    font-size: 1.6rem;
   }
 
   .ctaTitle {

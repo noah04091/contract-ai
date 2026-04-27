@@ -181,10 +181,19 @@
 }
 
 .sectionTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 2rem;
+  font-weight: 700;
   color: #0f172a;
   margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.sectionTitleAccent {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ============================================
@@ -742,7 +751,7 @@
   }
 
   .sectionTitle {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
 }
 

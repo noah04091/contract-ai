@@ -195,7 +195,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <Building2 size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Über Contract AI</h2>
+              <h2 className={styles.sectionTitle}>Über <span className={styles.sectionTitleAccent}>Contract AI</span></h2>
             </div>
 
             <div className={styles.boilerplateCard}>
@@ -226,7 +226,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <FileText size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Pressemitteilungen</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Pressemitteilungen</span></h2>
             </div>
 
             <div className={styles.pressGrid}>
@@ -258,7 +258,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <User size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Gründer & Geschäftsführung</h2>
+              <h2 className={styles.sectionTitle}>Gründer &amp; <span className={styles.sectionTitleAccent}>Geschäftsführung</span></h2>
             </div>
 
             <div className={styles.founderCard}>
@@ -284,7 +284,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <Image size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Bildmaterial & Logos</h2>
+              <h2 className={styles.sectionTitle}>Bildmaterial &amp; <span className={styles.sectionTitleAccent}>Logos</span></h2>
             </div>
 
             <div className={styles.downloadsGrid}>
@@ -320,7 +320,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <Mail size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Pressekontakt</h2>
+              <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Pressekontakt</span></h2>
             </div>
 
             <div className={styles.contactCard}>
@@ -347,7 +347,7 @@ export default function Press() {
               <div className={styles.sectionIcon}>
                 <MessageSquare size={22} />
               </div>
-              <h2 className={styles.sectionTitle}>Häufige Fragen für Journalisten</h2>
+              <h2 className={styles.sectionTitle}>Häufige Fragen für <span className={styles.sectionTitleAccent}>Journalisten</span></h2>
             </div>
 
             <div className={styles.faqList}>

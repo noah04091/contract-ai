@@ -551,23 +551,46 @@
   background: linear-gradient(180deg, #f8faff 0%, #fff 100%);
 }
 
-.sectionTitle {
-  font-size: 40px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
+.sectionHeader {
+  text-align: center;
   margin-bottom: 64px;
-  color: #1d1d1f;
-  position: relative;
-  display: inline-block;
 }
 
-.sectionTitle::after {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #007AFF, transparent);
-  margin: 16px auto 0;
+.sectionEyebrow {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #0066FF;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 100px;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.sectionTitle {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+.sectionTitleAccent {
+  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sectionSubtitle {
+  font-size: 1.15rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 1rem auto 0;
+  line-height: 1.5;
 }
 
 .teamGrid {
@@ -771,8 +794,15 @@
   }
 
   .sectionTitle {
-    font-size: 32px;
+    font-size: 2rem;
+  }
+
+  .sectionHeader {
     margin-bottom: 48px;
+  }
+
+  .sectionSubtitle {
+    font-size: 1rem;
   }
 
   /* Highlight Quote Mobile */

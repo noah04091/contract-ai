@@ -155,6 +155,81 @@ const About: React.FC = () => {
             ]
           })}
         </script>
+
+        {/* Organization Schema — E-E-A-T-Signal für Google Knowledge Graph */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Contract AI",
+            "url": "https://www.contract-ai.de",
+            "logo": "https://www.contract-ai.de/logo-contractai.webp",
+            "description": "Contract AI ist eine KI-gestützte Plattform für Vertragsanalyse, -optimierung und -verwaltung. DSGVO-konform mit Servern in Deutschland.",
+            "foundingDate": "2024",
+            "foundingLocation": {
+              "@type": "Place",
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "DE",
+                "addressLocality": "Frankfurt"
+              }
+            },
+            "email": "info@contract-ai.de",
+            "sameAs": [
+              "https://linkedin.com",
+              "https://www.instagram.com/contract_ai",
+              "https://www.facebook.com/profile.php?id=61578781115190"
+            ],
+            "founder": {
+              "@type": "Person",
+              "name": "Noah Liebold",
+              "jobTitle": "Gründer & CEO"
+            }
+          })}
+        </script>
+
+        {/* Person Schemas — Team-Mitglieder als E-E-A-T-Authoritäten */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Noah Liebold",
+            "jobTitle": "Gründer & CEO",
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Contract AI",
+              "url": "https://www.contract-ai.de"
+            }
+          })}
+        </script>
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Michael Weber",
+            "jobTitle": "CTO",
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Contract AI",
+              "url": "https://www.contract-ai.de"
+            }
+          })}
+        </script>
+
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Person",
+            "name": "Laura Hoffmann",
+            "jobTitle": "Head of Design",
+            "worksFor": {
+              "@type": "Organization",
+              "name": "Contract AI",
+              "url": "https://www.contract-ai.de"
+            }
+          })}
+        </script>
       </Helmet>
 
       <div className={styles.aboutPage}>
@@ -199,9 +274,13 @@ const About: React.FC = () => {
 
         {/* Values Section */}
         <section className={styles.valuesSection}>
-          <h2 className={`${styles.sectionTitle} scaleIn`} style={{ animationDelay: '0.3s' }}>
-            Unsere Werte
-          </h2>
+          <div className={`${styles.sectionHeader} scaleIn`} style={{ animationDelay: '0.3s' }}>
+            <span className={styles.sectionEyebrow}>WERTE</span>
+            <h2 className={styles.sectionTitle}>
+              Was uns <span className={styles.sectionTitleAccent}>antreibt</span>
+            </h2>
+            <p className={styles.sectionSubtitle}>Die Prinzipien, nach denen wir Contract AI bauen.</p>
+          </div>
           <div className={styles.valuesGrid}>
             {values.map((value, index) => (
               <div
@@ -221,9 +300,13 @@ const About: React.FC = () => {
 
         {/* Timeline Section */}
         <section className={styles.timelineSection}>
-          <h2 className={`${styles.sectionTitle} scaleIn`} style={{ animationDelay: '0.4s' }}>
-            Unsere Geschichte
-          </h2>
+          <div className={`${styles.sectionHeader} scaleIn`} style={{ animationDelay: '0.4s' }}>
+            <span className={styles.sectionEyebrow}>GESCHICHTE</span>
+            <h2 className={styles.sectionTitle}>
+              Unser <span className={styles.sectionTitleAccent}>Weg</span>
+            </h2>
+            <p className={styles.sectionSubtitle}>Wie aus einer Idee Contract AI wurde.</p>
+          </div>
           <div className={styles.timeline} ref={timelineRef}>
             {milestones.map((milestone, index) => (
               <div
@@ -257,9 +340,13 @@ const About: React.FC = () => {
 
         {/* Team Section */}
         <section className={styles.teamSection}>
-          <h2 className={`${styles.sectionTitle} scaleIn`} style={{ animationDelay: '0.4s' }}>
-            Unser Team
-          </h2>
+          <div className={`${styles.sectionHeader} scaleIn`} style={{ animationDelay: '0.4s' }}>
+            <span className={styles.sectionEyebrow}>TEAM</span>
+            <h2 className={styles.sectionTitle}>
+              Die Menschen <span className={styles.sectionTitleAccent}>dahinter</span>
+            </h2>
+            <p className={styles.sectionSubtitle}>Lerne uns kennen.</p>
+          </div>
 
           <div className={styles.teamGrid}>
             {/* Team Member 1 */}

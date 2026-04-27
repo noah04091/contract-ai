@@ -1264,7 +1264,10 @@ const HelpCenter: React.FC = () => {
             {/* GUIDES TAB */}
             {activeTab === 'guides' && (
               <div className={styles.tabContent}>
-                <h2 className={styles.sectionTitle}>Anleitungen</h2>
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionEyebrow}>TUTORIALS</span>
+                  <h2 className={styles.sectionTitle}>Schritt für <span className={styles.sectionTitleAccent}>Schritt</span></h2>
+                </div>
                 <p className={styles.sectionSubtitle}>
                   {filteredGuides.length} {filteredGuides.length === 1 ? 'Anleitung' : 'Anleitungen'} verfügbar
                 </p>
@@ -1518,7 +1521,10 @@ const HelpCenter: React.FC = () => {
             {/* FAQ TAB */}
             {activeTab === 'faq' && (
               <div className={styles.tabContent}>
-                <h2 className={styles.sectionTitle}>Häufig gestellte Fragen</h2>
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionEyebrow}>FAQ</span>
+                  <h2 className={styles.sectionTitle}>Häufig gestellte <span className={styles.sectionTitleAccent}>Fragen</span></h2>
+                </div>
                 <p className={styles.sectionSubtitle}>
                   {filteredFAQs.length} {filteredFAQs.length === 1 ? 'Frage' : 'Fragen'} verfügbar
                 </p>
