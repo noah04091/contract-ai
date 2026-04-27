@@ -80,6 +80,9 @@ const MietvertragPruefen = lazy(() => import("./pages/landing/MietvertragPruefen
 const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 const KaufvertragPruefen = lazy(() => import("./pages/landing/KaufvertragPruefen"));
 
+// 🏢 B2B / Team-Landingpage (für Agenturen, Verwaltungen, Berater)
+const FuerAgenturen = lazy(() => import("./pages/FuerAgenturen"));
+
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/DashboardV2")); // ✅ Neues Premium Dashboard
 const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes Dashboard (Backup)
@@ -218,6 +221,9 @@ function AppWithLoader() {
             <Route path="/mietvertrag-pruefen" element={<MietvertragPruefen />} />
             <Route path="/nda-pruefen" element={<NdaPruefen />} />
             <Route path="/kaufvertrag-pruefen" element={<KaufvertragPruefen />} />
+
+            {/* 🏢 B2B / Team-Landingpage */}
+            <Route path="/fuer-agenturen" element={<FuerAgenturen />} />
 
             {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
