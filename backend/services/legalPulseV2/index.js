@@ -10,6 +10,7 @@ const { runDeepAnalysis } = require("./stages/02-deepAnalysis");
 const { runCrossContractIntelligence } = require("./stages/03-crossContractIntelligence");
 const { runActionEngine } = require("./stages/04-actionEngine");
 const { runScoreCalculation } = require("./stages/05-scoreCalculation");
+const { t } = require("./i18n");
 
 const database = require("../../config/database");
 const { ObjectId } = require("mongodb");
@@ -68,7 +69,8 @@ async function loadContractText(contract) {
     }
   }
 
-  throw new Error("Kein Vertragstext verfügbar. Bitte laden Sie den Vertrag erneut hoch.");
+  // No language info available at this point (text loading failed) — default German.
+  throw new Error(t("error.noContractText", "de"));
 }
 
 /**
@@ -98,11 +100,17 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     costs: { totalTokensInput: 0, totalTokensOutput: 0, totalCostUSD: 0, perStage: [] },
   });
 
+  // Detected contract language for user-facing strings. Defaults to "de" — every
+  // message stays byte-identical to the previous hardcoded German wording until
+  // Stage 0 has determined the actual contract language. After Stage 0, lang is
+  // updated and all subsequent progress/error messages render in the right language.
+  let lang = "de";
+
   try {
     // ═══════════════════════════════════════════
     // STAGE 1: Context Gathering (DB queries only)
     // ═══════════════════════════════════════════
-    onProgress(5, "Sammle Vertragskontext...", { stage: 1, stageName: "Context Gathering" });
+    onProgress(5, t("progress.collectingContext", lang), { stage: 1, stageName: "Context Gathering" });
 
     const context = await runContextGathering(userId, contractId);
 
@@ -131,17 +139,21 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       }
     );
 
-    onProgress(10, "Kontext gesammelt", { stage: 1, stageName: "Context Gathering", complete: true });
+    onProgress(10, t("progress.contextCollected", lang), { stage: 1, stageName: "Context Gathering", complete: true });
 
     // ═══════════════════════════════════════════
     // STAGE 0: Document Intelligence (no AI)
     // ═══════════════════════════════════════════
-    onProgress(12, "Lade und bereinige Vertragstext...", { stage: 0, stageName: "Document Intelligence" });
+    onProgress(12, t("progress.loadingText", lang), { stage: 0, stageName: "Document Intelligence" });
 
     // Load raw text
     const rawText = await loadContractText(context._contract);
 
     const { cleanedText, document: docMeta } = runDocumentIntelligence(rawText);
+
+    // Switch downstream user-facing strings to the detected language.
+    // Default "de" preserves byte-identical existing behavior when language is unset.
+    lang = docMeta.language || "de";
 
     // ── OCR Quality Gate (tiered) ──
     // < 25: Block — too poor for reliable analysis
@@ -154,12 +166,12 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
           $set: {
             status: "failed",
             document: docMeta,
-            error: `Dokumentqualität zu niedrig für eine zuverlässige Analyse (Score: ${docMeta.qualityScore}/100). Bitte laden Sie eine bessere PDF-Version hoch.`,
+            error: t("error.qualityTooLow", lang, { score: docMeta.qualityScore }),
             qualityGate: { blocked: true, score: docMeta.qualityScore, reason: "quality_too_low" },
           },
         }
       );
-      onProgress(100, "Analyse abgebrochen: Dokumentqualität zu niedrig", {
+      onProgress(100, t("progress.analysisAborted.qualityLow", lang), {
         stage: 0,
         stageName: "Document Intelligence",
         error: true,
@@ -177,7 +189,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     const qualityWarning = docMeta.qualityScore < 40 ? {
       limited: true,
       score: docMeta.qualityScore,
-      message: "Eingeschränkte Dokumentqualität — Ergebnisse können unvollständig sein",
+      message: t("error.qualityWarning", lang),
     } : null;
 
     await LegalPulseV2Result.updateOne(
@@ -185,7 +197,11 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       { $set: { currentStage: 2, document: docMeta, ...(qualityWarning && { qualityWarning }) } }
     );
 
-    onProgress(20, `Dokument bereinigt (${docMeta.cleanedTextLength} Zeichen, Typ: ${docMeta.contractType})${qualityWarning ? ' — Eingeschränkte Qualität' : ''}`, {
+    onProgress(20, t("progress.documentCleaned", lang, {
+      chars: docMeta.cleanedTextLength,
+      type: docMeta.contractType,
+      suffix: qualityWarning ? t("progress.qualityLimitedSuffix", lang) : "",
+    }), {
       stage: 0,
       stageName: "Document Intelligence",
       complete: true,
@@ -201,12 +217,12 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     // Propagate detected language to downstream stages.
     // Default "de" preserves existing behavior for any path where docMeta is missing the field.
-    context.language = docMeta.language || "de";
+    context.language = lang;
 
     // ═══════════════════════════════════════════
     // STAGE 2: Deep Analysis (GPT-4o)
     // ═══════════════════════════════════════════
-    onProgress(22, "Starte tiefgehende Klauselanalyse...", {
+    onProgress(22, t("progress.startingDeepAnalysis", lang), {
       stage: 2,
       stageName: "Deep Analysis",
       // Send context early so frontend can show header while analyzing
@@ -223,7 +239,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     // the frontend can show a clear message and the radar query can
     // filter out junk entries.
     if (analysisResult.rejectedAsNotContract) {
-      const reason = analysisResult.aiContractTypeReasoning || "Dokument ist kein Vertrag";
+      const reason = analysisResult.aiContractTypeReasoning || t("error.notAContract", lang);
       console.log(`[PulseV2] Document rejected as non-contract: ${reason}`);
 
       await LegalPulseV2Result.updateOne(
@@ -252,7 +268,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
         }
       );
 
-      onProgress(100, `Analyse abgebrochen: ${reason}`, {
+      onProgress(100, t("progress.analysisAborted.reason", lang, { reason }), {
         stage: 2,
         stageName: "Document Gate",
         complete: true,
@@ -321,10 +337,16 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     );
 
     const coverageMsg = analysisResult.coverage.percentage < 100
-      ? ` (${analysisResult.coverage.analyzed}/${analysisResult.coverage.total} Klauseln analysiert)`
+      ? t("progress.coverageDetail", lang, {
+          analyzed: analysisResult.coverage.analyzed,
+          total: analysisResult.coverage.total,
+        })
       : "";
 
-    onProgress(70, `${analysisResult.clauseFindings.length} Befunde identifiziert${coverageMsg}`, {
+    onProgress(70, t("progress.findingsIdentified", lang, {
+      count: analysisResult.clauseFindings.length,
+      coverage: coverageMsg,
+    }), {
       stage: 2,
       stageName: "Deep Analysis",
       complete: true,
@@ -337,7 +359,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     // ═══════════════════════════════════════════
     let portfolioInsights = [];
     try {
-      onProgress(71, "Starte Portfolio-Analyse...", { stage: 3, stageName: "Portfolio Intelligence" });
+      onProgress(71, t("progress.startingPortfolio", lang), { stage: 3, stageName: "Portfolio Intelligence" });
       const crossResult = await runCrossContractIntelligence(userId, onProgress, context.language);
       portfolioInsights = crossResult.portfolioInsights;
 
@@ -354,7 +376,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
         }
       );
 
-      onProgress(78, `${portfolioInsights.length} Portfolio-Insights erkannt`, {
+      onProgress(78, t("progress.portfolioInsights", lang, { count: portfolioInsights.length }), {
         stage: 3,
         stageName: "Portfolio Intelligence",
         complete: true,
@@ -362,9 +384,9 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       });
     } catch (err) {
       console.error("[PulseV2] Stage 3 failed (non-critical):", err.message);
-      onProgress(78, "Portfolio-Analyse nicht verfügbar", {
+      onProgress(78, t("progress.portfolioUnavailable", lang), {
         stage: 3, stageName: "Portfolio Intelligence", complete: true,
-        stageError: true, errorMessage: "Portfolio-Analyse konnte nicht durchgeführt werden",
+        stageError: true, errorMessage: t("progress.portfolioFailed", lang),
       });
     }
 
@@ -373,7 +395,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     // ═══════════════════════════════════════════
     let actions = [];
     try {
-      onProgress(80, "Generiere Handlungsempfehlungen...", { stage: 4, stageName: "Action Engine" });
+      onProgress(80, t("progress.generatingActions", lang), { stage: 4, stageName: "Action Engine" });
       const actionResult = await runActionEngine(
         analysisResult.clauseFindings,
         portfolioInsights,
@@ -395,7 +417,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
         }
       );
 
-      onProgress(88, `${actions.length} Handlungsempfehlungen generiert`, {
+      onProgress(88, t("progress.actionsGenerated", lang, { count: actions.length }), {
         stage: 4,
         stageName: "Action Engine",
         complete: true,
@@ -403,16 +425,16 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       });
     } catch (err) {
       console.error("[PulseV2] Stage 4 failed (non-critical):", err.message);
-      onProgress(88, "Empfehlungen nicht verfügbar", {
+      onProgress(88, t("progress.actionsUnavailable", lang), {
         stage: 4, stageName: "Action Engine", complete: true,
-        stageError: true, errorMessage: "Handlungsempfehlungen konnten nicht generiert werden",
+        stageError: true, errorMessage: t("progress.actionsFailed", lang),
       });
     }
 
     // ═══════════════════════════════════════════
     // STAGE 5: Score Calculation (deterministic)
     // ═══════════════════════════════════════════
-    onProgress(90, "Berechne Health Score...", { stage: 5, stageName: "Score Calculation" });
+    onProgress(90, t("progress.calculatingScore", lang), { stage: 5, stageName: "Score Calculation" });
 
     const scores = runScoreCalculation(
       analysisResult.clauses,
@@ -431,7 +453,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       }
     );
 
-    onProgress(90, `Health Score: ${scores.overall}/100`, {
+    onProgress(90, t("progress.healthScore", lang, { score: scores.overall }), {
       stage: 5,
       stageName: "Score Calculation",
       complete: true,

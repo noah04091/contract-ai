@@ -11,6 +11,7 @@ const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
 const verifyAdmin = require("../middleware/verifyAdmin");
 const { fixUtf8Filename } = require("../utils/fixUtf8");
+const { t } = require("../services/legalPulseV2/i18n");
 
 // Normalize fields that may be stored as object {name, displayName, ...} or string
 function normalizeToString(val) {
@@ -162,11 +163,15 @@ router.get("/contract/:contractId/latest", async (req, res) => {
     }).sort({ createdAt: -1 }).lean();
 
     if (rejected) {
+      // Localize the fallback to the contract's detected language. The DB-stored
+      // rejectionReason already comes from the AI in the contract language; this
+      // fallback only fires if the AI returned no reason — keep it consistent.
+      const rejectedLang = rejected.document?.language || "de";
       return res.json({
         result: null,
         rejected: {
           status: "rejected_not_contract",
-          reason: rejected.rejectionReason || "Dokument ist kein Vertrag",
+          reason: rejected.rejectionReason || t("error.notAContract", rejectedLang),
           rejectedAt: rejected.completedAt || rejected.createdAt,
         },
       });

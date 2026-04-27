@@ -5,6 +5,7 @@
 
 const database = require("../../../config/database");
 const { ObjectId } = require("mongodb");
+const { t } = require("../i18n");
 
 // contractAnalyzer stores provider/contractType as objects {name, displayName, ...}
 // This helper always returns a string or null
@@ -33,7 +34,9 @@ async function runContextGathering(userId, contractId) {
   });
 
   if (!contract) {
-    throw new Error(`Vertrag ${contractId} nicht gefunden`);
+    // Contract doesn't exist — language can't be determined, default German
+    // is consistent with other "not found" errors in the API.
+    throw new Error(t("error.contractNotFound", "de", { contractId }));
   }
 
   // Load all other contracts for portfolio context (lightweight projection)

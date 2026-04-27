@@ -229,19 +229,37 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       clauseTitle: clauseMap.get(f.clauseId)?.title,
     }));
 
-  // Score label + context description
+  // Score label + context description.
+  // Language-aware: backend stores the detected contract language in result.document.language.
+  // Default "de" preserves byte-identical existing behavior for German contracts and any
+  // older record without a language field.
   const score = scoresState?.overall ?? 0;
-  const scoreLabel = score >= 80 ? 'Gut' : score >= 60 ? 'Akzeptabel' : score >= 40 ? 'Bedenklich' : 'Kritisch';
+  const isEN = (result.document?.language || 'de').toLowerCase() === 'en';
+
+  const scoreLabel = isEN
+    ? (score >= 80 ? 'Good' : score >= 60 ? 'Acceptable' : score >= 40 ? 'Concerning' : 'Critical')
+    : (score >= 80 ? 'Gut' : score >= 60 ? 'Akzeptabel' : score >= 40 ? 'Bedenklich' : 'Kritisch');
   const scoreLabelColor = score >= 80 ? '#15803d' : score >= 60 ? '#d97706' : score >= 40 ? '#ea580c' : '#dc2626';
-  const scoreDescription = score >= 80
-    ? 'Solider Vertrag ohne wesentliche Risiken.'
-    : score >= 60
-      ? `Solider Vertrag mit ${criticalCount + highCount > 0 ? 'einigen wichtigen Punkten' : 'einseitigen Klauseln'}. Keine akuten Risiken.`
-      : score >= 40
-        ? (criticalCount + highCount > 0
-          ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt, der geprüft werden sollte' : 'wichtigen Punkten, die geprüft werden sollten'}.`
-          : 'Vertrag mit Optimierungspotenzial. Siehe Empfehlungen unten.')
-        : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend prüfen.'}`;
+
+  const scoreDescription = isEN
+    ? (score >= 80
+        ? 'Solid contract with no material risks.'
+        : score >= 60
+          ? `Solid contract with ${criticalCount + highCount > 0 ? 'a few important points' : 'some one-sided clauses'}. No acute risks.`
+          : score >= 40
+            ? (criticalCount + highCount > 0
+              ? `Contract with ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'important point that should be reviewed' : 'important points that should be reviewed'}.`
+              : 'Contract with optimization potential. See recommendations below.')
+            : `Contract with substantial risks. ${criticalCount > 0 ? `${criticalCount} critical ${criticalCount > 1 ? 'points require' : 'point requires'} immediate attention.` : 'Urgent review required.'}`)
+    : (score >= 80
+        ? 'Solider Vertrag ohne wesentliche Risiken.'
+        : score >= 60
+          ? `Solider Vertrag mit ${criticalCount + highCount > 0 ? 'einigen wichtigen Punkten' : 'einseitigen Klauseln'}. Keine akuten Risiken.`
+          : score >= 40
+            ? (criticalCount + highCount > 0
+              ? `Vertrag mit ${criticalCount + highCount} ${criticalCount + highCount === 1 ? 'wichtigem Punkt, der geprüft werden sollte' : 'wichtigen Punkten, die geprüft werden sollten'}.`
+              : 'Vertrag mit Optimierungspotenzial. Siehe Empfehlungen unten.')
+            : `Vertrag mit erheblichen Risiken. ${criticalCount > 0 ? `${criticalCount} kritische${criticalCount > 1 ? ' Punkte' : 'r Punkt'} erfordert sofortige Aufmerksamkeit.` : 'Dringend prüfen.'}`);
 
   return (
     <div>
@@ -356,7 +374,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 onClick={() => scrollToSection('empfehlungen')}
                 style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8, ...clickableStyle }}
               >
-                &mdash; {findings.length} Befunde in {result.coverage ? `${result.coverage.analyzed}/${result.coverage.total}` : String(clauses.length)} Klauseln
+                &mdash; {findings.length} {isEN ? 'findings in' : 'Befunde in'} {result.coverage ? `${result.coverage.analyzed}/${result.coverage.total}` : String(clauses.length)} {isEN ? 'clauses' : 'Klauseln'}
                 {result.coverage && result.coverage.percentage < 100 && (
                   <span style={{ color: '#d97706', marginLeft: 4 }}>({result.coverage.percentage}%)</span>
                 )}
