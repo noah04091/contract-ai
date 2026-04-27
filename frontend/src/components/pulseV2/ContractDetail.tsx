@@ -357,11 +357,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }));
 
   // Score label + context description.
-  // Language-aware: backend stores the detected contract language in result.document.language.
-  // Default "de" preserves byte-identical existing behavior for German contracts and any
-  // older record without a language field.
+  // Language-aware via PR-4 toggle: isEN reflects the EFFECTIVE display language
+  // (declared earlier together with the toggle state). When the user toggles to
+  // the other language, verdict strings follow.
   const score = scoresState?.overall ?? 0;
-  const isEN = (result.document?.language || 'de').toLowerCase() === 'en';
 
   const scoreLabel = isEN
     ? (score >= 80 ? 'Good' : score >= 60 ? 'Acceptable' : score >= 40 ? 'Concerning' : 'Critical')
