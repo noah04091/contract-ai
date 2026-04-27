@@ -569,7 +569,7 @@ const MietvertragPruefen: React.FC = () => {
                       <Search size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Klausel-für-Klausel-Bewertung</h4>
+                      <h3>Klausel-für-Klausel-Bewertung</h3>
                       <p>Jede Klausel wird gegen geltendes Mietrecht geprüft, mit Paragraphen-Verweis</p>
                     </div>
                   </div>
@@ -579,7 +579,7 @@ const MietvertragPruefen: React.FC = () => {
                       <Gavel size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Aktuelle BGH-Rechtsprechung</h4>
+                      <h3>Aktuelle BGH-Rechtsprechung</h3>
                       <p>Schönheitsreparaturen, Quotenabgeltung, Tierhaltung, Kündigungsausschluss</p>
                     </div>
                   </div>
@@ -589,7 +589,7 @@ const MietvertragPruefen: React.FC = () => {
                       <ThumbsUp size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Verständliche Empfehlung</h4>
+                      <h3>Verständliche Empfehlung</h3>
                       <p>Klartext statt Juristendeutsch, mit konkretem Handlungsvorschlag</p>
                     </div>
                   </div>
@@ -619,7 +619,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 1: Schönheitsreparaturen mit starrem Fristenplan */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>1. Starrer Fristenplan für Schönheitsreparaturen</h4>
+                  <h3 className={styles.riskTitle}>1. Starrer Fristenplan für Schönheitsreparaturen</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -634,7 +634,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 2: Renovierung bei unrenoviert übergebener Wohnung */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>2. Renovierungspflicht bei unrenoviert übergebener Wohnung</h4>
+                  <h3 className={styles.riskTitle}>2. Renovierungspflicht bei unrenoviert übergebener Wohnung</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -649,7 +649,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 3: Quotenabgeltungsklausel */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>3. Quotenabgeltungsklausel</h4>
+                  <h3 className={styles.riskTitle}>3. Quotenabgeltungsklausel</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -664,7 +664,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 4: Kaution über 3 Monatsmieten */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>4. Kaution über drei Monatsmieten</h4>
+                  <h3 className={styles.riskTitle}>4. Kaution über drei Monatsmieten</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -679,7 +679,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 5: Kündigungsausschluss länger als 4 Jahre */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>5. Überlanger Kündigungsausschluss</h4>
+                  <h3 className={styles.riskTitle}>5. Überlanger Kündigungsausschluss</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -694,7 +694,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 6: Indexmiete intransparent */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>6. Intransparente Indexmiete</h4>
+                  <h3 className={styles.riskTitle}>6. Intransparente Indexmiete</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -709,7 +709,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 7: Generelles Tierhaltungsverbot */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>7. Generelles Tierhaltungsverbot</h4>
+                  <h3 className={styles.riskTitle}>7. Generelles Tierhaltungsverbot</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -724,7 +724,7 @@ const MietvertragPruefen: React.FC = () => {
               {/* FALLE 8: Kleinreparaturen überhöht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>8. Überzogene Kleinreparaturklausel</h4>
+                  <h3 className={styles.riskTitle}>8. Überzogene Kleinreparaturklausel</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>

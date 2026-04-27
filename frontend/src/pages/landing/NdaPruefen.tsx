@@ -572,7 +572,7 @@ const NdaPruefen: React.FC = () => {
                       <Search size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Klausel-für-Klausel-Bewertung</h4>
+                      <h3>Klausel-für-Klausel-Bewertung</h3>
                       <p>Jede Klausel wird gegen GeschGehG und BGB-AGB-Kontrolle geprüft</p>
                     </div>
                   </div>
@@ -582,7 +582,7 @@ const NdaPruefen: React.FC = () => {
                       <Gavel size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Verhandlungs-Hebel erkennen</h4>
+                      <h3>Verhandlungs-Hebel erkennen</h3>
                       <p>Wo du nachverhandeln kannst — und wo du standfest bleiben solltest</p>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ const NdaPruefen: React.FC = () => {
                       <ThumbsUp size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Klartext für Geschäftsleute</h4>
+                      <h3>Klartext für Geschäftsleute</h3>
                       <p>Keine juristische Vorbildung nötig — die Empfehlungen sind direkt umsetzbar</p>
                     </div>
                   </div>
@@ -621,7 +621,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 1: Unbegrenzte Geheimhaltungsdauer */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>1. Unbegrenzte Geheimhaltungsdauer</h4>
+                  <h3 className={styles.riskTitle}>1. Unbegrenzte Geheimhaltungsdauer</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -636,7 +636,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 2: Überzogene Vertragsstrafe */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>2. Überzogene Vertragsstrafe</h4>
+                  <h3 className={styles.riskTitle}>2. Überzogene Vertragsstrafe</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -651,7 +651,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 3: Zu weiter Schutzbereich */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>3. Zu weit gefasster Schutzbereich</h4>
+                  <h3 className={styles.riskTitle}>3. Zu weit gefasster Schutzbereich</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -666,7 +666,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 4: Fehlende Carve-Outs */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>4. Fehlende Standard-Carve-Outs</h4>
+                  <h3 className={styles.riskTitle}>4. Fehlende Standard-Carve-Outs</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -681,7 +681,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 5: Einseitige Geheimhaltung trotz mutual exchange */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>5. Einseitige Geheimhaltung trotz beidseitigem Austausch</h4>
+                  <h3 className={styles.riskTitle}>5. Einseitige Geheimhaltung trotz beidseitigem Austausch</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -696,7 +696,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 6: Verstecktes Wettbewerbsverbot */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>6. Verstecktes Wettbewerbsverbot</h4>
+                  <h3 className={styles.riskTitle}>6. Verstecktes Wettbewerbsverbot</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -711,7 +711,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 7: Ungünstiger Gerichtsstand & Recht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>7. Ungünstiger Gerichtsstand und anwendbares Recht</h4>
+                  <h3 className={styles.riskTitle}>7. Ungünstiger Gerichtsstand und anwendbares Recht</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -726,7 +726,7 @@ const NdaPruefen: React.FC = () => {
               {/* FALLE 8: Fehlende Rückgabe-/Löschpflicht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>8. Fehlende Rückgabe- und Löschpflicht</h4>
+                  <h3 className={styles.riskTitle}>8. Fehlende Rückgabe- und Löschpflicht</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>

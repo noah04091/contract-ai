@@ -572,7 +572,7 @@ const KaufvertragPruefen: React.FC = () => {
                       <Search size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Klausel-für-Klausel-Bewertung</h4>
+                      <h3>Klausel-für-Klausel-Bewertung</h3>
                       <p>Jede Klausel wird gegen geltendes BGB-Kaufrecht geprüft, mit Paragraphen-Verweis</p>
                     </div>
                   </div>
@@ -582,7 +582,7 @@ const KaufvertragPruefen: React.FC = () => {
                       <Gavel size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Aktuelle BGH-Rechtsprechung</h4>
+                      <h3>Aktuelle BGH-Rechtsprechung</h3>
                       <p>Urteile zu „gekauft wie gesehen", arglistig verschwiegenen Mängeln, Sachmangel</p>
                     </div>
                   </div>
@@ -592,7 +592,7 @@ const KaufvertragPruefen: React.FC = () => {
                       <ThumbsUp size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>Verständliche Empfehlung</h4>
+                      <h3>Verständliche Empfehlung</h3>
                       <p>Klartext statt Juristendeutsch, mit konkretem Handlungsvorschlag</p>
                     </div>
                   </div>
@@ -621,7 +621,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 1: Pauschaler Gewährleistungsausschluss beim Verbrauchsgüterkauf */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>1. Pauschaler Gewährleistungsausschluss beim Verbrauchsgüterkauf</h4>
+                  <h3 className={styles.riskTitle}>1. Pauschaler Gewährleistungsausschluss beim Verbrauchsgüterkauf</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -636,7 +636,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 2: "Gekauft wie gesehen" als Freibrief */}
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>2. „Gekauft wie gesehen" als Freibrief verstanden</h4>
+                  <h3 className={styles.riskTitle}>2. „Gekauft wie gesehen" als Freibrief verstanden</h3>
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
@@ -651,7 +651,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 3: Vage Beschaffenheitsangaben */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>3. Vage oder fehlende Beschaffenheitsangaben</h4>
+                  <h3 className={styles.riskTitle}>3. Vage oder fehlende Beschaffenheitsangaben</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -666,7 +666,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 4: Verkürzte Verjährung */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>4. Unzulässig verkürzte Verjährungsfrist</h4>
+                  <h3 className={styles.riskTitle}>4. Unzulässig verkürzte Verjährungsfrist</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -681,7 +681,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 5: Fehlender Eigentumsvorbehalt */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>5. Fehlender oder unklarer Eigentumsvorbehalt</h4>
+                  <h3 className={styles.riskTitle}>5. Fehlender oder unklarer Eigentumsvorbehalt</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -696,7 +696,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 6: Überzogene Stornogebühren */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>6. Überzogene Stornogebühren</h4>
+                  <h3 className={styles.riskTitle}>6. Überzogene Stornogebühren</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -711,7 +711,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 7: Ungesicherte Anzahlung */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>7. Ungesicherte Anzahlung</h4>
+                  <h3 className={styles.riskTitle}>7. Ungesicherte Anzahlung</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
@@ -726,7 +726,7 @@ const KaufvertragPruefen: React.FC = () => {
               {/* FALLE 8: Gefahrübergang ungünstig */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h4 className={styles.riskTitle}>8. Ungünstige Gefahrübergangsregelung</h4>
+                  <h3 className={styles.riskTitle}>8. Ungünstige Gefahrübergangsregelung</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Häufig</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
