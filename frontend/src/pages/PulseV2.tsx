@@ -294,9 +294,32 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
             anderer Dokumenttyp erkannt (z.{'\u00A0'}B. Rechnung, Angebot, Formular) und kann daher
             nicht ausgewertet werden.
           </div>
-          <div style={{ fontSize: 12, color: '#a16207', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: '#a16207', lineHeight: 1.5, marginBottom: 14 }}>
             Laden Sie einen Vertrag hoch, um eine vollständige Risikoanalyse mit Klauselbewertung,
             Handlungsempfehlungen und Gesetzesmonitoring zu erhalten.
+          </div>
+          {/* Override: user explicitly bypasses the document gate */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => startAnalysis(contractId, { lenientMode: true })}
+              style={{
+                padding: '8px 16px',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#92400e',
+                background: '#fef3c7',
+                border: '1px solid #fcd34d',
+                borderRadius: 8,
+                cursor: 'pointer',
+              }}
+            >
+              Trotzdem analysieren
+            </button>
+            <span style={{ fontSize: 11, color: '#a16207', lineHeight: 1.4 }}>
+              Wenn Sie sicher sind, dass es ein Vertrag ist, können Sie die Analyse erzwingen.
+              Ergebnisse können bei Nicht-Verträgen ungenau sein.
+            </span>
           </div>
         </div>
       )}

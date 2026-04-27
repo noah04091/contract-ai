@@ -79,7 +79,7 @@ async function loadContractText(contract) {
  * @param {function} onProgress - (progress: number, message: string, data?: object) => void
  * @returns {object} Complete result
  */
-async function runPipeline({ userId, contractId, requestId, triggeredBy = "manual" }, onProgress) {
+async function runPipeline({ userId, contractId, requestId, triggeredBy = "manual", lenientMode = false }, onProgress) {
   // Find previous result for linking
   const previousResult = await LegalPulseV2Result.findOne({
     userId,
@@ -218,6 +218,11 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
     // Propagate detected language to downstream stages.
     // Default "de" preserves existing behavior for any path where docMeta is missing the field.
     context.language = lang;
+
+    // Propagate lenient-mode override (user clicked "Trotzdem analysieren" after a
+    // previous rejection). When true, Stage 2 ignores the AI document-gate and
+    // injects a directive so the AI produces findings even on borderline documents.
+    context.lenientMode = lenientMode;
 
     // ═══════════════════════════════════════════
     // STAGE 2: Deep Analysis (GPT-4o)

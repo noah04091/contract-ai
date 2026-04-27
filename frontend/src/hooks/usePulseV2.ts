@@ -218,13 +218,20 @@ export function usePulseV2() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const startAnalysis = useCallback(async (contractId: string) => {
+  const startAnalysis = useCallback(async (contractId: string, options?: { lenientMode?: boolean }) => {
     dispatch({ type: 'START_ANALYSIS' });
 
     abortControllerRef.current = new AbortController();
 
+    // Optional override: when the user clicks "Trotzdem analysieren" / "Analyze anyway"
+    // after a previous rejection, we append ?lenientMode=true so the backend bypasses
+    // the document gate. Default behavior unchanged when option not provided.
+    const url = options?.lenientMode
+      ? `${API_BASE}/legal-pulse-v2/analyze/${contractId}?lenientMode=true`
+      : `${API_BASE}/legal-pulse-v2/analyze/${contractId}`;
+
     try {
-      const response = await fetch(`${API_BASE}/legal-pulse-v2/analyze/${contractId}`, {
+      const response = await fetch(url, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

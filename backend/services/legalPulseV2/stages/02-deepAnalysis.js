@@ -134,7 +134,7 @@ function validateAffectedText(finding, clauseOriginalTexts) {
 /**
  * Run deep analysis on a batch of clauses
  */
-async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, totalBatches, language = "de") {
+async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, totalBatches, language = "de", lenientMode = false) {
   const lang = (language || "de").toLowerCase() === "en" ? "en" : "de";
 
   // Clause headers are language-aware. German behavior preserved verbatim when lang === "de".
@@ -150,11 +150,20 @@ async function analyzeClauseBatch(clauses, contractType, parties, batchIndex, to
     ? "as stated in the contract — otherwise apply general contract-law principles"
     : "Deutschland";
 
+  // Lenient-mode directive: when the user has clicked "Trotzdem analysieren" /
+  // "Analyze anyway" after a previous rejection, prepend an explicit directive
+  // that overrides the document-gate inside the system prompt.
+  const lenientDirective = !lenientMode
+    ? ""
+    : lang === "en"
+      ? "IMPORTANT — USER OVERRIDE: The user has manually overridden the document filter ('Analyze anyway'). Treat this document as a contract and analyze it as such, even if you have doubts about whether it is a contract. Do NOT set detectedContractType to 'nicht_vertrag' — produce findings, recommendations and clause categorizations as you would for a regular contract. If the document is partially contractual (terms-of-service, agreement summary, letter of intent, framework letter), analyze the contractual elements you can identify.\n\n"
+      : "WICHTIG — NUTZER-ÜBERSCHREIBUNG: Der Nutzer hat den Dokument-Filter manuell überschrieben ('Trotzdem analysieren'). Behandle dieses Dokument als Vertrag und analysiere es entsprechend, auch wenn du Zweifel hast, ob es ein Vertrag ist. Setze detectedContractType NICHT auf 'nicht_vertrag' — produziere Befunde, Empfehlungen und Klauselkategorisierungen wie bei einem regulären Vertrag. Wenn das Dokument teilweise vertraglich ist (AGB, Vertragszusammenfassung, Letter of Intent, Rahmenschreiben), analysiere die identifizierbaren vertraglichen Elemente.\n\n";
+
   const typeHint = getContractTypeHint(contractType, lang);
   const systemPrompt = getDeepAnalysisPrompt(lang, contractType, jurisdictionLabel, parties);
   const userPrompt = lang === "en"
-    ? `${typeHint ? `\nSPECIFIC CONTEXT: ${typeHint}\n\n` : ""}Analyze the following ${clauses.length} clauses (batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`
-    : `${typeHint ? `\nSPEZIFISCHER KONTEXT: ${typeHint}\n\n` : ""}Analysiere die folgenden ${clauses.length} Klauseln (Batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`;
+    ? `${lenientDirective}${typeHint ? `\nSPECIFIC CONTEXT: ${typeHint}\n\n` : ""}Analyze the following ${clauses.length} clauses (batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`
+    : `${lenientDirective}${typeHint ? `\nSPEZIFISCHER KONTEXT: ${typeHint}\n\n` : ""}Analysiere die folgenden ${clauses.length} Klauseln (Batch ${batchIndex + 1}/${totalBatches}):\n\n${clauseTexts}`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -210,6 +219,10 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
   // Language for downstream prompts; "de" preserves existing behavior when unset.
   const language = context.language || "de";
 
+  // Lenient-mode override: skip the AI document-gate rejection check.
+  // Default false preserves existing behavior on the standard path.
+  const lenientMode = context.lenientMode === true;
+
   // Build clause list (language affects title fallback + English keyword recognition only;
   // category tags are always German for stable downstream scoring)
   const clauses = buildClauseList(cleanedText, language);
@@ -256,7 +269,7 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
     });
 
     try {
-      const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length, language);
+      const result = await analyzeClauseBatch(batches[i], contractType, parties, i, batches.length, language, lenientMode);
       totalInputTokens += result.inputTokens;
       totalOutputTokens += result.outputTokens;
 
@@ -270,6 +283,16 @@ async function runDeepAnalysis(cleanedText, context, onProgress) {
       if (!aiDetectedContractType && result.detectedContractType) {
         aiDetectedContractType = result.detectedContractType;
         aiContractTypeReasoning = result.contractTypeReasoning;
+      }
+
+      // Lenient-mode override: when user has clicked "Trotzdem analysieren", we keep
+      // analyzing even if a batch's AI returned "nicht_vertrag". Subsequent batches
+      // see the lenient directive in their user prompt and should produce findings.
+      // The flag is cleared so we don't surface a stale rejection downstream.
+      if (aiDetectedContractType === "nicht_vertrag" && lenientMode) {
+        console.log(`[PulseV2] Batch ${i + 1}/${batches.length}: AI flagged as non-contract but lenientMode=true — continuing analysis.`);
+        aiDetectedContractType = null;
+        aiContractTypeReasoning = null;
       }
 
       // Early abort: AI has determined this is NOT a contract (e.g. invoice, offer, form).

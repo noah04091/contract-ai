@@ -57,6 +57,14 @@ router.post("/analyze/:contractId", requirePremium, analyzeRateLimiter, async (r
   const userId = req.user.userId;
   const requestId = uuidv4();
 
+  // Optional override: when the user clicks "Trotzdem analysieren" / "Analyze anyway"
+  // after a previous rejection, this flag bypasses the AI document-gate so the
+  // pipeline produces findings even on borderline documents. Accepts both query
+  // param and body field for client flexibility.
+  const lenientMode = req.query.lenientMode === "true"
+    || req.query.lenientMode === "1"
+    || req.body?.lenientMode === true;
+
   // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -86,7 +94,7 @@ router.post("/analyze/:contractId", requirePremium, analyzeRateLimiter, async (r
     sendSSE({ progress: 0, message: "Pipeline wird gestartet...", stage: 0 });
 
     const result = await runPipeline(
-      { userId, contractId, requestId, triggeredBy: "manual" },
+      { userId, contractId, requestId, triggeredBy: "manual", lenientMode },
       (progress, message, stageData) => {
         if (clientDisconnected) return;
         sendSSE({ progress, message, ...stageData });
