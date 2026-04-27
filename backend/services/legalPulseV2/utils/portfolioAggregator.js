@@ -8,6 +8,16 @@ const { ObjectId } = require("mongodb");
 const LegalPulseV2Result = require("../../../models/LegalPulseV2Result");
 const { fixUtf8Filename } = require("../../../utils/fixUtf8");
 
+// contractAnalyzer stores provider/contractType as either a plain string OR
+// an object {name, displayName, confidence, ...}. Normalize at the source so
+// downstream grouping code (which calls .toLowerCase) always sees a string.
+function toStringOrNull(val) {
+  if (!val) return null;
+  if (typeof val === "string") return val;
+  if (typeof val === "object") return val.displayName || val.name || null;
+  return null;
+}
+
 /**
  * Aggregate portfolio data for cross-contract analysis
  * @param {string} userId
@@ -59,8 +69,8 @@ async function aggregatePortfolio(userId) {
     return {
       id,
       name: fixUtf8Filename(c.name || c.title || c.filename || "Unbenannt"),
-      contractType: c.contractType || c.type || v2?.document?.contractType || "unbekannt",
-      provider: c.provider || c.partner || c.company || null,
+      contractType: toStringOrNull(c.contractType) || toStringOrNull(c.type) || v2?.document?.contractType || "unbekannt",
+      provider: toStringOrNull(c.provider) || toStringOrNull(c.partner) || toStringOrNull(c.company) || null,
       endDate: endDate || null,
       startDate: c.startDate || null,
       autoRenewal: c.autoRenewal || false,
