@@ -1795,6 +1795,20 @@ const HomeRedesign = () => {
 
 {/* Beliebte Vertragstypen — SEO Internal Linking Hub */}
         <section className="contract-types-section" style={{ padding: '100px 0', background: 'transparent', position: 'relative' }}>
+          <style>{`
+            .home-contract-types-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 24px;
+              margin-top: 48px;
+            }
+            @media (max-width: 1024px) {
+              .home-contract-types-grid { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 560px) {
+              .home-contract-types-grid { grid-template-columns: 1fr; }
+            }
+          `}</style>
           <div className="section-container">
             <div className="section-title features-title">
               <span className="section-badge reveal-text">VERTRAGSTYPEN</span>
@@ -1802,7 +1816,7 @@ const HomeRedesign = () => {
               <p className="reveal-text">Spezialisierte Analysen für die wichtigsten deutschen Vertragstypen — auf Basis aktueller BGH- und BAG-Rechtsprechung.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginTop: '48px' }}>
+            <div className="home-contract-types-grid">
               <Link to="/arbeitsvertrag-pruefen" style={{ display: 'block', padding: '32px', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)', textDecoration: 'none', color: 'inherit', transition: 'transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease' }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.15)'; e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.3)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)'; }}>
@@ -2077,6 +2091,16 @@ const HomeRedesign = () => {
                   </ul>
                 </div>
                 
+                <div className="footer-column">
+                  <h4>Verträge prüfen</h4>
+                  <ul>
+                    <li><Link to="/arbeitsvertrag-pruefen">Arbeitsvertrag prüfen</Link></li>
+                    <li><Link to="/mietvertrag-pruefen">Mietvertrag prüfen</Link></li>
+                    <li><Link to="/nda-pruefen">NDA prüfen</Link></li>
+                    <li><Link to="/kaufvertrag-pruefen">Kaufvertrag prüfen</Link></li>
+                  </ul>
+                </div>
+
                 <div className="footer-column">
                   <h4>Unternehmen</h4>
                   <ul>

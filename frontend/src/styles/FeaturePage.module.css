@@ -3301,6 +3301,27 @@
   margin: 0 auto;
 }
 
+/* SEO-Pages mit 8 Karten: 4 Spalten Desktop, 2 Tablet, 1 Mobile */
+.functionsGrid4col {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+  .functionsGrid4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .functionsGrid4col {
+    grid-template-columns: 1fr;
+  }
+}
+
 .securityGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

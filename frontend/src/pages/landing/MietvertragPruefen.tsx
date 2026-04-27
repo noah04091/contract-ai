@@ -351,7 +351,7 @@ const MietvertragPruefen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.functionsGrid}>
+            <div className={styles.functionsGrid4col}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
                   <Home size={24} />
