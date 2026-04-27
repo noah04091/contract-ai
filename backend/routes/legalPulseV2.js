@@ -147,6 +147,76 @@ router.get("/results/:id", async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+// POST /result/:id/translate?to=de|en — Language toggle (lazy-cached)
+// ══════════════════════════════════════════════════════════════
+//
+// Translates a completed result's user-facing strings (findings, actions,
+// portfolio insights, clause titles) into the requested target language.
+// First call invokes GPT-4o-mini and caches the result on the document under
+// translations[<lang>]. Subsequent calls return instantly from cache.
+//
+// Returns:
+//   { translation: {...}, cached: boolean, sourceLanguage: "de"|"en" }
+//   or { translation: null, sourceLanguage } when source === target.
+//
+router.post("/result/:id/translate", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const targetLang = (req.query.to || "").toString().toLowerCase();
+
+    if (targetLang !== "de" && targetLang !== "en") {
+      return res.status(400).json({ error: "Ungültige Zielsprache. Erlaubt: de, en" });
+    }
+
+    const result = await LegalPulseV2Result.findOne({
+      _id: id,
+      userId: req.user.userId,
+    });
+
+    if (!result) {
+      return res.status(404).json({ error: "Ergebnis nicht gefunden" });
+    }
+
+    // Source-language detection. Default "de" for legacy records without language field.
+    const sourceLang = result.document?.language || "de";
+
+    // Same source/target → nothing to do, return null translation (frontend renders original).
+    if (sourceLang === targetLang) {
+      return res.json({ translation: null, cached: false, sourceLanguage: sourceLang });
+    }
+
+    // Cache hit
+    if (result.translations && result.translations[targetLang]) {
+      return res.json({
+        translation: result.translations[targetLang],
+        cached: true,
+        sourceLanguage: sourceLang,
+      });
+    }
+
+    // Cache miss → translate via GPT
+    const { translateResult } = require("../services/legalPulseV2/translator");
+    const translated = await translateResult(result.toObject(), targetLang);
+
+    // Persist into translations.<lang> without disturbing other fields.
+    // Mongoose Mixed type: assign sub-key + markModified so the change is saved.
+    if (!result.translations) result.translations = {};
+    result.translations[targetLang] = translated;
+    result.markModified("translations");
+    await result.save();
+
+    return res.json({
+      translation: translated,
+      cached: false,
+      sourceLanguage: sourceLang,
+    });
+  } catch (error) {
+    console.error("[PulseV2] Translation error:", error);
+    res.status(500).json({ error: "Übersetzung fehlgeschlagen" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 // GET /contract/:contractId/latest — Latest result for contract
 // ══════════════════════════════════════════════════════════════
 router.get("/contract/:contractId/latest", async (req, res) => {

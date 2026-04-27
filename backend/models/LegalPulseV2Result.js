@@ -165,6 +165,16 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
   version: { type: String, default: "2.0.0" },
   startedAt: Date,
   completedAt: Date,
+
+  // Language-toggle cache (PR 4): lazy-populated on first user toggle.
+  // Shape: { de: { findings, actions, insights, clauseTitles, translatedAt }, en: {...} }
+  // Only user-facing strings are translated; technical IDs (clauseId, action.id) and
+  // category tags stay untouched. Default is undefined — old records & untranslated
+  // results are unaffected.
+  translations: {
+    type: mongoose.Schema.Types.Mixed,
+    default: undefined,
+  },
 }, {
   timestamps: true,
   collection: "legal_pulse_v2_results",

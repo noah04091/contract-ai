@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { PulseV2Result, PulseV2Action, PulseV2Finding, PulseV2LegalAlert } from '../../types/pulseV2';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import type { PulseV2Result, PulseV2Action, PulseV2Finding, PulseV2LegalAlert, PulseV2Translation, PulseV2TranslateResponse } from '../../types/pulseV2';
 import { useToast } from '../../context/ToastContext';
 import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
@@ -53,6 +53,21 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [pdfExporting, setPdfExporting] = useState(false);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
+  // ── Language toggle (PR 4) ──
+  // Source language is the contract's detected language. User can toggle to the
+  // opposite language; translation is fetched from backend on first toggle and
+  // cached server-side. Subsequent toggles between source and target are instant.
+  const sourceLang = ((result.document?.language || 'de').toLowerCase() === 'en' ? 'en' : 'de') as 'de' | 'en';
+  const otherLang: 'de' | 'en' = sourceLang === 'en' ? 'de' : 'en';
+  const [displayLang, setDisplayLang] = useState<'original' | 'de' | 'en'>('original');
+  const [translation, setTranslation] = useState<PulseV2Translation | null>(
+    // If the result already has a cached translation for the other language,
+    // pre-load it so toggling is instant on first click.
+    (result.translations?.[otherLang] as PulseV2Translation | undefined) || null
+  );
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!showJuristischeInfo) return;
     const handler = (e: MouseEvent) => {
@@ -71,7 +86,61 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     setActions(result.actions || []);
     setFindingsState(result.clauseFindings || []);
     setScoresState(result.scores);
-  }, [result]);
+    // When the result instance changes (re-analyze, switch contract), reset
+    // the language toggle to the original. Pre-load any server-cached
+    // translation for the opposite language for instant first-click.
+    setDisplayLang('original');
+    setTranslation((result.translations?.[otherLang] as PulseV2Translation | undefined) || null);
+    setTranslationError(null);
+  }, [result, otherLang]);
+
+  // Effective language currently shown in the UI (used for verdict-string branching).
+  const effectiveLang = displayLang === 'original' ? sourceLang : displayLang;
+  const isEN = effectiveLang === 'en';
+
+  // Toggle handler: fetch translation if needed (cached server-side), then switch view.
+  const handleToggleLanguage = useCallback(async () => {
+    setTranslationError(null);
+    // If currently showing translated → flip back to original instantly.
+    if (displayLang !== 'original') {
+      setDisplayLang('original');
+      return;
+    }
+    // If we already have a cached translation for otherLang → switch instantly.
+    if (translation) {
+      setDisplayLang(otherLang);
+      return;
+    }
+    // Otherwise fetch from backend.
+    setTranslating(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || '';
+      const res = await fetch(`${API_BASE}/api/legal-pulse-v2/result/${result._id}/translate?to=${otherLang}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as PulseV2TranslateResponse;
+      if (data.translation) {
+        setTranslation(data.translation);
+        setDisplayLang(otherLang);
+      } else {
+        setTranslationError(isEN ? 'No translation needed' : 'Keine Übersetzung erforderlich');
+      }
+    } catch (err) {
+      console.error('[PulseV2] Translation failed:', err);
+      setTranslationError(
+        sourceLang === 'en'
+          ? (err instanceof Error ? err.message : 'Translation failed')
+          : (err instanceof Error ? err.message : 'Übersetzung fehlgeschlagen')
+      );
+    } finally {
+      setTranslating(false);
+    }
+  }, [displayLang, translation, otherLang, result._id, sourceLang, isEN]);
 
   useEffect(() => {
     const names = new Map<string, string>();
@@ -186,8 +255,66 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }
   }, [result._id, toast]);
 
-  const findings = findingsState;
-  const clauses = result.clauses || [];
+  // Language-aware derivations: when displayLang is the OTHER language and we have
+  // a translation, replace user-facing fields. State (userStatus etc.) is preserved.
+  const useTranslated = displayLang !== 'original' && !!translation;
+
+  const findings = useMemo(() => {
+    if (!useTranslated) return findingsState;
+    const tMap = new Map(translation!.findings.map(t => [t.clauseId, t]));
+    return findingsState.map(f => {
+      const t = tMap.get(f.clauseId);
+      if (!t) return f;
+      return {
+        ...f,
+        title: t.title || f.title,
+        description: t.description || f.description,
+        legalBasis: t.legalBasis || f.legalBasis,
+        reasoning: t.reasoning || f.reasoning,
+      };
+    });
+  }, [findingsState, useTranslated, translation]);
+
+  const displayActions = useMemo(() => {
+    if (!useTranslated) return actions;
+    const tMap = new Map(translation!.actions.map(t => [t.id, t]));
+    return actions.map(a => {
+      const t = tMap.get(a.id);
+      if (!t) return a;
+      return {
+        ...a,
+        title: t.title || a.title,
+        description: t.description || a.description,
+        nextStep: t.nextStep || a.nextStep,
+        estimatedImpact: t.estimatedImpact || a.estimatedImpact,
+      };
+    });
+  }, [actions, useTranslated, translation]);
+
+  const clauses = useMemo(() => {
+    const raw = result.clauses || [];
+    if (!useTranslated) return raw;
+    return raw.map(c => ({
+      ...c,
+      title: translation!.clauseTitles[c.id] || c.title,
+    }));
+  }, [result.clauses, useTranslated, translation]);
+
+  const portfolioInsightsDisplay = useMemo(() => {
+    const raw = result.portfolioInsights || [];
+    if (!useTranslated) return raw;
+    return raw.map((p, idx) => {
+      const t = translation!.insights.find(ti => ti.idx === idx);
+      if (!t) return p;
+      return {
+        ...p,
+        title: t.title || p.title,
+        description: t.description || p.description,
+        reasoning: t.reasoning || p.reasoning,
+      };
+    });
+  }, [result.portfolioInsights, useTranslated, translation]);
+
   const clauseMap = new Map(clauses.map(c => [c.id, c]));
 
   // Severity counts
@@ -415,6 +542,40 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             >
               {pdfExporting ? '\u23F3' : '\uD83D\uDCC4'} {pdfExporting ? 'Exportiert...' : 'PDF'}
             </button>
+            {/* Language toggle (PR 4): cached server-side after first click. */}
+            <button
+              type="button"
+              onClick={handleToggleLanguage}
+              disabled={translating}
+              title={
+                displayLang === 'original'
+                  ? (otherLang === 'en' ? 'Show findings in English' : 'Befunde auf Deutsch anzeigen')
+                  : (sourceLang === 'en' ? 'Show original (English)' : 'Originalsprache anzeigen (Deutsch)')
+              }
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '3px 10px',
+                fontSize: 11,
+                fontWeight: 500,
+                color: translating ? '#9ca3af' : '#4b5563',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: 5,
+                cursor: translating ? 'default' : 'pointer',
+              }}
+            >
+              {translating
+                ? (sourceLang === 'en' ? 'Translating...' : 'Übersetze...')
+                : displayLang === 'original'
+                  ? (otherLang === 'en' ? 'Show in English' : 'Auf Deutsch anzeigen')
+                  : (sourceLang === 'en' ? 'Show original' : 'Original anzeigen')
+              }
+            </button>
+            {translationError && (
+              <span style={{ fontSize: 11, color: '#dc2626' }}>{translationError}</span>
+            )}
           </div>
 
           {/* Monitoring Status */}
@@ -671,12 +832,12 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       )}
 
       {/* ═══ Empfehlungen — Actions + kritische Findings zusammen ═══ */}
-      {(actions.length > 0 || topFindings.length > 0) && (() => {
-        const openActions = actions.filter(a => a.status === 'open');
-        const doneActions = actions.filter(a => a.status === 'done');
-        const dismissedActions = actions.filter(a => a.status === 'dismissed');
+      {(displayActions.length > 0 || topFindings.length > 0) && (() => {
+        const openActions = displayActions.filter(a => a.status === 'open');
+        const doneActions = displayActions.filter(a => a.status === 'done');
+        const dismissedActions = displayActions.filter(a => a.status === 'dismissed');
         const doneCount = doneActions.length;
-        const totalCount = actions.length;
+        const totalCount = displayActions.length;
         const progressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
         const historyActions = [...doneActions, ...dismissedActions];
 
@@ -994,7 +1155,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
       {/* ═══ Portfolio Insights ═══ */}
       <PortfolioInsightsPanel
-        insights={result.portfolioInsights || []}
+        insights={portfolioInsightsDisplay}
         contractNames={contractNames}
       />
 

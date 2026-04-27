@@ -151,6 +151,44 @@ export interface PulseV2Result {
     score: number;
     message: string;
   };
+  // Lazy-populated translation cache (PR 4). Each key holds translated copies
+  // of user-facing strings. Technical IDs and category tags stay untouched.
+  translations?: {
+    de?: PulseV2Translation;
+    en?: PulseV2Translation;
+  };
+}
+
+export interface PulseV2Translation {
+  findings: Array<{
+    clauseId: string;
+    title: string;
+    description: string;
+    legalBasis: string;
+    reasoning: string;
+  }>;
+  actions: Array<{
+    id: string;
+    title: string;
+    description: string;
+    nextStep: string;
+    estimatedImpact: string;
+  }>;
+  insights: Array<{
+    idx: number;
+    title: string;
+    description: string;
+    reasoning: string;
+  }>;
+  // Map clauseId -> translated title for O(1) lookup at render time.
+  clauseTitles: Record<string, string>;
+  translatedAt: string;
+}
+
+export interface PulseV2TranslateResponse {
+  translation: PulseV2Translation | null;
+  cached: boolean;
+  sourceLanguage: 'de' | 'en';
 }
 
 export interface PulseV2DashboardItem {
