@@ -61,6 +61,7 @@ const Footer: React.FC = () => {
               <ul>
                 <li><a href="mailto:info@contract-ai.de">Kontakt</a></li>
                 <li><Link to="/about">Über uns</Link></li>
+                <li><Link to="/fuer-agenturen">Für Agenturen &amp; Teams</Link></li>
                 <li><Link to="/hilfe">Hilfe</Link></li>
                 <li><Link to="/blog">Blog</Link></li>
                 <li><Link to="/press">Presse</Link></li>

@@ -282,7 +282,7 @@ const FuerAgenturen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.functionsGrid}>
+            <div className={styles.functionsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', maxWidth: '880px', margin: '0 auto' }}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Briefcase size={24} />
