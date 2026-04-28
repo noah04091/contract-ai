@@ -2960,15 +2960,22 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       s3Key: storageInfo.s3Info?.key || 'none'
     });
 
-    // ✅ FIXED: Generate robust lawyer-level analysis prompt
+    // ✅ FIXED: Generate robust lawyer-level analysis prompt.
+    // 🌐 Phase-2-Fix (28.04.2026): documentType wird jetzt aus extractedContractType
+    // (rental/employment/nda/...) statt aus validationResult.documentType (UNKNOWN/CONTRACT/
+    // INVOICE) gespeist. Sonst landet jeder Vertrag bei der "other"-Awareness und die
+    // Pilot-Tiefenanalyse triggert nicht. Fallback bleibt unverändert: wenn die
+    // contractType-Detection nichts liefert, nutzen wir die Dokumentenklasse wie zuvor —
+    // das landet beim "other"-Awareness, identisch zum alten Verhalten.
+    const promptContractType = extractedContractType || validationResult.documentType;
     const analysisPrompt = generateDeepLawyerLevelPrompt(
-      fullTextContent, 
-      validationResult.documentType, 
+      fullTextContent,
+      promptContractType,
       validationResult.strategy,
       requestId
     );
 
-    console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document`);
+    console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
 
     let completion;
     try {
