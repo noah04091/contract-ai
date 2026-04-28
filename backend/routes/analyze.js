@@ -1274,7 +1274,30 @@ Wenn Haftungsausschlüsse zu weit gehen → prüfe § 309 BGB.`,
 • Fehlende Datenrückgabe-Regelung (Art. 20 DSGVO: maschinenlesbar!)
 • Vendor Lock-In durch proprietäre Datenformate
 • Einseitige Leistungsänderungsrechte ohne Kündigungsrecht
-• Unzureichende SLA-Penalties bei Ausfall`
+• Unzureichende SLA-Penalties bei Ausfall`,
+
+      // 🌐 Phase-2-Erweiterung (28.04.2026): Pilot-Typ ausgebaut.
+      // Service-/Dienstleistungs-/SaaS-Verträge sind ein Hochfrequenz-B2B-Typ.
+      // Tiefenanalyse mit konkreten Pflicht-Checkpoints.
+      pilotChecklist: `DIENSTLEISTUNGSVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" oder "issue" (je nach Wichtigkeit).
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Vertragsklassifikation — Dienstvertrag (§§ 611 BGB ff.) vs. Werkvertrag (§§ 631 BGB ff.) eindeutig erkennbar? Korrekte Gewährleistungs-/Abnahmeregeln?
+2. Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO — vorhanden bei Verarbeitung personenbezogener Daten? PFLICHT, wenn Daten verarbeitet werden!
+3. Datenrückgabe-/Löschpflicht bei Vertragsende (Art. 20 DSGVO, maschinenlesbares Format)
+4. Service Level Agreements (SLA) — Verfügbarkeit (z.B. 99,5%/99,9%) und Reaktionszeiten klar definiert?
+5. SLA-Penalties bei Nichterfüllung — verhältnismäßig zur Schadenshöhe?
+6. Haftungsbegrenzung — Kappung verhältnismäßig (z.B. auf Auftragswert, max. 12-24 Monatshonorar)? Vorsatz/grobe Fahrlässigkeit ausgenommen (§ 309 Nr. 7 BGB)?
+7. Vendor Lock-In — Datenexport-Möglichkeiten in offenen Formaten? Migration zu anderem Anbieter möglich?
+8. Subunternehmer-Klausel — Information/Zustimmung des Auftraggebers bei Wechsel?
+9. Geistiges Eigentum / Code-Ownership — bei individuell entwickelter Software: gehören Rechte dem Auftraggeber oder dem Auftragnehmer?
+10. Preisanpassungsklauseln — Obergrenze pro Jahr? Sonderkündigungsrecht bei Erhöhung?
+11. Geheimhaltung / Vertraulichkeit — Reichweite + nachvertragliche Wirksamkeit
+12. Kündigungsrechte — beidseitig fair? Außerordentliche Kündigung bei wichtigem Grund klar geregelt?`
     },
 
     // 🔒 NDA / Geheimhaltungsvereinbarung — Pilot-Typ Phase 2
