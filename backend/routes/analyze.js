@@ -20,6 +20,7 @@ const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pr
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
+const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2: Dedizierte Datums-Extraktion mit Evidence-Validierung
 
 const router = express.Router();
 
@@ -3068,17 +3069,30 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
 
+    // 🚀 Parallel-Aufruf: Hauptanalyse + Date Hunt Stage gleichzeitig.
+    // Date Hunt liefert evidence-validierte importantDates — die Liste der
+    // Hauptanalyse wird später überschrieben (Single Source of Truth für Termine).
+    // Bei Fehler/Timeout der Date Hunt Stage: leeres Array, Hauptanalyse läuft normal.
     let completion;
+    let dateHuntResult = { importantDates: [], stats: { fallback: true } };
     try {
-      completion = await Promise.race([
-        makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("OpenAI API timeout after 90s")), 90000)
-        )
+      const [completionResult, dateHuntPromiseResult] = await Promise.all([
+        Promise.race([
+          makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("OpenAI API timeout after 90s")), 90000)
+          )
+        ]),
+        dateHuntService.huntDates(fullTextContent, getOpenAI(), requestId)
+          .catch(err => {
+            console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
+            return { importantDates: [], stats: { fallback: true, error: err.message } };
+          })
       ]);
+      completion = completionResult;
+      dateHuntResult = dateHuntPromiseResult;
     } catch (openaiError) {
       console.error(`❌ [${requestId}] OpenAI error:`, openaiError.message);
-      
       throw new Error(`OpenAI API error: ${openaiError.message}`);
     }
 
@@ -3131,10 +3145,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       result = validateAndNormalizeLawyerAnalysis(result, validationResult.documentType, requestId);
     } catch (validationError) {
       console.error(`❌ [${requestId}] Deep lawyer analysis validation failed:`, validationError.message);
-      
+
       // ✅ FIXED: Fallback to legacy format instead of throwing
       console.warn(`⚠️ [${requestId}] Using fallback analysis format`);
       result = convertLegacyToDeepLawyerFormat(result, validationResult.documentType, requestId);
+    }
+
+    // 📅 Stufe-2-Merge: Date Hunt Stage liefert evidence-validierte Datums.
+    // Sie ist Single Source of Truth für importantDates (überschreibt die
+    // unvalidierten Datums aus der Hauptanalyse). Strikt: bei Fallback /
+    // 0 Treffern → leeres Array, kein erfundenes Datum durchlassen.
+    if (!dateHuntResult.stats?.fallback) {
+      const previousCount = Array.isArray(result.importantDates) ? result.importantDates.length : 0;
+      result.importantDates = dateHuntResult.importantDates;
+      console.log(
+        `📅 [${requestId}] importantDates ersetzt durch Date Hunt: ` +
+        `Hauptanalyse hatte ${previousCount} → Date Hunt validierte ${dateHuntResult.importantDates.length}`
+      );
+    } else {
+      console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben (Best-Effort)`);
     }
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
