@@ -941,8 +941,10 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               </motion.button>
             )}
 
-            {/* ✅ CRITICAL FIX: Re-Analyse Button wenn Analyse vorhanden (result ODER initialResult) */}
-            {(result || initialResult) && !analyzing && (
+            {/* Re-Analyse-Button nur im Upload-Flow (file vorhanden).
+                Bei Bestandsverträgen aus der Schnellanalyse-Modal (nur contractId,
+                kein File) wäre der Button funktionslos — daher ausblenden. */}
+            {(result || initialResult) && !analyzing && file && (
               <motion.button
                 className={styles.reanalyzeButton}
                 onClick={() => handleAnalyze(true)}
