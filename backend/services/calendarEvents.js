@@ -1413,8 +1413,57 @@ async function onContractChange(db, contract, action = "create") {
   }
 }
 
+/**
+ * 🧹 Cleanup + Regenerate für AI-erzeugte Events eines einzelnen Vertrags.
+ *
+ * Verwendung: Re-Analyse, Reminder-Settings-Update, Vertrags-Reaktivierung,
+ * manueller User-Trigger "Events neu generieren".
+ *
+ * Garantien:
+ *   • Manuelle Termine (isManual === true) werden NIEMALS gelöscht.
+ *   • Cancellation-Confirmation-Checks (eigenes Subsystem) bleiben unangetastet.
+ *   • Nur Events mit metadata.aiExtracted === true ODER
+ *     dataSource ∈ {ai_extracted, ai_calculated, ai_reminder} werden entfernt.
+ *
+ * Single Source of Truth — alle Aufrufer (analyze.js, contracts.js,
+ * cancellations.js, calendar.js) verwenden diesen Helper, damit Filter-Logik
+ * nur an einer Stelle gepflegt wird.
+ *
+ * @param {Db} db - MongoDB Database Connection
+ * @param {Object} contract - Contract Document (muss _id und userId haben)
+ * @returns {Promise<{deleted: number, generated: number}>}
+ */
+async function cleanAndRegenerateAIEvents(db, contract) {
+  if (!contract || !contract._id) {
+    throw new Error('cleanAndRegenerateAIEvents: contract._id required');
+  }
+
+  const cleanupFilter = {
+    contractId: contract._id,
+    isManual: { $ne: true },
+    $or: [
+      { 'metadata.aiExtracted': true },
+      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } }
+    ]
+  };
+
+  const deleteResult = await db.collection('contract_events').deleteMany(cleanupFilter);
+  const events = await generateEventsForContract(db, contract);
+
+  console.log(
+    `🧹 Calendar Cleanup für "${contract.name || contract._id}": ` +
+    `${deleteResult.deletedCount} alte AI-Events entfernt, ${events.length} neue erzeugt`
+  );
+
+  return {
+    deleted: deleteResult.deletedCount,
+    generated: events.length
+  };
+}
+
 module.exports = {
   generateEventsForContract,
+  cleanAndRegenerateAIEvents,
   regenerateAllEvents,
   updateExpiredEvents,
   onContractChange,

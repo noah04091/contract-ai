@@ -13,7 +13,7 @@ const database = require("../config/database");
 const path = require("path");
 const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
-const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
+const { generateEventsForContract, cleanAndRegenerateAIEvents } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
 const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
@@ -3355,12 +3355,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         console.log(`✅ [${requestId}] Existing contract updated with FIXED deep lawyer-level analysis (${fullTextContent.length} characters)`);
 
-        // 🆕 CALENDAR EVENTS GENERIEREN FÜR UPDATE
+        // 🆕 CALENDAR EVENTS REGENERIEREN BEI RE-ANALYSE
+        // Cleanup vorher: alte AI-Events werden entfernt, manuelle Termine bleiben.
         try {
           const db = await database.connect();
           const updatedContract = await contractsCollection.findOne({ _id: existingContract._id });
-          const events = await generateEventsForContract(db, updatedContract);
-          console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${events.length} Events${updatedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+          const result = await cleanAndRegenerateAIEvents(db, updatedContract);
+          console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${result.deleted} alt → ${result.generated} neu${updatedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }

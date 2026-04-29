@@ -4,7 +4,7 @@ const { ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
-const { generateEventsForContract, regenerateAllEvents } = require("../services/calendarEvents");
+const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents } = require("../services/calendarEvents");
 const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerator");
 
 const router = express.Router();
@@ -259,13 +259,14 @@ router.post("/generate/:contractId", verifyToken, async (req, res) => {
       });
     }
     
-    // Generate events
-    const events = await generateEventsForContract(req.db, contract);
-    
+    // Manueller User-Trigger "Events neu generieren": Cleanup alte AI-Events,
+    // erzeuge frische — manuelle Termine bleiben unangetastet.
+    const { generated } = await cleanAndRegenerateAIEvents(req.db, contract);
+
     res.json({
       success: true,
-      message: `${events.length} Ereignisse für Vertrag "${contract.name}" generiert`,
-      events: events
+      message: `${generated} Ereignisse für Vertrag "${contract.name}" generiert`,
+      eventsGenerated: generated
     });
     
   } catch (error) {

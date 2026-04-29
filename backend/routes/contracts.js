@@ -3737,22 +3737,16 @@ router.patch("/:id/reminder-settings", async (req, res) => {
         });
       }
 
-      // Regenerate calendar events for this contract
-      const { generateEventsForContract } = require("../services/calendarEvents");
-
-      await req.db.collection("contract_events").deleteMany({
-        contractId: new ObjectId(id),
-        userId
-      });
-
-      const events = await generateEventsForContract(req.db, result);
+      // Regenerate calendar events: cleanup nur AI-Events, manuelle Termine bleiben.
+      const { cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
+      const { generated } = await cleanAndRegenerateAIEvents(req.db, result);
 
       return res.json({
         success: true,
         message: "Reminder-Einstellungen aktualisiert",
         reminderSettings,
         reminderDays: compatReminderDays,
-        eventsGenerated: events.length
+        eventsGenerated: generated
       });
     }
 
@@ -3792,21 +3786,15 @@ router.patch("/:id/reminder-settings", async (req, res) => {
       });
     }
 
-    // Regenerate calendar events for this contract
-    const { generateEventsForContract } = require("../services/calendarEvents");
-
-    await req.db.collection("contract_events").deleteMany({
-      contractId: new ObjectId(id),
-      userId
-    });
-
-    const events = await generateEventsForContract(req.db, result);
+    // Regenerate calendar events: cleanup nur AI-Events, manuelle Termine bleiben.
+    const { cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
+    const { generated } = await cleanAndRegenerateAIEvents(req.db, result);
 
     res.json({
       success: true,
       message: "Reminder-Einstellungen aktualisiert",
       reminderDays,
-      eventsGenerated: events.length
+      eventsGenerated: generated
     });
 
   } catch (error) {
