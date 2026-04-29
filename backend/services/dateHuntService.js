@@ -55,9 +55,28 @@ loan_end, interest_rate_change, delivery_date, other
 
 REGELN — STRIKT:
 1. NIEMALS Datum erfinden. Wenn du nichts im Text belegen kannst → das Datum WEGLASSEN.
-2. evidence ist PFLICHT. Wenn du den Original-Satz nicht zitieren kannst → das Datum WEGLASSEN.
-3. evidence muss WÖRTLICH im Vertragstext vorkommen — nicht paraphrasiert.
-4. Bei Berechnungen: zeige in description die Rechnung (z.B. "Vertragsbeginn 01.04.2026 + 6 Monate Probezeit = 01.10.2026").
+2. evidence ist PFLICHT. Wenn du den Original-Satz nicht WÖRTLICH kopieren kannst → das Datum WEGLASSEN.
+
+3. EVIDENCE-REGEL — KRITISCH (90 % aller Fehler entstehen hier):
+   evidence muss ein WÖRTLICHES Copy-Paste aus dem Vertragstext sein.
+   Behalte Tippfehler, Umlaute (ae/oe/ue/ß), Sonderzeichen, Kommas — alles 1:1.
+   NIEMALS umformulieren, zusammenfassen oder eigene Worte verwenden.
+
+   ✅ RICHTIG (1:1 aus dem Vertrag kopiert):
+      Vertrag enthält:  "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich."
+      evidence:         "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich"
+
+   ❌ FALSCH (paraphrasiert, eigene Worte):
+      Vertrag enthält:  "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich."
+      evidence:         "Mietanpassung 15 Monate nach Mietbeginn"           ← UMFORMULIERT
+      evidence:         "frühestens 15 Monate nach Mietbeginn"              ← Umlaut geändert
+      evidence:         "Frist von 15 Monaten ab Mietvertragsbeginn"        ← Synonym
+
+   Faustregel: Wenn deine evidence Wörter enthält, die NICHT im Vertrag stehen,
+   ist sie falsch. Lieber das Datum komplett weglassen als eine paraphrasierte
+   Evidence liefern — der Backend-Validator wird sie sowieso verwerfen.
+
+4. Bei Berechnungen: zeige in description die Rechnung (z.B. "Vertragsbeginn 01.04.2026 + 6 Monate Probezeit = 01.10.2026"). Die Rechnung gehört in description, NICHT in evidence — evidence bleibt das wörtliche Zitat.
 5. Wörter-Datums ("dreißigster Juni") ins ISO-Format konvertieren (2026-06-30).
 6. Maximal ${MAX_DATES} Datums — fokussiere auf die wichtigsten für den Mandanten.
 7. Antworte AUSSCHLIESSLICH mit dem unten definierten JSON.
@@ -93,8 +112,19 @@ function validateDateEntry(entry, contractText) {
   if (evidence.length < EVIDENCE_MIN_LEN || evidence.length > EVIDENCE_MAX_LEN) {
     return { valid: false, reason: `evidence_length_${evidence.length}` };
   }
-  // Evidence muss wörtlich im Volltext vorkommen (case-insensitive, whitespace-tolerant).
-  const normalize = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+  // Evidence muss wörtlich im Volltext vorkommen.
+  // Toleriert: Case, Whitespace, Umlaut-Varianten (ä/ae, ö/oe, ü/ue, ß/ss),
+  // typografische Anführungszeichen — alles, was bei OCR/PDF-Konvertierung
+  // legitim variieren kann. Bewusst NICHT toleriert: Paraphrasen, Synonyme,
+  // hinzugefügte/entfernte Wörter — Halluzinationen müssen weiter scheitern.
+  const normalize = (s) => s
+    .toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+    .replace(/[‘’‚‛′]/g, "'")
+    .replace(/[“”„‟″]/g, '"')
+    .replace(/[‐-―]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
   const normEvidence = normalize(evidence);
   const normText = normalize(contractText);
   if (!normText.includes(normEvidence)) {
