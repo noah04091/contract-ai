@@ -2786,13 +2786,81 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }
     } catch (error) {
       console.error(`❌ [${requestId}] Document parsing error:`, error);
-      return res.status(400).json({
-        success: false,
-        message: "📄 Datei konnte nicht verarbeitet werden",
-        error: "PARSE_ERROR",
-        details: "Die Datei scheint beschädigt oder kein gültiges PDF/DOCX zu sein",
-        requestId
-      });
+
+      // Last-Resort: Bei harten pdf-parse-Crashes (z.B. "bad XRef entry",
+      // korrupte Streams, defekte Trailer) Textract direkt mit den rohen
+      // Bytes versuchen. Textract ruft pdf-parse nicht auf und kann viele
+      // strukturell beschädigte oder gescannte PDFs trotzdem rastern.
+      const isPdf = fileMimetype === 'application/pdf';
+      if (isPdf) {
+        console.log(`🆘 [${requestId}] pdf-parse Crash — versuche OCR-Last-Resort über Textract...`);
+        try {
+          const ocrResult = await pdfExtractor.extractTextWithOCRFallback(buffer, {
+            mimetype: fileMimetype,
+            enableOCR: true,
+            ocrThreshold: 50,
+            userId: req.user?.userId
+          });
+          if (ocrResult.success && ocrResult.text && ocrResult.text.trim().length >= 50) {
+            console.log(`✅ [${requestId}] OCR-Last-Resort erfolgreich: ${ocrResult.text.length} Zeichen, OCR=${ocrResult.usedOCR}`);
+            pdfData = {
+              text: ocrResult.text,
+              numpages: ocrResult.quality?.pageCount || ocrResult.ocrPages || 0
+            };
+            // weiter im normalen Flow — pdfData ist gesetzt
+          } else {
+            // OCR konnte ebenfalls nichts retten — differenzierte Fehlermeldung
+            const ocrLimitWarning = ocrResult.warnings?.find(w => w.type === 'ocr_limit_reached');
+            if (ocrLimitWarning) {
+              return res.status(400).json({
+                success: false,
+                message: "📸 OCR-Kontingent erreicht",
+                error: "OCR_LIMIT_REACHED",
+                details: ocrLimitWarning.message,
+                suggestions: [
+                  "Speichern Sie die PDF erneut über Ihren PDF-Viewer (z.B. Adobe Reader → Speichern unter, oder Browser → Drucken → Als PDF speichern)",
+                  "Upgraden Sie Ihren Plan für mehr OCR-Seiten"
+                ],
+                requestId
+              });
+            }
+            return res.status(400).json({
+              success: false,
+              message: "📄 PDF-Datei beschädigt",
+              error: "PDF_CORRUPTED",
+              details: "Die PDF-Struktur ist defekt (z.B. beschädigte XRef-Tabelle). Auch automatische Texterkennung (OCR) konnte das Dokument nicht lesen.",
+              suggestions: [
+                "Öffnen Sie die PDF in einem Viewer (Adobe Reader, Browser, Vorschau) und speichern Sie sie erneut ab — das repariert oft beschädigte PDFs",
+                "Alternativ: über Browser → Drucken → 'Als PDF speichern' eine saubere Version erzeugen",
+                "Falls Sie das Originaldokument haben, laden Sie es bitte direkt hoch"
+              ],
+              requestId
+            });
+          }
+        } catch (ocrErr) {
+          console.error(`❌ [${requestId}] OCR-Last-Resort fehlgeschlagen: ${ocrErr.message}`);
+          return res.status(400).json({
+            success: false,
+            message: "📄 Datei konnte nicht verarbeitet werden",
+            error: "PARSE_ERROR",
+            details: "Die PDF konnte weder regulär noch per OCR gelesen werden. Sie ist möglicherweise beschädigt oder kein gültiges PDF.",
+            suggestions: [
+              "PDF in einem Viewer öffnen und neu abspeichern",
+              "Falls möglich, das Originaldokument verwenden"
+            ],
+            requestId
+          });
+        }
+      } else {
+        // Non-PDF (z.B. DOCX): kein OCR-Fallback sinnvoll, klare Meldung
+        return res.status(400).json({
+          success: false,
+          message: "📄 Datei konnte nicht verarbeitet werden",
+          error: "PARSE_ERROR",
+          details: "Die Datei scheint beschädigt oder kein gültiges PDF/DOCX zu sein",
+          requestId
+        });
+      }
     }
 
     // 🚨 STRIKTE SEITEN- & TOKEN-LIMIT PRÜFUNG - Plan-basiert
