@@ -225,7 +225,28 @@ async function huntDates(contractText, openaiClient, requestId = '') {
       } else {
         stats.rejected_other++;
       }
-      console.warn(`⚠️ [${requestId}] [DateHunt] Datum verworfen (${v.reason}): ${JSON.stringify(entry).slice(0, 150)}`);
+      // Diagnose-Logging: Bei evidence_not_in_text die volle Evidence + den
+      // ähnlichsten Vertragsabschnitt zeigen, damit wir paraphrasierte Outputs
+      // von Encoding-Mismatches unterscheiden können.
+      const evidence = entry.evidence || '';
+      console.warn(
+        `⚠️ [${requestId}] [DateHunt] Datum verworfen (${v.reason}): ` +
+        `type=${entry.type} date=${entry.date} label=${entry.label}`
+      );
+      if (v.reason === 'evidence_not_in_text' && evidence) {
+        console.warn(`   📝 Evidence (${evidence.length} chars): "${evidence}"`);
+        // Zeige den ähnlichsten Treffer im Volltext: erste 5 Wörter der Evidence im Text suchen
+        const firstWords = evidence.trim().split(/\s+/).slice(0, 5).join(' ');
+        if (firstWords.length >= 8) {
+          const idx = contractText.toLowerCase().indexOf(firstWords.toLowerCase());
+          if (idx >= 0) {
+            const snippet = contractText.slice(Math.max(0, idx - 10), idx + evidence.length + 50);
+            console.warn(`   🔎 Ähnlicher Vertragsabschnitt (Pos ${idx}): "${snippet}"`);
+          } else {
+            console.warn(`   🔎 Erste 5 Wörter der Evidence ("${firstWords}") nicht im Vertragstext gefunden`);
+          }
+        }
+      }
     }
   }
 
