@@ -171,10 +171,37 @@
   margin-bottom: 22px;
   border-bottom: 1px solid var(--border-soft);
 }
+.pageHeaderLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
 .pageHeaderTitleRow {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+}
+.mobileMenuBtn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.mobileMenuBtn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.mobileSidebarOverlay {
+  display: none;
 }
 .pageHeader h1 {
   margin: 0 0 4px 0;
@@ -1002,28 +1029,112 @@ table.contracts {
   color: var(--bad);
 }
 
-/* ============================ MOBILE ============================ */
+/* ============================ MOBILE — app-like ============================ */
 @media (max-width: 900px) {
   .shell,
   .shellWithDrawer {
     grid-template-columns: 1fr;
   }
+
+  /* ---- Sidebar als Slide-In-Drawer von links ---- */
   .sidebar {
-    display: none; /* in Schritt 6 wird der Mobile-Layout sauber gebaut */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    z-index: 70;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.10);
   }
+  .sidebar.sidebarMobileOpen {
+    transform: translateX(0);
+  }
+  .mobileSidebarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    z-index: 65;
+    animation: mobileOverlayFadeIn 0.18s ease;
+  }
+  @keyframes mobileOverlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Hamburger-Button erscheint */
+  .mobileMenuBtn {
+    display: inline-flex;
+  }
+
+  /* ---- Drawer auf Mobile aus — Single-Click → Modal direkt ---- */
   .drawer {
-    /* Auf Mobile übernimmt das bestehende Detail-Modal die Detail-Ansicht.
-       Drawer wird gar nicht erst geöffnet — siehe handleRowClick in der Page. */
     display: none;
   }
+
+  /* ---- Main-Content ---- */
   .main {
-    padding: 20px 16px 40px;
+    padding: 18px 14px 96px; /* unten Platz für Bulk-Bar */
   }
   .pageHeader {
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
   }
+  .pageHeader h1 {
+    font-size: 22px;
+  }
+  .headerActions {
+    flex-wrap: wrap;
+  }
+  /* Auf Mobile zeigen die Buttons nur noch das Icon — Platzersparnis */
+  .headerActions .btn {
+    min-width: 44px;
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+  .headerActions .btnLabel {
+    display: none;
+  }
+  /* Vorschau-Pill auf neuer Zeile mit kleiner Schrift */
+  .pageHeaderTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .devBanner {
+    margin-left: 0;
+  }
+
+  /* ---- Filter-Row ---- */
+  .filterRow {
+    gap: 8px;
+  }
+  .search {
+    max-width: none;
+    width: 100%;
+  }
+  .chipGroup {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .chipGroup::-webkit-scrollbar {
+    display: none;
+  }
+  .chip {
+    flex-shrink: 0;
+  }
+
+  /* ---- Tabelle ---- */
   .docName {
     max-width: 200px;
   }
@@ -1039,14 +1150,80 @@ table.contracts {
   .contracts tbody td:nth-child(6) {
     display: none;
   }
+  .contracts thead th,
+  .contracts td {
+    padding: 12px 10px;
+  }
   /* Aktion-Spalte schrumpft, Tap-Target bleibt erhalten */
   .iconBtn {
+    width: 38px;
+    height: 38px;
+  }
+
+  /* Bulk-Modus: Checkbox-Spalte stays visible */
+  .contracts.bulkActive thead th:first-child,
+  .contracts.bulkActive tbody td:first-child {
+    display: table-cell;
+  }
+  .checkboxBtn {
     width: 36px;
     height: 36px;
   }
+
+  /* Popover an Bildschirmrand anpassen */
   .popover {
-    /* Auf Mobile soll das Popover nicht über den Bildschirmrand laufen */
     right: 4px;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: calc(100vw - 32px);
+  }
+  /* Konfigurator-Popover auf Mobile: zentriert, breiter */
+  .columnPopover {
+    position: fixed;
+    left: 16px !important;
+    right: 16px;
+    top: 80px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  /* ---- Bulk-Bar mobile ---- */
+  .bulkBar {
+    left: 16px;
+    right: 16px;
+    transform: none;
+    bottom: 16px;
+    min-width: 0;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .bulkBarInfo {
+    border-right: none;
+    padding-right: 0;
+    width: 100%;
+  }
+  .bulkBarActions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .bulkBarActions .btn {
+    flex: 1 1 auto;
+    min-height: 38px;
+    justify-content: center;
+  }
+}
+
+/* Sehr kleine Geräte: noch kompakter */
+@media (max-width: 380px) {
+  .main {
+    padding: 14px 10px 96px;
+  }
+  .pageHeader h1 {
+    font-size: 20px;
+  }
+  .docName {
+    max-width: 160px;
   }
 }

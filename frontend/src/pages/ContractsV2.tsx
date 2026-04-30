@@ -32,6 +32,7 @@ import {
   CheckSquare,
   Square,
   Download,
+  Menu,
 } from "lucide-react";
 
 import NewContractDetailsModal from "../components/NewContractDetailsModal";
@@ -365,6 +366,9 @@ export default function ContractsV2() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const bulkFolderRef = useRef<HTMLDivElement | null>(null);
 
+  // Mobile-Sidebar (Slide-In)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   /* -------------------------------------------------------------------
      Initial-Fetch
   ------------------------------------------------------------------- */
@@ -401,6 +405,14 @@ export default function ContractsV2() {
   useEffect(() => {
     fetchFolders();
   }, [fetchFolders]);
+
+  /* -------------------------------------------------------------------
+     Mobile-Sidebar schließt sich automatisch nach Folder/Filter-Wechsel
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (mobileSidebarOpen) setMobileSidebarOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFolder, statusChip]);
 
   /* -------------------------------------------------------------------
      Click-Outside für Spalten-Popover
@@ -1020,7 +1032,13 @@ export default function ContractsV2() {
       <div className={styles.page}>
         <div className={`${styles.shell} ${showDrawer ? styles.shellWithDrawer : ""}`}>
           {/* ===== Sidebar — echte Folders + Schnellfilter ===== */}
-          <aside className={styles.sidebar}>
+          {mobileSidebarOpen && (
+            <div
+              className={styles.mobileSidebarOverlay}
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+          )}
+          <aside className={`${styles.sidebar} ${mobileSidebarOpen ? styles.sidebarMobileOpen : ""}`}>
             <div className={styles.sidebarTopSpacer} />
 
             <div className={styles.navLabel}>Verträge</div>
@@ -1140,15 +1158,25 @@ export default function ContractsV2() {
           <main className={styles.main}>
             {/* Page Header */}
             <div className={styles.pageHeader}>
-              <div>
-                <div className={styles.pageHeaderTitleRow}>
-                  <h1>Alle Verträge</h1>
-                  <span className={styles.devBanner}>
-                    <b>Vorschau</b> · neue Verwaltung, eigene Route
-                  </span>
-                </div>
-                <div className={styles.subtitle}>
-                  {loading ? "Lade Verträge…" : `${contracts.length} Verträge — neueste zuerst`}
+              <div className={styles.pageHeaderLeft}>
+                <button
+                  type="button"
+                  className={styles.mobileMenuBtn}
+                  onClick={() => setMobileSidebarOpen(true)}
+                  aria-label="Menü öffnen"
+                >
+                  <Menu size={20} />
+                </button>
+                <div>
+                  <div className={styles.pageHeaderTitleRow}>
+                    <h1>Alle Verträge</h1>
+                    <span className={styles.devBanner}>
+                      <b>Vorschau</b> · neue Verwaltung
+                    </span>
+                  </div>
+                  <div className={styles.subtitle}>
+                    {loading ? "Lade Verträge…" : `${contracts.length} Verträge — neueste zuerst`}
+                  </div>
                 </div>
               </div>
               <div className={styles.headerActions}>
@@ -1159,7 +1187,9 @@ export default function ContractsV2() {
                   title={bulkMode ? "Auswahlmodus beenden" : "Mehrere Verträge auswählen"}
                 >
                   {bulkMode ? <CheckSquare size={14} /> : <Square size={14} />}
-                  {bulkMode ? "Auswahl beenden" : "Auswählen"}
+                  <span className={styles.btnLabel}>
+                    {bulkMode ? "Auswahl beenden" : "Auswählen"}
+                  </span>
                 </button>
                 <button
                   className={`${styles.btn} ${styles.btnPrimary}`}
@@ -1168,7 +1198,7 @@ export default function ContractsV2() {
                   title="Upload kommt nach V2-Rollout in V2 selbst. Bis dahin nutzt du die produktive Seite."
                 >
                   <Upload size={14} />
-                  Vertrag hochladen
+                  <span className={styles.btnLabel}>Vertrag hochladen</span>
                 </button>
               </div>
             </div>
