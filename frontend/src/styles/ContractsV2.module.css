@@ -483,6 +483,142 @@ table.contracts {
   color: var(--accent);
 }
 
+/* ============================ COLUMN CONFIGURATOR ============================ */
+.configurableHead {
+  cursor: default;
+}
+.configurableHeadInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+.configBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.configurableHead:hover .configBtn {
+  color: var(--text-3);
+}
+.configBtn:hover {
+  color: var(--accent) !important;
+  background: var(--accent-soft);
+}
+.columnPopover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  min-width: 280px;
+  max-width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.06);
+  padding: 0;
+  z-index: 40;
+  /* Wir setzen das normalisiert — überschreibt das default popover-styling */
+  display: flex;
+  flex-direction: column;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--text);
+}
+.columnPopoverSection {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.columnPopoverLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.columnPopoverInput {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-soft);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.columnPopoverInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  background: var(--surface);
+}
+.columnPopoverActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.columnPopoverActions .btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.fieldOptionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0 -4px;
+}
+.fieldOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.fieldOption:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.fieldOption.fieldOptionActive {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+.fieldRadio {
+  width: 14px;
+  height: 14px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.fieldRadio span {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 50%;
+}
+.fieldOption.fieldOptionActive .fieldRadio svg {
+  color: var(--accent);
+}
+
 /* ============================ SCORE in Tabelle ============================ */
 .scoreCell {
   display: inline-flex;
@@ -891,14 +1027,16 @@ table.contracts {
   .docName {
     max-width: 200px;
   }
-  /* Auf Mobile bleibt nur Vertrag (1) + Status (4) + Aktionen (6) sichtbar.
-     Anbieter (2), Ablauf (3) und Score (5) werden ausgeblendet. */
+  /* Auf Mobile bleibt nur Vertrag (1) + Status (5) + Aktionen (7) sichtbar.
+     Slots A/B/C (2,3,4) und Score (6) werden ausgeblendet. */
   .contracts thead th:nth-child(2),
   .contracts thead th:nth-child(3),
-  .contracts thead th:nth-child(5),
+  .contracts thead th:nth-child(4),
+  .contracts thead th:nth-child(6),
   .contracts tbody td:nth-child(2),
   .contracts tbody td:nth-child(3),
-  .contracts tbody td:nth-child(5) {
+  .contracts tbody td:nth-child(4),
+  .contracts tbody td:nth-child(6) {
     display: none;
   }
   /* Aktion-Spalte schrumpft, Tap-Target bleibt erhalten */

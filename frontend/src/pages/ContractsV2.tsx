@@ -84,8 +84,50 @@ interface Contract {
 }
 
 type StatusTone = "ok" | "warn" | "bad" | "muted" | "accent";
-type SortKey = "name" | "provider" | "expiry" | "status" | "score" | "createdAt";
 type SortDir = "asc" | "desc";
+
+/* =====================================================================
+   Spalten-Konfigurator — 3 freie Slots zwischen Vertrag und Status.
+   Persistiert in user.uiPreferences.contractColumns (geteilt mit V1's
+   eckdatenLabels — Migration aus alten Labels in Slot A/B).
+   ===================================================================== */
+type ColumnFieldKey =
+  | "provider"        // Anbieter (provider.displayName)
+  | "contractType"    // Vertragstyp (contractType / provider.category)
+  | "contractNumber"  // Vertragsnummer
+  | "laufzeit"        // Laufzeit
+  | "kuendigung"      // Kündigung
+  | "expiry"          // Ablauf (Resttage + Datum, farblich)
+  | "startDate"       // Vertragsbeginn
+  | "payment"         // Zahlung (€/Frequenz)
+  | "createdAt"       // Hochgeladen
+  | "remaining"       // Restlaufzeit (Tage, computed)
+  | "folder";         // Ordner-Name
+
+interface ColumnConfig {
+  title: string;
+  field: ColumnFieldKey;
+}
+
+const FIELD_OPTIONS: { key: ColumnFieldKey; label: string; defaultTitle: string }[] = [
+  { key: "provider", label: "Anbieter / Vertragspartner", defaultTitle: "Anbieter" },
+  { key: "contractType", label: "Vertragstyp", defaultTitle: "Vertragstyp" },
+  { key: "contractNumber", label: "Vertragsnummer", defaultTitle: "Nummer" },
+  { key: "laufzeit", label: "Laufzeit", defaultTitle: "Laufzeit" },
+  { key: "kuendigung", label: "Kündigungsfrist", defaultTitle: "Kündigung" },
+  { key: "expiry", label: "Ablaufdatum + Resttage", defaultTitle: "Ablauf" },
+  { key: "remaining", label: "Restlaufzeit (Tage)", defaultTitle: "Rest" },
+  { key: "startDate", label: "Vertragsbeginn", defaultTitle: "Beginn" },
+  { key: "payment", label: "Zahlung (€ / Frequenz)", defaultTitle: "Zahlung" },
+  { key: "createdAt", label: "Hochgeladen am", defaultTitle: "Hochgeladen" },
+  { key: "folder", label: "Ordner-Zuordnung", defaultTitle: "Ordner" },
+];
+
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { title: "Anbieter", field: "provider" },
+  { title: "Vertragstyp", field: "contractType" },
+  { title: "Ablauf", field: "expiry" },
+];
 
 /* =====================================================================
    Pure Helpers — keine Side-Effects, kein State.
@@ -193,36 +235,56 @@ function hasActiveReminder(c: Contract): boolean {
   );
 }
 
-function compareContracts(a: Contract, b: Contract, key: SortKey, dir: SortDir): number {
-  const factor = dir === "asc" ? 1 : -1;
-  const cmp = (x: number | string, y: number | string): number => {
-    if (typeof x === "number" && typeof y === "number") return (x - y) * factor;
-    return String(x).localeCompare(String(y), "de") * factor;
-  };
-  switch (key) {
+/* Sortierwert pro Field — funktioniert generisch für jeden Slot. */
+function getFieldSortValue(c: Contract, field: ColumnFieldKey | "name" | "status" | "score"): number | string {
+  switch (field) {
     case "name":
-      return cmp(a.name || "", b.name || "");
-    case "provider":
-      return cmp(getProviderLabel(a), getProviderLabel(b));
-    case "expiry": {
-      const ax = a.expiryDate ? new Date(a.expiryDate).getTime() : Number.POSITIVE_INFINITY;
-      const bx = b.expiryDate ? new Date(b.expiryDate).getTime() : Number.POSITIVE_INFINITY;
-      return cmp(ax, bx);
-    }
+      return (c.name || "").toLowerCase();
     case "status":
-      return cmp(statusInfo(a).label, statusInfo(b).label);
-    case "score": {
-      const ax = typeof a.contractScore === "number" ? a.contractScore : -1;
-      const bx = typeof b.contractScore === "number" ? b.contractScore : -1;
-      return cmp(ax, bx);
+      return statusInfo(c).label;
+    case "score":
+      return typeof c.contractScore === "number" ? c.contractScore : -1;
+    case "provider":
+      return (c.provider?.displayName || "").toLowerCase();
+    case "contractType":
+      return (c.contractType || c.provider?.category || "").toLowerCase();
+    case "contractNumber":
+      return (c.contractNumber || "").toLowerCase();
+    case "laufzeit":
+      return (c.laufzeit || "").toLowerCase();
+    case "kuendigung":
+      return (c.kuendigung || "").toLowerCase();
+    case "expiry": {
+      return c.expiryDate ? new Date(c.expiryDate).getTime() : Number.POSITIVE_INFINITY;
     }
+    case "startDate": {
+      return c.startDate ? new Date(c.startDate).getTime() : Number.POSITIVE_INFINITY;
+    }
+    case "payment":
+      return typeof c.paymentAmount === "number" ? c.paymentAmount : -1;
+    case "remaining": {
+      if (!c.expiryDate) return Number.POSITIVE_INFINITY;
+      const d = new Date(c.expiryDate);
+      if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+      return Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    }
+    case "folder":
+      return c.folderId || "";
     case "createdAt":
     default: {
-      const ax = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bx = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return cmp(ax, bx);
+      return c.createdAt ? new Date(c.createdAt).getTime() : 0;
     }
   }
+}
+
+type SortKey = ColumnFieldKey | "name" | "status" | "score";
+
+function compareContracts(a: Contract, b: Contract, key: SortKey, dir: SortDir): number {
+  const factor = dir === "asc" ? 1 : -1;
+  const ax = getFieldSortValue(a, key);
+  const bx = getFieldSortValue(b, key);
+  if (typeof ax === "number" && typeof bx === "number") return (ax - bx) * factor;
+  return String(ax).localeCompare(String(bx), "de") * factor;
 }
 
 /* =====================================================================
@@ -275,6 +337,27 @@ export default function ContractsV2() {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Spalten-Konfigurator
+  const [columns, setColumns] = useState<ColumnConfig[]>(() => {
+    const stored = user?.uiPreferences?.contractColumns as ColumnConfig[] | undefined;
+    if (Array.isArray(stored) && stored.length === 3) {
+      // Validieren, dass jeder Eintrag ein gültiges Field hat
+      const valid = stored.every(
+        (c) => c && typeof c.title === "string" && FIELD_OPTIONS.some((o) => o.key === c.field),
+      );
+      if (valid) return stored;
+    }
+    // Migration: alte eckdatenLabels aus V1 als Spaltentitel übernehmen
+    const oldLabels = user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined;
+    return DEFAULT_COLUMNS.map((col, i) => {
+      const t = oldLabels?.[String(i)];
+      return t ? { ...col, title: t } : col;
+    });
+  });
+  const [columnPopoverFor, setColumnPopoverFor] = useState<number | null>(null);
+  const [columnDraftTitle, setColumnDraftTitle] = useState("");
+  const columnPopoverRef = useRef<HTMLDivElement | null>(null);
+
   // Bulk-Modus
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -318,6 +401,24 @@ export default function ContractsV2() {
   useEffect(() => {
     fetchFolders();
   }, [fetchFolders]);
+
+  /* -------------------------------------------------------------------
+     Click-Outside für Spalten-Popover
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (columnPopoverFor === null) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (columnPopoverRef.current && target && !columnPopoverRef.current.contains(target)) {
+        setColumnPopoverFor(null);
+      }
+    };
+    const t = setTimeout(() => document.addEventListener("mousedown", handler), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [columnPopoverFor]);
 
   /* -------------------------------------------------------------------
      Click-Outside für Bulk-Folder-Dropdown
@@ -437,6 +538,90 @@ export default function ContractsV2() {
     };
   }, [contracts]);
 
+  /* -------------------------------------------------------------------
+     Cell-Renderer pro Field — wird in jeder Slot-Spalte aufgerufen
+  ------------------------------------------------------------------- */
+  const renderFieldCell = (c: Contract, field: ColumnFieldKey): React.ReactNode => {
+    switch (field) {
+      case "provider":
+        return getProviderLabel(c);
+      case "contractType":
+        return getContractTypeLabel(c);
+      case "contractNumber":
+        return c.contractNumber || <span style={{ color: "var(--text-3)" }}>—</span>;
+      case "laufzeit":
+        return c.laufzeit || <span style={{ color: "var(--text-3)" }}>—</span>;
+      case "kuendigung":
+        return c.kuendigung || <span style={{ color: "var(--text-3)" }}>—</span>;
+      case "expiry": {
+        const exp = expiryInfo(c.expiryDate);
+        if (!exp) return <span style={{ color: "var(--text-3)" }}>unbefristet</span>;
+        return (
+          <>
+            <span
+              style={{
+                color:
+                  exp.tone === "bad"
+                    ? "var(--bad)"
+                    : exp.tone === "warn"
+                    ? "var(--warn)"
+                    : "var(--text-2)",
+                fontWeight: exp.tone ? 500 : 400,
+              }}
+            >
+              {exp.label}
+            </span>
+            <span style={{ color: "var(--text-3)", fontSize: 12 }}>
+              {" · "}
+              {formatDateShort(c.expiryDate)}
+            </span>
+          </>
+        );
+      }
+      case "remaining": {
+        if (!c.expiryDate) return <span style={{ color: "var(--text-3)" }}>unbefristet</span>;
+        const d = new Date(c.expiryDate);
+        if (Number.isNaN(d.getTime())) return <span style={{ color: "var(--text-3)" }}>—</span>;
+        const days = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (days < 0) return <span style={{ color: "var(--bad)" }}>abgelaufen</span>;
+        if (days <= 30) return <span style={{ color: "var(--warn)", fontWeight: 500 }}>{days} Tage</span>;
+        return <span>{days} Tage</span>;
+      }
+      case "startDate":
+        return c.startDate ? formatDateShort(c.startDate) : <span style={{ color: "var(--text-3)" }}>—</span>;
+      case "payment":
+        return c.paymentAmount ? (
+          <span>
+            {c.paymentAmount} €
+            {c.paymentFrequency ? (
+              <span style={{ color: "var(--text-3)", fontSize: 12 }}> / {c.paymentFrequency}</span>
+            ) : null}
+          </span>
+        ) : (
+          <span style={{ color: "var(--text-3)" }}>—</span>
+        );
+      case "createdAt":
+        return formatDateShort(c.createdAt);
+      case "folder": {
+        if (!c.folderId) return <span style={{ color: "var(--text-3)" }}>Ohne Ordner</span>;
+        const f = folders.find((x) => x._id === c.folderId);
+        if (!f) return <span style={{ color: "var(--text-3)" }}>—</span>;
+        return (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {f.icon ? (
+              <span style={{ fontSize: 14 }}>{f.icon}</span>
+            ) : (
+              <Folder size={12} style={{ color: f.color || "#fbbf24" }} />
+            )}
+            {f.name}
+          </span>
+        );
+      }
+      default:
+        return <span style={{ color: "var(--text-3)" }}>—</span>;
+    }
+  };
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = folderScoped.filter((c) => {
@@ -518,8 +703,86 @@ export default function ContractsV2() {
     } else {
       setSortKey(key);
       // Datum/Score: neueste/höchste zuerst sinnvoll, sonst A→Z
-      setSortDir(key === "createdAt" || key === "expiry" || key === "score" ? "desc" : "asc");
+      setSortDir(
+        key === "createdAt" ||
+          key === "expiry" ||
+          key === "startDate" ||
+          key === "score" ||
+          key === "payment"
+          ? "desc"
+          : "asc",
+      );
     }
+  };
+
+  /* ----------------------------- Spalten-Konfig ----------------------------- */
+  const persistColumns = async (next: ColumnConfig[]) => {
+    setColumns(next);
+    // Optimistisch im user-Objekt cachen, damit Page-Refresh ohne Re-Fetch klappt
+    if (user) {
+      user.uiPreferences = { ...user.uiPreferences, contractColumns: next };
+    }
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      await fetch("/api/auth/ui-preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token ?? ""}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ contractColumns: next }),
+      });
+    } catch (err) {
+      console.error("Spalten-Config konnte nicht gespeichert werden:", err);
+    }
+  };
+
+  const handleColumnHeaderClick = (slotIdx: number) => {
+    if (columnPopoverFor === slotIdx) {
+      setColumnPopoverFor(null);
+      return;
+    }
+    setColumnDraftTitle(columns[slotIdx]?.title || "");
+    setColumnPopoverFor(slotIdx);
+  };
+
+  const handleColumnFieldChange = (slotIdx: number, field: ColumnFieldKey) => {
+    const opt = FIELD_OPTIONS.find((o) => o.key === field);
+    const next = columns.map((c, i) =>
+      i === slotIdx
+        ? {
+            // Wenn Title gleich dem alten Default war, automatisch auf neuen Default umstellen
+            title:
+              c.title === FIELD_OPTIONS.find((o) => o.key === c.field)?.defaultTitle
+                ? opt?.defaultTitle || c.title
+                : c.title,
+            field,
+          }
+        : c,
+    );
+    void persistColumns(next);
+    // Wenn nach diesem Field gerade sortiert wurde, neu sortieren mit neuem Field
+    if (sortKey === columns[slotIdx]?.field) {
+      setSortKey(field);
+    }
+  };
+
+  const handleColumnTitleSave = (slotIdx: number) => {
+    const trimmed = columnDraftTitle.trim();
+    if (!trimmed) {
+      setColumnPopoverFor(null);
+      return;
+    }
+    const next = columns.map((c, i) => (i === slotIdx ? { ...c, title: trimmed } : c));
+    void persistColumns(next);
+    setColumnPopoverFor(null);
+  };
+
+  const handleColumnReset = (slotIdx: number) => {
+    const next = columns.map((c, i) => (i === slotIdx ? DEFAULT_COLUMNS[slotIdx] : c));
+    void persistColumns(next);
+    setColumnPopoverFor(null);
   };
 
   const handleAnalyze = async (c: Contract) => {
@@ -1022,36 +1285,105 @@ export default function ContractsV2() {
                               ))}
                           </span>
                         </th>
-                        <th
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleSort("provider")}
-                          title="Sortieren nach Anbieter"
-                        >
-                          <span className={styles.sortHead}>
-                            Anbieter
-                            {sortKey === "provider" &&
-                              (sortDir === "asc" ? (
-                                <ChevronUp size={12} />
-                              ) : (
-                                <ChevronDown size={12} />
-                              ))}
-                          </span>
-                        </th>
-                        <th
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleSort("expiry")}
-                          title="Sortieren nach Ablauf"
-                        >
-                          <span className={styles.sortHead}>
-                            Ablauf
-                            {sortKey === "expiry" &&
-                              (sortDir === "asc" ? (
-                                <ChevronUp size={12} />
-                              ) : (
-                                <ChevronDown size={12} />
-                              ))}
-                          </span>
-                        </th>
+                        {columns.map((col, idx) => {
+                          const isSorted = sortKey === col.field;
+                          const isPopoverOpen = columnPopoverFor === idx;
+                          return (
+                            <th
+                              key={`col-${idx}`}
+                              className={styles.configurableHead}
+                            >
+                              <div className={styles.configurableHeadInner}>
+                                <span
+                                  className={styles.sortHead}
+                                  onClick={() => handleSort(col.field)}
+                                  title={`Sortieren nach ${col.title}`}
+                                  style={{ cursor: "pointer" }}
+                                >
+                                  {col.title}
+                                  {isSorted &&
+                                    (sortDir === "asc" ? (
+                                      <ChevronUp size={12} />
+                                    ) : (
+                                      <ChevronDown size={12} />
+                                    ))}
+                                </span>
+                                <button
+                                  type="button"
+                                  className={styles.configBtn}
+                                  onClick={() => handleColumnHeaderClick(idx)}
+                                  title="Spalte konfigurieren"
+                                  aria-label="Spalte konfigurieren"
+                                >
+                                  <Edit3 size={11} />
+                                </button>
+                                {isPopoverOpen && (
+                                  <div
+                                    ref={columnPopoverRef}
+                                    className={`${styles.popover} ${styles.columnPopover}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className={styles.columnPopoverSection}>
+                                      <label className={styles.columnPopoverLabel}>
+                                        Spaltentitel
+                                      </label>
+                                      <input
+                                        type="text"
+                                        className={styles.columnPopoverInput}
+                                        value={columnDraftTitle}
+                                        onChange={(e) => setColumnDraftTitle(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") handleColumnTitleSave(idx);
+                                          if (e.key === "Escape") setColumnPopoverFor(null);
+                                        }}
+                                        autoFocus
+                                        placeholder="z. B. Anbieter"
+                                      />
+                                      <div className={styles.columnPopoverActions}>
+                                        <button
+                                          type="button"
+                                          className={styles.btn}
+                                          onClick={() => handleColumnReset(idx)}
+                                          title="Auf Standard zurücksetzen"
+                                        >
+                                          Standard
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className={`${styles.btn} ${styles.btnPrimary}`}
+                                          onClick={() => handleColumnTitleSave(idx)}
+                                        >
+                                          Speichern
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <div className={styles.popoverDivider} />
+                                    <div className={styles.columnPopoverSection}>
+                                      <label className={styles.columnPopoverLabel}>
+                                        Anzuzeigender Wert
+                                      </label>
+                                      <div className={styles.fieldOptionsList}>
+                                        {FIELD_OPTIONS.map((opt) => (
+                                          <button
+                                            key={opt.key}
+                                            type="button"
+                                            className={`${styles.fieldOption} ${col.field === opt.key ? styles.fieldOptionActive : ""}`}
+                                            onClick={() => handleColumnFieldChange(idx, opt.key)}
+                                          >
+                                            <span className={styles.fieldRadio}>
+                                              {col.field === opt.key ? <CheckCircle2 size={13} /> : <span />}
+                                            </span>
+                                            <span>{opt.label}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </th>
+                          );
+                        })}
                         <th
                           style={{ width: "120px", cursor: "pointer" }}
                           onClick={() => handleSort("status")}
@@ -1087,7 +1419,6 @@ export default function ContractsV2() {
                     </thead>
                     <tbody>
                       {visible.map((c) => {
-                        const exp = expiryInfo(c.expiryDate);
                         const st = statusInfo(c);
                         const isSel = drawerContract?._id === c._id;
                         const isPopoverOpen = openPopoverFor === c._id;
@@ -1134,32 +1465,11 @@ export default function ContractsV2() {
                                 </div>
                               </div>
                             </td>
-                            <td>{getProviderLabel(c)}</td>
-                            <td>
-                              {exp ? (
-                                <>
-                                  <span
-                                    style={{
-                                      color:
-                                        exp.tone === "bad"
-                                          ? "var(--bad)"
-                                          : exp.tone === "warn"
-                                          ? "var(--warn)"
-                                          : "var(--text-2)",
-                                      fontWeight: exp.tone ? 500 : 400,
-                                    }}
-                                  >
-                                    {exp.label}
-                                  </span>
-                                  <span style={{ color: "var(--text-3)", fontSize: 12 }}>
-                                    {" · "}
-                                    {formatDateShort(c.expiryDate)}
-                                  </span>
-                                </>
-                              ) : (
-                                <span style={{ color: "var(--text-3)" }}>unbefristet</span>
-                              )}
-                            </td>
+                            {columns.map((col, ci) => (
+                              <td key={`cell-${c._id}-${ci}`}>
+                                {renderFieldCell(c, col.field)}
+                              </td>
+                            ))}
                             <td>
                               <span className={`${styles.pill} ${pillClass(st.tone)}`}>
                                 {st.tone === "ok" && <span className={styles.pulse} />}
