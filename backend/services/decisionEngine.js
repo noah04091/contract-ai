@@ -3,7 +3,22 @@
 // Gibt Struktur, Regeln und Intention für die V2-Pipeline zurück (KEINE fertigen Klauseln!)
 
 const playbooks = {
-  nda: require("../playbooks/nda")
+  arbeitsvertrag: require("../playbooks/arbeitsvertrag"),
+  aufhebungsvertrag: require("../playbooks/aufhebungsvertrag"),
+  berater: require("../playbooks/berater"),
+  darlehensvertrag: require("../playbooks/darlehensvertrag"),
+  freelancer: require("../playbooks/freelancer"),
+  gesellschaftsvertrag: require("../playbooks/gesellschaftsvertrag"),
+  individuell: require("../playbooks/individuell"),
+  kaufvertrag: require("../playbooks/kaufvertrag"),
+  kooperation: require("../playbooks/kooperation"),
+  lizenzvertrag: require("../playbooks/lizenzvertrag"),
+  mietvertrag: require("../playbooks/mietvertrag"),
+  nda: require("../playbooks/nda"),
+  pachtvertrag: require("../playbooks/pachtvertrag"),
+  softwareEndkunde: require("../playbooks/softwareEndkunde"),
+  softwareVertrieb: require("../playbooks/softwareVertrieb"),
+  werkvertrag: require("../playbooks/werkvertrag")
 };
 
 /**
