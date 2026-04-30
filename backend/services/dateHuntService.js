@@ -57,24 +57,43 @@ REGELN — STRIKT:
 1. NIEMALS Datum erfinden. Wenn du nichts im Text belegen kannst → das Datum WEGLASSEN.
 2. evidence ist PFLICHT. Wenn du den Original-Satz nicht WÖRTLICH kopieren kannst → das Datum WEGLASSEN.
 
-3. EVIDENCE-REGEL — KRITISCH (90 % aller Fehler entstehen hier):
-   evidence muss ein WÖRTLICHES Copy-Paste aus dem Vertragstext sein.
+3. EVIDENCE-REGEL — KRITISCH (95 % aller Fehler entstehen hier):
+   evidence muss ein ZUSAMMENHÄNGENDES Copy-Paste aus dem Vertragstext sein.
    Behalte Tippfehler, Umlaute (ae/oe/ue/ß), Sonderzeichen, Kommas — alles 1:1.
-   NIEMALS umformulieren, zusammenfassen oder eigene Worte verwenden.
 
-   ✅ RICHTIG (1:1 aus dem Vertrag kopiert):
-      Vertrag enthält:  "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich."
-      evidence:         "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich"
+   DREI ABSOLUTE VERBOTE:
+   (a) NIEMALS Wörter aus der MITTE eines Satzes auslassen.
+       Wenn ein Satz lautet "A B C D E F", darfst du NICHT "A B C F" liefern —
+       du darfst NUR "A B C", "A B C D", "A B C D E", oder "A B C D E F" liefern.
+       Niemals Anfang + Ende zusammenkleben und die Mitte überspringen.
+   (b) NIEMALS Synonyme oder eigene Formulierungen.
+   (c) NIEMALS Umlaute oder Schreibweisen ändern (auch wenn du sie "schöner" findest).
 
-   ❌ FALSCH (paraphrasiert, eigene Worte):
-      Vertrag enthält:  "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich."
-      evidence:         "Mietanpassung 15 Monate nach Mietbeginn"           ← UMFORMULIERT
-      evidence:         "frühestens 15 Monate nach Mietbeginn"              ← Umlaut geändert
-      evidence:         "Frist von 15 Monaten ab Mietvertragsbeginn"        ← Synonym
+   KONKRETES BEISPIEL — der Vertragstext lautet wörtlich:
+   "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn oder nach der
+   letzten Mieterhoehung moeglich."
 
-   Faustregel: Wenn deine evidence Wörter enthält, die NICHT im Vertrag stehen,
-   ist sie falsch. Lieber das Datum komplett weglassen als eine paraphrasierte
-   Evidence liefern — der Backend-Validator wird sie sowieso verwerfen.
+   ✅ RICHTIG (kompletter Satz, 1:1):
+      "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn oder nach der letzten Mieterhoehung moeglich"
+
+   ✅ AUCH RICHTIG (nur Anfang, ohne Auslassungen):
+      "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn"
+
+   ❌ FALSCH — MITTE AUSGELASSEN (das ist eine Halluzination!):
+      "Eine Mietanpassung ist fruehestens 15 Monate nach Mietbeginn moeglich"
+                                                                    ↑
+       "oder nach der letzten Mieterhoehung" wurde übersprungen —
+       der Satz "...Mietbeginn moeglich" steht NICHT so im Vertrag!
+
+   ❌ FALSCH — paraphrasiert:
+      "Mietanpassung 15 Monate nach Mietbeginn"               ← umformuliert
+      "frühestens 15 Monate nach Mietbeginn"                  ← Umlaut geändert
+      "Frist von 15 Monaten ab Mietvertragsbeginn"            ← Synonym
+
+   Faustregel: Wenn du deine evidence neben den Vertrag legst und mit dem Finger
+   Wort für Wort mitliest, MUSS jedes Wort identisch sein. Sobald du auch nur
+   ein Wort überspringen, ändern oder ersetzen würdest → das Datum WEGLASSEN.
+   Der Backend-Validator akzeptiert keine Verkürzungen mit Lücken in der Mitte.
 
 4. Bei Berechnungen: zeige in description die Rechnung (z.B. "Vertragsbeginn 01.04.2026 + 6 Monate Probezeit = 01.10.2026"). Die Rechnung gehört in description, NICHT in evidence — evidence bleibt das wörtliche Zitat.
 5. Wörter-Datums ("dreißigster Juni") ins ISO-Format konvertieren (2026-06-30).
