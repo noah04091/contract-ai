@@ -1374,9 +1374,14 @@ Wenn es ein sehr kurzer Vertrag ist → fokussiere auf die wenigen vorhandenen K
  * KEINE Checklisten, KEINE Templates - nur individuelle, vertragsspezifische Analyse
  * Flexible Tiefe, Qualität > Quantität
  */
-function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
-  // Optimize text for GPT-4 (but allow more tokens for complex analysis)
-  const optimizedText = optimizeTextForGPT4(text, 3000, requestId);
+function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, maxTokens) {
+  // Token-Budget für Vertragstext kommt aus dem User-Plan (analyze.js übergibt das
+  // plan-basierte Limit). Default 40k = BUSINESS_MAX_INPUT_TOKENS, damit Aufrufer,
+  // die das Plan-Limit nicht kennen (z.B. die Edge-Route in contracts.js) trotzdem
+  // sinnvolles Verhalten zeigen — nicht mehr 3000-hardcoded.
+  // gpt-4-turbo hat 128k Kontext → 60k Vertrag + ~3k Prompt + ~4k Output = passt locker.
+  const tokenBudget = typeof maxTokens === 'number' && maxTokens > 0 ? maxTokens : 40000;
+  const optimizedText = optimizeTextForGPT4(text, tokenBudget, requestId);
 
   // Get contract-type-specific AWARENESS (nicht Checklisten!)
   const awareness = getContractTypeAwareness(documentType);
@@ -3060,11 +3065,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // contractType-Detection nichts liefert, nutzen wir die Dokumentenklasse wie zuvor —
     // das landet beim "other"-Awareness, identisch zum alten Verhalten.
     const promptContractType = extractedContractType || validationResult.documentType;
+    // 📏 Plan-basiertes Token-Limit übergeben statt hardcoded 3000 — sonst sieht
+    // die Hauptanalyse bei langen Verträgen nur einen Bruchteil des Inhalts.
+    // maxInputTokens stammt aus getAnalysisLimits(plan) — Free 20k / Business 40k / Enterprise 60k.
     const analysisPrompt = generateDeepLawyerLevelPrompt(
       fullTextContent,
       promptContractType,
       validationResult.strategy,
-      requestId
+      requestId,
+      maxInputTokens
     );
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
