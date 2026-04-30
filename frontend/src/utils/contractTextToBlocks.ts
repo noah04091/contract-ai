@@ -37,6 +37,13 @@ function pickFirst(formData: Record<string, unknown>, candidates: string[]): str
   return '';
 }
 
+// Entfernt Markdown-Bold-Marker (**text**) — GPT formatiert §-Header so.
+// Andere Markdown-Marker (Italic, Underscore) werden NICHT angefasst,
+// um keine Variablennamen oder Bullet-Lists zu beschädigen.
+function stripMarkdownBold(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, '$1');
+}
+
 function extractTitle(contractText: string, fallback: string): string {
   const firstNonEmptyLine = contractText.split('\n').map(l => l.trim()).find(l => l.length > 0);
   if (!firstNonEmptyLine) return fallback;
@@ -149,7 +156,7 @@ export function contractTextToBlocks(
   formData: Record<string, unknown>
 ): BuilderBlockShape[] {
   const blocks: BuilderBlockShape[] = [];
-  const safeText = (contractText || '').trim();
+  const safeText = stripMarkdownBold((contractText || '').trim());
   const title = extractTitle(safeText, contractTypeName || 'Vertrag');
 
   blocks.push(buildHeaderBlock(title, contractType));
