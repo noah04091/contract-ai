@@ -1,0 +1,1078 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mockup — Vertragsverwaltung Redesign · Contract AI</title>
+  <style>
+    /* ===========================================================
+       Standalone Mockup — kein Einfluss auf die Live-App.
+       Inspiriert von Legartis-Aufgeräumtheit + Linear/Notion-Detail.
+       =========================================================== */
+
+    :root {
+      --bg:           #f7f8fa;
+      --surface:      #ffffff;
+      --surface-soft: #fbfcfd;
+      --border:       #e6e8ec;
+      --border-soft:  #eef0f3;
+      --hover:        #f4f6f9;
+
+      --text:         #0f172a;
+      --text-2:       #475569;
+      --text-3:       #94a3b8;
+
+      --accent:       #4f46e5;     /* Indigo 600 */
+      --accent-2:     #6366f1;
+      --accent-soft:  #eef2ff;
+
+      --ok:           #047857;
+      --ok-soft:      #ecfdf5;
+      --warn:         #b45309;
+      --warn-soft:    #fffbeb;
+      --bad:          #b91c1c;
+      --bad-soft:     #fef2f2;
+      --muted:        #475569;
+      --muted-soft:   #f1f5f9;
+
+      --shadow-sm: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.04);
+      --shadow-md: 0 4px 12px rgba(15,23,42,.06), 0 8px 28px rgba(15,23,42,.06);
+      --shadow-lg: 0 12px 32px rgba(15,23,42,.10), 0 24px 48px rgba(15,23,42,.08);
+
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+                   "Inter", "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button { font-family: inherit; }
+
+    /* ============================ APP SHELL ============================ */
+    .app {
+      display: grid;
+      grid-template-columns: 248px 1fr 420px;
+      min-height: 100vh;
+    }
+
+    /* ============================ SIDEBAR ============================ */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: sticky; top: 0; height: 100vh;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px 18px 10px;
+    }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center; color: #fff;
+      font-weight: 700; font-size: 13px; letter-spacing: .5px;
+    }
+    .brand-name { font-weight: 600; font-size: 14px; letter-spacing: .2px; }
+
+    .nav-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-3); letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 14px 10px 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px;
+      border-radius: var(--r-sm);
+      color: var(--text-2);
+      font-size: 13.5px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      transition: background .12s ease, color .12s ease;
+    }
+    .nav-item:hover { background: var(--hover); color: var(--text); }
+    .nav-item.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .nav-item.active svg { color: var(--accent); }
+    .nav-item svg { color: var(--text-3); flex-shrink: 0; }
+    .nav-item .count {
+      margin-left: auto;
+      font-size: 11.5px;
+      color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .nav-item.active .count { color: var(--accent); }
+
+    .folder-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px;
+      border-radius: var(--r-sm);
+      color: var(--text-2);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .folder-row:hover { background: var(--hover); color: var(--text); }
+    .folder-dot {
+      width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0;
+    }
+    .folder-row .count {
+      margin-left: auto; font-size: 11.5px; color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 12px 10px;
+      border-top: 1px solid var(--border-soft);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #fff; display: grid; place-items: center;
+      font-weight: 600; font-size: 12px;
+    }
+    .who { line-height: 1.2; }
+    .who .name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .who .plan { font-size: 11px; color: var(--text-3); }
+
+    /* ============================ MAIN ============================ */
+    .main {
+      padding: 28px 32px 56px;
+      min-width: 0;
+    }
+
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--border-soft);
+      margin-bottom: 22px;
+    }
+    .page-header h1 {
+      margin: 0 0 4px 0;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -.01em;
+    }
+    .page-header .subtitle {
+      color: var(--text-2); font-size: 13.5px;
+    }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: var(--r-sm); border: 1px solid var(--border);
+      background: var(--surface); color: var(--text-2);
+      font-size: 13px; font-weight: 500;
+      padding: 8px 12px; cursor: pointer;
+      transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .btn:hover { background: var(--hover); color: var(--text); }
+    .btn-primary {
+      background: var(--text); color: #fff; border-color: var(--text);
+    }
+    .btn-primary:hover { background: #1e293b; border-color: #1e293b; color: #fff; }
+    .btn-icon {
+      display: grid; place-items: center;
+      width: 34px; height: 34px; padding: 0;
+    }
+
+    /* Filter row */
+    .filter-row {
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .search {
+      position: relative; flex: 1; min-width: 240px; max-width: 360px;
+    }
+    .search input {
+      width: 100%;
+      padding: 9px 12px 9px 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      font-size: 13.5px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .search input::placeholder { color: var(--text-3); }
+    .search input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+    }
+    .search svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--text-3);
+    }
+
+    .chip-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      font-size: 12.5px; font-weight: 500;
+      cursor: pointer;
+      transition: background .12s ease, border-color .12s ease, color .12s ease;
+    }
+    .chip:hover { background: var(--hover); color: var(--text); }
+    .chip.active {
+      background: var(--accent-soft);
+      border-color: rgba(79,70,229,.20);
+      color: var(--accent);
+    }
+    .chip .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-3);
+    }
+    .chip.active .dot { background: var(--accent); }
+
+    .filter-spacer { flex: 1; }
+
+    /* ============================ TABLE ============================ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    table.contracts {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .contracts thead th {
+      text-align: left;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 12px 16px;
+      background: var(--surface-soft);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .contracts tbody tr {
+      border-bottom: 1px solid var(--border-soft);
+      cursor: pointer;
+      transition: background .1s ease;
+    }
+    .contracts tbody tr:last-child { border-bottom: none; }
+    .contracts tbody tr:hover { background: var(--hover); }
+    .contracts tbody tr.selected {
+      background: var(--accent-soft);
+    }
+    .contracts tbody tr.selected td:first-child {
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .contracts td { padding: 14px 16px; vertical-align: middle; }
+
+    .doc-cell {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .doc-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--muted-soft);
+      color: var(--muted);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .doc-meta { line-height: 1.35; min-width: 0; }
+    .doc-name {
+      font-weight: 500; color: var(--text);
+      max-width: 360px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .doc-sub {
+      font-size: 12px; color: var(--text-3);
+      display: flex; gap: 6px; align-items: center;
+    }
+    .doc-sub .sep { color: var(--border); }
+
+    /* Status pill — exactly ONE per row */
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .pill .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 0 currentColor;
+    }
+    .pill.ok    { color: var(--ok);    background: var(--ok-soft); }
+    .pill.warn  { color: var(--warn);  background: var(--warn-soft); }
+    .pill.bad   { color: var(--bad);   background: var(--bad-soft); }
+    .pill.muted { color: var(--muted); background: var(--muted-soft); }
+    .pill.accent{ color: var(--accent);background: var(--accent-soft); }
+
+    /* Score chip — sehr kompakt */
+    .score {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-variant-numeric: tabular-nums;
+      font-weight: 500; color: var(--text);
+    }
+    .score .bar {
+      width: 56px; height: 5px; border-radius: 3px;
+      background: var(--border-soft);
+      position: relative; overflow: hidden;
+    }
+    .score .bar > i {
+      position: absolute; left:0; top:0; bottom:0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 3px;
+    }
+
+    .row-actions {
+      display: flex; align-items: center; gap: 4px;
+      justify-content: flex-end;
+    }
+    .icon-btn {
+      width: 30px; height: 30px;
+      display: grid; place-items: center;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-3);
+      cursor: pointer;
+      transition: background .12s ease, color .12s ease, border-color .12s ease;
+    }
+    .icon-btn:hover {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .table-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 16px;
+      font-size: 12.5px; color: var(--text-3);
+      border-top: 1px solid var(--border-soft);
+      background: var(--surface-soft);
+    }
+
+    /* ============================ DETAIL PANEL ============================ */
+    .detail {
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .detail-head {
+      padding: 22px 24px 18px;
+      border-bottom: 1px solid var(--border-soft);
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px;
+    }
+    .detail-head .label {
+      font-size: 11px; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .08em; font-weight: 600;
+    }
+    .detail-head h2 {
+      margin: 4px 0 0; font-size: 16px; font-weight: 600; line-height: 1.3;
+      color: var(--text);
+    }
+    .detail-head .pill { margin-top: 8px; }
+
+    .detail-section {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .detail-section:last-of-type { border-bottom: none; }
+    .detail-section h3 {
+      margin: 0 0 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--text-3);
+      font-weight: 600;
+    }
+
+    /* PDF thumbnail */
+    .pdf-thumb {
+      aspect-ratio: 4 / 5;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(180deg, #fff 0%, #fff 8px, transparent 8px),
+        repeating-linear-gradient(0deg,
+          rgba(15,23,42,.06) 0 1px,
+          transparent 1px 14px),
+        var(--surface-soft);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      cursor: zoom-in;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .pdf-thumb:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .pdf-thumb::before {
+      content: "";
+      position: absolute; inset: 14px 14px 30% 14px;
+      background:
+        linear-gradient(180deg,
+          rgba(15,23,42,.10) 0, rgba(15,23,42,.10) 6px,
+          transparent 6px, transparent 18px,
+          rgba(15,23,42,.06) 18px, rgba(15,23,42,.06) 22px,
+          transparent 22px, transparent 32px,
+          rgba(15,23,42,.06) 32px, rgba(15,23,42,.06) 36px,
+          transparent 36px);
+      border-radius: 4px;
+    }
+    .pdf-thumb::after {
+      content: "Seite 1 / 4";
+      position: absolute; right: 10px; bottom: 10px;
+      font-size: 11px; color: var(--text-3);
+      background: rgba(255,255,255,.8); padding: 3px 7px; border-radius: 4px;
+    }
+
+    /* Score panel */
+    .score-panel {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .score-ring {
+      --val: 78;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background:
+        conic-gradient(var(--accent) calc(var(--val) * 1%), var(--border-soft) 0);
+      display: grid; place-items: center;
+      flex-shrink: 0;
+    }
+    .score-ring > div {
+      width: 56px; height: 56px;
+      background: var(--surface); border-radius: 50%;
+      display: grid; place-items: center;
+      font-weight: 600; font-size: 18px; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .score-detail .label {
+      font-size: 12px; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .score-detail .value {
+      font-size: 14px; font-weight: 500; color: var(--text);
+    }
+    .score-detail .meta {
+      margin-top: 6px;
+      display: flex; gap: 12px; flex-wrap: wrap;
+      color: var(--text-2); font-size: 12.5px;
+    }
+    .score-detail .meta span { display: inline-flex; gap: 5px; align-items: center; }
+
+    /* Key/value pairs */
+    .kv {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 8px 12px;
+      font-size: 13px;
+    }
+    .kv dt { color: var(--text-3); }
+    .kv dd { margin: 0; color: var(--text); font-weight: 500; }
+    .kv dd.warn-text { color: var(--warn); }
+
+    /* Risk list */
+    .risks { display: flex; flex-direction: column; gap: 8px; }
+    .risk {
+      display: flex; gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-sm);
+      background: var(--surface-soft);
+      font-size: 12.5px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .risk .lvl {
+      width: 4px; flex-shrink: 0; border-radius: 4px; background: var(--bad);
+    }
+    .risk .lvl.med { background: var(--warn); }
+    .risk .lvl.low { background: var(--accent-2); }
+
+    /* Detail action bar */
+    .detail-actions {
+      padding: 16px 24px 22px;
+      display: flex; flex-direction: column; gap: 8px;
+      border-top: 1px solid var(--border-soft);
+      background: var(--surface-soft);
+    }
+    .detail-actions .btn-primary {
+      padding: 10px 14px; justify-content: center; font-weight: 500;
+    }
+    .detail-actions .secondary-row {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    }
+    .detail-actions .btn { justify-content: center; padding: 9px 8px; font-size: 12.5px; }
+
+    /* ============================ NOTE ============================ */
+    .mockup-note {
+      position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%);
+      background: var(--text); color: #fff;
+      padding: 8px 14px; border-radius: 999px;
+      font-size: 12px; letter-spacing: .02em;
+      box-shadow: var(--shadow-md);
+      z-index: 50;
+    }
+    .mockup-note b { color: #a5b4fc; font-weight: 600; margin-right: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- =================== ICON SET (inline, reused via <use>) =================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+      <path d="M14 3v5h5"/>
+    </symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <path d="M17 8l-5-5-5 5"/>
+      <path d="M12 3v12"/>
+    </symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 6h18v12H3z"/>
+      <path d="M3 7l9 6 9-6"/>
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7"/>
+      <path d="m20 20-3.5-3.5"/>
+    </symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 8a6 6 0 1 1 12 0c0 6 3 6 3 8H3c0-2 3-2 3-8z"/>
+      <path d="M10 21a2 2 0 0 0 4 0"/>
+    </symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 9v4"/><path d="M12 17h.01"/>
+      <path d="M10.3 3.86 1.82 18a2 2 0 0 0 1.72 3h16.92a2 2 0 0 0 1.72-3L13.7 3.86a2 2 0 0 0-3.4 0z"/>
+    </symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <path d="m9 11 3 3L22 4"/>
+    </symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 7v5l3 2"/>
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"/>
+      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+    </symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="5" cy="12" r="1.4"/>
+      <circle cx="12" cy="12" r="1.4"/>
+      <circle cx="19" cy="12" r="1.4"/>
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <path d="M7 10l5 5 5-5"/>
+      <path d="M12 15V3"/>
+    </symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>
+    </symbol>
+    <symbol id="i-radar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M12 12 19 5"/>
+      <path d="M3 12a9 9 0 0 0 9 9"/>
+    </symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 6 6 18M6 6l12 12"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">CA</div>
+      <div class="brand-name">Contract&nbsp;AI</div>
+    </div>
+
+    <div class="nav-label">Verträge</div>
+    <button class="nav-item active">
+      <svg width="16" height="16"><use href="#i-file"/></svg>
+      Alle Verträge <span class="count">85</span>
+    </button>
+    <button class="nav-item">
+      <svg width="16" height="16"><use href="#i-upload"/></svg>
+      Hochladen
+    </button>
+    <button class="nav-item">
+      <svg width="16" height="16"><use href="#i-mail"/></svg>
+      Email-Inbox
+    </button>
+
+    <div class="nav-label">Schnellfilter</div>
+    <button class="nav-item">
+      <svg width="16" height="16"><use href="#i-alert"/></svg>
+      Bald ablaufend <span class="count">7</span>
+    </button>
+    <button class="nav-item">
+      <svg width="16" height="16"><use href="#i-check-circle"/></svg>
+      Aktive Verträge <span class="count">40</span>
+    </button>
+    <button class="nav-item">
+      <svg width="16" height="16"><use href="#i-clock"/></svg>
+      Nicht analysiert <span class="count">12</span>
+    </button>
+
+    <div class="nav-label">Ordner</div>
+    <button class="folder-row">
+      <span class="folder-dot" style="background:#94a3b8"></span>
+      Ohne Ordner <span class="count">64</span>
+    </button>
+    <button class="folder-row">
+      <span class="folder-dot" style="background:#0ea5e9"></span>
+      Rechnungen <span class="count">10</span>
+    </button>
+    <button class="folder-row">
+      <span class="folder-dot" style="background:#f59e0b"></span>
+      Verträge <span class="count">11</span>
+    </button>
+    <button class="folder-row">
+      <span class="folder-dot" style="background:#10b981"></span>
+      Versicherungen <span class="count">5</span>
+    </button>
+    <button class="folder-row" style="color: var(--text-3)">
+      <svg width="14" height="14"><use href="#i-plus"/></svg>
+      Neuer Ordner
+    </button>
+
+    <div class="sidebar-footer">
+      <div class="avatar">NL</div>
+      <div class="who">
+        <div class="name">Noah Liebold</div>
+        <div class="plan">Enterprise</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <h1>Alle Verträge</h1>
+        <div class="subtitle">85 Verträge — zuletzt aktualisiert vor 2 Minuten</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn">
+          <svg width="14" height="14"><use href="#i-download"/></svg>
+          Export
+        </button>
+        <button class="btn-primary btn">
+          <svg width="14" height="14"><use href="#i-upload"/></svg>
+          Vertrag hochladen
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter row -->
+    <div class="filter-row">
+      <div class="search">
+        <svg width="14" height="14"><use href="#i-search"/></svg>
+        <input placeholder="Verträge durchsuchen — Name, Anbieter, Vertragsnummer …" />
+      </div>
+
+      <div class="chip-group">
+        <button class="chip active"><span class="dot"></span>Alle</button>
+        <button class="chip">Aktiv</button>
+        <button class="chip">Bald fällig</button>
+        <button class="chip">Gekündigt</button>
+        <button class="chip">Entwurf</button>
+      </div>
+
+      <div class="filter-spacer"></div>
+
+      <button class="btn">Sortieren: Neueste</button>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <table class="contracts">
+        <thead>
+          <tr>
+            <th style="width:40%">Vertrag</th>
+            <th>Anbieter</th>
+            <th>Ablauf</th>
+            <th>Status</th>
+            <th style="width:120px">Score</th>
+            <th style="width:90px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- selected row -->
+          <tr class="selected">
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Mustervertrag Contract AI Test</div>
+                  <div class="doc-sub">SaaS · Hochgeladen 23.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Contract AI GmbH</td>
+            <td>
+              <span style="color:var(--warn);font-weight:500">3 Monate</span>
+              <span style="color:var(--text-3);font-size:12px"> · 31.07.</span>
+            </td>
+            <td><span class="pill ok"><span class="pulse"></span>Aktiv</span></td>
+            <td>
+              <div class="score">
+                <div class="bar"><i style="width:78%"></i></div>
+                <span>78</span>
+              </div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" title="PDF öffnen"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn" title="Mehr"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Darlehensvertrag AutoEuropa Bank</div>
+                  <div class="doc-sub">Finanzierung · Hochgeladen 26.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>AutoEuropa Bank</td>
+            <td>
+              <span style="color:var(--text-2)">48 Monate</span>
+              <span style="color:var(--text-3);font-size:12px"> · 04.02.2030</span>
+            </td>
+            <td><span class="pill warn">Nicht analysiert</span></td>
+            <td><span style="color:var(--text-3);font-size:12px">—</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" title="PDF öffnen"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn" title="Mehr"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">SaaS &amp; Software Reseller Vertrag — 20.04.2026</div>
+                  <div class="doc-sub">SaaS · Hochgeladen 20.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Lemon GmbH</td>
+            <td>
+              <span style="color:var(--text-2)">24 Monate</span>
+              <span style="color:var(--text-3);font-size:12px"> · 20.04.2028</span>
+            </td>
+            <td><span class="pill ok"><span class="pulse"></span>Aktiv</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:62%"></i></div><span>62</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">NDA — Noah &amp; Paul</div>
+                  <div class="doc-sub">Geheimhaltung · Generiert 22.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>—</td>
+            <td><span style="color:var(--text-3)">unbefristet</span></td>
+            <td><span class="pill accent">Generiert</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:88%"></i></div><span>88</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Haftpflichtversicherung Allianz</div>
+                  <div class="doc-sub">Versicherung · Hochgeladen 16.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Allianz</td>
+            <td>
+              <span style="color:var(--bad);font-weight:500">28 Tage</span>
+              <span style="color:var(--text-3);font-size:12px"> · 27.05.</span>
+            </td>
+            <td><span class="pill bad"><span class="pulse"></span>Bald fällig</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:54%"></i></div><span>54</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Mietvertrag Büro Köln-Ehrenfeld</div>
+                  <div class="doc-sub">Gewerbemiete · Hochgeladen 09.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Hahn &amp; Partner Immobilien</td>
+            <td>
+              <span style="color:var(--text-2)">5 Jahre</span>
+              <span style="color:var(--text-3);font-size:12px"> · 31.03.2031</span>
+            </td>
+            <td><span class="pill ok"><span class="pulse"></span>Aktiv</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:71%"></i></div><span>71</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Mobilfunk Vodafone Red Business</div>
+                  <div class="doc-sub">Telekommunikation · Hochgeladen 03.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Vodafone</td>
+            <td>
+              <span style="color:var(--text-2)">24 Monate</span>
+              <span style="color:var(--text-3);font-size:12px"> · 02.04.2028</span>
+            </td>
+            <td><span class="pill muted">Gekündigt</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:42%"></i></div><span>42</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <div class="doc-cell">
+                <div class="doc-icon"><svg width="16" height="16"><use href="#i-file"/></svg></div>
+                <div class="doc-meta">
+                  <div class="doc-name">Datenschutz-Auftragsverarbeitung Santander</div>
+                  <div class="doc-sub">DSGVO · Hochgeladen 22.04.2026</div>
+                </div>
+              </div>
+            </td>
+            <td>Santander</td>
+            <td><span style="color:var(--text-3)">unbefristet</span></td>
+            <td><span class="pill ok"><span class="pulse"></span>Aktiv</span></td>
+            <td>
+              <div class="score"><div class="bar"><i style="width:81%"></i></div><span>81</span></div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-eye"/></svg></button>
+                <button class="icon-btn"><svg width="15" height="15"><use href="#i-more"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="table-footer">
+        <span>8 von 85 Verträgen</span>
+        <span>Klicke eine Zeile, um Details rechts zu sehen — Doppelklick öffnet die Vollansicht</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== DETAIL ===================== -->
+  <aside class="detail">
+
+    <div class="detail-head">
+      <div>
+        <div class="label">Vertragsdetails</div>
+        <h2>Mustervertrag Contract AI Test</h2>
+        <span class="pill ok" style="margin-top:8px"><span class="pulse"></span>Aktiv · läuft 31.07.2026 ab</span>
+      </div>
+      <button class="icon-btn" title="Schließen"><svg width="15" height="15"><use href="#i-x"/></svg></button>
+    </div>
+
+    <!-- PDF preview -->
+    <div class="detail-section">
+      <div class="pdf-thumb"></div>
+    </div>
+
+    <!-- Score -->
+    <div class="detail-section">
+      <h3>Vertragsbewertung</h3>
+      <div class="score-panel">
+        <div class="score-ring" style="--val: 78">
+          <div>78</div>
+        </div>
+        <div class="score-detail">
+          <div class="value">Solider Vertrag mit Verbesserungspotenzial</div>
+          <div class="meta">
+            <span><svg width="13" height="13" style="color:var(--bad)"><use href="#i-alert"/></svg> 3 Risiken</span>
+            <span><svg width="13" height="13" style="color:var(--accent)"><use href="#i-sparkles"/></svg> 5 Optimierungen</span>
+            <span><svg width="13" height="13" style="color:var(--ok)"><use href="#i-check-circle"/></svg> KI-analysiert</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Eckdaten -->
+    <div class="detail-section">
+      <h3>Eckdaten</h3>
+      <dl class="kv">
+        <dt>Anbieter</dt><dd>Contract AI GmbH</dd>
+        <dt>Vertragstyp</dt><dd>SaaS-Abonnement</dd>
+        <dt>Laufzeit</dt><dd>24 Monate</dd>
+        <dt>Kündigung</dt><dd class="warn-text">3 Monate zum Quartalsende</dd>
+        <dt>Nächste Frist</dt><dd>30.04.2026 — Kündigungsfrist</dd>
+        <dt>Zahlung</dt><dd>49 € / Monat · SEPA-Lastschrift</dd>
+        <dt>Vertragsnummer</dt><dd>CA-2024-0042</dd>
+      </dl>
+    </div>
+
+    <!-- Risks -->
+    <div class="detail-section">
+      <h3>Erkannte Risiken</h3>
+      <div class="risks">
+        <div class="risk">
+          <div class="lvl"></div>
+          <div>
+            <strong>Automatische Verlängerung</strong> um 12 Monate, wenn nicht 3 Monate vor Ablauf gekündigt — ungewöhnlich lange Sperrfrist.
+          </div>
+        </div>
+        <div class="risk">
+          <div class="lvl med"></div>
+          <div>
+            <strong>Preisanpassung</strong> einseitig durch Anbieter mit 30 Tagen Vorlauf — kein Sonderkündigungsrecht definiert.
+          </div>
+        </div>
+        <div class="risk">
+          <div class="lvl low"></div>
+          <div>
+            <strong>Haftungsbegrenzung</strong> auf Jahresgebühr beschränkt — branchenüblich, aber prüfenswert.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action footer -->
+    <div class="detail-actions">
+      <button class="btn-primary btn">
+        <svg width="14" height="14"><use href="#i-eye"/></svg>
+        Vollständige Details öffnen
+      </button>
+      <div class="secondary-row">
+        <button class="btn">
+          <svg width="14" height="14"><use href="#i-edit"/></svg>
+          Bearbeiten
+        </button>
+        <button class="btn">
+          <svg width="14" height="14"><use href="#i-bell"/></svg>
+          Erinnern
+        </button>
+        <button class="btn">
+          <svg width="14" height="14"><use href="#i-download"/></svg>
+          PDF
+        </button>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<div class="mockup-note"><b>Mockup</b> Standalone — keine Bindung an die Live-App</div>
+
+</body>
+</html>

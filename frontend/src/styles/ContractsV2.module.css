@@ -1,0 +1,818 @@
+/* ============================================================
+   ContractsV2 — Schritt 1 (Skelett, Read-Only)
+   Eigenständig, kein globaler Selektor, kein Eingriff in V1.
+   Übernommen vom validierten Mockup mockups/contracts-redesign.html
+   ============================================================ */
+
+.page {
+  /* lokale Tokens — nur in dieser Datei aktiv (CSS-Module-Scope) */
+  --bg:           #f7f8fa;
+  --surface:      #ffffff;
+  --surface-soft: #fbfcfd;
+  --border:       #e6e8ec;
+  --border-soft:  #eef0f3;
+  --hover:        #f4f6f9;
+
+  --text:         #0f172a;
+  --text-2:       #475569;
+  --text-3:       #94a3b8;
+
+  --accent:       #4f46e5;
+  --accent-2:     #6366f1;
+  --accent-soft:  #eef2ff;
+
+  --ok:           #047857;
+  --ok-soft:      #ecfdf5;
+  --warn:         #b45309;
+  --warn-soft:    #fffbeb;
+  --bad:          #b91c1c;
+  --bad-soft:     #fef2f2;
+  --muted:        #475569;
+  --muted-soft:   #f1f5f9;
+
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.04);
+
+  --r-sm: 6px;
+  --r-md: 10px;
+
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100vh;
+}
+
+/* ============================ SIDEBAR ============================ */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+/* Brand wurde entfernt — die globale App-Navbar zeigt das Logo bereits.
+   Stattdessen direkter Top-Spacer für visuelle Atemluft. */
+.sidebarTopSpacer {
+  height: 6px;
+}
+
+.navLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 10px 6px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  color: var(--text-2);
+  font-size: 13.5px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.navItem:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.navItem.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+.navItem svg {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.navItem.active svg {
+  color: var(--accent);
+}
+.navItem .count {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+.navItem.active .count {
+  color: var(--accent);
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  padding: 12px 10px;
+  border-top: 1px solid var(--border-soft);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 12px;
+}
+.who {
+  line-height: 1.2;
+}
+.who .name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.who .plan {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ============================ MAIN ============================ */
+.main {
+  padding: 28px 32px 56px;
+  min-width: 0;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.pageHeaderTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pageHeader h1 {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.subtitle {
+  color: var(--text-2);
+  font-size: 13.5px;
+}
+.headerActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.btnPrimary {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+.btnPrimary:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #fff;
+}
+
+/* Filter row */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 360px;
+}
+.search input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  font-family: inherit;
+}
+.search input::placeholder {
+  color: var(--text-3);
+}
+.search input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+}
+
+/* ============================ TABLE ============================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+table.contracts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.contracts thead th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 12px 16px;
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border-soft);
+}
+.contracts tbody tr {
+  border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.contracts tbody tr:last-child {
+  border-bottom: none;
+}
+.contracts tbody tr:hover {
+  background: var(--hover);
+}
+.contracts tbody tr.selectedRow {
+  background: var(--accent-soft);
+}
+.contracts tbody tr.selectedRow td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.contracts td {
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.docCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.docIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--muted-soft);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.docMeta {
+  line-height: 1.35;
+  min-width: 0;
+}
+.docName {
+  font-weight: 500;
+  color: var(--text);
+  max-width: 360px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.docSub {
+  font-size: 12px;
+  color: var(--text-3);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.docSub .sep {
+  color: var(--border);
+}
+
+/* Status pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pill .pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.pillOk    { color: var(--ok);    background: var(--ok-soft); }
+.pillWarn  { color: var(--warn);  background: var(--warn-soft); }
+.pillBad   { color: var(--bad);   background: var(--bad-soft); }
+.pillMuted { color: var(--muted); background: var(--muted-soft); }
+.pillAccent{ color: var(--accent); background: var(--accent-soft); }
+
+.tableFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+}
+
+/* ============================ STATES ============================ */
+.center {
+  padding: 80px 24px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 14px;
+}
+.errorBox {
+  background: var(--bad-soft);
+  color: var(--bad);
+  padding: 14px 16px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 12px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================ BANNER (dezenter Pill statt Vollbreit) ============================ */
+.devBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+.devBanner b {
+  color: #78350f;
+  font-weight: 600;
+}
+
+/* ============================ FILTER CHIPS ============================ */
+.chipGroup {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.chip:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.chip.chipActive {
+  background: var(--accent-soft);
+  border-color: rgba(79, 70, 229, 0.2);
+  color: var(--accent);
+}
+.chipCount {
+  background: rgba(0, 0, 0, 0.05);
+  color: inherit;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.chip.chipActive .chipCount {
+  background: rgba(79, 70, 229, 0.12);
+}
+
+/* ============================ SCORE in Tabelle ============================ */
+.scoreCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text);
+}
+.scoreBar {
+  width: 56px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-soft);
+  position: relative;
+  overflow: hidden;
+}
+.scoreBar > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: 3px;
+}
+.scoreEmpty {
+  color: var(--text-3);
+  font-size: 12px;
+}
+
+/* ============================ ACTIONS COLUMN ============================ */
+.actionsCell {
+  text-align: right;
+  white-space: nowrap;
+}
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  margin-left: 2px;
+}
+.iconBtn:hover {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Popover-Menü (⋯) */
+.popoverWrap {
+  position: relative;
+  display: inline-block;
+}
+.popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+  padding: 6px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.popoverItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.popoverItem:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.popoverItem.danger {
+  color: var(--bad);
+}
+.popoverItem.danger:hover {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.popoverDivider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 4px 2px;
+}
+
+/* ============================ DRAWER ============================ */
+.shellWithDrawer {
+  grid-template-columns: 248px 1fr 420px;
+}
+
+.drawer {
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.drawerHead {
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.drawerLabel {
+  font-size: 11px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.drawerTitle {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  word-break: break-word;
+}
+.drawerHead .pill {
+  margin-top: 8px;
+}
+
+.drawerSection {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-soft);
+}
+.drawerSection h3 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+/* Score */
+.scorePanel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.scoreRing {
+  /* --val wird inline gesetzt */
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) calc(var(--val) * 1%), var(--border-soft) 0);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.scoreRing > div {
+  width: 56px;
+  height: 56px;
+  background: var(--surface);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.scoreDetail .value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.4;
+}
+.scoreDetail .meta {
+  margin-top: 6px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.scoreDetail .meta span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+/* Key/Value */
+.kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+  margin: 0;
+}
+.kv dt {
+  color: var(--text-3);
+}
+.kv dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 500;
+}
+.kv dd.warn {
+  color: var(--warn);
+}
+.kv dd.muted {
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+/* Risks */
+.risks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.risk {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  background: var(--surface-soft);
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.45;
+}
+.risk .lvl {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--bad);
+}
+.risk .lvl.med {
+  background: var(--warn);
+}
+.risk .lvl.low {
+  background: var(--accent-2);
+}
+
+/* Drawer Actions */
+.drawerActions {
+  margin-top: auto;
+  padding: 16px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface-soft);
+}
+.drawerActions .btnPrimary {
+  padding: 10px 14px;
+  justify-content: center;
+  font-weight: 500;
+}
+.secondaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+.secondaryRow .btn {
+  justify-content: center;
+  padding: 9px 8px;
+  font-size: 12.5px;
+}
+.btnDanger {
+  color: var(--bad);
+  border-color: var(--bad-soft);
+}
+.btnDanger:hover {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+/* ============================ MOBILE ============================ */
+@media (max-width: 900px) {
+  .shell,
+  .shellWithDrawer {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none; /* in Schritt 6 wird der Mobile-Layout sauber gebaut */
+  }
+  .drawer {
+    /* Auf Mobile übernimmt das bestehende Detail-Modal die Detail-Ansicht.
+       Drawer wird gar nicht erst geöffnet — siehe handleRowClick in der Page. */
+    display: none;
+  }
+  .main {
+    padding: 20px 16px 40px;
+  }
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .docName {
+    max-width: 200px;
+  }
+  /* Auf Mobile bleibt nur Vertrag (1) + Status (4) + Aktionen (6) sichtbar.
+     Anbieter (2), Ablauf (3) und Score (5) werden ausgeblendet. */
+  .contracts thead th:nth-child(2),
+  .contracts thead th:nth-child(3),
+  .contracts thead th:nth-child(5),
+  .contracts tbody td:nth-child(2),
+  .contracts tbody td:nth-child(3),
+  .contracts tbody td:nth-child(5) {
+    display: none;
+  }
+  /* Aktion-Spalte schrumpft, Tap-Target bleibt erhalten */
+  .iconBtn {
+    width: 36px;
+    height: 36px;
+  }
+  .popover {
+    /* Auf Mobile soll das Popover nicht über den Bildschirmrand laufen */
+    right: 4px;
+    min-width: 180px;
+  }
+}
