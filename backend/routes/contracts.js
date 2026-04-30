@@ -26,6 +26,13 @@ const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
 
+// 📎 RFC 5987 Content-Disposition Builder — Non-ASCII-Zeichen (Umlaute, em-dash) safe für HTTP-Header
+function buildContentDisposition(disposition, filename) {
+  const ascii = (filename || 'Datei').replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  const utf8 = encodeURIComponent(filename || 'Datei');
+  return `${disposition}; filename="${ascii}"; filename*=UTF-8''${utf8}`;
+}
+
 // 🚀 Cache-Invalidierung: Bei jeder Schreiboperation (POST/PUT/PATCH/DELETE) Cache für den User leeren
 router.use((req, res, next) => {
   if (req.method !== 'GET') {
@@ -2971,7 +2978,7 @@ router.get("/:id/analysis-report", verifyToken, async (req, res) => {
 
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${contract.name}_Analyse.pdf"`);
+    res.setHeader('Content-Disposition', buildContentDisposition('attachment', `${contract.name || 'Vertrag'}_Analyse.pdf`));
 
     // Pipe PDF to response
     doc.pipe(res);
@@ -4208,7 +4215,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}.pdf"`);
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}.pdf`));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
@@ -4394,7 +4401,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}.pdf"`);
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}.pdf`));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
@@ -4584,7 +4591,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     // 2. Wenn keine Anlagen-Dateien, direkt zurückgeben
     if (attachmentFiles.length === 0) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_mit_Anlagen.pdf"`);
+      res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_mit_Anlagen.pdf`));
       res.setHeader('Content-Length', mainPdfBuffer.length);
       return res.send(mainPdfBuffer);
     }
@@ -4646,7 +4653,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     const mergedPdfBytes = await mergedPdf.save();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_mit_Anlagen.pdf"`);
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_mit_Anlagen.pdf`));
     res.setHeader('Content-Length', mergedPdfBytes.length);
     res.send(Buffer.from(mergedPdfBytes));
 
@@ -4708,7 +4715,7 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${contract.name || 'Vertrag'}_v3.pdf"`);
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_v3.pdf`));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
