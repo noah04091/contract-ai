@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Sparkles } from 'lucide-react';
 import styles from '../styles/TemplateModal.module.css';
+import { contractTextToBlocks } from '../utils/contractTextToBlocks';
 
 interface CreateTemplateModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface CreateTemplateModalProps {
   contractType: string;
   contractTypeName: string;
   currentFormData: Record<string, unknown>;
+  // Wenn gesetzt: Vorlage wird Builder-kompatibel gespeichert (Blocks aus contractText geparsed)
+  contractText?: string;
 }
 
 export interface TemplateFormData {
@@ -27,7 +30,8 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
   onSave,
   contractType,
   contractTypeName,
-  currentFormData
+  currentFormData,
+  contractText
 }) => {
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
@@ -55,11 +59,24 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
     setError('');
 
     try {
+      const trimmedContractText = (contractText || '').trim();
+      const builderBlocks = trimmedContractText
+        ? contractTextToBlocks(trimmedContractText, contractType, contractTypeName, currentFormData)
+        : null;
+
       const templateData: TemplateFormData = {
         name: templateName.trim(),
         description: templateDescription.trim(),
         contractType: contractType,
-        defaultValues: currentFormData
+        defaultValues: builderBlocks
+          ? {
+              blocks: builderBlocks,
+              variables: [],
+              metadata: { contractType, contractTypeName, source: 'generate' },
+              formData: currentFormData,
+              contractText: trimmedContractText,
+            }
+          : currentFormData,
       };
 
       await onSave(templateData);
@@ -165,12 +182,12 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
                   <strong>💡 So funktioniert's:</strong>
                 </div>
                 <ol className={styles.infoSteps}>
-                  <li><strong>Zuerst</strong> das Formular unten mit Ihren Daten ausfüllen</li>
-                  <li><strong>Dann</strong> auf "Vorlage erstellen" klicken und einen Namen eingeben</li>
-                  <li><strong>Fertig!</strong> Alle ausgefüllten Felder werden als Vorlage gespeichert</li>
+                  <li><strong>Speichern:</strong> Die Daten und der Vertragstext werden als Vorlage gesichert</li>
+                  <li><strong>Wiederverwenden:</strong> Später im <strong>Contract Builder</strong> mit einem Klick öffnen</li>
+                  <li><strong>Anpassen:</strong> Im Builder Block für Block bearbeiten und als neuen Vertrag erstellen</li>
                 </ol>
                 <p className={styles.infoFooter}>
-                  ✅ Später können Sie mit einem Klick alle Daten wiederherstellen!
+                  ✅ Ideal für wiederkehrende Verträge mit ähnlichen Konditionen.
                 </p>
               </div>
 

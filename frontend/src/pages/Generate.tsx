@@ -4382,6 +4382,7 @@ export default function Generate() {
       case 1: return selectedType !== null;
       case 2: {
         if (!selectedType) return false;
+        if (currentStep > 2 || contractText !== "") return true;
         const requiredFields = selectedType.fields.filter(f => f.required);
         if (requiredFields.length === 0) {
           return selectedType.fields.some(field =>
@@ -7111,6 +7112,7 @@ export default function Generate() {
           contractType={selectedType?.id || ''}
           contractTypeName={selectedType?.name || ''}
           currentFormData={formData}
+          contractText={contractText}
         />
 
         {/* NEW: Enhanced Signature Modal */}
