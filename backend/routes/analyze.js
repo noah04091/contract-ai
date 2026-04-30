@@ -3389,10 +3389,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         try {
           const db = await database.connect();
           const updatedContract = await contractsCollection.findOne({ _id: existingContract._id });
-          const result = await cleanAndRegenerateAIEvents(db, updatedContract);
-          console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${result.deleted} alt → ${result.generated} neu${updatedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+          if (!updatedContract) {
+            // Defensive: bei parallelen Re-Analysen kann findOne theoretisch null
+            // liefern. Dann nutzen wir das bereits geladene existingContract als
+            // Fallback — die updateOne() oben hat ja den Datensatz schon aktualisiert.
+            console.warn(`⚠️ [${requestId}] findOne lieferte null nach Update — nutze existingContract als Fallback für Calendar-Sync`);
+          }
+          const contractForCalendar = updatedContract || existingContract;
+          const result = await cleanAndRegenerateAIEvents(db, contractForCalendar);
+          console.log(`📅 [${requestId}] Calendar Events regeneriert für ${contractForCalendar.name}: ${result.deleted} alt → ${result.generated} neu${contractForCalendar.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
         } catch (eventError) {
-          console.warn(`⚠️ Calendar Events konnten nicht regeneriert werden:`, eventError.message);
+          console.warn(`⚠️ [${requestId}] Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }
 
         // V1 Legal Pulse Background-Analyse — DEAKTIVIERT (22.04.2026)
