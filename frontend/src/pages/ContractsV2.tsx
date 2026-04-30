@@ -29,6 +29,9 @@ import {
   ChevronDown,
   Zap,
   Loader,
+  CheckSquare,
+  Square,
+  Download,
 } from "lucide-react";
 
 import NewContractDetailsModal from "../components/NewContractDetailsModal";
@@ -230,7 +233,7 @@ export default function ContractsV2() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
-  const { folders, fetchFolders } = useFolders();
+  const { folders, fetchFolders, bulkMoveToFolder } = useFolders();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -272,6 +275,13 @@ export default function ContractsV2() {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // Bulk-Modus
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkFolderDropdownOpen, setBulkFolderDropdownOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const bulkFolderRef = useRef<HTMLDivElement | null>(null);
+
   /* -------------------------------------------------------------------
      Initial-Fetch
   ------------------------------------------------------------------- */
@@ -308,6 +318,24 @@ export default function ContractsV2() {
   useEffect(() => {
     fetchFolders();
   }, [fetchFolders]);
+
+  /* -------------------------------------------------------------------
+     Click-Outside für Bulk-Folder-Dropdown
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (!bulkFolderDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (bulkFolderRef.current && target && !bulkFolderRef.current.contains(target)) {
+        setBulkFolderDropdownOpen(false);
+      }
+    };
+    const t = setTimeout(() => document.addEventListener("mousedown", handler), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [bulkFolderDropdownOpen]);
 
   /* -------------------------------------------------------------------
      Click-Outside für ⋯-Popover
@@ -440,6 +468,11 @@ export default function ContractsV2() {
 
   const handleRowClick = (c: Contract) => {
     setOpenPopoverFor(null);
+    // Im Bulk-Modus: Klick togglet die Auswahl, kein Drawer/Modal
+    if (bulkMode) {
+      toggleSelect(c._id);
+      return;
+    }
     if (isMobileViewport()) {
       // Auf Mobile öffnet Single-Click direkt das Modal (Drawer ist auf Mobile aus).
       openModal(c);
@@ -520,6 +553,155 @@ export default function ContractsV2() {
   const handleReminder = (c: Contract) => {
     setOpenPopoverFor(null);
     setReminderContract(c);
+  };
+
+  /* ----------------------------- Bulk-Modus ----------------------------- */
+  const toggleBulkMode = () => {
+    setBulkMode((m) => {
+      if (m) setSelectedIds(new Set()); // beim Beenden: Auswahl leeren
+      return !m;
+    });
+    setOpenPopoverFor(null);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      const allVisibleSelected = visible.length > 0 && visible.every((c) => prev.has(c._id));
+      if (allVisibleSelected) {
+        // alle abwählen, die gerade sichtbar sind (außerhalb des Filters bleibt erhalten)
+        const next = new Set(prev);
+        for (const c of visible) next.delete(c._id);
+        return next;
+      }
+      const next = new Set(prev);
+      for (const c of visible) next.add(c._id);
+      return next;
+    });
+  };
+
+  const handleBulkMove = async (folderId: string | null) => {
+    if (selectedIds.size === 0) return;
+    setBulkBusy(true);
+    try {
+      await bulkMoveToFolder(Array.from(selectedIds), folderId);
+      // Lokal aktualisieren — kein Re-Fetch nötig
+      setContracts((prev) =>
+        prev.map((c) => (selectedIds.has(c._id) ? { ...c, folderId } : c)),
+      );
+      toast?.success?.(`${selectedIds.size} Verträge verschoben`);
+      setSelectedIds(new Set());
+      setBulkFolderDropdownOpen(false);
+      // Folder-Counts neu laden
+      fetchFolders(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Verschieben fehlgeschlagen";
+      toast?.error?.(msg);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const confirmed = window.confirm(`${selectedIds.size} Verträge wirklich löschen?`);
+    if (!confirmed) return;
+
+    setBulkBusy(true);
+    const ids = Array.from(selectedIds);
+    const previous = contracts;
+
+    // Optimistisch entfernen
+    setContracts((prev) => prev.filter((c) => !selectedIds.has(c._id)));
+    if (drawerContract && selectedIds.has(drawerContract._id)) setDrawerContract(null);
+
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch("/api/contracts/bulk-delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token ?? ""}`,
+        },
+        body: JSON.stringify({ contractIds: ids }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.requiresUpgrade) {
+          throw new Error(data.message || "Bulk-Löschen ist ein Enterprise-Feature");
+        }
+        throw new Error(data.message || `Fehler ${response.status}`);
+      }
+      toast?.success?.(`${ids.length} Verträge gelöscht`);
+      setSelectedIds(new Set());
+      fetchFolders(true);
+    } catch (err) {
+      // Rollback
+      setContracts(previous);
+      const msg = err instanceof Error ? err.message : "Löschen fehlgeschlagen";
+      toast?.error?.(msg);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const handleBulkDownloadZip = async () => {
+    if (selectedIds.size === 0) return;
+    if (selectedIds.size > 100) {
+      toast?.error?.("Maximal 100 Verträge gleichzeitig downloadbar");
+      return;
+    }
+    setBulkBusy(true);
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch("/api/contracts/bulk-download", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token ?? ""}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({ contractIds: Array.from(selectedIds) }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const cd = response.headers.get("Content-Disposition");
+      let filename = "Contract_AI_Vertraege.zip";
+      if (cd) {
+        const m = cd.match(/filename[^;=\n]*=\s*["']?([^"';\n]+)["']?/);
+        if (m && m[1]) filename = m[1].trim();
+      }
+
+      const blob = await response.blob();
+      const typedBlob = new Blob([blob], { type: "application/zip" });
+      const url = window.URL.createObjectURL(typedBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+
+      toast?.success?.(`${selectedIds.size} Verträge als ZIP heruntergeladen`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "ZIP-Download fehlgeschlagen";
+      toast?.error?.(msg);
+    } finally {
+      setBulkBusy(false);
+    }
   };
 
   const handleDelete = async (c: Contract) => {
@@ -708,10 +890,19 @@ export default function ContractsV2() {
               </div>
               <div className={styles.headerActions}>
                 <button
+                  className={`${styles.btn} ${bulkMode ? styles.btnPrimary : ""}`}
+                  type="button"
+                  onClick={toggleBulkMode}
+                  title={bulkMode ? "Auswahlmodus beenden" : "Mehrere Verträge auswählen"}
+                >
+                  {bulkMode ? <CheckSquare size={14} /> : <Square size={14} />}
+                  {bulkMode ? "Auswahl beenden" : "Auswählen"}
+                </button>
+                <button
                   className={`${styles.btn} ${styles.btnPrimary}`}
                   type="button"
                   onClick={() => navigate("/contracts")}
-                  title="Upload-Drawer wird in Schritt 4 in V2 gebaut. Bis dahin nutzt du die V1-Seite zum Hochladen."
+                  title="Upload kommt nach V2-Rollout in V2 selbst. Bis dahin nutzt du die produktive Seite."
                 >
                   <Upload size={14} />
                   Vertrag hochladen
@@ -793,9 +984,29 @@ export default function ContractsV2() {
                 </div>
               ) : (
                 <>
-                  <table className={styles.contracts}>
+                  <table className={`${styles.contracts} ${bulkMode ? styles.bulkActive : ""}`}>
                     <thead>
                       <tr>
+                        {bulkMode && (
+                          <th style={{ width: "44px" }}>
+                            <button
+                              type="button"
+                              className={styles.checkboxBtn}
+                              onClick={toggleSelectAllVisible}
+                              title={
+                                visible.length > 0 && visible.every((c) => selectedIds.has(c._id))
+                                  ? "Alle abwählen"
+                                  : "Alle auswählen"
+                              }
+                            >
+                              {visible.length > 0 && visible.every((c) => selectedIds.has(c._id)) ? (
+                                <CheckSquare size={16} />
+                              ) : (
+                                <Square size={16} />
+                              )}
+                            </button>
+                          </th>
+                        )}
                         <th
                           style={{ width: "40%", cursor: "pointer" }}
                           onClick={() => handleSort("name")}
@@ -883,10 +1094,22 @@ export default function ContractsV2() {
                         return (
                           <tr
                             key={c._id}
-                            className={isSel ? styles.selectedRow : undefined}
+                            className={`${isSel ? styles.selectedRow : ""} ${bulkMode && selectedIds.has(c._id) ? styles.bulkSelectedRow : ""}`}
                             onClick={() => handleRowClick(c)}
                             onDoubleClick={() => handleRowDoubleClick(c)}
                           >
+                            {bulkMode && (
+                              <td onClick={(e) => { e.stopPropagation(); toggleSelect(c._id); }}>
+                                <button
+                                  type="button"
+                                  className={styles.checkboxBtn}
+                                  tabIndex={-1}
+                                  aria-label={selectedIds.has(c._id) ? "Abwählen" : "Auswählen"}
+                                >
+                                  {selectedIds.has(c._id) ? <CheckSquare size={16} /> : <Square size={16} />}
+                                </button>
+                              </td>
+                            )}
                             <td>
                               <div className={styles.docCell}>
                                 <div className={styles.docIcon}>
@@ -1283,6 +1506,92 @@ export default function ContractsV2() {
           )}
         </div>
       </div>
+
+      {/* Floating Bulk Action Bar */}
+      {bulkMode && selectedIds.size > 0 &&
+        createPortal(
+          <div className={styles.bulkBar} role="toolbar" aria-label="Bulk-Aktionen">
+            <div className={styles.bulkBarInfo}>
+              <CheckSquare size={16} />
+              <span>{selectedIds.size} ausgewählt</span>
+            </div>
+            <div className={styles.bulkBarActions}>
+              <div className={styles.popoverWrap} ref={bulkFolderRef}>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  onClick={() => setBulkFolderDropdownOpen((v) => !v)}
+                  disabled={bulkBusy}
+                >
+                  <Folder size={14} />
+                  In Ordner verschieben
+                  <ChevronDown size={12} />
+                </button>
+                {bulkFolderDropdownOpen && (
+                  <div className={`${styles.popover} ${styles.popoverUp}`}>
+                    <button
+                      type="button"
+                      className={styles.popoverItem}
+                      onClick={() => handleBulkMove(null)}
+                    >
+                      <Folder size={14} style={{ color: "#94a3b8" }} />
+                      Ohne Ordner
+                    </button>
+                    {folders.length > 0 && <div className={styles.popoverDivider} />}
+                    {folders.map((f) => (
+                      <button
+                        key={f._id}
+                        type="button"
+                        className={styles.popoverItem}
+                        onClick={() => handleBulkMove(f._id)}
+                      >
+                        {f.icon ? (
+                          <span style={{ fontSize: 14, lineHeight: 1, width: 14, textAlign: "center" }}>
+                            {f.icon}
+                          </span>
+                        ) : (
+                          <Folder size={14} style={{ color: f.color || "#fbbf24" }} />
+                        )}
+                        {f.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={handleBulkDownloadZip}
+                disabled={bulkBusy}
+                title="Ausgewählte Verträge als ZIP herunterladen"
+              >
+                <Download size={14} />
+                Als ZIP
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnDanger}`}
+                onClick={handleBulkDelete}
+                disabled={bulkBusy}
+              >
+                <Trash2 size={14} />
+                Löschen
+              </button>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={() => {
+                  setSelectedIds(new Set());
+                  setBulkMode(false);
+                }}
+                title="Auswahl beenden"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* Detail-Modal — exakt dasselbe wie in V1 */}
       {modalContract &&

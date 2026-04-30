@@ -594,6 +594,86 @@ table.contracts {
   margin: 4px 2px;
 }
 
+/* ============================ BULK MODE ============================ */
+.checkboxBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.checkboxBtn:hover {
+  background: var(--hover);
+  color: var(--accent);
+}
+.contracts.bulkActive tbody tr {
+  /* Im Bulk-Modus: Hover-Cursor auf "pointer" — Klick ist Auswahl */
+  cursor: pointer;
+}
+.contracts tbody tr.bulkSelectedRow {
+  background: var(--accent-soft);
+}
+.contracts tbody tr.bulkSelectedRow:hover {
+  background: var(--accent-soft);
+  filter: brightness(0.98);
+}
+.contracts tbody tr.bulkSelectedRow td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.contracts tbody tr.bulkSelectedRow .checkboxBtn {
+  color: var(--accent);
+}
+
+/* Floating Action Bar */
+.bulkBar {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.08);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 50;
+  min-width: 380px;
+  max-width: calc(100vw - 32px);
+}
+.bulkBarInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  padding-right: 12px;
+  border-right: 1px solid var(--border-soft);
+}
+.bulkBarInfo svg {
+  color: var(--accent);
+}
+.bulkBarActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Popover, das nach oben öffnet (für Bulk-Bar) */
+.popoverUp {
+  top: auto;
+  bottom: calc(100% + 4px);
+  max-height: 280px;
+  overflow-y: auto;
+}
+
 /* ============================ DRAWER ============================ */
 .shellWithDrawer {
   grid-template-columns: 248px 1fr 420px;
