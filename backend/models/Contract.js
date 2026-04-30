@@ -38,6 +38,12 @@ const contractSchema = new mongoose.Schema({
   // Wird nur befüllt, wenn der erkannte Vertragstyp ein Pilot-Typ ist (Mietvertrag,
   // Arbeitsvertrag, NDA). Bei anderen Typen / "other" bleibt das Feld undefined.
   typeSpecificFindings: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  // 📅 Stufe-2b (30.04.2026): Frist-Hinweise aus dem Date Hunt Service.
+  // Universelle Frist-Regelungen (Kündigung, Widerruf, Gewährleistung, Probezeit, ...),
+  // die KEIN konkretes Datum sind, aber für den Mandanten wichtig zu wissen sind.
+  // Jeder Eintrag: { type, title, description, legalBasis, evidence }.
+  // Evidence-validiert wie importantDates — keine Halluzinationen erlaubt.
+  fristHinweise: { type: mongoose.Schema.Types.Mixed, default: undefined },
   summary: String,
   legalAssessment: String,
   suggestions: String,

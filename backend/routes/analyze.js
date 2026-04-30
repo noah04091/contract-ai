@@ -3160,19 +3160,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       result = convertLegacyToDeepLawyerFormat(result, validationResult.documentType, requestId);
     }
 
-    // 📅 Stufe-2-Merge: Date Hunt Stage liefert evidence-validierte Datums.
+    // 📅 Stufe-2-Merge: Date Hunt Stage liefert evidence-validierte Datums + Frist-Hinweise.
     // Sie ist Single Source of Truth für importantDates (überschreibt die
-    // unvalidierten Datums aus der Hauptanalyse). Strikt: bei Fallback /
-    // 0 Treffern → leeres Array, kein erfundenes Datum durchlassen.
+    // unvalidierten Datums aus der Hauptanalyse) UND für fristHinweise (universelle
+    // Frist-Regelungen: Kündigung, Widerruf, Gewährleistung, Probezeit, ...).
+    // Strikt: bei Fallback / 0 Treffern → leere Arrays, kein erfundener Eintrag durchgelassen.
     if (!dateHuntResult.stats?.fallback) {
       const previousCount = Array.isArray(result.importantDates) ? result.importantDates.length : 0;
       result.importantDates = dateHuntResult.importantDates;
+      result.fristHinweise = Array.isArray(dateHuntResult.fristHinweise) ? dateHuntResult.fristHinweise : [];
       console.log(
-        `📅 [${requestId}] importantDates ersetzt durch Date Hunt: ` +
-        `Hauptanalyse hatte ${previousCount} → Date Hunt validierte ${dateHuntResult.importantDates.length}`
+        `📅 [${requestId}] Date Hunt Merge: importantDates Hauptanalyse ${previousCount} → Date Hunt ${dateHuntResult.importantDates.length} | ` +
+        `fristHinweise: ${result.fristHinweise.length}`
       );
     } else {
-      console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben (Best-Effort)`);
+      // Im Fallback-Fall keine fristHinweise setzen (bleiben undefined statt leeres Array,
+      // damit Frontend per render-if-present sauber unterscheidet).
+      result.fristHinweise = undefined;
+      console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben, fristHinweise leer`);
     }
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
@@ -3317,6 +3322,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           asymmetryAssessment: result.asymmetryAssessment,            // PFLICHT-Recognition-Feld
           scoreReasoning: result.scoreReasoning,                      // PFLICHT — gehört zu contractScore
           typeSpecificFindings: result.typeSpecificFindings,          // Phase 2: optional, nur bei Pilot-Typen
+          fristHinweise: result.fristHinweise,                        // Stufe 2b: Universelle Frist-Hinweise aus Date Hunt
           laymanSummary: result.laymanSummary,                        // adaptiv
           summary: result.summary,                                    // adaptiv
           legalAssessment: result.legalAssessment,                    // adaptiv
@@ -3632,6 +3638,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               asymmetryAssessment: result.asymmetryAssessment,
               scoreReasoning: result.scoreReasoning,
               typeSpecificFindings: result.typeSpecificFindings,
+              fristHinweise: result.fristHinweise,
               laymanSummary: result.laymanSummary,
               summary: result.summary,
               legalAssessment: result.legalAssessment,
