@@ -96,9 +96,38 @@ REGELN — STRIKT:
    Der Backend-Validator akzeptiert keine Verkürzungen mit Lücken in der Mitte.
 
 4. Bei Berechnungen: zeige in description die Rechnung (z.B. "Vertragsbeginn 01.04.2026 + 6 Monate Probezeit = 01.10.2026"). Die Rechnung gehört in description, NICHT in evidence — evidence bleibt das wörtliche Zitat.
-5. Wörter-Datums ("dreißigster Juni") ins ISO-Format konvertieren (2026-06-30).
-6. Maximal ${MAX_DATES} Datums — fokussiere auf die wichtigsten für den Mandanten.
-7. Antworte AUSSCHLIESSLICH mit dem unten definierten JSON.
+
+5. STAFFELZAHLUNGEN — wenn der Vertrag eine KONKRETE ANZAHL gestaffelter Zahlungen
+   nennt (z.B. "in 3 Raten", "in 6 Tranchen", "in 4 Quartalsraten", "in zwei Teilbeträgen"),
+   extrahiere JEDE einzelne Rate als separates Datum mit type=payment_due.
+
+   AUSLÖSER (alle drei müssen erfüllt sein):
+   • Konkrete Zahl ist genannt (drei, vier, 5, sechs, ...)
+   • Zeitlicher Rhythmus ist nennbar (monatlich, quartalsweise, halbjährlich, ...)
+   • Startpunkt ist nennbar (bei Mietbeginn, ab Vertragsabschluss, ab Lieferung, ...)
+
+   KONKRETES BEISPIEL — Vertragstext:
+   "Die Kaution kann in drei gleichen monatlichen Raten gezahlt werden.
+   Die erste Rate ist bei Mietbeginn faellig."
+   Mit Mietbeginn = 01.04.2026 → drei Datums:
+   - Rate 1: 01.04.2026 (calculated=false — Mietbeginn ist explizit)
+   - Rate 2: 01.05.2026 (calculated=true)
+   - Rate 3: 01.06.2026 (calculated=true)
+   Alle drei mit derselben evidence: "Die Kaution kann in drei gleichen
+   monatlichen Raten gezahlt werden"
+   Label-Beispiele: "Kaution Rate 1 von 3", "Kaution Rate 2 von 3", "Kaution Rate 3 von 3"
+
+   KEIN AUSLÖSER — laufende Standard-Zahlungen ohne feste Anzahl:
+   "Die Miete ist bis zum 3. Werktag eines jeden Monats zu zahlen"
+   → Das ist KEINE Staffelung. Extrahiere höchstens die NÄCHSTE Mietzahlung als
+   payment_due — NICHT alle 24 oder 36 Monatsmieten ausschreiben! Sonst Kalender-Spam.
+
+   KEIN AUSLÖSER — wenn nur "in mehreren Raten" ohne konkrete Anzahl steht:
+   → Dann nur EIN Datum mit description "in mehreren Raten zahlbar".
+
+6. Wörter-Datums ("dreißigster Juni") ins ISO-Format konvertieren (2026-06-30).
+7. Maximal ${MAX_DATES} Datums — fokussiere auf die wichtigsten für den Mandanten.
+8. Antworte AUSSCHLIESSLICH mit dem unten definierten JSON.
 
 OUTPUT-FORMAT:
 {
