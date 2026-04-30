@@ -24,14 +24,22 @@ import {
   X,
   Bell,
   Sparkles,
+  Folder,
+  ChevronUp,
+  ChevronDown,
+  Zap,
+  Loader,
 } from "lucide-react";
 
 import NewContractDetailsModal from "../components/NewContractDetailsModal";
 import ContractEditModal from "../components/ContractEditModal";
+import ReminderSettingsModal from "../components/ReminderSettingsModal";
 import { apiCall } from "../utils/api";
 import { fixUtf8Display } from "../utils/textUtils";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../context/ToastContext";
+import { useFolders } from "../hooks/useFolders";
+import type { FolderType } from "../components/FolderBar";
 
 import styles from "../styles/ContractsV2.module.css";
 
@@ -56,12 +64,25 @@ interface Contract {
   risiken?: Array<string | { title?: string; description?: string }>;
   paymentAmount?: number;
   paymentFrequency?: string;
+  folderId?: string | null;
+  analyzed?: boolean;
+  legalAssessment?: string;
+  suggestions?: string;
+  reminderDays?: number[];
+  reminderSettings?: Array<{
+    type: "expiry" | "cancellation" | "custom";
+    days: number;
+    targetDate?: string;
+    label?: string;
+  }>;
   // wird vom Modal weiterverwendet — wir reichen den ganzen Contract durch
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 }
 
 type StatusTone = "ok" | "warn" | "bad" | "muted" | "accent";
+type SortKey = "name" | "provider" | "expiry" | "status" | "score" | "createdAt";
+type SortDir = "asc" | "desc";
 
 /* =====================================================================
    Pure Helpers — keine Side-Effects, kein State.
@@ -145,6 +166,62 @@ function getRiskList(c: Contract): string[] {
     .filter(Boolean);
 }
 
+function isAnalyzed(c: Contract): boolean {
+  if (c.isGenerated || c.isOptimized) return true;
+  if (c.analyzed === true) return true;
+  if (c.summary || c.legalAssessment || c.suggestions) return true;
+  if (typeof c.contractScore === "number" && c.contractScore > 0) return true;
+  if (Array.isArray(c.risiken) && c.risiken.length > 0) return true;
+  return false;
+}
+
+function isExpiringSoon(c: Contract): boolean {
+  if (!c.expiryDate) return false;
+  const d = new Date(c.expiryDate);
+  if (Number.isNaN(d.getTime())) return false;
+  const days = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return days >= 0 && days <= 30;
+}
+
+function hasActiveReminder(c: Contract): boolean {
+  return (
+    (Array.isArray(c.reminderSettings) && c.reminderSettings.length > 0) ||
+    (Array.isArray(c.reminderDays) && c.reminderDays.length > 0)
+  );
+}
+
+function compareContracts(a: Contract, b: Contract, key: SortKey, dir: SortDir): number {
+  const factor = dir === "asc" ? 1 : -1;
+  const cmp = (x: number | string, y: number | string): number => {
+    if (typeof x === "number" && typeof y === "number") return (x - y) * factor;
+    return String(x).localeCompare(String(y), "de") * factor;
+  };
+  switch (key) {
+    case "name":
+      return cmp(a.name || "", b.name || "");
+    case "provider":
+      return cmp(getProviderLabel(a), getProviderLabel(b));
+    case "expiry": {
+      const ax = a.expiryDate ? new Date(a.expiryDate).getTime() : Number.POSITIVE_INFINITY;
+      const bx = b.expiryDate ? new Date(b.expiryDate).getTime() : Number.POSITIVE_INFINITY;
+      return cmp(ax, bx);
+    }
+    case "status":
+      return cmp(statusInfo(a).label, statusInfo(b).label);
+    case "score": {
+      const ax = typeof a.contractScore === "number" ? a.contractScore : -1;
+      const bx = typeof b.contractScore === "number" ? b.contractScore : -1;
+      return cmp(ax, bx);
+    }
+    case "createdAt":
+    default: {
+      const ax = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bx = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return cmp(ax, bx);
+    }
+  }
+}
+
 /* =====================================================================
    Component
    ===================================================================== */
@@ -153,6 +230,7 @@ export default function ContractsV2() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
+  const { folders, fetchFolders } = useFolders();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,16 +248,29 @@ export default function ContractsV2() {
   // Quick-Edit-Modal aus V1, wiederverwendet
   const [editContract, setEditContract] = useState<Contract | null>(null);
 
+  // Reminder-Modal (geteilt mit V1)
+  const [reminderContract, setReminderContract] = useState<Contract | null>(null);
+
   // Welche Zeile hat das ⋯-Popover offen? (string = contractId, null = keines)
   const [openPopoverFor, setOpenPopoverFor] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
-  // Lokale Volltextsuche — Backend-Filter binden wir in Schritt 3 ein.
+  // Loading-State pro Vertrag für "Jetzt analysieren"
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+
+  // Lokale Volltextsuche
   const [query, setQuery] = useState("");
 
-  // Status-Filter über Chips. In Schritt 3 wird das an die Backend-Query gehängt.
-  type StatusChip = "alle" | "aktiv" | "bald" | "gekündigt" | "generiert";
+  // Status-Filter über Chips
+  type StatusChip = "alle" | "aktiv" | "bald" | "gekündigt" | "generiert" | "nicht_analysiert";
   const [statusChip, setStatusChip] = useState<StatusChip>("alle");
+
+  // Folder-Filter: null = Alle, "unassigned" = ohne Ordner, sonst Folder-ID
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+
+  // Sortierung
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   /* -------------------------------------------------------------------
      Initial-Fetch
@@ -210,6 +301,13 @@ export default function ContractsV2() {
       cancelled = true;
     };
   }, []);
+
+  /* -------------------------------------------------------------------
+     Folders laden (parallel, geteilt mit V1)
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    fetchFolders();
+  }, [fetchFolders]);
 
   /* -------------------------------------------------------------------
      Click-Outside für ⋯-Popover
@@ -245,11 +343,12 @@ export default function ContractsV2() {
   }, [contracts, modalContract]);
 
   /* -------------------------------------------------------------------
-     Filter
+     Filter + Sort
   ------------------------------------------------------------------- */
   const chipMatches = (c: Contract, chip: StatusChip): boolean => {
     if (chip === "alle") return true;
     if (chip === "generiert") return !!c.isGenerated || !!c.isOptimized;
+    if (chip === "nicht_analysiert") return !isAnalyzed(c);
     const tone = statusInfo(c).tone;
     if (chip === "aktiv") return tone === "ok";
     if (chip === "bald") return tone === "warn";
@@ -257,21 +356,62 @@ export default function ContractsV2() {
     return true;
   };
 
+  const folderMatches = (c: Contract, folder: string | null): boolean => {
+    if (folder === null) return true;
+    if (folder === "unassigned") return !c.folderId;
+    return c.folderId === folder;
+  };
+
+  // Counts werden auf der Basis des Folder-Filters berechnet — so zeigen
+  // die Chips nur, was im aktuellen Ordner-Kontext sichtbar wäre.
+  const folderScoped = useMemo(
+    () => contracts.filter((c) => folderMatches(c, activeFolder)),
+    [contracts, activeFolder],
+  );
+
   const counts = useMemo(() => {
-    const result = { alle: contracts.length, aktiv: 0, bald: 0, gekündigt: 0, generiert: 0 };
-    for (const c of contracts) {
+    const result = {
+      alle: folderScoped.length,
+      aktiv: 0,
+      bald: 0,
+      gekündigt: 0,
+      generiert: 0,
+      nicht_analysiert: 0,
+    };
+    for (const c of folderScoped) {
       if (chipMatches(c, "aktiv")) result.aktiv++;
       if (chipMatches(c, "bald")) result.bald++;
       if (chipMatches(c, "gekündigt")) result.gekündigt++;
       if (chipMatches(c, "generiert")) result.generiert++;
+      if (chipMatches(c, "nicht_analysiert")) result.nicht_analysiert++;
     }
     return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folderScoped]);
+
+  // Sidebar-Counts (unabhängig vom aktiven Status-Chip)
+  const sidebarCounts = useMemo(() => {
+    let baldAblaufend = 0;
+    let aktiv = 0;
+    let nichtAnalysiert = 0;
+    let unassigned = 0;
+    for (const c of contracts) {
+      if (isExpiringSoon(c)) baldAblaufend++;
+      if (statusInfo(c).tone === "ok") aktiv++;
+      if (!isAnalyzed(c)) nichtAnalysiert++;
+      if (!c.folderId) unassigned++;
+    }
+    return {
+      total: contracts.length,
+      baldAblaufend,
+      aktiv,
+      nichtAnalysiert,
+      unassigned,
+    };
   }, [contracts]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return contracts.filter((c) => {
+    const filtered = folderScoped.filter((c) => {
       if (!chipMatches(c, statusChip)) return false;
       if (!q) return true;
       const haystack = [
@@ -285,8 +425,9 @@ export default function ContractsV2() {
         .toLowerCase();
       return haystack.includes(q);
     });
+    return [...filtered].sort((a, b) => compareContracts(a, b, sortKey, sortDir));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contracts, query, statusChip]);
+  }, [folderScoped, query, statusChip, sortKey, sortDir]);
 
   /* -------------------------------------------------------------------
      Handlers
@@ -336,6 +477,49 @@ export default function ContractsV2() {
     if (drawerContract?._id === updated._id) {
       setDrawerContract({ ...drawerContract, ...updated });
     }
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      // Datum/Score: neueste/höchste zuerst sinnvoll, sonst A→Z
+      setSortDir(key === "createdAt" || key === "expiry" || key === "score" ? "desc" : "asc");
+    }
+  };
+
+  const handleAnalyze = async (c: Contract) => {
+    setOpenPopoverFor(null);
+    setAnalyzingId(c._id);
+    try {
+      const result = (await apiCall(`/contracts/${c._id}/analyze`, { method: "POST" })) as {
+        success?: boolean;
+        contract?: Contract;
+        message?: string;
+      };
+      if (result?.contract) {
+        setContracts((prev) =>
+          prev.map((x) => (x._id === c._id ? { ...x, ...result.contract } : x)),
+        );
+        if (drawerContract?._id === c._id) {
+          setDrawerContract({ ...drawerContract, ...result.contract });
+        }
+        toast?.success?.("Analyse abgeschlossen");
+      } else {
+        toast?.success?.(result?.message || "Analyse gestartet");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Analyse fehlgeschlagen";
+      toast?.error?.(msg);
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+
+  const handleReminder = (c: Contract) => {
+    setOpenPopoverFor(null);
+    setReminderContract(c);
   };
 
   const handleDelete = async (c: Contract) => {
@@ -390,19 +574,27 @@ export default function ContractsV2() {
 
       <div className={styles.page}>
         <div className={`${styles.shell} ${showDrawer ? styles.shellWithDrawer : ""}`}>
-          {/* ===== Sidebar (statisch in Schritt 1/2, Folders folgen in Schritt 3) ===== */}
+          {/* ===== Sidebar — echte Folders + Schnellfilter ===== */}
           <aside className={styles.sidebar}>
             <div className={styles.sidebarTopSpacer} />
+
             <div className={styles.navLabel}>Verträge</div>
-            <button className={`${styles.navItem} ${styles.active}`} type="button">
+            <button
+              className={`${styles.navItem} ${activeFolder === null && statusChip === "alle" ? styles.active : ""}`}
+              type="button"
+              onClick={() => {
+                setActiveFolder(null);
+                setStatusChip("alle");
+              }}
+            >
               <FileText size={16} />
-              Alle Verträge <span className={styles.count}>{contracts.length}</span>
+              Alle Verträge <span className={styles.count}>{sidebarCounts.total}</span>
             </button>
             <button
               className={styles.navItem}
               type="button"
               onClick={() => navigate("/contracts")}
-              title="Hochladen läuft in Schritt 4 in V2 — nutze solange die produktive Seite"
+              title="Upload-Drawer wird in Schritt 4 in V2 gebaut. Bis dahin nutzt du die V1-Seite zum Hochladen."
             >
               <Upload size={16} />
               Hochladen
@@ -411,6 +603,78 @@ export default function ContractsV2() {
               <Mail size={16} />
               Email-Inbox
             </button>
+
+            <div className={styles.navLabel}>Schnellfilter</div>
+            <button
+              className={`${styles.navItem} ${statusChip === "bald" ? styles.active : ""}`}
+              type="button"
+              onClick={() => {
+                setActiveFolder(null);
+                setStatusChip(statusChip === "bald" ? "alle" : "bald");
+              }}
+            >
+              <AlertTriangle size={16} style={{ color: "#f59e0b" }} />
+              Bald ablaufend <span className={styles.count}>{sidebarCounts.baldAblaufend}</span>
+            </button>
+            <button
+              className={`${styles.navItem} ${statusChip === "aktiv" ? styles.active : ""}`}
+              type="button"
+              onClick={() => {
+                setActiveFolder(null);
+                setStatusChip(statusChip === "aktiv" ? "alle" : "aktiv");
+              }}
+            >
+              <CheckCircle2 size={16} style={{ color: "#22c55e" }} />
+              Aktive Verträge <span className={styles.count}>{sidebarCounts.aktiv}</span>
+            </button>
+            <button
+              className={`${styles.navItem} ${statusChip === "nicht_analysiert" ? styles.active : ""}`}
+              type="button"
+              onClick={() => {
+                setActiveFolder(null);
+                setStatusChip(statusChip === "nicht_analysiert" ? "alle" : "nicht_analysiert");
+              }}
+            >
+              <Clock size={16} style={{ color: "#94a3b8" }} />
+              Nicht analysiert <span className={styles.count}>{sidebarCounts.nichtAnalysiert}</span>
+            </button>
+
+            <div className={styles.navLabel}>Ordner</div>
+            <button
+              className={`${styles.navItem} ${activeFolder === "unassigned" ? styles.active : ""}`}
+              type="button"
+              onClick={() => {
+                setStatusChip("alle");
+                setActiveFolder(activeFolder === "unassigned" ? null : "unassigned");
+              }}
+            >
+              <Folder size={16} style={{ color: "#94a3b8" }} />
+              Ohne Ordner <span className={styles.count}>{sidebarCounts.unassigned}</span>
+            </button>
+            {folders.map((f: FolderType) => (
+              <button
+                key={f._id}
+                className={`${styles.navItem} ${activeFolder === f._id ? styles.active : ""}`}
+                type="button"
+                onClick={() => {
+                  setStatusChip("alle");
+                  setActiveFolder(activeFolder === f._id ? null : f._id);
+                }}
+                title={f.name}
+              >
+                {f.icon ? (
+                  <span style={{ fontSize: 14, lineHeight: 1, width: 16, textAlign: "center" }}>
+                    {f.icon}
+                  </span>
+                ) : (
+                  <Folder size={16} style={{ color: f.color || "#fbbf24" }} />
+                )}
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {f.name}
+                </span>
+                <span className={styles.count}>{f.contractCount ?? 0}</span>
+              </button>
+            ))}
 
             <div className={styles.sidebarFooter}>
               <div className={styles.avatar}>{userInitials}</div>
@@ -532,11 +796,81 @@ export default function ContractsV2() {
                   <table className={styles.contracts}>
                     <thead>
                       <tr>
-                        <th style={{ width: "40%" }}>Vertrag</th>
-                        <th>Anbieter</th>
-                        <th>Ablauf</th>
-                        <th style={{ width: "120px" }}>Status</th>
-                        <th style={{ width: "120px" }}>Score</th>
+                        <th
+                          style={{ width: "40%", cursor: "pointer" }}
+                          onClick={() => handleSort("name")}
+                          title="Sortieren nach Name"
+                        >
+                          <span className={styles.sortHead}>
+                            Vertrag
+                            {sortKey === "name" &&
+                              (sortDir === "asc" ? (
+                                <ChevronUp size={12} />
+                              ) : (
+                                <ChevronDown size={12} />
+                              ))}
+                          </span>
+                        </th>
+                        <th
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleSort("provider")}
+                          title="Sortieren nach Anbieter"
+                        >
+                          <span className={styles.sortHead}>
+                            Anbieter
+                            {sortKey === "provider" &&
+                              (sortDir === "asc" ? (
+                                <ChevronUp size={12} />
+                              ) : (
+                                <ChevronDown size={12} />
+                              ))}
+                          </span>
+                        </th>
+                        <th
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleSort("expiry")}
+                          title="Sortieren nach Ablauf"
+                        >
+                          <span className={styles.sortHead}>
+                            Ablauf
+                            {sortKey === "expiry" &&
+                              (sortDir === "asc" ? (
+                                <ChevronUp size={12} />
+                              ) : (
+                                <ChevronDown size={12} />
+                              ))}
+                          </span>
+                        </th>
+                        <th
+                          style={{ width: "120px", cursor: "pointer" }}
+                          onClick={() => handleSort("status")}
+                          title="Sortieren nach Status"
+                        >
+                          <span className={styles.sortHead}>
+                            Status
+                            {sortKey === "status" &&
+                              (sortDir === "asc" ? (
+                                <ChevronUp size={12} />
+                              ) : (
+                                <ChevronDown size={12} />
+                              ))}
+                          </span>
+                        </th>
+                        <th
+                          style={{ width: "120px", cursor: "pointer" }}
+                          onClick={() => handleSort("score")}
+                          title="Sortieren nach Score"
+                        >
+                          <span className={styles.sortHead}>
+                            Score
+                            {sortKey === "score" &&
+                              (sortDir === "asc" ? (
+                                <ChevronUp size={12} />
+                              ) : (
+                                <ChevronDown size={12} />
+                              ))}
+                          </span>
+                        </th>
                         <th style={{ width: "90px" }} aria-label="Aktionen" />
                       </tr>
                     </thead>
@@ -671,16 +1005,46 @@ export default function ContractsV2() {
                                       <Edit3 size={14} />
                                       Bearbeiten
                                     </button>
+                                    {!isAnalyzed(c) && (
+                                      <button
+                                        className={styles.popoverItem}
+                                        type="button"
+                                        onClick={() => handleAnalyze(c)}
+                                        disabled={analyzingId === c._id}
+                                      >
+                                        {analyzingId === c._id ? (
+                                          <>
+                                            <Loader size={14} className={styles.spinner} />
+                                            Analysiert…
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Zap size={14} />
+                                            Jetzt analysieren
+                                          </>
+                                        )}
+                                      </button>
+                                    )}
+                                    {isAnalyzed(c) && (
+                                      <button
+                                        className={styles.popoverItem}
+                                        type="button"
+                                        onClick={() => {
+                                          setOpenPopoverFor(null);
+                                          openModal(c, "analysis");
+                                        }}
+                                      >
+                                        <Sparkles size={14} />
+                                        Analyse anzeigen
+                                      </button>
+                                    )}
                                     <button
                                       className={styles.popoverItem}
                                       type="button"
-                                      onClick={() => {
-                                        setOpenPopoverFor(null);
-                                        openModal(c, "analysis");
-                                      }}
+                                      onClick={() => handleReminder(c)}
                                     >
-                                      <Sparkles size={14} />
-                                      Analyse anzeigen
+                                      <Bell size={14} />
+                                      Erinnerung einrichten
                                     </button>
                                     <div className={styles.popoverDivider} />
                                     <button
@@ -899,11 +1263,10 @@ export default function ContractsV2() {
                   <button
                     className={styles.btn}
                     type="button"
-                    onClick={() =>
-                      toast?.info?.("Erinnerungen können in Schritt 3 direkt aus der Liste verwaltet werden.")
-                    }
+                    onClick={() => handleReminder(drawerContract)}
+                    title={hasActiveReminder(drawerContract) ? "Erinnerung aktiv — klick zum Bearbeiten" : "Erinnerung einrichten"}
                   >
-                    <Bell size={14} />
+                    <Bell size={14} style={hasActiveReminder(drawerContract) ? { color: "var(--accent)" } : undefined} />
                     Erinnern
                   </button>
                   <button
@@ -952,6 +1315,32 @@ export default function ContractsV2() {
           onUpdate={(updated) => {
             handleEditUpdate(updated as Contract);
             setEditContract(null);
+          }}
+        />
+      )}
+
+      {/* Reminder-Settings-Modal aus V1, wiederverwendet */}
+      {reminderContract && (
+        <ReminderSettingsModal
+          contractId={reminderContract._id}
+          contractName={fixUtf8Display(reminderContract.name)}
+          currentReminderSettings={reminderContract.reminderSettings || []}
+          currentReminderDays={reminderContract.reminderDays || []}
+          expiryDate={reminderContract.expiryDate}
+          kuendigung={reminderContract.kuendigung}
+          onClose={() => setReminderContract(null)}
+          onSuccess={() => {
+            // Nach erfolgreichem Speichern: Liste neu laden, damit reminderSettings aktuell sind.
+            apiCall("/contracts").then((data: unknown) => {
+              const list: Contract[] = Array.isArray(data)
+                ? (data as Contract[])
+                : ((data as { contracts?: Contract[] })?.contracts ?? []);
+              setContracts(list);
+              if (drawerContract) {
+                const refreshed = list.find((c) => c._id === drawerContract._id);
+                if (refreshed) setDrawerContract(refreshed);
+              }
+            });
           }}
         />
       )}
