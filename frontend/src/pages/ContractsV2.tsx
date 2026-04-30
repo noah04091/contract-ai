@@ -35,6 +35,10 @@ import {
   Menu,
 } from "lucide-react";
 
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
 import NewContractDetailsModal from "../components/NewContractDetailsModal";
 import ContractEditModal from "../components/ContractEditModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal";
@@ -46,6 +50,9 @@ import { useFolders } from "../hooks/useFolders";
 import type { FolderType } from "../components/FolderBar";
 
 import styles from "../styles/ContractsV2.module.css";
+
+// PDF.js Worker (idempotent — gleiche Setzung wie in V1)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 /* =====================================================================
    Types — bewusst minimal gehalten. Wir brauchen nur das, was die Liste
@@ -103,7 +110,8 @@ type ColumnFieldKey =
   | "payment"         // Zahlung (€/Frequenz)
   | "createdAt"       // Hochgeladen
   | "remaining"       // Restlaufzeit (Tage, computed)
-  | "folder";         // Ordner-Name
+  | "folder"          // Ordner-Name
+  | "score";          // Vertrags-Score (0-100 Mini-Bar)
 
 interface ColumnConfig {
   title: string;
@@ -120,6 +128,7 @@ const FIELD_OPTIONS: { key: ColumnFieldKey; label: string; defaultTitle: string 
   { key: "remaining", label: "Restlaufzeit (Tage)", defaultTitle: "Rest" },
   { key: "startDate", label: "Vertragsbeginn", defaultTitle: "Beginn" },
   { key: "payment", label: "Zahlung (€ / Frequenz)", defaultTitle: "Zahlung" },
+  { key: "score", label: "Vertragsbewertung (Score)", defaultTitle: "Score" },
   { key: "createdAt", label: "Hochgeladen am", defaultTitle: "Hochgeladen" },
   { key: "folder", label: "Ordner-Zuordnung", defaultTitle: "Ordner" },
 ];
@@ -237,7 +246,7 @@ function hasActiveReminder(c: Contract): boolean {
 }
 
 /* Sortierwert pro Field — funktioniert generisch für jeden Slot. */
-function getFieldSortValue(c: Contract, field: ColumnFieldKey | "name" | "status" | "score"): number | string {
+function getFieldSortValue(c: Contract, field: ColumnFieldKey | "name" | "status"): number | string {
   switch (field) {
     case "name":
       return (c.name || "").toLowerCase();
@@ -278,7 +287,7 @@ function getFieldSortValue(c: Contract, field: ColumnFieldKey | "name" | "status
   }
 }
 
-type SortKey = ColumnFieldKey | "name" | "status" | "score";
+type SortKey = ColumnFieldKey | "name" | "status";
 
 function compareContracts(a: Contract, b: Contract, key: SortKey, dir: SortDir): number {
   const factor = dir === "asc" ? 1 : -1;
@@ -296,7 +305,7 @@ export default function ContractsV2() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const toast = useToast();
-  const { folders, fetchFolders, bulkMoveToFolder } = useFolders();
+  const { folders, fetchFolders, bulkMoveToFolder, moveContractToFolder } = useFolders();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -369,6 +378,17 @@ export default function ContractsV2() {
   // Mobile-Sidebar (Slide-In)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // PDF-Vorschau im Drawer (zuklappbar, persistiert geräteübergreifend)
+  const [drawerPdfCollapsed, setDrawerPdfCollapsed] = useState<boolean>(
+    () => !!user?.uiPreferences?.sidebarPdfCollapsed,
+  );
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewPdfLoading, setPreviewPdfLoading] = useState(false);
+  const [previewPdfError, setPreviewPdfError] = useState(false);
+
+  // Folder-Submenu im ⋯-Popover
+  const [popoverFolderExpanded, setPopoverFolderExpanded] = useState(false);
+
   /* -------------------------------------------------------------------
      Initial-Fetch
   ------------------------------------------------------------------- */
@@ -415,6 +435,99 @@ export default function ContractsV2() {
   }, [activeFolder, statusChip]);
 
   /* -------------------------------------------------------------------
+     PDF-Vorschau für den Drawer laden (V1-Pattern)
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (!drawerContract) {
+      setPreviewPdfUrl((prev) => {
+        if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setPreviewPdfError(false);
+      setPreviewPdfLoading(false);
+      return;
+    }
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    const load = async () => {
+      setPreviewPdfLoading(true);
+      setPreviewPdfError(false);
+      try {
+        const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+        let newUrl: string | null = null;
+        if (drawerContract.s3Key) {
+          const res = await fetch(`/api/s3/view?contractId=${drawerContract._id}&type=original`, {
+            headers: { Authorization: `Bearer ${token ?? ""}` },
+            credentials: "include",
+          });
+          if (res.ok && !cancelled) {
+            const data = await res.json();
+            newUrl = data.fileUrl || data.url || null;
+          }
+        } else if (drawerContract.isGenerated) {
+          const res = await fetch(`/api/contracts/${drawerContract._id}/pdf-v2`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token ?? ""}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ design: "executive" }),
+          });
+          if (res.ok && !cancelled) {
+            const blob = await res.blob();
+            blobUrl = URL.createObjectURL(blob);
+            newUrl = blobUrl;
+          }
+        }
+        if (!cancelled) {
+          setPreviewPdfUrl((prev) => {
+            if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+            return newUrl;
+          });
+          if (!newUrl) setPreviewPdfError(true);
+        }
+      } catch (e) {
+        console.error("Drawer PDF load error:", e);
+        if (!cancelled) setPreviewPdfError(true);
+      } finally {
+        if (!cancelled) setPreviewPdfLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerContract?._id]);
+
+  const toggleDrawerPdf = () => {
+    setDrawerPdfCollapsed((prev) => {
+      const next = !prev;
+      // Persistieren — geteilt mit V1 (sidebarPdfCollapsed)
+      try {
+        const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+        fetch("/api/auth/ui-preferences", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token ?? ""}`,
+          },
+          credentials: "include",
+          body: JSON.stringify({ sidebarPdfCollapsed: next }),
+        }).catch(() => {});
+        if (user) {
+          user.uiPreferences = { ...user.uiPreferences, sidebarPdfCollapsed: next };
+        }
+      } catch {
+        /* nichts */
+      }
+      return next;
+    });
+  };
+
+  /* -------------------------------------------------------------------
      Click-Outside für Spalten-Popover
   ------------------------------------------------------------------- */
   useEffect(() => {
@@ -451,17 +564,20 @@ export default function ContractsV2() {
   }, [bulkFolderDropdownOpen]);
 
   /* -------------------------------------------------------------------
-     Click-Outside für ⋯-Popover
+     Click-Outside für ⋯-Popover (+ Folder-Submenu zurücksetzen)
   ------------------------------------------------------------------- */
   useEffect(() => {
-    if (!openPopoverFor) return;
+    if (!openPopoverFor) {
+      // Beim Schließen: Folder-Submenu auch zumachen
+      setPopoverFolderExpanded(false);
+      return;
+    }
     const handler = (e: MouseEvent) => {
       const target = e.target as Node | null;
       if (popoverRef.current && target && !popoverRef.current.contains(target)) {
         setOpenPopoverFor(null);
       }
     };
-    // Mit kleinem Delay, sonst feuert das gleich beim Öffnen.
     const t = setTimeout(() => {
       document.addEventListener("mousedown", handler);
     }, 0);
@@ -614,6 +730,17 @@ export default function ContractsV2() {
         );
       case "createdAt":
         return formatDateShort(c.createdAt);
+      case "score":
+        return typeof c.contractScore === "number" && c.contractScore > 0 ? (
+          <span className={styles.scoreCell}>
+            <span className={styles.scoreBar}>
+              <i style={{ width: `${Math.min(100, Math.max(0, c.contractScore))}%` }} />
+            </span>
+            <span>{c.contractScore}</span>
+          </span>
+        ) : (
+          <span className={styles.scoreEmpty}>—</span>
+        );
       case "folder": {
         if (!c.folderId) return <span style={{ color: "var(--text-3)" }}>Ohne Ordner</span>;
         const f = folders.find((x) => x._id === c.folderId);
@@ -828,6 +955,33 @@ export default function ContractsV2() {
   const handleReminder = (c: Contract) => {
     setOpenPopoverFor(null);
     setReminderContract(c);
+  };
+
+  const handleMoveContract = async (c: Contract, folderId: string | null) => {
+    setOpenPopoverFor(null);
+    setPopoverFolderExpanded(false);
+    try {
+      await moveContractToFolder(c._id, folderId);
+      // Lokal aktualisieren
+      setContracts((prev) =>
+        prev.map((x) => (x._id === c._id ? { ...x, folderId } : x)),
+      );
+      if (drawerContract?._id === c._id) {
+        setDrawerContract({ ...drawerContract, folderId });
+      }
+      const folderName =
+        folderId === null
+          ? '"Ohne Ordner"'
+          : folders.find((f) => f._id === folderId)?.name
+          ? `"${folders.find((f) => f._id === folderId)?.name}"`
+          : "Ordner";
+      toast?.success?.(`Verschoben nach ${folderName}`);
+      // Folder-Counts neu laden
+      fetchFolders(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Verschieben fehlgeschlagen";
+      toast?.error?.(msg);
+    }
   };
 
   /* ----------------------------- Bulk-Modus ----------------------------- */
@@ -1429,21 +1583,6 @@ export default function ContractsV2() {
                               ))}
                           </span>
                         </th>
-                        <th
-                          style={{ width: "120px", cursor: "pointer" }}
-                          onClick={() => handleSort("score")}
-                          title="Sortieren nach Score"
-                        >
-                          <span className={styles.sortHead}>
-                            Score
-                            {sortKey === "score" &&
-                              (sortDir === "asc" ? (
-                                <ChevronUp size={12} />
-                              ) : (
-                                <ChevronDown size={12} />
-                              ))}
-                          </span>
-                        </th>
                         <th style={{ width: "90px" }} aria-label="Aktionen" />
                       </tr>
                     </thead>
@@ -1510,18 +1649,6 @@ export default function ContractsV2() {
                                 {st.label}
                                 {st.tone === "ok" && <CheckCircle2 size={11} />}
                               </span>
-                            </td>
-                            <td>
-                              {typeof c.contractScore === "number" && c.contractScore > 0 ? (
-                                <span className={styles.scoreCell}>
-                                  <span className={styles.scoreBar}>
-                                    <i style={{ width: `${Math.min(100, Math.max(0, c.contractScore))}%` }} />
-                                  </span>
-                                  <span>{c.contractScore}</span>
-                                </span>
-                              ) : (
-                                <span className={styles.scoreEmpty}>—</span>
-                              )}
                             </td>
                             <td className={styles.actionsCell} onClick={(e) => e.stopPropagation()}>
                               <button
@@ -1609,6 +1736,58 @@ export default function ContractsV2() {
                                       <Bell size={14} />
                                       Erinnerung einrichten
                                     </button>
+                                    <button
+                                      className={styles.popoverItem}
+                                      type="button"
+                                      onClick={() => setPopoverFolderExpanded((v) => !v)}
+                                    >
+                                      <Folder size={14} />
+                                      <span style={{ flex: 1, textAlign: "left" }}>
+                                        In Ordner verschieben
+                                      </span>
+                                      {popoverFolderExpanded ? (
+                                        <ChevronUp size={12} />
+                                      ) : (
+                                        <ChevronDown size={12} />
+                                      )}
+                                    </button>
+                                    {popoverFolderExpanded && (
+                                      <div className={styles.popoverFolderList}>
+                                        <button
+                                          type="button"
+                                          className={`${styles.popoverItem} ${styles.popoverFolderItem} ${!c.folderId ? styles.popoverFolderItemActive : ""}`}
+                                          onClick={() => handleMoveContract(c, null)}
+                                        >
+                                          <Folder size={12} style={{ color: "#94a3b8" }} />
+                                          Ohne Ordner
+                                          {!c.folderId && (
+                                            <CheckCircle2 size={12} style={{ marginLeft: "auto" }} />
+                                          )}
+                                        </button>
+                                        {folders.map((f) => (
+                                          <button
+                                            key={f._id}
+                                            type="button"
+                                            className={`${styles.popoverItem} ${styles.popoverFolderItem} ${c.folderId === f._id ? styles.popoverFolderItemActive : ""}`}
+                                            onClick={() => handleMoveContract(c, f._id)}
+                                          >
+                                            {f.icon ? (
+                                              <span style={{ fontSize: 13, lineHeight: 1, width: 14, textAlign: "center" }}>
+                                                {f.icon}
+                                              </span>
+                                            ) : (
+                                              <Folder size={12} style={{ color: f.color || "#fbbf24" }} />
+                                            )}
+                                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                              {f.name}
+                                            </span>
+                                            {c.folderId === f._id && (
+                                              <CheckCircle2 size={12} style={{ marginLeft: "auto", flexShrink: 0 }} />
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
                                     <div className={styles.popoverDivider} />
                                     <button
                                       className={`${styles.popoverItem} ${styles.danger}`}
@@ -1668,6 +1847,57 @@ export default function ContractsV2() {
                   <X size={15} />
                 </button>
               </div>
+
+              {/* PDF-Vorschau (zuklappbar, wie V1) */}
+              {(previewPdfLoading || previewPdfUrl || previewPdfError) && (
+                <div className={styles.drawerSection}>
+                  <button
+                    type="button"
+                    className={styles.pdfToggleBtn}
+                    onClick={toggleDrawerPdf}
+                    title={drawerPdfCollapsed ? "PDF-Vorschau einblenden" : "PDF-Vorschau ausblenden"}
+                  >
+                    <span>PDF-Vorschau</span>
+                    {drawerPdfCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  </button>
+                  {!drawerPdfCollapsed && (
+                    previewPdfLoading && !previewPdfUrl ? (
+                      <div className={styles.pdfThumbLoading}>
+                        <Loader size={20} className={styles.spinner} />
+                      </div>
+                    ) : previewPdfUrl ? (
+                      <div
+                        className={styles.pdfThumb}
+                        onClick={() => openModal(drawerContract, "pdf")}
+                        title="Vollständiges PDF öffnen"
+                      >
+                        <Document
+                          file={previewPdfUrl}
+                          loading={null}
+                          error={
+                            <div className={styles.pdfThumbError}>
+                              <AlertTriangle size={14} />
+                              <span>Vorschau nicht verfügbar</span>
+                            </div>
+                          }
+                        >
+                          <Page
+                            pageNumber={1}
+                            width={360}
+                            renderTextLayer={false}
+                            renderAnnotationLayer={false}
+                          />
+                        </Document>
+                      </div>
+                    ) : (
+                      <div className={styles.pdfThumbError}>
+                        <AlertTriangle size={14} />
+                        <span>PDF-Vorschau nicht verfügbar</span>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
 
               {/* Score */}
               {score !== null && (
