@@ -8,6 +8,7 @@ import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { contractTemplates, ContractTemplate } from '../data/contractTemplates';
 import type { DesignTemplate } from '../data/designTemplates';
+import { handleTokenRefresh } from '../utils/authUtils';
 
 // ============================================
 // TYPES
@@ -779,35 +780,9 @@ function createLocalDocument(name: string, contractType: string, template?: Cont
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
-// Token-Validierung: Prüft ob JWT gültig und nicht abgelaufen ist
-function isTokenValid(token: string | null): boolean {
-  if (!token) return false;
-  try {
-    // JWT besteht aus 3 Teilen: header.payload.signature
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-
-    const payload = JSON.parse(atob(parts[1]));
-    // exp ist in Sekunden, Date.now() in Millisekunden
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      // Token abgelaufen
-      return false;
-    }
-    return true;
-  } catch {
-    // Token ungültig
-    return false;
-  }
-}
-
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   // Token-Fallback: authToken (von Login.tsx) ODER token (legacy)
   const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-
-  // SICHERHEIT: Token validieren bevor API-Call
-  if (!isTokenValid(token)) {
-    throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
-  }
 
   const response = await fetch(`${API_BASE}/api/contract-builder${endpoint}`, {
     ...options,
@@ -818,8 +793,11 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
     },
   });
 
+  // Silent Token Refresh: Backend kann via X-Refreshed-Token Header ein erneuertes JWT mitschicken
+  handleTokenRefresh(response);
+
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
       throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
     }
     const error = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));

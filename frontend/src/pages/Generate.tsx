@@ -5503,7 +5503,7 @@ export default function Generate() {
       }
 
       // Auth-Token validieren
-      const authToken = localStorage.getItem('token');
+      const authToken = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!authToken) {
         toast.error('Authentifizierung erforderlich. Bitte melden Sie sich erneut an.', {
           autoClose: 5000, position: 'top-center'
