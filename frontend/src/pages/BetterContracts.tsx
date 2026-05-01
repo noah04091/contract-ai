@@ -680,12 +680,12 @@ const BetterContracts: React.FC = () => {
                     Zurück
                   </button>
                   
-                  <button 
-                    className="contract-button"
+                  <button
+                    className={`contract-button ${loading ? 'is-loading' : ''}`}
                     onClick={handleAnalyze}
                     disabled={!isPremium || loading}
                     style={{
-                      opacity: isPremium && !loading ? 1 : 0.6,
+                      opacity: isPremium ? 1 : 0.6,
                       cursor: isPremium && !loading ? 'pointer' : 'not-allowed'
                     }}
                   >

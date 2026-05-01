@@ -637,6 +637,23 @@
   height: 18px;
 }
 
+/* Loading-State: behält Brand-Look statt Disabled-Grau */
+.contract-button.is-loading,
+.contract-button.is-loading:disabled {
+  background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
+  color: white;
+  opacity: 0.85;
+  cursor: progress;
+  transform: none;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+}
+
+/* Analyzing-Progress: full-width statt 200px-Cap (greift NUR im Step-2 Analyze-Block) */
+.analyzing-progress .progress-container {
+  max-width: 100%;
+  margin: 0;
+}
+
 /* ============================================
    PRICE INPUT SECTION (Step 2)
    ============================================ */

@@ -2318,7 +2318,7 @@ router.post("/", async (req, res) => {
     console.log(`✅ ${successfulExtractions.length} erfolgreich, ${failedExtractions} fehlgeschlagen`);
 
     // 🆕 Enhanced Data Kombinierung mit VERBESSERTER SORTIERUNG UND PREISERKENNUNG
-    const enrichedResults = combinedResults.slice(0, 10).map((result, index) => {
+    let enrichedResults = combinedResults.slice(0, 10).map((result, index) => {
       // Partner results already have all needed data
       if (result.source === 'partner') {
         return {
