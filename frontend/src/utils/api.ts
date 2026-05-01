@@ -1,5 +1,6 @@
 // 📁 src/utils/api.ts - FIXED: PDF-Fehlermeldungen + Duplikat-Handling (NO extractExistingContract)
 import { debug } from './debug';
+import { handleTokenRefresh } from './authUtils';
 
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
 
@@ -344,6 +345,9 @@ export const apiCall = async (
 
     const response = await fetch(url, mergedOptions);
 
+    // 🔄 Silent Token Refresh: Backend setzt X-Refreshed-Token wenn Token bald abläuft
+    handleTokenRefresh(response);
+
     // Debug: Response loggen
     if (response.ok) {
       debug.apiSuccess(callId, response.status, { statusText: response.statusText }, url);
@@ -376,6 +380,19 @@ export const apiCall = async (
             };
             console.log("🔄 Duplikat-Error erkannt in apiCall");
             throw duplicateError;
+          }
+
+          // 🔒 Session abgelaufen: Auto-Logout + Redirect zu /login
+          // Triggert NUR bei diesem spezifischen Backend-Code (verifyToken.js).
+          // Andere 403-Fälle (PREMIUM_REQUIRED, PLAN_LIMIT, "Chat limit reached", upgradeRequired)
+          // bleiben unangetastet und werden weiterhin von ihren jeweiligen Aufrufern behandelt.
+          if (response.status === 403 && errorData?.error === "TOKEN_EXPIRED") {
+            console.warn("🔒 Sitzung abgelaufen - Auto-Logout");
+            clearAuthData();
+            if (!window.location.pathname.startsWith("/login")) {
+              window.location.href = "/login?reason=session_expired";
+            }
+            throw new Error("Sitzung abgelaufen. Bitte erneut einloggen.");
           }
 
           // Prüfe ob Retry sinnvoll ist

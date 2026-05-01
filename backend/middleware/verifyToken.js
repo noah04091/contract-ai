@@ -88,6 +88,6 @@ module.exports = function (req, res, next) {
     next();
   } catch (err) {
     console.error("❌ Ungültiger JWT:", err.message);
-    return res.status(403).json({ message: "Sitzung abgelaufen oder ungültig. Bitte erneut einloggen." });
+    return res.status(403).json({ error: "TOKEN_EXPIRED", message: "Sitzung abgelaufen oder ungültig. Bitte erneut einloggen." });
   }
 };
