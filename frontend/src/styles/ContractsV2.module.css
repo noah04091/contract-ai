@@ -976,20 +976,28 @@ table.contracts {
 }
 
 /* ============================ DRAWER ============================ */
+/* Drawer wird fixed positioniert, damit er IMMER im Sichtfeld ist —
+   egal wie weit der User in der Tabelle gescrollt hat.
+   Das Grid bleibt 2-spaltig, der Main-Content bekommt padding-right. */
 .shellWithDrawer {
-  grid-template-columns: 224px 1fr 420px;
+  grid-template-columns: 224px 1fr;
+}
+.shellWithDrawer .main {
+  padding-right: 440px; /* 420 Drawer + 20 Margin */
 }
 
 .drawer {
   background: var(--surface);
   border-left: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  align-self: start; /* WICHTIG: ohne stretch nimmt das Grid-Item nur 100vh — sticky greift sauber */
-  height: 100vh;
-  overflow-y: auto; /* eigener Scroll im Drawer, unabhängig vom Page-Scroll */
+  position: fixed;
+  top: 64px; /* Höhe der globalen App-Navbar */
+  right: 0;
+  width: 420px;
+  height: calc(100vh - 64px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  z-index: 20;
 }
 .drawerHead {
   padding: 22px 24px 18px;
@@ -1173,6 +1181,10 @@ table.contracts {
   .shell,
   .shellWithDrawer {
     grid-template-columns: 1fr;
+  }
+  /* Auf Mobile kein Drawer-Padding nötig, weil Drawer eh display:none ist */
+  .shellWithDrawer .main {
+    padding-right: 14px;
   }
 
   /* ---- Sidebar als Slide-In-Drawer von links ---- */
