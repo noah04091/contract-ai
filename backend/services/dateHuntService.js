@@ -15,7 +15,12 @@
 const DATE_HUNT_TIMEOUT_MS = 75_000;
 const DATE_HUNT_MODEL = 'gpt-4-turbo';
 const MAX_DATES = 10;
-const MAX_FRIST_HINWEISE = 8;
+// Sanity-Cap, KEIN Steuer-Limit. 25 ist de facto unbegrenzt für reale Verträge —
+// auch ein 50-seitiger Beratungsvertrag erreicht selten zweistellige Fristen-Zahlen.
+// Der Evidence-Validator filtert die Wahrheit. Niemals als "Quote" im Prompt
+// kommunizieren — das würde GPT zum Halluzinieren verleiten.
+// (Architektur-Linie: memory/feedback_datum-extraktion-universalitaet.md, Punkt 0)
+const MAX_FRIST_HINWEISE = 25;
 const EVIDENCE_MIN_LEN = 8;
 const EVIDENCE_MAX_LEN = 250;
 
@@ -174,7 +179,11 @@ REGELN FÜR FRIST-HINWEISE — gleiche Disziplin wie für Datums:
    keine Synonym-Ersetzung, kein Umlaut-Tausch. Wörtlich oder gar nicht.
 9. Niemals erfinden: wenn keine entsprechende Frist im Vertrag steht, fristHinweise = [].
 10. Nicht doppeln: dieselbe Frist nur EINMAL extrahieren, auch wenn sie mehrfach erwähnt wird.
-11. Maximal ${MAX_FRIST_HINWEISE} Frist-Hinweise — fokussiere auf das, was der Mandant wirklich wissen muss.
+11. Der Vertrag bestimmt die Menge — manche Verträge haben gar keine Frist-Regelungen,
+    andere 10–15. Erfinde keine, wenn der Vertrag wenige hat. Übersiehe aber auch keine,
+    die wirklich da steht und belegbar ist. Der Backend-Validator entfernt automatisch
+    jede Frist, deren evidence du nicht wörtlich aus dem Vertrag zitieren kannst —
+    du musst dich nicht selbst zensieren, der Validator macht das.
 12. Wenn aus einer Frist ein konkretes Datum berechenbar ist, gehört das Datum in importantDates.
     Der Frist-Hinweis bleibt zusätzlich, weil er die Regel beschreibt — er ist kein Termin.
 
