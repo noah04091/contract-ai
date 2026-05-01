@@ -1455,7 +1455,7 @@ export default function ContractsV2() {
                           </th>
                         )}
                         <th
-                          style={{ width: "40%", cursor: "pointer" }}
+                          style={{ width: "30%", cursor: "pointer" }}
                           onClick={() => handleSort("name")}
                           title="Sortieren nach Name"
                         >
