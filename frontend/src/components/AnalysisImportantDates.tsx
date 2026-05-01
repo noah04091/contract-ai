@@ -153,12 +153,14 @@ export default function AnalysisImportantDates({
         : [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      // Strikt < today: heute fällige Termine bleiben im Termine-Block
+      // (sonst Doppelung "Heute!" + "Vertragshistorie 0 Tage vergangen").
       const past = allImportant.filter((d) => {
         if (!d?.date) return false;
         const dt = new Date(d.date);
         if (isNaN(dt.getTime())) return false;
         dt.setHours(0, 0, 0, 0);
-        return dt.getTime() <= today.getTime();
+        return dt.getTime() < today.getTime();
       });
       setHistoricalDates(past);
 
@@ -302,7 +304,7 @@ export default function AnalysisImportantDates({
           type: "kuendigungsfrist",
           title: `Kündigungsfrist ${cancellationPeriod.value} ${cancellationPeriod.unit === "months" ? "Monate" : cancellationPeriod.unit === "weeks" ? "Wochen" : cancellationPeriod.unit === "days" ? "Tage" : cancellationPeriod.unit}${cancellationPeriod.type === "end_of_period" ? " zum Laufzeitende" : ""}`,
           description:
-            "Diese Frist wurde aus dem Vertragstext erkannt. Plane sie ein, falls du den Vertrag beenden möchtest.",
+            "Aus dem Vertragstext erkannt. Komplexe Verträge enthalten oft mehrere Kündigungsregelungen — prüfe das Rechtsgutachten unten für den vollständigen Kontext.",
         }
       : null;
 

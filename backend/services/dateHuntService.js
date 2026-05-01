@@ -22,7 +22,12 @@ const MAX_DATES = 10;
 // (Architektur-Linie: memory/feedback_datum-extraktion-universalitaet.md, Punkt 0)
 const MAX_FRIST_HINWEISE = 25;
 const EVIDENCE_MIN_LEN = 8;
-const EVIDENCE_MAX_LEN = 250;
+// 400 statt 250: Komplexe Regelungen mit zwei Sätzen (z.B. Kündigungsfrist
+// "2 Wochen in den ersten 3 Monaten, danach 6 Monate zum Monatsende") brauchen
+// realistisch ~280-320 Zeichen Vertragszitat. 250 hat den korrekten Frist-Hinweis
+// im Factoring-Test verworfen und den Fallback aktiviert — der Fallback zeigte
+// nur die halbe Wahrheit. 400 deckt diese Fälle ab, der Validator bleibt strikt.
+const EVIDENCE_MAX_LEN = 400;
 
 const SYSTEM_PROMPT = `Du bist ein juristischer Spezialist für Vertrags-Termine und -Fristen. Du hast genau zwei Aufgaben:
 
