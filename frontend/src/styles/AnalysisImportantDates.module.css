@@ -522,3 +522,160 @@
     max-height: 95vh;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Stufe-2c Sub-Blöcke: Wichtige Fristen & Hinweise + Vertragshistorie
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.fristenBlock,
+.historyBlock {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.fristenBlock {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  border: 1px solid #fde68a;
+}
+
+.historyBlock {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  opacity: 0.85;
+}
+
+.subBlockHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.subBlockIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.subBlockTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Frist-Hinweise */
+.fristenList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fristItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+}
+
+.fristIconWrap {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.fristContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.fristTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.fristDescription {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.fristLegalBasis {
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 500;
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fef3c7;
+  border-radius: 6px;
+}
+
+/* Vertragshistorie */
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.historyEmoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.historyContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.historyTitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 2px;
+}
+
+.historyDescription {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.historyMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.historyDate {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.historyDays {
+  font-size: 11px;
+  color: #94a3b8;
+}
