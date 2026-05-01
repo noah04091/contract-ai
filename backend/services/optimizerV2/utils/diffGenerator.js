@@ -24,8 +24,12 @@ function generateWordDiff(original, optimized) {
   const totalParts = wordDiffChanges.length;
   const changeRatio = totalParts > 0 ? changeCount / totalParts : 0;
 
-  // If >60% of diff parts are changes, switch to sentence-level diff for readability
-  const changes = changeRatio > 0.6
+  // Sentence-fallback only kicks in for near-complete rewrites (>85%).
+  // The previous 60% threshold caused block-level remove/add operations to swallow
+  // moderate edits (e.g. removing a section header like "§ 2 −"), turning visually
+  // 90%-identical clauses into "everything red" in the redline view.
+  // Word-level diff is preferred for moderate edits and still yields readable output.
+  const changes = changeRatio > 0.85
     ? Diff.diffSentences(original, optimized)
     : wordDiffChanges;
 
