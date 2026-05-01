@@ -174,6 +174,7 @@ function processDecisions({ type, decisions, mode, partyData }) {
 
   return {
     playbook: type,
+    playbookObject: playbook, // Volles Playbook-Objekt für routes/playbooks.js (title, roles, etc.)
     mode: safeMode,
     modeLabel: playbook.modes[safeMode].label,
     resolvedDecisions,
@@ -206,16 +207,20 @@ function buildReasoning(section, chosenOption, mode, partyData) {
  * Gibt GPT Struktur, Regeln und Intention — KEINE fertigen Klauseln
  */
 function buildPromptInstructions(playbook, sectionOutputs, mode, partyData) {
+  // Rollen aus dem Playbook (vertragstyp-spezifisch — z.B. "Arbeitgeber"/"Arbeitnehmer", "Vermieter"/"Mieter")
+  const partyARole = playbook.roles?.A?.label || "Partei A";
+  const partyBRole = playbook.roles?.B?.label || "Partei B";
+
   const modeInstructions = {
-    sicher: "Der Vertrag soll MAXIMALEN SCHUTZ für die offenlegende Partei bieten. " +
+    sicher: `Der Vertrag soll MAXIMALEN SCHUTZ für ${partyARole} bieten. ` +
       "Formulierungen sollen klar, strikt und durchsetzbar sein. " +
       "Im Zweifel: strenger formulieren.",
     ausgewogen: "Der Vertrag soll FAIR und AUSGEWOGEN für beide Parteien sein. " +
       "Marktübliche Formulierungen verwenden. " +
       "Beide Parteien sollen sich wohlfühlen.",
-    durchsetzungsstark: "Der Vertrag soll die INTERESSEN des Auftraggebers DURCHSETZEN. " +
+    durchsetzungsstark: `Der Vertrag soll die INTERESSEN von ${partyARole} DURCHSETZEN. ` +
       "Formulierungen sollen professionell aber bestimmt sein. " +
-      "Wo möglich: Vorteile für die auftraggebende Seite einbauen."
+      `Wo möglich: Vorteile für ${partyARole} einbauen.`
   };
 
   // Sektions-Anweisungen (was GPT pro Paragraph berücksichtigen soll)
@@ -224,34 +229,44 @@ function buildPromptInstructions(playbook, sectionOutputs, mode, partyData) {
       `Ansatz "${s.clauseVariables.chosenApproach}" — ${s.clauseVariables.description}`;
   }).join("\n");
 
-  // Parteien-Info
+  // Parteien-Info (Rollen-Labels dynamisch aus Playbook)
   const partyInfo = partyData ? [
-    `Offenlegende Partei: ${partyData.partyA_name || "[Name Partei A]"}`,
+    `${partyARole}: ${partyData.partyA_name || "[Name Partei A]"}`,
     partyData.partyA_address ? `Adresse: ${partyData.partyA_address}` : "",
     partyData.partyA_representative ? `Vertreten durch: ${partyData.partyA_representative}` : "",
-    `Empfangende Partei: ${partyData.partyB_name || "[Name Partei B]"}`,
+    `${partyBRole}: ${partyData.partyB_name || "[Name Partei B]"}`,
     partyData.partyB_address ? `Adresse: ${partyData.partyB_address}` : "",
     partyData.partyB_representative ? `Vertreten durch: ${partyData.partyB_representative}` : "",
     partyData.purpose ? `Zweck: ${partyData.purpose}` : "",
-    partyData.direction ? `Art: ${partyData.direction === "gegenseitig" ? "Gegenseitige NDA" : "Einseitige NDA"}` : ""
+    partyData.direction ? `Art: ${partyData.direction === "gegenseitig" ? "Gegenseitig" : "Einseitig"}` : ""
   ].filter(Boolean).join("\n") : "";
 
+  // Basis-Regeln (gelten für alle Vertragstypen)
+  const baseRules = [
+    "Verwende EXAKT die Parteinamen aus den Angaben.",
+    "Jeder Paragraph muss eine vollständige, rechtlich formulierte Klausel sein.",
+    "KEINE Platzhalter wie [Name] — nur echte Daten.",
+    "Sprache: Professionelles Deutsch, rechtlich präzise.",
+    "Orientiere dich an den Sektions-Anweisungen für Intention und Strenge.",
+    "Schreibe den KOMPLETTEN Vertrag mit allen Paragraphen.",
+    "KEINE Unterschriftenzeilen — das ist ein separates Dokument.",
+    "Verwende KEINE Markdown-Formatierung: keine ** für Bold, keine -- als Trennstriche, keine # für Headings, keine *-Bullets. Schreibe reinen formellen Fließtext mit Paragraphen-Strukturen in der Form '§ X Titel' (Header) gefolgt vom Klausel-Inhalt darunter."
+  ];
+
+  // NDA-spezifische Regel: nur einfügen wenn direction-Feld existiert (nur NDA-Playbook hat das)
+  if (partyData?.direction) {
+    baseRules.push(
+      `Art der Vereinbarung: ${partyData.direction === "gegenseitig" ? "Gegenseitig — BEIDE Parteien haben Rechte und Pflichten" : "Einseitig — Pflichten primär bei der empfangenden Partei"}.`
+    );
+  }
+
   return {
-    systemContext: `Du erstellst eine professionelle Geheimhaltungsvereinbarung (NDA) nach deutschem Recht. ` +
+    systemContext: `Du erstellst nach deutschem Recht das folgende juristische Dokument: ${playbook.title}. ` +
       `Strategie-Modus: ${playbook.modes[mode].label}. ` +
       modeInstructions[mode],
     partyInfo,
     sectionInstructions,
-    rules: [
-      "Verwende EXAKT die Parteinamen aus den Angaben.",
-      "Jeder Paragraph muss eine vollständige, rechtlich formulierte Klausel sein.",
-      "KEINE Platzhalter wie [Name] — nur echte Daten.",
-      "Sprache: Professionelles Deutsch, rechtlich präzise.",
-      "Orientiere dich an den Sektions-Anweisungen für Intention und Strenge.",
-      `Art der NDA: ${partyData?.direction === "gegenseitig" ? "Gegenseitig — BEIDE Parteien haben Rechte und Pflichten" : "Einseitig — Pflichten primär bei der empfangenden Partei"}.`,
-      "Schreibe den KOMPLETTEN Vertrag mit allen Paragraphen.",
-      "KEINE Unterschriftenzeilen — das ist ein separates Dokument."
-    ]
+    rules: baseRules
   };
 }
 

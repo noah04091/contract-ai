@@ -94,16 +94,17 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
     // 2. V2-Pipeline aufrufen mit angereichertem Prompt
     const { contractText, generationDoc } = await generateWithPlaybook(engineResult, req.user.userId);
 
-    // 3. In DB speichern
+    // 3. In DB speichern (name + contractType dynamisch aus Playbook)
     const db = await database.connect();
     const contractId = new ObjectId();
+    const playbookTitle = engineResult.playbookObject?.title || type;
 
     await db.collection("contracts").insertOne({
       _id: contractId,
       userId: new ObjectId(req.user.userId),
-      name: `NDA — ${partyData.partyA_name} & ${partyData.partyB_name}`,
+      name: `${playbookTitle} — ${partyData.partyA_name} & ${partyData.partyB_name}`,
       content: contractText,
-      contractType: "nda",
+      contractType: type,
       isGenerated: true,
       source: "playbook",
       playbook: {
@@ -233,20 +234,17 @@ async function generateWithPlaybook(engineResult, userId) {
     promptInstructions.rules.map((r, i) => `${i + 1}. ${r}`).join("\n")
   ].join("\n");
 
-  const userPrompt = `Erstelle jetzt die vollständige Geheimhaltungsvereinbarung (NDA) basierend auf den obigen Angaben und Sektions-Anweisungen.
+  // Sektionsliste dynamisch aus dem Playbook (statt hardcoded NDA-Sektionen)
+  const playbookTitle = engineResult.playbookObject?.title || engineResult.playbook;
+  const sectionList = engineResult.sections.map(s => `${s.paragraph} ${s.title}`).join("\n");
+  const finalParagraphNumber = engineResult.sections.length + 2; // §1 Parteien, §2..N Sektionen, §N+1 Schlussbestimmungen
+
+  const userPrompt = `Erstelle jetzt den vollständigen Vertrag "${playbookTitle}" basierend auf den obigen Angaben und Sektions-Anweisungen.
 
 Der Vertrag muss enthalten:
-§ 1 Vertragsgegenstand und Zweck
-§ 2 Vertrauliche Informationen
-§ 3 Pflichten der empfangenden Partei
-§ 4 Ausnahmen von der Vertraulichkeit
-§ 5 Dauer der Geheimhaltung
-§ 6 Weitergabe an Dritte
-§ 7 Rückgabe und Vernichtung
-§ 8 Vertragsstrafe
-§ 9 Haftung
-§ 10 Gerichtsstand und anwendbares Recht
-§ 11 Schlussbestimmungen
+§ 1 Vertragsparteien
+${sectionList}
+§ ${finalParagraphNumber} Schlussbestimmungen
 
 Schreibe den KOMPLETTEN Vertrag in professionellem Deutsch. Jeder Paragraph muss vollständig und rechtlich präzise formuliert sein. KEINE Platzhalter, KEINE Abkürzungen, KEINE Unterschriftenzeilen.`;
 
@@ -276,7 +274,7 @@ Schreibe den KOMPLETTEN Vertrag in professionellem Deutsch. Jeder Paragraph muss
     playbookMode: engineResult.mode
   };
 
-  console.log(`✅ [PLAYBOOK-GPT] NDA generiert in ${durationMs}ms (${generationDoc.tokenCount} tokens)`);
+  console.log(`✅ [PLAYBOOK-GPT] ${engineResult.playbookObject?.title || engineResult.playbook} generiert in ${durationMs}ms (${generationDoc.tokenCount} tokens)`);
 
   return { contractText, generationDoc };
 }
