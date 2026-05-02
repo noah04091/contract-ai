@@ -24,7 +24,9 @@ export interface UserData {
     analysisLimit: number;
     optimizationCount: number;
     optimizationLimit: number;
-  }   
+    generateCount?: number;
+    generateLimit?: number;
+  }
 
 /**
  * Holt das JWT Token aus dem Cookie storage (falls vorhanden)

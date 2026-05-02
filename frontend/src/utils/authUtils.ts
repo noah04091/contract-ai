@@ -25,6 +25,8 @@ export interface UserData {
   analysisLimit: number;
   optimizationCount: number;
   optimizationLimit: number;
+  generateCount?: number;
+  generateLimit?: number;
 
   // 📅 Timestamps (aus Backend)
   createdAt: string;
