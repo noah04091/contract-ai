@@ -50,13 +50,19 @@ Du arbeitest wie ein Anwalt, der seinem Mandanten Termine UND Fristen aufschreib
 // Bewusst anderer Tonfall als Stage A — die Assistentin ist die Sicherheitsschicht,
 // nicht der zweite Anwalt. Sie sucht nicht "etwas zu finden"; sie prüft, ob etwas
 // fehlt. "Leer ist OK" ist die wichtigste Regel.
+//
+// WICHTIG: Das Wort "JSON" muss irgendwo in den messages stehen, weil wir
+// response_format: json_object benutzen — sonst lehnt OpenAI den Call ab mit
+// "messages must contain the word 'json'". Hier explizit am Ende erwähnt.
 const REVIEW_SYSTEM_PROMPT = `Du bist eine erfahrene juristische Assistentin in einer Anwaltskanzlei. Der Anwalt hat einen Vertrag analysiert und Datums + Frist-Hinweise notiert. Deine einzige Aufgabe: prüfen, ob er etwas übersehen hat — und nur ZUSÄTZLICHE Funde liefern.
 
 Strenge Prinzipien:
 - Es ist OKAY und richtig, NICHTS zu finden. Wenn der Anwalt alles hat, liefere leere Arrays. Das ist kein Versagen.
 - Erfinde nichts. Halluziniere nicht. Zitiere immer wörtlich aus dem Vertrag.
 - Doppele nicht. Was schon in der Anwalts-Liste steht, ergänzt du NICHT noch einmal.
-- Du bist die Sicherheitsschicht, kein zweiter Anwalt. Lieber leer als erfunden.`;
+- Du bist die Sicherheitsschicht, kein zweiter Anwalt. Lieber leer als erfunden.
+
+Antworte AUSSCHLIESSLICH mit korrekt formatiertem JSON. Keine Markdown-Blöcke, kein Text vor oder nach dem JSON.`;
 
 function buildUserPrompt(contractText) {
   const today = new Date().toISOString().slice(0, 10);
