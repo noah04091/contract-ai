@@ -81,7 +81,7 @@ const convertS3ToBase64 = async (url) => {
           if (totalSize > 5 * 1024 * 1024) { // Max 5MB
             console.error("❌ Logo zu groß (>5MB)");
             request.destroy();
-            reject(new Error('Logo file too large (>5MB)'));
+            reject(new Error('Logo-Datei zu groß (max. 5 MB)'));
             return;
           }
         });
@@ -95,7 +95,7 @@ const convertS3ToBase64 = async (url) => {
             const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
             if (!validImageTypes.includes(mimeType)) {
               console.error(`❌ Ungültiges Bildformat: ${mimeType}`);
-              reject(new Error(`Unsupported image type: ${mimeType}`));
+              reject(new Error(`Bildformat nicht unterstützt: ${mimeType}`));
               return;
             }
             

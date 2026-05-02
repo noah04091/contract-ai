@@ -1494,7 +1494,18 @@ router.put('/:id', auth, async (req, res) => {
 
 /**
  * DELETE /api/contract-builder/:id
- * Dokument löschen
+ * Dokument löschen.
+ *
+ * Berechtigungen: NUR der Eigentümer (Owner) darf löschen.
+ * Collaborators mit edit-Permission dürfen das Dokument bearbeiten,
+ * aber nicht löschen — Design-Rationale: Löschen ist eine permanente,
+ * nicht rückgängig machbare Aktion und bleibt dem Owner vorbehalten.
+ *
+ * Antwort-Differenzierung:
+ *   - 200: Dokument erfolgreich gelöscht.
+ *   - 403: Dokument existiert, aber Aufrufer ist nicht Owner.
+ *   - 404: Dokument existiert nicht (oder wurde bereits gelöscht).
+ *   - 500: Unerwarteter Server-Fehler.
  */
 router.delete('/:id', auth, async (req, res) => {
   try {
@@ -1504,7 +1515,18 @@ router.delete('/:id', auth, async (req, res) => {
     });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ success: false, error: 'Dokument nicht gefunden' });
+      // Unterscheide zwischen "existiert nicht" (404) und "kein Owner" (403)
+      const existsForOther = await ContractBuilder.exists({ _id: req.params.id });
+      if (existsForOther) {
+        return res.status(403).json({
+          success: false,
+          error: 'Nur der Dokumenteigentümer kann dieses Dokument löschen.'
+        });
+      }
+      return res.status(404).json({
+        success: false,
+        error: 'Dokument nicht gefunden oder bereits gelöscht.'
+      });
     }
 
     res.json({ success: true, message: 'Dokument gelöscht' });
