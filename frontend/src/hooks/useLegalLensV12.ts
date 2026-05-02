@@ -437,6 +437,11 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
             },
+            onClausesMerged: (mergedClauses, totalClauses) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              setClauses(mergedClauses);
+              setStreamingStatus(`${totalClauses} Klauseln zusammengeführt`);
+            },
             onComplete: () => {
               if (parseRequestIdRef.current !== requestId) return;
               setIsStreaming(false);
@@ -518,6 +523,11 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
               });
               setStreamingStatus(`${totalSoFar} Klauseln analysiert...`);
               setConnectionLost(false);
+            },
+            onClausesMerged: (mergedClauses, totalClauses) => {
+              if (parseRequestIdRef.current !== requestId) return;
+              setClauses(mergedClauses);
+              setStreamingStatus(`${totalClauses} Klauseln zusammengeführt`);
             },
             onComplete: () => {
               if (parseRequestIdRef.current !== requestId) return;
