@@ -42,22 +42,15 @@
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 
-  /* V1-Pattern: gesamte Page fixed unter der App-Navbar.
-     Nichts auf Page-Ebene scrollt — nur einzelne Bereiche innen. */
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
-  overflow: hidden;
+  /* Normales scrollendes Layout — Body scrollt, Sidebar/Drawer sind sticky/fixed.
+     Damit ist der Scroll garantiert vorhanden und alle Bereiche bleiben sichtbar. */
+  min-height: 100vh;
 }
 
 .shell {
   display: flex;
-  height: 100%;
-  min-height: 0;
+  align-items: flex-start;
+  min-height: 100vh;
 }
 
 /* ============================ SIDEBAR ============================ */
@@ -70,8 +63,10 @@
   gap: 4px;
   width: 224px;
   flex-shrink: 0;
-  height: 100%;
-  min-height: 0;
+  /* Sticky unter der App-Navbar — bleibt beim Scrollen sichtbar */
+  position: sticky;
+  top: 64px;
+  height: calc(100vh - 64px);
   overflow-y: auto;
 }
 /* Dezenter Scrollbar nur in der Sidebar */
@@ -172,9 +167,8 @@
   padding: 28px 36px 56px 44px; /* mehr Luft links Richtung Sidebar */
   flex: 1;
   min-width: 0;
-  min-height: 0;       /* WICHTIG für overflow im Flex-Child — sonst kein Scroll */
-  height: 100%;
-  overflow-y: auto;    /* Eigener Scroll im Main — Sidebar/Drawer scrollen nicht mit */
+  /* Kein eigenes overflow — Body scrollt. Padding-Right wird per Inline-Style
+     gesetzt wenn Drawer offen ist (höchste Spezifität, garantiert wirksam). */
 }
 
 .pageHeader {
@@ -991,18 +985,20 @@ table.contracts {
 }
 
 /* ============================ DRAWER ============================ */
-/* Flex-Layout-Pattern wie V1: Drawer ist ein normaler Flex-Sibling der
-   Sidebar/Main, mit eigenem Scroll. Page-Container scrollt nicht. */
+/* Drawer ist position:fixed unter der App-Navbar — immer sichtbar, egal wo
+   der User scrolled. Tabelle bekommt per Inline-Style paddingRight gesetzt. */
 .drawer {
   background: var(--surface);
   border-left: 1px solid var(--border);
+  position: fixed;
+  top: 64px;
+  right: 0;
   width: 420px;
-  flex-shrink: 0;
-  height: 100%;
-  min-height: 0;
+  height: calc(100vh - 64px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  z-index: 20;
 }
 .drawerHead {
   padding: 22px 24px 18px;
@@ -1183,24 +1179,8 @@ table.contracts {
 
 /* ============================ MOBILE — app-like ============================ */
 @media (max-width: 900px) {
-  /* Auf Mobile: Page wird wieder normal (nicht fixed), Body scrollt natürlich,
-     weil die App-Navbar auf Mobile evtl. anders/höher ist und Slide-In-Sidebar
-     sowieso über den ganzen Screen geht. */
-  .page {
-    position: static;
-    top: auto;
-    height: auto;
-    max-height: none;
-    overflow: visible;
-    min-height: 100vh;
-  }
   .shell {
     display: block;
-    height: auto;
-  }
-  .main {
-    overflow-y: visible;
-    height: auto;
   }
 
   /* ---- Sidebar als Slide-In-Drawer von links ---- */
