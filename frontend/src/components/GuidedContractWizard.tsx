@@ -19,6 +19,8 @@ import {
   Info
 } from 'lucide-react';
 import { apiCall } from '../utils/api';
+import { getErrorMessage } from '../utils/errorHandling';
+import ErrorDisplay from './ErrorDisplay';
 
 // ═══════════════════════════════════════════════
 // Types (gleich wie in PlaybookWizard.tsx)
@@ -182,6 +184,7 @@ const RISK_LABELS: Record<string, string> = { low: 'Gering', medium: 'Mittel', h
 const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractType, contractTypeName, onComplete }) => {
   const [playbook, setPlaybook] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1); // 1=Modus, 2=Parteien, 3=Entscheidungen
 
   // Step 1
@@ -200,6 +203,8 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
   }, [contractType]);
 
   const loadPlaybook = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const response = await apiCall(`/playbooks/${contractType}`) as { success: boolean; playbook: PlaybookData };
       if (response.success && response.playbook) {
@@ -212,12 +217,29 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
         if (response.playbook.sections.length > 0) {
           setExpandedSections(new Set([response.playbook.sections[0].key]));
         }
+      } else {
+        setError('Playbook konnte nicht geladen werden — Antwort unvollständig.');
       }
     } catch (err) {
       console.error('Playbook laden fehlgeschlagen:', err);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleResetWizard = () => {
+    if (!playbook) return;
+    setWizardStep(1);
+    setSelectedMode('ausgewogen');
+    setPartyData({});
+    const defaults: Record<string, string> = {};
+    for (const section of playbook.sections) {
+      defaults[section.key] = section.smartDefault['ausgewogen'] || '';
+    }
+    setDecisions(defaults);
+    setExpandedSections(playbook.sections.length > 0 ? new Set([playbook.sections[0].key]) : new Set());
+    setError(null);
   };
 
   const handleModeChange = useCallback((mode: string) => {
@@ -247,6 +269,7 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
   const handleGenerate = async () => {
     if (!playbook || generating) return;
     setGenerating(true);
+    setError(null);
     try {
       const response = await apiCall(`/playbooks/${contractType}/generate`, {
         method: 'POST',
@@ -255,17 +278,33 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
 
       if (response.success) {
         onComplete({ contractText: response.contractText, contractId: response.contractId });
+      } else {
+        setError('Generierung fehlgeschlagen — Server lieferte keinen Vertragstext.');
       }
     } catch (err) {
       console.error('Generierung fehlgeschlagen:', err);
+      setError(getErrorMessage(err));
     } finally {
       setGenerating(false);
     }
   };
 
-  // ─── Loading / Not found ───
+  // ─── Loading / Error / Not found ───
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '60px 0', color: '#6b7280' }}><Loader2 size={24} style={{ animation: 'spin 0.6s linear infinite' }} /> Lade geführte Erstellung...</div>;
+  }
+
+  if (error && !playbook) {
+    return (
+      <div style={{ padding: '24px 0' }}>
+        <ErrorDisplay
+          error={error}
+          variant="card"
+          onRetry={loadPlaybook}
+          onDismiss={() => setError(null)}
+        />
+      </div>
+    );
   }
 
   if (!playbook) {
@@ -284,12 +323,44 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
 
   return (
     <div style={S.container}>
-      {/* Step Pills */}
-      <div style={S.stepsRow}>
-        {['Strategie', 'Parteien', 'Entscheidungen'].map((label, i) => (
-          <span key={label} style={S.stepPill(wizardStep === i + 1)}>{i + 1}. {label}</span>
-        ))}
+      {/* Step Pills + Reset-Button */}
+      <div style={{ ...S.stepsRow, justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['Strategie', 'Parteien', 'Entscheidungen'].map((label, i) => (
+            <span key={label} style={S.stepPill(wizardStep === i + 1)}>{i + 1}. {label}</span>
+          ))}
+        </div>
+        {(wizardStep > 1 || Object.keys(partyData).length > 0) && (
+          <button
+            type="button"
+            onClick={handleResetWizard}
+            disabled={generating}
+            style={{
+              fontSize: 12,
+              padding: '6px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: 6,
+              background: 'white',
+              color: '#6b7280',
+              cursor: generating ? 'not-allowed' : 'pointer',
+              opacity: generating ? 0.6 : 1
+            }}
+          >
+            ↺ Von vorne
+          </button>
+        )}
       </div>
+
+      {/* Generation-Error-Banner (für Fehler nach Klick auf "Generieren") */}
+      {error && playbook && (
+        <div style={{ marginTop: 12 }}>
+          <ErrorDisplay
+            error={error}
+            variant="banner"
+            onDismiss={() => setError(null)}
+          />
+        </div>
+      )}
 
       {/* ─── WIZARD STEP 1: Modus ─── */}
       {wizardStep === 1 && (

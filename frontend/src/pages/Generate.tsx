@@ -19,6 +19,7 @@ import GuidedContractWizard from "../components/GuidedContractWizard";
 import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
+import { getErrorMessage } from "../utils/errorHandling";
 
 // Types
 export interface FormDataType {
@@ -4196,6 +4197,15 @@ export default function Generate() {
   };
 
   const handleTypeSelect = (type: ContractType) => {
+    // 🧹 Cleanup: alten Vertrag/Generierungs-State zurücksetzen, damit kein
+    //    Inhalt vom vorherigen Vertragstyp hängenbleibt (z.B. nach Type-Wechsel).
+    setContractText("");
+    setGeneratedHTML("");
+    setCopied(false);
+    setSaved(false);
+    setSavedContractId(null);
+    setShowPreview(false);
+
     setSelectedType(type);
     setContractData((prev: any) => ({
       ...prev,
@@ -4413,17 +4423,22 @@ export default function Generate() {
     setSaved(false);
     setSavedContractId(null);
 
+    // ⏱️ 120s Timeout via AbortController — verhindert ewige Spinner bei GPT-Hängern
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
+
     try {
       const res = await fetch("/api/contracts/generate", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          type: selectedType.id, 
+        body: JSON.stringify({
+          type: selectedType.id,
           formData: { ...formData, title: formData.title || selectedType.name },
           useCompanyProfile: useCompanyProfile && !!companyProfile,
           designVariant: selectedDesignVariant
         }),
+        signal: controller.signal,
       });
 
       const data = await res.json();
@@ -4466,9 +4481,13 @@ export default function Generate() {
         hasLogo: data.metadata?.hasLogo
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("❌ Fehler: " + msg);
+      if (err instanceof Error && err.name === 'AbortError') {
+        toast.error("⏱️ Generierung hat zu lange gedauert (>120s). Bitte erneut versuchen.");
+      } else {
+        toast.error("❌ Fehler: " + getErrorMessage(err));
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
