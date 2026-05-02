@@ -8,6 +8,7 @@ const requirePremium = require("../middleware/requirePremium");
 const decisionEngine = require("../services/decisionEngine");
 const database = require("../config/database");
 const { ObjectId } = require("mongodb");
+const { getFeatureLimit } = require("../constants/subscriptionPlans");
 
 // Feature Flag
 const PLAYBOOKS_ENABLED = process.env.PLAYBOOKS_ENABLED !== "false"; // default: true
@@ -82,6 +83,47 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
     }
 
     console.log(`🧠 [PLAYBOOK] Generiere ${type} im Modus "${mode}" für User ${req.user.userId}`);
+
+    // Server-seitige Usage-Limit-Prüfung (analog zu routes/generate.js)
+    try {
+      const dbCheck = await database.connect();
+      const user = await dbCheck.collection("users").findOne({ _id: new ObjectId(req.user.userId) });
+      if (!user) {
+        return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
+      }
+
+      const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || "free").toLowerCase();
+      const generateLimit = getFeatureLimit(plan, "generate");
+
+      if (generateLimit !== Infinity) {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        // userId kann String ODER ObjectId sein — $or für Robustheit
+        const generationsThisMonth = await dbCheck.collection("contracts").countDocuments({
+          $or: [
+            { userId: req.user.userId },
+            { userId: new ObjectId(req.user.userId) }
+          ],
+          isGenerated: true,
+          createdAt: { $gte: startOfMonth }
+        });
+
+        if (generationsThisMonth >= generateLimit) {
+          return res.status(403).json({
+            success: false,
+            message: `Monatliches Generierungslimit erreicht (${generateLimit}). Bitte upgraden Sie Ihren Plan.`,
+            limitReached: true,
+            currentUsage: generationsThisMonth,
+            limit: generateLimit
+          });
+        }
+      }
+    } catch (limitError) {
+      console.error("[PLAYBOOK] Usage-Limit-Check Fehler:", limitError);
+      // Bei Fehler weitermachen (fail-open für Verfügbarkeit, Frontend zeigt Hinweis)
+    }
 
     // 1. Decision Engine verarbeiten
     const engineResult = decisionEngine.processDecisions({

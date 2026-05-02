@@ -505,6 +505,29 @@ router.get("/me", verifyToken, async (req, res) => {
     // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
     const optimizationLimit = getFeatureLimit(plan, 'optimize');
 
+    // 📝 GENERATE LIMITS — Server-authoritativer Counter via countDocuments
+    // (kein User-Field, zählt direkt aus contracts-Collection diesen Monat)
+    const generateLimit = getFeatureLimit(plan, 'generate');
+    let generateCount = 0;
+    if (generateLimit !== Infinity && contractsCollection) {
+      try {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        // userId kann String ODER ObjectId sein — $or für Robustheit
+        generateCount = await contractsCollection.countDocuments({
+          $or: [
+            { userId: req.user.userId },
+            { userId: new ObjectId(req.user.userId) }
+          ],
+          isGenerated: true,
+          createdAt: { $gte: startOfMonth }
+        });
+      } catch (countErr) {
+        console.warn("⚠️ generateCount-Zählung fehlgeschlagen:", countErr.message);
+      }
+    }
+
     const userData = {
       email: user.email,
       // 🆕 Name-Felder
@@ -531,6 +554,9 @@ router.get("/me", verifyToken, async (req, res) => {
       // ⭐ OPTIMIERUNG INFO (NEU)
       optimizationCount,
       optimizationLimit,
+      // ⭐ GENERATE INFO (NEU — server-authoritativ)
+      generateCount,
+      generateLimit,
       // 📅 ACCOUNT INFO
       createdAt: user.createdAt,
       emailNotifications: user.emailNotifications ?? true,

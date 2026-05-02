@@ -21,6 +21,8 @@ export interface UserData {
   analysisLimit: number;
   optimizationCount: number;
   optimizationLimit: number;
+  generateCount?: number;
+  generateLimit?: number;
   createdAt: string;
   emailNotifications: boolean;
   contractReminders: boolean;

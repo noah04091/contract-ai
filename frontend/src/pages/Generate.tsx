@@ -3864,25 +3864,22 @@ export default function Generate() {
 
   const loadUsageData = async () => {
     try {
-      // For now, use localStorage simulation
-      // TODO: Replace with actual API call when backend supports it
+      // ✅ Server-authoritativ: generateCount + generateLimit aus /api/auth/me (UserData)
+      // Kein localStorage mehr — bypassbar war zuvor möglich, jetzt zählt nur Backend.
+      const contractsGenerated = user?.generateCount ?? 0;
+      const monthlyLimit = user?.generateLimit ?? 0;
+
+      // Reset am 1. nächsten Monats (laut Cron resetAnalysisCount.js)
       const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
-      const storageKey = `contract_generation_${user?.email}_${currentMonth}`;
-
-      const stored = localStorage.getItem(storageKey);
-      const contractsGenerated = stored ? parseInt(stored) : 0;
-
-      // Calculate next month reset date
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
       setUsageData({
         contractsGenerated,
-        monthlyLimit: 10,
+        monthlyLimit,
         resetDate: nextMonth.toLocaleDateString('de-DE')
       });
 
-      console.log('✅ Usage Data geladen:', { contractsGenerated, limit: 10 });
+      console.log('✅ Usage Data geladen (Backend):', { contractsGenerated, monthlyLimit });
     } catch (error) {
       console.error('❌ Fehler beim Laden der Usage-Daten:', error);
     }
@@ -4453,20 +4450,13 @@ export default function Generate() {
       // 💾 Clear draft after successful generation
       clearDraft();
 
-      // Update usage tracking for Business plan
-      if (userPlan === 'business' && usageData && user?.email) {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
-        const storageKey = `contract_generation_${user.email}_${currentMonth}`;
-        const newCount = usageData.contractsGenerated + 1;
-
-        localStorage.setItem(storageKey, newCount.toString());
+      // Optimistic UI-Update — beim nächsten /api/auth/me-Call wird der echte
+      // Stand aus dem Backend gelesen (Source of Truth: countDocuments diesen Monat).
+      if (userPlan === 'business' && usageData) {
         setUsageData({
           ...usageData,
-          contractsGenerated: newCount
+          contractsGenerated: usageData.contractsGenerated + 1
         });
-
-        console.log(`✅ Business Usage aktualisiert: ${newCount}/${usageData.monthlyLimit}`);
       }
 
       console.log("✅ Vertrag generiert mit HTML-Support:", {
