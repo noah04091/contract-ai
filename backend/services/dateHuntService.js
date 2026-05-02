@@ -15,6 +15,16 @@
 const DATE_HUNT_TIMEOUT_MS = 75_000;
 const DATE_HUNT_MODEL = 'gpt-4-turbo';
 const MAX_DATES = 10;
+
+// ─── Phase 3: Review-Pass (Anwalt + Assistentin Pattern) ──────────────────
+// Stage B läuft sequenziell nach Stage A. Bekommt den vollen Vertragstext +
+// die Funde von Stage A und prüft Klausel für Klausel, ob etwas übersehen wurde.
+// Liefert NUR Zusätze. Eigener Validator-Pfad → Halluzinationen müssten ZWEI
+// Validatoren passieren (praktisch unmöglich). Bei Fehler/Timeout: Stage A bleibt
+// unangetastet (graceful degradation).
+const REVIEW_PASS_ENABLED = true;
+const REVIEW_PASS_TIMEOUT_MS = 60_000;
+const REVIEW_PASS_MAX_TOKENS = 2000;
 // Sanity-Cap, KEIN Steuer-Limit. 25 ist de facto unbegrenzt für reale Verträge —
 // auch ein 50-seitiger Beratungsvertrag erreicht selten zweistellige Fristen-Zahlen.
 // Der Evidence-Validator filtert die Wahrheit. Niemals als "Quote" im Prompt
@@ -35,6 +45,18 @@ const SYSTEM_PROMPT = `Du bist ein juristischer Spezialist für Vertrags-Termine
 (2) Finde alle wichtigen FRIST-REGELUNGEN im Vertrag — Fristen ohne konkretes Datum, aber wichtig zu wissen (Kündigungsfristen, Widerrufsfristen, Gewährleistungsfristen, Probezeiten, etc.).
 
 Du arbeitest wie ein Anwalt, der seinem Mandanten Termine UND Fristen aufschreibt. Erfinde nichts. Halluziniere nicht. Zitiere immer wörtlich aus dem Vertrag.`;
+
+// Phase 3: System-Prompt für Stage B (Review-Pass).
+// Bewusst anderer Tonfall als Stage A — die Assistentin ist die Sicherheitsschicht,
+// nicht der zweite Anwalt. Sie sucht nicht "etwas zu finden"; sie prüft, ob etwas
+// fehlt. "Leer ist OK" ist die wichtigste Regel.
+const REVIEW_SYSTEM_PROMPT = `Du bist eine erfahrene juristische Assistentin in einer Anwaltskanzlei. Der Anwalt hat einen Vertrag analysiert und Datums + Frist-Hinweise notiert. Deine einzige Aufgabe: prüfen, ob er etwas übersehen hat — und nur ZUSÄTZLICHE Funde liefern.
+
+Strenge Prinzipien:
+- Es ist OKAY und richtig, NICHTS zu finden. Wenn der Anwalt alles hat, liefere leere Arrays. Das ist kein Versagen.
+- Erfinde nichts. Halluziniere nicht. Zitiere immer wörtlich aus dem Vertrag.
+- Doppele nicht. Was schon in der Anwalts-Liste steht, ergänzt du NICHT noch einmal.
+- Du bist die Sicherheitsschicht, kein zweiter Anwalt. Lieber leer als erfunden.`;
 
 function buildUserPrompt(contractText) {
   const today = new Date().toISOString().slice(0, 10);
@@ -218,6 +240,120 @@ ${contractText}`;
 }
 
 /**
+ * Phase 3: User-Prompt für den Review-Pass (Stage B).
+ * Bekommt den Vertragstext + die Stage-A-Funde als Kontext, fragt explizit
+ * nach ZUSÄTZLICHEN Funden. "Leer ist OK" wird mehrfach betont, damit GPT
+ * keinen Druck verspürt, künstlich was zu finden.
+ */
+function buildReviewPrompt(contractText, stageAResults) {
+  const datesAlreadyFound = (stageAResults.importantDates || []).length > 0
+    ? stageAResults.importantDates.map(d =>
+        `- ${d.label} (${d.date}, type=${d.type})`
+      ).join('\n')
+    : '(keine — der Anwalt hat keine Datums notiert)';
+
+  const fristenAlreadyFound = (stageAResults.fristHinweise || []).length > 0
+    ? stageAResults.fristHinweise.map(f =>
+        `- ${f.title} (type=${f.type}${f.legalBasis ? ', ' + f.legalBasis : ''})`
+      ).join('\n')
+    : '(keine — der Anwalt hat keine Frist-Hinweise notiert)';
+
+  return `Der Anwalt hat den unten stehenden Vertrag bereits analysiert. Hier ist seine Notiz:
+
+═══════════════════════════════════════════════════════════════════════
+ANWALTS-NOTIZ — was bereits gefunden wurde
+═══════════════════════════════════════════════════════════════════════
+
+DATUMS:
+${datesAlreadyFound}
+
+FRIST-HINWEISE:
+${fristenAlreadyFound}
+
+═══════════════════════════════════════════════════════════════════════
+DEINE AUFGABE
+═══════════════════════════════════════════════════════════════════════
+
+Lies den Vertrag JEDE KLAUSEL einzeln durch und prüfe: hat der Anwalt etwas übersehen?
+
+Liefere AUSSCHLIESSLICH zusätzliche Funde, die noch nicht in der Liste oben stehen.
+NICHT noch einmal erwähnen, was der Anwalt schon hat.
+
+═══════════════════════════════════════════════════════════════════════
+WICHTIGSTE REGEL
+═══════════════════════════════════════════════════════════════════════
+
+Es ist OKAY und richtig, NICHTS zu finden. Wenn der Anwalt alles erfasst hat,
+liefere leere Arrays. Das ist die richtige Antwort, KEIN Versagen.
+
+Du bist NICHT da, um Lücken auf Teufel komm raus zu finden. Du bist die zweite
+Sicherheitsschicht, die nur dann Funde liefert, wenn sie WIRKLICH belegbar sind.
+
+═══════════════════════════════════════════════════════════════════════
+REGELN — STRIKT
+═══════════════════════════════════════════════════════════════════════
+
+1. Erfinde NICHTS. Jeder neue Eintrag muss durch wörtliches Vertragszitat (evidence)
+   belegt sein. Der Backend-Validator filtert automatisch jede Frist/Datum, deren
+   evidence du nicht wörtlich aus dem Vertrag zitieren kannst.
+
+2. Doppele NICHT. Wenn ein Datum oder eine Frist schon in der ANWALTS-NOTIZ steht
+   (auch in anderer Formulierung), ergänze sie NICHT noch einmal.
+
+3. Evidence-Regel — KRITISCH (gleiche Disziplin wie der Anwalt):
+   • evidence muss ein ZUSAMMENHÄNGENDES Copy-Paste aus dem Vertragstext sein
+   • Behalte Tippfehler, Umlaute (ae/oe/ue/ß), Sonderzeichen — alles 1:1
+   • NIEMALS Wörter aus der Mitte eines Satzes auslassen
+   • NIEMALS Synonyme oder eigene Formulierungen
+   • Wörtlich oder gar nicht — der Validator akzeptiert nichts Anderes
+
+4. Häufig übersehen werden in komplexen Verträgen:
+   • Reaktionsfristen (z.B. "5 Werktage zur Stellungnahme", "90 Tage Inkasso")
+   • Einwendungsfristen (z.B. "6 Wochen nach Zugang")
+   • Annahmefristen (z.B. "14 Tage gebunden")
+   • Bestätigungsfristen (z.B. "10 Tage zur Bestätigung")
+   • Mängelrügepflichten / Rügefristen
+   • Optionsfristen / Vorkaufsrechte
+
+   ABER: nur extrahieren wenn sie WIRKLICH im Vertrag stehen. NIEMALS erfinden.
+
+═══════════════════════════════════════════════════════════════════════
+OUTPUT-FORMAT (gleiches Schema wie der Anwalt — beide Felder PFLICHT)
+═══════════════════════════════════════════════════════════════════════
+
+{
+  "importantDates": [<NUR zusätzliche Datums, sonst []>],
+  "fristHinweise":  [<NUR zusätzliche Frist-Hinweise, sonst []>]
+}
+
+Datums-Schema:
+{
+  "type": "<Datums-Typ>",
+  "date": "YYYY-MM-DD",
+  "label": "<Kurzname, max. 50 Zeichen>",
+  "description": "<warum für Mandant wichtig, 1 Satz>",
+  "calculated": true | false,
+  "source": "<§ X / Klausel-Bezeichnung>",
+  "evidence": "<EXAKTER Satzauszug, max. 120 Zeichen, wörtlich>"
+}
+
+Frist-Hinweis-Schema:
+{
+  "type": "<Frist-Typ: kuendigungsfrist, widerrufsfrist, reaktionsfrist, einwendungsfrist, annahmefrist, ruegefrist, optionsfrist, sonstige, ...>",
+  "title": "<Kurz-Hinweis, max. 80 Zeichen>",
+  "description": "<1-2 Sätze warum für Mandant wichtig>",
+  "legalBasis": "<§/Abschnitt, z.B. '§ 9 Abs. 2'>",
+  "evidence": "<EXAKTER Satzauszug, max. 250 Zeichen, wörtlich>"
+}
+
+═══════════════════════════════════════════════════════════════════════
+VERTRAGSTEXT
+═══════════════════════════════════════════════════════════════════════
+
+${contractText}`;
+}
+
+/**
  * Normalisiert einen String für Evidence-Vergleich.
  * Toleriert: Case, Whitespace, Umlaut-Varianten (ä/ae, ö/oe, ü/ue, ß/ss),
  * typografische Anführungszeichen, em-/en-dashes — alles, was bei OCR/PDF-
@@ -299,6 +435,179 @@ function validateFristHinweis(entry, contractText) {
     return { valid: false, reason: 'evidence_not_in_text' };
   }
   return { valid: true };
+}
+
+/**
+ * Phase 3: Dedup-Logik für Datums-Merge.
+ * Stage A gewinnt bei Konflikt — sie kam zuerst und ist die "Hauptquelle".
+ * Dedup-Kriterium: gleicher type + gleiches Datum (YYYY-MM-DD).
+ */
+function dedupDates(stageA, stageB) {
+  if (!Array.isArray(stageB) || stageB.length === 0) return stageA;
+  const result = [...stageA];
+  for (const b of stageB) {
+    const isDup = stageA.some(a => a.type === b.type && a.date === b.date);
+    if (!isDup) result.push(b);
+  }
+  return result;
+}
+
+/**
+ * Phase 3: Dedup-Logik für Frist-Hinweise.
+ * Stage A gewinnt bei Konflikt. Dedup-Kriterium: gleicher type UND
+ * Evidence-Substring-Match (mindestens 40 Zeichen Overlap) — verhindert,
+ * dass dieselbe Frist in leicht anderer Formulierung doppelt erscheint.
+ */
+function dedupFristen(stageA, stageB) {
+  if (!Array.isArray(stageB) || stageB.length === 0) return stageA;
+  const result = [...stageA];
+  for (const b of stageB) {
+    const bEvNorm = normalize(b.evidence || '');
+    const isDup = stageA.some(a => {
+      if (a.type !== b.type) return false;
+      const aEvNorm = normalize(a.evidence || '');
+      if (!aEvNorm || !bEvNorm) return false;
+      // Substring-Overlap mindestens 40 Zeichen → wahrscheinlich gleiche Klausel
+      const minOverlap = 40;
+      if (aEvNorm.length >= minOverlap && bEvNorm.includes(aEvNorm.slice(0, minOverlap))) return true;
+      if (bEvNorm.length >= minOverlap && aEvNorm.includes(bEvNorm.slice(0, minOverlap))) return true;
+      return false;
+    });
+    if (!isDup) result.push(b);
+  }
+  return result;
+}
+
+/**
+ * Phase 3: Review-Pass (Stage B — Anwalt-Assistentin-Pattern).
+ * Wird sequenziell nach Stage A aufgerufen. Bekommt Vertragstext + Stage-A-Funde,
+ * prüft Klausel für Klausel auf Übersehenes. Liefert NUR Zusätze.
+ *
+ * Eigener Validator-Pfad: validateDateEntry / validateFristHinweis laufen
+ * 1:1 wie für Stage A — Halluzinationen müssen ZWEI Validatoren passieren,
+ * was praktisch unmöglich ist.
+ *
+ * Bei Fehler/Timeout: graceful fallback (leere Arrays). Stage A bleibt aktiv.
+ *
+ * @returns {Promise<{importantDates: Array, fristHinweise: Array, stats: object}>}
+ */
+async function runReviewPass(contractText, stageAResults, openaiClient, requestId = '') {
+  const startTime = Date.now();
+  const stats = {
+    raw_dates: 0,
+    raw_fristen: 0,
+    validated_dates: 0,
+    validated_fristen: 0,
+    rejected: 0,
+    durationMs: 0,
+    fallback: false,
+    skipped: false
+  };
+  const empty = (s) => ({ importantDates: [], fristHinweise: [], stats: s });
+
+  if (!REVIEW_PASS_ENABLED) {
+    stats.skipped = true;
+    return empty(stats);
+  }
+  if (!contractText || contractText.length < 100) {
+    stats.skipped = true;
+    return empty(stats);
+  }
+
+  let response;
+  try {
+    response = await Promise.race([
+      openaiClient.chat.completions.create({
+        model: DATE_HUNT_MODEL,
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        max_tokens: REVIEW_PASS_MAX_TOKENS,
+        messages: [
+          { role: 'system', content: REVIEW_SYSTEM_PROMPT },
+          { role: 'user', content: buildReviewPrompt(contractText, stageAResults) }
+        ]
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Review-Pass timeout after ${REVIEW_PASS_TIMEOUT_MS}ms`)), REVIEW_PASS_TIMEOUT_MS)
+      )
+    ]);
+  } catch (err) {
+    console.warn(`⚠️ [${requestId}] [Review-Pass] Aufruf fehlgeschlagen: ${err.message} — Stage A bleibt aktiv`);
+    stats.fallback = true;
+    stats.durationMs = Date.now() - startTime;
+    return empty(stats);
+  }
+
+  const raw = response?.choices?.[0]?.message?.content || '';
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    console.warn(`⚠️ [${requestId}] [Review-Pass] JSON-Parse fehlgeschlagen: ${err.message} — Stage A bleibt aktiv`);
+    stats.fallback = true;
+    stats.durationMs = Date.now() - startTime;
+    return empty(stats);
+  }
+
+  // Datums validieren — gleicher Validator wie Stage A
+  const dateCands = Array.isArray(parsed?.importantDates) ? parsed.importantDates : [];
+  stats.raw_dates = dateCands.length;
+  const validDates = [];
+  for (const e of dateCands) {
+    const v = validateDateEntry(e, contractText);
+    if (v.valid) {
+      validDates.push({
+        type: e.type,
+        date: e.date,
+        label: e.label,
+        description: e.description || e.label,
+        calculated: !!e.calculated,
+        source: e.source || '',
+        evidence: e.evidence
+      });
+    } else {
+      stats.rejected++;
+      console.warn(
+        `⚠️ [${requestId}] [Review-Pass] Datum verworfen (${v.reason}): ` +
+        `type=${e.type} label="${e.label || '(leer)'}"`
+      );
+    }
+  }
+  stats.validated_dates = validDates.length;
+
+  // Frist-Hinweise validieren
+  const fristCands = Array.isArray(parsed?.fristHinweise) ? parsed.fristHinweise : [];
+  stats.raw_fristen = fristCands.length;
+  const validFristen = [];
+  for (const e of fristCands) {
+    const v = validateFristHinweis(e, contractText);
+    if (v.valid) {
+      validFristen.push({
+        type: e.type,
+        title: e.title,
+        description: e.description || '',
+        legalBasis: e.legalBasis || '',
+        evidence: e.evidence
+      });
+    } else {
+      stats.rejected++;
+      console.warn(
+        `⚠️ [${requestId}] [Review-Pass] Frist-Hinweis verworfen (${v.reason}): ` +
+        `type=${e.type} title="${e.title || '(leer)'}"`
+      );
+    }
+  }
+  stats.validated_fristen = validFristen.length;
+  stats.durationMs = Date.now() - startTime;
+
+  console.log(
+    `🔍 [${requestId}] [Review-Pass] zusätzliche Funde: ` +
+    `Datums ${stats.raw_dates}→${stats.validated_dates}, ` +
+    `Fristen ${stats.raw_fristen}→${stats.validated_fristen} ` +
+    `(${stats.rejected} abgelehnt) in ${stats.durationMs}ms`
+  );
+
+  return { importantDates: validDates, fristHinweise: validFristen, stats };
 }
 
 /**
@@ -441,19 +750,53 @@ async function huntDates(contractText, openaiClient, requestId = '') {
   }
   stats.fristHinweiseValidated = validatedFristHinweise.length;
 
+  // ─── Phase 3: Review-Pass (Stage B — Anwalt-Assistentin) ────────────
+  // Sequenzieller zweiter GPT-Call. Bekommt die Stage-A-Funde + den Vertragstext
+  // und prüft, ob etwas übersehen wurde. Liefert NUR Zusätze — Halluzinationen
+  // werden vom Validator gefiltert (gleiche Disziplin wie Stage A). Bei
+  // Fehler/Timeout: leere Arrays, Stage A bleibt aktiv.
+  const reviewResult = await runReviewPass(
+    contractText,
+    { importantDates: validatedDates, fristHinweise: validatedFristHinweise },
+    openaiClient,
+    requestId
+  );
+
+  // Review-Pass-Stats in das Haupt-Stats-Objekt mergen
+  stats.reviewPass_raw_dates = reviewResult.stats.raw_dates;
+  stats.reviewPass_raw_fristen = reviewResult.stats.raw_fristen;
+  stats.reviewPass_validated_dates = reviewResult.stats.validated_dates;
+  stats.reviewPass_validated_fristen = reviewResult.stats.validated_fristen;
+  stats.reviewPass_rejected = reviewResult.stats.rejected;
+  stats.reviewPass_durationMs = reviewResult.stats.durationMs;
+  stats.reviewPass_fallback = reviewResult.stats.fallback;
+  stats.reviewPass_skipped = reviewResult.stats.skipped;
+
+  // ─── Merge Stage A + Review-Pass mit Dedup ──────────────────────────
+  // Stage A gewinnt bei Konflikt (sie ist die "Hauptquelle"). Review-Pass-Funde
+  // werden nur ergänzt, wenn sie wirklich neu sind.
+  const mergedDates = dedupDates(validatedDates, reviewResult.importantDates);
+  const mergedFristen = dedupFristen(validatedFristHinweise, reviewResult.fristHinweise);
+
   // ─── Cap auf MAX-Limits ─────────────────────────────────────────────
   // Falls GPT trotz Prompt-Vorgabe mehr liefert: hartes Cap im Backend.
-  const cappedDates = validatedDates.slice(0, MAX_DATES);
-  const cappedFristen = validatedFristHinweise.slice(0, MAX_FRIST_HINWEISE);
+  const cappedDates = mergedDates.slice(0, MAX_DATES);
+  const cappedFristen = mergedFristen.slice(0, MAX_FRIST_HINWEISE);
 
   stats.durationMs = Date.now() - startTime;
 
   console.log(
-    `📅 [${requestId}] [DateHunt] Datums: ${stats.raw} → ${cappedDates.length} validiert ` +
-    `(${stats.rejected_evidence} Evidence-Fail, ${stats.rejected_format} Format-Fail, ${stats.rejected_other} Sonstige) | ` +
-    `Frist-Hinweise: ${stats.fristHinweiseRaw} → ${cappedFristen.length} validiert ` +
-    `(${stats.fristHinweiseRejectedEvidence} Evidence-Fail) ` +
-    `in ${stats.durationMs}ms`
+    `📅 [${requestId}] [DateHunt] Stage A: Datums ${stats.raw}→${stats.validated} | ` +
+    `Fristen ${stats.fristHinweiseRaw}→${stats.fristHinweiseValidated} ` +
+    `(${stats.rejected_evidence + stats.fristHinweiseRejectedEvidence} Evidence-Fail) ` +
+    `in ${stats.durationMs - (stats.reviewPass_durationMs || 0)}ms`
+  );
+  console.log(
+    `🔄 [${requestId}] [DateHunt] Final: ${cappedDates.length} Datums + ${cappedFristen.length} Fristen ` +
+    `(Stage A: ${validatedDates.length}+${validatedFristHinweise.length}, ` +
+    `Review-Pass: +${reviewResult.importantDates.length}+${reviewResult.fristHinweise.length} ` +
+    `${stats.reviewPass_fallback ? '[FALLBACK]' : stats.reviewPass_skipped ? '[SKIPPED]' : ''}) ` +
+    `total ${stats.durationMs}ms`
   );
 
   return { importantDates: cappedDates, fristHinweise: cappedFristen, stats };
@@ -464,5 +807,8 @@ module.exports = {
   // Export für Tests
   validateDateEntry,
   validateFristHinweis,
-  buildUserPrompt
+  buildUserPrompt,
+  buildReviewPrompt,
+  dedupDates,
+  dedupFristen
 };
