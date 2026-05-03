@@ -19,6 +19,58 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const { ObjectId } = require('mongodb');
 const database = require('../config/database');
 const { isBusinessOrHigher } = require('../constants/subscriptionPlans');
+const { checkContractLimit } = require('../services/contractUsage');
+
+/**
+ * Subscription-Check für Vertrags-Erstellung.
+ * Prüft Plan-Zugang (Free hat generate=0 → Block) UND Monats-Limit
+ * (Business: 10/Monat geteilt mit Generate; Enterprise: unbegrenzt).
+ *
+ * Rückgabe:
+ *   - true: User darf Doc erstellen, weiter zur Route
+ *   - false: Response wurde mit 403/401 gesendet, Caller muss return tun
+ */
+async function checkContractCreationAllowed(req, res) {
+  try {
+    const db = await database.connect();
+    const user = await db.collection('users').findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      res.status(401).json({ success: false, error: 'Benutzer nicht gefunden.' });
+      return false;
+    }
+
+    const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
+    const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
+
+    if (!allowed) {
+      // Free-User (limit=0) bekommen Plan-Sperre, Business-User mit aufgebrauchtem Limit
+      // bekommen Limit-Meldung — semantisch unterschieden für klare UX.
+      if (limit === 0) {
+        res.status(403).json({
+          success: false,
+          error: 'Vertragserstellung ist nur mit Business- oder Enterprise-Plan verfügbar.',
+          requiresUpgrade: true,
+          upgradeUrl: '/pricing'
+        });
+      } else {
+        res.status(403).json({
+          success: false,
+          error: `Monatliches Limit erreicht (${count}/${limit}). Bitte upgraden Sie Ihren Plan oder warten Sie bis zum nächsten Monat.`,
+          limitReached: true,
+          currentUsage: count,
+          limit,
+          upgradeUrl: '/pricing'
+        });
+      }
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[ContractBuilder] Limit-Check Error:', err);
+    // Fail-open für Verfügbarkeit (wie bei checkAiAccess) — bei Backend-Fehler nicht blockieren
+    return true;
+  }
+}
 
 // Input-Validierung für KI-Endpoints
 const MAX_AI_INPUT_LENGTH = 10000; // max 10KB Text pro AI-Request
@@ -207,6 +259,9 @@ router.get('/:id', auth, async (req, res) => {
  */
 router.post('/', auth, async (req, res) => {
   try {
+    // 🔐 Plan- + Limit-Check (Free=0, Business=10/Monat, Enterprise=∞ — geteilt mit Generate)
+    if (!(await checkContractCreationAllowed(req, res))) return;
+
     const {
       name,
       contractType,
@@ -326,6 +381,9 @@ router.post('/', auth, async (req, res) => {
  */
 router.post('/import-from-generator', auth, async (req, res) => {
   try {
+    // 🔐 Plan- + Limit-Check (geteilter Counter mit Generate)
+    if (!(await checkContractCreationAllowed(req, res))) return;
+
     const { contractText, contractType, parties, designVariant, contractId, name } = req.body;
 
     if (!contractText || typeof contractText !== 'string') {
@@ -650,6 +708,9 @@ router.post('/import-from-document', auth, (req, res, next) => {
   });
 }, async (req, res) => {
   try {
+    // 🔐 Plan- + Limit-Check (geteilter Counter mit Generate)
+    if (!(await checkContractCreationAllowed(req, res))) return;
+
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'Keine Datei hochgeladen' });
     }
@@ -956,6 +1017,9 @@ ${truncatedText}`
  */
 router.post('/import-from-optimizer', auth, async (req, res) => {
   try {
+    // 🔐 Plan- + Limit-Check (geteilter Counter mit Generate)
+    if (!(await checkContractCreationAllowed(req, res))) return;
+
     const { resultId, selections, mode } = req.body;
 
     if (!resultId) {
@@ -1575,6 +1639,9 @@ router.patch('/:id', auth, async (req, res) => {
  */
 router.post('/:id/duplicate', auth, async (req, res) => {
   try {
+    // 🔐 Plan- + Limit-Check (Duplizieren = neuer Vertrag, zählt gegen Limit)
+    if (!(await checkContractCreationAllowed(req, res))) return;
+
     const { name } = req.body;
     const userId = req.user.userId;
 
