@@ -1,21 +1,24 @@
 /* ============================================================
-   ContractsV2 — Schritt 1 (Skelett, Read-Only)
-   Eigenständig, kein globaler Selektor, kein Eingriff in V1.
-   Übernommen vom validierten Mockup mockups/contracts-redesign.html
+   ContractsV2 — Premium-Layout (Stripe / Linear-Niveau)
+   1:1 übernommen aus mockups/contracts-premium.html
+   plus zoom:0.8 als Standardgröße (User-Wunsch).
    ============================================================ */
 
 .page {
-  /* lokale Tokens — nur in dieser Datei aktiv (CSS-Module-Scope) */
+  /* Tokens */
   --bg:           #f7f8fa;
   --surface:      #ffffff;
-  --surface-soft: #fbfcfd;
-  --border:       #e6e8ec;
-  --border-soft:  #eef0f3;
-  --hover:        #f4f6f9;
+  --surface-2:   #fbfcfe;
 
-  --text:         #0f172a;
+  --border:       #eaecf0;
+  --border-soft:  #f1f3f6;
+
+  --hover:        #f5f6f9;
+
+  --text:         #0a0e1a;
   --text-2:       #475569;
-  --text-3:       #94a3b8;
+  --text-3:       #8896a8;
+  --text-4:       #b0b8c4;
 
   --accent:       #4f46e5;
   --accent-2:     #6366f1;
@@ -30,105 +33,93 @@
   --muted:        #475569;
   --muted-soft:   #f1f5f9;
 
-  --shadow-sm: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.04);
-
-  --r-sm: 6px;
-  --r-md: 10px;
+  --shadow-xs: 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-sm: 0 1px 3px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.03);
+  --shadow-md: 0 1px 3px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05);
+  --shadow-lg: 0 4px 8px rgba(15,23,42,0.04), 0 20px 36px rgba(15,23,42,0.10);
 
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
                "Inter", "Helvetica Neue", Arial, sans-serif;
   font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
 
-  /* Mockup-Pattern: Grid-Layout, normales Body-Scroll. Sidebar und Drawer
-     sind sticky — bleiben beim Scrollen sichtbar. */
   min-height: 100vh;
+  /* User-Wunsch: 80%-Standardgröße. Funktioniert in Chrome/Safari/Edge/FF 127+ */
+  zoom: 0.8;
 }
 
 .shell {
   display: grid;
-  grid-template-columns: 248px 1fr;
+  grid-template-columns: 264px 1fr;
+  align-items: start;
   min-height: 100vh;
-  align-items: start; /* WICHTIG: ohne stretch sind sticky-Items nur 100vh hoch */
 }
 .shellWithDrawer {
-  grid-template-columns: 248px 1fr 420px;
+  grid-template-columns: 264px 1fr 440px;
 }
 
 /* ============================ SIDEBAR ============================ */
 .sidebar {
   background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 20px 14px;
+  box-shadow: 1px 0 0 var(--border);
+  padding: 24px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  /* Sticky unter der App-Navbar — bleibt beim Scrollen sichtbar */
+  gap: 2px;
   position: sticky;
   top: 64px;
   height: calc(100vh - 64px);
   overflow-y: auto;
 }
-/* Dezenter Scrollbar nur in der Sidebar */
-.sidebar::-webkit-scrollbar { width: 6px; }
-.sidebar::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.08); border-radius: 3px; }
-.sidebar::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.16); }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 2px; }
 
-/* Brand-Block ganz oben in der Sidebar — wie im Mockup */
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px 18px 10px;
+  display: flex; align-items: center; gap: 11px;
+  padding: 4px 12px 24px 12px;
 }
 .brandMark {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px; height: 32px;
+  border-radius: 9px;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  display: grid;
-  place-items: center;
+  display: grid; place-items: center;
   color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.5px;
+  font-weight: 700; font-size: 13px; letter-spacing: 0.4px;
+  box-shadow: 0 4px 10px -3px rgba(79,70,229,0.4);
   flex-shrink: 0;
 }
 .brandName {
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.2px;
+  font-weight: 600; font-size: 14.5px;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
-.sidebarTopSpacer {
-  height: 6px;
-}
+.sidebarTopSpacer { display: none; }
 
 .navLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0.08em;
+  font-size: 11px; font-weight: 600;
+  color: var(--text-3); letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 14px 10px 6px;
+  padding: 18px 12px 6px;
 }
 
 .navItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 12px;
+  border-radius: 7px;
   color: var(--text-2);
   font-size: 13.5px;
+  font-weight: 450;
   cursor: pointer;
   border: none;
   background: transparent;
   width: 100%;
   text-align: left;
-  transition: background 0.12s ease, color 0.12s ease;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .navItem:hover {
   background: var(--hover);
@@ -137,89 +128,60 @@
 .navItem.active {
   background: var(--accent-soft);
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 550;
 }
-.navItem svg {
-  color: var(--text-3);
-  flex-shrink: 0;
-}
-.navItem.active svg {
-  color: var(--accent);
-}
+.navItem.active svg { color: var(--accent); }
+.navItem svg { color: var(--text-4); flex-shrink: 0; }
 .navItem .count {
   margin-left: auto;
   font-size: 11.5px;
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
+  font-weight: 450;
 }
-.navItem.active .count {
-  color: var(--accent);
-}
+.navItem.active .count { color: var(--accent); }
+.navItem:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .sidebarFooter {
   margin-top: auto;
-  padding: 12px 10px;
+  padding: 16px 12px 4px;
   border-top: 1px solid var(--border-soft);
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 11px;
 }
 .avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  font-weight: 600;
-  font-size: 12px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #06b6d4);
+  color: #fff; display: grid; place-items: center;
+  font-weight: 600; font-size: 12px;
+  flex-shrink: 0;
 }
-.who {
-  line-height: 1.2;
-}
+.who { line-height: 1.25; min-width: 0; flex: 1; }
 .who .name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
+  font-size: 13px; font-weight: 550; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .who .plan {
-  font-size: 11px;
-  color: var(--text-3);
+  font-size: 11.5px; color: var(--text-3);
 }
 
 /* ============================ MAIN ============================ */
 .main {
-  /* Großzügiges horizontales Padding: links Abstand zur Sidebar,
-     rechts Abstand zum Browserrand. */
-  padding: 28px 48px 56px 48px;
+  padding: 44px 56px 80px;
   min-width: 0;
 }
 
 .pageHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  padding-bottom: 22px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 32px;
 }
 .pageHeaderLeft {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 0;
-}
-.pageHeaderTitleRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  display: flex; align-items: flex-start; gap: 12px;
+  min-width: 0; flex: 1;
 }
 .mobileMenuBtn {
   display: none;
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -228,105 +190,153 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.mobileMenuBtn:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-.mobileSidebarOverlay {
-  display: none;
 }
 .pageHeader h1 {
-  margin: 0 0 4px 0;
-  font-size: 24px;
+  margin: 0 0 6px 0;
+  font-size: 30px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: var(--text);
 }
 .subtitle {
   color: var(--text-2);
-  font-size: 13.5px;
+  font-size: 14px;
+  line-height: 1.5;
 }
+
 .headerActions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  display: flex; gap: 8px; align-items: center;
+  flex-shrink: 0;
 }
+
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; gap: 8px;
+  border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 8px 13px;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  box-shadow: var(--shadow-xs);
+  letter-spacing: -0.005em;
+  font-family: inherit;
 }
 .btn:hover {
-  background: var(--hover);
+  border-color: #d4d8df;
   color: var(--text);
 }
+.btn:active { transform: translateY(0.5px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btnPrimary {
   background: var(--text);
   color: #fff;
   border-color: var(--text);
+  box-shadow: 0 1px 2px rgba(10,14,26,0.18), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .btnPrimary:hover {
-  background: #1e293b;
-  border-color: #1e293b;
+  background: #1c2233;
+  border-color: #1c2233;
   color: #fff;
 }
+.btnDanger {
+  color: var(--bad);
+  border-color: #fecaca;
+}
+.btnDanger:hover {
+  background: var(--bad-soft);
+  border-color: var(--bad);
+  color: var(--bad);
+}
+.btnLabel { display: inline; }
 
-/* Filter row */
+/* ============================ FILTER / TOOLBAR ============================ */
 .filterRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
 }
 .search {
   position: relative;
-  flex: 1;
-  min-width: 240px;
-  max-width: 360px;
+  flex: 1; min-width: 280px; max-width: 400px;
 }
 .search input {
   width: 100%;
-  padding: 9px 12px 9px 34px;
+  padding: 9px 14px 9px 38px;
   border: 1px solid var(--border);
-  border-radius: var(--r-sm);
+  border-radius: 8px;
   font-size: 13.5px;
   background: var(--surface);
   color: var(--text);
   outline: none;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: -0.005em;
+  box-shadow: var(--shadow-xs);
   font-family: inherit;
 }
-.search input::placeholder {
-  color: var(--text-3);
-}
+.search input::placeholder { color: var(--text-3); font-weight: 400; }
 .search input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.10);
 }
-.search svg {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+.search > svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
   color: var(--text-3);
+  pointer-events: none;
 }
 
-/* ============================ TABLE ============================ */
+.chipGroup {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow-xs);
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  letter-spacing: -0.005em;
+  font-family: inherit;
+}
+.chip:hover { background: var(--hover); color: var(--text); }
+.chip.chipActive {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+.chipCount {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.05);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+.chip.chipActive .chipCount {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.filterSpacer { flex: 1; min-width: 0; }
+
+/* ============================ TABLE CARD ============================ */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: 14px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -334,115 +344,185 @@
 table.contracts {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 14px;
 }
 .contracts thead th {
   text-align: left;
   font-size: 11.5px;
-  font-weight: 500;
+  font-weight: 550;
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 12px 16px;
-  background: var(--surface-soft);
+  padding: 14px 20px;
+  background: var(--surface-2);
   border-bottom: 1px solid var(--border-soft);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
 }
+.contracts thead th:hover { color: var(--text-2); }
+
 .contracts tbody tr {
   border-bottom: 1px solid var(--border-soft);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background 0.12s ease;
 }
-.contracts tbody tr:last-child {
-  border-bottom: none;
-}
-.contracts tbody tr:hover {
-  background: var(--hover);
-}
-.contracts tbody tr.selectedRow {
-  background: var(--accent-soft);
-}
+.contracts tbody tr:last-child { border-bottom: none; }
+.contracts tbody tr:hover { background: var(--surface-2); }
+.contracts tbody tr.selectedRow { background: var(--accent-soft); }
 .contracts tbody tr.selectedRow td:first-child {
   box-shadow: inset 3px 0 0 var(--accent);
 }
+.contracts tbody tr.bulkSelectedRow { background: var(--accent-soft); }
+.contracts tbody tr.bulkSelectedRow td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.contracts tbody tr.bulkSelectedRow .checkboxBtn { color: var(--accent); }
+
 .contracts td {
-  padding: 14px 16px;
+  padding: 16px 20px;
   vertical-align: middle;
 }
 
 .docCell {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 14px;
 }
 .docIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--muted-soft);
-  color: var(--muted);
-  display: grid;
-  place-items: center;
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--text-3);
+  display: grid; place-items: center;
   flex-shrink: 0;
 }
-.docMeta {
-  line-height: 1.35;
-  min-width: 0;
-}
+.docMeta { line-height: 1.4; min-width: 0; flex: 1; }
 .docName {
-  font-weight: 500;
+  font-weight: 550;
   color: var(--text);
-  max-width: 280px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 320px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+  font-size: 14px;
 }
 .docSub {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-3);
-  display: flex;
-  gap: 6px;
-  align-items: center;
+  display: flex; gap: 6px; align-items: center;
+  margin-top: 2px;
 }
-.docSub .sep {
-  color: var(--border);
-}
+.docSub .sep { color: var(--text-4); }
 
 /* Status pill */
 .pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: inline-flex; align-items: center; gap: 6px;
   padding: 3px 9px;
   border-radius: 999px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 550;
   line-height: 1.4;
+  letter-spacing: -0.005em;
   white-space: nowrap;
 }
 .pill .pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+  width: 6px; height: 6px; border-radius: 50%;
   background: currentColor;
 }
 .pillOk    { color: var(--ok);    background: var(--ok-soft); }
 .pillWarn  { color: var(--warn);  background: var(--warn-soft); }
 .pillBad   { color: var(--bad);   background: var(--bad-soft); }
 .pillMuted { color: var(--muted); background: var(--muted-soft); }
-.pillAccent{ color: var(--accent); background: var(--accent-soft); }
+.pillAccent{ color: var(--accent);background: var(--accent-soft); }
 
-.tableFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  font-size: 12.5px;
-  color: var(--text-3);
-  border-top: 1px solid var(--border-soft);
-  background: var(--surface-soft);
+/* Sort header */
+.sortHead {
+  display: inline-flex; align-items: center; gap: 4px;
+  user-select: none;
+}
+.sortHead svg {
+  color: var(--accent);
 }
 
-/* ============================ STATES ============================ */
+/* Configurable column header */
+.configurableHead {
+  cursor: default;
+}
+.configurableHeadInner {
+  display: inline-flex; align-items: center; gap: 4px;
+  position: relative;
+}
+.configBtn {
+  display: inline-grid; place-items: center;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.configurableHead:hover .configBtn { color: var(--text-3); }
+.configBtn:hover {
+  color: var(--accent) !important;
+  background: var(--accent-soft);
+}
+
+/* Score cell (für Konfigurator-Field "score") */
+.scoreCell {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--text);
+}
+.scoreBar {
+  width: 56px; height: 5px;
+  border-radius: 3px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.scoreBar > i {
+  position: absolute; left:0; top:0; bottom:0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: 3px;
+}
+.scoreEmpty { color: var(--text-3); font-size: 12px; }
+
+/* Row actions */
+.actionsCell {
+  text-align: right;
+  white-space: nowrap;
+}
+.iconBtn {
+  width: 32px; height: 32px;
+  display: inline-grid; place-items: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  margin-left: 2px;
+  font-family: inherit;
+}
+.iconBtn:hover {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+.iconBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.deleteButton:hover { color: var(--bad); border-color: var(--bad); }
+
+.tableFooter {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px;
+  font-size: 12.5px; color: var(--text-3);
+  border-top: 1px solid var(--border-soft);
+  background: var(--surface-2);
+}
+
+/* Empty / loading / error states */
 .center {
   padding: 80px 24px;
   text-align: center;
@@ -453,305 +533,21 @@ table.contracts {
   background: var(--bad-soft);
   color: var(--bad);
   padding: 14px 16px;
-  border-radius: var(--r-sm);
+  border-radius: 8px;
   font-size: 13.5px;
   margin-bottom: 16px;
 }
-
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 32px; height: 32px;
   border: 3px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 12px;
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ============================ BANNER (dezenter Pill statt Vollbreit) ============================ */
-.devBanner {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: #fef3c7;
-  color: #92400e;
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  vertical-align: middle;
-  margin-left: 10px;
-}
-.devBanner b {
-  color: #78350f;
-  font-weight: 600;
-}
-
-/* ============================ FILTER CHIPS ============================ */
-.chipGroup {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 12.5px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-.chip:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-.chip.chipActive {
-  background: var(--accent-soft);
-  border-color: rgba(79, 70, 229, 0.2);
-  color: var(--accent);
-}
-.chipCount {
-  background: rgba(0, 0, 0, 0.05);
-  color: inherit;
-  font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-variant-numeric: tabular-nums;
-}
-.chip.chipActive .chipCount {
-  background: rgba(79, 70, 229, 0.12);
-}
-
-/* Spacer schiebt Sortier-Button nach rechts (wie Mockup) */
-.filterSpacer {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Sortier-Popover öffnet rechtsbündig */
-.sortPopover {
-  right: 0;
-  left: auto;
-  min-width: 200px;
-}
-
-/* ============================ SORT HEADER ============================ */
-.sortHead {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  user-select: none;
-}
-.sortHead svg {
-  color: var(--accent);
-}
-
-/* ============================ COLUMN CONFIGURATOR ============================ */
-.configurableHead {
-  cursor: default;
-}
-.configurableHeadInner {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-}
-.configBtn {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-  transition: color 0.12s ease, background 0.12s ease;
-}
-.configurableHead:hover .configBtn {
-  color: var(--text-3);
-}
-.configBtn:hover {
-  color: var(--accent) !important;
-  background: var(--accent-soft);
-}
-.columnPopover {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  min-width: 280px;
-  max-width: 320px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.06);
-  padding: 0;
-  z-index: 40;
-  /* Wir setzen das normalisiert — überschreibt das default popover-styling */
-  display: flex;
-  flex-direction: column;
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 400;
-  color: var(--text);
-}
-.columnPopoverSection {
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.columnPopoverLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.columnPopoverInput {
-  font-family: inherit;
-  font-size: 13px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: var(--surface-soft);
-  color: var(--text);
-  outline: none;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-.columnPopoverInput:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-  background: var(--surface);
-}
-.columnPopoverActions {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-}
-.columnPopoverActions .btn {
-  padding: 6px 10px;
-  font-size: 12px;
-}
-.fieldOptionsList {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  max-height: 260px;
-  overflow-y: auto;
-  margin: 0 -4px;
-}
-.fieldOption {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-2);
-  font-size: 13px;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.fieldOption:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-.fieldOption.fieldOptionActive {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 500;
-}
-.fieldRadio {
-  width: 14px;
-  height: 14px;
-  display: inline-grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.fieldRadio span {
-  width: 12px;
-  height: 12px;
-  border: 1.5px solid var(--text-3);
-  border-radius: 50%;
-}
-.fieldOption.fieldOptionActive .fieldRadio svg {
-  color: var(--accent);
-}
-
-/* ============================ SCORE in Tabelle ============================ */
-.scoreCell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-  color: var(--text);
-}
-.scoreBar {
-  width: 56px;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--border-soft);
-  position: relative;
-  overflow: hidden;
-}
-.scoreBar > i {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
-  border-radius: 3px;
-}
-.scoreEmpty {
-  color: var(--text-3);
-  font-size: 12px;
-}
-
-/* ============================ ACTIONS COLUMN ============================ */
-.actionsCell {
-  text-align: right;
-  white-space: nowrap;
-}
-.iconBtn {
-  width: 30px;
-  height: 30px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-3);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-  margin-left: 2px;
-}
-.iconBtn:hover {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--text);
-}
-.iconBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Popover-Menü (⋯) */
+/* ============================ POPOVER ============================ */
 .popoverWrap {
   position: relative;
   display: inline-block;
@@ -760,11 +556,11 @@ table.contracts {
   position: absolute;
   right: 0;
   top: calc(100% + 4px);
-  min-width: 200px;
+  min-width: 220px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
   padding: 6px;
   z-index: 30;
   display: flex;
@@ -772,9 +568,7 @@ table.contracts {
   gap: 1px;
 }
 .popoverItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 8px 10px;
   border-radius: 6px;
   border: none;
@@ -791,222 +585,21 @@ table.contracts {
   background: var(--hover);
   color: var(--text);
 }
-.popoverItem.danger {
-  color: var(--bad);
-}
-.popoverItem.danger:hover {
-  background: var(--bad-soft);
-  color: var(--bad);
-}
+.popoverItem.danger { color: var(--bad); }
+.popoverItem.danger:hover { background: var(--bad-soft); color: var(--bad); }
 .popoverDivider {
-  height: 1px;
-  background: var(--border-soft);
+  height: 1px; background: var(--border-soft);
   margin: 4px 2px;
 }
-
-/* ============================ BULK MODE ============================ */
-.checkboxBtn {
-  display: inline-grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.checkboxBtn:hover {
-  background: var(--hover);
-  color: var(--accent);
-}
-.contracts.bulkActive tbody tr {
-  /* Im Bulk-Modus: Hover-Cursor auf "pointer" — Klick ist Auswahl */
-  cursor: pointer;
-}
-.contracts tbody tr.bulkSelectedRow {
-  background: var(--accent-soft);
-}
-.contracts tbody tr.bulkSelectedRow:hover {
-  background: var(--accent-soft);
-  filter: brightness(0.98);
-}
-.contracts tbody tr.bulkSelectedRow td:first-child {
-  box-shadow: inset 3px 0 0 var(--accent);
-}
-.contracts tbody tr.bulkSelectedRow .checkboxBtn {
-  color: var(--accent);
-}
-
-/* Floating Action Bar — Hex-Werte (kein var()), weil das Element via Portal
-   an document.body gerendert wird und CSS-Module-Vars dort nicht greifen. */
-.bulkBar {
-  position: fixed;
-  left: 50%;
-  bottom: 20px;
-  transform: translateX(-50%);
-  background: #ffffff;
-  border: 1px solid #e6e8ec;
-  border-radius: 14px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 6px 16px rgba(15, 23, 42, 0.10);
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  z-index: 50;
-  min-width: 380px;
-  max-width: calc(100vw - 32px);
-  color: #0f172a;
-  /* Solides Backing — kein blur/transparency, damit alles unten drunter wirklich verdeckt ist */
-}
-.bulkBarInfo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0f172a;
-  padding-right: 12px;
-  border-right: 1px solid #eef0f3;
-}
-.bulkBarInfo svg {
-  color: #4f46e5;
-}
-.bulkBarActions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-/* Auch die Buttons im Portal brauchen explizite Farben */
-.bulkBar .btn {
-  background: #ffffff;
-  border-color: #e6e8ec;
-  color: #475569;
-}
-.bulkBar .btn:hover {
-  background: #f4f6f9;
-  color: #0f172a;
-}
-.bulkBar .btnPrimary {
-  background: #0f172a;
-  color: #ffffff;
-  border-color: #0f172a;
-}
-.bulkBar .btnPrimary:hover {
-  background: #1e293b;
-  border-color: #1e293b;
-}
-.bulkBar .btnDanger {
-  color: #b91c1c;
-  border-color: #fecaca;
-  background: #ffffff;
-}
-.bulkBar .btnDanger:hover {
-  background: #fef2f2;
-  border-color: #b91c1c;
-}
-.bulkBar .iconBtn {
-  background: transparent;
-  color: #94a3b8;
-}
-.bulkBar .iconBtn:hover {
-  background: #f4f6f9;
-  color: #0f172a;
-}
-/* Folder-Popover innerhalb der Bulk-Bar braucht ebenfalls Hex-Werte */
-.bulkBar .popover {
-  background: #ffffff;
-  border-color: #e6e8ec;
-  color: #0f172a;
-}
-.bulkBar .popoverItem {
-  color: #475569;
-}
-.bulkBar .popoverItem:hover {
-  background: #f4f6f9;
-  color: #0f172a;
-}
-.bulkBar .popoverDivider {
-  background: #eef0f3;
-}
-
-/* Popover, das nach oben öffnet (für Bulk-Bar) */
 .popoverUp {
-  top: auto;
-  bottom: calc(100% + 4px);
-  max-height: 280px;
-  overflow-y: auto;
+  top: auto; bottom: calc(100% + 4px);
+  max-height: 280px; overflow-y: auto;
 }
+.sortPopover { right: 0; left: auto; min-width: 200px; }
 
-/* ============================ PDF-VORSCHAU im Drawer ============================ */
-.pdfToggleBtn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0;
-  margin: 0 0 12px 0;
-  background: transparent;
-  border: none;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-  font-family: inherit;
-}
-.pdfToggleBtn:hover {
-  color: var(--text-2);
-}
-.pdfToggleBtn svg {
-  color: var(--text-3);
-}
-.pdfThumb {
-  border-radius: var(--r-md);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  background: var(--surface-soft);
-  cursor: zoom-in;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  display: flex;
-  justify-content: center;
-}
-.pdfThumb:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-.pdfThumb canvas {
-  max-width: 100%;
-  height: auto !important;
-  display: block;
-}
-.pdfThumbLoading {
-  height: 280px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-md);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-}
-.pdfThumbError {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px;
-  border-radius: var(--r-md);
-  background: var(--surface-soft);
-  border: 1px solid var(--border-soft);
-  font-size: 12.5px;
-  color: var(--text-3);
-}
-
-/* ============================ FOLDER SUB-MENU im Popover ============================ */
+/* Folder sub-menu im Popover */
 .popoverFolderList {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  display: flex; flex-direction: column; gap: 1px;
   margin: 2px 0 2px 8px;
   padding-left: 6px;
   border-left: 2px solid var(--border-soft);
@@ -1022,13 +615,159 @@ table.contracts {
   background: var(--accent-soft);
 }
 
+/* Column-Konfigurator Popover */
+.columnPopover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  min-width: 280px;
+  max-width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--text);
+}
+.columnPopoverSection {
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.columnPopoverLabel {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.columnPopoverInput {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.columnPopoverInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.12);
+  background: var(--surface);
+}
+.columnPopoverActions {
+  display: flex; gap: 6px; justify-content: flex-end;
+}
+.columnPopoverActions .btn {
+  padding: 6px 10px; font-size: 12px;
+}
+.fieldOptionsList {
+  display: flex; flex-direction: column; gap: 1px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0 -4px;
+}
+.fieldOption {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.fieldOption:hover { background: var(--hover); color: var(--text); }
+.fieldOption.fieldOptionActive {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 500;
+}
+.fieldRadio {
+  width: 14px; height: 14px;
+  display: inline-grid; place-items: center;
+  flex-shrink: 0;
+}
+.fieldRadio span {
+  width: 12px; height: 12px;
+  border: 1.5px solid var(--text-3);
+  border-radius: 50%;
+}
+.fieldOption.fieldOptionActive .fieldRadio svg { color: var(--accent); }
+
+/* ============================ CHECKBOX / BULK ============================ */
+.checkboxBtn {
+  display: inline-grid; place-items: center;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.checkboxBtn:hover {
+  background: var(--hover);
+  color: var(--accent);
+}
+.contracts.bulkActive tbody tr { cursor: pointer; }
+
+.bulkBar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(15,23,42,0.18), 0 6px 16px rgba(15,23,42,0.10);
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 50;
+  min-width: 380px;
+  max-width: calc(100vw - 32px);
+  color: #0a0e1a;
+}
+.bulkBarInfo {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 500;
+  color: #0a0e1a;
+  padding-right: 12px;
+  border-right: 1px solid #f1f3f6;
+}
+.bulkBarInfo svg { color: #4f46e5; }
+.bulkBarActions {
+  display: flex; align-items: center; gap: 6px;
+}
+.bulkBar .btn {
+  background: #ffffff; border-color: #eaecf0; color: #475569;
+}
+.bulkBar .btn:hover { background: #f5f6f9; color: #0a0e1a; border-color: #d4d8df; }
+.bulkBar .btnDanger { color: #b91c1c; border-color: #fecaca; background: #ffffff; }
+.bulkBar .btnDanger:hover { background: #fef2f2; border-color: #b91c1c; }
+.bulkBar .iconBtn { background: transparent; color: #8896a8; }
+.bulkBar .iconBtn:hover { background: #f5f6f9; color: #0a0e1a; }
+.bulkBar .popover { background: #ffffff; border-color: #eaecf0; color: #0a0e1a; }
+.bulkBar .popoverItem { color: #475569; }
+.bulkBar .popoverItem:hover { background: #f5f6f9; color: #0a0e1a; }
+.bulkBar .popoverDivider { background: #f1f3f6; }
+
 /* ============================ DRAWER ============================ */
-/* Mockup-Pattern: Drawer ist Grid-Column (sticky), nicht fixed.
-   Mit align-items:start auf der .shell ist der Drawer-Slot nur 100vh hoch,
-   sodass sticky sofort greift — egal wie weit gescrollt wurde. */
 .drawer {
   background: var(--surface);
-  border-left: 1px solid var(--border);
+  box-shadow: -1px 0 0 var(--border);
   position: sticky;
   top: 64px;
   height: calc(100vh - 64px);
@@ -1036,8 +775,11 @@ table.contracts {
   display: flex;
   flex-direction: column;
 }
+.drawer::-webkit-scrollbar { width: 4px; }
+.drawer::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 2px; }
+
 .drawerHead {
-  padding: 22px 24px 18px;
+  padding: 28px 28px 22px;
   border-bottom: 1px solid var(--border-soft);
   display: flex;
   align-items: flex-start;
@@ -1045,287 +787,264 @@ table.contracts {
   gap: 12px;
 }
 .drawerLabel {
-  font-size: 11px;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 600;
+  font-size: 11px; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
 }
 .drawerTitle {
-  margin: 4px 0 0;
-  font-size: 16px;
+  margin: 6px 0 10px;
+  font-size: 18px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--text);
+  letter-spacing: -0.015em;
   word-break: break-word;
-}
-.drawerHead .pill {
-  margin-top: 8px;
 }
 
 .drawerSection {
-  padding: 18px 24px;
+  padding: 22px 28px;
   border-bottom: 1px solid var(--border-soft);
 }
 .drawerSection h3 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-3);
   font-weight: 600;
 }
 
-/* Score */
-.scorePanel {
+/* PDF preview */
+.pdfToggleBtn {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 12px 0;
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  font-family: inherit;
+}
+.pdfToggleBtn:hover { color: var(--text-2); }
+.pdfToggleBtn svg { color: var(--text-3); }
+
+.pdfThumb {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  cursor: zoom-in;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+.pdfThumb:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+.pdfThumb canvas {
+  max-width: 100%;
+  height: auto !important;
+  display: block;
+}
+.pdfThumbLoading {
+  height: 280px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.pdfThumbError {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  font-size: 12.5px; color: var(--text-3);
+}
+
+/* Score panel */
+.scorePanel {
+  display: flex; align-items: center; gap: 18px;
 }
 .scoreRing {
-  /* --val wird inline gesetzt */
-  width: 72px;
-  height: 72px;
+  width: 68px; height: 68px;
   border-radius: 50%;
-  background: conic-gradient(var(--accent) calc(var(--val) * 1%), var(--border-soft) 0);
-  display: grid;
-  place-items: center;
+  background: conic-gradient(var(--accent) calc(var(--val) * 1%), var(--border) 0);
+  display: grid; place-items: center;
   flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .scoreRing > div {
-  width: 56px;
-  height: 56px;
+  width: 54px; height: 54px;
   background: var(--surface);
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 600;
-  font-size: 18px;
-  color: var(--text);
+  display: grid; place-items: center;
+  font-weight: 600; font-size: 18px; color: var(--text);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 .scoreDetail .value {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 14.5px; font-weight: 550;
   color: var(--text);
+  letter-spacing: -0.005em;
   line-height: 1.4;
 }
 .scoreDetail .meta {
-  margin-top: 6px;
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  color: var(--text-2);
-  font-size: 12.5px;
+  margin-top: 8px;
+  display: flex; gap: 14px; flex-wrap: wrap;
+  color: var(--text-2); font-size: 12.5px;
 }
 .scoreDetail .meta span {
-  display: inline-flex;
-  gap: 5px;
-  align-items: center;
+  display: inline-flex; gap: 5px; align-items: center;
 }
 
-/* Key/Value */
+/* Key/value pairs */
 .kv {
   display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 8px 12px;
-  font-size: 13px;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 16px;
+  font-size: 13.5px;
   margin: 0;
 }
 .kv dt {
   color: var(--text-3);
+  font-weight: 450;
 }
 .kv dd {
   margin: 0;
   color: var(--text);
   font-weight: 500;
+  letter-spacing: -0.005em;
 }
-.kv dd.warn {
-  color: var(--warn);
-}
-.kv dd.muted {
-  color: var(--text-3);
-  font-weight: 400;
-}
+.kv dd.warn { color: var(--warn); }
+.kv dd.muted { color: var(--text-3); font-weight: 400; }
 
 /* Risks */
 .risks {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .risk {
-  display: flex;
-  gap: 10px;
-  padding: 10px 12px;
+  display: flex; gap: 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border-soft);
-  border-radius: var(--r-sm);
-  background: var(--surface-soft);
-  font-size: 12.5px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-size: 13px;
   color: var(--text);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 .risk .lvl {
-  width: 4px;
-  flex-shrink: 0;
+  width: 3px; flex-shrink: 0;
   border-radius: 4px;
   background: var(--bad);
 }
-.risk .lvl.med {
-  background: var(--warn);
-}
-.risk .lvl.low {
-  background: var(--accent-2);
-}
+.risk .lvl.med { background: var(--warn); }
+.risk .lvl.low { background: var(--accent); }
 
-/* Drawer Actions */
+/* Drawer Actions footer */
 .drawerActions {
   margin-top: auto;
-  padding: 16px 24px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 18px 28px 24px;
+  display: flex; flex-direction: column; gap: 8px;
   border-top: 1px solid var(--border-soft);
-  background: var(--surface-soft);
+  background: var(--surface);
+  position: sticky;
+  bottom: 0;
 }
 .drawerActions .btnPrimary {
-  padding: 10px 14px;
+  padding: 11px 16px;
   justify-content: center;
-  font-weight: 500;
+  font-weight: 550;
+  font-size: 14px;
 }
 .secondaryRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
 }
 .secondaryRow .btn {
   justify-content: center;
-  padding: 9px 8px;
+  padding: 8px 6px;
   font-size: 12.5px;
 }
-.btnDanger {
-  color: var(--bad);
-  border-color: var(--bad-soft);
-}
-.btnDanger:hover {
-  background: var(--bad-soft);
-  border-color: var(--bad);
-  color: var(--bad);
-}
 
-/* ============================ MOBILE — app-like ============================ */
+/* ============================ MOBILE ============================ */
+.mobileSidebarOverlay { display: none; }
+
 @media (max-width: 900px) {
+  .page {
+    /* Auf Mobile keine zusätzliche Skalierung — sonst zu klein */
+    zoom: 1;
+  }
   .shell,
   .shellWithDrawer {
     grid-template-columns: 1fr;
     display: block;
   }
 
-  /* ---- Sidebar als Slide-In-Drawer von links ---- */
   .sidebar {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: 280px;
     max-width: 85vw;
     height: 100vh;
     z-index: 70;
     transform: translateX(-100%);
     transition: transform 0.22s ease;
-    box-shadow: 6px 0 24px rgba(15, 23, 42, 0.10);
-    flex-shrink: initial;
+    box-shadow: 6px 0 24px rgba(15,23,42,0.10);
   }
-  .sidebar.sidebarMobileOpen {
-    transform: translateX(0);
-  }
+  .sidebar.sidebarMobileOpen { transform: translateX(0); }
+
   .mobileSidebarOverlay {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(15,23,42,0.35);
     z-index: 65;
-    animation: mobileOverlayFadeIn 0.18s ease;
-  }
-  @keyframes mobileOverlayFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
   }
 
-  /* Hamburger-Button erscheint */
-  .mobileMenuBtn {
-    display: inline-flex;
-  }
+  .mobileMenuBtn { display: inline-flex; }
 
-  /* ---- Drawer auf Mobile aus — Single-Click → Modal direkt ---- */
-  .drawer {
-    display: none;
-  }
+  .drawer { display: none; }
 
-  /* ---- Main-Content ---- */
   .main {
-    padding: 18px 14px 96px; /* unten Platz für Bulk-Bar */
+    padding: 22px 18px 96px;
   }
   .pageHeader {
     flex-direction: column;
     align-items: stretch;
     gap: 14px;
-    padding-bottom: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 22px;
   }
-  .pageHeader h1 {
-    font-size: 22px;
-  }
-  .headerActions {
-    flex-wrap: wrap;
-  }
-  /* Auf Mobile zeigen die Buttons nur noch das Icon — Platzersparnis */
+  .pageHeader h1 { font-size: 24px; }
+  .headerActions { flex-wrap: wrap; }
   .headerActions .btn {
     min-width: 44px;
     min-height: 40px;
     padding: 8px 10px;
   }
-  .headerActions .btnLabel {
-    display: none;
-  }
-  /* Vorschau-Pill auf neuer Zeile mit kleiner Schrift */
-  .pageHeaderTitleRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-  .devBanner {
-    margin-left: 0;
-  }
+  .headerActions .btnLabel { display: none; }
 
-  /* ---- Filter-Row ---- */
-  .filterRow {
-    gap: 8px;
-  }
-  .search {
-    max-width: none;
-    width: 100%;
-  }
+  .filterRow { gap: 8px; }
+  .search { max-width: none; width: 100%; }
   .chipGroup {
     overflow-x: auto;
     flex-wrap: nowrap;
-    width: 100%;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    width: 100%;
     padding-bottom: 4px;
   }
-  .chipGroup::-webkit-scrollbar {
-    display: none;
-  }
-  .chip {
-    flex-shrink: 0;
-  }
+  .chipGroup::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; }
 
-  /* ---- Tabelle ---- */
-  .docName {
-    max-width: 200px;
-  }
-  /* Auf Mobile bleibt nur Vertrag (1) + Status (5) + Aktionen (6) sichtbar.
-     Slots A/B/C (2,3,4) werden ausgeblendet. */
+  /* Mobile: nur Vertrag (1) + Status (5) + Aktionen (6) sichtbar */
   .contracts thead th:nth-child(2),
   .contracts thead th:nth-child(3),
   .contracts thead th:nth-child(4),
@@ -1334,33 +1053,19 @@ table.contracts {
   .contracts tbody td:nth-child(4) {
     display: none;
   }
-  .contracts thead th,
-  .contracts td {
-    padding: 12px 10px;
-  }
-  /* Aktion-Spalte schrumpft, Tap-Target bleibt erhalten */
-  .iconBtn {
-    width: 38px;
-    height: 38px;
-  }
+  .contracts thead th, .contracts td { padding: 12px 14px; }
+  .docName { max-width: 200px; }
 
-  /* Bulk-Modus: Checkbox-Spalte stays visible */
+  .iconBtn { width: 38px; height: 38px; }
+
   .contracts.bulkActive thead th:first-child,
-  .contracts.bulkActive tbody td:first-child {
-    display: table-cell;
-  }
-  .checkboxBtn {
-    width: 36px;
-    height: 36px;
-  }
+  .contracts.bulkActive tbody td:first-child { display: table-cell; }
 
-  /* Popover an Bildschirmrand anpassen */
   .popover {
     right: 4px;
     min-width: 200px;
     max-width: calc(100vw - 32px);
   }
-  /* Konfigurator-Popover auf Mobile: zentriert, breiter */
   .columnPopover {
     position: fixed;
     left: 16px !important;
@@ -1371,11 +1076,8 @@ table.contracts {
     max-width: none !important;
   }
 
-  /* ---- Bulk-Bar mobile ---- */
   .bulkBar {
-    left: 16px;
-    right: 16px;
-    transform: none;
+    left: 16px; right: 16px; transform: none;
     bottom: 16px;
     min-width: 0;
     padding: 10px 12px;
@@ -1396,18 +1098,5 @@ table.contracts {
     flex: 1 1 auto;
     min-height: 38px;
     justify-content: center;
-  }
-}
-
-/* Sehr kleine Geräte: noch kompakter */
-@media (max-width: 380px) {
-  .main {
-    padding: 14px 10px 96px;
-  }
-  .pageHeader h1 {
-    font-size: 20px;
-  }
-  .docName {
-    max-width: 160px;
   }
 }
