@@ -342,6 +342,8 @@ function normalize(s) {
     .replace(/[‘’‚‛′]/g, "'")
     .replace(/[“”„‟″]/g, '"')
     .replace(/[‐-―]/g, '-')
+    .replace(/­/g, '')                  // Soft-Hyphen-Unicode entfernen
+    .replace(/(\w)-\n\s*(\w)/g, '$1$2')      // Silbentrennung am Zeilenende heilen
     .replace(/\s+/g, ' ')
     .trim();
 }
