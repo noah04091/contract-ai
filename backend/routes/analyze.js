@@ -1098,9 +1098,11 @@ function getContractTypeAwareness(documentType) {
   const awarenessMap = {
     purchase: {
       title: "Fachanwalt für Kaufrecht",
-      expertise: `Als Fachanwalt für Kaufrecht mit 20+ Jahren Erfahrung weißt du:
+      expertise: `Als Fachanwalt für Kaufrecht mit 20+ Jahren Erfahrung — inkl. der BGB-Reform 2022 (Verbrauchergüterkauf, digitale Produkte) — weißt du:
 
-Bei Kaufverträgen sind typischerweise relevant: Gewährleistung/Sachmängelhaftung, Eigentumsvorbehalt, Rücktritts-/Widerrufsrechte, Gefahrübergang, Zahlungsbedingungen, Lieferfristen.
+Bei Kaufverträgen sind typischerweise relevant: Gewährleistung/Sachmängelhaftung, Beweislastumkehr, digitale Elemente und Aktualisierungspflichten (§§ 327 ff., 475b BGB), Eigentumsvorbehalt, Gefahrübergang, Lieferfristen, Zahlungsbedingungen, Widerrufsrecht im Fernabsatz.
+
+WICHTIG für 2026: Bei Verbrauchsgüterkäufen gelten zusätzlich §§ 474 ff. BGB. Bei digitalen Produkten und Waren mit digitalen Elementen greifen §§ 327 ff., 475b BGB mit Update-Pflicht. Beweislastumkehr nach § 477 BGB jetzt 12 Monate (nicht mehr 6), bei dauerhafter Bereitstellung digitaler Elemente sogar 2 Jahre.
 
 ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
 Wenn keine Eigentumsvorbehaltsklausel drin steht → erwähne sie nicht.
@@ -1109,11 +1111,41 @@ Wenn es nur 2 Seiten mit 5 Klauseln sind → fokussiere auf diese 5.`,
 
       commonTraps: `Häufige Fallen bei Kaufverträgen (falls im Vertrag vorhanden):
 • Gewährleistungsverkürzung unter gesetzliches Minimum (§ 438 BGB: 2 Jahre bei Neuware, 1 Jahr bei Gebrauchtware im B2C)
-• Unwirksame Haftungsausschlüsse nach § 309 BGB (für Vorsatz/grobe Fahrlässigkeit)
+• Klauseln, die § 442 BGB im B2C wieder einführen wollen (Käufer verliert Rechte bei Mangel-Kenntnis) — unwirksam (§ 475 Abs. 3 BGB n.F.)
+• Verkürzung der Beweislastumkehr unter 12 Monate im B2C — unwirksam (§ 477 BGB)
+• Bei Smart-Geräten/Software: fehlende Update-Pflicht-Regelung (§§ 327f, 475b BGB)
+• Versendungsklausel im B2C, die Gefahrübergang vor Übergabe legt → unwirksam (§ 475 Abs. 2 BGB)
+• Unwirksame Haftungsausschlüsse nach § 309 Nr. 7 BGB (Vorsatz/grobe Fahrlässigkeit, Leben/Körper/Gesundheit) — BGH-Indizwirkung auch im B2B
 • Versteckte Kosten (Lieferkosten, Verpackung, Finanzierung)
 • Unklare Lieferbedingungen ohne Verzugsfolgen
-• Überhöhte Verzugszinsen (Verbraucher: max. 5% über Basiszinssatz)
-• Eigentumsvorbehalt mit unklaren Verwertungsrechten`
+• Überhöhte Verzugszinsen (Verbraucher: max. 5%-Pkt. über Basiszinssatz, B2B: 9%-Pkt. + 40€-Pauschale § 288 Abs. 5 BGB)
+• Eigentumsvorbehalt mit unklaren Verwertungsrechten oder Vorausabtretung
+• Fehlerhafte Widerrufsbelehrung im Fernabsatz → Widerrufsfrist 12 Monate + 14 Tage statt 14 Tage
+• Schiedsklauseln gegenüber Verbrauchern (§ 1031 Abs. 5 ZPO) oder Wegfall des Wohnsitzgerichtsstands (§ 29c ZPO)`,
+
+      // 🌐 Phase-3-Pilot (03.05.2026): Pflicht-Prüfpunkte für kaufrechtliche Tiefenanalyse.
+      // Fundiert auf BGB-Reform 2022 (Verbrauchergüterkauf, digitale Produkte) und
+      // aktueller BGH-Rechtsprechung. Werden zusätzlich zur Universal-Analyse als
+      // typeSpecificFindings ausgegeben.
+      pilotChecklist: `KAUFVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" (das ist OK!).
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Vertragstyp & Geltungsbereich — Kauf nach § 433 BGB vs. Werkvertrag § 631 BGB; B2C (§ 13) vs. B2B (§ 14); bei Verbrauchsgüterkauf zusätzlich §§ 474 ff. BGB; bei digitalen Produkten zusätzlich §§ 327 ff. BGB
+2. Gewährleistungsfrist (§§ 438, 475 BGB) — Neuware B2C zwingend 2 Jahre; Gebrauchtware B2C verkürzbar auf max. 1 Jahr; B2B verkürzbar (außer Vorsatz). Klauseln unter Minimum unwirksam. § 442 BGB im B2C ausgeschlossen — Käufer-Kenntnis schadet nicht (§ 475 Abs. 3 BGB n.F.)
+3. Beweislastumkehr (§ 477 BGB) — seit 1.1.2022 12 Monate (vorher 6); bei dauerhafter Bereitstellung digitaler Elemente 2 Jahre (i.V.m. § 475b BGB). Klauseln, die das verkürzen, sind im B2C unwirksam
+4. Digitale Elemente & Aktualisierungspflicht (§§ 327f, 475b BGB) — bei Smart-Geräten, Software, Apps: Update-Pflicht für übliche Lebensdauer geregelt? Information über Updates? Bei dauerhafter Bereitstellung mind. 2 Jahre Update-Pflicht
+5. Untersuchungs- und Rügepflicht (§ 377 HGB) — nur B2B-Handelskauf. Unverzügliche Anzeige bei erkennbaren Mängeln; bei verdeckten Mängeln nach Erkennen. Klausel-Verkürzung auf starre Tage-Frist in AGB rechtlich problematisch
+6. Eigentumsvorbehalt (§ 449 BGB) — einfach / erweitert / verlängert? Vorausabtretungsklausel klar geregelt? Verarbeitungsklausel sauber? Verwertungsrechte transparent?
+7. Gefahrübergang (§§ 446, 475 Abs. 2 BGB) — bei B2C zwingend mit Übergabe an Verbraucher; Versendungsklauseln im B2C UNWIRKSAM. Bei B2B Incoterms üblich
+8. Lieferfrist & Verzug (§ 286 BGB) — kalendermäßig bestimmte Frist? Mahnung erforderlich? Pauschalierter Verzugsschaden im B2C verhältnismäßig (§ 309 Nr. 5 BGB)?
+9. Zahlungsbedingungen & Verzugszinsen (§ 288 BGB) — Verbraucher max. 5%-Pkt. über Basiszinssatz, B2B 9%-Pkt. + 40€-Pauschale (§ 288 Abs. 5 BGB). Vorkasse-Klauseln im B2C kritisch (§ 309 Nr. 2 BGB)
+10. Widerrufsrecht im Fernabsatz (§§ 312g, 312f BGB, Art. 246a EGBGB) — bei Verbraucher-Online/-Telefon-Kauf zwingend 14 Tage. Belehrung formgerecht (Anlage 1 EGBGB)? Pflichtangaben nach Art. 246a EGBGB? Bestätigung auf dauerhaftem Datenträger? Fehlerhafte Belehrung verlängert auf 12 Monate + 14 Tage
+11. Haftungsausschluss (§§ 307, 309 Nr. 7 BGB) — Vorsatz, grobe Fahrlässigkeit, Verletzung von Leben/Körper/Gesundheit NIEMALS ausschließbar. BGH-Indizwirkung auch im B2B (BGH VIII ZR 174/12). Pauschale Haftungsbegrenzung bei wesentlichen Vertragspflichten kritisch
+12. Garantie, Gerichtsstand, VSBG (§§ 443 BGB, 29c ZPO, 36 VSBG) — Garantie klar von Gewährleistung abgegrenzt? Garantiegeber + Inhalt eindeutig? Bei Verbrauchern Wohnsitzgerichtsstand zwingend (§ 29c ZPO); Schiedsklauseln im B2C unwirksam (§ 1031 Abs. 5 ZPO). Online-Shops: VSBG-Hinweis (§ 36 VSBG)?`
     },
 
     employment: {
