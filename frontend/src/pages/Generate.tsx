@@ -5808,14 +5808,28 @@ export default function Generate() {
           transition={{ duration: 0.6 }}
         >
           <div className={styles.headerContent}>
-            <div className={styles.headerText}>
-              <h1>
-                <FileText size={28} />
-                Intelligente Vertragserstellung
-              </h1>
-              <p>Erstellen Sie rechtssichere Verträge in wenigen Minuten – powered by KI</p>
-            </div>
-            
+            {/* Titel + Subtitle nur in Schritt 1 anzeigen — danach mehr Platz für Eingaben.
+                AnimatePresence sorgt für sanftes Ausblenden + Height-Collapse, sodass
+                die Step-Indikatoren smooth nach oben rutschen. */}
+            <AnimatePresence initial={false}>
+              {currentStep === 1 && (
+                <motion.div
+                  className={styles.headerText}
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginBottom: undefined }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <h1>
+                    <FileText size={28} />
+                    Intelligente Vertragserstellung
+                  </h1>
+                  <p>Erstellen Sie rechtssichere Verträge in wenigen Minuten – powered by KI</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Progress Steps */}
             <div className={styles.progressSteps}>
               {[
