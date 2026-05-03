@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { contractTemplates, templateCategories, ContractTemplate } from '../../data/contractTemplates';
 import { fetchUserTemplates, deleteUserTemplate, UserTemplate } from '../../services/userTemplatesAPI';
+import UnifiedPremiumNotice from '../UnifiedPremiumNotice';
 import styles from './ContractTypeSelector.module.css';
 
 interface SavedDraft {
@@ -165,19 +166,22 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   });
 
   const handleSelect = (templateId: string) => {
-    // "individuell" ist für alle User verfügbar
-    if (templateId === 'individuell') {
-      onSelect(templateId);
-      return;
-    }
-
-    // Alle anderen Templates nur für Premium+ User
+    // Free-User: ALLE Templates gesperrt (auch "individuell") — Upgrade nötig.
+    // Backend setzt das gleiche Limit (free.generate=0), Frontend zeigt Modal vor API-Call.
     if (!isPremiumUser) {
       setShowUpgradeModal(true);
       return;
     }
-
     onSelect(templateId);
+  };
+
+  // Klick auf User-eigene Vorlage → ebenfalls nur für Premium+
+  const handleUserTemplateSelect = (template: UserTemplate) => {
+    if (!isPremiumUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    onSelectUserTemplate?.(template);
   };
 
   return (
@@ -196,6 +200,13 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             <X size={20} />
           </button>
         </div>
+
+        {/* Premium Notice für Free-User — analog zu Generate-Page */}
+        {!isPremiumUser && (
+          <div style={{ padding: '0 24px', marginTop: 16 }}>
+            <UnifiedPremiumNotice featureName="Der Contract Builder" />
+          </div>
+        )}
 
         {/* Search + Drafts Toggle */}
         <div className={styles.searchSection}>
@@ -350,7 +361,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
                   <div key={template.id} className={styles.draftCardWrapper}>
                     <button
                       className={styles.draftCard}
-                      onClick={() => onSelectUserTemplate?.(template)}
+                      onClick={() => handleUserTemplateSelect(template)}
                     >
                       <div className={styles.draftInfo}>
                         <span className={styles.draftName}>{template.name}</span>
@@ -566,7 +577,7 @@ export const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
               </div>
 
               <p className={styles.upgradeTip}>
-                <strong>Tipp:</strong> Mit "Individueller Vertrag" können Sie auch ohne Upgrade einen leeren Vertrag von Grund auf erstellen.
+                <strong>Tipp:</strong> Schon ab dem Business-Plan können Sie monatlich 10 Verträge erstellen — über alle Tools hinweg (Generator, Builder, Vorlagen).
               </p>
             </div>
           </div>
