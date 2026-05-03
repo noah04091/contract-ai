@@ -96,7 +96,8 @@ const S = {
   stepsRow: { display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '28px' } as React.CSSProperties,
   stepPill: (active: boolean) => ({
     padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: active ? 600 : 400,
-    background: active ? '#6366f1' : '#f3f4f6', color: active ? 'white' : '#6b7280',
+    // Generate-Theme-Blau (#2E6CF6) statt Indigo — passt zur Firmenfarbe
+    background: active ? '#2E6CF6' : '#f3f4f6', color: active ? 'white' : '#6b7280',
     border: 'none', cursor: 'default', transition: 'all 0.2s'
   } as React.CSSProperties),
   // Mode cards
@@ -126,26 +127,26 @@ const S = {
   } as React.CSSProperties),
   sHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer' } as React.CSSProperties,
   sHeaderLeft: { display: 'flex', alignItems: 'center', gap: '10px' } as React.CSSProperties,
-  sParagraph: { fontSize: '11px', fontWeight: 600, color: '#6366f1', background: '#ede9fe', padding: '3px 8px', borderRadius: '5px' } as React.CSSProperties,
+  sParagraph: { fontSize: '11px', fontWeight: 600, color: '#2E6CF6', background: '#dbeafe', padding: '3px 8px', borderRadius: '5px' } as React.CSSProperties,
   sTitle: { fontSize: '14px', fontWeight: 600, color: '#111827', margin: 0 } as React.CSSProperties,
   sBody: { padding: '0 20px 20px', borderTop: '1px solid #f3f4f6' } as React.CSSProperties,
   sDesc: { fontSize: '13px', color: '#6b7280', margin: '14px 0', lineHeight: 1.5 } as React.CSSProperties,
   // Options
   optCard: (selected: boolean) => ({
     display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '14px',
-    border: `2px solid ${selected ? '#6366f1' : '#e5e7eb'}`, borderRadius: '11px',
+    border: `2px solid ${selected ? '#2E6CF6' : '#e5e7eb'}`, borderRadius: '11px',
     cursor: 'pointer', transition: 'all 0.2s', marginBottom: '8px',
     background: selected ? '#faf5ff' : 'white'
   } as React.CSSProperties),
   optRadio: (selected: boolean) => ({
-    width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selected ? '#6366f1' : '#d1d5db'}`,
-    background: selected ? '#6366f1' : 'white', display: 'flex', alignItems: 'center',
+    width: '18px', height: '18px', borderRadius: '50%', border: `2px solid ${selected ? '#2E6CF6' : '#d1d5db'}`,
+    background: selected ? '#2E6CF6' : 'white', display: 'flex', alignItems: 'center',
     justifyContent: 'center', flexShrink: 0, marginTop: '2px'
   } as React.CSSProperties),
   optDot: { width: '7px', height: '7px', borderRadius: '50%', background: 'white' } as React.CSSProperties,
   optLabel: { fontSize: '13px', fontWeight: 600, color: '#111827' } as React.CSSProperties,
   optDesc: { fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0', lineHeight: 1.4 } as React.CSSProperties,
-  recBadge: { fontSize: '10px', fontWeight: 600, background: '#6366f1', color: 'white', padding: '2px 7px', borderRadius: '8px', marginLeft: '6px' } as React.CSSProperties,
+  recBadge: { fontSize: '10px', fontWeight: 600, background: '#2E6CF6', color: 'white', padding: '2px 7px', borderRadius: '8px', marginLeft: '6px' } as React.CSSProperties,
   riskBadge: (risk: string) => ({
     fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '10px', marginLeft: 'auto',
     background: risk === 'low' ? '#ecfdf5' : risk === 'medium' ? '#fef3c7' : '#fef2f2',
@@ -162,7 +163,7 @@ const S = {
   detailContent: { padding: '14px', background: '#fafbfc', borderRadius: '10px', fontSize: '12px', color: '#374151', lineHeight: 1.6 } as React.CSSProperties,
   // Footer
   footer: { display: 'flex', justifyContent: 'space-between', marginTop: '28px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' } as React.CSSProperties,
-  btnPrimary: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 22px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: 'pointer' } as React.CSSProperties,
+  btnPrimary: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 22px', background: 'linear-gradient(135deg, #2E6CF6, #1E53D8)', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: 'pointer' } as React.CSSProperties,
   btnSecondary: { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', background: 'white', border: '1px solid #d1d5db', borderRadius: '10px', fontSize: '14px', color: '#374151', cursor: 'pointer' } as React.CSSProperties,
   // Summary
   summaryBar: { display: 'flex', gap: '14px', padding: '14px 18px', background: 'white', borderRadius: '11px', border: '1px solid #e5e7eb', marginBottom: '20px', flexWrap: 'wrap' as const } as React.CSSProperties,
@@ -323,9 +324,9 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
 
   return (
     <div style={S.container}>
-      {/* Step Pills + Reset-Button */}
-      <div style={{ ...S.stepsRow, justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {/* Step Pills (zentriert) + Reset-Button absolut rechts — analog Title oben */}
+      <div style={{ position: 'relative', marginBottom: '28px' }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           {['Strategie', 'Parteien', 'Entscheidungen'].map((label, i) => (
             <span key={label} style={S.stepPill(wizardStep === i + 1)}>{i + 1}. {label}</span>
           ))}
@@ -336,6 +337,10 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
             onClick={handleResetWizard}
             disabled={generating}
             style={{
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
               fontSize: 12,
               padding: '6px 12px',
               border: '1px solid #d1d5db',
@@ -497,7 +502,7 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
                         <div style={S.detailContent}>
                           {dTab === 'explanation' && <><p style={{ fontWeight: 600, marginBottom: 4 }}><Shield size={12} /> Risiko-Einschätzung</p><p>{chosen.riskNote}</p></>}
                           {dTab === 'problem' && <><p style={{ fontWeight: 600, marginBottom: 4, color: '#d97706' }}><AlertTriangle size={12} /> Wann wird das zum Problem?</p><p>{chosen.whenProblem}</p></>}
-                          {dTab === 'negotiate' && <><p style={{ fontWeight: 600, marginBottom: 4, color: '#6366f1' }}><Lightbulb size={12} /> Wann solltest du verhandeln?</p><p>{chosen.whenNegotiate}</p></>}
+                          {dTab === 'negotiate' && <><p style={{ fontWeight: 600, marginBottom: 4, color: '#2E6CF6' }}><Lightbulb size={12} /> Wann solltest du verhandeln?</p><p>{chosen.whenNegotiate}</p></>}
                         </div>
                       </>
                     )}
