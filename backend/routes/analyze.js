@@ -1252,9 +1252,11 @@ Wenn alte Klauseln noch drin sind → kritisiere konkret.`,
 
     insurance: {
       title: "Fachanwalt für Versicherungsrecht",
-      expertise: `Als Fachanwalt für Versicherungsrecht mit 20+ Jahren Erfahrung weißt du:
+      expertise: `Als Fachanwalt für Versicherungsrecht mit 20+ Jahren Erfahrung — inkl. VVG-Stand 2026 + aktueller BGH-Rechtsprechung 2024/2025 — weißt du:
 
-Bei Versicherungsverträgen sind typischerweise relevant: Deckungssumme, Selbstbeteiligung, Leistungsausschlüsse, Obliegenheiten, Wartezeiten, Kündigung nach Schadensfall.
+Bei Versicherungsverträgen sind typischerweise relevant: Anzeigepflicht (§ 19 VVG), Beratungs-/Dokumentationspflicht (§ 6 VVG), Widerrufsrecht (§ 8 VVG / 30 Tage Lebensvers. § 152 VVG), Obliegenheiten + Quotelung (§ 28 VVG), Leistungsausschlüsse, Wartezeiten (§ 197 VVG), Prämienanpassung (§§ 40, 203 VVG), Kündigung nach Versicherungsfall (§ 92 VVG), stillschweigende Verlängerung (§ 11 VVG), Fälligkeit (§ 14 VVG).
+
+WICHTIG für 2026: Spartenspezifika beachten. PKV: § 204 VVG Tarifwechselrecht zu gleichwertigen Tarifen, BGH IV ZR 51/22 + IV ZR 347/22 zu Limitierungsmaßnahmen. BU: abstrakte Verweisung (§ 172 VVG) bei Bestandsverträgen kritisch. Kfz-Haftpflicht: PflVG-Sonderlage (§ 5 PflVG Pflichtkontrahierung).
 
 ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
 Wenn keine Wartezeit vereinbart ist → erwähne es nicht.
@@ -1262,12 +1264,42 @@ Wenn der Vertrag sehr umfangreich ist → analysiere ALLE wichtigen Ausschlüsse
 Wenn es eine Standard-Police ist → fokussiere auf typische Problemfelder.`,
 
       commonTraps: `Häufige Fallen bei Versicherungsverträgen (falls im Vertrag vorhanden):
-• Zu weitgehende Leistungsausschlüsse (grobe Fahrlässigkeit oft unzulässig!)
-• Unklare Obliegenheiten mit Leistungskürzung bei Verstoß
-• Kündigung durch Versicherer nach jedem Schadensfall (oft einseitig)
-• Zu lange Wartezeiten (Krankenversicherung: max. 8 Monate bei Zahn)
-• Unzureichende Deckungssummen für typische Schadenfälle
-• Vorvertragliche Anzeigepflicht: Zu weitgehende Fragen des Versicherers`
+• Zu weitgehende Leistungsausschlüsse (grobe Fahrlässigkeit nach BGH unzulässig — Quotelung erforderlich, § 81 Abs. 2 VVG)
+• Unklare Obliegenheiten mit pauschaler Leistungsfreiheit bei jeder Verletzung — unwirksam (§ 28 VVG verlangt Quotelung bei grober FL)
+• Vorvertragliche Anzeigepflicht: zu weitgehende Fragen ("alle relevanten Umstände") — unwirksam, nur in TEXTFORM gestellte Fragen sind anzeigepflichtig (§ 19 VVG)
+• Fehlerhafte Widerrufsbelehrung — verlängert Widerrufsfrist auf 1 Jahr + 14 Tage (BGH/EuGH-Rspr.), insb. bei Lebensversicherungen 1994-2007
+• Kündigung durch Versicherer nach jedem Schadensfall einseitig — § 92 VVG sieht beidseitiges Recht vor
+• Zu lange Wartezeiten (Krankenvers.: max. 3 Monate allgemein, max. 8 Monate Zahnersatz § 197 VVG)
+• BU-Versicherung mit abstrakter Verweisungsklausel (§ 172 VVG) — bei Bestandsverträgen häufig, kritisch für Berufsschutz
+• Prämienanpassungsklauseln OHNE Sonderkündigungsrecht (§ 40 VVG) — unwirksam
+• PKV: Beitragserhöhung ohne nachvollziehbare Begründung (§ 203 VVG / BGH IV ZR 51/22) angreifbar
+• Unzureichende Deckungssummen für typische Schadenfälle bei der Sparte
+• Bei Vermittler-Verträgen: fehlende Beratungs-Dokumentation (§ 6 VVG)
+• Stillschweigende Verlängerung ohne Kündigungsmöglichkeit nach 3 Jahren (§ 11 Abs. 4 VVG)`,
+
+      // 🌐 Phase-3-Pilot (03.05.2026): Pflicht-Prüfpunkte für versicherungsrechtliche
+      // Tiefenanalyse. Fundiert auf VVG-Stand 03.02.2026 und aktueller
+      // BGH-Rechtsprechung 2024/2025 (PKV-Limitierung). Werden zusätzlich zur
+      // Universal-Analyse als typeSpecificFindings ausgegeben.
+      pilotChecklist: `VERSICHERUNGSVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" (das ist OK!).
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Vertragsart, Sparte & Geltungsbereich — Sach- / Lebens- (§§ 150 ff. VVG) / PKV (§§ 192 ff. VVG) / BU (§§ 172 ff. VVG) / Kfz-Haftpflicht (PflVG)? Verbraucher- (§ 13 BGB) oder Geschäftsversicherung? PKV: § 204 VVG Tarifwechselrecht zu gleichwertigen Tarifen erkennbar? Kfz-Haftpflicht: Pflichtversicherung nach PflVG (§ 5 PflVG Pflichtkontrahierung)?
+2. Vorvertragliche Anzeigepflicht (§ 19 VVG) — Klauseln, die über in TEXTFORM gestellte Fragen hinausgehen ("alle relevanten Umstände") unwirksam. Belehrung über Rechtsfolgen falscher Angaben (§ 19 Abs. 5 VVG) ordnungsgemäß? Bei Gesundheitsdaten: DSGVO-konforme Einwilligung erforderlich
+3. Beratungs- und Dokumentationspflicht (§ 6 VVG) — bei Vermittler-Verträgen: anlassbezogene Beratung dokumentiert? IDD-Konformität? Verstoß = Schadensersatzanspruch des VN
+4. Widerrufsrecht (§§ 8, 152 VVG) — allgemein 14 Tage; LEBENSVERSICHERUNG 30 Tage (§ 152 Abs. 1 VVG). Belehrung formgerecht? Bei fehlerhafter Belehrung: erweiterter Widerruf bis 1 Jahr + 14 Tage (BGH/EuGH-Rspr., relevant für Verträge 1994-2007 mit Formfehlern)
+5. Obliegenheiten & Quotelung (§ 28 VVG) — pauschale Leistungsfreiheit bei jeder Verletzung UNWIRKSAM. Quotelung bei grober Fahrlässigkeit erforderlich. Beweislast für fehlende grobe FL trägt VN. Kausalitätserfordernis (§ 28 Abs. 3 VVG) gewahrt?
+6. Leistungsausschlüsse, grobe Fahrlässigkeit & abstrakte Verweisung — pauschaler Ausschluss bei grober FL nach BGH unwirksam (§ 81 Abs. 2 VVG: Quotelung). BU-Versicherung: abstrakte Verweisung (§ 172 VVG) — bei Bestandsverträgen bis ca. 2010 oft enthalten, heute meist Verzicht. Bei vorhandener Verweisungsklausel kritisch prüfen!
+7. Wartezeiten (§ 197 VVG bei Krankenvers.) — allgemeine Wartezeit max. 3 Monate; Zahnersatz max. 8 Monate. Längere Wartezeiten unwirksam
+8. Selbstbeteiligung, Deckungssummen & versteckte Begrenzungen — klar definiert und transparent? Verhältnismäßig zur Prämie? Kappungsgrenzen für typische Schadensfälle ausreichend? Versteckte Untergrenzen oder Sublimits?
+9. Prämien- und Bedingungsanpassung (§§ 40, 203 VVG) — bei Erhöhung: Sonderkündigungsrecht für VN mit sofortiger Wirkung (§ 40 VVG)? Anpassungsklauseln OHNE Sonderkündigung unwirksam. PKV: § 203 VVG — nachvollziehbare Begründung erforderlich, 10%-Schwelle als Auslöser (BGH IV ZR 347/22), Limitierung nur bei korrekter Nachkalkulation wirksam (BGH IV ZR 51/22)
+10. Kündigung nach Versicherungsfall (§§ 92, 111, 158 VVG) — beidseitiges Kündigungsrecht innerhalb 1 Monat nach Verhandlungsabschluss. Klauseln, die einseitig nur den Versicherer berechtigen, sind unausgewogen. Kfz-Haftpflicht: § 5 V S. 2 PflVG mit 1-Monats-Frist
+11. Stillschweigende Verlängerung & Vertragslaufzeit (§ 11 VVG) — bei Mehrjahresvertrag mit Verlängerungsklausel: Frist und Modalitäten klar? Sonderkündigungsrecht nach 3 Jahren bei Mehrjahresverträgen (§ 11 Abs. 4 VVG)?
+12. Fälligkeit der Versicherungsleistung & Verzug (§ 14 VVG) — Fälligkeit binnen 1 Monat nach abgeschlossenen Erhebungen. Klauseln, die das verzögern, sind kritisch. Verzugsfolgen klar geregelt?`
     },
 
     loan: {
