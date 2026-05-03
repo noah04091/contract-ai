@@ -4663,6 +4663,12 @@
   left: 0;
 }
 
+/* Reset-Button rechts absolut — Spiegelbild zum Zurück-Button */
+.resetButtonAbsolute {
+  position: absolute;
+  right: 0;
+}
+
 /* Sidebar Toggle Button rechts absolut - Firmenblau */
 .sidebarToggleBtn {
   position: absolute;
