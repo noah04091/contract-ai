@@ -2078,7 +2078,7 @@ router.post("/", verifyToken, async (req, res) => {
     return res.status(400).json({ message: "Ungültige Feldnamen." });
   }
 
-  // Server-seitige Usage-Limit-Prüfung
+  // Server-seitige Usage-Limit-Prüfung — geteilter Zähler (contracts + contractbuilders)
   try {
     await ensureDb();
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
@@ -2087,32 +2087,20 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
-    const generateLimit = getFeatureLimit(plan, 'generate');
+    const { checkContractLimit } = require('../services/contractUsage');
+    const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
 
-    if (generateLimit !== Infinity) {
-      // Generierungen diesen Monat zählen
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const generationsThisMonth = await contractsCollection.countDocuments({
-        userId: req.user.userId,
-        isGenerated: true,
-        createdAt: { $gte: startOfMonth }
+    if (!allowed) {
+      return res.status(403).json({
+        message: `Monatliches Generierungslimit erreicht (${limit}). Bitte upgraden Sie Ihren Plan.`,
+        limitReached: true,
+        currentUsage: count,
+        limit
       });
-
-      if (generationsThisMonth >= generateLimit) {
-        return res.status(403).json({
-          message: `Monatliches Generierungslimit erreicht (${generateLimit}). Bitte upgraden Sie Ihren Plan.`,
-          limitReached: true,
-          currentUsage: generationsThisMonth,
-          limit: generateLimit
-        });
-      }
     }
   } catch (limitError) {
     console.error('[Generate] Usage-Limit-Check Fehler:', limitError);
-    // Bei Fehler weitermachen, nicht blockieren
+    // Bei Fehler weitermachen, nicht blockieren (fail-open für Verfügbarkeit)
   }
 
   // ===== V2 SYSTEM: Automatische Aktivierung für unterstützte Contract-Types =====

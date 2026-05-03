@@ -505,24 +505,15 @@ router.get("/me", verifyToken, async (req, res) => {
     // ✅ KORRIGIERT: Zentrale Funktion statt hardcoded Limits
     const optimizationLimit = getFeatureLimit(plan, 'optimize');
 
-    // 📝 GENERATE LIMITS — Server-authoritativer Counter via countDocuments
-    // (kein User-Field, zählt direkt aus contracts-Collection diesen Monat)
+    // 📝 GENERATE LIMITS — Server-authoritativer Counter via shared Helper
+    // Zählt sowohl Generate-Verträge (contracts) als auch Builder-Docs (contractbuilders)
+    // diesen Monat — verhindert Limit-Bypass durch Wechsel zwischen Tools.
     const generateLimit = getFeatureLimit(plan, 'generate');
     let generateCount = 0;
-    if (generateLimit !== Infinity && contractsCollection) {
+    if (generateLimit !== Infinity) {
       try {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        // userId kann String ODER ObjectId sein — $or für Robustheit
-        generateCount = await contractsCollection.countDocuments({
-          $or: [
-            { userId: req.user.userId },
-            { userId: new ObjectId(req.user.userId) }
-          ],
-          isGenerated: true,
-          createdAt: { $gte: startOfMonth }
-        });
+        const { getMonthlyContractCount } = require('../services/contractUsage');
+        generateCount = await getMonthlyContractCount(req.user.userId);
       } catch (countErr) {
         console.warn("⚠️ generateCount-Zählung fehlgeschlagen:", countErr.message);
       }

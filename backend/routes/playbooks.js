@@ -84,7 +84,7 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
 
     console.log(`🧠 [PLAYBOOK] Generiere ${type} im Modus "${mode}" für User ${req.user.userId}`);
 
-    // Server-seitige Usage-Limit-Prüfung (analog zu routes/generate.js)
+    // Server-seitige Usage-Limit-Prüfung — geteilter Zähler (contracts + contractbuilders)
     try {
       const dbCheck = await database.connect();
       const user = await dbCheck.collection("users").findOne({ _id: new ObjectId(req.user.userId) });
@@ -93,32 +93,17 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
       }
 
       const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || "free").toLowerCase();
-      const generateLimit = getFeatureLimit(plan, "generate");
+      const { checkContractLimit } = require("../services/contractUsage");
+      const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
 
-      if (generateLimit !== Infinity) {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-
-        // userId kann String ODER ObjectId sein — $or für Robustheit
-        const generationsThisMonth = await dbCheck.collection("contracts").countDocuments({
-          $or: [
-            { userId: req.user.userId },
-            { userId: new ObjectId(req.user.userId) }
-          ],
-          isGenerated: true,
-          createdAt: { $gte: startOfMonth }
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          message: `Monatliches Generierungslimit erreicht (${limit}). Bitte upgraden Sie Ihren Plan.`,
+          limitReached: true,
+          currentUsage: count,
+          limit
         });
-
-        if (generationsThisMonth >= generateLimit) {
-          return res.status(403).json({
-            success: false,
-            message: `Monatliches Generierungslimit erreicht (${generateLimit}). Bitte upgraden Sie Ihren Plan.`,
-            limitReached: true,
-            currentUsage: generationsThisMonth,
-            limit: generateLimit
-          });
-        }
       }
     } catch (limitError) {
       console.error("[PLAYBOOK] Usage-Limit-Check Fehler:", limitError);
