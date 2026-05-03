@@ -7,6 +7,7 @@ import ContractShareModal from './ContractShareModal';
 import ContractEditModal from './ContractEditModal';
 import SignatureModal from './SignatureModal';
 import ImportantDatesSection from './ImportantDatesSection';
+import FristHinweiseSection from './FristHinweiseSection';
 import { fixUtf8Display } from "../utils/textUtils";
 import { apiCall } from "../utils/api";
 import { useToast } from "../context/ToastContext";
@@ -199,6 +200,14 @@ interface Contract {
     description?: string;
     calculated?: boolean;
     source?: string;
+  }>;
+  // ⏰ Universelle Frist-Regelungen aus Date Hunt (Kündigung, Widerruf, etc.)
+  fristHinweise?: Array<{
+    type: string;
+    title: string;
+    description?: string;
+    legalBasis?: string;
+    evidence?: string;
   }>;
   startDate?: string;
   anbieter?: string;
@@ -1378,6 +1387,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             importantDates={contract.importantDates}
             contractName={fixUtf8Display(contract.name)}
           />
+        </div>
+      )}
+
+      {/* ⏰ Wichtige Fristen & Hinweise — universelle Frist-Regelungen aus Date Hunt */}
+      {contract.fristHinweise && contract.fristHinweise.length > 0 && (
+        <div className={styles.section}>
+          <FristHinweiseSection fristHinweise={contract.fristHinweise} />
         </div>
       )}
 

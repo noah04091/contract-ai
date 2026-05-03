@@ -727,7 +727,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     analyzed: 1, analysis: 1, analysisId: 1,
     contractScore: 1, summary: 1, risiken: 1, criticalIssues: 1,
     suggestions: 1, legalAssessment: 1, quickFacts: 1,
-    importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+    importantDates: 1, fristHinweise: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
     // Status-Felder
     isGenerated: 1, isOptimized: 1, gekuendigtZum: 1, cancellationId: 1, cancellationDate: 1, cancellationConfirmed: 1, cancellationConfirmedAt: 1,
     paymentStatus: 1, paymentAmount: 1, paymentFrequency: 1,
@@ -773,7 +773,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
           projection: {
             summary: 1, legalAssessment: 1, suggestions: 1, comparison: 1,
             contractScore: 1, createdAt: 1, criticalIssues: 1, quickFacts: 1,
-            importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+            importantDates: 1, fristHinweise: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
             userId: 1, contractName: 1, originalFileName: 1
           }
         }).toArray()
@@ -840,7 +840,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
           projection: {
             summary: 1, legalAssessment: 1, suggestions: 1, comparison: 1,
             contractScore: 1, createdAt: 1, criticalIssues: 1, quickFacts: 1,
-            importantDates: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
+            importantDates: 1, fristHinweise: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
             userId: 1, contractName: 1, originalFileName: 1
           }
         }).sort({ createdAt: -1 }).toArray();
@@ -987,6 +987,7 @@ async function enrichContractWithAnalysis(contract) {
     contract.quickFacts = contract.quickFacts || analysis?.quickFacts || null;
     contract.detailedLegalOpinion = contract.detailedLegalOpinion || analysis?.detailedLegalOpinion || null;
     contract.importantDates = contract.importantDates || analysis?.importantDates || null;
+    contract.fristHinweise = contract.fristHinweise || analysis?.fristHinweise || null;
     contract.positiveAspects = contract.positiveAspects || analysis?.positiveAspects || null;
     contract.recommendations = contract.recommendations || analysis?.recommendations || null;
     contract.laymanSummary = contract.laymanSummary || analysis?.laymanSummary || null;

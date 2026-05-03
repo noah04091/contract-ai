@@ -34,6 +34,7 @@ import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Up
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 Reminder Settings Modal
 import ContractEditModal from "../components/ContractEditModal"; // ✏️ Quick Edit Modal
 import ImportantDatesSection from "../components/ImportantDatesSection"; // 📅 KI-extrahierte wichtige Termine
+import FristHinweiseSection from "../components/FristHinweiseSection"; // ⏰ Universelle Frist-Regelungen aus Date Hunt
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -143,6 +144,14 @@ interface Contract {
     description?: string;
     calculated?: boolean;
     source?: string;
+  }>;
+  // ⏰ Universelle Frist-Regelungen aus Date Hunt (Kündigung, Widerruf, etc.)
+  fristHinweise?: Array<{
+    type: string;
+    title: string;
+    description?: string;
+    legalBasis?: string;
+    evidence?: string;
   }>;
   // 📊 Analysis Object (für Analyse-Tab Verfügbarkeit)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -5993,6 +6002,9 @@ export default function Contracts() {
                     contractName={previewContract.name}
                   />
                 )}
+
+                {/* ⏰ Wichtige Fristen & Hinweise — universelle Frist-Regelungen aus Date Hunt */}
+                <FristHinweiseSection fristHinweise={previewContract.fristHinweise} />
 
                 {/* Summary Section */}
                 {previewContract.summary && (
