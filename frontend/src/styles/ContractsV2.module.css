@@ -168,9 +168,9 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  /* Großzügiges Padding rundum: oben Luft zur Navbar,
-     links zur Sidebar, rechts zum Browserrand. */
-  padding: 56px 80px 88px 80px;
+  /* Großzügiges Padding rundum. Mit zoom:0.8 ergibt das visuell
+     ca. 64/96/96/96 — viel Luft zu Navbar/Sidebar/Rand. */
+  padding: 80px 120px 120px 120px;
   min-width: 0;
 }
 
