@@ -84,6 +84,9 @@ interface GuidedContractWizardProps {
   contractType: string;
   contractTypeName: string;
   onComplete: (result: { contractText: string; contractId: string }) => void;
+  // Optionaler Callback: Parent kann die Reset-Funktion + canReset-Flag bekommen,
+  // um den "Von vorne"-Button außerhalb des Wizards zu rendern (z.B. parallel zum Zurück-Button).
+  onResetableChange?: (state: { canReset: boolean; reset: () => void }) => void;
 }
 
 // ═══════════════════════════════════════════════
@@ -182,7 +185,7 @@ const RISK_LABELS: Record<string, string> = { low: 'Gering', medium: 'Mittel', h
 // Component
 // ═══════════════════════════════════════════════
 
-const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractType, contractTypeName, onComplete }) => {
+const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractType, contractTypeName, onComplete, onResetableChange }) => {
   const [playbook, setPlaybook] = useState<PlaybookData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -242,6 +245,19 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
     setExpandedSections(playbook.sections.length > 0 ? new Set([playbook.sections[0].key]) : new Set());
     setError(null);
   };
+
+  // Parent (Generate.tsx) wird über Reset-Status informiert, sodass er den Button
+  // außerhalb des Wizards spiegelbild zum "Zurück"-Button rendern kann.
+  useEffect(() => {
+    if (!onResetableChange) return;
+    onResetableChange({
+      canReset: wizardStep > 1 || Object.keys(partyData).length > 0,
+      reset: handleResetWizard
+    });
+    // handleResetWizard enthält playbook (closure) — bewusst nicht in dep-array,
+    // sonst würde Funktions-Identität bei jedem Render wechseln.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wizardStep, partyData, playbook]);
 
   const handleModeChange = useCallback((mode: string) => {
     setSelectedMode(mode);
@@ -324,36 +340,12 @@ const GuidedContractWizard: React.FC<GuidedContractWizardProps> = ({ contractTyp
 
   return (
     <div style={S.container}>
-      {/* Step Pills (zentriert) + Reset-Button absolut rechts — analog Title oben */}
-      <div style={{ position: 'relative', marginBottom: '28px' }}>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {['Strategie', 'Parteien', 'Entscheidungen'].map((label, i) => (
-            <span key={label} style={S.stepPill(wizardStep === i + 1)}>{i + 1}. {label}</span>
-          ))}
-        </div>
-        {(wizardStep > 1 || Object.keys(partyData).length > 0) && (
-          <button
-            type="button"
-            onClick={handleResetWizard}
-            disabled={generating}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: 12,
-              padding: '6px 12px',
-              border: '1px solid #d1d5db',
-              borderRadius: 6,
-              background: 'white',
-              color: '#6b7280',
-              cursor: generating ? 'not-allowed' : 'pointer',
-              opacity: generating ? 0.6 : 1
-            }}
-          >
-            ↺ Von vorne
-          </button>
-        )}
+      {/* Step Pills (zentriert) — Reset-Button wird von Generate.tsx parallel zum
+          Zurück-Button auf Header-Höhe gerendert (via onResetableChange-Callback). */}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: '28px' }}>
+        {['Strategie', 'Parteien', 'Entscheidungen'].map((label, i) => (
+          <span key={label} style={S.stepPill(wizardStep === i + 1)}>{i + 1}. {label}</span>
+        ))}
       </div>
 
       {/* Generation-Error-Banner (für Fehler nach Klick auf "Generieren") */}

@@ -3544,6 +3544,10 @@ export default function Generate() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
   const [templateRefreshKey, setTemplateRefreshKey] = useState<number>(0);
 
+  // GuidedContractWizard Reset-Button: Wizard meldet seinen Reset-Status,
+  // wir rendern den Button parallel zum Zurück-Button im step2Header.
+  const [wizardResetState, setWizardResetState] = useState<{ canReset: boolean; reset: () => void } | null>(null);
+
   // 🔄 Contract Improvement States
   const [improvements, setImprovements] = useState<string>("");
   const [isImproving, setIsImproving] = useState<boolean>(false);
@@ -6547,7 +6551,7 @@ export default function Generate() {
                     exit={{ opacity: 0, x: -20 }}
                     className={styles.stepContent}
                   >
-                    {/* Header mit Zurück-Button */}
+                    {/* Header mit Zurück-Button (links) + Reset-Button (rechts, gespiegelt) */}
                     <div className={styles.step2Header}>
                       <motion.button
                         className={`${styles.headerButton} ${styles.secondaryButton} ${styles.backButtonAbsolute}`}
@@ -6562,12 +6566,24 @@ export default function Generate() {
                         <h2>{selectedType.name} erstellen</h2>
                         <p>Geführte Erstellung mit strategischen Entscheidungen</p>
                       </div>
+                      {wizardResetState?.canReset && (
+                        <motion.button
+                          className={`${styles.headerButton} ${styles.secondaryButton} ${styles.resetButtonAbsolute}`}
+                          onClick={() => wizardResetState.reset()}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <RefreshCw size={16} />
+                          <span>Von vorne</span>
+                        </motion.button>
+                      )}
                     </div>
 
                     {/* Eingebetteter Playbook-Wizard */}
                     <GuidedContractWizard
                       contractType={selectedType.id}
                       contractTypeName={selectedType.name}
+                      onResetableChange={setWizardResetState}
                       onComplete={(generatedResult) => {
                         // Ergebnis in Generate-State übernehmen
                         setContractText(generatedResult.contractText);
