@@ -1567,6 +1567,11 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Erstellen des Dokuments:', err);
+      // Limit-/Plan-Sperre vom Backend → Toast zeigen statt stumm zu schlucken
+      if (handleCreationLimitError(err, 'Fehler beim Erstellen des Vertrags.')) {
+        return;
+      }
+      toast.error('Fehler beim Erstellen des Vertrags');
     } finally {
       setGalleryCreating(null);
     }
@@ -1598,6 +1603,10 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Erstellen:', err);
+      if (handleCreationLimitError(err, 'Fehler beim Erstellen des Vertrags.')) {
+        return;
+      }
+      toast.error('Fehler beim Erstellen des Vertrags');
     } finally {
       setGalleryCreating(null);
     }
@@ -1835,6 +1844,10 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Laden der Vorlage:', err);
+      if (handleCreationLimitError(err, 'Fehler beim Erstellen aus Vorlage.')) {
+        return;
+      }
+      toast.error('Fehler beim Erstellen aus Vorlage');
     } finally {
       setGalleryCreating(null);
     }
@@ -1890,6 +1903,10 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Fehler beim Laden der Vorlage:', err);
+      if (handleCreationLimitError(err, 'Fehler beim Erstellen aus Vorlage.')) {
+        return;
+      }
+      toast.error('Fehler beim Erstellen aus Vorlage');
     } finally {
       setGalleryCreating(null);
     }
