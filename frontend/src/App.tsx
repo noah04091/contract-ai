@@ -167,7 +167,7 @@ function AppWithLoader() {
   }, [location.pathname]); // Nur pathname, nicht location.search!
 
   // Seiten ohne Navbar (Auth-Seiten mit Split-Screen Design + Dashboard mit eigener Sidebar + Fullscreen-Apps)
-  const hideNavbarRoutes = ['/login', '/register', '/verify-success', '/dashboard', '/contracts-v2'];
+  const hideNavbarRoutes = ['/login', '/register', '/verify-success', '/dashboard'];
   // /verify/:id keine Navbar, /dashboard hat eigene Sidebar, /contract-builder/:id ist Fullscreen-Editor
   // /contract-builder OHNE ID (Gallery) zeigt die Navbar
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname) ||

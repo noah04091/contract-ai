@@ -71,8 +71,10 @@
   flex-direction: column;
   gap: 2px;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  /* Mit zoom:0.8: top * 0.8 = 64px Navbar-Offset visuell.
+     height * 0.8 = 100vh - 64px = sichtbarer Bereich unter Navbar. */
+  top: 80px;
+  height: calc(125vh - 80px);
   overflow-y: auto;
 }
 .sidebar::-webkit-scrollbar { width: 4px; }
@@ -769,8 +771,10 @@ table.contracts {
   background: var(--surface);
   box-shadow: -1px 0 0 var(--border);
   position: sticky;
-  top: 0;
-  height: 100vh;
+  /* Mit zoom:0.8: top * 0.8 = 64px Navbar-Offset visuell.
+     height * 0.8 = 100vh - 64px = sichtbarer Bereich unter Navbar. */
+  top: 80px;
+  height: calc(125vh - 80px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
