@@ -99,6 +99,11 @@ export default function AnalysisImportantDates({
   const [historicalDates, setHistoricalDates] = useState<ImportantDate[]>([]);
   const [cancellationPeriod, setCancellationPeriod] = useState<CancellationPeriod | null>(null);
 
+  // Standardmäßig erste 4 Fristen anzeigen, Rest hinter Toggle. Verhindert
+  // visuelle Überladung bei komplexen Verträgen (Factoring etc. mit 12+ Fristen).
+  const [fristenExpanded, setFristenExpanded] = useState(false);
+  const FRISTEN_COLLAPSED_LIMIT = 4;
+
   const toast = useToast();
   const navigate = useNavigate();
   const { clearCache: clearCalendarCache } = useCalendarStore();
@@ -366,7 +371,10 @@ export default function AnalysisImportantDates({
                 <span className={styles.subBlockTitle}>Wichtige Fristen & Hinweise</span>
               </div>
               <div className={styles.fristenList}>
-                {displayedFristHinweise.map((fh, idx) => (
+                {(fristenExpanded
+                  ? displayedFristHinweise
+                  : displayedFristHinweise.slice(0, FRISTEN_COLLAPSED_LIMIT)
+                ).map((fh, idx) => (
                   <div key={`${fh.type}-${idx}`} className={styles.fristItem}>
                     <div className={styles.fristIconWrap}>{fristIcon(fh.type)}</div>
                     <div className={styles.fristContent}>
@@ -381,6 +389,18 @@ export default function AnalysisImportantDates({
                   </div>
                 ))}
               </div>
+              {displayedFristHinweise.length > FRISTEN_COLLAPSED_LIMIT && (
+                <button
+                  type="button"
+                  className={styles.fristenToggleButton}
+                  onClick={() => setFristenExpanded((v) => !v)}
+                  aria-expanded={fristenExpanded}
+                >
+                  {fristenExpanded
+                    ? "Weniger anzeigen"
+                    : `+ ${displayedFristHinweise.length - FRISTEN_COLLAPSED_LIMIT} weitere Fristen anzeigen`}
+                </button>
+              )}
             </div>
           )}
 

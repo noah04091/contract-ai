@@ -619,6 +619,34 @@
   border-radius: 6px;
 }
 
+/* Toggle-Button für Show-More bei vielen Fristen.
+   Erscheint nur wenn fristHinweise.length > FRISTEN_COLLAPSED_LIMIT.
+   Subtiler Stil passend zum gelben Fristen-Block-Design. */
+.fristenToggleButton {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fristenToggleButton:hover {
+  background: #ffffff;
+  border-color: #f59e0b;
+}
+
+.fristenToggleButton:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
 /* Vertragshistorie */
 .historyList {
   display: flex;

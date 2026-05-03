@@ -942,19 +942,23 @@ async function generateEventsForContract(db, contract) {
           // Wichtige Termine: 14, 7 Tage vorher
           // Normale Termine: 7 Tage vorher
 
+          // Labels mit "vorher"-Suffix: macht klar, dass es VORWARNUNGEN sind,
+          // nicht Termine, die in X Tagen ab heute liegen. "In 30 Tagen: Kündigungsfristende"
+          // wurde sonst mit dem absoluten Datum + "In 7 Monaten"-Anzeige als widersprüchlich
+          // wahrgenommen. "30 Tage vorher: Kündigungsfristende" ist eindeutig.
           const reminderConfig = {
             critical: [
-              { days: 30, emoji: '📅', urgency: 'info', label: 'In 30 Tagen' },
-              { days: 14, emoji: '⚠️', urgency: 'warning', label: 'In 2 Wochen' },
-              { days: 7, emoji: '🚨', urgency: 'warning', label: 'In 7 Tagen' },
-              { days: 3, emoji: '🔴', urgency: 'critical', label: 'In 3 Tagen - DRINGEND' }
+              { days: 30, emoji: '📅', urgency: 'info', label: '30 Tage vorher' },
+              { days: 14, emoji: '⚠️', urgency: 'warning', label: '2 Wochen vorher' },
+              { days: 7, emoji: '🚨', urgency: 'warning', label: '7 Tage vorher' },
+              { days: 3, emoji: '🔴', urgency: 'critical', label: '3 Tage vorher – DRINGEND' }
             ],
             warning: [
-              { days: 14, emoji: '📅', urgency: 'info', label: 'In 2 Wochen' },
-              { days: 7, emoji: '⚠️', urgency: 'warning', label: 'In 7 Tagen' }
+              { days: 14, emoji: '📅', urgency: 'info', label: '2 Wochen vorher' },
+              { days: 7, emoji: '⚠️', urgency: 'warning', label: '7 Tage vorher' }
             ],
             info: [
-              { days: 7, emoji: '📅', urgency: 'info', label: 'In 7 Tagen' }
+              { days: 7, emoji: '📅', urgency: 'info', label: '7 Tage vorher' }
             ]
           };
 
