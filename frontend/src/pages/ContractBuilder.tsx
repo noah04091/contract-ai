@@ -19,6 +19,25 @@ import {
   ContractTypeSelector,
 } from '../components/ContractBuilder';
 import { DesignTemplateGallery } from '../components/ContractBuilder/DesignTemplateGallery';
+import { toast } from 'react-toastify';
+
+// Hilfsfunktion: Behandelt 403-Fehler aus Backend (Limit/Plan-Sperre) mit klarem Toast
+function handleCreationLimitError(err: unknown, fallbackMessage: string): boolean {
+  const error = err as { limitReached?: boolean; requiresUpgrade?: boolean; message?: string; status?: number };
+  if (error?.requiresUpgrade) {
+    toast.error(error.message || 'Vertragserstellung erfordert Business- oder Enterprise-Plan.', { autoClose: 6000 });
+    return true;
+  }
+  if (error?.limitReached) {
+    toast.error(error.message || 'Monatliches Limit erreicht. Bitte upgraden Sie Ihren Plan.', { autoClose: 6000 });
+    return true;
+  }
+  if (error?.status === 403) {
+    toast.error(error.message || fallbackMessage, { autoClose: 6000 });
+    return true;
+  }
+  return false;
+}
 import { BuilderErrorBoundary } from '../components/ContractBuilder/BuilderErrorBoundary';
 import {
   Save,
@@ -400,7 +419,11 @@ const ContractBuilder: React.FC = () => {
       setShowTypeSelector(false);
     } catch (err) {
       console.error('Fehler beim Erstellen des Dokuments:', err);
-      // Bei Fehler zurück zur Vertragsliste
+      // Limit/Plan-Sperre? Toast zeigen, Selector offen lassen, NICHT navigieren.
+      if (handleCreationLimitError(err, 'Fehler beim Erstellen des Vertrags.')) {
+        return;
+      }
+      // Bei sonstigen Fehlern zurück zur Vertragsliste
       navigate('/contracts');
     }
   };
@@ -459,7 +482,11 @@ const ContractBuilder: React.FC = () => {
       setShowTypeSelector(false);
     } catch (err) {
       console.error('Fehler beim Laden der Vorlage:', err);
-      alert('Fehler beim Laden der Vorlage');
+      // Limit/Plan-Sperre? Klarer Toast, sonst generische Meldung.
+      if (handleCreationLimitError(err, 'Fehler beim Laden der Vorlage')) {
+        return;
+      }
+      toast.error('Fehler beim Laden der Vorlage');
     }
   };
 
@@ -548,11 +575,22 @@ const ContractBuilder: React.FC = () => {
         // Neuen Entwurf zur Liste hinzufügen
         setSavedDrafts(prev => [data.document, ...prev]);
       } else {
-        alert('Fehler beim Duplizieren des Entwurfs');
+        // 403 = Limit/Plan-Sperre — Backend liefert strukturierte Felder
+        const errorBody = await response.json().catch(() => ({}));
+        const fakeErr = {
+          status: response.status,
+          message: errorBody.error || errorBody.message,
+          limitReached: !!errorBody.limitReached,
+          requiresUpgrade: !!errorBody.requiresUpgrade
+        };
+        if (handleCreationLimitError(fakeErr, 'Fehler beim Duplizieren des Entwurfs')) {
+          return;
+        }
+        toast.error('Fehler beim Duplizieren des Entwurfs');
       }
     } catch (error) {
       console.error('Fehler beim Duplizieren:', error);
-      alert('Fehler beim Duplizieren des Entwurfs');
+      toast.error('Fehler beim Duplizieren des Entwurfs');
     }
   };
 
@@ -1005,9 +1043,20 @@ const ContractBuilder: React.FC = () => {
         if (data.document?._id) {
           navigate(`/contract-builder/${data.document._id}`);
         }
+      } else {
+        // 403 = Limit/Plan-Sperre — Backend liefert strukturierte Felder
+        const errorBody = await response.json().catch(() => ({}));
+        const fakeErr = {
+          status: response.status,
+          message: errorBody.error || errorBody.message,
+          limitReached: !!errorBody.limitReached,
+          requiresUpgrade: !!errorBody.requiresUpgrade
+        };
+        handleCreationLimitError(fakeErr, 'Fehler beim Duplizieren');
       }
     } catch (err) {
       console.error('Fehler beim Duplizieren:', err);
+      toast.error('Fehler beim Duplizieren');
     }
   };
 

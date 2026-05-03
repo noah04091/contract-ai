@@ -797,11 +797,33 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   handleTokenRefresh(response);
 
   if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
+    // 401 = Auth-Problem (Token abgelaufen)
+    if (response.status === 401) {
       throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
     }
-    const error = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
-    throw new Error(error.error || 'API-Fehler');
+    // Body lesen — bei Limit/Upgrade-Sperren liefert Backend strukturierte Felder mit
+    const errorBody = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+    // 403 ohne Limit/Upgrade-Flags = sonstiges Auth-Problem (z.B. Token-Refresh fehlgeschlagen)
+    if (response.status === 403 && !errorBody.limitReached && !errorBody.requiresUpgrade) {
+      throw new Error('Sitzung abgelaufen. Bitte erneut anmelden.');
+    }
+    // Strukturierter Fehler mit Backend-Properties (limitReached, requiresUpgrade etc.)
+    // damit Caller (createDocument, etc.) zwischen Backend-Down und Sperre unterscheiden kann.
+    const err = new Error(errorBody.error || errorBody.message || 'API-Fehler') as Error & {
+      status?: number;
+      limitReached?: boolean;
+      requiresUpgrade?: boolean;
+      upgradeUrl?: string;
+      currentUsage?: number;
+      limit?: number;
+    };
+    err.status = response.status;
+    err.limitReached = !!errorBody.limitReached;
+    err.requiresUpgrade = !!errorBody.requiresUpgrade;
+    err.upgradeUrl = errorBody.upgradeUrl;
+    err.currentUsage = errorBody.currentUsage;
+    err.limit = errorBody.limit;
+    throw err;
   }
 
   return response.json();
@@ -956,8 +978,15 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
               isLocalMode: false,
             });
             return data.document._id;
-          } catch {
-            // Fallback: Lokales Dokument erstellen wenn API nicht verfügbar
+          } catch (err) {
+            // Wenn Backend Limit/Plan-Sperre meldet, NICHT auf Local-Mode fallen —
+            // sonst würde User die Sperre nicht sehen und das Limit wäre wirkungslos.
+            const error = err as Error & { limitReached?: boolean; requiresUpgrade?: boolean };
+            if (error?.limitReached || error?.requiresUpgrade) {
+              set({ isLoading: false, error: error.message });
+              throw err;
+            }
+            // Fallback: Lokales Dokument erstellen wenn API nicht verfügbar (Backend down)
             const localDoc = createLocalDocument(name, contractType);
             set({
               document: localDoc,
@@ -1131,8 +1160,15 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             });
             // Dokument über API erstellt
             return data.document._id;
-          } catch {
-            // Fallback auf lokales Dokument
+          } catch (err) {
+            // Bei Limit/Plan-Sperre den Error propagieren — Frontend zeigt Modal,
+            // statt User stillschweigend in Local-Mode zu schicken (Limit wäre sonst wirkungslos).
+            const error = err as Error & { limitReached?: boolean; requiresUpgrade?: boolean };
+            if (error?.limitReached || error?.requiresUpgrade) {
+              set({ isLoading: false, error: error.message });
+              throw err;
+            }
+            // Fallback auf lokales Dokument (Backend offline)
             const localDoc = createLocalDocument(name, contractType, template);
             set({
               document: localDoc,
