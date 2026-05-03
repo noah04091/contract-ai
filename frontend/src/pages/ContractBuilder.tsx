@@ -2361,7 +2361,10 @@ const ContractBuilder: React.FC = () => {
               {/* Vertrag importieren — Card */}
               <div
                 className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
-                onClick={() => setShowImportModal(true)}
+                onClick={() => {
+                  if (!isPremiumUser) { showUpgradeHint('Vertrags-Import'); return; }
+                  setShowImportModal(true);
+                }}
                 data-tour="gallery-import"
               >
                 <div className={styles.galleryCardHeader}>
@@ -2380,7 +2383,10 @@ const ContractBuilder: React.FC = () => {
               {/* Eigene Vorlage erstellen — Card */}
               <div
                 className={`${styles.galleryCard} ${styles.galleryCardCreate}`}
-                onClick={() => setShowCustomCreator(true)}
+                onClick={() => {
+                  if (!isPremiumUser) { showUpgradeHint('Eigene Vorlagen erstellen'); return; }
+                  setShowCustomCreator(true);
+                }}
                 data-tour="gallery-create"
               >
                 <div className={styles.galleryCardHeader}>
@@ -3099,6 +3105,37 @@ const ContractBuilder: React.FC = () => {
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm Dialog Modal — auch in Gallery-View nötig (showUpgradeHint zeigt sonst nichts) */}
+        {confirmDialog?.isOpen && (
+          <div className={styles.modalOverlay} onClick={() => setConfirmDialog(null)}>
+            <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.confirmIcon}>
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className={styles.confirmTitle}>{confirmDialog.title}</h3>
+              <p className={styles.confirmMessage}>{confirmDialog.message}</p>
+              <div className={styles.confirmActions}>
+                <button
+                  className={styles.confirmCancelBtn}
+                  onClick={() => setConfirmDialog(null)}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  className={`${styles.confirmBtn} ${
+                    confirmDialog.confirmStyle === 'danger' ? styles.confirmBtnDanger :
+                    confirmDialog.confirmStyle === 'warning' ? styles.confirmBtnWarning :
+                    styles.confirmBtnPrimary
+                  }`}
+                  onClick={confirmDialog.onConfirm}
+                >
+                  {confirmDialog.confirmText}
+                </button>
               </div>
             </div>
           </div>
