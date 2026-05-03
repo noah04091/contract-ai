@@ -3831,6 +3831,13 @@ export default function Generate() {
     }
   }, [contractData.parties]);
 
+  // 📜 Beim Step-Wechsel an den Seitenanfang scrollen — sonst landet der User
+  // mitten auf der Seite (z.B. wenn er in Step 1 weit unten den Vertragstyp
+  // ausgewählt hat und Step 2 dann an gleicher Scroll-Position startet).
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+
   // 📄 Auto-load PDF preview when Step 3 is reached
   useEffect(() => {
     if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
