@@ -1304,22 +1304,54 @@ CHECKPOINTS:
 
     loan: {
       title: "Fachanwalt für Bank- und Kapitalmarktrecht",
-      expertise: `Als Fachanwalt für Bank- und Kapitalmarktrecht mit Fokus auf Verbraucherdarlehen weißt du:
+      expertise: `Als Fachanwalt für Bank- und Kapitalmarktrecht mit Fokus auf Verbraucherdarlehen — inkl. BGB-Stand 03.02.2026, ZuFinG seit 1.1.2025, BGH 2025 zum Widerrufsjoker und EuGH C-203/22 zur SCHUFA — weißt du:
 
-Bei Darlehensverträgen sind typischerweise relevant: Zinssatz (fest/variabel), Sicherheiten, Vorfälligkeitsentschädigung, Sondertilgung, Widerrufsbelehrung, effektiver Jahreszins.
+Bei Darlehensverträgen sind typischerweise relevant: Vertragstyp (Allgemein-Verbraucherdarlehen § 491 Abs. 2 / Immobiliar-Verbraucherdarlehen § 491 Abs. 3 / Unternehmenskredit), Pflichtangaben (§ 492 BGB / Art. 247 EGBGB), Widerrufsrecht (§§ 495, 356b), Bearbeitungsgebühren (BGH XI ZR 405/12), Vorfälligkeitsentschädigung (§ 502), Sondertilgung (§ 500), Restschuldversicherungs-Kopplung (§ 492a n.F.), Effektivzins (PAngV), Sicherheiten, Kreditwürdigkeitsprüfung (§ 505a), Verzugszinsen (§ 497) und Bank-Kündigung (§ 498).
+
+WICHTIG für 2026: Verbraucherkreditrichtlinie 2.0 (CCD II) tritt am 20.11.2026 in Kraft — erfasst NEU auch Kleinkredite ≤ €200, zinsfreie Kredite, BNPL und kurzlaufende Darlehen ≤ 3 Monate. Restschuldversicherungs-Kopplungsverbot durch ZuFinG seit 1.1.2025 verschärft. EuGH C-203/22 vom 27.02.2025 zur SCHUFA stärkt Verbraucher-Auskunftsrechte über Score-Logik. BGH 2025 klargestellt: KEIN ewiger Widerruf nach komplett-Erfüllung.
 
 ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
 Wenn keine Vorfälligkeitsentschädigung vereinbart ist → erwähne es positiv.
-Wenn der Vertrag fehlerhafte Widerrufsbelehrung hat → "Widerrufsjoker" prüfen!
-Wenn Bearbeitungsgebühren drin stehen → sofort auf Unwirksamkeit hinweisen (BGH 2014).`,
+Wenn der Vertrag fehlerhafte Widerrufsbelehrung hat → bei laufendem Vertrag erweiterten Widerruf prüfen.
+Wenn Bearbeitungsgebühren drin stehen → sofort auf Unwirksamkeit hinweisen (BGH XI ZR 405/12).`,
 
       commonTraps: `Häufige Fallen bei Darlehensverträgen (falls im Vertrag vorhanden):
-• Bearbeitungsgebühren UNWIRKSAM (BGH 2014) → Rückforderung möglich!
-• Fehlerhafte Widerrufsbelehrung = ewiges Widerrufsrecht ("Widerrufsjoker")
-• Überhöhte Vorfälligkeitsentschädigung (BGH-Formel prüfen!)
-• Restschuldversicherung überteuert (oft 20-30% der Darlehenssumme)
-• Unklare Sicherheiten (Grundschuld ohne Sicherungsabrede)
-• Variable Zinsen ohne Obergrenze`
+• Bearbeitungsgebühren UNWIRKSAM (BGH XI ZR 405/12 vom 13.05.2014) → Rückforderung möglich, § 488 Abs. 1 S. 2 BGB
+• Fehlerhafte Widerrufsbelehrung — bei laufenden Verträgen erweiterter Widerruf möglich; bei Immobilien max. 12 Monate + 14 Tage
+• Überhöhte Vorfälligkeitsentschädigung — bei Allgemein-Verbraucherdarlehen MAX 1% (bzw. 0,5% bei <1J Restlaufzeit), bei Immobilien BGH-Formel; ausgeschlossen bei Versicherungsleistung oder unzureichenden Pflichtangaben (§ 502 Abs. 2 BGB)
+• Restschuldversicherungs-Kopplung an Darlehen UNZULÄSSIG (§ 492a BGB n.F. seit 1.1.2025) → RSV-Vertrag nichtig
+• Unklare Sicherheiten (Grundschuld ohne schriftliche Sicherungsabrede; Übersicherung verboten)
+• Variable Zinsen ohne Referenzzinssatz, ohne transparenten Mechanismus, ohne Obergrenze (§ 307 BGB)
+• Verzugszinsen über § 288/§ 497 BGB hinaus — bei Immobilien max. 2,5%-Pkt. über Basiszinssatz, sonst 5%-Pkt.
+• § 498 BGB Schwellen für Bank-Kündigung wegen Zahlungsverzug nicht eingehalten (10%/5%/2,5% je nach Vertragstyp + 2-Wochen-Frist + Pflicht zur gütlichen Einigung)
+• Versteckte Kosten nicht in Effektivzins eingerechnet (PAngV-Verstoß)
+• Kreditwürdigkeitsprüfung (§ 505a) nicht dokumentiert; SCHUFA-Score-Logik intransparent (EuGH C-203/22 vom 27.02.2025)
+• Sondertilgungsrecht ausgeschlossen oder unzulässig beschränkt (§ 500 BGB Verbraucher-Mindestrecht)`,
+
+      // 🌐 Phase-3-Pilot (03.05.2026): Pflicht-Prüfpunkte für darlehensrechtliche
+      // Tiefenanalyse. Fundiert auf BGB-Stand 03.02.2026, ZuFinG (Kopplungsverbot
+      // seit 1.1.2025), CCD II (ab 20.11.2026), BGH XI ZR 405/12, BGH 2025 zum
+      // Widerrufsjoker und EuGH C-203/22 vom 27.02.2025 zur SCHUFA.
+      // Werden zusätzlich zur Universal-Analyse als typeSpecificFindings ausgegeben.
+      pilotChecklist: `DARLEHENSVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+Prüfe gezielt jeden dieser Punkte und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Wenn ein Punkt im Vertrag NICHT vorkommt → status "not_applicable" (das ist OK!).
+Wenn ein Punkt vorkommt UND in Ordnung ist → status "ok".
+Wenn ein Punkt vorkommt UND problematisch ist → status "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Vertragstyp & Geltungsbereich — Allgemein-Verbraucherdarlehen (§ 491 Abs. 2 BGB) vs. Immobiliar-Verbraucherdarlehen (§ 491 Abs. 3) vs. Unternehmenskredit? Bei Verbraucher: zwingende §§ 491-505d BGB. CCD II ab 20.11.2026: erfasst NEU Kleinkredite ≤ €200, zinsfreie Kredite, BNPL, Laufzeit ≤ 3 Monate
+2. Pflichtangaben im Vertrag (§ 492 BGB / Art. 247 EGBGB) — Schriftform gewahrt? Alle Pflichtangaben enthalten (Net-Kreditbetrag, Sollzinssatz, Effektivzinssatz, Vertragslaufzeit, Tilgungsplan-Anspruch, Kosten, Sicherheiten, Verzugszinssatz, Widerrufshinweis, Aufsichtsbehörde)? Bei Immobiliendarlehen: ESIS-Merkblatt vorvertraglich ausgehändigt (Anlage 6 EGBGB)?
+3. Widerrufsrecht (§§ 495, 356b BGB) — 14 Tage ab Vertragsschluss + Pflichtangaben. Belehrung formgerecht (Anlage 7 EGBGB)? Bei FEHLERHAFTER Belehrung: erweiterter Widerruf möglich für laufende Verträge. Bei Immobiliardarlehen: erlischt nach 12 Monaten + 14 Tagen. Bei vollständig erfüllten Verträgen kein Widerruf mehr (BGH 2025)
+4. Bearbeitungsgebühren (BGH XI ZR 405/12 vom 13.05.2014) — Bearbeitungsentgelt-Klauseln in Verbraucherdarlehen UNWIRKSAM, Banken müssen Kosten durch laufzeitabhängigen Zins decken (§ 488 Abs. 1 S. 2 BGB). Rückforderung gezahlter Gebühren möglich
+5. Vorfälligkeitsentschädigung (§ 502 BGB) — Allgemein-Verbraucherdarlehen: max. 1% des vorzeitig zurückgezahlten Betrags, bei Restlaufzeit ≤ 1 Jahr max. 0,5%. Immobiliardarlehen: realer Schaden nach BGH-Formel (Aktiv-/Passiv-Vergleichsmethode). AUSGESCHLOSSEN wenn (a) Rückzahlung aus Versicherungsleistungen, (b) Vertrag unzureichende Angaben über Laufzeit/Kündigung/VFE-Berechnung enthält
+6. Sondertilgungsrecht (§ 500 BGB) — Verbraucher kann jederzeit teilweise vorzeitig zurückzahlen — nicht vertraglich ausschließbar. Bei vereinbartem Sondertilgungsrecht: bei VFE-Berechnung mindernd zu berücksichtigen, auch wenn nie ausgeübt
+7. Kopplungsverbot Restschuldversicherung (§ 492a BGB n.F. seit 1.1.2025) — Darlehensgeber darf Verbraucherdarlehen NICHT vom Abschluss einer RSV abhängig machen. Bei Verstoß: RSV-Vertrag NICHTIG, Darlehen bleibt wirksam. Geänderte Fassung durch Zukunftsfinanzierungsgesetz
+8. Effektivzins-Berechnung (Preisangabenverordnung — PAngV) — Effektivzinssatz nach PAngV-Methode? Alle Kosten enthalten (Bearbeitung, Vermittlung, RSV bei Pflichtkopplung)? Versteckte Gebühren als Preisbestandteil?
+9. Variable Zinsen & Zinsanpassungsklauseln — Anpassungsklauseln nur wirksam mit Referenzzinssatz + transparentem Mechanismus (BGH-Rspr.). Obergrenze (Cap)? Sonderkündigungsrecht bei Anpassung? Unklare Klauseln → § 307 BGB-unwirksam
+10. Sicherheiten, Grundschuld & Sicherungsabrede — Sicherungsabrede schriftlich + zweckgebunden? Übersicherung-Verbot (BGH-Rspr.)? Grundschuld im Immobilienkredit: Zweckbestimmung klar? Verwertungsrechte transparent?
+11. Kreditwürdigkeitsprüfung & Bonitätsdaten — § 505a BGB durchgeführt und dokumentiert? Verschärft durch CCD II ab 20.11.2026 (auch ohne Banklizenz, auch BNPL). DSGVO-Konformität bei SCHUFA-Abfrage: nach EuGH C-203/22 vom 27.02.2025 ist Bonitätsbewertung automatisierte Einzelentscheidung (Art. 22 DSGVO) — Verbraucher hat Auskunftsrecht über Score-Logik (Art. 15 DSGVO). Negative SCHUFA-Einträge nach Beglichen sofort zu löschen, pauschale 18-Monats-Fristen unzulässig
+12. Vertragsbeendigung, Verzug & Bank-Kündigung — Verzugszinsen (§ 497 BGB): Immobilien max. 2,5%-Pkt. über Basiszinssatz, sonst 5%-Pkt. Gesamtfälligstellung durch Bank (§ 498 BGB) nur bei qualifiziertem Zahlungsverzug: 10% (Laufzeit ≤ 3J), 5% (> 3J), 2,5% (Immobilien) + 2-Wochen-Frist + Pflicht zur gütlichen Einigung. Außerordentliche Kündigung (§ 490 BGB) nur bei wichtigem Grund. Bei unbestimmter Laufzeit: jederzeit kündbar (§ 500 Abs. 1 BGB)`
     },
 
     service: {
