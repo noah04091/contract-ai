@@ -190,7 +190,9 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  padding: 28px 32px 56px; /* exakt wie Mockup */
+  /* Großzügiges horizontales Padding: links Abstand zur Sidebar,
+     rechts Abstand zum Browserrand. */
+  padding: 28px 48px 56px 48px;
   min-width: 0;
 }
 
