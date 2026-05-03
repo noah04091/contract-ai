@@ -42,15 +42,19 @@
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 
-  /* Normales scrollendes Layout — Body scrollt, Sidebar/Drawer sind sticky/fixed.
-     Damit ist der Scroll garantiert vorhanden und alle Bereiche bleiben sichtbar. */
+  /* Mockup-Pattern: Grid-Layout, normales Body-Scroll. Sidebar und Drawer
+     sind sticky — bleiben beim Scrollen sichtbar. */
   min-height: 100vh;
 }
 
 .shell {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 248px 1fr;
   min-height: 100vh;
+  align-items: start; /* WICHTIG: ohne stretch sind sticky-Items nur 100vh hoch */
+}
+.shellWithDrawer {
+  grid-template-columns: 248px 1fr 420px;
 }
 
 /* ============================ SIDEBAR ============================ */
@@ -61,8 +65,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 224px;
-  flex-shrink: 0;
   /* Sticky unter der App-Navbar — bleibt beim Scrollen sichtbar */
   position: sticky;
   top: 64px;
@@ -164,11 +166,8 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  padding: 28px 36px 56px 44px; /* mehr Luft links Richtung Sidebar */
-  flex: 1;
+  padding: 28px 32px 56px; /* exakt wie Mockup */
   min-width: 0;
-  /* Kein eigenes overflow — Body scrollt. Padding-Right wird per Inline-Style
-     gesetzt wenn Drawer offen ist (höchste Spezifität, garantiert wirksam). */
 }
 
 .pageHeader {
@@ -985,20 +984,18 @@ table.contracts {
 }
 
 /* ============================ DRAWER ============================ */
-/* Drawer ist position:fixed unter der App-Navbar — immer sichtbar, egal wo
-   der User scrolled. Tabelle bekommt per Inline-Style paddingRight gesetzt. */
+/* Mockup-Pattern: Drawer ist Grid-Column (sticky), nicht fixed.
+   Mit align-items:start auf der .shell ist der Drawer-Slot nur 100vh hoch,
+   sodass sticky sofort greift — egal wie weit gescrollt wurde. */
 .drawer {
   background: var(--surface);
   border-left: 1px solid var(--border);
-  position: fixed;
+  position: sticky;
   top: 64px;
-  right: 0;
-  width: 420px;
   height: calc(100vh - 64px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  z-index: 20;
 }
 .drawerHead {
   padding: 22px 24px 18px;
@@ -1179,7 +1176,9 @@ table.contracts {
 
 /* ============================ MOBILE — app-like ============================ */
 @media (max-width: 900px) {
-  .shell {
+  .shell,
+  .shellWithDrawer {
+    grid-template-columns: 1fr;
     display: block;
   }
 

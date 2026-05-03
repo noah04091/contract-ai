@@ -1309,10 +1309,7 @@ export default function ContractsV2() {
           </aside>
 
           {/* ===== Main ===== */}
-          <main
-            className={styles.main}
-            style={showDrawer ? { paddingRight: 440 } : undefined}
-          >
+          <main className={styles.main}>
             {/* Page Header */}
             <div className={styles.pageHeader}>
               <div className={styles.pageHeaderLeft}>
