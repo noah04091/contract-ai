@@ -71,8 +71,8 @@
   flex-direction: column;
   gap: 2px;
   position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
+  top: 0;
+  height: 100vh;
   overflow-y: auto;
 }
 .sidebar::-webkit-scrollbar { width: 4px; }
@@ -769,8 +769,8 @@ table.contracts {
   background: var(--surface);
   box-shadow: -1px 0 0 var(--border);
   position: sticky;
-  top: 64px;
-  height: calc(100vh - 64px);
+  top: 0;
+  height: 100vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
