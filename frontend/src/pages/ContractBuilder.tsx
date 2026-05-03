@@ -20,6 +20,7 @@ import {
 } from '../components/ContractBuilder';
 import { DesignTemplateGallery } from '../components/ContractBuilder/DesignTemplateGallery';
 import { toast } from 'react-toastify';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 
 // Hilfsfunktion: Behandelt 403-Fehler aus Backend (Limit/Plan-Sperre) mit klarem Toast
 function handleCreationLimitError(err: unknown, fallbackMessage: string): boolean {
@@ -1533,6 +1534,14 @@ const ContractBuilder: React.FC = () => {
 
   // Gallery Handler — öffnet Quick-Fill Modal statt direkt zu erstellen
   const handleGallerySelectTemplate = (templateId: string) => {
+    // 🔐 Free-User: Plan-Sperre vor jedem Klick auf eine Mustervorlage / Leeres Dokument.
+    // Backend blockiert auch (free.generate=0), aber Frontend zeigt direkt das Upgrade-
+    // Modal — sonst würde sich noch der Quick-Fill öffnen und der User wundert sich.
+    if (!isPremiumUser) {
+      showUpgradeHint('Vertragserstellung');
+      return;
+    }
+
     const template = contractTemplates.find(t => t.id === templateId);
     if (!template) return;
 
@@ -1770,6 +1779,12 @@ const ContractBuilder: React.FC = () => {
 
   // User-Template Klick → Quick-Fill öffnen wenn Variablen vorhanden
   const handleGallerySelectUserTemplate = (template: UserTemplate) => {
+    // 🔐 Free-User: Plan-Sperre auch bei eigenen Vorlagen (zählen gegen 10/Monat-Limit).
+    if (!isPremiumUser) {
+      showUpgradeHint('Vertragserstellung aus Vorlage');
+      return;
+    }
+
     const templateData = template.defaultValues as {
       variables?: Array<{ id?: string; name?: string; displayName?: string; type?: string; group?: string }>;
     };
@@ -2046,6 +2061,13 @@ const ContractBuilder: React.FC = () => {
         </Helmet>
         <div className={styles.galleryPage}>
           <div className={styles.galleryInner}>
+            {/* Premium Notice für Free-User — analog zu Generate-Page */}
+            {!isPremiumUser && (
+              <div style={{ marginBottom: 24 }}>
+                <UnifiedPremiumNotice featureName="Der Contract Builder" />
+              </div>
+            )}
+
             {/* Header */}
             <div className={styles.galleryHeader} data-tour="gallery-header">
               <div className={styles.galleryBadge}>
