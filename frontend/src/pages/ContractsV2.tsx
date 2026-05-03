@@ -18,7 +18,7 @@ import {
   CheckCircle2,
   Clock,
   Eye,
-  MoreHorizontal,
+  MoreVertical,
   Edit3,
   Trash2,
   X,
@@ -138,6 +138,18 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { title: "Vertragstyp", field: "contractType" },
   { title: "Ablauf", field: "expiry" },
 ];
+
+/* Labels für den Sortier-Button (rechts in Filter-Row, wie im Mockup) */
+const SORT_LABELS: Record<string, string> = {
+  createdAt: "Neueste",
+  name: "Name",
+  expiry: "Ablauf",
+  status: "Status",
+  provider: "Anbieter",
+  contractType: "Vertragstyp",
+  payment: "Zahlung",
+  score: "Score",
+};
 
 /* =====================================================================
    Pure Helpers — keine Side-Effects, kein State.
@@ -378,6 +390,13 @@ export default function ContractsV2() {
   // Mobile-Sidebar (Slide-In)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Sortier-Menu (Filter-Row Button)
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // Excel-Export Loading
+  const [exportBusy, setExportBusy] = useState(false);
+
   // PDF-Vorschau im Drawer (zuklappbar, persistiert geräteübergreifend)
   const [drawerPdfCollapsed, setDrawerPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed,
@@ -544,6 +563,24 @@ export default function ContractsV2() {
       document.removeEventListener("mousedown", handler);
     };
   }, [columnPopoverFor]);
+
+  /* -------------------------------------------------------------------
+     Click-Outside für Sortier-Menu
+  ------------------------------------------------------------------- */
+  useEffect(() => {
+    if (!sortMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as Node | null;
+      if (sortMenuRef.current && target && !sortMenuRef.current.contains(target)) {
+        setSortMenuOpen(false);
+      }
+    };
+    const t = setTimeout(() => document.addEventListener("mousedown", handler), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [sortMenuOpen]);
 
   /* -------------------------------------------------------------------
      Click-Outside für Bulk-Folder-Dropdown
@@ -1082,6 +1119,54 @@ export default function ContractsV2() {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (exportBusy) return;
+    setExportBusy(true);
+    try {
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const response = await fetch("/api/contracts/export-excel", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token ?? ""}` },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        if (err.requiresUpgrade) {
+          toast?.error?.(err.message || "Excel-Export ist Enterprise-only");
+          return;
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const cd = response.headers.get("Content-Disposition");
+      let filename = "Contract_AI_Portfolio.xlsx";
+      if (cd) {
+        const m = cd.match(/filename[^;=\n]*=\s*["']?([^"';\n]+)["']?/);
+        if (m && m[1]) filename = m[1].trim();
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(
+        new Blob([blob], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      toast?.success?.("Export gestartet");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Export fehlgeschlagen";
+      toast?.error?.(msg);
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
   const handleBulkDownloadZip = async () => {
     if (selectedIds.size === 0) return;
     if (selectedIds.size > 100) {
@@ -1193,7 +1278,11 @@ export default function ContractsV2() {
             />
           )}
           <aside className={`${styles.sidebar} ${mobileSidebarOpen ? styles.sidebarMobileOpen : ""}`}>
-            <div className={styles.sidebarTopSpacer} />
+            {/* Brand-Block wie im Mockup */}
+            <div className={styles.brand}>
+              <div className={styles.brandMark}>CA</div>
+              <div className={styles.brandName}>Contract&nbsp;AI</div>
+            </div>
 
             <div className={styles.navLabel}>Verträge</div>
             <button
@@ -1322,12 +1411,7 @@ export default function ContractsV2() {
                   <Menu size={20} />
                 </button>
                 <div>
-                  <div className={styles.pageHeaderTitleRow}>
-                    <h1>Alle Verträge</h1>
-                    <span className={styles.devBanner}>
-                      <b>Vorschau</b> · neue Verwaltung
-                    </span>
-                  </div>
+                  <h1>Alle Verträge</h1>
                   <div className={styles.subtitle}>
                     {loading ? "Lade Verträge…" : `${contracts.length} Verträge — neueste zuerst`}
                   </div>
@@ -1344,6 +1428,16 @@ export default function ContractsV2() {
                   <span className={styles.btnLabel}>
                     {bulkMode ? "Auswahl beenden" : "Auswählen"}
                   </span>
+                </button>
+                <button
+                  className={styles.btn}
+                  type="button"
+                  onClick={handleExportExcel}
+                  title="Alle Verträge als Excel exportieren"
+                  disabled={exportBusy}
+                >
+                  <Download size={14} />
+                  <span className={styles.btnLabel}>Export</span>
                 </button>
                 <button
                   className={`${styles.btn} ${styles.btnPrimary}`}
@@ -1409,6 +1503,46 @@ export default function ContractsV2() {
                   Generiert
                   <span className={styles.chipCount}>{counts.generiert}</span>
                 </button>
+              </div>
+
+              {/* Spacer — drückt Sortier-Button rechts */}
+              <div className={styles.filterSpacer} />
+
+              {/* Sortier-Button rechts (wie Mockup) */}
+              <div className={styles.popoverWrap}>
+                <button
+                  type="button"
+                  className={styles.btn}
+                  onClick={() => setSortMenuOpen((v) => !v)}
+                >
+                  Sortieren: {SORT_LABELS[sortKey] ?? "Neueste"}
+                  <ChevronDown size={12} />
+                </button>
+                {sortMenuOpen && (
+                  <div ref={sortMenuRef} className={`${styles.popover} ${styles.sortPopover}`}>
+                    {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        className={`${styles.popoverItem} ${sortKey === k ? styles.popoverFolderItemActive : ""}`}
+                        onClick={() => {
+                          setSortKey(k);
+                          setSortDir(
+                            k === "createdAt" || k === "expiry" || k === "startDate" || k === "score" || k === "payment"
+                              ? "desc"
+                              : "asc",
+                          );
+                          setSortMenuOpen(false);
+                        }}
+                      >
+                        {SORT_LABELS[k]}
+                        {sortKey === k && (
+                          <CheckCircle2 size={12} style={{ marginLeft: "auto" }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1668,7 +1802,7 @@ export default function ContractsV2() {
                                     setOpenPopoverFor(isPopoverOpen ? null : c._id)
                                   }
                                 >
-                                  <MoreHorizontal size={15} />
+                                  <MoreVertical size={15} />
                                 </button>
                                 {isPopoverOpen && (
                                   <div
@@ -2063,12 +2197,13 @@ export default function ContractsV2() {
                     Erinnern
                   </button>
                   <button
-                    className={`${styles.btn} ${styles.btnDanger}`}
+                    className={styles.btn}
                     type="button"
-                    onClick={() => handleDelete(drawerContract)}
+                    onClick={() => openModal(drawerContract, "pdf")}
+                    title="PDF in Vollansicht öffnen"
                   >
-                    <Trash2 size={14} />
-                    Löschen
+                    <Download size={14} />
+                    PDF
                   </button>
                 </div>
               </div>

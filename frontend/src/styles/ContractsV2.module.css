@@ -76,8 +76,32 @@
 .sidebar::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.08); border-radius: 3px; }
 .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.16); }
 
-/* Brand wurde entfernt — die globale App-Navbar zeigt das Logo bereits.
-   Stattdessen direkter Top-Spacer für visuelle Atemluft. */
+/* Brand-Block ganz oben in der Sidebar — wie im Mockup */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 18px 10px;
+}
+.brandMark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.brandName {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  color: var(--text);
+}
 .sidebarTopSpacer {
   height: 6px;
 }
@@ -505,6 +529,19 @@ table.contracts {
 }
 .chip.chipActive .chipCount {
   background: rgba(79, 70, 229, 0.12);
+}
+
+/* Spacer schiebt Sortier-Button nach rechts (wie Mockup) */
+.filterSpacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sortier-Popover öffnet rechtsbündig */
+.sortPopover {
+  right: 0;
+  left: auto;
+  min-width: 200px;
 }
 
 /* ============================ SORT HEADER ============================ */
