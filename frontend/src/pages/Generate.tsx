@@ -3543,6 +3543,10 @@ export default function Generate() {
   // Template Modal State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
   const [templateRefreshKey, setTemplateRefreshKey] = useState<number>(0);
+  // Steuert nur den Erklärtext im CreateTemplateModal:
+  //   'form-fill' = Step 2 Sidebar (Felder-Vorlage für nächste Erstellung)
+  //   'builder'   = Step 3 (Vertragstext-Vorlage für Contract Builder)
+  const [templateModalPurpose, setTemplateModalPurpose] = useState<'form-fill' | 'builder'>('form-fill');
 
   // GuidedContractWizard Reset-Button: Wizard meldet seinen Reset-Status,
   // wir rendern den Button parallel zum Zurück-Button im step2Header.
@@ -6466,7 +6470,11 @@ export default function Generate() {
                             contractType={selectedType.id}
                             systemTemplates={CONTRACT_TEMPLATES.filter(t => t.contractType === selectedType.id)}
                             onSelectTemplate={handleTemplateSelect}
-                            onCreateTemplate={() => setIsTemplateModalOpen(true)}
+                            onCreateTemplate={() => {
+                              // Step 2: Form-fill-Vorlage — Felder werden gespeichert für nächste Erstellung
+                              setTemplateModalPurpose('form-fill');
+                              setIsTemplateModalOpen(true);
+                            }}
                             isPremium={isPremium}
                             compact={true}
                           />
@@ -6674,7 +6682,11 @@ export default function Generate() {
                           <span>Im Builder</span>
                         </motion.button>
                         <motion.button
-                          onClick={() => setIsTemplateModalOpen(true)}
+                          onClick={() => {
+                            // Step 3: Builder-Vorlage — Vertragstext + Blocks für Contract Builder
+                            setTemplateModalPurpose('builder');
+                            setIsTemplateModalOpen(true);
+                          }}
                           disabled={!contractText}
                           className={`${styles.step3HeaderBtn} ${styles.template}`}
                           whileHover={contractText ? { scale: 1.02 } : {}}
@@ -7162,6 +7174,7 @@ export default function Generate() {
           contractType={selectedType?.id || ''}
           contractTypeName={selectedType?.name || ''}
           currentFormData={formData}
+          purpose={templateModalPurpose}
           contractText={contractText}
         />
 

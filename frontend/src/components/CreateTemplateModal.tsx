@@ -15,6 +15,10 @@ interface CreateTemplateModalProps {
   currentFormData: Record<string, unknown>;
   // Wenn gesetzt: Vorlage wird Builder-kompatibel gespeichert (Blocks aus contractText geparsed)
   contractText?: string;
+  // Steuert nur den Erklärtext im Info-Box — Speicher-Logik bleibt identisch.
+  //   'form-fill' (default): Vorlage füllt bei nächster Generate-Session die Felder vor (Step 2).
+  //   'builder': Vorlage öffnet sich später im Contract Builder (Step 3 nach Vertragserstellung).
+  purpose?: 'form-fill' | 'builder';
 }
 
 export interface TemplateFormData {
@@ -31,7 +35,8 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
   contractType,
   contractTypeName,
   currentFormData,
-  contractText
+  contractText,
+  purpose = 'form-fill'
 }) => {
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
@@ -181,14 +186,29 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
                 <div className={styles.infoHeader}>
                   <strong>💡 So funktioniert's:</strong>
                 </div>
-                <ol className={styles.infoSteps}>
-                  <li><strong>Speichern:</strong> Die Daten und der Vertragstext werden als Vorlage gesichert</li>
-                  <li><strong>Wiederverwenden:</strong> Später im <strong>Contract Builder</strong> mit einem Klick öffnen</li>
-                  <li><strong>Anpassen:</strong> Im Builder Block für Block bearbeiten und als neuen Vertrag erstellen</li>
-                </ol>
-                <p className={styles.infoFooter}>
-                  ✅ Ideal für wiederkehrende Verträge mit ähnlichen Konditionen.
-                </p>
+                {purpose === 'builder' ? (
+                  <>
+                    <ol className={styles.infoSteps}>
+                      <li><strong>Speichern:</strong> Die Daten und der Vertragstext werden als Vorlage gesichert</li>
+                      <li><strong>Wiederverwenden:</strong> Später im <strong>Contract Builder</strong> mit einem Klick öffnen</li>
+                      <li><strong>Anpassen:</strong> Im Builder Block für Block bearbeiten und als neuen Vertrag erstellen</li>
+                    </ol>
+                    <p className={styles.infoFooter}>
+                      ✅ Ideal für wiederkehrende Verträge mit ähnlichen Konditionen.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <ol className={styles.infoSteps}>
+                      <li><strong>Speichern:</strong> Ihre eingegebenen Daten werden als Vorlage gesichert</li>
+                      <li><strong>Wiederverwenden:</strong> Bei der nächsten Vertragserstellung mit einem Klick alle Felder vorausfüllen</li>
+                      <li><strong>Anpassen:</strong> Vor dem Generieren noch einzelne Werte ändern</li>
+                    </ol>
+                    <p className={styles.infoFooter}>
+                      ✅ Ideal für wiederkehrende Verträge mit gleichen Geschäftspartnern.
+                    </p>
+                  </>
+                )}
               </div>
 
               {error && (
