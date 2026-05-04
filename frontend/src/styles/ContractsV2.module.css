@@ -53,8 +53,10 @@
 }
 
 .shell {
+  /* IMMER 3 Spalten — Drawer-Slot bleibt reserviert, auch ohne Drawer.
+     So bleibt die Tabellenbreite konstant wie im Mockup. */
   display: grid;
-  grid-template-columns: 264px 1fr;
+  grid-template-columns: 264px 1fr 440px;
   align-items: start;
   min-height: 100vh;
 }
@@ -168,14 +170,13 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  padding: 56px 40px 80px 40px;
+  /* Mockup-Padding: 44/56/80 */
+  padding: 44px 56px 80px 56px;
   min-width: 0;
 }
 .mainInner {
-  /* Mittelweg: max-width für echten Whitespace links/rechts, aber großzügig
-     genug damit Tabelle nicht zentriert-eingeengt wirkt. */
-  max-width: 1500px;
-  margin: 0 auto;
+  /* Kein max-width — Drawer-Slot ist immer reserviert,
+     dadurch bleibt Tabellenbreite automatisch wie im Mockup. */
 }
 
 .pageHeader {
