@@ -2543,23 +2543,73 @@ export default function Contracts() {
     }
   };
 
-  const handleAnalyzeAnywayFromDuplicate = () => {
+  const handleAnalyzeAnywayFromDuplicate = async () => {
     if (!duplicateModal?.fileItem) return;
-    
-    // ✅ Setze Status zurück auf pending für neue Analyse
-    // ✅ forceReanalyze=true setzen, sonst erkennt Backend wieder Duplikat → 409 → Modal-Loop
+    const fileItem = duplicateModal.fileItem;
+
+    // ✅ ROBUST FIX: Direkte Analyse statt setTimeout + startBatchAnalysis,
+    // weil startBatchAnalysis() durch React-State-Closure den ALTEN uploadFiles-State
+    // sieht (status noch 'duplicate' statt 'pending') → pendingFiles = [] → kein Call.
+    // Diese Variante ruft uploadAndAnalyze direkt mit explizitem forceReanalyze=true.
+    setDuplicateModal(null);
     setUploadFiles(prev => prev.map(item =>
-      item.id === duplicateModal.fileItem!.id
-        ? { ...item, status: 'pending', progress: 0, duplicateInfo: undefined, error: undefined, forceReanalyze: true }
+      item.id === fileItem.id
+        ? { ...item, status: 'analyzing', progress: 10, error: undefined, duplicateInfo: undefined }
         : item
     ));
-    
-    setDuplicateModal(null);
-    
-    // ✅ Starte Batch-Analyse für diese eine Datei
-    setTimeout(() => {
-      startBatchAnalysis();
-    }, 100);
+    setIsAnalyzing(true);
+
+    try {
+      const result = await uploadAndAnalyze(
+        fileItem.file,
+        (progress) => {
+          setUploadFiles(prev => prev.map(item =>
+            item.id === fileItem.id ? { ...item, progress } : item
+          ));
+        },
+        true // ✅ forceReanalyze EXPLICIT — Backend überspringt Duplikat-Check
+      ) as AnalysisResult;
+
+      if (result?.success) {
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileItem.id
+            ? { ...item, status: 'completed', progress: 100, analyzed: true, result }
+            : item
+        ));
+        clearCalendarCache();
+        toast.success('Vertrag wurde neu analysiert!');
+      } else if (result?.duplicate) {
+        // Sollte mit forceReanalyze=true nicht mehr passieren — Safety-Fallback
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileItem.id
+            ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result }
+            : item
+        ));
+        toast.error('Vertrag wurde trotz Force-Reanalyze als Duplikat erkannt. Bitte erneut versuchen.');
+      } else {
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileItem.id
+            ? { ...item, status: 'completed', progress: 100, result }
+            : item
+        ));
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      setUploadFiles(prev => prev.map(item =>
+        item.id === fileItem.id
+          ? { ...item, status: 'error', progress: 0, error: errorMessage }
+          : item
+      ));
+      toast.error(`Fehler bei der Analyse: ${errorMessage}`);
+      console.error(`❌ Re-Analyse-Fehler für ${fileItem.file.name}:`, error);
+    } finally {
+      setIsAnalyzing(false);
+      // User-Info und Verträge neu laden (analysisCount hat sich geändert)
+      setTimeout(() => {
+        fetchUserInfo(true);
+        fetchContracts();
+      }, 1000);
+    }
   };
 
   // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion mit Debug
