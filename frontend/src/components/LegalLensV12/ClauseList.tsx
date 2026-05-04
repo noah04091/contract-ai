@@ -132,6 +132,18 @@ const ClauseList: React.FC<ClauseListProps> = ({
   type RiskFilter = 'all' | 'high' | 'medium' | 'low';
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
 
+  // Compact-Modus: Nur Klausel-Header sichtbar, Klick öffnet (global, localStorage-persistiert)
+  const [compactMode, setCompactMode] = useState<boolean>(() => {
+    try { return localStorage.getItem('legalLens_compactMode') === 'true'; } catch { return false; }
+  });
+  const toggleCompactMode = useCallback(() => {
+    setCompactMode(prev => {
+      const next = !prev;
+      try { localStorage.setItem('legalLens_compactMode', String(next)); } catch { /* localStorage nicht verfügbar */ }
+      return next;
+    });
+  }, []);
+
   // Clause Decision Tracking (localStorage-persisted, scoped by contractId)
   type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
   const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
@@ -543,6 +555,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
               {collapsedSections.size >= detectedSections.length ? '▶ Alle' : '▼ Alle'}
             </button>
           )}
+          <button
+            className={`${styles.compactToggle} ${compactMode ? styles.compactToggleActive : ''}`}
+            onClick={toggleCompactMode}
+            title={compactMode ? 'Vollansicht (alle Details zeigen)' : 'Übersicht (nur Überschriften)'}
+            aria-label={compactMode ? 'Vollansicht aktivieren' : 'Übersichtsmodus aktivieren'}
+            aria-pressed={compactMode}
+          >
+            {compactMode ? '▦ Voll' : '☰ Übersicht'}
+          </button>
         </span>
       </div>
 
@@ -778,6 +799,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
           // Verwende preAnalysis wenn verfügbar, sonst riskIndicators
           const effectiveRiskLevel = isNonAnalyzable ? 'none' : (clause.preAnalysis?.riskLevel || riskLevel);
 
+          // Compact-Modus: Klausel-Detail nur ausklappen wenn ausgewählt, expanded oder bei Suche
+          const isClauseCompact = compactMode && !isSelected && !searchQuery && !expandedClauses.has(clause.id);
+
           // Nicht-analysierbare Klauseln: ausgegraut, nicht klickbar
           const groupHeaderEl = groupLabel ? (
             <div key={`group-${clause.id}`} className={styles.clauseGroupHeader}>
@@ -849,6 +873,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 </span>
               </div>
 
+              {!isClauseCompact && (
+                <>
               {clause.riskReason && effectiveRiskLevel !== 'low' && (
                 <div className={styles.riskReasonHint}>
                   {clause.riskReason}
@@ -991,6 +1017,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
                     </button>
                   </div>
                 </div>
+              )}
+                </>
               )}
             </div>
             </React.Fragment>
