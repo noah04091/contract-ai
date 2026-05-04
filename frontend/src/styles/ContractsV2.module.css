@@ -168,12 +168,14 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  /* Padding wie Mockup, leicht erhöht. Kein max-width (Mockup hat auch keine). */
   padding: 56px 40px 80px 40px;
   min-width: 0;
 }
 .mainInner {
-  /* Kein max-width — Mockup-Pattern: Inhalt füllt verfügbaren Raum */
+  /* Mittelweg: max-width für echten Whitespace links/rechts, aber großzügig
+     genug damit Tabelle nicht zentriert-eingeengt wirkt. */
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
 .pageHeader {
