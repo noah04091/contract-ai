@@ -4663,10 +4663,14 @@
   left: 0;
 }
 
-/* Reset-Button rechts absolut — Spiegelbild zum Zurück-Button */
+/* Reset-Button rechts absolut — Spiegelbild zum Zurück-Button.
+   left: auto wichtig, weil .secondaryButton bereits left: 0 setzt — sonst
+   nimmt der Button mit left:0 + right:0 die volle Breite (Banner-Effekt). */
 .resetButtonAbsolute {
   position: absolute;
+  left: auto;
   right: 0;
+  top: 0;
 }
 
 /* Sidebar Toggle Button rechts absolut - Firmenblau */
