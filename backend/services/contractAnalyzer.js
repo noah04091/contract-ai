@@ -1554,6 +1554,16 @@ class ContractAnalyzer {
         strong: ['geheimhaltungsvereinbarung', 'vertraulichkeitsvereinbarung', 'non-disclosure agreement', 'nda', 'confidentiality agreement'],
         medium: ['vertrauliche informationen', 'geheimhaltung', 'offenlegende partei', 'empfangende partei', 'confidential information', 'non-disclosure', 'disclosing party', 'receiving party', 'trade secret'],
         weak: ['vertraulich', 'confidential', 'geheim']
+      },
+
+      // ⚡ ENERGIELIEFERVERTRAG (energy) — Pilot-Typ Phase 3 (04.05.2026)
+      // Fängt Strom-, Gas- und Fernwärmelieferverträge ab. Hochrelevant wegen
+      // BGH EnZR 97/23 vom 21.10.2025 (Transparenz Preisanpassungen) und
+      // EnWG-Reform 23.12.2025. Datenbasiert priorisiert nach vzbv-Beschwerden 2024/2025.
+      energy: {
+        strong: ['energieliefervertrag', 'stromliefervertrag', 'stromvertrag', 'gasliefervertrag', 'gasvertrag', 'fernwärmevertrag', 'stromlieferant', 'gaslieferant', 'energielieferant', 'grundversorgung', 'sondervertrag strom', 'sondervertrag gas'],
+        medium: ['arbeitspreis', 'grundpreis', 'kwh', 'kilowattstunde', 'verbrauchsstelle', 'zählernummer', 'sonderkündigungsrecht', 'preisgarantie', 'preisbremse', 'ökostrom', 'bundesnetzagentur', 'stromgvv', 'gasgvv', 'enwg', 'netznutzung', 'konzessionsabgabe'],
+        weak: ['strom', 'gas', 'energie', 'tarif']
       }
     };
 
