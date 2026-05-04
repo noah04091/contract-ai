@@ -168,14 +168,12 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  /* Padding: oben weniger, weil die ganze Inner-Box max-width:1280 hat
-     und auf großen Screens zentriert wird (= echter Whitespace links/rechts) */
-  padding: 56px 32px 96px 32px;
+  /* Padding wie Mockup, leicht erhöht. Kein max-width (Mockup hat auch keine). */
+  padding: 56px 40px 80px 40px;
   min-width: 0;
 }
 .mainInner {
-  max-width: 1280px;
-  margin: 0 auto;
+  /* Kein max-width — Mockup-Pattern: Inhalt füllt verfügbaren Raum */
 }
 
 .pageHeader {
