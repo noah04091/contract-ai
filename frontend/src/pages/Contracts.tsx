@@ -202,6 +202,10 @@ interface UploadFileItem {
   result?: AnalysisResult;
   error?: string;
   duplicateInfo?: AnalysisResult;
+  // ✅ Bei Duplikat-Reanalyse aus dem Modal heraus auf true gesetzt → uploadAndAnalyze
+  // schickt forceReanalyze=true an /api/analyze, damit Backend nicht erneut HTTP 409
+  // zurückgibt und das Duplikat-Modal nicht in einer Endlos-Schleife wieder auftaucht.
+  forceReanalyze?: boolean;
 }
 
 // ✅ User Info Interface
@@ -2543,9 +2547,10 @@ export default function Contracts() {
     if (!duplicateModal?.fileItem) return;
     
     // ✅ Setze Status zurück auf pending für neue Analyse
-    setUploadFiles(prev => prev.map(item => 
-      item.id === duplicateModal.fileItem!.id 
-        ? { ...item, status: 'pending', progress: 0, duplicateInfo: undefined, error: undefined }
+    // ✅ forceReanalyze=true setzen, sonst erkennt Backend wieder Duplikat → 409 → Modal-Loop
+    setUploadFiles(prev => prev.map(item =>
+      item.id === duplicateModal.fileItem!.id
+        ? { ...item, status: 'pending', progress: 0, duplicateInfo: undefined, error: undefined, forceReanalyze: true }
         : item
     ));
     
@@ -2594,15 +2599,17 @@ export default function Contracts() {
 
 
         // ✅ Einzelne Analyse durchführen
+        // ✅ forceReanalyze aus File-Item übergeben — gesetzt bei Duplikat-Reanalyse aus Modal
         const result = await uploadAndAnalyze(
           fileItem.file,
           (progress) => {
-            setUploadFiles(prev => prev.map(item => 
-              item.id === fileItem.id 
+            setUploadFiles(prev => prev.map(item =>
+              item.id === fileItem.id
                 ? { ...item, progress }
                 : item
             ));
-          }
+          },
+          fileItem.forceReanalyze
         ) as AnalysisResult;
 
         // ✅ Erfolgreich
@@ -2705,15 +2712,17 @@ export default function Contracts() {
           : item
       ));
 
+      // ✅ forceReanalyze aus File-Item übergeben — auch beim Retry konsistent
       const result = await uploadAndAnalyze(
         fileItem.file,
         (progress) => {
-          setUploadFiles(prev => prev.map(item => 
-            item.id === fileId 
+          setUploadFiles(prev => prev.map(item =>
+            item.id === fileId
               ? { ...item, progress }
               : item
           ));
-        }
+        },
+        fileItem.forceReanalyze
       ) as AnalysisResult;
 
       if (result?.success) {
