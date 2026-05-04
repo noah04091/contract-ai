@@ -168,10 +168,24 @@
 
 /* ============================ MAIN ============================ */
 .main {
-  /* Sehr großzügiges Padding — visuell ~80/128/128/128 mit zoom:0.8.
-     Mehr als bei Stripe. Falls zu viel, später reduzieren. */
   padding: 100px 160px 140px 160px;
   min-width: 0;
+  /* SMOKING-GUN-TEST: roter Border + Timestamp-Banner.
+     Wenn du DAS nicht siehst, ist's 100% Cache. */
+  border: 8px solid #ef4444;
+  position: relative;
+}
+.main::before {
+  content: "DEPLOY-CHECK 2026-05-04 · padding:100/160/140/160 · wenn du das siehst, ist die neue CSS live";
+  display: block;
+  background: #ef4444;
+  color: #fff;
+  padding: 12px 20px;
+  margin: -100px -160px 40px -160px;
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
 .pageHeader {
