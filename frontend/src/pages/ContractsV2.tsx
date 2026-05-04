@@ -1399,6 +1399,7 @@ export default function ContractsV2() {
 
           {/* ===== Main ===== */}
           <main className={styles.main}>
+           <div className={styles.mainInner}>
             {/* Page Header */}
             <div className={styles.pageHeader}>
               <div className={styles.pageHeaderLeft}>
@@ -1951,6 +1952,7 @@ export default function ContractsV2() {
                 </>
               )}
             </div>
+           </div>
           </main>
 
           {/* ===== Detail-Drawer (Desktop only — Mobile öffnet direkt das Modal) ===== */}
