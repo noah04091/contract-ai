@@ -980,6 +980,46 @@ export const clearAuthData = (): void => {
 };
 
 /**
+ * Auth-Aspekte einer fetch-Response handhaben — für direkte fetch-Calls
+ * (SSE-Streams, Blob-Downloads), die nicht über apiCall() laufen können.
+ *
+ * Macht zwei Dinge:
+ *  1. Silent Token Refresh: schreibt erneuerten Token aus X-Refreshed-Token-Header
+ *  2. TOKEN_EXPIRED Auto-Logout: bei 403 mit error="TOKEN_EXPIRED" → clearAuthData + Redirect /login
+ *
+ * Andere 403-Codes (PREMIUM_REQUIRED, PLAN_LIMIT) bleiben unangetastet —
+ * der Caller behandelt sie wie bisher.
+ *
+ * Wirft "Sitzung abgelaufen. Bitte erneut einloggen." bei TOKEN_EXPIRED.
+ * Bei JSON-Parse-Fehler oder anderen 403: still — Caller läuft normal weiter.
+ *
+ * Spiegelt das Verhalten von apiCall() (api.ts:349, 389-396) für direkte fetch-Calls.
+ */
+export async function handleAuthResponse(response: Response): Promise<void> {
+  // 1) Silent Refresh: neuer Token aus X-Refreshed-Token Header in localStorage schreiben
+  handleTokenRefresh(response);
+
+  // 2) Auto-Logout bei TOKEN_EXPIRED
+  if (response.status === 403) {
+    try {
+      const errorData = await response.clone().json();
+      if (errorData?.error === "TOKEN_EXPIRED") {
+        console.warn("🔒 Sitzung abgelaufen - Auto-Logout");
+        clearAuthData();
+        if (!window.location.pathname.startsWith("/login")) {
+          window.location.href = "/login?reason=session_expired";
+        }
+        throw new Error("Sitzung abgelaufen. Bitte erneut einloggen.");
+      }
+    } catch (e) {
+      // Eigener Re-Throw bei TOKEN_EXPIRED weiterwerfen
+      if (e instanceof Error && e.message.includes("Sitzung abgelaufen")) throw e;
+      // Sonst: JSON-Parse fehlgeschlagen oder anderer 403 → Caller normal weitermachen
+    }
+  }
+}
+
+/**
  * ⭐ KORRIGIERT: Batch-Upload-Funktion für mehrere Dateien (Premium-Feature) - TypeScript-Lint-Fix
  * Führt mehrere Upload-Analysen parallel oder sequenziell durch
  */

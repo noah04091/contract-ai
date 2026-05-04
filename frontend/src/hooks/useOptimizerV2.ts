@@ -1,5 +1,5 @@
 import { useReducer, useCallback, useRef } from 'react';
-import { apiCall } from '../utils/api';
+import { apiCall, handleAuthResponse } from '../utils/api';
 import type {
   OptimizerV2State,
   AnalysisResult,
@@ -222,6 +222,9 @@ export function useOptimizerV2() {
         body: formData,
         signal: abortControllerRef.current.signal
       });
+
+      // Auth-Handling: Silent-Refresh + Auto-Logout bei TOKEN_EXPIRED
+      await handleAuthResponse(response);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

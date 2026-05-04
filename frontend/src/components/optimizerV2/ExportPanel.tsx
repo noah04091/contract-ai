@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, FileText, File, Loader2, CheckCircle2, Mail, Copy, Check, Hammer } from 'lucide-react';
-import { apiCall } from '../../utils/api';
+import { apiCall, handleAuthResponse } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import type { AnalysisResult, OptimizationMode, UserSelection } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
@@ -66,6 +66,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
       const response = await fetch(`/api/optimizer-v2/results/${result.resultId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      await handleAuthResponse(response);
       if (!response.ok) {
         if (response.status === 403) throw new Error('SESSION_EXPIRED');
         throw new Error('EXPORT_FAILED');
@@ -114,6 +115,7 @@ export default function ExportPanel({ result, userSelections }: Props) {
         body: JSON.stringify({ selections, mode: docxMode })
       });
 
+      await handleAuthResponse(response);
       if (!response.ok) {
         if (response.status === 403) throw new Error('SESSION_EXPIRED');
         const errData = await response.json().catch(() => null);

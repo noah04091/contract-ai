@@ -7,6 +7,7 @@ import {
 import NegotiationModeSelector from './NegotiationModeSelector';
 import type { Clause, ClauseOptimization, ClauseAnalysis, OptimizationMode, DiffOp } from '../../types/optimizerV2';
 import { CATEGORY_LABELS, MODE_LABELS } from '../../types/optimizerV2';
+import { handleAuthResponse } from '../../utils/api';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -125,6 +126,7 @@ export default function RedlineView({
       const response = await fetch(`${apiBase}/api/optimizer-v2/results/${resultId}/redline-pdf?mode=${activeMode}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      await handleAuthResponse(response);
       if (!response.ok) throw new Error('Export fehlgeschlagen');
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
