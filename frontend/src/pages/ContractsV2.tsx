@@ -2554,21 +2554,46 @@ export default function Contracts() {
     setDuplicateModal(null);
     setUploadFiles(prev => prev.map(item =>
       item.id === fileItem.id
-        ? { ...item, status: 'analyzing', progress: 10, error: undefined, duplicateInfo: undefined }
+        ? { ...item, status: 'analyzing', progress: 0, error: undefined, duplicateInfo: undefined }
         : item
     ));
     setIsAnalyzing(true);
 
+    // 🔍 Full-Screen Overlay zeigen — dieselbe UX wie bei normalem Upload+Analyse
+    // und bei Re-Analyse aus der Liste, statt nur winzige File-Item-Progress.
+    setAnalyzingOverlay({
+      show: true,
+      contractName: fixUtf8Display(fileItem.file.name),
+      pdfFile: fileItem.file,
+      progress: 0,
+    });
+
+    // 🎨 Smooth Progress-Animation 0→99% — 1:1 dieselbe Stufung wie in
+    // handleAnalyzeExistingContract, damit beide Re-Analyse-Wege identisch wirken.
+    let currentProgress = 0;
+    const progressInterval = setInterval(() => {
+      let increment = 1;
+      if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
+      else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
+      else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
+      else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
+      else if (currentProgress >= 95) increment = 0.2;
+      currentProgress = Math.min(currentProgress + increment, 99);
+      const rounded = Math.round(currentProgress);
+      setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: rounded } : prev);
+      setUploadFiles(prev => prev.map(item =>
+        item.id === fileItem.id ? { ...item, progress: rounded } : item
+      ));
+    }, 200);
+
     try {
       const result = await uploadAndAnalyze(
         fileItem.file,
-        (progress) => {
-          setUploadFiles(prev => prev.map(item =>
-            item.id === fileItem.id ? { ...item, progress } : item
-          ));
-        },
+        () => { /* Progress läuft via Interval — Backend liefert keinen echten Progress */ },
         true // ✅ forceReanalyze EXPLICIT — Backend überspringt Duplikat-Check
       ) as AnalysisResult;
+
+      clearInterval(progressInterval);
 
       if (result?.success) {
         setUploadFiles(prev => prev.map(item =>
@@ -2577,7 +2602,59 @@ export default function Contracts() {
             : item
         ));
         clearCalendarCache();
-        toast.success('Vertrag wurde neu analysiert!');
+
+        // 🚀 Direkt zum QuickAnalysis-Modal mit dem frischen Ergebnis springen —
+        // genau dieselbe Übergabe wie in handleAnalyzeExistingContract.
+        const refreshed = await fetchContracts();
+        const fresh = result.contractId
+          ? refreshed?.find(c => c._id === result.contractId)
+          : null;
+
+        if (fresh) {
+          const analysisResultData = {
+            success: true,
+            originalContractId: fresh._id,
+            contractScore: fresh.analysis?.contractScore ?? fresh.contractScore,
+            summary: fresh.analysis?.summary || fresh.summary,
+            legalAssessment: fresh.analysis?.legalAssessment || fresh.legalAssessment,
+            suggestions: fresh.analysis?.suggestions || fresh.suggestions,
+            comparison: fresh.analysis?.comparison,
+            positiveAspects: fresh.analysis?.positiveAspects,
+            criticalIssues: fresh.analysis?.criticalIssues,
+            recommendations: fresh.analysis?.recommendations,
+            detailedLegalOpinion: fresh.analysis?.detailedLegalOpinion || fresh.detailedLegalOpinion,
+            kuendigung: fresh.kuendigung,
+            laufzeit: fresh.laufzeit,
+            risiken: fresh.risiken,
+            optimierungen: fresh.optimierungen,
+          };
+
+          setQuickAnalysisModal({
+            show: true,
+            contractName: fresh.name,
+            contractId: fresh._id,
+            analysisResult: analysisResultData,
+          });
+
+          try {
+            sessionStorage.setItem('contractai_quickAnalysis', JSON.stringify({
+              contractName: fresh.name,
+              contractId: fresh._id,
+              analysisResult: analysisResultData,
+            }));
+          } catch { /* sessionStorage voll oder nicht verfügbar */ }
+          navigate(`/contracts?quickAnalysis=${fresh._id}`, { replace: true });
+
+          // File-Item aus Upload-Liste entfernen — Vertrag liegt jetzt in der Liste,
+          // sonst hängt er doppelt.
+          removeUploadFile(fileItem.id);
+
+          triggerOnboardingSync();
+        } else {
+          // Fallback falls fetchContracts den frischen Vertrag nicht zurückgibt
+          // (Race-Condition / Filter-Mismatch) — bleibe auf Upload-Liste mit Toast.
+          toast.success('Vertrag wurde neu analysiert!');
+        }
       } else if (result?.duplicate) {
         // Sollte mit forceReanalyze=true nicht mehr passieren — Safety-Fallback
         setUploadFiles(prev => prev.map(item =>
@@ -2603,11 +2680,13 @@ export default function Contracts() {
       toast.error(`Fehler bei der Analyse: ${errorMessage}`);
       console.error(`❌ Re-Analyse-Fehler für ${fileItem.file.name}:`, error);
     } finally {
+      clearInterval(progressInterval);
       setIsAnalyzing(false);
-      // User-Info und Verträge neu laden (analysisCount hat sich geändert)
+      setAnalyzingOverlay({ show: false, contractName: '', progress: 0 });
+      // User-Info aktualisieren (analysisCount hat sich geändert);
+      // fetchContracts ist bereits im Success-Branch erfolgt.
       setTimeout(() => {
         fetchUserInfo(true);
-        fetchContracts();
       }, 1000);
     }
   };
