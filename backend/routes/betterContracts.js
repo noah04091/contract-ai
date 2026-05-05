@@ -544,8 +544,14 @@ async function generateGPTSearchQueries(detectedType, contractText, openaiClient
     });
 
     const responseText = completion.choices[0].message.content.trim();
-    // Parse JSON array from response
-    const queries = JSON.parse(responseText);
+
+    // GPT verpackt JSON manchmal in Markdown-Codefences (```json ... ```).
+    // Selbes Strip-Pattern wie in generateV2.js und optimize.js.
+    const cleanedResponse = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/```\s*$/, '')
+      .trim();
+    const queries = JSON.parse(cleanedResponse);
 
     if (Array.isArray(queries) && queries.length > 0) {
       console.log(`✅ GPT generierte ${queries.length} Suchqueries:`, queries);
