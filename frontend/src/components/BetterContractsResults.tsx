@@ -360,27 +360,29 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           </div>
         </div>
 
-        {/* B2B Content Grid */}
-        <div className="b2b-content-grid">
-          {alternative.pricingModel && (
-            <div className="b2b-field">
-              <span className="b2b-field-label">Preismodell</span>
-              <span className="b2b-field-value">{alternative.pricingModel}</span>
-            </div>
-          )}
-          {alternative.targetSegment && (
-            <div className="b2b-field">
-              <span className="b2b-field-label">Zielgruppe</span>
-              <span className="b2b-field-value">{alternative.targetSegment}</span>
-            </div>
-          )}
-          {alternative.industryFocus && (
-            <div className="b2b-field">
-              <span className="b2b-field-label">Branchenfokus</span>
-              <span className="b2b-field-value">{alternative.industryFocus}</span>
-            </div>
-          )}
-        </div>
+        {/* B2B Content Grid — nur wenn mind. 1 Feld vorhanden ist */}
+        {(alternative.pricingModel || alternative.targetSegment || alternative.industryFocus) && (
+          <div className="b2b-content-grid">
+            {alternative.pricingModel && (
+              <div className="b2b-field">
+                <span className="b2b-field-label">Preismodell</span>
+                <span className="b2b-field-value">{alternative.pricingModel}</span>
+              </div>
+            )}
+            {alternative.targetSegment && (
+              <div className="b2b-field">
+                <span className="b2b-field-label">Zielgruppe</span>
+                <span className="b2b-field-value">{alternative.targetSegment}</span>
+              </div>
+            )}
+            {alternative.industryFocus && (
+              <div className="b2b-field">
+                <span className="b2b-field-label">Branchenfokus</span>
+                <span className="b2b-field-value">{alternative.industryFocus}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* B2B Summary */}
         {alternative.b2bSummary && (

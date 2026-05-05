@@ -1049,6 +1049,11 @@
   border-left-color: #a78bfa;
 }
 
+/* AI-Suggested Card: Header braucht Platz für die absolute KI-Vorschlag-Badge */
+.alternative-card.ai-suggested-card .card-header {
+  padding-top: 1.75rem;
+}
+
 /* AI-Suggested Indicator Badge */
 .ai-suggested-indicator {
   position: absolute;
