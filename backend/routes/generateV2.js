@@ -239,6 +239,7 @@ REGELN FÜR DEINEN META-PROMPT:
 6. WICHTIG: Übernimm die EXAKTEN Parteinamen aus den Eingabedaten in den Meta-Prompt. Fordere PRÄAMBEL mit vollständigen Vertragsparteien
 7. WICHTIG: Fordere umfassende, detaillierte Paragraphen (mindestens 4000-5000 Zeichen Gesamtlänge)
 8. WICHTIG: Betone professionellen, ausführlichen Stil - KEINE Kurzfassungen oder Minimalismus
+9. KRITISCH: Weise im META-PROMPT explizit an, dass der Vertrag KEINE Unterschriftenzeilen, KEINE "_______"-Linien, KEINE "Datum, Unterschrift"-Felder und KEINE Unterschriftsblöcke (z.B. "Vermieter: Max Mustermann _______") enthält — die letzte PDF-Seite ist immer ein separates Unterschriftenblatt. Der Vertrag MUSS nach dem letzten Sach-Paragraph (z.B. § Schlussbestimmungen) enden, ohne weitere Schlussformeln oder Unterschriftensektionen.
 
 Output-Format (strikt einhalten!):
 ===PROMPT===

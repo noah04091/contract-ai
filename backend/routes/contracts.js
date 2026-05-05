@@ -33,6 +33,33 @@ function buildContentDisposition(disposition, filename) {
   return `${disposition}; filename="${ascii}"; filename*=UTF-8''${utf8}`;
 }
 
+// 📎 Lesbarer PDF-Filename — fällt nur bei kryptischen/leeren Namen auf "Vertragstyp_YYYY-MM-DD"
+// zurück. Sinnvolle vom User gesetzte Namen ("Mietvertrag - 5.5.2026", "Meine NDA") bleiben.
+const CONTRACT_TYPE_LABELS = {
+  mietvertrag: 'Mietvertrag', arbeitsvertrag: 'Arbeitsvertrag', kaufvertrag: 'Kaufvertrag',
+  nda: 'NDA', freelancer: 'Freelancer-Vertrag', werkvertrag: 'Werkvertrag',
+  berater: 'Beratungsvertrag', aufhebungsvertrag: 'Aufhebungsvertrag',
+  pachtvertrag: 'Pachtvertrag', kooperation: 'Kooperationsvertrag',
+  softwareVertrieb: 'SaaS-Reseller-Vertrag', softwareEndkunde: 'Software-Endkunde-Vertrag',
+  lizenzvertrag: 'Lizenzvertrag', darlehensvertrag: 'Darlehensvertrag',
+  gesellschaftsvertrag: 'Gesellschaftsvertrag', individuell: 'Vertrag'
+};
+function buildSafePdfFilename(contract, suffix = '') {
+  const rawName = (contract?.name || '').trim();
+  const idStr = contract?._id ? String(contract._id) : '';
+  // Kryptisch = leer ODER exakt gleich der Mongo-ObjectId ODER reine 24-Hex-Zeichen
+  const isCryptic = !rawName || rawName === idStr || /^[a-f0-9]{24}$/i.test(rawName);
+  if (!isCryptic) {
+    return `${rawName}${suffix}.pdf`;
+  }
+  // Fallback: lesbarer Vertragstyp + Datum
+  const typeKey = (contract?.contractType || '').toString();
+  const typeLabel = CONTRACT_TYPE_LABELS[typeKey] || (typeKey ? typeKey.charAt(0).toUpperCase() + typeKey.slice(1) : 'Vertrag');
+  const dateSrc = contract?.createdAt || contract?.uploadedAt || Date.now();
+  const date = new Date(dateSrc).toISOString().slice(0, 10);
+  return `${typeLabel}_${date}${suffix}.pdf`;
+}
+
 // 🚀 Cache-Invalidierung: Bei jeder Schreiboperation (POST/PUT/PATCH/DELETE) Cache für den User leeren
 router.use((req, res, next) => {
   if (req.method !== 'GET') {
@@ -2979,7 +3006,7 @@ router.get("/:id/analysis-report", verifyToken, async (req, res) => {
 
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('attachment', `${contract.name || 'Vertrag'}_Analyse.pdf`));
+    res.setHeader('Content-Disposition', buildContentDisposition('attachment', buildSafePdfFilename(contract, '_Analyse')));
 
     // Pipe PDF to response
     doc.pipe(res);
@@ -4216,7 +4243,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
     }
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}.pdf`));
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', buildSafePdfFilename(contract)));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
@@ -4402,7 +4429,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}.pdf`));
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', buildSafePdfFilename(contract)));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
@@ -4592,7 +4619,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     // 2. Wenn keine Anlagen-Dateien, direkt zurückgeben
     if (attachmentFiles.length === 0) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_mit_Anlagen.pdf`));
+      res.setHeader('Content-Disposition', buildContentDisposition('inline', buildSafePdfFilename(contract, '_mit_Anlagen')));
       res.setHeader('Content-Length', mainPdfBuffer.length);
       return res.send(mainPdfBuffer);
     }
@@ -4654,7 +4681,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
     const mergedPdfBytes = await mergedPdf.save();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_mit_Anlagen.pdf`));
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', buildSafePdfFilename(contract, '_mit_Anlagen')));
     res.setHeader('Content-Length', mergedPdfBytes.length);
     res.send(Buffer.from(mergedPdfBytes));
 
@@ -4716,7 +4743,7 @@ router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
     );
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('inline', `${contract.name || 'Vertrag'}_v3.pdf`));
+    res.setHeader('Content-Disposition', buildContentDisposition('inline', buildSafePdfFilename(contract, '_v3')));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
