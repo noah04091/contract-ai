@@ -8316,69 +8316,93 @@
 }
 
 /* === FILTER CHIPS === */
+/* V2 Phase A5 — Filter-Chips als Container-Pill (Stripe-Style)
+   Unterschied zu V1: jetzt AUF DESKTOP sichtbar, mit Container-Pill-Optik */
 .mobileFilterChips {
-  display: none; /* Hidden on desktop */
+  display: flex;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.5rem;
   gap: 0.5rem;
-  background: white;
-  border-bottom: 1px solid #f3f4f6;
+  background: transparent;
+  border-bottom: none;
 }
 
 .mobileFilterChips::-webkit-scrollbar {
   display: none;
 }
 
+/* Container-Pill um die Chips herum */
 .filterChipGroup {
-  display: flex;
-  gap: 0.5rem;
+  display: inline-flex;
+  gap: 4px;
   flex-shrink: 0;
+  padding: 4px;
+  background: #fbfcfe;
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .filterChip {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  background: #f3f4f6;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 0.8125rem;
+  gap: 7px;
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
   font-weight: 500;
-  color: #4b5563;
+  color: #475569;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: -0.005em;
+  font-family: inherit;
+}
+
+.filterChip:hover {
+  background: #f5f6f9;
+  color: #0a0e1a;
 }
 
 .filterChip:active {
-  transform: scale(0.96);
+  transform: scale(0.98);
 }
 
+/* Active-Chip "gedrückt"-Look mit weißem Hintergrund + Shadow */
 .filterChip.active {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background: #ffffff;
+  border-color: transparent;
+  color: #0a0e1a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .filterChip svg {
   width: 14px;
   height: 14px;
+  color: #8896a8;
+}
+.filterChip.active svg {
+  color: #4f46e5;
 }
 
 .filterChipCount {
-  background: rgba(0, 0, 0, 0.1);
-  padding: 0.125rem 0.375rem;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 7px;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 11px;
   font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
 }
 
 .filterChip.active .filterChipCount {
-  background: rgba(59, 130, 246, 0.15);
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
 /* === PULL TO REFRESH === */
