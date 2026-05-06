@@ -558,11 +558,11 @@ const ClauseList: React.FC<ClauseListProps> = ({
           <button
             className={`${styles.compactToggle} ${compactMode ? styles.compactToggleActive : ''}`}
             onClick={toggleCompactMode}
-            title={compactMode ? 'Vollansicht (alle Details zeigen)' : 'Übersicht (nur Überschriften)'}
+            title={compactMode ? 'Vollansicht aktivieren (alle Details zeigen)' : 'Übersicht aktivieren (nur Überschriften)'}
             aria-label={compactMode ? 'Vollansicht aktivieren' : 'Übersichtsmodus aktivieren'}
             aria-pressed={compactMode}
           >
-            {compactMode ? '▦ Voll' : '☰ Übersicht'}
+            {compactMode ? '📄 Vollansicht' : '☰ Übersicht'}
           </button>
         </span>
       </div>
