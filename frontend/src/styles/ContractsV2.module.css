@@ -3787,7 +3787,7 @@
 
 .contractsTable th {
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: 0.875rem 0.75rem;
+  padding: 0.625rem 0.75rem;
   text-align: left;
   font-weight: 600;
   color: #475569;
@@ -3798,6 +3798,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 🆕 V2 TODO #3: Erste und letzte Spalte näher an die Kasten-Ränder */
+.contractsTable thead th:first-child,
+.contractsTable tbody td:first-child {
+  padding-left: 0.5rem;
+}
+.contractsTable thead th:last-child,
+.contractsTable tbody td:last-child {
+  padding-right: 0.5rem;
 }
 
 /* 🔽 Sortable Header Styles */
@@ -3877,7 +3887,7 @@
 }
 
 .tableRow td {
-  padding: 0.875rem 0.75rem;
+  padding: 0.75rem 0.75rem;
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
