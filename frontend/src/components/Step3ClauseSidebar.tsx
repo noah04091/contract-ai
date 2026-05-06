@@ -329,6 +329,22 @@ const Step3ClauseSidebar: React.FC<Props> = ({
 
               {!loading && !error && result && result.clauses.length > 0 && (
                 <div className={styles.clauseList}>
+                  {applied.size > 0 && (
+                    <div className={styles.staleBanner} role="status">
+                      <RefreshCw size={16} className={styles.staleBannerIcon} />
+                      <span className={styles.staleBannerText}>
+                        Vertrag wurde geändert ({applied.size} {applied.size === 1 ? 'Vorschlag' : 'Vorschläge'} übernommen) — Bewertung jetzt veraltet.
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.staleBannerBtn}
+                        onClick={handleRefresh}
+                        disabled={loading}
+                      >
+                        <RefreshCw size={12} /> Neu prüfen
+                      </button>
+                    </div>
+                  )}
                   {result.clauses.map((clause) => {
                     const isExpanded = expanded.has(clause.id);
                     const isApplied = applied.has(clause.id);
