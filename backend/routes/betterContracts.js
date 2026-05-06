@@ -618,7 +618,7 @@ async function enrichB2BResultsWithGPT(searchResults, contractText, detectedType
 
 AUFGABE:
 1. Analysiere jeden gefundenen Anbieter — reichere mit Marktwissen an
-2. Schlage bis zu 3 ZUSÄTZLICHE bekannte Anbieter vor (nicht in Suchergebnissen)
+2. Schlage mindestens 5, gerne bis zu 8 ZUSÄTZLICHE bekannte Anbieter vor (nicht in Suchergebnissen)
 3. Trenne KLAR zwischen verifizierten Infos und KI-Wissen
 
 ANTWORTE NUR mit validem JSON:
@@ -654,7 +654,7 @@ REGELN:
 - confidence "medium" = bekannter Anbieter, Details aus KI-Wissen
 - confidence "low" = nur aus KI-Wissen, nicht verifiziert
 - NIEMALS konkrete Preise erfinden — Preismodell beschreiben
-- aiSuggestedProviders: NUR seriöse, bekannte Anbieter, max 3
+- aiSuggestedProviders: NUR seriöse, bekannte Anbieter, mindestens 5 und maximal 8
 - aiSuggestedProviders confidence ist IMMER "medium" oder "low"
 - Nenne NUR Anbieter, bei denen du sicher bist, dass sie real existieren. Erfinde KEINE Anbieter.
 - website-URLs müssen echte, existierende Domains sein — keine Platzhalter oder erfundene URLs
@@ -711,11 +711,73 @@ function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
   });
 }
 
+// 🆕 Consumer-KI-Vorschläge: GPT generiert bekannte Anbieter aus Marktwissen
+// (B2B nutzt enrichB2BResultsWithGPT; Consumer hatte bisher 0 KI-Vorschläge)
+async function generateConsumerAiSuggestions(contractText, detectedType, openaiClient) {
+  try {
+    console.log(`🛒 Consumer-KI-Vorschläge für Typ: ${detectedType}`);
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein Marktexperte für deutsche Consumer-Verträge.
+Liste 5-8 etablierte, bekannte Anbieter für den gegebenen Vertragstyp auf.
+
+REGELN:
+- Nur reale, etablierte Anbieter aus dem deutschen Markt
+- Erfinde KEINE Anbieter
+- URLs müssen echte, existierende Domains sein — keine Platzhalter
+- Bei Versicherungen: ARAG, ROLAND, ADVOCARD, HUK-COBURG, Allianz, AXA, ERGO, DEVK, CosmosDirekt, Adam Riese etc.
+- Bei Strom: E.ON, Vattenfall, EnBW, Lichtblick, Naturstrom, Tibber, Octopus Energy etc.
+- Bei Mobilfunk: Telekom, Vodafone, O2, Congstar, 1&1, Klarmobil etc.
+- Wenn du für den Vertragstyp KEINE realen Anbieter sicher kennst, gib ein leeres Array zurück.
+
+ANTWORTE NUR mit validem JSON:
+{
+  "providers": [{
+    "providerName": "Name",
+    "website": "https://www...",
+    "pricingModel": "z.B. Tarif-basiert / monatlich kündbar",
+    "targetSegment": "z.B. Privatkunden",
+    "industryFocus": "z.B. Privat / Branchenunabhängig",
+    "whyFit": "Warum bekannter Anbieter (1-2 Sätze)",
+    "confidence": "medium",
+    "evidenceSource": "ai-knowledge",
+    "summary": "Kurzbeschreibung (1-2 Sätze)"
+  }]
+}`
+        },
+        {
+          role: "user",
+          content: `Vertragstyp: ${detectedType}\nVertragsauszug (max. 1500 Zeichen):\n${contractText.slice(0, 1500)}\n\nNenne 5-8 bekannte deutsche Anbieter für diesen Vertragstyp.`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+      max_tokens: 1500
+    });
+
+    const parsed = JSON.parse(completion.choices[0].message.content);
+    if (!parsed.providers || !Array.isArray(parsed.providers)) {
+      console.warn(`⚠️ Consumer-KI: providers-Array fehlt oder ungültig`);
+      return [];
+    }
+
+    console.log(`✅ Consumer-KI: ${parsed.providers.length} Anbieter generiert`);
+    return parsed.providers;
+  } catch (error) {
+    console.error(`❌ Consumer-KI fehlgeschlagen:`, error.message);
+    return [];
+  }
+}
+
 // Konvertiere GPT aiSuggestedProviders in Alternative-Shape
 function createAiSuggestedAlternatives(aiSuggested) {
   if (!aiSuggested || !Array.isArray(aiSuggested)) return [];
 
-  return aiSuggested.slice(0, 3).map((provider, index) => ({
+  return aiSuggested.slice(0, 8).map((provider, index) => ({
     title: provider.providerName || 'Unbekannter Anbieter',
     link: provider.website || '#',
     snippet: provider.summary || '',
@@ -2485,7 +2547,14 @@ router.post("/", async (req, res) => {
       analysis = formatB2BAnalysis(b2bEnrichment);
       console.log(`✅ B2B Enrichment abgeschlossen: ${enrichedResults.length} angereichert, ${aiSuggestedAlternatives.length} KI-Vorschläge`);
     } else {
-      // 🛒 Consumer: bestehender Flow UNVERÄNDERT
+      // 🛒 Consumer: KI-Vorschläge generieren (NEU) — bestehender Analyse-Flow danach UNVERÄNDERT
+      console.log(`🛒 Consumer-Modus: Generiere KI-Vorschläge...`);
+      const consumerAiProviders = await generateConsumerAiSuggestions(
+        cleanContractText, detectedType, openai
+      );
+      aiSuggestedAlternatives = createAiSuggestedAlternatives(consumerAiProviders);
+      console.log(`✅ Consumer KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
+
       const consumerSystemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
 
 WICHTIG:
