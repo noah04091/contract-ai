@@ -5569,6 +5569,21 @@ export default function Contracts() {
                                     </button>
                                     {morePopoverFor === contract._id && (
                                       <div className={styles.morePopover} onClick={(e) => e.stopPropagation()}>
+                                        {/* 1. Vollständige Details öffnen */}
+                                        <button
+                                          className={styles.morePopoverItem}
+                                          onClick={() => {
+                                            setMorePopoverFor(null);
+                                            setSelectedContract(contract);
+                                            setShowDetails(true);
+                                            setOpenEditModalDirectly(false);
+                                            setModalInitialTab('overview');
+                                          }}
+                                        >
+                                          <FileText size={14} />
+                                          <span>Vollständige Details öffnen</span>
+                                        </button>
+                                        {/* 2. Bearbeiten */}
                                         {canEditContract(contract) && (
                                           <button
                                             className={styles.morePopoverItem}
@@ -5581,23 +5596,41 @@ export default function Contracts() {
                                             <span>Bearbeiten</span>
                                           </button>
                                         )}
-                                        {isContractNotAnalyzed(contract) && canEditContract(contract) && (
+                                        {/* 3. Analyse anzeigen / Jetzt analysieren */}
+                                        {isContractNotAnalyzed(contract) ? (
+                                          canEditContract(contract) && (
+                                            <button
+                                              className={styles.morePopoverItem}
+                                              onClick={() => {
+                                                setMorePopoverFor(null);
+                                                handleAnalyzeExistingContract(contract);
+                                              }}
+                                              disabled={analyzingContract[contract._id]}
+                                            >
+                                              {analyzingContract[contract._id] ? (
+                                                <Loader size={14} className={styles.spinning} />
+                                              ) : (
+                                                <Zap size={14} />
+                                              )}
+                                              <span>Jetzt analysieren</span>
+                                            </button>
+                                          )
+                                        ) : (
                                           <button
                                             className={styles.morePopoverItem}
                                             onClick={() => {
                                               setMorePopoverFor(null);
-                                              handleAnalyzeExistingContract(contract);
+                                              setSelectedContract(contract);
+                                              setShowDetails(true);
+                                              setOpenEditModalDirectly(false);
+                                              setModalInitialTab('analysis');
                                             }}
-                                            disabled={analyzingContract[contract._id]}
                                           >
-                                            {analyzingContract[contract._id] ? (
-                                              <Loader size={14} className={styles.spinning} />
-                                            ) : (
-                                              <Zap size={14} />
-                                            )}
-                                            <span>Jetzt analysieren</span>
+                                            <Sparkles size={14} />
+                                            <span>Analyse anzeigen</span>
                                           </button>
                                         )}
+                                        {/* 4. Erinnerung einrichten */}
                                         {canEditContract(contract) && (
                                           <button
                                             className={styles.morePopoverItem}
@@ -5610,6 +5643,8 @@ export default function Contracts() {
                                             <span>Erinnerung einrichten</span>
                                           </button>
                                         )}
+                                        <div className={styles.morePopoverDivider} />
+                                        {/* 5. In Ordner verschieben */}
                                         <button
                                           className={styles.morePopoverItem}
                                           onClick={() => setMorePopoverFolderExpanded((v) => !v)}
@@ -5657,20 +5692,18 @@ export default function Contracts() {
                                             ))}
                                           </div>
                                         )}
+                                        {/* 6. Löschen */}
                                         {canDeleteContract(contract) && (
-                                          <>
-                                            <div className={styles.morePopoverDivider} />
-                                            <button
-                                              className={`${styles.morePopoverItem} ${styles.morePopoverDanger}`}
-                                              onClick={() => {
-                                                setMorePopoverFor(null);
-                                                handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-                                              }}
-                                            >
-                                              <Trash2 size={14} />
-                                              <span>Löschen</span>
-                                            </button>
-                                          </>
+                                          <button
+                                            className={`${styles.morePopoverItem} ${styles.morePopoverDanger}`}
+                                            onClick={() => {
+                                              setMorePopoverFor(null);
+                                              handleDeleteContract(contract._id, fixUtf8Display(contract.name));
+                                            }}
+                                          >
+                                            <Trash2 size={14} />
+                                            <span>Löschen</span>
+                                          </button>
                                         )}
                                       </div>
                                     )}
