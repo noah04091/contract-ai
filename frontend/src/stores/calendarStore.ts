@@ -158,15 +158,18 @@ export const useCalendarStore = create<CalendarState>()(
               return;
             }
 
-            const pastDate = new Date();
-            pastDate.setDate(pastDate.getDate() - 365); // 1 Jahr zurück (für Jahresübersicht)
+            // Future-Cutoff bei 3 Jahren — verhindert Endlos-Recurrence-Expansion
+            // (Mietraten etc.) bei langfristigen Verträgen.
+            // KEIN Past-Cutoff: historische Vertragsereignisse (Vertragsunterzeichnung
+            // 2014, etc.) werden via HISTORICAL_EVENT_TYPE_WHITELIST im Backend
+            // bereits streng gefiltert — wir wollen sie alle sehen, damit der
+            // Kalender die volle Vertrags-Timeline abbildet.
             const futureDate = new Date();
-            futureDate.setDate(futureDate.getDate() + 1095); // 3 Jahre in die Zukunft (für langfristige Verträge)
+            futureDate.setDate(futureDate.getDate() + 1095); // 3 Jahre voraus
 
             const response = await axios.get<ApiResponse>('/api/calendar/events', {
               headers: { Authorization: `Bearer ${token}` },
               params: {
-                from: pastDate.toISOString(),
                 to: futureDate.toISOString()
               }
             });
