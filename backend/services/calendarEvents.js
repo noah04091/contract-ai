@@ -912,7 +912,9 @@ async function generateEventsForContract(db, contract) {
           continue;
         }
 
-        // Nur zukünftige Datums als Events
+        // Zukünftige Datums: vollwertige Events MIT Reminder-Staffelung.
+        // Vergangene Datums (else-Branch unten): rein historische Read-Only-Events
+        // mit isHistorical-Flag, ohne Reminder.
         if (dateObj > now) {
           events.push({
             userId: contract.userId,
@@ -996,7 +998,36 @@ async function generateEventsForContract(db, contract) {
 
           console.log(`  ✅ KI-Datum: ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')} (${importantDate.label})`);
         } else {
-          console.log(`  ⚠️ KI-Datum in Vergangenheit übersprungen: ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')}`);
+          // 📜 HISTORICAL EVENT: Vergangene KI-Datums werden als Read-Only-Events
+          // gespeichert, damit "Vertragshistorie" auch im zentralen Kalender sichtbar
+          // ist. Severity 'info' (kein Alarm), KEINE Reminder-Vorwarnungen,
+          // isHistorical=true schützt vor updateExpiredEvents-Cron.
+          // Email-Notifier filtert eh date >= now → kein Spam für vergangene Daten.
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: mapping.eventType,
+            title: `📜 ${importantDate.label}: ${contract.name}`,
+            description: importantDate.description || `Historisches Datum für "${contract.name}"`,
+            date: dateObj,
+            severity: 'info',
+            status: "scheduled",
+            isHistorical: true,
+            confidence: importantDate.calculated ? 75 : 95,
+            dataSource: importantDate.calculated ? 'ai_calculated' : 'ai_extracted',
+            isEstimated: importantDate.calculated || false,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              aiExtracted: true,
+              source: importantDate.source || 'KI-Analyse',
+              originalType: importantDate.type,
+              historical: true
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          console.log(`  📜 KI-Datum (historisch): ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')} (${importantDate.label})`);
         }
       }
     }
@@ -1371,11 +1402,15 @@ async function updateExpiredEvents(db) {
   try {
     const now = new Date();
     
-    // Markiere abgelaufene Events
+    // Markiere abgelaufene Events.
+    // 📜 isHistorical-Events sind ABSICHTLICH in der Vergangenheit (Vertragshistorie)
+    // und dürfen NICHT als "expired" markiert werden — sonst verschwinden sie aus dem
+    // Kalender bzw. werden als ungültig gerendert.
     const result = await db.collection("contract_events").updateMany(
       {
         date: { $lt: now },
-        status: "scheduled"
+        status: "scheduled",
+        isHistorical: { $ne: true }
       },
       {
         $set: {
