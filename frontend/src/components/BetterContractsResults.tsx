@@ -232,6 +232,47 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     }
   };
 
+  // Heuristik: Vergleichsseite/Ratgeber vs. direkter Anbieter
+  // Threshold 3 = mind. 1 starkes ODER 2 mittlere Signale
+  const classifyAsComparisonSite = (alt: Alternative): boolean => {
+    const url = (alt.link || '').toLowerCase();
+    const title = (alt.title || '').toLowerCase();
+    const provider = (alt.provider || '').toLowerCase().trim();
+
+    // Short-Circuit: Provider konnte nicht extrahiert werden = Artikel/Liste
+    if (!provider || provider === 'unknown') return true;
+
+    // Short-Circuit: Provider-Name ist generisch (Scraper hat Vertragstyp als Provider genommen)
+    const genericNames = ['anbieter', 'factoring', 'leasing', 'beratung', 'services', 'consulting'];
+    if (genericNames.includes(provider)) return true;
+
+    let score = 0;
+
+    const comparisonDomains = [
+      'vergleich', 'check24', 'verivox', 'tarifcheck', 'idealo',
+      'testberichte', 'finanztip', 'fuer-gruender', 'gruender',
+      'impulse', 'pool-mittelstand', 'wechselpiraten',
+      'preisvergleich', 'stiftung-warentest', 'test.de'
+    ];
+    if (comparisonDomains.some(d => url.includes(d))) score += 3;
+
+    const comparisonPaths = [
+      '/vergleich', '/anbieter-vergleich', '/anbieter-finden',
+      '/ratgeber', '/blog', '/tipps', '/kosten-vergleich',
+      '/wissen/', '/magazin/', '/artikel/'
+    ];
+    if (comparisonPaths.some(p => url.includes(p))) score += 2;
+
+    const comparisonTitleWords = [
+      'vergleich', 'tipps zum', 'was du wissen', 'im check',
+      'anbieter nach umsatz', 'den richtigen', 'liste',
+      'top 5', 'top 10', 'top 3'
+    ];
+    if (comparisonTitleWords.some(w => title.includes(w))) score += 2;
+
+    return score >= 3;
+  };
+
   // Extract price from strings and estimate monthly cost
   const extractPrice = (priceStrings: string[]): number | null => {
     for (const priceStr of priceStrings) {
@@ -282,6 +323,10 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   });
 
   const displayedAlternatives = showAllAlternatives ? sortedAlternatives : sortedAlternatives.slice(0, 5); // 🆕 Show 5 by default instead of 3
+
+  // 🆕 Aufteilung B2B-Karten in: direkte Anbieter vs. Vergleichsseiten/Ratgeber
+  const b2bDirectProviders = displayedAlternatives.filter(a => !a.isAiSuggested && !classifyAsComparisonSite(a));
+  const b2bComparisonSites = displayedAlternatives.filter(a => !a.isAiSuggested && classifyAsComparisonSite(a));
 
   const formatAnalysis = (analysisText: string) => {
     return analysisText.split('\n').map((line, index) => {
@@ -543,17 +588,21 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       {/* Alternatives Grid — B2B vs Consumer Branch */}
       {isB2B ? (
         <>
-          {/* B2B: Gefundene Anbieter */}
-          {displayedAlternatives.filter(a => !a.isAiSuggested).length > 0 && (
+          {/* B2B: Gefundene Anbieter (nur echte direkte Anbieter) */}
+          {b2bDirectProviders.length > 0 ? (
             <>
               <div className="b2b-section-header">
                 <h3>Gefundene Anbieter</h3>
-                <p>Basierend auf Marktrecherche und KI-Analyse</p>
+                <p>Direkte Anbieter aus der Marktrecherche</p>
               </div>
               <div className="alternatives-grid">
-                {displayedAlternatives.filter(a => !a.isAiSuggested).map((alt, i) => renderB2BCard(alt, i))}
+                {b2bDirectProviders.map((alt, i) => renderB2BCard(alt, i))}
               </div>
             </>
+          ) : (
+            <div className="empty-direct-providers-notice">
+              <p>Keine direkten Anbieter über die Suche gefunden — siehe KI-Vorschläge und Marktrecherche unten.</p>
+            </div>
           )}
 
           {/* B2B: AI-Suggested Providers */}
@@ -565,6 +614,19 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
               </div>
               <div className="alternatives-grid">
                 {aiSuggestedAlternatives.map((alt, i) => renderB2BCard(alt, i + 100))}
+              </div>
+            </>
+          )}
+
+          {/* B2B: Marktrecherche & Vergleichsportale (Vergleichsseiten/Ratgeber) */}
+          {b2bComparisonSites.length > 0 && (
+            <>
+              <div className="b2b-section-header market-research">
+                <h3>Marktrecherche & Vergleichsportale</h3>
+                <p>Hilfreiche Quellen für Marktüberblick, Vergleiche und Erklärungen</p>
+              </div>
+              <div className="alternatives-grid">
+                {b2bComparisonSites.map((alt, i) => renderB2BCard(alt, i + 200))}
               </div>
             </>
           )}

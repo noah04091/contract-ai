@@ -1203,6 +1203,33 @@
   color: #6d28d9;
 }
 
+/* Marktrecherche-Sektion: dezent in Slate-Grau, signalisiert "informational" */
+.b2b-section-header.market-research {
+  border-bottom-color: #cbd5e1;
+  margin-top: 2rem;
+}
+
+.b2b-section-header.market-research h3 {
+  color: #475569;
+}
+
+/* Empty-State, wenn keine direkten Anbieter gefunden */
+.empty-direct-providers-notice {
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.empty-direct-providers-notice p {
+  margin: 0;
+}
+
 /* B2B Responsive */
 @media (max-width: 768px) {
   .b2b-content-grid {
