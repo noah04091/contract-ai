@@ -8864,3 +8864,18 @@
   color: #4f46e5;
   background: #eef2ff;
 }
+
+/* V2 Phase A4 — Sub-Label unter Vertragsnamen (Mockup-Style) */
+.contractSubLabel {
+  font-size: 12px;
+  color: #8896a8;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.contractSubSep {
+  color: #d4d8df;
+}

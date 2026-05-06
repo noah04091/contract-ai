@@ -5396,25 +5396,18 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{fixUtf8Display(contract.name)}</span>
-                                    {(contract.isGenerated || contract.isOptimized || contract.uploadType === 'EMAIL_IMPORT') && (
-                                      <div className={styles.contractBadges}>
-                                        {contract.isGenerated && (
-                                          <span className={styles.generatedBadge}>Generiert</span>
-                                        )}
-                                        {contract.isOptimized && (
-                                          <span className={styles.optimizedBadge}>Optimiert</span>
-                                        )}
-                                        {contract.uploadType === 'EMAIL_IMPORT' && (
-                                          <span
-                                            className={styles.emailImportBadge}
-                                            title={`Importiert am ${formatDate(contract.createdAt)} via Email`}
-                                          >
-                                            <Mail size={12} />
-                                            Per Email
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
+                                    {/* 🆕 V2 Phase A: Sub-Label statt Badges (Mockup-Style) */}
+                                    <div className={styles.contractSubLabel}>
+                                      <span>
+                                        {contract.isGenerated
+                                          ? 'Generiert'
+                                          : contract.uploadType === 'EMAIL_IMPORT'
+                                          ? 'Per E-Mail'
+                                          : (contract.contractType || contract.provider?.category || 'Vertrag')}
+                                      </span>
+                                      <span className={styles.contractSubSep}>·</span>
+                                      <span>Hochgeladen {formatDate(contract.createdAt)}</span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
@@ -5501,11 +5494,10 @@ export default function Contracts() {
                                 );
                               })}
                               <td>
+                                {/* 🆕 V2 Phase A: nur eine Status-Pille (Signature-Badge wandert in Drawer) */}
                                 <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
                                   {calculateSmartStatus(contract)}
                                 </span>
-                                {/* 🆕 Smart Signature Status Badge */}
-                                {renderSignatureBadge(contract)}
                               </td>
                               <td className={styles.uploadDateColumn}>
                                 <span className={styles.uploadDate}>
