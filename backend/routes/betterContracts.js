@@ -529,14 +529,28 @@ async function generateGPTSearchQueries(detectedType, contractText, openaiClient
       messages: [
         {
           role: "system",
-          content: `Du generierst Google-Suchanfragen auf Deutsch, die alternative Anbieter für einen bestimmten Vertragstyp finden.
-          Antworte NUR mit einem JSON-Array von 4 Strings. Keine Erklärungen.
-          Die Suchanfragen sollen ALTERNATIVE ANBIETER finden, keine Definitionen oder Wikipedia-Artikel.
-          Fokus auf: Anbieter-Vergleich, beste Konditionen, Marktübersicht Deutschland.`
+          content: `Du generierst Google-Suchanfragen auf Deutsch, mit denen man die OFFIZIELLEN WEBSITES echter Anbieter findet — NICHT Vergleichsportale, NICHT Ratgeber-Artikel, NICHT "Top 10"-Listen.
+
+ZIEL: Suchanfragen, die direkt zu den Anbieter-Websites führen, wo der Nutzer einen Vertrag abschliessen oder Kontakt aufnehmen kann.
+
+GUTE QUERY-PATTERNS (Beispiele):
+- "[Vertragstyp] services für KMU Deutschland"
+- "[Vertragstyp]gesellschaft mittelstand"
+- "[Vertragstyp] anbieten unternehmen Deutschland"
+- "[konkreter bekannter Anbieter] [Vertragstyp]"
+
+VERMEIDE diese Wörter (führen zu Vergleichs-/Ratgeber-Seiten):
+- "vergleich", "vergleichen"
+- "test", "testsieger"
+- "ratgeber", "tipps"
+- "top 10", "beste", "besten"
+- "übersicht", "marktübersicht"
+
+Antworte NUR mit einem JSON-Array von 4 Strings. Keine Erklärungen.`
         },
         {
           role: "user",
-          content: `Vertragstyp: ${detectedType}\nVertragsauszug: ${contractText.slice(0, 500)}\n\nGeneriere 4 spezifische deutsche Suchanfragen um alternative Anbieter für diesen Vertragstyp zu finden.`
+          content: `Vertragstyp: ${detectedType}\nVertragsauszug: ${contractText.slice(0, 500)}\n\nGeneriere 4 spezifische deutsche Suchanfragen, die zu DIREKTEN Anbieter-Websites führen (NICHT zu Vergleichsportalen oder Ratgeber-Artikeln).`
         }
       ],
       temperature: 0.3,
@@ -561,12 +575,12 @@ async function generateGPTSearchQueries(detectedType, contractText, openaiClient
     throw new Error('Invalid GPT response format');
   } catch (error) {
     console.warn(`⚠️ GPT-Suchquery-Generierung fehlgeschlagen:`, error.message);
-    // Fallback: Konstruiere sinnvolle Queries aus dem Typ-Namen
+    // Fallback: Direct-Provider-fokussierte Queries (keine Vergleichs-/Ratgeber-Begriffe)
     return [
-      `${detectedType} anbieter vergleich deutschland`,
-      `${detectedType} dienstleister beste konditionen`,
-      `${detectedType} unternehmen deutschland marktvergleich`,
-      `beste ${detectedType} anbieter 2024`
+      `${detectedType} services KMU deutschland`,
+      `${detectedType} anbieten unternehmen mittelstand`,
+      `${detectedType} dienstleister direkt deutschland`,
+      `${detectedType} kontakt anfrage anbieter`
     ];
   }
 }
