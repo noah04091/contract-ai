@@ -2799,8 +2799,9 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       message: 'Analyse erfolgreich abgeschlossen',
       contractId: id,
       analysis: analysisResult,
-      contract: finalContract,
-      legalPulseStatus: 'pending'
+      contract: finalContract
+      // legalPulseStatus entfernt — Frontend referenzierte das Feld nirgends,
+      // war toter Legacy aus V1-Zeit. V2 ist user-getriggert über /legal-pulse.
     });
 
   } catch (error) {
