@@ -29,6 +29,7 @@ import {
   Plus,
   EyeOff,
   Filter,
+  Search,
   SlidersHorizontal,
   Pencil,
   Trash2,
@@ -1186,15 +1187,33 @@ interface StatsDetailModalProps {
   onEventClick: (event: CalendarEvent) => void;
 }
 
+// Lazy-Pagination-Schritte für StatsDetailModal — verhindert Endlos-Scrolling
+// bei Usern mit hunderten Events. Suche + Lazy Load arbeiten zusammen.
+const STATS_MODAL_INITIAL_LIMIT = 50;
+const STATS_MODAL_INCREMENT = 50;
+
 function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: StatsDetailModalProps) {
   useEscapeKey(onClose);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  // Such-Filter (Free-Text über contractName + title + description)
+  const [searchTerm, setSearchTerm] = useState('');
+  // Lazy-Pagination: erst 50 zeigen, „Weitere anzeigen" lädt +50
+  const [displayLimit, setDisplayLimit] = useState(STATS_MODAL_INITIAL_LIMIT);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Reset State bei Modal-Open oder Filter-Wechsel (z.B. von „past" zu „upcoming"),
+  // damit User immer mit leerer Suche und 50 sichtbaren Events startet.
+  useEffect(() => {
+    if (isOpen) {
+      setSearchTerm('');
+      setDisplayLimit(STATS_MODAL_INITIAL_LIMIT);
+    }
+  }, [isOpen, title]);
 
   if (!isOpen) return null;
 
@@ -1247,6 +1266,25 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
       : dateA.getTime() - dateB.getTime();
   });
 
+  // Free-Text-Filter (case-insensitive) über contractName + title + description.
+  // Bei leerem Suchbegriff wird nicht gefiltert.
+  const searchLower = searchTerm.trim().toLowerCase();
+  const filteredEvents = searchLower
+    ? sortedEvents.filter(e => {
+        const eventTitle = (e.title || '').toLowerCase();
+        const contractName = (e.contractName || '').toLowerCase();
+        const description = (e.description || '').toLowerCase();
+        return eventTitle.includes(searchLower)
+          || contractName.includes(searchLower)
+          || description.includes(searchLower);
+      })
+    : sortedEvents;
+
+  // Lazy-Pagination: nur die ersten N Events rendern, Rest hinter „Mehr anzeigen"
+  const visibleEvents = filteredEvents.slice(0, displayLimit);
+  const hasMore = filteredEvents.length > displayLimit;
+  const remaining = filteredEvents.length - displayLimit;
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return '#ef4444';
@@ -1298,7 +1336,9 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                 {title}
               </h2>
               <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#6b7280' }}>
-                {safeEvents.length} {safeEvents.length === 1 ? 'Ereignis' : 'Ereignisse'}
+                {searchLower
+                  ? `${filteredEvents.length} von ${safeEvents.length} Treffer für "${searchTerm}"`
+                  : `${safeEvents.length} ${safeEvents.length === 1 ? 'Ereignis' : 'Ereignisse'}`}
               </p>
             </div>
             <motion.button
@@ -1321,6 +1361,87 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
             </motion.button>
           </div>
 
+          {/* 🔍 Such-Feld — Free-Text-Filter über Vertragsname + Eventtitel */}
+          {sortedEvents.length > 0 && (
+            <div style={{
+              padding: isMobile ? '16px 20px 0' : '20px 30px 0',
+              position: 'sticky',
+              top: isMobile ? '80px' : '95px',
+              background: '#ffffff',
+              zIndex: 5
+            }}>
+              <div style={{ position: 'relative' }}>
+                <Search
+                  size={18}
+                  style={{
+                    position: 'absolute',
+                    left: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: '#9ca3af',
+                    pointerEvents: 'none'
+                  }}
+                />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setDisplayLimit(STATS_MODAL_INITIAL_LIMIT);
+                  }}
+                  placeholder="Suche nach Vertragsname oder Ereignis..."
+                  aria-label="Ereignisse durchsuchen"
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px 10px 42px',
+                    fontSize: '14px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    background: '#f9fafb',
+                    outline: 'none',
+                    transition: 'border-color 0.15s ease, background 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#3b82f6';
+                    e.target.style.background = '#ffffff';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = '#e5e7eb';
+                    e.target.style.background = '#f9fafb';
+                  }}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setDisplayLimit(STATS_MODAL_INITIAL_LIMIT);
+                    }}
+                    aria-label="Suche zurücksetzen"
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(0, 0, 0, 0.05)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: '#6b7280'
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Simple Events List */}
           <div style={{ padding: isMobile ? '20px' : '30px', maxHeight: '60vh', overflowY: 'auto' }}>
             {sortedEvents.length === 0 ? (
@@ -1328,9 +1449,19 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                 <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                 <p style={{ fontSize: '16px', fontWeight: 500 }}>Keine Ereignisse gefunden</p>
               </div>
+            ) : filteredEvents.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9ca3af' }}>
+                <Search size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                <p style={{ fontSize: '16px', fontWeight: 500, color: '#6b7280' }}>
+                  Keine Treffer für „{searchTerm}"
+                </p>
+                <p style={{ fontSize: '13px', marginTop: '4px' }}>
+                  Versuche einen anderen Suchbegriff
+                </p>
+              </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {sortedEvents.map((event, index) => (
+                {visibleEvents.map((event, index) => (
                   <div
                     key={event.id || `event-${index}`}
                     onClick={() => onEventClick(event)}
@@ -1373,6 +1504,41 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                     </p>
                   </div>
                 ))}
+
+                {/* 📥 Lazy-Pagination: Weitere Events laden (+50 pro Klick) */}
+                {hasMore && (
+                  <button
+                    onClick={() => setDisplayLimit(prev => prev + STATS_MODAL_INCREMENT)}
+                    style={{
+                      marginTop: '8px',
+                      padding: '12px 20px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#3b82f6',
+                      background: '#eff6ff',
+                      border: '1px solid #dbeafe',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      width: '100%'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#dbeafe';
+                      e.currentTarget.style.borderColor = '#bfdbfe';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#eff6ff';
+                      e.currentTarget.style.borderColor = '#dbeafe';
+                    }}
+                  >
+                    Weitere {Math.min(remaining, STATS_MODAL_INCREMENT)} {remaining === 1 ? 'Ereignis' : 'Ereignisse'} anzeigen
+                    {remaining > STATS_MODAL_INCREMENT && (
+                      <span style={{ color: '#6b7280', fontWeight: 400, marginLeft: '6px' }}>
+                        (von {remaining})
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
             )}
           </div>
