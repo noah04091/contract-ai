@@ -32,14 +32,6 @@ interface FristHinweis {
   evidence?: string;
 }
 
-interface ImportantDate {
-  type?: string;
-  date: string;
-  label: string;
-  description?: string;
-  source?: string;
-}
-
 interface CancellationPeriod {
   value?: number;
   unit?: string;
@@ -92,11 +84,13 @@ export default function AnalysisImportantDates({
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
 
-  // 📅 Stufe-2c: Frist-Hinweise + historische Datums + Kündigungsfrist (Fallback)
-  // werden zusätzlich zum Calendar-Events-Pfad geladen, weil sie aus dem Contract-
-  // Document selbst kommen (Date Hunt Stage + deterministischer Regex-Extractor).
+  // 📅 Stufe-2c: Frist-Hinweise + Kündigungsfrist (Fallback) werden zusätzlich
+  // zum Calendar-Events-Pfad geladen, weil sie aus dem Contract-Document selbst
+  // kommen (Date Hunt Stage + deterministischer Regex-Extractor).
+  // Historische Datums werden NICHT mehr separat hier gerendert — sie kommen jetzt
+  // als Kalender-Events mit isHistorical=true durch den Calendar-Events-Pfad
+  // (Whitelist im Backend filtert Metadaten-Lärm raus).
   const [fristHinweise, setFristHinweise] = useState<FristHinweis[]>([]);
-  const [historicalDates, setHistoricalDates] = useState<ImportantDate[]>([]);
   const [cancellationPeriod, setCancellationPeriod] = useState<CancellationPeriod | null>(null);
 
   // Standardmäßig erste 4 Fristen anzeigen, Rest hinter Toggle. Verhindert
@@ -151,23 +145,6 @@ export default function AnalysisImportantDates({
       // Frist-Hinweise direkt aus dem Document (kann undefined/leer sein)
       const fh = Array.isArray(contract?.fristHinweise) ? contract.fristHinweise : [];
       setFristHinweise(fh);
-
-      // Vergangenheits-Datums: alle importantDates, deren date heute oder früher ist
-      const allImportant: ImportantDate[] = Array.isArray(contract?.importantDates)
-        ? contract.importantDates
-        : [];
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      // Strikt < today: heute fällige Termine bleiben im Termine-Block
-      // (sonst Doppelung "Heute!" + "Vertragshistorie 0 Tage vergangen").
-      const past = allImportant.filter((d) => {
-        if (!d?.date) return false;
-        const dt = new Date(d.date);
-        if (isNaN(dt.getTime())) return false;
-        dt.setHours(0, 0, 0, 0);
-        return dt.getTime() < today.getTime();
-      });
-      setHistoricalDates(past);
 
       // cancellationPeriod aus deterministischer Extraktion (Fallback bei leeren fristHinweise)
       const cp = contract?.cancellationPeriod;
@@ -292,11 +269,6 @@ export default function AnalysisImportantDates({
 
   const sortedEvents = [...events].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  // Vergangenheit absteigend sortieren (jüngste zuerst)
-  const sortedHistorical = [...historicalDates].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   // Fallback-Hinweis aus cancellationPeriod, wenn KEINE fristHinweise da sind
@@ -461,37 +433,11 @@ export default function AnalysisImportantDates({
             </div>
           )}
 
-          {/* 📅 Stufe-2c Block 2: Vertragshistorie (unterhalb, gedimmt).
-              Zeigt vergangene Datums (Mietbeginn, frühere Zahlungen etc.) als
-              Anker-Information für den User. Keine Reminder, kein Kalender-Spam. */}
-          {sortedHistorical.length > 0 && (
-            <div className={styles.historyBlock}>
-              <div className={styles.subBlockHeader}>
-                <span className={styles.subBlockIcon}>📜</span>
-                <span className={styles.subBlockTitle}>Vertragshistorie</span>
-              </div>
-              <div className={styles.historyList}>
-                {sortedHistorical.map((d, idx) => {
-                  const days = getDaysUntil(d.date);
-                  return (
-                    <div key={`${d.type || "hist"}-${idx}`} className={styles.historyItem}>
-                      <div className={styles.historyEmoji}>🕒</div>
-                      <div className={styles.historyContent}>
-                        <div className={styles.historyTitle}>{d.label}</div>
-                        {d.description && (
-                          <div className={styles.historyDescription}>{d.description}</div>
-                        )}
-                      </div>
-                      <div className={styles.historyMeta}>
-                        <div className={styles.historyDate}>{formatDate(d.date)}</div>
-                        <div className={styles.historyDays}>{formatDaysUntil(days)}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Vertragshistorie-Block ENTFERNT (Doppelung beseitigt):
+              Vergangene Datums werden jetzt mit isHistorical=true als reguläre
+              Calendar-Events im Termine-Block oben gerendert (📜-Präfix vom
+              Backend). Whitelist im Backend filtert Metadaten-Lärm raus.
+              Daten bleiben in contract.importantDates abrufbar. */}
         </>
       )}
 

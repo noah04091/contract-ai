@@ -18,6 +18,24 @@ const EVENT_CONFIDENCE_THRESHOLDS = {
   REMINDER_EVENTS: 50     // Reminder: Auch bei niedrigerer Konfidenz
 };
 
+// 🛡️ Whitelist für historische Calendar-Events: Nur "echte Vertragsereignisse"
+// landen als Past-Events im Kalender. Metadaten (Ausdruckdatum, Gesetzes-
+// Verweise, sonstige Detaildatums) bleiben in contract.importantDates erhalten,
+// werden aber nicht als Kalender-Termine angezeigt — das vermeidet Lärm.
+// FUTURE-Events (Hauptdatums) werden NICHT durch diese Whitelist gefiltert,
+// die durchlaufen wie bisher das vollständige typeMapping.
+const HISTORICAL_EVENT_TYPE_WHITELIST = new Set([
+  'start_date', 'end_date', 'cancellation_deadline', 'minimum_term_end',
+  'probation_end', 'warranty_end', 'renewal_date', 'payment_due',
+  'notice_period_start', 'contract_signed', 'service_start',
+  'insurance_coverage_end', 'trial_end', 'license_expiry',
+  'price_guarantee_end', 'inspection_due', 'lease_end', 'option_deadline',
+  'loan_end', 'delivery_date'
+  // Bewusst NICHT in Whitelist:
+  //   'other'                 → Metadaten (Ausdruckdatum, sonstige Detaildatums)
+  //   'interest_rate_change'  → meist historisch + nicht termin-relevant
+]);
+
 /**
  * Generiert automatisch Kalenderereignisse basierend auf Vertragsdaten
  * NEU: Unterstützt Auto-Renewal für "alte" aber aktive Verträge
@@ -998,6 +1016,14 @@ async function generateEventsForContract(db, contract) {
 
           console.log(`  ✅ KI-Datum: ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')} (${importantDate.label})`);
         } else {
+          // 🛡️ Whitelist-Filter: Nur "echte Vertragsereignisse" werden als
+          // historische Calendar-Events erzeugt. Metadaten (Ausdruckdatum etc.)
+          // bleiben in contract.importantDates abrufbar, tauchen aber nicht
+          // als Kalender-Termine auf — das vermeidet Lärm im Kalender.
+          if (!HISTORICAL_EVENT_TYPE_WHITELIST.has(importantDate.type)) {
+            console.log(`  ⏭️ KI-Datum (historisch, gefiltert): ${importantDate.type} → ${dateObj.toLocaleDateString('de-DE')} — nicht kalenderwürdig`);
+            continue;
+          }
           // 📜 HISTORICAL EVENT: Vergangene KI-Datums werden als Read-Only-Events
           // gespeichert, damit "Vertragshistorie" auch im zentralen Kalender sichtbar
           // ist. Severity 'info' (kein Alarm), KEINE Reminder-Vorwarnungen,
