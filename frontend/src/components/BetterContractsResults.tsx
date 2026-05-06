@@ -239,12 +239,12 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     const title = (alt.title || '').toLowerCase();
     const provider = (alt.provider || '').toLowerCase().trim();
 
-    // Short-Circuit: Provider konnte nicht extrahiert werden = Artikel/Liste
-    if (!provider || provider === 'unknown') return true;
-
-    // Short-Circuit: Provider-Name ist generisch (Scraper hat Vertragstyp als Provider genommen)
+    // Provider konnte nicht extrahiert werden ODER ist generisch (Vertragstyp etc.)
+    // → niedrigerer Threshold (2), aber nicht automatisch comparison
+    // Begründung: Echte Anbieter-URLs (z.B. grenke.de) haben oft "Unknown" als Provider,
+    //              werden aber mit clean URL/Title als direkt erkannt
     const genericNames = ['anbieter', 'factoring', 'leasing', 'beratung', 'services', 'consulting'];
-    if (genericNames.includes(provider)) return true;
+    const genericProvider = !provider || provider === 'unknown' || genericNames.includes(provider);
 
     let score = 0;
 
@@ -275,7 +275,9 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     const articleWeakSignals = ['vergleich', 'liste', 'übersicht'];
     if (articleWeakSignals.some(w => title.includes(w))) score += 2;
 
-    return score >= 3;
+    // Bei generic Provider (z.B. "Unknown"): niedrigerer Threshold,
+    // weil URL/Title-Signale dann das einzige Klassifikations-Kriterium sind
+    return score >= (genericProvider ? 2 : 3);
   };
 
   // Extract price from strings and estimate monthly cost
