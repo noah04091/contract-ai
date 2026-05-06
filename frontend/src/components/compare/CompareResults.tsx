@@ -223,6 +223,7 @@ export default function CompareResults({
                     scores: v2Result.scores,
                     overallRecommendation: v2Result.overallRecommendation,
                     benchmark: v2Result.benchmark,
+                    contractMap: v2Result.contractMap,
                   },
                 }),
               });

@@ -939,6 +939,9 @@ async function structureContract(contractText) {
   // V3.1: Sicherheitsnetz — wenn parties[] top-level vorhanden aber keine Klausel mit area='parties'
   ensurePartiesClause(validated);
 
+  // Entfernt Footer-/Header-Wiederholungen die mehrfach als separate Klauseln landen
+  dedupeClausesWithinArea(validated);
+
   // Maßnahme A.2: Qualitätsprüfung — warnt bei suspekt dünner Extraktion
   const qualityIssues = checkExtractionQuality(validated);
   if (qualityIssues.length > 0) {
@@ -1552,6 +1555,51 @@ function ensurePartiesClause(phaseAResult) {
 
   phaseAResult.clauses.unshift(synthesized);
   console.log(`🔧 Parties-Repair: Klausel aus ${parties.length} top-level Parteien synthetisiert`);
+}
+
+/**
+ * Entfernt Klausel-Duplikate innerhalb derselben Area (z.B. mehrfach extrahierte
+ * PDF-Footer/Header-Blöcke, die als separate "other"-Klauseln in der Vertragskarte landen).
+ * Konservativ: behält bei Nicht-Match alles, greift nur bei exakter Text-Gleichheit
+ * nach Normalisierung, schützt sehr kurze Texte und Single-Clause-Areas.
+ */
+function dedupeClausesWithinArea(phaseAResult) {
+  const clauses = phaseAResult.clauses || [];
+  if (clauses.length === 0) return;
+
+  const countsByArea = new Map();
+  for (const c of clauses) {
+    countsByArea.set(c.area, (countsByArea.get(c.area) || 0) + 1);
+  }
+
+  const seenByArea = new Map();
+  const result = [];
+  let removed = 0;
+
+  for (const c of clauses) {
+    const text = c.originalText || '';
+    if (text.length < 30 || (countsByArea.get(c.area) || 0) <= 1) {
+      result.push(c);
+      continue;
+    }
+    const normalized = text.toLowerCase().replace(/\s+/g, ' ').trim();
+    let seen = seenByArea.get(c.area);
+    if (!seen) {
+      seen = new Set();
+      seenByArea.set(c.area, seen);
+    }
+    if (seen.has(normalized)) {
+      removed++;
+      continue;
+    }
+    seen.add(normalized);
+    result.push(c);
+  }
+
+  if (removed > 0) {
+    phaseAResult.clauses = result;
+    console.log(`🧹 Phase A Dedup: ${removed} Klausel-Duplikat(e) entfernt`);
+  }
 }
 
 /**
@@ -7081,6 +7129,21 @@ Generiere 3-5 vorausschauende Fragen, die der User jetzt wahrscheinlich hat:`
   }
 }
 
+function buildClauseInventoryLine(c) {
+  const section = (c.section || '').trim();
+  const title = (c.title || 'Unbenannt').trim();
+  const area = c.area || 'other';
+  const prefix = section ? `${section} ` : '';
+  const summary = c.summary ? ` — ${c.summary.substring(0, 120)}` : '';
+  return `- ${prefix}${title} [${area}]${summary}`;
+}
+
+function buildClauseInventory(clauses, label) {
+  if (!Array.isArray(clauses) || clauses.length === 0) return null;
+  const lines = clauses.slice(0, 60).map(buildClauseInventoryLine);
+  return `${label} (${clauses.length} Klauseln):\n${lines.join('\n')}`;
+}
+
 async function answerCompareFollowUp(question, context) {
   const docName = context.documentType?.labels?.documentName || 'Vertrag';
   const docType = context.documentType?.label || 'Vertrag';
@@ -7110,6 +7173,13 @@ async function answerCompareFollowUp(question, context) {
   const benchmarkInfo = (context.benchmark?.metrics || []).slice(0, 5).map(m =>
     `${m.label}: V1=${m.contract1?.value ?? '?'} ${m.unit}, V2=${m.contract2?.value ?? '?'} ${m.unit}, Markt=${m.marketTypical} ${m.unit}`
   ).join('\n');
+
+  // Klausel-Inventar: ermöglicht GPT Antworten auf "fehlt was?"-/"sind die restlichen Paragrafen identisch?"-Fragen
+  const inv1 = buildClauseInventory(context.contractMap?.contract1?.clauses, `${docName} 1`);
+  const inv2 = buildClauseInventory(context.contractMap?.contract2?.clauses, `${docName} 2`);
+  const inventoryBlock = (inv1 || inv2)
+    ? `\n\nSTRUKTUR-ÜBERBLICK (alle Klauseln in beiden Dokumenten):\n${[inv1, inv2].filter(Boolean).join('\n\n')}`
+    : '';
 
   const rec = context.overallRecommendation;
 
@@ -7142,7 +7212,7 @@ ${diffs || 'Keine'}
 RISIKEN:
 ${risks || 'Keine'}
 
-${benchmarkInfo ? `MARKTVERGLEICH:\n${benchmarkInfo}` : ''}
+${benchmarkInfo ? `MARKTVERGLEICH:\n${benchmarkInfo}` : ''}${inventoryBlock}
 
 FRAGE: ${question}`
       }
