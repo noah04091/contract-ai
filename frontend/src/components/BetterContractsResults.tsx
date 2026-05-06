@@ -837,6 +837,19 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             })}
           </div>
 
+          {/* Consumer: KI-Vorschläge — additive Sektion (NEU in Phase 1) */}
+          {aiSuggestedAlternatives.length > 0 && (
+            <>
+              <div className="b2b-section-header ai-suggested" style={{ marginTop: '2rem' }}>
+                <h3>Weitere bekannte Anbieter (KI)</h3>
+                <p>Etablierte deutsche Anbieter aus KI-Marktwissen — nicht über Suche verifiziert</p>
+              </div>
+              <div className="alternatives-grid">
+                {aiSuggestedAlternatives.map((alt, i) => renderB2BCard(alt, i + 500, 'ai'))}
+              </div>
+            </>
+          )}
+
           {/* Show More Button */}
           {alternatives.length > 5 && (
             <div className="show-more-section">
