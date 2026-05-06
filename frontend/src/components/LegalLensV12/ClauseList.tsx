@@ -377,6 +377,26 @@ const ClauseList: React.FC<ClauseListProps> = ({
     return map;
   }, [detectedSections]);
 
+  // Section-Collapse mit Compact-Mode synchronisieren — NUR bei aktivem Toggle, nicht beim Mount.
+  // Compact ON  → alle Sektionen zuklappen (= reines Inhaltsverzeichnis)
+  // Compact OFF → alle Sektionen aufklappen (= alles voll lesbar)
+  // Schutz vor Initial-Mount und Streaming-Re-Renders durch prev-Ref-Check.
+  const prevCompactRef = useRef(compactMode);
+  useEffect(() => {
+    if (prevCompactRef.current === compactMode) return; // Kein echter Toggle
+    prevCompactRef.current = compactMode;
+    if (!detectedSections || detectedSections.length === 0) return; // Nur bei strukturierten Verträgen
+
+    if (compactMode) {
+      const allIds = new Set(detectedSections.map(s => s.id));
+      setCollapsedSections(allIds);
+      try { localStorage.setItem(collapsedKey, JSON.stringify([...allIds])); } catch { /* localStorage nicht verfügbar */ }
+    } else {
+      setCollapsedSections(new Set());
+      try { localStorage.removeItem(collapsedKey); } catch { /* localStorage nicht verfügbar */ }
+    }
+  }, [compactMode, detectedSections, collapsedKey]);
+
   // Keyboard shortcut: Ctrl+F oder Cmd+F zum Fokussieren der Suche
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
