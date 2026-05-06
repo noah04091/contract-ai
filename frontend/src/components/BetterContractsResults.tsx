@@ -374,7 +374,11 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   };
 
   // B2B Card Renderer
-  const renderB2BCard = (alternative: Alternative & { monthlyPrice?: number | null; features?: string[] }, index: number) => {
+  const renderB2BCard = (
+    alternative: Alternative & { monthlyPrice?: number | null; features?: string[] },
+    index: number,
+    cardType: 'direct' | 'ai' | 'comparison' = 'direct'
+  ) => {
     const conf = getConfidenceLabel(alternative.confidence);
     const isAiCard = alternative.isAiSuggested || alternative.source === 'ai-suggested';
 
@@ -474,7 +478,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
                 <polyline points="15,3 21,3 21,9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              Zum Anbieter
+              {cardType === 'comparison' ? 'Zur Quelle' : 'Zum Anbieter'}
             </a>
           ) : (
             <span className="action-button primary" style={{ opacity: 0.5, cursor: 'default' }}>
@@ -633,7 +637,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
                 <p>Hilfreiche Quellen für Marktüberblick, Vergleiche und Erklärungen</p>
               </div>
               <div className="alternatives-grid">
-                {b2bComparisonSites.map((alt, i) => renderB2BCard(alt, i + 200))}
+                {b2bComparisonSites.map((alt, i) => renderB2BCard(alt, i + 200, 'comparison'))}
               </div>
             </>
           )}

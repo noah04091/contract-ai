@@ -166,12 +166,13 @@ const BetterContracts: React.FC = () => {
     const knownQuery = searchQueries[detectedType.toLowerCase()];
     if (knownQuery) return knownQuery;
 
-    // Für unbekannte/B2B-Typen: Sinnvollen Query aus dem Typ-Namen konstruieren
+    // Für unbekannte/B2B-Typen: Direct-Provider-fokussierte Default-Query
+    // ("services anbieter" zwingt Google zu Anbieter-Service-Pages statt Vergleichsseiten)
     if (detectedType && detectedType !== 'unbekannt') {
-      return `${detectedType} anbieter vergleich deutschland`;
+      return `${detectedType} services anbieter deutschland`;
     }
 
-    return "anbieter vergleich günstig alternative";
+    return "anbieter services deutschland";
   };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
