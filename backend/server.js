@@ -682,6 +682,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Playbook Routen:", err);
     }
 
+    // ✅ 6.7b QUICK LINT - Klausel-Schnellbewertung (Generate-Step-3 Sidebar)
+    try {
+      const quickLintRoutes = require("./routes/quickLint");
+      app.use("/api/quickLint", quickLintRoutes);
+      console.log("✅ QuickLint Routen geladen unter /api/quickLint (Klausel-Bewertung)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der QuickLint Routen:", err);
+    }
+
     // ✅ 6.8 PLAYBOOK REVIEW - Regelbasierte Vertragspruefung
     try {
       const playbookReviewRoutes = require("./routes/playbookReview");

@@ -7,7 +7,8 @@ import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
-  Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus
+  Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus,
+  Scale
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -17,6 +18,7 @@ import CreateTemplateModal, { TemplateFormData } from "../components/CreateTempl
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
 import GuidedContractWizard from "../components/GuidedContractWizard";
 import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
+import Step3ClauseSidebar from "../components/Step3ClauseSidebar";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
 import { getErrorMessage } from "../utils/errorHandling";
@@ -3534,6 +3536,7 @@ export default function Generate() {
   const [contractS3Key, setContractS3Key] = useState<string | null>(null);
   const [showSignatureModal, setShowSignatureModal] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [isClauseSidebarOpen, setIsClauseSidebarOpen] = useState<boolean>(false);
 
   // 📄 NEW: PDF Preview States
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -4520,6 +4523,20 @@ export default function Generate() {
     } catch {
       toast.error("❌ Kopieren fehlgeschlagen.");
     }
+  };
+
+  // Klausel-Bewertung: Optimierten Vorschlag in den Vertragstext übernehmen.
+  // Ersetzt das exakte Original-Snippet — wenn nicht gefunden, fällt Toast als Hinweis.
+  const handleApplyClauseFix = (originalText: string, optimizedText: string) => {
+    if (!originalText || !optimizedText) return;
+    setContractText((prev) => {
+      if (!prev) return prev;
+      if (!prev.includes(originalText)) {
+        toast.warn("Originalstelle wurde nicht eindeutig gefunden — bitte manuell ersetzen.");
+        return prev;
+      }
+      return prev.replace(originalText, optimizedText);
+    });
   };
 
   const handleSave = async (): Promise<string | null> => {
@@ -6696,6 +6713,25 @@ export default function Generate() {
                           <FolderPlus size={16} />
                           <span>Als Vorlage</span>
                         </motion.button>
+                        {isPremium && (
+                          <motion.button
+                            onClick={async () => {
+                              if (!savedContractId) {
+                                const newId = await handleSave();
+                                if (!newId) return;
+                              }
+                              setIsClauseSidebarOpen(true);
+                            }}
+                            disabled={!contractText}
+                            className={`${styles.step3HeaderBtn} ${styles.primary}`}
+                            whileHover={contractText ? { scale: 1.02 } : {}}
+                            whileTap={contractText ? { scale: 0.98 } : {}}
+                            title="Jede Klausel juristisch prüfen lassen"
+                          >
+                            <Scale size={16} />
+                            <span>Klauseln prüfen</span>
+                          </motion.button>
+                        )}
                       </div>
                     </div>
 
@@ -7349,6 +7385,16 @@ export default function Generate() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Klausel-Bewertung Sidebar (on-demand, Premium only) */}
+        <Step3ClauseSidebar
+          isOpen={isClauseSidebarOpen}
+          onClose={() => setIsClauseSidebarOpen(false)}
+          contractId={savedContractId}
+          contractText={contractText}
+          contractType={selectedType?.id || "individuell"}
+          onApplyOptimization={handleApplyClauseFix}
+        />
       </div>
     </>
   );
