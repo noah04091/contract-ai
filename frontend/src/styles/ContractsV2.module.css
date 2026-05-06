@@ -1794,17 +1794,17 @@
 /* Content Area */
 .contentArea {
   flex: 1;
-  padding: 1.5rem;
+  padding: 0.25rem 0.5rem;
   min-height: 0; /* ✅ Kritisch für Flex-Children */
   height: 0; /* ✅ Erzwingt dass flex: 1 die Höhe begrenzt */
   overflow-y: auto; /* ✅ Nur dieser Bereich scrollt */
   overflow-x: hidden;
 }
 
-/* ✅ DESKTOP-ONLY: Weniger weißer Bereich über der Tabelle */
+/* ✅ DESKTOP-ONLY: Block an die Ränder schieben */
 @media (min-width: 769px) {
   .contentArea {
-    padding-top: 0.5rem;
+    padding: 0.25rem;
   }
 }
 
@@ -3751,7 +3751,7 @@
   border-radius: 12px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 /* ========== MODERNIZED TABLE ========== */
@@ -3773,7 +3773,8 @@
 .contractsTable thead th:nth-child(3) { width: 15%; } /* Ablaufdatum */
 .contractsTable thead th:nth-child(4) { width: 12%; } /* Status */
 .contractsTable thead th:nth-child(5) { width: 15%; } /* Upload-Datum */
-.contractsTable thead th:nth-child(6) { width: 13%; } /* Aktionen */
+.contractsTable thead th:nth-child(6) { width: 13%; text-align: right; } /* Aktionen rechts */
+.contractsTable tbody td:nth-child(6) { text-align: right; } /* Aktionen-Zelle rechts */
 
 /* ✅ Spaltenbreiten MIT Checkbox-Spalte (Bulk-Modus aktiv) */
 .contractsTable.withCheckboxes thead th:nth-child(1) { width: 28px; } /* Checkbox - FIXED */
