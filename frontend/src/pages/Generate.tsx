@@ -4530,16 +4530,25 @@ export default function Generate() {
 
   // Klausel-Bewertung: Optimierten Vorschlag in den Vertragstext übernehmen.
   // Ersetzt das exakte Original-Snippet — wenn nicht gefunden, fällt Toast als Hinweis.
+  // Bei erfolgreichem Replace: setSaved(false) triggert Auto-Save (existing useEffect),
+  // setPdfPreviewUrl(null) triggert PDF-Auto-Refresh (existing useEffect Z.3860).
+  // Gleicher Pattern wie handleImproveContract — keine neue Logik, nur konsistent.
   const handleApplyClauseFix = (originalText: string, optimizedText: string) => {
     if (!originalText || !optimizedText) return;
+    let didReplace = false;
     setContractText((prev) => {
       if (!prev) return prev;
       if (!prev.includes(originalText)) {
         toast.warn("Originalstelle wurde nicht eindeutig gefunden — bitte manuell ersetzen.");
         return prev;
       }
+      didReplace = true;
       return prev.replace(originalText, optimizedText);
     });
+    if (didReplace) {
+      setSaved(false);
+      setPdfPreviewUrl(null);
+    }
   };
 
   const handleSave = async (opts: { silent?: boolean } = {}): Promise<string | null> => {
@@ -4818,11 +4827,24 @@ export default function Generate() {
       // NUR die aktuelle Contract ID verwenden
       let contractId = savedContractId;
       
-      console.log("📊 Contract ID Status:", { 
-        savedContractId, 
-        final: contractId 
+      console.log("📊 Contract ID Status:", {
+        savedContractId,
+        final: contractId
       });
-      
+
+      // Wenn Vertrag bereits gespeichert, aber lokale Edits noch nicht persistiert sind
+      // (z.B. nach "Klauseln pruefen → Übernehmen" oder schnellem Tippen vor Auto-Save):
+      // erst silent speichern, sonst lädt der PDF-Endpoint den alten Text aus der DB.
+      if (contractId && !saved && contractText) {
+        console.log("📝 Speichere lokale Änderungen vor PDF-Download...");
+        toast.update(loadingToast, {
+          render: "Übernehme letzte Änderungen...",
+          type: "info",
+          isLoading: true
+        });
+        await handleSave({ silent: true });
+      }
+
       // Wenn noch nicht gespeichert, automatisch speichern
       if (!contractId && contractText) {
         console.log("📝 Speichere Vertrag automatisch vor PDF-Export...");
