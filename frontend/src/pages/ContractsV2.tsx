@@ -10,7 +10,7 @@ import {
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder, Archive,
   CheckSquare, Square, Mail, Bell, Download,
-  LayoutGrid, List, FolderPlus,
+  FolderPlus,
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
   MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
@@ -381,7 +381,7 @@ export default function Contracts() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 🆕 Enterprise View Mode
+  const viewMode = 'list' as const; // V2 Phase A: nur Liste (Rasteransicht entfernt)
   const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
   const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
@@ -489,6 +489,9 @@ export default function Contracts() {
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingFolder, setEditingFolder] = useState<FolderType | null>(null);
   const [folderDropdownOpen, setFolderDropdownOpen] = useState<string | null>(null); // Track which contract's dropdown is open
+  // 🆕 V2 Phase A: Mehr-Popover (⋮) State — welche Zeile hat das Mehr-Menü offen
+  const [morePopoverFor, setMorePopoverFor] = useState<string | null>(null);
+  const [morePopoverFolderExpanded, setMorePopoverFolderExpanded] = useState(false);
   const [folderDropdownPosition, setFolderDropdownPosition] = useState<{ top: number; right: number } | null>(null); // Position für fixed Dropdown
   const [folderDropdownContractId, setFolderDropdownContractId] = useState<string | null>(null); // Contract ID für Portal
   // selectedFolderId entfernt — Sidebar-Navigation nutzt jetzt activeFolder + statusFilter direkt
@@ -631,11 +634,16 @@ export default function Contracts() {
       if (qfDropdownOpen) {
         setQfDropdownOpen(null);
       }
+      // 🆕 V2 Phase A: Mehr-Popover schließen
+      if (morePopoverFor) {
+        setMorePopoverFor(null);
+        setMorePopoverFolderExpanded(false);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen]);
+  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor]);
 
   // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
   useEffect(() => {
@@ -3358,6 +3366,8 @@ export default function Contracts() {
   const displayedContracts = contracts;
 
   // ✅ RESPONSIVE: Mobile Card Component
+  // @ts-expect-error V2 Phase A: Component vorerst ungenutzt (Mobile zeigt nur Liste)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const MobileContractCard = ({ contract }: { contract: Contract }) => {
     const isSelected = selectedContracts.includes(contract._id);
 
@@ -3769,6 +3779,8 @@ export default function Contracts() {
   };
 
   // 🆕 Enterprise Grid Card Component (für Grid-Ansicht)
+  // @ts-expect-error V2 Phase A: Component vorerst ungenutzt (Rasteransicht entfernt)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const EnterpriseGridCard = ({ contract }: { contract: Contract }) => {
     const isSelected = selectedContracts.includes(contract._id);
     const daysUntilExpiry = contract.expiryDate
@@ -4367,22 +4379,7 @@ export default function Contracts() {
                 </select>
               </div>
 
-              <div className={styles.toolbarViewButtons}>
-                <button
-                  className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
-                  onClick={() => setViewMode('list')}
-                  title="Listenansicht"
-                >
-                  <List size={16} />
-                </button>
-                <button
-                  className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
-                  onClick={() => setViewMode('grid')}
-                  title="Rasteransicht"
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
+              {/* Rasteransicht-Toggle entfernt — V2 zeigt nur Liste (Mockup-Style) */}
             </div>
 
             {/* 📱 MOBILE: Filter Bottom-Sheet */}
@@ -5236,17 +5233,8 @@ export default function Contracts() {
                     )}
                   </div>
                 ) : (
-                  // ✅ VIEW MODE CONTAINER - Grid oder Liste
+                  // ✅ VIEW MODE CONTAINER - nur Liste (Grid entfernt)
                   <>
-                    {/* 🆕 ENTERPRISE GRID VIEW */}
-                    {viewMode === 'grid' && (
-                      <div className={styles.enterpriseGrid}>
-                        {contracts.map((contract) => (
-                          <EnterpriseGridCard key={contract._id} contract={contract} />
-                        ))}
-                      </div>
-                    )}
-
                     {/* ✅ ENTERPRISE LIST VIEW (Tabelle) */}
                     {viewMode === 'list' && (
                     <div className={styles.tableContainer}>
@@ -5525,7 +5513,8 @@ export default function Contracts() {
                                 </span>
                               </td>
                               <td>
-                                <div className={styles.actionButtons}>
+                                {/* 🆕 V2 Phase A: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}
+                                <div className={styles.actionButtonsV2} onClick={(e) => e.stopPropagation()}>
                                   <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
@@ -5541,101 +5530,131 @@ export default function Contracts() {
                                       <ExternalLink size={16} />
                                     )}
                                   </button>
-                                  {canEditContract(contract) && (
+                                  <div className={styles.morePopoverWrap}>
                                     <button
-                                      className={styles.actionButton}
+                                      className={`${styles.actionButton} ${morePopoverFor === contract._id ? styles.active : ''}`}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handleEditContract(contract);
-                                      }}
-                                      title="Bearbeiten"
-                                    >
-                                      <Edit size={16} />
-                                    </button>
-                                  )}
-                                  {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-                                  {isContractNotAnalyzed(contract) && canEditContract(contract) && (
-                                    <button
-                                      className={`${styles.actionButton} ${styles.analyzeButton}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAnalyzeExistingContract(contract);
-                                      }}
-                                      disabled={analyzingContract[contract._id]}
-                                      title="Jetzt analysieren"
-                                    >
-                                      {analyzingContract[contract._id] ? (
-                                        <Loader size={16} className={styles.spinning} />
-                                      ) : (
-                                        <Zap size={16} />
-                                      )}
-                                    </button>
-                                  )}
-                                  {/* 🔔 Reminder Settings Button */}
-                                  {canEditContract(contract) && (
-                                    <button
-                                      className={styles.actionButton}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setReminderSettingsModal({ show: true, contract });
-                                      }}
-                                      title="Erinnerungen einrichten"
-                                    >
-                                      <Bell size={16} />
-                                    </button>
-                                  )}
-                                  {/* 📁 Folder Dropdown Button */}
-                                  <button
-                                    className={`${styles.actionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (folderDropdownOpen === contract._id) {
-                                        setFolderDropdownOpen(null);
-                                        setFolderDropdownPosition(null);
-                                        setFolderDropdownContractId(null);
-                                      } else {
-                                        // Berechne Position basierend auf Button
-                                        const button = e.currentTarget;
-                                        const rect = button.getBoundingClientRect();
-                                        const dropdownHeight = 300; // Geschätzte Höhe
-                                        const viewportHeight = window.innerHeight;
-                                        const spaceBelow = viewportHeight - rect.bottom;
-                                        const spaceAbove = rect.top;
-
-                                        // Entscheide ob nach oben oder unten öffnen
-                                        if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-                                          // Nach unten öffnen
-                                          setFolderDropdownPosition({
-                                            top: rect.bottom + 8,
-                                            right: window.innerWidth - rect.right
-                                          });
+                                        if (morePopoverFor === contract._id) {
+                                          setMorePopoverFor(null);
+                                          setMorePopoverFolderExpanded(false);
                                         } else {
-                                          // Nach oben öffnen - berechne von unten
-                                          setFolderDropdownPosition({
-                                            top: rect.top - dropdownHeight - 8,
-                                            right: window.innerWidth - rect.right
-                                          });
+                                          setMorePopoverFor(contract._id);
+                                          setMorePopoverFolderExpanded(false);
                                         }
-                                        setFolderDropdownOpen(contract._id);
-                                        setFolderDropdownContractId(contract._id);
-                                      }
-                                    }}
-                                    title="In Ordner verschieben"
-                                  >
-                                    <Folder size={16} />
-                                  </button>
-                                  {canDeleteContract(contract) && (
-                                    <button
-                                      className={`${styles.actionButton} ${styles.deleteButton}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteContract(contract._id, fixUtf8Display(contract.name));
                                       }}
-                                      title="Löschen"
+                                      title="Mehr"
                                     >
-                                      <Trash2 size={16} />
+                                      <MoreVertical size={16} />
                                     </button>
-                                  )}
+                                    {morePopoverFor === contract._id && (
+                                      <div className={styles.morePopover} onClick={(e) => e.stopPropagation()}>
+                                        {canEditContract(contract) && (
+                                          <button
+                                            className={styles.morePopoverItem}
+                                            onClick={() => {
+                                              setMorePopoverFor(null);
+                                              handleEditContract(contract);
+                                            }}
+                                          >
+                                            <Edit size={14} />
+                                            <span>Bearbeiten</span>
+                                          </button>
+                                        )}
+                                        {isContractNotAnalyzed(contract) && canEditContract(contract) && (
+                                          <button
+                                            className={styles.morePopoverItem}
+                                            onClick={() => {
+                                              setMorePopoverFor(null);
+                                              handleAnalyzeExistingContract(contract);
+                                            }}
+                                            disabled={analyzingContract[contract._id]}
+                                          >
+                                            {analyzingContract[contract._id] ? (
+                                              <Loader size={14} className={styles.spinning} />
+                                            ) : (
+                                              <Zap size={14} />
+                                            )}
+                                            <span>Jetzt analysieren</span>
+                                          </button>
+                                        )}
+                                        {canEditContract(contract) && (
+                                          <button
+                                            className={styles.morePopoverItem}
+                                            onClick={() => {
+                                              setMorePopoverFor(null);
+                                              setReminderSettingsModal({ show: true, contract });
+                                            }}
+                                          >
+                                            <Bell size={14} />
+                                            <span>Erinnerung einrichten</span>
+                                          </button>
+                                        )}
+                                        <button
+                                          className={styles.morePopoverItem}
+                                          onClick={() => setMorePopoverFolderExpanded((v) => !v)}
+                                        >
+                                          <Folder size={14} />
+                                          <span style={{ flex: 1, textAlign: 'left' }}>In Ordner verschieben</span>
+                                          {morePopoverFolderExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                        </button>
+                                        {morePopoverFolderExpanded && (
+                                          <div className={styles.morePopoverFolderList}>
+                                            <button
+                                              className={`${styles.morePopoverItem} ${styles.morePopoverFolderItem} ${!contract.folderId ? styles.morePopoverFolderActive : ''}`}
+                                              onClick={() => {
+                                                setMorePopoverFor(null);
+                                                setMorePopoverFolderExpanded(false);
+                                                handleMoveToFolder(contract._id, null);
+                                              }}
+                                            >
+                                              <Folder size={12} style={{ color: '#94a3b8' }} />
+                                              <span>Ohne Ordner</span>
+                                              {!contract.folderId && <CheckCircle size={12} style={{ marginLeft: 'auto' }} />}
+                                            </button>
+                                            {folders.map((f) => (
+                                              <button
+                                                key={f._id}
+                                                className={`${styles.morePopoverItem} ${styles.morePopoverFolderItem} ${contract.folderId === f._id ? styles.morePopoverFolderActive : ''}`}
+                                                onClick={() => {
+                                                  setMorePopoverFor(null);
+                                                  setMorePopoverFolderExpanded(false);
+                                                  handleMoveToFolder(contract._id, f._id);
+                                                }}
+                                              >
+                                                {f.icon ? (
+                                                  <span style={{ fontSize: 13, lineHeight: 1, width: 14, textAlign: 'center' }}>
+                                                    {f.icon}
+                                                  </span>
+                                                ) : (
+                                                  <Folder size={12} style={{ color: f.color || '#fbbf24' }} />
+                                                )}
+                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                  {f.name}
+                                                </span>
+                                                {contract.folderId === f._id && <CheckCircle size={12} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+                                        {canDeleteContract(contract) && (
+                                          <>
+                                            <div className={styles.morePopoverDivider} />
+                                            <button
+                                              className={`${styles.morePopoverItem} ${styles.morePopoverDanger}`}
+                                              onClick={() => {
+                                                setMorePopoverFor(null);
+                                                handleDeleteContract(contract._id, fixUtf8Display(contract.name));
+                                              }}
+                                            >
+                                              <Trash2 size={14} />
+                                              <span>Löschen</span>
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </td>
                             </motion.tr>
@@ -5646,30 +5665,16 @@ export default function Contracts() {
                     )}
                     {/* End of viewMode === 'list' */}
 
-                    {/* ✅ MOBILE VIEWS - Automatically shown on mobile via CSS */}
-                    {/* Liste = kompakte Zeilen, Raster = Cards */}
+                    {/* ✅ MOBILE VIEW - nur Liste (Grid entfernt) */}
                     <div className={styles.mobileCardsContainer}>
-                      {viewMode === 'list' ? (
-                        // 📋 LISTE: Kompakte Zeilen (wie Desktop/Outlook)
-                        <div className={styles.mobileListContainer}>
-                          {displayedContracts.map((contract) => (
-                            <MobileListRow
-                              key={`list-${contract._id}`}
-                              contract={contract}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        // 🔲 RASTER: Cards (wie bisher)
-                        <div className={styles.mobileGridContainer}>
-                          {displayedContracts.map((contract) => (
-                            <MobileContractCard
-                              key={`grid-${contract._id}`}
-                              contract={contract}
-                            />
-                          ))}
-                        </div>
-                      )}
+                      <div className={styles.mobileListContainer}>
+                        {displayedContracts.map((contract) => (
+                          <MobileListRow
+                            key={`list-${contract._id}`}
+                            contract={contract}
+                          />
+                        ))}
+                      </div>
                     </div>
 
                     {/* ✅ NEU: Infinite Scroll Loading Indicator & Sentinel */}
