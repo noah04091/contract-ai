@@ -1,5 +1,5 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -390,13 +390,191 @@ export default function Contracts() {
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
 
-  // ✏️ Eckdaten-Header Umbenennung — V2 TODO #4a: entfernt, kommt in 4b zurück
-  // (editingHeader / editHeaderValue Vars wurden bereinigt)
-
   const eckdatenLabels = [
     (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['0'] || 'Eckdaten 1',
     (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['1'] || 'Eckdaten 2',
   ];
+
+  /* ============================================================
+     V2 TODO #4b — Spalten-Konfigurator
+     ============================================================ */
+  type ColumnFieldKey =
+    | 'provider' | 'contractType' | 'contractNumber'
+    | 'startDate' | 'expiry' | 'remaining'
+    | 'payment' | 'value'
+    | 'createdAt' | 'kuendigung' | 'laufzeit'
+    | 'qf0' | 'qf1';
+
+  interface ColumnFieldDef {
+    key: ColumnFieldKey;
+    label: string;
+  }
+
+  // Field-Optionen für Slot-Spalten
+  const FIELD_OPTIONS: ColumnFieldDef[] = useMemo(() => [
+    { key: 'provider',       label: 'Anbieter' },
+    { key: 'contractType',   label: 'Vertragstyp' },
+    { key: 'contractNumber', label: 'Vertragsnummer' },
+    { key: 'startDate',      label: 'Vertragsbeginn' },
+    { key: 'expiry',         label: 'Ablauf' },
+    { key: 'remaining',      label: 'Restlaufzeit' },
+    { key: 'payment',        label: 'Zahlung' },
+    { key: 'value',          label: 'Vertragswert' },
+    { key: 'createdAt',      label: 'Hochgeladen' },
+    { key: 'kuendigung',     label: 'Kündigungsfrist' },
+    { key: 'laufzeit',       label: 'Laufzeit' },
+    { key: 'qf0',            label: eckdatenLabels[0] },
+    { key: 'qf1',            label: eckdatenLabels[1] },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [eckdatenLabels[0], eckdatenLabels[1]]);
+
+  // Default-Slots
+  const DEFAULT_SLOTS: ColumnFieldKey[] = ['provider', 'contractType', 'expiry'];
+
+  // Slot-State (3 Slots)
+  const [columnSlots, setColumnSlots] = useState<ColumnFieldKey[]>(() => {
+    const stored = user?.uiPreferences?.contractColumns as ColumnFieldKey[] | undefined;
+    if (Array.isArray(stored) && stored.length === 3) return stored;
+    return DEFAULT_SLOTS;
+  });
+
+  // Sub-Label-Field (was unter Vertragsname steht)
+  type SubLabelField = 'contractType' | 'provider' | 'createdAt' | 'startDate';
+  const [subLabelField, setSubLabelField] = useState<SubLabelField>(() => {
+    const stored = user?.uiPreferences?.contractSubLabel as SubLabelField | undefined;
+    if (stored && ['contractType', 'provider', 'createdAt', 'startDate'].includes(stored)) return stored;
+    return 'contractType';
+  });
+
+  // Welcher Slot hat das Konfigurator-Popover offen
+  const [columnConfigFor, setColumnConfigFor] = useState<number | 'sublabel' | null>(null);
+
+  // Wert eines Felds rendern
+  const renderColumnValue = (contract: Contract, field: ColumnFieldKey): React.ReactNode => {
+    const muted = (text: string) => <span className={styles.contractDetailMuted}>{text}</span>;
+    switch (field) {
+      case 'provider':
+        return contract.provider?.displayName || muted('—');
+      case 'contractType':
+        return contract.contractType || contract.provider?.category || muted('—');
+      case 'contractNumber':
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (contract as any).contractNumber || muted('—');
+      case 'startDate':
+        return contract.startDate ? formatDate(contract.startDate) : muted('—');
+      case 'expiry': {
+        if (!contract.expiryDate) return muted('unbefristet');
+        const exp = new Date(contract.expiryDate);
+        if (Number.isNaN(exp.getTime())) return muted('—');
+        const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        let label: string;
+        let tone: 'bad' | 'warn' | 'normal' = 'normal';
+        if (days < 0) { label = 'abgelaufen'; tone = 'bad'; }
+        else if (days === 0) { label = 'heute'; tone = 'bad'; }
+        else if (days <= 30) { label = `${days} Tag${days === 1 ? '' : 'e'}`; tone = 'warn'; }
+        else if (days <= 90) { label = `${days} Tage`; }
+        else { label = `${Math.round(days / 30)} Monate`; }
+        return (
+          <>
+            <span style={{
+              color: tone === 'bad' ? '#b91c1c' : tone === 'warn' ? '#b45309' : '#475569',
+              fontWeight: tone !== 'normal' ? 500 : 400,
+            }}>{label}</span>
+            <span style={{ color: '#94a3b8', fontSize: '0.8125rem', marginLeft: 4 }}>
+              · {formatDate(contract.expiryDate)}
+            </span>
+          </>
+        );
+      }
+      case 'remaining': {
+        if (!contract.expiryDate) return muted('unbefristet');
+        const exp = new Date(contract.expiryDate);
+        if (Number.isNaN(exp.getTime())) return muted('—');
+        const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (days < 0) return <span style={{ color: '#b91c1c' }}>abgelaufen</span>;
+        return `${days} Tag${days === 1 ? '' : 'e'}`;
+      }
+      case 'payment':
+        return contract.paymentAmount
+          ? `${contract.paymentAmount} €${contract.paymentFrequency ? ` / ${contract.paymentFrequency}` : ''}`
+          : muted('—');
+      case 'value':
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (contract as any).contractValue ? `${(contract as any).contractValue} €` : muted('—');
+      case 'createdAt':
+        return formatDate(contract.createdAt);
+      case 'kuendigung':
+        return contract.kuendigung || muted('—');
+      case 'laufzeit':
+        return contract.laufzeit || muted('—');
+      case 'qf0':
+        return contract.quickFacts?.[0]?.value || muted('—');
+      case 'qf1':
+        return contract.quickFacts?.[1]?.value || muted('—');
+      default:
+        return muted('—');
+    }
+  };
+
+  // Spalten-Title (für Header) basierend auf Field-Key
+  const getFieldLabel = (field: ColumnFieldKey): string => {
+    return FIELD_OPTIONS.find((f) => f.key === field)?.label || field;
+  };
+
+  // Slot-Field ändern + persistieren
+  const setColumnSlotField = (slotIdx: number, field: ColumnFieldKey) => {
+    const next = [...columnSlots];
+    next[slotIdx] = field;
+    setColumnSlots(next);
+    setColumnConfigFor(null);
+    // Persistieren
+    if (user) {
+      user.uiPreferences = { ...user.uiPreferences, contractColumns: next };
+    }
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    fetch('/api/auth/ui-preferences', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ contractColumns: next }),
+    }).catch((e) => console.error('Spalten-Config speichern fehlgeschlagen:', e));
+  };
+
+  // Sub-Label-Field ändern + persistieren
+  const setSubLabelFieldPersist = (field: SubLabelField) => {
+    setSubLabelField(field);
+    setColumnConfigFor(null);
+    if (user) {
+      user.uiPreferences = { ...user.uiPreferences, contractSubLabel: field };
+    }
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    fetch('/api/auth/ui-preferences', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ contractSubLabel: field }),
+    }).catch((e) => console.error('Sub-Label-Config speichern fehlgeschlagen:', e));
+  };
+
+  // Sub-Label rendern
+  const renderSubLabel = (contract: Contract): React.ReactNode => {
+    if (contract.isGenerated) return <>Generiert <span className={styles.contractSubSepV2}>·</span> Hochgeladen {formatDate(contract.createdAt)}</>;
+    if (contract.uploadType === 'EMAIL_IMPORT') return <>Per E-Mail <span className={styles.contractSubSepV2}>·</span> Hochgeladen {formatDate(contract.createdAt)}</>;
+    let primary: string | undefined;
+    switch (subLabelField) {
+      case 'contractType': primary = contract.contractType || contract.provider?.category; break;
+      case 'provider':     primary = contract.provider?.displayName; break;
+      case 'startDate':    primary = contract.startDate ? formatDate(contract.startDate) : undefined; break;
+      case 'createdAt':    primary = formatDate(contract.createdAt); break;
+    }
+    return (
+      <>
+        <span>{primary || 'Vertrag'}</span>
+        <span className={styles.contractSubSepV2}>·</span>
+        <span>Hochgeladen {formatDate(contract.createdAt)}</span>
+      </>
+    );
+  };
 
   // 📱 MOBILE UX: Filter-Bottom-Sheet und Upload-Tabs
   const [showMobileFilterSheet, setShowMobileFilterSheet] = useState(false);
@@ -638,11 +816,15 @@ export default function Contracts() {
         setMorePopoverFor(null);
         setMorePopoverFolderExpanded(false);
       }
+      // 🆕 V2 TODO #4b: Konfigurator-Popover schließen
+      if (columnConfigFor !== null) {
+        setColumnConfigFor(null);
+      }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor]);
+  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor]);
 
   // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
   useEffect(() => {
@@ -5250,23 +5432,80 @@ export default function Contracts() {
                               </th>
                             )}
                             <th className={styles.sortableHeader} onClick={() => handleColumnSort('name_az', 'name_za')}>
-                              <span className={styles.sortableHeaderContent}>
+                              <span className={styles.colHeaderV2}>
                                 <span>Vertragsname</span>
                                 {sortOrder === 'name_az' && <ChevronUp size={14} className={styles.sortArrow} />}
                                 {sortOrder === 'name_za' && <ChevronDown size={14} className={styles.sortArrow} />}
+                                {/* 🆕 V2 TODO #4b: Sub-Label switchbar */}
+                                <button
+                                  className={styles.colConfigBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setColumnConfigFor(columnConfigFor === 'sublabel' ? null : 'sublabel');
+                                  }}
+                                  title="Sub-Label konfigurieren"
+                                >
+                                  <Pencil size={11} />
+                                </button>
+                                {columnConfigFor === 'sublabel' && (
+                                  <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                    <div className={styles.colConfigLabel}>Sub-Label unter Name</div>
+                                    <div className={styles.colConfigList}>
+                                      {([
+                                        { key: 'contractType', label: 'Vertragstyp' },
+                                        { key: 'provider',     label: 'Anbieter' },
+                                        { key: 'startDate',    label: 'Vertragsbeginn' },
+                                        { key: 'createdAt',    label: 'Hochladedatum' },
+                                      ] as const).map((opt) => (
+                                        <button
+                                          key={opt.key}
+                                          className={`${styles.colConfigItem} ${subLabelField === opt.key ? styles.colConfigItemActive : ''}`}
+                                          onClick={() => setSubLabelFieldPersist(opt.key)}
+                                        >
+                                          {subLabelField === opt.key ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
+                                          <span>{opt.label}</span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </span>
                             </th>
-                            {/* 🆕 V2 TODO #4a: feste Header "Anbieter" + "Vertragstyp" (Konfigurator in 4b) */}
-                            <th className={styles.sortableHeader}>
-                              <span className={styles.sortableHeaderContent}>
-                                <span>Anbieter</span>
-                              </span>
-                            </th>
-                            <th className={styles.sortableHeader}>
-                              <span className={styles.sortableHeaderContent}>
-                                <span>Vertragstyp</span>
-                              </span>
-                            </th>
+                            {/* 🆕 V2 TODO #4b: dynamische Slot-Header mit Konfigurator */}
+                            {[0, 1].map((slotIdx) => (
+                              <th key={`slot-${slotIdx}`} className={styles.sortableHeader}>
+                                <span className={styles.colHeaderV2}>
+                                  <span>{getFieldLabel(columnSlots[slotIdx])}</span>
+                                  <button
+                                    className={styles.colConfigBtn}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setColumnConfigFor(columnConfigFor === slotIdx ? null : slotIdx);
+                                    }}
+                                    title="Spalte konfigurieren"
+                                  >
+                                    <Pencil size={11} />
+                                  </button>
+                                  {columnConfigFor === slotIdx && (
+                                    <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                      <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
+                                      <div className={styles.colConfigList}>
+                                        {FIELD_OPTIONS.map((opt) => (
+                                          <button
+                                            key={opt.key}
+                                            className={`${styles.colConfigItem} ${columnSlots[slotIdx] === opt.key ? styles.colConfigItemActive : ''}`}
+                                            onClick={() => setColumnSlotField(slotIdx, opt.key)}
+                                          >
+                                            {columnSlots[slotIdx] === opt.key ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
+                                            <span>{opt.label}</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </span>
+                              </th>
+                            ))}
                             <th className={styles.sortableHeader} onClick={() => handleColumnSort('status_asc', 'status_desc')}>
                               <span className={styles.sortableHeaderContent}>
                                 <span>Status</span>
@@ -5274,9 +5513,37 @@ export default function Contracts() {
                                 {sortOrder === 'status_desc' && <ChevronDown size={14} className={styles.sortArrow} />}
                               </span>
                             </th>
+                            {/* 🆕 V2 TODO #4b: 3. Slot-Spalte (default Ablauf, konfigurierbar) */}
                             <th className={`${styles.sortableHeader} ${styles.uploadDateColumn}`}>
-                              <span className={styles.sortableHeaderContent}>
-                                <span>Ablauf</span>
+                              <span className={styles.colHeaderV2}>
+                                <span>{getFieldLabel(columnSlots[2])}</span>
+                                <button
+                                  className={styles.colConfigBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setColumnConfigFor(columnConfigFor === 2 ? null : 2);
+                                  }}
+                                  title="Spalte konfigurieren"
+                                >
+                                  <Pencil size={11} />
+                                </button>
+                                {columnConfigFor === 2 && (
+                                  <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                    <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
+                                    <div className={styles.colConfigList}>
+                                      {FIELD_OPTIONS.map((opt) => (
+                                        <button
+                                          key={opt.key}
+                                          className={`${styles.colConfigItem} ${columnSlots[2] === opt.key ? styles.colConfigItemActive : ''}`}
+                                          onClick={() => setColumnSlotField(2, opt.key)}
+                                        >
+                                          {columnSlots[2] === opt.key ? <CheckCircle size={12} /> : <span style={{ width: 12 }} />}
+                                          <span>{opt.label}</span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </span>
                             </th>
                             <th>Aktionen</th>
@@ -5367,38 +5634,21 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{fixUtf8Display(contract.name)}</span>
-                                    {/* 🆕 V2 TODO #4a: Sub-Label statt Badges (Mockup-Style) */}
+                                    {/* 🆕 V2 TODO #4b: Sub-Label switchbar via renderSubLabel */}
                                     <div className={styles.contractSubLabelV2}>
-                                      <span>
-                                        {contract.isGenerated
-                                          ? 'Generiert'
-                                          : contract.uploadType === 'EMAIL_IMPORT'
-                                          ? 'Per E-Mail'
-                                          : (contract.contractType || contract.provider?.category || 'Vertrag')}
-                                      </span>
-                                      <span className={styles.contractSubSepV2}>·</span>
-                                      <span>Hochgeladen {formatDate(contract.createdAt)}</span>
+                                      {renderSubLabel(contract)}
                                     </div>
                                   </div>
                                 </div>
                               </td>
-                              {/* 🆕 V2 TODO #4a: Anbieter + Vertragstyp als feste Slots (Konfigurator kommt in 4b) */}
-                              {([0, 1] as const).map((slotIdx) => {
-                                // Slot 0 = Anbieter, Slot 1 = Vertragstyp
-                                const isSlot0 = slotIdx === 0;
-                                const primaryValue = isSlot0
-                                  ? contract.provider?.displayName
-                                  : (contract.contractType || contract.provider?.category);
-                                const fallbackFact = getQuickFacts(contract)[slotIdx];
-                                const displayValue = primaryValue || fallbackFact?.value || '—';
-                                return (
-                                  <td key={slotIdx} title={isSlot0 ? 'Anbieter' : 'Vertragstyp'}>
-                                    <span className={`${styles.contractDetail} ${primaryValue ? '' : styles.contractDetailMuted}`}>
-                                      <span>{displayValue}</span>
-                                    </span>
-                                  </td>
-                                );
-                              })}
+                              {/* 🆕 V2 TODO #4b: dynamische Slot-Cells (Slot 0+1) */}
+                              {[0, 1].map((slotIdx) => (
+                                <td key={`cell-${slotIdx}`}>
+                                  <span className={styles.contractDetail}>
+                                    {renderColumnValue(contract, columnSlots[slotIdx])}
+                                  </span>
+                                </td>
+                              ))}
                               <td>
                                 <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
                                   {calculateSmartStatus(contract)}
@@ -5407,46 +5657,8 @@ export default function Contracts() {
                                 {renderSignatureBadge(contract)}
                               </td>
                               <td className={styles.uploadDateColumn}>
-                                {/* 🆕 V2 TODO #4a: Ablauf statt Upload-Datum, mit Resttage-Indikator */}
-                                {(() => {
-                                  if (!contract.expiryDate) {
-                                    return <span className={styles.contractDetailMuted}>unbefristet</span>;
-                                  }
-                                  const exp = new Date(contract.expiryDate);
-                                  if (Number.isNaN(exp.getTime())) {
-                                    return <span className={styles.contractDetailMuted}>—</span>;
-                                  }
-                                  const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                                  let label: string;
-                                  let tone: 'bad' | 'warn' | 'normal' = 'normal';
-                                  if (days < 0) {
-                                    label = 'abgelaufen';
-                                    tone = 'bad';
-                                  } else if (days === 0) {
-                                    label = 'heute';
-                                    tone = 'bad';
-                                  } else if (days <= 30) {
-                                    label = `${days} Tag${days === 1 ? '' : 'e'}`;
-                                    tone = 'warn';
-                                  } else if (days <= 90) {
-                                    label = `${days} Tage`;
-                                  } else {
-                                    label = `${Math.round(days / 30)} Monate`;
-                                  }
-                                  return (
-                                    <>
-                                      <span style={{
-                                        color: tone === 'bad' ? '#b91c1c' : tone === 'warn' ? '#b45309' : '#475569',
-                                        fontWeight: tone !== 'normal' ? 500 : 400,
-                                      }}>
-                                        {label}
-                                      </span>
-                                      <span style={{ color: '#94a3b8', fontSize: '0.8125rem', marginLeft: 4 }}>
-                                        · {formatDate(contract.expiryDate)}
-                                      </span>
-                                    </>
-                                  );
-                                })()}
+                                {/* 🆕 V2 TODO #4b: 3. Slot-Cell (default Ablauf, konfigurierbar) */}
+                                {renderColumnValue(contract, columnSlots[2])}
                               </td>
                               <td>
                                 {/* 🆕 V2 TODO #1: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}
