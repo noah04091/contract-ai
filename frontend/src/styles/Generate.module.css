@@ -6413,6 +6413,63 @@
   background: #1A2540;
 }
 
+/* Brand-Blau Variante (für KI-Hauptaktion "KI verbessern") */
+.step3EditorBtn.brand {
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  color: #ffffff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.step3EditorBtn.brand:hover {
+  background: linear-gradient(135deg, #1E53D8 0%, #1740BC 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.25);
+}
+
+.step3EditorBtn.brand:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status-Pille im Banner: ersetzt den manuellen "Speichern"-Button.
+ * Drei Zustände via data-status: saved | saving | unsaved */
+.saveStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.saveStatusPill[data-status="saved"] {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.saveStatusPill[data-status="saving"] {
+  background: #eff6ff;
+  color: #2E6CF6;
+  border: 1px solid #bfdbfe;
+}
+
+.saveStatusPill[data-status="unsaved"] {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.saveStatusPill svg {
+  flex-shrink: 0;
+}
+
 .step3ImprovementBar {
   display: flex;
   align-items: center;

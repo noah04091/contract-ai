@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
-  CheckCircle, Clipboard, Save, FileText, Check, Download,
+  CheckCircle, Clipboard, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
   Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus,
@@ -3537,6 +3537,9 @@ export default function Generate() {
   const [showSignatureModal, setShowSignatureModal] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [isClauseSidebarOpen, setIsClauseSidebarOpen] = useState<boolean>(false);
+  // Auto-Save State (Step 3): zeigt Status-Pille im Banner statt manuellem Speichern-Button
+  const [isAutoSaving, setIsAutoSaving] = useState<boolean>(false);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 📄 NEW: PDF Preview States
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -4539,7 +4542,8 @@ export default function Generate() {
     });
   };
 
-  const handleSave = async (): Promise<string | null> => {
+  const handleSave = async (opts: { silent?: boolean } = {}): Promise<string | null> => {
+    const { silent = false } = opts;
     try {
       // ✅ UPDATE wenn bereits gespeichert, CREATE wenn neu
       const isUpdate = !!savedContractId;
@@ -4608,36 +4612,39 @@ export default function Generate() {
         }
         setSaved(true);
 
-        toast.success(isUpdate ? "✅ Änderungen gespeichert!" : "✅ Vertrag erfolgreich gespeichert!", {
-          autoClose: 3000,
-          position: 'top-center',
-        });
+        // Im silent-Modus (Auto-Save): keine Toasts, keine Navigation-Hinweise
+        if (!silent) {
+          toast.success(isUpdate ? "✅ Änderungen gespeichert!" : "✅ Vertrag erfolgreich gespeichert!", {
+            autoClose: 3000,
+            position: 'top-center',
+          });
 
-        // Nur bei erstem Speichern die Navigation-Buttons zeigen
-        if (!isUpdate && contractId) {
-          setTimeout(() => {
-            toast.info(
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => navigate(`/contracts/${contractId}`)}
-                  className="px-2 py-1 bg-green-600 text-white rounded text-xs"
-                >
-                  Ansehen
-                </button>
-              </div>,
-              {
-                autoClose: 5000,
-                position: 'top-center',
-                closeButton: true
-              }
-            );
-          }, 100);
+          // Nur bei erstem Speichern die Navigation-Buttons zeigen
+          if (!isUpdate && contractId) {
+            setTimeout(() => {
+              toast.info(
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="px-2 py-1 bg-blue-600 text-white rounded text-xs"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => navigate(`/contracts/${contractId}`)}
+                    className="px-2 py-1 bg-green-600 text-white rounded text-xs"
+                  >
+                    Ansehen
+                  </button>
+                </div>,
+                {
+                  autoClose: 5000,
+                  position: 'top-center',
+                  closeButton: true
+                }
+              );
+            }, 100);
+          }
         }
 
         return contractId || null;
@@ -4647,10 +4654,40 @@ export default function Generate() {
       }
     } catch (error) {
       console.error("❌ Fehler beim Speichern:", error);
-      toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      // Im silent-Modus: Fehler nur loggen, kein Toast (User merkt's an Status-Pille)
+      if (!silent) {
+        toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      }
       return null;
     }
   };
+
+  // 💾 Auto-Save (Step 3): debouncedes silent-Save bei jeder Text-Änderung.
+  // Pattern wiederverwendet aus EnhancedSignaturePage (autoSaveTimerRef).
+  // Triggert nur wenn:
+  // - User in Step 3 ist
+  // - Vertrag bereits initial gespeichert (savedContractId vorhanden)
+  // - Es ungespeicherte Änderungen gibt
+  // - Nicht bereits ein Auto-Save läuft
+  useEffect(() => {
+    if (currentStep !== 3 || !savedContractId || saved || isAutoSaving) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setIsAutoSaving(true);
+      try {
+        await handleSave({ silent: true });
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contractText, saved, savedContractId, currentStep]);
 
   // 🎨 NEUE FUNKTION: Design-Variante ändern (nach Vertragserstellung)
   const handleDesignChange = async (newDesign: string, customConfig?: typeof customDesign) => {
@@ -6663,15 +6700,34 @@ export default function Generate() {
                           )}
                           <span>PDF</span>
                         </motion.button>
-                        <motion.button
-                          onClick={handleSave}
-                          className={`${styles.step3HeaderBtn} ${saved ? styles.success : styles.primary}`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                        <div
+                          className={styles.saveStatusPill}
+                          data-status={isAutoSaving ? 'saving' : saved ? 'saved' : 'unsaved'}
+                          title={
+                            isAutoSaving
+                              ? 'Speichert automatisch im Hintergrund...'
+                              : saved
+                                ? 'Alle Änderungen automatisch gespeichert'
+                                : 'Ungespeicherte Änderungen — werden in 2s automatisch gespeichert'
+                          }
                         >
-                          {saved ? <Check size={16} /> : <Save size={16} />}
-                          <span>{saved ? "Gespeichert" : "Speichern"}</span>
-                        </motion.button>
+                          {isAutoSaving ? (
+                            <>
+                              <div className={styles.tinySpinner}></div>
+                              <span>Speichert…</span>
+                            </>
+                          ) : saved ? (
+                            <>
+                              <Check size={14} />
+                              <span>Gespeichert</span>
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 size={14} />
+                              <span>Ungespeichert</span>
+                            </>
+                          )}
+                        </div>
                         <motion.button
                           onClick={handleSendForSignature}
                           disabled={!saved || !savedContractId}
@@ -6713,25 +6769,6 @@ export default function Generate() {
                           <FolderPlus size={16} />
                           <span>Als Vorlage</span>
                         </motion.button>
-                        {isPremium && (
-                          <motion.button
-                            onClick={async () => {
-                              if (!savedContractId) {
-                                const newId = await handleSave();
-                                if (!newId) return;
-                              }
-                              setIsClauseSidebarOpen(true);
-                            }}
-                            disabled={!contractText}
-                            className={`${styles.step3HeaderBtn} ${styles.primary}`}
-                            whileHover={contractText ? { scale: 1.02 } : {}}
-                            whileTap={contractText ? { scale: 0.98 } : {}}
-                            title="Jede Klausel juristisch prüfen lassen"
-                          >
-                            <Scale size={16} />
-                            <span>Klauseln prüfen</span>
-                          </motion.button>
-                        )}
                       </div>
                     </div>
 
@@ -6829,7 +6866,7 @@ export default function Generate() {
                             <div className={styles.step3EditorActions}>
                               {!showImprovementSection && (
                                 <button
-                                  className={styles.step3EditorBtn}
+                                  className={`${styles.step3EditorBtn} ${styles.brand}`}
                                   onClick={() => setShowImprovementSection(true)}
                                   disabled={isImproving}
                                 >
@@ -6851,6 +6888,25 @@ export default function Generate() {
                                 )}
                                 PDF aktualisieren
                               </motion.button>
+                              {isPremium && (
+                                <motion.button
+                                  className={styles.step3EditorBtn}
+                                  onClick={async () => {
+                                    if (!savedContractId) {
+                                      const newId = await handleSave();
+                                      if (!newId) return;
+                                    }
+                                    setIsClauseSidebarOpen(true);
+                                  }}
+                                  disabled={!contractText}
+                                  whileHover={contractText ? { scale: 1.02 } : {}}
+                                  whileTap={contractText ? { scale: 0.98 } : {}}
+                                  title="Jede Klausel juristisch prüfen lassen"
+                                >
+                                  <Scale size={14} />
+                                  Klauseln prüfen
+                                </motion.button>
+                              )}
                             </div>
                           </div>
 
