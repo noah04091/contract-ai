@@ -390,9 +390,8 @@ export default function Contracts() {
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
 
-  // ✏️ Eckdaten-Header Umbenennung
-  const [editingHeader, setEditingHeader] = useState<number | null>(null);
-  const [editHeaderValue, setEditHeaderValue] = useState('');
+  // ✏️ Eckdaten-Header Umbenennung — V2 TODO #4a: entfernt, kommt in 4b zurück
+  // (editingHeader / editHeaderValue Vars wurden bereinigt)
 
   const eckdatenLabels = [
     (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['0'] || 'Eckdaten 1',
@@ -790,29 +789,7 @@ export default function Contracts() {
     else setSortOrder(ascKey);
   };
 
-  // ✏️ Eckdaten-Label speichern
-  const saveEckdatenLabel = (index: number, newLabel: string) => {
-    const trimmed = newLabel.trim();
-    const currentLabels: Record<string, string> = { ...((user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined) || {}) };
-    if (trimmed) {
-      currentLabels[String(index)] = trimmed;
-    } else {
-      delete currentLabels[String(index)];
-    }
-    const updated = currentLabels;
-    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-    fetch('/api/auth/ui-preferences', {
-      method: 'PATCH',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ eckdatenLabels: updated })
-    }).catch(e => console.error('UI-Preference save error:', e));
-    // Optimistisch im user-Objekt updaten
-    if (user) {
-      user.uiPreferences = { ...user.uiPreferences, eckdatenLabels: updated };
-    }
-    setEditingHeader(null);
-  };
+  // ✏️ Eckdaten-Label speichern — V2 TODO #4a: entfernt, kommt in 4b zurück (Konfigurator)
 
   // 📁 Handle folder reorder (move up/down)
   const handleMoveFolderUp = async (folderId: string) => {
@@ -5279,42 +5256,17 @@ export default function Contracts() {
                                 {sortOrder === 'name_za' && <ChevronDown size={14} className={styles.sortArrow} />}
                               </span>
                             </th>
-                            {([0, 1] as const).map((idx) => (
-                              <th key={idx} className={styles.sortableHeader}>
-                                {editingHeader === idx ? (
-                                  <input
-                                    className={styles.headerInlineEdit}
-                                    value={editHeaderValue}
-                                    onChange={(e) => setEditHeaderValue(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') e.currentTarget.blur();
-                                      if (e.key === 'Escape') { setEditingHeader(null); (e.currentTarget as HTMLInputElement).dataset.cancelled = '1'; e.currentTarget.blur(); }
-                                    }}
-                                    onBlur={(e) => { if (e.currentTarget.dataset.cancelled !== '1') saveEckdatenLabel(idx, editHeaderValue); }}
-                                    autoFocus
-                                  />
-                                ) : (
-                                  <span className={styles.sortableHeaderContent}>
-                                    <span onClick={() => handleColumnSort(`qf${idx}_asc` as SortOrder, `qf${idx}_desc` as SortOrder)}>
-                                      {eckdatenLabels[idx]}
-                                    </span>
-                                    {sortOrder === `qf${idx}_asc` && <ChevronUp size={14} className={styles.sortArrow} />}
-                                    {sortOrder === `qf${idx}_desc` && <ChevronDown size={14} className={styles.sortArrow} />}
-                                    <button
-                                      className={styles.headerEditBtn}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingHeader(idx);
-                                        setEditHeaderValue(eckdatenLabels[idx] === `Eckdaten ${idx + 1}` ? '' : eckdatenLabels[idx]);
-                                      }}
-                                      title="Spalte umbenennen"
-                                    >
-                                      <Pencil size={12} />
-                                    </button>
-                                  </span>
-                                )}
-                              </th>
-                            ))}
+                            {/* 🆕 V2 TODO #4a: feste Header "Anbieter" + "Vertragstyp" (Konfigurator in 4b) */}
+                            <th className={styles.sortableHeader}>
+                              <span className={styles.sortableHeaderContent}>
+                                <span>Anbieter</span>
+                              </span>
+                            </th>
+                            <th className={styles.sortableHeader}>
+                              <span className={styles.sortableHeaderContent}>
+                                <span>Vertragstyp</span>
+                              </span>
+                            </th>
                             <th className={styles.sortableHeader} onClick={() => handleColumnSort('status_asc', 'status_desc')}>
                               <span className={styles.sortableHeaderContent}>
                                 <span>Status</span>
@@ -5322,10 +5274,9 @@ export default function Contracts() {
                                 {sortOrder === 'status_desc' && <ChevronDown size={14} className={styles.sortArrow} />}
                               </span>
                             </th>
-                            <th className={`${styles.sortableHeader} ${styles.uploadDateColumn}`} onClick={() => setSortOrder(sortOrder === 'älteste' ? 'neueste' : 'älteste')}>
+                            <th className={`${styles.sortableHeader} ${styles.uploadDateColumn}`}>
                               <span className={styles.sortableHeaderContent}>
-                                <span>Upload-Datum</span>
-                                {sortOrder === 'älteste' && <ChevronUp size={14} className={styles.sortArrow} />}
+                                <span>Ablauf</span>
                               </span>
                             </th>
                             <th>Aktionen</th>
@@ -5416,107 +5367,35 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{fixUtf8Display(contract.name)}</span>
-                                    {(contract.isGenerated || contract.isOptimized || contract.uploadType === 'EMAIL_IMPORT') && (
-                                      <div className={styles.contractBadges}>
-                                        {contract.isGenerated && (
-                                          <span className={styles.generatedBadge}>Generiert</span>
-                                        )}
-                                        {contract.isOptimized && (
-                                          <span className={styles.optimizedBadge}>Optimiert</span>
-                                        )}
-                                        {contract.uploadType === 'EMAIL_IMPORT' && (
-                                          <span
-                                            className={styles.emailImportBadge}
-                                            title={`Importiert am ${formatDate(contract.createdAt)} via Email`}
-                                          >
-                                            <Mail size={12} />
-                                            Per Email
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
+                                    {/* 🆕 V2 TODO #4a: Sub-Label statt Badges (Mockup-Style) */}
+                                    <div className={styles.contractSubLabelV2}>
+                                      <span>
+                                        {contract.isGenerated
+                                          ? 'Generiert'
+                                          : contract.uploadType === 'EMAIL_IMPORT'
+                                          ? 'Per E-Mail'
+                                          : (contract.contractType || contract.provider?.category || 'Vertrag')}
+                                      </span>
+                                      <span className={styles.contractSubSepV2}>·</span>
+                                      <span>Hochgeladen {formatDate(contract.createdAt)}</span>
+                                    </div>
                                   </div>
                                 </div>
                               </td>
-                              {/* 📊 Dynamische QuickFacts Spalten – Inline-Edit */}
-                              {getQuickFacts(contract).slice(0, 2).map((fact, factIndex) => {
-                                const FactIcon = getQuickFactIcon(fact.label, fact.value);
-                                const isEditing = editingQuickFact?.contractId === contract._id && editingQuickFact?.factIndex === factIndex;
-                                const isDropdownOpen = qfDropdownOpen?.contractId === contract._id && qfDropdownOpen?.displayIndex === factIndex;
-                                const hasEditable = !!(contract.quickFacts && contract.quickFacts.length > 0);
-                                const allFacts = contract.quickFacts || [];
-
+                              {/* 🆕 V2 TODO #4a: Anbieter + Vertragstyp als feste Slots (Konfigurator kommt in 4b) */}
+                              {([0, 1] as const).map((slotIdx) => {
+                                // Slot 0 = Anbieter, Slot 1 = Vertragstyp
+                                const isSlot0 = slotIdx === 0;
+                                const primaryValue = isSlot0
+                                  ? contract.provider?.displayName
+                                  : (contract.contractType || contract.provider?.category);
+                                const fallbackFact = getQuickFacts(contract)[slotIdx];
+                                const displayValue = primaryValue || fallbackFact?.value || '—';
                                 return (
-                                  <td key={factIndex} title={fact.label}>
-                                    {isEditing ? (
-                                      /* ✏️ Inline-Edit Modus */
-                                      <div className={styles.qfInlineEdit} onClick={(e) => e.stopPropagation()}>
-                                        <input
-                                          type="text"
-                                          className={styles.qfInlineInput}
-                                          value={editQfValue}
-                                          onChange={(e) => setEditQfValue(e.target.value)}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter') saveQuickFactValue(contract._id, factIndex, editQfValue);
-                                            if (e.key === 'Escape') setEditingQuickFact(null);
-                                          }}
-                                          autoFocus
-                                        />
-                                        <button
-                                          className={styles.qfSaveBtn}
-                                          onClick={() => saveQuickFactValue(contract._id, factIndex, editQfValue)}
-                                          title="Speichern"
-                                        >
-                                          <Check size={14} />
-                                        </button>
-                                        <button
-                                          className={styles.qfCancelBtn}
-                                          onClick={() => setEditingQuickFact(null)}
-                                          title="Abbrechen"
-                                        >
-                                          <X size={14} />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      /* 📊 Normaler Anzeige-Modus mit Hover-Aktionen */
-                                      <div className={`${styles.qfCell} ${hasEditable ? styles.qfEditable : ''}`}>
-                                        <div className={`${styles.contractDetail} ${getRatingClass(fact.rating)}`}>
-                                          <FactIcon size={14} className={styles.detailIcon} />
-                                          <span>{fact.value}</span>
-                                        </div>
-                                        {hasEditable && (
-                                          <div className={styles.qfActions} onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                              className={styles.qfEditBtn}
-                                              onClick={() => {
-                                                setEditingQuickFact({ contractId: contract._id, factIndex });
-                                                setEditQfValue(fact.value);
-                                                setQfDropdownOpen(null);
-                                              }}
-                                              title="Wert bearbeiten"
-                                            >
-                                              <Pencil size={12} />
-                                            </button>
-                                            {allFacts.length > 2 && (
-                                              <button
-                                                className={styles.qfDropdownBtn}
-                                                onClick={(e) => {
-                                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                                                  setQfDropdownOpen(isDropdownOpen ? null : {
-                                                    contractId: contract._id,
-                                                    displayIndex: factIndex,
-                                                    position: { top: rect.bottom + 4, left: rect.left }
-                                                  });
-                                                }}
-                                                title="Eckdaten wechseln"
-                                              >
-                                                <ChevronDown size={12} />
-                                              </button>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
+                                  <td key={slotIdx} title={isSlot0 ? 'Anbieter' : 'Vertragstyp'}>
+                                    <span className={`${styles.contractDetail} ${primaryValue ? '' : styles.contractDetailMuted}`}>
+                                      <span>{displayValue}</span>
+                                    </span>
                                   </td>
                                 );
                               })}
@@ -5528,9 +5407,46 @@ export default function Contracts() {
                                 {renderSignatureBadge(contract)}
                               </td>
                               <td className={styles.uploadDateColumn}>
-                                <span className={styles.uploadDate}>
-                                  {formatDate(contract.createdAt)}
-                                </span>
+                                {/* 🆕 V2 TODO #4a: Ablauf statt Upload-Datum, mit Resttage-Indikator */}
+                                {(() => {
+                                  if (!contract.expiryDate) {
+                                    return <span className={styles.contractDetailMuted}>unbefristet</span>;
+                                  }
+                                  const exp = new Date(contract.expiryDate);
+                                  if (Number.isNaN(exp.getTime())) {
+                                    return <span className={styles.contractDetailMuted}>—</span>;
+                                  }
+                                  const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                                  let label: string;
+                                  let tone: 'bad' | 'warn' | 'normal' = 'normal';
+                                  if (days < 0) {
+                                    label = 'abgelaufen';
+                                    tone = 'bad';
+                                  } else if (days === 0) {
+                                    label = 'heute';
+                                    tone = 'bad';
+                                  } else if (days <= 30) {
+                                    label = `${days} Tag${days === 1 ? '' : 'e'}`;
+                                    tone = 'warn';
+                                  } else if (days <= 90) {
+                                    label = `${days} Tage`;
+                                  } else {
+                                    label = `${Math.round(days / 30)} Monate`;
+                                  }
+                                  return (
+                                    <>
+                                      <span style={{
+                                        color: tone === 'bad' ? '#b91c1c' : tone === 'warn' ? '#b45309' : '#475569',
+                                        fontWeight: tone !== 'normal' ? 500 : 400,
+                                      }}>
+                                        {label}
+                                      </span>
+                                      <span style={{ color: '#94a3b8', fontSize: '0.8125rem', marginLeft: 4 }}>
+                                        · {formatDate(contract.expiryDate)}
+                                      </span>
+                                    </>
+                                  );
+                                })()}
                               </td>
                               <td>
                                 {/* 🆕 V2 TODO #1: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}

@@ -8867,3 +8867,24 @@
   color: #4f46e5;
   background: #eef2ff;
 }
+
+/* ============================================================
+   V2 TODO #4a — Spalten-Layout (Sub-Label, neue Slot-Spalten)
+   ============================================================ */
+.contractSubLabelV2 {
+  font-size: 0.75rem;
+  color: #8896a8;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.contractSubSepV2 {
+  color: #d4d8df;
+}
+.contractDetailMuted {
+  color: #8896a8;
+  font-weight: 400;
+}
