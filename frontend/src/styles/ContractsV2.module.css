@@ -2810,7 +2810,7 @@
 .section {
   background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
   border-radius: 24px;
-  padding: 2.5rem;
+  padding: 0.5rem;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.03),
     0 4px 12px rgba(0, 0, 0, 0.04),
@@ -2820,10 +2820,10 @@
   overflow: hidden;
 }
 
-/* ✅ DESKTOP-ONLY: Weniger Abstand oben im Section-Bereich */
+/* ✅ DESKTOP-ONLY: Section-Padding minimal — Tabelle füllt den Kasten */
 @media (min-width: 769px) {
   .section {
-    padding-top: 1rem;
+    padding: 0.5rem;
   }
 }
 
@@ -3800,15 +3800,7 @@
   text-overflow: ellipsis;
 }
 
-/* 🆕 V2 TODO #3: Erste und letzte Spalte direkt an die Kasten-Ränder */
-.contractsTable thead th:first-child,
-.contractsTable tbody td:first-child {
-  padding-left: 0 !important;
-}
-.contractsTable thead th:last-child,
-.contractsTable tbody td:last-child {
-  padding-right: 0 !important;
-}
+/* 🆕 V2 TODO #3 zurück: erste/letzte Spalte normales padding (war zu eng) */
 
 /* 🔽 Sortable Header Styles */
 .sortableHeader {
