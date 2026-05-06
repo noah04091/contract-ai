@@ -8774,3 +8774,93 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+/* ============================================================
+   V2 TODO #1 — Action-Spalte: 2 Icons + Mehr-Popover
+   ============================================================ */
+.actionButtonsV2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  justify-content: flex-end;
+}
+
+.morePopoverWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.morePopover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 220px;
+  background: #ffffff;
+  border: 1px solid #eaecf0;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(15,23,42,0.04), 0 20px 36px rgba(15,23,42,0.10);
+  padding: 6px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: #0a0e1a;
+}
+
+.morePopoverItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.morePopoverItem:hover {
+  background: #f5f6f9;
+  color: #0a0e1a;
+}
+.morePopoverItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.morePopoverDanger {
+  color: #b91c1c;
+}
+.morePopoverDanger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.morePopoverDivider {
+  height: 1px;
+  background: #f1f3f6;
+  margin: 4px 2px;
+}
+
+.morePopoverFolderList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 2px 8px;
+  padding-left: 6px;
+  border-left: 2px solid #f1f3f6;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.morePopoverFolderItem {
+  font-size: 12.5px;
+  padding: 6px 8px !important;
+}
+.morePopoverFolderActive {
+  color: #4f46e5;
+  background: #eef2ff;
+}
