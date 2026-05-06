@@ -3981,11 +3981,6 @@ export default function Contracts() {
               className={`${styles.sidebarResizeHandle} ${isResizing ? styles.resizing : ''}`}
               onMouseDown={handleSidebarResizeStart}
             />
-            {/* Brand-Block (Mockup-Style) */}
-            <div className={styles.brand}>
-              <div className={styles.brandMark}>CA</div>
-              <div className={styles.brandName}>Contract&nbsp;AI</div>
-            </div>
             <div className={styles.sidebarNav}>
               <p className={styles.sidebarTitle}>Navigation</p>
 
