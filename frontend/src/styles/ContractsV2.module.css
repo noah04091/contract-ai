@@ -3800,14 +3800,14 @@
   text-overflow: ellipsis;
 }
 
-/* 🆕 V2 TODO #3: Erste und letzte Spalte näher an die Kasten-Ränder */
+/* 🆕 V2 TODO #3: Erste und letzte Spalte direkt an die Kasten-Ränder */
 .contractsTable thead th:first-child,
 .contractsTable tbody td:first-child {
-  padding-left: 0.5rem;
+  padding-left: 0 !important;
 }
 .contractsTable thead th:last-child,
 .contractsTable tbody td:last-child {
-  padding-right: 0.5rem;
+  padding-right: 0 !important;
 }
 
 /* 🔽 Sortable Header Styles */
