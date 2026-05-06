@@ -21,7 +21,7 @@ import {
   Check, // ✅ QuickFact Inline-Edit Save
   Pencil // ✏️ QuickFact Inline-Edit Icon
 } from "lucide-react";
-import styles from "../styles/Contracts.module.css";
+import styles from "../styles/ContractsV2.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
@@ -3948,7 +3948,7 @@ export default function Contracts() {
       />
 
       <Helmet>
-        <title>Verträge mit KI analysieren & optimieren | Contract AI</title>
+        <title>Verträge (V2 Vorschau) | Contract AI</title>
         <meta name="description" content="Verträge hochladen, Risiken erkennen & direkt optimieren – alles mit KI. Mehr Klarheit, bessere Konditionen, volle Kontrolle. Jetzt ausprobieren!" />
         <meta name="keywords" content="Vertragsanalyse, Verträge optimieren, Vertrag hochladen, Risiken erkennen, Contract AI" />
         <link rel="canonical" href="https://www.contract-ai.de/contracts" />
