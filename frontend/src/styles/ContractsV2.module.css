@@ -33,14 +33,17 @@
 }
 
 .duplicateModal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  max-width: 500px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.04),
+    0 24px 64px -16px rgba(15, 23, 42, 0.18),
+    0 8px 24px -8px rgba(15, 23, 42, 0.12);
+  max-width: 480px;
   width: 100%;
   max-height: 90vh;
   max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -61,20 +64,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 24px 24px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  gap: 10px;
+  padding: 28px 28px 22px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
   position: relative;
   flex-shrink: 0;
 }
 
 .modalHeader h3 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #111827;
+  font-size: 21px;
+  font-weight: 650;
+  color: #0f172a;
   margin: 0;
   text-align: center;
+  letter-spacing: -0.02em;
 }
 
 .modalIcon {
@@ -88,7 +92,7 @@
 }
 
 .duplicateIcon {
-  color: #d97706;
+  color: #2563eb;
 }
 
 .legacyIcon {
@@ -104,28 +108,34 @@
 }
 
 .modalCloseButton {
+  position: absolute;
+  top: 14px;
+  right: 14px;
   width: 32px;
   height: 32px;
   min-width: 44px; /* Touch-Target für Mobile */
   min-height: 44px; /* Touch-Target für Mobile */
   border: none;
-  background: none;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  transition: all 0.2s;
+  color: #64748b;
+  transition: all 0.18s ease;
 }
 
 .modalCloseButton:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .modalContent {
-  padding: 20px;
+  padding: 22px 24px 6px;
   flex: 1;
   overflow-y: auto;
 }
@@ -232,9 +242,9 @@
 .modalActions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 20px;
-  background: white;
+  gap: 9px;
+  padding: 16px 24px 24px;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
@@ -311,62 +321,98 @@
 .modalIconBadge {
   width: 56px;
   height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+  box-shadow:
+    inset 0 0 0 1px rgba(59, 130, 246, 0.18),
+    0 6px 16px -4px rgba(59, 130, 246, 0.25),
+    0 2px 4px rgba(15, 23, 42, 0.04);
+  position: relative;
+}
+
+.modalIconBadge::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 60%);
+  pointer-events: none;
 }
 
 .modalIconBadge .duplicateIcon {
-  color: #d97706;
-  filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.2));
+  color: #2563eb;
+  position: relative;
+  z-index: 1;
 }
 
 .modalSubtitle {
   text-align: center;
   font-size: 14px;
-  color: #6b7280;
-  margin-top: 8px;
+  color: #64748b;
+  margin: 2px 0 0;
   font-weight: 400;
+  line-height: 1.5;
+  max-width: 340px;
 }
 
 .fileComparisonGrid {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
-  align-items: center;
-  margin: 20px 0 16px;
+  gap: 10px;
+  align-items: stretch;
+  margin: 22px 0 18px;
 }
 
 .fileCard {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;
-  padding: 12px;
-  transition: all 0.3s ease;
+  padding: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px -4px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
 }
 
 .fileCard:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 8px 24px -8px rgba(15, 23, 42, 0.10);
+  transform: translateY(-1px);
 }
 
 .fileCardExisting {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-color: #86efac;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  border-color: rgba(34, 197, 94, 0.2);
+  position: relative;
+}
+
+.fileCardExisting::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+  border-radius: 0 3px 3px 0;
 }
 
 .fileCardHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 7px;
+  margin-bottom: 10px;
 }
 
 .fileCardIcon {
-  color: #6b7280;
+  color: #94a3b8;
   flex-shrink: 0;
 }
 
@@ -375,11 +421,11 @@
 }
 
 .fileCardLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
+  font-size: 11px;
+  font-weight: 650;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .fileCardExisting .fileCardLabel {
@@ -393,16 +439,17 @@
 }
 
 .fileCardName {
-  font-size: 14px;
-  font-weight: 500;
-  color: #111827;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: #0f172a;
   word-break: break-word;
   line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .fileCardMeta {
   font-size: 12px;
-  color: #9ca3af;
+  color: #94a3b8;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -413,109 +460,167 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  background: #dcfce7;
-  color: #166534;
-  border-radius: 12px;
+  padding: 3px 8px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 .fileComparisonDivider {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 2px;
 }
 
 .fileComparisonArrow {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid #e5e7eb;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
+  color: #cbd5e1;
 }
 
-/* ✅ Modernisierte Action Cards */
+/* ✅ Modernisierte Action Cards — clean Premium */
 .modalActionCard {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: white;
-  border: 2px solid #e5e7eb;
+  gap: 13px;
+  padding: 13px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   width: 100%;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 2px 6px -2px rgba(15, 23, 42, 0.04);
+  position: relative;
 }
 
 .modalActionCard:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: rgba(15, 23, 42, 0.14);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 12px 28px -8px rgba(15, 23, 42, 0.12),
+    0 4px 8px -2px rgba(15, 23, 42, 0.06);
+}
+
+.modalActionCard:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
 }
 
 .actionCardIcon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.actionCardIcon::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 50%);
+  pointer-events: none;
 }
 
 .actionView .actionCardIcon {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #1e40af;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  box-shadow:
+    inset 0 0 0 1px rgba(59, 130, 246, 0.15),
+    0 2px 6px -1px rgba(59, 130, 246, 0.18);
 }
 
 .actionAnalyze .actionCardIcon {
-  background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
-  color: #2563eb;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  color: #6d28d9;
+  box-shadow:
+    inset 0 0 0 1px rgba(139, 92, 246, 0.15),
+    0 2px 6px -1px rgba(139, 92, 246, 0.18);
 }
 
 .actionReplace .actionCardIcon {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: #b91c1c;
+  box-shadow:
+    inset 0 0 0 1px rgba(239, 68, 68, 0.15),
+    0 2px 6px -1px rgba(239, 68, 68, 0.15);
 }
 
 .actionCardContent {
   flex: 1;
+  min-width: 0;
 }
 
 .actionCardTitle {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
-  color: #111827;
+  color: #0f172a;
   margin-bottom: 2px;
+  letter-spacing: -0.015em;
 }
 
 .actionCardDescription {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12.5px;
+  color: #64748b;
+  letter-spacing: -0.005em;
+}
+
+.modalActionCard::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid rgba(15, 23, 42, 0.18);
+  border-top: 1.5px solid rgba(15, 23, 42, 0.18);
+  transform: translateY(-50%) rotate(45deg);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.6;
+}
+
+.modalActionCard:hover::after {
+  right: 11px;
+  opacity: 1;
+  border-color: rgba(15, 23, 42, 0.32);
 }
 
 .actionView:hover .actionCardIcon {
-  background: linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%);
-  transform: scale(1.05);
+  transform: scale(1.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(59, 130, 246, 0.25),
+    0 4px 12px -2px rgba(59, 130, 246, 0.28);
 }
 
 .actionAnalyze:hover .actionCardIcon {
-  background: linear-gradient(135deg, #c4b5fd 0%, #a78bfa 100%);
-  transform: scale(1.05);
+  transform: scale(1.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(139, 92, 246, 0.25),
+    0 4px 12px -2px rgba(139, 92, 246, 0.28);
 }
 
 .actionReplace:hover .actionCardIcon {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  transform: scale(1.05);
+  transform: scale(1.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(239, 68, 68, 0.25),
+    0 4px 12px -2px rgba(239, 68, 68, 0.25);
 }
 
 /* ✅ NEU: Contract Badges - Cloud, Reupload etc. */

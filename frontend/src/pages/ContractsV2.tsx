@@ -19,7 +19,8 @@ import {
   Radar, // 📡 Legal Pulse Icon
   Camera, // 📸 Document Scanner Icon
   Check, // ✅ QuickFact Inline-Edit Save
-  Pencil // ✏️ QuickFact Inline-Edit Icon
+  Pencil, // ✏️ QuickFact Inline-Edit Icon
+  Files // 📑 Duplikat-Modal Icon (zwei überlappende Files = "Duplikat")
 } from "lucide-react";
 import styles from "../styles/ContractsV2.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -1482,7 +1483,7 @@ export default function Contracts() {
           <div className={styles.modalHeader}>
             <div className={styles.modalIconWrapper}>
               <div className={styles.modalIconBadge}>
-                <AlertCircle size={28} className={styles.duplicateIcon} />
+                <Files size={26} className={styles.duplicateIcon} strokeWidth={1.75} />
               </div>
             </div>
             <h3>Duplikat erkannt</h3>
