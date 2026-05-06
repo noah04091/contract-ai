@@ -6700,34 +6700,6 @@ export default function Generate() {
                           )}
                           <span>PDF</span>
                         </motion.button>
-                        <div
-                          className={styles.saveStatusPill}
-                          data-status={isAutoSaving ? 'saving' : saved ? 'saved' : 'unsaved'}
-                          title={
-                            isAutoSaving
-                              ? 'Speichert automatisch im Hintergrund...'
-                              : saved
-                                ? 'Alle Änderungen automatisch gespeichert'
-                                : 'Ungespeicherte Änderungen — werden in 2s automatisch gespeichert'
-                          }
-                        >
-                          {isAutoSaving ? (
-                            <>
-                              <div className={styles.tinySpinner}></div>
-                              <span>Speichert…</span>
-                            </>
-                          ) : saved ? (
-                            <>
-                              <Check size={14} />
-                              <span>Gespeichert</span>
-                            </>
-                          ) : (
-                            <>
-                              <Edit3 size={14} />
-                              <span>Ungespeichert</span>
-                            </>
-                          )}
-                        </div>
                         <motion.button
                           onClick={handleSendForSignature}
                           disabled={!saved || !savedContractId}
@@ -6862,6 +6834,34 @@ export default function Generate() {
                             <div className={styles.step3EditorTitle}>
                               <Edit3 size={16} />
                               <span>Vertragstext bearbeiten</span>
+                              <div
+                                className={styles.saveStatusPill}
+                                data-status={isAutoSaving ? 'saving' : saved ? 'saved' : 'unsaved'}
+                                title={
+                                  isAutoSaving
+                                    ? 'Speichert automatisch im Hintergrund...'
+                                    : saved
+                                      ? 'Alle Änderungen automatisch gespeichert'
+                                      : 'Ungespeicherte Änderungen — werden in 2s automatisch gespeichert'
+                                }
+                              >
+                                {isAutoSaving ? (
+                                  <>
+                                    <div className={styles.tinySpinner}></div>
+                                    <span>Speichert…</span>
+                                  </>
+                                ) : saved ? (
+                                  <>
+                                    <Check size={14} />
+                                    <span>Gespeichert</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Edit3 size={14} />
+                                    <span>Ungespeichert</span>
+                                  </>
+                                )}
+                              </div>
                             </div>
                             <div className={styles.step3EditorActions}>
                               {!showImprovementSection && (
@@ -6890,7 +6890,7 @@ export default function Generate() {
                               </motion.button>
                               {isPremium && (
                                 <motion.button
-                                  className={styles.step3EditorBtn}
+                                  className={`${styles.step3EditorBtn} ${styles.green}`}
                                   onClick={async () => {
                                     if (!savedContractId) {
                                       const newId = await handleSave();

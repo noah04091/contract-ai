@@ -6433,19 +6433,42 @@
   cursor: not-allowed;
 }
 
-/* Status-Pille im Banner: ersetzt den manuellen "Speichern"-Button.
- * Drei Zustände via data-status: saved | saving | unsaved */
+/* Grüne Variante (für "Klauseln prüfen" — Quality/Sicherheits-Aktion) */
+.step3EditorBtn.green {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.step3EditorBtn.green:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.step3EditorBtn.green:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Status-Pille im Editor-Header: dezenter Auto-Save-Indikator.
+ * Drei Zustände via data-status: saved | saving | unsaved.
+ * Klein gehalten weil im Header neben dem Editor-Title sitzt. */
 .saveStatusPill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.2px;
   transition: background-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
   user-select: none;
+  margin-left: 4px;
 }
 
 .saveStatusPill[data-status="saved"] {
@@ -6468,6 +6491,8 @@
 
 .saveStatusPill svg {
   flex-shrink: 0;
+  width: 11px;
+  height: 11px;
 }
 
 .step3ImprovementBar {
