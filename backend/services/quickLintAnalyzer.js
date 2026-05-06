@@ -84,6 +84,13 @@ async function analyzeClauses(contractText, contractType) {
     };
   }
 
+  // 1d) Eindeutige Quick-Lint-IDs (qlId) zuweisen, damit das GPT-Response-Mapping
+  // verlässlich ist. clauseParser vergibt Sub-Sektion-IDs aus Pattern-Matches
+  // (z.B. "1", "2"), die mehrfach pro Vertrag vorkommen können — find() würde
+  // sonst das erste Match auf alle Klauseln mit gleicher id mappen (Live-Bug:
+  // 3 Klauseln zeigten dieselbe Kaution-Schwäche, weil id="1" 5x vorkam).
+  localClauses = localClauses.map((c, idx) => ({ ...c, qlId: `qc-${idx + 1}` }));
+
   // Bei zu vielen Klauseln: nur die ersten MAX_CLAUSES_PER_CALL bewerten — Rest bekommt Keyword-only
   const clausesForGpt = localClauses.slice(0, MAX_CLAUSES_PER_CALL);
 
@@ -95,13 +102,15 @@ async function analyzeClauses(contractText, contractType) {
     console.warn('[QuickLint] GPT-Call fehlgeschlagen, Fallback auf Keyword-Bewertung:', err.message);
   }
 
-  // 3) GPT- und Keyword-Daten zusammenführen — ein klares Schema pro Klausel
+  // 3) GPT- und Keyword-Daten zusammenführen — ein klares Schema pro Klausel.
+  // Mapping primär über qlId (eindeutig), Fallback über Index (falls GPT die
+  // Reihenfolge wahrt aber IDs verändert).
   const merged = localClauses.map((clause, idx) => {
-    const gptItem = gptAssessments?.find(a => a.id === clause.id || a.index === idx);
+    const gptItem = gptAssessments?.find(a => a.id === clause.qlId) || gptAssessments?.[idx] || null;
     const fallback = mapKeywordRiskToAssessment(clause);
     if (gptItem) {
       return {
-        id: clause.id || `clause-${idx + 1}`,
+        id: clause.qlId,
         index: idx,
         number: extractClauseNumber(clause),
         title: sanitizeTitle(clause.sectionTitle, idx),
@@ -113,7 +122,7 @@ async function analyzeClauses(contractText, contractType) {
       };
     }
     return {
-      id: clause.id || `clause-${idx + 1}`,
+      id: clause.qlId,
       index: idx,
       number: extractClauseNumber(clause),
       title: sanitizeTitle(clause.sectionTitle, idx),
@@ -162,7 +171,7 @@ WICHTIGE REGELN:
 - Berücksichtige den Vertragstyp: ${contractType}`;
 
   const clauseList = clauses.map((c, idx) => ({
-    id: c.id || `clause-${idx + 1}`,
+    id: c.qlId || c.id || `clause-${idx + 1}`,
     number: extractClauseNumber(c),
     title: c.sectionTitle || `Abschnitt ${idx + 1}`,
     text: c.text
