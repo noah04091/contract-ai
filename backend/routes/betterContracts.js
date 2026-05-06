@@ -66,6 +66,21 @@ function checkRateLimit(ip) {
   return true; // OK
 }
 
+// 🆕 Brand-Extraktion aus URL-Domain (Fallback wenn Scraper keine Marke findet)
+// Wandelt z.B. "https://www.grenke.de/..." → "Grenke"
+function extractBrandFromUrl(url) {
+  if (!url || typeof url !== 'string') return 'Anbieter';
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, '');
+    const parts = hostname.split('.');
+    const brand = parts[0];
+    if (!brand || brand.length < 2) return 'Anbieter';
+    return brand.charAt(0).toUpperCase() + brand.slice(1);
+  } catch (e) {
+    return 'Anbieter';
+  }
+}
+
 // 🔧 Cache (unverändert)
 const contractCache = new Map();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 Minuten
@@ -642,7 +657,8 @@ REGELN:
 - aiSuggestedProviders: NUR seriöse, bekannte Anbieter, max 3
 - aiSuggestedProviders confidence ist IMMER "medium" oder "low"
 - Nenne NUR Anbieter, bei denen du sicher bist, dass sie real existieren. Erfinde KEINE Anbieter.
-- website-URLs müssen echte, existierende Domains sein — keine Platzhalter oder erfundene URLs`
+- website-URLs müssen echte, existierende Domains sein — keine Platzhalter oder erfundene URLs
+- Wenn der "providerName" in den Suchergebnissen ungenau wirkt (z.B. ein generisches Wort wie "Factoring" oder eine URL-Domain wie "Grenke"), leite den richtigen Anbieter-Namen aus der URL ab und reichere mit Marktwissen an. Lass keinen direkten Anbieter ungereichert.`
         },
         {
           role: "user",
@@ -2387,7 +2403,9 @@ router.post("/", async (req, res) => {
         prices: extracted?.prices || [], // NUR echte Preise, KEINE Ersparnisse
         savings: extracted?.savings || [], // Ersparnisse separat
         features: extracted?.features || [],
-        provider: extracted?.provider || 'Unknown',
+        provider: (extracted?.provider && extracted.provider.toLowerCase() !== 'unknown')
+          ? extracted.provider
+          : extractBrandFromUrl(result.link),
         relevantInfo: extracted?.relevantInfo || '',
         hasDetailedData: !!extracted,
         isPriorityPortal: extracted?.isSpecialPortal || false,
@@ -2423,7 +2441,7 @@ router.post("/", async (req, res) => {
         prices: [],
         savings: [],
         features: [],
-        provider: 'Unknown',
+        provider: extractBrandFromUrl(result.link),
         relevantInfo: result.snippet || '',
         hasDetailedData: false,
         isPriorityPortal: false,
