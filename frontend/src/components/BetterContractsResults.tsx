@@ -263,12 +263,17 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     ];
     if (comparisonPaths.some(p => url.includes(p))) score += 2;
 
-    const comparisonTitleWords = [
-      'vergleich', 'tipps zum', 'was du wissen', 'im check',
-      'anbieter nach umsatz', 'den richtigen', 'liste',
-      'top 5', 'top 10', 'top 3'
+    // STARKE Artikel-/Listicle-Signale: fast immer kein Anbieter-Titel (+3)
+    const articleStrongSignals = [
+      'anbieter nach umsatz', 'der beste', 'die besten',
+      'tipps zum', 'was du wissen', 'im check', 'testsieger',
+      'top 5', 'top 10', 'top 3', 'den richtigen'
     ];
-    if (comparisonTitleWords.some(w => title.includes(w))) score += 2;
+    if (articleStrongSignals.some(w => title.includes(w))) score += 3;
+
+    // SCHWÄCHERE Vergleichs-Signale: können auch auf echten Anbieter-Seiten vorkommen (+2)
+    const articleWeakSignals = ['vergleich', 'liste', 'übersicht'];
+    if (articleWeakSignals.some(w => title.includes(w))) score += 2;
 
     return score >= 3;
   };
