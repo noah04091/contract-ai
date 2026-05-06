@@ -10,6 +10,7 @@
 
 const { OpenAI } = require('openai');
 const clauseParser = require('./legalLens/clauseParser');
+const { postProcess } = require('./legalLens/clausePostProcessor');
 
 // Lazy-Init: erst beim ersten Aufruf instantiieren — verhindert Crash beim require()
 // falls OPENAI_API_KEY (noch) nicht gesetzt ist (z.B. in Tests, Module-Loading-Phase).
@@ -40,7 +41,34 @@ async function analyzeClauses(contractText, contractType) {
 
   // 1) Klauseln extrahieren (lokal, keine Kosten)
   const parsed = clauseParser.parseContract(contractText, { detectRisk: true });
-  const localClauses = (parsed?.clauses || []).filter(c => c?.text && c.text.length > 0);
+  let localClauses = (parsed?.clauses || []).filter(c => c?.text && c.text.length > 0);
+
+  // 1b) Post-Processing: bewährte Filter aus LegalLens wiederverwenden
+  // (Stammdaten/Parteien-Block, Signaturen, Duplikate, leere Titel etc.)
+  if (localClauses.length > 0) {
+    const adapted = localClauses.map(c => ({ ...c, title: c.sectionTitle, number: c.id }));
+    const { clauses: cleaned, stats: ppStats } = postProcess(adapted, contractText);
+    const removed = adapted.length - cleaned.length;
+    if (removed > 0) {
+      const removedKeys = Object.entries(ppStats)
+        .filter(([k, v]) => v > 0 && k !== 'input' && k !== 'output')
+        .map(([k, v]) => `${k}=${v}`).join(', ');
+      console.log(`[QuickLint] PostProcess: ${adapted.length} → ${cleaned.length} Klauseln (${removedKeys})`);
+    }
+    localClauses = cleaned;
+  }
+
+  // 1c) Generate-spezifischer Filter: der "zwischen X und Y wird folgender … geschlossen"-
+  // Header-Block, den unsere generierten Verträge an Stelle 1 haben. stripPartyData in
+  // postProcess greift hier nicht, weil der Block nach Line-Joining nur 2 Adress-Signale
+  // hat (signalCount-Schwelle: 4). Sehr enges Pattern → keine False Positives.
+  if (localClauses.length > 0) {
+    const beforeIntro = localClauses.length;
+    localClauses = localClauses.filter(c => !isPartiesIntroBlock(c));
+    if (localClauses.length < beforeIntro) {
+      console.log(`[QuickLint] PartiesIntroFilter: ${beforeIntro - localClauses.length} Header-Block(s) entfernt`);
+    }
+  }
 
   if (localClauses.length === 0) {
     return {
@@ -76,7 +104,7 @@ async function analyzeClauses(contractText, contractType) {
         id: clause.id || `clause-${idx + 1}`,
         index: idx,
         number: extractClauseNumber(clause),
-        title: clause.sectionTitle || `Abschnitt ${idx + 1}`,
+        title: sanitizeTitle(clause.sectionTitle, idx),
         originalText: clause.text,
         riskLevel: normalizeRiskLevel(gptItem.riskLevel) || fallback.riskLevel,
         weakness: trimOrNull(gptItem.weakness),
@@ -88,7 +116,7 @@ async function analyzeClauses(contractText, contractType) {
       id: clause.id || `clause-${idx + 1}`,
       index: idx,
       number: extractClauseNumber(clause),
-      title: clause.sectionTitle || `Abschnitt ${idx + 1}`,
+      title: sanitizeTitle(clause.sectionTitle, idx),
       originalText: clause.text,
       ...fallback
     };
@@ -181,6 +209,32 @@ function callWithTimeout(fn, timeoutMs) {
 }
 
 // Helpers
+
+// Trifft den Stammdaten-Header-Block ("zwischen X und Y wird folgender ... geschlossen"),
+// der bei unseren GPT-generierten Verträgen Klausel 1 ist. Sehr eng:
+// muss MIT "zwischen" anfangen UND "wird folgender ... geschlossen/abgeschlossen/vereinbart"
+// enthalten — beides zusammen kommt in echten juristischen Klauseln praktisch nicht vor.
+function isPartiesIntroBlock(clause) {
+  const text = (clause?.text || '').trim();
+  if (!text) return false;
+  if (!/^zwischen\b/i.test(text)) return false;
+  if (!/wird\s+folgender.{0,150}\b(geschlossen|abgeschlossen|vereinbart)\b/i.test(text)) return false;
+  return true;
+}
+
+// Wenn der vom Parser gelieferte sectionTitle ein ganzer Satz oder unsinnig ist
+// (endet mit Punkt, beginnt klein, > 70 Zeichen) → Fallback auf "Abschnitt N".
+// Akzeptiert: "§ 1 Mietzeit", "Schönheitsreparaturen", "Kaution", etc.
+function sanitizeTitle(rawTitle, idx) {
+  if (!rawTitle || typeof rawTitle !== 'string') return `Abschnitt ${idx + 1}`;
+  const trimmed = rawTitle.trim();
+  if (!trimmed) return `Abschnitt ${idx + 1}`;
+  if (trimmed.length > 70) return `Abschnitt ${idx + 1}`;
+  if (/[.!?]\s*$/.test(trimmed)) return `Abschnitt ${idx + 1}`;
+  if (!/^[§A-ZÄÖÜ]/.test(trimmed)) return `Abschnitt ${idx + 1}`;
+  return trimmed;
+}
+
 function extractClauseNumber(clause) {
   if (!clause) return '';
   if (clause.id && /§\s*\d+[a-z]?/i.test(clause.id)) return clause.id;
