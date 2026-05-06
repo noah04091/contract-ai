@@ -938,37 +938,58 @@ const extractPartiesFromText = (contractText) => {
   let partyAName = null, partyBName = null;
   let partyAAddress = null, partyBAddress = null;
 
+  // Helper: Erkennt Markdown-Bold-Header allein in einer Zeile (z.B. "**Vermieter:**")
+  const isMarkdownLabel = (s) => /^\*\*[^*]+\*\*\s*:?\s*$/.test(s.trim());
+  // Helper: Erkennt Verbindungs-Wörter / Trenner die NICHT Name/Adresse sind
+  const isConnector = (s) => /^(und|–|-|—|nachfolgend|wird folgender|geschlossen|im folgenden)/i.test(s.trim());
+  // Helper: Liefert eine bereinigte Zeile oder null wenn sie zu skippen ist
+  const cleanCandidate = (s) => {
+    if (!s) return null;
+    const trimmed = s.trim().replace(/^\*\*|\*\*$/g, '').trim();
+    if (!trimmed) return null;
+    if (isMarkdownLabel(s)) return null;
+    if (isConnector(trimmed)) return null;
+    return trimmed;
+  };
+  // Helper: Splittet 1-N Zeilen in Name + Adresse — entweder Komma-getrennt in einer Zeile
+  // oder Multiline (erste Zeile = Name, Rest = Adresse).
+  const splitNameAddress = (lines) => {
+    const cleaned = lines.map(cleanCandidate).filter(Boolean);
+    if (cleaned.length === 0) return { name: null, address: null };
+    // Bei Komma in Zeile 1 → klassisches Format
+    if (cleaned[0].includes(',')) {
+      const idx = cleaned[0].indexOf(',');
+      return {
+        name: cleaned[0].substring(0, idx).trim(),
+        address: [cleaned[0].substring(idx + 1).trim(), ...cleaned.slice(1)].filter(Boolean).join(', ')
+      };
+    }
+    // Multiline-Format: Zeile 1 = Name, Rest = Adresse
+    return {
+      name: cleaned[0],
+      address: cleaned.slice(1, 3).join(', ') || null
+    };
+  };
+
   try {
-    // Suche den "zwischen" Block: "zwischen\n\nName, Adresse\n\n– nachfolgend"
-    const zwischenRegex = /zwischen\s*\n\s*\n?\s*([^\n]+)/i;
+    // Erfasse "zwischen" + bis zu 5 Folgezeilen (deckt Komma-Format UND Markdown-Multiline ab)
+    const zwischenRegex = /zwischen\s*\n+([^\n]+)(?:\n+([^\n]+))?(?:\n+([^\n]+))?(?:\n+([^\n]+))?(?:\n+([^\n]+))?/i;
     const matchA = contractText.match(zwischenRegex);
     if (matchA) {
-      const line = matchA[1].trim();
-      // Entferne eventuelle "– nachfolgend" am Ende
-      const cleanLine = line.replace(/\s*[-–—]\s*nachfolgend.*$/i, '').trim();
-      const commaIdx = cleanLine.indexOf(',');
-      if (commaIdx > 0) {
-        partyAName = cleanLine.substring(0, commaIdx).trim();
-        partyAAddress = cleanLine.substring(commaIdx + 1).trim();
-      } else {
-        partyAName = cleanLine;
-      }
+      const candidateLines = [matchA[1], matchA[2], matchA[3], matchA[4], matchA[5]];
+      const { name, address } = splitNameAddress(candidateLines);
+      partyAName = name;
+      partyAAddress = address;
     }
 
-    // Suche den "und" Block nach dem ersten "nachfolgend":
-    // "nachfolgend ... und\n\nName, Adresse\n\n– nachfolgend"
-    const undRegex = /nachfolgend[^]*?und\s*\n\s*\n?\s*([^\n]+)/i;
+    // Erfasse "und" Block nach dem ersten "nachfolgend"
+    const undRegex = /nachfolgend[^]*?\bund\s*\n+([^\n]+)(?:\n+([^\n]+))?(?:\n+([^\n]+))?(?:\n+([^\n]+))?(?:\n+([^\n]+))?/i;
     const matchB = contractText.match(undRegex);
     if (matchB) {
-      const line = matchB[1].trim();
-      const cleanLine = line.replace(/\s*[-–—]\s*nachfolgend.*$/i, '').trim();
-      const commaIdx = cleanLine.indexOf(',');
-      if (commaIdx > 0) {
-        partyBName = cleanLine.substring(0, commaIdx).trim();
-        partyBAddress = cleanLine.substring(commaIdx + 1).trim();
-      } else {
-        partyBName = cleanLine;
-      }
+      const candidateLines = [matchB[1], matchB[2], matchB[3], matchB[4], matchB[5]];
+      const { name, address } = splitNameAddress(candidateLines);
+      partyBName = name;
+      partyBAddress = address;
     }
   } catch (err) {
     console.warn('⚠️ [PDF] Party extraction from text failed:', err.message);

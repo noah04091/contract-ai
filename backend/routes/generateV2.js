@@ -503,15 +503,20 @@ EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
 zwischen
 
-WICHTIG: Setze hier die ECHTEN Namen und Adressen aus den Eingabedaten ein!
-Verwende NIEMALS Platzhalter wie [Name] wenn der Name in den Eingabedaten vorhanden ist!
-Name Partei A aus Eingabedaten, Adresse Partei A aus Eingabedaten
+[Name Partei A], [Straße Hausnummer Partei A], [PLZ Stadt Partei A]
 - nachfolgend "Vermieter" (oder passende Rolle) genannt -
 
 und
 
-Name Partei B aus Eingabedaten, Adresse Partei B aus Eingabedaten
+[Name Partei B], [Straße Hausnummer Partei B], [PLZ Stadt Partei B]
 - nachfolgend "Mieter" (oder passende Rolle) genannt -
+
+KRITISCHE REGELN für die "zwischen"-Sektion:
+- Schreibe Name UND Adresse in EINER Zeile, getrennt durch Komma — NICHT über mehrere Zeilen!
+- Verwende KEIN Markdown-Bold (**Vermieter:**) und KEINE Unterüberschriften für die Parteien
+- Format genau: <Voller Name>, <Straße Hausnummer>, <PLZ Stadt> – nachfolgend "<Rolle>" genannt –
+- Beispiel: "Max Mustermann, Hauptstraße 1, 12345 Berlin – nachfolgend „Vermieter" genannt –"
+- Verwende die ECHTEN Namen und Adressen aus den Eingabedaten — NIEMALS Platzhalter wie [Name]
 
 PRÄAMBEL
 
