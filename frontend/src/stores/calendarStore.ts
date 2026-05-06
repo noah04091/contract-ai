@@ -289,6 +289,11 @@ export const useCalendarStore = create<CalendarState>()(
       }),
       {
         name: 'calendar-store',
+        // 🔄 Cache-Bust: bei jedem Schema-relevanten Code-Change inkrementieren.
+        // Triggert automatisch frisches Re-Fetch aller User beim nächsten Page-Load.
+        // v1 (06.05.2026): Past-Events-Cutoff entfernt → alte Caches enthalten nur
+        // Events der letzten 365 Tage und müssen neu geladen werden.
+        version: 1,
         // Only persist events, lastFetched, cachedUserId, and access (not loading state)
         partialize: (state) => ({
           events: state.events,
