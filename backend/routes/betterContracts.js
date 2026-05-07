@@ -6,6 +6,12 @@ const router = express.Router();
 const axios = require("axios");
 const { OpenAI } = require("openai");
 const cheerio = require("cheerio");
+const crypto = require("crypto");
+const pLimit = require("p-limit");
+
+// 🆕 Globaler Concurrency-Limiter für Web-Scraping (Skalierungs-Schutz)
+// Egal wie viele User gleichzeitig analysieren — max 20 simultane Scrapes serverweit
+const scrapeLimit = pLimit(20);
 
 // 🔧 FORCE reload environment variables for this module
 const path = require('path');
@@ -86,8 +92,11 @@ const contractCache = new Map();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 Minuten
 
 function getCacheKey(contractText, searchQuery) {
-  const content = contractText.slice(0, 100) + searchQuery;
-  return Buffer.from(content).toString('base64').slice(0, 32);
+  // SHA-256 Hash über kompletten Text + Query → keine False-Positives bei ähnlichen Verträgen
+  return crypto.createHash('sha256')
+    .update((contractText || '') + '|' + (searchQuery || ''))
+    .digest('base64')
+    .slice(0, 32);
 }
 
 function getFromCache(cacheKey) {
@@ -1490,6 +1499,7 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
 
 // 🌍 ULTIMATIVE STANDORT-INTEGRATION\nconst MAJOR_GERMAN_CITIES = {\n  'berlin': {\n    stadtwerke: 'Berliner Stadtwerke',\n    carsharing: ['car2go', 'DriveNow', 'Miles'],\n    oepnv: 'BVG Berliner Verkehrsbetriebe',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', '1&1', 'EWE'],\n    regionalEnergy: ['Berliner Stadtwerke', 'GASAG', 'E.ON']\n  },\n  'muenchen': {\n    stadtwerke: 'Stadtwerke München',\n    carsharing: ['DriveNow', 'car2go', 'Flinkster'],\n    oepnv: 'MVG Münchner Verkehrsgesellschaft',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', 'M-net'],\n    regionalEnergy: ['Stadtwerke München', 'E.ON Bayern', 'LichtBlick']\n  },\n  'hamburg': {\n    stadtwerke: 'Hamburger Stadtwerke',\n    carsharing: ['car2go', 'DriveNow', 'Cambio'],\n    oepnv: 'HVV Hamburger Verkehrsverbund',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', 'Wilhelm.tel'],\n    regionalEnergy: ['Hamburger Stadtwerke', 'LichtBlick', 'E.ON']\n  },\n  'koeln': {\n    stadtwerke: 'Stadtwerke Köln',\n    carsharing: ['car2go', 'Cambio', 'Flinkster'],\n    oepnv: 'KVB Kölner Verkehrs-Betriebe',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', 'NetCologne'],\n    regionalEnergy: ['RheinEnergie', 'E.ON', 'Stadtwerke Köln']\n  },\n  'frankfurt': {\n    stadtwerke: 'Mainova',\n    carsharing: ['car2go', 'DriveNow', 'Flinkster'],\n    oepnv: 'RMV Rhein-Main-Verkehrsverbund',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', '1&1'],\n    regionalEnergy: ['Mainova', 'E.ON', 'Süwag']\n  },\n  'stuttgart': {\n    stadtwerke: 'Stadtwerke Stuttgart',\n    carsharing: ['car2go', 'Flinkster', 'Stadtmobil'],\n    oepnv: 'VVS Verkehrs- und Tarifverbund Stuttgart',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', 'EWE'],\n    regionalEnergy: ['EnBW', 'Stadtwerke Stuttgart', 'E.ON']\n  },\n  'hannover': {\n    stadtwerke: 'enercity',\n    carsharing: ['stadtmobil', 'car2go'],\n    oepnv: 'üstra',\n    internetProvider: ['Telekom', 'Vodafone', 'O2', 'EWE'],\n    regionalEnergy: ['enercity', 'E.ON', 'EWE']\n  }\n};\n\n// 🌍 Standort-Erkennung\nasync function getLocationFromIP() {\n  try {\n    console.log('🌍 Ermittle Standort über IP...');\n    \n    const response = await axios.get('http://ip-api.com/json/', {\n      timeout: 3000,\n      params: {\n        fields: 'status,city,regionName,country,query'\n      }\n    });\n    \n    if (response.data.status === 'success' && response.data.country === 'Germany') {\n      const city = response.data.city.toLowerCase();\n      const region = response.data.regionName;\n      \n      console.log(`🏙️ Standort erkannt: ${response.data.city}, ${region}`);\n      \n      const cityMapping = {\n        'berlin': 'berlin',\n        'münchen': 'muenchen',\n        'munich': 'muenchen',\n        'hamburg': 'hamburg',\n        'köln': 'koeln',\n        'cologne': 'koeln',\n        'frankfurt': 'frankfurt',\n        'stuttgart': 'stuttgart',\n        'düsseldorf': 'duesseldorf',\n        'dortmund': 'dortmund',\n        'leipzig': 'leipzig',\n        'hannover': 'hannover'\n      };\n      \n      const mappedCity = cityMapping[city] || null;\n      \n      if (mappedCity && MAJOR_GERMAN_CITIES[mappedCity]) {\n        console.log(`✅ Stadt gefunden: ${mappedCity}`);\n        return {\n          city: mappedCity,\n          cityName: response.data.city,\n          region: region,\n          providers: MAJOR_GERMAN_CITIES[mappedCity],\n          success: true\n        };\n      }\n    }\n    \n    console.log('⚠️ Fallback auf default');\n    return { city: 'default', success: false };\n    \n  } catch (error) {\n    console.warn('❌ Standort-Ermittlung fehlgeschlagen:', error.message);\n    return { city: 'default', success: false };\n  }\n}\n\n// 🌍 Standort-spezifische Query-Erweiterung\nfunction enhanceQueriesWithLocation(baseQueries, location, contractType) {\n  if (!location || !location.success) {\n    return baseQueries;\n  }\n  \n  const enhancedQueries = [...baseQueries];\n  const cityName = location.cityName;\n  const providers = location.providers;\n  \n  // Standort-spezifische Queries\n  if (contractType === 'strom' || contractType === 'gas') {\n    if (providers && providers.regionalEnergy) {\n      enhancedQueries.unshift(\n        `${providers.stadtwerke} ${contractType} tarife ${cityName}`,\n        `${contractType}anbieter ${cityName} vergleich`,\n        `günstige ${contractType}tarife ${cityName}`\n      );\n    }\n  } else if (contractType === 'dsl' || contractType === 'internet') {\n    if (providers && providers.internetProvider) {\n      enhancedQueries.unshift(\n        `internet anbieter ${cityName} vergleich`,\n        `dsl tarife ${cityName}`,\n        `glasfaser ${cityName}`\n      );\n    }\n  } else if (contractType === 'carsharing') {\n    if (providers && providers.carsharing) {\n      enhancedQueries.unshift(\n        `carsharing ${cityName} anbieter`,\n        `auto teilen ${cityName}`,\n        `${providers.carsharing[0]} ${cityName}`\n      );\n    }\n  } else if (contractType === 'oepnv') {\n    if (providers && providers.oepnv) {\n      enhancedQueries.unshift(\n        `${providers.oepnv} monatskarte`,\n        `nahverkehr ${cityName} preise`,\n        `öpnv ticket ${cityName}`\n      );\n    }\n  }\n  \n  console.log(`🌍 ${enhancedQueries.length - baseQueries.length} standort-spezifische Queries hinzugefügt`);\n  return enhancedQueries;\n}\n\n// 🚀 HAUPTROUTE mit verbesserter Validierung UND PARTNER-INTEGRATION
 router.post("/", async (req, res) => {
+  const startTime = Date.now();
   console.log(`🚀 START better-contracts Route - ${new Date().toISOString()}`);
 
   try {
@@ -2386,24 +2396,24 @@ router.post("/", async (req, res) => {
     const urlsToExtract = [...priorityUrls, ...regularUrls].slice(0, maxUrlsToExtract);
     console.log(`📄 Extrahiere Inhalte von ${urlsToExtract.length} Websites (${priorityUrls.length} Priority, ${isConsumer ? 'Consumer' : 'B2B'})...`);
 
-    // 🆕 Parallele Extraktion mit Error-Handling
-    const extractionPromises = urlsToExtract.map(async (result, index) => {
-      // Delays für Rate-Limiting
-      await new Promise(resolve => setTimeout(resolve, index * 200));
-
-      try {
-        const extracted = await extractWebContent(result.link);
-        return { ...extracted, originalResult: result };
-      } catch (error) {
-        console.warn(`⚠️ Extraktion fehlgeschlagen für ${result.link}:`, error.message);
-        return {
-          url: result.link,
-          success: false,
-          error: error.message,
-          originalResult: result
-        };
-      }
-    });
+    // 🆕 Parallele Extraktion mit GLOBALEM Concurrency-Limiter (max 20 simultane Scrapes serverweit)
+    // Schützt Server vor Überlastung bei vielen gleichzeitigen User-Anfragen
+    const extractionPromises = urlsToExtract.map((result) =>
+      scrapeLimit(async () => {
+        try {
+          const extracted = await extractWebContent(result.link);
+          return { ...extracted, originalResult: result };
+        } catch (error) {
+          console.warn(`⚠️ Extraktion fehlgeschlagen für ${result.link}:`, error.message);
+          return {
+            url: result.link,
+            success: false,
+            error: error.message,
+            originalResult: result
+          };
+        }
+      })
+    );
 
     const extractedContents = await Promise.allSettled(extractionPromises);
 
@@ -2549,13 +2559,8 @@ router.post("/", async (req, res) => {
       analysis = formatB2BAnalysis(b2bEnrichment);
       console.log(`✅ B2B Enrichment abgeschlossen: ${enrichedResults.length} angereichert, ${aiSuggestedAlternatives.length} KI-Vorschläge`);
     } else {
-      // 🛒 Consumer: KI-Vorschläge generieren (NEU) — bestehender Analyse-Flow danach UNVERÄNDERT
-      console.log(`🛒 Consumer-Modus: Generiere KI-Vorschläge...`);
-      const consumerAiProviders = await generateConsumerAiSuggestions(
-        cleanContractText, detectedType, openai
-      );
-      aiSuggestedAlternatives = createAiSuggestedAlternatives(consumerAiProviders);
-      console.log(`✅ Consumer KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
+      // 🛒 Consumer: KI-Vorschläge UND Analyse PARALLEL ausführen (Latenz-Optimierung)
+      console.log(`🛒 Consumer-Modus: KI-Vorschläge + Analyse parallel...`);
 
       const consumerSystemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
 
@@ -2608,15 +2613,22 @@ Die Ersparnisse sind nur Marketingangaben darüber, was man maximal sparen könn
 
 Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksichtige besonders die Partner-Angebote, da diese oft die besten Vergleichsmöglichkeiten bieten.`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          { role: "system", content: consumerSystemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.4,
-        max_tokens: 1200
-      });
+      // PARALLEL: KI-Vorschläge + Analyse (spart ~3 Sek vs. sequenziell)
+      const [consumerAiProviders, completion] = await Promise.all([
+        generateConsumerAiSuggestions(cleanContractText, detectedType, openai),
+        openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            { role: "system", content: consumerSystemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.4,
+          max_tokens: 1200
+        })
+      ]);
+
+      aiSuggestedAlternatives = createAiSuggestedAlternatives(consumerAiProviders);
+      console.log(`✅ Consumer parallel abgeschlossen — KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
 
       analysis = completion.choices[0].message.content;
     }
@@ -2637,7 +2649,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         detailedExtractions: successfulExtractions.length,
         aiSuggestedCount: aiSuggestedAlternatives.length,
         timestamp: new Date().toISOString(),
-        processingTimeMs: Date.now() - Date.now() // Placeholder
+        processingTimeMs: Date.now() - startTime
       }
     };
 
