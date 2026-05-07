@@ -148,6 +148,10 @@
 }
 
 /* Header Layout Modifiers */
+.header.centered {
+  text-align: center;
+}
+
 .header.left-logo {
   text-align: left;
 }
