@@ -167,6 +167,40 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
     </div>
   );
 
+  // Logo Rechts Layout (Spiegel von left-logo)
+  const renderRightLogoLayout = () => (
+    <div className={styles.rightLogoLayout}>
+      <div className={styles.rightLogoText}>
+        {renderTitle()}
+        {renderSubtitle()}
+      </div>
+      {logo && (
+        <div className={styles.rightLogoWrapper}>
+          <img src={logo} alt="Logo" className={styles.rightLogo} />
+        </div>
+      )}
+    </div>
+  );
+
+  // Logo Unten Layout (Text zentriert oben, Logo zentriert unten)
+  const renderLogoBelowLayout = () => (
+    <div className={styles.logoBelowLayout}>
+      {renderTitle()}
+      {renderSubtitle()}
+      {showDivider && (
+        <div
+          className={styles.decorativeLine}
+          style={dividerColor ? { backgroundColor: dividerColor } : undefined}
+        />
+      )}
+      {logo && (
+        <div className={styles.logoBelowWrapper}>
+          <img src={logo} alt="Logo" className={styles.logoBelow} />
+        </div>
+      )}
+    </div>
+  );
+
   // Minimal Layout (nur Text, kein Logo, keine Linie)
   const renderMinimalLayout = () => (
     <div className={styles.minimalLayout}>
@@ -180,6 +214,10 @@ export const HeaderBlock: React.FC<HeaderBlockProps> = ({
     switch (headerLayout) {
       case 'left-logo':
         return renderLeftLogoLayout();
+      case 'right-logo':
+        return renderRightLogoLayout();
+      case 'logo-below':
+        return renderLogoBelowLayout();
       case 'minimal':
         return renderMinimalLayout();
       default:

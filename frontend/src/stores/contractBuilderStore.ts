@@ -94,6 +94,7 @@ export interface BlockContent {
   party2?: PartyInfo;
   showPartyIcons?: boolean;      // Icons bei Parteien einblenden (default: false)
   partiesLayout?: 'modern' | 'classic';  // Layout-Variante: modern (side-by-side) oder classic (vertikal)
+  partiesAlignment?: 'left' | 'center' | 'right';  // Text-Ausrichtung im klassischen Layout (default: left)
   // Cover Block
   coverTitle?: string;
   coverSubtitle?: string;
@@ -110,7 +111,7 @@ export interface BlockContent {
   showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
   signatureLayout?: 'modern' | 'classic' | 'formal' | 'corporate' | 'elegant';  // Layout-Varianten
   // Header
-  headerLayout?: 'centered' | 'left-logo' | 'minimal';  // Layout: zentriert, Logo links, nur Titel
+  headerLayout?: 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal';  // Layout: zentriert, Logo links/rechts, Logo unten, nur Titel
   // Clause
   clauseLayout?: 'standard' | 'indented' | 'boxed';  // Layout: Standard, eingerückt, mit Rahmen
   // Clause

@@ -25,7 +25,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { party1, party2, showPartyIcons = false, partiesLayout = 'modern' } = content;
+  const { party1, party2, showPartyIcons = false, partiesLayout = 'modern', partiesAlignment = 'left' } = content;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -212,7 +212,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
     const prefix2 = getVariablePrefix(2);
 
     return (
-      <div className={styles.classicLayout}>
+      <div className={styles.classicLayout} style={{ textAlign: partiesAlignment as 'left' | 'center' | 'right' }}>
         <div className={styles.classicIntro}>zwischen</div>
 
         <div className={styles.classicParty}>

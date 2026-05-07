@@ -663,7 +663,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
         dividerColor?: string;
         titleFontSize?: number;
         subtitleFontSize?: number;
-        headerLayout?: 'centered' | 'left-logo' | 'minimal';
+        headerLayout?: 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal';
         logo?: string;
       };
       const hdrLayout = headerContent.headerLayout || 'centered';
@@ -697,15 +697,19 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             <select
               className={styles.select}
               value={hdrLayout}
-              onChange={(e) => onUpdate({ ...content, headerLayout: e.target.value as 'centered' | 'left-logo' | 'minimal' })}
+              onChange={(e) => onUpdate({ ...content, headerLayout: e.target.value as 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal' })}
             >
-              <option value="centered">Zentriert</option>
+              <option value="centered">Zentriert (Logo oben)</option>
               <option value="left-logo">Logo Links</option>
-              <option value="minimal">Minimal</option>
+              <option value="right-logo">Logo Rechts</option>
+              <option value="logo-below">Logo Unten</option>
+              <option value="minimal">Minimal (kein Logo)</option>
             </select>
             <p className={styles.fieldHint}>
               {hdrLayout === 'centered' && 'Zentrierter Titel mit optionalem Logo darüber'}
               {hdrLayout === 'left-logo' && 'Logo links, Titel und Untertitel rechts'}
+              {hdrLayout === 'right-logo' && 'Titel links, Logo rechts (Spiegel von Logo Links)'}
+              {hdrLayout === 'logo-below' && 'Titel zentriert oben, Logo darunter'}
               {hdrLayout === 'minimal' && 'Nur Titel und Untertitel, linksbündig'}
             </p>
           </div>
@@ -833,6 +837,7 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     case 'parties': {
       const showIcons = (content as { showPartyIcons?: boolean }).showPartyIcons;
       const partiesLayout = (content as { partiesLayout?: 'modern' | 'classic' }).partiesLayout || 'modern';
+      const partiesAlignment = (content as { partiesAlignment?: 'left' | 'center' | 'right' }).partiesAlignment || 'left';
       return (
         <>
           {/* Layout-Auswahl */}
@@ -865,6 +870,25 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
                 />
                 <span>Icons einblenden</span>
               </label>
+            </div>
+          )}
+
+          {/* Ausrichtung nur bei klassischem Layout anzeigen */}
+          {partiesLayout === 'classic' && (
+            <div className={styles.field}>
+              <label className={styles.label}>Ausrichtung</label>
+              <select
+                className={styles.select}
+                value={partiesAlignment}
+                onChange={(e) => onUpdate({ ...content, partiesAlignment: e.target.value as 'left' | 'center' | 'right' })}
+              >
+                <option value="left">Linksbündig</option>
+                <option value="center">Zentriert</option>
+                <option value="right">Rechtsbündig</option>
+              </select>
+              <p className={styles.fieldHint}>
+                Ausrichtung der Parteien-Texte im klassischen Layout
+              </p>
             </div>
           )}
 
