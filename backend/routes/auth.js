@@ -169,6 +169,8 @@ router.post("/register", authLimiter, async (req, res) => {
         timestamp: new Date()
       },
       lastLoginDevice: null, // Wird beim ersten Login gesetzt
+      // 🎨 UI-PRÄFERENZEN — von Anfang an existent, damit nested Keys (contractColumns, contractSubLabel) sauber via $set updaten
+      uiPreferences: {},
       // 🎓 ONBOARDING v3.0 - Server-seitige Persistierung
       onboarding: {
         status: 'not_started', // not_started | in_progress | completed | skipped

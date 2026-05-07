@@ -8908,9 +8908,27 @@
   background: transparent;
   color: #cbd5e1;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
   flex-shrink: 0;
   padding: 0;
+  position: relative;
+}
+/* 🆕 V2 TODO #6: Tap-Target ≥36px (a11y) ohne visuelle Vergrößerung des Stift-Icons */
+.colConfigBtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  /* unsichtbar, fängt nur Touch-Events */
+}
+.colConfigBtn:focus { outline: none; }
+.colConfigBtn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  color: #3b82f6;
 }
 .colHeaderV2:hover .colConfigBtn {
   color: #94a3b8;
@@ -8965,10 +8983,17 @@
   cursor: pointer;
   text-align: left;
   width: 100%;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
   text-transform: none;
   letter-spacing: 0;
   font-weight: 400;
+  min-height: 32px; /* a11y tap-target */
+}
+.colConfigItem:focus { outline: none; }
+.colConfigItem:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+  background: #eff6ff;
 }
 .colConfigItem:hover {
   background: #f5f6f9;
@@ -9008,6 +9033,11 @@
 .colConfigResetBtn:hover {
   background: #f1f5f9;
   color: #0a0e1a;
+}
+.colConfigResetBtn:focus { outline: none; }
+.colConfigResetBtn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 .colConfigResetBtn svg {
   flex-shrink: 0;

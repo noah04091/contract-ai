@@ -1,5 +1,5 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -456,10 +456,28 @@ export default function Contracts() {
   const [columnConfigFor, setColumnConfigFor] = useState<number | 'sublabel' | null>(null);
   // Position des Popovers (fixed positioning, damit es nicht von overflow:hidden abgeschnitten wird)
   const [columnConfigPos, setColumnConfigPos] = useState<{ top: number; left: number } | null>(null);
+  // 🆕 V2 TODO #6: Refs für A11y (Focus-Restore + saubere Outside-Detection statt querySelector)
+  const colConfigPopoverRef = useRef<HTMLDivElement | null>(null);
+  // Map: slot-id → trigger-button-element. Damit beim Schließen Focus zurück zum richtigen Stift geht.
+  const colConfigTriggerRefs = useRef<Map<number | 'sublabel', HTMLButtonElement | null>>(new Map());
+  // Welcher Slot hat zuletzt geöffnet — für Focus-Restore beim Schließen
+  const colConfigLastOpenedRef = useRef<number | 'sublabel' | null>(null);
+  // Helper: Konfigurator schließen + Fokus zurück zum Trigger
+  const closeColumnConfig = useCallback(() => {
+    const last = colConfigLastOpenedRef.current;
+    setColumnConfigFor(null);
+    setColumnConfigPos(null);
+    if (last !== null) {
+      const trigger = colConfigTriggerRefs.current.get(last);
+      // setTimeout damit React den State-Update verarbeitet hat, bevor wir focus setzen
+      window.requestAnimationFrame(() => trigger?.focus());
+    }
+  }, []);
   // Helper: Stift-Button-Klick → Position berechnen + State setzen
   const openColumnConfig = (slot: number | 'sublabel', e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (columnConfigFor === slot) {
+      // Toggle: schließen + Fokus bleibt auf Trigger (Click-Source)
       setColumnConfigFor(null);
       setColumnConfigPos(null);
       return;
@@ -470,6 +488,7 @@ export default function Contracts() {
       top: rect.bottom + 6,
       left: Math.min(rect.left, window.innerWidth - 220), // Popover ist ~210px breit
     });
+    colConfigLastOpenedRef.current = slot;
     setColumnConfigFor(slot);
   };
 
@@ -572,7 +591,12 @@ export default function Contracts() {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ contractColumns: next }),
-    }).catch((e) => console.error('Spalten-Config speichern fehlgeschlagen:', e));
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }).catch((e) => {
+      console.error('Spalten-Config speichern fehlgeschlagen:', e);
+      toast.error('Spalten-Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen.');
+    });
   };
 
   // Reset einen Slot auf Default
@@ -597,7 +621,12 @@ export default function Contracts() {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ contractSubLabel: field }),
-    }).catch((e) => console.error('Sub-Label-Config speichern fehlgeschlagen:', e));
+    }).then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }).catch((e) => {
+      console.error('Sub-Label-Config speichern fehlgeschlagen:', e);
+      toast.error('Sub-Label-Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen.');
+    });
   };
 
   // Sub-Label rendern — Hochladedatum bleibt IMMER als zweites Element
@@ -872,13 +901,58 @@ export default function Contracts() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor]);
 
-  // 🆕 V2 TODO #4d: Scroll-Listener nur wenn Konfigurator offen (eigenes useEffect, deps minimal)
+  // 🆕 V2 TODO #6: Escape schließt Konfigurator + Focus-Restore zum Trigger
+  useEffect(() => {
+    if (columnConfigFor === null) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        closeColumnConfig();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [columnConfigFor, closeColumnConfig]);
+
+  // 🆕 V2 TODO #6: Beim Öffnen Fokus auf aktuell ausgewähltes Item (oder erstes Item)
+  useEffect(() => {
+    if (columnConfigFor === null) return;
+    // RAF, damit Popover gerendert ist
+    const id = window.requestAnimationFrame(() => {
+      const popover = colConfigPopoverRef.current;
+      if (!popover) return;
+      const active = popover.querySelector<HTMLButtonElement>(`.${styles.colConfigItemActive}`);
+      const first = popover.querySelector<HTMLButtonElement>(`.${styles.colConfigItem}`);
+      (active || first)?.focus();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [columnConfigFor]);
+
+  // 🆕 V2 TODO #6: Pfeil-Tasten-Navigation in Konfigurator-Liste (rove-tabindex Pattern)
+  const handleConfigListKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return;
+    const popover = colConfigPopoverRef.current;
+    if (!popover) return;
+    const items = Array.from(popover.querySelectorAll<HTMLButtonElement>(`.${styles.colConfigItem}`));
+    if (items.length === 0) return;
+    const currentIdx = items.findIndex((el) => el === document.activeElement);
+    e.preventDefault();
+    let nextIdx = currentIdx;
+    if (e.key === 'ArrowDown') nextIdx = currentIdx < items.length - 1 ? currentIdx + 1 : 0;
+    else if (e.key === 'ArrowUp') nextIdx = currentIdx > 0 ? currentIdx - 1 : items.length - 1;
+    else if (e.key === 'Home') nextIdx = 0;
+    else if (e.key === 'End') nextIdx = items.length - 1;
+    items[nextIdx]?.focus();
+  };
+
+  // 🆕 V2 TODO #4d/#6: Scroll-Listener nur wenn Konfigurator offen (eigenes useEffect, deps minimal)
   // WICHTIG: Scroll IM Popover (max-height + overflow-y der Field-Liste) darf das Popover NICHT schließen.
+  // Outside-Detection läuft über Ref (nicht querySelector) → robust bei mehreren Popovers im DOM.
   useEffect(() => {
     if (columnConfigFor === null) return;
     const handleScroll = (e: Event) => {
       const target = e.target as Node | null;
-      const popoverEl = document.querySelector(`.${styles.colConfigPopover}`);
+      const popoverEl = colConfigPopoverRef.current;
       if (popoverEl && target && popoverEl.contains(target)) return;
       setColumnConfigFor(null);
       setColumnConfigPos(null);
@@ -5497,21 +5571,38 @@ export default function Contracts() {
                                 <span>Vertragsname</span>
                                 {sortOrder === 'name_az' && <ChevronUp size={14} className={styles.sortArrow} />}
                                 {sortOrder === 'name_za' && <ChevronDown size={14} className={styles.sortArrow} />}
-                                {/* 🆕 V2 TODO #4b: Sub-Label switchbar */}
+                                {/* 🆕 V2 TODO #4b/#6: Sub-Label switchbar (ARIA + Keyboard) */}
                                 <button
+                                  ref={(el) => { colConfigTriggerRefs.current.set('sublabel', el); }}
                                   className={styles.colConfigBtn}
                                   onClick={(e) => openColumnConfig('sublabel', e)}
+                                  aria-haspopup="dialog"
+                                  aria-expanded={columnConfigFor === 'sublabel'}
+                                  aria-controls={columnConfigFor === 'sublabel' ? 'col-config-popover-sublabel' : undefined}
+                                  aria-label="Sub-Label unter Vertragsname konfigurieren"
                                   title="Sub-Label konfigurieren"
                                 >
                                   <Pencil size={11} />
                                 </button>
                                 {columnConfigFor === 'sublabel' && (
-                                  <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
+                                  <div
+                                    ref={colConfigPopoverRef}
+                                    id="col-config-popover-sublabel"
+                                    role="dialog"
+                                    aria-label="Sub-Label unter Vertragsname"
+                                    className={styles.colConfigPopover}
+                                    style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={handleConfigListKeyDown}
+                                  >
                                     <div className={styles.colConfigLabel}>Sub-Label unter Vertragsname</div>
                                     <div className={styles.colConfigList}>
                                       {SUB_LABEL_OPTIONS.map((opt) => (
                                         <button
                                           key={opt.key}
+                                          role="option"
+                                          aria-selected={subLabelField === opt.key}
+                                          tabIndex={subLabelField === opt.key ? 0 : -1}
                                           className={`${styles.colConfigItem} ${subLabelField === opt.key ? styles.colConfigItemActive : ''}`}
                                           onClick={() => setSubLabelFieldPersist(opt.key)}
                                         >
@@ -5524,6 +5615,7 @@ export default function Contracts() {
                                       <button
                                         className={styles.colConfigResetBtn}
                                         onClick={resetSubLabel}
+                                        aria-label="Sub-Label auf Standard-Wert zurücksetzen"
                                         title="Auf Standard-Wert zurücksetzen"
                                       >
                                         <RotateCcw size={11} />
@@ -5534,25 +5626,42 @@ export default function Contracts() {
                                 )}
                               </span>
                             </th>
-                            {/* 🆕 V2 TODO #4b: dynamische Slot-Header mit Konfigurator */}
+                            {/* 🆕 V2 TODO #4b/#6: dynamische Slot-Header mit Konfigurator (ARIA + Keyboard) */}
                             {[0, 1].map((slotIdx) => (
                               <th key={`slot-${slotIdx}`} className={styles.sortableHeader}>
                                 <span className={styles.colHeaderV2}>
                                   <span>{getFieldLabel(columnSlots[slotIdx])}</span>
                                   <button
+                                    ref={(el) => { colConfigTriggerRefs.current.set(slotIdx, el); }}
                                     className={styles.colConfigBtn}
                                     onClick={(e) => openColumnConfig(slotIdx, e)}
+                                    aria-haspopup="dialog"
+                                    aria-expanded={columnConfigFor === slotIdx}
+                                    aria-controls={columnConfigFor === slotIdx ? `col-config-popover-${slotIdx}` : undefined}
+                                    aria-label={`Spalte ${slotIdx + 1} konfigurieren`}
                                     title="Spalte konfigurieren"
                                   >
                                     <Pencil size={11} />
                                   </button>
                                   {columnConfigFor === slotIdx && (
-                                    <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
+                                    <div
+                                      ref={colConfigPopoverRef}
+                                      id={`col-config-popover-${slotIdx}`}
+                                      role="dialog"
+                                      aria-label={`Spalte ${slotIdx + 1} konfigurieren`}
+                                      className={styles.colConfigPopover}
+                                      style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined}
+                                      onClick={(e) => e.stopPropagation()}
+                                      onKeyDown={handleConfigListKeyDown}
+                                    >
                                       <div className={styles.colConfigLabel}>Spalte {slotIdx + 1} · Anzuzeigender Wert</div>
                                       <div className={styles.colConfigList}>
                                         {FIELD_OPTIONS.map((opt) => (
                                           <button
                                             key={opt.key}
+                                            role="option"
+                                            aria-selected={columnSlots[slotIdx] === opt.key}
+                                            tabIndex={columnSlots[slotIdx] === opt.key ? 0 : -1}
                                             className={`${styles.colConfigItem} ${columnSlots[slotIdx] === opt.key ? styles.colConfigItemActive : ''}`}
                                             onClick={() => setColumnSlotField(slotIdx, opt.key)}
                                           >
@@ -5565,6 +5674,7 @@ export default function Contracts() {
                                         <button
                                           className={styles.colConfigResetBtn}
                                           onClick={() => resetColumnSlot(slotIdx)}
+                                          aria-label={`Spalte ${slotIdx + 1} auf Standard zurücksetzen`}
                                           title="Auf Standard-Wert zurücksetzen"
                                         >
                                           <RotateCcw size={11} />
@@ -5583,24 +5693,41 @@ export default function Contracts() {
                                 {sortOrder === 'status_desc' && <ChevronDown size={14} className={styles.sortArrow} />}
                               </span>
                             </th>
-                            {/* 🆕 V2 TODO #4b: 3. Slot-Spalte (default Ablauf, konfigurierbar) */}
+                            {/* 🆕 V2 TODO #4b/#6: 3. Slot-Spalte (default Ablauf, konfigurierbar) */}
                             <th className={`${styles.sortableHeader} ${styles.uploadDateColumn}`}>
                               <span className={styles.colHeaderV2}>
                                 <span>{getFieldLabel(columnSlots[2])}</span>
                                 <button
+                                  ref={(el) => { colConfigTriggerRefs.current.set(2, el); }}
                                   className={styles.colConfigBtn}
                                   onClick={(e) => openColumnConfig(2, e)}
+                                  aria-haspopup="dialog"
+                                  aria-expanded={columnConfigFor === 2}
+                                  aria-controls={columnConfigFor === 2 ? 'col-config-popover-2' : undefined}
+                                  aria-label="Spalte 3 konfigurieren"
                                   title="Spalte konfigurieren"
                                 >
                                   <Pencil size={11} />
                                 </button>
                                 {columnConfigFor === 2 && (
-                                  <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
+                                  <div
+                                    ref={colConfigPopoverRef}
+                                    id="col-config-popover-2"
+                                    role="dialog"
+                                    aria-label="Spalte 3 konfigurieren"
+                                    className={styles.colConfigPopover}
+                                    style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onKeyDown={handleConfigListKeyDown}
+                                  >
                                     <div className={styles.colConfigLabel}>Spalte 3 · Anzuzeigender Wert</div>
                                     <div className={styles.colConfigList}>
                                       {FIELD_OPTIONS.map((opt) => (
                                         <button
                                           key={opt.key}
+                                          role="option"
+                                          aria-selected={columnSlots[2] === opt.key}
+                                          tabIndex={columnSlots[2] === opt.key ? 0 : -1}
                                           className={`${styles.colConfigItem} ${columnSlots[2] === opt.key ? styles.colConfigItemActive : ''}`}
                                           onClick={() => setColumnSlotField(2, opt.key)}
                                         >
@@ -5613,6 +5740,7 @@ export default function Contracts() {
                                       <button
                                         className={styles.colConfigResetBtn}
                                         onClick={() => resetColumnSlot(2)}
+                                        aria-label="Spalte 3 auf Standard zurücksetzen"
                                         title="Auf Standard-Wert zurücksetzen"
                                       >
                                         <RotateCcw size={11} />
