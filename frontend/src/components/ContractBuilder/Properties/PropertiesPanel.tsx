@@ -699,18 +699,18 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               value={hdrLayout}
               onChange={(e) => onUpdate({ ...content, headerLayout: e.target.value as 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal' })}
             >
-              <option value="centered">Zentriert (Logo oben)</option>
-              <option value="left-logo">Logo Links</option>
-              <option value="right-logo">Logo Rechts</option>
-              <option value="logo-below">Logo Unten</option>
-              <option value="minimal">Minimal (kein Logo)</option>
+              <option value="centered">Zentriert</option>
+              <option value="left-logo">Linksbündig</option>
+              <option value="right-logo">Rechtsbündig</option>
+              <option value="logo-below">Zentriert mit Logo unten</option>
+              <option value="minimal">Schlicht</option>
             </select>
             <p className={styles.fieldHint}>
-              {hdrLayout === 'centered' && 'Zentrierter Titel mit optionalem Logo darüber'}
-              {hdrLayout === 'left-logo' && 'Logo links, Titel und Untertitel rechts'}
-              {hdrLayout === 'right-logo' && 'Titel links, Logo rechts (Spiegel von Logo Links)'}
-              {hdrLayout === 'logo-below' && 'Titel zentriert oben, Logo darunter'}
-              {hdrLayout === 'minimal' && 'Nur Titel und Untertitel, linksbündig'}
+              {hdrLayout === 'centered' && 'Titel zentriert, Logo (falls vorhanden) darüber zentriert'}
+              {hdrLayout === 'left-logo' && 'Titel und Untertitel links — Logo (falls vorhanden) daneben links'}
+              {hdrLayout === 'right-logo' && 'Titel und Untertitel rechts — Logo (falls vorhanden) daneben rechts'}
+              {hdrLayout === 'logo-below' && 'Titel zentriert oben, Logo (falls vorhanden) zentriert darunter'}
+              {hdrLayout === 'minimal' && 'Reine Textdarstellung linksbündig, ohne Trennlinie'}
             </p>
           </div>
 
