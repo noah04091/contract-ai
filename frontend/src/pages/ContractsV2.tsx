@@ -479,15 +479,22 @@ export default function Contracts() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = contract as any; // für Felder die nicht im strikten Type sind (anbieter, vertragsnummer, kosten, etc.)
     switch (field) {
-      case 'provider':
+      case 'provider': {
         // Smart-Fallback: User-manuell `anbieter` > KI `provider.displayName`
-        return c.anbieter || contract.provider?.displayName || muted('—');
+        // .trim() damit "  " (whitespace-only) als leer gilt
+        const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+        return manual || contract.provider?.displayName || muted('—');
+      }
       case 'contractType':
         return contract.contractType || contract.provider?.category || muted('—');
-      case 'contractNumber':
-        return c.vertragsnummer || c.contractNumber || muted('—');
-      case 'customerNumber':
-        return c.customerNumber || c.kundennummer || muted('—');
+      case 'contractNumber': {
+        const v = (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') || (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '');
+        return v || muted('—');
+      }
+      case 'customerNumber': {
+        const v = (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') || (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '');
+        return v || muted('—');
+      }
       case 'startDate':
         return contract.startDate ? formatDate(contract.startDate) : muted('—');
       case 'expiry': {
@@ -533,9 +540,10 @@ export default function Contracts() {
         return contract.laufzeit || muted('—');
       case 'payment': {
         // Smart-Display: paymentAmount + Frequenz, oder kosten
+        // WICHTIG: nullish-Check (==null) damit 0 € korrekt angezeigt wird (nicht durch !-falsy gefiltert)
         const amount = contract.paymentAmount ?? c.kosten;
         const freq = contract.paymentFrequency;
-        if (!amount) return muted('—');
+        if (amount === undefined || amount === null || amount === '') return muted('—');
         return `${amount} €${freq ? ` / ${freq}` : ''}`;
       }
       default:
@@ -860,21 +868,24 @@ export default function Contracts() {
         setColumnConfigPos(null);
       }
     };
-    // 🆕 V2 TODO #4c: Konfigurator-Popover beim Scrollen schließen (fixed-Position klebt sonst)
-    const handleScroll = () => {
-      if (columnConfigFor !== null) {
-        setColumnConfigFor(null);
-        setColumnConfigPos(null);
-      }
-    };
-
     document.addEventListener('click', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, true);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor]);
+
+  // 🆕 V2 TODO #4d: Scroll-Listener nur wenn Konfigurator offen (eigenes useEffect, deps minimal)
+  // WICHTIG: Scroll IM Popover (max-height + overflow-y der Field-Liste) darf das Popover NICHT schließen.
+  useEffect(() => {
+    if (columnConfigFor === null) return;
+    const handleScroll = (e: Event) => {
+      const target = e.target as Node | null;
+      const popoverEl = document.querySelector(`.${styles.colConfigPopover}`);
+      if (popoverEl && target && popoverEl.contains(target)) return;
+      setColumnConfigFor(null);
+      setColumnConfigPos(null);
+    };
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [columnConfigFor]);
 
   // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
   useEffect(() => {
