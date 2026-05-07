@@ -396,53 +396,59 @@ export default function Contracts() {
   ];
 
   /* ============================================================
-     V2 TODO #4b — Spalten-Konfigurator
+     V2 TODO #4c — Spalten-Konfigurator (aufgeräumt + Smart-Display)
      ============================================================ */
   type ColumnFieldKey =
-    | 'provider' | 'contractType' | 'contractNumber'
-    | 'startDate' | 'expiry' | 'remaining'
-    | 'payment' | 'value'
-    | 'createdAt' | 'kuendigung' | 'laufzeit'
-    | 'qf0' | 'qf1';
+    | 'provider' | 'contractType' | 'contractNumber' | 'customerNumber'
+    | 'startDate' | 'expiry' | 'gekuendigtZum'
+    | 'kuendigung' | 'laufzeit' | 'payment';
 
   interface ColumnFieldDef {
     key: ColumnFieldKey;
     label: string;
   }
 
-  // Field-Optionen für Slot-Spalten
+  // 10 Field-Optionen für Slot-Spalten (statt 13 — qf0/qf1, value, remaining, createdAt raus)
   const FIELD_OPTIONS: ColumnFieldDef[] = useMemo(() => [
     { key: 'provider',       label: 'Anbieter' },
     { key: 'contractType',   label: 'Vertragstyp' },
     { key: 'contractNumber', label: 'Vertragsnummer' },
-    { key: 'startDate',      label: 'Vertragsbeginn' },
     { key: 'expiry',         label: 'Ablauf' },
-    { key: 'remaining',      label: 'Restlaufzeit' },
-    { key: 'payment',        label: 'Zahlung' },
-    { key: 'value',          label: 'Vertragswert' },
-    { key: 'createdAt',      label: 'Hochgeladen' },
+    { key: 'startDate',      label: 'Vertragsbeginn' },
     { key: 'kuendigung',     label: 'Kündigungsfrist' },
     { key: 'laufzeit',       label: 'Laufzeit' },
-    { key: 'qf0',            label: eckdatenLabels[0] },
-    { key: 'qf1',            label: eckdatenLabels[1] },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [eckdatenLabels[0], eckdatenLabels[1]]);
+    { key: 'payment',        label: 'Zahlung' },
+    { key: 'gekuendigtZum',  label: 'Gekündigt zum' },
+    { key: 'customerNumber', label: 'Kundennummer' },
+  ], []);
 
   // Default-Slots
   const DEFAULT_SLOTS: ColumnFieldKey[] = ['provider', 'contractType', 'expiry'];
 
-  // Slot-State (3 Slots)
+  // Slot-State (3 Slots) — mit Migration: alte/unbekannte Field-Keys → Default
   const [columnSlots, setColumnSlots] = useState<ColumnFieldKey[]>(() => {
-    const stored = user?.uiPreferences?.contractColumns as ColumnFieldKey[] | undefined;
-    if (Array.isArray(stored) && stored.length === 3) return stored;
+    const stored = user?.uiPreferences?.contractColumns as string[] | undefined;
+    if (Array.isArray(stored) && stored.length === 3) {
+      const validKeys = new Set(FIELD_OPTIONS.map(f => f.key));
+      return stored.map((key, idx): ColumnFieldKey =>
+        validKeys.has(key as ColumnFieldKey) ? (key as ColumnFieldKey) : DEFAULT_SLOTS[idx]
+      );
+    }
     return DEFAULT_SLOTS;
   });
 
-  // Sub-Label-Field (was unter Vertragsname steht)
-  type SubLabelField = 'contractType' | 'provider' | 'createdAt' | 'startDate';
+  // Sub-Label-Field (was unter Vertragsname steht) — Vertragsbeginn statt Status
+  type SubLabelField = 'contractType' | 'provider' | 'startDate' | 'contractNumber';
+  const SUB_LABEL_OPTIONS: { key: SubLabelField; label: string }[] = [
+    { key: 'contractType',   label: 'Vertragstyp' },
+    { key: 'provider',       label: 'Anbieter' },
+    { key: 'startDate',      label: 'Vertragsbeginn' },
+    { key: 'contractNumber', label: 'Vertragsnummer' },
+  ];
   const [subLabelField, setSubLabelField] = useState<SubLabelField>(() => {
     const stored = user?.uiPreferences?.contractSubLabel as SubLabelField | undefined;
-    if (stored && ['contractType', 'provider', 'createdAt', 'startDate'].includes(stored)) return stored;
+    const validKeys = ['contractType', 'provider', 'startDate', 'contractNumber'];
+    if (stored && validKeys.includes(stored)) return stored;
     return 'contractType';
   });
 
@@ -467,20 +473,35 @@ export default function Contracts() {
     setColumnConfigFor(slot);
   };
 
-  // Wert eines Felds rendern
+  // Wert eines Felds rendern (Smart-Display)
   const renderColumnValue = (contract: Contract, field: ColumnFieldKey): React.ReactNode => {
     const muted = (text: string) => <span className={styles.contractDetailMuted}>{text}</span>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = contract as any; // für Felder die nicht im strikten Type sind (anbieter, vertragsnummer, kosten, etc.)
     switch (field) {
       case 'provider':
-        return contract.provider?.displayName || muted('—');
+        // Smart-Fallback: User-manuell `anbieter` > KI `provider.displayName`
+        return c.anbieter || contract.provider?.displayName || muted('—');
       case 'contractType':
         return contract.contractType || contract.provider?.category || muted('—');
       case 'contractNumber':
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (contract as any).contractNumber || muted('—');
+        return c.vertragsnummer || c.contractNumber || muted('—');
+      case 'customerNumber':
+        return c.customerNumber || c.kundennummer || muted('—');
       case 'startDate':
         return contract.startDate ? formatDate(contract.startDate) : muted('—');
       case 'expiry': {
+        // Smart-Anzeige: bei aktiver Kündigung "Gekündigt zum X" statt Original-Ablaufdatum
+        if (c.gekuendigtZum) {
+          const cancelled = new Date(c.gekuendigtZum);
+          if (!Number.isNaN(cancelled.getTime())) {
+            return (
+              <span style={{ color: '#b91c1c', fontWeight: 500 }}>
+                Gekündigt zum {formatDate(c.gekuendigtZum)}
+              </span>
+            );
+          }
+        }
         if (!contract.expiryDate) return muted('unbefristet');
         const exp = new Date(contract.expiryDate);
         if (Number.isNaN(exp.getTime())) return muted('—');
@@ -504,31 +525,19 @@ export default function Contracts() {
           </>
         );
       }
-      case 'remaining': {
-        if (!contract.expiryDate) return muted('unbefristet');
-        const exp = new Date(contract.expiryDate);
-        if (Number.isNaN(exp.getTime())) return muted('—');
-        const days = Math.ceil((exp.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (days < 0) return <span style={{ color: '#b91c1c' }}>abgelaufen</span>;
-        return `${days} Tag${days === 1 ? '' : 'e'}`;
-      }
-      case 'payment':
-        return contract.paymentAmount
-          ? `${contract.paymentAmount} €${contract.paymentFrequency ? ` / ${contract.paymentFrequency}` : ''}`
-          : muted('—');
-      case 'value':
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (contract as any).contractValue ? `${(contract as any).contractValue} €` : muted('—');
-      case 'createdAt':
-        return formatDate(contract.createdAt);
+      case 'gekuendigtZum':
+        return c.gekuendigtZum ? formatDate(c.gekuendigtZum) : muted('—');
       case 'kuendigung':
         return contract.kuendigung || muted('—');
       case 'laufzeit':
         return contract.laufzeit || muted('—');
-      case 'qf0':
-        return contract.quickFacts?.[0]?.value || muted('—');
-      case 'qf1':
-        return contract.quickFacts?.[1]?.value || muted('—');
+      case 'payment': {
+        // Smart-Display: paymentAmount + Frequenz, oder kosten
+        const amount = contract.paymentAmount ?? c.kosten;
+        const freq = contract.paymentFrequency;
+        if (!amount) return muted('—');
+        return `${amount} €${freq ? ` / ${freq}` : ''}`;
+      }
       default:
         return muted('—');
     }
@@ -558,6 +567,15 @@ export default function Contracts() {
     }).catch((e) => console.error('Spalten-Config speichern fehlgeschlagen:', e));
   };
 
+  // Reset einen Slot auf Default
+  const resetColumnSlot = (slotIdx: number) => {
+    setColumnSlotField(slotIdx, DEFAULT_SLOTS[slotIdx]);
+  };
+  // Reset Sub-Label auf Default
+  const resetSubLabel = () => {
+    setSubLabelFieldPersist('contractType');
+  };
+
   // Sub-Label-Field ändern + persistieren
   const setSubLabelFieldPersist = (field: SubLabelField) => {
     setSubLabelField(field);
@@ -574,16 +592,18 @@ export default function Contracts() {
     }).catch((e) => console.error('Sub-Label-Config speichern fehlgeschlagen:', e));
   };
 
-  // Sub-Label rendern
+  // Sub-Label rendern — Hochladedatum bleibt IMMER als zweites Element
   const renderSubLabel = (contract: Contract): React.ReactNode => {
     if (contract.isGenerated) return <>Generiert <span className={styles.contractSubSepV2}>·</span> Hochgeladen {formatDate(contract.createdAt)}</>;
     if (contract.uploadType === 'EMAIL_IMPORT') return <>Per E-Mail <span className={styles.contractSubSepV2}>·</span> Hochgeladen {formatDate(contract.createdAt)}</>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = contract as any;
     let primary: string | undefined;
     switch (subLabelField) {
-      case 'contractType': primary = contract.contractType || contract.provider?.category; break;
-      case 'provider':     primary = contract.provider?.displayName; break;
-      case 'startDate':    primary = contract.startDate ? formatDate(contract.startDate) : undefined; break;
-      case 'createdAt':    primary = formatDate(contract.createdAt); break;
+      case 'contractType':   primary = contract.contractType || contract.provider?.category; break;
+      case 'provider':       primary = c.anbieter || contract.provider?.displayName; break;
+      case 'startDate':      primary = contract.startDate ? formatDate(contract.startDate) : undefined; break;
+      case 'contractNumber': primary = c.vertragsnummer || c.contractNumber; break;
     }
     return (
       <>
@@ -840,9 +860,20 @@ export default function Contracts() {
         setColumnConfigPos(null);
       }
     };
+    // 🆕 V2 TODO #4c: Konfigurator-Popover beim Scrollen schließen (fixed-Position klebt sonst)
+    const handleScroll = () => {
+      if (columnConfigFor !== null) {
+        setColumnConfigFor(null);
+        setColumnConfigPos(null);
+      }
+    };
 
     document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
   }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor]);
 
   // 📱 MOBILE: Scroll blockieren wenn Bottom Sheet offen ist (nur contentArea, nicht body)
@@ -5465,14 +5496,9 @@ export default function Contracts() {
                                 </button>
                                 {columnConfigFor === 'sublabel' && (
                                   <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
-                                    <div className={styles.colConfigLabel}>Sub-Label unter Name</div>
+                                    <div className={styles.colConfigLabel}>Sub-Label unter Vertragsname</div>
                                     <div className={styles.colConfigList}>
-                                      {([
-                                        { key: 'contractType', label: 'Vertragstyp' },
-                                        { key: 'provider',     label: 'Anbieter' },
-                                        { key: 'startDate',    label: 'Vertragsbeginn' },
-                                        { key: 'createdAt',    label: 'Hochladedatum' },
-                                      ] as const).map((opt) => (
+                                      {SUB_LABEL_OPTIONS.map((opt) => (
                                         <button
                                           key={opt.key}
                                           className={`${styles.colConfigItem} ${subLabelField === opt.key ? styles.colConfigItemActive : ''}`}
@@ -5482,6 +5508,16 @@ export default function Contracts() {
                                           <span>{opt.label}</span>
                                         </button>
                                       ))}
+                                    </div>
+                                    <div className={styles.colConfigFooter}>
+                                      <button
+                                        className={styles.colConfigResetBtn}
+                                        onClick={resetSubLabel}
+                                        title="Auf Standard-Wert zurücksetzen"
+                                      >
+                                        <RotateCcw size={11} />
+                                        <span>Standard</span>
+                                      </button>
                                     </div>
                                   </div>
                                 )}
@@ -5501,7 +5537,7 @@ export default function Contracts() {
                                   </button>
                                   {columnConfigFor === slotIdx && (
                                     <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
-                                      <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
+                                      <div className={styles.colConfigLabel}>Spalte {slotIdx + 1} · Anzuzeigender Wert</div>
                                       <div className={styles.colConfigList}>
                                         {FIELD_OPTIONS.map((opt) => (
                                           <button
@@ -5513,6 +5549,16 @@ export default function Contracts() {
                                             <span>{opt.label}</span>
                                           </button>
                                         ))}
+                                      </div>
+                                      <div className={styles.colConfigFooter}>
+                                        <button
+                                          className={styles.colConfigResetBtn}
+                                          onClick={() => resetColumnSlot(slotIdx)}
+                                          title="Auf Standard-Wert zurücksetzen"
+                                        >
+                                          <RotateCcw size={11} />
+                                          <span>Standard</span>
+                                        </button>
                                       </div>
                                     </div>
                                   )}
@@ -5539,7 +5585,7 @@ export default function Contracts() {
                                 </button>
                                 {columnConfigFor === 2 && (
                                   <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
-                                    <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
+                                    <div className={styles.colConfigLabel}>Spalte 3 · Anzuzeigender Wert</div>
                                     <div className={styles.colConfigList}>
                                       {FIELD_OPTIONS.map((opt) => (
                                         <button
@@ -5551,6 +5597,16 @@ export default function Contracts() {
                                           <span>{opt.label}</span>
                                         </button>
                                       ))}
+                                    </div>
+                                    <div className={styles.colConfigFooter}>
+                                      <button
+                                        className={styles.colConfigResetBtn}
+                                        onClick={() => resetColumnSlot(2)}
+                                        title="Auf Standard-Wert zurücksetzen"
+                                      >
+                                        <RotateCcw size={11} />
+                                        <span>Standard</span>
+                                      </button>
                                     </div>
                                   </div>
                                 )}
