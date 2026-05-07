@@ -5851,3 +5851,25 @@
     display: none;
   }
 }
+
+/* ===================================================================
+   COMPACT-MODE MOBILE FIX — verhindert Header-Überlauf bei 5 Buttons
+   ================================================================== */
+@media (max-width: 768px) {
+  .contractHeader {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .clauseCount {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .compactToggle,
+  .sectionCollapseAll {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}

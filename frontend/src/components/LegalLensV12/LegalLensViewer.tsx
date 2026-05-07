@@ -2106,6 +2106,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           {mobileTab === 'clauses' ? (
             <div className={styles.mobileTabPanel}>
               <ClauseList
+                key={contractId || 'pending'}
                 clauses={clauses}
                 selectedClause={selectedClause}
                 progress={progress}
@@ -2216,6 +2217,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           {/* Left: Clause List OR PDF Viewer */}
           {viewMode === 'text' ? (
             <ClauseList
+              key={contractId || 'pending'}
               clauses={clauses}
               selectedClause={selectedClause}
               progress={progress}
