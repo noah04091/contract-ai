@@ -1360,7 +1360,13 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
   keywords.push(...relevantTerms.filter(term => term.length > 3).slice(0, 20));
   
   // 🔴 STRENGES MATCHING: Explizite Typ-Extraktion
+  // ORDER MATTERS: spezifische Typen ZUERST (Mobilfunk/DSL/Kredit/Girokonto vor Strom/Gas),
+  // weil die kurzen Substrings in Strom-Regex (eon|rwe|enbw) sonst false positives produzieren
   const explicitTypes = {
+    'mobilfunk': /mobilfunk|handy(?:tarif|vertrag)/i,
+    'dsl': /dsl|internet(?:anschluss|tarif)/i,
+    'kredit': /kredit|darlehen/i,
+    'girokonto': /girokonto|banking/i,
     'rechtsschutz': /rechtsschutz/i,
     'haftpflicht': /(?<!kfz.{0,20})haftpflicht(?!.*kfz)/i,
     'kfz': /kfz|auto(?:versicherung)?|fahrzeug/i,
@@ -1372,11 +1378,7 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
     'unfall': /unfallversicherung/i,
     'tierhalter': /tier(?:halter)?.*haftpflicht|hunde.*haftpflicht/i,
     'strom': /strom|energie|kwh|stadtwerke|stromanbieter|stromtarif|stromvertrag|eon|vattenfall|enbw|rwe/i,
-    'gas': /gas|erdgas|gasanbieter|gastarif|gasvertrag/i,
-    'dsl': /dsl|internet(?:anschluss|tarif)/i,
-    'mobilfunk': /mobilfunk|handy(?:tarif|vertrag)/i,
-    'kredit': /kredit|darlehen/i,
-    'girokonto': /girokonto|banking/i
+    'gas': /gas|erdgas|gasanbieter|gastarif|gasvertrag/i
   };
   
   // 🔴 SCHRITT 1: Expliziten Vertragstyp finden
@@ -1740,10 +1742,10 @@ router.post("/", async (req, res) => {
       filterType = 'strom';
     } else if (textLower.includes('gas') && !textLower.includes('versicherung')) {
       filterType = 'gas';
-    } else if (textLower.includes('dsl') || textLower.includes('internet')) {
-      filterType = 'dsl';
-    } else if (textLower.includes('handy') || textLower.includes('mobilfunk')) {
+    } else if (textLower.includes('handy') || textLower.includes('mobilfunk') || detectedType === 'mobilfunk' || detectedType === 'handy') {
       filterType = 'mobilfunk';
+    } else if (textLower.includes('dsl') || textLower.includes('breitband') || detectedType === 'dsl' || detectedType === 'internet') {
+      filterType = 'dsl';
     } else if (textLower.includes('fitness') || textLower.includes('gym') || textLower.includes('mcfit')) {
       filterType = 'fitness';
     } else if (textLower.includes('netflix') || textLower.includes('spotify') || 
