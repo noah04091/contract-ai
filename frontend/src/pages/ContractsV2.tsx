@@ -448,6 +448,24 @@ export default function Contracts() {
 
   // Welcher Slot hat das Konfigurator-Popover offen
   const [columnConfigFor, setColumnConfigFor] = useState<number | 'sublabel' | null>(null);
+  // Position des Popovers (fixed positioning, damit es nicht von overflow:hidden abgeschnitten wird)
+  const [columnConfigPos, setColumnConfigPos] = useState<{ top: number; left: number } | null>(null);
+  // Helper: Stift-Button-Klick → Position berechnen + State setzen
+  const openColumnConfig = (slot: number | 'sublabel', e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (columnConfigFor === slot) {
+      setColumnConfigFor(null);
+      setColumnConfigPos(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Popover öffnet unter dem Button, leicht nach links versetzt damit's reinpasst
+    setColumnConfigPos({
+      top: rect.bottom + 6,
+      left: Math.min(rect.left, window.innerWidth - 220), // Popover ist ~210px breit
+    });
+    setColumnConfigFor(slot);
+  };
 
   // Wert eines Felds rendern
   const renderColumnValue = (contract: Contract, field: ColumnFieldKey): React.ReactNode => {
@@ -819,6 +837,7 @@ export default function Contracts() {
       // 🆕 V2 TODO #4b: Konfigurator-Popover schließen
       if (columnConfigFor !== null) {
         setColumnConfigFor(null);
+        setColumnConfigPos(null);
       }
     };
 
@@ -5439,16 +5458,13 @@ export default function Contracts() {
                                 {/* 🆕 V2 TODO #4b: Sub-Label switchbar */}
                                 <button
                                   className={styles.colConfigBtn}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setColumnConfigFor(columnConfigFor === 'sublabel' ? null : 'sublabel');
-                                  }}
+                                  onClick={(e) => openColumnConfig('sublabel', e)}
                                   title="Sub-Label konfigurieren"
                                 >
                                   <Pencil size={11} />
                                 </button>
                                 {columnConfigFor === 'sublabel' && (
-                                  <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                  <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
                                     <div className={styles.colConfigLabel}>Sub-Label unter Name</div>
                                     <div className={styles.colConfigList}>
                                       {([
@@ -5478,16 +5494,13 @@ export default function Contracts() {
                                   <span>{getFieldLabel(columnSlots[slotIdx])}</span>
                                   <button
                                     className={styles.colConfigBtn}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setColumnConfigFor(columnConfigFor === slotIdx ? null : slotIdx);
-                                    }}
+                                    onClick={(e) => openColumnConfig(slotIdx, e)}
                                     title="Spalte konfigurieren"
                                   >
                                     <Pencil size={11} />
                                   </button>
                                   {columnConfigFor === slotIdx && (
-                                    <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                    <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
                                       <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
                                       <div className={styles.colConfigList}>
                                         {FIELD_OPTIONS.map((opt) => (
@@ -5519,16 +5532,13 @@ export default function Contracts() {
                                 <span>{getFieldLabel(columnSlots[2])}</span>
                                 <button
                                   className={styles.colConfigBtn}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setColumnConfigFor(columnConfigFor === 2 ? null : 2);
-                                  }}
+                                  onClick={(e) => openColumnConfig(2, e)}
                                   title="Spalte konfigurieren"
                                 >
                                   <Pencil size={11} />
                                 </button>
                                 {columnConfigFor === 2 && (
-                                  <div className={styles.colConfigPopover} onClick={(e) => e.stopPropagation()}>
+                                  <div className={styles.colConfigPopover} style={columnConfigPos ? { top: columnConfigPos.top, left: columnConfigPos.left } : undefined} onClick={(e) => e.stopPropagation()}>
                                     <div className={styles.colConfigLabel}>Anzuzeigender Wert</div>
                                     <div className={styles.colConfigList}>
                                       {FIELD_OPTIONS.map((opt) => (
