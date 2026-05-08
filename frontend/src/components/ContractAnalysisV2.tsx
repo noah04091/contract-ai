@@ -21,6 +21,7 @@ import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine &
 import V2HeroSection from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
+import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -1565,8 +1566,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             />
           )}
 
-          {/* Action Buttons */}
-          <div className={styles.actionButtonsContainer}>
+          {/* AUSGEBLENDET in V2 (durch V2ActionBar als sticky Bar unten ersetzt) */}
+          <div className={styles.actionButtonsContainer} style={{ display: 'none' }}>
             {/* Legal Pulse Button - Primary, links */}
             {(result?.originalContractId || initialResult?.originalContractId) && (
               <motion.button
@@ -1747,6 +1748,28 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               </p>
             </div>
           )}
+
+          {/* 🎨 V2 HÄPPCHEN D — Sticky Action-Bar unten (ersetzt actionButtonsContainer) */}
+          <V2ActionBar
+            hasContractId={!!(propContractId || result?.originalContractId || initialResult?.originalContractId)}
+            isBusinessOrHigher={isBusinessOrHigher}
+            optimizing={optimizing}
+            generatingPdf={generatingPdf}
+            openingChat={openingChat}
+            showPulseLink={!!(result?.originalContractId || initialResult?.originalContractId)}
+            showOpenContract={!!onNavigateToContract && !!(result?.originalContractId || initialResult?.originalContractId)}
+            onOptimize={handleOptimize}
+            onDownloadPdf={handleDownloadPdf}
+            onOpenChat={handleOpenInChat}
+            onOpenPulse={() => {
+              const id = result?.originalContractId || initialResult?.originalContractId;
+              if (id) window.location.href = `/pulse/${id}`;
+            }}
+            onOpenContract={() => {
+              const id = result?.originalContractId || initialResult?.originalContractId;
+              if (id && onNavigateToContract) onNavigateToContract(id);
+            }}
+          />
         </motion.div>
       )}
     </div>

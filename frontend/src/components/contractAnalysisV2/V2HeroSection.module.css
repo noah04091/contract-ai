@@ -124,7 +124,25 @@
   margin-bottom: 12px;
 }
 .heroSub { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 14px; }
-.heroStats { display: flex; gap: 18px; flex-wrap: wrap; }
+.heroStats { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+.laymanToggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  background: #f5f3ff;
+  color: #8b5cf6;
+  border-radius: 8px;
+  font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+  border: 1px dashed rgba(139,92,246,.3);
+  font-family: inherit;
+}
+.laymanToggle:hover { background: #ede9fe; }
+.laymanToggleActive {
+  background: #8b5cf6;
+  color: #fff;
+  border-style: solid;
+  border-color: #8b5cf6;
+}
 .hsItem { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #475569; }
 .hsDot { width: 7px; height: 7px; border-radius: 50%; }
 .hsDotRed { background: #ef4444; }

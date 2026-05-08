@@ -1,0 +1,82 @@
+/* V2 Action-Bar — sticky, dunkel, V6-Mockup-Stil */
+
+.actionBar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15,23,42,.97);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 13px;
+  padding: 8px 10px 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  box-shadow: 0 8px 24px -8px rgba(15,23,42,.4);
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg,#f59e0b,#d97706);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.primary:hover { filter: brightness(1.05); }
+.primary:disabled { background: linear-gradient(135deg,#94a3b8,#64748b); cursor: not-allowed; }
+.primary svg { animation: none; }
+.primaryLoading svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.divider { width: 1px; height: 22px; background: rgba(255,255,255,.12); }
+
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: rgba(255,255,255,.85);
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+}
+.secondary:hover { background: rgba(255,255,255,.06); }
+.secondary:disabled { opacity: .4; cursor: not-allowed; }
+.secondary.locked { opacity: .6; cursor: not-allowed; }
+.crown {
+  margin-left: 3px;
+  color: #fbbf24;
+  font-size: 10px;
+}
+.secondaryLoading svg { animation: spin 1s linear infinite; }
+
+@media (max-width: 768px) {
+  .actionBar {
+    width: calc(100vw - 24px);
+    left: 12px;
+    transform: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px 6px;
+  }
+  .primary { flex: 1; justify-content: center; min-width: 0; }
+}
+@media (max-width: 480px) {
+  .secondary span { display: none; }
+  .secondary { padding: 7px 9px; }
+  .primary span { font-size: 12.5px; }
+}

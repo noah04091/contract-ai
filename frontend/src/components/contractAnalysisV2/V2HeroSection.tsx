@@ -9,7 +9,8 @@
 //
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
-import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
@@ -123,6 +124,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const d = data;
   const score = d.contractScore;
   const variant = getScoreVariant(score);
+  const [laymanMode, setLaymanMode] = useState(false);
 
   // SVG Donut Math
   const radius = 68;
@@ -132,9 +134,16 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
     ? circumference
     : circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
 
-  // Score-Hero-Sub: scoreReasoning bevorzugt
-  const heroSubRaw = d.scoreReasoning || (Array.isArray(d.laymanSummary) ? d.laymanSummary[0] : (typeof d.laymanSummary === "string" ? d.laymanSummary : ""));
-  const heroSub = heroSubRaw ? truncateAtWord(heroSubRaw) : "";
+  // Layman-Modus: laymanSummary statt scoreReasoning anzeigen
+  const laymanArr = Array.isArray(d.laymanSummary) ? d.laymanSummary : (typeof d.laymanSummary === "string" ? [d.laymanSummary] : []);
+  const hasLayman = laymanArr.length > 0;
+  let heroSub: string;
+  if (laymanMode && hasLayman) {
+    heroSub = laymanArr.join(" ");
+  } else {
+    heroSub = d.scoreReasoning || laymanArr[0] || "";
+  }
+  if (heroSub) heroSub = truncateAtWord(heroSub, laymanMode ? 600 : 280);
 
   // Counts für Hero-Stats
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
@@ -303,6 +312,18 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </div>
               )}
             </div>
+            {hasLayman && (
+              <button
+                type="button"
+                className={`${styles.laymanToggle} ${laymanMode ? styles.laymanToggleActive : ""}`}
+                onClick={() => setLaymanMode(v => !v)}
+                aria-pressed={laymanMode}
+                title={laymanMode ? "Zurück zur Anwalts-Sprache" : "In einfacher Sprache erklären"}
+              >
+                <Sparkles size={13} />
+                {laymanMode ? "Anwalts-Sprache" : "In einfachen Worten"}
+              </button>
+            )}
           </div>
         </div>
 
