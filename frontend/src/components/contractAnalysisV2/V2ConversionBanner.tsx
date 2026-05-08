@@ -4,6 +4,7 @@
 //   Business   → blau, "Mehrere Verträge gleichzeitig?" → Enterprise
 //   Enterprise → null (kein Banner — dafür dezenter Footer in der Action-Bar)
 
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
 interface UsageData {
@@ -23,22 +24,35 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
   const limit = usage?.limit;
   const limitDisplay = limit && isFinite(limit) ? limit : "∞";
 
+  // Responsive: stack bei <600px
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 600);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const stackStyle = isMobile ? { flexDirection: "column" as const, alignItems: "flex-start" as const, gap: 12 } : {};
+  const ctaStyle = isMobile ? { width: "100%", justifyContent: "center" as const } : {};
+
   if (plan === "enterprise") return null;
 
   if (plan === "business") {
     const eye = count != null && limit ? `Business · ${count} von ${limitDisplay} Analysen` : "Business-Account";
     return (
       <div style={{
-        margin: "0 24px 20px",
+        margin: isMobile ? "0 12px 20px" : "0 24px 20px",
         background: "linear-gradient(135deg,#1e40af,#1e3a8a)",
         borderRadius: 12,
-        padding: "18px 22px",
+        padding: isMobile ? "14px 16px" : "18px 22px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         gap: 18,
         color: "#fff",
         flexWrap: "wrap",
+        ...stackStyle,
       }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#bfdbfe", marginBottom: 4 }}>{eye}</div>
@@ -50,6 +64,7 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
           padding: "9px 16px", background: "#fff", color: "#0f172a",
           borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none",
           flexShrink: 0,
+          ...ctaStyle,
         }}>
           Enterprise ansehen <ArrowRight size={13} />
         </a>
@@ -61,10 +76,10 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
   const eye = count != null && limit ? `Free-Account · ${count} von ${limitDisplay} Analysen` : "Free-Account";
   return (
     <div style={{
-      margin: "0 24px 20px",
+      margin: isMobile ? "0 12px 20px" : "0 24px 20px",
       background: "linear-gradient(135deg,#1e293b,#0f172a)",
       borderRadius: 12,
-      padding: "18px 22px",
+      padding: isMobile ? "14px 16px" : "18px 22px",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -73,6 +88,7 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
       position: "relative",
       overflow: "hidden",
       flexWrap: "wrap",
+      ...stackStyle,
     }}>
       <div style={{
         content: '""',
@@ -93,6 +109,7 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
         padding: "9px 16px", background: "#fff", color: "#0f172a",
         borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: "none",
         flexShrink: 0,
+        ...ctaStyle,
       }}>
         Plan ansehen <ArrowRight size={13} />
       </a>

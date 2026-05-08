@@ -18,7 +18,7 @@ import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cac
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
-import V2HeroSection from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
+import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
@@ -1031,21 +1031,30 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
           {/* 🎨 V2 HÄPPCHEN B — Neuer Hero-Bereich (File-Card + Banner + Score-Donut + Hero-Stats + Quick-Facts + Asymmetrie).
               Ersetzt: success-header, documentCharacterization-Banner, score-section, asymmetry-card.
               Tabs/Cards darunter bleiben in Häppchen B noch wie alte Komponente — kommen in Häppchen C. */}
-          <V2HeroSection
-            data={(result || initialResult) as Parameters<typeof V2HeroSection>[0]['data']}
-            fileName={displayName}
-            serviceHealth={serviceHealth}
-            isInitialResult={!!initialResult && !result}
-          />
-
-          {/* 🎨 V2 HÄPPCHEN C — Tabs-System ersetzt das alte 6-Card-Grid + Recommendations + typeSpecificFindings + detailedLegalOpinion */}
-          <V2TabsSection data={(result || initialResult) as Parameters<typeof V2TabsSection>[0]['data']} />
-
-          {/* 🎨 V2 HÄPPCHEN C — Conversion-Banner für Free-User (Business: Hint zu Enterprise, Enterprise: kein Banner) */}
-          <V2ConversionBanner
-            usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2ConversionBanner>[0]['usage']}
-            userPlan={user?.subscriptionPlan}
-          />
+          {(() => {
+            const data = (result || initialResult) as Parameters<typeof V2HeroSection>[0]['data'];
+            const failed = isFailedAnalysis(data);
+            return (
+              <>
+                <V2HeroSection
+                  data={data}
+                  fileName={displayName}
+                  serviceHealth={serviceHealth}
+                  isInitialResult={!!initialResult && !result}
+                />
+                {/* Bei kaputter Analyse: Tabs + Conv-Banner überspringen — Hero zeigt schon Fehler-Banner */}
+                {!failed && (
+                  <>
+                    <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+                    <V2ConversionBanner
+                      usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2ConversionBanner>[0]['usage']}
+                      userPlan={user?.subscriptionPlan}
+                    />
+                  </>
+                )}
+              </>
+            );
+          })()}
 
           {/* === ALTE Sektionen ab hier · in Häppchen C komplett ersetzt durch Tabs/Banner oben === */}
           {/* AUSGEBLENDET in V2: Success Header (durch V2HeroSection-Banner ersetzt) */}

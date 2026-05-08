@@ -23,10 +23,13 @@ type AnalysisData = {
   asymmetryAssessment?: { rating?: string; favoredParty?: string | null; explanation?: string } | null;
   laymanSummary?: string[] | string | null;
   quickFacts?: Array<{ label?: string; value?: string | number; meta?: string; rating?: string }> | null;
+  summary?: string[] | string | null;
   criticalIssues?: unknown[] | null;
+  positiveAspects?: unknown[] | null;
   fristHinweise?: unknown[] | null;
   recommendations?: unknown[] | null;
   typeSpecificFindings?: unknown[] | null;
+  detailedLegalOpinion?: string | null;
   confidence?: number | string | null;
   qualityScore?: number | string | null;
   documentType?: string | null;
@@ -42,6 +45,27 @@ interface Props {
   fileName: string;
   serviceHealth?: boolean | null;
   isInitialResult?: boolean;
+}
+
+// Erkennt eine kaputte/unvollständige Analyse:
+//   - Score 0 (zuverlässiger Backend-Fallback-Indikator)
+//   - Score < 30 + alle Inhalts-Felder leer
+//   - Inhalt enthält "Ohne Vertragstext"-Hilflos-Antworten der KI
+export function isFailedAnalysis(d: AnalysisData): boolean {
+  if (d.contractScore === 0) return true;
+  const isArrayEmpty = (a: unknown) => !Array.isArray(a) || a.length === 0;
+  const helplessRegex = /ohne (den )?vertragstext|kann (ich )?(keine?|nicht)|bitte lade/i;
+  const summaryStr = Array.isArray(d.summary) ? d.summary.join(" ") : (typeof d.summary === "string" ? d.summary : "");
+  if (d.contractScore != null && d.contractScore < 30 && helplessRegex.test(summaryStr)) return true;
+  if (d.contractScore == null || d.contractScore < 30) {
+    return isArrayEmpty(d.summary)
+      && isArrayEmpty(d.criticalIssues)
+      && isArrayEmpty(d.positiveAspects)
+      && isArrayEmpty(d.recommendations)
+      && !d.scoreReasoning
+      && !d.detailedLegalOpinion;
+  }
+  return false;
 }
 
 function getScoreVariant(score: number | null | undefined) {
@@ -125,6 +149,53 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const score = d.contractScore;
   const variant = getScoreVariant(score);
   const [laymanMode, setLaymanMode] = useState(false);
+
+  // Spezialfall: Analyse fehlgeschlagen → eigener roter Banner statt peinlich leeres Layout
+  if (isFailedAnalysis(d)) {
+    return (
+      <>
+        <div className={styles.fileCard}>
+          <div className={styles.fcLeft}>
+            <div className={styles.fcIcon} style={{ background: "linear-gradient(135deg,#fef2f2,#fecaca)", color: "#ef4444" }}>!</div>
+            <div className={styles.fcMeta}>
+              <div className={styles.fcName}>{fileName}</div>
+              <div className={styles.fcPartners}>
+                <span className={styles.fcDoctype} style={{ background: "#fef2f2", color: "#ef4444" }}>Analyse unvollständig</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{
+          background: "#fef2f2",
+          border: "1px solid #fca5a5",
+          borderRadius: 14,
+          padding: "20px 24px",
+          marginBottom: 16,
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 14,
+        }}>
+          <div style={{
+            width: 40, height: 40,
+            background: "#ef4444",
+            color: "#fff",
+            borderRadius: 10,
+            display: "grid", placeItems: "center",
+            flexShrink: 0,
+            fontSize: 20, fontWeight: 700,
+          }}>!</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>
+              Analyse konnte nicht abgeschlossen werden
+            </div>
+            <div style={{ fontSize: 13.5, color: "#475569", lineHeight: 1.55 }}>
+              Für diesen Vertrag liegen keine Analyse-Ergebnisse vor — vermutlich konnte die KI den Vertragstext nicht ausreichend extrahieren oder die Pipeline ist während der Verarbeitung abgebrochen. <strong>Bitte erneut analysieren.</strong>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // SVG Donut Math
   const radius = 68;

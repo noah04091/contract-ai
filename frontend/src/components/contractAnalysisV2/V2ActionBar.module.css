@@ -1,10 +1,11 @@
 /* V2 Action-Bar — sticky, dunkel, V6-Mockup-Stil */
 
 .actionBar {
-  position: fixed;
+  position: sticky;
   bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin: 24px auto 8px;
+  width: -moz-fit-content;
+  width: fit-content;
   background: rgba(15,23,42,.97);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
@@ -66,9 +67,8 @@
 
 @media (max-width: 768px) {
   .actionBar {
-    width: calc(100vw - 24px);
-    left: 12px;
-    transform: none;
+    width: calc(100% - 24px);
+    margin: 24px auto 8px;
     flex-wrap: wrap;
     justify-content: center;
     padding: 8px 6px;
