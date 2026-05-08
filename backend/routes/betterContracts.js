@@ -553,15 +553,24 @@ async function generateGPTSearchQueries(detectedType, contractText, openaiClient
       messages: [
         {
           role: "system",
-          content: `Du generierst Google-Suchanfragen auf Deutsch, mit denen man die OFFIZIELLEN WEBSITES echter Anbieter findet — NICHT Vergleichsportale, NICHT Ratgeber-Artikel, NICHT "Top 10"-Listen.
+          content: `Du generierst Google-Suchanfragen auf Deutsch, mit denen man ALTERNATIVE Anbieter findet — KONKURRENTEN des im Vertrag genannten aktuellen Anbieters.
 
-ZIEL: Suchanfragen, die direkt zu den Anbieter-Websites führen, wo der Nutzer einen Vertrag abschliessen oder Kontakt aufnehmen kann.
+KRITISCH:
+1. Erkenne den AKTUELLEN Anbieter aus dem Vertragsauszug (z.B. GRENKEFACTORING, ARAG, klarmobil, E.ON, etc.)
+2. Generiere Queries für KONKURRENTEN/ALTERNATIVEN dieses Anbieters
+3. Verwende NIEMALS den Namen des aktuellen Anbieters in den Queries
+4. Suche OFFIZIELLE WEBSITES echter Anbieter — NICHT Vergleichsportale, Ratgeber, Top-10-Listen
 
 GUTE QUERY-PATTERNS (Beispiele):
 - "[Vertragstyp] services für KMU Deutschland"
 - "[Vertragstyp]gesellschaft mittelstand"
 - "[Vertragstyp] anbieten unternehmen Deutschland"
-- "[konkreter bekannter Anbieter] [Vertragstyp]"
+- "[konkreter bekannter Konkurrent] [Vertragstyp]"
+
+BEISPIELE:
+- Vertrag bei GRENKEFACTORING → Queries für "factoring services KMU", "abcfinance factoring", "deutsche factoring bank"
+- Vertrag bei ARAG → Queries für "rechtsschutz ROLAND", "ADVOCARD rechtsschutz"
+- NIE den IST-Anbieter googeln!
 
 VERMEIDE diese Wörter (führen zu Vergleichs-/Ratgeber-Seiten):
 - "vergleich", "vergleichen"
@@ -779,6 +788,95 @@ ANTWORTE NUR mit validem JSON:
   } catch (error) {
     console.error(`❌ Consumer-KI fehlgeschlagen:`, error.message);
     return [];
+  }
+}
+
+// 🆕 GPT-Validation-Layer: Klassifiziert jeden Treffer in 4 Kategorien
+// Wird NACH allen anderen Schritten aufgerufen — saubere Trennung im Frontend
+// Bei Fehler: Fallback auf Frontend-Heuristik (kein gptCategory gesetzt)
+async function classifyResultsWithGPT(results, contractText, detectedType, openaiClient) {
+  if (!Array.isArray(results) || results.length === 0) return new Map();
+
+  try {
+    console.log(`🔍 GPT-Klassifikator: starte für ${results.length} Treffer...`);
+
+    // Kompakte Summary für GPT — nur das Nötige
+    const summary = results.map((r, i) => ({
+      i,
+      url: r.link || '',
+      title: (r.title || '').slice(0, 120),
+      provider: r.provider || ''
+    }));
+
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Du klassifizierst Suchtreffer für einen Vertragsvergleich.
+
+KONTEXT:
+- Vertragstyp: ${detectedType}
+- Vertragsauszug (für Anbieter-Erkennung): ${contractText.slice(0, 800)}
+
+AUFGABE: Klassifiziere jeden Suchtreffer in genau EINE der 4 Kategorien:
+
+1. "direct_competitor" — KONKURRENZ-Anbieter, wo man theoretisch einen Vertrag abschliessen kann (NICHT der aktuelle Anbieter aus dem Vertrag)
+2. "comparison_portal" — Vergleichsportal (check24, verivox, vergleich.de, factoring-vergleich, etc.)
+3. "info_source" — Wikipedia, Verband, Firmenverzeichnis (Northdata, WLW), Fachzeitschrift, Ratgeber, Lexikon
+4. "current_provider" — Seite des AKTUELLEN Anbieters aus dem Vertrag (Hauptseite, Service-Page, Produktseite, oder Wikipedia/Verband-Eintrag ÜBER diesen Anbieter)
+
+REGELN:
+- Erkenne aus Vertragsauszug den IST-Anbieter (z.B. "GRENKEFACTORING", "ARAG", "klarmobil")
+- Treffer auf Domain des IST-Anbieters → "current_provider"
+- Treffer auf Wikipedia/Verband/Verzeichnis ÜBER den IST-Anbieter → "current_provider"
+- Wikipedia/Verzeichnisse ÜBER andere Themen → "info_source"
+- Wenn UNSICHER ob direct_competitor oder info_source → wähle "direct_competitor" (User sieht es dann)
+
+ANTWORTE NUR mit validem JSON (keine Erklärung, kein Markdown):
+{
+  "currentProviderName": "<Name des erkannten aktuellen Anbieters>",
+  "classifications": [
+    { "i": 0, "category": "direct_competitor" },
+    { "i": 1, "category": "current_provider" }
+  ]
+}`
+        },
+        {
+          role: "user",
+          content: `Klassifiziere diese ${summary.length} Treffer:\n${JSON.stringify(summary, null, 2)}`
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1,
+      max_tokens: 1500
+    });
+
+    const responseText = completion.choices[0].message.content.trim();
+    const cleaned = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/```\s*$/, '')
+      .trim();
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.classifications || !Array.isArray(parsed.classifications)) {
+      console.warn(`⚠️ GPT-Klassifikator: classifications-Array fehlt`);
+      return new Map();
+    }
+
+    const allowedCategories = ['direct_competitor', 'comparison_portal', 'info_source', 'current_provider'];
+    const categoryMap = new Map();
+
+    for (const c of parsed.classifications) {
+      if (typeof c.i !== 'number' || !allowedCategories.includes(c.category)) continue;
+      categoryMap.set(c.i, c.category);
+    }
+
+    console.log(`✅ GPT-Klassifikator: ${categoryMap.size}/${results.length} klassifiziert (IST-Anbieter erkannt: ${parsed.currentProviderName || 'unklar'})`);
+    return categoryMap;
+  } catch (error) {
+    console.warn(`⚠️ GPT-Klassifikator fehlgeschlagen — Fallback auf Heuristik:`, error.message);
+    return new Map();
   }
 }
 
@@ -2631,6 +2729,21 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       console.log(`✅ Consumer parallel abgeschlossen — KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
 
       analysis = completion.choices[0].message.content;
+    }
+
+    // 🆕 GPT-Validation-Layer: klassifiziert alle Treffer in 4 Kategorien (direct/comparison/info/current_provider)
+    // Bei Fehler: leere Map, Frontend nutzt Heuristik-Fallback (kein Verlust)
+    const categoryMap = await classifyResultsWithGPT(
+      enrichedResults,
+      cleanContractText,
+      detectedType,
+      openai
+    );
+    if (categoryMap.size > 0) {
+      enrichedResults.forEach((r, i) => {
+        const cat = categoryMap.get(i);
+        if (cat) r.gptCategory = cat;
+      });
     }
 
     // Ergebnis strukturieren (MIT PARTNER-INFO + B2B-FELDER)
