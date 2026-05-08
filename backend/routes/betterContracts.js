@@ -711,7 +711,10 @@ function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
   const providers = b2bEnrichment.enrichedProviders || [];
 
   return enrichedResults.map((result, index) => {
-    const enrichment = providers.find(p => Number(p.originalIndex) === index) || providers[index];
+    // Strenge Index-Zuordnung: nur Enrichment mit exakt passendem originalIndex.
+    // Kein positional fallback (providers[index]) — das vergibt fälschlich Daten von
+    // anderen Treffern an nicht-enrichte Indexes (z.B. Coface-Daten landen bei "Mitgliedsverzeichnis").
+    const enrichment = providers.find(p => Number(p.originalIndex) === index);
     if (!enrichment) return result;
 
     return {
