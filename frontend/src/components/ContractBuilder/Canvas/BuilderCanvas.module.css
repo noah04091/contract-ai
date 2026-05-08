@@ -233,17 +233,16 @@
   box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
 }
 
-/* Seite-verschieben — sehr dezente kleine Tabs, ragen oben/unten aus dem Blatt heraus.
- * Im Ruhezustand niedrige Opacity (wirkt wie "hinter dem Blatt hervorscheinend"),
- * beim Hover über die Seite voll sichtbar. */
+/* Seite-verschieben — kleine Tabs am rechten Rand, ragen oben/unten aus dem Blatt heraus.
+ * Optik: leicht abgedunkelter Hintergrund + Inset-Schatten zur Blatt-Seite,
+ * sodass es wirkt als kommen die Buttons "hinter dem Blatt hervor". */
 .pageMoveBtn {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 32px;
-  height: 18px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  right: 6px;
+  width: 26px;
+  height: 16px;
+  border: 1px solid #d1d5db;
+  background: #f1f5f9;
   color: #94a3b8;
   cursor: pointer;
   display: inline-flex;
@@ -251,8 +250,7 @@
   justify-content: center;
   padding: 0;
   z-index: 11;
-  opacity: 0.45;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  opacity: 0.5;
   transition: opacity 0.18s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 
@@ -268,7 +266,7 @@
 }
 
 .pageMoveBtn:active {
-  transform: translateX(-50%) scale(0.92);
+  transform: scale(0.92);
 }
 
 .pageMoveBtn:focus-visible {
@@ -277,33 +275,42 @@
   opacity: 1;
 }
 
-/* Pfeil oben — ragt über dem Blatt heraus (Tab-Optik) */
+/* Pfeil oben — ragt über dem Blatt heraus, der untere Rand "verschwindet" hinter dem Blatt */
 .pageMoveBtnTop {
-  top: -14px;
+  top: -12px;
   border-radius: 4px 4px 0 0;
   border-bottom: none;
   padding-bottom: 1px;
+  /* Schatten der den "Hinter-dem-Blatt"-Effekt verstärkt: leichter Drop nach oben + Inset
+     unten als wäre der Button-Fuß im Schatten des Blattes */
+  box-shadow:
+    0 -1px 2px rgba(15, 23, 42, 0.06),
+    inset 0 -4px 4px -3px rgba(15, 23, 42, 0.12);
 }
 
-/* Pfeil unten — ragt unter dem Blatt heraus */
+/* Pfeil unten — ragt unter dem Blatt heraus, der obere Rand "verschwindet" hinter dem Blatt */
 .pageMoveBtnBottom {
-  bottom: -14px;
+  bottom: -12px;
   border-radius: 0 0 4px 4px;
   border-top: none;
   padding-top: 1px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    inset 0 4px 4px -3px rgba(15, 23, 42, 0.12);
 }
 
 @media (max-width: 600px) {
   .pageMoveBtn {
     opacity: 0.7;
-    width: 40px;
-    height: 22px;
+    width: 32px;
+    height: 20px;
+    right: 4px;
   }
   .pageMoveBtnTop {
-    top: -18px;
+    top: -16px;
   }
   .pageMoveBtnBottom {
-    bottom: -18px;
+    bottom: -16px;
   }
 }
 
