@@ -233,64 +233,77 @@
   box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
 }
 
-/* Seite-verschieben-Controls (Pfeile oben rechts, Canva-Style) */
-.pageMoveControls {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 11;
-  opacity: 0.35;
-  transition: opacity 0.18s ease;
-}
-
-.pageMoveControls:hover,
-.paper:hover .pageMoveControls {
-  opacity: 1;
-}
-
+/* Seite-verschieben — sehr dezente kleine Tabs, ragen oben/unten aus dem Blatt heraus.
+ * Im Ruhezustand niedrige Opacity (wirkt wie "hinter dem Blatt hervorscheinend"),
+ * beim Hover über die Seite voll sichtbar. */
 .pageMoveBtn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 18px;
   border: 1px solid #e2e8f0;
-  background: rgba(255, 255, 255, 0.92);
-  color: #4a5568;
+  background: #ffffff;
+  color: #94a3b8;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-  backdrop-filter: blur(4px);
+  z-index: 11;
+  opacity: 0.45;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transition: opacity 0.18s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.paper:hover .pageMoveBtn {
+  opacity: 1;
 }
 
 .pageMoveBtn:hover {
-  background: #ffffff;
   color: #2E6CF6;
   border-color: #2E6CF6;
+  background: #ffffff;
+  opacity: 1;
 }
 
 .pageMoveBtn:active {
-  transform: scale(0.92);
+  transform: translateX(-50%) scale(0.92);
 }
 
 .pageMoveBtn:focus-visible {
   outline: 2px solid #2E6CF6;
   outline-offset: 2px;
+  opacity: 1;
+}
+
+/* Pfeil oben — ragt über dem Blatt heraus (Tab-Optik) */
+.pageMoveBtnTop {
+  top: -14px;
+  border-radius: 4px 4px 0 0;
+  border-bottom: none;
+  padding-bottom: 1px;
+}
+
+/* Pfeil unten — ragt unter dem Blatt heraus */
+.pageMoveBtnBottom {
+  bottom: -14px;
+  border-radius: 0 0 4px 4px;
+  border-top: none;
+  padding-top: 1px;
 }
 
 @media (max-width: 600px) {
-  .pageMoveControls {
-    opacity: 1;
-    top: 6px;
-    right: 6px;
-  }
   .pageMoveBtn {
-    width: 36px;
-    height: 36px;
+    opacity: 0.7;
+    width: 40px;
+    height: 22px;
+  }
+  .pageMoveBtnTop {
+    top: -18px;
+  }
+  .pageMoveBtnBottom {
+    bottom: -18px;
   }
 }
 
