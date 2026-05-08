@@ -65,8 +65,8 @@ function formatPercent(v: number | string | null | undefined): string {
 
 function buildHeroTitle(d: AnalysisData): string {
   if (d.analysisMessage) return d.analysisMessage;
-  const docType = d.documentCharacterization?.description || d.documentType || "Vertrag";
-  const cleanDocType = docType
+  const rawDocType = d.documentCharacterization?.description || d.documentType || "Vertrag";
+  const cleanDocType = cleanOcrSpacing(rawDocType)
     .replace(/^(aktiver,?\s*beidseitig\s*unterzeichneter\s*)/i, "")
     .replace(/\s+über\s+.*/i, "")
     .substring(0, 60);
@@ -82,6 +82,41 @@ function truncateAtWord(s: string, max = 280): string {
   const cut = s.substring(0, max);
   const lastSpace = cut.lastIndexOf(" ");
   return (lastSpace > 200 ? cut.substring(0, lastSpace) : cut) + "…";
+}
+
+// Erkennt und bereinigt OCR-Output mit Leerzeichen zwischen jedem Buchstaben:
+// "M I E T V E R T R AG" → "Mietvertrag"
+// Heuristik: wenn >50 % der Tokens nur 1-2 Zeichen lang sind → Spaces entfernen.
+function cleanOcrSpacing(s: string): string {
+  if (!s) return s;
+  const tokens = s.trim().split(/\s+/);
+  if (tokens.length < 3) return s;
+  const shortTokens = tokens.filter(t => t.length <= 2).length;
+  if (shortTokens / tokens.length < 0.5) return s;
+  const joined = tokens.join("");
+  // Title-Case: erster Buchstabe groß, Rest klein
+  return joined.charAt(0).toUpperCase() + joined.slice(1).toLowerCase();
+}
+
+// Wählt den besten Doc-Type für die File-Card-Pille:
+// 1. documentCharacterization.description, gekürzt + OCR-bereinigt
+// 2. documentCharacterization.documentType, OCR-bereinigt
+// 3. documentType (top-level) — niemals leer
+function pickDocTypeLabel(d: AnalysisData): string {
+  const desc = d.documentCharacterization?.description;
+  if (desc) {
+    const cleanDesc = cleanOcrSpacing(desc)
+      .replace(/^aktiver,?\s*beidseitig\s*unterzeichneter\s*/i, "")
+      .replace(/\s+über\s+.*/i, "")
+      .trim();
+    if (cleanDesc.length > 0 && cleanDesc.length <= 40) return cleanDesc;
+  }
+  const docTypeRaw = d.documentCharacterization?.documentType;
+  if (docTypeRaw) {
+    const cleaned = cleanOcrSpacing(docTypeRaw);
+    if (cleaned.length <= 40) return cleaned;
+  }
+  return d.documentType || "Vertrag";
 }
 
 export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult }: Props) {
@@ -143,7 +178,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
   // File-Type-Icon-Text
   const fileIconText = (d.documentType || "PDF").substring(0, 3).toUpperCase();
-  const docTypeLabel = (d.documentCharacterization?.documentType || d.documentType || "Vertrag").toString().substring(0, 30);
+  const docTypeLabel = pickDocTypeLabel(d);
 
   // Banner-Headline
   const bannerHead = d.analysisMessage
