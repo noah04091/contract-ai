@@ -22,7 +22,7 @@ import {
   Pencil // ✏️ QuickFact Inline-Edit Icon
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
-import ContractAnalysis from "../components/ContractAnalysis";
+import ContractAnalysis from "../components/ContractAnalysisSwitch";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
