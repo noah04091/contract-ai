@@ -25,7 +25,24 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { party1, party2, showPartyIcons = false, partiesLayout = 'modern', partiesAlignment = 'left' } = content;
+  const {
+    party1,
+    party2,
+    showPartyIcons = false,
+    partiesLayout = 'modern',
+    partiesAlignment = 'left',
+    partiesAccentColor,
+    partiesBackgroundColor,
+    partiesBorderColor,
+  } = content;
+
+  // Per-Block Farbüberschreibungen via CSS-Custom-Properties.
+  // Leer = erbt vom Design-Template (bestehende Verträge unverändert).
+  const colorOverrides: React.CSSProperties = {
+    ...(partiesAccentColor ? { ['--primary-color' as string]: partiesAccentColor } : {}),
+    ...(partiesBackgroundColor ? { ['--background-secondary' as string]: partiesBackgroundColor } : {}),
+    ...(partiesBorderColor ? { ['--border-color' as string]: partiesBorderColor } : {}),
+  };
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -266,7 +283,7 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   };
 
   return (
-    <div className={`${styles.parties} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.parties} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
       {partiesLayout === 'classic' ? renderClassicLayout() : renderModernLayout()}
     </div>
   );

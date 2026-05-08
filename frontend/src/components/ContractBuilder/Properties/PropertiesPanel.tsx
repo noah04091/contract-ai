@@ -654,6 +654,45 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
   const content = block.content || {};
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Helper: Color-Picker mit Hex-Input und ↺-Reset-Button. Wird mehrfach genutzt
+  // für blockspezifische Farb-Overrides (Klausel, Präambel, Definitions, Signature, Parties).
+  // Wenn `value` leer ist, fällt der Block via CSS-Custom-Property auf das Template-Default zurück.
+  const renderColorField = (
+    label: string,
+    value: string,
+    propertyKey: string,
+    fallbackHex: string
+  ) => (
+    <div className={styles.field}>
+      <label className={styles.label}>{label}</label>
+      <div className={styles.colorInput}>
+        <input
+          type="color"
+          value={value || fallbackHex}
+          onChange={(e) => onUpdate({ ...content, [propertyKey]: e.target.value })}
+        />
+        <input
+          type="text"
+          className={styles.input}
+          placeholder="leer = Template-Standard"
+          value={value}
+          onChange={(e) => onUpdate({ ...content, [propertyKey]: e.target.value || undefined })}
+        />
+        {value && (
+          <button
+            type="button"
+            className={styles.colorReset}
+            onClick={() => onUpdate({ ...content, [propertyKey]: undefined })}
+            title="Auf Template-Standard zurücksetzen"
+            aria-label={`${label} zurücksetzen`}
+          >
+            ↺
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   switch (block.type) {
     case 'header': {
       const headerContent = content as {
@@ -835,9 +874,17 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'parties': {
-      const showIcons = (content as { showPartyIcons?: boolean }).showPartyIcons;
-      const partiesLayout = (content as { partiesLayout?: 'modern' | 'classic' }).partiesLayout || 'modern';
-      const partiesAlignment = (content as { partiesAlignment?: 'left' | 'center' | 'right' }).partiesAlignment || 'left';
+      const partiesContent = content as {
+        showPartyIcons?: boolean;
+        partiesLayout?: 'modern' | 'classic';
+        partiesAlignment?: 'left' | 'center' | 'right';
+        partiesAccentColor?: string;
+        partiesBackgroundColor?: string;
+        partiesBorderColor?: string;
+      };
+      const showIcons = partiesContent.showPartyIcons;
+      const partiesLayout = partiesContent.partiesLayout || 'modern';
+      const partiesAlignment = partiesContent.partiesAlignment || 'left';
       return (
         <>
           {/* Layout-Auswahl */}
@@ -892,6 +939,15 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
             </div>
           )}
 
+          {/* Farb-Anpassungen — nur bei modern (Karten-Stil hat farbige Elemente) */}
+          {partiesLayout === 'modern' && (
+            <>
+              {renderColorField('Akzentfarbe (Header)', partiesContent.partiesAccentColor || '', 'partiesAccentColor', '#1a365d')}
+              {renderColorField('Karten-Hintergrund', partiesContent.partiesBackgroundColor || '', 'partiesBackgroundColor', '#f8fafc')}
+              {renderColorField('Rahmenfarbe', partiesContent.partiesBorderColor || '', 'partiesBorderColor', '#e2e8f0')}
+            </>
+          )}
+
           <p className={styles.noContent}>
             Bearbeiten Sie die Partei-Daten per Doppelklick direkt im Block.
           </p>
@@ -900,7 +956,13 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'preamble': {
-      const preambleLayout = (content as { preambleLayout?: 'accent-bar' | 'bordered' | 'minimal' | 'quote' }).preambleLayout || 'bordered';
+      const preambleContent = content as {
+        preambleLayout?: 'accent-bar' | 'bordered' | 'minimal' | 'quote';
+        preambleAccentColor?: string;
+        preambleBackgroundColor?: string;
+        preambleBorderColor?: string;
+      };
+      const preambleLayout = preambleContent.preambleLayout || 'bordered';
       return (
         <>
           <div className={styles.field}>
@@ -922,6 +984,22 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               {preambleLayout === 'quote' && 'Zentriert mit dekorativen Anführungszeichen'}
             </p>
           </div>
+
+          {/* Farb-Anpassungen — nicht bei minimal (hat keine farbigen Akzente) */}
+          {preambleLayout !== 'minimal' && (
+            <>
+              {(preambleLayout === 'accent-bar' || preambleLayout === 'quote') &&
+                renderColorField('Akzentfarbe', preambleContent.preambleAccentColor || '', 'preambleAccentColor', '#3182ce')
+              }
+              {(preambleLayout === 'accent-bar' || preambleLayout === 'bordered') &&
+                renderColorField('Hintergrundfarbe', preambleContent.preambleBackgroundColor || '', 'preambleBackgroundColor', '#f8fafc')
+              }
+              {preambleLayout === 'bordered' &&
+                renderColorField('Rahmen- & Linien-Farbe', preambleContent.preambleBorderColor || '', 'preambleBorderColor', '#e2e8f0')
+              }
+            </>
+          )}
+
           <div className={styles.field}>
             <label className={styles.label}>Präambeltext</label>
             <textarea
@@ -971,101 +1049,14 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
           {/* Farb-Anpassungen — nur bei indented oder boxed sichtbar */}
           {(clsLayout === 'indented' || clsLayout === 'boxed') && (
             <>
-              {/* Akzentfarbe — wirkt bei indented (Strich) und boxed (Klausel-Nr) */}
-              <div className={styles.field}>
-                <label className={styles.label}>
-                  {clsLayout === 'indented' ? 'Linien-Farbe' : 'Akzentfarbe (Klausel-Nr & Trennlinie)'}
-                </label>
-                <div className={styles.colorInput}>
-                  <input
-                    type="color"
-                    value={accentColor || '#3182ce'}
-                    onChange={(e) => onUpdate({ ...content, clauseAccentColor: e.target.value })}
-                  />
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="leer = Template-Standard"
-                    value={accentColor}
-                    onChange={(e) => onUpdate({ ...content, clauseAccentColor: e.target.value || undefined })}
-                  />
-                  {accentColor && (
-                    <button
-                      type="button"
-                      className={styles.colorReset}
-                      onClick={() => onUpdate({ ...content, clauseAccentColor: undefined })}
-                      title="Auf Template-Standard zurücksetzen"
-                      aria-label="Akzentfarbe zurücksetzen"
-                    >
-                      ↺
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Hintergrundfarbe — nur boxed */}
-              {clsLayout === 'boxed' && (
-                <div className={styles.field}>
-                  <label className={styles.label}>Hintergrundfarbe</label>
-                  <div className={styles.colorInput}>
-                    <input
-                      type="color"
-                      value={bgColor || '#f8fafc'}
-                      onChange={(e) => onUpdate({ ...content, clauseBackgroundColor: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="leer = Template-Standard"
-                      value={bgColor}
-                      onChange={(e) => onUpdate({ ...content, clauseBackgroundColor: e.target.value || undefined })}
-                    />
-                    {bgColor && (
-                      <button
-                        type="button"
-                        className={styles.colorReset}
-                        onClick={() => onUpdate({ ...content, clauseBackgroundColor: undefined })}
-                        title="Auf Template-Standard zurücksetzen"
-                        aria-label="Hintergrundfarbe zurücksetzen"
-                      >
-                        ↺
-                      </button>
-                    )}
-                  </div>
-                </div>
+              {renderColorField(
+                clsLayout === 'indented' ? 'Linien-Farbe' : 'Akzentfarbe (Klausel-Nr & Trennlinie)',
+                accentColor,
+                'clauseAccentColor',
+                '#3182ce'
               )}
-
-              {/* Rahmenfarbe — nur boxed */}
-              {clsLayout === 'boxed' && (
-                <div className={styles.field}>
-                  <label className={styles.label}>Rahmenfarbe</label>
-                  <div className={styles.colorInput}>
-                    <input
-                      type="color"
-                      value={borderColor || '#e2e8f0'}
-                      onChange={(e) => onUpdate({ ...content, clauseBorderColor: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      className={styles.input}
-                      placeholder="leer = Template-Standard"
-                      value={borderColor}
-                      onChange={(e) => onUpdate({ ...content, clauseBorderColor: e.target.value || undefined })}
-                    />
-                    {borderColor && (
-                      <button
-                        type="button"
-                        className={styles.colorReset}
-                        onClick={() => onUpdate({ ...content, clauseBorderColor: undefined })}
-                        title="Auf Template-Standard zurücksetzen"
-                        aria-label="Rahmenfarbe zurücksetzen"
-                      >
-                        ↺
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
+              {clsLayout === 'boxed' && renderColorField('Hintergrundfarbe', bgColor, 'clauseBackgroundColor', '#f8fafc')}
+              {clsLayout === 'boxed' && renderColorField('Rahmenfarbe', borderColor, 'clauseBorderColor', '#e2e8f0')}
             </>
           )}
 
@@ -1249,7 +1240,13 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'signature': {
-      const signatureContent = content as { showSignatureIcons?: boolean; signatureLayout?: string };
+      const signatureContent = content as {
+        showSignatureIcons?: boolean;
+        signatureLayout?: string;
+        signatureAccentColor?: string;
+        signatureBackgroundColor?: string;
+        signatureBorderColor?: string;
+      };
       const sigLayout = signatureContent.signatureLayout || 'modern';
       const layoutDescriptions: Record<string, string> = {
         modern: 'Modernes Layout mit separaten Ort/Datum Feldern und Karten',
@@ -1291,6 +1288,15 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
                 <span>Icons einblenden</span>
               </label>
             </div>
+          )}
+
+          {/* Farb-Anpassungen — alle Layouts haben Linien, corporate zusätzlich Box */}
+          {renderColorField('Linien-Farbe', signatureContent.signatureBorderColor || '', 'signatureBorderColor', '#e2e8f0')}
+          {sigLayout === 'corporate' && (
+            <>
+              {renderColorField('Box-Hintergrund (Corporate)', signatureContent.signatureBackgroundColor || '', 'signatureBackgroundColor', '#f8fafc')}
+              {renderColorField('Akzentfarbe (Corporate)', signatureContent.signatureAccentColor || '', 'signatureAccentColor', '#3182ce')}
+            </>
           )}
 
           <p className={styles.noContent}>
@@ -1454,7 +1460,12 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       const defsContent = content as {
         definitionsTitle?: string;
         definitions?: { term: string; definition: string }[];
+        definitionsLayout?: 'card' | 'table' | 'inline' | 'numbered';
+        definitionsAccentColor?: string;
+        definitionsBackgroundColor?: string;
+        definitionsBorderColor?: string;
       };
+      const defsLayout = defsContent.definitionsLayout || 'card';
       return (
         <>
           <div className={styles.field}>
@@ -1467,6 +1478,20 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               onChange={(e) => onUpdate({ ...content, definitionsTitle: e.target.value })}
             />
           </div>
+
+          {/* Farb-Anpassungen — nicht bei inline (hat keine farbigen Akzente) */}
+          {defsLayout !== 'inline' && (
+            <>
+              {renderColorField('Akzentfarbe', defsContent.definitionsAccentColor || '', 'definitionsAccentColor', '#3b82f6')}
+              {(defsLayout === 'card' || defsLayout === 'table') &&
+                renderColorField('Hintergrundfarbe', defsContent.definitionsBackgroundColor || '', 'definitionsBackgroundColor', '#f8fafc')
+              }
+              {(defsLayout === 'card' || defsLayout === 'table') &&
+                renderColorField('Rahmen- & Linien-Farbe', defsContent.definitionsBorderColor || '', 'definitionsBorderColor', '#e2e8f0')
+              }
+            </>
+          )}
+
           <p className={styles.noContent}>
             Begriffe und Definitionen können per Doppelklick direkt im Block bearbeitet werden.
             Nutzen Sie die + / × Buttons um Einträge hinzuzufügen oder zu entfernen.

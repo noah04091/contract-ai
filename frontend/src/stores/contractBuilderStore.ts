@@ -95,6 +95,9 @@ export interface BlockContent {
   showPartyIcons?: boolean;      // Icons bei Parteien einblenden (default: false)
   partiesLayout?: 'modern' | 'classic';  // Layout-Variante: modern (side-by-side) oder classic (vertikal)
   partiesAlignment?: 'left' | 'center' | 'right';  // Text-Ausrichtung im klassischen Layout (default: left)
+  partiesAccentColor?: string;       // Per-Block Akzentfarbe (modern: Card-Header). Leer = Template-Default.
+  partiesBackgroundColor?: string;   // Per-Block Card-Hintergrund (modern). Leer = Template-Default.
+  partiesBorderColor?: string;       // Per-Block Card-Rahmen (modern). Leer = Template-Default.
   // Cover Block
   coverTitle?: string;
   coverSubtitle?: string;
@@ -110,6 +113,9 @@ export interface BlockContent {
   // Signature
   showSignatureIcons?: boolean;  // Icons bei Unterschriften einblenden (default: false)
   signatureLayout?: 'modern' | 'classic' | 'formal' | 'corporate' | 'elegant';  // Layout-Varianten
+  signatureAccentColor?: string;       // Per-Block Akzentfarbe (Trennlinien). Leer = Template-Default.
+  signatureBackgroundColor?: string;   // Per-Block Box-Hintergrund (corporate). Leer = Template-Default.
+  signatureBorderColor?: string;       // Per-Block Rahmen-/Linien-Farbe. Leer = Template-Default.
   // Header
   headerLayout?: 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal';  // Layout: zentriert, Logo links/rechts, Logo unten, nur Titel
   // Clause
@@ -138,8 +144,14 @@ export interface BlockContent {
   // Preamble
   preambleText?: string;
   preambleLayout?: 'accent-bar' | 'bordered' | 'minimal' | 'quote';
+  preambleAccentColor?: string;       // Akzent (Bar, Quote-Markup). Leer = Template-Default.
+  preambleBackgroundColor?: string;   // Hintergrund (accent-bar, bordered). Leer = Template-Default.
+  preambleBorderColor?: string;       // Rahmen-/Linien-Farbe (bordered). Leer = Template-Default.
   // Definitions Layout
   definitionsLayout?: 'card' | 'table' | 'inline' | 'numbered';
+  definitionsAccentColor?: string;       // Akzent (Bar bei Card, Header bei Table, Nr bei Numbered). Leer = Template-Default.
+  definitionsBackgroundColor?: string;   // Hintergrund (Card, Table-Header). Leer = Template-Default.
+  definitionsBorderColor?: string;       // Rahmen-/Linien-Farbe (Card, Table). Leer = Template-Default.
   // Attachment (Legacy - einzelne Datei, für Abwärtskompatibilität)
   attachmentTitle?: string;
   attachmentDescription?: string;

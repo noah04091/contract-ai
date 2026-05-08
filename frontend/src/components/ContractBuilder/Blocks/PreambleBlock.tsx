@@ -22,7 +22,21 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { preambleText, preambleLayout = 'accent-bar' } = content;
+  const {
+    preambleText,
+    preambleLayout = 'accent-bar',
+    preambleAccentColor,
+    preambleBackgroundColor,
+    preambleBorderColor,
+  } = content;
+
+  // Per-Block Farbüberschreibungen via CSS-Custom-Properties.
+  // Leer = erbt vom Design-Template (bestehende Verträge unverändert).
+  const colorOverrides: React.CSSProperties = {
+    ...(preambleAccentColor ? { ['--accent-color' as string]: preambleAccentColor } : {}),
+    ...(preambleBackgroundColor ? { ['--background-secondary' as string]: preambleBackgroundColor } : {}),
+    ...(preambleBorderColor ? { ['--border-color' as string]: preambleBorderColor } : {}),
+  };
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -86,7 +100,7 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
   // Layout: accent-bar (default)
   if (preambleLayout === 'accent-bar' || !preambleLayout) {
     return (
-      <div className={`${styles.preamble} ${styles.accentBar} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.preamble} ${styles.accentBar} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         <div className={styles.preambleHeader}>
           <span className={styles.preambleTitle}>Präambel</span>
         </div>
@@ -100,7 +114,7 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
   // Layout: bordered
   if (preambleLayout === 'bordered') {
     return (
-      <div className={`${styles.preamble} ${styles.bordered} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.preamble} ${styles.bordered} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         <div className={styles.borderedHeader}>
           <span className={styles.borderedLine} />
           <span className={styles.borderedTitle}>PRÄAMBEL</span>
@@ -116,7 +130,7 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
   // Layout: minimal
   if (preambleLayout === 'minimal') {
     return (
-      <div className={`${styles.preamble} ${styles.minimal} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.preamble} ${styles.minimal} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         <div className={styles.minimalHeader}>
           <span className={styles.minimalTitle}>Präambel</span>
         </div>
@@ -129,7 +143,7 @@ export const PreambleBlock: React.FC<PreambleBlockProps> = ({
 
   // Layout: quote
   return (
-    <div className={`${styles.preamble} ${styles.quote} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.preamble} ${styles.quote} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
       <div className={styles.quoteContent}>
         {isEditing ? renderEditor() : renderText()}
       </div>

@@ -31,7 +31,22 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { definitionsTitle, definitions = [], definitionsLayout = 'card' } = content;
+  const {
+    definitionsTitle,
+    definitions = [],
+    definitionsLayout = 'card',
+    definitionsAccentColor,
+    definitionsBackgroundColor,
+    definitionsBorderColor,
+  } = content;
+
+  // Per-Block Farbüberschreibungen via CSS-Custom-Properties.
+  // Leer = erbt vom Design-Template (bestehende Verträge unverändert).
+  const colorOverrides: React.CSSProperties = {
+    ...(definitionsAccentColor ? { ['--accent-color' as string]: definitionsAccentColor } : {}),
+    ...(definitionsBackgroundColor ? { ['--background-secondary' as string]: definitionsBackgroundColor } : {}),
+    ...(definitionsBorderColor ? { ['--border-color' as string]: definitionsBorderColor } : {}),
+  };
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -166,7 +181,7 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   // ============================================
   if (layout === 'card') {
     return (
-      <div className={`${styles.definitions} ${styles.layoutCard} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.definitions} ${styles.layoutCard} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         {renderTitle()}
         <p className={styles.intro}>Im Sinne dieses Vertrages gelten folgende Begriffsbestimmungen:</p>
         <div className={styles.definitionsList}>
@@ -206,7 +221,7 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   // ============================================
   if (layout === 'table') {
     return (
-      <div className={`${styles.definitions} ${styles.layoutTable} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.definitions} ${styles.layoutTable} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         {renderTitle()}
         <table className={styles.defTable}>
           <thead>
@@ -252,7 +267,7 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   // ============================================
   if (layout === 'inline') {
     return (
-      <div className={`${styles.definitions} ${styles.layoutInline} ${isSelected ? styles.selected : ''}`}>
+      <div className={`${styles.definitions} ${styles.layoutInline} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
         {renderTitle()}
         <div className={styles.inlineList}>
           {currentDefinitions.map((def, index) => (
@@ -291,7 +306,7 @@ export const DefinitionsBlock: React.FC<DefinitionsBlockProps> = ({
   // LAYOUT: numbered
   // ============================================
   return (
-    <div className={`${styles.definitions} ${styles.layoutNumbered} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.definitions} ${styles.layoutNumbered} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
       {renderTitle()}
       <div className={styles.numberedList}>
         {currentDefinitions.map((def, index) => {

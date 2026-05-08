@@ -24,7 +24,23 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { signatureFields, witnesses, showSignatureIcons = false, signatureLayout = 'modern' } = content;
+  const {
+    signatureFields,
+    witnesses,
+    showSignatureIcons = false,
+    signatureLayout = 'modern',
+    signatureAccentColor,
+    signatureBackgroundColor,
+    signatureBorderColor,
+  } = content;
+
+  // Per-Block Farbüberschreibungen via CSS-Custom-Properties.
+  // Leer = erbt vom Design-Template (bestehende Verträge unverändert).
+  const colorOverrides: React.CSSProperties = {
+    ...(signatureAccentColor ? { ['--accent-color' as string]: signatureAccentColor } : {}),
+    ...(signatureBackgroundColor ? { ['--background-secondary' as string]: signatureBackgroundColor } : {}),
+    ...(signatureBorderColor ? { ['--border-color' as string]: signatureBorderColor } : {}),
+  };
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
@@ -457,7 +473,7 @@ export const SignatureBlock: React.FC<SignatureBlockProps> = ({
   };
 
   return (
-    <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.signature} ${isSelected ? styles.selected : ''}`} style={colorOverrides}>
       {renderByLayout()}
     </div>
   );
