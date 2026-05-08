@@ -114,6 +114,9 @@ export interface BlockContent {
   headerLayout?: 'centered' | 'left-logo' | 'right-logo' | 'logo-below' | 'minimal';  // Layout: zentriert, Logo links/rechts, Logo unten, nur Titel
   // Clause
   clauseLayout?: 'standard' | 'indented' | 'boxed';  // Layout: Standard, eingerückt, mit Rahmen
+  clauseAccentColor?: string;       // Per-Klausel Akzentfarbe (Strich bei indented, Klausel-Nr bei boxed). Leer = Template-Default.
+  clauseBackgroundColor?: string;   // Per-Klausel Box-Hintergrund (nur boxed). Leer = Template-Default.
+  clauseBorderColor?: string;       // Per-Klausel Box-/Trennlinien-Farbe (nur boxed). Leer = Template-Default.
   // Clause
   number?: string;
   clauseTitle?: string;

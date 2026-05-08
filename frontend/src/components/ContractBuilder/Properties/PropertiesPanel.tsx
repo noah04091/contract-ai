@@ -937,8 +937,16 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
     }
 
     case 'clause': {
-      const clauseContent = content as { clauseLayout?: 'standard' | 'indented' | 'boxed' };
+      const clauseContent = content as {
+        clauseLayout?: 'standard' | 'indented' | 'boxed';
+        clauseAccentColor?: string;
+        clauseBackgroundColor?: string;
+        clauseBorderColor?: string;
+      };
       const clsLayout = clauseContent.clauseLayout || 'standard';
+      const accentColor = clauseContent.clauseAccentColor || '';
+      const bgColor = clauseContent.clauseBackgroundColor || '';
+      const borderColor = clauseContent.clauseBorderColor || '';
       return (
         <>
           {/* Layout-Auswahl */}
@@ -959,6 +967,107 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
               {clsLayout === 'boxed' && 'Klausel in einem Rahmen mit Hintergrund'}
             </p>
           </div>
+
+          {/* Farb-Anpassungen — nur bei indented oder boxed sichtbar */}
+          {(clsLayout === 'indented' || clsLayout === 'boxed') && (
+            <>
+              {/* Akzentfarbe — wirkt bei indented (Strich) und boxed (Klausel-Nr) */}
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  {clsLayout === 'indented' ? 'Linien-Farbe' : 'Akzentfarbe (Klausel-Nr & Trennlinie)'}
+                </label>
+                <div className={styles.colorInput}>
+                  <input
+                    type="color"
+                    value={accentColor || '#3182ce'}
+                    onChange={(e) => onUpdate({ ...content, clauseAccentColor: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className={styles.input}
+                    placeholder="leer = Template-Standard"
+                    value={accentColor}
+                    onChange={(e) => onUpdate({ ...content, clauseAccentColor: e.target.value || undefined })}
+                  />
+                  {accentColor && (
+                    <button
+                      type="button"
+                      className={styles.colorReset}
+                      onClick={() => onUpdate({ ...content, clauseAccentColor: undefined })}
+                      title="Auf Template-Standard zurücksetzen"
+                      aria-label="Akzentfarbe zurücksetzen"
+                    >
+                      ↺
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Hintergrundfarbe — nur boxed */}
+              {clsLayout === 'boxed' && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Hintergrundfarbe</label>
+                  <div className={styles.colorInput}>
+                    <input
+                      type="color"
+                      value={bgColor || '#f8fafc'}
+                      onChange={(e) => onUpdate({ ...content, clauseBackgroundColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="leer = Template-Standard"
+                      value={bgColor}
+                      onChange={(e) => onUpdate({ ...content, clauseBackgroundColor: e.target.value || undefined })}
+                    />
+                    {bgColor && (
+                      <button
+                        type="button"
+                        className={styles.colorReset}
+                        onClick={() => onUpdate({ ...content, clauseBackgroundColor: undefined })}
+                        title="Auf Template-Standard zurücksetzen"
+                        aria-label="Hintergrundfarbe zurücksetzen"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Rahmenfarbe — nur boxed */}
+              {clsLayout === 'boxed' && (
+                <div className={styles.field}>
+                  <label className={styles.label}>Rahmenfarbe</label>
+                  <div className={styles.colorInput}>
+                    <input
+                      type="color"
+                      value={borderColor || '#e2e8f0'}
+                      onChange={(e) => onUpdate({ ...content, clauseBorderColor: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      className={styles.input}
+                      placeholder="leer = Template-Standard"
+                      value={borderColor}
+                      onChange={(e) => onUpdate({ ...content, clauseBorderColor: e.target.value || undefined })}
+                    />
+                    {borderColor && (
+                      <button
+                        type="button"
+                        className={styles.colorReset}
+                        onClick={() => onUpdate({ ...content, clauseBorderColor: undefined })}
+                        title="Auf Template-Standard zurücksetzen"
+                        aria-label="Rahmenfarbe zurücksetzen"
+                      >
+                        ↺
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className={styles.field}>
             <label className={styles.label}>Klauseltitel</label>

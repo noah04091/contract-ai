@@ -213,6 +213,30 @@
   flex: 1;
 }
 
+/* Reset-Button neben Color-Pickern: setzt Wert auf undefined → fällt auf Template-Default zurück */
+.colorReset {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.colorReset:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
 .checkboxLabel {
   display: flex;
   align-items: center;

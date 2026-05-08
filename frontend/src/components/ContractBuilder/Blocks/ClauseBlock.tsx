@@ -24,7 +24,16 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
   isSelected,
   isPreview,
 }) => {
-  const { number, clauseTitle, body: rawBody, subclauses, clauseLayout = 'standard' } = content;
+  const {
+    number,
+    clauseTitle,
+    body: rawBody,
+    subclauses,
+    clauseLayout = 'standard',
+    clauseAccentColor,
+    clauseBackgroundColor,
+    clauseBorderColor,
+  } = content;
   // Im Preview-Modus (PDF-Export) Tipp-Zeilen aus dem Body filtern
   const body = isPreview && rawBody
     ? rawBody.split('\n').filter(line => !line.trim().startsWith('💡')).join('\n').trimEnd()
@@ -231,8 +240,20 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
     : clauseLayout === 'boxed' ? styles.boxed
     : '';
 
+  // Per-Klausel Farbüberschreibungen via CSS-Custom-Properties.
+  // Wenn die Felder leer sind, erbt die Klausel die Werte des Design-Templates
+  // — bestehende Klauseln bleiben dadurch optisch unverändert.
+  const colorOverrides: React.CSSProperties = {
+    ...(clauseAccentColor ? { ['--accent-color' as string]: clauseAccentColor } : {}),
+    ...(clauseBackgroundColor ? { ['--background-secondary' as string]: clauseBackgroundColor } : {}),
+    ...(clauseBorderColor ? { ['--border-color' as string]: clauseBorderColor } : {}),
+  };
+
   return (
-    <div className={`${styles.clause} ${layoutClass} ${isSelected ? styles.selected : ''}`}>
+    <div
+      className={`${styles.clause} ${layoutClass} ${isSelected ? styles.selected : ''}`}
+      style={colorOverrides}
+    >
       {/* Klausel-Header */}
       <div className={styles.clauseHeader}>
         <span className={styles.clauseNumber}>
