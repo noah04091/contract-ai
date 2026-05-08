@@ -370,10 +370,8 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   const nonAiAlts = displayedAlternatives.filter(a => !a.isAiSuggested);
   const b2bDirectProviders = nonAiAlts.filter(a => getEffectiveCategory(a) === 'direct');
   const b2bComparisonSites = nonAiAlts.filter(a => getEffectiveCategory(a) === 'comparison');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _b2bInfoSources = nonAiAlts.filter(a => getEffectiveCategory(a) === 'info');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _b2bCurrentProvider = nonAiAlts.filter(a => getEffectiveCategory(a) === 'current');
+  const b2bInfoSources = nonAiAlts.filter(a => getEffectiveCategory(a) === 'info');
+  const b2bCurrentProvider = nonAiAlts.filter(a => getEffectiveCategory(a) === 'current');
 
   const formatAnalysis = (analysisText: string) => {
     return analysisText.split('\n').map((line, index) => {
