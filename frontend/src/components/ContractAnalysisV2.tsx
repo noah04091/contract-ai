@@ -19,6 +19,8 @@ import { useAuth } from "../context/AuthContext"; // 💬 User subscription chec
 import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
 import V2HeroSection from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
+import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
+import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -1035,7 +1037,16 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             isInitialResult={!!initialResult && !result}
           />
 
-          {/* === ALTE Sektionen ab hier · werden in Häppchen C ersetzt === */}
+          {/* 🎨 V2 HÄPPCHEN C — Tabs-System ersetzt das alte 6-Card-Grid + Recommendations + typeSpecificFindings + detailedLegalOpinion */}
+          <V2TabsSection data={(result || initialResult) as Parameters<typeof V2TabsSection>[0]['data']} />
+
+          {/* 🎨 V2 HÄPPCHEN C — Conversion-Banner für Free-User (Business: Hint zu Enterprise, Enterprise: kein Banner) */}
+          <V2ConversionBanner
+            usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2ConversionBanner>[0]['usage']}
+            userPlan={user?.subscriptionPlan}
+          />
+
+          {/* === ALTE Sektionen ab hier · in Häppchen C komplett ersetzt durch Tabs/Banner oben === */}
           {/* AUSGEBLENDET in V2: Success Header (durch V2HeroSection-Banner ersetzt) */}
           <div className={styles.successHeader} style={{ display: 'none' }}>
             <div className={styles.successInfo}>
@@ -1239,8 +1250,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
           })()}
           </div>{/* /V2-display:none-Wrapper für Asymmetry-Card */}
 
-          {/* ✅ ENHANCED: 7-Punkte-Analyse Details Grid */}
-          <div className={styles.detailsGrid}>
+          {/* AUSGEBLENDET in V2 (durch V2TabsSection ersetzt) */}
+          <div className={styles.detailsGrid} style={{ display: 'none' }}>
             {/* 1. Zusammenfassung */}
             {(result?.summary || initialResult?.summary) && (
               <div className={styles.detailCard}>
@@ -1378,9 +1389,9 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             )}
           </div>
 
-          {/* 7. Handlungsempfehlungen (Volle Breite) */}
+          {/* AUSGEBLENDET in V2 (durch V2TabsSection > Empfehlungen-Tab ersetzt) */}
           {(result?.recommendations || initialResult?.recommendations) && (
-            <div className={`${styles.detailCard} ${styles.fullWidthCard}`}>
+            <div className={`${styles.detailCard} ${styles.fullWidthCard}`} style={{ display: 'none' }}>
               <div className={styles.detailHeader}>
                 <Zap size={18} className={styles.cardIconYellow} />
                 <h5>Handlungsempfehlungen</h5>
@@ -1405,11 +1416,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             </div>
           )}
 
-          {/* 🌐 Phase-2-Redesign: Pilot-Typ-spezifische Tiefenanalyse-Card.
-              Render-if-present: erscheint nur, wenn typeSpecificFindings vorhanden ist
-              UND mindestens ein Item enthält. Bei nicht-Pilot-Verträgen (Kaufvertrag,
-              Versicherung, exotisch, etc.) bleibt die Card unsichtbar — Universal-Pfad
-              pur. Status-Indikatoren: ok=grün, issue=rot, not_applicable=grau. */}
+          {/* AUSGEBLENDET in V2 (durch V2TabsSection > Pilot-Tab ersetzt) */}
+          <div style={{ display: 'none' }}>
           {(() => {
             const findings = result?.typeSpecificFindings || initialResult?.typeSpecificFindings;
             if (!findings || !Array.isArray(findings) || findings.length === 0) return null;
@@ -1502,14 +1510,16 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               </div>
             );
           })()}
+          </div>{/* /V2-display:none-Wrapper für typeSpecificFindings */}
 
-          {/* ✅ NEU: Ausführliches Rechtsgutachten */}
+          {/* AUSGEBLENDET in V2 (durch V2TabsSection > Rechtsgutachten-Tab ersetzt) */}
           {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion) && (
             <motion.div
               className={styles.legalOpinionSection}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              style={{ display: 'none' }}
             >
               <div className={styles.legalOpinionHeader}>
                 <div className={styles.legalOpinionTitleSection}>
