@@ -22,7 +22,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { AlertTriangle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { useContractBuilderStore, Block, _pageBreakFlags } from '../../../stores/contractBuilderStore';
 import { SortableBlock } from './SortableBlock';
 import { BlockRenderer } from '../Blocks/BlockRenderer';
@@ -75,6 +75,7 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     zoom,
     view,
     reorderBlocks,
+    movePage,
     setSelectedBlock,
     setActivePage,
     setDragState,
@@ -444,6 +445,40 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                     {activePageIndex === pageIndex && view !== 'preview' && (
                       <div className={styles.activePageBadge}>
                         Aktive Seite
+                      </div>
+                    )}
+
+                    {/* Seite verschieben — Pfeile oben rechts (Edit-Mode, mehr als 1 Seite) */}
+                    {view !== 'preview' && pages.length > 1 && (
+                      <div className={styles.pageMoveControls}>
+                        {pageIndex > 0 && (
+                          <button
+                            type="button"
+                            className={styles.pageMoveBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              movePage(pageIndex, pageIndex - 1);
+                            }}
+                            title="Seite nach oben verschieben"
+                            aria-label={`Seite ${pageIndex + 1} nach oben verschieben`}
+                          >
+                            <ArrowUp size={14} />
+                          </button>
+                        )}
+                        {pageIndex < pages.length - 1 && (
+                          <button
+                            type="button"
+                            className={styles.pageMoveBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              movePage(pageIndex, pageIndex + 1);
+                            }}
+                            title="Seite nach unten verschieben"
+                            aria-label={`Seite ${pageIndex + 1} nach unten verschieben`}
+                          >
+                            <ArrowDown size={14} />
+                          </button>
+                        )}
                       </div>
                     )}
 

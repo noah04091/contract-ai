@@ -233,6 +233,67 @@
   box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
 }
 
+/* Seite-verschieben-Controls (Pfeile oben rechts, Canva-Style) */
+.pageMoveControls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 11;
+  opacity: 0.35;
+  transition: opacity 0.18s ease;
+}
+
+.pageMoveControls:hover,
+.paper:hover .pageMoveControls {
+  opacity: 1;
+}
+
+.pageMoveBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #4a5568;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  backdrop-filter: blur(4px);
+}
+
+.pageMoveBtn:hover {
+  background: #ffffff;
+  color: #2E6CF6;
+  border-color: #2E6CF6;
+}
+
+.pageMoveBtn:active {
+  transform: scale(0.92);
+}
+
+.pageMoveBtn:focus-visible {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .pageMoveControls {
+    opacity: 1;
+    top: 6px;
+    right: 6px;
+  }
+  .pageMoveBtn {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 /* Leere Seite Platzhalter */
 .emptyPage {
   display: flex;

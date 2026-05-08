@@ -396,6 +396,7 @@ interface ContractBuilderActions {
   deleteBlock: (blockId: string) => void;
   duplicateBlock: (blockId: string) => void;
   reorderBlocks: (fromIndex: number, toIndex: number) => void;
+  movePage: (fromIndex: number, toIndex: number) => void;
   lockBlock: (blockId: string, locked: boolean) => void;
   autoInsertPageBreak: (beforeBlockId: string) => void;
 
@@ -1448,6 +1449,63 @@ export const useContractBuilderStore = create<ContractBuilderState & ContractBui
             blocks.forEach((b, i) => {
               b.order = i;
             });
+            state.hasUnsavedChanges = true;
+          });
+          get().pushToHistory();
+        },
+
+        // Verschiebt eine ganze Seite (alle Blöcke zwischen 2 page-breaks) zur Nachbarseite.
+        // Page-Break-Blocks bleiben strukturell an ihrer Position — nur die Inhalte
+        // der zwei benachbarten Seiten werden atomar getauscht.
+        // toIndex muss fromIndex ± 1 sein (sonst no-op).
+        movePage: (fromIndex, toIndex) => {
+          set((state) => {
+            if (!state.document) return;
+            const blocks = state.document.content.blocks;
+
+            // Alle page-break-Block-Positionen
+            const pbIndices: number[] = [];
+            blocks.forEach((b, i) => { if (b.type === 'page-break') pbIndices.push(i); });
+            const totalPages = pbIndices.length + 1;
+
+            // Bounds-Checks
+            if (fromIndex < 0 || fromIndex >= totalPages) return;
+            if (toIndex < 0 || toIndex >= totalPages) return;
+            if (Math.abs(fromIndex - toIndex) !== 1) return; // nur Nachbarseiten
+
+            const lower = Math.min(fromIndex, toIndex);
+            const upper = Math.max(fromIndex, toIndex);
+
+            // Range Page lower
+            const lowerStart = lower === 0 ? 0 : pbIndices[lower - 1] + 1;
+            const lowerEnd = pbIndices[lower] - 1; // existiert immer (lower < totalPages-1)
+            const separatorIdx = pbIndices[lower];
+
+            // Range Page upper
+            const upperStart = separatorIdx + 1;
+            const upperEnd = upper === totalPages - 1
+              ? blocks.length - 1
+              : pbIndices[upper] - 1;
+
+            // Atomare Reassemblage — Inhalte tauschen, Separator bleibt
+            const before = blocks.slice(0, lowerStart);
+            const lowerBlocks = blocks.slice(lowerStart, lowerEnd + 1);
+            const separator = blocks[separatorIdx];
+            const upperBlocks = blocks.slice(upperStart, upperEnd + 1);
+            const after = blocks.slice(upperEnd + 1);
+
+            const newBlocks = [...before, ...upperBlocks, separator, ...lowerBlocks, ...after];
+            newBlocks.forEach((b, i) => { b.order = i; });
+            state.document.content.blocks = newBlocks;
+
+            // activePageIndex mitschwenken: wenn die aktive Seite verschoben wurde,
+            // folgt die Selektion mit, damit der User die Seite weiterhin "verfolgt".
+            if (state.activePageIndex === fromIndex) {
+              state.activePageIndex = toIndex;
+            } else if (state.activePageIndex === toIndex) {
+              state.activePageIndex = fromIndex;
+            }
+
             state.hasUnsavedChanges = true;
           });
           get().pushToHistory();
