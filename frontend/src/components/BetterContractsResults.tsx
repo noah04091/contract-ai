@@ -38,6 +38,8 @@ interface Alternative {
   evidenceSource?: 'website' | 'search-result' | 'ai-knowledge';
   isAiSuggested?: boolean;
   b2bSummary?: string;
+  // GPT-Validation-Klassifikation (vom Backend)
+  gptCategory?: 'direct_competitor' | 'comparison_portal' | 'info_source' | 'current_provider';
 }
 
 // 🆕 Partner Category Interface
@@ -280,6 +282,39 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     return score >= (genericProvider ? 2 : 3);
   };
 
+  // Heuristik: Info-Quelle (Wikipedia, Verband, Verzeichnis, Fachzeitschrift) — Fallback wenn GPT-Category fehlt
+  const classifyAsInfoSource = (alt: Alternative): boolean => {
+    const url = (alt.link || '').toLowerCase();
+
+    const infoDomains = [
+      'wikipedia.org', 'wikipedia.de',
+      'northdata.de', 'firmenwissen.de', 'wlw.de',
+      'kreditwesen.de', 'versicherungsbote.de', 'versicherungsjournal.de',
+      'factoring-verband', 'deutscher-factoring-verband',
+      'izs-institut', 'finanztip.de'
+    ];
+    if (infoDomains.some(d => url.includes(d))) return true;
+
+    const infoPaths = ['/wiki/', '/lexikon/', '/glossar/', '/mitgliedsverzeichnis/'];
+    if (infoPaths.some(p => url.includes(p))) return true;
+
+    return false;
+  };
+
+  // Effektive Kategorie ermitteln: GPT-Klassifikation hat Vorrang, sonst Heuristik-Fallback
+  const getEffectiveCategory = (alt: Alternative): 'direct' | 'comparison' | 'info' | 'current' => {
+    // VORRANG: GPT-Klassifikation vom Backend
+    if (alt.gptCategory === 'direct_competitor') return 'direct';
+    if (alt.gptCategory === 'comparison_portal') return 'comparison';
+    if (alt.gptCategory === 'info_source') return 'info';
+    if (alt.gptCategory === 'current_provider') return 'current';
+
+    // FALLBACK: bestehende Heuristik
+    if (classifyAsInfoSource(alt)) return 'info';
+    if (classifyAsComparisonSite(alt)) return 'comparison';
+    return 'direct';
+  };
+
   // Extract price from strings and estimate monthly cost
   const extractPrice = (priceStrings: string[]): number | null => {
     for (const priceStr of priceStrings) {
@@ -331,9 +366,14 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
 
   const displayedAlternatives = showAllAlternatives ? sortedAlternatives : sortedAlternatives.slice(0, 5); // 🆕 Show 5 by default instead of 3
 
-  // 🆕 Aufteilung B2B-Karten in: direkte Anbieter vs. Vergleichsseiten/Ratgeber
-  const b2bDirectProviders = displayedAlternatives.filter(a => !a.isAiSuggested && !classifyAsComparisonSite(a));
-  const b2bComparisonSites = displayedAlternatives.filter(a => !a.isAiSuggested && classifyAsComparisonSite(a));
+  // 🆕 4-fache Aufteilung — GPT-Klassifikation hat Vorrang, Heuristik als Fallback
+  const nonAiAlts = displayedAlternatives.filter(a => !a.isAiSuggested);
+  const b2bDirectProviders = nonAiAlts.filter(a => getEffectiveCategory(a) === 'direct');
+  const b2bComparisonSites = nonAiAlts.filter(a => getEffectiveCategory(a) === 'comparison');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _b2bInfoSources = nonAiAlts.filter(a => getEffectiveCategory(a) === 'info');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _b2bCurrentProvider = nonAiAlts.filter(a => getEffectiveCategory(a) === 'current');
 
   const formatAnalysis = (analysisText: string) => {
     return analysisText.split('\n').map((line, index) => {
@@ -638,6 +678,32 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
               </div>
               <div className="alternatives-grid">
                 {b2bComparisonSites.map((alt, i) => renderB2BCard(alt, i + 200, 'comparison'))}
+              </div>
+            </>
+          )}
+
+          {/* B2B: Hintergrund & Info-Quellen (Wikipedia, Verbände, Verzeichnisse, Fachzeitschriften) */}
+          {b2bInfoSources.length > 0 && (
+            <>
+              <div className="b2b-section-header info-source">
+                <h3>Hintergrund & Info-Quellen</h3>
+                <p>Wikipedia, Verbände, Firmenverzeichnisse und Fachzeitschriften zum Thema</p>
+              </div>
+              <div className="alternatives-grid">
+                {b2bInfoSources.map((alt, i) => renderB2BCard(alt, i + 300, 'comparison'))}
+              </div>
+            </>
+          )}
+
+          {/* B2B: Hinweis zum aktuellen Anbieter (kompakt, dezent) */}
+          {b2bCurrentProvider.length > 0 && (
+            <>
+              <div className="b2b-section-header current-provider">
+                <h3>Hinweis: Dein aktueller Anbieter</h3>
+                <p>Diese Treffer beziehen sich auf den im Vertrag genannten Anbieter</p>
+              </div>
+              <div className="alternatives-grid">
+                {b2bCurrentProvider.map((alt, i) => renderB2BCard(alt, i + 400, 'comparison'))}
               </div>
             </>
           )}

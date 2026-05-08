@@ -1213,6 +1213,32 @@
   color: #475569;
 }
 
+/* Hintergrund & Info-Quellen: Amber/Bernstein, signalisiert "Wissens-Quelle" */
+.b2b-section-header.info-source {
+  border-bottom-color: #fde68a;
+  margin-top: 2rem;
+}
+
+.b2b-section-header.info-source h3 {
+  color: #92400e;
+}
+
+/* Aktueller Anbieter: dezent grau, signalisiert "FYI — kein Konkurrent" */
+.b2b-section-header.current-provider {
+  border-bottom-color: #e5e7eb;
+  margin-top: 2rem;
+}
+
+.b2b-section-header.current-provider h3 {
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.b2b-section-header.current-provider p {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
 /* Empty-State, wenn keine direkten Anbieter gefunden */
 .empty-direct-providers-notice {
   padding: 1rem 1.25rem;
