@@ -9042,3 +9042,347 @@
 .colConfigResetBtn svg {
   flex-shrink: 0;
 }
+
+/* =========================================================================
+   📱 V2 TODO #5: Mobile-Konfigurator (Bottom-Sheet)
+   ========================================================================= */
+
+/* Trigger-Button in Mobile-Toolbar (gleicher Style wie .mobileFilterButton) */
+.mobileColumnTrigger {
+  display: none; /* Desktop hidden, mobile breakpoint zeigt es */
+}
+@media (max-width: 768px) {
+  .mobileColumnTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 500;
+    min-height: 40px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, color 0.15s, transform 0.1s;
+  }
+  .mobileColumnTrigger:hover { background: #f8fafc; color: #0a0e1a; }
+  .mobileColumnTrigger:active { transform: scale(0.96); }
+  .mobileColumnTrigger:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  .mobileColumnTriggerActive {
+    background: #dbeafe;
+    color: #3b82f6;
+    border-color: #3b82f6;
+  }
+}
+
+/* Bottom-Sheet Overlay (Backdrop) */
+.bottomSheetOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  will-change: opacity;
+}
+
+/* Bottom-Sheet Container */
+.bottomSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -16px 60px rgba(15, 23, 42, 0.18);
+  z-index: 1001;
+  max-height: 85vh;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  will-change: transform;
+}
+
+/* Drag-Handle */
+.bottomSheetHandle {
+  width: 36px;
+  height: 5px;
+  border-radius: 99px;
+  background: #cbd5e1;
+  margin: 8px auto;
+  flex-shrink: 0;
+}
+
+/* Sheet-Header */
+.bottomSheetHeader {
+  padding: 4px 16px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.bottomSheetTitle {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+  color: #0a0e1a;
+}
+.bottomSheetClose {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+.bottomSheetClose::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.bottomSheetClose:hover { background: #e2e8f0; color: #0a0e1a; }
+.bottomSheetClose:active { transform: scale(0.94); }
+.bottomSheetClose:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Sheet-Body (scrollable) */
+.bottomSheetBody {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  padding: 8px 0 24px;
+}
+
+/* Accordion-Section innerhalb Sheet */
+.colSheetSection {
+  border-bottom: 1px solid #f1f5f9;
+}
+.colSheetSection:last-child { border-bottom: none; }
+
+.colSheetHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  min-height: 56px;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+.colSheetHeader:hover { background: #f8fafc; }
+.colSheetHeader:active { background: #f1f5f9; }
+.colSheetHeader:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+.colSheetLabel {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+.colSheetValue {
+  flex: 1;
+  font-size: 14px;
+  color: #0a0e1a;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.colSheetChevron {
+  color: #64748b;
+  transition: transform 250ms ease;
+  flex-shrink: 0;
+}
+.colSheetSectionExpanded .colSheetChevron {
+  transform: rotate(180deg);
+}
+
+.colSheetBody {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 280ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+.colSheetSectionExpanded .colSheetBody {
+  max-height: 600px;
+}
+.colSheetBodyInner {
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.colSheetOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  color: #475569;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s, color 0.12s, transform 0.08s;
+}
+.colSheetOption:hover { background: #f1f5f9; color: #0a0e1a; }
+.colSheetOption:active { transform: scale(0.98); }
+.colSheetOption:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+.colSheetOptionSelected {
+  background: #dbeafe;
+  color: #3b82f6;
+  font-weight: 500;
+}
+.colSheetOptionSelected svg { color: #3b82f6; flex-shrink: 0; }
+.colSheetOptionPlaceholder {
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.colSheetReset {
+  align-self: flex-end;
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+.colSheetReset:hover { background: #f1f5f9; color: #0a0e1a; }
+.colSheetReset:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* MobileContractCard: Eckdaten-Block (3 Slot-Felder) */
+.cardEckdatenBlock {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 420px) {
+  .cardEckdatenBlock {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cardEckdatenBlock .cardEckdatenItem:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+.cardEckdatenItem {
+  min-width: 0;
+}
+.cardEckdatenLabel {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+.cardEckdatenValue {
+  font-size: 13px;
+  color: #0a0e1a;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+/* MobileListRow: Sub-Label-Zeile zwischen Name und Meta */
+.listRowSubLabel {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* MobileListRow: Slot-Items in Meta-Zeile (statt fix Status•Date•Days) */
+.listRowMetaSlot {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: #475569;
+  /* v2-Audit: Truncation-Schutz für sehr lange Werte (z.B. langer Anbieter-Name) */
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.listRowMetaSlot + .listRowMetaSlot::before {
+  content: '·';
+  margin: 0 6px;
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+.listRowMetaSlot.expired { color: #b91c1c; font-weight: 500; }
+.listRowMetaSlot.warn { color: #b45309; font-weight: 500; }
+.listRowMetaSlot.muted { color: #94a3b8; }
