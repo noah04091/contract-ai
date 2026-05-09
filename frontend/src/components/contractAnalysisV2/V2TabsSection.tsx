@@ -11,7 +11,7 @@
 // Empty-States für jeden Tab — niemals leerer Bildschirm.
 // Tabs IMMER sichtbar (UX-Best-Practice „Hide tabs is bad UX").
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   AlertTriangle, CheckCircle, Zap, Lightbulb, BarChart3, Scale, Target,
   FileText
@@ -27,12 +27,13 @@ interface InsightItem {
   description?: string;
   text?: string;
   detail?: string;
+  finding?: string; // Backend-Variation
   severity?: Severity;
   priority?: Severity;
   legalBasis?: string;
   consequence?: string;
   riskLevel?: string;
-  impact?: string;
+  impact?: string; // bei positiveAspects manchmal das einzige Beschreibungs-Feld
 }
 
 interface PilotItem {
@@ -101,7 +102,8 @@ function getInsightTitle(item: InsightItem | string): string {
 
 function getInsightDesc(item: InsightItem | string): string {
   if (typeof item === "string") return "";
-  return item.description || item.text || item.detail || "";
+  // Backend-Variationen: criticalIssues hat description, positiveAspects manchmal nur impact, Pilot-Items finding
+  return item.description || item.text || item.detail || item.finding || item.impact || "";
 }
 
 function getInsightLegal(item: InsightItem | string): string {
@@ -205,13 +207,29 @@ export default function V2TabsSection({ data }: Props) {
     { id: "opinion", label: "Rechtsgutachten", icon: <Scale size={14} /> },
   ];
 
+  // Tab-Refs für Arrow-Key-Navigation (WCAG Tabs-Pattern)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const handleTabKey = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    let next: number | null = null;
+    if (e.key === "ArrowRight") next = (idx + 1) % tabs.length;
+    else if (e.key === "ArrowLeft") next = (idx - 1 + tabs.length) % tabs.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    if (next != null) {
+      e.preventDefault();
+      setActive(tabs[next].id);
+      tabRefs.current[next]?.focus();
+    }
+  };
+
   return (
     <>
       <div className={styles.tabsContainer}>
         <div className={styles.tabs} role="tablist" aria-label="Vertragsanalyse">
-          {tabs.map(t => (
+          {tabs.map((t, idx) => (
             <button
               key={t.id}
+              ref={el => { tabRefs.current[idx] = el; }}
               role="tab"
               aria-selected={active === t.id}
               aria-controls={`v2-panel-${t.id}`}
@@ -219,6 +237,7 @@ export default function V2TabsSection({ data }: Props) {
               tabIndex={active === t.id ? 0 : -1}
               className={`${styles.tab} ${active === t.id ? styles.tabActive : ""}`}
               onClick={() => setActive(t.id)}
+              onKeyDown={(e) => handleTabKey(e, idx)}
             >
               {t.icon}
               <span>{t.label}</span>

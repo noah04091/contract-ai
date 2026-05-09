@@ -352,15 +352,19 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const handleOptimize = () => {
     if (!result && !initialResult) return;
 
+    // Loading-Indikator für V2ActionBar — beim Navigieren visuelles Feedback geben
+    setOptimizing(true);
+
     const analysisData = result || initialResult;
     const targetContractId = analysisData?.originalContractId || propContractId;
 
     if (targetContractId) {
-      // OptimizerV2 lädt die PDF automatisch über ?contractId=
       navigate(`/optimizer?contractId=${targetContractId}`);
     } else {
       navigate('/optimizer');
     }
+    // Reset nach kurzem Delay falls Navigation hängt — Component unmountet eh
+    setTimeout(() => setOptimizing(false), 1500);
   };
 
   const handleDownloadPdf = async () => {
@@ -1567,8 +1571,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               Pop-up "Legal Pulse Analyse läuft..." ist entfernt — war Legacy aus
               V1-Zeit (V1 deaktiviert seit 22.04.2026). Verhinderte Pop-up-Flackern. */}
 
-          {/* 📅 Wichtige Termine & Erinnerungen */}
-          {(result?.originalContractId || initialResult?.originalContractId) && (
+          {/* 📅 Wichtige Termine & Erinnerungen — bei kaputter Analyse ausblenden,
+              um nach dem Fehler-Banner keine verwirrenden alten Termine zu zeigen. */}
+          {(result?.originalContractId || initialResult?.originalContractId)
+            && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
             <AnalysisImportantDates
               contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
               contractName={displayName}
@@ -1758,7 +1764,9 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             </div>
           )}
 
-          {/* 🎨 V2 HÄPPCHEN D — Sticky Action-Bar unten (ersetzt actionButtonsContainer) */}
+          {/* 🎨 V2 HÄPPCHEN D — Sticky Action-Bar unten (ersetzt actionButtonsContainer)
+              Bei kaputter Analyse ausblenden — sonst klickt User auf Optimieren bei nicht-analysiertem Vertrag. */}
+          {!isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
           <V2ActionBar
             hasContractId={!!(propContractId || result?.originalContractId || initialResult?.originalContractId)}
             isBusinessOrHigher={isBusinessOrHigher}
@@ -1779,6 +1787,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               if (id && onNavigateToContract) onNavigateToContract(id);
             }}
           />
+          )}
         </motion.div>
       )}
     </div>

@@ -137,6 +137,7 @@
   font-family: inherit;
 }
 .laymanToggle:hover { background: #ede9fe; }
+.laymanToggle:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 .laymanToggleActive {
   background: #8b5cf6;
   color: #fff;
@@ -204,4 +205,19 @@
 @media (max-width: 600px) {
   .facts6, .facts5, .facts4, .facts3 { grid-template-columns: repeat(2, 1fr); }
   .fact { border-right: none; border-bottom: 1px solid #f1f5f9; padding: 14px 16px; }
+  .fileCard { padding: 14px 16px; gap: 12px; }
+  .acHero { padding: 20px 16px; }
+  .scoreDonut { width: 96px; height: 96px; }
+  .scoreNum { font-size: 32px; }
+  .heroTitle { font-size: 18px; }
+  .heroSub { font-size: 13px; }
+}
+@media (max-width: 380px) {
+  .scoreDonut { width: 80px; height: 80px; }
+  .scoreNum { font-size: 26px; }
+  .heroTitle { font-size: 17px; }
+  .acBannerPill { font-size: 10px; padding: 2px 7px; }
+  .fact { padding: 12px 14px; }
+  .factValue { font-size: 14px; }
+  .fcName { font-size: 13.5px; }
 }

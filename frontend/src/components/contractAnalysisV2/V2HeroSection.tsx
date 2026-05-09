@@ -165,7 +165,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
         </div>
-        <div style={{
+        <div role="alert" aria-live="polite" style={{
           background: "#fef2f2",
           border: "1px solid #fca5a5",
           borderRadius: 14,
@@ -421,10 +421,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
             {asym?.explanation && (
               <div className={styles.balanceExpl}>
-                {asym.favoredParty && asym.favoredParty !== "null" && (
+                {asym.favoredParty && asym.favoredParty !== "null" && asym.favoredParty !== null && (
                   <strong>Bevorzugte Partei: {asym.favoredParty}.</strong>
                 )}
-                {asym.favoredParty && asym.favoredParty !== "null" ? " " : ""}
+                {asym.favoredParty && asym.favoredParty !== "null" && asym.favoredParty !== null ? " " : ""}
                 {asym.explanation}
               </div>
             )}

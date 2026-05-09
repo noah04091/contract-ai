@@ -33,6 +33,10 @@
   cursor: pointer;
   font-family: inherit;
 }
+.primary:focus-visible, .secondary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 .primary:hover { filter: brightness(1.05); }
 .primary:disabled { background: linear-gradient(135deg,#94a3b8,#64748b); cursor: not-allowed; }
 .primary svg { animation: none; }
@@ -79,4 +83,11 @@
   .secondary span { display: none; }
   .secondary { padding: 7px 9px; }
   .primary span { font-size: 12.5px; }
+}
+@media (max-width: 380px) {
+  .actionBar { padding: 6px 5px; gap: 4px; }
+  .primary { padding: 9px 12px; gap: 5px; }
+  .primary span { font-size: 11.5px; }
+  .divider { display: none; }
+  .secondary { padding: 7px 8px; }
 }
