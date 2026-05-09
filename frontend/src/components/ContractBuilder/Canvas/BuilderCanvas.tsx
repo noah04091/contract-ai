@@ -429,6 +429,27 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
               // Seiten mit Inhalten
               pages.map((pageBlocks, pageIndex) => (
                 <div key={pageIndex} className={styles.paperWrapper}>
+                  {/* Position-Gruppe: Container für paper + die seitlich rausragenden
+                      Move-Buttons. Buttons liegen mit niedrigerem z-index hinter paper,
+                      sodass nur der oben/unten rausragende Teil sichtbar ist. */}
+                  <div className={styles.paperPositionGroup}>
+                    {/* Pfeil "nach oben verschieben" — liegt strukturell HINTER dem Blatt,
+                        nur der oben aus dem Blatt rausragende Teil ist sichtbar/klickbar */}
+                    {view !== 'preview' && pages.length > 1 && pageIndex > 0 && (
+                      <button
+                        type="button"
+                        className={`${styles.pageMoveBtn} ${styles.pageMoveBtnTop}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          movePage(pageIndex, pageIndex - 1);
+                        }}
+                        title="Seite nach oben verschieben"
+                        aria-label={`Seite ${pageIndex + 1} nach oben verschieben`}
+                      >
+                        <ArrowUp size={12} />
+                      </button>
+                    )}
+
                   <div
                     ref={setPageRef(pageIndex)}
                     className={`
@@ -446,36 +467,6 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                       <div className={styles.activePageBadge}>
                         Aktive Seite
                       </div>
-                    )}
-
-                    {/* Seite verschieben — dezente Pfeile, ragen oben/unten aus dem Blatt heraus (Canva-Style) */}
-                    {view !== 'preview' && pages.length > 1 && pageIndex > 0 && (
-                      <button
-                        type="button"
-                        className={`${styles.pageMoveBtn} ${styles.pageMoveBtnTop}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          movePage(pageIndex, pageIndex - 1);
-                        }}
-                        title="Seite nach oben verschieben"
-                        aria-label={`Seite ${pageIndex + 1} nach oben verschieben`}
-                      >
-                        <ArrowUp size={12} />
-                      </button>
-                    )}
-                    {view !== 'preview' && pages.length > 1 && pageIndex < pages.length - 1 && (
-                      <button
-                        type="button"
-                        className={`${styles.pageMoveBtn} ${styles.pageMoveBtnBottom}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          movePage(pageIndex, pageIndex + 1);
-                        }}
-                        title="Seite nach unten verschieben"
-                        aria-label={`Seite ${pageIndex + 1} nach unten verschieben`}
-                      >
-                        <ArrowDown size={12} />
-                      </button>
                     )}
 
                     {/* Page Header (optional) */}
@@ -553,6 +544,24 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                       >
                         {design.watermark}
                       </div>
+                    )}
+                  </div>
+
+                    {/* Pfeil "nach unten verschieben" — strukturell HINTER dem Blatt,
+                        nur der unten aus dem Blatt rausragende Teil ist sichtbar/klickbar */}
+                    {view !== 'preview' && pages.length > 1 && pageIndex < pages.length - 1 && (
+                      <button
+                        type="button"
+                        className={`${styles.pageMoveBtn} ${styles.pageMoveBtnBottom}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          movePage(pageIndex, pageIndex + 1);
+                        }}
+                        title="Seite nach unten verschieben"
+                        aria-label={`Seite ${pageIndex + 1} nach unten verschieben`}
+                      >
+                        <ArrowDown size={12} />
+                      </button>
                     )}
                   </div>
 

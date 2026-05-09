@@ -69,6 +69,13 @@
   padding-top: 24px; /* Platz für "Aktive Seite" Badge */
 }
 
+/* Wrapper um paper + Move-Buttons. Definiert den Stacking-Kontext, sodass die
+   Buttons strukturell HINTER dem paper liegen können (z-index < paper). */
+.paperPositionGroup {
+  position: relative;
+  width: 210mm; /* exakt paper-Breite — Buttons können relativ zur paper-Kante sitzen */
+}
+
 .paperWrapper:last-child {
   margin-bottom: 0;
 }
@@ -86,6 +93,7 @@
     0 16px 32px rgba(0, 0, 0, 0.05);
   border-radius: 2px;
   position: relative;
+  z-index: 2; /* paper liegt VOR den Move-Buttons (deckt den unteren Teil ab) */
   /* MAXIMIERT: Minimales Padding für maximalen Inhaltsbereich */
   padding: 12mm 18mm 12mm 18mm; /* Reduziert: oben, rechts, unten, links */
   padding-top: calc(12mm + 8px); /* Extra Platz für Block-Controls oben */
@@ -233,35 +241,36 @@
   box-shadow: 0 2px 8px rgba(49, 130, 206, 0.4);
 }
 
-/* Seite-verschieben — kleine Tabs am rechten Rand, ragen oben/unten aus dem Blatt heraus.
- * Optik: leicht abgedunkelter Hintergrund + Inset-Schatten zur Blatt-Seite,
- * sodass es wirkt als kommen die Buttons "hinter dem Blatt hervor". */
+/* Seite-verschieben — Tab-Buttons liegen STRUKTURELL HINTER dem Blatt (z-index: 1
+ * vs paper z-index: 2). Sie sind höher als sichtbar — nur ein dünner Streifen ragt
+ * oben bzw. unten aus dem Blatt heraus, der untere/obere Rest wird vom paper visuell
+ * verdeckt. Klickbar nur wo sichtbar (paper hat opaques background). */
 .pageMoveBtn {
   position: absolute;
-  right: 6px;
-  width: 26px;
-  height: 16px;
-  border: 1px solid #d1d5db;
-  background: #f1f5f9;
-  color: #94a3b8;
+  right: 8px;
+  width: 28px;
+  height: 22px;
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  color: #64748b;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  z-index: 11;
-  opacity: 0.5;
+  z-index: 1; /* HINTER paper (z-index: 2) — paper deckt den überlappenden Teil ab */
+  opacity: 0.7;
   transition: opacity 0.18s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 
-.paper:hover .pageMoveBtn {
+.paperPositionGroup:hover .pageMoveBtn {
   opacity: 1;
 }
 
 .pageMoveBtn:hover {
   color: #2E6CF6;
   border-color: #2E6CF6;
-  background: #ffffff;
+  background: #f1f5f9;
   opacity: 1;
 }
 
@@ -275,42 +284,39 @@
   opacity: 1;
 }
 
-/* Pfeil oben — ragt über dem Blatt heraus, der untere Rand "verschwindet" hinter dem Blatt */
+/* Pfeil oben — Button startet 12px ÜBER dem paper-rand und ragt 10px ins paper rein.
+ * paper deckt die unteren 10px ab → es schauen 12px (genug für Pfeil-Icon) heraus */
 .pageMoveBtnTop {
   top: -12px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 5px 5px 0 0;
   border-bottom: none;
-  padding-bottom: 1px;
-  /* Schatten der den "Hinter-dem-Blatt"-Effekt verstärkt: leichter Drop nach oben + Inset
-     unten als wäre der Button-Fuß im Schatten des Blattes */
-  box-shadow:
-    0 -1px 2px rgba(15, 23, 42, 0.06),
-    inset 0 -4px 4px -3px rgba(15, 23, 42, 0.12);
+  padding-bottom: 6px; /* Icon nach oben verschoben — wo's sichtbar ist */
+  box-shadow: 0 -1px 3px rgba(15, 23, 42, 0.08);
 }
 
-/* Pfeil unten — ragt unter dem Blatt heraus, der obere Rand "verschwindet" hinter dem Blatt */
+/* Pfeil unten — analog, ragt unten 12px aus dem paper, oberer Teil verdeckt */
 .pageMoveBtnBottom {
   bottom: -12px;
-  border-radius: 0 0 4px 4px;
+  border-radius: 0 0 5px 5px;
   border-top: none;
-  padding-top: 1px;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    inset 0 4px 4px -3px rgba(15, 23, 42, 0.12);
+  padding-top: 6px; /* Icon nach unten verschoben — wo's sichtbar ist */
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 600px) {
   .pageMoveBtn {
-    opacity: 0.7;
-    width: 32px;
-    height: 20px;
-    right: 4px;
+    opacity: 0.85;
+    width: 36px;
+    height: 26px;
+    right: 6px;
   }
   .pageMoveBtnTop {
-    top: -16px;
+    top: -14px;
+    padding-bottom: 8px;
   }
   .pageMoveBtnBottom {
-    bottom: -16px;
+    bottom: -14px;
+    padding-top: 8px;
   }
 }
 
