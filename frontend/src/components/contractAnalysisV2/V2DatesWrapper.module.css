@@ -1,0 +1,17 @@
+/* V2-Wrapper für AnalysisImportantDates — neutralisiert das knallige Gelb der Fristen-Sektion.
+   Targets: alle Klassen, die das alte Modul mit fef3c7/fffbeb/fde68a hat. */
+
+.v2DatesWrapper :global([class*="fristenBlock"]) {
+  background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%) !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Pin-Icons im Fristen-Header sollen dezent bleiben, nicht ablenken */
+.v2DatesWrapper :global([class*="fristenBlock"] [class*="subBlockHeader"]) {
+  color: #475569;
+}
+
+/* Toggle-Button "weitere Fristen anzeigen" — von rot/gelb auf neutral */
+.v2DatesWrapper :global([class*="fristenBlock"] button) {
+  color: #475569;
+}

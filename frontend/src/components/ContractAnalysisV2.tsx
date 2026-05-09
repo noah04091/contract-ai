@@ -22,6 +22,7 @@ import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSect
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
+import datesWrapperStyles from "./contractAnalysisV2/V2DatesWrapper.module.css"; // 🎨 V2 — neutraler statt gelb
 
 interface ContractAnalysisProps {
   file?: File; // Optional - für Upload-Flow
@@ -785,10 +786,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
         )}
       </AnimatePresence>
 
-      {/* Header — File-Info-Block in V2 ausgeblendet, Action-Buttons bleiben sichtbar */}
-      <div className={styles.header}>
+      {/* Header komplett in V2 ausgeblendet — File-Info & Action-Buttons sind jetzt in V2HeroSection.fcActions */}
+      <div className={styles.header} style={{ display: 'none' }}>
         <div className={styles.headerContent}>
-          <div className={styles.fileInfo} style={{ display: 'none' }}>
+          <div className={styles.fileInfo}>
             <div className={styles.fileIconContainer}>
               <FileText size={24} className={styles.fileIcon} />
             </div>
@@ -1045,6 +1046,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                   fileName={displayName}
                   serviceHealth={serviceHealth}
                   isInitialResult={!!initialResult && !result}
+                  canReanalyze={(!!result || !!initialResult) && !analyzing && !!file}
+                  analyzing={analyzing}
+                  onReanalyze={() => handleAnalyze(true)}
+                  onReset={handleReset}
                 />
                 {/* Bei kaputter Analyse: Tabs + Conv-Banner überspringen — Hero zeigt schon Fehler-Banner */}
                 {!failed && (
@@ -1572,13 +1577,16 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               V1-Zeit (V1 deaktiviert seit 22.04.2026). Verhinderte Pop-up-Flackern. */}
 
           {/* 📅 Wichtige Termine & Erinnerungen — bei kaputter Analyse ausblenden,
-              um nach dem Fehler-Banner keine verwirrenden alten Termine zu zeigen. */}
+              um nach dem Fehler-Banner keine verwirrenden alten Termine zu zeigen.
+              V2: Wrapper neutralisiert das gelbe fristenBlock-Styling. */}
           {(result?.originalContractId || initialResult?.originalContractId)
             && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
-            <AnalysisImportantDates
-              contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
-              contractName={displayName}
-            />
+            <div className={datesWrapperStyles.v2DatesWrapper}>
+              <AnalysisImportantDates
+                contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
+                contractName={displayName}
+              />
+            </div>
           )}
 
           {/* AUSGEBLENDET in V2 (durch V2ActionBar als sticky Bar unten ersetzt) */}

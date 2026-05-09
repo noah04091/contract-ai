@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState } from "react";
-import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
@@ -45,6 +45,11 @@ interface Props {
   fileName: string;
   serviceHealth?: boolean | null;
   isInitialResult?: boolean;
+  // Action-Buttons rechts in der File-Card (statt oben im Header)
+  canReanalyze?: boolean;
+  analyzing?: boolean;
+  onReanalyze?: () => void;
+  onReset?: () => void;
 }
 
 // Erkennt eine kaputte/unvollständige Analyse:
@@ -141,10 +146,13 @@ function pickDocTypeLabel(d: AnalysisData): string {
     const cleaned = cleanOcrSpacing(docTypeRaw);
     if (cleaned.length <= 40) return cleaned;
   }
-  return d.documentType || "Vertrag";
+  // 'UNKNOWN' wird vom Backend gesetzt, wenn der Typ nicht zuordenbar war — nicht anzeigen
+  const fallback = d.documentType;
+  if (!fallback || /^unknown$/i.test(fallback)) return "Vertrag";
+  return fallback;
 }
 
-export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult }: Props) {
+export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset }: Props) {
   const d = data;
   const score = d.contractScore;
   const variant = getScoreVariant(score);
@@ -253,11 +261,19 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // Banner-Pills
   const completeness = d.completeness;
   const isIncomplete = completeness?.isComplete === false;
-  const conf = formatPercent(d.confidence);
-  const qual = formatPercent(d.qualityScore);
+  // 0% ist ein Backend-Fallback wenn Validation nicht lief — nicht zeigen, das verwirrt mehr als es informiert
+  const isMeaningfulPercent = (v: number | string | null | undefined) => {
+    if (v == null || v === "") return false;
+    const n = typeof v === "number" ? v : parseFloat(String(v));
+    return !isNaN(n) && n > 0;
+  };
+  const conf = isMeaningfulPercent(d.confidence) ? formatPercent(d.confidence) : "";
+  const qual = isMeaningfulPercent(d.qualityScore) ? formatPercent(d.qualityScore) : "";
 
-  // File-Type-Icon-Text
-  const fileIconText = (d.documentType || "PDF").substring(0, 3).toUpperCase();
+  // File-Type-Icon-Text — 'UNKNOWN' nicht als 'UNK' anzeigen, lieber Datei-Endung
+  const dt = d.documentType;
+  const fileExt = (fileName.match(/\.([a-z0-9]{1,4})$/i)?.[1] || "PDF").toUpperCase();
+  const fileIconText = (!dt || /^unknown$/i.test(dt) ? fileExt : dt).substring(0, 3).toUpperCase();
   const docTypeLabel = pickDocTypeLabel(d);
 
   // Banner-Headline
@@ -306,6 +322,34 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
         </div>
+        {(onReanalyze || onReset) && (
+          <div className={styles.fcActions}>
+            {canReanalyze && onReanalyze && (
+              <button
+                type="button"
+                className={`${styles.fcBtn} ${styles.fcBtnPrimary}`}
+                onClick={onReanalyze}
+                disabled={analyzing}
+                aria-label="Analyse erneut durchführen"
+              >
+                <RefreshCw size={14} aria-hidden="true" />
+                <span>Erneut analysieren</span>
+              </button>
+            )}
+            {onReset && (
+              <button
+                type="button"
+                className={styles.fcBtn}
+                onClick={onReset}
+                disabled={analyzing}
+                aria-label="Analyse zurücksetzen"
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                <span>Zurücksetzen</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ANALYSIS-CARD */}
