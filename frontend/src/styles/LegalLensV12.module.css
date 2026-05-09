@@ -3113,10 +3113,9 @@
 
 /* 2. Action Badge Section — compact, scrolls with content */
 .actionBadgeSection {
-  background: var(--action-bg);
-  border: 2px solid var(--action-color);
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  background: #fafbfc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   padding: 0.5rem 0.75rem !important;
 }
 
@@ -3141,21 +3140,46 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--action-color);
   line-height: 1.2;
 }
 
 .metaLabel {
-  font-size: 0.65rem;
-  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Score-Popover Anker */
+.scorePopoverAnchor {
+  position: relative;
 }
 
 .scoreCard {
-  text-align: center;
-  padding: 0.25rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.55rem;
   background: white;
-  border-radius: 6px;
-  min-width: 60px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font: inherit;
+}
+.scoreCard:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.scoreCard:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.scoreLabelGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.1;
 }
 
 .scoreValue {
@@ -3165,15 +3189,89 @@
 }
 
 .scoreLabel {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--score-color);
+  font-size: 0.7rem;
+  font-weight: 700;
   margin-bottom: 1px;
 }
 
 .scoreHint {
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   color: #64748b;
+}
+
+.scoreInfoIcon {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+/* Popover-Box */
+.scoreInfoPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: 320px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 14px 16px;
+  animation: popoverFadeIn 0.15s ease;
+}
+
+.scoreInfoHeader {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.scoreInfoDesc {
+  font-size: 0.75rem;
+  color: #475569;
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+
+.scoreInfoScale {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.scoreScaleItem {
+  display: grid;
+  grid-template-columns: 10px 50px 1fr;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: #1e293b;
+}
+
+.scoreScaleDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.scoreScaleRange {
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreScaleLabel {
+  color: #64748b;
+}
+
+.scoreInfoCurrent {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  font-size: 0.75rem;
+  color: #475569;
 }
 
 .actionReasonText {

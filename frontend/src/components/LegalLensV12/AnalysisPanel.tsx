@@ -87,6 +87,20 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [showSimulator, setShowSimulator] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const scorePopoverRef = useRef<HTMLDivElement>(null);
+
+  // Click-outside handler für Score-Popover
+  useEffect(() => {
+    if (!showScoreInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (scorePopoverRef.current && !scorePopoverRef.current.contains(e.target as Node)) {
+        setShowScoreInfo(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showScoreInfo]);
 
   // Live elapsed timer during analysis
   useEffect(() => {
@@ -304,8 +318,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const marketComparison = perspectiveData?.marketComparison || analysisWithExtras.marketComparison;
   const riskAssessment = perspectiveData?.riskAssessment || analysisWithExtras.riskAssessment;
 
-  const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
-
   // ✅ FIX Issue #2: "Auf einen Blick" zeigt NUR actionReason, NICHT die Erklärung
   // Die detaillierte Erklärung kommt in "Was bedeutet das?" - KEINE DUPLIZIERUNG!
   const oneSentenceSummary = actionReason || null;
@@ -336,59 +348,77 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* 🎯 ACTION BADGE - DAS WICHTIGSTE ZUERST */}
-      <div
-        className={`${styles.analysisSection} ${styles.actionBadgeSection}`}
-        style={{ '--action-bg': actionInfo.bgColor, '--action-color': actionInfo.color } as React.CSSProperties}
-      >
+      {/* 🎯 HANDLUNGSEMPFEHLUNG — entschärft, dezent, Score klickbar */}
+      <div className={`${styles.analysisSection} ${styles.actionBadgeSection}`}>
         <div className={styles.actionBadgeHeader} style={{ marginBottom: actionReason ? '0.4rem' : 0 }}>
           <div className={styles.actionBadgeInfo}>
-            <span className={styles.actionEmoji}>{actionInfo.emoji}</span>
-            <div>
-              <h3 className={styles.actionTitle}>
-                {actionInfo.text}
-              </h3>
-              <span className={styles.metaLabel}>
-                Handlungsempfehlung
-              </span>
-            </div>
+            <span className={styles.metaLabel}>
+              Handlungsempfehlung
+            </span>
           </div>
           <div className={styles.actionBadgeInfo}>
             {riskAssessment && (() => {
               const scoreInfo = getRiskScoreInfo(riskAssessment.score);
-              const radius = 28;
+              const radius = 22;
               const circumference = 2 * Math.PI * radius;
               const arcLength = (riskAssessment.score / 100) * circumference * 0.75; // 270° arc
               return (
-                <div className={styles.scoreCard} style={{ '--score-color': scoreInfo.color } as React.CSSProperties}>
-                  <div className={styles.riskArcWrapper}>
-                    <svg viewBox="0 0 68 68" className={styles.riskArcSvg}>
-                      {/* Background arc */}
-                      <circle
-                        cx="34" cy="34" r={radius}
-                        fill="none" stroke="#e2e8f0" strokeWidth="5"
-                        strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
-                        strokeLinecap="round"
-                        transform="rotate(135 34 34)"
-                      />
-                      {/* Score arc */}
-                      <circle
-                        cx="34" cy="34" r={radius}
-                        fill="none" stroke={scoreInfo.color} strokeWidth="5"
-                        strokeDasharray={`${arcLength} ${circumference}`}
-                        strokeLinecap="round"
-                        transform="rotate(135 34 34)"
-                        className={styles.riskArcFill}
-                      />
-                    </svg>
-                    <span className={styles.riskArcValue}>{riskAssessment.score}</span>
-                  </div>
-                  <div className={styles.scoreLabel}>
-                    {scoreInfo.label}
-                  </div>
-                  <div className={styles.scoreHint}>
-                    {scoreInfo.hint}
-                  </div>
+                <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
+                  <button
+                    type="button"
+                    className={styles.scoreCard}
+                    style={{ '--score-color': scoreInfo.color } as React.CSSProperties}
+                    onClick={() => setShowScoreInfo(prev => !prev)}
+                    title="Was bedeutet der Score?"
+                    aria-label="Score-Erklärung anzeigen"
+                    aria-expanded={showScoreInfo}
+                  >
+                    <div className={styles.riskArcWrapper}>
+                      <svg viewBox="0 0 56 56" className={styles.riskArcSvg}>
+                        <circle
+                          cx="28" cy="28" r={radius}
+                          fill="none" stroke="#e2e8f0" strokeWidth="4"
+                          strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
+                          strokeLinecap="round"
+                          transform="rotate(135 28 28)"
+                        />
+                        <circle
+                          cx="28" cy="28" r={radius}
+                          fill="none" stroke={scoreInfo.color} strokeWidth="4"
+                          strokeDasharray={`${arcLength} ${circumference}`}
+                          strokeLinecap="round"
+                          transform="rotate(135 28 28)"
+                          className={styles.riskArcFill}
+                        />
+                      </svg>
+                      <span className={styles.riskArcValue}>{riskAssessment.score}</span>
+                    </div>
+                    <div className={styles.scoreLabelGroup}>
+                      <span className={styles.scoreLabel} style={{ color: scoreInfo.color }}>
+                        {scoreInfo.label}
+                      </span>
+                      <span className={styles.scoreHint}>{scoreInfo.hint}</span>
+                    </div>
+                    <span className={styles.scoreInfoIcon} aria-hidden="true">ⓘ</span>
+                  </button>
+                  {showScoreInfo && (
+                    <div className={styles.scoreInfoPopover} role="dialog" aria-label="So berechnet sich der Score">
+                      <div className={styles.scoreInfoHeader}>So berechnet sich der Score</div>
+                      <p className={styles.scoreInfoDesc}>
+                        Skala 0–100, basierend auf rechtlichem Risiko, finanzieller Tragweite, Marktüblichkeit und Verhandlungsbedarf.
+                      </p>
+                      <div className={styles.scoreInfoScale}>
+                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#059669' }} /><span className={styles.scoreScaleRange}>0–19</span><span className={styles.scoreScaleLabel}>Minimal — Unbedenklich</span></div>
+                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#16a34a' }} /><span className={styles.scoreScaleRange}>20–39</span><span className={styles.scoreScaleLabel}>Niedrig — Akzeptabel</span></div>
+                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ca8a04' }} /><span className={styles.scoreScaleRange}>40–59</span><span className={styles.scoreScaleLabel}>Mittel — Verhandeln empfohlen</span></div>
+                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ea580c' }} /><span className={styles.scoreScaleRange}>60–79</span><span className={styles.scoreScaleLabel}>Hoch — Aufmerksamkeit nötig</span></div>
+                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#dc2626' }} /><span className={styles.scoreScaleRange}>80–100</span><span className={styles.scoreScaleLabel}>Kritisch — Dringend prüfen</span></div>
+                      </div>
+                      <div className={styles.scoreInfoCurrent}>
+                        Diese Klausel: <strong style={{ color: scoreInfo.color }}>{riskAssessment.score} — {scoreInfo.label}</strong>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -780,7 +810,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </div>
         ) : (
           <p className={styles.emptyAlternativesText}>
-            Klicken Sie auf "Generieren", um weitere alternative Formulierungen zu erhalten.
+            Klick auf "Generieren", um weitere alternative Formulierungen zu bekommen.
           </p>
         )}
       </div>
@@ -830,7 +860,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </>
         ) : (
           <p className={styles.explanationText}>
-            Klicken Sie auf "Generieren", um Verhandlungstipps zu erhalten.
+            Klick auf "Generieren", um Verhandlungstipps zu bekommen.
           </p>
         )}
       </div>
@@ -899,7 +929,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Stellen Sie eine Frage zu dieser Klausel..."
+            placeholder="Stelle eine Frage zu dieser Klausel..."
             rows={1}
           />
           <button

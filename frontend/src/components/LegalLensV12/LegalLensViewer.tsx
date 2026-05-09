@@ -2524,7 +2524,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   fontWeight: 500,
                   boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                 }}>
-                  💡 Klicken Sie auf Text um die Analyse zu sehen
+                  💡 Klick auf Text, um die Analyse zu sehen
                 </div>
               )}
 
