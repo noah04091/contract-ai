@@ -14,7 +14,6 @@ import {
   FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
   MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
-  Columns, // 📱 V2 TODO #5: Mobile Spalten-Konfigurator-Trigger
   Star, // ⭐ Favoriten-Icon
   Scale, // ⚖️ Rechtsprüfung Icon
   Radar, // 📡 Legal Pulse Icon
@@ -457,29 +456,6 @@ export default function Contracts() {
   const [columnConfigFor, setColumnConfigFor] = useState<number | 'sublabel' | null>(null);
   // Position des Popovers (fixed positioning, damit es nicht von overflow:hidden abgeschnitten wird)
   const [columnConfigPos, setColumnConfigPos] = useState<{ top: number; left: number } | null>(null);
-  // 🆕 V2 TODO #5: Mobile-Konfigurator (Bottom-Sheet)
-  const [showMobileColumnSheet, setShowMobileColumnSheet] = useState(false);
-  const [mobileSheetExpanded, setMobileSheetExpanded] = useState<Set<string>>(new Set());
-  const mobileColumnTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const toggleMobileAccordion = useCallback((key: string) => {
-    setMobileSheetExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-  }, []);
-  const closeMobileColumnSheet = useCallback(() => {
-    setShowMobileColumnSheet(false);
-    setMobileSheetExpanded(new Set());
-    // Focus-Restore zum Trigger
-    window.requestAnimationFrame(() => mobileColumnTriggerRef.current?.focus());
-  }, []);
-  // v2-Audit: Defensives Auto-Schließen — verhindert Z-Index-Konflikt zwischen Filter- und Column-Sheet
-  const openMobileColumnSheet = useCallback(() => {
-    setShowMobileFilterSheet(false);
-    setShowMobileColumnSheet(true);
-  }, []);
   // 🆕 V2 TODO #6: Refs für A11y (Focus-Restore + saubere Outside-Detection statt querySelector)
   const colConfigPopoverRef = useRef<HTMLDivElement | null>(null);
   // Map: slot-id → trigger-button-element. Damit beim Schließen Focus zurück zum richtigen Stift geht.
@@ -937,24 +913,6 @@ export default function Contracts() {
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [columnConfigFor, closeColumnConfig]);
-
-  // 🆕 V2 TODO #5: Mobile-Sheet — Body-Scroll-Lock + Escape-Handler
-  useEffect(() => {
-    if (!showMobileColumnSheet) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        closeMobileColumnSheet();
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [showMobileColumnSheet, closeMobileColumnSheet]);
 
   // 🆕 V2 TODO #6: Beim Öffnen Fokus auf aktuell ausgewähltes Item (oder erstes Item)
   useEffect(() => {
@@ -3764,16 +3722,6 @@ export default function Contracts() {
           </div>
         </div>
 
-      {/* 🆕 V2 TODO #5: Eckdaten-Block (3 Slot-Felder, User-konfiguriert) */}
-      <div className={styles.cardEckdatenBlock}>
-        {[0, 1, 2].map((slotIdx) => (
-          <div key={slotIdx} className={styles.cardEckdatenItem}>
-            <span className={styles.cardEckdatenLabel}>{getFieldLabel(columnSlots[slotIdx])}</span>
-            <span className={styles.cardEckdatenValue}>{renderColumnValue(contract, columnSlots[slotIdx])}</span>
-          </div>
-        ))}
-      </div>
-
       {/* Card Details Grid - 📊 Dynamische QuickFacts – Inline-Edit */}
       <div className={styles.cardDetails}>
         {getQuickFacts(contract).slice(0, 2).map((fact, index) => {
@@ -4061,7 +4009,7 @@ export default function Contracts() {
           <div className={styles.listRowStatusIndicator} />
         </div>
 
-        {/* Hauptinhalt: Name + Sub-Label + Slot-Meta */}
+        {/* Hauptinhalt: Name + Meta-Info (V1-Style: kompakt) */}
         <div className={styles.listRowContent}>
           <div className={styles.listRowMain}>
             <span className={styles.listRowName}>{fixUtf8Display(contract.name)}</span>
@@ -4073,17 +4021,18 @@ export default function Contracts() {
               {isContractNotAnalyzed(contract) && <span className={styles.listRowBadge} data-type="unanalyzed">!</span>}
             </div>
           </div>
-          {/* 🆕 V2 TODO #5: Sub-Label-Zeile (User-konfiguriertes Feld) */}
-          <div className={styles.listRowSubLabel}>
-            {renderColumnValue(contract, subLabelField as ColumnFieldKey)}
-          </div>
-          {/* 🆕 V2 TODO #5: 3 Slot-Felder ersetzen die fixe Status•Date•Days-Zeile */}
           <div className={styles.listRowMeta}>
-            {[0, 1, 2].map((slotIdx) => (
-              <span key={slotIdx} className={styles.listRowMetaSlot}>
-                {renderColumnValue(contract, columnSlots[slotIdx])}
-              </span>
-            ))}
+            <span className={styles.listRowStatus}>{calculateSmartStatus(contract)}</span>
+            <span className={styles.listRowDivider}>•</span>
+            <span className={styles.listRowDate}>
+              {contract.expiryDate ? formatDate(contract.expiryDate) : 'Kein Ablauf'}
+            </span>
+            {daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 && (
+              <>
+                <span className={styles.listRowDivider}>•</span>
+                <span className={styles.listRowUrgent}>{daysUntilExpiry}T</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -4640,20 +4589,6 @@ export default function Contracts() {
                   )}
                 </button>
 
-                {/* 📱 V2 TODO #5: MOBILE — Spalten-Konfigurator-Trigger */}
-                <button
-                  ref={mobileColumnTriggerRef}
-                  className={`${styles.mobileColumnTrigger} ${showMobileColumnSheet ? styles.mobileColumnTriggerActive : ''}`}
-                  onClick={openMobileColumnSheet}
-                  aria-haspopup="dialog"
-                  aria-expanded={showMobileColumnSheet}
-                  aria-controls={showMobileColumnSheet ? 'mobile-column-sheet' : undefined}
-                  aria-label="Spalten anpassen"
-                  title="Spalten anpassen"
-                >
-                  <Columns size={16} />
-                  <span>Spalten</span>
-                </button>
               </div>
 
               <div className={styles.toolbarDivider} />
@@ -4862,149 +4797,6 @@ export default function Contracts() {
                       >
                         Anwenden
                       </button>
-                    </div>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-
-            {/* 📱 V2 TODO #5: MOBILE — Spalten-Konfigurator Bottom-Sheet */}
-            <AnimatePresence>
-              {showMobileColumnSheet && (
-                <>
-                  <motion.div
-                    className={styles.bottomSheetOverlay}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                    onClick={closeMobileColumnSheet}
-                  />
-                  <motion.div
-                    id="mobile-column-sheet"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="mobile-column-sheet-title"
-                    className={styles.bottomSheet}
-                    initial={{ y: '100%' }}
-                    animate={{ y: 0 }}
-                    exit={{ y: '100%' }}
-                    transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-                  >
-                    <div className={styles.bottomSheetHandle} aria-hidden="true" />
-                    <div className={styles.bottomSheetHeader}>
-                      <h2 className={styles.bottomSheetTitle} id="mobile-column-sheet-title">Spalten anpassen</h2>
-                      <button
-                        className={styles.bottomSheetClose}
-                        onClick={closeMobileColumnSheet}
-                        aria-label="Schließen"
-                      >
-                        <X size={16} strokeWidth={2.5} />
-                      </button>
-                    </div>
-                    <div className={styles.bottomSheetBody}>
-                      {/* 3 Slots */}
-                      {[0, 1, 2].map((slotIdx) => {
-                        const key = String(slotIdx);
-                        const isOpen = mobileSheetExpanded.has(key);
-                        const currentLabel = getFieldLabel(columnSlots[slotIdx]);
-                        return (
-                          <div
-                            key={key}
-                            className={`${styles.colSheetSection} ${isOpen ? styles.colSheetSectionExpanded : ''}`}
-                          >
-                            <button
-                              className={styles.colSheetHeader}
-                              onClick={() => toggleMobileAccordion(key)}
-                              aria-expanded={isOpen}
-                            >
-                              <span className={styles.colSheetLabel}>Spalte {slotIdx + 1}</span>
-                              <span className={styles.colSheetValue}>{currentLabel}</span>
-                              <ChevronDown size={18} className={styles.colSheetChevron} />
-                            </button>
-                            <div className={styles.colSheetBody}>
-                              <div className={styles.colSheetBodyInner}>
-                                {FIELD_OPTIONS.map((opt) => {
-                                  const selected = columnSlots[slotIdx] === opt.key;
-                                  return (
-                                    <button
-                                      key={opt.key}
-                                      role="option"
-                                      aria-selected={selected}
-                                      className={`${styles.colSheetOption} ${selected ? styles.colSheetOptionSelected : ''}`}
-                                      onClick={() => setColumnSlotField(slotIdx, opt.key)}
-                                    >
-                                      {selected ? (
-                                        <CheckCircle size={14} />
-                                      ) : (
-                                        <span className={styles.colSheetOptionPlaceholder} />
-                                      )}
-                                      <span>{opt.label}</span>
-                                    </button>
-                                  );
-                                })}
-                                <button
-                                  className={styles.colSheetReset}
-                                  onClick={() => resetColumnSlot(slotIdx)}
-                                  aria-label={`Spalte ${slotIdx + 1} auf Standard zurücksetzen`}
-                                >
-                                  <RotateCcw size={11} />
-                                  <span>Standard</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {/* Sub-Label */}
-                      {(() => {
-                        const isOpen = mobileSheetExpanded.has('sublabel');
-                        const currentLabel = SUB_LABEL_OPTIONS.find(o => o.key === subLabelField)?.label || subLabelField;
-                        return (
-                          <div className={`${styles.colSheetSection} ${isOpen ? styles.colSheetSectionExpanded : ''}`}>
-                            <button
-                              className={styles.colSheetHeader}
-                              onClick={() => toggleMobileAccordion('sublabel')}
-                              aria-expanded={isOpen}
-                            >
-                              <span className={styles.colSheetLabel}>Sub-Label</span>
-                              <span className={styles.colSheetValue}>{currentLabel}</span>
-                              <ChevronDown size={18} className={styles.colSheetChevron} />
-                            </button>
-                            <div className={styles.colSheetBody}>
-                              <div className={styles.colSheetBodyInner}>
-                                {SUB_LABEL_OPTIONS.map((opt) => {
-                                  const selected = subLabelField === opt.key;
-                                  return (
-                                    <button
-                                      key={opt.key}
-                                      role="option"
-                                      aria-selected={selected}
-                                      className={`${styles.colSheetOption} ${selected ? styles.colSheetOptionSelected : ''}`}
-                                      onClick={() => setSubLabelFieldPersist(opt.key)}
-                                    >
-                                      {selected ? (
-                                        <CheckCircle size={14} />
-                                      ) : (
-                                        <span className={styles.colSheetOptionPlaceholder} />
-                                      )}
-                                      <span>{opt.label}</span>
-                                    </button>
-                                  );
-                                })}
-                                <button
-                                  className={styles.colSheetReset}
-                                  onClick={resetSubLabel}
-                                  aria-label="Sub-Label auf Standard zurücksetzen"
-                                >
-                                  <RotateCcw size={11} />
-                                  <span>Standard</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
                     </div>
                   </motion.div>
                 </>
