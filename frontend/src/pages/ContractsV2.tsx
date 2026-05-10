@@ -5948,7 +5948,9 @@ export default function Contracts() {
                               </td>
                               <td className={styles.uploadDateColumn}>
                                 {/* 🆕 V2 TODO #4b: 3. Slot-Cell (default Ablauf, konfigurierbar) */}
-                                {renderColumnValue(contract, columnSlots[2])}
+                                <span className={styles.contractDetail}>
+                                  {renderColumnValue(contract, columnSlots[2])}
+                                </span>
                               </td>
                               <td>
                                 {/* 🆕 V2 TODO #1: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}
