@@ -5922,8 +5922,8 @@ export default function Contracts() {
                                   <div className={styles.contractIcon}>
                                     <FileText size={16} />
                                   </div>
-                                  <div>
-                                    <span className={styles.contractNameText}>{fixUtf8Display(contract.name)}</span>
+                                  <div className={styles.contractNameWrap}>
+                                    <span className={styles.contractNameText} title={fixUtf8Display(contract.name)}>{fixUtf8Display(contract.name)}</span>
                                     {/* 🆕 V2 TODO #4b: Sub-Label switchbar via renderSubLabel */}
                                     <div className={styles.contractSubLabelV2}>
                                       {renderSubLabel(contract)}
