@@ -1054,6 +1054,11 @@
   padding-top: 1.75rem;
 }
 
+/* Partner Card: Header braucht Platz für die absolute Partner-Badge (identisches Pattern) */
+.alternative-card.partner-card .card-header {
+  padding-top: 1.75rem;
+}
+
 /* AI-Suggested Indicator Badge */
 .ai-suggested-indicator {
   position: absolute;
