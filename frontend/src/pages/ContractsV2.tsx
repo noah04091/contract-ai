@@ -1,5 +1,5 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6301,15 +6301,34 @@ export default function Contracts() {
           {/* 🆕 REDESIGNED PREVIEW PANEL - Right Side */}
           {previewContract && activeSection === 'contracts' && (
             <aside className={styles.previewPanel}>
-              {/* Dark Gradient Header mit Vertragsname */}
+              {/* Dark Gradient Header mit Vertragsname + Status-Pill (Mockup-aligned) */}
               <div className={styles.previewHeader}>
                 <div className={styles.previewHeaderInfo}>
                   <div className={styles.previewHeaderIcon}>
                     <FileText size={20} />
                   </div>
                   <div className={styles.previewHeaderText}>
-                    <span className={styles.previewHeaderLabel}>Vertragsvorschau</span>
+                    <span className={styles.previewHeaderLabel}>Vertragsdetails</span>
                     <h3 className={styles.previewHeaderTitle}>{previewContract.name}</h3>
+                    {/* 🆕 Status-Pill mit Pulse direkt im Header */}
+                    {(() => {
+                      const smart = calculateSmartStatus(previewContract);
+                      // Mapping: tatsächliche Werte aus calculateSmartStatus (Z. 3244+)
+                      let pulseStatus: 'aktiv' | 'warn' | 'bad' | 'muted' = 'muted';
+                      if (smart === 'Aktiv') pulseStatus = 'aktiv';
+                      else if (smart === 'Läuft ab' || smart === 'Gekündigt — offen') pulseStatus = 'warn';
+                      else if (smart === 'Beendet' || smart === 'Gekündigt ✓' || smart === 'Gekündigt') pulseStatus = 'bad';
+                      const expiry = previewContract.expiryDate ? formatDate(previewContract.expiryDate) : null;
+                      return (
+                        <span
+                          className={styles.previewHeaderStatusPill}
+                          data-status={pulseStatus}
+                        >
+                          <span className={styles.previewHeaderPulse} />
+                          {smart}{expiry ? ` · läuft ${expiry} ab` : ''}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <button
@@ -6369,18 +6388,7 @@ export default function Contracts() {
               )}
 
               <div className={styles.previewContent}>
-                {/* Status Badge - kompakt unter Header */}
-                <div className={styles.previewStatusRow}>
-                  <span className={`${styles.previewStatusBadge} ${getStatusColor(previewContract.status)}`}>
-                    {previewContract.status}
-                  </span>
-                  {previewContract.analyzed && (
-                    <span className={styles.previewAnalyzedBadge}>
-                      <CheckCircle size={12} />
-                      Analysiert
-                    </span>
-                  )}
-                </div>
+                {/* Status & Analysiert sind jetzt im Header bzw. im Score-Ring-Meta — keine Redundanz */}
 
                 {/* Score Ring - wenn Score vorhanden */}
                 {previewContract.contractScore !== undefined && previewContract.contractScore !== null && (
@@ -6462,47 +6470,43 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {/* Info Grid - 2 Spalten - 📊 Dynamische QuickFacts */}
-                <div className={styles.previewInfo}>
-                  {getQuickFacts(previewContract).map((fact, index) => {
-                    const FactIcon = getQuickFactIcon(fact.label, fact.value);
-                    return (
-                      <div key={index} className={styles.previewInfoItem}>
-                        <span className={styles.previewLabel}>{fact.label}</span>
-                        <span className={`${styles.previewValue} ${getRatingClass(fact.rating)}`}>
-                          <FactIcon size={14} style={{ color: '#64748b' }} />
-                          {fact.value}
-                        </span>
+                {/* Eckdaten als kompakte <dl>-Liste (Mockup-Style) */}
+                {(() => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const c = previewContract as any;
+                  const anbieter = (typeof c.anbieter === 'string' && c.anbieter.trim()) || previewContract.provider?.displayName;
+                  const vertragsnummer = (typeof c.vertragsnummer === 'string' && c.vertragsnummer.trim()) || (typeof c.contractNumber === 'string' && c.contractNumber.trim());
+                  const items: Array<{ label: string; value: string; cls?: string }> = [];
+                  if (anbieter) items.push({ label: 'Anbieter', value: anbieter });
+                  if (previewContract.contractType) items.push({ label: 'Vertragstyp', value: previewContract.contractType });
+                  if (previewContract.laufzeit) items.push({ label: 'Laufzeit', value: previewContract.laufzeit });
+                  if (previewContract.kuendigung) items.push({ label: 'Kündigung', value: previewContract.kuendigung, cls: styles.warn });
+                  if (previewContract.startDate) items.push({ label: 'Vertragsbeginn', value: formatDate(previewContract.startDate) });
+                  if (previewContract.paymentAmount !== undefined && previewContract.paymentAmount !== null) {
+                    const freq = previewContract.paymentFrequency ? ` / ${previewContract.paymentFrequency}` : '';
+                    items.push({ label: 'Zahlung', value: `${previewContract.paymentAmount} €${freq}` });
+                  }
+                  if (vertragsnummer) items.push({ label: 'Vertragsnummer', value: vertragsnummer });
+                  if (items.length === 0) return null;
+                  return (
+                    <div className={styles.previewSection}>
+                      <div className={styles.previewSectionHeader}>
+                        <div className={`${styles.previewSectionIcon} ${styles.summary}`}>
+                          <FileText size={14} />
+                        </div>
+                        <h5>Eckdaten</h5>
                       </div>
-                    );
-                  })}
-                  {previewContract.startDate && (
-                    <div className={styles.previewInfoItem}>
-                      <span className={styles.previewLabel}>Vertragsbeginn</span>
-                      <span className={styles.previewValue}>
-                        <Calendar size={14} style={{ color: '#22c55e' }} />
-                        {formatDate(previewContract.startDate)}
-                      </span>
+                      <dl className={styles.previewEckdaten}>
+                        {items.map((it, i) => (
+                          <Fragment key={i}>
+                            <dt>{it.label}</dt>
+                            <dd className={it.cls}>{it.value}</dd>
+                          </Fragment>
+                        ))}
+                      </dl>
                     </div>
-                  )}
-                  <div className={styles.previewInfoItem}>
-                    <span className={styles.previewLabel}>Hochgeladen</span>
-                    <span className={styles.previewValue}>
-                      <Upload size={14} style={{ color: '#64748b' }} />
-                      {formatDate(previewContract.createdAt)}
-                    </span>
-                  </div>
-                  {/* Zahlungsinfo wenn vorhanden */}
-                  {previewContract.paymentAmount && (
-                    <div className={`${styles.previewInfoItem} ${styles.fullWidth}`}>
-                      <span className={styles.previewLabel}>Zahlung</span>
-                      <span className={`${styles.previewValue} ${styles.success}`}>
-                        <CreditCard size={14} />
-                        {previewContract.paymentAmount}€ {previewContract.paymentFrequency && `/ ${previewContract.paymentFrequency}`}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* 📅 Wichtige Termine - KI-extrahierte Datums (VOR Zusammenfassung) */}
                 {previewContract.importantDates && previewContract.importantDates.length > 0 && (
@@ -6532,7 +6536,7 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {/* Risks Section */}
+                {/* Risks Section — Mockup-Style: bold Title + Description */}
                 {previewContract.risiken && previewContract.risiken.length > 0 && (
                   <div className={styles.previewSection}>
                     <div className={styles.previewSectionHeader}>
@@ -6541,24 +6545,33 @@ export default function Contracts() {
                       </div>
                       <h5>Erkannte Risiken ({previewContract.risiken.length})</h5>
                     </div>
-                    <ul className={styles.previewList}>
-                      {previewContract.risiken.slice(0, 3).map((risk, i) => (
-                        <li key={i} className={styles.previewRisk}>
-                          {typeof risk === 'string' ? risk : ((risk as { title?: string; description?: string }).title || (risk as { title?: string; description?: string }).description || 'Unbekanntes Risiko')}
-                        </li>
-                      ))}
+                    <div className={styles.previewRiskList}>
+                      {previewContract.risiken.slice(0, 3).map((risk, i) => {
+                        const isObj = typeof risk === 'object' && risk !== null;
+                        const obj = isObj ? (risk as { title?: string; description?: string }) : null;
+                        const title = obj?.title || '';
+                        const desc = obj?.description || (isObj ? '' : (risk as string));
+                        return (
+                          <div key={i} className={styles.previewRiskItem}>
+                            <AlertTriangle size={14} className={styles.previewRiskIcon} />
+                            <div className={styles.previewRiskContent}>
+                              {title && <strong className={styles.previewRiskTitle}>{title}</strong>}
+                              <span className={styles.previewRiskDesc}>{desc || title || 'Unbekanntes Risiko'}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                       {previewContract.risiken.length > 3 && (
-                        <li
-                          className={styles.previewMore}
-                          style={{ cursor: 'pointer' }}
+                        <span
+                          className={styles.previewRiskMore}
                           onClick={() => {
                             setSelectedContract(previewContract);
                             setModalInitialTab('analysis');
                             setShowDetails(true);
                           }}
-                        >+{previewContract.risiken.length - 3} weitere Risiken anzeigen</li>
+                        >+{previewContract.risiken.length - 3} weitere Risiken anzeigen</span>
                       )}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
@@ -6621,6 +6634,15 @@ export default function Contracts() {
                       Bearbeiten
                     </button>
                   )}
+                  {/* 🆕 Erinnern (Mockup-aligned) */}
+                  <button
+                    className={styles.previewQuickAction}
+                    onClick={() => setReminderSettingsModal({ show: true, contract: previewContract })}
+                    title="Erinnerung einrichten"
+                  >
+                    <Bell size={14} />
+                    Erinnern
+                  </button>
                   {canDeleteContract(previewContract) && (
                     <button
                       className={`${styles.previewQuickAction} ${styles.delete}`}

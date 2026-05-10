@@ -2196,38 +2196,6 @@
   gap: 1.5rem;
 }
 
-/* Status Row - kompakt unter Header */
-.previewStatusRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.previewStatusBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.375rem 0.875rem;
-  border-radius: 9999px;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.previewAnalyzedBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0.3125rem 0.75rem;
-  border-radius: 9999px;
-  background: #dcfce7;
-  color: #15803d;
-}
-
 /* Legacy support - falls noch verwendet */
 .previewStatus {
   display: inline-flex;
@@ -9063,3 +9031,132 @@
 .colConfigResetBtn svg {
   flex-shrink: 0;
 }
+
+/* =========================================================================
+   📱 Preview-Sidebar Polish (Mockup-aligned)
+   - Status-Pill mit Pulse im Header
+   - Eckdaten als <dl>-Liste (kompakt)
+   - Risiken mit bold Title + Description (ohne Severity-Bar — keine Daten)
+   - Action-Footer: Bearbeiten/Erinnern/PDF
+   ========================================================================= */
+
+/* Pulse-Animation für Status-Indicator */
+@keyframes previewStatusPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.4); }
+}
+
+/* Status-Pill direkt im Header (statt separater Status-Row darunter) */
+.previewHeaderStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px 4px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.previewHeaderPulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  animation: previewStatusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+/* A11y: User mit prefers-reduced-motion bekommen keinen Pulse */
+@media (prefers-reduced-motion: reduce) {
+  .previewHeaderPulse { animation: none; }
+}
+/* Status-Variants — Hintergrund-Pulse-Farbe an Status-Status anpassen */
+.previewHeaderStatusPill[data-status="aktiv"] .previewHeaderPulse { background: #10b981; }
+.previewHeaderStatusPill[data-status="warn"] .previewHeaderPulse { background: #f59e0b; }
+.previewHeaderStatusPill[data-status="bad"] .previewHeaderPulse { background: #ef4444; }
+.previewHeaderStatusPill[data-status="muted"] .previewHeaderPulse { background: #94a3b8; animation: none; }
+
+/* Eckdaten als <dl>-Liste (Mockup-Style) */
+.previewEckdaten {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 12px;
+  row-gap: 8px;
+  margin: 0;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.previewEckdaten dt {
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.previewEckdaten dd {
+  margin: 0;
+  color: #0a0e1a;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.previewEckdaten dd.warn { color: #b45309; }
+.previewEckdaten dd.bad { color: #b91c1c; }
+.previewEckdaten dd.muted { color: #94a3b8; font-weight: 400; }
+
+/* Risiken mit Icon + bold Title + Description (Mockup-Style ohne Severity-Bar) */
+.previewRiskList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.previewRiskItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fef9f9;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.previewRiskIcon {
+  color: #b91c1c;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.previewRiskContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.previewRiskTitle {
+  font-weight: 600;
+  color: #0a0e1a;
+}
+.previewRiskDesc {
+  color: #475569;
+}
+.previewRiskMore {
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.previewRiskMore:hover { text-decoration: underline; }
+
