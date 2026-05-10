@@ -296,7 +296,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               </span>
               {d.provider?.name && (
                 <span className={styles.fcStatusPill} style={{ background: "#eff6ff", color: "#2563eb" }}>
-                  {d.provider.name}
+                  {cleanOcrSpacing(d.provider.name)}
                 </span>
               )}
               {d.isReanalysis && (
