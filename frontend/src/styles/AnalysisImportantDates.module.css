@@ -243,6 +243,41 @@
   text-align: right;
 }
 
+/* Lösch-Button rechts vom Termin — dezent, hover-only sichtbar.
+   Nur für Business+ User (canDelete) gerendert. */
+.eventDeleteBtn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.eventItem:hover .eventDeleteBtn,
+.eventDeleteBtn:focus-visible {
+  opacity: 1;
+}
+.eventDeleteBtn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+.eventDeleteBtn:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  /* Auf Mobile immer sichtbar (kein Hover) */
+  .eventDeleteBtn { opacity: 0.7; }
+}
+
 .eventDate {
   font-size: 13px;
   font-weight: 600;

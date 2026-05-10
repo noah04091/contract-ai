@@ -1503,9 +1503,17 @@ async function cleanAndRegenerateAIEvents(db, contract) {
     throw new Error('cleanAndRegenerateAIEvents: contract._id required');
   }
 
+  // 🛡️ User-Dismissed-Events bleiben erhalten:
+  //   Wenn ein User einen AI-Reminder per UI gelöscht hat, wurde er auf
+  //   status='dismissed' gesetzt (siehe routes/calendar.js:826 quick-action).
+  //   Beim Cleanup hier bewusst NICHT löschen — der nachfolgende
+  //   generateEventsForContract() läuft durch findOne()-Duplicate-Check
+  //   (calendarEvents.js:~1073), der dismissed-Events findet und kein neues
+  //   Duplikat erzeugt. Damit bleibt die User-Entscheidung über Re-Analyse hinaus persistent.
   const cleanupFilter = {
     contractId: contract._id,
     isManual: { $ne: true },
+    status: { $ne: 'dismissed' },
     $or: [
       { 'metadata.aiExtracted': true },
       { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } }

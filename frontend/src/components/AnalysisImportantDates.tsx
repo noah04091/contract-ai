@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Plus, X, Loader, Crown } from "lucide-react";
+import { Calendar, Plus, X, Loader, Crown, Trash2 } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { useCalendarStore } from "../stores/calendarStore";
 import type { CalendarEvent, CalendarAccess } from "../stores/calendarStore";
@@ -98,6 +98,12 @@ export default function AnalysisImportantDates({
   const [fristenExpanded, setFristenExpanded] = useState(false);
   const FRISTEN_COLLAPSED_LIMIT = 4;
 
+  // Termin-löschen-Modal: User klickt auf × → Confirmation. AI-Events werden via dismiss
+  // gelöscht (verhindert Wiederkehr bei Re-Analyse via cleanupFilter-Schutz im Backend),
+  // manuelle Events via Hard-Delete. State hält das zu löschende Event vor.
+  const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const toast = useToast();
   const navigate = useNavigate();
   const { clearCache: clearCalendarCache } = useCalendarStore();
@@ -164,6 +170,69 @@ export default function AnalysisImportantDates({
   }, [fetchEvents, fetchContractMeta]);
 
   const canCreate = access?.canCreate === true;
+  const canDelete = access?.canDelete === true;
+
+  // Termin löschen: bei manuellen Events Hard-Delete via DELETE-Endpoint,
+  // bei AI-Events „dismiss" via quick-action — sodass das Event in der DB bleibt
+  // und vom Cleanup-Filter (Backend) bei Re-Analyse nicht regeneriert wird.
+  const handleDeleteClick = (event: CalendarEvent) => {
+    if (!canDelete) {
+      toast.info("Termin-Löschung ist ein Business/Enterprise-Feature");
+      navigate("/pricing");
+      return;
+    }
+    setDeleteTarget(event);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (deleting) return;
+    setDeleteTarget(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const event = deleteTarget;
+    try {
+      const token = localStorage.getItem("token");
+      let res: Response;
+      if (event.isManual) {
+        // Hard-Delete: manuelle Events werden nicht regeneriert, dürfen weg
+        res = await fetch(`/api/calendar/events/${event.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        // Dismiss: AI-Events bleiben in DB mit status='dismissed' →
+        // Cleanup-Filter überspringt sie, Re-Analyse erzeugt kein Duplikat
+        res = await fetch("/api/calendar/quick-action", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ eventId: event.id, action: "dismiss" }),
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        toast.success("Termin entfernt");
+        // Optimistic UI: lokal aus Liste rauswerfen + Cache invalidieren
+        setEvents(prev => prev.filter(e => e.id !== event.id));
+        clearCalendarCache();
+        setDeleteTarget(null);
+      } else if (res.status === 403 && data.upgradeRequired) {
+        toast.error(data.error || "Business/Enterprise-Plan erforderlich");
+      } else {
+        toast.error(data.error || "Fehler beim Entfernen des Termins");
+      }
+    } catch (err) {
+      console.error("Error deleting calendar event:", err);
+      toast.error("Netzwerkfehler beim Entfernen");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleAddClick = () => {
     if (!canCreate) {
@@ -427,6 +496,17 @@ export default function AnalysisImportantDates({
                         {formatDaysUntil(days)}
                       </div>
                     </div>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        className={styles.eventDeleteBtn}
+                        onClick={() => handleDeleteClick(event)}
+                        aria-label={`Termin „${event.title}" entfernen`}
+                        title="Termin entfernen"
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -565,6 +645,110 @@ export default function AnalysisImportantDates({
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation-Modal beim Löschen eines Termins. AI-Events werden via dismiss
+          gelöscht (status='dismissed'), manuelle Events via Hard-Delete. Beides bleibt
+          nach Re-Analyse erhalten — siehe services/calendarEvents.js cleanupFilter. */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseDeleteModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-confirm-title"
+          >
+            <motion.div
+              className={styles.modal}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ maxWidth: 460 }}
+            >
+              <div className={styles.modalHeader}>
+                <h3 id="delete-confirm-title" className={styles.modalTitle}>Termin entfernen?</h3>
+                <button
+                  type="button"
+                  className={styles.modalClose}
+                  onClick={handleCloseDeleteModal}
+                  disabled={deleting}
+                  aria-label="Modal schließen"
+                >
+                  <X size={20} aria-hidden="true" />
+                </button>
+              </div>
+              <div style={{ padding: "16px 24px" }}>
+                <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.55, marginBottom: 12 }}>
+                  Diesen Termin entfernen?
+                </p>
+                <div style={{
+                  background: "#fafbfc",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  marginBottom: 14,
+                }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a", marginBottom: 2 }}>
+                    {deleteTarget.title}
+                  </div>
+                  <div style={{ fontSize: 12.5, color: "#64748b" }}>
+                    {formatDate(deleteTarget.date)}
+                  </div>
+                </div>
+                <p style={{ fontSize: 12.5, color: "#64748b", lineHeight: 1.5 }}>
+                  Du erhältst keine Erinnerungen mehr für diesen Termin. Die Entscheidung bleibt auch nach einer Re-Analyse erhalten.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, padding: "0 24px 20px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={handleCloseDeleteModal}
+                  disabled={deleting}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 8,
+                    border: "1px solid #e5e7eb",
+                    background: "#fff",
+                    color: "#475569",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: deleting ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                  }}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={deleting}
+                  style={{
+                    padding: "9px 16px",
+                    borderRadius: 8,
+                    border: "1px solid #ef4444",
+                    background: "#ef4444",
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: deleting ? "wait" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontFamily: "inherit",
+                  }}
+                >
+                  {deleting ? <Loader size={14} aria-hidden="true" /> : <Trash2 size={14} aria-hidden="true" />}
+                  {deleting ? "Entferne..." : "Entfernen"}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
