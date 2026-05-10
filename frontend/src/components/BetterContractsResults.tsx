@@ -133,13 +133,22 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     if (alternative.widget) {
       setSelectedWidget(alternative);
       setWidgetLoading(true);
-      
+
+      // Body-Scroll-Lock damit Hintergrund nicht mitscrollt
+      // (gleiches Pattern wie in ClauseLibrary/SammlungTab)
+      document.body.style.overflow = 'hidden';
+
       // Load scripts after a short delay to ensure modal is rendered
       setTimeout(() => {
         if (alternative.widget) { // Type guard to ensure widget is defined
           loadWidgetScript(alternative.widget);
         }
         setWidgetLoading(false);
+        // Backup: Stelle sicher dass Modal im Sichtbereich ist
+        document.querySelector('.widget-modal')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
       }, 100);
     } else if (alternative.directLink) {
       // Direkt zum Partner-Link
@@ -154,6 +163,8 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   const closeWidgetModal = () => {
     setSelectedWidget(null);
     setWidgetLoading(false);
+    // Body-Scroll wieder freigeben
+    document.body.style.overflow = '';
   };
 
   // 💾 Save alternative function
@@ -1004,10 +1015,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             )}
             
             <div className="widget-modal-footer">
-              <p className="disclaimer">
-                * Wir erhalten eine Provision bei erfolgreicher Vermittlung.
-                Dies hat keinen Einfluss auf Ihre Preise.
-              </p>
+              <p className="disclaimer">*Werbung</p>
               {selectedWidget.category && (
                 <p className="widget-category">
                   Kategorie: {selectedWidget.category}
