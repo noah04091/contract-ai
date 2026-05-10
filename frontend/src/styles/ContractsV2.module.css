@@ -2489,17 +2489,17 @@
 }
 .previewActionBtn:active { transform: translateY(0.5px); }
 
-/* Mockup-Style: Primary ist DARK statt Brand-Blau */
+/* User-Wunsch: Primary in Brand-Blau (statt Mockup-Dark) */
 .previewActionBtn.primary {
-  background: #0a0e1a;
-  border-color: #0a0e1a;
+  background: #3b82f6;
+  border-color: #3b82f6;
   color: #ffffff;
-  box-shadow: 0 1px 2px rgba(10, 14, 26, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .previewActionBtn.primary:hover {
-  background: #1c2233;
-  border-color: #1c2233;
+  background: #2563eb;
+  border-color: #2563eb;
   color: #ffffff;
 }
 
