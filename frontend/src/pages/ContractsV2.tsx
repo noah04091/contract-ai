@@ -6301,12 +6301,9 @@ export default function Contracts() {
           {/* 🆕 REDESIGNED PREVIEW PANEL - Right Side */}
           {previewContract && activeSection === 'contracts' && (
             <aside className={styles.previewPanel}>
-              {/* Dark Gradient Header mit Vertragsname + Status-Pill (Mockup-aligned) */}
+              {/* 🎨 Mockup-1:1 Header (Light Mode, kein Icon, h2 statt h3) */}
               <div className={styles.previewHeader}>
                 <div className={styles.previewHeaderInfo}>
-                  <div className={styles.previewHeaderIcon}>
-                    <FileText size={20} />
-                  </div>
                   <div className={styles.previewHeaderText}>
                     <span className={styles.previewHeaderLabel}>Vertragsdetails</span>
                     <h3 className={styles.previewHeaderTitle}>{previewContract.name}</h3>
@@ -6390,57 +6387,44 @@ export default function Contracts() {
               <div className={styles.previewContent}>
                 {/* Status & Analysiert sind jetzt im Header bzw. im Score-Ring-Meta — keine Redundanz */}
 
-                {/* Score Ring - wenn Score vorhanden */}
+                {/* 🎨 Mockup-1:1 Score-Ring via CSS conic-gradient */}
                 {previewContract.contractScore !== undefined && previewContract.contractScore !== null && (
-                  <div className={styles.previewScoreRing}>
-                    <div className={styles.scoreCircle}>
-                      <svg viewBox="0 0 80 80" style={{ width: '100%', height: '100%' }}>
-                        <defs>
-                          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#3b82f6" />
-                            <stop offset="100%" stopColor="#8b5cf6" />
-                          </linearGradient>
-                        </defs>
-                        <circle cx="40" cy="40" r="32" className={styles.scoreCircleBg} />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="32"
-                          className={styles.scoreCircleProgress}
-                          strokeDasharray={`${(previewContract.contractScore / 100) * 201} 201`}
-                          style={{ stroke: 'url(#scoreGradient)' }}
-                        />
-                      </svg>
-                      <div className={styles.scoreValue}>
-                        <span className={styles.scoreNumber}>{previewContract.contractScore}</span>
-                        <span className={styles.scoreLabel}>Score</span>
-                      </div>
+                  <div className={styles.previewSection}>
+                    <div className={styles.previewSectionHeader}>
+                      <h5>Vertragsbewertung</h5>
                     </div>
-                    <div className={styles.scoreDetails}>
-                      <div className={styles.scoreDetailItem}>
-                        {previewContract.contractScore >= 70 ? (
-                          <CheckCircle size={14} style={{ color: '#10b981' }} />
-                        ) : previewContract.contractScore >= 40 ? (
-                          <AlertTriangle size={14} style={{ color: '#f59e0b' }} />
-                        ) : (
-                          <AlertTriangle size={14} style={{ color: '#ef4444' }} />
-                        )}
-                        <span>
-                          {previewContract.contractScore >= 70 ? 'Guter Vertrag' : previewContract.contractScore >= 40 ? 'Verbesserungspotenzial' : 'Kritische Punkte'}
-                        </span>
+                    <div className={styles.previewScoreRing}>
+                      <div
+                        className={styles.scoreCircle}
+                        style={{ ['--scoreVal' as string]: previewContract.contractScore } as React.CSSProperties}
+                      >
+                        <div>{previewContract.contractScore}</div>
                       </div>
-                      {previewContract.risiken && (
-                        <div className={styles.scoreDetailItem}>
-                          <AlertTriangle size={14} style={{ color: '#ef4444' }} />
-                          <span>{previewContract.risiken.length} Risiken erkannt</span>
+                      <div className={styles.scoreDetails}>
+                        <div className={styles.scoreDetailValue}>
+                          {previewContract.contractScore >= 70 ? 'Guter Vertrag' : previewContract.contractScore >= 40 ? 'Solider Vertrag — Verbesserungspotenzial' : 'Kritische Punkte'}
                         </div>
-                      )}
-                      {previewContract.analyzed && (
-                        <div className={styles.scoreDetailItem}>
-                          <CheckCircle size={14} style={{ color: '#10b981' }} />
-                          <span>KI-analysiert</span>
+                        <div className={styles.scoreDetailMeta}>
+                          {previewContract.risiken && previewContract.risiken.length > 0 && (
+                            <span>
+                              <AlertTriangle size={13} style={{ color: '#b91c1c' }} />
+                              {previewContract.risiken.length} Risiken
+                            </span>
+                          )}
+                          {previewContract.optimierungen && previewContract.optimierungen.length > 0 && (
+                            <span>
+                              <Sparkles size={13} style={{ color: '#3b82f6' }} />
+                              {previewContract.optimierungen.length} Optimierungen
+                            </span>
+                          )}
+                          {previewContract.analyzed && (
+                            <span>
+                              <CheckCircle size={13} style={{ color: '#059669' }} />
+                              KI-analysiert
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                 )}

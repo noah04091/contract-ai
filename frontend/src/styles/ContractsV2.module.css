@@ -2024,71 +2024,59 @@
 }
 
 /* Header - HELLES DESIGN */
+/* 🎨 Mockup-1:1 Refactor — drawer-head */
 .previewHeader {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: #F8FAFC;
-  border-bottom: 1px solid #E2E8F0;
+  padding: 28px 28px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f3f6;
+  gap: 12px;
   position: relative;
-  overflow: hidden;
-  gap: 0.75rem;
-  min-height: 72px;
 }
 
-.previewHeader::before {
-  display: none; /* Entferne den Gradient-Effekt */
-}
+.previewHeader::before { display: none; }
 
-/* Header Info mit Icon und Text */
 .previewHeaderInfo {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-start;
+  gap: 0;
   flex: 1;
   min-width: 0;
-  position: relative;
-  z-index: 1;
 }
 
-.previewHeaderIcon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
+/* Mockup hat keinen Icon im Header — wird display: none */
+.previewHeaderIcon { display: none; }
 
 .previewHeaderText {
   flex: 1;
   min-width: 0;
 }
 
+/* Mockup-Style: Label uppercase 11px, h2 18px */
 .previewHeaderLabel {
-  font-size: 0.625rem;
-  font-weight: 500;
-  color: #64748B;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   display: block;
-  margin-bottom: 0.125rem;
 }
 
 .previewHeaderTitle {
-  font-size: 0.875rem;
+  font-size: 18px;
   font-weight: 600;
-  color: #1E293B;
-  margin: 0;
+  color: #0a0e1a;
+  margin: 6px 0 10px;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .previewHeader h3 {
@@ -2187,13 +2175,21 @@
   font-size: 0.8rem;
 }
 
+/* 🎨 Mockup-Style: Sections sind volle Breite mit Border-Bottom statt Card-Look */
 .previewContent {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
+}
+.previewContent > .previewSection {
+  padding: 22px 28px;
+  border-bottom: 1px solid #f1f3f6;
+}
+.previewContent > .previewSection:last-of-type {
+  border-bottom: none;
 }
 
 /* Legacy support - falls noch verwendet */
@@ -2210,71 +2206,73 @@
 }
 
 /* Score Ring - NEU */
+/* 🎨 Mockup-1:1: Score-Ring via CSS conic-gradient */
 .previewScoreRing {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  padding: 1.25rem;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  gap: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .scoreCircle {
+  --scoreVal: 0;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: conic-gradient(#3b82f6 calc(var(--scoreVal) * 1%), #e2e8f0 0);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px #dbeafe;
   position: relative;
-  width: 80px;
-  height: 80px;
 }
 
-.scoreCircleBg {
-  fill: none;
-  stroke: #e2e8f0;
-  stroke-width: 8;
+/* Inner-circle: weißes "Loch" in der Mitte mit Score-Zahl */
+.scoreCircle > div {
+  width: 54px;
+  height: 54px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 18px;
+  color: #0a0e1a;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
-.scoreCircleProgress {
-  fill: none;
-  stroke: url(#scoreGradient);
-  stroke-width: 8;
-  stroke-linecap: round;
-  transform: rotate(-90deg);
-  transform-origin: center;
-  transition: stroke-dashoffset 0.8s ease;
-}
-
-.scoreValue {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.scoreNumber {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-}
-
-.scoreLabel {
-  font-size: 0.625rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 0.25rem;
-}
+/* Legacy SVG-Klassen — display: none (alte Render-Pfade noch im JSX bevor wir umbauen) */
+.scoreCircleBg, .scoreCircleProgress, .scoreValue, .scoreNumber, .scoreLabel { display: none; }
 
 .scoreDetails {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  min-width: 0;
 }
-
+.scoreDetailValue {
+  font-size: 14.5px;
+  font-weight: 550;
+  color: #0a0e1a;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.scoreDetailMeta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: #475569;
+  font-size: 12.5px;
+}
+.scoreDetailMeta span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
 .scoreDetailItem {
   display: flex;
   align-items: center;
@@ -2370,50 +2368,28 @@
   transform: translateY(-1px);
 }
 
-/* Sections mit Icons */
+/* 🎨 Mockup-1:1: drawer-section — pure uppercase Headers ohne Icon-Cubes */
 .previewSection {
-  padding: 1rem;
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .previewSectionHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  display: block;
+  margin-bottom: 14px;
 }
 
-.previewSectionIcon {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.previewSectionIcon.summary {
-  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
-  color: #3b82f6;
-}
-
-.previewSectionIcon.risks {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #ef4444;
-}
-
-.previewSectionIcon.payment {
-  background: linear-gradient(135deg, #dcfce7 0%, #d1fae5 100%);
-  color: #10b981;
-}
+/* Icon-Cubes ausblenden (Mockup-Style hat keine) */
+.previewSectionIcon { display: none; }
 
 .previewSection h5 {
-  font-size: 0.8125rem;
+  font-size: 11px;
   font-weight: 600;
-  color: #1e293b;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   margin: 0;
   flex: 1;
 }
@@ -2475,50 +2451,67 @@
 }
 
 /* Actions Section - Redesigned */
+/* 🎨 Mockup-1:1: Action-Footer mit Dark Primary + 3-Col-Grid Secondary */
 .previewActions {
-  padding: 1.25rem 1.5rem;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border-top: 1px solid #e2e8f0;
+  padding: 18px 28px 24px;
+  background: #ffffff;
+  border-top: 1px solid #f1f3f6;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 8px;
+  position: sticky;
+  bottom: 0;
 }
 
 .previewActionBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.625rem;
-  padding: 0.875rem 1.25rem;
+  gap: 8px;
+  padding: 11px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 600;
+  color: #0a0e1a;
+  font-size: 14px;
+  font-weight: 550;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  letter-spacing: -0.005em;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .previewActionBtn:hover {
-  background: #ffffff;
-  border-color: #3b82f6;
-  color: #3b82f6;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+  border-color: #d4d8df;
+  transform: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
+.previewActionBtn:active { transform: translateY(0.5px); }
 
+/* Mockup-Style: Primary ist DARK statt Brand-Blau */
 .previewActionBtn.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
-  border: none;
+  background: #0a0e1a;
+  border-color: #0a0e1a;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 1px 2px rgba(10, 14, 26, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .previewActionBtn.primary:hover {
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
-  transform: translateY(-2px);
+  background: #1c2233;
+  border-color: #1c2233;
+  color: #ffffff;
+}
+
+.previewActionBtn.analyze {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.25);
+}
+.previewActionBtn.analyze:hover {
+  background: #2563eb;
+  border-color: #2563eb;
 }
 
 .previewActionBtn:disabled {
@@ -2527,38 +2520,39 @@
   transform: none;
 }
 
-/* Quick Action Buttons Row */
+/* 🎨 Mockup-1:1: Secondary-Row als 3-Col-Grid (auto-fit für mehr Buttons) */
 .previewQuickActions {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .previewQuickAction {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
+  gap: 6px;
+  padding: 8px 6px;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #ffffff;
-  color: #64748b;
-  font-size: 0.75rem;
+  color: #475569;
+  font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
 }
 
 .previewQuickAction:hover {
-  border-color: #cbd5e1;
-  color: #1e293b;
+  border-color: #d4d8df;
+  color: #0a0e1a;
   background: #f8fafc;
 }
 
 .previewQuickAction.delete:hover {
   border-color: #fecaca;
-  color: #ef4444;
+  color: #b91c1c;
   background: #fef2f2;
 }
 
@@ -9046,62 +9040,59 @@
   50% { opacity: 0.45; transform: scale(1.4); }
 }
 
-/* Status-Pill direkt im Header (statt separater Status-Row darunter) */
+/* Mockup-Style Status-Pill: farbiger BG + Pulse mit currentColor */
 .previewHeaderStatusPill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
-  padding: 4px 10px 4px 8px;
-  border-radius: 9999px;
-  font-size: 11px;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .previewHeaderPulse {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #10b981;
+  background: currentColor;
   flex-shrink: 0;
   animation: previewStatusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-/* A11y: User mit prefers-reduced-motion bekommen keinen Pulse */
 @media (prefers-reduced-motion: reduce) {
   .previewHeaderPulse { animation: none; }
 }
-/* Status-Variants — Hintergrund-Pulse-Farbe an Status-Status anpassen */
-.previewHeaderStatusPill[data-status="aktiv"] .previewHeaderPulse { background: #10b981; }
-.previewHeaderStatusPill[data-status="warn"] .previewHeaderPulse { background: #f59e0b; }
-.previewHeaderStatusPill[data-status="bad"] .previewHeaderPulse { background: #ef4444; }
-.previewHeaderStatusPill[data-status="muted"] .previewHeaderPulse { background: #94a3b8; animation: none; }
+/* Status-Variants: ok / warn / bad / muted */
+.previewHeaderStatusPill[data-status="aktiv"] { color: #059669; background: #ecfdf5; }
+.previewHeaderStatusPill[data-status="warn"]  { color: #b45309; background: #fffbeb; }
+.previewHeaderStatusPill[data-status="bad"]   { color: #b91c1c; background: #fef2f2; }
+.previewHeaderStatusPill[data-status="muted"] { color: #64748b; background: #f1f5f9; }
+.previewHeaderStatusPill[data-status="muted"] .previewHeaderPulse { animation: none; }
 
-/* Eckdaten als <dl>-Liste (Mockup-Style) */
+/* 🎨 Mockup-1:1: kv-Grid 120px / 1fr, 13.5px */
 .previewEckdaten {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  column-gap: 12px;
-  row-gap: 8px;
+  grid-template-columns: 120px 1fr;
+  gap: 10px 16px;
   margin: 0;
-  padding: 14px;
-  background: #f8fafc;
-  border-radius: 10px;
-  font-size: 13px;
+  padding: 0;
+  background: transparent;
+  font-size: 13.5px;
 }
 .previewEckdaten dt {
   color: #64748b;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 450;
 }
 .previewEckdaten dd {
   margin: 0;
   color: #0a0e1a;
   font-weight: 500;
+  letter-spacing: -0.005em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -9111,7 +9102,7 @@
 .previewEckdaten dd.bad { color: #b91c1c; }
 .previewEckdaten dd.muted { color: #94a3b8; font-weight: 400; }
 
-/* Risiken mit Icon + bold Title + Description (Mockup-Style ohne Severity-Bar) */
+/* 🎨 Mockup-1:1: Risks mit Level-Bar links */
 .previewRiskList {
   display: flex;
   flex-direction: column;
@@ -9122,24 +9113,30 @@
 }
 .previewRiskItem {
   display: flex;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #fef9f9;
-  border: 1px solid #fee2e2;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #f1f3f6;
+  border-radius: 10px;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
+  color: #0a0e1a;
 }
-.previewRiskIcon {
-  color: #b91c1c;
+.previewRiskLvl {
+  width: 3px;
   flex-shrink: 0;
-  margin-top: 1px;
+  border-radius: 4px;
+  background: #b91c1c;
 }
+.previewRiskLvl.med { background: #b45309; }
+.previewRiskLvl.low { background: #3b82f6; }
+.previewRiskIcon { display: none; }
 .previewRiskContent {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 .previewRiskTitle {
   font-weight: 600;
