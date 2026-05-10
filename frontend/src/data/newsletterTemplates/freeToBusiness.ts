@@ -51,10 +51,8 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
       <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:18px;overflow:hidden;max-width:600px;width:100%;box-shadow:0 1px 2px rgba(15,23,42,0.04);">
 
         <tr>
-          <td class="px-inner" style="padding:36px 56px 0;text-align:center;">
-            <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#6b7280;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              Contract&nbsp;AI &nbsp;&middot;&nbsp; Ausgabe Mai 2026
-            </div>
+          <td class="px-inner" style="padding:40px 56px 0;text-align:center;">
+            <img src="https://www.contract-ai.de/logo.png" alt="Contract AI" width="140" height="36" style="height:36px;width:auto;max-width:140px;display:inline-block;border:0;outline:none;">
           </td>
         </tr>
 
