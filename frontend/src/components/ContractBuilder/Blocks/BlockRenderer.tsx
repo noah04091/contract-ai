@@ -329,30 +329,7 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
       className={styles.blockWrapper}
       style={blockStyles}
       data-highlight={block.style?.highlight}
-      data-block-font={block.style?.fontFamily || undefined}
     >
-      {/* Diagnose-Badge: Zeigt aktive Block-Schriftart (nur wenn gesetzt) */}
-      {block.style?.fontFamily && !isPreview && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '-22px',
-            right: '4px',
-            fontSize: '10px',
-            padding: '2px 6px',
-            background: '#2E6CF6',
-            color: '#ffffff',
-            borderRadius: '4px',
-            fontWeight: 600,
-            zIndex: 100,
-            fontFamily: 'Inter, sans-serif',
-            letterSpacing: '0.2px',
-            pointerEvents: 'none',
-          }}
-        >
-          Schrift: {block.style.fontFamily.split(',')[0].replace(/['"]/g, '')}
-        </div>
-      )}
       <BlockErrorBoundary blockId={block.id} blockType={block.type}>
         {renderBlock()}
       </BlockErrorBoundary>
