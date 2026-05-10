@@ -6150,8 +6150,8 @@
 }
 
 .fontOption.active {
-  border-color: #7C3AED;
-  background: rgba(124, 58, 237, 0.05);
+  border-color: #2E6CF6;
+  background: rgba(46, 108, 246, 0.05);
 }
 
 .fontName {
@@ -6172,7 +6172,7 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  color: #7C3AED;
+  color: #2E6CF6;
 }
 
 /* Layout Grid */
@@ -6198,8 +6198,8 @@
 }
 
 .layoutOption.active {
-  border-color: #7C3AED;
-  background: rgba(124, 58, 237, 0.05);
+  border-color: #2E6CF6;
+  background: rgba(46, 108, 246, 0.05);
 }
 
 .layoutOption span {
@@ -6214,7 +6214,7 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  color: #7C3AED;
+  color: #2E6CF6;
 }
 
 .layoutPreview {
@@ -6265,44 +6265,253 @@
   margin-bottom: 12px;
 }
 
-.customDesignPreviewBox {
-  width: 100%;
-  height: 120px;
-  border-radius: 12px;
-  border: 3px solid;
-  overflow: hidden;
-  position: relative;
-}
-
-.customDesignPreviewBox .previewHeader {
-  height: 30px;
-  border-bottom: 2px solid;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-}
-
-.customDesignPreviewBox .previewHeader div {
-  width: 60px;
-  height: 10px;
-  border-radius: 5px;
-}
-
-.customDesignPreviewBox .previewBody {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
+/* Color Presets Row */
+.colorPresetsRow {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 
-.customDesignPreviewBox .previewBody div {
-  height: 8px;
-  border-radius: 4px;
+.colorPresetBtn {
+  padding: 10px 6px;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-.customDesignPreviewBox .previewBody div:nth-child(1) { width: 70%; }
-.customDesignPreviewBox .previewBody div:nth-child(2) { width: 90%; }
-.customDesignPreviewBox .previewBody div:nth-child(3) { width: 50%; }
+.colorPresetBtn:hover {
+  border-color: #2E6CF6;
+  transform: translateY(-1px);
+}
+
+.colorPresetBtn.active {
+  border-color: #2E6CF6;
+  background: rgba(46, 108, 246, 0.05);
+}
+
+.colorPresetSwatches {
+  display: flex;
+  gap: 0;
+  height: 18px;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.colorPresetSwatches span {
+  flex: 1;
+  display: block;
+}
+
+.colorPresetName {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  line-height: 1.1;
+}
+
+@media (max-width: 640px) {
+  .colorPresetsRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mini Contract Preview - Echte Mini-Vorschau im A4-Stil */
+.miniContractPreview {
+  width: 100%;
+  aspect-ratio: 210 / 297;
+  max-height: 360px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  margin: 0 auto;
+}
+
+.miniSidebar {
+  width: 14px;
+  background: var(--mc-primary, #0B1324);
+  flex-shrink: 0;
+}
+
+.miniPaper {
+  flex: 1;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--mc-primary, #0B1324);
+}
+
+.miniContractPreview[data-layout="classic-centered"] .miniPaper {
+  text-align: center;
+  align-items: center;
+}
+
+.miniContractPreview[data-layout="whitespace-focus"] .miniPaper {
+  padding: 28px 32px;
+  gap: 12px;
+}
+
+.miniContractPreview[data-layout="ornamental"] .miniPaper {
+  text-align: center;
+  align-items: center;
+  padding: 22px 26px;
+}
+
+.miniContractPreview[data-layout="structured-boxes"] .miniPaper {
+  padding: 16px 18px;
+  gap: 6px;
+}
+
+.miniOrnament {
+  font-size: 10px;
+  letter-spacing: 8px;
+  color: var(--mc-accent, #3B82F6);
+  margin-bottom: 2px;
+}
+
+.miniTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--mc-primary, #0B1324);
+  text-transform: uppercase;
+}
+
+.miniContractPreview[data-layout="classic-centered"] .miniTitle {
+  border-bottom: 1px solid var(--mc-primary, #0B1324);
+  padding-bottom: 4px;
+  width: 80%;
+}
+
+.miniContractPreview[data-layout="ornamental"] .miniTitle {
+  font-style: italic;
+  font-weight: 600;
+  border-top: 1px solid var(--mc-accent, #3B82F6);
+  border-bottom: 1px solid var(--mc-accent, #3B82F6);
+  padding: 4px 0;
+  letter-spacing: 2px;
+}
+
+.miniContractPreview[data-layout="whitespace-focus"] .miniTitle {
+  font-weight: 300;
+  letter-spacing: 3px;
+  font-size: 12px;
+}
+
+.miniContractPreview[data-layout="structured-boxes"] .miniTitle {
+  background: var(--mc-primary, #0B1324);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 3px;
+  align-self: stretch;
+  text-align: center;
+}
+
+.miniSubtitle {
+  font-size: 8px;
+  color: var(--mc-secondary, #1A2540);
+  opacity: 0.75;
+  margin-bottom: 6px;
+}
+
+.miniSection {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.miniContractPreview[data-layout="classic-centered"] .miniSection,
+.miniContractPreview[data-layout="ornamental"] .miniSection {
+  justify-content: center;
+}
+
+.miniSectionNum {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--mc-accent, #3B82F6);
+  white-space: nowrap;
+}
+
+.miniSectionTitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mc-primary, #0B1324);
+}
+
+.miniContractPreview[data-layout="structured-boxes"] .miniSection {
+  background: rgba(0, 0, 0, 0.04);
+  border-left: 3px solid var(--mc-primary, #0B1324);
+  padding: 4px 8px;
+  border-radius: 0 3px 3px 0;
+  margin-top: 2px;
+}
+
+.miniContractPreview[data-layout="structured-boxes"] .miniSectionNum {
+  color: var(--mc-primary, #0B1324);
+}
+
+.miniBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.miniContractPreview[data-layout="classic-centered"] .miniBody,
+.miniContractPreview[data-layout="ornamental"] .miniBody {
+  align-items: center;
+}
+
+.miniLine {
+  height: 3px;
+  background: #D1D5DB;
+  border-radius: 1px;
+  width: 100%;
+}
+
+.miniSignature {
+  margin-top: auto;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+}
+
+.miniContractPreview[data-layout="classic-centered"] .miniSignature,
+.miniContractPreview[data-layout="ornamental"] .miniSignature {
+  align-items: center;
+}
+
+.miniSigLine {
+  width: 90px;
+  height: 1px;
+  background: var(--mc-primary, #0B1324);
+}
+
+.miniSigLabel {
+  font-size: 8px;
+  color: var(--mc-secondary, #1A2540);
+  letter-spacing: 0.5px;
+}
 
 /* Custom Design Footer */
 .customDesignFooter {

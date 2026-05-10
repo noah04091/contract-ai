@@ -3618,6 +3618,16 @@ export default function Generate() {
     { id: 'ornamental', name: 'Elegant', desc: 'Dekorativ' }
   ];
 
+  // Profi-Color-Presets für Custom Design (kuratierte Combos)
+  const colorPresets = [
+    { name: 'Brand-Blau', primary: '#0B1324', secondary: '#1F2937', accent: '#2E6CF6' },
+    { name: 'Bordeaux', primary: '#1A1A1A', secondary: '#6B1F32', accent: '#6B1F32' },
+    { name: 'Big Law', primary: '#2D2D30', secondary: '#1B4332', accent: '#1B4332' },
+    { name: 'Anthrazit', primary: '#1F2937', secondary: '#0EA5E9', accent: '#0EA5E9' },
+    { name: 'Burgund', primary: '#7A1F2E', secondary: '#5C1622', accent: '#7A1F2E' },
+    { name: 'Cognac', primary: '#0F0F0F', secondary: '#B5651D', accent: '#B5651D' },
+  ];
+
   // 📂 Accordion State für Step 2 Feldgruppen
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -7331,9 +7341,43 @@ export default function Generate() {
                 </div>
 
                 <div className={styles.customDesignContent}>
+                  {/* Color Presets - Profi-Combos zum One-Click */}
+                  <div className={styles.customDesignSection}>
+                    <h4>Profi-Combos</h4>
+                    <div className={styles.colorPresetsRow}>
+                      {colorPresets.map((preset) => {
+                        const isActive =
+                          customDesign.primaryColor === preset.primary &&
+                          customDesign.secondaryColor === preset.secondary &&
+                          customDesign.accentColor === preset.accent;
+                        return (
+                          <button
+                            key={preset.name}
+                            type="button"
+                            className={`${styles.colorPresetBtn} ${isActive ? styles.active : ''}`}
+                            onClick={() => setCustomDesign({
+                              ...customDesign,
+                              primaryColor: preset.primary,
+                              secondaryColor: preset.secondary,
+                              accentColor: preset.accent,
+                            })}
+                            title={preset.name}
+                          >
+                            <div className={styles.colorPresetSwatches}>
+                              <span style={{ background: preset.primary }} />
+                              <span style={{ background: preset.secondary }} />
+                              <span style={{ background: preset.accent }} />
+                            </div>
+                            <span className={styles.colorPresetName}>{preset.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Color Picker Section */}
                   <div className={styles.customDesignSection}>
-                    <h4>Farben</h4>
+                    <h4>Eigene Farben</h4>
                     <div className={styles.colorPickerGrid}>
                       <div className={styles.colorPickerItem}>
                         <label>Primärfarbe</label>
@@ -7418,23 +7462,57 @@ export default function Generate() {
                     </div>
                   </div>
 
-                  {/* Preview */}
+                  {/* Preview - Echte Mini-Vertrags-Vorschau */}
                   <div className={styles.customDesignPreviewSection}>
                     <h4>Vorschau</h4>
                     <div
-                      className={styles.customDesignPreviewBox}
+                      className={styles.miniContractPreview}
+                      data-layout={customDesign.layout}
                       style={{
-                        background: `linear-gradient(135deg, ${customDesign.primaryColor} 0%, ${customDesign.secondaryColor} 100%)`,
-                        borderColor: customDesign.accentColor
-                      }}
+                        fontFamily:
+                          customDesign.fontFamily === 'Times-Roman'
+                            ? "'Times New Roman', Times, serif"
+                            : customDesign.fontFamily === 'Courier'
+                            ? "'Courier New', Courier, monospace"
+                            : "Helvetica, Arial, sans-serif",
+                        ['--mc-primary' as string]: customDesign.primaryColor,
+                        ['--mc-secondary' as string]: customDesign.secondaryColor,
+                        ['--mc-accent' as string]: customDesign.accentColor,
+                      } as React.CSSProperties}
                     >
-                      <div className={styles.previewHeader} style={{ borderColor: customDesign.accentColor }}>
-                        <div style={{ background: customDesign.accentColor }}></div>
-                      </div>
-                      <div className={styles.previewBody}>
-                        <div style={{ background: 'rgba(255,255,255,0.3)' }}></div>
-                        <div style={{ background: 'rgba(255,255,255,0.2)' }}></div>
-                        <div style={{ background: 'rgba(255,255,255,0.15)' }}></div>
+                      {customDesign.layout === 'sidebar-accent' && (
+                        <div className={styles.miniSidebar} />
+                      )}
+                      <div className={styles.miniPaper}>
+                        {customDesign.layout === 'ornamental' && (
+                          <div className={styles.miniOrnament}>◆ ◆ ◆</div>
+                        )}
+                        <div className={styles.miniTitle}>DIENSTLEISTUNGSVERTRAG</div>
+                        <div className={styles.miniSubtitle}>zwischen Mustermann GmbH und Beispiel AG</div>
+
+                        <div className={styles.miniSection}>
+                          <span className={styles.miniSectionNum}>§ 1</span>
+                          <span className={styles.miniSectionTitle}>Vertragsgegenstand</span>
+                        </div>
+                        <div className={styles.miniBody}>
+                          <div className={styles.miniLine} />
+                          <div className={styles.miniLine} style={{ width: '92%' }} />
+                          <div className={styles.miniLine} style={{ width: '70%' }} />
+                        </div>
+
+                        <div className={styles.miniSection}>
+                          <span className={styles.miniSectionNum}>§ 2</span>
+                          <span className={styles.miniSectionTitle}>Vergütung</span>
+                        </div>
+                        <div className={styles.miniBody}>
+                          <div className={styles.miniLine} style={{ width: '85%' }} />
+                          <div className={styles.miniLine} style={{ width: '60%' }} />
+                        </div>
+
+                        <div className={styles.miniSignature}>
+                          <div className={styles.miniSigLine} />
+                          <div className={styles.miniSigLabel}>Unterschrift</div>
+                        </div>
                       </div>
                     </div>
                   </div>
