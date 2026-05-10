@@ -2,7 +2,7 @@
  * BlockRenderer - Rendert den richtigen Block-Typ basierend auf block.type
  */
 
-import React, { Component } from 'react';
+import React, { Component, useRef, useEffect } from 'react';
 import { Block } from '../../../stores/contractBuilderStore';
 import { HeaderBlock } from './HeaderBlock';
 import { CoverBlock } from './CoverBlock';
@@ -307,12 +307,52 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
     }
   };
 
+  // Robuster Block-Level-Schriftart-Override: setzt font-family per setProperty
+  // mit 'important'-Flag DIREKT auf alle Text-Descendants des Blocks. Inline-
+  // !important schlägt CSS-!important — wirkt selbst gegen [data-doc-font] *.
+  // Wenn block.style.fontFamily nicht gesetzt → entfernt Override → erbt wieder
+  // vom paper-Element die Document-Schriftart wie bisher.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const elements = [wrapperRef.current, ...Array.from(wrapperRef.current.querySelectorAll<HTMLElement>('*'))];
+    if (resolvedFont) {
+      elements.forEach((el) => el.style.setProperty('font-family', resolvedFont, 'important'));
+    } else {
+      elements.forEach((el) => el.style.removeProperty('font-family'));
+    }
+  }, [resolvedFont, block.id, block.content]);
+
   return (
     <div
+      ref={wrapperRef}
       className={styles.blockWrapper}
       style={blockStyles}
       data-highlight={block.style?.highlight}
+      data-block-font={block.style?.fontFamily || undefined}
     >
+      {/* Diagnose-Badge: Zeigt aktive Block-Schriftart (nur wenn gesetzt) */}
+      {block.style?.fontFamily && !isPreview && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '-22px',
+            right: '4px',
+            fontSize: '10px',
+            padding: '2px 6px',
+            background: '#2E6CF6',
+            color: '#ffffff',
+            borderRadius: '4px',
+            fontWeight: 600,
+            zIndex: 100,
+            fontFamily: 'Inter, sans-serif',
+            letterSpacing: '0.2px',
+            pointerEvents: 'none',
+          }}
+        >
+          Schrift: {block.style.fontFamily.split(',')[0].replace(/['"]/g, '')}
+        </div>
+      )}
       <BlockErrorBoundary blockId={block.id} blockType={block.type}>
         {renderBlock()}
       </BlockErrorBoundary>

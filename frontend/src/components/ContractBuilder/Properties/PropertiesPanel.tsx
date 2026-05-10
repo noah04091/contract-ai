@@ -43,7 +43,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
     updateBlock,
     updateBlockContent,
     updateBlockStyle,
-    updateDesign,
     deleteBlock,
     duplicateBlock,
     applyStyleToAllOfType,
@@ -228,14 +227,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ className }) =
           onToggle={() => toggleSection('typography')}
         >
           <div className={styles.field}>
-            <label className={styles.label}>Schriftart (Dokument)</label>
+            <label className={styles.label}>Schriftart</label>
             <select
               className={styles.select}
-              value={currentDocument?.design?.fontFamily || ''}
-              onChange={(e) => {
-                const font = e.target.value || 'Inter, sans-serif';
-                updateDesign({ fontFamily: font, headingFont: font });
-              }}
+              value={selectedBlock.style?.fontFamily || ''}
+              onChange={(e) => updateStyle('fontFamily', e.target.value || undefined)}
             >
               <option value="">Standard (Inter)</option>
               <optgroup label="Sans-Serif">
