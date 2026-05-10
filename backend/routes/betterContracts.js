@@ -706,6 +706,45 @@ REGELN:
   }
 }
 
+// 🛡️ Plausibilitäts-Check: Passt enrichment.providerName zum tatsächlichen Treffer?
+// Schützt gegen GPT-Halluzination (originalIndex stimmt, aber providerName/whyFit beziehen
+// sich auf einen anderen Anbieter). Bei klarem Mismatch: skip merge → Card behält saubere Defaults.
+function isEnrichmentMatch(enrichment, result) {
+  const enrichName = (enrichment.providerName || '').toLowerCase().trim();
+  if (!enrichName) return false; // Kein providerName → unsicher → skip
+
+  const resultUrl = (result.link || '').toLowerCase();
+  const resultTitle = (result.title || '').toLowerCase();
+  const resultProvider = (result.provider || '').toLowerCase();
+
+  // Generische Wörter ignorieren — zu unspezifisch, würden alles matchen
+  const genericWords = [
+    'factoring', 'leasing', 'anbieter', 'gmbh', 'ag', 'kg', 'ohg',
+    'ltd', 'limited', 'gesellschaft', 'co', 'service', 'services',
+    'group', 'finance', 'financial', 'bank', 'capital', 'global', 'mbh',
+    'versicherung', 'rechtsschutz', 'haftpflicht', 'kfz', 'hausrat',
+    'energie', 'strom', 'gas', 'mobilfunk', 'handy', 'internet', 'dsl'
+  ];
+
+  // Spezifische Wörter aus providerName extrahieren
+  const specificWords = enrichName
+    .split(/[\s.,\-_/&]+/)
+    .map(w => w.trim().toLowerCase())
+    .filter(w => w.length >= 3)
+    .filter(w => !genericWords.includes(w));
+
+  // Wenn providerName nur aus generic words besteht (z.B. "Factoring GmbH"),
+  // können wir nicht zuverlässig validieren → vertrauen wir
+  if (specificWords.length === 0) return true;
+
+  // Mindestens EIN spezifisches Wort muss in URL/Title/Provider vorkommen
+  return specificWords.some(w =>
+    resultUrl.includes(w) ||
+    resultTitle.includes(w) ||
+    resultProvider.includes(w)
+  );
+}
+
 // Merge GPT-Enrichment auf bestehende Ergebnisse
 function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
   const providers = b2bEnrichment.enrichedProviders || [];
@@ -716,6 +755,12 @@ function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
     // anderen Treffern an nicht-enrichte Indexes (z.B. Coface-Daten landen bei "Mitgliedsverzeichnis").
     const enrichment = providers.find(p => Number(p.originalIndex) === index);
     if (!enrichment) return result;
+
+    // 🛡️ Plausibilitäts-Check gegen GPT-Halluzination (Index stimmt, aber Content ist über anderen Anbieter)
+    if (!isEnrichmentMatch(enrichment, result)) {
+      console.warn(`⚠️ B2B Enrichment Index ${index}: providerName "${enrichment.providerName}" passt nicht zu Treffer "${(result.title || '').slice(0, 60)}" — skip merge`);
+      return result;
+    }
 
     return {
       ...result,
