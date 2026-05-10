@@ -2,7 +2,7 @@
  * BlockRenderer - Rendert den richtigen Block-Typ basierend auf block.type
  */
 
-import React, { Component } from 'react';
+import React, { Component, useRef, useEffect } from 'react';
 import { Block } from '../../../stores/contractBuilderStore';
 import { HeaderBlock } from './HeaderBlock';
 import { CoverBlock } from './CoverBlock';
@@ -307,8 +307,24 @@ export const BlockRenderer: React.FC<BlockRendererProps> = ({
     }
   };
 
+  // Robuster Block-Level-Override: setzt font-family per setProperty mit
+  // 'important'-Flag direkt auf das DOM-Element. Schlägt jede CSS-Regel
+  // (auch falls Browser-Cache, Extensions oder Library-CSS interferieren).
+  // Wenn block.style.fontFamily nicht gesetzt → kein DOM-Setter → Block erbt
+  // wie bisher die Document-Schriftart vom paper-Element.
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    if (resolvedFont) {
+      wrapperRef.current.style.setProperty('font-family', resolvedFont, 'important');
+    } else {
+      wrapperRef.current.style.removeProperty('font-family');
+    }
+  }, [resolvedFont]);
+
   return (
     <div
+      ref={wrapperRef}
       className={styles.blockWrapper}
       style={blockStyles}
       data-highlight={block.style?.highlight}
