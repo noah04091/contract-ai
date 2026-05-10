@@ -67,23 +67,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // MODERN - Farbige Sidebar, asymmetrisch, dynamisch
+  // MODERN - Brand-Blau Sidebar, modern asymmetrisch (Stripe-Style)
   // ═══════════════════════════════════════════════════════════════════════════
   modern: {
     name: 'Modern',
     fontFamily: 'Helvetica',
     layout: 'sidebar-accent', // Farbige Sidebar links
     colors: {
-      primary: '#0066cc',
-      secondary: '#0052a3',
-      accent: '#00a3cc',
-      text: '#2d2d2d',
-      textLight: '#5a5a5a',
-      textMuted: '#8a8a8a',
-      border: '#e0e0e0',
+      primary: '#2E6CF6',
+      secondary: '#1E53D8',
+      accent: '#2E6CF6',
+      text: '#1F2937',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
       background: '#ffffff',
-      headerBg: '#0066cc',
-      line: '#0066cc',
+      headerBg: '#2E6CF6',
+      line: '#2E6CF6',
     },
     features: {
       showSidebar: true,
@@ -125,23 +125,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // ELEGANT - Goldene Akzente, Ornamente, luxuriös
+  // BOUTIQUE EDITORIAL - Cream-Bordeaux, redaktionell, Boutique-Kanzlei-Stil
   // ═══════════════════════════════════════════════════════════════════════════
   elegant: {
-    name: 'Elegant',
+    name: 'Boutique Editorial',
     fontFamily: 'Times-Roman',
-    layout: 'ornamental', // Dekorative Elemente
+    layout: 'ornamental',
     colors: {
-      primary: '#2c1810',
-      secondary: '#4a3728',
-      accent: '#c9a227',
-      text: '#2c1810',
-      textLight: '#5a4a3a',
-      textMuted: '#8a7a6a',
-      border: '#c9a227',
-      background: '#fffef8',
-      headerBg: '#faf8f5',
-      line: '#c9a227',
+      primary: '#1A1A1A',
+      secondary: '#6B1F32',
+      accent: '#6B1F32',
+      text: '#1A1A1A',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
+      background: '#FFFDF8',
+      headerBg: '#FAF8F3',
+      line: '#6B1F32',
     },
     features: {
       showOrnaments: true,
@@ -153,23 +153,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CORPORATE - Strukturierte Boxen, formell, klare Hierarchie
+  // BIG LAW - Charcoal + Forest Green, Big-Law-Kanzlei-Niveau
   // ═══════════════════════════════════════════════════════════════════════════
   corporate: {
-    name: 'Corporate',
+    name: 'Big Law',
     fontFamily: 'Helvetica',
-    layout: 'structured-boxes', // Klare Box-Struktur
+    layout: 'structured-boxes',
     colors: {
-      primary: '#003366',
-      secondary: '#004080',
-      accent: '#0066cc',
-      text: '#1a1a1a',
-      textLight: '#4a4a4a',
-      textMuted: '#6a6a6a',
-      border: '#003366',
+      primary: '#2D2D30',
+      secondary: '#1B4332',
+      accent: '#1B4332',
+      text: '#1F2937',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#D1D5DB',
       background: '#ffffff',
-      headerBg: '#003366',
-      line: '#003366',
+      headerBg: '#2D2D30',
+      line: '#2D2D30',
     },
     features: {
       showHeaderBar: true,
@@ -210,23 +210,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STARTUP - Orange/Coral, jung, dynamisch, modern
+  // NORDIC MODERN - Schwarz + Cognac, skandinavisch reduziert, warm
   // ═══════════════════════════════════════════════════════════════════════════
   startup: {
-    name: 'Startup',
+    name: 'Nordic Modern',
     fontFamily: 'Helvetica',
     layout: 'sidebar-accent',
     colors: {
-      primary: '#E63946',
-      secondary: '#D62839',
-      accent: '#FF6B6B',
-      text: '#2B2D42',
-      textLight: '#5C5F7A',
-      textMuted: '#8D90A8',
-      border: '#FFE5E5',
+      primary: '#0F0F0F',
+      secondary: '#B5651D',
+      accent: '#B5651D',
+      text: '#1F2937',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
       background: '#ffffff',
-      headerBg: '#E63946',
-      line: '#E63946',
+      headerBg: '#0F0F0F',
+      line: '#0F0F0F',
     },
     features: {
       showSidebar: true,
@@ -239,23 +239,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // LEGAL - Burgunderrot, juristisch, traditionell
+  // LEGAL - Weiches Burgund, juristisch, traditionell
   // ═══════════════════════════════════════════════════════════════════════════
   legal: {
     name: 'Legal',
     fontFamily: 'Times-Roman',
     layout: 'ornamental',
     colors: {
-      primary: '#800020',
-      secondary: '#A0002A',
-      accent: '#C41E3A',
-      text: '#3D0011',
-      textLight: '#5D2030',
-      textMuted: '#8D5060',
-      border: '#C41E3A',
+      primary: '#7A1F2E',
+      secondary: '#5C1622',
+      accent: '#7A1F2E',
+      text: '#1F2937',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
       background: '#FFFDF8',
-      headerBg: '#FFF5F7',
-      line: '#C41E3A',
+      headerBg: '#FAF6F4',
+      line: '#7A1F2E',
     },
     features: {
       showOrnaments: true,
@@ -267,23 +267,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // TECH - Cyan/Türkis, digital, innovativ
+  // SAAS PREMIUM - Anthrazit + Sky-Blue, Linear/Vercel-Niveau, modern-tech
   // ═══════════════════════════════════════════════════════════════════════════
   tech: {
-    name: 'Tech',
+    name: 'SaaS Premium',
     fontFamily: 'Helvetica',
     layout: 'sidebar-accent',
     colors: {
-      primary: '#0891B2',
-      secondary: '#0E7490',
-      accent: '#22D3EE',
-      text: '#164E63',
-      textLight: '#3B8293',
-      textMuted: '#67A3B3',
-      border: '#CFFAFE',
+      primary: '#1F2937',
+      secondary: '#0EA5E9',
+      accent: '#0EA5E9',
+      text: '#1F2937',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
       background: '#ffffff',
-      headerBg: '#0891B2',
-      line: '#0891B2',
+      headerBg: '#1F2937',
+      line: '#1F2937',
     },
     features: {
       showSidebar: true,
@@ -324,23 +324,23 @@ const DESIGN_THEMES = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // CREATIVE - Lila/Magenta, kreativ, auffällig
+  // EDITORIAL - Schwarz + Charcoal-Akzent, redaktionell-monochrom (NYT-Style)
   // ═══════════════════════════════════════════════════════════════════════════
   creative: {
-    name: 'Creative',
+    name: 'Editorial',
     fontFamily: 'Helvetica',
     layout: 'sidebar-accent',
     colors: {
-      primary: '#7C3AED',
-      secondary: '#6D28D9',
-      accent: '#A78BFA',
-      text: '#3B1D6E',
-      textLight: '#5B3D8E',
-      textMuted: '#8B6DBE',
-      border: '#EDE9FE',
+      primary: '#1A1A1A',
+      secondary: '#3F3F46',
+      accent: '#3F3F46',
+      text: '#1A1A1A',
+      textLight: '#4B5563',
+      textMuted: '#9CA3AF',
+      border: '#E5E7EB',
       background: '#ffffff',
-      headerBg: '#7C3AED',
-      line: '#7C3AED',
+      headerBg: '#1A1A1A',
+      line: '#1A1A1A',
     },
     features: {
       showSidebar: true,

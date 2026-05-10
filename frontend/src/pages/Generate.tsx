@@ -3588,17 +3588,17 @@ export default function Generate() {
 
   // All available designs
   const allDesigns = [
-    { id: 'executive', name: 'Executive', color: '#0B1324', desc: 'Klassisch' },
-    { id: 'modern', name: 'Modern', color: '#3B82F6', desc: 'Dynamisch' },
-    { id: 'minimal', name: 'Minimal', color: '#6B7280', desc: 'Schlicht' },
-    { id: 'elegant', name: 'Elegant', color: '#D4AF37', desc: 'Luxuriös' },
-    { id: 'corporate', name: 'Corporate', color: '#003366', desc: 'Formell' },
+    { id: 'executive', name: 'Executive', color: '#1a1a1a', desc: 'Klassisch' },
+    { id: 'modern', name: 'Modern', color: '#2E6CF6', desc: 'Brand-Blau' },
+    { id: 'minimal', name: 'Minimal', color: '#2d2d2d', desc: 'Schlicht' },
+    { id: 'elegant', name: 'Boutique Editorial', color: '#6B1F32', desc: 'Cream-Bordeaux' },
+    { id: 'corporate', name: 'Big Law', color: '#2D2D30', desc: 'Charcoal' },
     { id: 'professional', name: 'Professional', color: '#1B4332', desc: 'Seriös' },
-    { id: 'startup', name: 'Startup', color: '#E63946', desc: 'Jung' },
-    { id: 'legal', name: 'Legal', color: '#800020', desc: 'Juristisch' },
-    { id: 'tech', name: 'Tech', color: '#0891B2', desc: 'Digital' },
+    { id: 'startup', name: 'Nordic Modern', color: '#0F0F0F', desc: 'Schwarz-Cognac' },
+    { id: 'legal', name: 'Legal', color: '#7A1F2E', desc: 'Burgund' },
+    { id: 'tech', name: 'SaaS Premium', color: '#1F2937', desc: 'Anthrazit' },
     { id: 'finance', name: 'Finance', color: '#0F172A', desc: 'Premium' },
-    { id: 'creative', name: 'Creative', color: '#7C3AED', desc: 'Kreativ' }
+    { id: 'creative', name: 'Editorial', color: '#1A1A1A', desc: 'Monochrom' }
   ];
   const VISIBLE_DESIGNS = 5;
 
