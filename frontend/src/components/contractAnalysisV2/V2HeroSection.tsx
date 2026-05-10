@@ -383,8 +383,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         {/* HERO mit Score-Donut */}
         <div className={styles.acHero}>
           <div>
-            <div className={styles.scoreDonut}>
-              <svg viewBox="0 0 160 160" role="img" aria-label={`Vertragsscore: ${displayScore} von 100, Bewertung: ${variant.rating}`}>
+            {/* Inline-Styles als Cache-Safe-Backup zusätzlich zum CSS-Modul */}
+            <div className={styles.scoreDonut} style={{ position: "relative", width: 160, height: 160 }}>
+              <svg viewBox="0 0 160 160" role="img" aria-label={`Vertragsscore: ${displayScore} von 100, Bewertung: ${variant.rating}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
                 <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="11" />
                 <circle
                   cx="80" cy="80" r={radius} fill="none"
@@ -395,9 +396,21 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   transform="rotate(-90 80 80)"
                 />
               </svg>
-              <div className={styles.scoreTextWrap}>
-                <div className={styles.scoreNum} aria-hidden="true">{displayScore}</div>
-                <div className={styles.scoreOf} aria-hidden="true">VON 100</div>
+              <div
+                className={styles.scoreTextWrap}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }}
+              >
+                <div className={styles.scoreNum} aria-hidden="true" style={{ fontSize: 44, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.04em", lineHeight: 1, position: "relative", zIndex: 3 }}>{displayScore}</div>
+                <div className={styles.scoreOf} aria-hidden="true" style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, letterSpacing: "0.5px", position: "relative", zIndex: 3 }}>VON 100</div>
               </div>
             </div>
             <div className={`${styles.scoreRating} ${variant.cls}`}>{variant.rating}</div>
