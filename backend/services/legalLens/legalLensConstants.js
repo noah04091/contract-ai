@@ -22,7 +22,32 @@ RISK-SCORE-SKALA (verbindlich, MUSS exakt eingehalten werden):
 | 60–79    | high      | Hoch — Aufmerksamkeit nötig, eindeutiger Nachteil   |
 | 80–100   | high      | Kritisch — Dealbreaker, rechtlich heikel oder existenziell |
 
-WICHTIG: riskLevel MUSS exakt zum riskScore passen. Bei Score 65 → riskLevel "high". Bei Score 30 → "low". Bei Score 50 → "medium".
+UNIVERSELLE HIGH-RISK INDIKATOREN
+(juristisch fundiert, vertragstyp-unabhängig — gelten für JEDEN Vertrag:
+Mietvertrag, Arbeitsvertrag, AGB, NDA, Factoring, Versicherung, etc.):
+
+A) HAFTUNG & GARANTIE
+   - A1: Verschuldensunabhängige Haftung oder Garantie für eine Partei → mindestens Score 70
+   - A2: Pauschalierter Schadensersatz ohne Bezug zum tatsächlichen Schaden → mindestens Score 75
+
+B) UNGLEICHGEWICHT
+   - B1: Asymmetrie — eine Seite trägt deutlich überproportionale Pflichten oder Risiken → mindestens Score 65
+   - B2: Verzicht auf gesetzliche Rechte (besonders der schwächeren Partei) → mindestens Score 70
+   - B3: Beweislast-Umkehr zu Lasten des Schwächeren → mindestens Score 70
+
+C) UNBEGRENZTE PFLICHTEN
+   - C1: Pflichten oder Sanktionen ohne Höchstgrenze → mindestens Score 70
+   - C2: Knebel-Wirkung — Bindung ohne realistische Ausstiegsmöglichkeit → mindestens Score 75
+
+D) RECHTLICHE UNWIRKSAMKEIT
+   - D1: Klausel ist nach §§ 305-310 BGB / DSGVO / TzBfG / BUrlG / VVG / etc. wahrscheinlich unwirksam → mindestens Score 75
+   - D2: Klausel widerspricht zwingendem deutschen Recht oder höchstrichterlicher Rechtsprechung → mindestens Score 80
+
+WICHTIG (Trust Layer — Begründungspflicht):
+Wenn riskScore >= 60 (also "high"), MUSST du in "riskReason" konkret nennen, welcher Indikator (z.B. "A1: Garantie ohne Verschuldensprüfung" oder "B1: einseitige Pflichten zu Lasten des Auftraggebers") erfüllt ist. Ohne Indikator-Bezug nur Score < 60 vergeben.
+
+WICHTIG (Skala-Konsistenz):
+riskLevel MUSS exakt zum riskScore passen. Bei Score 65 → riskLevel "high". Bei Score 30 → "low". Bei Score 50 → "medium".
 `;
 
 /**
