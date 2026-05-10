@@ -6,7 +6,7 @@ import {
   BarChart3, RefreshCw, Award, Target, AlertTriangle, AlertCircle
 } from "lucide-react";
 import styles from "./BatchAnalysisResults.module.css";
-import ContractAnalysis from "./ContractAnalysis";
+import ContractAnalysis from "./ContractAnalysisSwitch";
 
 interface UploadFileItem {
   id: string;
