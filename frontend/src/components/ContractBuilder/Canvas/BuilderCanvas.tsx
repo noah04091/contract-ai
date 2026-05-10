@@ -357,6 +357,13 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
     transformOrigin: 'top center',
   };
 
+  // Dynamische Font-Styles — erzwingt Schriftart auf ALLEN Elementen im Canvas
+  const fontStyleTag = (
+    <style>{`
+      [data-doc-font] * { font-family: ${resolvedFont} !important; }
+    `}</style>
+  );
+
   // Direkte DOM-Manipulation als Fallback (bypasses React rendering)
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -372,7 +379,9 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
       ref={canvasRef}
       className={`${styles.canvas} ${className || ''}`}
       onClick={handleCanvasClick}
+      data-doc-font="true"
     >
+      {fontStyleTag}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
