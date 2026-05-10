@@ -12,6 +12,11 @@ import { fixUtf8Display } from "../utils/textUtils";
 import { apiCall } from "../utils/api";
 import { useToast } from "../context/ToastContext";
 import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
+// 🎨 V2: Analyse-Tab nutzt das gleiche Layout wie der Hochlad-Direkt-Flow (hinter Beta-Toggle)
+import { useAuth } from "../hooks/useAuth";
+import { isAnalysisV2Enabled } from "../utils/featureFlags";
+import V2HeroSection from "./contractAnalysisV2/V2HeroSection";
+import V2TabsSection from "./contractAnalysisV2/V2TabsSection";
 
 // Signature-related interfaces
 interface Signer {
@@ -263,6 +268,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   onEdit,
   onDelete
 }) => {
+  const { user } = useAuth();
+  const v2Active = isAnalysisV2Enabled(user);
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'overview');
   const [contract, setContract] = useState<Contract>(initialContract);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -1946,6 +1953,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <p>Keine Analyse verfügbar</p>
             <span className={styles.hint}>Dieser Vertrag wurde noch nicht analysiert.</span>
           </div>
+        </div>
+      );
+    }
+
+    // 🎨 V2-Layout (hinter Beta-Toggle) — selbe Ansicht wie im Hochlad-Direkt-Flow.
+    // Contract enthält praktisch alle Analysefelder, die V2-Komponenten erwarten —
+    // wir reichen es defensiv als generisches Objekt durch (V2 liest defensiv).
+    if (v2Active) {
+      const data = contract as unknown as Parameters<typeof V2HeroSection>[0]['data'];
+      return (
+        <div className={styles.tabContent}>
+          <V2HeroSection
+            data={data}
+            fileName={contract.name || 'Vertrag'}
+            isInitialResult={true}
+          />
+          <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
         </div>
       );
     }
