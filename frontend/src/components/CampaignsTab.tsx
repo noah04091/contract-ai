@@ -17,10 +17,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Zap,
-  Copy
+  Copy,
+  Sparkles
 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { fixUtf8Display } from '../utils/textUtils';
+import { newsletterTemplates, getNewsletterTemplateById } from '../data/newsletterTemplates';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
@@ -1228,9 +1230,72 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
     marginTop: '0.25rem'
   };
 
+  function loadTemplate(id: string) {
+    const tpl = getNewsletterTemplateById(id);
+    if (!tpl) return;
+    const hasContent = !!(form.subject || form.title || form.body || form.ctaText || form.ctaUrl);
+    if (hasContent && !window.confirm(`Aktueller Inhalt wird durch die Vorlage "${tpl.label}" überschrieben. Fortfahren?`)) {
+      return;
+    }
+    setForm({
+      ...form,
+      name: form.name || tpl.label,
+      subject: tpl.subject,
+      preheader: tpl.preheader,
+      title: tpl.title,
+      body: tpl.body,
+      ctaText: tpl.ctaText,
+      ctaUrl: tpl.ctaUrl
+    });
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
       <div>
+        {newsletterTemplates.length > 0 && (
+          <div
+            style={{
+              padding: '0.875rem 1rem',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)',
+              backgroundColor: '#eff6ff',
+              border: '1px solid #bfdbfe',
+              borderRadius: '8px',
+              marginBottom: '1.25rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.35rem' }}>
+              <Sparkles size={14} /> Premium-Vorlage laden
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#475569', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+              Fertig gestaltetes HTML-Template — alle Felder (Betreff, Titel, Body, CTA) werden automatisch befüllt. Du kannst danach jeden Wert noch anpassen.
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              {newsletterTemplates.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => loadTemplate(t.id)}
+                  title={t.description}
+                  style={{
+                    padding: '0.4rem 0.75rem',
+                    borderRadius: '6px',
+                    border: '1px solid #3b82f6',
+                    background: '#fff',
+                    color: '#1d4ed8',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  <Sparkles size={11} /> {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <h3 style={{ marginTop: 0 }}>Inhalt</h3>
 
         <label style={{ fontSize: '0.875rem', fontWeight: 600 }}>
