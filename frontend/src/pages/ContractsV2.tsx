@@ -4681,6 +4681,8 @@ export default function Contracts() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                {/* 🎨 Premium-Polish: ⌘K-Badge (Mockup-Style) */}
+                <kbd className={styles.toolbarSearchKbd}>⌘K</kbd>
               </div>
 
               <div className={styles.toolbarDivider} />
@@ -5518,6 +5520,29 @@ export default function Contracts() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
+                {/* 🎨 Mockup-1:1 Page-Header (Stripe-Style) */}
+                <div className={styles.pageHeader}>
+                  <h1 className={styles.pageHeaderTitle}>
+                    {activeFolder
+                      ? (folders.find(f => f._id === activeFolder)?.name || 'Ordner')
+                      : statusFilter === 'bald_ablaufend' ? 'Bald ablaufend'
+                      : statusFilter === 'aktiv' ? 'Aktive Verträge'
+                      : statusFilter === 'gekündigt' ? 'Gekündigt'
+                      : statusFilter === 'abgelaufen' ? 'Abgelaufen'
+                      : 'Alle Verträge'}
+                  </h1>
+                  <p className={styles.pageHeaderSubtitle}>
+                    <span className={styles.pageHeaderCount}>{paginationInfo.total || contracts.length}</span>
+                    {' '}{(paginationInfo.total || contracts.length) === 1 ? 'Vertrag' : 'Verträge'}
+                    {refreshing && (
+                      <>
+                        <span className={styles.pageHeaderDot}>·</span>
+                        <span>wird aktualisiert…</span>
+                      </>
+                    )}
+                  </p>
+                </div>
+
                 {/* Results info — nur bei echten Filtern (Suche/Datum/Quelle), nicht bei Sidebar-Navigation */}
                 {(searchQuery || dateFilter !== 'alle' || sourceFilter !== 'alle') && (
                   <div className={styles.resultsInfo}>
@@ -5836,7 +5861,7 @@ export default function Contracts() {
                                 )}
                               </span>
                             </th>
-                            <th>Aktionen</th>
+                            <th aria-label="Aktionen"></th>
                           </tr>
                         </thead>
                         <tbody>
@@ -5941,6 +5966,7 @@ export default function Contracts() {
                               ))}
                               <td>
                                 <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
+                                  <span className={styles.statusBadgeDot} />
                                   {calculateSmartStatus(contract)}
                                 </span>
                                 {/* 🆕 Smart Signature Status Badge */}
