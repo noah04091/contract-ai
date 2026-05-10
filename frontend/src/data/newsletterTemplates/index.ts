@@ -11,9 +11,11 @@ export interface NewsletterTemplate {
 }
 
 import { freeToBusinessTemplate } from './freeToBusiness';
+import { freeInactiveReactivationTemplate } from './freeInactiveReactivation';
 
 export const newsletterTemplates: NewsletterTemplate[] = [
   freeToBusinessTemplate,
+  freeInactiveReactivationTemplate,
 ];
 
 export function getNewsletterTemplateById(id: string): NewsletterTemplate | undefined {
