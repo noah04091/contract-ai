@@ -3279,9 +3279,12 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
         }
 
         // 🏢 AUTO-BRANCHENERKENNUNG + 📄 DOKUMENTTYP-ERKENNUNG (Stream-Pfad V4)
+        // Variablen außerhalb des try-Blocks deklariert, damit Phase 2 (RiskBatch) sie nutzen kann
+        let industryDetection = { industry: 'general', confidence: 0, detectedKeywords: [] };
+        let docTypeDetection = { documentType: 'general_document', confidence: 0 };
         try {
-          const industryDetection = detectIndustryFromText(text);
-          const docTypeDetection = detectDocumentType(text);
+          industryDetection = detectIndustryFromText(text);
+          docTypeDetection = detectDocumentType(text);
           console.log(`🏢 [Legal Lens Stream V4] Auto-detected industry: ${industryDetection.industry} (${industryDetection.confidence}%)`);
           console.log(`📄 [Legal Lens Stream V4] Auto-detected document type: ${docTypeDetection.documentType} (${docTypeDetection.confidence}%)`);
 
@@ -3363,7 +3366,13 @@ router.get('/:contractId/parse-stream', verifyToken, async (req, res) => {
             text: c.text || ''
           }));
 
-          const gptAssessment = await assessRiskBatch(rawClausesForGpt);
+          // assessRiskBatch erweitert: nutzt jetzt gpt-4o + Perspektive + Branche + DocType
+          // → konsistentere Bewertung mit analyzeClause (Detail-Panel)
+          const gptAssessment = await assessRiskBatch(rawClausesForGpt, {
+            perspective: 'contractor', // Default-Perspektive für Listen-Bewertung
+            industry: industryDetection.industry || 'general',
+            documentType: docTypeDetection.documentType || 'general_document'
+          });
 
           if (gptAssessment) {
             // GPT-Ergebnisse in Klauseln mergen (Klauseln ohne GPT-Match behalten Schnell-Werte)

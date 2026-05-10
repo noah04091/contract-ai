@@ -359,9 +359,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           <div className={styles.actionBadgeInfo}>
             {riskAssessment && (() => {
               const scoreInfo = getRiskScoreInfo(riskAssessment.score);
-              const radius = 22;
-              const circumference = 2 * Math.PI * radius;
-              const arcLength = (riskAssessment.score / 100) * circumference * 0.75; // 270° arc
               return (
                 <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
                   <button
@@ -369,30 +366,15 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     className={styles.scoreCard}
                     style={{ '--score-color': scoreInfo.color } as React.CSSProperties}
                     onClick={() => setShowScoreInfo(prev => !prev)}
-                    title="Was bedeutet der Score?"
-                    aria-label="Score-Erklärung anzeigen"
+                    title="Was bedeutet diese Bewertung?"
+                    aria-label="Bewertung erklären"
                     aria-expanded={showScoreInfo}
                   >
-                    <div className={styles.riskArcWrapper}>
-                      <svg viewBox="0 0 56 56" className={styles.riskArcSvg}>
-                        <circle
-                          cx="28" cy="28" r={radius}
-                          fill="none" stroke="#e2e8f0" strokeWidth="4"
-                          strokeDasharray={`${circumference * 0.75} ${circumference * 0.25}`}
-                          strokeLinecap="round"
-                          transform="rotate(135 28 28)"
-                        />
-                        <circle
-                          cx="28" cy="28" r={radius}
-                          fill="none" stroke={scoreInfo.color} strokeWidth="4"
-                          strokeDasharray={`${arcLength} ${circumference}`}
-                          strokeLinecap="round"
-                          transform="rotate(135 28 28)"
-                          className={styles.riskArcFill}
-                        />
-                      </svg>
-                      <span className={styles.riskArcValue}>{riskAssessment.score}</span>
-                    </div>
+                    <span
+                      className={styles.riskDotIndicator}
+                      style={{ background: scoreInfo.color }}
+                      aria-hidden="true"
+                    />
                     <div className={styles.scoreLabelGroup}>
                       <span className={styles.scoreLabel} style={{ color: scoreInfo.color }}>
                         {scoreInfo.label}

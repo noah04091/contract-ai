@@ -487,9 +487,13 @@ ALLGEMEINE DOKUMENTPRÜFUNG:
     // Kombinierter Kontext: Dokumenttyp + Branche
     const combinedContext = this.getCombinedContext(industry, documentType);
 
+    const { RISK_SCORE_SCALE_PROMPT_BLOCK } = require('./legalLensConstants');
+
     const systemPrompt = `${perspectiveConfig.systemPrompt}
 
 ${combinedContext}
+
+${RISK_SCORE_SCALE_PROMPT_BLOCK}
 
 WICHTIG: Du bist ein erfahrener Rechtsexperte der für Laien und Gründer berät.
 Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!
