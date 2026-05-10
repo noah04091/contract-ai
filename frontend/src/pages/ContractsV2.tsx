@@ -225,7 +225,17 @@ type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekün
 type DateFilter = 'alle' | 'heute' | 'woche' | 'monat' | 'quartal' | 'jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za'
   | 'status_asc' | 'status_desc'
-  | 'qf0_asc' | 'qf0_desc' | 'qf1_asc' | 'qf1_desc';
+  | 'qf0_asc' | 'qf0_desc' | 'qf1_asc' | 'qf1_desc'
+  // 🆕 Slot-basierte Sortierung (Frontend-side, basiert auf columnSlots[i])
+  | 'slot0_asc' | 'slot0_desc'
+  | 'slot1_asc' | 'slot1_desc'
+  | 'slot2_asc' | 'slot2_desc';
+// Welche Sortierungen das Backend versteht — alle anderen werden frontend-sortiert
+const isBackendSort = (s: SortOrder): boolean => {
+  return s === 'neueste' || s === 'älteste' || s === 'name_az' || s === 'name_za'
+    || s === 'status_asc' || s === 'status_desc'
+    || s === 'qf0_asc' || s === 'qf0_desc' || s === 'qf1_asc' || s === 'qf1_desc';
+};
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
@@ -389,11 +399,6 @@ export default function Contracts() {
   const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
-
-  const eckdatenLabels = [
-    (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['0'] || 'Eckdaten 1',
-    (user?.uiPreferences?.eckdatenLabels as Record<string, string> | undefined)?.['1'] || 'Eckdaten 2',
-  ];
 
   /* ============================================================
      V2 TODO #4c — Spalten-Konfigurator (aufgeräumt + Smart-Display)
@@ -1989,7 +1994,7 @@ export default function Contracts() {
         search: searchQuery,
         status: statusFilter,
         dateFilter: dateFilter,
-        sort: sortOrder,
+        sort: isBackendSort(sortOrder) ? sortOrder : 'neueste', // Slot-Sort nur Frontend
         source: sourceFilter
       });
 
@@ -2057,7 +2062,7 @@ export default function Contracts() {
         search: searchQuery,
         status: statusFilter,
         dateFilter: dateFilter,
-        sort: sortOrder,
+        sort: isBackendSort(sortOrder) ? sortOrder : 'neueste', // Slot-Sort nur Frontend
         source: sourceFilter
       });
 
@@ -2138,7 +2143,7 @@ export default function Contracts() {
         search: searchQuery,
         status: statusFilter,
         dateFilter: dateFilter,
-        sort: sortOrder,
+        sort: isBackendSort(sortOrder) ? sortOrder : 'neueste', // Slot-Sort nur Frontend
         source: sourceFilter
       });
 
@@ -3119,8 +3124,12 @@ export default function Contracts() {
   };
 
   // 🆕 Single Click: Open Preview Panel | Double Click: Open Modal
+  // 🆕 V2 Hybrid: Im Bulk-Mode toggelt Single-Click die Selection (statt Preview zu öffnen)
   const handleRowClick = (contract: Contract) => {
-    // Single click opens preview panel
+    if (bulkSelectMode) {
+      toggleSelectContract(contract._id);
+      return;
+    }
     setPreviewContract(contract);
   };
 
@@ -3657,7 +3666,76 @@ export default function Contracts() {
   const allAnalyzed = uploadFiles.length > 0 && uploadFiles.every(f => f.status === 'completed');
 
   // ✅ Infinite Scroll: Zeige alle geladenen Contracts (keine Frontend-Slice mehr)
-  const displayedContracts = contracts;
+  // 🆕 Frontend-side Sort für slot-basierte Sortier-Optionen (Backend kennt sie nicht)
+  const displayedContracts = useMemo(() => {
+    if (isBackendSort(sortOrder)) return contracts;
+
+    let slotIdx = -1;
+    let asc = true;
+    if (sortOrder === 'slot0_asc') { slotIdx = 0; asc = true; }
+    else if (sortOrder === 'slot0_desc') { slotIdx = 0; asc = false; }
+    else if (sortOrder === 'slot1_asc') { slotIdx = 1; asc = true; }
+    else if (sortOrder === 'slot1_desc') { slotIdx = 1; asc = false; }
+    else if (sortOrder === 'slot2_asc') { slotIdx = 2; asc = true; }
+    else if (sortOrder === 'slot2_desc') { slotIdx = 2; asc = false; }
+    if (slotIdx === -1) return contracts;
+
+    const fieldKey = columnSlots[slotIdx];
+    // Helper: extrahiere comparable Sort-Value für ein Field
+    const getSortVal = (contract: Contract): string | number => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c = contract as any;
+      switch (fieldKey) {
+        case 'provider': {
+          const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+          return (manual || contract.provider?.displayName || '').toLowerCase();
+        }
+        case 'contractType': return (contract.contractType || contract.provider?.category || '').toLowerCase();
+        case 'contractNumber': return (
+          (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') ||
+          (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '')
+        ).toLowerCase();
+        case 'customerNumber': return (
+          (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') ||
+          (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '')
+        ).toLowerCase();
+        case 'startDate': {
+          if (!contract.startDate) return Number.POSITIVE_INFINITY;
+          const ts = new Date(contract.startDate).getTime();
+          return Number.isNaN(ts) ? Number.POSITIVE_INFINITY : ts;
+        }
+        case 'expiry': {
+          if (!contract.expiryDate) return Number.POSITIVE_INFINITY;
+          const ts = new Date(contract.expiryDate).getTime();
+          return Number.isNaN(ts) ? Number.POSITIVE_INFINITY : ts;
+        }
+        case 'gekuendigtZum': {
+          if (!c.gekuendigtZum) return Number.POSITIVE_INFINITY;
+          const ts = new Date(c.gekuendigtZum).getTime();
+          return Number.isNaN(ts) ? Number.POSITIVE_INFINITY : ts;
+        }
+        case 'kuendigung': return (contract.kuendigung || '').toLowerCase();
+        case 'laufzeit': return (contract.laufzeit || '').toLowerCase();
+        case 'payment': {
+          const amount = contract.paymentAmount ?? c.kosten;
+          if (amount === undefined || amount === null || amount === '') return Number.POSITIVE_INFINITY;
+          if (typeof amount === 'number') return amount;
+          // EU-Format "1.234,56": Tausender-Punkte raus, dann Komma → Punkt
+          const sanitized = String(amount).replace(/\./g, '').replace(',', '.');
+          const parsed = parseFloat(sanitized);
+          return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
+        }
+        default: return '';
+      }
+    };
+    return [...contracts].sort((a, b) => {
+      const va = getSortVal(a);
+      const vb = getSortVal(b);
+      if (va < vb) return asc ? -1 : 1;
+      if (va > vb) return asc ? 1 : -1;
+      return 0;
+    });
+  }, [contracts, sortOrder, columnSlots]);
 
   // ✅ RESPONSIVE: Mobile Card Component
   const MobileContractCard = ({ contract }: { contract: Contract }) => {
@@ -4655,7 +4733,7 @@ export default function Contracts() {
                   className={styles.toolbarButton}
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                  style={{ minWidth: '130px' }}
+                  style={{ minWidth: '160px' }}
                 >
                   <option value="neueste">Neueste zuerst</option>
                   <option value="älteste">Älteste zuerst</option>
@@ -4663,10 +4741,13 @@ export default function Contracts() {
                   <option value="name_za">Name Z-A</option>
                   <option value="status_asc">Status A-Z</option>
                   <option value="status_desc">Status Z-A</option>
-                  <option value="qf0_asc">{eckdatenLabels[0]} ↑</option>
-                  <option value="qf0_desc">{eckdatenLabels[0]} ↓</option>
-                  <option value="qf1_asc">{eckdatenLabels[1]} ↑</option>
-                  <option value="qf1_desc">{eckdatenLabels[1]} ↓</option>
+                  {/* 🆕 Slot-basierte Sortierung (dynamisch nach aktuellem columnSlots) */}
+                  <option value="slot0_asc">{getFieldLabel(columnSlots[0])} ↑</option>
+                  <option value="slot0_desc">{getFieldLabel(columnSlots[0])} ↓</option>
+                  <option value="slot1_asc">{getFieldLabel(columnSlots[1])} ↑</option>
+                  <option value="slot1_desc">{getFieldLabel(columnSlots[1])} ↓</option>
+                  <option value="slot2_asc">{getFieldLabel(columnSlots[2])} ↑</option>
+                  <option value="slot2_desc">{getFieldLabel(columnSlots[2])} ↓</option>
                 </select>
               </div>
 
@@ -4771,10 +4852,13 @@ export default function Contracts() {
                           <option value="name_za">Name Z-A</option>
                           <option value="status_asc">Status A-Z</option>
                           <option value="status_desc">Status Z-A</option>
-                          <option value="qf0_asc">{eckdatenLabels[0]} ↑</option>
-                          <option value="qf0_desc">{eckdatenLabels[0]} ↓</option>
-                          <option value="qf1_asc">{eckdatenLabels[1]} ↑</option>
-                          <option value="qf1_desc">{eckdatenLabels[1]} ↓</option>
+                          {/* 🆕 Slot-basierte Sortierung */}
+                          <option value="slot0_asc">{getFieldLabel(columnSlots[0])} ↑</option>
+                          <option value="slot0_desc">{getFieldLabel(columnSlots[0])} ↓</option>
+                          <option value="slot1_asc">{getFieldLabel(columnSlots[1])} ↑</option>
+                          <option value="slot1_desc">{getFieldLabel(columnSlots[1])} ↓</option>
+                          <option value="slot2_asc">{getFieldLabel(columnSlots[2])} ↑</option>
+                          <option value="slot2_desc">{getFieldLabel(columnSlots[2])} ↓</option>
                         </select>
                       </div>
                     </div>
@@ -5544,7 +5628,7 @@ export default function Contracts() {
                     {/* 🆕 ENTERPRISE GRID VIEW */}
                     {viewMode === 'grid' && (
                       <div className={styles.enterpriseGrid}>
-                        {contracts.map((contract) => (
+                        {displayedContracts.map((contract) => (
                           <EnterpriseGridCard key={contract._id} contract={contract} />
                         ))}
                       </div>
@@ -7173,7 +7257,7 @@ export default function Contracts() {
               </div>
             ) : (
               <div className={styles.mobileListContainer}>
-                {contracts.map((contract) => (
+                {displayedContracts.map((contract) => (
                   <MobileListRow key={contract._id} contract={contract} />
                 ))}
               </div>
