@@ -11,7 +11,7 @@ import type {
   ChatMessage,
   ActionLevel
 } from '../../types/legalLens';
-import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS, type PerspectiveInfo } from '../../types/legalLens';
+import { PERSPECTIVES, ACTION_LABELS, PROBABILITY_LABELS, RISK_COLORS, type PerspectiveInfo } from '../../types/legalLens';
 import ClauseCompareModal from './ClauseCompareModal';
 import ClauseSimulatorModal from './ClauseSimulatorModal';
 import SaveClauseModal from './SaveClauseModal';
@@ -356,6 +356,19 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
       ? listRiskScore
       : (deriveScoreFromLevel(listRiskLevel) ?? riskAssessment?.score);
 
+  // 🎯 Label direkt aus dem riskLevel (matched die Liste-Anzeige 1:1).
+  // Falls listRiskLevel fehlt → Fallback auf Score-basierte Logik.
+  const getRiskLevelDisplay = (level: 'low' | 'medium' | 'high') => {
+    switch (level) {
+      case 'high':   return { label: 'Hoch',    color: RISK_COLORS.high,   hint: 'Aufmerksamkeit nötig' };
+      case 'medium': return { label: 'Mittel',  color: RISK_COLORS.medium, hint: 'Verhandeln empfohlen' };
+      case 'low':    return { label: 'Niedrig', color: RISK_COLORS.low,    hint: 'Akzeptabel' };
+    }
+  };
+  const effectiveDisplay = listRiskLevel
+    ? getRiskLevelDisplay(listRiskLevel)
+    : (typeof effectiveScore === 'number' ? getRiskScoreInfo(effectiveScore) : null);
+
   return (
     <div className={styles.analysisContent}>
       {/* 📝 FIX Issue #2: EIN-SATZ-ERKLÄRUNG - NUR wenn unterschiedlich von Erklärung */}
@@ -375,8 +388,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </span>
           </div>
           <div className={styles.actionBadgeInfo}>
-            {(typeof effectiveScore === 'number') && (() => {
-              const scoreInfo = getRiskScoreInfo(effectiveScore);
+            {effectiveDisplay && (() => {
+              const scoreInfo = effectiveDisplay;
               return (
                 <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
                   <button
