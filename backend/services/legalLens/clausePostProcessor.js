@@ -29,6 +29,7 @@ function postProcess(clauses, rawText = '') {
   const stats = {
     input: clauses.length,
     textCleaned: 0,
+    titlesCleaned: 0,
     pageHeadersStripped: 0,
     signaturesRemoved: 0,
     greetingsRemoved: 0,
@@ -46,6 +47,9 @@ function postProcess(clauses, rawText = '') {
 
   // 1. Text Cleanup (PDF-Artefakte in Klauseltexten)
   result = cleanTexts(result, stats);
+
+  // 1.5. Title Cleanup (Doppelung "§ 1 − Angebot" wenn number="§ 1" + OCR-Artefakte)
+  result = cleanTitles(result, stats);
 
   // 2. Seitenkopf/-fuss Erkennung und Entfernung aus Texten
   result = stripPageHeaders(result, stats);
@@ -101,6 +105,54 @@ function cleanTexts(clauses, stats) {
 
     if (text !== before) stats.textCleaned++;
     return { ...c, text: text.trim() };
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// 1.5. TITLE CLEANUP
+// ══════════════════════════════════════════════════════════════
+// Behebt zwei Probleme die GPT trotz Prompt durchlaesst:
+// a) Doppelung: number="§ 1", title="§ 1 − Angebot zum Forderungskauf"
+//    → title nach Cleanup: "Angebot zum Forderungskauf"
+// b) Fuehrende PDF-OCR-Bindestrich-Sequenzen (-, –, —, −) am Title-Anfang
+//    → werden weggetrimmt
+// Nicht-betroffen: title=null/undefined/leer, sauberer title, body-text
+
+function cleanTitles(clauses, stats) {
+  return clauses.map(c => {
+    if (!c.title || typeof c.title !== 'string') return c;
+
+    let title = c.title.trim();
+    const before = title;
+
+    // Schritt 1: Wenn title mit der number anfaengt, strippe das Prefix
+    if (c.number && typeof c.number === 'string') {
+      const number = c.number.trim();
+      if (number.length > 0) {
+        // Spezialfall: title ist EXAKT die number → komplett leeren
+        if (title === number) {
+          title = '';
+        } else {
+          // Escape Regex-Sonderzeichen in der number
+          const numberEscaped = number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Match am Anfang: "§ 1", "§ 1 -", "§ 1 −", "§ 1 −− −", optional gefolgt von Trennzeichen
+          const numberPrefixRegex = new RegExp(`^${numberEscaped}(\\s*[\\-–—−·.]+\\s*|\\s+)`, 'i');
+          title = title.replace(numberPrefixRegex, '');
+        }
+      }
+    }
+
+    // Schritt 2: Fuehrende OCR-Bindestrich-Sequenzen entfernen ("−−", "- −", "—", etc.)
+    title = title.replace(/^[\s\-–—−]+/, '');
+
+    // Schritt 3: Multi-Whitespace zu Single-Whitespace
+    title = title.replace(/\s+/g, ' ').trim();
+
+    if (title !== before) {
+      stats.titlesCleaned++;
+      return { ...c, title };
+    }
+    return c;
   });
 }
 
