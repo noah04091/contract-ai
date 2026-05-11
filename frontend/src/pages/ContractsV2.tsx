@@ -5519,48 +5519,6 @@ export default function Contracts() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* 🎨 Mockup-1:1 Page-Header */}
-                <div className={styles.mockupPageHeader}>
-                  <div>
-                    <h1>
-                      {activeFolder
-                        ? (folders.find(f => f._id === activeFolder)?.name || 'Ordner')
-                        : statusFilter === 'bald_ablaufend' ? 'Bald ablaufend'
-                        : statusFilter === 'aktiv' ? 'Aktive Verträge'
-                        : statusFilter === 'gekündigt' ? 'Gekündigt'
-                        : statusFilter === 'abgelaufen' ? 'Abgelaufen'
-                        : 'Alle Verträge'}
-                    </h1>
-                    <p className={styles.subtitle}>
-                      <b>{paginationInfo.total || contracts.length}</b>
-                      {' '}{(paginationInfo.total || contracts.length) === 1 ? 'Vertrag' : 'Verträge'}
-                      {refreshing && ' · wird aktualisiert…'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* 🎨 Mockup-1:1 Filter-Chip-Group (statt Dropdown-Selects) */}
-                {(['alle', 'aktiv', 'bald_ablaufend', 'abgelaufen', 'gekündigt'] as const).map((_, i) => i === 0 && (
-                  <div key="chips" className={styles.mockupChipGroup} style={{ marginBottom: 16 }}>
-                    {([
-                      { key: 'alle', label: 'Alle', count: sidebarCounts?.total ?? (paginationInfo.total || contracts.length) },
-                      { key: 'aktiv', label: 'Aktiv', count: sidebarCounts?.aktiv ?? 0 },
-                      { key: 'bald_ablaufend', label: 'Bald fällig', count: sidebarCounts?.baldAblaufend ?? 0 },
-                      { key: 'gekündigt', label: 'Gekündigt', count: 0 },
-                    ] as const).map((chip) => (
-                      <button
-                        key={chip.key}
-                        type="button"
-                        className={`${styles.mockupChip} ${statusFilter === chip.key ? styles.mockupChipActive : ''}`}
-                        onClick={() => setStatusFilter(chip.key)}
-                      >
-                        <span>{chip.label}</span>
-                        <span className={styles.mockupChipCount}>{chip.count}</span>
-                      </button>
-                    ))}
-                  </div>
-                ))}
-
                 {/* Results info — nur bei echten Filtern (Suche/Datum/Quelle), nicht bei Sidebar-Navigation */}
                 {(searchQuery || dateFilter !== 'alle' || sourceFilter !== 'alle') && (
                   <div className={styles.resultsInfo}>

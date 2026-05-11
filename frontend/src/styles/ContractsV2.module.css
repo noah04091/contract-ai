@@ -9253,7 +9253,7 @@
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
 .enterpriseToolbar .toolbarDivider { display: none !important; }
-.enterpriseToolbar .desktopFilters { display: none !important; } /* Dropdown-Filter durch Chip-Group ersetzt */
+/* Dropdown-Filter bleiben sichtbar (User-Wunsch: kein Chip-Group oben) */
 .enterpriseToolbar .toolbarViewButtons { gap: 4px !important; }
 
 /* Buttons — Mockup btn-Style */
@@ -9280,16 +9280,16 @@
 }
 .enterpriseToolbar .toolbarButton:active { transform: translateY(0.5px) !important; }
 
-/* "Vertrag hochladen" — DARK Primary (Mockup-Style) */
+/* User-Wunsch: Hochladen-Button in Brand-Blau (statt Mockup-Dark) */
 .enterpriseToolbar .toolbarButton.primary {
-  background: var(--m-text) !important;
-  border-color: var(--m-text) !important;
+  background: var(--m-accent) !important;
+  border-color: var(--m-accent) !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 2px rgba(10,14,26,0.18), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  box-shadow: 0 1px 2px rgba(59,130,246,0.20), inset 0 1px 0 rgba(255,255,255,0.12) !important;
 }
 .enterpriseToolbar .toolbarButton.primary:hover {
-  background: #1c2233 !important;
-  border-color: #1c2233 !important;
+  background: var(--m-accent-2) !important;
+  border-color: var(--m-accent-2) !important;
   color: #ffffff !important;
 }
 
