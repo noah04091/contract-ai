@@ -1,9 +1,11 @@
 /**
  * TableBlock - Tabelle für strukturierte Daten
  * Unterstützt Inline-Editing per Doppelklick
+ * Plus/X Buttons im Edit-Modus zum Hinzufügen/Entfernen von Zeilen/Spalten
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Plus, X } from 'lucide-react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './TableBlock.module.css';
@@ -96,6 +98,36 @@ export const TableBlock: React.FC<TableBlockProps> = ({
     }
   }, [handleSave]);
 
+  // Zeile hinzufügen — leere Zellen passend zur Spaltenanzahl
+  const addRow = useCallback(() => {
+    const emptyRow = tableHeaders.map(() => '');
+    updateBlockContent(blockId, { rows: [...tableRows, emptyRow] });
+    syncVariables();
+  }, [blockId, tableHeaders, tableRows, updateBlockContent, syncVariables]);
+
+  // Spalte hinzufügen — neuer Header + leere Zelle in jeder Zeile
+  const addColumn = useCallback(() => {
+    const newHeaders = [...tableHeaders, `Spalte ${tableHeaders.length + 1}`];
+    const newRows = tableRows.map((row) => [...row, '']);
+    updateBlockContent(blockId, { headers: newHeaders, rows: newRows });
+    syncVariables();
+  }, [blockId, tableHeaders, tableRows, updateBlockContent, syncVariables]);
+
+  // Zeile entfernen
+  const removeRow = useCallback((rowIndex: number) => {
+    const newRows = tableRows.filter((_, i) => i !== rowIndex);
+    updateBlockContent(blockId, { rows: newRows });
+    syncVariables();
+  }, [blockId, tableRows, updateBlockContent, syncVariables]);
+
+  // Spalte entfernen — aus Headers UND jeder Zeile
+  const removeColumn = useCallback((colIndex: number) => {
+    const newHeaders = tableHeaders.filter((_, i) => i !== colIndex);
+    const newRows = tableRows.map((row) => row.filter((_, i) => i !== colIndex));
+    updateBlockContent(blockId, { headers: newHeaders, rows: newRows });
+    syncVariables();
+  }, [blockId, tableHeaders, tableRows, updateBlockContent, syncVariables]);
+
   const isEditingThis = (type: 'header' | 'cell' | 'footer', row?: number, col?: number) => {
     if (!editingCell) return false;
     if (editingCell.type !== type) return false;
@@ -111,25 +143,42 @@ export const TableBlock: React.FC<TableBlockProps> = ({
           <tr>
             {tableHeaders.map((header, index) => (
               <th key={`h-${index}-${header.slice(0, 15)}`} className={styles.headerCell}>
-                {isEditingThis('header', undefined, index) ? (
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={handleKeyDown}
-                    className={styles.inlineInput}
-                  />
-                ) : (
-                  <VariableHighlight
-                    text={header}
-                    isPreview={isPreview}
-                    onDoubleClick={() => handleDoubleClick({ type: 'header', col: index }, header)}
-                  />
-                )}
+                <div className={styles.headerInner}>
+                  <div className={styles.headerText}>
+                    {isEditingThis('header', undefined, index) ? (
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSave}
+                        onKeyDown={handleKeyDown}
+                        className={styles.inlineInput}
+                      />
+                    ) : (
+                      <VariableHighlight
+                        text={header}
+                        isPreview={isPreview}
+                        onDoubleClick={() => handleDoubleClick({ type: 'header', col: index }, header)}
+                      />
+                    )}
+                  </div>
+                  {!isPreview && tableHeaders.length > 1 && (
+                    <button
+                      className={`${styles.removeBtn} blockControls`}
+                      onClick={(e) => { e.stopPropagation(); removeColumn(index); }}
+                      title="Spalte entfernen"
+                      type="button"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               </th>
             ))}
+            {!isPreview && (
+              <th className={`${styles.actionCell} blockControls`} aria-hidden="true"></th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -156,6 +205,20 @@ export const TableBlock: React.FC<TableBlockProps> = ({
                   )}
                 </td>
               ))}
+              {!isPreview && (
+                <td className={`${styles.actionCell} blockControls`}>
+                  {tableRows.length > 1 && (
+                    <button
+                      className={`${styles.removeBtn} blockControls`}
+                      onClick={(e) => { e.stopPropagation(); removeRow(rowIndex); }}
+                      title="Zeile entfernen"
+                      type="button"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -183,10 +246,33 @@ export const TableBlock: React.FC<TableBlockProps> = ({
                   </span>
                 )}
               </td>
+              {!isPreview && (
+                <td className={`${styles.actionCell} blockControls`} aria-hidden="true"></td>
+              )}
             </tr>
           </tfoot>
         )}
       </table>
+      {!isPreview && (
+        <div className={`${styles.tableActions} blockControls`}>
+          <button
+            className={styles.addBtn}
+            onClick={addRow}
+            type="button"
+          >
+            <Plus size={14} />
+            <span>Zeile hinzufügen</span>
+          </button>
+          <button
+            className={styles.addBtn}
+            onClick={addColumn}
+            type="button"
+          >
+            <Plus size={14} />
+            <span>Spalte hinzufügen</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
