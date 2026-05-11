@@ -9239,17 +9239,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === TOOLBAR als eigene Card (User-Wunsch: getrennte Sektion, nicht schwebend) === */
+/* === TOOLBAR flush mit Page-BG (User-Wunsch: kein Card um Toolbar) === */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   margin-bottom: 12px !important;
-  padding: 12px !important;
-  background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: 10px !important;
-  box-shadow: var(--m-shadow-xs) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   flex-wrap: wrap !important;
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
@@ -9380,13 +9380,13 @@
   color: var(--m-accent);
 }
 
-/* === TABELLE — Flush, kein Card-Wrapper (User-Wunsch: kein Kasten-im-Kasten) === */
+/* === TABELLE als Card (User-Wunsch: Tabelle in eigener weißer Box, Toolbar flush) === */
 .tableContainer {
   background: var(--m-surface) !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--m-shadow-xs) !important;
+  overflow: hidden !important;
 }
 
 .contractsTable {
