@@ -19,6 +19,39 @@ const BATCH_OVERLAP = 5000;
 const MAX_COMPLETION_TOKENS = 16384;
 
 // ──────────────────────────────────────────────────────────────────
+// OPENAI-RETRY für transiente Server-Fehler
+// 2026-05-11: OpenAI wirft gelegentlich 500/502/503/504 oder 429 —
+// meist kurze Schluckaufs. Statt sofort auf den Legacy-Parser (~10 Min)
+// umzuschalten, einmal kurz warten und nochmal versuchen.
+// Bei Fehlern wie 400/401 (unser Problem) sofort werfen — kein Retry.
+// ──────────────────────────────────────────────────────────────────
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+const RETRY_DELAY_MS = 3000;
+const MAX_RETRIES = 1;
+
+async function withOpenAIRetry(label, fn) {
+  let lastError;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      const statusInfo = lastError?.status ? `Status ${lastError.status}` : (lastError?.message || 'unbekannter Fehler');
+      console.log(`[DirectExtractor] OpenAI-Retry ${attempt}/${MAX_RETRIES} für ${label} nach ${RETRY_DELAY_MS}ms (vorher: ${statusInfo})`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const status = err?.status;
+      const isRetryable = typeof status === 'number' && RETRYABLE_STATUS_CODES.has(status);
+      if (!isRetryable || attempt === MAX_RETRIES) {
+        throw err;
+      }
+    }
+  }
+  throw lastError;
+}
+
+// ──────────────────────────────────────────────────────────────────
 // LENIENT MODE — Fuer "Trotzdem analysieren"-Override
 // User hat bewusst entschieden, dass das Dokument analysiert werden
 // soll, auch wenn es nicht eindeutig ein Vertrag ist (z.B. komplexe
@@ -226,7 +259,7 @@ class DirectExtractor {
    * @private
    */
   async _singleCall(text, timeoutMs, systemPrompt = SYSTEM_PROMPT) {
-    const response = await this.openai.chat.completions.create({
+    const response = await withOpenAIRetry('singleCall', () => this.openai.chat.completions.create({
       model: MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -238,7 +271,7 @@ class DirectExtractor {
       response_format: { type: 'json_object' },
       temperature: 0,
       max_tokens: MAX_COMPLETION_TOKENS
-    }, { timeout: timeoutMs });
+    }, { timeout: timeoutMs }));
 
     const content = response.choices?.[0]?.message?.content;
     if (!content) throw new Error('directExtractor: Leere Antwort');
@@ -288,7 +321,7 @@ class DirectExtractor {
             ? `Hier ist der ERSTE TEIL eines langen Dokuments. Zerlege ihn in Abschnitte. Wenn ein Abschnitt am Ende abgeschnitten wirkt, extrahiere trotzdem alles was da ist.\n\n---BEGIN DOKUMENT (Teil ${batchIdx + 1})---\n${win.text}\n---END DOKUMENT---`
             : `Hier ist ein WEITERER TEIL desselben Dokuments (Fortsetzung). Zerlege ihn in Abschnitte. Es kann sein, dass der Text mitten in einem Abschnitt beginnt — wenn ja, extrahiere ihn trotzdem.\n\n---BEGIN DOKUMENT (Teil ${batchIdx + 1})---\n${win.text}\n---END DOKUMENT---`;
 
-          return this.openai.chat.completions.create({
+          return withOpenAIRetry(`batch ${batchIdx + 1}`, () => this.openai.chat.completions.create({
             model: MODEL,
             messages: [
               { role: 'system', content: systemPrompt },
@@ -297,7 +330,7 @@ class DirectExtractor {
             response_format: { type: 'json_object' },
             temperature: 0,
             max_tokens: MAX_COMPLETION_TOKENS
-          }, { timeout: timeoutMs });
+          }, { timeout: timeoutMs }));
         })
       );
 
