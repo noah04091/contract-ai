@@ -39,6 +39,9 @@ interface AnalysisPanelProps {
   sourceClauseId?: string;
   currentIndustry?: string;
   analysisCache?: Record<string, unknown>;
+  // 🔄 Sync mit Liste-Bewertung (assessRiskBatch) — Single Source of Truth
+  listRiskScore?: number;
+  listRiskLevel?: 'low' | 'medium' | 'high';
   onLoadAlternatives: () => void;
   onLoadNegotiation: () => void;
   onSendChatMessage: (message: string) => void;
@@ -67,6 +70,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   sourceClauseId,
   currentIndustry,
   analysisCache = {},
+  listRiskScore,
+  listRiskLevel,
   onLoadAlternatives,
   onLoadNegotiation,
   onSendChatMessage,
@@ -338,6 +343,19 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     return { label: 'Minimal', color: '#059669', hint: 'Unbedenklich' };
   };
 
+  // 🔄 Single Source of Truth: Liste-Bewertung gewinnt (sonst Fallback auf Detail-Analyse).
+  // Falls listRiskLevel vorhanden aber score fehlt, leiten wir einen repräsentativen Score ab.
+  const deriveScoreFromLevel = (level?: 'low' | 'medium' | 'high'): number | undefined => {
+    if (level === 'high') return 70;
+    if (level === 'medium') return 50;
+    if (level === 'low') return 25;
+    return undefined;
+  };
+  const effectiveScore: number | undefined =
+    (typeof listRiskScore === 'number')
+      ? listRiskScore
+      : (deriveScoreFromLevel(listRiskLevel) ?? riskAssessment?.score);
+
   return (
     <div className={styles.analysisContent}>
       {/* 📝 FIX Issue #2: EIN-SATZ-ERKLÄRUNG - NUR wenn unterschiedlich von Erklärung */}
@@ -357,8 +375,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             </span>
           </div>
           <div className={styles.actionBadgeInfo}>
-            {riskAssessment && (() => {
-              const scoreInfo = getRiskScoreInfo(riskAssessment.score);
+            {(typeof effectiveScore === 'number') && (() => {
+              const scoreInfo = getRiskScoreInfo(effectiveScore);
               return (
                 <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
                   <button
@@ -397,7 +415,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                         <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#dc2626' }} /><span className={styles.scoreScaleRange}>80–100</span><span className={styles.scoreScaleLabel}>Kritisch — Dringend prüfen</span></div>
                       </div>
                       <div className={styles.scoreInfoCurrent}>
-                        Diese Klausel: <strong style={{ color: scoreInfo.color }}>{riskAssessment.score} — {scoreInfo.label}</strong>
+                        Diese Klausel: <strong style={{ color: scoreInfo.color }}>{effectiveScore} — {scoreInfo.label}</strong>
                       </div>
                     </div>
                   )}

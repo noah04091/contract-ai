@@ -2168,6 +2168,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       sourceContractName={contractName}
                       sourceClauseId={selectedClause?.id}
                       currentIndustry={currentIndustry}
+                      listRiskScore={
+                        selectedClause?.riskIndicators?.score ??
+                        selectedClause?.preAnalysis?.riskScore
+                      }
+                      listRiskLevel={
+                        (selectedClause?.riskIndicators?.level ??
+                          selectedClause?.preAnalysis?.riskLevel) as
+                          'low' | 'medium' | 'high' | undefined
+                      }
                       onLoadAlternatives={loadAlternatives}
                       onLoadNegotiation={loadNegotiationTips}
                       onSendChatMessage={sendChatMessage}
@@ -2623,6 +2632,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 sourceClauseId={selectedClause?.id}
                 currentIndustry={currentIndustry}
                 analysisCache={analysisCache as Record<string, unknown>}
+                listRiskScore={
+                  selectedClause?.riskIndicators?.score ??
+                  selectedClause?.preAnalysis?.riskScore
+                }
+                listRiskLevel={
+                  (selectedClause?.riskIndicators?.level ??
+                    selectedClause?.preAnalysis?.riskLevel) as
+                    'low' | 'medium' | 'high' | undefined
+                }
                 onLoadAlternatives={loadAlternatives}
                 onLoadNegotiation={loadNegotiationTips}
                 onSendChatMessage={sendChatMessage}
