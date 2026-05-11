@@ -845,19 +845,23 @@ const resolvePartyNames = (parties) => {
   if (!parties) return { partyAName: null, partyBName: null, partyAAddress: null, partyBAddress: null, partyACity: null, partyBCity: null };
 
   // Partei A Name: typ-spezifisch → generisch → null
+  // Deckt alle Vertragstypen aus PARTY_FIELD_MAP in routes/generate.js ab
   const partyAName =
-    parties.seller || parties.partyA ||
+    parties.seller || parties.partyA || parties.partyAName ||
     parties.landlord || parties.employer || parties.lender ||
-    parties.nameClient || parties.licensor ||
+    parties.nameClient || parties.clientName || parties.licensor ||
+    parties.contractor || parties.vendorName || parties.providerName ||
+    parties.partnerA ||
     parties.verpachter || parties.darlehensgeber ||
     (parties.parteiA?.name ? parties.parteiA.name : null) ||
     null;
 
   // Partei B Name: typ-spezifisch → generisch → null
   const partyBName =
-    parties.buyer || parties.partyB || parties.buyerName ||
+    parties.buyer || parties.partyB || parties.partyBName || parties.buyerName ||
     parties.tenant || parties.employee || parties.borrower ||
-    parties.nameFreelancer || parties.licensee ||
+    parties.nameFreelancer || parties.consultantName || parties.licensee ||
+    parties.resellerName || parties.customerName || parties.partnerB ||
     parties.pachter || parties.darlehensnehmer ||
     (parties.parteiB?.name ? parties.parteiB.name : null) ||
     null;
@@ -867,6 +871,9 @@ const resolvePartyNames = (parties) => {
     parties.sellerAddress || parties.partyAAddress ||
     parties.landlordAddress || parties.employerAddress || parties.lenderAddress ||
     parties.clientAddress || parties.licensorAddress ||
+    parties.contractorAddress || parties.vendorAddress || parties.providerAddress ||
+    parties.partnerAAddress ||
+    (parties.parteiA?.address ? parties.parteiA.address : null) ||
     null;
 
   // Partei B Adresse
@@ -874,6 +881,9 @@ const resolvePartyNames = (parties) => {
     parties.buyerAddress || parties.partyBAddress ||
     parties.tenantAddress || parties.employeeAddress || parties.borrowerAddress ||
     parties.freelancerAddress || parties.licenseeAddress ||
+    parties.consultantAddress || parties.resellerAddress || parties.customerAddress ||
+    parties.partnerBAddress ||
+    (parties.parteiB?.address ? parties.parteiB.address : null) ||
     null;
 
   // City fields
@@ -937,6 +947,18 @@ const extractPartiesFromText = (contractText) => {
   const isMarkdownLabel = (s) => /^\*\*[^*]+\*\*\s*:?\s*$/.test(s.trim());
   // Helper: Erkennt Verbindungs-Wörter / Trenner die NICHT Name/Adresse sind
   const isConnector = (s) => /^(und|–|-|—|nachfolgend|wird folgender|geschlossen|im folgenden)/i.test(s.trim());
+  // Helper: Erkennt Sektions-Header die NICHT zur Adresse gehören (PRÄAMBEL, § 1, Body-Text, ...)
+  // Verhindert dass nachfolgender Vertragsinhalt fälschlich als Adresse mit-extrahiert wird
+  const isSectionMarker = (s) => {
+    const t = s.trim();
+    // §-Paragraphen-Marker (z.B. "§ 1 BERATUNGSGEGENSTAND")
+    if (/^§/.test(t)) return true;
+    // Standalone Sektions-Labels (Präambel, Unterschriften, etc.)
+    if (/^(PRÄAMBEL|PRAEAMBEL|ZWISCHEN|UNTERSCHRIFTEN|UNTERSCHRIFT|ANLAGEN|VERTRAGSPARTEIEN|VERTRAG\b)/i.test(t)) return true;
+    // Zu lang um Adress-Zeile zu sein (Paragraph-Text)
+    if (t.length > 150) return true;
+    return false;
+  };
   // Helper: Liefert eine bereinigte Zeile oder null wenn sie zu skippen ist
   const cleanCandidate = (s) => {
     if (!s) return null;
@@ -944,22 +966,26 @@ const extractPartiesFromText = (contractText) => {
     if (!trimmed) return null;
     if (isMarkdownLabel(s)) return null;
     if (isConnector(trimmed)) return null;
+    if (isSectionMarker(trimmed)) return null;
     return trimmed;
   };
   // Helper: Splittet 1-N Zeilen in Name + Adresse — entweder Komma-getrennt in einer Zeile
   // oder Multiline (erste Zeile = Name, Rest = Adresse).
+  // WICHTIG: Streng begrenzt damit nachfolgender Vertragsinhalt nicht ins Adressfeld rutscht
   const splitNameAddress = (lines) => {
     const cleaned = lines.map(cleanCandidate).filter(Boolean);
     if (cleaned.length === 0) return { name: null, address: null };
-    // Bei Komma in Zeile 1 → klassisches Format
+    // Format A: Name, Straße, PLZ Stadt — alles in einer Zeile mit Kommas
+    // Adresse = nur der Teil NACH dem ersten Komma der ersten Zeile (keine Folgezeilen),
+    // um zu verhindern dass die nachfolgende Partei oder Sektion mit reingezogen wird.
     if (cleaned[0].includes(',')) {
       const idx = cleaned[0].indexOf(',');
       return {
         name: cleaned[0].substring(0, idx).trim(),
-        address: [cleaned[0].substring(idx + 1).trim(), ...cleaned.slice(1)].filter(Boolean).join(', ')
+        address: cleaned[0].substring(idx + 1).trim() || null
       };
     }
-    // Multiline-Format: Zeile 1 = Name, Rest = Adresse
+    // Format B: Multiline — Zeile 1 = Name, max 2 Folgezeilen als Adresse (Straße + PLZ Stadt)
     return {
       name: cleaned[0],
       address: cleaned.slice(1, 3).join(', ') || null
@@ -1704,11 +1730,22 @@ const generatePDFv2 = async (contractText, companyProfile, contractType, parties
   const textParties = extractPartiesFromText(contractText);
   if (textParties) {
     console.log('📝 [PDF] Parteinamen aus Vertragstext extrahiert:', JSON.stringify(textParties));
+    // Sanity-Check: Verwerfen wenn Adresse offensichtlich Sektions-/Body-Text enthält
+    // (Letztes Sicherheitsnetz falls extractPartiesFromText doch was Faules durchlässt)
+    const looksLikeSection = (s) => !s || /\b(PRÄAMBEL|PRAEAMBEL|§\s*\d|UNTERSCHRIFTEN|Vertrag regelt|Vertragsgegenstand)\b/i.test(s) || s.length > 200;
     // Text-extrahierte Namen überschreiben Form-Daten (höchste Priorität)
     if (textParties.partyAName) resolvedParties.partyAName = textParties.partyAName;
     if (textParties.partyBName) resolvedParties.partyBName = textParties.partyBName;
-    if (textParties.partyAAddress) resolvedParties.partyAAddress = textParties.partyAAddress;
-    if (textParties.partyBAddress) resolvedParties.partyBAddress = textParties.partyBAddress;
+    if (textParties.partyAAddress && !looksLikeSection(textParties.partyAAddress)) {
+      resolvedParties.partyAAddress = textParties.partyAAddress;
+    } else if (textParties.partyAAddress) {
+      console.warn('⚠️ [PDF] Verwerfe extrahierte Partei-A-Adresse (enthält Sektions-Text):', textParties.partyAAddress.substring(0, 80));
+    }
+    if (textParties.partyBAddress && !looksLikeSection(textParties.partyBAddress)) {
+      resolvedParties.partyBAddress = textParties.partyBAddress;
+    } else if (textParties.partyBAddress) {
+      console.warn('⚠️ [PDF] Verwerfe extrahierte Partei-B-Adresse (enthält Sektions-Text):', textParties.partyBAddress.substring(0, 80));
+    }
   }
 
   // Proper Case als Sicherheitsnetz (falls Daten aus Formular ganz klein geschrieben sind)
