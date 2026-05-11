@@ -11,7 +11,7 @@ const { ObjectId } = require('mongodb');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const pdfParse = require('pdf-parse');
 const { clauseParser } = require('./index');
-const { getDb } = require('../../config/database');
+const database = require('../../config/database');
 
 // S3 Client
 const s3Client = new S3Client({
@@ -79,7 +79,7 @@ async function preprocessContract(contractId, options = {}) {
   console.log(`\n🧠 [Preprocessor] Starte Legal Lens Vorverarbeitung für Contract: ${contractId}`);
 
   try {
-    const db = await getDb();
+    const db = await database.connect();
     const contractsCollection = db.collection('contracts');
 
     // Contract laden
@@ -191,7 +191,7 @@ async function preprocessContract(contractId, options = {}) {
 
     // Fehler in DB speichern
     try {
-      const db = await getDb();
+      const db = await database.connect();
       await db.collection('contracts').updateOne(
         { _id: new ObjectId(contractId) },
         {
