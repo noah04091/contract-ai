@@ -9239,13 +9239,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === Wrapper-Card ENTFERNT (User-Korrektur: Toolbar flush, Tabelle separat als Card) === */
+/* === EIN großer Wrapper-Card um Toolbar + Tabelle (dockt an Sidebar+Navbar) === */
 .contractsMainCard {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
+  background: var(--m-surface) !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--m-shadow-xs) !important;
+  overflow: hidden !important;
+  padding: 16px !important;
 }
 
 /* === Toolbar flush mit Page-BG === */
@@ -9389,13 +9390,13 @@
   color: var(--m-accent);
 }
 
-/* === Tabelle als eigene weiße Card mit rounded corners (User-Screenshot) === */
+/* === Tabelle innerhalb Wrapper-Card: flush (keine eigene Card) === */
 .tableContainer {
-  background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--m-shadow-xs) !important;
-  overflow: hidden !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
 .contractsTable {
