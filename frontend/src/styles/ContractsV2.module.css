@@ -9207,9 +9207,9 @@
   background: var(--m-bg);
 }
 
-/* === MAIN-CONTENT PADDING (großzügig) === */
+/* === MAIN-CONTENT PADDING (User-Wunsch: kompakt wie alter Stand) === */
 .mainContent {
-  padding: 44px 56px 80px !important;
+  padding: 24px !important;
 }
 
 /* === PAGE-HEADER (h1 30px, dezenter Subtitle) === */
@@ -9260,13 +9260,13 @@
 .enterpriseToolbar .toolbarButton {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 8px !important;
-  padding: 8px 13px !important;
+  gap: 6px !important;
+  padding: 6px 11px !important;
   border-radius: 8px !important;
   border: 1px solid var(--m-border) !important;
   background: var(--m-surface) !important;
   color: var(--m-text-2) !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-weight: 500 !important;
   box-shadow: var(--m-shadow-xs) !important;
   letter-spacing: -0.005em !important;
@@ -9293,19 +9293,17 @@
   color: #ffffff !important;
 }
 
-/* Suche — schmaler, mit ⌘K-Badge-Slot */
+/* Suche — volle Breite (kein max-limit, kein ⌘K-Slot mehr) */
 .enterpriseToolbar .toolbarSearch {
   position: relative !important;
   flex: 1 !important;
-  min-width: 280px !important;
-  max-width: 400px !important;
 }
 .enterpriseToolbar .toolbarSearchInput {
   width: 100% !important;
-  padding: 9px 50px 9px 38px !important;
+  padding: 7px 14px 7px 36px !important;
   border: 1px solid var(--m-border) !important;
   border-radius: 8px !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   background: var(--m-surface) !important;
   color: var(--m-text) !important;
   box-shadow: var(--m-shadow-xs) !important;
@@ -9396,7 +9394,7 @@
   background: var(--m-surface) !important;
 }
 
-/* Header-Cells — uppercase 11.5px */
+/* Header-Cells — kompakter (User-Wunsch) */
 .contractsTable thead th {
   text-align: left !important;
   font-size: 11.5px !important;
@@ -9404,14 +9402,14 @@
   color: var(--m-text-3) !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
-  padding: 14px 20px !important;
+  padding: 10px 12px !important;
   background: var(--m-surface-2) !important;
   border-bottom: 1px solid var(--m-border-soft) !important;
 }
 
-/* Body-Cells */
+/* Body-Cells — kompakter (User-Wunsch) */
 .contractsTable tbody td {
-  padding: 16px 20px !important;
+  padding: 12px 12px !important;
   vertical-align: middle !important;
   border-bottom: 1px solid var(--m-border-soft) !important;
   color: var(--m-text) !important;

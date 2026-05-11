@@ -4681,7 +4681,6 @@ export default function Contracts() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
-                <kbd className={styles.mockupKbd}>⌘K</kbd>
               </div>
 
               <div className={styles.toolbarDivider} />
