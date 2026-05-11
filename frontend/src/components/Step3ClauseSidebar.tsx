@@ -46,7 +46,7 @@ interface Props {
   contractId: string | null;
   contractText: string;
   contractType: string;
-  onApplyOptimization: (originalText: string, optimizedText: string) => void;
+  onApplyOptimization: (originalText: string, optimizedText: string) => boolean;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://api.contract-ai.de";
@@ -168,9 +168,12 @@ const Step3ClauseSidebar: React.FC<Props> = ({
   const handleApply = (clause: ClauseAssessment) => {
     if (!clause.optimizedSuggestion || !clause.originalText) return;
     if (applied.has(clause.id)) return;
-    onApplyOptimization(clause.originalText, clause.optimizedSuggestion);
-    setApplied((prev) => new Set(prev).add(clause.id));
-    toast.success(`Vorschlag für "${clause.title}" übernommen.`);
+    const success = onApplyOptimization(clause.originalText, clause.optimizedSuggestion);
+    if (success) {
+      setApplied((prev) => new Set(prev).add(clause.id));
+      toast.success(`Vorschlag für "${clause.title}" übernommen.`);
+    }
+    // Bei !success: handleApplyClauseFix zeigt schon den warn-Toast — kein doppelter Toast
   };
 
   const handleRefresh = () => {

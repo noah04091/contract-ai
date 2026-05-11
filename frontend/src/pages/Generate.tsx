@@ -4539,26 +4539,41 @@ export default function Generate() {
   };
 
   // Klausel-Bewertung: Optimierten Vorschlag in den Vertragstext übernehmen.
-  // Ersetzt das exakte Original-Snippet — wenn nicht gefunden, fällt Toast als Hinweis.
+  // Sucht das Original-Snippet zuerst exakt; wenn nicht gefunden, Whitespace-tolerant
+  // (Backend-Parser kann Leerzeichen/Zeilenumbrüche normalisieren — ohne Fallback
+  // würde der User unnötig auf "manuell ersetzen" verwiesen).
   // Bei erfolgreichem Replace: setSaved(false) triggert Auto-Save (existing useEffect),
   // setPdfPreviewUrl(null) triggert PDF-Auto-Refresh (existing useEffect Z.3860).
-  // Gleicher Pattern wie handleImproveContract — keine neue Logik, nur konsistent.
-  const handleApplyClauseFix = (originalText: string, optimizedText: string) => {
-    if (!originalText || !optimizedText) return;
-    let didReplace = false;
-    setContractText((prev) => {
-      if (!prev) return prev;
-      if (!prev.includes(originalText)) {
-        toast.warn("Originalstelle wurde nicht eindeutig gefunden — bitte manuell ersetzen.");
-        return prev;
+  // Returntyp boolean: true = ersetzt, false = nicht gefunden (Caller zeigt nur dann Erfolg).
+  const handleApplyClauseFix = (originalText: string, optimizedText: string): boolean => {
+    if (!originalText || !optimizedText) return false;
+    if (!contractText) return false;
+
+    let newText: string | null = null;
+
+    // 1) Exakter Match (häufigster, schnellster Pfad)
+    if (contractText.includes(originalText)) {
+      newText = contractText.replace(originalText, optimizedText);
+    } else {
+      // 2) Fallback: Whitespace-toleranter Regex-Match
+      const escapedOriginal = originalText
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')  // Regex-Spezialzeichen escapen
+        .replace(/\s+/g, '\\s+');                 // Whitespace tolerant matchen
+      const fuzzyRegex = new RegExp(escapedOriginal);
+      if (fuzzyRegex.test(contractText)) {
+        newText = contractText.replace(fuzzyRegex, optimizedText);
       }
-      didReplace = true;
-      return prev.replace(originalText, optimizedText);
-    });
-    if (didReplace) {
+    }
+
+    if (newText !== null) {
+      setContractText(newText);
       setSaved(false);
       setPdfPreviewUrl(null);
+      return true;
     }
+
+    toast.warn("Originalstelle wurde nicht eindeutig gefunden — bitte manuell ersetzen.");
+    return false;
   };
 
   const handleSave = async (opts: { silent?: boolean } = {}): Promise<string | null> => {
