@@ -638,7 +638,7 @@ const createMinimalStyles = (theme) => {
     companyInfo: { textAlign: 'center', fontSize: 8, color: c.textMuted, marginTop: 10 },
     companyName: { fontSize: 9, color: c.textLight, letterSpacing: 2, textTransform: 'uppercase' },
     titleContainer: { alignItems: 'center' },
-    title: { fontSize: 20, fontWeight: 'normal', letterSpacing: 8, color: c.primary, textTransform: 'uppercase' },
+    title: { fontSize: 20, fontWeight: 'normal', letterSpacing: 8, color: c.primary, textTransform: 'uppercase', textAlign: 'center' },
     titleLine: { display: 'none' },
     subtitle: { fontSize: 10, color: c.textMuted, marginTop: 15, letterSpacing: 1 },
     partiesContainer: { marginTop: 50 },
