@@ -9207,9 +9207,9 @@
   background: var(--m-bg);
 }
 
-/* === MAIN-CONTENT padding 0 — damit Wrapper-Kasten an Sidebar+Navbar andockt === */
+/* === MAIN-CONTENT Padding kompakt === */
 .mainContent {
-  padding: 0 !important;
+  padding: 16px !important;
 }
 
 /* === PAGE-HEADER (h1 30px, dezenter Subtitle) === */
@@ -9239,35 +9239,26 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === EIN großer Wrapper-Kasten — dockt an Sidebar+Navbar (User-Wunsch) === */
+/* === Wrapper-Card raus (User: nur Kasten um Toolbar) === */
 .contractsMainCard {
-  background: var(--m-surface) !important;
-  border-left: 1px solid var(--m-border) !important;
-  border-top: 1px solid var(--m-border) !important;
-  border-right: none !important;
-  border-bottom: none !important;
-  border-top-left-radius: 16px !important;
-  border-top-right-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  box-shadow: var(--m-shadow-xs) !important;
-  overflow: hidden !important;
-  padding: 20px !important;
-  min-height: calc(100vh - 64px) !important;
-  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-/* === Toolbar flush mit Page-BG === */
+/* === Toolbar als Kasten (User-Wunsch: weißer BG + Border + Radius wie V1) === */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   margin-bottom: 12px !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  padding: 12px 16px !important;
+  background: var(--m-surface) !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--m-shadow-xs) !important;
   flex-wrap: wrap !important;
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
