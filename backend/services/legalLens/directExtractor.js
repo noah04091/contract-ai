@@ -118,13 +118,15 @@ class DirectExtractor {
    *
    * @param {string} rawText
    * @param {object} [options]
-   * @param {number} [options.timeoutMs=120000]
+   * @param {number} [options.timeoutMs=180000] - 3 Minuten (vorher 120s).
+   *   Erhöht 2026-05-11: bei OpenAI-Latenz-Spikes lieber V4 abwarten als
+   *   auf Legacy-Parser fallback (Legacy braucht ~10 Min für 60K-Verträge).
    * @param {boolean} [options.lenient=false] - Lenient-Mode fuer "Trotzdem analysieren":
    *   Extrahiert auch Rechnungs-/Angebots-Positionen, nicht nur Vertragsklauseln.
    * @returns {Promise<object>} { clauses, documentType, language, metadata }
    */
   async extract(rawText, options = {}) {
-    const { timeoutMs = 120000, lenient = false, onProgress } = options;
+    const { timeoutMs = 180000, lenient = false, onProgress } = options;
     const startTime = Date.now();
 
     if (!rawText || typeof rawText !== 'string' || rawText.trim().length < 100) {
