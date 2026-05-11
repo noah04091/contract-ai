@@ -9381,13 +9381,13 @@
   color: var(--m-accent);
 }
 
-/* === TABELLE — Card-Style === */
+/* === TABELLE — Flush, kein Card-Wrapper (User-Wunsch: kein Kasten-im-Kasten) === */
 .tableContainer {
   background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: var(--m-r-lg) !important;
-  box-shadow: var(--m-shadow-sm) !important;
-  overflow: hidden !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
 .contractsTable {
