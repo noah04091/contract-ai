@@ -12,7 +12,7 @@ const body = `<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="format-detection" content="telephone=no">
-<title>Vertr&auml;ge kosten dich oft mehr, als du denkst.</title>
+<title>Viele Vertr&auml;ge wirken harmlos &mdash; bis sie dich Geld kosten.</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
   body { margin:0; padding:0; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
@@ -41,7 +41,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f5f3ee;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f5f3ee;">
-${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. Versteckte Risiken in deinen Vertr&auml;gen kosten dich oft mehr, als du denkst.
+${PROMO_PERCENT}% Rabatt mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. Was du nicht erkennst, kostet dich sp&auml;ter.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ee;">
@@ -66,8 +66,8 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
 
         <tr>
           <td class="px-inner" style="padding:36px 56px 0;text-align:center;">
-            <h1 class="hero-h" style="margin:0;font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:44px;line-height:1.1;color:#0f172a;font-weight:700;letter-spacing:-1px;">
-              Vertr&auml;ge kosten dich<br><em style="font-style:italic;font-weight:600;color:#1e3a8a;">oft mehr</em>, als du denkst.
+            <h1 class="hero-h" style="margin:0;font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:42px;line-height:1.12;color:#0f172a;font-weight:700;letter-spacing:-1px;">
+              Viele Vertr&auml;ge wirken harmlos.<br><em style="font-style:italic;font-weight:600;color:#1e3a8a;">Bis sie dich Geld kosten.</em>
             </h1>
           </td>
         </tr>
@@ -81,8 +81,16 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:24px 56px 0;text-align:center;">
             <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.7;color:#4b5563;">
-              Versteckte Risiken. Schlechte Konditionen. Unklare Verpflichtungen.<br>
-              Nicht weil du es nicht besser k&ouml;nntest &mdash; sondern weil viele Vertr&auml;ge genau darauf ausgelegt sind.
+              Versteckte Klauseln. Automatische Verl&auml;ngerungen. Ungenutzte K&uuml;ndigungsrechte.<br>
+              Was du nicht erkennst, kostet dich sp&auml;ter &mdash; manchmal viel sp&auml;ter, manchmal viel mehr, als du jetzt denkst.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="px-inner" style="padding:20px 56px 0;text-align:center;">
+            <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.75;color:#64748b;">
+              Schluss mit dem Bauchgef&uuml;hl beim Unterschreiben. Du bekommst Klarheit, <em>bevor</em> du unterschreibst &mdash; und Schutz, lange danach.
             </p>
           </td>
         </tr>
@@ -93,7 +101,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
               <tr>
                 <td style="padding:32px 28px;text-align:center;background-color:#0f172a;border-radius:14px;">
                   <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#93c5fd;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">
-                    Launch-Aktion &middot; nur ${PROMO_DAYS} Tage
+                    Schutz zum Sonderpreis &middot; nur ${PROMO_DAYS} Tage
                   </div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.3px;">
                     ${PROMO_PERCENT}&thinsp;% Rabatt auf Business
@@ -103,7 +111,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#ffffff;font-weight:700;letter-spacing:6px;">${PROMO_CODE}</div>
                   </div>
                   <p style="margin:20px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#cbd5e1;">
-                    Code beim Checkout einl&ouml;sen. Gilt nur ${PROMO_DAYS} Tage und nur f&uuml;r dich.
+                    Beim Checkout einl&ouml;sen. Gilt ${PROMO_DAYS} Tage. Nur f&uuml;r dich.
                   </p>
                 </td>
               </tr>
@@ -117,7 +125,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
               <tr>
                 <td style="background-color:#3b82f6;border-radius:30px;">
                   <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:15px 34px;color:#ffffff;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.3px;">
-                    Business jetzt ansehen &rarr;
+                    Jetzt Vertr&auml;ge smarter absichern &rarr;
                   </a>
                 </td>
               </tr>
@@ -142,7 +150,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:14px 56px 0;text-align:center;">
             <h2 class="section-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:32px;line-height:1.25;color:#0f172a;font-weight:700;letter-spacing:-0.5px;">
-              Der Unterschied,<br>den du sofort merkst.
+              Der Unterschied,<br>der dich Geld spart.
             </h2>
           </td>
         </tr>
@@ -159,11 +167,11 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     Du speicherst Vertr&auml;ge.
                   </div>
                   <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.7;">
-                    &middot;&nbsp; 3 Analysen einmalig<br>
-                    &middot;&nbsp; Grundlegende Risiko-Anzeige<br>
-                    &middot;&nbsp; Manuelle Fristen-Pflege<br>
-                    &middot;&nbsp; Keine Optimierungs&shy;vorschl&auml;ge<br>
-                    &middot;&nbsp; Kein Vertragsvergleich
+                    &middot;&nbsp; 3 Basis-Analysen einmalig<br>
+                    &middot;&nbsp; Risiken nur an der Oberfl&auml;che<br>
+                    &middot;&nbsp; Fristen selbst im Kopf behalten<br>
+                    &middot;&nbsp; Kein Fr&uuml;hwarn-System<br>
+                    &middot;&nbsp; Keine Vergleichsm&ouml;glichkeit
                   </div>
                 </td>
                 <td class="compare-cell compare-cell-last" valign="top" style="width:50%;padding:28px 24px;background-color:#eff6ff;">
@@ -171,14 +179,14 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     Business
                   </div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;color:#0f172a;font-weight:700;margin-bottom:18px;line-height:1.3;">
-                    Du kontrollierst Vertr&auml;ge.
+                    Du bist abgesichert.
                   </div>
                   <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#1f2937;line-height:1.7;">
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; 25 Tiefen-Analysen / Monat<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Vollst&auml;ndige Risiko-Bewertung<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Automatische Fristen-Erinnerung<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Konkrete Optimierungen<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Vertr&auml;ge direkt vergleichen
+                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Risiken erkennen, bevor sie teuer werden<br>
+                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Bessere Formulierungen &mdash; direkt zum Kopieren<br>
+                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Fr&uuml;hwarnung bei neuen Urteilen und Gesetzen<br>
+                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Fristen automatisch erkannt + erinnert<br>
+                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Zwei Angebote? Wir sagen, welches besser ist
                   </div>
                 </td>
               </tr>
@@ -199,8 +207,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                 <td style="padding:48px 36px;text-align:center;background-color:#fef3c7;border-radius:14px;">
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:48px;line-height:1;color:#92400e;font-weight:700;margin-bottom:12px;">&ldquo;</div>
                   <p class="quote-text" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:24px;line-height:1.45;color:#451a03;font-style:italic;font-weight:500;">
-                    Wer Vertr&auml;ge nur speichert, reagiert.<br>
-                    Wer Vertr&auml;ge versteht, entscheidet.
+                    Wer Vertr&auml;ge blind unterschreibt,<br>zahlt oft sp&auml;ter.
                   </p>
                 </td>
               </tr>
@@ -211,10 +218,10 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:64px 56px 0;text-align:center;">
             <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#3b82f6;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              Was Business ver&auml;ndert
+              Worum es wirklich geht
             </div>
             <h2 class="section-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
-              Vier Ebenen,<br>auf denen du sofort gewinnst.
+              Vier Momente,<br>in denen du dich sicher f&uuml;hlst.
             </h2>
           </td>
         </tr>
@@ -222,9 +229,9 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
             <div class="step-num" style="font-family:'Playfair Display',Georgia,serif;font-size:84px;line-height:1;color:#bfdbfe;font-weight:500;letter-spacing:-3px;">01</div>
-            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Mehr Sicherheit</h3>
-            <p style="margin:10px auto 0;max-width:380px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
-              Erkenne kritische Klauseln fr&uuml;h &mdash; bevor sie teuer werden.
+            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Du erkennst es vorher.</h3>
+            <p style="margin:10px auto 0;max-width:420px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
+              Was im Vertrag versteckt ist, siehst du, bevor du unterschreibst. Welche Klausel teuer werden kann. Welche du verhandeln solltest. Welche du nie akzeptieren w&uuml;rdest, wenn du sie wirklich verstehst.
             </p>
           </td>
         </tr>
@@ -233,9 +240,9 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:36px 56px 0;text-align:center;">
             <div class="step-num" style="font-family:'Playfair Display',Georgia,serif;font-size:84px;line-height:1;color:#bfdbfe;font-weight:500;letter-spacing:-3px;">02</div>
-            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Mehr Kontrolle</h3>
-            <p style="margin:10px auto 0;max-width:380px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
-              Risiken, Fristen und Schw&auml;chen jederzeit im Blick. Ohne Tabellen-Chaos.
+            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Du bleibst informiert.</h3>
+            <p style="margin:10px auto 0;max-width:420px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
+              Wenn ein neues Urteil oder Gesetz deinen Vertrag betrifft, erf&auml;hrst du es. Wenn eine Frist n&auml;her r&uuml;ckt, erinnert dich der Kalender. Du musst nichts mehr im Kopf haben.
             </p>
           </td>
         </tr>
@@ -244,9 +251,9 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:36px 56px 0;text-align:center;">
             <div class="step-num" style="font-family:'Playfair Display',Georgia,serif;font-size:84px;line-height:1;color:#bfdbfe;font-weight:500;letter-spacing:-3px;">03</div>
-            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Mehr Optimierung</h3>
-            <p style="margin:10px auto 0;max-width:380px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
-              Konkrete Verbesserungs&shy;vorschl&auml;ge statt Bauchgef&uuml;hl. Direkt umsetzbar.
+            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Du verhandelst st&auml;rker.</h3>
+            <p style="margin:10px auto 0;max-width:420px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
+              Bessere Formulierungen, fertig zum Kopieren. Begr&uuml;ndungen, warum sie besser sind. Du musst nicht mehr lange &uuml;berlegen, was du schreiben sollst &mdash; du musst nur entscheiden, ob du verhandeln willst.
             </p>
           </td>
         </tr>
@@ -255,9 +262,9 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:36px 56px 0;text-align:center;">
             <div class="step-num" style="font-family:'Playfair Display',Georgia,serif;font-size:84px;line-height:1;color:#bfdbfe;font-weight:500;letter-spacing:-3px;">04</div>
-            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Mehr Professionalit&auml;t</h3>
-            <p style="margin:10px auto 0;max-width:380px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
-              Du arbeitest auf einem Niveau, das &uuml;ber Standard-Vertrags&shy;management hinausgeht.
+            <h3 class="step-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#0f172a;font-weight:700;line-height:1.3;letter-spacing:-0.3px;">Du entscheidest kl&uuml;ger.</h3>
+            <p style="margin:10px auto 0;max-width:420px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.7;color:#4b5563;">
+              Zwei Angebote? Wir sagen dir, welches dich besser stellt. Eine Frage zum Vertrag? Frag direkt, bekomme die Antwort in einfacher Sprache. Kl&uuml;ger entscheiden &mdash; auch ohne Anwalt.
             </p>
           </td>
         </tr>
@@ -271,9 +278,16 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
         <tr>
           <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
             <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.75;color:#4b5563;">
-              Jeder nicht optimierte Vertrag kann unn&ouml;tige Risiken oder Kosten enthalten.<br>
-              Die Frage ist nicht, <em style="color:#0f172a;font-weight:500;">ob</em> bessere Vertragskontrolle sinnvoll ist &mdash;<br>
-              sondern <em style="color:#0f172a;font-weight:500;">wie lange</em> du noch darauf verzichten willst.
+              Ein einziger Absatz, den du nicht beachtest,<br>
+              kann dich <em style="color:#0f172a;font-weight:500;">Jahre kosten</em>.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="px-inner" style="padding:32px 56px 0;text-align:center;">
+            <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;font-style:italic;">
+              Bereits genutzt von Privatpersonen und Selbstst&auml;ndigen, die ihre Vertr&auml;ge nicht mehr dem Zufall &uuml;berlassen wollen.
             </p>
           </td>
         </tr>
@@ -287,16 +301,16 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     Nur noch ${PROMO_DAYS} Tage
                   </div>
                   <h3 class="final-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">
-                    Vertr&auml;ge sollten<br>f&uuml;r dich arbeiten.
+                    Sch&uuml;tz dich,<br>bevor es teuer wird.
                   </h3>
                   <p style="margin:16px 0 28px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#dbeafe;">
-                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sparst du ${PROMO_PERCENT}&thinsp;%.
+                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sicherst du dir ${PROMO_PERCENT}&thinsp;% Rabatt.
                   </p>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
                     <tr>
                       <td style="background-color:#ffffff;border-radius:30px;">
                         <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:17px 40px;color:#1e3a8a;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.3px;">
-                          Business jetzt freischalten &rarr;
+                          Jetzt Vertr&auml;ge smarter absichern &rarr;
                         </a>
                       </td>
                     </tr>
@@ -336,11 +350,11 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
 export const freeToBusinessTemplate: NewsletterTemplate = {
   id: 'free-to-business',
   label: 'Free → Business (Launch-Aktion)',
-  description: 'Premium-Editorial-Newsletter mit Vertrags-Hero, 10% Rabatt-Code und Vergleichs-Tabelle. Web-Fonts (Playfair + Inter).',
-  subject: 'Verträge kosten dich oft mehr, als du denkst',
-  preheader: '10% Rabatt auf Business mit Code BUSINESS10 — nur 7 Tage.',
-  title: 'Verträge kosten dich oft mehr, als du denkst',
-  ctaText: 'Business jetzt freischalten',
+  description: 'Premium-Editorial-Newsletter mit Outcome-Sprache, 10% Rabatt-Code und Social Proof. Web-Fonts (Playfair + Inter).',
+  subject: 'Viele Verträge wirken harmlos — bis sie dich Geld kosten',
+  preheader: '10% Rabatt mit Code BUSINESS10 — nur 7 Tage. Was du nicht erkennst, kostet dich später.',
+  title: 'Viele Verträge wirken harmlos. Bis sie dich Geld kosten.',
+  ctaText: 'Jetzt Verträge smarter absichern',
   ctaUrl: 'https://contract-ai.de/pricing?code=BUSINESS10',
   body
 };
