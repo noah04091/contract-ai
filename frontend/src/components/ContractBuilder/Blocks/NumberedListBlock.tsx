@@ -1,9 +1,11 @@
 /**
  * NumberedListBlock - Nummerierte Liste
  * Unterstützt Inline-Editing per Doppelklick
+ * Plus/X Buttons im Edit-Modus zum Hinzufügen/Entfernen von Punkten
  */
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Plus, X } from 'lucide-react';
 import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
 import styles from './NumberedListBlock.module.css';
@@ -89,6 +91,19 @@ export const NumberedListBlock: React.FC<NumberedListBlockProps> = ({
     }
   }, [handleSave]);
 
+  // Punkt hinzufügen — leerer Eintrag am Ende
+  const addItem = useCallback(() => {
+    updateBlockContent(blockId, { items: [...listItems, ''] });
+    syncVariables();
+  }, [blockId, listItems, updateBlockContent, syncVariables]);
+
+  // Punkt entfernen
+  const removeItem = useCallback((index: number) => {
+    const newItems = listItems.filter((_, i) => i !== index);
+    updateBlockContent(blockId, { items: newItems });
+    syncVariables();
+  }, [blockId, listItems, updateBlockContent, syncVariables]);
+
   return (
     <div className={`${styles.numberedList} ${isSelected ? styles.selected : ''}`}>
       {/* Optionaler Titel */}
@@ -125,27 +140,59 @@ export const NumberedListBlock: React.FC<NumberedListBlockProps> = ({
         style={{ listStyleType: getListStyleType() }}
       >
         {listItems.map((item: string, index: number) => (
-          <li key={`item-${index}-${item.slice(0, 20)}`} className={styles.listItem}>
-            {editingField === `item-${index}` ? (
-              <input
-                ref={inputRef}
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={handleSave}
-                onKeyDown={handleKeyDown}
-                className={styles.inlineInput}
-              />
-            ) : (
-              <VariableHighlight
-                text={item}
-                isPreview={isPreview}
-                onDoubleClick={() => handleDoubleClick(`item-${index}`, item)}
-              />
-            )}
+          <li
+            key={`item-${index}-${item.slice(0, 20)}`}
+            className={styles.listItem}
+            onDoubleClick={() => !isPreview && editingField !== `item-${index}` && handleDoubleClick(`item-${index}`, item)}
+          >
+            <div className={styles.itemRow}>
+              <div className={styles.itemText}>
+                {editingField === `item-${index}` ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={handleSave}
+                    onKeyDown={handleKeyDown}
+                    className={styles.inlineInput}
+                  />
+                ) : item ? (
+                  <VariableHighlight
+                    text={item}
+                    isPreview={isPreview}
+                    onDoubleClick={() => handleDoubleClick(`item-${index}`, item)}
+                  />
+                ) : !isPreview ? (
+                  <span className={styles.itemPlaceholder}>Doppelklick zum Bearbeiten</span>
+                ) : null}
+              </div>
+              {!isPreview && listItems.length > 1 && (
+                <button
+                  className={`${styles.removeBtn} blockControls`}
+                  onClick={(e) => { e.stopPropagation(); removeItem(index); }}
+                  title="Punkt entfernen"
+                  type="button"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ol>
+      {!isPreview && (
+        <div className={`${styles.listActions} blockControls`}>
+          <button
+            className={styles.addBtn}
+            onClick={addItem}
+            type="button"
+          >
+            <Plus size={14} />
+            <span>Punkt hinzufügen</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

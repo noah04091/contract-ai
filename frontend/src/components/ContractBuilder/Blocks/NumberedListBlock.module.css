@@ -78,3 +78,84 @@
   color: #a0aec0;
   font-style: italic;
 }
+
+/* ============================================
+   Add/Remove Controls — nur im Edit-Modus
+   Werden im PDF-Export ausgeblendet
+   (isPreview=true + html2canvas blockControls Filter)
+   ============================================ */
+
+/* Item-Row: Text links, X-Button rechts */
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Placeholder für leere Items */
+.itemPlaceholder {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.85em;
+  opacity: 0.6;
+  user-select: none;
+}
+
+/* X-Button — rot, dezent, erscheint beim Hover über Item */
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.removeBtn:hover {
+  background: #fecaca;
+}
+
+.listItem:hover .removeBtn {
+  opacity: 1;
+}
+
+/* + Punkt hinzufügen Button unter der Liste */
+.listActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  color: #3b82f6;
+  border: 1px dashed #3b82f6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.addBtn:hover {
+  background: #eff6ff;
+}
