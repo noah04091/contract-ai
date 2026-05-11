@@ -9239,17 +9239,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === TOOLBAR als Card (zurück zum Stand davor) === */
+/* === TOOLBAR flush mit Page-BG (User-Screenshot: kein Card um Toolbar) === */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
   margin-bottom: 12px !important;
-  padding: 12px !important;
-  background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: 10px !important;
-  box-shadow: var(--m-shadow-xs) !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
   flex-wrap: wrap !important;
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
@@ -9380,13 +9380,13 @@
   color: var(--m-accent);
 }
 
-/* === TABELLE flush (zurück: kein Card-Wrapper) === */
+/* === TABELLE als Card (User-Screenshot: weiße Box mit rounded corners) === */
 .tableContainer {
   background: var(--m-surface) !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  overflow: visible !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--m-shadow-xs) !important;
+  overflow: hidden !important;
 }
 
 .contractsTable {
