@@ -143,7 +143,10 @@ export const TableBlock: React.FC<TableBlockProps> = ({
           <tr>
             {tableHeaders.map((header, index) => (
               <th key={`h-${index}-${header.slice(0, 15)}`} className={styles.headerCell}>
-                <div className={styles.headerInner}>
+                <div
+                  className={styles.headerInner}
+                  onDoubleClick={() => !isPreview && !isEditingThis('header', undefined, index) && handleDoubleClick({ type: 'header', col: index }, header)}
+                >
                   <div className={styles.headerText}>
                     {isEditingThis('header', undefined, index) ? (
                       <input
@@ -155,13 +158,15 @@ export const TableBlock: React.FC<TableBlockProps> = ({
                         onKeyDown={handleKeyDown}
                         className={styles.inlineInput}
                       />
-                    ) : (
+                    ) : header ? (
                       <VariableHighlight
                         text={header}
                         isPreview={isPreview}
                         onDoubleClick={() => handleDoubleClick({ type: 'header', col: index }, header)}
                       />
-                    )}
+                    ) : !isPreview ? (
+                      <span className={styles.placeholder}>Doppelklick zum Bearbeiten</span>
+                    ) : null}
                   </div>
                   {!isPreview && tableHeaders.length > 1 && (
                     <button
@@ -185,7 +190,11 @@ export const TableBlock: React.FC<TableBlockProps> = ({
           {tableRows.map((row, rowIndex) => (
             <tr key={`row-${rowIndex}`} className={styles.tableRow}>
               {row.map((cell, cellIndex) => (
-                <td key={`cell-${rowIndex}-${cellIndex}`} className={styles.tableCell}>
+                <td
+                  key={`cell-${rowIndex}-${cellIndex}`}
+                  className={styles.tableCell}
+                  onDoubleClick={() => !isPreview && !isEditingThis('cell', rowIndex, cellIndex) && handleDoubleClick({ type: 'cell', row: rowIndex, col: cellIndex }, cell)}
+                >
                   {isEditingThis('cell', rowIndex, cellIndex) ? (
                     <input
                       ref={inputRef}
@@ -196,13 +205,15 @@ export const TableBlock: React.FC<TableBlockProps> = ({
                       onKeyDown={handleKeyDown}
                       className={styles.inlineInput}
                     />
-                  ) : (
+                  ) : cell ? (
                     <VariableHighlight
                       text={cell}
                       isPreview={isPreview}
                       onDoubleClick={() => handleDoubleClick({ type: 'cell', row: rowIndex, col: cellIndex }, cell)}
                     />
-                  )}
+                  ) : !isPreview ? (
+                    <span className={styles.placeholder}>Doppelklick zum Bearbeiten</span>
+                  ) : null}
                 </td>
               ))}
               {!isPreview && (

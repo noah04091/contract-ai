@@ -169,3 +169,12 @@
 .addBtn:hover {
   background: #eff6ff;
 }
+
+/* Placeholder für leere Zellen/Header — nur im Edit-Modus sichtbar */
+.placeholder {
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.85em;
+  opacity: 0.6;
+  user-select: none;
+}
