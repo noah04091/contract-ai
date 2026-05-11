@@ -9207,9 +9207,9 @@
   background: var(--m-bg);
 }
 
-/* === MAIN-CONTENT PADDING (User-Wunsch: kompakt + mehr Platz für Tabelle) === */
+/* === MAIN-CONTENT padding 0 — damit Wrapper-Kasten an Sidebar+Navbar andockt === */
 .mainContent {
-  padding: 16px !important;
+  padding: 0 !important;
 }
 
 /* === PAGE-HEADER (h1 30px, dezenter Subtitle) === */
@@ -9239,14 +9239,22 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === EIN großer Wrapper-Card um Toolbar + Tabelle (dockt an Sidebar+Navbar) === */
+/* === EIN großer Wrapper-Kasten — dockt an Sidebar+Navbar (User-Wunsch) === */
 .contractsMainCard {
   background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: 12px !important;
+  border-left: 1px solid var(--m-border) !important;
+  border-top: 1px solid var(--m-border) !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  border-top-left-radius: 16px !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
   box-shadow: var(--m-shadow-xs) !important;
   overflow: hidden !important;
-  padding: 16px !important;
+  padding: 20px !important;
+  min-height: calc(100vh - 64px) !important;
+  margin: 0 !important;
 }
 
 /* === Toolbar flush mit Page-BG === */
