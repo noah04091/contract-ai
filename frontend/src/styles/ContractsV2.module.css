@@ -9269,64 +9269,72 @@
 .enterpriseToolbar .toolbarViewButtons { gap: 4px !important; }
 
 /* Buttons — Mockup btn-Style */
+/* Buttons 1:1 wie V1 */
 .enterpriseToolbar .toolbarButton {
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 11px !important;
+  gap: 0.5rem !important;
+  padding: 0.5rem 0.875rem !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
-  border: 1px solid var(--m-border) !important;
-  background: var(--m-surface) !important;
-  color: var(--m-text-2) !important;
-  font-size: 13px !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  font-size: 0.8125rem !important;
   font-weight: 500 !important;
-  box-shadow: var(--m-shadow-xs) !important;
-  letter-spacing: -0.005em !important;
+  box-shadow: none !important;
+  letter-spacing: normal !important;
   cursor: pointer !important;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease !important;
+  transition: all 0.2s ease !important;
 }
 .enterpriseToolbar .toolbarButton:hover {
-  background: var(--m-surface) !important;
-  border-color: #d4d8df !important;
-  color: var(--m-text) !important;
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  transform: none !important;
 }
-.enterpriseToolbar .toolbarButton:active { transform: translateY(0.5px) !important; }
 
-/* User-Wunsch: Hochladen-Button in Brand-Blau (statt Mockup-Dark) */
+/* Hochladen-Primary 1:1 wie V1 */
 .enterpriseToolbar .toolbarButton.primary {
-  background: var(--m-accent) !important;
-  border-color: var(--m-accent) !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%) !important;
+  border: none !important;
   color: #ffffff !important;
-  box-shadow: 0 1px 2px rgba(59,130,246,0.20), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
 }
 .enterpriseToolbar .toolbarButton.primary:hover {
-  background: var(--m-accent-2) !important;
-  border-color: var(--m-accent-2) !important;
-  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Suche — volle Breite (kein max-limit, kein ⌘K-Slot mehr) */
+/* Suche 1:1 wie V1 */
 .enterpriseToolbar .toolbarSearch {
-  position: relative !important;
   flex: 1 !important;
+  max-width: 400px !important;
+  position: relative !important;
 }
 .enterpriseToolbar .toolbarSearchInput {
   width: 100% !important;
-  padding: 7px 14px 7px 36px !important;
-  border: 1px solid var(--m-border) !important;
+  padding: 0.5rem 1rem 0.5rem 2.5rem !important;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
-  font-size: 13px !important;
-  background: var(--m-surface) !important;
-  color: var(--m-text) !important;
-  box-shadow: var(--m-shadow-xs) !important;
-  letter-spacing: -0.005em !important;
+  font-size: 0.875rem !important;
+  background: #f8fafc !important;
+  box-shadow: none !important;
+  letter-spacing: normal !important;
+  transition: all 0.2s ease !important;
 }
 .enterpriseToolbar .toolbarSearchInput:focus {
-  border-color: var(--m-accent) !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.10) !important;
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
 }
 .enterpriseToolbar .toolbarSearchIcon {
-  color: var(--m-text-3) !important;
+  position: absolute !important;
+  left: 0.75rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #94a3b8 !important;
+  pointer-events: none !important;
 }
 .mockupKbd {
   position: absolute;
