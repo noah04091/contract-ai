@@ -9207,9 +9207,9 @@
   background: var(--m-bg);
 }
 
-/* === MAIN-CONTENT PADDING (User-Wunsch: kompakt wie alter Stand) === */
+/* === MAIN-CONTENT PADDING (User-Wunsch: kompakt + mehr Platz für Tabelle) === */
 .mainContent {
-  padding: 24px !important;
+  padding: 16px !important;
 }
 
 /* === PAGE-HEADER (h1 30px, dezenter Subtitle) === */
@@ -9239,16 +9239,17 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === TOOLBAR mit Buttons + Suche + Chip-Group === */
-/* Bestehende enterpriseToolbar überschreiben */
+/* === TOOLBAR als eigene Card (User-Wunsch: getrennte Sektion, nicht schwebend) === */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
-  margin-bottom: 20px !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
+  margin-bottom: 12px !important;
+  padding: 12px !important;
+  background: var(--m-surface) !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--m-shadow-xs) !important;
   flex-wrap: wrap !important;
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
