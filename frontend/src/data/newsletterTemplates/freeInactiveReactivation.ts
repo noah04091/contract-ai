@@ -34,7 +34,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f5f3ee;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f5f3ee;">
-Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klick &mdash; und du wei&szlig;t, worauf du dich wirklich eingelassen hast.
+Du hast dich registriert. Jetzt fehlt nur ein Klick.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ee;">
@@ -74,65 +74,62 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
         <tr>
           <td class="px-inner" style="padding:24px 56px 0;text-align:center;">
             <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.7;color:#4b5563;">
-              Du hast dich registriert, weil du Klarheit willst.<br>
-              Jetzt fehlt nur noch ein Klick &mdash; und du wei&szlig;t, worauf du dich wirklich eingelassen hast.
+              Du hast dich registriert. Jetzt fehlt nur ein Klick.<br>
+              Dann wei&szlig;t du, worauf du dich eingelassen hast.
             </p>
           </td>
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:48px 56px 0;">
+          <td class="px-inner" style="padding:40px 56px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eff6ff;border-radius:14px;border:1px solid #dbeafe;">
               <tr>
-                <td style="padding:32px 28px;text-align:center;background-color:#eff6ff;border-radius:14px;">
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#1e3a8a;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">
+                <td style="padding:28px 28px 24px;text-align:center;background-color:#eff6ff;border-radius:14px;">
+                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#1e3a8a;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:12px;">
                     Weniger als eine Minute
                   </div>
-                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;line-height:1.3;color:#0f172a;font-weight:700;letter-spacing:-0.3px;margin-bottom:24px;">
-                    Mehr Klarheit,<br>als du erwartest.
+                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;line-height:1.3;color:#0f172a;font-weight:700;letter-spacing:-0.3px;margin-bottom:20px;">
+                    So einfach geht&apos;s.
                   </div>
 
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td style="padding:8px 0;">
+                      <td style="padding:6px 0;">
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                           <tr>
-                            <td width="48" valign="top" style="padding-right:14px;text-align:left;">
-                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:36px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">01</span>
+                            <td width="42" valign="middle" style="padding-right:12px;text-align:left;">
+                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:32px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">01</span>
                             </td>
-                            <td valign="middle" style="text-align:left;">
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#1f2937;font-weight:600;">Vertrag hochladen</div>
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.55;color:#6b7280;">PDF oder Foto &mdash; Drag &amp; Drop, fertig.</div>
+                            <td valign="middle" style="text-align:left;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#1f2937;font-weight:600;">
+                              Hochladen. PDF oder Foto.
                             </td>
                           </tr>
                         </table>
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding:8px 0;">
+                      <td style="padding:6px 0;">
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                           <tr>
-                            <td width="48" valign="top" style="padding-right:14px;text-align:left;">
-                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:36px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">02</span>
+                            <td width="42" valign="middle" style="padding-right:12px;text-align:left;">
+                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:32px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">02</span>
                             </td>
-                            <td valign="middle" style="text-align:left;">
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#1f2937;font-weight:600;">Wir pr&uuml;fen automatisch</div>
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.55;color:#6b7280;">In etwa 30 Sekunden &mdash; ohne dass du etwas markieren musst.</div>
+                            <td valign="middle" style="text-align:left;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#1f2937;font-weight:600;">
+                              Wir pr&uuml;fen. Etwa 30 Sekunden.
                             </td>
                           </tr>
                         </table>
                       </td>
                     </tr>
                     <tr>
-                      <td style="padding:8px 0;">
+                      <td style="padding:6px 0;">
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                           <tr>
-                            <td width="48" valign="top" style="padding-right:14px;text-align:left;">
-                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:36px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">03</span>
+                            <td width="42" valign="middle" style="padding-right:12px;text-align:left;">
+                              <span class="step-num-inline" style="font-family:'Playfair Display',Georgia,serif;font-size:32px;line-height:1;color:#3b82f6;font-weight:700;letter-spacing:-1px;">03</span>
                             </td>
-                            <td valign="middle" style="text-align:left;">
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.55;color:#1f2937;font-weight:600;">Du wei&szlig;t Bescheid</div>
-                              <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.55;color:#6b7280;">Risiken, Fristen und Schwachstellen auf einen Blick.</div>
+                            <td valign="middle" style="text-align:left;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#1f2937;font-weight:600;">
+                              Du wei&szlig;t Bescheid.
                             </td>
                           </tr>
                         </table>
@@ -160,80 +157,59 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:64px 56px 0;">
+          <td class="px-inner" style="padding:56px 56px 0;">
             <div style="border-top:1px solid #e5e7eb;height:1px;line-height:1px;font-size:0;">&nbsp;</div>
           </td>
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
-            <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#3b82f6;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              In weniger als 60 Sekunden
-            </div>
-            <h2 class="section-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
-              Wei&szlig;t du,<br>worauf du dich wirklich<br>eingelassen hast.
+          <td class="px-inner" style="padding:40px 56px 0;text-align:center;">
+            <h2 class="section-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
+              Was du nach 60 Sekunden wei&szlig;t.
             </h2>
           </td>
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:32px 56px 0;">
+          <td class="px-inner" style="padding:24px 56px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td style="padding:14px 0;border-bottom:1px solid #f3f4f6;">
+                <td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td width="36" valign="top" style="padding-right:14px;padding-top:2px;">
+                      <td width="36" valign="middle" style="padding-right:14px;">
                         <span style="display:inline-block;width:24px;height:24px;background-color:#dbeafe;color:#1e3a8a;border-radius:50%;text-align:center;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;line-height:24px;">&#10003;</span>
                       </td>
-                      <td valign="middle">
-                        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#0f172a;font-weight:700;line-height:1.35;">Wie sicher dieser Vertrag wirklich ist</div>
-                        <div style="margin-top:4px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.6;">Eine klare Antwort statt Bauchgef&uuml;hl &mdash; schwarz auf wei&szlig;.</div>
+                      <td valign="middle" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;color:#1f2937;line-height:1.5;">
+                        Wie sicher dieser Vertrag wirklich ist.
                       </td>
                     </tr>
                   </table>
                 </td>
               </tr>
               <tr>
-                <td style="padding:14px 0;border-bottom:1px solid #f3f4f6;">
+                <td style="padding:12px 0;border-bottom:1px solid #f3f4f6;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td width="36" valign="top" style="padding-right:14px;padding-top:2px;">
+                      <td width="36" valign="middle" style="padding-right:14px;">
                         <span style="display:inline-block;width:24px;height:24px;background-color:#dbeafe;color:#1e3a8a;border-radius:50%;text-align:center;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;line-height:24px;">&#10003;</span>
                       </td>
-                      <td valign="middle">
-                        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#0f172a;font-weight:700;line-height:1.35;">Welche Klauseln dich teuer werden k&ouml;nnen</div>
-                        <div style="margin-top:4px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.6;">Direkt im Vertragstext markiert &mdash; mit Erkl&auml;rung, warum.</div>
+                      <td valign="middle" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;color:#1f2937;line-height:1.5;">
+                        Welche Klauseln dich teuer werden k&ouml;nnen.
                       </td>
                     </tr>
                   </table>
                 </td>
               </tr>
               <tr>
-                <td style="padding:14px 0;border-bottom:1px solid #f3f4f6;">
+                <td style="padding:12px 0;">
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
-                      <td width="36" valign="top" style="padding-right:14px;padding-top:2px;">
+                      <td width="36" valign="middle" style="padding-right:14px;">
                         <span style="display:inline-block;width:24px;height:24px;background-color:#dbeafe;color:#1e3a8a;border-radius:50%;text-align:center;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;line-height:24px;">&#10003;</span>
                       </td>
-                      <td valign="middle">
-                        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#0f172a;font-weight:700;line-height:1.35;">Wo du nachverhandeln solltest &mdash; und wie</div>
-                        <div style="margin-top:4px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.6;">Bessere Formulierungen, fertig zum Kopieren.</div>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:14px 0;">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                    <tr>
-                      <td width="36" valign="top" style="padding-right:14px;padding-top:2px;">
-                        <span style="display:inline-block;width:24px;height:24px;background-color:#dbeafe;color:#1e3a8a;border-radius:50%;text-align:center;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;line-height:24px;">&#10003;</span>
-                      </td>
-                      <td valign="middle">
-                        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#0f172a;font-weight:700;line-height:1.35;">Welche Fristen du nicht verpassen darfst</div>
-                        <div style="margin-top:4px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.6;">Automatisch erkannt. Automatisch erinnert.</div>
+                      <td valign="middle" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;color:#1f2937;line-height:1.5;">
+                        Welche Fristen du nicht verpassen darfst.
                       </td>
                     </tr>
                   </table>
@@ -244,18 +220,12 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:64px 56px 0;">
-            <div style="border-top:1px solid #e5e7eb;height:1px;line-height:1px;font-size:0;">&nbsp;</div>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:48px 40px 0;">
+          <td class="px-inner" style="padding:56px 40px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fef3c7;border-radius:14px;">
               <tr>
-                <td style="padding:48px 36px;text-align:center;background-color:#fef3c7;border-radius:14px;">
-                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:48px;line-height:1;color:#92400e;font-weight:700;margin-bottom:12px;">&ldquo;</div>
-                  <p class="quote-text" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:24px;line-height:1.45;color:#451a03;font-style:italic;font-weight:500;">
+                <td style="padding:40px 32px;text-align:center;background-color:#fef3c7;border-radius:14px;">
+                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:40px;line-height:1;color:#92400e;font-weight:700;margin-bottom:8px;">&ldquo;</div>
+                  <p class="quote-text" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:22px;line-height:1.45;color:#451a03;font-style:italic;font-weight:500;">
                     Was du heute nicht erkennst,<br>kostet dich sp&auml;ter.
                   </p>
                 </td>
@@ -265,84 +235,17 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:64px 56px 0;text-align:center;">
-            <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#3b82f6;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              Worauf wir automatisch pr&uuml;fen
-            </div>
-            <h2 class="section-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
-              Die Fallen,<br>die fast jeder &uuml;bersieht.
-            </h2>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:32px 56px 0;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> Klauseln, die deinen Vertrag heimlich verl&auml;ngern
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> K&uuml;ndigungsfristen, die du leicht verpasst
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> Regeln, die nur einer Seite n&uuml;tzen &mdash; meist nicht dir
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> Bedingungen, die dich schlechter stellen als die andere Seite
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> Preiserh&ouml;hungen, die du nicht kommen siehst
-                </td>
-              </tr>
-              <tr>
-                <td style="padding:10px 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.7;color:#374151;">
-                  <span style="color:#3b82f6;font-weight:700;margin-right:10px;">&middot;</span> Was wirklich mit deinen Daten passiert
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:64px 56px 0;">
-            <div style="border-top:1px solid #e5e7eb;height:1px;line-height:1px;font-size:0;">&nbsp;</div>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
-            <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.75;color:#4b5563;">
-              Was du nicht erkennst, kostet dich sp&auml;ter.<br>
-              Manchmal viel sp&auml;ter. Manchmal viel mehr,<br>
-              <em style="color:#0f172a;font-weight:500;">als du jetzt denkst</em>.
-            </p>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:48px 40px 0;">
+          <td class="px-inner" style="padding:40px 40px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);background-color:#1e3a8a;border-radius:16px;">
               <tr>
-                <td style="padding:48px 32px;text-align:center;background-color:#1e3a8a;border-radius:16px;">
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#bfdbfe;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:16px;">
+                <td style="padding:44px 32px;text-align:center;background-color:#1e3a8a;border-radius:16px;">
+                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#bfdbfe;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">
                     Der letzte Klick
                   </div>
-                  <h3 class="final-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">
-                    Du hast den schwersten<br>Teil hinter dir.
+                  <h3 class="final-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">
+                    Account steht.<br>Fehlt nur ein Vertrag.
                   </h3>
-                  <p style="margin:16px 0 28px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#dbeafe;">
-                    Account ist da. Login geht. Jetzt fehlt nur eins: dein erster Vertrag.
-                  </p>
-                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:24px auto 0;">
                     <tr>
                       <td style="background-color:#ffffff;border-radius:30px;">
                         <a href="${CTA_URL}" class="cta-link" style="display:inline-block;padding:17px 40px;color:#1e3a8a;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.3px;">
@@ -358,19 +261,19 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
-            <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:16px;line-height:2;color:#6b7280;font-style:italic;">
+          <td class="px-inner" style="padding:40px 56px 0;text-align:center;">
+            <p style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:15px;line-height:2;color:#6b7280;font-style:italic;">
               Du legst los.<br>
               Wir machen den Rest.
             </p>
-            <p style="margin:24px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;color:#0f172a;">
+            <p style="margin:20px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;color:#0f172a;">
               Contract&nbsp;AI &nbsp;&middot;&nbsp; Vertragsintelligenz
             </p>
           </td>
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:40px 56px 56px;"></td>
+          <td class="px-inner" style="padding:32px 56px 48px;"></td>
         </tr>
 
       </table>
@@ -385,9 +288,9 @@ Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur noch ein Klic
 export const freeInactiveReactivationTemplate: NewsletterTemplate = {
   id: 'free-inactive-reactivation',
   label: 'Free-Inaktiv → Reaktivierung',
-  description: 'Für registrierte Free-User, die noch keine Analyse gestartet haben. Outcome-Sprache, niedrigschwellige Aktivierung, kein Verkaufs-Push.',
+  description: 'Kurze Reaktivierungs-Mail für Free-User, die noch keine Analyse gestartet haben. 3-Step-Anleitung + 3-Punkte-Versprechen. ~150 Wörter.',
   subject: 'Dein erster Vertrag wartet auf dich',
-  preheader: 'Du hast dich registriert, weil du Klarheit willst. Jetzt fehlt nur ein Klick.',
+  preheader: 'Du hast dich registriert. Jetzt fehlt nur ein Klick.',
   title: 'Dein erster Vertrag wartet auf dich',
   ctaText: 'Erste Analyse starten',
   ctaUrl: CTA_URL,
