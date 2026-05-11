@@ -9239,7 +9239,31 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === TOOLBAR flush mit Page-BG (User-Screenshot: kein Card um Toolbar) === */
+/* === WRAPPER-CARD um Toolbar + Tabelle (EIN großer Block, User-Wunsch) === */
+.contractsMainCard {
+  background: var(--m-surface) !important;
+  border: 1px solid var(--m-border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--m-shadow-xs) !important;
+  overflow: hidden !important;
+  padding: 16px !important;
+}
+
+/* Toolbar innen — flush (nimmt nur Layout-Funktion, kein Card-Style) */
+.contractsMainCard .enterpriseToolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  flex-wrap: wrap !important;
+}
+
+/* Fallback wenn .section ohne contractsMainCard verwendet wird (andere Sections) */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
@@ -9380,13 +9404,13 @@
   color: var(--m-accent);
 }
 
-/* === TABELLE als Card (User-Screenshot: weiße Box mit rounded corners) === */
+/* === TABELLE flush innerhalb Wrapper-Card (User-Wunsch: EIN Block) === */
 .tableContainer {
-  background: var(--m-surface) !important;
-  border: 1px solid var(--m-border) !important;
-  border-radius: 12px !important;
-  box-shadow: var(--m-shadow-xs) !important;
-  overflow: hidden !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
 .contractsTable {

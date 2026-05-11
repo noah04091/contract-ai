@@ -5512,7 +5512,7 @@ export default function Contracts() {
             {activeSection === 'contracts' && (
               <motion.div
                 key="contracts-section"
-                className={styles.section}
+                className={`${styles.section} ${styles.contractsMainCard}`}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
