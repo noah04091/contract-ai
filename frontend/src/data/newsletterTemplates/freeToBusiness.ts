@@ -29,9 +29,7 @@ const body = `<!doctype html>
     .quote-text { font-size:21px !important; line-height:1.42 !important; }
     .final-h { font-size:24px !important; line-height:1.25 !important; }
     .cta-link { padding:16px 28px !important; font-size:14px !important; }
-    .compare-table td { display:block !important; width:100% !important; }
-    .compare-cell { padding:24px !important; border-right:none !important; border-bottom:1px solid #e5e7eb !important; }
-    .compare-cell-last { border-bottom:none !important; }
+    .feat-grid td { display:block !important; width:100% !important; padding:8px 0 !important; }
     .promo-code { font-size:22px !important; letter-spacing:4px !important; }
   }
 </style>
@@ -39,7 +37,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f5f3ee;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f5f3ee;">
-${PROMO_PERCENT}% Rabatt. Code ${PROMO_CODE}. ${PROMO_DAYS} Tage. Mehr nicht.
+${PROMO_PERCENT}% Rabatt. Code ${PROMO_CODE}. ${PROMO_DAYS} Tage. Acht Werkzeuge, die Free nicht hat.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ee;">
@@ -132,53 +130,72 @@ ${PROMO_PERCENT}% Rabatt. Code ${PROMO_CODE}. ${PROMO_DAYS} Tage. Mehr nicht.
         <tr>
           <td class="px-inner" style="padding:40px 56px 0;text-align:center;">
             <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#3b82f6;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              Free vs. Business
+              Was Business dir freischaltet
             </div>
-          </td>
-        </tr>
-
-        <tr>
-          <td class="px-inner" style="padding:14px 56px 0;text-align:center;">
-            <h2 class="section-h" style="margin:0;font-family:'Playfair Display',Georgia,serif;font-size:32px;line-height:1.25;color:#0f172a;font-weight:700;letter-spacing:-0.5px;">
-              Der Unterschied.
+            <h2 class="section-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
+              Acht Werkzeuge.<br>Eine klare Aufgabe: dich sch&uuml;tzen.
             </h2>
           </td>
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:28px 40px 0;">
-            <table role="presentation" class="compare-table" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+          <td class="px-inner" style="padding:32px 40px 0;">
+            <table role="presentation" class="feat-grid" width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td class="compare-cell" valign="top" style="width:50%;padding:28px 24px;background-color:#fafafa;border-right:1px solid #e5e7eb;">
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#6b7280;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">
-                    Free
-                  </div>
-                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;color:#374151;font-weight:600;margin-bottom:18px;line-height:1.3;">
-                    Du speicherst Vertr&auml;ge.
-                  </div>
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#6b7280;line-height:1.7;">
-                    &middot;&nbsp; 3 Basis-Analysen<br>
-                    &middot;&nbsp; Risiken nur an der Oberfl&auml;che<br>
-                    &middot;&nbsp; Fristen selbst im Kopf<br>
-                    &middot;&nbsp; Kein Fr&uuml;hwarn-System
-                  </div>
+                <td valign="top" style="width:50%;padding:0 12px 0 0;">
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Tiefenanalyse</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Erkenne Risiken, bevor sie teuer werden.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Live-Warnung</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Neue Urteile oder Gesetze? Du erf&auml;hrst es zuerst.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Klausel-Optimizer</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Bessere Formulierungen. Fertig zum Kopieren.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Vertragsvergleich</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Zwei Angebote, eine klare Empfehlung.</div>
+                    </td></tr>
+                  </table>
+
                 </td>
-                <td class="compare-cell compare-cell-last" valign="top" style="width:50%;padding:28px 24px;background-color:#eff6ff;">
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#1e3a8a;letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">
-                    Business
-                  </div>
-                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:18px;color:#0f172a;font-weight:700;margin-bottom:18px;line-height:1.3;">
-                    Du bist abgesichert.
-                  </div>
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;color:#1f2937;line-height:1.7;">
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Risiken erkennen, bevor sie teuer werden<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Bessere Klauseln zum Kopieren<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Fr&uuml;hwarnung bei neuen Urteilen<br>
-                    <span style="color:#3b82f6;font-weight:700;">&#10003;</span>&nbsp; Vertr&auml;ge vergleichen lassen
-                  </div>
+                <td valign="top" style="width:50%;padding:0 0 0 12px;">
+
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Vertrags-Chat</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Frag deinen Vertrag. Antwort in einfacher Sprache.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Vertragsgenerator</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">KI baut dir den passenden Vertrag auf Knopfdruck.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; Auto-Kalender</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Fristen, Stichtage, Termine. Vergisst du nie wieder.</div>
+                    </td></tr>
+                    <tr><td style="padding:8px 0;">
+                      <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;"><span style="color:#3b82f6;">&#10003;</span>&nbsp; K&uuml;ndigungs-Tool</div>
+                      <div style="margin-top:3px;padding-left:20px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#6b7280;line-height:1.55;">Schreiben fertig in zwei Klicks. Versandfertig.</div>
+                    </td></tr>
+                  </table>
+
                 </td>
               </tr>
             </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="px-inner" style="padding:32px 56px 0;text-align:center;">
+            <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.7;color:#64748b;font-style:italic;">
+              Und das ist noch nicht alles. Den vollen Funktionsumfang siehst du auf <a href="https://contract-ai.de" style="color:#1e3a8a;text-decoration:underline;font-weight:600;">contract-ai.de</a>.
+            </p>
           </td>
         </tr>
 
@@ -263,9 +280,9 @@ ${PROMO_PERCENT}% Rabatt. Code ${PROMO_CODE}. ${PROMO_DAYS} Tage. Mehr nicht.
 export const freeToBusinessTemplate: NewsletterTemplate = {
   id: 'free-to-business',
   label: 'Free → Business (Launch-Aktion)',
-  description: 'Kurze, knackige Conversion-Mail mit Hero, Aktion-Box, Vergleichstabelle, Quote und Final-CTA. ~250 Wörter.',
+  description: 'Conversion-Mail mit 8 konkreten Business-Werkzeugen (2-Spalten-Grid), Aktion-Code, Quote, Social Proof. Verweis auf Website für mehr.',
   subject: 'Viele Verträge wirken harmlos. Bis sie dich Geld kosten.',
-  preheader: '10% Rabatt. Code BUSINESS10. 7 Tage. Mehr nicht.',
+  preheader: '10% Rabatt mit Code BUSINESS10 — 7 Tage. Acht Werkzeuge, die Free nicht hat.',
   title: 'Viele Verträge wirken harmlos. Bis sie dich Geld kosten.',
   ctaText: 'Jetzt Verträge smarter absichern',
   ctaUrl: 'https://contract-ai.de/pricing?code=BUSINESS10',

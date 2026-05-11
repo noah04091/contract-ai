@@ -220,7 +220,16 @@ Du hast dich registriert. Jetzt fehlt nur ein Klick.
         </tr>
 
         <tr>
-          <td class="px-inner" style="padding:56px 40px 0;">
+          <td class="px-inner" style="padding:32px 56px 0;text-align:center;">
+            <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.75;color:#64748b;font-style:italic;">
+              Und das ist erst der Anfang.<br>
+              Live-Warnungen bei neuen Urteilen, fertige Klausel-Verbesserungen, Vertrags-Chat und mehr &mdash; auf <a href="https://contract-ai.de" style="color:#1e3a8a;text-decoration:underline;font-weight:600;">contract-ai.de</a>.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="px-inner" style="padding:48px 40px 0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#fef3c7;border-radius:14px;">
               <tr>
                 <td style="padding:40px 32px;text-align:center;background-color:#fef3c7;border-radius:14px;">
@@ -288,7 +297,7 @@ Du hast dich registriert. Jetzt fehlt nur ein Klick.
 export const freeInactiveReactivationTemplate: NewsletterTemplate = {
   id: 'free-inactive-reactivation',
   label: 'Free-Inaktiv → Reaktivierung',
-  description: 'Kurze Reaktivierungs-Mail für Free-User, die noch keine Analyse gestartet haben. 3-Step-Anleitung + 3-Punkte-Versprechen. ~150 Wörter.',
+  description: 'Reaktivierungs-Mail mit 60-Sek-Anleitung, 3-Punkte-Versprechen und Sneak-Peek auf weitere Funktionen.',
   subject: 'Dein erster Vertrag wartet auf dich',
   preheader: 'Du hast dich registriert. Jetzt fehlt nur ein Klick.',
   title: 'Dein erster Vertrag wartet auf dich',
