@@ -1853,6 +1853,56 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 {riskStats.low > 0 && <span className={styles.statBadgeLow}>{riskStats.low}</span>}
                 <span className={styles.statCount}>{riskStats.analyzed} analysiert</span>
               </div>
+              {riskStats.worstClause && riskStats.worstScore >= 50 && (
+                <div className={styles.worstPopoverAnchor} ref={worstPopoverRef}>
+                  <button
+                    className={styles.worstClauseBtn}
+                    onClick={() => { setShowWorstPopover(prev => !prev); setShowScorePopover(false); }}
+                    title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
+                  >
+                    <AlertTriangle size={14} />
+                    <span>Riskanteste: {riskStats.worstScore}</span>
+                  </button>
+                  {showWorstPopover && (
+                    <div className={styles.worstPopover}>
+                      <div className={styles.worstPopoverHeader}>
+                        <AlertTriangle size={16} style={{ color: '#ef4444' }} />
+                        <span className={styles.worstPopoverTitle}>Riskanteste Klausel</span>
+                      </div>
+                      <div className={styles.worstPopoverClause}>
+                        <span className={styles.worstPopoverName}>
+                          {riskStats.worstClause!.title || riskStats.worstClause!.number || 'Klausel'}
+                        </span>
+                        <span className={styles.worstPopoverScore} style={{ color: '#ef4444' }}>
+                          {riskStats.worstScore}/100
+                        </span>
+                      </div>
+                      <p className={styles.worstPopoverDesc}>
+                        Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
+                        {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
+                        {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
+                      </p>
+                      <button
+                        className={styles.worstPopoverBtn}
+                        onClick={() => { selectClause(riskStats.worstClause!); setShowWorstPopover(false); }}
+                      >
+                        Zur Klausel springen
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {(riskStats.high > 0 || riskStats.medium > 0) && (
+                <button
+                  className={styles.nextRiskBtn}
+                  onClick={goToNextRisk}
+                  title="Zur nächsten Risiko-Klausel springen (n)"
+                >
+                  <ChevronRight size={14} />
+                  <span>Nächstes Risiko</span>
+                </button>
+              )}
             </div>
           )}
           {reviewStats && reviewStats.reviewed > 0 && (
@@ -2044,59 +2094,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
       </header>
 
-      {/* Quick-Action-Toolbar: Riskanteste + Nächstes Risiko (wenn relevant) */}
-      {riskStats && (riskStats.high > 0 || riskStats.medium > 0) && (
-        <div className={styles.quickActionToolbar}>
-          {riskStats.worstClause && riskStats.worstScore >= 50 && (
-            <div className={styles.worstPopoverAnchor} ref={worstPopoverRef}>
-              <button
-                className={styles.worstClauseBtn}
-                onClick={() => { setShowWorstPopover(prev => !prev); setShowScorePopover(false); }}
-                title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
-              >
-                <AlertTriangle size={14} />
-                <span>Riskanteste: {riskStats.worstScore}</span>
-              </button>
-              {showWorstPopover && (
-                <div className={styles.worstPopover}>
-                  <div className={styles.worstPopoverHeader}>
-                    <AlertTriangle size={16} style={{ color: '#ef4444' }} />
-                    <span className={styles.worstPopoverTitle}>Riskanteste Klausel</span>
-                  </div>
-                  <div className={styles.worstPopoverClause}>
-                    <span className={styles.worstPopoverName}>
-                      {riskStats.worstClause!.title || riskStats.worstClause!.number || 'Klausel'}
-                    </span>
-                    <span className={styles.worstPopoverScore} style={{ color: '#ef4444' }}>
-                      {riskStats.worstScore}/100
-                    </span>
-                  </div>
-                  <p className={styles.worstPopoverDesc}>
-                    Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
-                    {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
-                    {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
-                  </p>
-                  <button
-                    className={styles.worstPopoverBtn}
-                    onClick={() => { selectClause(riskStats.worstClause!); setShowWorstPopover(false); }}
-                  >
-                    Zur Klausel springen
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-          <button
-            className={styles.nextRiskBtn}
-            onClick={goToNextRisk}
-            title="Zur nächsten Risiko-Klausel springen (n)"
-          >
-            <ChevronRight size={14} />
-            <span>Nächstes Risiko</span>
-          </button>
-        </div>
-      )}
 
       {/* Main Content - Overview vs Detail View */}
       {showOverview ? (
