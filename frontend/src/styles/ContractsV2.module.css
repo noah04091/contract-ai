@@ -9293,6 +9293,9 @@
   transform: none !important;
 }
 
+/* Mobile-Filter-Button bleibt auf Desktop unsichtbar (V1-Verhalten) */
+.enterpriseToolbar .mobileFilterButton { display: none !important; }
+
 /* Hochladen-Primary 1:1 wie V1 */
 .enterpriseToolbar .toolbarButton.primary {
   background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%) !important;
