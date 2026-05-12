@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { FileText, Eye, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, BarChart3, Zap, X, List, MessageSquare, LayoutGrid, ClipboardCheck, Download, Type, AlignJustify, MousePointer2, RefreshCw, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import { useLegalLensV12 as useLegalLens, generateContentHash } from '../../hooks/useLegalLensV12';
 import ClauseList from './ClauseList';
 import ClauseSkeleton from './ClauseSkeleton';
@@ -137,6 +137,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const scorePopoverRef = useRef<HTMLDivElement>(null);
   const worstPopoverRef = useRef<HTMLDivElement>(null);
 
+  // Header Overflow-Menü (Fokus, Branche, Export, Checkliste, Dashboard, Refresh, Summary)
+  const [showOverflowMenu, setShowOverflowMenu] = useState<boolean>(false);
+  const overflowMenuRef = useRef<HTMLDivElement>(null);
+
   // Celebration when all clauses reviewed
   const [showCelebration, setShowCelebration] = useState<boolean>(false);
   const celebrationShownRef = useRef<boolean>(false);
@@ -206,7 +210,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return () => observer.disconnect();
   }, [numPages, viewMode, pdfUrl]);
 
-  // Click-outside for score & worst clause popovers
+  // Click-outside for score, worst clause & overflow menu
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (showScorePopover && scorePopoverRef.current && !scorePopoverRef.current.contains(e.target as Node)) {
@@ -215,12 +219,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       if (showWorstPopover && worstPopoverRef.current && !worstPopoverRef.current.contains(e.target as Node)) {
         setShowWorstPopover(false);
       }
+      if (showOverflowMenu && overflowMenuRef.current && !overflowMenuRef.current.contains(e.target as Node)) {
+        setShowOverflowMenu(false);
+      }
     };
-    if (showScorePopover || showWorstPopover) {
+    if (showScorePopover || showWorstPopover || showOverflowMenu) {
       document.addEventListener('mousedown', handleClick);
       return () => document.removeEventListener('mousedown', handleClick);
     }
-  }, [showScorePopover, showWorstPopover]);
+  }, [showScorePopover, showWorstPopover, showOverflowMenu]);
 
   // Ref für alle aktuell gelb markierten Text-Elemente
   const highlightedElementsRef = useRef<HTMLElement[]>([]);
@@ -1846,56 +1853,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 {riskStats.low > 0 && <span className={styles.statBadgeLow}>{riskStats.low}</span>}
                 <span className={styles.statCount}>{riskStats.analyzed} analysiert</span>
               </div>
-              {riskStats.worstClause && riskStats.worstScore >= 50 && (
-                <div className={styles.worstPopoverAnchor} ref={worstPopoverRef}>
-                  <button
-                    className={styles.worstClauseBtn}
-                    onClick={() => { setShowWorstPopover(prev => !prev); setShowScorePopover(false); }}
-                    title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
-                  >
-                    <AlertTriangle size={14} />
-                    <span>Riskanteste: {riskStats.worstScore}</span>
-                  </button>
-                  {showWorstPopover && (
-                    <div className={styles.worstPopover}>
-                      <div className={styles.worstPopoverHeader}>
-                        <AlertTriangle size={16} style={{ color: '#ef4444' }} />
-                        <span className={styles.worstPopoverTitle}>Riskanteste Klausel</span>
-                      </div>
-                      <div className={styles.worstPopoverClause}>
-                        <span className={styles.worstPopoverName}>
-                          {riskStats.worstClause!.title || riskStats.worstClause!.number || 'Klausel'}
-                        </span>
-                        <span className={styles.worstPopoverScore} style={{ color: '#ef4444' }}>
-                          {riskStats.worstScore}/100
-                        </span>
-                      </div>
-                      <p className={styles.worstPopoverDesc}>
-                        Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
-                        {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
-                        {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
-                      </p>
-                      <button
-                        className={styles.worstPopoverBtn}
-                        onClick={() => { selectClause(riskStats.worstClause!); setShowWorstPopover(false); }}
-                      >
-                        Zur Klausel springen
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              {(riskStats.high > 0 || riskStats.medium > 0) && (
-                <button
-                  className={styles.nextRiskBtn}
-                  onClick={goToNextRisk}
-                  title="Zur nächsten Risiko-Klausel springen"
-                >
-                  <ChevronRight size={14} />
-                  <span>Nächstes Risiko</span>
-                </button>
-              )}
             </div>
           )}
           {reviewStats && reviewStats.reviewed > 0 && (
@@ -1935,84 +1892,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
 
         <div className={styles.headerRight}>
-          {/* Focus Mode Toggle */}
-          <button
-            className={`${styles.focusModeBtn} ${focusMode ? styles.focusModeActive : ''}`}
-            onClick={() => setFocusMode(prev => !prev)}
-            title={focusMode ? 'Fokus-Modus deaktivieren (F)' : 'Fokus-Modus aktivieren (F)'}
-          >
-            <Eye size={16} />
-            <span>{focusMode ? 'Fokus an' : 'Fokus'}</span>
-          </button>
-
-          {/* Industry Selector */}
-          <IndustrySelector
-            currentIndustry={currentIndustry}
-            onIndustryChange={handleIndustryChange}
-            disabled={industryLoading || isParsing}
-            compact={false}
-            autoDetected={industryAutoDetected}
-            confidence={industryConfidence}
-            detectedKeywords={industryKeywords}
-          />
-
-          {/* Force-Refresh Button */}
-          <button
-            className={styles.refreshButton}
-            onClick={() => parseContract(contractId, true)}
-            disabled={isParsing || isStreaming}
-            title="Klauseln neu analysieren (Cache ignorieren)"
-          >
-            <RefreshCw size={18} className={isStreaming ? styles.spinning : ''} />
-          </button>
-
-          {/* Export Button */}
-          <button
-            className={styles.exportButton}
-            onClick={() => setShowExportModal(true)}
-            disabled={(clauses || []).length === 0}
-            title="Analyse als PDF exportieren"
-          >
-            <Download size={18} />
-            <span>Export</span>
-          </button>
-
-          {/* Negotiation Checklist Button - nur für Vertragsempfänger */}
-          {(currentPerspective === 'contractor' || currentPerspective === 'client') && (
-            <button
-              className={styles.checklistButton}
-              onClick={() => setShowChecklist(true)}
-              disabled={(clauses || []).length === 0}
-              title="Verhandlungs-Checkliste"
-            >
-              <ClipboardCheck size={18} />
-              <span>Checkliste</span>
-            </button>
-          )}
-
-          {/* Overview Toggle Button */}
-          <button
-            className={`${styles.overviewToggleButton} ${showOverview ? styles.active : ''}`}
-            onClick={() => setShowOverview(!showOverview)}
-            title={showOverview ? 'Zur Detail-Ansicht' : 'Gesamtübersicht'}
-          >
-            <LayoutGrid size={18} />
-            <span>{showOverview ? 'Details' : 'Dashboard'}</span>
-          </button>
-
-          {/* Summary Button - nur anzeigen wenn Summary dismissed wurde */}
-          {summaryDismissed && !showOverview && (
-            <button
-              className={styles.summaryButton}
-              onClick={handleShowSummary}
-              title="Übersicht anzeigen"
-            >
-              <BarChart3 size={18} />
-              <span>Übersicht</span>
-            </button>
-          )}
-
-          {/* Batch Analysis Button / Progress */}
+          {/* Primary Action: Batch Analysis Button / Progress */}
           {isBatchAnalyzing ? (
             <div className={styles.batchProgress}>
               <div className={styles.batchProgressInfo}>
@@ -2046,6 +1926,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             </button>
           )}
 
+          {/* Progress-Bar */}
           <div className={styles.progressBar}>
             <div className={styles.progressTrack}>
               <div
@@ -2057,8 +1938,165 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               {percentComplete}% durchgesehen
             </span>
           </div>
+
+          {/* Overflow-Menü: Sekundäre Aktionen (Fokus, Branche, Refresh, Export, Checkliste, Dashboard, Summary) */}
+          <div className={styles.overflowMenuAnchor} ref={overflowMenuRef}>
+            <button
+              className={styles.overflowMenuBtn}
+              onClick={() => setShowOverflowMenu(prev => !prev)}
+              title="Weitere Aktionen"
+              aria-label="Weitere Aktionen"
+              aria-haspopup="menu"
+              aria-expanded={showOverflowMenu}
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            {showOverflowMenu && (
+              <div className={styles.overflowMenu} role="menu">
+                {/* Fokus-Modus Toggle */}
+                <button
+                  className={`${styles.overflowMenuItem} ${focusMode ? styles.overflowMenuItemActive : ''}`}
+                  onClick={() => { setFocusMode(prev => !prev); setShowOverflowMenu(false); }}
+                  role="menuitem"
+                >
+                  <Eye size={16} />
+                  <span>{focusMode ? 'Fokus-Modus: An' : 'Fokus-Modus'}</span>
+                </button>
+
+                {/* Dashboard/Details Toggle */}
+                <button
+                  className={`${styles.overflowMenuItem} ${showOverview ? styles.overflowMenuItemActive : ''}`}
+                  onClick={() => { setShowOverview(!showOverview); setShowOverflowMenu(false); }}
+                  role="menuitem"
+                >
+                  <LayoutGrid size={16} />
+                  <span>{showOverview ? 'Zur Detail-Ansicht' : 'Dashboard-Übersicht'}</span>
+                </button>
+
+                {/* Summary Button - nur wenn dismissed */}
+                {summaryDismissed && !showOverview && (
+                  <button
+                    className={styles.overflowMenuItem}
+                    onClick={() => { handleShowSummary(); setShowOverflowMenu(false); }}
+                    role="menuitem"
+                  >
+                    <BarChart3 size={16} />
+                    <span>Vertrags-Übersicht</span>
+                  </button>
+                )}
+
+                <div className={styles.overflowMenuDivider} />
+
+                {/* Industry Selector (im Menü als spezielle Zeile) */}
+                <div className={styles.overflowMenuIndustry}>
+                  <IndustrySelector
+                    currentIndustry={currentIndustry}
+                    onIndustryChange={handleIndustryChange}
+                    disabled={industryLoading || isParsing}
+                    compact={false}
+                    autoDetected={industryAutoDetected}
+                    confidence={industryConfidence}
+                    detectedKeywords={industryKeywords}
+                  />
+                </div>
+
+                <div className={styles.overflowMenuDivider} />
+
+                {/* Export */}
+                <button
+                  className={styles.overflowMenuItem}
+                  onClick={() => { setShowExportModal(true); setShowOverflowMenu(false); }}
+                  disabled={(clauses || []).length === 0}
+                  role="menuitem"
+                >
+                  <Download size={16} />
+                  <span>Als PDF exportieren</span>
+                </button>
+
+                {/* Negotiation Checklist - nur für Vertragsempfänger */}
+                {(currentPerspective === 'contractor' || currentPerspective === 'client') && (
+                  <button
+                    className={styles.overflowMenuItem}
+                    onClick={() => { setShowChecklist(true); setShowOverflowMenu(false); }}
+                    disabled={(clauses || []).length === 0}
+                    role="menuitem"
+                  >
+                    <ClipboardCheck size={16} />
+                    <span>Verhandlungs-Checkliste</span>
+                  </button>
+                )}
+
+                <div className={styles.overflowMenuDivider} />
+
+                {/* Refresh */}
+                <button
+                  className={styles.overflowMenuItem}
+                  onClick={() => { parseContract(contractId, true); setShowOverflowMenu(false); }}
+                  disabled={isParsing || isStreaming}
+                  role="menuitem"
+                >
+                  <RefreshCw size={16} className={isStreaming ? styles.spinning : ''} />
+                  <span>Neu analysieren (Cache ignorieren)</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
+
+      {/* Quick-Action-Toolbar: Riskanteste + Nächstes Risiko (wenn relevant) */}
+      {riskStats && (riskStats.high > 0 || riskStats.medium > 0) && (
+        <div className={styles.quickActionToolbar}>
+          {riskStats.worstClause && riskStats.worstScore >= 50 && (
+            <div className={styles.worstPopoverAnchor} ref={worstPopoverRef}>
+              <button
+                className={styles.worstClauseBtn}
+                onClick={() => { setShowWorstPopover(prev => !prev); setShowScorePopover(false); }}
+                title={`Riskanteste Klausel: ${riskStats.worstClause.title || riskStats.worstClause.number || 'Klausel'} (${riskStats.worstScore}/100)`}
+              >
+                <AlertTriangle size={14} />
+                <span>Riskanteste: {riskStats.worstScore}</span>
+              </button>
+              {showWorstPopover && (
+                <div className={styles.worstPopover}>
+                  <div className={styles.worstPopoverHeader}>
+                    <AlertTriangle size={16} style={{ color: '#ef4444' }} />
+                    <span className={styles.worstPopoverTitle}>Riskanteste Klausel</span>
+                  </div>
+                  <div className={styles.worstPopoverClause}>
+                    <span className={styles.worstPopoverName}>
+                      {riskStats.worstClause!.title || riskStats.worstClause!.number || 'Klausel'}
+                    </span>
+                    <span className={styles.worstPopoverScore} style={{ color: '#ef4444' }}>
+                      {riskStats.worstScore}/100
+                    </span>
+                  </div>
+                  <p className={styles.worstPopoverDesc}>
+                    Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
+                    {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
+                    {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
+                  </p>
+                  <button
+                    className={styles.worstPopoverBtn}
+                    onClick={() => { selectClause(riskStats.worstClause!); setShowWorstPopover(false); }}
+                  >
+                    Zur Klausel springen
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <button
+            className={styles.nextRiskBtn}
+            onClick={goToNextRisk}
+            title="Zur nächsten Risiko-Klausel springen (n)"
+          >
+            <ChevronRight size={14} />
+            <span>Nächstes Risiko</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Content - Overview vs Detail View */}
       {showOverview ? (
