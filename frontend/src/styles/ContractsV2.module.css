@@ -9248,10 +9248,11 @@
   padding: 0 !important;
 }
 
-/* === Toolbar kompakter (V1-Style + reduziertes Vertical-Padding) === */
+/* === Toolbar kompakt + vertikal mittig + voll auffüllend === */
 .enterpriseToolbar {
   display: flex !important;
   align-items: center !important;
+  align-content: center !important;
   gap: 0.625rem !important;
   margin-bottom: 0 !important;
   padding: 0.625rem 1.25rem !important;
@@ -9262,6 +9263,7 @@
   box-shadow: none !important;
   flex-shrink: 0 !important;
   flex-wrap: wrap !important;
+  min-height: 56px !important;
 }
 .enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
 .enterpriseToolbar .toolbarDivider { display: none !important; }
@@ -9308,10 +9310,10 @@
   transform: translateY(-1px) !important;
 }
 
-/* Suche kompakter */
+/* Suche füllt die volle verfügbare Breite (max-width raus) */
 .enterpriseToolbar .toolbarSearch {
   flex: 1 !important;
-  max-width: 400px !important;
+  max-width: none !important;
   position: relative !important;
 }
 .enterpriseToolbar .toolbarSearchInput {
