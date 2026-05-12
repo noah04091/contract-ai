@@ -16,6 +16,8 @@ import {
   Ban,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
+  ChevronUp,
   Zap,
   Copy,
   Sparkles
@@ -1222,6 +1224,11 @@ function Step1Recipients({
 // Step 2: Content
 function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: CampaignForm) => void }) {
   const [previewTemplate, setPreviewTemplate] = useState<NewsletterTemplate | null>(null);
+  const [showAlternatives, setShowAlternatives] = useState(false);
+
+  const FEATURED_IDS = ['free-to-business', 'free-inactive-reactivation'];
+  const featuredTemplates = newsletterTemplates.filter((t) => FEATURED_IDS.includes(t.id));
+  const alternativeTemplates = newsletterTemplates.filter((t) => !FEATURED_IDS.includes(t.id));
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -1266,13 +1273,13 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 700, color: '#1e3a8a', marginBottom: '0.35rem' }}>
-              <Sparkles size={14} /> Premium-Vorlagen ({newsletterTemplates.length})
+              <Sparkles size={14} /> Premium-Vorlagen
             </div>
             <div style={{ fontSize: '0.7rem', color: '#475569', marginBottom: '0.85rem', lineHeight: 1.5 }}>
               <strong>Vorschau</strong> öffnet eine Live-Ansicht ohne den Composer zu überschreiben. <strong>Laden</strong> übernimmt die Vorlage in alle Felder.
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
-              {newsletterTemplates.map((t) => (
+              {featuredTemplates.map((t) => (
                 <div
                   key={t.id}
                   style={{
@@ -1337,6 +1344,109 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
                 </div>
               ))}
             </div>
+
+            {alternativeTemplates.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowAlternatives(!showAlternatives)}
+                  style={{
+                    marginTop: '0.65rem',
+                    width: '100%',
+                    padding: '0.55rem 0.75rem',
+                    background: 'transparent',
+                    border: '1px dashed #93c5fd',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: '#1e3a8a',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  {showAlternatives ? (
+                    <>
+                      <ChevronUp size={14} /> Alternativen einklappen
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} /> {alternativeTemplates.length} weitere Free→Business-Varianten anzeigen
+                    </>
+                  )}
+                </button>
+
+                {showAlternatives && (
+                  <div style={{ marginTop: '0.6rem', display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
+                    {alternativeTemplates.map((t) => (
+                      <div
+                        key={t.id}
+                        style={{
+                          padding: '0.7rem 0.85rem',
+                          background: '#ffffff',
+                          border: '1px solid #e0e7ff',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '0.65rem'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.2rem' }}>
+                            {t.label}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.45 }}>
+                            {t.description}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                          <button
+                            onClick={() => setPreviewTemplate(t)}
+                            title="Vorschau anzeigen (ohne Laden)"
+                            style={{
+                              padding: '0.4rem 0.65rem',
+                              borderRadius: '5px',
+                              border: '1px solid #cbd5e1',
+                              background: '#fff',
+                              color: '#475569',
+                              cursor: 'pointer',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <Eye size={11} /> Vorschau
+                          </button>
+                          <button
+                            onClick={() => loadTemplate(t.id)}
+                            title="Vorlage in Composer laden"
+                            style={{
+                              padding: '0.4rem 0.65rem',
+                              borderRadius: '5px',
+                              border: '1px solid #3b82f6',
+                              background: '#3b82f6',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            <Sparkles size={11} /> Laden
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
