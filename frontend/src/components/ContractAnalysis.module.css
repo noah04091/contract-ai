@@ -1106,9 +1106,17 @@
 }
 
 .planBadge {
-  color: #94a3b8;
-  font-size: 12px;
-  margin-left: 4px;
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: #f5f3ff;
+  color: #8b5cf6;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 5px;
+  vertical-align: middle;
 }
 
 /* Action Buttons Container */

@@ -187,7 +187,10 @@ export default function V2TabsSection({ data }: Props) {
     });
   }, [criticals]);
 
-  const [active, setActive] = useState<TabId>(() => (hasHighRisk ? "risks" : "summary"));
+  // User-Feedback: immer Zusammenfassung als Start-Tab, nicht adaptive auf Risiken.
+  // hasHighRisk wird trotzdem für andere Zwecke berechnet (Badge-Indikator etc.).
+  const [active, setActive] = useState<TabId>("summary");
+  void hasHighRisk;
 
   // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback
   useEffect(() => {
@@ -259,8 +262,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="📋"
             iconCls={styles.esIconPrimary}
-            title="Keine Zusammenfassung verfügbar"
-            text="Die KI konnte für diesen Vertrag keine strukturierte Zusammenfassung erstellen. Schau in den Risiken-Tab und in das Rechtsgutachten für die wichtigsten Punkte."
+            title="Bei dieser Analyse fehlt die Zusammenfassung"
+            text="Das kann bei komplexen oder gescannten Dokumenten gelegentlich passieren. Klicke oben rechts auf „Erneut analysieren" — meistens reicht ein zweiter Versuch. Falls weiterhin keine Zusammenfassung erscheint, schau zusätzlich in den Risiken-Tab und in das Rechtsgutachten."
           />
         ) : (
           <>

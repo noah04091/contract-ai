@@ -17,6 +17,7 @@ import { useAuth } from "../hooks/useAuth";
 import { isAnalysisV2Enabled } from "../utils/featureFlags";
 import V2HeroSection from "./contractAnalysisV2/V2HeroSection";
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection";
+import AnalysisImportantDates from "./AnalysisImportantDates";
 
 // Signature-related interfaces
 interface Signer {
@@ -387,6 +388,50 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     };
     fetchCalendarEvents();
   }, [contract._id]);
+
+  // Calendar-Event löschen — Smart-Delete wie in AnalysisImportantDates:
+  // Manual → Hard-Delete (DELETE), AI → Dismiss (POST quick-action) — bleibt in DB
+  // mit status='dismissed', damit Re-Analyse kein Duplikat erzeugt.
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const handleDeleteCalendarEvent = async (event: typeof calendarEvents[0]) => {
+    const canDelete = user?.subscriptionPlan === 'business' || user?.subscriptionPlan === 'enterprise';
+    if (!canDelete) {
+      toast.info("Termin-Löschung ist ein Business/Enterprise-Feature");
+      return;
+    }
+    if (!window.confirm(`Termin „${event.title}" wirklich entfernen?`)) return;
+    setDeletingEventId(event.id);
+    try {
+      const token = localStorage.getItem('token');
+      let res: Response;
+      if (event.isManual) {
+        res = await fetch(`/api/calendar/events/${event.id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        res = await fetch("/api/calendar/quick-action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ eventId: event.id, action: "dismiss" }),
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        toast.success("Termin entfernt");
+        setCalendarEvents(prev => prev.filter(e => e.id !== event.id));
+      } else if (res.status === 403 && data.upgradeRequired) {
+        toast.error(data.error || "Business/Enterprise-Plan erforderlich");
+      } else {
+        toast.error(data.error || "Fehler beim Entfernen des Termins");
+      }
+    } catch (err) {
+      console.error("Error deleting calendar event:", err);
+      toast.error("Netzwerkfehler beim Entfernen");
+    } finally {
+      setDeletingEventId(null);
+    }
+  };
 
   // 🔐 User Subscription Plan laden für Legal Pulse Zugriffsprüfung
   useEffect(() => {
@@ -1404,7 +1449,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       )}
 
-      {/* 🔔 Kalendererinnerungen für diesen Vertrag */}
+      {/* 🔔 Kalendererinnerungen für diesen Vertrag — V2-Look: weißer BG mit Border-Stripe */}
       <div className={styles.section} style={{
         opacity: (contract.status === 'gekündigt' || contract.cancellationId) ? 0.5 : 1,
         pointerEvents: (contract.status === 'gekündigt' || contract.cancellationId) ? 'none' : 'auto'
@@ -1413,17 +1458,17 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
         </h3>
         {loadingEvents ? (
-          <p style={{ color: '#666', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
+          <p style={{ color: '#64748b', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
         ) : calendarEvents.length === 0 ? (
-          <p style={{ color: '#888', fontSize: '0.9rem' }}>
+          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
             Keine Kalendererinnerungen für diesen Vertrag vorhanden.
             <br />
-            <span style={{ fontSize: '0.85rem', color: '#aaa' }}>
+            <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
               Erstelle im Kalender ein Ereignis und verknüpfe es mit diesem Vertrag.
             </span>
           </p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {calendarEvents.map((event) => {
               const eventDate = new Date(event.date);
               eventDate.setHours(0, 0, 0, 0);
@@ -1433,9 +1478,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               const isPast = daysUntil < 0;
 
               const severityColors = {
-                critical: { bg: '#fee2e2', border: '#ef4444', text: '#b91c1c' },
-                warning: { bg: '#fef3c7', border: '#f59e0b', text: '#b45309' },
-                info: { bg: '#eff6ff', border: '#3B82F6', text: '#1d4ed8' }  // Firmenblau
+                critical: { stripe: '#ef4444', dot: '#ef4444', dotRing: '#fef2f2' },
+                warning: { stripe: '#f59e0b', dot: '#f59e0b', dotRing: '#fffbeb' },
+                info: { stripe: '#2563eb', dot: '#2563eb', dotRing: '#eff6ff' },
               };
               const colors = severityColors[event.severity] || severityColors.info;
 
@@ -1443,38 +1488,97 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <div
                   key={event.id}
                   style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    backgroundColor: colors.bg,
-                    borderLeft: `4px solid ${colors.border}`,
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    background: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderLeft: `4px solid ${colors.stripe}`,
+                    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    opacity: isPast ? 0.6 : 1
+                    gap: '12px',
+                    opacity: isPast ? 0.7 : 1,
                   }}
                 >
-                  <div>
-                    <div style={{ fontWeight: 500, color: colors.text }}>{event.title}</div>
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
-                      {eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                      {' • '}
-                      {isPast ? `vor ${Math.abs(daysUntil)} Tagen` : daysUntil === 0 ? 'Heute' : daysUntil === 1 ? 'Morgen' : `in ${daysUntil} Tagen`}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: colors.dot,
+                        boxShadow: `0 0 0 3px ${colors.dotRing}`,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13.5px', lineHeight: 1.4 }}>{event.title}</div>
+                      <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px', fontVariantNumeric: 'tabular-nums' }}>
+                        {eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {' · '}
+                        {isPast ? `vor ${Math.abs(daysUntil)} Tagen` : daysUntil === 0 ? 'heute' : daysUntil === 1 ? 'morgen' : `in ${daysUntil} Tagen`}
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
-                    style={{
-                      padding: '0.4rem 0.8rem',
-                      fontSize: '0.8rem',
-                      background: 'white',
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '6px',
-                      color: colors.text,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Zum Kalender
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    <button
+                      onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
+                      style={{
+                        padding: '7px 12px',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        background: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        color: '#475569',
+                        cursor: 'pointer',
+                        transition: 'background .15s, border-color .15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#f6f8fb';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#fff';
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                      }}
+                    >
+                      Zum Kalender
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCalendarEvent(event)}
+                      disabled={deletingEventId === event.id}
+                      aria-label={`Termin „${event.title}" entfernen`}
+                      title="Termin entfernen"
+                      style={{
+                        padding: '7px 9px',
+                        background: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        color: '#94a3b8',
+                        cursor: deletingEventId === event.id ? 'not-allowed' : 'pointer',
+                        opacity: deletingEventId === event.id ? 0.5 : 1,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        transition: 'background .15s, border-color .15s, color .15s',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (deletingEventId === event.id) return;
+                        e.currentTarget.style.background = '#fef2f2';
+                        e.currentTarget.style.borderColor = '#fecaca';
+                        e.currentTarget.style.color = '#ef4444';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#fff';
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                        e.currentTarget.style.color = '#94a3b8';
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -1970,6 +2074,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             isInitialResult={true}
           />
           <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+          {contract._id && (
+            <AnalysisImportantDates
+              contractId={String(contract._id)}
+              contractName={contract.name || 'Vertrag'}
+            />
+          )}
         </div>
       );
     }

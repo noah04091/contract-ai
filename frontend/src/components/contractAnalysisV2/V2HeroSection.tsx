@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState } from "react";
-import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
@@ -310,9 +310,17 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </span>
               )}
               {d.lawyerLevelAnalysis && (
-                <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
-                  <Gavel size={10} /> Anwaltsniveau
-                </span>
+                <>
+                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
+                    <Scale size={10} /> 7-Punkte-Analyse
+                  </span>
+                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
+                    <Gavel size={10} /> Anwaltsniveau
+                  </span>
+                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
+                    <CheckSquare size={10} /> Vollständigkeitsgarantie
+                  </span>
+                </>
               )}
               {serviceHealth === false && (
                 <span className={`${styles.fcStatusPill} ${styles.statusService}`}>
@@ -327,13 +335,14 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             {canReanalyze && onReanalyze && (
               <button
                 type="button"
-                className={`${styles.fcBtn} ${styles.fcBtnPrimary}`}
+                className={`${styles.fcBtn} ${styles.fcBtnPrimary} ${analyzing ? styles.fcBtnLoading : ""}`}
                 onClick={onReanalyze}
                 disabled={analyzing}
-                aria-label="Analyse erneut durchführen"
+                aria-label={analyzing ? "Analyse läuft" : "Analyse erneut durchführen"}
+                aria-busy={analyzing || undefined}
               >
-                <RefreshCw size={14} aria-hidden="true" />
-                <span>Erneut analysieren</span>
+                <RefreshCw size={14} aria-hidden="true" className={analyzing ? styles.spinIcon : ""} />
+                <span>{analyzing ? "Analysiere..." : "Erneut analysieren"}</span>
               </button>
             )}
             {onReset && (
@@ -351,6 +360,44 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           </div>
         )}
       </div>
+
+      {/* RECOGNITION-BANNER — erscheint VOR der Analyse-Card, wenn die KI
+          einen non-finalen Dokument-Status erkennt (Muster/Entwurf/LOI/etc.)
+          oder completeness.isComplete === false meldet. Render-if-present. */}
+      {(() => {
+        const docChar = d.documentCharacterization;
+        const completeness = d.completeness;
+        const desc = docChar?.description || "";
+        const lowerDesc = desc.toLowerCase();
+        const nonFinalSignals = [
+          "muster", "mustervertrag", "template", "vorlage",
+          "entwurf", "draft",
+          "vorvertrag", "letter of intent", "loi",
+          "term sheet", "memorandum of understanding", "mou",
+          "side letter",
+          "unvollständ", "incomplete", "noch nicht ausgefüllt", "placeholder",
+        ];
+        const isNonFinal = nonFinalSignals.some(s => lowerDesc.includes(s))
+          || completeness?.isComplete === false;
+        if (!isNonFinal || !desc) return null;
+        return (
+          <div className={styles.recognitionBanner} role="alert">
+            <div className={styles.recognitionIcon} aria-hidden="true">⚠️</div>
+            <div className={styles.recognitionBody}>
+              <div className={styles.recognitionTitle}>Hinweis zum Dokument-Status</div>
+              <div className={styles.recognitionDesc}>{desc}</div>
+              {docChar?.rationale && (
+                <div className={styles.recognitionRationale}>{docChar.rationale}</div>
+              )}
+              {completeness?.openItems && completeness.openItems.length > 0 && (
+                <div className={styles.recognitionOpenItems}>
+                  <strong>Noch offen:</strong> {completeness.openItems.join(" • ")}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ANALYSIS-CARD */}
       <div className={styles.analysisCard}>
@@ -395,23 +442,36 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   strokeDashoffset={offset.toFixed(2)}
                   transform="rotate(-90 80 80)"
                 />
+                {/* Score-Zahl direkt IM SVG — robust gegen CSS-Module-Mismatch.
+                    Zusätzlich zum HTML-Overlay weiter unten, damit auch bei Cache-
+                    Issues die Zahl sichtbar ist. */}
+                <text
+                  x="80"
+                  y="80"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#0f172a"
+                  fontSize="44"
+                  fontWeight="700"
+                  fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif"
+                  style={{ letterSpacing: "-0.04em" }}
+                >
+                  {displayScore}
+                </text>
+                <text
+                  x="80"
+                  y="112"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#94a3b8"
+                  fontSize="10"
+                  fontWeight="600"
+                  fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  VON 100
+                </text>
               </svg>
-              <div
-                className={styles.scoreTextWrap}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  zIndex: 2,
-                  pointerEvents: "none",
-                }}
-              >
-                <div className={styles.scoreNum} aria-hidden="true" style={{ fontSize: 44, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.04em", lineHeight: 1, position: "relative", zIndex: 3 }}>{displayScore}</div>
-                <div className={styles.scoreOf} aria-hidden="true" style={{ fontSize: 11, color: "#94a3b8", marginTop: 4, letterSpacing: "0.5px", position: "relative", zIndex: 3 }}>VON 100</div>
-              </div>
             </div>
             <div className={`${styles.scoreRating} ${variant.cls}`}>{variant.rating}</div>
           </div>

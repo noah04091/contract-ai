@@ -1055,6 +1055,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                 {!failed && (
                   <>
                     <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+                    {/* Termine kommen via AnalysisImportantDates weiter unten — der hat
+                        Liste+Zeitstrahl-Toggle, Add/Delete und Fristen-Block in einer Komponente. */}
                     <V2ConversionBanner
                       usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2ConversionBanner>[0]['usage']}
                       userPlan={user?.subscriptionPlan}
@@ -1760,17 +1762,23 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             </motion.div>
           )}
 
-          {/* Usage Info */}
-          {(result?.usage || initialResult?.usage) && (
-            <div className={styles.usageInfo}>
-              <p>
-                Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
-                <span className={styles.planBadge}>
-                  {(result?.usage || initialResult?.usage)?.plan}
-                </span>
-              </p>
-            </div>
-          )}
+          {/* Usage Info — limit kann Infinity, Number ODER String ("enterprise") sein
+              je nach Backend-Plan. Bei nicht-numerischem Wert → ∞. */}
+          {(result?.usage || initialResult?.usage) && (() => {
+            const usage = (result?.usage || initialResult?.usage);
+            const lim = usage?.limit as unknown;
+            const limDisplay = (lim === Infinity || typeof lim !== 'number') ? '∞' : lim;
+            return (
+              <div className={styles.usageInfo}>
+                <p>
+                  Anwaltliche Analyse <strong>{usage?.count}</strong> von <strong>{limDisplay}</strong>
+                  <span className={styles.planBadge}>
+                    {usage?.plan}
+                  </span>
+                </p>
+              </div>
+            );
+          })()}
 
           {/* 🎨 V2 HÄPPCHEN D — Sticky Action-Bar unten (ersetzt actionButtonsContainer)
               Bei kaputter Analyse ausblenden — sonst klickt User auf Optimieren bei nicht-analysiertem Vertrag. */}

@@ -98,6 +98,11 @@ export default function AnalysisImportantDates({
   const [fristenExpanded, setFristenExpanded] = useState(false);
   const FRISTEN_COLLAPSED_LIMIT = 4;
 
+  // 📅 View-Toggle: Zeitstrahl-Ansicht (vertikale Linie mit Severity-Dots
+  // und HEUTE-Divider) oder Listen-Ansicht (Detail-Karten mit Emoji-Severity).
+  // Default 'list' — historisch erprobt und mit Add/Delete-Buttons direkt am Item.
+  const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
+
   // Termin-löschen-Modal: User klickt auf × → Confirmation. AI-Events werden via dismiss
   // gelöscht (verhindert Wiederkehr bei Re-Analyse via cleanupFilter-Schutz im Backend),
   // manuelle Events via Hard-Delete. State hält das zu löschende Event vor.
@@ -466,51 +471,194 @@ export default function AnalysisImportantDates({
               </p>
             </div>
           ) : (
-            <div className={styles.eventList}>
-              {sortedEvents.map((event) => {
-                const days = getDaysUntil(event.date);
-                const daysClass =
-                  days < 0 ? styles.past : days <= 7 ? styles.urgent : days <= 30 ? styles.soon : "";
-                return (
-                  <div
-                    key={event.id}
-                    className={`${styles.eventItem} ${getSeverityClass(event.severity)}`}
-                  >
-                    <div className={styles.eventEmoji}>{getSeverityEmoji(event.severity)}</div>
-                    <div className={styles.eventContent}>
-                      <div className={styles.eventTitleRow}>
-                        <span className={styles.eventTitle}>{event.title}</span>
-                        {event.isManual && (
-                          <span className={styles.manualBadge} title="Manuell hinzugefügt">
-                            ✋ Manuell
-                          </span>
+            <>
+              {/* View-Toggle: Liste (Detail-Karten) vs Zeitstrahl (vertikale Linie + HEUTE-Divider) */}
+              <div className={styles.viewToggle} role="tablist" aria-label="Termine-Ansicht">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === "list"}
+                  className={`${styles.viewToggleBtn} ${viewMode === "list" ? styles.viewToggleBtnActive : ""}`}
+                  onClick={() => setViewMode("list")}
+                >
+                  Liste
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === "timeline"}
+                  className={`${styles.viewToggleBtn} ${viewMode === "timeline" ? styles.viewToggleBtnActive : ""}`}
+                  onClick={() => setViewMode("timeline")}
+                >
+                  Zeitstrahl
+                </button>
+              </div>
+
+              {viewMode === "list" ? (
+                <div className={styles.eventList}>
+                  {sortedEvents.map((event) => {
+                    const days = getDaysUntil(event.date);
+                    const daysClass =
+                      days < 0 ? styles.past : days <= 7 ? styles.urgent : days <= 30 ? styles.soon : "";
+                    return (
+                      <div
+                        key={event.id}
+                        className={`${styles.eventItem} ${getSeverityClass(event.severity)}`}
+                      >
+                        <div className={styles.eventEmoji}>{getSeverityEmoji(event.severity)}</div>
+                        <div className={styles.eventContent}>
+                          <div className={styles.eventTitleRow}>
+                            <span className={styles.eventTitle}>{event.title}</span>
+                            {event.isManual && (
+                              <span className={styles.manualBadge} title="Manuell hinzugefügt">
+                                ✋ Manuell
+                              </span>
+                            )}
+                          </div>
+                          {event.description && (
+                            <div className={styles.eventDescription}>{event.description}</div>
+                          )}
+                        </div>
+                        <div className={styles.eventMeta}>
+                          <div className={styles.eventDate}>{formatDate(event.date)}</div>
+                          <div className={`${styles.eventDays} ${daysClass}`}>
+                            {formatDaysUntil(days)}
+                          </div>
+                        </div>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className={styles.eventDeleteBtn}
+                            onClick={() => handleDeleteClick(event)}
+                            aria-label={`Termin „${event.title}" entfernen`}
+                            title="Termin entfernen"
+                          >
+                            <Trash2 size={14} aria-hidden="true" />
+                          </button>
                         )}
                       </div>
-                      {event.description && (
-                        <div className={styles.eventDescription}>{event.description}</div>
-                      )}
+                    );
+                  })}
+                </div>
+              ) : (
+                // Zeitstrahl-Ansicht: vertikale Linie mit Severity-Dots, HEUTE-Divider zwischen past/future
+                (() => {
+                  const firstFutureIdx = sortedEvents.findIndex((e) => getDaysUntil(e.date) >= 0);
+                  const hasPast = firstFutureIdx > 0;
+                  const hasFuture = firstFutureIdx !== -1 && firstFutureIdx < sortedEvents.length;
+                  // Echter Zeitstrahl: durchgehende vertikale Linie + SVG-Dots pro Event.
+                  // SVG-Dots sind robust gegen CSS-Module-Konflikte. Linie ist absolute
+                  // im Container, Dots sind in einer 40px-Spalte links.
+                  return (
+                    <div style={{ position: "relative", padding: "8px 0" }}>
+                      {/* DURCHGEHENDE VERTIKALE LINIE — geht durch alle Dot-Center */}
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          left: 19,
+                          top: 12,
+                          bottom: 12,
+                          width: 2,
+                          background: "#e2e8f0",
+                          zIndex: 0,
+                        }}
+                      />
+                      {sortedEvents.map((event, idx) => {
+                        const days = getDaysUntil(event.date);
+                        const sev: "urgent" | "soon" | "past" | "future" =
+                          days < 0 ? "past" : days <= 7 ? "urgent" : days <= 30 ? "soon" : "future";
+                        const dotColor =
+                          sev === "urgent" ? "#ef4444"
+                          : sev === "soon" ? "#f59e0b"
+                          : sev === "past" ? "#94a3b8"
+                          : "#2563eb";
+                        const dotRing =
+                          sev === "urgent" ? "#fef2f2"
+                          : sev === "soon" ? "#fffbeb"
+                          : sev === "past" ? "#f1f5f9"
+                          : "#eff6ff";
+                        const showDivider = hasPast && hasFuture && idx === firstFutureIdx;
+                        return (
+                          <div key={event.id} style={{ position: "relative" }}>
+                            {showDivider && (
+                              <div style={{ position: "relative", padding: "14px 0", display: "flex", alignItems: "center", zIndex: 2 }}>
+                                <div style={{ width: 40, flexShrink: 0, display: "flex", justifyContent: "center" }}>
+                                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#2563eb", border: "3px solid #fff", boxShadow: "0 0 0 2px #2563eb" }} />
+                                </div>
+                                <span style={{ marginLeft: 4, background: "#2563eb", color: "#fff", padding: "3px 12px", borderRadius: 999, fontSize: 10, fontWeight: 700, letterSpacing: 1.2 }}>HEUTE</span>
+                              </div>
+                            )}
+                            <div style={{ display: "flex", alignItems: "flex-start", padding: "14px 0", position: "relative", zIndex: 1 }}>
+                              {/* DOT-SPALTE — 40px breit, SVG-Circle in der Mitte */}
+                              <div style={{ width: 40, flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: 2 }}>
+                                <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style={{ display: "block" }}>
+                                  {/* Outer ring (hellfarbig) */}
+                                  <circle cx="11" cy="11" r="10" fill={dotRing} />
+                                  {/* White separator */}
+                                  <circle cx="11" cy="11" r="7.5" fill="#ffffff" />
+                                  {/* Inner colored dot */}
+                                  <circle cx="11" cy="11" r="5" fill={dotColor} />
+                                </svg>
+                              </div>
+                              {/* CONTENT */}
+                              <div style={{ flex: 1, minWidth: 0, paddingLeft: 4 }}>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 2, flexWrap: "wrap" }}>
+                                  <div style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: sev === "past" ? "#64748b" : "#0f172a", minWidth: 88 }}>{formatDate(event.date)}</div>
+                                  <div style={{ fontSize: 11.5, color: "#94a3b8" }}>{formatDaysUntil(days)}</div>
+                                </div>
+                                <div style={{ fontSize: 13.5, fontWeight: 550, color: sev === "past" ? "#475569" : "#0f172a", display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                                  {event.isManual && <span title="Manuell hinzugefügt">✋</span>}
+                                  {event.title}
+                                </div>
+                                {event.description && (
+                                  <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4, lineHeight: 1.5 }}>{event.description}</div>
+                                )}
+                              </div>
+                              {/* DELETE-BUTTON */}
+                              {canDelete && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteClick(event)}
+                                  aria-label={`Termin „${event.title}" entfernen`}
+                                  title="Termin entfernen"
+                                  style={{
+                                    flexShrink: 0,
+                                    width: 26,
+                                    height: 26,
+                                    borderRadius: 7,
+                                    border: "1px solid #e5e7eb",
+                                    background: "#fff",
+                                    color: "#94a3b8",
+                                    cursor: "pointer",
+                                    display: "grid",
+                                    placeItems: "center",
+                                    marginLeft: 8,
+                                    transition: "background .15s, color .15s, border-color .15s",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#fef2f2";
+                                    e.currentTarget.style.color = "#ef4444";
+                                    e.currentTarget.style.borderColor = "#fecaca";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "#fff";
+                                    e.currentTarget.style.color = "#94a3b8";
+                                    e.currentTarget.style.borderColor = "#e5e7eb";
+                                  }}
+                                >
+                                  <Trash2 size={13} aria-hidden="true" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className={styles.eventMeta}>
-                      <div className={styles.eventDate}>{formatDate(event.date)}</div>
-                      <div className={`${styles.eventDays} ${daysClass}`}>
-                        {formatDaysUntil(days)}
-                      </div>
-                    </div>
-                    {canDelete && (
-                      <button
-                        type="button"
-                        className={styles.eventDeleteBtn}
-                        onClick={() => handleDeleteClick(event)}
-                        aria-label={`Termin „${event.title}" entfernen`}
-                        title="Termin entfernen"
-                      >
-                        <Trash2 size={14} aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })()
+              )}
+            </>
           )}
 
           {/* Vertragshistorie-Block ENTFERNT (Doppelung beseitigt):
@@ -674,7 +822,9 @@ export default function AnalysisImportantDates({
               style={{ maxWidth: 460 }}
             >
               <div className={styles.modalHeader}>
-                <h3 id="delete-confirm-title" className={styles.modalTitle}>Termin entfernen?</h3>
+                <h3 id="delete-confirm-title" className={styles.modalTitle}>
+                  {getDaysUntil(deleteTarget.date) < 0 ? "Vergangenen Termin entfernen?" : "Termin entfernen?"}
+                </h3>
                 <button
                   type="button"
                   className={styles.modalClose}
@@ -687,7 +837,9 @@ export default function AnalysisImportantDates({
               </div>
               <div style={{ padding: "16px 24px" }}>
                 <p style={{ fontSize: 14, color: "#475569", lineHeight: 1.55, marginBottom: 12 }}>
-                  Diesen Termin entfernen?
+                  {getDaysUntil(deleteTarget.date) < 0
+                    ? "Diesen vergangenen Termin aus der Übersicht entfernen?"
+                    : "Diesen Termin entfernen?"}
                 </p>
                 <div style={{
                   background: "#fafbfc",
@@ -704,7 +856,9 @@ export default function AnalysisImportantDates({
                   </div>
                 </div>
                 <p style={{ fontSize: 12.5, color: "#64748b", lineHeight: 1.5 }}>
-                  Du erhältst keine Erinnerungen mehr für diesen Termin. Die Entscheidung bleibt auch nach einer Re-Analyse erhalten.
+                  {getDaysUntil(deleteTarget.date) < 0
+                    ? "Der Eintrag wird dauerhaft aus deiner Vertragshistorie ausgeblendet und auch nach einer Re-Analyse nicht erneut angezeigt."
+                    : "Du erhältst keine Erinnerungen mehr für diesen Termin. Die Entscheidung bleibt auch nach einer Re-Analyse erhalten."}
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, padding: "0 24px 20px", justifyContent: "flex-end" }}>

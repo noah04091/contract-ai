@@ -247,23 +247,23 @@
    Nur für Business+ User (canDelete) gerendert. */
 .eventDeleteBtn {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #cbd5e1;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #94a3b8;
   cursor: pointer;
   display: grid;
   place-items: center;
   margin-left: 4px;
-  opacity: 0.55;
-  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  opacity: 1;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .eventItem:hover .eventDeleteBtn,
 .eventDeleteBtn:focus-visible {
-  opacity: 1;
-  color: #94a3b8;
+  color: #64748b;
+  border-color: #cbd5e1;
 }
 .eventDeleteBtn:hover {
   background: #fef2f2;
@@ -739,4 +739,189 @@
 .historyDays {
   font-size: 11px;
   color: #94a3b8;
+}
+
+/* ============================================================
+   VIEW-TOGGLE: Liste / Zeitstrahl (Sub-Tab oberhalb der Events)
+   ============================================================ */
+.viewToggle {
+  display: inline-flex;
+  background: #f6f8fb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  margin: 0 0 14px 0;
+}
+.viewToggleBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+  font-family: inherit;
+}
+.viewToggleBtn:hover {
+  color: #0f172a;
+}
+.viewToggleBtnActive {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+/* ============================================================
+   ZEITSTRAHL-ANSICHT (Timeline-Mode)
+   ============================================================ */
+.tlStream {
+  position: relative;
+  padding: 4px 0;
+}
+.tlStream::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e5e7eb;
+}
+.tlEvent {
+  position: relative;
+  padding: 10px 36px 14px 56px;
+}
+.tlEventDot {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #94a3b8;
+  z-index: 2;
+}
+.tlEventPast .tlEventDot { background: #f6f8fb; }
+.tlEventFuture .tlEventDot {
+  border-color: #2563eb;
+  background: #2563eb;
+  box-shadow: 0 0 0 3px #eff6ff;
+}
+.tlEventUrgent .tlEventDot {
+  border-color: #ef4444;
+  background: #ef4444;
+  box-shadow: 0 0 0 3px #fef2f2;
+}
+.tlEventSoon .tlEventDot {
+  border-color: #f59e0b;
+  background: #f59e0b;
+  box-shadow: 0 0 0 3px #fffbeb;
+}
+.tlEventRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+.tlEventDate {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 88px;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+}
+.tlEventPast .tlEventDate { color: #64748b; }
+.tlEventRel {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+.tlEventTitle {
+  font-size: 13.5px;
+  font-weight: 550;
+  color: #0f172a;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tlEventPast .tlEventTitle { color: #475569; }
+.tlEventDesc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.tlNowDivider {
+  position: relative;
+  padding: 16px 0 16px 56px;
+}
+.tlNowDivider::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #2563eb;
+  z-index: 1;
+}
+.tlNowDivider::after {
+  content: "HEUTE";
+  position: absolute;
+  left: 56px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #2563eb;
+  color: #fff;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+.tlEventDeleteBtn {
+  position: absolute;
+  top: 10px;
+  right: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  padding: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+.tlEvent:hover .tlEventDeleteBtn,
+.tlEventDeleteBtn:focus-visible {
+  color: #ef4444;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+@media (max-width: 600px) {
+  .tlEvent { padding: 9px 32px 12px 48px; }
+  .tlEventDot { left: 12px; }
+  .tlStream::before { left: 18px; }
+  .tlNowDivider::before { left: 18px; }
+  .tlNowDivider::after { left: 48px; }
+  .tlEventDate { min-width: 70px; font-size: 12.5px; }
+}
+@media (max-width: 380px) {
+  .tlEvent { padding: 8px 28px 10px 40px; }
+  .tlEventDot { left: 10px; width: 12px; height: 12px; }
+  .tlStream::before { left: 15px; }
+  .tlNowDivider::before { left: 15px; }
+  .tlNowDivider::after { left: 40px; font-size: 9.5px; padding: 2px 9px; }
+  .tlEventRow { gap: 6px; }
+  .tlEventDate { min-width: auto; font-size: 12px; }
+  .tlEventTitle { font-size: 13px; }
+  .tlEventDesc { font-size: 12px; }
 }
