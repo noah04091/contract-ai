@@ -5402,21 +5402,24 @@ export default function Generate() {
         return null;
       }
 
-      // Try Puppeteer first (backend PDF generation)
+      // Primary: React-PDF V2 (stabil, kein Chrome erforderlich)
+      // Vorher: Puppeteer-Route /api/contracts/generate/pdf — instabil auf Render
+      // (Chromium-Binary-Abhängigkeit, 500-Errors). Auto-PDF wurde Feb 2026 schon
+      // auf React-PDF migriert; Signatur-PDF zog jetzt nach.
       if (savedContractId) {
-        console.log("🚀 Trying Puppeteer PDF generation...");
+        console.log("🚀 Trying React-PDF V2 generation...");
 
         try {
-          const puppeteerUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`;
+          const v2Url = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/pdf-v2`;
 
-          const response = await fetch(puppeteerUrl, {
+          const response = await fetch(v2Url, {
             method: 'POST',
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              contractId: savedContractId
+              design: selectedDesignVariant
             })
           });
 
@@ -5463,8 +5466,8 @@ export default function Generate() {
               throw new Error(uploadData.error || "S3 upload failed");
             }
           }
-        } catch (puppeteerError) {
-          console.warn("⚠️ Puppeteer failed, trying fallback:", puppeteerError);
+        } catch (v2Error) {
+          console.warn("⚠️ React-PDF V2 failed, trying fallback:", v2Error);
         }
       }
 
