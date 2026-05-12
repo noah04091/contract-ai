@@ -263,7 +263,7 @@ export default function V2TabsSection({ data }: Props) {
             icon="📋"
             iconCls={styles.esIconPrimary}
             title="Bei dieser Analyse fehlt die Zusammenfassung"
-            text="Das kann bei komplexen oder gescannten Dokumenten gelegentlich passieren. Klicke oben rechts auf „Erneut analysieren" — meistens reicht ein zweiter Versuch. Falls weiterhin keine Zusammenfassung erscheint, schau zusätzlich in den Risiken-Tab und in das Rechtsgutachten."
+            text={'Das kann bei komplexen oder gescannten Dokumenten gelegentlich passieren. Klicke oben rechts auf „Erneut analysieren" — meistens reicht ein zweiter Versuch. Falls weiterhin keine Zusammenfassung erscheint, schau zusätzlich in den Risiken-Tab und in das Rechtsgutachten.'}
           />
         ) : (
           <>
