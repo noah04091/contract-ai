@@ -1046,7 +1046,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                   fileName={displayName}
                   serviceHealth={serviceHealth}
                   isInitialResult={!!initialResult && !result}
-                  canReanalyze={(!!result || !!initialResult) && !analyzing && !!file}
+                  canReanalyze={(!!result || !!initialResult) && !!file}
                   analyzing={analyzing}
                   onReanalyze={() => handleAnalyze(true)}
                   onReset={handleReset}
