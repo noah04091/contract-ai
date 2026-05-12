@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import styles from './AdminDashboard.module.css';
 import { fixUtf8Display } from '../utils/textUtils';
-import { newsletterTemplates, getNewsletterTemplateById } from '../data/newsletterTemplates';
+import { newsletterTemplates, getNewsletterTemplateById, type NewsletterTemplate } from '../data/newsletterTemplates';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
@@ -1221,6 +1221,8 @@ function Step1Recipients({
 
 // Step 2: Content
 function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: CampaignForm) => void }) {
+  const [previewTemplate, setPreviewTemplate] = useState<NewsletterTemplate | null>(null);
+
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '0.5rem 0.75rem',
@@ -1255,7 +1257,7 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
         {newsletterTemplates.length > 0 && (
           <div
             style={{
-              padding: '0.875rem 1rem',
+              padding: '1rem 1.1rem',
               background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)',
               backgroundColor: '#eff6ff',
               border: '1px solid #bfdbfe',
@@ -1263,35 +1265,149 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
               marginBottom: '1.25rem'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 600, color: '#1e3a8a', marginBottom: '0.35rem' }}>
-              <Sparkles size={14} /> Premium-Vorlage laden
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8125rem', fontWeight: 700, color: '#1e3a8a', marginBottom: '0.35rem' }}>
+              <Sparkles size={14} /> Premium-Vorlagen ({newsletterTemplates.length})
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#475569', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-              Fertig gestaltetes HTML-Template — alle Felder (Betreff, Titel, Body, CTA) werden automatisch befüllt. Du kannst danach jeden Wert noch anpassen.
+            <div style={{ fontSize: '0.7rem', color: '#475569', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+              <strong>Vorschau</strong> öffnet eine Live-Ansicht ohne den Composer zu überschreiben. <strong>Laden</strong> übernimmt die Vorlage in alle Felder.
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
               {newsletterTemplates.map((t) => (
-                <button
+                <div
                   key={t.id}
-                  onClick={() => loadTemplate(t.id)}
-                  title={t.description}
                   style={{
-                    padding: '0.4rem 0.75rem',
+                    padding: '0.7rem 0.85rem',
+                    background: '#ffffff',
+                    border: '1px solid #dbeafe',
                     borderRadius: '6px',
-                    border: '1px solid #3b82f6',
-                    background: '#fff',
-                    color: '#1d4ed8',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    display: 'inline-flex',
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '0.3rem'
+                    gap: '0.65rem'
                   }}
                 >
-                  <Sparkles size={11} /> {t.label}
-                </button>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.2rem' }}>
+                      {t.label}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.45 }}>
+                      {t.description}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.3rem', flexShrink: 0 }}>
+                    <button
+                      onClick={() => setPreviewTemplate(t)}
+                      title="Vorschau anzeigen (ohne Laden)"
+                      style={{
+                        padding: '0.4rem 0.65rem',
+                        borderRadius: '5px',
+                        border: '1px solid #cbd5e1',
+                        background: '#fff',
+                        color: '#475569',
+                        cursor: 'pointer',
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <Eye size={11} /> Vorschau
+                    </button>
+                    <button
+                      onClick={() => loadTemplate(t.id)}
+                      title="Vorlage in Composer laden"
+                      style={{
+                        padding: '0.4rem 0.65rem',
+                        borderRadius: '5px',
+                        border: '1px solid #3b82f6',
+                        background: '#3b82f6',
+                        color: '#fff',
+                        cursor: 'pointer',
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <Sparkles size={11} /> Laden
+                    </button>
+                  </div>
+                </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {previewTemplate && (
+          <div
+            onClick={() => setPreviewTemplate(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15, 23, 42, 0.7)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem'
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#fff',
+                borderRadius: '12px',
+                width: '100%',
+                maxWidth: '720px',
+                maxHeight: '90vh',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+              }}
+            >
+              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', background: '#fff' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.25rem' }}>Vorlagen-Vorschau</div>
+                  <h2 style={{ margin: 0, fontSize: '1.05rem', color: '#0f172a' }}>{previewTemplate.label}</h2>
+                  <div style={{ marginTop: '0.4rem', fontSize: '0.72rem', color: '#475569', lineHeight: 1.5 }}>
+                    {previewTemplate.description}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPreviewTemplate(null)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}
+                  title="Schließen"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div style={{ padding: '0.75rem 1.25rem', background: '#f8fafc', fontSize: '0.72rem', color: '#475569', borderBottom: '1px solid #e2e8f0', lineHeight: 1.6 }}>
+                <div><strong style={{ color: '#0f172a' }}>Betreff:</strong> {previewTemplate.subject}</div>
+                <div style={{ marginTop: '0.2rem' }}><strong style={{ color: '#0f172a' }}>CTA:</strong> {previewTemplate.ctaText} → <span style={{ color: '#3b82f6' }}>{previewTemplate.ctaUrl}</span></div>
+              </div>
+              <iframe
+                srcDoc={previewTemplate.body}
+                title={`Vorschau ${previewTemplate.label}`}
+                sandbox=""
+                style={{ width: '100%', flex: 1, minHeight: '500px', border: 'none' }}
+              />
+              <div style={{ padding: '0.85rem 1.25rem', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', background: '#fff' }}>
+                <button
+                  onClick={() => setPreviewTemplate(null)}
+                  style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}
+                >
+                  Schließen
+                </button>
+                <button
+                  onClick={() => { const id = previewTemplate.id; setPreviewTemplate(null); loadTemplate(id); }}
+                  style={{ padding: '0.5rem 1.1rem', borderRadius: '6px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  <Sparkles size={12} /> In Composer laden
+                </button>
+              </div>
             </div>
           </div>
         )}
