@@ -96,15 +96,15 @@ const Generator: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Vertrag erstellen online – Vertragsgenerator mit KI | Contract AI</title>
-        <meta name="description" content="Verträge online erstellen mit KI-Vertragsgenerator: Arbeitsvertrag, Mietvertrag, Dienstvertrag & mehr. Rechtssichere Vorlagen, individuell anpassbar. ✓ Jetzt kostenlos Vertrag erstellen" />
+        <title>Verträge erstellen online – KI-Vertragsgenerator kostenlos | Contract AI</title>
+        <meta name="description" content="Verträge online erstellen mit KI in Minuten: Arbeitsvertrag, Mietvertrag, NDA, Freelancer & mehr. Rechtssichere Vorlagen, individuell anpassbar. ✓ Kostenlos starten" />
         <meta name="keywords" content="Vertrag erstellen, Vertrag erstellen online, Vertragsgenerator, Vertragsvorlage, Arbeitsvertrag erstellen, Mietvertrag erstellen, Vertrag Generator, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/generator" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Vertrag erstellen online – Vertragsgenerator mit KI | Contract AI" />
-        <meta property="og:description" content="Verträge online erstellen mit KI-Vertragsgenerator. Rechtssichere Vorlagen, individuell anpassbar. ✓ Jetzt kostenlos erstellen" />
+        <meta property="og:title" content="Verträge erstellen online – KI-Vertragsgenerator kostenlos | Contract AI" />
+        <meta property="og:description" content="Verträge online erstellen mit KI in Minuten: Arbeitsvertrag, Mietvertrag, NDA, Freelancer & mehr. Rechtssichere Vorlagen. ✓ Kostenlos starten" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/generator" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-generator.png" />
@@ -112,8 +112,8 @@ const Generator: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Vertrag erstellen online – Vertragsgenerator mit KI | Contract AI" />
-        <meta name="twitter:description" content="Verträge online erstellen mit KI-Vertragsgenerator. Rechtssichere Vorlagen, individuell anpassbar. ✓ Jetzt kostenlos erstellen" />
+        <meta name="twitter:title" content="Verträge erstellen online – KI-Vertragsgenerator kostenlos | Contract AI" />
+        <meta name="twitter:description" content="Verträge online erstellen mit KI in Minuten: Arbeitsvertrag, Mietvertrag, NDA, Freelancer & mehr. ✓ Kostenlos starten" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-generator.png" />
 
         <script type="application/ld+json">
@@ -447,7 +447,7 @@ const Generator: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', color: '#10b981' }}>
                   <Shield size={28} />
