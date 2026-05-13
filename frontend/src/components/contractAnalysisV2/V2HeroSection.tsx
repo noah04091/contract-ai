@@ -162,6 +162,32 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const variant = getScoreVariant(score);
   const [laymanMode, setLaymanMode] = useState(false);
 
+  // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
+  // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
+  const [animatedScore, setAnimatedScore] = useState<number | null>(score == null ? null : 0);
+  const animRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (score == null) {
+      setAnimatedScore(null);
+      return;
+    }
+    const targetScore = Math.round(score);
+    const duration = 1400;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(targetScore * eased));
+      if (progress < 1) animRef.current = requestAnimationFrame(tick);
+    };
+    animRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (animRef.current != null) cancelAnimationFrame(animRef.current);
+    };
+  }, [score]);
+
   // Spezialfall: Analyse fehlgeschlagen → eigener roter Banner statt peinlich leeres Layout
   if (isFailedAnalysis(d)) {
     return (
@@ -212,32 +238,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // SVG Donut Math
   const radius = 68;
   const circumference = 2 * Math.PI * radius;
-
-  // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
-  // Premium-Feel beim First-Render. Läuft nur 1x pro Score-Wert (key=score).
-  const [animatedScore, setAnimatedScore] = useState<number | null>(score == null ? null : 0);
-  const animRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (score == null) {
-      setAnimatedScore(null);
-      return;
-    }
-    const targetScore = Math.round(score);
-    const duration = 1400;
-    const startTime = performance.now();
-    const tick = (now: number) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setAnimatedScore(Math.round(targetScore * eased));
-      if (progress < 1) animRef.current = requestAnimationFrame(tick);
-    };
-    animRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (animRef.current != null) cancelAnimationFrame(animRef.current);
-    };
-  }, [score]);
 
   const displayScore = animatedScore == null ? "—" : animatedScore;
   const offset = score == null
