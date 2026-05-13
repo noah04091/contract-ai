@@ -1050,18 +1050,14 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                   analyzing={analyzing}
                   onReanalyze={() => handleAnalyze(true)}
                   onReset={handleReset}
+                  usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
+                  userPlan={user?.subscriptionPlan}
                 />
-                {/* Bei kaputter Analyse: Tabs + Conv-Banner überspringen — Hero zeigt schon Fehler-Banner */}
+                {/* Bei kaputter Analyse: Tabs überspringen — Hero zeigt schon Fehler-Banner.
+                    Conversion-Banner wurde in V2HeroSection inline verschoben (max Sichtbarkeit
+                    direkt nach Score/Asymmetrie statt versteckt zwischen Tabs und Action-Bar). */}
                 {!failed && (
-                  <>
-                    <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
-                    {/* Termine kommen via AnalysisImportantDates weiter unten — der hat
-                        Liste+Zeitstrahl-Toggle, Add/Delete und Fristen-Block in einer Komponente. */}
-                    <V2ConversionBanner
-                      usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2ConversionBanner>[0]['usage']}
-                      userPlan={user?.subscriptionPlan}
-                    />
-                  </>
+                  <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
                 )}
               </>
             );

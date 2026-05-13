@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
+import V2ConversionBanner from "./V2ConversionBanner";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
 type AnalysisData = {
@@ -50,6 +51,9 @@ interface Props {
   analyzing?: boolean;
   onReanalyze?: () => void;
   onReset?: () => void;
+  // Conversion-Banner inline im Hero (Free→Business/Business→Enterprise)
+  usage?: { analysisCount?: number; limit?: number; plan?: string } | null;
+  userPlan?: string | null;
 }
 
 // Erkennt eine kaputte/unvollständige Analyse:
@@ -152,7 +156,7 @@ function pickDocTypeLabel(d: AnalysisData): string {
   return fallback;
 }
 
-export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset }: Props) {
+export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, usage, userPlan }: Props) {
   const d = data;
   const score = d.contractScore;
   const variant = getScoreVariant(score);
@@ -575,6 +579,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           </>
         )}
 
+        {/* Conversion-Banner inline im Hero — direkt nach Asymmetrie, max
+            Sichtbarkeit für Free→Business-Conversion (Wow-Effekt-Moment).
+            Banner rendert nur für Free/Business — Enterprise = null. */}
+        {(usage || userPlan) && (
+          <V2ConversionBanner usage={usage as Parameters<typeof V2ConversionBanner>[0]['usage']} userPlan={userPlan} />
+        )}
       </div>
     </>
   );
