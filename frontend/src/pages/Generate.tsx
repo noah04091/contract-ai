@@ -3565,9 +3565,6 @@ export default function Generate() {
 
   // 🔴 FIX 2: Loading State für PDF-Button
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
-  // In-Flight-Guard für "Zur Signatur"-Button — verhindert parallele PDF-Uploads
-  // beim Doppelklick (sonst doppelte S3-Keys, State-Desync mit DB möglich)
-  const [isSendingForSignature, setIsSendingForSignature] = useState<boolean>(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   
   // Company Profile State
@@ -5336,30 +5333,20 @@ export default function Generate() {
         const JSZip = (await import('jszip')).default;
         const zip = new JSZip();
 
-        // Haupt-PDF hinzufügen (wenn gespeichert) via pdf-v2 (React-PDF, stabil)
-        // Der frühere /download-pdf Endpoint existiert nicht im Backend — verursachte
-        // silent data loss (ZIP ohne Hauptvertrag, kein Toast).
+        // Haupt-PDF hinzufügen (wenn gespeichert)
         if (savedContractId && contractS3Key) {
           try {
+            const token = localStorage.getItem("token");
             const pdfResponse = await fetch(
-              `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/pdf-v2`,
-              {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ design: selectedDesignVariant })
-              }
+              `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/download-pdf?design=${selectedDesignVariant}`,
+              { headers: { Authorization: `Bearer ${token}` } }
             );
             if (pdfResponse.ok) {
               const pdfBlob = await pdfResponse.blob();
               zip.file(`${contractData.contractType || 'vertrag'}.pdf`, pdfBlob);
-            } else {
-              console.warn("Haupt-PDF konnte nicht in ZIP eingebunden werden:", pdfResponse.status);
-              toast.warn('Hauptvertrag konnte nicht in ZIP eingebunden werden — bitte separat herunterladen.');
             }
           } catch (err) {
             console.error("Fehler beim Laden des Haupt-PDFs:", err);
-            toast.warn('Hauptvertrag konnte nicht in ZIP eingebunden werden — bitte separat herunterladen.');
           }
         }
 
@@ -5582,9 +5569,6 @@ export default function Generate() {
 
   // 🔐 Handler for "Zur Signatur versenden" Button
   const handleSendForSignature = async () => {
-    // In-Flight-Guard: verhindert parallele Aufrufe bei Doppelklick
-    if (isSendingForSignature) return;
-
     // Check if saved
     if (!saved || !savedContractId) {
       toast.error("Bitte speichern Sie den Vertrag zuerst", {
@@ -5593,8 +5577,6 @@ export default function Generate() {
       });
       return;
     }
-
-    setIsSendingForSignature(true);
 
     // Show loading toast
     const loadingToast = toast.loading("PDF wird vorbereitet...", {
@@ -5627,8 +5609,6 @@ export default function Generate() {
         position: "top-right",
         autoClose: 5000
       });
-    } finally {
-      setIsSendingForSignature(false);
     }
   };
 
@@ -6772,22 +6752,14 @@ export default function Generate() {
                         </motion.button>
                         <motion.button
                           onClick={handleSendForSignature}
-                          disabled={!saved || !savedContractId || isSendingForSignature}
+                          disabled={!saved || !savedContractId}
                           className={`${styles.step3HeaderBtn} ${styles.accent}`}
-                          whileHover={saved && !isSendingForSignature ? { scale: 1.02 } : {}}
-                          whileTap={saved && !isSendingForSignature ? { scale: 0.98 } : {}}
-                          title={
-                            isSendingForSignature ? "PDF wird vorbereitet…" :
-                            !saved ? "Bitte speichern Sie den Vertrag zuerst" :
-                            "Zur Signatur versenden"
-                          }
+                          whileHover={saved ? { scale: 1.02 } : {}}
+                          whileTap={saved ? { scale: 0.98 } : {}}
+                          title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
                         >
-                          {isSendingForSignature ? (
-                            <div className={styles.tinySpinner}></div>
-                          ) : (
-                            <Send size={16} />
-                          )}
-                          <span>{isSendingForSignature ? "Wird vorbereitet…" : "Zur Signatur"}</span>
+                          <Send size={16} />
+                          <span>Zur Signatur</span>
                         </motion.button>
                         <motion.button
                           onClick={handleOpenInBuilder}

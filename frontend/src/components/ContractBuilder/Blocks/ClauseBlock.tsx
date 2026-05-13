@@ -345,15 +345,15 @@ export const ClauseBlock: React.FC<ClauseBlockProps> = ({
             isPreview={isPreview}
             onDoubleClick={() => handleDoubleClick('body', body)}
           />
-        ) : !isPreview ? (
+        ) : (
           <span
             className={styles.placeholder}
-            onDoubleClick={() => handleDoubleClick('body', '')}
-            style={{ cursor: 'text' }}
+            onDoubleClick={() => !isPreview && handleDoubleClick('body', '')}
+            style={{ cursor: !isPreview ? 'text' : 'default' }}
           >
             Doppelklick zum Bearbeiten...
           </span>
-        ) : null}
+        )}
       </div>
 
       {/* Unterklauseln */}

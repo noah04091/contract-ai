@@ -297,12 +297,6 @@ const ContractBuilder: React.FC = () => {
         setLastAutoSaved(new Date());
       } catch (error) {
         console.error('[Auto-Save] Fehler:', error);
-        // Auto-Save-Fail: User informieren damit er manuell speichern kann.
-        // toastId dedupliciert wiederholte Auto-Save-Fails zu einem einzigen Toast.
-        toast.warn('Auto-Speichern fehlgeschlagen — bitte manuell speichern.', {
-          autoClose: 4000,
-          toastId: 'auto-save-fail'
-        });
       } finally {
         setIsAutoSaving(false);
       }
@@ -610,14 +604,6 @@ const ContractBuilder: React.FC = () => {
       setSaveSuccess(true);
       // Reset nach 2 Sekunden
       setTimeout(() => setSaveSuccess(false), 2000);
-    } catch (error) {
-      // Vorher: kein catch → Fehler wurden stillschweigend geschluckt,
-      // User glaubte gespeichert zu haben → Datenverlust-Risiko
-      console.error('[Save] Fehler:', error);
-      toast.error('Speichern fehlgeschlagen — bitte erneut versuchen.', {
-        position: 'top-right',
-        autoClose: 5000
-      });
     } finally {
       setIsSaving(false);
     }

@@ -482,30 +482,26 @@ export const BuilderCanvas: React.FC<BuilderCanvasProps> = ({ className }) => {
                       ref={setPageContentRef(pageIndex)}
                     >
                       {pageBlocks.length === 0 ? (
-                        // Im Preview-Mode (PDF-Export): leere Seite gar nicht rendern,
-                        // sonst erscheint "Seite N / Hierher scrollen..." als Vertragsinhalt im PDF.
-                        view === 'preview' ? null : (
-                          <div className={styles.emptyPage}>
-                            <span>Seite {pageIndex + 1}</span>
-                            <span className={styles.emptyPageHint}>
-                              {activePageIndex === pageIndex
-                                ? 'Blöcke werden hier eingefügt'
-                                : 'Hierher scrollen um Blöcke einzufügen'}
-                            </span>
-                            {pageIndex > 0 && (
-                              <button
-                                className={styles.deletePageButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteEmptyPage(pageIndex);
-                                }}
-                              >
-                                <Trash2 size={14} />
-                                <span>Leere Seite entfernen</span>
-                              </button>
-                            )}
-                          </div>
-                        )
+                        <div className={styles.emptyPage}>
+                          <span>Seite {pageIndex + 1}</span>
+                          <span className={styles.emptyPageHint}>
+                            {activePageIndex === pageIndex
+                              ? 'Blöcke werden hier eingefügt'
+                              : 'Hierher scrollen um Blöcke einzufügen'}
+                          </span>
+                          {pageIndex > 0 && view !== 'preview' && (
+                            <button
+                              className={styles.deletePageButton}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEmptyPage(pageIndex);
+                              }}
+                            >
+                              <Trash2 size={14} />
+                              <span>Leere Seite entfernen</span>
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         pageBlocks.map((block: Block) => (
                           <div key={block.id} ref={setBlockRef(block.id)}>
