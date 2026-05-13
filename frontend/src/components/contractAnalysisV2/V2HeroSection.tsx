@@ -9,7 +9,7 @@
 //
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 
@@ -208,10 +208,37 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // SVG Donut Math
   const radius = 68;
   const circumference = 2 * Math.PI * radius;
-  const displayScore = score == null ? "—" : Math.round(score);
+
+  // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
+  // Premium-Feel beim First-Render. Läuft nur 1x pro Score-Wert (key=score).
+  const [animatedScore, setAnimatedScore] = useState<number | null>(score == null ? null : 0);
+  const animRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (score == null) {
+      setAnimatedScore(null);
+      return;
+    }
+    const targetScore = Math.round(score);
+    const duration = 1400;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(targetScore * eased));
+      if (progress < 1) animRef.current = requestAnimationFrame(tick);
+    };
+    animRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (animRef.current != null) cancelAnimationFrame(animRef.current);
+    };
+  }, [score]);
+
+  const displayScore = animatedScore == null ? "—" : animatedScore;
   const offset = score == null
     ? circumference
-    : circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
+    : circumference - (Math.min(100, Math.max(0, animatedScore ?? 0)) / 100) * circumference;
 
   // Layman-Modus: laymanSummary statt scoreReasoning anzeigen
   const laymanArr = Array.isArray(d.laymanSummary) ? d.laymanSummary : (typeof d.laymanSummary === "string" ? [d.laymanSummary] : []);
