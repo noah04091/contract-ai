@@ -1503,15 +1503,18 @@ async function cleanAndRegenerateAIEvents(db, contract) {
     throw new Error('cleanAndRegenerateAIEvents: contract._id required');
   }
 
-  // 🔄 Re-Analyse = frischer Start für KI-Termine:
-  //   Wenn ein User per UI einen KI-Reminder gelöscht hat (status='dismissed'),
-  //   soll bei expliziter Re-Analyse dieser Status zurückgesetzt werden — der
-  //   User erwartet, dass eine Re-Analyse alle KI-extrahierten Termine neu
-  //   generiert (nicht „dauerhaft weg trotz Re-Analyse"). Manuelle Termine
-  //   (isManual: true) bleiben unangetastet — die hat der User selbst angelegt.
+  // 🛡️ User-Dismissed-Events bleiben erhalten (wiederhergestellt 13.05.2026):
+  //   Wenn ein User einen AI-Reminder per UI gelöscht hat, wurde er auf
+  //   status='dismissed' gesetzt. Diese Entscheidung bleibt persistent —
+  //   auch bei Re-Analyse. Grund: GPT-Variabilität bei Date-Extraction
+  //   (Junior-Timeouts, inkonsistente Kündigungsfrist-Interpretation) kann
+  //   bei „frischem Start" alle bestehenden Reminder zerstören. Lieber
+  //   „einmal bewusst gelöscht bleibt gelöscht" als „GPT-Inkonsistenz killt
+  //   Termine-Liste komplett". User wird im Delete-Modal klar gewarnt.
   const cleanupFilter = {
     contractId: contract._id,
     isManual: { $ne: true },
+    status: { $ne: 'dismissed' },
     $or: [
       { 'metadata.aiExtracted': true },
       { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } }
