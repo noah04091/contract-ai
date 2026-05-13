@@ -769,225 +769,118 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         );
       })()}
 
-      {/* 💡 Weitere Alternativen (generiert) — collapsable */}
+      {/* 💡 Weitere Alternativen (generiert) */}
       <div className={styles.analysisSection}>
-        <div
-          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
-          onClick={() => toggleSection('moreAlternatives')}
-        >
+        <div className={styles.sectionHeader}>
           <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>💡</span>
             Weitere Alternativen
-            {alternatives.length > 0 && (
-              <span className={styles.sectionCount}>{alternatives.length}</span>
-            )}
           </h4>
-          <span className={styles.sectionToggle}>
-            {expandedSections.has('moreAlternatives') ? '▼' : '▶'}
-          </span>
+          {alternatives.length === 0 && !isGeneratingAlternatives && (
+            <button
+              className={styles.actionButton}
+              onClick={onLoadAlternatives}
+            >
+              Generieren
+            </button>
+          )}
         </div>
-        {expandedSections.has('moreAlternatives') && (
-          <>
-            {alternatives.length === 0 && !isGeneratingAlternatives && (
-              <button
-                className={styles.actionButton}
-                onClick={(e) => { e.stopPropagation(); onLoadAlternatives(); }}
-                style={{ marginTop: '0.5rem' }}
-              >
-                Generieren
-              </button>
-            )}
-            {isGeneratingAlternatives ? (
-              <div className={styles.loadingOverlay}>
-                <div className={styles.loadingSpinner} />
-                <span className={styles.loadingText}>Generiere Alternativen...</span>
-              </div>
-            ) : alternatives.length > 0 ? (
-              <div className={styles.alternativesColumn}>
-                {alternatives.map((alt, idx) => (
-                  <div key={idx} className={styles.alternativeCard}>
-                    <p className={styles.alternativeCardText}>
-                      "{alt.text}"
-                    </p>
-                    {alt.benefits && alt.benefits.length > 0 && (
-                      <div className={styles.benefitsRow}>
-                        {alt.benefits.map((benefit, bIdx) => (
-                          <span key={bIdx} className={styles.benefitTag}>
-                            {benefit}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className={styles.difficultyRow}>
-                      <span
-                        className={styles.difficultyDot}
-                        style={{
-                          '--diff-color': alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
-                        } as React.CSSProperties}
-                      />
-                      <span>
-                        {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
-                         alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
+        {isGeneratingAlternatives ? (
+          <div className={styles.loadingOverlay}>
+            <div className={styles.loadingSpinner} />
+            <span className={styles.loadingText}>Generiere Alternativen...</span>
+          </div>
+        ) : alternatives.length > 0 ? (
+          <div className={styles.alternativesColumn}>
+            {alternatives.map((alt, idx) => (
+              <div key={idx} className={styles.alternativeCard}>
+                <p className={styles.alternativeCardText}>
+                  "{alt.text}"
+                </p>
+                {alt.benefits && alt.benefits.length > 0 && (
+                  <div className={styles.benefitsRow}>
+                    {alt.benefits.map((benefit, bIdx) => (
+                      <span key={bIdx} className={styles.benefitTag}>
+                        {benefit}
                       </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className={styles.emptyAlternativesText}>
-                Klick auf "Generieren", um weitere alternative Formulierungen zu bekommen.
-              </p>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* 🤝 Verhandlungstipps — collapsable */}
-      <div className={styles.analysisSection}>
-        <div
-          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
-          onClick={() => toggleSection('negotiationTips')}
-        >
-          <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>🤝</span>
-            Verhandlungstipps
-            {negotiation?.tips?.length ? (
-              <span className={styles.sectionCount}>{negotiation.tips.length}</span>
-            ) : null}
-          </h4>
-          <span className={styles.sectionToggle}>
-            {expandedSections.has('negotiationTips') ? '▼' : '▶'}
-          </span>
-        </div>
-        {expandedSections.has('negotiationTips') && (
-          <>
-            {!negotiation && !isGeneratingNegotiation && (
-              <button
-                className={styles.actionButton}
-                onClick={(e) => { e.stopPropagation(); onLoadNegotiation(); }}
-                style={{ marginTop: '0.5rem' }}
-              >
-                Generieren
-              </button>
-            )}
-            {isGeneratingNegotiation ? (
-              <div className={styles.loadingOverlay}>
-                <div className={styles.loadingSpinner} />
-                <span className={styles.loadingText}>Generiere Verhandlungstipps...</span>
-              </div>
-            ) : negotiation ? (
-              <>
-                <p className={styles.explanationText}>{negotiation.argument}</p>
-                {negotiation.tips?.length > 0 && (
-                  <div className={styles.negotiationTips}>
-                    {negotiation.tips.map((tip, idx) => (
-                      <div key={idx} className={styles.tipItem}>
-                        <span className={styles.tipIcon}>💡</span>
-                        <span>{tip}</span>
-                      </div>
                     ))}
                   </div>
                 )}
-                {negotiation.emailTemplate && (
-                  <>
-                    <pre className={styles.emailTemplate}>{negotiation.emailTemplate}</pre>
-                    <button className={styles.copyButton} onClick={copyEmailTemplate}>
-                      {copiedTemplate ? '✓ Kopiert!' : '📋 E-Mail-Vorlage kopieren'}
-                    </button>
-                  </>
-                )}
-              </>
-            ) : (
-              <p className={styles.explanationText}>
-                Klick auf "Generieren", um Verhandlungstipps zu bekommen.
-              </p>
-            )}
-          </>
+                <div className={styles.difficultyRow}>
+                  <span
+                    className={styles.difficultyDot}
+                    style={{
+                      '--diff-color': alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
+                    } as React.CSSProperties}
+                  />
+                  <span>
+                    {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
+                     alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className={styles.emptyAlternativesText}>
+            Klick auf "Generieren", um weitere alternative Formulierungen zu bekommen.
+          </p>
         )}
       </div>
 
-      {/* 💬 Chat Section — collapsable */}
-      <div className={styles.chatSection}>
-        <div
-          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
-          onClick={() => toggleSection('chat')}
-        >
-          <h4 className={styles.chatTitle}>
-            <span className={styles.sectionIcon}>💬</span>
-            Fragen zur Klausel
-            {chatHistory.length > 0 && (
-              <span className={styles.sectionCount}>{chatHistory.length}</span>
-            )}
+      {/* 🤝 Verhandlungstipps */}
+      <div className={styles.analysisSection}>
+        <div className={styles.sectionHeader}>
+          <h4 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>🤝</span>
+            Verhandlungstipps
           </h4>
-          <span className={styles.sectionToggle}>
-            {expandedSections.has('chat') ? '▼' : '▶'}
-          </span>
+          {!negotiation && !isGeneratingNegotiation && (
+            <button
+              className={styles.actionButton}
+              onClick={onLoadNegotiation}
+            >
+              Generieren
+            </button>
+          )}
         </div>
-        {expandedSections.has('chat') && (
+        {isGeneratingNegotiation ? (
+          <div className={styles.loadingOverlay}>
+            <div className={styles.loadingSpinner} />
+            <span className={styles.loadingText}>Generiere Verhandlungstipps...</span>
+          </div>
+        ) : negotiation ? (
           <>
-            {(chatHistory.length > 0 || isChatting) && (
-              <div className={styles.chatMessages} ref={chatMessagesRef}>
-                {chatHistory.map((msg, idx) => (
-                  <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
-                    <div className={styles.messageContent}>
-                      {msg.content}
-                    </div>
+            <p className={styles.explanationText}>{negotiation.argument}</p>
+            {negotiation.tips?.length > 0 && (
+              <div className={styles.negotiationTips}>
+                {negotiation.tips.map((tip, idx) => (
+                  <div key={idx} className={styles.tipItem}>
+                    <span className={styles.tipIcon}>💡</span>
+                    <span>{tip}</span>
                   </div>
-                ))}
-                {isChatting && (
-                  <div className={`${styles.chatMessage} ${styles.assistant}`}>
-                    <div className={styles.messageContent}>
-                      <div className={styles.typingIndicator}>
-                        <span className={styles.typingDot}></span>
-                        <span className={styles.typingDot}></span>
-                        <span className={styles.typingDot}></span>
-                        <span className={styles.typingText}>Antwort wird erstellt...</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Smart Quick Questions */}
-            {chatHistory.length === 0 && quickQuestions.length > 0 && !isChatting && (
-              <div className={styles.quickQuestions}>
-                {quickQuestions.map((q, idx) => (
-                  <button
-                    key={idx}
-                    className={styles.quickQuestionChip}
-                    onClick={() => onSendChatMessage(q)}
-                  >
-                    {q}
-                  </button>
                 ))}
               </div>
             )}
-
-            <div className={styles.chatInputContainer}>
-              <textarea
-                className={styles.chatInput}
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Stelle eine Frage zu dieser Klausel..."
-                rows={1}
-              />
-              <button
-                className={styles.chatSendButton}
-                onClick={handleSendMessage}
-                disabled={!chatInput.trim() || isChatting}
-              >
-                ➤
-              </button>
-            </div>
+            {negotiation.emailTemplate && (
+              <>
+                <pre className={styles.emailTemplate}>{negotiation.emailTemplate}</pre>
+                <button className={styles.copyButton} onClick={copyEmailTemplate}>
+                  {copiedTemplate ? '✓ Kopiert!' : '📋 E-Mail-Vorlage kopieren'}
+                </button>
+              </>
+            )}
           </>
+        ) : (
+          <p className={styles.explanationText}>
+            Klick auf "Generieren", um Verhandlungstipps zu bekommen.
+          </p>
         )}
       </div>
 
-      {/* 🧪 Klausel-Simulator — kompakter Trigger statt großer Sektion */}
+      {/* 🧪 Klausel-Simulator */}
       {originalClauseText && sourceContractId && (
-        <div className={styles.simulatorTrigger}>
+        <div className={styles.analysisSection}>
           <button
             className={styles.simulatorTriggerBtn}
             onClick={() => setShowSimulator(true)}
@@ -996,6 +889,71 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </button>
         </div>
       )}
+
+      {/* 💬 Chat Section */}
+      <div className={styles.chatSection}>
+        <div className={styles.chatHeader}>
+          <span>💬</span>
+          <h4 className={styles.chatTitle}>Fragen zur Klausel</h4>
+        </div>
+
+        {(chatHistory.length > 0 || isChatting) && (
+          <div className={styles.chatMessages} ref={chatMessagesRef}>
+            {chatHistory.map((msg, idx) => (
+              <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
+                <div className={styles.messageContent}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {isChatting && (
+              <div className={`${styles.chatMessage} ${styles.assistant}`}>
+                <div className={styles.messageContent}>
+                  <div className={styles.typingIndicator}>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingDot}></span>
+                    <span className={styles.typingText}>Antwort wird erstellt...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Smart Quick Questions */}
+        {chatHistory.length === 0 && quickQuestions.length > 0 && !isChatting && (
+          <div className={styles.quickQuestions}>
+            {quickQuestions.map((q, idx) => (
+              <button
+                key={idx}
+                className={styles.quickQuestionChip}
+                onClick={() => onSendChatMessage(q)}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.chatInputContainer}>
+          <textarea
+            className={styles.chatInput}
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Stelle eine Frage zu dieser Klausel..."
+            rows={1}
+          />
+          <button
+            className={styles.chatSendButton}
+            onClick={handleSendMessage}
+            disabled={!chatInput.trim() || isChatting}
+          >
+            ➤
+          </button>
+        </div>
+      </div>
 
       {/* Klausel-Vergleichs-Modal */}
       <ClauseCompareModal
