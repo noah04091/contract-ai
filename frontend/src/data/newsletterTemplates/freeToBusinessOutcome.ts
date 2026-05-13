@@ -1,7 +1,7 @@
 import type { NewsletterTemplate } from './index';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1750277120336-ca98ec2e2f90?w=1200&q=80&auto=format&fit=crop';
-const PROMO_CODE = 'BUSINESS10';
+const PROMO_CODE = 'AKTION10';
 const PROMO_PERCENT = '10';
 const PROMO_DAYS = '7';
 
@@ -104,14 +104,14 @@ ${PROMO_PERCENT}% Rabatt mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. 
                     Schutz zum Sonderpreis &middot; nur ${PROMO_DAYS} Tage
                   </div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.3px;">
-                    ${PROMO_PERCENT}&thinsp;% Rabatt auf Business
+                    ${PROMO_PERCENT}&thinsp;% Rabatt f&uuml;r 3 Monate
                   </div>
                   <div style="margin-top:18px;display:inline-block;padding:12px 22px;background-color:rgba(59,130,246,0.18);border:1px dashed #3b82f6;border-radius:8px;">
                     <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:9px;color:#bfdbfe;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Dein Code</div>
                     <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#ffffff;font-weight:700;letter-spacing:6px;">${PROMO_CODE}</div>
                   </div>
                   <p style="margin:20px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#cbd5e1;">
-                    Beim Checkout einl&ouml;sen. Gilt ${PROMO_DAYS} Tage. Nur f&uuml;r dich.
+                    Business + Enterprise &middot; Im Jahresabo: 10 % auf das ganze Jahr.
                   </p>
                 </td>
               </tr>
@@ -304,7 +304,7 @@ ${PROMO_PERCENT}% Rabatt mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. 
                     Sch&uuml;tz dich,<br>bevor es teuer wird.
                   </h3>
                   <p style="margin:16px 0 28px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#dbeafe;">
-                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sicherst du dir ${PROMO_PERCENT}&thinsp;% Rabatt.
+                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sicherst du dir ${PROMO_PERCENT}&thinsp;% f&uuml;r 3 Monate. Im Jahresabo: aufs ganze Jahr.
                   </p>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
                     <tr>
@@ -352,9 +352,9 @@ export const freeToBusinessOutcomeTemplate: NewsletterTemplate = {
   label: 'Free → Business · Schutz-Sprache',
   description: 'Outcome-Sprache (erkennen/schützen/absichern) statt Feature-Listen. 4 Sections "Du erkennst es vorher / bleibst informiert / verhandelst stärker / entscheidest klüger". Mit Social Proof + Pain-Reflection.',
   subject: 'Viele Verträge wirken harmlos — bis sie dich Geld kosten',
-  preheader: '10% Rabatt mit Code BUSINESS10 — nur 7 Tage. Was du nicht erkennst, kostet dich später.',
+  preheader: '10% Rabatt mit Code AKTION10 — nur 7 Tage. Was du nicht erkennst, kostet dich später.',
   title: 'Viele Verträge wirken harmlos. Bis sie dich Geld kosten.',
   ctaText: 'Jetzt Verträge smarter absichern',
-  ctaUrl: 'https://contract-ai.de/pricing?code=BUSINESS10',
+  ctaUrl: 'https://contract-ai.de/pricing?code=AKTION10',
   body
 };

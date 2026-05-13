@@ -1,7 +1,7 @@
 import type { NewsletterTemplate } from './index';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1750277120336-ca98ec2e2f90?w=1200&q=80&auto=format&fit=crop';
-const PROMO_CODE = 'BUSINESS10';
+const PROMO_CODE = 'AKTION10';
 const PROMO_PERCENT = '10';
 const PROMO_DAYS = '7';
 
@@ -41,7 +41,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f5f3ee;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f5f3ee;">
-${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. Versteckte Risiken in deinen Vertr&auml;gen kosten dich oft mehr, als du denkst.
+${PROMO_PERCENT}% Rabatt f&uuml;r 3 Monate mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. Versteckte Risiken in deinen Vertr&auml;gen kosten dich oft mehr, als du denkst.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ee;">
@@ -96,14 +96,14 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     Launch-Aktion &middot; nur ${PROMO_DAYS} Tage
                   </div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.3px;">
-                    ${PROMO_PERCENT}&thinsp;% Rabatt auf Business
+                    ${PROMO_PERCENT}&thinsp;% Rabatt f&uuml;r 3 Monate
                   </div>
                   <div style="margin-top:18px;display:inline-block;padding:12px 22px;background-color:rgba(59,130,246,0.18);border:1px dashed #3b82f6;border-radius:8px;">
                     <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:9px;color:#bfdbfe;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Dein Code</div>
                     <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#ffffff;font-weight:700;letter-spacing:6px;">${PROMO_CODE}</div>
                   </div>
                   <p style="margin:20px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#cbd5e1;">
-                    Code beim Checkout einl&ouml;sen. Gilt nur ${PROMO_DAYS} Tage und nur f&uuml;r dich.
+                    Business + Enterprise &middot; Im Jahresabo: 10 % auf das ganze Jahr.
                   </p>
                 </td>
               </tr>
@@ -290,7 +290,7 @@ ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO
                     Vertr&auml;ge sollten<br>f&uuml;r dich arbeiten.
                   </h3>
                   <p style="margin:16px 0 28px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#dbeafe;">
-                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sparst du ${PROMO_PERCENT}&thinsp;%.
+                    Mit Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> sparst du ${PROMO_PERCENT}&thinsp;% f&uuml;r 3 Monate. Im Jahresabo: aufs ganze Jahr.
                   </p>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
                     <tr>
@@ -338,9 +338,9 @@ export const freeToBusinessEditorialTemplate: NewsletterTemplate = {
   label: 'Free → Business · Editorial',
   description: 'Klassisches Editorial-Premium-Layout. 4 Number-Sections (Mehr Sicherheit/Kontrolle/Optimierung/Professionalität) + Vergleichstabelle + Sand-Quote. Ausführlich, ruhig, professionell.',
   subject: 'Verträge kosten dich oft mehr, als du denkst',
-  preheader: '10% Rabatt auf Business mit Code BUSINESS10 — nur 7 Tage.',
+  preheader: '10% Rabatt für 3 Monate mit Code AKTION10 — nur 7 Tage. Beim Jahresabo: aufs ganze Jahr.',
   title: 'Verträge kosten dich oft mehr, als du denkst',
   ctaText: 'Business jetzt freischalten',
-  ctaUrl: 'https://contract-ai.de/pricing?code=BUSINESS10',
+  ctaUrl: 'https://contract-ai.de/pricing?code=AKTION10',
   body
 };

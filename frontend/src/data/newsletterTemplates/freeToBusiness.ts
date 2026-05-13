@@ -1,7 +1,7 @@
 import type { NewsletterTemplate } from './index';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1750277120336-ca98ec2e2f90?w=1200&q=80&auto=format&fit=crop';
-const PROMO_CODE = 'BUSINESS10';
+const PROMO_CODE = 'AKTION10';
 const PROMO_PERCENT = '10';
 const PROMO_DAYS = '7';
 
@@ -37,7 +37,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f5f3ee;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f5f3ee;">
-Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt auf Business mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage.
+Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt f&uuml;r 3 Monate mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f3ee;">
@@ -110,12 +110,15 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt auf Business 
                     Nur noch ${PROMO_DAYS} Tage
                   </div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;line-height:1.25;color:#ffffff;font-weight:700;letter-spacing:-0.3px;">
-                    ${PROMO_PERCENT}&thinsp;% Rabatt auf Business
+                    ${PROMO_PERCENT}&thinsp;% Rabatt f&uuml;r 3 Monate
                   </div>
                   <div style="margin-top:18px;display:inline-block;padding:12px 22px;background-color:rgba(59,130,246,0.18);border:1px dashed #3b82f6;border-radius:8px;">
                     <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:9px;color:#bfdbfe;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Dein Code</div>
                     <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#ffffff;font-weight:700;letter-spacing:6px;">${PROMO_CODE}</div>
                   </div>
+                  <p style="margin:18px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.6;color:#cbd5e1;">
+                    Business + Enterprise &middot; Im Jahresabo: 10 % auf das ganze Jahr.
+                  </p>
                 </td>
               </tr>
             </table>
@@ -264,7 +267,7 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt auf Business 
                     Sch&uuml;tz dich,<br>bevor's teuer wird.
                   </h3>
                   <p style="margin:14px 0 24px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#dbeafe;">
-                    Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> beim Checkout. ${PROMO_PERCENT}&thinsp;% Rabatt.
+                    Code <strong style="color:#ffffff;letter-spacing:2px;">${PROMO_CODE}</strong> &middot; ${PROMO_PERCENT}&thinsp;% f&uuml;r 3 Monate. Im Jahresabo: aufs ganze Jahr.
                   </p>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
                     <tr>
@@ -312,9 +315,9 @@ export const freeToBusinessTemplate: NewsletterTemplate = {
   label: 'Free → Business · Pattern-Interrupt',
   description: 'Verkaufs-psychologisch durchstrukturiert. Frage als Hook ("Wann hast du das letzte Mal einen Vertrag wirklich gelesen?"), 3 Feature-Stories (Frühwarnung/Bessere Klauseln/Vertrag antwortet), Founder-Voice, Preis-Anchoring. (Aktuelle Empfehlung.)',
   subject: 'Wann hast du das letzte Mal einen Vertrag wirklich gelesen?',
-  preheader: 'Geht den meisten so. Genau deshalb gibt\'s 10% auf Business — 7 Tage.',
+  preheader: 'Geht den meisten so. Jetzt 10% Rabatt für 3 Monate mit Code AKTION10.',
   title: 'Wann hast du das letzte Mal einen Vertrag wirklich gelesen?',
   ctaText: 'Business jetzt freischalten',
-  ctaUrl: 'https://contract-ai.de/pricing?code=BUSINESS10',
+  ctaUrl: 'https://contract-ai.de/pricing?code=AKTION10',
   body
 };
