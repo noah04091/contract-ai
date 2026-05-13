@@ -100,8 +100,21 @@ export default function AnalysisImportantDates({
 
   // 📅 View-Toggle: Zeitstrahl-Ansicht (vertikale Linie mit Severity-Dots
   // und HEUTE-Divider) oder Listen-Ansicht (Detail-Karten mit Emoji-Severity).
-  // Default 'list' — historisch erprobt und mit Add/Delete-Buttons direkt am Item.
-  const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
+  // Default 'timeline' — visuell wertvoller für First-Impression bei Free-Usern
+  // (Conversion-Optimierung). User-Wahl wird in LocalStorage persistiert, damit
+  // Power-User auf 'list' bleiben können wenn sie das einmal gewählt haben.
+  const [viewMode, setViewMode] = useState<"list" | "timeline">(() => {
+    if (typeof window === "undefined") return "timeline";
+    try {
+      const saved = localStorage.getItem("analysisTimelineView");
+      if (saved === "list" || saved === "timeline") return saved;
+    } catch { /* localStorage geblockt (Safari Private) — Default greift */ }
+    return "timeline";
+  });
+  const updateViewMode = (mode: "list" | "timeline") => {
+    setViewMode(mode);
+    try { localStorage.setItem("analysisTimelineView", mode); } catch { /* localStorage geblockt — UI funktioniert trotzdem */ }
+  };
 
   // Termin-löschen-Modal: User klickt auf × → Confirmation. AI-Events werden via dismiss
   // gelöscht (verhindert Wiederkehr bei Re-Analyse via cleanupFilter-Schutz im Backend),
@@ -479,7 +492,7 @@ export default function AnalysisImportantDates({
                   role="tab"
                   aria-selected={viewMode === "list"}
                   className={`${styles.viewToggleBtn} ${viewMode === "list" ? styles.viewToggleBtnActive : ""}`}
-                  onClick={() => setViewMode("list")}
+                  onClick={() => updateViewMode("list")}
                 >
                   Liste
                 </button>
@@ -488,7 +501,7 @@ export default function AnalysisImportantDates({
                   role="tab"
                   aria-selected={viewMode === "timeline"}
                   className={`${styles.viewToggleBtn} ${viewMode === "timeline" ? styles.viewToggleBtnActive : ""}`}
-                  onClick={() => setViewMode("timeline")}
+                  onClick={() => updateViewMode("timeline")}
                 >
                   Zeitstrahl
                 </button>
