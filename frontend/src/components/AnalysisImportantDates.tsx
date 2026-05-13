@@ -552,17 +552,18 @@ export default function AnalysisImportantDates({
                   return (
                     <div style={{ position: "relative", padding: "8px 0" }}>
                       {/* DURCHGEHENDE VERTIKALE LINIE — geht durch alle Dot-Center.
-                          Dunkler + dicker damit auf weißem BG klar sichtbar. */}
+                          top/bottom: 0 statt 16 — damit Linie auch bei kurzen Streams
+                          und in framer-motion-Stacking-Context sichtbar bleibt.
+                          Farbe #94a3b8 (slate-400) für klaren Kontrast auf weißem BG. */}
                       <div
                         aria-hidden="true"
                         style={{
                           position: "absolute",
-                          left: 18,
-                          top: 16,
-                          bottom: 16,
-                          width: 3,
-                          background: "linear-gradient(to bottom, #cbd5e1 0%, #cbd5e1 100%)",
-                          borderRadius: 2,
+                          left: 19,
+                          top: 0,
+                          bottom: 0,
+                          width: 2,
+                          background: "#94a3b8",
                           zIndex: 0,
                         }}
                       />
