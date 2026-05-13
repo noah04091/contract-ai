@@ -79,6 +79,7 @@ const ArbeitsvertragPruefen = lazy(() => import("./pages/landing/ArbeitsvertragP
 const MietvertragPruefen = lazy(() => import("./pages/landing/MietvertragPruefen"));
 const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 const KaufvertragPruefen = lazy(() => import("./pages/landing/KaufvertragPruefen"));
+const AgenturvertragPruefen = lazy(() => import("./pages/landing/AgenturvertragPruefen"));
 
 // 🏢 B2B / Team-Landingpage (für Agenturen, Verwaltungen, Berater)
 const FuerAgenturen = lazy(() => import("./pages/FuerAgenturen"));
@@ -222,6 +223,7 @@ function AppWithLoader() {
             <Route path="/mietvertrag-pruefen" element={<MietvertragPruefen />} />
             <Route path="/nda-pruefen" element={<NdaPruefen />} />
             <Route path="/kaufvertrag-pruefen" element={<KaufvertragPruefen />} />
+            <Route path="/agenturvertrag-pruefen" element={<AgenturvertragPruefen />} />
 
             {/* 🏢 B2B / Team-Landingpage */}
             <Route path="/fuer-agenturen" element={<FuerAgenturen />} />

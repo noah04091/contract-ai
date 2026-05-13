@@ -53,6 +53,7 @@ const Footer: React.FC = () => {
                 <li><Link to="/mietvertrag-pruefen">Mietvertrag prüfen</Link></li>
                 <li><Link to="/nda-pruefen">NDA prüfen</Link></li>
                 <li><Link to="/kaufvertrag-pruefen">Kaufvertrag prüfen</Link></li>
+                <li><Link to="/agenturvertrag-pruefen">Agenturvertrag prüfen</Link></li>
               </ul>
             </div>
 
