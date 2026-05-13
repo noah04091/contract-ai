@@ -355,10 +355,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   // Prüfe ob "Auf einen Blick" ANDERS ist als "Was bedeutet das?" (Erklärung)
   const explanationText = perspectiveData?.explanation?.simple ||
     perspectiveData?.explanation?.summary || '';
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const showOneSentenceSummary = oneSentenceSummary &&
-    oneSentenceSummary !== explanationText &&
-    oneSentenceSummary.length > 10;
+  void oneSentenceSummary; void explanationText; // reserved für künftige Summary-Logik
 
   // ✅ Phase 2 Task 2.3: Risk-Score Erklärung Helper
   const getRiskScoreInfo = (score: number) => {
