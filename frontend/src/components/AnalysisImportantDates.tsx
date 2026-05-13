@@ -551,16 +551,18 @@ export default function AnalysisImportantDates({
                   // im Container, Dots sind in einer 40px-Spalte links.
                   return (
                     <div style={{ position: "relative", padding: "8px 0" }}>
-                      {/* DURCHGEHENDE VERTIKALE LINIE — geht durch alle Dot-Center */}
+                      {/* DURCHGEHENDE VERTIKALE LINIE — geht durch alle Dot-Center.
+                          Dunkler + dicker damit auf weißem BG klar sichtbar. */}
                       <div
                         aria-hidden="true"
                         style={{
                           position: "absolute",
-                          left: 19,
-                          top: 12,
-                          bottom: 12,
-                          width: 2,
-                          background: "#e2e8f0",
+                          left: 18,
+                          top: 16,
+                          bottom: 16,
+                          width: 3,
+                          background: "linear-gradient(to bottom, #cbd5e1 0%, #cbd5e1 100%)",
+                          borderRadius: 2,
                           zIndex: 0,
                         }}
                       />
@@ -624,12 +626,12 @@ export default function AnalysisImportantDates({
                                   title="Termin entfernen"
                                   style={{
                                     flexShrink: 0,
-                                    width: 26,
-                                    height: 26,
+                                    width: 28,
+                                    height: 28,
                                     borderRadius: 7,
-                                    border: "1px solid #e5e7eb",
-                                    background: "#fff",
-                                    color: "#94a3b8",
+                                    border: "1px solid #cbd5e1",
+                                    background: "#f8fafc",
+                                    color: "#475569",
                                     cursor: "pointer",
                                     display: "grid",
                                     placeItems: "center",
@@ -642,12 +644,12 @@ export default function AnalysisImportantDates({
                                     e.currentTarget.style.borderColor = "#fecaca";
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "#fff";
-                                    e.currentTarget.style.color = "#94a3b8";
-                                    e.currentTarget.style.borderColor = "#e5e7eb";
+                                    e.currentTarget.style.background = "#f8fafc";
+                                    e.currentTarget.style.color = "#475569";
+                                    e.currentTarget.style.borderColor = "#cbd5e1";
                                   }}
                                 >
-                                  <Trash2 size={13} aria-hidden="true" />
+                                  <Trash2 size={15} aria-hidden="true" />
                                 </button>
                               )}
                             </div>

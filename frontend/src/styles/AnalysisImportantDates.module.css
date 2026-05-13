@@ -247,12 +247,12 @@
    Nur für Business+ User (canDelete) gerendert. */
 .eventDeleteBtn {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 7px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
   cursor: pointer;
   display: grid;
   place-items: center;
