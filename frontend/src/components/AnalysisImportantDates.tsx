@@ -546,27 +546,12 @@ export default function AnalysisImportantDates({
                   const firstFutureIdx = sortedEvents.findIndex((e) => getDaysUntil(e.date) >= 0);
                   const hasPast = firstFutureIdx > 0;
                   const hasFuture = firstFutureIdx !== -1 && firstFutureIdx < sortedEvents.length;
-                  // Echter Zeitstrahl: durchgehende vertikale Linie + SVG-Dots pro Event.
-                  // SVG-Dots sind robust gegen CSS-Module-Konflikte. Linie ist absolute
-                  // im Container, Dots sind in einer 40px-Spalte links.
+                  // Echter Zeitstrahl: border-left auf jedem Event = unkaputtbare Linie.
+                  // Funktioniert auch bei framer-motion-Stacking-Context, CSS-Module-Konflikten
+                  // oder anderen unbekannten Layout-Problemen. Pro Event eine 2px-Border-Linie
+                  // links, durch fehlende vertikale Margins entsteht ein durchgehender Strang.
                   return (
-                    <div style={{ position: "relative", padding: "8px 0" }}>
-                      {/* DURCHGEHENDE VERTIKALE LINIE — geht durch alle Dot-Center.
-                          top/bottom: 0 statt 16 — damit Linie auch bei kurzen Streams
-                          und in framer-motion-Stacking-Context sichtbar bleibt.
-                          Farbe #94a3b8 (slate-400) für klaren Kontrast auf weißem BG. */}
-                      <div
-                        aria-hidden="true"
-                        style={{
-                          position: "absolute",
-                          left: 19,
-                          top: 0,
-                          bottom: 0,
-                          width: 2,
-                          background: "#94a3b8",
-                          zIndex: 0,
-                        }}
-                      />
+                    <div>
                       {sortedEvents.map((event, idx) => {
                         const days = getDaysUntil(event.date);
                         const sev: "urgent" | "soon" | "past" | "future" =
@@ -583,29 +568,69 @@ export default function AnalysisImportantDates({
                           : "#eff6ff";
                         const showDivider = hasPast && hasFuture && idx === firstFutureIdx;
                         return (
-                          <div key={event.id} style={{ position: "relative" }}>
+                          <div key={event.id}>
                             {showDivider && (
-                              <div style={{ position: "relative", padding: "14px 0", display: "flex", alignItems: "center", zIndex: 2 }}>
-                                <div style={{ width: 40, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-                                  <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#2563eb", border: "3px solid #fff", boxShadow: "0 0 0 2px #2563eb" }} />
-                                </div>
-                                <span style={{ marginLeft: 4, background: "#2563eb", color: "#fff", padding: "3px 12px", borderRadius: 999, fontSize: 10, fontWeight: 700, letterSpacing: 1.2 }}>HEUTE</span>
+                              <div style={{
+                                position: "relative",
+                                marginLeft: 19,
+                                borderLeft: "2px solid #2563eb",
+                                paddingLeft: 32,
+                                paddingTop: 14,
+                                paddingBottom: 14,
+                                display: "flex",
+                                alignItems: "center",
+                              }}>
+                                {/* HEUTE-Dot zentriert auf border */}
+                                <div style={{
+                                  position: "absolute",
+                                  left: -9,
+                                  top: "50%",
+                                  transform: "translateY(-50%)",
+                                  width: 16,
+                                  height: 16,
+                                  borderRadius: "50%",
+                                  background: "#2563eb",
+                                  border: "3px solid #fff",
+                                  boxShadow: "0 0 0 2px #2563eb",
+                                }} />
+                                <span style={{
+                                  background: "#2563eb",
+                                  color: "#fff",
+                                  padding: "3px 12px",
+                                  borderRadius: 999,
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  letterSpacing: 1.2,
+                                }}>HEUTE</span>
                               </div>
                             )}
-                            <div style={{ display: "flex", alignItems: "flex-start", padding: "14px 0", position: "relative", zIndex: 1 }}>
-                              {/* DOT-SPALTE — 40px breit, SVG-Circle in der Mitte */}
-                              <div style={{ width: 40, flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: 2 }}>
-                                <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" style={{ display: "block" }}>
-                                  {/* Outer ring (hellfarbig) */}
-                                  <circle cx="11" cy="11" r="10" fill={dotRing} />
-                                  {/* White separator */}
-                                  <circle cx="11" cy="11" r="7.5" fill="#ffffff" />
-                                  {/* Inner colored dot */}
-                                  <circle cx="11" cy="11" r="5" fill={dotColor} />
-                                </svg>
-                              </div>
+                            <div style={{
+                              position: "relative",
+                              marginLeft: 19,
+                              borderLeft: `2px solid ${sev === "past" ? "#cbd5e1" : "#94a3b8"}`,
+                              paddingLeft: 32,
+                              paddingTop: 14,
+                              paddingBottom: 14,
+                              display: "flex",
+                              alignItems: "flex-start",
+                            }}>
+                              {/* DOT — absolute zentriert auf der border-Linie */}
+                              <div
+                                aria-hidden="true"
+                                style={{
+                                  position: "absolute",
+                                  left: -10,
+                                  top: 16,
+                                  width: 18,
+                                  height: 18,
+                                  borderRadius: "50%",
+                                  background: dotColor,
+                                  border: "3px solid #ffffff",
+                                  boxShadow: `0 0 0 1px ${dotColor}, 0 0 0 5px ${dotRing}`,
+                                }}
+                              />
                               {/* CONTENT */}
-                              <div style={{ flex: 1, minWidth: 0, paddingLeft: 4 }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 2, flexWrap: "wrap" }}>
                                   <div style={{ fontSize: 13, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: sev === "past" ? "#64748b" : "#0f172a", minWidth: 88 }}>{formatDate(event.date)}</div>
                                   <div style={{ fontSize: 11.5, color: "#94a3b8" }}>{formatDaysUntil(days)}</div>
