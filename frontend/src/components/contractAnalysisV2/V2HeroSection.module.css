@@ -309,25 +309,34 @@
   .recognitionDesc { font-size: 13px; }
 }
 
-/* Loading-State für Reanalyze-Button: Spinner + visueller Pulse damit User
-   sofort sieht, dass die Analyse läuft (kein "App eingefroren"-Eindruck). */
+/* Loading-State für Reanalyze-Button: aktive Optik (NICHT disabled-grau),
+   sichtbarer Spinner + Pulse. Höhere Specificity überschreibt .fcBtn:disabled. */
 @keyframes v2Spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 .spinIcon {
-  animation: v2Spin 1s linear infinite;
+  animation: v2Spin 0.9s linear infinite;
   transform-origin: center;
 }
-.fcBtnLoading {
-  cursor: progress !important;
-  opacity: 0.85;
+.fcBtn.fcBtnLoading {
+  cursor: progress;
+  min-width: 154px;
+  justify-content: center;
 }
-.fcBtnLoading.fcBtnPrimary {
-  /* Subtle pulse damit User merkt, hier passiert was */
-  animation: v2BtnPulse 1.6s ease-in-out infinite;
+.fcBtn.fcBtnLoading:disabled {
+  /* Override des disabled-grau: Button bleibt vollfarbig + aktiv-Optik */
+  opacity: 1;
+  cursor: progress;
+}
+.fcBtnPrimary.fcBtnLoading {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  animation: v2BtnPulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
 }
 @keyframes v2BtnPulse {
-  0%, 100% { box-shadow: 0 1px 2px rgba(37, 99, 235, .25); }
-  50% { box-shadow: 0 0 0 4px rgba(37, 99, 235, .12); }
+  0%, 100% { box-shadow: 0 1px 2px rgba(16, 185, 129, 0.3), 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 1px 2px rgba(16, 185, 129, 0.3), 0 0 0 6px rgba(16, 185, 129, 0.18); }
 }
