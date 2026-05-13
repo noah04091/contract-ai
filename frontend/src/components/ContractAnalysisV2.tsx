@@ -19,6 +19,7 @@ import { useAuth } from "../context/AuthContext"; // 💬 User subscription chec
 import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
 import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
+import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // für v2UnifiedContainer-Wrapper
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
@@ -1040,7 +1041,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             const data = (result || initialResult) as Parameters<typeof V2HeroSection>[0]['data'];
             const failed = isFailedAnalysis(data);
             return (
-              <>
+              <div className={v2HeroStyles.v2UnifiedContainer}>
                 <V2HeroSection
                   data={data}
                   fileName={displayName}
@@ -1059,7 +1060,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                 {!failed && (
                   <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
                 )}
-              </>
+              </div>
             );
           })()}
 

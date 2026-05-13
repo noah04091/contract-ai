@@ -1,12 +1,13 @@
 /* AnalysisImportantDates — Termine & Erinnerungen in Analyse-Ergebnis */
 
 .container {
-  margin: 32px 0 24px;
+  /* Box-Soup entzaubert (13.05.2026): Termine sind innere Sektion des
+     v2UnifiedContainer, keine eigene Border/Shadow/Radius mehr.
+     border-top trennt visuell von der vorherigen Tabs-Sektion. */
+  margin: 0;
   padding: 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
 }
 
 /* Header */

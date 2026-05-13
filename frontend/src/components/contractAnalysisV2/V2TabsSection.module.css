@@ -1,7 +1,13 @@
 /* V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
    Ersetzt das alte 6-Card-Grid + Recommendations + typeSpecificFindings + detailedLegalOpinion. */
 
-.tabsContainer { background: #fff; border-bottom: 1px solid #f1f5f9; }
+.tabsContainer {
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+  /* Box-Soup entzaubert: keine eigene Border/Shadow/Radius, lebt im
+     v2UnifiedContainer-Wrapper als interne Sektion. Border-top trennt
+     visuell von der vorherigen Analyse-Card-Sektion. */
+}
 .tabs {
   border-bottom: 1px solid #e5e7eb;
   display: flex;

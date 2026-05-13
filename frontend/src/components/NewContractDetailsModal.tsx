@@ -18,6 +18,7 @@ import { isAnalysisV2Enabled } from "../utils/featureFlags";
 import V2HeroSection from "./contractAnalysisV2/V2HeroSection";
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection";
 import AnalysisImportantDates from "./AnalysisImportantDates";
+import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css";
 
 // Signature-related interfaces
 interface Signer {
@@ -2068,18 +2069,20 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       const data = contract as unknown as Parameters<typeof V2HeroSection>[0]['data'];
       return (
         <div className={styles.tabContent}>
-          <V2HeroSection
-            data={data}
-            fileName={contract.name || 'Vertrag'}
-            isInitialResult={true}
-          />
-          <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
-          {contract._id && (
-            <AnalysisImportantDates
-              contractId={String(contract._id)}
-              contractName={contract.name || 'Vertrag'}
+          <div className={v2HeroStyles.v2UnifiedContainer}>
+            <V2HeroSection
+              data={data}
+              fileName={contract.name || 'Vertrag'}
+              isInitialResult={true}
             />
-          )}
+            <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+            {contract._id && (
+              <AnalysisImportantDates
+                contractId={String(contract._id)}
+                contractName={contract.name || 'Vertrag'}
+              />
+            )}
+          </div>
         </div>
       );
     }
