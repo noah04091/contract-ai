@@ -613,22 +613,31 @@ export default function AnalysisImportantDates({
                               paddingBottom: 14,
                               display: "flex",
                               alignItems: "flex-start",
+                              borderBottom: idx < sortedEvents.length - 1 ? "1px solid #f1f5f9" : "none",
                             }}>
-                              {/* DOT — absolute zentriert auf der border-Linie */}
-                              <div
+                              {/* DOT als SVG — robust gegen Stacking-Context (negative left
+                                  wurde im div nicht gerendert). SVG mit overflow:visible
+                                  ragt aus dem Container heraus und sitzt mittig auf der Border. */}
+                              <svg
                                 aria-hidden="true"
+                                width="22"
+                                height="22"
+                                viewBox="0 0 22 22"
                                 style={{
                                   position: "absolute",
-                                  left: -10,
-                                  top: 16,
-                                  width: 18,
-                                  height: 18,
-                                  borderRadius: "50%",
-                                  background: dotColor,
-                                  border: "3px solid #ffffff",
-                                  boxShadow: `0 0 0 1px ${dotColor}, 0 0 0 5px ${dotRing}`,
+                                  left: -12,
+                                  top: 14,
+                                  overflow: "visible",
+                                  display: "block",
                                 }}
-                              />
+                              >
+                                {/* Pastell-Outer-Ring */}
+                                <circle cx="11" cy="11" r="11" fill={dotRing} />
+                                {/* Weißer Trennring */}
+                                <circle cx="11" cy="11" r="8" fill="#ffffff" />
+                                {/* Farbiger Inner-Dot */}
+                                <circle cx="11" cy="11" r="6" fill={dotColor} />
+                              </svg>
                               {/* CONTENT */}
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 2, flexWrap: "wrap" }}>
