@@ -249,8 +249,45 @@ function buildContextBlock(industry = 'general', documentType = 'general_documen
   return `${docContext}\n\nBRANCHEN-KONTEXT (${industry}): ${industryHint}`;
 }
 
+/**
+ * LEGAL SOURCES INSTRUCTION BLOCK (Phase 2 — Rechtsquellen-Sektion).
+ *
+ * Wird NUR in den Prompt eingefügt, wenn RAG-Kandidaten gefunden wurden.
+ * Strikte Regel: GPT darf AUSSCHLIESSLICH aus der Kandidaten-Liste wählen,
+ * niemals erfinden. Bei Unsicherheit: leere Liste zurückgeben.
+ *
+ * Post-Validation im Code filtert zusätzlich gegen Kandidaten-IDs.
+ */
+const LEGAL_SOURCES_INSTRUCTION_BLOCK = `
+RECHTSQUELLEN-AUSWAHL (verbindlich, MUSS exakt eingehalten werden):
+
+Du erhältst unten eine Liste von Kandidaten-Gesetzen und -Urteilen aus unserer
+verifizierten Datenbank. Diese sind die EINZIGEN Quellen, die du zitieren darfst.
+
+REGELN:
+1. ERFINDE NIEMALS §§, Urteile, Aktenzeichen oder URLs. ABSOLUT VERBOTEN.
+2. Wähle aus den Kandidaten NUR die WIRKLICH relevanten aus (max. 3 Gesetze, max. 2 Urteile).
+3. Wenn KEIN Kandidat wirklich passend ist: gib "legalSources": null zurück. Lieber leer als irrelevant.
+4. Für jede gewählte Quelle gib im JSON die EXAKTEN Werte aus der Kandidaten-Liste zurück
+   (lawId, sectionId bei Gesetzen / caseNumber bei Urteilen).
+5. Optional: ein kurzes "relevance_note" (1 Satz) pro Quelle, warum sie für diese Klausel relevant ist.
+6. URLs musst du NICHT zurückgeben — die werden serverseitig aus der DB ergänzt.
+
+JSON-FORMAT-ERWEITERUNG:
+"legalSources": {
+  "statutes": [
+    { "lawId": "BGB", "sectionId": "§ 305c", "relevance_note": "Schützt vor überraschenden AGB-Klauseln." }
+  ],
+  "caselaw": [
+    { "caseNumber": "VIII ZR 230/22", "relevance_note": "BGH: pauschale Abtretungs-Pflichten unwirksam." }
+  ]
+}
+ODER bei keinem passenden Kandidaten: "legalSources": null
+`;
+
 module.exports = {
   RISK_SCORE_SCALE_PROMPT_BLOCK,
+  LEGAL_SOURCES_INSTRUCTION_BLOCK,
   PERSPECTIVES,
   DOCUMENT_TYPE_CONTEXTS,
   INDUSTRY_CONTEXTS_COMPACT,

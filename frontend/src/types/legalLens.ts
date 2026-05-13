@@ -304,6 +304,41 @@ export interface PerspectiveAnalysis {
     marketRange: string;
     deviation: string;
   };
+
+  // 🏛️ Phase 2: Rechtsquellen-Sektion (RAG-validiert, ohne Halluzinationen).
+  // null wenn keine relevanten Quellen gefunden — Frontend zeigt dann KEINE Sektion.
+  legalSources?: LegalSources | null;
+}
+
+/**
+ * 🏛️ Rechtsquellen — Gesetze + Urteile, garantiert aus verifizierter DB.
+ * URLs sind serverseitig validiert (kein Halluzinations-Risiko).
+ */
+export interface LegalSources {
+  statutes: LegalSourceStatute[];
+  caselaw: LegalSourceCaselaw[];
+}
+
+export interface LegalSourceStatute {
+  lawId: string;          // z.B. "BGB"
+  sectionId: string;      // z.B. "§ 305c"
+  title: string;          // Titel des Gesetzes
+  area: string;           // Rechtsgebiet
+  relevance: number;      // 0-1 Cosine-Similarity
+  sourceUrl: string;      // garantierte URL aus DB
+  relevance_note?: string | null;  // GPT-Begründung warum relevant
+}
+
+export interface LegalSourceCaselaw {
+  caseNumber: string;     // z.B. "VIII ZR 230/22"
+  court: string;          // z.B. "BGH"
+  decisionDate?: string | null;
+  legalArea: string;
+  headnotes: string[];    // Leitsätze (max. 2)
+  relevantLaws: string[]; // z.B. ["§ 307 BGB"]
+  relevance: number;
+  sourceUrl: string;
+  relevance_note?: string | null;
 }
 
 /**

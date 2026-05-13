@@ -487,14 +487,19 @@ ALLGEMEINE DOKUMENTPRÜFUNG:
     // Kombinierter Kontext: Dokumenttyp + Branche
     const combinedContext = this.getCombinedContext(industry, documentType);
 
-    const { RISK_SCORE_SCALE_PROMPT_BLOCK } = require('./legalLensConstants');
+    const { RISK_SCORE_SCALE_PROMPT_BLOCK, LEGAL_SOURCES_INSTRUCTION_BLOCK } = require('./legalLensConstants');
+
+    // 🏛️ Phase 2: RAG-Kandidaten für Rechtsquellen (Halluzinations-Schutz)
+    // Try/Catch — bei Fehler: leer, kein Crash der Analyse
+    const legalCandidates = await this._fetchLegalCandidates(clauseText);
+    const hasLegalCandidates = legalCandidates.statutes.length > 0 || legalCandidates.caselaw.length > 0;
 
     const systemPrompt = `${perspectiveConfig.systemPrompt}
 
 ${combinedContext}
 
 ${RISK_SCORE_SCALE_PROMPT_BLOCK}
-
+${hasLegalCandidates ? '\n' + LEGAL_SOURCES_INSTRUCTION_BLOCK : ''}
 WICHTIG: Du bist ein erfahrener Rechtsexperte der für Laien und Gründer berät.
 Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!
 
@@ -539,7 +544,7 @@ Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
     "isStandard": true|false,
     "marketRange": "Was ist marktüblich? MIT KONKRETEN ZAHLEN/FRISTEN",
     "deviation": "Wie weicht diese Klausel ab? Ist das zu deinem Nachteil?"
-  }
+  }${hasLegalCandidates ? ',\n  "legalSources": null  // ODER {statutes: [...], caselaw: [...]} - siehe RECHTSQUELLEN-AUSWAHL oben' : ''}
 }
 
 REGELN:
@@ -550,6 +555,11 @@ REGELN:
 - KEINE vagen Aussagen wie "könnte teuer werden" - stattdessen "bis zu X€"
 - Sprich den Leser direkt an mit "du/dein"`;
 
+    // 🏛️ Phase 2: Kandidaten-Block für User-Prompt zusammenbauen
+    const candidatesBlock = hasLegalCandidates
+      ? `\n\nKANDIDATEN-RECHTSQUELLEN (du wählst aus, was wirklich passt — oder gib legalSources: null):\n${this._formatLegalCandidates(legalCandidates)}`
+      : '';
+
     try {
       const startTime = Date.now();
 
@@ -559,9 +569,9 @@ REGELN:
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: contractContext
+            content: (contractContext
               ? `Kontext zum Dokument:\n${contractContext.substring(0, 1500)}\n\n---\n\nAnalysiere diese Klausel:\n"${clauseText}"`
-              : `Analysiere diese Klausel:\n"${clauseText}"`
+              : `Analysiere diese Klausel:\n"${clauseText}"`) + candidatesBlock
           }
         ],
         response_format: { type: 'json_object' },
@@ -572,7 +582,15 @@ REGELN:
       const processingTime = Date.now() - startTime;
       const result = safeParseJSON(response.choices[0].message.content, 'analyzeClause');
 
-      console.log(`✅ Analyse abgeschlossen in ${processingTime}ms`);
+      // 🏛️ Phase 2: Post-Validation — nur Quellen aus Kandidaten-Liste erlauben, URLs aus DB
+      if (hasLegalCandidates && result.legalSources) {
+        result.legalSources = this._validateLegalSources(result.legalSources, legalCandidates);
+      } else if (!hasLegalCandidates) {
+        // Wenn keine Kandidaten da waren, darf GPT auch nichts erfinden
+        delete result.legalSources;
+      }
+
+      console.log(`✅ Analyse abgeschlossen in ${processingTime}ms${result.legalSources ? ` (mit ${(result.legalSources.statutes?.length || 0) + (result.legalSources.caselaw?.length || 0)} Rechtsquellen)` : ''}`);
 
       return {
         success: true,
@@ -591,6 +609,178 @@ REGELN:
       console.error('❌ Analyse-Fehler:', error.message);
       throw new Error(`Analyse fehlgeschlagen: ${error.message}`);
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PHASE 2: RAG-RECHTSQUELLEN-HELPER
+  //
+  // Sicherheits-Garantien:
+  // - NUR Read-Operations auf laws + courtdecisions (keine Schreibvorgänge!)
+  // - Try-Catch: bei Fehler leere Listen, niemals Crash der analyzeClause-Pipeline
+  // - Threshold-Filter (0.65/0.70): nur wirklich relevante Treffer
+  // - Quality-Filter: schließt News/Gesetzgebungs-Einträge aus
+  // - Post-Validation: GPT-Output muss in Kandidaten-Liste sein
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Holt RAG-Kandidaten für eine Klausel aus laws + courtdecisions parallel.
+   * Strikt READ-ONLY, kein Crash bei Fehlern.
+   *
+   * @private
+   * @param {string} clauseText
+   * @returns {Promise<{statutes: Array, caselaw: Array}>}
+   */
+  async _fetchLegalCandidates(clauseText) {
+    const empty = { statutes: [], caselaw: [] };
+
+    // Klausel zu kurz → kein sinnvoller RAG-Query
+    if (!clauseText || clauseText.length < 50) return empty;
+
+    // Whitelist für "echte" Gesetze (filtert News/Gesetzgebungs-Einträge aus)
+    const VALID_AREAS = new Set([
+      'Vertragsrecht', 'Arbeitsrecht', 'Mietrecht', 'Verbraucherrecht',
+      'Datenschutz', 'datenschutz', 'kaufrecht', 'Kaufrecht',
+      'Bankrecht', 'Gesellschaftsrecht', 'Steuerrecht', 'EU-Recht',
+      'Sozialrecht', 'Verfassungsrecht', 'Verwaltungsrecht'
+    ]);
+
+    // Threshold (konservativ — lieber leer als irrelevant, Variante B)
+    const STATUTE_THRESHOLD = 0.65;
+    const CASELAW_THRESHOLD = 0.70;
+
+    try {
+      const lawEmbeddings = require('../lawEmbeddings').getInstance();
+      const courtEmbeddings = require('../courtDecisionEmbeddings').getInstance();
+
+      const [rawStatutes, rawCaselaw] = await Promise.allSettled([
+        lawEmbeddings.queryRelevantSections({ text: clauseText, topK: 8 }),
+        courtEmbeddings.queryRelevantDecisions({ text: clauseText, topK: 5 })
+      ]);
+
+      // Statutes: Threshold + Quality-Filter
+      const statutes = (rawStatutes.status === 'fulfilled' ? rawStatutes.value : [])
+        .filter(s => s.relevance >= STATUTE_THRESHOLD)
+        .filter(s => s.lawId && !s.lawId.startsWith('http') && s.lawId.length < 50) // kein URL-als-lawId
+        .filter(s => VALID_AREAS.has(s.area))
+        .filter(s => s.sourceUrl && s.sourceUrl.startsWith('http')) // muss valide URL haben
+        .slice(0, 5); // Max 5 Kandidaten an GPT geben
+
+      // Caselaw: höhere Schwelle (44 Urteile sind wenig — lieber nichts als irrelevant)
+      const caselaw = (rawCaselaw.status === 'fulfilled' ? rawCaselaw.value : [])
+        .filter(c => c.relevance >= CASELAW_THRESHOLD)
+        .filter(c => c.caseNumber && c.court && c.sourceUrl)
+        .slice(0, 3);
+
+      console.log(`[RAG] Kandidaten: ${statutes.length} Gesetze, ${caselaw.length} Urteile`);
+      return { statutes, caselaw };
+
+    } catch (error) {
+      // Niemals Crash der Analyse — bei RAG-Fehler einfach leer zurück
+      console.warn(`[RAG] Kandidaten-Fetch fehlgeschlagen (graceful degradation): ${error.message}`);
+      return empty;
+    }
+  }
+
+  /**
+   * Formatiert RAG-Kandidaten für die User-Message des GPT-Prompts.
+   * @private
+   */
+  _formatLegalCandidates({ statutes, caselaw }) {
+    const lines = [];
+
+    if (statutes.length > 0) {
+      lines.push('GESETZE:');
+      for (const s of statutes) {
+        const sec = s.sectionId || '';
+        const title = (s.title || '').substring(0, 100);
+        lines.push(`  - lawId: "${s.lawId}", sectionId: "${sec}" — ${title}`);
+      }
+    }
+
+    if (caselaw.length > 0) {
+      if (lines.length > 0) lines.push('');
+      lines.push('URTEILE:');
+      for (const c of caselaw) {
+        const headnote = (c.headnotes && c.headnotes[0]) || c.summary || '';
+        const shortHeadnote = headnote.substring(0, 120);
+        lines.push(`  - caseNumber: "${c.caseNumber}", court: "${c.court}" — ${shortHeadnote}`);
+      }
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Validiert GPT-Output gegen Kandidaten-Liste — entfernt Halluzinationen.
+   * Ersetzt URLs serverseitig aus DB.
+   *
+   * @private
+   * @returns {Object|null} - Validierte legalSources oder null wenn nichts gültig
+   */
+  _validateLegalSources(gptOutput, candidates) {
+    if (!gptOutput || typeof gptOutput !== 'object') return null;
+
+    // Lookup-Maps für O(1) Validierung
+    const statuteMap = new Map();
+    for (const s of candidates.statutes) {
+      const key = `${s.lawId}::${s.sectionId || ''}`;
+      statuteMap.set(key, s);
+    }
+    const caselawMap = new Map();
+    for (const c of candidates.caselaw) {
+      caselawMap.set(c.caseNumber, c);
+    }
+
+    // Validate Statutes
+    const validatedStatutes = [];
+    if (Array.isArray(gptOutput.statutes)) {
+      for (const s of gptOutput.statutes) {
+        const key = `${s.lawId}::${s.sectionId || ''}`;
+        const candidate = statuteMap.get(key);
+        if (candidate) {
+          validatedStatutes.push({
+            lawId: candidate.lawId,
+            sectionId: candidate.sectionId || '',
+            title: candidate.title || '',
+            area: candidate.area || '',
+            relevance: Number(candidate.relevance?.toFixed(3) || 0),
+            sourceUrl: candidate.sourceUrl, // serverseitig aus DB (nie aus GPT)
+            relevance_note: typeof s.relevance_note === 'string' ? s.relevance_note.substring(0, 200) : null
+          });
+        }
+      }
+    }
+
+    // Validate Caselaw
+    const validatedCaselaw = [];
+    if (Array.isArray(gptOutput.caselaw)) {
+      for (const c of gptOutput.caselaw) {
+        const candidate = caselawMap.get(c.caseNumber);
+        if (candidate) {
+          validatedCaselaw.push({
+            caseNumber: candidate.caseNumber,
+            court: candidate.court,
+            decisionDate: candidate.decisionDate || null,
+            legalArea: candidate.legalArea || '',
+            headnotes: Array.isArray(candidate.headnotes) ? candidate.headnotes.slice(0, 2) : [],
+            relevantLaws: Array.isArray(candidate.relevantLaws) ? candidate.relevantLaws : [],
+            relevance: Number(candidate.relevance?.toFixed(3) || 0),
+            sourceUrl: candidate.sourceUrl,
+            relevance_note: typeof c.relevance_note === 'string' ? c.relevance_note.substring(0, 200) : null
+          });
+        }
+      }
+    }
+
+    // Wenn nach Validation nichts übrig: null (Frontend zeigt keine Sektion)
+    if (validatedStatutes.length === 0 && validatedCaselaw.length === 0) {
+      return null;
+    }
+
+    return {
+      statutes: validatedStatutes,
+      caselaw: validatedCaselaw
+    };
   }
 
   /**

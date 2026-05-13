@@ -100,6 +100,14 @@ const perspectiveAnalysisSchema = new mongoose.Schema({
   // Marktvergleich
   marketComparison: marketComparisonSchema,
 
+  // 🏛️ Phase 2: Rechtsquellen-Sektion (RAG-validiert, niemals halluziniert)
+  // Quellen stammen aus laws + courtdecisions Collections (Read-Only).
+  // null wenn keine relevanten Quellen gefunden.
+  legalSources: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+
   // Wann analysiert
   analyzedAt: Date
 }, { _id: false });

@@ -347,6 +347,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   };
   const marketComparison = perspectiveData?.marketComparison || analysisWithExtras.marketComparison;
   const riskAssessment = perspectiveData?.riskAssessment || analysisWithExtras.riskAssessment;
+  // 🏛️ Phase 2: Rechtsquellen — null wenn keine relevanten Quellen (Frontend zeigt dann nichts)
+  const legalSources = perspectiveData?.legalSources || (analysis as ClauseAnalysis & { legalSources?: import('../../types/legalLens').LegalSources | null }).legalSources;
+  const hasLegalSources = !!legalSources && ((legalSources.statutes?.length || 0) + (legalSources.caselaw?.length || 0)) > 0;
 
   // ✅ FIX Issue #2: "Auf einen Blick" zeigt NUR actionReason, NICHT die Erklärung
   // Die detaillierte Erklärung kommt in "Was bedeutet das?" - KEINE DUPLIZIERUNG!
@@ -541,6 +544,71 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           </>
         )}
       </div>
+
+      {/* 🏛️ Phase 2: Was sagt das Gesetz? — Rechtsquellen-Sektion (conditional) */}
+      {hasLegalSources && legalSources && (
+        <div className={styles.legalSourceCard}>
+          <div className={styles.legalSourceHeader}>
+            <span className={styles.legalSourceLabel}>
+              <span aria-hidden="true">🏛️</span> Was sagt das Gesetz?
+            </span>
+          </div>
+          <div className={styles.legalSourceBody}>
+            {legalSources.statutes?.map((statute, idx) => (
+              <div key={`s-${idx}`} className={styles.legalSourceItem}>
+                <div className={styles.legalSourceItemHead}>
+                  <span className={styles.legalSourceIcon}>§</span>
+                  <span className={styles.legalSourceTitle}>
+                    {statute.sectionId} {statute.lawId} — {statute.title}
+                  </span>
+                  {statute.sourceUrl && (
+                    <a
+                      href={statute.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.legalSourceLink}
+                      title="Gesetzestext öffnen"
+                    >
+                      ↗ Lesen
+                    </a>
+                  )}
+                </div>
+                {statute.relevance_note && (
+                  <div className={styles.legalSourceDesc}>{statute.relevance_note}</div>
+                )}
+              </div>
+            ))}
+            {legalSources.caselaw?.map((caselaw, idx) => (
+              <div key={`c-${idx}`} className={styles.legalSourceItem}>
+                <div className={styles.legalSourceItemHead}>
+                  <span className={styles.legalSourceIcon}>⚖️</span>
+                  <span className={styles.legalSourceTitle}>
+                    {caselaw.court} {caselaw.caseNumber}
+                    {caselaw.decisionDate && ` (${new Date(caselaw.decisionDate).getFullYear()})`}
+                  </span>
+                  {caselaw.sourceUrl && (
+                    <a
+                      href={caselaw.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.legalSourceLink}
+                      title="Urteil öffnen"
+                    >
+                      ↗ Urteil lesen
+                    </a>
+                  )}
+                </div>
+                {caselaw.relevance_note && (
+                  <div className={styles.legalSourceDesc}>{caselaw.relevance_note}</div>
+                )}
+                {caselaw.headnotes && caselaw.headnotes.length > 0 && (
+                  <div className={styles.legalSourceQuote}>„{caselaw.headnotes[0]}"</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ⚠️ Worst-Case Szenario - MIT KONKRETEN ZAHLEN */}
       {worstCase && (

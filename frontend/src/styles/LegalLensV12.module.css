@@ -1692,6 +1692,125 @@
   color: #1e293b;
 }
 
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   LEGAL SOURCES CARD — "Was sagt das Gesetz?"
+   Phase 2: Rechtsquellen mit Verlinkungen (RAG-validiert)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.legalSourceCard {
+  border: 1px solid #8b5cf6;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ede9fe 0%, #faf5ff 100%);
+  margin-bottom: 0.85rem;
+}
+
+.legalSourceHeader {
+  padding: 0.7rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.legalSourceLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6d28d9;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legalSourceBody {
+  padding: 0.85rem 1rem;
+}
+
+.legalSourceItem {
+  padding: 0.8rem 0;
+  border-bottom: 1px dashed rgba(139, 92, 246, 0.2);
+}
+
+.legalSourceItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.legalSourceItem:first-child {
+  padding-top: 0;
+}
+
+.legalSourceItemHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.legalSourceIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.15);
+  color: #6d28d9;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.legalSourceTitle {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #4c1d95;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.legalSourceLink {
+  font-size: 0.72rem;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.legalSourceLink:hover {
+  background: rgba(139, 92, 246, 0.25);
+  color: #6d28d9;
+}
+
+.legalSourceDesc {
+  font-size: 0.825rem;
+  color: #6d28d9;
+  line-height: 1.55;
+  padding-left: 2.2rem;
+}
+
+.legalSourceQuote {
+  font-size: 0.78rem;
+  color: #5b21b6;
+  font-style: italic;
+  margin-top: 0.4rem;
+  border-left: 2px solid rgba(139, 92, 246, 0.3);
+  padding-left: calc(2.2rem - 2px);
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+}
+
 /* ===== RISK BADGE ===== */
 .riskBadge {
   display: flex;
