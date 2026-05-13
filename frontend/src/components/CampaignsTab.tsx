@@ -76,6 +76,7 @@ interface SegmentFilter {
   plan?: string | string[];
   subscriptionActive?: boolean;
   minAnalysisCount?: number;
+  maxAnalysisCount?: number;
   createdAfter?: string;
   createdBefore?: string;
 }
@@ -108,6 +109,8 @@ interface CampaignForm {
     subscriptionActive: boolean;
     useMinAnalyses: boolean;
     minAnalysisCount: number;
+    useMaxAnalyses: boolean;
+    maxAnalysisCount: number;
     useDateRange: boolean;
     createdAfter: string;
     createdBefore: string;
@@ -197,6 +200,7 @@ function buildSegmentFilter(form: CampaignForm['filter']): SegmentFilter {
   if (form.usePlan && form.plan !== 'all') filter.plan = form.plan;
   if (form.subscriptionActive) filter.subscriptionActive = true;
   if (form.useMinAnalyses && form.minAnalysisCount > 0) filter.minAnalysisCount = form.minAnalysisCount;
+  if (form.useMaxAnalyses) filter.maxAnalysisCount = form.maxAnalysisCount;
   if (form.useDateRange) {
     if (form.createdAfter) filter.createdAfter = form.createdAfter;
     if (form.createdBefore) filter.createdBefore = form.createdBefore;
@@ -221,6 +225,8 @@ function defaultForm(): CampaignForm {
       subscriptionActive: false,
       useMinAnalyses: false,
       minAnalysisCount: 1,
+      useMaxAnalyses: false,
+      maxAnalysisCount: 0,
       useDateRange: false,
       createdAfter: '',
       createdBefore: '',
@@ -634,6 +640,10 @@ function ComposerModal({
       if (sf.minAnalysisCount) {
         f.filter.useMinAnalyses = true;
         f.filter.minAnalysisCount = sf.minAnalysisCount;
+      }
+      if (sf.maxAnalysisCount !== undefined && sf.maxAnalysisCount !== null) {
+        f.filter.useMaxAnalyses = true;
+        f.filter.maxAnalysisCount = sf.maxAnalysisCount;
       }
       if (sf.createdAfter || sf.createdBefore) {
         f.filter.useDateRange = true;
@@ -1050,7 +1060,7 @@ function Step1Recipients({
           <span style={{ fontSize: '0.875rem' }}>Nur aktive Abonnenten</span>
         </label>
 
-        {/* Analyses */}
+        {/* Analyses min */}
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
           <input
             type="checkbox"
@@ -1068,6 +1078,30 @@ function Step1Recipients({
             style={{ width: '70px', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
           />
           <span style={{ fontSize: '0.875rem' }}>Analysen</span>
+        </label>
+
+        {/* Analyses max — wichtig für Reaktivierungs-Newsletter (Max 0 = inaktive User) */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '6px', opacity: form.filter.useEmails ? 0.5 : 1 }}>
+          <input
+            type="checkbox"
+            disabled={form.filter.useEmails}
+            checked={form.filter.useMaxAnalyses}
+            onChange={(e) => setForm({ ...form, filter: { ...form.filter, useMaxAnalyses: e.target.checked } })}
+          />
+          <span style={{ fontSize: '0.875rem', flex: 1 }}>Höchstens</span>
+          <input
+            type="number"
+            disabled={!form.filter.useMaxAnalyses || form.filter.useEmails}
+            min={0}
+            value={form.filter.maxAnalysisCount}
+            onChange={(e) => {
+              const parsed = parseInt(e.target.value);
+              const value = isNaN(parsed) ? 0 : Math.max(0, parsed);
+              setForm({ ...form, filter: { ...form.filter, maxAnalysisCount: value } });
+            }}
+            style={{ width: '70px', padding: '0.25rem 0.5rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+          />
+          <span style={{ fontSize: '0.875rem' }}>Analysen <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>(0 = inaktiv)</span></span>
         </label>
 
         {/* Date range */}
@@ -1556,6 +1590,9 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
         </label>
         <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
           Tipp: {'<p>'}, {'<strong>'}, {'<ul><li>'}, {'<a href=...>'} funktionieren.
+        </div>
+        <div style={{ fontSize: '0.7rem', color: '#1e3a8a', marginTop: '0.35rem', padding: '0.4rem 0.55rem', background: '#eff6ff', border: '1px solid #dbeafe', borderRadius: '4px' }}>
+          🎁 <strong>Personalisierung:</strong> Verwende <code style={{ background: '#fff', padding: '0.05rem 0.3rem', borderRadius: '3px', fontFamily: 'monospace' }}>{`{{firstName}}`}</code> in Subject, Titel, Body, Preheader oder CTA — wird pro Empfänger durch den Vornamen ersetzt. Fallback bei fehlendem Vornamen: leerer String.
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.75rem' }}>

@@ -112,7 +112,10 @@ function buildRecipientQuery(filter = {}) {
   }
 
   if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) {
-    query.analysisCount = { $gte: Number(filter.minAnalysisCount) };
+    query.analysisCount = { ...(query.analysisCount || {}), $gte: Number(filter.minAnalysisCount) };
+  }
+  if (filter.maxAnalysisCount !== undefined && filter.maxAnalysisCount !== null) {
+    query.analysisCount = { ...(query.analysisCount || {}), $lte: Number(filter.maxAnalysisCount) };
   }
 
   if (filter.createdAfter) {
@@ -175,7 +178,8 @@ async function previewRecipients(filter = {}) {
   } else {
     if (filter.plan && filter.plan !== 'all') baseQuery.subscriptionPlan = Array.isArray(filter.plan) ? { $in: filter.plan } : filter.plan;
     if (filter.subscriptionActive === true) baseQuery.subscriptionActive = true;
-    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { $gte: Number(filter.minAnalysisCount) };
+    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { ...(baseQuery.analysisCount || {}), $gte: Number(filter.minAnalysisCount) };
+    if (filter.maxAnalysisCount !== undefined && filter.maxAnalysisCount !== null) baseQuery.analysisCount = { ...(baseQuery.analysisCount || {}), $lte: Number(filter.maxAnalysisCount) };
     if (filter.createdAfter) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$gte = new Date(filter.createdAfter); }
     if (filter.createdBefore) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$lte = new Date(filter.createdBefore); }
   }
@@ -428,7 +432,8 @@ async function createCampaign(data, adminUser) {
   } else {
     if (filter.plan && filter.plan !== 'all') baseQuery.subscriptionPlan = Array.isArray(filter.plan) ? { $in: filter.plan } : filter.plan;
     if (filter.subscriptionActive === true) baseQuery.subscriptionActive = true;
-    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { $gte: Number(filter.minAnalysisCount) };
+    if (filter.minAnalysisCount !== undefined && filter.minAnalysisCount !== null) baseQuery.analysisCount = { ...(baseQuery.analysisCount || {}), $gte: Number(filter.minAnalysisCount) };
+    if (filter.maxAnalysisCount !== undefined && filter.maxAnalysisCount !== null) baseQuery.analysisCount = { ...(baseQuery.analysisCount || {}), $lte: Number(filter.maxAnalysisCount) };
     if (filter.createdAfter) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$gte = new Date(filter.createdAfter); }
     if (filter.createdBefore) { baseQuery.createdAt = baseQuery.createdAt || {}; baseQuery.createdAt.$lte = new Date(filter.createdBefore); }
   }
@@ -675,20 +680,49 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
     }
 
     try {
-      const html = buildCampaignHtml(campaign, recipient.email, recipient._id);
+      // 🎁 Vorname-Personalisierung — Pro-Empfänger-Lookup mit Fail-Safe
+      // Platzhalter {{firstName}} in Subject/Title/Body/Preheader/ctaText wird ersetzt
+      // Fallback bei fehlendem Vornamen oder Lookup-Fehler: leerer String (NICHT "undefined")
+      let firstName = '';
+      if (recipient.userId) {
+        try {
+          const user = await db.collection('users').findOne(
+            { _id: recipient.userId },
+            { projection: { firstName: 1, name: 1 } }
+          );
+          firstName = user?.firstName || user?.name?.split(' ')[0] || '';
+        } catch (lookupErr) {
+          console.warn(`[campaignService] User-Lookup für Personalisierung fehlgeschlagen (${recipient.email}):`, lookupErr.message);
+        }
+      }
+
+      const substitute = (text) => typeof text === 'string'
+        ? text.replace(/\{\{firstName\}\}/g, firstName)
+        : text;
+
+      const personalizedCampaign = {
+        ...campaign,
+        subject: substitute(campaign.subject),
+        title: substitute(campaign.title),
+        body: substitute(campaign.body),
+        preheader: substitute(campaign.preheader),
+        ctaText: substitute(campaign.ctaText),
+      };
+
+      const html = buildCampaignHtml(personalizedCampaign, recipient.email, recipient._id);
       const unsubscribeUrl = generateUnsubscribeUrl(recipient.email, 'marketing');
 
       await sendEmail(
         recipient.email,
-        campaign.subject,
-        campaign.title || campaign.subject,
+        personalizedCampaign.subject,
+        personalizedCampaign.title || personalizedCampaign.subject,
         html,
         { unsubscribeUrl }
       );
 
       logSentEmail({
         to: recipient.email,
-        subject: campaign.subject,
+        subject: personalizedCampaign.subject,
         category: `campaign_${String(_id).slice(-6)}`,
         userId: recipient.userId ? String(recipient.userId) : null,
         source: 'services/campaignService.js'
