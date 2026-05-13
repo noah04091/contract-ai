@@ -2,7 +2,7 @@
 // Komponente für das Analyse-Panel (rechte Seite) - KOMPLETT ÜBERARBEITET
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle, Copy, Check } from 'lucide-react';
+import { GitCompare, BookmarkPlus, Wifi, Clock, Server, AlertTriangle, Copy, Check, MessageSquare, FlaskConical } from 'lucide-react';
 import type {
   ClauseAnalysis,
   PerspectiveType,
@@ -17,6 +17,31 @@ import ClauseSimulatorModal from './ClauseSimulatorModal';
 import SaveClauseModal from './SaveClauseModal';
 import { ErrorInfo, generateContentHash } from '../../hooks/useLegalLensV12';
 import styles from '../../styles/LegalLensV12.module.css';
+
+/**
+ * Indikator-Tooltip-Map (universelle High-Risk-Indikatoren A1-D2).
+ * Match per Prefix — z.B. "A1: Verschuldensunabhängige..." → Tooltip aus A1.
+ * Wenn Indikator nicht in Map: Tag wird trotzdem angezeigt, ohne Tooltip.
+ */
+const INDICATOR_TOOLTIPS: Record<string, string> = {
+  A1: 'Verschuldensunabhängige Haftung/Garantie — du haftest auch ohne eigenes Fehlverhalten. Erhöhtes Risiko.',
+  A2: 'Pauschalierter Schadensersatz ohne Bezug zum echten Schaden — kann zu unverhältnismäßig hohen Zahlungen führen.',
+  B1: 'Einseitige Pflichten — die Klausel verteilt Lasten asymmetrisch, eine Seite trägt deutlich mehr.',
+  B2: 'Verzicht auf gesetzliche Rechte — du gibst Ansprüche auf, die dir das Gesetz eigentlich zusichert.',
+  B3: 'Beweislast-Umkehr — du musst beweisen, was eigentlich die Gegenseite beweisen müsste.',
+  C1: 'Pflichten ohne Höchstgrenze — keine Deckelung, theoretisch unbegrenzte Verpflichtung.',
+  C2: 'Knebel-Wirkung — schränkt deine wirtschaftliche Handlungsfreiheit so stark ein, dass du unbillig gebunden wirst (§ 138 BGB).',
+  D1: 'Klausel kann nach §§ 305-310 BGB unwirksam sein — möglicherweise nicht durchsetzbar.',
+  D2: 'Klausel widerspricht zwingendem deutschen Recht — höchstwahrscheinlich nichtig.'
+};
+
+/** Findet passenden Tooltip-Text für einen Indikator-String (z.B. "A1: Verschuldens...") */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getIndicatorTooltip(reason: string): string | null {
+  const match = reason.match(/^([A-D]\d):/);
+  if (match) return INDICATOR_TOOLTIPS[match[1]] || null;
+  return null;
+}
 
 interface AnalysisPanelProps {
   analysis: ClauseAnalysis | null;
@@ -330,6 +355,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   // Prüfe ob "Auf einen Blick" ANDERS ist als "Was bedeutet das?" (Erklärung)
   const explanationText = perspectiveData?.explanation?.simple ||
     perspectiveData?.explanation?.summary || '';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const showOneSentenceSummary = oneSentenceSummary &&
     oneSentenceSummary !== explanationText &&
     oneSentenceSummary.length > 10;
@@ -371,30 +397,31 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
   return (
     <div className={styles.analysisContent}>
-      {/* 📝 FIX Issue #2: EIN-SATZ-ERKLÄRUNG - NUR wenn unterschiedlich von Erklärung */}
-      {showOneSentenceSummary && (
-        <div className={styles.oneSentenceSummary}>
-          <span className={styles.summaryLabel}>Auf einen Blick</span>
-          <p className={styles.summaryText}>{oneSentenceSummary}</p>
+      {/* ✨ HERO: "Auf einen Blick" + Empfehlung-Badge + Meta-Stats — eine konsolidierte Card */}
+      <div className={styles.glanceCard}>
+        <div className={styles.glanceHeader}>
+          <span className={styles.glanceLabel}>
+            <span aria-hidden="true">✨</span> Auf einen Blick
+          </span>
         </div>
-      )}
+        <div className={styles.glanceBody}>
+          {/* Summary-Text: actionReason ODER Fallback aus erklärung */}
+          {(oneSentenceSummary || explanationText) && (
+            <p className={styles.glanceSummary}>
+              {oneSentenceSummary || explanationText}
+            </p>
+          )}
 
-      {/* 🎯 HANDLUNGSEMPFEHLUNG — entschärft, dezent, Score klickbar */}
-      <div className={`${styles.analysisSection} ${styles.actionBadgeSection}`}>
-        <div className={styles.actionBadgeHeader} style={{ marginBottom: actionReason ? '0.4rem' : 0 }}>
-          <div className={styles.actionBadgeInfo}>
-            <span className={styles.metaLabel}>
-              Handlungsempfehlung
-            </span>
-          </div>
-          <div className={styles.actionBadgeInfo}>
+          <div className={styles.glanceFooter}>
+            {/* Empfehlung-Badge (klickbar mit Score-Popover) */}
             {effectiveDisplay && (() => {
               const scoreInfo = effectiveDisplay;
               return (
                 <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
+                  <span className={styles.glanceRecLabel}>Empfehlung:</span>
                   <button
                     type="button"
-                    className={styles.scoreCard}
+                    className={styles.glanceBadge}
                     style={{ '--score-color': scoreInfo.color } as React.CSSProperties}
                     onClick={() => setShowScoreInfo(prev => !prev)}
                     title="Was bedeutet diese Bewertung?"
@@ -402,16 +429,11 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     aria-expanded={showScoreInfo}
                   >
                     <span
-                      className={styles.riskDotIndicator}
+                      className={styles.glanceBadgeDot}
                       style={{ background: scoreInfo.color }}
                       aria-hidden="true"
                     />
-                    <div className={styles.scoreLabelGroup}>
-                      <span className={styles.scoreLabel} style={{ color: scoreInfo.color }}>
-                        {scoreInfo.label}
-                      </span>
-                      <span className={styles.scoreHint}>{scoreInfo.hint}</span>
-                    </div>
+                    <span style={{ color: scoreInfo.color }}>{scoreInfo.label}</span>
                     <span className={styles.scoreInfoIcon} aria-hidden="true">ⓘ</span>
                   </button>
                   {showScoreInfo && (
@@ -435,14 +457,20 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </div>
               );
             })()}
+
+            {/* Meta-Stats: Finanzielles + Zeitliches Risiko aus worstCase */}
+            {(worstCase?.financialRisk || worstCase?.timeRisk) && (
+              <div className={styles.glanceMeta}>
+                {worstCase?.financialRisk && (
+                  <span className={styles.glanceMetaItem}>💰 {worstCase.financialRisk}</span>
+                )}
+                {worstCase?.timeRisk && (
+                  <span className={styles.glanceMetaItem}>⏰ {worstCase.timeRisk}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        {/* ✅ FIX: actionReason NUR zeigen wenn NICHT schon in "Auf einen Blick" */}
-        {actionReason && !showOneSentenceSummary && (
-          <p className={styles.actionReasonText}>
-            {actionReason}
-          </p>
-        )}
       </div>
 
       {/* 📖 Einfache Erklärung - IMMER anzeigen mit Fallback-Text */}
@@ -488,6 +516,30 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* 🏷️ Indikator-Tags mit Tooltips (Trust-Layer) */}
+            {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
+              <div className={styles.indicatorTags}>
+                {riskAssessment.reasons.map((reason: string, idx: number) => {
+                  const tooltip = getIndicatorTooltip(reason);
+                  return (
+                    <span
+                      key={idx}
+                      className={styles.indicatorTag}
+                      title={tooltip || undefined}
+                    >
+                      <span aria-hidden="true">⚠️</span>
+                      <span>{reason}</span>
+                      {tooltip && (
+                        <span className={styles.indicatorTooltip} role="tooltip">
+                          {tooltip}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
             )}
           </>
         )}
@@ -557,81 +609,42 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* 📊 Risiko-Gründe */}
-      {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
-        <div className={styles.analysisSection}>
-          <div
-            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
-            onClick={() => toggleSection('risks')}
-          >
-            <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>📊</span>
-              Risiko-Faktoren
-            </h4>
-            <span className={styles.sectionToggle}>
-              {expandedSections.has('risks') ? '▼' : '▶'}
-            </span>
-          </div>
-          {expandedSections.has('risks') && (
-            <div className={styles.risksColumn}>
-              {riskAssessment.reasons.map((reason: string, idx: number) => (
-                <div key={idx} className={styles.riskItem}>
-                  <span className={styles.riskDot}>●</span>
-                  {reason}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 💼 Bessere Alternative */}
+      {/* ✍️ Verhandlungs-Vorschlag — prominente Card (nicht mehr collapsed) */}
       {betterAlternative && (
-        <div className={styles.analysisSection}>
-          <div
-            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
-            onClick={() => toggleSection('alternative')}
-          >
-            <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>💼</span>
-              Bessere Alternative
-            </h4>
-            <span className={styles.sectionToggle}>
-              {expandedSections.has('alternative') ? '▼' : '▶'}
+        <div className={styles.proposalCard}>
+          <div className={styles.proposalHeader}>
+            <span className={styles.proposalLabel}>
+              <span aria-hidden="true">✍️</span> So sollte es heißen
             </span>
           </div>
-          {expandedSections.has('alternative') && (
-            <div className={styles.alternativeColumn}>
-              {/* Vorgeschlagene Formulierung */}
-              <div className={styles.suggestionBox}>
-                <div className={styles.suggestionLabel}>
-                  Vorgeschlagene Formulierung
-                </div>
-                <p className={styles.suggestionText}>
-                  "{betterAlternative.text}"
-                </p>
-                <div className={styles.alternativeActions}>
+          <div className={styles.proposalContent}>
+            {/* Vorgeschlagene Formulierung */}
+            <div className={styles.suggestionBox}>
+              <p className={styles.suggestionText}>
+                "{betterAlternative.text}"
+              </p>
+              <div className={styles.alternativeActions}>
+                <button
+                  onClick={() => copyText(betterAlternative.text, 'betterAlt')}
+                  className={`${styles.copyButtonGreen} ${copiedField === 'betterAlt' ? styles.copied : ''}`}
+                >
+                  {copiedField === 'betterAlt' ? <><Check size={12} /> Kopiert!</> : <><Copy size={12} /> Kopieren</>}
+                </button>
+                {originalClauseText && (
                   <button
-                    onClick={() => copyText(betterAlternative.text, 'betterAlt')}
-                    className={`${styles.copyButtonGreen} ${copiedField === 'betterAlt' ? styles.copied : ''}`}
+                    onClick={() => {
+                      setCompareAlternativeText(betterAlternative.text);
+                      setCompareWhyBetter(betterAlternative.whyBetter || '');
+                      setShowCompareModal(true);
+                    }}
+                    className={styles.compareButtonBlue}
                   >
-                    {copiedField === 'betterAlt' ? <><Check size={12} /> Kopiert!</> : <><Copy size={12} /> Kopieren</>}
+                    <GitCompare size={12} />
+                    Vergleichen
                   </button>
-                  {originalClauseText && (
-                    <button
-                      onClick={() => {
-                        setCompareAlternativeText(betterAlternative.text);
-                        setCompareWhyBetter(betterAlternative.whyBetter || '');
-                        setShowCompareModal(true);
-                      }}
-                      className={styles.compareButtonBlue}
-                    >
-                      <GitCompare size={12} />
-                      Vergleichen
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
+            </div>
 
               {betterAlternative.whyBetter && (
                 <p className={styles.whyBetterText}>
@@ -655,8 +668,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   </p>
                 </div>
               )}
-            </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -769,190 +781,245 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         );
       })()}
 
-      {/* 💡 Weitere Alternativen (generiert) */}
+      {/* 💡 Weitere Alternativen (generiert) — collapsable, default CLOSED */}
       <div className={styles.analysisSection}>
-        <div className={styles.sectionHeader}>
+        <div
+          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
+          onClick={() => toggleSection('moreAlternatives')}
+        >
           <h4 className={styles.sectionTitle}>
             <span className={styles.sectionIcon}>💡</span>
-            Weitere Alternativen
+            Weitere Formulierungs-Alternativen
+            {alternatives.length > 0 && (
+              <span className={styles.sectionCountBadge}>{alternatives.length}</span>
+            )}
           </h4>
-          {alternatives.length === 0 && !isGeneratingAlternatives && (
-            <button
-              className={styles.actionButton}
-              onClick={onLoadAlternatives}
-            >
-              Generieren
-            </button>
-          )}
+          <span className={styles.sectionToggle}>
+            {expandedSections.has('moreAlternatives') ? '▼' : '▶'}
+          </span>
         </div>
-        {isGeneratingAlternatives ? (
-          <div className={styles.loadingOverlay}>
-            <div className={styles.loadingSpinner} />
-            <span className={styles.loadingText}>Generiere Alternativen...</span>
-          </div>
-        ) : alternatives.length > 0 ? (
-          <div className={styles.alternativesColumn}>
-            {alternatives.map((alt, idx) => (
-              <div key={idx} className={styles.alternativeCard}>
-                <p className={styles.alternativeCardText}>
-                  "{alt.text}"
-                </p>
-                {alt.benefits && alt.benefits.length > 0 && (
-                  <div className={styles.benefitsRow}>
-                    {alt.benefits.map((benefit, bIdx) => (
-                      <span key={bIdx} className={styles.benefitTag}>
-                        {benefit}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className={styles.difficultyRow}>
-                  <span
-                    className={styles.difficultyDot}
-                    style={{
-                      '--diff-color': alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
-                    } as React.CSSProperties}
-                  />
-                  <span>
-                    {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
-                     alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.emptyAlternativesText}>
-            Klick auf "Generieren", um weitere alternative Formulierungen zu bekommen.
-          </p>
-        )}
-      </div>
-
-      {/* 🤝 Verhandlungstipps */}
-      <div className={styles.analysisSection}>
-        <div className={styles.sectionHeader}>
-          <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>🤝</span>
-            Verhandlungstipps
-          </h4>
-          {!negotiation && !isGeneratingNegotiation && (
-            <button
-              className={styles.actionButton}
-              onClick={onLoadNegotiation}
-            >
-              Generieren
-            </button>
-          )}
-        </div>
-        {isGeneratingNegotiation ? (
-          <div className={styles.loadingOverlay}>
-            <div className={styles.loadingSpinner} />
-            <span className={styles.loadingText}>Generiere Verhandlungstipps...</span>
-          </div>
-        ) : negotiation ? (
+        {expandedSections.has('moreAlternatives') && (
           <>
-            <p className={styles.explanationText}>{negotiation.argument}</p>
-            {negotiation.tips?.length > 0 && (
-              <div className={styles.negotiationTips}>
-                {negotiation.tips.map((tip, idx) => (
-                  <div key={idx} className={styles.tipItem}>
-                    <span className={styles.tipIcon}>💡</span>
-                    <span>{tip}</span>
+            {alternatives.length === 0 && !isGeneratingAlternatives && (
+              <button
+                className={styles.actionButton}
+                onClick={(e) => { e.stopPropagation(); onLoadAlternatives(); }}
+                style={{ marginTop: '0.5rem' }}
+              >
+                Generieren
+              </button>
+            )}
+            {isGeneratingAlternatives ? (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.loadingSpinner} />
+                <span className={styles.loadingText}>Generiere Alternativen...</span>
+              </div>
+            ) : alternatives.length > 0 ? (
+              <div className={styles.alternativesColumn}>
+                {alternatives.map((alt, idx) => (
+                  <div key={idx} className={styles.alternativeCard}>
+                    <p className={styles.alternativeCardText}>
+                      "{alt.text}"
+                    </p>
+                    {alt.benefits && alt.benefits.length > 0 && (
+                      <div className={styles.benefitsRow}>
+                        {alt.benefits.map((benefit, bIdx) => (
+                          <span key={bIdx} className={styles.benefitTag}>
+                            {benefit}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <div className={styles.difficultyRow}>
+                      <span
+                        className={styles.difficultyDot}
+                        style={{
+                          '--diff-color': alt.difficulty === 'easy' ? '#16a34a' : alt.difficulty === 'hard' ? '#dc2626' : '#d97706'
+                        } as React.CSSProperties}
+                      />
+                      <span>
+                        {alt.difficulty === 'easy' ? 'Einfach umzusetzen' :
+                         alt.difficulty === 'hard' ? 'Schwierig umzusetzen' : 'Mittlerer Aufwand'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-            {negotiation.emailTemplate && (
-              <>
-                <pre className={styles.emailTemplate}>{negotiation.emailTemplate}</pre>
-                <button className={styles.copyButton} onClick={copyEmailTemplate}>
-                  {copiedTemplate ? '✓ Kopiert!' : '📋 E-Mail-Vorlage kopieren'}
-                </button>
-              </>
+            ) : (
+              <p className={styles.emptyAlternativesText}>
+                Klick auf "Generieren", um weitere alternative Formulierungen zu bekommen.
+              </p>
             )}
           </>
-        ) : (
-          <p className={styles.explanationText}>
-            Klick auf "Generieren", um Verhandlungstipps zu bekommen.
-          </p>
         )}
       </div>
 
-      {/* 🧪 Klausel-Simulator */}
-      {originalClauseText && sourceContractId && (
-        <div className={styles.analysisSection}>
-          <button
-            className={styles.simulatorTriggerBtn}
-            onClick={() => setShowSimulator(true)}
-          >
-            🧪 Klausel-Simulator — Was wäre wenn...?
-          </button>
+      {/* 🤝 Verhandlungstipps & E-Mail — collapsable, default CLOSED */}
+      <div className={styles.analysisSection}>
+        <div
+          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
+          onClick={() => toggleSection('negotiationTips')}
+        >
+          <h4 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>🤝</span>
+            Verhandlungstipps & E-Mail-Vorlage
+            {negotiation?.tips?.length ? (
+              <span className={styles.sectionCountBadge}>{negotiation.tips.length}</span>
+            ) : null}
+          </h4>
+          <span className={styles.sectionToggle}>
+            {expandedSections.has('negotiationTips') ? '▼' : '▶'}
+          </span>
         </div>
-      )}
-
-      {/* 💬 Chat Section */}
-      <div className={styles.chatSection}>
-        <div className={styles.chatHeader}>
-          <span>💬</span>
-          <h4 className={styles.chatTitle}>Fragen zur Klausel</h4>
-        </div>
-
-        {(chatHistory.length > 0 || isChatting) && (
-          <div className={styles.chatMessages} ref={chatMessagesRef}>
-            {chatHistory.map((msg, idx) => (
-              <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
-                <div className={styles.messageContent}>
-                  {msg.content}
-                </div>
+        {expandedSections.has('negotiationTips') && (
+          <>
+            {!negotiation && !isGeneratingNegotiation && (
+              <button
+                className={styles.actionButton}
+                onClick={(e) => { e.stopPropagation(); onLoadNegotiation(); }}
+                style={{ marginTop: '0.5rem' }}
+              >
+                Generieren
+              </button>
+            )}
+            {isGeneratingNegotiation ? (
+              <div className={styles.loadingOverlay}>
+                <div className={styles.loadingSpinner} />
+                <span className={styles.loadingText}>Generiere Verhandlungstipps...</span>
               </div>
-            ))}
-            {isChatting && (
-              <div className={`${styles.chatMessage} ${styles.assistant}`}>
-                <div className={styles.messageContent}>
-                  <div className={styles.typingIndicator}>
-                    <span className={styles.typingDot}></span>
-                    <span className={styles.typingDot}></span>
-                    <span className={styles.typingDot}></span>
-                    <span className={styles.typingText}>Antwort wird erstellt...</span>
+            ) : negotiation ? (
+              <>
+                <p className={styles.explanationText}>{negotiation.argument}</p>
+                {negotiation.tips?.length > 0 && (
+                  <div className={styles.negotiationTips}>
+                    {negotiation.tips.map((tip, idx) => (
+                      <div key={idx} className={styles.tipItem}>
+                        <span className={styles.tipIcon}>💡</span>
+                        <span>{tip}</span>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
+                {negotiation.emailTemplate && (
+                  <>
+                    <div className={styles.emailHint}>
+                      ⚠️ Diese E-Mail-Vorlage ist ein Vorschlag. <strong>Bitte vor dem Versand anpassen</strong>.
+                    </div>
+                    <pre className={styles.emailTemplate}>{negotiation.emailTemplate}</pre>
+                    <button className={styles.copyButton} onClick={copyEmailTemplate}>
+                      {copiedTemplate ? '✓ Kopiert!' : '📋 E-Mail-Vorlage kopieren'}
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className={styles.explanationText}>
+                Klick auf "Generieren", um Verhandlungstipps zu bekommen.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* 💬 Chat — collapsable, default CLOSED */}
+      <div className={styles.analysisSection}>
+        <div
+          className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
+          onClick={() => toggleSection('chat')}
+        >
+          <h4 className={styles.sectionTitle}>
+            <span className={styles.sectionIcon}>💬</span>
+            Fragen zur Klausel
+            {chatHistory.length > 0 && (
+              <span className={styles.sectionCountBadge}>{chatHistory.length}</span>
+            )}
+          </h4>
+          <span className={styles.sectionToggle}>
+            {expandedSections.has('chat') ? '▼' : '▶'}
+          </span>
+        </div>
+        {expandedSections.has('chat') && (
+          <>
+            {(chatHistory.length > 0 || isChatting) && (
+              <div className={styles.chatMessages} ref={chatMessagesRef}>
+                {chatHistory.map((msg, idx) => (
+                  <div key={idx} className={`${styles.chatMessage} ${styles[msg.role]}`}>
+                    <div className={styles.messageContent}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isChatting && (
+                  <div className={`${styles.chatMessage} ${styles.assistant}`}>
+                    <div className={styles.messageContent}>
+                      <div className={styles.typingIndicator}>
+                        <span className={styles.typingDot}></span>
+                        <span className={styles.typingDot}></span>
+                        <span className={styles.typingDot}></span>
+                        <span className={styles.typingText}>Antwort wird erstellt...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* Smart Quick Questions */}
-        {chatHistory.length === 0 && quickQuestions.length > 0 && !isChatting && (
-          <div className={styles.quickQuestions}>
-            {quickQuestions.map((q, idx) => (
+            {/* Smart Quick Questions */}
+            {chatHistory.length === 0 && quickQuestions.length > 0 && !isChatting && (
+              <div className={styles.quickQuestions}>
+                {quickQuestions.map((q, idx) => (
+                  <button
+                    key={idx}
+                    className={styles.quickQuestionChip}
+                    onClick={() => onSendChatMessage(q)}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className={styles.chatInputContainer}>
+              <textarea
+                className={styles.chatInput}
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Stelle eine Frage zu dieser Klausel..."
+                rows={1}
+              />
               <button
-                key={idx}
-                className={styles.quickQuestionChip}
-                onClick={() => onSendChatMessage(q)}
+                className={styles.chatSendButton}
+                onClick={handleSendMessage}
+                disabled={!chatInput.trim() || isChatting}
               >
-                {q}
+                ➤
               </button>
-            ))}
-          </div>
+            </div>
+          </>
         )}
+      </div>
 
-        <div className={styles.chatInputContainer}>
-          <textarea
-            className={styles.chatInput}
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Stelle eine Frage zu dieser Klausel..."
-            rows={1}
-          />
+      {/* 🎯 Panel-Footer mit Quick-Actions: Chat öffnen + Simulator */}
+      <div className={styles.panelFooter}>
+        <button
+          className={styles.panelFooterBtn}
+          onClick={() => toggleSection('chat')}
+          title="Frage zur Klausel stellen"
+        >
+          <MessageSquare size={14} />
+          <span>Frage stellen</span>
+        </button>
+        {originalClauseText && sourceContractId && (
           <button
-            className={styles.chatSendButton}
-            onClick={handleSendMessage}
-            disabled={!chatInput.trim() || isChatting}
+            className={styles.panelFooterBtn}
+            onClick={() => setShowSimulator(true)}
+            title="Klausel-Simulator: Was wäre wenn...?"
           >
-            ➤
+            <FlaskConical size={14} />
+            <span>Simulator</span>
           </button>
-        </div>
+        )}
       </div>
 
       {/* Klausel-Vergleichs-Modal */}

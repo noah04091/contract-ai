@@ -308,7 +308,14 @@ export default function V2TabsSection({ data }: Props) {
                 <div className={`${styles.insightCard} ${sev.card}`} key={i}>
                   <div className={`${styles.insightIcon} ${sev.icon}`}>!</div>
                   <div className={styles.insightContent}>
-                    {title && <div className={styles.insightTitle}>{title}</div>}
+                    {title && (
+                      <div className={styles.insightTitle}>
+                        {title}
+                        <span className={styles.verifiedBadge} title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding.">
+                          ✓ Verifiziert
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
                     {legal && <div className={styles.insightMeta}>{legal}</div>}
                   </div>
@@ -343,7 +350,14 @@ export default function V2TabsSection({ data }: Props) {
                 <div className={styles.insightCard} key={i}>
                   <div className={`${styles.insightIcon} ${styles.insightIconGood}`}>✓</div>
                   <div className={styles.insightContent}>
-                    {title && <div className={styles.insightTitle}>{title}</div>}
+                    {title && (
+                      <div className={styles.insightTitle}>
+                        {title}
+                        <span className={styles.verifiedBadge} title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding.">
+                          ✓ Verifiziert
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
                   </div>
                   <div />

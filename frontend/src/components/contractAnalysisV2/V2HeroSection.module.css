@@ -353,3 +353,66 @@
   overflow: hidden;
   margin-bottom: 16px;
 }
+
+/* ============================================================
+   AUF EINEN BLICK — Hero-Cards mit 3 wichtigsten Findings
+   ============================================================
+   3 Spalten Desktop, 1 Spalte Mobile. Border-Left-Stripe pro
+   Kategorie (Risiko=rot, Empfehlung=amber, Termin=blau). */
+.atAGlance {
+  padding: 18px 24px 22px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.atAGlanceTitle {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.atAGlanceGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.glanceCard {
+  background: #fafbfc;
+  border: 1px solid #e5e7eb;
+  border-left-width: 3px;
+  border-radius: 11px;
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.glanceCard:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+.glanceCardRisk { border-left-color: #ef4444; }
+.glanceCardReco { border-left-color: #f59e0b; }
+.glanceCardDate { border-left-color: #2563eb; }
+.glanceIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+.glanceLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.glanceText {
+  font-size: 13.5px;
+  color: #0f172a;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.005em;
+}
+@media (max-width: 768px) {
+  .atAGlanceGrid { grid-template-columns: 1fr; gap: 10px; }
+  .atAGlance { padding: 16px 16px 20px; }
+}

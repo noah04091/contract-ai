@@ -30,6 +30,7 @@ type AnalysisData = {
   fristHinweise?: unknown[] | null;
   recommendations?: unknown[] | null;
   typeSpecificFindings?: unknown[] | null;
+  importantDates?: Array<{ type?: string; date?: string; label?: string; title?: string; description?: string }> | null;
   detailedLegalOpinion?: string | null;
   confidence?: number | string | null;
   qualityScore?: number | string | null;
@@ -578,6 +579,67 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             )}
           </>
         )}
+
+        {/* AUF EINEN BLICK — 3 wichtigste Findings als Hero-Cards.
+            User sieht in 3 Sekunden ohne klicken: Top-Risiko, Empfehlung, Termin.
+            Render-if-present: wenn keins der 3 vorhanden → Block weglassen. */}
+        {(() => {
+          type InsightLike = { title?: string; description?: string; severity?: string; priority?: string; riskLevel?: string };
+          const criticals = (Array.isArray(d.criticalIssues) ? d.criticalIssues : []) as InsightLike[];
+          const recos = (Array.isArray(d.recommendations) ? d.recommendations : []) as InsightLike[];
+          const dates = Array.isArray(d.importantDates) ? d.importantDates : [];
+
+          const isHigh = (item: InsightLike) => /high|hoch|dringend|kritisch/i.test(String(item.severity || item.priority || item.riskLevel || ""));
+          const topRisk = criticals.find(isHigh) || criticals[0];
+          const topReco = recos.find(isHigh) || recos[0];
+
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const upcoming = dates
+            .map(ev => ({ ev, date: ev.date ? new Date(ev.date) : null }))
+            .filter((x): x is { ev: typeof dates[0]; date: Date } => x.date != null && !isNaN(x.date.getTime()) && x.date >= now)
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+          const topDate = upcoming[0];
+
+          if (!topRisk && !topReco && !topDate) return null;
+
+          const truncate = (s: string, max: number) => s.length <= max ? s : s.substring(0, max).trim() + "…";
+          const getInsightText = (item: InsightLike | undefined) => {
+            if (!item) return "";
+            return item.title || item.description || "";
+          };
+
+          return (
+            <div className={styles.atAGlance}>
+              <div className={styles.atAGlanceTitle}>Auf einen Blick</div>
+              <div className={styles.atAGlanceGrid}>
+                {topRisk && (
+                  <div className={`${styles.glanceCard} ${styles.glanceCardRisk}`}>
+                    <div className={styles.glanceIcon} aria-hidden="true">⚠️</div>
+                    <div className={styles.glanceLabel}>Top-Risiko</div>
+                    <div className={styles.glanceText}>{truncate(getInsightText(topRisk), 90)}</div>
+                  </div>
+                )}
+                {topReco && (
+                  <div className={`${styles.glanceCard} ${styles.glanceCardReco}`}>
+                    <div className={styles.glanceIcon} aria-hidden="true">💡</div>
+                    <div className={styles.glanceLabel}>Wichtigste Empfehlung</div>
+                    <div className={styles.glanceText}>{truncate(getInsightText(topReco), 90)}</div>
+                  </div>
+                )}
+                {topDate && (
+                  <div className={`${styles.glanceCard} ${styles.glanceCardDate}`}>
+                    <div className={styles.glanceIcon} aria-hidden="true">⏰</div>
+                    <div className={styles.glanceLabel}>Kritischster Termin</div>
+                    <div className={styles.glanceText}>
+                      {topDate.ev.label || topDate.ev.title || "Termin"} · {topDate.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Conversion-Banner inline im Hero — direkt nach Asymmetrie, max
             Sichtbarkeit für Free→Business-Conversion (Wow-Effekt-Moment).
