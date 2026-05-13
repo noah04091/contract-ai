@@ -108,6 +108,9 @@ export const LogoBlock: React.FC<LogoBlockProps> = ({
 
   // Wenn kein Logo-URL vorhanden, Upload-Interface anzeigen
   if (!logoUrl) {
+    // Im PDF-Export/Preview: leeren LogoBlock nicht rendern
+    // (sonst erschiene "Logo hier einfügen" als sichtbarer Text im Vertrag)
+    if (isPreview) return null;
     return (
       <div
         className={`${styles.logoBlock} ${isSelected ? styles.selected : ''}`}

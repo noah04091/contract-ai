@@ -33,13 +33,15 @@ export const NumberedListBlock: React.FC<NumberedListBlockProps> = ({
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Default items falls keine definiert
-  const listItems = useMemo(() =>
-    items && items.length > 0
-      ? items
-      : ['Listenpunkt 1', 'Listenpunkt 2', 'Listenpunkt 3'],
-    [items]
-  );
+  // Default items nur im Edit-Modus zeigen. Im PDF-Preview: echte Items oder leer.
+  // (sonst erschienen "Listenpunkt 1/2/3" als echter Vertragsinhalt im PDF)
+  const listItems = useMemo(() => {
+    if (items && items.length > 0) return items;
+    return isPreview ? [] : ['Listenpunkt 1', 'Listenpunkt 2', 'Listenpunkt 3'];
+  }, [items, isPreview]);
+
+  // Im PDF-Preview: komplett leere Liste (ohne Titel) gar nicht rendern
+  if (isPreview && listItems.length === 0 && !title) return null;
 
   // Nummerierungsstil
   const getListStyleType = () => {

@@ -33,20 +33,20 @@ export const TableBlock: React.FC<TableBlockProps> = ({
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Default Tabelle falls leer
-  const tableHeaders = useMemo(() =>
-    headers && headers.length > 0
-      ? headers
-      : ['Spalte 1', 'Spalte 2', 'Spalte 3'],
-    [headers]
-  );
+  // Default Tabelle nur im Edit-Modus. Im PDF-Preview: echte Daten oder leer.
+  // (sonst erschienen "Spalte 1/2/3" + "Wert 1/2/3" als echte Vertrags-Tabelle)
+  const tableHeaders = useMemo(() => {
+    if (headers && headers.length > 0) return headers;
+    return isPreview ? [] : ['Spalte 1', 'Spalte 2', 'Spalte 3'];
+  }, [headers, isPreview]);
 
-  const tableRows = useMemo(() =>
-    rows && rows.length > 0
-      ? rows
-      : [['Wert 1', 'Wert 2', 'Wert 3']],
-    [rows]
-  );
+  const tableRows = useMemo(() => {
+    if (rows && rows.length > 0) return rows;
+    return isPreview ? [] : [['Wert 1', 'Wert 2', 'Wert 3']];
+  }, [rows, isPreview]);
+
+  // Im PDF-Preview: komplett leere Tabelle (keine Header und keine Rows) gar nicht rendern
+  if (isPreview && tableHeaders.length === 0 && tableRows.length === 0) return null;
 
   useEffect(() => {
     if (editingCell) {

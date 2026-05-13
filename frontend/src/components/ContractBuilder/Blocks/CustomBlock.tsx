@@ -75,6 +75,10 @@ export const CustomBlock: React.FC<CustomBlockProps> = ({
     }
   }, [handleSave]);
 
+  // Im PDF-Export/Preview: leeren CustomBlock nicht rendern
+  // (sonst erschienen "Benutzerdefinierter Block / Inhalt..." Defaults im Vertrag)
+  if (isPreview && !title && !body) return null;
+
   return (
     <div className={`${styles.custom} ${isSelected ? styles.selected : ''}`}>
       {!isPreview && (

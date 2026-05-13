@@ -77,6 +77,10 @@ export const NoticeBlock: React.FC<NoticeBlockProps> = ({
   const config = noticeTypeConfig[noticeType as keyof typeof noticeTypeConfig] || noticeTypeConfig.info;
   const IconComponent = config.icon;
 
+  // Im PDF-Export/Preview: leeren NoticeBlock (ohne eigenen Text) nicht rendern
+  // (sonst erschiene der Edit-Hinweis "Hier können Sie..." als sichtbarer Vertragsinhalt)
+  if (isPreview && !noticeText) return null;
+
   // Farben: Benutzerdefiniert oder Default
   const borderColor = noticeBorderColor || config.defaultBorder;
   const backgroundColor = noticeBackgroundColor || config.defaultBackground;
