@@ -679,7 +679,10 @@ Antworte in diesem JSON-Format:
         ],
         response_format: { type: 'json_object' },
         temperature: 0.5,
-        max_tokens: 1000
+        // 2026-05-13: 1000 → 2500. Bei langen Klauseln (>1500 chars) brach
+        // GPT die JSON-Antwort mitten in der 2. Alternative ab → Parse-Error.
+        // 2 Alt × ~900 Tokens + JSON-Overhead + Puffer = 2500 sicher.
+        max_tokens: 2500
       }, { timeout: 30000 });
 
       const result = safeParseJSON(response.choices[0].message.content, 'generateAlternatives');
