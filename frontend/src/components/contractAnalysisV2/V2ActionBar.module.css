@@ -1,4 +1,7 @@
-/* V2 Action-Bar — sticky, dunkel, V6-Mockup-Stil */
+/* V2 Action-Bar — sticky, hell, Contract-AI-Stil
+   Refresh 13.05.2026: schwarzer Pill → weiße helle Bar, alle Buttons gleichwertig
+   (Optimieren nicht mehr als oranger Solist). Passt zur restlichen Hell-Optik
+   von Contract AI und vermeidet Klotz-Wirkung. */
 
 .actionBar {
   position: sticky;
@@ -6,65 +9,80 @@
   margin: 24px auto 8px;
   width: -moz-fit-content;
   width: fit-content;
-  background: rgba(15,23,42,.97);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  border-radius: 13px;
-  padding: 8px 10px 8px 14px;
+  border-radius: 14px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   z-index: 100;
-  box-shadow: 0 8px 24px -8px rgba(15,23,42,.4);
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 24px -8px rgba(15,23,42,.12);
 }
 
 .primary {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg,#f59e0b,#d97706);
-  color: #fff;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 9px 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 9px;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  border: none;
+  border: 1px solid #bfdbfe;
   cursor: pointer;
   font-family: inherit;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 .primary:focus-visible, .secondary:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
-.primary:hover { filter: brightness(1.05); }
-.primary:disabled { background: linear-gradient(135deg,#94a3b8,#64748b); cursor: not-allowed; }
+.primary:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.primary:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
 .primary svg { animation: none; }
 .primaryLoading svg { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.divider { width: 1px; height: 22px; background: rgba(255,255,255,.12); }
+.divider { width: 1px; height: 22px; background: #e5e7eb; }
 
 .secondary {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 7px 11px;
-  border-radius: 7px;
+  padding: 8px 12px;
+  border-radius: 8px;
   font-size: 12.5px;
-  color: rgba(255,255,255,.85);
+  font-weight: 500;
+  color: #475569;
   text-decoration: none;
   cursor: pointer;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   font-family: inherit;
+  transition: background 150ms ease, color 150ms ease;
 }
-.secondary:hover { background: rgba(255,255,255,.06); }
-.secondary:disabled { opacity: .4; cursor: not-allowed; }
-.secondary.locked { opacity: .6; cursor: not-allowed; }
+.secondary:hover {
+  background: #f6f8fb;
+  color: #0f172a;
+}
+.secondary:disabled { opacity: .5; cursor: not-allowed; }
+.secondary.locked { opacity: .65; cursor: not-allowed; }
 .crown {
   margin-left: 3px;
-  color: #fbbf24;
+  color: #f59e0b;
   font-size: 10px;
 }
 .secondaryLoading svg { animation: spin 1s linear infinite; }
