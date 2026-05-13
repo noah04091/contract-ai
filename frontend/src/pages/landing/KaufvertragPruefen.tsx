@@ -175,15 +175,15 @@ const KaufvertragPruefen: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
-        <meta name="description" content="Kaufvertrag prüfen lassen mit KI: unwirksame Gewährleistungsausschlüsse, vage Beschaffenheit & versteckte Fallen in 60 Sekunden erkennen. Auf Basis BGB-Kaufrecht & BGH-Rechtsprechung. DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
+        <title>Kaufvertrag prüfen kostenlos – KI-Check für Auto, Möbel & Co. | Contract AI</title>
+        <meta name="description" content="Kaufvertrag mit KI prüfen: Gewährleistung, versteckte Fallen & Stornogebühren in 60 Sek. erkennen. Speziell für Autokauf, Möbel und Privatkauf. Auf Basis BGB & BGH-Rechtsprechung. Kostenlos testen." />
         <meta name="keywords" content="Kaufvertrag prüfen, Kaufvertrag prüfen lassen, Kaufvertrag KI prüfen, Kaufvertrag online prüfen, Autokaufvertrag prüfen, Kaufvertrag Check, Kaufvertrag analysieren, Gewährleistung prüfen, gekauft wie gesehen, Sachmangel prüfen" />
 
         <link rel="canonical" href="https://www.contract-ai.de/kaufvertrag-pruefen" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta property="og:description" content="Kaufvertrag prüfen lassen mit KI: Gewährleistung, Beschaffenheit und versteckte Fallen in 60 Sekunden erkennen. DSGVO-konform." />
+        <meta property="og:title" content="Kaufvertrag prüfen kostenlos – KI-Check für Auto, Möbel & Co. | Contract AI" />
+        <meta property="og:description" content="Kaufvertrag mit KI prüfen: Gewährleistung & versteckte Fallen in 60 Sek. erkennen. Speziell für Autokauf, Möbel und Privatkauf. Kostenlos testen." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/kaufvertrag-pruefen" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
@@ -191,8 +191,8 @@ const KaufvertragPruefen: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Kaufvertrag prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta name="twitter:description" content="Kaufvertrag prüfen lassen mit KI: Gewährleistung, Beschaffenheit und versteckte Fallen in 60 Sekunden erkennen." />
+        <meta name="twitter:title" content="Kaufvertrag prüfen kostenlos – KI-Check für Auto, Möbel & Co. | Contract AI" />
+        <meta name="twitter:description" content="Kaufvertrag mit KI prüfen: Gewährleistung & versteckte Fallen in 60 Sek. erkennen. Speziell für Autokauf, Möbel und Privatkauf." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         <script type="application/ld+json">
@@ -811,7 +811,7 @@ const KaufvertragPruefen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Gavel size={28} />
@@ -1154,7 +1154,7 @@ const KaufvertragPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Auch interessant</h2>
             </div>
 
-            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>

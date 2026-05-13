@@ -175,15 +175,15 @@ const NdaPruefen: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI</title>
-        <meta name="description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen, fehlende Carve-Outs, verstecktes Wettbewerbsverbot in 60 Sekunden erkennen. Auf Basis Geschäftsgeheimnisgesetz (GeschGehG). DSGVO-konform, Server in Deutschland. ✓ Kostenlos starten" />
+        <title>NDA prüfen kostenlos – KI-Check in 60 Sek. | Contract AI</title>
+        <meta name="description" content="NDA online prüfen mit KI: Vertragsstrafe, Geheimhaltungsdauer & Carve-Outs in 60 Sekunden checken. Auch für Mutual NDA. Kostenloser Test, DSGVO-konform, Server in Deutschland." />
         <meta name="keywords" content="NDA prüfen, NDA prüfen lassen, NDA Check, Geheimhaltungsvereinbarung prüfen, NDA online prüfen, NDA KI prüfen, Non Disclosure Agreement prüfen, Geheimhaltungsvertrag prüfen, NDA analysieren, Mutual NDA prüfen" />
 
         <link rel="canonical" href="https://www.contract-ai.de/nda-pruefen" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta property="og:description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen & versteckte Klauseln in 60 Sekunden erkennen. Basierend auf GeschGehG. DSGVO-konform." />
+        <meta property="og:title" content="NDA prüfen kostenlos – KI-Check in 60 Sek. | Contract AI" />
+        <meta property="og:description" content="NDA online prüfen mit KI: Vertragsstrafe, Geheimhaltungsdauer & Carve-Outs in 60 Sek. checken. Auch für Mutual NDA. Kostenloser Test." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/nda-pruefen" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
@@ -191,8 +191,8 @@ const NdaPruefen: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="NDA prüfen lassen – KI-Analyse in 60 Sek. | Contract AI" />
-        <meta name="twitter:description" content="NDA prüfen lassen mit KI: überzogene Vertragsstrafen & versteckte Klauseln in 60 Sekunden erkennen. Basierend auf GeschGehG." />
+        <meta name="twitter:title" content="NDA prüfen kostenlos – KI-Check in 60 Sek. | Contract AI" />
+        <meta name="twitter:description" content="NDA online prüfen mit KI: Vertragsstrafe, Geheimhaltungsdauer & Carve-Outs in 60 Sek. checken. Kostenloser Test." />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-vertragsanalyse.png" />
 
         <script type="application/ld+json">
@@ -812,7 +812,7 @@ const NdaPruefen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Gavel size={28} />
@@ -1157,7 +1157,7 @@ const NdaPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Auch interessant</h2>
             </div>
 
-            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
