@@ -156,6 +156,18 @@ const KiVertragsanalyse: React.FC = () => {
     {
       question: "Wie starte ich mit KI-Vertragsanalyse?",
       answer: "Registrieren Sie sich kostenlos bei Contract AI, laden Sie Ihren ersten Vertrag als PDF oder Word hoch, und erhalten Sie innerhalb von 60 Sekunden eine vollständige Analyse mit Risikobewertung und Handlungsempfehlungen. Keine Kreditkarte erforderlich."
+    },
+    {
+      question: "Wie funktioniert automatisierte Vertragsprüfung mit KI?",
+      answer: "Bei der automatisierten Vertragsprüfung mit KI laden Sie Ihren Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp automatisch und gleicht jede Klausel mit aktueller Rechtsprechung (BGH, BAG) sowie geltendem Recht (BGB, HGB) ab. Innerhalb von 60 Sekunden erhalten Sie einen strukturierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen — vollständig automatisiert, ohne menschliches Zutun während der Analyse."
+    },
+    {
+      question: "Was ist KI-gestützte Vertragsanalyse und wer braucht sie?",
+      answer: "KI-gestützte Vertragsanalyse ist die automatisierte Prüfung von Verträgen durch künstliche Intelligenz, die juristische Texte versteht und bewertet. Sie eignet sich für Privatpersonen (vor Unterschrift eines Miet-, Arbeits- oder Kaufvertrags), Freelancer und Selbstständige (bei Kundenverträgen und NDAs), kleine und mittlere Unternehmen (bei Lieferanten- und Dienstleistungsverträgen) sowie Rechtsabteilungen großer Firmen für die Qualitätssicherung und Massenprüfung. Überall, wo Verträge schnell, konsistent und fundiert geprüft werden müssen."
+    },
+    {
+      question: "Ist KI-Vertragsprüfung wirklich kostenlos?",
+      answer: "Ja, Contract AI bietet einen kostenlosen Starter-Tarif mit bis zu drei vollständigen Vertragsanalysen — ohne Kreditkarte, ohne Abo-Falle. Für intensive Nutzung gibt es den Business-Tarif (19 EUR/Monat, 25 Analysen) und den Enterprise-Tarif (29 EUR/Monat, unbegrenzt). Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Sie können Contract AI also risikofrei testen und sehen, ob die KI für Ihre Bedürfnisse passt."
     }
   ];
 
