@@ -21,7 +21,6 @@ import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine &
 import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // für v2UnifiedContainer-Wrapper
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
-import V2ConversionBanner from "./contractAnalysisV2/V2ConversionBanner"; // 🎨 V2 — Free→Business Conv-Banner
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
 import datesWrapperStyles from "./contractAnalysisV2/V2DatesWrapper.module.css"; // 🎨 V2 — neutraler statt gelb
 
