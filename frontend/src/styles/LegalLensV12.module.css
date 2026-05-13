@@ -1422,6 +1422,28 @@
   font-size: 1rem;
 }
 
+/* Count-Badge in Section-Titles (z.B. "Weitere Alternativen [2]") */
+.sectionCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 0.45rem;
+  margin-left: 0.25rem;
+  background: #e2e8f0;
+  color: #475569;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Wrapper für den Simulator-Trigger (kompakte Footer-Position) */
+.simulatorTrigger {
+  margin-top: 0.25rem;
+}
+
 /* ===== RISK BADGE ===== */
 .riskBadge {
   display: flex;
