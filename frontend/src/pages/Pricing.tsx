@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Zap, Star, Shield, ChevronDown, TrendingUp, Users, Calendar, Bell, Download, Sparkles, Lock, ArrowRight, Eye, Search, FolderOpen, Clock, Smartphone, PenTool } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Footer from "../components/Footer";
 import TrustBadgeRow from "../components/TrustBadgeRow";
@@ -17,6 +17,8 @@ export default function Pricing() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [currentPlan, setCurrentPlan] = useState<'free' | 'business' | 'enterprise' | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const urlPromoCode = searchParams.get('code')?.trim() || null;
 
   // Load current subscription status
   useEffect(() => {
@@ -162,7 +164,11 @@ export default function Pricing() {
         method: "POST",
         credentials: "include",
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, billing: billingPeriod })
+        body: JSON.stringify({
+          plan,
+          billing: billingPeriod,
+          ...(urlPromoCode && { code: urlPromoCode })
+        })
       });
 
       const data: { url?: string; message?: string } = await res.json();

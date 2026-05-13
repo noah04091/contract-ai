@@ -19,7 +19,7 @@ ensureDb().catch(err => console.error("❌ Stripe-Route: MongoDB Fehler:", err.m
 
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
   await ensureDb();
-  const { plan, billing = 'monthly' } = req.body; // billing: 'monthly' oder 'yearly'
+  const { plan, billing = 'monthly', code } = req.body; // billing: 'monthly'/'yearly', code: optionaler Promo-Code aus URL
   const email = req.user.email;
 
   // DEBUG LOGGING
@@ -80,10 +80,30 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       );
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // 🎁 Optional: Promo-Code aus URL auto-anwenden (z.B. /pricing?code=BUSINESS10)
+    // Fail-safe: Bei jedem Fehler/Mismatch -> Fallback auf manuelle Eingabe via allow_promotion_codes
+    let resolvedPromotionCodeId = null;
+    if (code && typeof code === 'string' && code.trim().length > 0) {
+      try {
+        const promoCodes = await stripe.promotionCodes.list({
+          code: code.trim(),
+          active: true,
+          limit: 1
+        });
+        if (promoCodes.data.length > 0) {
+          resolvedPromotionCodeId = promoCodes.data[0].id;
+          console.log(`✅ [STRIPE] Promo-Code "${code.trim()}" auto-applied (promo_id: ${resolvedPromotionCodeId})`);
+        } else {
+          console.warn(`⚠️  [STRIPE] Promo-Code "${code.trim()}" nicht gefunden/inaktiv — Fallback auf manuelle Eingabe`);
+        }
+      } catch (lookupErr) {
+        console.warn(`⚠️  [STRIPE] Promo-Code-Lookup fehlgeschlagen:`, lookupErr.message);
+      }
+    }
+
+    const sessionParams = {
       mode: "subscription",
       customer: customerId,
-      allow_promotion_codes: true,
       line_items: [{ price: selectedPriceId, quantity: 1 }],
       subscription_data: {
         metadata: { userId: user._id.toString() },
@@ -113,9 +133,18 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       ],
       success_url: "https://contract-ai.de/success",
       cancel_url: "https://contract-ai.de/pricing?canceled=true",
-    });
+    };
 
-    console.log(`✅ Stripe Checkout-Session erstellt: ${session.id}`);
+    // Stripe-API-Konflikt vermeiden: `discounts` und `allow_promotion_codes` sind mutually exclusive
+    if (resolvedPromotionCodeId) {
+      sessionParams.discounts = [{ promotion_code: resolvedPromotionCodeId }];
+    } else {
+      sessionParams.allow_promotion_codes = true;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log(`✅ Stripe Checkout-Session erstellt: ${session.id}${resolvedPromotionCodeId ? ' (mit Auto-Promo)' : ''}`);
     res.json({ url: session.url });
   } catch (err) {
     console.error("❌ Stripe Checkout Fehler:", err);
