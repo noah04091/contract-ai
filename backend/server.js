@@ -1120,6 +1120,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Health:", err);
     }
 
+    // ✅ 14.1.5 LEGAL REFERENCES (Read-Only Slug-Map für Frontend-Pillen, 13.05.2026)
+    //    Nutzt GesetzImInternetConnector-Singleton — Legal Pulse UNANGETASTET.
+    try {
+      app.use("/api/legal-references", require("./routes/legalReferences"));
+      console.log("✅ Legal References Slug-Map geladen unter /api/legal-references");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal References:", err);
+    }
+
     // ✅ 14.2 LEGAL PULSE NOTIFICATIONS (Phase 2)
     try {
       const pulseNotificationsRoutes = require("./routes/pulseNotifications");

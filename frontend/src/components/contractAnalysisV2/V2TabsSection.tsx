@@ -17,6 +17,7 @@ import {
   FileText
 } from "lucide-react";
 import styles from "./V2TabsSection.module.css";
+import LegalRefPill from "../LegalRefPill";
 
 type Severity = "high" | "medium" | "low" | string;
 
@@ -317,7 +318,11 @@ export default function V2TabsSection({ data }: Props) {
                       </div>
                     )}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
-                    {legal && <div className={styles.insightMeta}>{legal}</div>}
+                    {legal && (
+                      <div className={styles.insightMeta}>
+                        <LegalRefPill reference={legal} fallbackClassName={styles.insightMeta} />
+                      </div>
+                    )}
                   </div>
                   {sev.tag ? <span className={`${styles.insightTag} ${sev.tag}`}>{sev.tagLabel}</span> : <div />}
                 </div>
@@ -432,7 +437,9 @@ export default function V2TabsSection({ data }: Props) {
                     {desc && <div className={styles.pilotCpDesc}>{desc}</div>}
                     {(item.legalBasis || item.clauseRef) && (
                       <div className={styles.pilotCpMeta}>
-                        {item.legalBasis && <span className={styles.pilotCpLegal}>{item.legalBasis}</span>}
+                        {item.legalBasis && (
+                          <LegalRefPill reference={item.legalBasis} fallbackClassName={styles.pilotCpLegal} />
+                        )}
                         {item.clauseRef && <span className={styles.pilotCpClauseRef}>{item.clauseRef}</span>}
                       </div>
                     )}
