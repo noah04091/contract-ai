@@ -856,9 +856,11 @@ export default function AnalysisImportantDates({
                   </div>
                 </div>
                 <p style={{ fontSize: 12.5, color: "#64748b", lineHeight: 1.5 }}>
-                  {getDaysUntil(deleteTarget.date) < 0
-                    ? "Der Eintrag wird dauerhaft aus deiner Vertragshistorie ausgeblendet und auch nach einer Re-Analyse nicht erneut angezeigt."
-                    : "Du erhältst keine Erinnerungen mehr für diesen Termin. Die Entscheidung bleibt auch nach einer Re-Analyse erhalten."}
+                  {deleteTarget.isManual
+                    ? "Dieser manuell hinzugefügte Termin wird dauerhaft entfernt."
+                    : getDaysUntil(deleteTarget.date) < 0
+                      ? "Der Eintrag wird aus der Übersicht entfernt. Bei einer Re-Analyse des Vertrags wird er ggf. wieder angezeigt."
+                      : "Du erhältst vorerst keine Erinnerungen mehr für diesen Termin. Bei einer Re-Analyse des Vertrags werden alle KI-Termine neu generiert."}
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, padding: "0 24px 20px", justifyContent: "flex-end" }}>
