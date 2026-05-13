@@ -204,6 +204,14 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Blog-Artikel — B2B Cluster -->
+  <url>
+    <loc>https://www.contract-ai.de/blog/ki-vertragsmanagement-agenturen-anwendungsfaelle</loc>
+    <lastmod>2026-05-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
   <!-- Blog-Artikel (Cluster: KI-Vertragsanalyse Pillar) -->
   <url>
     <loc>https://www.contract-ai.de/blog/ki-vs-anwalt-vertrag-pruefen</loc>

@@ -23,6 +23,135 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 21,
+    slug: 'ki-vertragsmanagement-agenturen-anwendungsfaelle',
+    title: 'KI-Vertragsmanagement für Agenturen: 5 Anwendungsfälle aus der Praxis',
+    subtitle: 'Wie Marketing-Agenturen, Hausverwaltungen, HR-Berater und kleine Kanzleien mit KI-gestützter Vertragsanalyse Zeit sparen, Risiken erkennen und ihre Mandanten besser bedienen.',
+    excerpt: 'Konkrete Use Cases aus der Praxis: Wie Agenturen, Immobilienverwalter, HR-Freelancer und kleine Kanzleien mit KI-Vertragsmanagement Zeit sparen, Risiken erkennen und ihre Kunden besser betreuen — mit echten Beispielen und Zahlen.',
+    category: 'tipps',
+    date: '13. Mai 2026',
+    readTime: '9 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🏢',
+    image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80',
+    faqs: [
+      {
+        question: 'Was kostet KI-Vertragsmanagement für eine Agentur oder ein kleines Team?',
+        answer: 'Der Enterprise-Tarif von Contract AI kostet 29 € pro Monat und enthält bereits bis zu 10 Nutzer ohne Pro-Sitz-Aufpreis. Das sind rechnerisch unter 3 € pro Mitarbeiter und Monat. Für größere Teams ab 25 Personen gibt es individuelle Konditionen auf Anfrage. Im Vergleich: Eine einzelne Vertragsprüfung beim Anwalt kostet typischerweise 150–400 € — der Enterprise-Tarif amortisiert sich bereits beim ersten geprüften Vertrag.'
+      },
+      {
+        question: 'Ist KI-Vertragsanalyse DSGVO-konform, wenn ich Verträge meiner Mandanten oder Kunden hochlade?',
+        answer: 'Ja. Contract AI ist vollständig DSGVO-konform und betreibt alle Server in Frankfurt am Main. Als Agentur, Verwaltung oder Berater bist du Auftragsverarbeiter im Sinne der DSGVO — wir stellen dir dafür auf Anfrage einen kostenlosen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO zur Verfügung. Damit ist die Verarbeitung von Mandanten- und Kundendokumenten rechtlich abgesichert.'
+      },
+      {
+        question: 'Wie viele Nutzer können in einem Team-Tarif arbeiten und welche Rollen gibt es?',
+        answer: 'Im Enterprise-Tarif sind bis zu 10 aktive Nutzer ohne Aufpreis enthalten. Es gibt drei Rollen: Admin (verwaltet das Team, lädt Mitglieder ein, vergibt Rechte), Mitarbeiter (lädt Verträge hoch, analysiert, bearbeitet) und Viewer (Lesezugriff). So entscheidest du selbst, wer welche Verträge sehen oder ändern darf — wichtig, wenn du sensible Mandantenakten von normalen Lieferantenverträgen trennen willst.'
+      },
+      {
+        question: 'Kann ich Contract AI in meine bestehende Kanzlei-, Hausverwaltungs- oder CRM-Software integrieren?',
+        answer: 'Ja. Der Enterprise-Tarif enthält Zugang zur REST API von Contract AI. Damit kannst du Verträge automatisch hochladen, Analysen abrufen und Ergebnisse in deine Kanzleisoftware (z.B. RA-MICRO, DATEV), Hausverwaltungssoftware oder dein CRM einspielen. Die vollständige API-Dokumentation findest du unter /api-docs.'
+      },
+      {
+        question: 'Gibt es eine White-Label-Option für Agenturen, die Vertragsanalysen an ihre Kunden weitergeben?',
+        answer: 'Ja. Im Enterprise-Tarif kannst du PDF-Analyse-Reports im White-Label-Modus exportieren — also ohne Contract-AI-Branding und mit deinem eigenen Logo. Das ist ideal, wenn du Vertragsanalysen als eigene Leistung an deine Kunden weitergibst oder berechnen möchtest.'
+      },
+      {
+        question: 'Wie schnell ist mein Team einsatzbereit?',
+        answer: 'Innerhalb von fünf Minuten. Du schließt den Enterprise-Tarif ab, lädst deine Kollegen per E-Mail ein, sie registrieren sich über den Einladungslink und können sofort mit der vereinbarten Rolle loslegen. Es gibt keinen Setup-Aufwand, keine technische Onboarding-Phase, keine Schulungspflicht.'
+      }
+    ],
+    content: `
+      <p>Eine Agentur mit fünf Mitarbeitern hat im Schnitt 20 bis 50 aktive Verträge — NDAs mit Freelancern, Kundenverträge mit Festpreis-Vereinbarungen, Lieferantenverträge mit Tools und Software, Mietverträge fürs Büro. Eine Hausverwaltung kommt schnell auf 100 bis 300 Mietverträge. Ein HR-Berater betreut parallel 10 bis 15 Kunden, jeder mit eigenen Arbeitsverträgen. Und trotzdem wird Vertragsmanagement in fast allen Agenturen und Beratungen wie eine Nebensache behandelt: Excel-Tabellen, geteilte Dropbox-Ordner, Anwaltsanfragen für jeden Kleinkram.</p>
+
+      <p>Mit moderner <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> lässt sich das Problem für die meisten Agenturen heute komplett anders lösen — schneller, günstiger und mit besserer Übersicht. In diesem Artikel zeigen wir fünf konkrete Anwendungsfälle, die wir aus Gesprächen mit Agenturen, Verwaltungen und Beratern kennen.</p>
+
+      <h2>Warum Vertragsmanagement für Agenturen ein blinder Fleck ist</h2>
+
+      <p>Drei typische Probleme tauchen in fast jeder Agentur auf, sobald man genauer hinschaut:</p>
+
+      <ul>
+        <li><strong>Niemand weiß den aktuellen Stand.</strong> Verträge liegen verteilt auf E-Mail, lokalem Rechner, geteilter Dropbox, manchmal sogar im physischen Aktenschrank. Wenn der Geschäftsführer in Elternzeit ist und jemand anderes eine Frist prüfen muss, dauert es Stunden.</li>
+        <li><strong>Fristen werden verpasst.</strong> Eine automatische Vertragsverlängerung um zwölf Monate, weil niemand drei Monate vorher gekündigt hat. Eine Mieterhöhung, die nicht rechtzeitig im Mietvertrag geprüft wurde. Solche Vorfälle kosten schnell vier- bis fünfstellige Beträge.</li>
+        <li><strong>Anwaltskosten für jeden Kleinkram.</strong> Eine Vertragsklausel-Prüfung beim Anwalt kostet typischerweise 150 bis 400 Euro. Bei zehn Verträgen im Monat sind das schnell mehrere tausend Euro — die für viele Agenturen schlicht nicht wirtschaftlich sind, also wird die Prüfung weggelassen und das Risiko in Kauf genommen.</li>
+      </ul>
+
+      <p>Die gute Nachricht: Genau diese drei Probleme lassen sich mit einer KI-gestützten Vertragsmanagement-Plattform für unter 30 € im Monat lösen — und zwar nicht für einzelne Personen, sondern für das ganze Team. Wie das in der Praxis aussieht, zeigen die folgenden fünf Anwendungsfälle.</p>
+
+      <h2>Use Case 1: Marketing-Agentur — NDAs in 30 Sekunden statt 30 Minuten</h2>
+
+      <p>Lisa führt eine 4-köpfige Werbeagentur in Hamburg. Etwa zwei bis drei Mal pro Monat bekommt sie ein neues NDA (Non-Disclosure Agreement) von potenziellen Großkunden, die ihre Marketingstrategie diskutieren wollen. Jedes NDA ist anders formuliert, jedes enthält andere Vertragsstrafen, andere Geheimhaltungsdauern, andere Konventionalstrafen.</p>
+
+      <p>Bisheriger Ablauf: NDA bekommen → 20 Minuten selbst lesen → unsicher → entweder unterschreiben und hoffen, oder zum Anwalt schicken (200 €, drei Tage Wartezeit). Bei zwei NDAs im Monat sind das 400 € Anwaltskosten — nur fürs Lesen.</p>
+
+      <p>Mit Contract AI: NDA hochladen, KI prüft in 30 Sekunden auf typische Risiken — überzogene Vertragsstrafen, einseitige Geheimhaltungsdauern, fehlende Carve-Outs für bereits bekannte Informationen, ausufernde Konventionalstrafen. Jede problematische Klausel wird mit Begründung und Paragraphen-Verweis markiert.</p>
+
+      <p>Ergebnis: Lisa kann das NDA noch im selben Termin durchgehen, kritische Punkte direkt mit dem Kunden besprechen und in der Hälfte der Fälle sogar Anpassungen verhandeln. Anwaltskosten: 0 €. Mehr zur <a href="/features/vertragsanalyse">KI-Vertragsanalyse</a> und welche Klauseltypen geprüft werden, findest du im Detail auf der Feature-Seite.</p>
+
+      <h2>Use Case 2: Hausverwaltung — 120 Mietverträge zentral managen</h2>
+
+      <p>Sandra ist Inhaberin einer Hausverwaltung mit sechs Mitarbeitern in München. Sie betreut etwa 120 Mietverträge für rund 35 Immobilien. Das Problem: Die Mietverträge liegen in drei verschiedenen Excel-Listen — eine pro Mitarbeiter-Bereich — und niemand weiß so richtig, wer den aktuellen Stand pflegt. Wenn ein Mieter anruft und nach seiner Kündigungsfrist fragt, dauert die Antwort manchmal eine halbe Stunde.</p>
+
+      <p>Noch schlimmer: In drei der letzten zwölf Monate ist eine Mieterhöhungsmöglichkeit verstrichen, weil sie niemand rechtzeitig auf dem Schirm hatte. Bei einer durchschnittlichen Erhöhung von 80 € pro Monat über 12 Monate hinweg sind das schnell 1.000 € Mietausfall — pro vergessener Erhöhung.</p>
+
+      <p>Mit Contract AI: Alle 120 Verträge werden einmalig hochgeladen und in zentralen Ordnern abgelegt. Die KI scannt jeden Vertrag automatisch auf unwirksame Klauseln — überzogene Schönheitsreparaturen, Indexmieten ohne klare Berechnungsgrundlage, ungültige Kündigungsfristen — und schiebt alle Fristen (Indexierung, Befristungsende, Kündigungsfristen) automatisch in einen gemeinsamen Kalender. Alle sechs Mitarbeiter arbeiten am selben Bestand und sehen den jeweils aktuellen Stand.</p>
+
+      <p>Ergebnis: Etwa 25 bis 30 Stunden Zeitersparnis pro Monat (laut Sandras Schätzung) und seitdem keine vergessenen Fristen mehr. Wer einen einzelnen <a href="/mietvertrag-pruefen">Mietvertrag prüfen</a> möchte, kann das auch ohne Team-Abo machen — für eine ganze Hausverwaltung ist der Team-Tarif aber deutlich effizienter.</p>
+
+      <h2>Use Case 3: HR-Beratung — Arbeitsverträge für 12 Kunden parallel</h2>
+
+      <p>Marco ist freiberuflicher HR-Berater und People-Ops-Consultant. Er betreut parallel 12 mittelständische Unternehmen — die meisten zwischen 20 und 80 Mitarbeitern. Sein Hauptproblem: Jeder Kunde hat eigene Arbeitsvertrags-Vorlagen, eigene Compliance-Anforderungen und eigene Standards. Wenn er beispielsweise einen neuen Arbeitsvertrag für Kunde A prüft, muss er die KI-relevanten Klauseln gegen BGB, BAG-Rechtsprechung und AGG abgleichen — und das pro Kunde mit jeweils anderen Branchenkontext.</p>
+
+      <p>Bisheriger Ablauf: Vertrag öffnen, durchscrollen, eigene Notizen machen, Klauseln gegen mentale Checkliste prüfen. Dauer pro Vertrag: 30 bis 45 Minuten. Bei einem Beratungssatz von 120 €/Stunde sind das 60 bis 90 € pro Vertragsprüfung — die er aus dem Pauschalhonorar mit jedem Kunden tragen muss.</p>
+
+      <p>Mit Contract AI: Marco prüft jeden Arbeitsvertrag in unter 60 Sekunden gegen § 622 BGB (Kündigungsfristen), § 74 HGB (Wettbewerbsverbote), AGG (Diskriminierung) und aktuelle BAG-Rechtsprechung. Die Ergebnisse bekommt er als strukturierten Report mit Paragraphen-Verweisen — perfekt, um sie direkt mit dem Kunden zu besprechen oder als PDF-Anhang per Mail zu schicken. Mehr zur konkreten Prüfung von Arbeitsverträgen findest du auf <a href="/arbeitsvertrag-pruefen">/arbeitsvertrag-pruefen</a>.</p>
+
+      <p>Ergebnis: Marco kann pro Stunde mindestens vier Verträge prüfen statt einem. Das macht seine Beratung schneller, günstiger und glaubwürdiger — weil er Aussagen mit konkreten BAG-Urteilen belegen kann, statt aus dem Bauch heraus zu argumentieren.</p>
+
+      <h2>Use Case 4: Kleine Kanzlei — Mandantenakten + API-Anbindung</h2>
+
+      <p>Eine 2-Personen-Kanzlei in München, spezialisiert auf Wirtschaftsrecht. Die beiden Partner betreuen etwa 60 aktive Mandate. Die Herausforderung: Mandantendokumente liegen verteilt auf E-Mail-Postfach, lokalem Server, Mandanten-DMS und teilweise auf USB-Sticks. Wenn eine Mandantin anruft und nach einem bestimmten Vertragspassus fragt, beginnt eine längere Suche.</p>
+
+      <p>Mit Contract AI: Alle Mandantenverträge werden einmalig digitalisiert und in mandantenspezifischen Ordnern strukturiert abgelegt. Über die REST API ist Contract AI mit dem Kanzlei-DMS verbunden — neue Verträge, die im DMS landen, werden automatisch hochgeladen und analysiert. Beide Partner sehen denselben Stand mit unterschiedlichen Rechten (jeder Partner ist Admin), die zwei Sekretärinnen haben Viewer-Rechte und können Verträge öffnen, aber nicht ändern.</p>
+
+      <p>Ergebnis: Mandantenanfragen werden binnen Sekunden beantwortet, neue Verträge werden automatisch geprüft und kategorisiert, und das gesamte Mandantenarchiv ist DSGVO-konform durchsuchbar. Die <a href="/api-docs">REST API-Dokumentation</a> beschreibt, wie die Integration konkret aussieht — typischerweise ist sie an einem Vormittag eingerichtet.</p>
+
+      <h2>Use Case 5: DSGVO-konform mit Kundendaten arbeiten</h2>
+
+      <p>Was alle vier Personas vereint: Sie verarbeiten Verträge, die nicht ihre eigenen sind. Lisa verarbeitet die NDAs ihrer Kunden. Sandra verwaltet die Mietverträge ihrer Eigentümer. Marco prüft die Arbeitsverträge fremder Unternehmen. Die Münchner Kanzlei bearbeitet Mandantenakten.</p>
+
+      <p>In allen vier Fällen handelt es sich um <strong>Auftragsverarbeitung im Sinne der DSGVO</strong>. Das bedeutet konkret: Wer ein externes Tool nutzt, um diese Dokumente zu speichern oder zu analysieren, braucht einen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO. Wer das vergisst, riskiert Bußgelder von bis zu 4 % des Jahresumsatzes.</p>
+
+      <p>Genau hier scheitern viele KI-Tools. ChatGPT-Standardversionen sind US-basiert und verarbeiten Daten auf Servern außerhalb der EU. Viele europäische Tools bieten zwar einen AVV an — aber nicht standardmäßig, sondern nur auf gesonderte Anfrage und manchmal gegen Aufpreis.</p>
+
+      <p>Contract AI ist von Anfang an für die Verarbeitung sensibler Vertragsdaten gebaut: Alle Server stehen in Frankfurt am Main, die Verarbeitung erfolgt ausschließlich innerhalb der EU, der AVV ist kostenlos und auf einfache Anfrage verfügbar. Es gibt kein Modell-Training mit Kundendaten und keine Weitergabe an Dritte. Das macht den Einsatz für Agenturen, Verwaltungen und Berater rechtssicher — ohne dass du dich um die DSGVO-Architektur sorgen musst.</p>
+
+      <h2>So fängst du an: Der Enterprise-Tarif für Teams</h2>
+
+      <p>Was die meisten Agenturen nicht wissen: Der Enterprise-Tarif von Contract AI (29 € pro Monat) enthält bereits <strong>bis zu 10 Nutzer</strong> ohne Pro-Sitz-Aufpreis. Rechnerisch sind das unter 3 € pro Mitarbeiter und Monat — günstiger als jede einzelne Anwaltsprüfung im Jahr.</p>
+
+      <p>Was im Enterprise-Tarif enthalten ist:</p>
+
+      <ul>
+        <li>Bis zu 10 aktive Nutzer mit Rollen-System (Admin, Mitarbeiter, Viewer)</li>
+        <li>Unbegrenzte KI-Vertragsanalysen, Optimierungen und Vergleiche</li>
+        <li>Gemeinsame Vertragsordner mit zentraler Übersicht</li>
+        <li>REST API-Zugang für Integrationen in bestehende Software</li>
+        <li>White-Label PDF-Reports für die Weitergabe an Kunden</li>
+        <li>Automatisches Activity-Log für Compliance und Mandantentransparenz</li>
+        <li>Kostenloser Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO</li>
+        <li>14 Tage Geld-zurück-Garantie ohne Wenn und Aber</li>
+      </ul>
+
+      <p>Für Teams ab 25 Mitarbeitern gibt es individuelle Konditionen auf Anfrage — eine kurze E-Mail an info@contract-ai.de reicht. Eine vollständige Übersicht aller Tarife findest du auf der <a href="/pricing">Preisseite</a>; alle Details zum Team-Setup, den Personas und der Sicherheits-Architektur sind auf <a href="/fuer-agenturen">/fuer-agenturen</a> zusammengefasst.</p>
+
+      <h2>Fazit: Vertragsmanagement ist für Agenturen eine unterschätzte Wachstumsquelle</h2>
+
+      <p>Die meisten Agenturen, Verwaltungen und Beratungen unterschätzen, wie viel Zeit und Geld sie durch besseres Vertragsmanagement freischaufeln können. Die fünf hier gezeigten Use Cases sind keine Theorie — sie sind die wiederkehrenden Muster, die wir in Gesprächen mit unseren Nutzern sehen. Lisa spart Anwaltskosten, Sandra spart 25 Stunden im Monat, Marco kann mehr Mandate parallel betreuen, die Münchner Kanzlei beantwortet Anfragen sofort statt nach Stunden.</p>
+
+      <p>Wer es ausprobieren will: Der Enterprise-Tarif hat 14 Tage Geld-zurück-Garantie — falls das Team nach zwei Wochen merkt, dass es nicht passt, kommt der Betrag ohne Rückfrage zurück. Mehr Details, die vollständige Persona-Übersicht und konkrete Schritte zur Einrichtung gibt es auf <a href="/fuer-agenturen">/fuer-agenturen</a>.</p>
+    `
+  },
+  {
     id: 20,
     slug: 'ki-vs-anwalt-vertrag-pruefen',
     title: 'KI vs. Anwalt: Vertrag prüfen lassen im Vergleich 2026',
