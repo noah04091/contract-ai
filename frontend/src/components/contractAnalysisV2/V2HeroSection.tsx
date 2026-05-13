@@ -547,6 +547,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           </div>
         </div>
 
+        {/* Sentinel für V2StickyMiniHeader — IntersectionObserver beobachtet
+            dieses Element. Sobald es out-of-viewport ist (User scrollt) erscheint
+            der Mini-Header oben mit Filename + Score + Optimieren-Button. */}
+        <div data-v2-hero-sentinel aria-hidden="true" style={{ width: 1, height: 1 }} />
+
         {/* QUICK-FACTS adaptive Spalten */}
         {qf.length > 0 && (
           <div className={`${styles.acFacts} ${factsCls}`}>

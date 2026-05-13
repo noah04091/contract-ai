@@ -20,6 +20,7 @@ import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from ".
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
 import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // für v2UnifiedContainer-Wrapper
+import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader"; // 🎨 V2 — Mini-Header beim Scrollen
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
 import datesWrapperStyles from "./contractAnalysisV2/V2DatesWrapper.module.css"; // 🎨 V2 — neutraler statt gelb
@@ -1039,27 +1040,49 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
           {(() => {
             const data = (result || initialResult) as Parameters<typeof V2HeroSection>[0]['data'];
             const failed = isFailedAnalysis(data);
+            const heroScore = data?.contractScore ?? null;
+            // Score-Color synchron zu V2HeroSection.getScoreVariant
+            const scoreColor = heroScore == null
+              ? "#94a3b8"
+              : heroScore >= 90 ? "#10b981"
+              : heroScore >= 70 ? "#2563eb"
+              : heroScore >= 40 ? "#f59e0b"
+              : "#ef4444";
             return (
-              <div className={v2HeroStyles.v2UnifiedContainer}>
-                <V2HeroSection
-                  data={data}
-                  fileName={displayName}
-                  serviceHealth={serviceHealth}
-                  isInitialResult={!!initialResult && !result}
-                  canReanalyze={(!!result || !!initialResult) && !!file}
-                  analyzing={analyzing}
-                  onReanalyze={() => handleAnalyze(true)}
-                  onReset={handleReset}
-                  usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
-                  userPlan={user?.subscriptionPlan}
-                />
-                {/* Bei kaputter Analyse: Tabs überspringen — Hero zeigt schon Fehler-Banner.
-                    Conversion-Banner wurde in V2HeroSection inline verschoben (max Sichtbarkeit
-                    direkt nach Score/Asymmetrie statt versteckt zwischen Tabs und Action-Bar). */}
+              <>
+                {/* Sticky Mini-Header — erscheint beim Runter-Scrollen mit Filename
+                    + Score-Pille + Optimieren-Button. Bei Failed-Analyse: kein Score,
+                    kein Optimize-Button (würde auf leere Analyse navigieren). */}
                 {!failed && (
-                  <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+                  <V2StickyMiniHeader
+                    filename={displayName}
+                    score={heroScore}
+                    scoreColor={scoreColor}
+                    onOptimize={handleOptimize}
+                    isOptimizing={optimizing}
+                  />
                 )}
-              </div>
+                <div className={v2HeroStyles.v2UnifiedContainer}>
+                  <V2HeroSection
+                    data={data}
+                    fileName={displayName}
+                    serviceHealth={serviceHealth}
+                    isInitialResult={!!initialResult && !result}
+                    canReanalyze={(!!result || !!initialResult) && !!file}
+                    analyzing={analyzing}
+                    onReanalyze={() => handleAnalyze(true)}
+                    onReset={handleReset}
+                    usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
+                    userPlan={user?.subscriptionPlan}
+                  />
+                  {/* Bei kaputter Analyse: Tabs überspringen — Hero zeigt schon Fehler-Banner.
+                      Conversion-Banner wurde in V2HeroSection inline verschoben (max Sichtbarkeit
+                      direkt nach Score/Asymmetrie statt versteckt zwischen Tabs und Action-Bar). */}
+                  {!failed && (
+                    <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
+                  )}
+                </div>
+              </>
             );
           })()}
 

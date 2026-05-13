@@ -1,0 +1,143 @@
+/* V2-Sticky-Mini-Header — fixed top, fade-in beim Scrollen.
+   Wird nur sichtbar wenn Sentinel-Element (am Ende des Heros) out-of-viewport ist. */
+
+.miniHeader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 4px 16px -8px rgba(15, 23, 42, 0.08);
+  transform: translateY(-100%);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease-out;
+  opacity: 0;
+  pointer-events: none;
+}
+.miniHeader.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filename {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.scorePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: border-color 150ms ease;
+}
+.scoreLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.scoreValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: inherit;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.optimizeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.optimizeBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+.optimizeBtn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.optimizeBtn:disabled {
+  cursor: progress;
+  opacity: 0.85;
+}
+.optimizeBtnLoading {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+@keyframes v2MiniSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spinIcon {
+  animation: v2MiniSpin 0.9s linear infinite;
+  transform-origin: center;
+}
+
+/* Mobile: Button-Text weg, nur Icon */
+@media (max-width: 600px) {
+  .inner { padding: 9px 14px; gap: 10px; }
+  .filename { font-size: 12.5px; }
+  .scorePill { padding: 4px 9px; }
+  .scoreLabel { display: none; }
+  .scoreValue { font-size: 13px; }
+  .optimizeBtnText { display: none; }
+  .optimizeBtn { padding: 7px 10px; }
+}
+
+/* Sehr klein: weniger padding */
+@media (max-width: 380px) {
+  .inner { padding: 8px 12px; gap: 8px; }
+  .scorePill { padding: 3px 8px; }
+}
+
+/* Print: nie anzeigen */
+@media print {
+  .miniHeader { display: none !important; }
+}
