@@ -154,6 +154,8 @@ const ContractBuilder: React.FC = () => {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  // Mobile-Hinweis (nur < 768px sichtbar via CSS) — User kann pro Session wegklicken
+  const [mobileWarningDismissed, setMobileWarningDismissed] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
@@ -3198,6 +3200,22 @@ const ContractBuilder: React.FC = () => {
       />
       {/* Editor-Tour deaktiviert — WelcomePopup + Variable-Guide reichen als Onboarding.
           Die Tour flackerte am Seitenende wegen Fullscreen-Layout + Scroll-Konflikten. */}
+      {/* Mobile-Hinweis — nur auf Smartphones (< 768px) sichtbar via CSS-Media-Query */}
+      {!mobileWarningDismissed && (
+        <div className={styles.mobileWarning} role="status">
+          <span className={styles.mobileWarningText}>
+            ⚠️ Der Vertrags-Editor ist für Tablet und Desktop optimiert. Auf dem Smartphone ist die Bedienung eingeschränkt.
+          </span>
+          <button
+            type="button"
+            className={styles.mobileWarningClose}
+            onClick={() => setMobileWarningDismissed(true)}
+            aria-label="Hinweis schließen"
+          >
+            ×
+          </button>
+        </div>
+      )}
       {/* Bulk-Tabs */}
       {bulkIdsFromUrl.length > 1 && (
         <div className={styles.bulkTabBar}>

@@ -2844,3 +2844,49 @@
   .quickFillFieldGrid { grid-template-columns: 1fr; }
   .customVarRow { flex-wrap: wrap; }
 }
+
+/* ============================================
+   Mobile-Hinweis: nur unter 768px sichtbar
+   (Smartphones — NICHT Tablet, NICHT Desktop)
+   ============================================ */
+.mobileWarning {
+  display: none; /* Default: versteckt auf Desktop + Tablet */
+}
+
+@media (max-width: 767px) {
+  .mobileWarning {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #fff7ed;
+    border-bottom: 1px solid #fed7aa;
+    color: #92400e;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .mobileWarningText {
+    flex: 1;
+  }
+
+  .mobileWarningClose {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: #92400e;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.15s;
+    padding: 0;
+  }
+
+  .mobileWarningClose:hover {
+    background: rgba(146, 64, 14, 0.1);
+  }
+}
