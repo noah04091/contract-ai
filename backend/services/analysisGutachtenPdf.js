@@ -85,26 +85,114 @@ function formatPct(v) {
   return Math.round(n <= 1 ? n * 100 : n) + '%';
 }
 
-function pickRecommendations(contract) {
-  const a = Array.isArray(contract?.analysis?.recommendations) ? contract.analysis.recommendations.filter(safeStr) : [];
-  if (a.length) return a;
-  const b = Array.isArray(contract?.optimierungen) ? contract.optimierungen.filter(safeStr) : [];
-  return b;
+// Picker-Reihenfolge ist defensiv: zuerst die echte V2-Analyzer-Quelle
+// (criticalIssues / recommendations als Object-Arrays mit reichen Feldern),
+// dann analyse-Subschema-Fallback, ganz zuletzt String-Array-Fallback.
+
+function normalizeItem(x) {
+  // Akzeptiert sowohl Objekt als auch nackten String. Bei Object werden alle
+  // möglichen Felder eingelesen — leere Strings werden später nicht gerendert.
+  if (typeof x === 'string') {
+    const s = x.trim();
+    return s ? { title: '', description: s, riskLevel: '', priority: '', legalBasis: '', consequence: '', timeframe: '', effort: '', impact: '' } : null;
+  }
+  if (x && typeof x === 'object') {
+    return {
+      title: safeStr(x.title),
+      description: safeStr(x.description),
+      riskLevel: safeStr(x.riskLevel),
+      priority: safeStr(x.priority),
+      legalBasis: safeStr(x.legalBasis),
+      consequence: safeStr(x.consequence),
+      timeframe: safeStr(x.timeframe),
+      effort: safeStr(x.effort),
+      impact: safeStr(x.impact),
+    };
+  }
+  return null;
 }
 
 function pickRisks(contract) {
+  // Quelle 1: criticalIssues (V2-Analyzer Standard-Feld, Objekt-Array mit legalBasis/consequence)
+  const ci = Array.isArray(contract?.criticalIssues) ? contract.criticalIssues : [];
+  if (ci.length) {
+    const norm = ci.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  // Quelle 2: analysis.concerningAspects (älteres Schema)
   const ca = Array.isArray(contract?.analysis?.concerningAspects) ? contract.analysis.concerningAspects : [];
   if (ca.length) {
-    return ca
-      .map(x => ({
-        title: safeStr(x?.title),
-        description: safeStr(x?.description),
-        impact: safeStr(x?.impact),
-      }))
-      .filter(x => x.title || x.description);
+    const norm = ca.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
   }
-  const r = Array.isArray(contract?.risiken) ? contract.risiken.filter(safeStr) : [];
-  return r.map(s => ({ title: '', description: s, impact: '' }));
+  // Quelle 3: risiken (kann Object-Array sein — Alias für criticalIssues — oder String-Array)
+  const r = Array.isArray(contract?.risiken) ? contract.risiken : [];
+  if (r.length) {
+    const norm = r.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  return [];
+}
+
+function pickRecommendations(contract) {
+  // Quelle 1: recommendations (V2-Analyzer Standard, Objekt-Array mit priority/timeframe/effort)
+  const rec = Array.isArray(contract?.recommendations) ? contract.recommendations : [];
+  if (rec.length) {
+    const norm = rec.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  // Quelle 2: analysis.recommendations (älteres Schema, String-Array)
+  const a = Array.isArray(contract?.analysis?.recommendations) ? contract.analysis.recommendations : [];
+  if (a.length) {
+    const norm = a.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  // Quelle 3: optimierungen (Optimizer-Output, String-Array)
+  const opt = Array.isArray(contract?.optimierungen) ? contract.optimierungen : [];
+  if (opt.length) {
+    const norm = opt.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  return [];
+}
+
+const RISK_LEVEL_STYLES = {
+  critical: { label: 'Kritisch', bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  high:     { label: 'Hoch',     bg: '#ffedd5', color: '#9a3412', border: '#fdba74' },
+  medium:   { label: 'Mittel',   bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  low:      { label: 'Niedrig',  bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
+};
+
+const PRIORITY_STYLES = {
+  urgent: { label: 'Dringend', bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  high:   { label: 'Hoch',     bg: '#ffedd5', color: '#9a3412', border: '#fdba74' },
+  medium: { label: 'Mittel',   bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  low:    { label: 'Optional', bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
+};
+
+const IMPACT_STYLES = {
+  high:   { label: 'Hoher Nutzen',    bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  medium: { label: 'Mittlerer Nutzen', bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
+  low:    { label: 'Geringer Nutzen', bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' },
+};
+
+function lookupStyle(map, key) {
+  if (!key) return null;
+  return map[String(key).toLowerCase()] || null;
+}
+
+function pickPositiveAspects(contract) {
+  const pa = Array.isArray(contract?.positiveAspects) ? contract.positiveAspects : [];
+  if (pa.length) {
+    const norm = pa.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  const pa2 = Array.isArray(contract?.analysis?.positiveAspects) ? contract.analysis.positiveAspects : [];
+  if (pa2.length) {
+    const norm = pa2.map(normalizeItem).filter(x => x && (x.title || x.description));
+    if (norm.length) return norm;
+  }
+  return [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -441,6 +529,64 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
 
+  // Inline pill row für Severity + Meta + LegalBasis
+  itemPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+    marginBottom: 6,
+    alignItems: 'center',
+  },
+  pill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderWidth: 1,
+    fontSize: 8.5,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    letterSpacing: 0.2,
+  },
+  pillLegal: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: C.hairline,
+    color: '#475569',
+    fontSize: 8.5,
+    fontFamily: 'Helvetica',
+  },
+  metaText: {
+    fontSize: 8.5,
+    color: C.muted,
+    fontFamily: 'Helvetica',
+  },
+  consequenceBox: {
+    marginTop: 6,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: '#fca5a5',
+    backgroundColor: '#fef2f2',
+    paddingTop: 4,
+    paddingBottom: 4,
+    paddingRight: 8,
+    borderRadius: 2,
+  },
+  consequenceLabel: {
+    fontSize: 8,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    color: '#991b1b',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  consequenceText: {
+    fontSize: 9.5,
+    color: '#7f1d1d',
+    lineHeight: 1.5,
+  },
+
   // Disclaimer
   disclaimerWrap: {
     marginTop: 24,
@@ -616,6 +762,41 @@ function ScoreSection({ contract }) {
   );
 }
 
+function PositiveAspectsSection({ contract, sectionNumber }) {
+  const items = pickPositiveAspects(contract);
+  if (!items.length) return null;
+
+  return e(View, { style: styles.sectionWrap, break: true },
+    e(View, { style: styles.sectionHeader },
+      e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Positive Aspekte`),
+      e(Text, { style: styles.sectionTitle },
+        items.length === 1 ? 'Vorteilhafte Vertragsregelung' : `${items.length} vorteilhafte Regelungen`,
+      ),
+    ),
+
+    ...items.map((it, i) => {
+      const impactStyle = lookupStyle(IMPACT_STYLES, it.impact);
+      const pills = impactStyle ? [
+        e(Text, {
+          key: 'impact',
+          style: [styles.pill, { backgroundColor: impactStyle.bg, color: impactStyle.color, borderColor: impactStyle.border }],
+        }, impactStyle.label),
+      ] : [];
+
+      return e(View, { key: `pos-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
+        e(View, { style: styles.itemHeaderRow },
+          e(Text, { style: styles.itemNum }, String(i + 1).padStart(2, '0')),
+          e(View, { style: styles.itemBody },
+            it.title && e(Text, { style: styles.itemTitle }, it.title),
+            pills.length > 0 && e(View, { style: styles.itemPillRow }, ...pills),
+            it.description && e(Text, { style: styles.itemDesc }, it.description),
+          ),
+        ),
+      );
+    }),
+  );
+}
+
 function RisksSection({ contract, sectionNumber }) {
   const risks = pickRisks(contract);
   if (!risks.length) return null;
@@ -628,18 +809,35 @@ function RisksSection({ contract, sectionNumber }) {
       ),
     ),
 
-    ...risks.map((r, i) =>
-      e(View, { key: `risk-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
+    ...risks.map((r, i) => {
+      const levelStyle = lookupStyle(RISK_LEVEL_STYLES, r.riskLevel);
+      const pills = [];
+      if (levelStyle) {
+        pills.push(e(Text, {
+          key: 'level',
+          style: [styles.pill, { backgroundColor: levelStyle.bg, color: levelStyle.color, borderColor: levelStyle.border }],
+        }, levelStyle.label));
+      }
+      if (r.legalBasis) {
+        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, r.legalBasis));
+      }
+
+      return e(View, { key: `risk-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
         e(View, { style: styles.itemHeaderRow },
           e(Text, { style: styles.itemNum }, String(i + 1).padStart(2, '0')),
           e(View, { style: styles.itemBody },
             r.title && e(Text, { style: styles.itemTitle }, r.title),
+            pills.length > 0 && e(View, { style: styles.itemPillRow }, ...pills),
             r.description && e(Text, { style: styles.itemDesc }, r.description),
             r.impact && e(Text, { style: styles.itemImpact }, `Auswirkung: ${r.impact}`),
+            r.consequence && e(View, { style: styles.consequenceBox },
+              e(Text, { style: styles.consequenceLabel }, 'Mögliche Folge'),
+              e(Text, { style: styles.consequenceText }, r.consequence),
+            ),
           ),
         ),
-      ),
-    ),
+      );
+    }),
   );
 }
 
@@ -655,16 +853,32 @@ function RecommendationsSection({ contract, sectionNumber }) {
       ),
     ),
 
-    ...recs.map((r, i) =>
-      e(View, { key: `rec-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
+    ...recs.map((r, i) => {
+      const priStyle = lookupStyle(PRIORITY_STYLES, r.priority);
+      const pills = [];
+      if (priStyle) {
+        pills.push(e(Text, {
+          key: 'pri',
+          style: [styles.pill, { backgroundColor: priStyle.bg, color: priStyle.color, borderColor: priStyle.border }],
+        }, priStyle.label));
+      }
+      const metaParts = [];
+      if (r.timeframe) metaParts.push(`Zeitrahmen: ${r.timeframe}`);
+      if (r.effort) metaParts.push(`Aufwand: ${r.effort}`);
+      const metaLine = metaParts.join('  ·  ');
+
+      return e(View, { key: `rec-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
         e(View, { style: styles.itemHeaderRow },
           e(Text, { style: styles.itemNum }, String(i + 1).padStart(2, '0')),
           e(View, { style: styles.itemBody },
-            e(Text, { style: styles.itemDesc }, safeStr(r)),
+            r.title && e(Text, { style: styles.itemTitle }, r.title),
+            pills.length > 0 && e(View, { style: styles.itemPillRow }, ...pills),
+            r.description && e(Text, { style: styles.itemDesc }, r.description),
+            metaLine && e(Text, { style: [styles.metaText, { marginTop: 4 }] }, metaLine),
           ),
         ),
-      ),
-    ),
+      );
+    }),
   );
 }
 
@@ -690,11 +904,17 @@ function GutachtenDocument({ contract, companyProfile }) {
     contract?.createdAt ||
     new Date();
 
-  // Section-Nummerierung: 01 = Score (immer wenn Daten da), 02/03 = Risiken/Empfehlungen wenn vorhanden.
+  // Section-Reihenfolge: 01 Score → 02 Risiken → 03 Empfehlungen → 04 Positive Aspekte.
+  // Nummerierung passt sich an: wenn eine Sektion keine Daten hat, springt sie raus
+  // und die folgenden rücken auf. Anti-Halluzination: keine leeren Sektionen.
   const hasRisks = pickRisks(contract).length > 0;
+  const hasRecs = pickRecommendations(contract).length > 0;
+  const hasPos = pickPositiveAspects(contract).length > 0;
+
   let nextNum = 2;
   const risksNum = hasRisks ? nextNum++ : null;
-  const recsNum = pickRecommendations(contract).length > 0 ? nextNum : null;
+  const recsNum = hasRecs ? nextNum++ : null;
+  const posNum = hasPos ? nextNum++ : null;
 
   return e(Document, {
     title: `Anwalts-Gutachten · ${contractName}`,
@@ -713,7 +933,8 @@ function GutachtenDocument({ contract, companyProfile }) {
       e(FooterFixed),
       e(ScoreSection, { contract }),
       hasRisks && e(RisksSection, { contract, sectionNumber: risksNum }),
-      recsNum && e(RecommendationsSection, { contract, sectionNumber: recsNum }),
+      hasRecs && e(RecommendationsSection, { contract, sectionNumber: recsNum }),
+      hasPos && e(PositiveAspectsSection, { contract, sectionNumber: posNum }),
       e(DisclaimerBlock),
     ),
   );

@@ -4515,15 +4515,20 @@ router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
 
     // Mindestens contractScore ODER irgendeine Analyse-Substanz muss vorhanden sein.
     // Sonst ist das Gutachten leer und der User wird verwirrt.
+    const hasArr = (v) => Array.isArray(v) && v.length > 0;
     const hasAnyAnalysisData =
       typeof contract.contractScore === 'number' ||
       (contract.scoreReasoning && contract.scoreReasoning.trim()) ||
+      hasArr(contract.criticalIssues) ||
+      hasArr(contract.recommendations) ||
+      hasArr(contract.positiveAspects) ||
+      hasArr(contract.risiken) ||
+      hasArr(contract.optimierungen) ||
       (contract.analysis && (
-        (Array.isArray(contract.analysis.recommendations) && contract.analysis.recommendations.length > 0) ||
-        (Array.isArray(contract.analysis.concerningAspects) && contract.analysis.concerningAspects.length > 0)
-      )) ||
-      (Array.isArray(contract.risiken) && contract.risiken.length > 0) ||
-      (Array.isArray(contract.optimierungen) && contract.optimierungen.length > 0);
+        hasArr(contract.analysis.recommendations) ||
+        hasArr(contract.analysis.concerningAspects) ||
+        hasArr(contract.analysis.positiveAspects)
+      ));
 
     if (!hasAnyAnalysisData) {
       return res.status(409).json({
