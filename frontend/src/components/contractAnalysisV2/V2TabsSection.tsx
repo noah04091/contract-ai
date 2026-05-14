@@ -309,33 +309,7 @@ export default function V2TabsSection({ data }: Props) {
                 <div className={`${styles.insightCard} ${sev.card}`} key={i}>
                   <div className={`${styles.insightIcon} ${sev.icon}`}>!</div>
                   <div className={styles.insightContent}>
-                    {title && (
-                      <div className={styles.insightTitle}>
-                        {title}
-                        <span
-                          className={styles.verifiedBadge}
-                          title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding."
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 3,
-                            padding: "2px 7px",
-                            background: "#ecfdf5",
-                            color: "#10b981",
-                            border: "1px solid #d1fae5",
-                            borderRadius: 5,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: "0.2px",
-                            marginLeft: 8,
-                            verticalAlign: "middle",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          ✓ Verifiziert
-                        </span>
-                      </div>
-                    )}
+                    {title && <div className={styles.insightTitle}>{title}</div>}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
                     {legal && (
                       <div className={styles.insightMeta}>
@@ -374,33 +348,7 @@ export default function V2TabsSection({ data }: Props) {
                 <div className={styles.insightCard} key={i}>
                   <div className={`${styles.insightIcon} ${styles.insightIconGood}`}>✓</div>
                   <div className={styles.insightContent}>
-                    {title && (
-                      <div className={styles.insightTitle}>
-                        {title}
-                        <span
-                          className={styles.verifiedBadge}
-                          title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding."
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 3,
-                            padding: "2px 7px",
-                            background: "#ecfdf5",
-                            color: "#10b981",
-                            border: "1px solid #d1fae5",
-                            borderRadius: 5,
-                            fontSize: 10,
-                            fontWeight: 700,
-                            letterSpacing: "0.2px",
-                            marginLeft: 8,
-                            verticalAlign: "middle",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          ✓ Verifiziert
-                        </span>
-                      </div>
-                    )}
+                    {title && <div className={styles.insightTitle}>{title}</div>}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
                   </div>
                   <div />
