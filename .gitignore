@@ -29,3 +29,6 @@ tmpclaude-*
 
 # Customer-data test fixtures (never commit real user files!)
 backend/scripts/_test-fixtures/
+
+# Smoke-Test-Output (Gutachten-PDF u.a.)
+tmp-pdfs/

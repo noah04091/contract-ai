@@ -199,6 +199,7 @@ const extractEndDateFromImportantDates = (importantDates) => {
 // ===== LAZY-LOAD PDF-GENERATOREN (für Auto-PDF bei Vertragserstellung) =====
 let generatePDFv2 = null;
 let generatePDFv3 = null;
+let generateGutachtenPdf = null;
 
 const loadPDFGenerators = async () => {
   if (!generatePDFv2) {
@@ -215,6 +216,14 @@ const loadPDFGenerators = async () => {
       generatePDFv3 = v3Module.generatePDFv3;
     } catch (err) {
       console.error('⚠️ PDF V3 Generator konnte nicht geladen werden:', err.message);
+    }
+  }
+  if (!generateGutachtenPdf) {
+    try {
+      const gutachtenModule = require('../services/analysisGutachtenPdf');
+      generateGutachtenPdf = gutachtenModule.generateGutachtenPdf;
+    } catch (err) {
+      console.error('⚠️ Gutachten-PDF Generator konnte nicht geladen werden:', err.message);
     }
   }
 };
@@ -4466,6 +4475,117 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
     console.error('❌ [V2] PDF-Generierung fehlgeschlagen:', error);
     res.status(500).json({
       message: 'PDF-Generierung (V2/React-PDF) fehlgeschlagen',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts/:id/gutachten-pdf
+ * Generiert das Anwalts-Gutachten-PDF einer Vertragsanalyse (React-PDF).
+ * Strikt adaptive: nur Sektionen mit echten Daten werden gerendert (Anti-Halluzination).
+ * Content-Disposition: attachment — User soll bewusst herunterladen.
+ */
+router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
+  try {
+    await ensureDb();
+    await loadPDFGenerators();
+
+    if (!generateGutachtenPdf) {
+      return res.status(503).json({
+        message: 'Gutachten-PDF Generator nicht verfügbar',
+        error: 'analysisGutachtenPdf-Modul konnte nicht geladen werden'
+      });
+    }
+
+    const contractId = req.params.id;
+
+    // Flexible userId-Suche (String ODER ObjectId) — siehe pdf-v2 Endpoint
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      $or: [
+        { userId: new ObjectId(req.user.userId) },
+        { userId: req.user.userId }
+      ]
+    });
+
+    if (!contract) {
+      return res.status(404).json({ message: 'Vertrag nicht gefunden' });
+    }
+
+    // Mindestens contractScore ODER irgendeine Analyse-Substanz muss vorhanden sein.
+    // Sonst ist das Gutachten leer und der User wird verwirrt.
+    const hasAnyAnalysisData =
+      typeof contract.contractScore === 'number' ||
+      (contract.scoreReasoning && contract.scoreReasoning.trim()) ||
+      (contract.analysis && (
+        (Array.isArray(contract.analysis.recommendations) && contract.analysis.recommendations.length > 0) ||
+        (Array.isArray(contract.analysis.concerningAspects) && contract.analysis.concerningAspects.length > 0)
+      )) ||
+      (Array.isArray(contract.risiken) && contract.risiken.length > 0) ||
+      (Array.isArray(contract.optimierungen) && contract.optimierungen.length > 0);
+
+    if (!hasAnyAnalysisData) {
+      return res.status(409).json({
+        message: 'Für diesen Vertrag liegt noch keine Analyse vor — bitte zuerst analysieren.',
+        code: 'NO_ANALYSIS_DATA'
+      });
+    }
+
+    // Company Profile laden (optional — wenn nicht da, Fallback im PDF auf Contract-AI-Branding)
+    let companyProfile = null;
+    try {
+      const db = req.db || await database.connect();
+      const rawProfile = await db.collection('company_profiles').findOne({
+        $or: [
+          { userId: new ObjectId(req.user.userId) },
+          { userId: req.user.userId }
+        ]
+      });
+
+      if (rawProfile) {
+        companyProfile = {
+          ...rawProfile,
+          companyName: rawProfile.companyName || '',
+        };
+
+        // Frische signierte S3-URL für Logo (1h gültig — PDF wird sofort gerendert)
+        if (rawProfile.logoKey) {
+          try {
+            const aws = require('aws-sdk');
+            const s3 = new aws.S3({
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              region: process.env.AWS_REGION
+            });
+            companyProfile.logoUrl = s3.getSignedUrl('getObject', {
+              Bucket: process.env.S3_BUCKET_NAME,
+              Key: rawProfile.logoKey,
+              Expires: 3600
+            });
+          } catch (s3Error) {
+            console.warn('⚠️ [GUTACHTEN-PDF] S3 Logo URL fehlgeschlagen:', s3Error.message);
+          }
+        } else if (rawProfile.logoUrl) {
+          // Bereits gesetzte logoUrl (z.B. Base64) durchreichen
+          companyProfile.logoUrl = rawProfile.logoUrl;
+        }
+      }
+    } catch (profileError) {
+      console.warn('⚠️ [GUTACHTEN-PDF] Profile-Lookup fehlgeschlagen:', profileError.message);
+    }
+
+    const pdfBuffer = await generateGutachtenPdf({ contract, companyProfile });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', buildContentDisposition('attachment', buildSafePdfFilename(contract, '_Gutachten')));
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('❌ [GUTACHTEN-PDF] Generierung fehlgeschlagen:', error);
+    res.status(500).json({
+      message: 'Gutachten-PDF-Generierung fehlgeschlagen',
       error: error.message
     });
   }
