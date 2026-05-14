@@ -176,6 +176,23 @@ const IMPACT_STYLES = {
   low:    { label: 'Geringer Nutzen', bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' },
 };
 
+// Status-Badges für typeSpecificFindings (Pilot-Tiefenprüfung).
+// Mapping ist großzügig wegen AI-Variabilität (ok/pass/conform → ok, issue/warn → issue, etc.).
+const FINDING_STATUS_STYLES = {
+  ok:              { label: 'Konform',       bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  pass:            { label: 'Konform',       bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  conform:         { label: 'Konform',       bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  issue:           { label: 'Auffällig',     bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  warning:         { label: 'Auffällig',     bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  warn:            { label: 'Auffällig',     bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
+  critical:        { label: 'Kritisch',      bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  fail:            { label: 'Kritisch',      bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  not_applicable:  { label: 'Nicht zutreffend', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  'not-applicable':{ label: 'Nicht zutreffend', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  n_a:             { label: 'Nicht zutreffend', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  na:              { label: 'Nicht zutreffend', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+};
+
 function lookupStyle(map, key) {
   if (!key) return null;
   return map[String(key).toLowerCase()] || null;
@@ -202,6 +219,65 @@ function pickPositiveAspects(contract) {
     if (norm.length) return norm;
   }
   return [];
+}
+
+// Generischer String-Array-Picker für summary/legalAssessment/comparison.
+// Akzeptiert String oder String[]. Leere Strings/Whitespace werden gefiltert.
+function pickStringArray(src) {
+  if (!src) return [];
+  const arr = Array.isArray(src) ? src : [src];
+  return arr.map(safeStr).filter(s => s.length > 0);
+}
+
+function pickSummary(contract) {
+  const a = pickStringArray(contract?.summary);
+  if (a.length) return a;
+  return pickStringArray(contract?.analysis?.summary);
+}
+
+function pickLegalAssessment(contract) {
+  return pickStringArray(contract?.legalAssessment);
+}
+
+function pickComparison(contract) {
+  return pickStringArray(contract?.comparison);
+}
+
+function pickTypeSpecificFindings(contract) {
+  const arr = Array.isArray(contract?.typeSpecificFindings) ? contract.typeSpecificFindings : [];
+  return arr
+    .map(x => ({
+      checkpoint: safeStr(x?.checkpoint),
+      status: safeStr(x?.status),
+      finding: safeStr(x?.finding),
+      legalBasis: safeStr(x?.legalBasis),
+      clauseRef: safeStr(x?.clauseRef),
+    }))
+    .filter(x => x.checkpoint || x.finding);
+}
+
+function pickFristHinweise(contract) {
+  const arr = Array.isArray(contract?.fristHinweise) ? contract.fristHinweise : [];
+  return arr
+    .map(x => ({
+      type: safeStr(x?.type),
+      title: safeStr(x?.title),
+      description: safeStr(x?.description),
+      legalBasis: safeStr(x?.legalBasis),
+      evidence: safeStr(x?.evidence),
+    }))
+    .filter(x => x.title || x.description);
+}
+
+// detailedLegalOpinion ist ein langer Fließtext. Split nach Paragraphen,
+// damit react-pdf sauber umbrechen kann und das Anwalts-Gutachten-Feel
+// stimmt (Absätze statt Wall-of-Text).
+function pickDetailedOpinion(contract) {
+  const txt = safeStr(contract?.detailedLegalOpinion);
+  if (!txt) return [];
+  // Erst nach Doppel-Newline splitten (echte Absätze), sonst nach Single-Newline.
+  const parts = txt.includes('\n\n') ? txt.split(/\n{2,}/) : txt.split(/\n+/);
+  return parts.map(s => s.trim()).filter(s => s.length > 0);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -587,6 +663,69 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
 
+  // Bullet-Liste für summary/legalAssessment/comparison
+  bulletItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 6,
+  },
+  bulletDot: {
+    fontSize: 11,
+    color: C.brand,
+    paddingTop: 2,
+    width: 8,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 10.5,
+    color: C.text,
+    lineHeight: 1.6,
+  },
+  subSectionTitle: {
+    fontSize: 11.5,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    color: C.ink,
+    marginBottom: 8,
+    marginTop: 14,
+  },
+
+  // Fristen-Sektion: kompaktere Karten
+  fristItem: {
+    marginBottom: 10,
+    paddingTop: 10,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+    borderTopColor: C.hairline,
+  },
+  fristItemFirst: {
+    borderTopWidth: 0,
+    paddingTop: 0,
+  },
+  fristTitle: {
+    fontSize: 11,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    color: C.ink,
+    marginBottom: 3,
+  },
+  fristDesc: {
+    fontSize: 10.5,
+    color: C.text,
+    lineHeight: 1.55,
+    marginBottom: 4,
+  },
+
+  // Detailed Legal Opinion — Fließtext-Layout
+  opinionParagraph: {
+    fontSize: 11,
+    color: C.text,
+    lineHeight: 1.7,
+    marginBottom: 10,
+    textAlign: 'justify',
+  },
+
   // Disclaimer
   disclaimerWrap: {
     marginTop: 24,
@@ -759,6 +898,128 @@ function ScoreSection({ contract }) {
   );
 }
 
+function BulletList({ items, keyPrefix }) {
+  return e(View, null,
+    ...items.map((s, i) =>
+      e(View, { key: `${keyPrefix}-${i}`, style: styles.bulletItem },
+        e(Text, { style: styles.bulletDot }, '•'),
+        e(Text, { style: styles.bulletText }, s),
+      ),
+    ),
+  );
+}
+
+function OverviewSection({ contract, sectionNumber }) {
+  const summary = pickSummary(contract);
+  const assess = pickLegalAssessment(contract);
+  const comp = pickComparison(contract);
+  if (!summary.length && !assess.length && !comp.length) return null;
+
+  return e(View, { style: styles.sectionWrap, break: true },
+    e(View, { style: styles.sectionHeader },
+      e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Überblick`),
+      e(Text, { style: styles.sectionTitle }, 'Zusammenfassung und rechtliche Einordnung'),
+    ),
+
+    summary.length > 0 && e(View, null,
+      e(Text, { style: styles.subSectionTitle }, 'Zusammenfassung'),
+      e(BulletList, { items: summary, keyPrefix: 'sum' }),
+    ),
+
+    assess.length > 0 && e(View, null,
+      e(Text, { style: styles.subSectionTitle }, 'Rechtliche Bewertung'),
+      e(BulletList, { items: assess, keyPrefix: 'la' }),
+    ),
+
+    comp.length > 0 && e(View, null,
+      e(Text, { style: styles.subSectionTitle }, 'Marktvergleich'),
+      e(BulletList, { items: comp, keyPrefix: 'cmp' }),
+    ),
+  );
+}
+
+function TypeSpecificFindingsSection({ contract, sectionNumber }) {
+  const items = pickTypeSpecificFindings(contract);
+  if (!items.length) return null;
+
+  return e(View, { style: styles.sectionWrap, break: true },
+    e(View, { style: styles.sectionHeader },
+      e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Spezifische Tiefenprüfung`),
+      e(Text, { style: styles.sectionTitle },
+        items.length === 1 ? 'Geprüfter Vertragspunkt' : `${items.length} geprüfte Vertragspunkte`,
+      ),
+    ),
+
+    ...items.map((it, i) => {
+      const statusStyle = lookupStyle(FINDING_STATUS_STYLES, it.status);
+      const pills = [];
+      if (statusStyle) {
+        pills.push(e(Text, {
+          key: 'status',
+          style: [styles.pill, { backgroundColor: statusStyle.bg, color: statusStyle.color, borderColor: statusStyle.border }],
+        }, statusStyle.label));
+      }
+      if (it.legalBasis) {
+        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, it.legalBasis));
+      }
+
+      return e(View, { key: `tsf-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
+        e(View, { style: styles.itemHeaderRow },
+          e(Text, { style: styles.itemNum }, String(i + 1).padStart(2, '0')),
+          e(View, { style: styles.itemBody },
+            it.checkpoint && e(Text, { style: styles.itemTitle }, it.checkpoint),
+            pills.length > 0 && e(View, { style: styles.itemPillRow }, ...pills),
+            it.finding && e(Text, { style: styles.itemDesc }, it.finding),
+            it.clauseRef && e(Text, { style: [styles.metaText, { marginTop: 4 }] }, `Klausel-Bezug: ${it.clauseRef}`),
+          ),
+        ),
+      );
+    }),
+  );
+}
+
+function FristHinweiseSection({ contract, sectionNumber }) {
+  const items = pickFristHinweise(contract);
+  if (!items.length) return null;
+
+  return e(View, { style: styles.sectionWrap, break: true },
+    e(View, { style: styles.sectionHeader },
+      e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Fristen und rechtliche Hinweise`),
+      e(Text, { style: styles.sectionTitle },
+        items.length === 1 ? 'Wichtiger Hinweis' : `${items.length} wichtige Hinweise`,
+      ),
+    ),
+
+    ...items.map((it, i) => {
+      const pills = [];
+      if (it.legalBasis) {
+        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, it.legalBasis));
+      }
+      return e(View, { key: `frist-${i}`, style: [styles.fristItem, i === 0 && styles.fristItemFirst].filter(Boolean), wrap: false },
+        it.title && e(Text, { style: styles.fristTitle }, it.title),
+        it.description && e(Text, { style: styles.fristDesc }, it.description),
+        pills.length > 0 && e(View, { style: styles.itemPillRow }, ...pills),
+      );
+    }),
+  );
+}
+
+function DetailedOpinionSection({ contract, sectionNumber }) {
+  const paragraphs = pickDetailedOpinion(contract);
+  if (!paragraphs.length) return null;
+
+  return e(View, { style: styles.sectionWrap, break: true },
+    e(View, { style: styles.sectionHeader },
+      e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Ausführliche rechtliche Würdigung`),
+      e(Text, { style: styles.sectionTitle }, 'Anwaltliches Gutachten im Volltext'),
+    ),
+
+    ...paragraphs.map((p, i) =>
+      e(Text, { key: `op-${i}`, style: styles.opinionParagraph }, p),
+    ),
+  );
+}
+
 function PositiveAspectsSection({ contract, sectionNumber }) {
   const items = pickPositiveAspects(contract);
   if (!items.length) return null;
@@ -901,17 +1162,31 @@ function GutachtenDocument({ contract, companyProfile }) {
     contract?.createdAt ||
     new Date();
 
-  // Section-Reihenfolge: 01 Score → 02 Risiken → 03 Empfehlungen → 04 Positive Aspekte.
-  // Nummerierung passt sich an: wenn eine Sektion keine Daten hat, springt sie raus
-  // und die folgenden rücken auf. Anti-Halluzination: keine leeren Sektionen.
+  // Section-Reihenfolge (adaptive, nur wenn Daten da):
+  // 01 Gesamtbewertung (Score) — immer wenn überhaupt analysiert
+  // 02 Überblick (summary + legalAssessment + comparison)
+  // 03 Risiken
+  // 04 Handlungsempfehlungen
+  // 05 Spezifische Tiefenprüfung (typeSpecificFindings, nur Pilot-Typen)
+  // 06 Fristen & Hinweise
+  // 07 Positive Aspekte
+  // 08 Ausführliche rechtliche Würdigung (detailedLegalOpinion)
+  const hasOverview = pickSummary(contract).length > 0 || pickLegalAssessment(contract).length > 0 || pickComparison(contract).length > 0;
   const hasRisks = pickRisks(contract).length > 0;
   const hasRecs = pickRecommendations(contract).length > 0;
+  const hasTsf = pickTypeSpecificFindings(contract).length > 0;
+  const hasFrist = pickFristHinweise(contract).length > 0;
   const hasPos = pickPositiveAspects(contract).length > 0;
+  const hasOpinion = pickDetailedOpinion(contract).length > 0;
 
   let nextNum = 2;
+  const overviewNum = hasOverview ? nextNum++ : null;
   const risksNum = hasRisks ? nextNum++ : null;
   const recsNum = hasRecs ? nextNum++ : null;
+  const tsfNum = hasTsf ? nextNum++ : null;
+  const fristNum = hasFrist ? nextNum++ : null;
   const posNum = hasPos ? nextNum++ : null;
+  const opinionNum = hasOpinion ? nextNum++ : null;
 
   return e(Document, {
     title: `Anwalts-Gutachten · ${contractName}`,
@@ -929,9 +1204,13 @@ function GutachtenDocument({ contract, companyProfile }) {
       e(HeaderFixed, { contractName }),
       e(FooterFixed),
       e(ScoreSection, { contract }),
+      hasOverview && e(OverviewSection, { contract, sectionNumber: overviewNum }),
       hasRisks && e(RisksSection, { contract, sectionNumber: risksNum }),
       hasRecs && e(RecommendationsSection, { contract, sectionNumber: recsNum }),
+      hasTsf && e(TypeSpecificFindingsSection, { contract, sectionNumber: tsfNum }),
+      hasFrist && e(FristHinweiseSection, { contract, sectionNumber: fristNum }),
       hasPos && e(PositiveAspectsSection, { contract, sectionNumber: posNum }),
+      hasOpinion && e(DetailedOpinionSection, { contract, sectionNumber: opinionNum }),
       e(DisclaimerBlock),
     ),
   );
