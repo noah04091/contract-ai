@@ -181,6 +181,15 @@ function lookupStyle(map, key) {
   return map[String(key).toLowerCase()] || null;
 }
 
+// Englische AI-Felder ins Deutsche übersetzen. Unbekannte Werte werden 1:1
+// durchgereicht (Anti-Halluzination: nichts erfinden).
+const EFFORT_DE = { low: 'gering', medium: 'mittel', high: 'hoch' };
+function germanize(map, val) {
+  if (!val) return '';
+  const lower = String(val).toLowerCase().trim();
+  return map[lower] || val;
+}
+
 function pickPositiveAspects(contract) {
   const pa = Array.isArray(contract?.positiveAspects) ? contract.positiveAspects : [];
   if (pa.length) {
@@ -242,27 +251,15 @@ const styles = StyleSheet.create({
     color: C.muted,
     fontSize: 8.5,
   },
+  // Minimalist footer — nur Seitenzahl rechts unten. Das eigentliche RDG-Disclaimer
+  // hat seinen eigenen Block am Ende des Gutachtens, hier nur dezente Pagination.
   footerFixed: {
     position: 'absolute',
-    bottom: 24,
-    left: 56,
+    bottom: 28,
     right: 56,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: C.hairline,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    fontSize: 7.5,
-    color: C.faint,
-  },
-  footerDisclaimer: {
-    width: '70%',
-    color: C.faint,
-    lineHeight: 1.4,
   },
   footerPage: {
-    color: C.muted,
+    color: C.faint,
     fontSize: 8,
   },
 
@@ -628,9 +625,6 @@ function HeaderFixed({ contractName }) {
 
 function FooterFixed() {
   return e(View, { style: styles.footerFixed, fixed: true },
-    e(Text, { style: styles.footerDisclaimer },
-      'Dieses Gutachten ist eine KI-gestützte Vorprüfung und ersetzt keine individuelle Rechtsberatung nach RDG. Erstellt durch Contract AI.',
-    ),
     e(Text, {
       style: styles.footerPage,
       render: ({ pageNumber, totalPages }) => `Seite ${pageNumber} / ${totalPages}`,
@@ -864,7 +858,7 @@ function RecommendationsSection({ contract, sectionNumber }) {
       }
       const metaParts = [];
       if (r.timeframe) metaParts.push(`Zeitrahmen: ${r.timeframe}`);
-      if (r.effort) metaParts.push(`Aufwand: ${r.effort}`);
+      if (r.effort) metaParts.push(`Aufwand: ${germanize(EFFORT_DE, r.effort)}`);
       const metaLine = metaParts.join('  ·  ');
 
       return e(View, { key: `rec-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
