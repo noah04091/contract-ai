@@ -726,6 +726,32 @@ const styles = StyleSheet.create({
     textAlign: 'justify',
   },
 
+  // Sammelzeile für "Nicht zutreffend"-Checkpoints am Ende der Tiefenprüfung.
+  // Bewusst dezent: signalisiert "wurde geprüft", nimmt aber nicht den Raum
+  // eines vollen Cards-Items ein.
+  notApplicableRow: {
+    marginTop: 14,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    backgroundColor: C.panel,
+    borderRadius: 4,
+  },
+  notApplicableLabel: {
+    fontSize: 8.5,
+    fontFamily: 'Helvetica',
+    fontWeight: 'bold',
+    color: C.faint,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  notApplicableList: {
+    fontSize: 10,
+    color: C.muted,
+    lineHeight: 1.5,
+  },
+
   // Disclaimer
   disclaimerWrap: {
     marginTop: 24,
@@ -938,19 +964,33 @@ function OverviewSection({ contract, sectionNumber }) {
   );
 }
 
+function isNotApplicableStatus(status) {
+  const s = String(status || '').toLowerCase().trim();
+  return s === 'not_applicable' || s === 'not-applicable' || s === 'n_a' || s === 'na';
+}
+
 function TypeSpecificFindingsSection({ contract, sectionNumber }) {
-  const items = pickTypeSpecificFindings(contract);
-  if (!items.length) return null;
+  const allItems = pickTypeSpecificFindings(contract);
+  if (!allItems.length) return null;
+
+  // Trennung: relevante Checkpoints kriegen volles Rendering,
+  // "Nicht zutreffend"-Punkte werden am Ende als eine Sammelzeile
+  // zusammengefasst — spart Platz und liest sich professioneller.
+  const relevant = allItems.filter(it => !isNotApplicableStatus(it.status));
+  const notApplicable = allItems.filter(it => isNotApplicableStatus(it.status));
+
+  // Sektion-Headline reflektiert die GESAMT-Zahl (auch n.a. wurde geprüft → Trust-Signal).
+  const total = allItems.length;
 
   return e(View, { style: styles.sectionWrap, break: true },
     e(View, { style: styles.sectionHeader },
       e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Spezifische Tiefenprüfung`),
       e(Text, { style: styles.sectionTitle },
-        items.length === 1 ? 'Geprüfter Vertragspunkt' : `${items.length} geprüfte Vertragspunkte`,
+        total === 1 ? 'Geprüfter Vertragspunkt' : `${total} geprüfte Vertragspunkte`,
       ),
     ),
 
-    ...items.map((it, i) => {
+    ...relevant.map((it, i) => {
       const statusStyle = lookupStyle(FINDING_STATUS_STYLES, it.status);
       const pills = [];
       if (statusStyle) {
@@ -975,6 +1015,13 @@ function TypeSpecificFindingsSection({ contract, sectionNumber }) {
         ),
       );
     }),
+
+    notApplicable.length > 0 && e(View, { style: styles.notApplicableRow, wrap: false },
+      e(Text, { style: styles.notApplicableLabel }, 'Nicht zutreffend (geprüft, im Vertrag nicht geregelt):'),
+      e(Text, { style: styles.notApplicableList },
+        notApplicable.map(it => safeStr(it.checkpoint)).filter(Boolean).join('  ·  '),
+      ),
+    ),
   );
 }
 
