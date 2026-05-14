@@ -253,9 +253,12 @@ const styles = StyleSheet.create({
   },
   // Minimalist footer — nur Seitenzahl rechts unten. Das eigentliche RDG-Disclaimer
   // hat seinen eigenen Block am Ende des Gutachtens, hier nur dezente Pagination.
+  // Wichtig: `top` statt `bottom` benutzen — react-pdf positioniert fixed-Elemente
+  // mit `bottom: X` auf der letzten Seite unzuverlässig (bekannter Page-Break-Bug).
+  // A4 = 842pt hoch, 810 ergibt ~32pt vom unteren Rand → konstant auf jeder Seite.
   footerFixed: {
     position: 'absolute',
-    bottom: 28,
+    top: 810,
     right: 56,
   },
   footerPage: {
