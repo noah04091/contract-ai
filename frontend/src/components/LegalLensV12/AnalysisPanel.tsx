@@ -559,7 +559,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 <div className={styles.legalSourceItemHead}>
                   <span className={styles.legalSourceIcon}>§</span>
                   <span className={styles.legalSourceTitle}>
-                    {statute.sectionId} {statute.lawId} — {statute.title}
+                    {statute.section} {statute.code} — {statute.title}
                   </span>
                   {statute.sourceUrl && (
                     <a

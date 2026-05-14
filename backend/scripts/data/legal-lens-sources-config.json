@@ -1,0 +1,191 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Phase 2.5 — Quellen-Konfiguration für legalLensSources Collection. Komplett isoliert von Legal Pulse (laws-Collection). Sync läuft manuell via backend/scripts/syncLegalLensSources.js.",
+    "lastUpdated": "2026-05-14",
+    "notes": [
+      "Areas-Mapping wird beim Sync auf den jeweiligen § übertragen (zum Filtern in der RAG-Suche).",
+      "URL-Strukturen: gesetze-im-internet.de nutzt einheitliche Pfade.",
+      "DSGVO/EU-Recht hat eigene Quelle (eur-lex.europa.eu).",
+      "Bei Änderungen an dieser Datei: ein erneutes sync-Script-Run führt nur Updates durch (contentHash-Check)."
+    ]
+  },
+  "sources": [
+    {
+      "code": "BGB",
+      "name": "Bürgerliches Gesetzbuch",
+      "xmlUrl": "https://www.gesetze-im-internet.de/bgb/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/bgb/",
+      "primaryArea": "Vertragsrecht",
+      "secondaryAreas": ["AGB-Recht", "Mietrecht", "Arbeitsrecht", "Kaufrecht", "Werkvertragsrecht", "Schadensersatz", "Sittenwidrigkeit"],
+      "priority": 1,
+      "estimatedSections": 2385,
+      "description": "Kernstück des deutschen Zivilrechts. Verträge, Schuldverhältnisse, Sachen, Familie, Erbrecht."
+    },
+    {
+      "code": "HGB",
+      "name": "Handelsgesetzbuch",
+      "xmlUrl": "https://www.gesetze-im-internet.de/hgb/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/hgb/",
+      "primaryArea": "Handelsrecht",
+      "secondaryAreas": ["Vertragsrecht", "Gesellschaftsrecht", "Handelsvertreter"],
+      "priority": 2,
+      "estimatedSections": 905,
+      "description": "Handelsverträge, Kaufleute, Handelsgesellschaften, Handelsvertreter, Speditionsrecht."
+    },
+    {
+      "code": "DSGVO",
+      "name": "Datenschutz-Grundverordnung",
+      "xmlUrl": null,
+      "manualSource": true,
+      "baseSourceUrl": "https://dsgvo-gesetz.de/",
+      "primaryArea": "Datenschutz",
+      "secondaryAreas": ["EU-Recht"],
+      "priority": 3,
+      "estimatedSections": 99,
+      "description": "EU-Verordnung 2016/679 zum Datenschutz. Pflicht bei jeder Datenverarbeitung. Statisch — selten geändert.",
+      "note": "EU-Recht hat keine XML-API bei gesetze-im-internet.de. Wird via dsgvo-gesetz.de oder hartcodiert geladen."
+    },
+    {
+      "code": "BDSG",
+      "name": "Bundesdatenschutzgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/bdsg_2018/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/bdsg_2018/",
+      "primaryArea": "Datenschutz",
+      "secondaryAreas": ["Arbeitsrecht"],
+      "priority": 4,
+      "estimatedSections": 85,
+      "description": "Deutsche DSGVO-Ergänzung. Beschäftigtendatenschutz, Bundesbeauftragter."
+    },
+    {
+      "code": "KSchG",
+      "name": "Kündigungsschutzgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/kschg/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/kschg/",
+      "primaryArea": "Arbeitsrecht",
+      "secondaryAreas": ["Vertragsrecht"],
+      "priority": 5,
+      "estimatedSections": 25,
+      "description": "Schutz vor sozial ungerechtfertigter Kündigung. Anwendbar ab 6 Monaten Beschäftigung."
+    },
+    {
+      "code": "ArbZG",
+      "name": "Arbeitszeitgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/arbzg/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/arbzg/",
+      "primaryArea": "Arbeitsrecht",
+      "secondaryAreas": [],
+      "priority": 6,
+      "estimatedSections": 30,
+      "description": "Arbeitszeit, Ruhepausen, Sonn-/Feiertagsarbeit."
+    },
+    {
+      "code": "BetrVG",
+      "name": "Betriebsverfassungsgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/betrvg/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/betrvg/",
+      "primaryArea": "Arbeitsrecht",
+      "secondaryAreas": ["Mitbestimmung"],
+      "priority": 7,
+      "estimatedSections": 132,
+      "description": "Betriebsräte, Mitbestimmung, Arbeitnehmer-Beteiligung."
+    },
+    {
+      "code": "TKG",
+      "name": "Telekommunikationsgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/tkg_2021/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/tkg_2021/",
+      "primaryArea": "Telekommunikation",
+      "secondaryAreas": ["Verbraucherrecht", "Vertragsrecht"],
+      "priority": 8,
+      "estimatedSections": 230,
+      "description": "Handy- und Internet-Verträge, Anbieterwechsel, Verbraucherschutz."
+    },
+    {
+      "code": "TMG",
+      "name": "Telemediengesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/tmg/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/tmg/",
+      "primaryArea": "Internet-Recht",
+      "secondaryAreas": ["Datenschutz", "Verbraucherrecht"],
+      "priority": 9,
+      "estimatedSections": 16,
+      "description": "Online-Dienste, Impressumspflicht, Haftung von Diensteanbietern."
+    },
+    {
+      "code": "StGB",
+      "name": "Strafgesetzbuch",
+      "xmlUrl": "https://www.gesetze-im-internet.de/stgb/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/stgb/",
+      "primaryArea": "Strafrecht",
+      "secondaryAreas": ["Vertragsstrafen", "Untreue"],
+      "priority": 10,
+      "estimatedSections": 358,
+      "description": "Strafrechtliche Tatbestände — relevant für Vertragsstrafen, Betrug, Untreue, Geheimnisverrat."
+    },
+    {
+      "code": "VVG",
+      "name": "Versicherungsvertragsgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/vvg_2008/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/vvg_2008/",
+      "primaryArea": "Versicherungsrecht",
+      "secondaryAreas": ["Vertragsrecht", "Verbraucherrecht"],
+      "priority": 11,
+      "estimatedSections": 215,
+      "description": "Alle Versicherungs-Verträge — Lebens-, Kranken-, Sach-, Haftpflichtversicherung."
+    },
+    {
+      "code": "GewO",
+      "name": "Gewerbeordnung",
+      "xmlUrl": "https://www.gesetze-im-internet.de/gewo/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/gewo/",
+      "primaryArea": "Gewerberecht",
+      "secondaryAreas": ["Arbeitsrecht", "Wettbewerbsverbote"],
+      "priority": 12,
+      "estimatedSections": 158,
+      "description": "Gewerbliche Betätigung. § 110 GewO: Wettbewerbsverbote für Arbeitnehmer."
+    },
+    {
+      "code": "UrhG",
+      "name": "Urheberrechtsgesetz",
+      "xmlUrl": "https://www.gesetze-im-internet.de/urhg/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/urhg/",
+      "primaryArea": "Urheberrecht",
+      "secondaryAreas": ["IT-Recht", "Lizenzrecht"],
+      "priority": 13,
+      "estimatedSections": 145,
+      "description": "Software-Verträge, Content-Lizenzen, IP-Verträge, Urheberrechte."
+    },
+    {
+      "code": "UWG",
+      "name": "Gesetz gegen den unlauteren Wettbewerb",
+      "xmlUrl": "https://www.gesetze-im-internet.de/uwg_2004/xml.zip",
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/uwg_2004/",
+      "primaryArea": "Wettbewerbsrecht",
+      "secondaryAreas": ["Vertragsstrafen", "Konkurrenzklauseln"],
+      "priority": 14,
+      "estimatedSections": 22,
+      "description": "Unlautere geschäftliche Handlungen, irreführende Werbung, Konkurrenzklauseln."
+    },
+    {
+      "code": "VOB-B",
+      "name": "Vergabe- und Vertragsordnung für Bauleistungen Teil B",
+      "xmlUrl": null,
+      "manualSource": true,
+      "baseSourceUrl": "https://www.gesetze-im-internet.de/vob_b_2016/",
+      "primaryArea": "Baurecht",
+      "secondaryAreas": ["Werkvertragsrecht", "Vertragsrecht"],
+      "priority": 15,
+      "estimatedSections": 18,
+      "description": "Bauverträge mit öffentlichen Auftraggebern und im B2B-Bereich. Ergänzung zu BGB Werkvertragsrecht.",
+      "note": "VOB/B ist keine reines Gesetz, sondern eine Vertragsordnung. Wird ggf. hartcodiert geladen."
+    }
+  ],
+  "_estimatedTotal": {
+    "sections": 4823,
+    "expectedAfterFilter": "ca. 4500-4700 valide §§ (manche Abschnitte werden gefiltert: weggefallene §§, Überschriften ohne Inhalt)",
+    "embeddingCalls": "ca. 4500-4700 API-Calls an OpenAI text-embedding-3-small",
+    "estimatedCostUSD": "ca. $0.10 - $0.30 (einmalig)",
+    "estimatedTimeMinutes": "30-60 Min (mit 100ms Throttle pro Call)"
+  }
+}

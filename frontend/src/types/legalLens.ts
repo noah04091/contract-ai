@@ -320,8 +320,8 @@ export interface LegalSources {
 }
 
 export interface LegalSourceStatute {
-  lawId: string;          // z.B. "BGB"
-  sectionId: string;      // z.B. "§ 305c"
+  code: string;           // z.B. "BGB", "HGB", "DSGVO"
+  section: string;        // z.B. "§ 305c", "Art. 6"
   title: string;          // Titel des Gesetzes
   area: string;           // Rechtsgebiet
   relevance: number;      // 0-1 Cosine-Similarity

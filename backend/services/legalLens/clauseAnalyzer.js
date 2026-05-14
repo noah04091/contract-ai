@@ -636,42 +636,36 @@ REGELN:
     // Klausel zu kurz → kein sinnvoller RAG-Query
     if (!clauseText || clauseText.length < 50) return empty;
 
-    // Whitelist für "echte" Gesetze (filtert News/Gesetzgebungs-Einträge aus)
-    const VALID_AREAS = new Set([
-      'Vertragsrecht', 'Arbeitsrecht', 'Mietrecht', 'Verbraucherrecht',
-      'Datenschutz', 'datenschutz', 'kaufrecht', 'Kaufrecht',
-      'Bankrecht', 'Gesellschaftsrecht', 'Steuerrecht', 'EU-Recht',
-      'Sozialrecht', 'Verfassungsrecht', 'Verwaltungsrecht'
-    ]);
-
-    // Threshold (konservativ — lieber leer als irrelevant, Variante B)
-    const STATUTE_THRESHOLD = 0.65;
-    const CASELAW_THRESHOLD = 0.70;
+    // Phase 2.5: Threshold (konservativ — lieber leer als irrelevant)
+    // Neue Collection ist kuratiert → höhere Schwelle möglich
+    const STATUTE_THRESHOLD = 0.55;  // legalLensSources ist sauber, etwas niedriger erlaubt
+    const CASELAW_THRESHOLD = 0.55;  // courtdecisions: nur kuratierte BGH/BAG-Urteile
 
     try {
-      const lawEmbeddings = require('../lawEmbeddings').getInstance();
+      // 🆕 Phase 2.5: Neue isolierte Collection statt laws
+      const legalLensSourcesEmb = require('../legalLensSourcesEmbeddings').getInstance();
       const courtEmbeddings = require('../courtDecisionEmbeddings').getInstance();
 
       const [rawStatutes, rawCaselaw] = await Promise.allSettled([
-        lawEmbeddings.queryRelevantSections({ text: clauseText, topK: 8 }),
+        legalLensSourcesEmb.queryRelevantSections({ text: clauseText, topK: 8 }),
         courtEmbeddings.queryRelevantDecisions({ text: clauseText, topK: 5 })
       ]);
 
-      // Statutes: Threshold + Quality-Filter
+      // Statutes (aus legalLensSources): Felder code + section
+      // Quality-Filter minimal, weil Collection bereits kuratiert
       const statutes = (rawStatutes.status === 'fulfilled' ? rawStatutes.value : [])
         .filter(s => s.relevance >= STATUTE_THRESHOLD)
-        .filter(s => s.lawId && !s.lawId.startsWith('http') && s.lawId.length < 50) // kein URL-als-lawId
-        .filter(s => VALID_AREAS.has(s.area))
-        .filter(s => s.sourceUrl && s.sourceUrl.startsWith('http')) // muss valide URL haben
+        .filter(s => s.code && s.section && s.title)
+        .filter(s => s.sourceUrl && s.sourceUrl.startsWith('http'))
         .slice(0, 5); // Max 5 Kandidaten an GPT geben
 
-      // Caselaw: höhere Schwelle (44 Urteile sind wenig — lieber nichts als irrelevant)
+      // Caselaw (aus courtdecisions, unverändert)
       const caselaw = (rawCaselaw.status === 'fulfilled' ? rawCaselaw.value : [])
         .filter(c => c.relevance >= CASELAW_THRESHOLD)
         .filter(c => c.caseNumber && c.court && c.sourceUrl)
         .slice(0, 3);
 
-      console.log(`[RAG] Kandidaten: ${statutes.length} Gesetze, ${caselaw.length} Urteile`);
+      console.log(`[RAG] Kandidaten: ${statutes.length} Gesetze (legalLensSources), ${caselaw.length} Urteile`);
       return { statutes, caselaw };
 
     } catch (error) {
@@ -691,9 +685,8 @@ REGELN:
     if (statutes.length > 0) {
       lines.push('GESETZE:');
       for (const s of statutes) {
-        const sec = s.sectionId || '';
         const title = (s.title || '').substring(0, 100);
-        lines.push(`  - lawId: "${s.lawId}", sectionId: "${sec}" — ${title}`);
+        lines.push(`  - code: "${s.code}", section: "${s.section}" — ${title}`);
       }
     }
 
@@ -720,10 +713,10 @@ REGELN:
   _validateLegalSources(gptOutput, candidates) {
     if (!gptOutput || typeof gptOutput !== 'object') return null;
 
-    // Lookup-Maps für O(1) Validierung
+    // Lookup-Maps für O(1) Validierung (Phase 2.5: code+section statt lawId+sectionId)
     const statuteMap = new Map();
     for (const s of candidates.statutes) {
-      const key = `${s.lawId}::${s.sectionId || ''}`;
+      const key = `${s.code}::${s.section || ''}`;
       statuteMap.set(key, s);
     }
     const caselawMap = new Map();
@@ -731,16 +724,16 @@ REGELN:
       caselawMap.set(c.caseNumber, c);
     }
 
-    // Validate Statutes
+    // Validate Statutes (Phase 2.5: code/section statt lawId/sectionId)
     const validatedStatutes = [];
     if (Array.isArray(gptOutput.statutes)) {
       for (const s of gptOutput.statutes) {
-        const key = `${s.lawId}::${s.sectionId || ''}`;
+        const key = `${s.code}::${s.section || ''}`;
         const candidate = statuteMap.get(key);
         if (candidate) {
           validatedStatutes.push({
-            lawId: candidate.lawId,
-            sectionId: candidate.sectionId || '',
+            code: candidate.code,
+            section: candidate.section || '',
             title: candidate.title || '',
             area: candidate.area || '',
             relevance: Number(candidate.relevance?.toFixed(3) || 0),

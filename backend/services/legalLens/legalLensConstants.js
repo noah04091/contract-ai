@@ -276,7 +276,7 @@ REGELN:
 JSON-FORMAT-ERWEITERUNG:
 "legalSources": {
   "statutes": [
-    { "lawId": "BGB", "sectionId": "§ 305c", "relevance_note": "Schützt vor überraschenden AGB-Klauseln." }
+    { "code": "BGB", "section": "§ 305c", "relevance_note": "Schützt vor überraschenden AGB-Klauseln." }
   ],
   "caselaw": [
     { "caseNumber": "VIII ZR 230/22", "relevance_note": "BGH: pauschale Abtretungs-Pflichten unwirksam." }
