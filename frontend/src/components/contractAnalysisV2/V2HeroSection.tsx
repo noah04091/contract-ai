@@ -13,6 +13,7 @@ import { useState, useEffect, useRef } from "react";
 import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
+import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
 type AnalysisData = {
@@ -162,6 +163,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const score = d.contractScore;
   const variant = getScoreVariant(score);
   const [laymanMode, setLaymanMode] = useState(false);
+  const [heroSubExpanded, setHeroSubExpanded] = useState(false);
+  const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
 
   // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
   // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
@@ -248,13 +251,19 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // Layman-Modus: laymanSummary statt scoreReasoning anzeigen
   const laymanArr = Array.isArray(d.laymanSummary) ? d.laymanSummary : (typeof d.laymanSummary === "string" ? [d.laymanSummary] : []);
   const hasLayman = laymanArr.length > 0;
-  let heroSub: string;
+  let heroSubFull: string;
   if (laymanMode && hasLayman) {
-    heroSub = laymanArr.join(" ");
+    heroSubFull = laymanArr.join(" ");
   } else {
-    heroSub = d.scoreReasoning || laymanArr[0] || "";
+    heroSubFull = d.scoreReasoning || laymanArr[0] || "";
   }
-  if (heroSub) heroSub = truncateAtWord(heroSub, laymanMode ? 600 : 280);
+  // Truncate-Threshold abhängig von Modus + Expand-State.
+  // Wenn User „Mehr anzeigen" geklickt → vollständig, sonst gekürzt.
+  const truncateAt = laymanMode ? 600 : 280;
+  const isHeroSubTruncated = heroSubFull.length > truncateAt;
+  const heroSub = heroSubExpanded || !isHeroSubTruncated
+    ? heroSubFull
+    : truncateAtWord(heroSubFull, truncateAt);
 
   // Counts für Hero-Stats
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
@@ -462,7 +471,25 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         {/* HERO mit Score-Donut */}
         <div className={styles.acHero}>
           <div>
-            {/* Inline-Styles als Cache-Safe-Backup zusätzlich zum CSS-Modul */}
+            {/* Inline-Styles als Cache-Safe-Backup zusätzlich zum CSS-Modul.
+                Score-Donut ist klickbar — öffnet Drawer mit Score-Zusammensetzung. */}
+            <button
+              type="button"
+              onClick={() => setScoreDrawerOpen(true)}
+              aria-label={`Score ${displayScore} von 100, klicken für Details zur Zusammensetzung`}
+              title="So setzt sich dein Score zusammen — klick für Details"
+              style={{
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
+                borderRadius: "50%",
+                transition: "transform 200ms ease",
+                fontFamily: "inherit",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+            >
             <div className={styles.scoreDonut} style={{ position: "relative", width: 160, height: 160 }}>
               <svg viewBox="0 0 160 160" role="img" aria-label={`Vertragsscore: ${displayScore} von 100, Bewertung: ${variant.rating}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
                 <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="11" />
@@ -505,12 +532,40 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </text>
               </svg>
             </div>
+            </button>
             <div className={`${styles.scoreRating} ${variant.cls}`}>{variant.rating}</div>
+            <div style={{ fontSize: 10.5, color: "#94a3b8", fontWeight: 600, letterSpacing: 0.5, textAlign: "center", marginTop: 4 }}>
+              ⓘ Klick für Details
+            </div>
           </div>
           <div>
             <div className={styles.heroEye}>Anwaltliche Gesamtbewertung</div>
             <h2 className={styles.heroTitle}>{buildHeroTitle(d)}</h2>
-            {heroSub && <p className={styles.heroSub}>{heroSub}</p>}
+            {heroSub && (
+              <p className={styles.heroSub}>
+                {heroSub}
+                {isHeroSubTruncated && (
+                  <button
+                    type="button"
+                    onClick={() => setHeroSubExpanded((v) => !v)}
+                    style={{
+                      marginLeft: 6,
+                      background: "none",
+                      border: "none",
+                      color: "#2563eb",
+                      fontSize: "inherit",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: 0,
+                      textDecoration: "underline",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {heroSubExpanded ? "Weniger" : "Mehr anzeigen"}
+                  </button>
+                )}
+              </p>
+            )}
             <div className={styles.heroStats}>
               <div className={styles.hsItem}>
                 <span className={`${styles.hsDot} ${styles.hsDotRed}`} />
@@ -653,6 +708,20 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           <V2ConversionBanner usage={usage as Parameters<typeof V2ConversionBanner>[0]['usage']} userPlan={userPlan} />
         )}
       </div>
+
+      {/* Score-Detail-Drawer — öffnet beim Klick auf Score-Donut */}
+      <V2ScoreDetailDrawer
+        open={scoreDrawerOpen}
+        onClose={() => setScoreDrawerOpen(false)}
+        score={score ?? null}
+        scoreColor={variant.color}
+        scoreRating={variant.rating}
+        scoreReasoning={d.scoreReasoning}
+        asymmetry={d.asymmetryAssessment}
+        completeness={d.completeness}
+        confidence={d.confidence}
+        qualityScore={d.qualityScore}
+      />
     </>
   );
 }

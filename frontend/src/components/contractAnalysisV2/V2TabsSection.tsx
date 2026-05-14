@@ -312,7 +312,26 @@ export default function V2TabsSection({ data }: Props) {
                     {title && (
                       <div className={styles.insightTitle}>
                         {title}
-                        <span className={styles.verifiedBadge} title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding.">
+                        <span
+                          className={styles.verifiedBadge}
+                          title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding."
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
+                            padding: "2px 7px",
+                            background: "#ecfdf5",
+                            color: "#10b981",
+                            border: "1px solid #d1fae5",
+                            borderRadius: 5,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: "0.2px",
+                            marginLeft: 8,
+                            verticalAlign: "middle",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           ✓ Verifiziert
                         </span>
                       </div>
@@ -358,7 +377,26 @@ export default function V2TabsSection({ data }: Props) {
                     {title && (
                       <div className={styles.insightTitle}>
                         {title}
-                        <span className={styles.verifiedBadge} title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding.">
+                        <span
+                          className={styles.verifiedBadge}
+                          title="Diese Aussage wurde durch deinen Vertragstext belegt — unsere KI-Pipeline verifiziert jedes Finding."
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 3,
+                            padding: "2px 7px",
+                            background: "#ecfdf5",
+                            color: "#10b981",
+                            border: "1px solid #d1fae5",
+                            borderRadius: 5,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: "0.2px",
+                            marginLeft: 8,
+                            verticalAlign: "middle",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           ✓ Verifiziert
                         </span>
                       </div>
