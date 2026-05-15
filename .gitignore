@@ -32,3 +32,9 @@ backend/scripts/_test-fixtures/
 
 # Smoke-Test-Output (Gutachten-PDF u.a.)
 tmp-pdfs/
+
+# Legal Lens Sync/Cleanup Backups (lokale Sicherungs-Files, niemals committen)
+backend/scripts/data/legalLensSources-backup-*.json
+backend/scripts/data/legalLensSources-backup-*.bson
+backend/scripts/data/clauseanalyses-cleanup-backup-*.json
+backend/scripts/data/clauseanalyses-cleanup-ids-*.json

@@ -702,11 +702,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [viewMode, contractId, getApiUrl, pdfUrl]);
 
   // Vertrag beim Laden parsen
+  // ✅ Stable-Ref-Pattern: parseContract.reference kann sich ändern (retryCount-Dep im Hook),
+  // aber wir wollen NUR bei contractId-Change neu parsen (verhindert Endlosschleife)
+  const parseContractRef = useRef(parseContract);
+  useEffect(() => { parseContractRef.current = parseContract; }, [parseContract]);
+
   useEffect(() => {
     if (contractId) {
-      parseContract(contractId);
+      parseContractRef.current(contractId);
     }
-  }, [contractId, parseContract]);
+  }, [contractId]);
 
   // Industry Context beim Laden holen
   useEffect(() => {

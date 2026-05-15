@@ -146,7 +146,7 @@ function buildUrl(slug: string, info: LawInfo, paragraph: string): string | null
   // z.B. VOB-Werke. Erkennung: keine Standard-Online-Slug-Form.
   // Heuristik: Wenn Abbreviation Slashes/Spezialzeichen enthält, ist es
   // wahrscheinlich kein gesetze-im-internet.de-Slug.
-  if (info.abbreviation && /[\/\s]/.test(info.abbreviation)) {
+  if (info.abbreviation && /[/\s]/.test(info.abbreviation)) {
     return null;
   }
   // Default: gesetze-im-internet.de
