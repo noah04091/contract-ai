@@ -4,9 +4,88 @@
 // Keine Standardtexte wie "Nicht angegeben" — nichts ist besser als nichts.
 
 const ReactPDF = require('@react-pdf/renderer');
-const { Document, Page, Text, View, StyleSheet, Image } = ReactPDF;
+const { Document, Page, Text, View, StyleSheet, Image, Link } = ReactPDF;
 const React = require('react');
 const e = React.createElement;
+
+// Slug-Map laden für klickbare legalBasis-Pillen.
+// Lazy + cached, damit erste PDF-Generierung nicht den Singleton blockiert.
+let _mergedMaps = null;
+function getMergedLegalMaps() {
+  if (_mergedMaps) return _mergedMaps;
+  try {
+    const { getInstance } = require('./gesetzImInternetConnector');
+    const supplemental = require('../data/legalReferencesSupplemental');
+    const connector = getInstance();
+    const baseLawInfo = connector.lawInfo || {};
+    _mergedMaps = {
+      lawInfo: { ...baseLawInfo, ...(supplemental.lawInfo || {}) },
+    };
+  } catch (err) {
+    console.warn('[analysisGutachtenPdf] Slug-Map nicht ladbar — Pillen bleiben Plain-Text:', err.message);
+    _mergedMaps = { lawInfo: {} };
+  }
+  return _mergedMaps;
+}
+
+// Node-Pendant von buildUrl im Frontend-Parser (frontend/src/utils/legalReferenceParser.ts).
+// Bewusst dupliziert (kein Shared-Module-Setup), damit PDF-Service unabhängig läuft.
+function buildLegalUrl(slug, info, paragraph) {
+  if (!info) return null;
+  if (info.urlTemplate) {
+    return info.urlTemplate.replace(/\{paragraph\}/g, paragraph);
+  }
+  // VOB/A, VOB/B etc. — Slash/Space in Abkürzung → kein Standard-Slug → null.
+  if (info.abbreviation && /[\/\s]/.test(info.abbreviation)) {
+    return null;
+  }
+  return `https://www.gesetze-im-internet.de/${slug}/__${paragraph}.html`;
+}
+
+function findLawInfoForAbbr(abbreviation, lawInfo) {
+  const abbrLower = String(abbreviation).toLowerCase().trim();
+  for (const [slug, info] of Object.entries(lawInfo)) {
+    if (info && info.abbreviation && info.abbreviation.toLowerCase() === abbrLower) {
+      return { slug, info };
+    }
+  }
+  if (lawInfo[abbrLower]) return { slug: abbrLower, info: lawInfo[abbrLower] };
+  return null;
+}
+
+// Resolves "§ 309 BGB" oder "Art. 28 DSGVO" zu einer URL — oder null.
+// Anti-Halluzination: nicht parsbar → null. Werk unbekannt → null.
+const ABBR_PATTERN = '[A-ZÄÖÜ][A-ZÄÖÜa-zäöü0-9]+(?:[\\/\\-][A-ZÄÖÜa-zäöü0-9]+)*';
+const PARAGRAPH_REGEX = new RegExp(`§\\s*(\\d+[a-z]?)\\s*(?:Abs\\.?\\s*\\d+\\s*)?(?:Nr\\.?\\s*\\d+\\s*)?(?:Satz\\s*\\d+\\s*)?(${ABBR_PATTERN})`);
+const ARTICLE_REGEX = new RegExp(`Art\\.?\\s*(\\d+[a-z]?)\\s*(?:Abs\\.?\\s*\\d+\\s*)?(${ABBR_PATTERN})`);
+
+function resolveLegalUrl(legalBasis) {
+  if (!legalBasis || typeof legalBasis !== 'string') return null;
+  const maps = getMergedLegalMaps();
+  if (!maps.lawInfo) return null;
+
+  for (const regex of [PARAGRAPH_REGEX, ARTICLE_REGEX]) {
+    const m = legalBasis.match(regex);
+    if (m) {
+      const paragraph = m[1];
+      const abbreviation = m[2];
+      const lookup = findLawInfoForAbbr(abbreviation, maps.lawInfo);
+      if (!lookup) return null;
+      return buildLegalUrl(lookup.slug, lookup.info, paragraph);
+    }
+  }
+  return null;
+}
+
+// Render-Helper: legalBasis-Pille als klickbarer Link (wenn URL ermittelbar) oder
+// als statischer Text. Im PDF-Reader wird der Link automatisch anklickbar.
+function makeLegalPill(key, legalBasis) {
+  const url = resolveLegalUrl(legalBasis);
+  if (url) {
+    return e(Link, { key, src: url, style: styles.pillLegalLink }, legalBasis);
+  }
+  return e(Text, { key, style: styles.pillLegal }, legalBasis);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Palette — abgeglichen mit der V2-Frontend-Design-Sprache.
@@ -632,6 +711,18 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontFamily: 'Helvetica',
   },
+  // Klickbare Variante — leichte Blau-Tönung signalisiert „Quellenlink".
+  // Visuell dezent, damit das Gutachten nicht wie eine Linkfarm aussieht.
+  pillLegalLink: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: '#eff6ff',
+    color: '#1e40af',
+    fontSize: 8.5,
+    fontFamily: 'Helvetica',
+    textDecoration: 'none',
+  },
   metaText: {
     fontSize: 8.5,
     color: C.muted,
@@ -1000,7 +1091,7 @@ function TypeSpecificFindingsSection({ contract, sectionNumber }) {
         }, statusStyle.label));
       }
       if (it.legalBasis) {
-        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, it.legalBasis));
+        pills.push(makeLegalPill('legal', it.legalBasis));
       }
 
       return e(View, { key: `tsf-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
@@ -1040,7 +1131,7 @@ function FristHinweiseSection({ contract, sectionNumber }) {
     ...items.map((it, i) => {
       const pills = [];
       if (it.legalBasis) {
-        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, it.legalBasis));
+        pills.push(makeLegalPill('legal', it.legalBasis));
       }
       return e(View, { key: `frist-${i}`, style: [styles.fristItem, i === 0 && styles.fristItemFirst].filter(Boolean), wrap: false },
         it.title && e(Text, { style: styles.fristTitle }, it.title),
@@ -1124,7 +1215,7 @@ function RisksSection({ contract, sectionNumber }) {
         }, levelStyle.label));
       }
       if (r.legalBasis) {
-        pills.push(e(Text, { key: 'legal', style: styles.pillLegal }, r.legalBasis));
+        pills.push(makeLegalPill('legal', r.legalBasis));
       }
 
       return e(View, { key: `risk-${i}`, style: [styles.itemWrap, i === 0 && styles.itemFirst].filter(Boolean), wrap: false },
