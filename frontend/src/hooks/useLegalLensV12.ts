@@ -294,6 +294,11 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
+  // ✅ FIX: retryCount auch als Ref, damit parseContract/analyzeClause stable Function-Reference behalten
+  // (sonst Endlosschleife: retryCount-Change → neue useCallback-Reference → useEffect feuert → infinite loop)
+  const retryCountRef = useRef(0);
+  useEffect(() => { retryCountRef.current = retryCount; }, [retryCount]);
+
   // ✅ NEU: Streaming-spezifische States für Option B
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingProgress, setStreamingProgress] = useState(0);
@@ -599,13 +604,15 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       }
     } catch (err) {
       if (parseRequestIdRef.current !== requestId) return;
-      const errorDetails = categorizeError(err, retryCount);
+      const errorDetails = categorizeError(err, retryCountRef.current);
       setError(errorDetails.message);
       setErrorInfo(errorDetails);
       setIsRetrying(false);
       setIsParsing(false);
     }
-  }, [retryCount]);
+    // ✅ FIX: KEINE Deps — Funktion bleibt stable. retryCount via Ref gelesen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Klausel auswählen - mit Cache-Prüfung
