@@ -85,6 +85,46 @@ module.exports = {
     // ─── Wohnraumförderung
     'wohnraumförderung': ['wofg'],
     'sozialwohnung': ['wofg'],
+
+    // ─── AGG (Anti-Diskriminierung, in fast jedem Arbeitsvertrag)
+    'agg': ['agg'],
+    'gleichbehandlung': ['agg'],
+    'diskriminierung': ['agg'],
+    'antidiskriminierung': ['agg'],
+
+    // ─── Banking / Finanz
+    'kwg': ['kredwg'],
+    'kreditwesen': ['kredwg'],
+    'wphg': ['wphg'],
+    'wertpapierhandel': ['wphg'],
+    'kagb': ['kagb'],
+    'kapitalanlage': ['kagb'],
+    'investmentfonds': ['kagb'],
+
+    // ─── Handwerk
+    'hwo': ['hwo'],
+    'handwerk': ['hwo'],
+    'handwerksordnung': ['hwo'],
+
+    // ─── Gebäudeenergie (ersetzt EnEV)
+    'geg': ['geg'],
+    'gebäudeenergie': ['geg'],
+    'energieausweis': ['geg'],
+
+    // ─── Fernunterricht / Online-Coaching (sehr aktuelles Thema 2026)
+    'fernusg': ['fernusg'],
+    'fernunterricht': ['fernusg'],
+    'online-coaching': ['fernusg'],
+    'online-kurs': ['fernusg'],
+
+    // ─── Verpackungsgesetz (Online-Shop B2C)
+    'verpackungsgesetz': ['verpackg'],
+    'verpackung': ['verpackg'],
+
+    // ─── ElektroG (Elektro-/Elektronikgeräte, B2C-Online-Shop)
+    'elektrog': ['elektrog_2015'],
+    'elektronikgeräte': ['elektrog_2015'],
+    'elektrogeräte': ['elektrog_2015'],
   },
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -192,6 +232,83 @@ module.exports = {
       abbreviation: 'WoFG',
       area: 'Wohnrecht',
       urlTemplate: 'https://www.gesetze-im-internet.de/wofg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+
+    // ═══ Phase 2 Step 2-Alt (15.05.2026) — alle 9 Slugs HTTP-200-verifiziert ═══
+    // Verifikations-Script: backend/scripts/verifyLegalSlugs.js
+    //
+    // AGG — Allgemeines Gleichbehandlungsgesetz (Anti-Diskriminierung, sehr häufig
+    // in Arbeitsverträgen)
+    'agg': {
+      title: 'Allgemeines Gleichbehandlungsgesetz',
+      abbreviation: 'AGG',
+      area: 'Arbeitsrecht / Diskriminierungsschutz',
+      urlTemplate: 'https://www.gesetze-im-internet.de/agg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // KWG — Kreditwesengesetz (Banking, Finanzdienstleister)
+    'kredwg': {
+      title: 'Kreditwesengesetz',
+      abbreviation: 'KWG',
+      area: 'Finanzrecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/kredwg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // WpHG — Wertpapierhandelsgesetz (Investment, Asset Management)
+    'wphg': {
+      title: 'Wertpapierhandelsgesetz',
+      abbreviation: 'WpHG',
+      area: 'Finanzrecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/wphg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // KAGB — Kapitalanlagegesetzbuch (Fonds, Investments)
+    'kagb': {
+      title: 'Kapitalanlagegesetzbuch',
+      abbreviation: 'KAGB',
+      area: 'Finanzrecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/kagb/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // HwO — Handwerksordnung (Handwerker-Verträge, Werkverträge)
+    'hwo': {
+      title: 'Handwerksordnung',
+      abbreviation: 'HwO',
+      area: 'Gewerberecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/hwo/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // GEG — Gebäudeenergiegesetz (ersetzt EnEV, häufig in Miet-/Bauverträgen)
+    'geg': {
+      title: 'Gebäudeenergiegesetz',
+      abbreviation: 'GEG',
+      area: 'Energierecht / Baurecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/geg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // FernUSG — Fernunterrichtsschutzgesetz (Online-Coaching, E-Learning)
+    'fernusg': {
+      title: 'Fernunterrichtsschutzgesetz',
+      abbreviation: 'FernUSG',
+      area: 'Verbraucherschutz',
+      urlTemplate: 'https://www.gesetze-im-internet.de/fernusg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // VerpackG — Verpackungsgesetz (Online-Shop B2C, ohne Jahres-Suffix)
+    'verpackg': {
+      title: 'Verpackungsgesetz',
+      abbreviation: 'VerpackG',
+      area: 'Umwelt-/Verbraucherrecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/verpackg/__{paragraph}.html',
+      urlScheme: 'paragraph',
+    },
+    // ElektroG — Elektro- und Elektronikgerätegesetz (Online-Shop B2C, Hardware)
+    'elektrog_2015': {
+      title: 'Elektro- und Elektronikgerätegesetz',
+      abbreviation: 'ElektroG',
+      area: 'Umwelt-/Verbraucherrecht',
+      urlTemplate: 'https://www.gesetze-im-internet.de/elektrog_2015/__{paragraph}.html',
       urlScheme: 'paragraph',
     },
   },
