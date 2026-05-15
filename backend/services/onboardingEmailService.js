@@ -37,6 +37,15 @@ const EMAIL_SEQUENCE = {
   }
 };
 
+// Mapping emailType → email_logs-Kategorie für Newsletter-Suppression
+const ONBOARDING_CATEGORIES = {
+  welcome: 'onboarding_welcome',
+  firstContract: 'onboarding_first_contract',
+  features: 'onboarding_features',
+  upgradeNudge: 'onboarding_upgrade_nudge',
+  socialProof: 'onboarding_social_proof'
+};
+
 /**
  * Generate Welcome Email (Day 0)
  */
@@ -372,13 +381,12 @@ async function sendOnboardingEmail(user, emailType) {
 
   // Send the email (marketing emails get List-Unsubscribe header, welcome is transactional)
   const isMarketing = emailType !== 'welcome';
-  await sendEmail(
-    user.email,
-    subject,
-    '',
-    html,
-    isMarketing ? { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') } : {}
-  );
+  const category = ONBOARDING_CATEGORIES[emailType] || 'general';
+  const sendOptions = {
+    ...(isMarketing ? { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') } : {}),
+    category
+  };
+  await sendEmail(user.email, subject, '', html, sendOptions);
 
   console.log(`📧 Onboarding email sent: ${emailType} to ${user.email}`);
 

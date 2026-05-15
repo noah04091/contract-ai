@@ -62,6 +62,7 @@ interface Campaign {
     skipped: number;
     pending?: number;
     processing?: number;
+    delayed?: number;
     opens?: number;
     uniqueOpens?: number;
     clicks?: number;
@@ -2200,7 +2201,16 @@ export default function CampaignsTab() {
                     {(detailsData.stats.failed ?? 0) > 0 && (
                       <div style={{ color: '#dc2626' }}>Fehler: {detailsData.stats.failed}</div>
                     )}
-                    {(detailsData.stats.pending ?? 0) > 0 && <div>Ausstehend: {detailsData.stats.pending}</div>}
+                    {(detailsData.stats.pending ?? 0) > 0 && (
+                      <div>
+                        Ausstehend: {detailsData.stats.pending}
+                        {(detailsData.stats.delayed ?? 0) > 0 && (
+                          <span style={{ color: '#6366f1', marginLeft: '0.5rem' }}>
+                            (davon {detailsData.stats.delayed} verzögert — Cooldown 72h nach vorheriger Lifecycle-Mail)
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     {detailsData.trackOpens !== false && (detailsData.stats.sent > 0) && (
                       <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>

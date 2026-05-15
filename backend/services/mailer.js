@@ -47,7 +47,7 @@ async function sendEmail(to, subject, text, html = null, options = {}) {
   logSentEmail({
     to,
     subject,
-    category: 'general',
+    category: options.category || 'general',
     messageId: result && result.messageId,
     source: 'services/mailer.js'
   }).catch(() => {});

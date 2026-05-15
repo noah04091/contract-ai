@@ -21,6 +21,13 @@ const SEND_DELAY_MS = 2000;
 const MIN_INTERVAL_BETWEEN_CAMPAIGNS_MS = 5 * 60 * 1000; // 5 Minuten Rate-Limit pro Admin
 const MAX_SCHEDULE_AHEAD_MS = 365 * 24 * 60 * 60 * 1000; // 1 Jahr max. Vorlauf
 
+// Newsletter-Suppression: User, die in den letzten X Stunden eine Lifecycle-Mail
+// (Newsletter, Onboarding-Sequenz, Beta-Reminder) bekommen haben, werden verzögert.
+// Transactional Mails (Stripe, Calendar, Status, Pulse, Cancellation, Auth) zählen NICHT.
+const LIFECYCLE_COOLDOWN_HOURS = 72;
+const LIFECYCLE_CATEGORY_PREFIXES = ['campaign_', 'onboarding_', 'beta_reminder'];
+const SUPPRESSION_ENABLED = process.env.NEWSLETTER_SUPPRESSION_ENABLED !== 'false';
+
 function parseScheduledFor(value) {
   if (!value) return null;
   const date = new Date(value);
@@ -53,7 +60,10 @@ async function ensureIndexes(db) {
       db.collection('campaign_recipients').createIndex(
         { campaignId: 1, email: 1 },
         { unique: true, background: true }
-      )
+      ),
+      // Compound-Index für Newsletter-Suppression-Live-Check (Lookup in email_logs).
+      // Query-Pattern: { to: <email>, sentAt: { $gte: cooldownThreshold } }
+      db.collection('email_logs').createIndex({ to: 1, sentAt: -1 })
     ]);
     indexesEnsured = true;
   } catch (err) {
@@ -488,14 +498,18 @@ async function createCampaign(data, adminUser) {
       recipientDocs.push({
         userId: u._id, email: u.email,
         status: 'skipped', skippedReason: skipReason,
-        sentAt: null, messageId: null, error: null, createdAt: new Date()
+        sentAt: null, messageId: null, error: null,
+        delayUntil: null,
+        createdAt: new Date()
       });
       skippedCount++;
     } else {
       recipientDocs.push({
         userId: u._id, email: u.email,
         status: 'pending', skippedReason: null,
-        sentAt: null, messageId: null, error: null, createdAt: new Date()
+        sentAt: null, messageId: null, error: null,
+        delayUntil: null,
+        createdAt: new Date()
       });
       eligibleCount++;
     }
@@ -639,13 +653,37 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
     );
   }
 
+  // Pending-Empfänger holen, die JETZT versendet werden dürfen.
+  // delayUntil-Recipients (Suppression-Cooldown aktiv) werden hier ausgefiltert
+  // und bei einem späteren Cron-Lauf wieder mit aufgenommen.
+  const now = new Date();
   const pending = await db.collection('campaign_recipients')
-    .find({ campaignId: _id, status: 'pending' })
+    .find({
+      campaignId: _id,
+      status: 'pending',
+      $or: [
+        { delayUntil: null },
+        { delayUntil: { $exists: false } },
+        { delayUntil: { $lte: now } }
+      ]
+    })
     .limit(batchSize)
     .toArray();
 
   if (pending.length === 0) {
-    // Keine pending mehr — als completed markieren
+    // KRITISCH: Bevor wir 'completed' setzen, sicherstellen, dass es WIRKLICH keine
+    // pending Recipients mehr gibt — auch keine mit delayUntil > now (Suppression-Wartende).
+    // Sonst würde die Kampagne fälschlich als fertig markiert und delayed Empfänger
+    // niemals versendet werden.
+    const stillWaiting = await db.collection('campaign_recipients').countDocuments({
+      campaignId: _id,
+      status: 'pending'
+    });
+    if (stillWaiting > 0) {
+      // Es gibt noch verzögerte Recipients — Kampagne bleibt 'sending', Cron kommt wieder
+      return { done: false, waiting: stillWaiting };
+    }
+    // Wirklich fertig
     const stats = await computeStats(db, _id);
     await db.collection('email_campaigns').updateOne(
       { _id },
@@ -677,6 +715,56 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
     const claimedDoc = claimed.value || claimed;
     if (!claimedDoc || claimedDoc.status !== 'processing') {
       continue; // Bereits verarbeitet — skip
+    }
+
+    // ========================================================================
+    // SUPPRESSION-LIVE-CHECK: Verzögern statt versenden, wenn User in den letzten
+    // LIFECYCLE_COOLDOWN_HOURS bereits eine Lifecycle-Mail (Newsletter/Onboarding/
+    // Beta-Reminder) bekommen hat. Transactional Mails (Stripe, Calendar, Status,
+    // Pulse, Auth, Cancellation) zählen NICHT — die haben keine Lifecycle-Kategorie
+    // in email_logs.
+    //
+    // Verhalten bei Treffer: claim zurückrollen → status='pending' + delayUntil setzen.
+    // Cron kommt jede Minute wieder und nimmt den Recipient auf, sobald
+    // delayUntil <= now.
+    //
+    // Fail-Safe: Bei DB-Fehler im Lookup wird NICHT verzögert (= alter Versand-Pfad).
+    // Im Zweifel senden statt für immer verzögern.
+    // ========================================================================
+    if (SUPPRESSION_ENABLED) {
+      try {
+        const cooldownThreshold = new Date(Date.now() - LIFECYCLE_COOLDOWN_HOURS * 3600 * 1000);
+        const categoryRegex = new RegExp('^(' + LIFECYCLE_CATEGORY_PREFIXES.join('|') + ')');
+        const recentLifecycleMail = await db.collection('email_logs').findOne(
+          {
+            to: recipient.email,
+            sentAt: { $gte: cooldownThreshold },
+            category: { $regex: categoryRegex }
+          },
+          { sort: { sentAt: -1 }, projection: { sentAt: 1, category: 1 } }
+        );
+
+        if (recentLifecycleMail) {
+          const delayUntil = new Date(
+            recentLifecycleMail.sentAt.getTime() + LIFECYCLE_COOLDOWN_HOURS * 3600 * 1000
+          );
+          await db.collection('campaign_recipients').updateOne(
+            { _id: recipient._id },
+            { $set: { status: 'pending', delayUntil } }
+          );
+          console.log(
+            `[CampaignDelay] ${recipient.email} verzögert bis ${delayUntil.toISOString()} ` +
+            `(letzte Lifecycle-Mail: ${recentLifecycleMail.category} am ${recentLifecycleMail.sentAt.toISOString()})`
+          );
+          continue; // Nicht senden — Cron kommt später wieder
+        }
+      } catch (suppressionErr) {
+        // Fail-Safe: DB-Fehler im Lookup blockiert NICHT den Versand
+        console.warn(
+          `[CampaignDelay] Suppression-Lookup für ${recipient.email} fehlgeschlagen, sende regulär:`,
+          suppressionErr && suppressionErr.message
+        );
+      }
     }
 
     try {
@@ -764,12 +852,25 @@ async function computeStats(db, campaignId) {
     { $group: { _id: '$status', count: { $sum: 1 } } }
   ]).toArray();
 
-  const stats = { total: 0, eligible: 0, sent: 0, failed: 0, skipped: 0, pending: 0, processing: 0 };
+  const stats = { total: 0, eligible: 0, sent: 0, failed: 0, skipped: 0, pending: 0, processing: 0, delayed: 0 };
   for (const c of counts) {
     if (c._id in stats) stats[c._id] = c.count;
     stats.total += c.count;
   }
   stats.eligible = stats.total - stats.skipped;
+
+  // delayed ist ein Sub-Count von pending: Recipients mit delayUntil > now,
+  // also durch Newsletter-Suppression aktuell zurückgehalten.
+  // Wird ZUSÄTZLICH zu pending geliefert (pending bleibt die Gesamtzahl aller noch nicht
+  // versendeten Empfänger), damit bestehende Frontend-Konsumenten nicht brechen.
+  if (stats.pending > 0) {
+    stats.delayed = await db.collection('campaign_recipients').countDocuments({
+      campaignId,
+      status: 'pending',
+      delayUntil: { $gt: new Date() }
+    });
+  }
+
   return stats;
 }
 
