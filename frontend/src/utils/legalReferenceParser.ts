@@ -12,11 +12,24 @@
 
 import { useEffect, useState } from "react";
 
+export interface LawInfo {
+  title?: string;
+  abbreviation?: string;
+  area?: string;
+  /** Optional. Falls gesetzt, wird {paragraph} mit der Paragraph-Nummer ersetzt.
+   *  Fehlt der Platzhalter, wird das Template als statische URL verwendet
+   *  (z.B. EU-Verordnungen ohne Article-Deep-Link). */
+  urlTemplate?: string;
+  /** 'paragraph' = § (z.B. § 307 BGB), 'article' = Art. (z.B. Art. 28 DSGVO).
+   *  Falls undefined: beide Schemata akzeptiert. */
+  urlScheme?: "paragraph" | "article";
+}
+
 export interface SlugMapData {
   /** Slug-Map: konzept → array of law slugs (z.B. "kündigungsfrist" → ["bgb", "kschg", "hgb"]) */
   slugMap: Record<string, string[]>;
-  /** Law Info: slug → { title, abbreviation, area } */
-  lawTitles: Record<string, { title?: string; abbreviation?: string; area?: string }>;
+  /** Law Info: slug → { title, abbreviation, area, urlTemplate?, urlScheme? } */
+  lawTitles: Record<string, LawInfo>;
   version: string;
 }
 
@@ -100,25 +113,44 @@ export function useLegalSlugMap(): SlugMapData | null {
 function findSlugForAbbreviation(
   abbreviation: string,
   lawTitles: SlugMapData["lawTitles"]
-): { slug: string; fullTitle: string } | null {
+): { slug: string; info: LawInfo } | null {
   const abbrLower = abbreviation.toLowerCase().trim();
 
-  // Direkte Lookup nach abbreviation in lawTitles
+  // Direkte Lookup nach abbreviation in lawTitles (case-insensitive)
   for (const [slug, info] of Object.entries(lawTitles)) {
     if (info.abbreviation && info.abbreviation.toLowerCase() === abbrLower) {
-      return { slug, fullTitle: info.title || info.abbreviation };
+      return { slug, info };
     }
   }
 
   // Fallback: lowercase passt manchmal direkt (BGB → bgb)
   if (lawTitles[abbrLower]) {
-    return {
-      slug: abbrLower,
-      fullTitle: lawTitles[abbrLower].title || abbreviation,
-    };
+    return { slug: abbrLower, info: lawTitles[abbrLower] };
   }
 
   return null;
+}
+
+/**
+ * Baut die finale URL für eine Quelle.
+ * Priorität: urlTemplate (mit {paragraph}-Replace) > Default-Schema gesetze-im-internet.de.
+ * Wenn der Eintrag KEIN urlTemplate hat UND er nicht als gesetze-im-internet.de-Slug
+ * erkennbar ist (z.B. VOB/A, VOB/B), wird null returned → Frontend Plain-Text.
+ */
+function buildUrl(slug: string, info: LawInfo, paragraph: string): string | null {
+  if (info.urlTemplate) {
+    // Template kann {paragraph} enthalten — falls nicht, statische URL.
+    return info.urlTemplate.replace(/\{paragraph\}/g, paragraph);
+  }
+  // Slugs ohne urlTemplate die als bekannt-aber-nicht-online markiert sind:
+  // z.B. VOB-Werke. Erkennung: keine Standard-Online-Slug-Form.
+  // Heuristik: Wenn Abbreviation Slashes/Spezialzeichen enthält, ist es
+  // wahrscheinlich kein gesetze-im-internet.de-Slug.
+  if (info.abbreviation && /[\/\s]/.test(info.abbreviation)) {
+    return null;
+  }
+  // Default: gesetze-im-internet.de
+  return `https://www.gesetze-im-internet.de/${slug}/__${paragraph}.html`;
 }
 
 /**
@@ -126,8 +158,15 @@ function findSlugForAbbreviation(
  * Anti-Halluzination: null wenn nicht eindeutig parsbar oder Werk nicht mappbar.
  *
  * Unterstützte Patterns:
- * - „§ 309 Nr. 7 BGB", „§ 309 BGB", „§309 BGB"
- * - „Art. 28 DSGVO" (Pille → externe DSGVO-Quelle nur falls slug existiert)
+ * - „§ 309 Nr. 7 BGB", „§ 309 BGB", „§309 BGB", „§ 4a HOAI"
+ * - „Art. 28 DSGVO", „Art. 6 Abs. 1 DSGVO", „Art. 5 KI-VO"
+ * - Mehrteilige Abkürzungen mit Slash (VOB/A, VOB/B) und Bindestrich (KI-VO, SGB-V)
+ *
+ * URL-Build:
+ * - Werk hat urlTemplate → Template wird mit {paragraph} gefüllt (oder statisch genutzt)
+ * - Sonst Default-Schema gesetze-im-internet.de/{slug}/__{paragraph}.html
+ * - Werk hat KEIN urlTemplate UND Abkürzung enthält /, Leerzeichen → url: null
+ *   (Pille wird trotzdem gerendert, aber als nicht-klickbar oder Plain-Text — Komponenten-Entscheidung)
  */
 export function parseLegalRef(
   raw: string | null | undefined,
@@ -136,8 +175,13 @@ export function parseLegalRef(
   if (!raw || typeof raw !== "string") return null;
   if (!slugMap || !slugMap.lawTitles) return null;
 
-  // Pattern 1: § <nr> [Nr. X] <ABBR>  — z.B. „§ 309 Nr. 7 BGB"
-  const paragraphMatch = raw.match(/§\s*(\d+[a-z]?)\s*(?:Abs\.?\s*\d+\s*)?(?:Nr\.?\s*\d+\s*)?(?:Satz\s*\d+\s*)?([A-ZÄÖÜ][A-ZÄÖÜa-zäöü]+)/);
+  // Erweiterte Abkürzungs-Regex: erlaubt Slash (VOB/A, VOB/B), Bindestrich (KI-VO),
+  // Großbuchstaben + kleine Buchstaben (BImSchG, EnWG). Muss mit einem Großbuchstaben starten.
+  const ABBR = '[A-ZÄÖÜ][A-ZÄÖÜa-zäöü0-9]+(?:[\\/\\-][A-ZÄÖÜa-zäöü0-9]+)*';
+
+  // Pattern 1: § <nr> [Abs. X] [Nr. X] [Satz X] <ABBR>  — z.B. „§ 309 Nr. 7 BGB"
+  const paragraphRegex = new RegExp(`§\\s*(\\d+[a-z]?)\\s*(?:Abs\\.?\\s*\\d+\\s*)?(?:Nr\\.?\\s*\\d+\\s*)?(?:Satz\\s*\\d+\\s*)?(${ABBR})`);
+  const paragraphMatch = raw.match(paragraphRegex);
   if (paragraphMatch) {
     const paragraph = paragraphMatch[1];
     const abbreviation = paragraphMatch[2];
@@ -148,14 +192,15 @@ export function parseLegalRef(
       abbreviation,
       paragraph,
       slug: lookup.slug,
-      url: `https://www.gesetze-im-internet.de/${lookup.slug}/__${paragraph}.html`,
-      fullTitle: lookup.fullTitle,
+      url: buildUrl(lookup.slug, lookup.info, paragraph),
+      fullTitle: lookup.info.title || lookup.info.abbreviation || abbreviation,
     };
   }
 
-  // Pattern 2: Art. <nr> <ABBR>  — z.B. „Art. 28 DSGVO"
-  // Nur weiterverarbeiten wenn Werk-Slug bekannt ist (sonst null → keine Pille)
-  const articleMatch = raw.match(/Art\.?\s*(\d+)\s+([A-ZÄÖÜ][A-ZÄÖÜa-zäöü]+)/);
+  // Pattern 2: Art. <nr> [Abs. X] <ABBR>  — z.B. „Art. 28 DSGVO", „Art. 6 Abs. 1 DSGVO"
+  // Anti-Halluzination: nur wenn Werk-Slug bekannt ist (sonst null → keine Pille).
+  const articleRegex = new RegExp(`Art\\.?\\s*(\\d+[a-z]?)\\s*(?:Abs\\.?\\s*\\d+\\s*)?(${ABBR})`);
+  const articleMatch = raw.match(articleRegex);
   if (articleMatch) {
     const paragraph = articleMatch[1];
     const abbreviation = articleMatch[2];
@@ -166,8 +211,8 @@ export function parseLegalRef(
       abbreviation,
       paragraph,
       slug: lookup.slug,
-      url: `https://www.gesetze-im-internet.de/${lookup.slug}/__${paragraph}.html`,
-      fullTitle: lookup.fullTitle,
+      url: buildUrl(lookup.slug, lookup.info, paragraph),
+      fullTitle: lookup.info.title || lookup.info.abbreviation || abbreviation,
     };
   }
 
