@@ -88,6 +88,59 @@ function makeLegalPill(key, legalBasis) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Vertragsart-Formatierung (universell)
+// ─────────────────────────────────────────────────────────────────────────────
+// Map identisch zu CONTRACT_TYPE_LABELS in backend/routes/contracts.js — bewusst
+// dupliziert (16 Strings) statt Cross-Module-Import, um Produktiv-Datei
+// contracts.js nicht zusätzlich anzufassen.
+const CONTRACT_TYPE_LABELS_PDF = {
+  mietvertrag: 'Mietvertrag', arbeitsvertrag: 'Arbeitsvertrag', kaufvertrag: 'Kaufvertrag',
+  nda: 'NDA', freelancer: 'Freelancer-Vertrag', werkvertrag: 'Werkvertrag',
+  berater: 'Beratungsvertrag', aufhebungsvertrag: 'Aufhebungsvertrag',
+  pachtvertrag: 'Pachtvertrag', kooperation: 'Kooperationsvertrag',
+  softwareVertrieb: 'SaaS-Reseller-Vertrag', softwareEndkunde: 'Software-Endkunde-Vertrag',
+  lizenzvertrag: 'Lizenzvertrag', darlehensvertrag: 'Darlehensvertrag',
+  gesellschaftsvertrag: 'Gesellschaftsvertrag', individuell: 'Vertrag',
+};
+
+// Skip-Set: das sind Subscription-Marker (NICHT Vertragsarten), kommen aus
+// contract.contractType (Top-Level, Mongoose-Schema "recurring"|"one-time"|null).
+// Würde fälschlich als Vertragsart angezeigt → bewusst weglassen.
+const CONTRACT_TYPE_SKIP_VALUES = new Set([
+  'recurring', 'one-time', 'one_time', 'onetime',
+  'subscription', 'weekly', 'monthly', 'yearly', 'daily',
+]);
+
+/**
+ * Formatiert den contractType-Wert für die Anzeige im PDF-Cover.
+ * Universell: deckt alle 5 möglichen Fälle ab.
+ *
+ * @returns string — formatierter Wert ODER '' (leer = nicht anzeigen)
+ */
+function formatContractType(value) {
+  const v = safeStr(value);
+  if (!v) return '';
+
+  const lower = v.toLowerCase();
+
+  // (1) Skip-Set: Subscription-Marker → nicht als Vertragsart anzeigen
+  if (CONTRACT_TYPE_SKIP_VALUES.has(lower)) return '';
+
+  // (2) Direkter Map-Hit (Slug → schöner Begriff)
+  if (CONTRACT_TYPE_LABELS_PDF[lower]) return CONTRACT_TYPE_LABELS_PDF[lower];
+
+  // (3) Bereits formatiert (beginnt mit Großbuchstaben, kein reiner Slug)
+  // Beispiele: „Mietvertrag", „Wohnraummietvertrag", „Service Agreement"
+  const firstChar = v.charAt(0);
+  if (firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase()) {
+    return v;
+  }
+
+  // (4) Unbekannter Slug → Capitalize-First-Letter
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Palette — abgeglichen mit der V2-Frontend-Design-Sprache.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -893,7 +946,12 @@ function FooterFixed() {
 
 function CoverPage({ contract, companyProfile, analysisDate }) {
   const score = typeof contract?.contractScore === 'number' ? contract.contractScore : null;
-  const contractType = safeStr(contract?.analysis?.contractType) || safeStr(contract?.contractType);
+  // Vertragsart-Wert universell formatieren — siehe formatContractType-Helper.
+  // Skip-Set verhindert, dass Subscription-Marker („recurring", „one-time")
+  // fälschlich als Vertragsart angezeigt werden.
+  const contractType = formatContractType(
+    safeStr(contract?.analysis?.contractType) || safeStr(contract?.contractType)
+  );
   const provider = safeStr(contract?.analysis?.parties?.provider) || safeStr(contract?.provider?.name);
   const customer = safeStr(contract?.analysis?.parties?.customer);
   const company = safeStr(companyProfile?.companyName);
