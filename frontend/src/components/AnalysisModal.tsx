@@ -167,7 +167,7 @@ ${contract.analysis.comparison || 'Nicht verfügbar'}
 
 ${contract.analysis.detailedLegalOpinion ? `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-AUSFÜHRLICHES RECHTSGUTACHTEN (Fachanwaltsniveau)
+AUSFÜHRLICHE RECHTLICHE WÜRDIGUNG
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${contract.analysis.detailedLegalOpinion}
@@ -395,10 +395,10 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
                         <div className={`${styles.sectionIcon} ${styles.legalOpinionIcon}`}>
                           <Gavel size={20} />
                         </div>
-                        <h3>📋 Ausführliches Rechtsgutachten</h3>
+                        <h3>📋 Ausführliche rechtliche Würdigung</h3>
                         <div className={styles.legalOpinionBadge}>
                           <Scale size={14} />
-                          <span>Fachanwaltsniveau</span>
+                          <span>Höchstes Niveau</span>
                         </div>
                       </div>
                       <div className={styles.sectionContent}>

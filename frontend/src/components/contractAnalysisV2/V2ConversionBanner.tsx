@@ -101,7 +101,7 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#f59e0b", marginBottom: 4 }}>{eye}</div>
         <div style={{ fontSize: 15.5, fontWeight: 700, marginBottom: 4, letterSpacing: "-.015em" }}>Hol dir die volle Tiefe</div>
-        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.7)" }}>Business: 25 Analysen/Monat · Pilotprüfung · Anwalts-PDFs · ab 19 €/Monat</div>
+        <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.7)" }}>Business: 25 Analysen/Monat · Pilotprüfung · Vorprüfungs-PDFs · ab 19 €/Monat</div>
       </div>
       <a href="/pricing" style={{
         position: "relative", zIndex: 1,

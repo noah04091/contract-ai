@@ -58,7 +58,7 @@ export default function V2ActionBar(props: Props) {
         className={`${styles.secondary} ${generatingPdf ? styles.secondaryLoading : ""}`}
         onClick={onDownloadPdf}
         disabled={generatingPdf}
-        aria-label="Anwalts-PDF herunterladen"
+        aria-label="Vorprüfungs-PDF herunterladen"
       >
         {generatingPdf ? <Loader size={13} aria-hidden="true" /> : <FileText size={13} aria-hidden="true" />}
         <span>{generatingPdf ? "Erstelle..." : "PDF"}</span>

@@ -805,7 +805,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                 {result?.lawyerLevelAnalysis && (
                   <span className={styles.lawyerBadge}>
                     <Gavel size={12} />
-                    Anwaltsniveau
+                    Tiefenanalyse
                   </span>
                 )}
                 {/* ✅ CRITICAL FIX: Badge für vorhandene Analyse */}
@@ -894,17 +894,17 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
           <div className={styles.progressTextContainer}>
             <p className={styles.progressText}>
               {progress < 30 && "PDF wird verarbeitet..."}
-              {progress >= 30 && progress < 70 && "Anwaltliche KI-Analyse läuft..."}
-              {progress >= 70 && progress < 100 && "Rechtsgutachten wird erstellt..."}
-              {progress === 100 && "Anwaltliche Analyse abgeschlossen"}
+              {progress >= 30 && progress < 70 && "KI-Vertragsanalyse läuft..."}
+              {progress >= 70 && progress < 100 && "Rechtliche Vorprüfung wird erstellt..."}
+              {progress === 100 && "Rechtliche Analyse abgeschlossen"}
             </p>
           </div>
 
           <div className={styles.progressSteps}>
             {[
               { text: "Text extrahieren", threshold: 10 },
-              { text: "Anwaltliche Analyse", threshold: 30 },
-              { text: "Rechtsgutachten erstellen", threshold: 70 }
+              { text: "Rechtliche Analyse", threshold: 30 },
+              { text: "Vorprüfung erstellen", threshold: 70 }
             ].map((step, index) => (
               <div key={index} className={`${styles.progressStep} ${progress >= step.threshold ? styles.active : ''}`}>
                 <span>{step.text}</span>
@@ -1045,10 +1045,10 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                 </h4>
                 <p>
                   {initialResult
-                    ? 'Einmalige juristische Analyse auf Anwaltsniveau - Ergebnisse werden angezeigt'
+                    ? 'Einmalige juristische Tiefenanalyse - Ergebnisse werden angezeigt'
                     : result?.isReanalysis
                       ? 'Bestehende Rechtsprüfung wurde erfolgreich aktualisiert'
-                      : 'Einmalige, detaillierte Vertragsanalyse wie von einem Fachanwalt'
+                      : 'Einmalige, detaillierte juristische Vertragsanalyse'
                   }
                 </p>
                 {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) && (
@@ -1059,7 +1059,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                     </span>
                     <span className={styles.feature}>
                       <Gavel size={14} />
-                      Anwaltsniveau
+                      Tiefenanalyse
                     </span>
                     <span className={styles.feature}>
                       <CheckSquare size={14} />
@@ -1137,7 +1137,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
             <div className={styles.scoreSection}>
               <h5 className={styles.scoreSectionTitle}>
                 {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis)
-                  ? 'Anwaltliche Gesamtbewertung'
+                  ? 'Rechtliche Gesamtbewertung'
                   : 'Contract Score'
                 }
               </h5>
@@ -1509,16 +1509,16 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                   <div>
                     <h5 className={styles.legalOpinionTitle}>
                       <Scale size={18} className={styles.cardIcon} />
-                      Ausführliches Rechtsgutachten
+                      Ausführliche rechtliche Würdigung
                     </h5>
                     <p className={styles.legalOpinionSubtitle}>
-                      Professionelle anwaltliche Gesamtbewertung auf Fachanwaltsniveau
+                      Detaillierte rechtliche Bewertung auf höchstem juristischen Niveau
                     </p>
                   </div>
                 </div>
                 <div className={styles.legalOpinionBadge}>
                   <Scale size={16} />
-                  <span>Fachanwaltsniveau</span>
+                  <span>Höchstes Niveau</span>
                 </div>
               </div>
 
@@ -1609,7 +1609,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               ) : (
                 <>
                   <Download size={18} />
-                  <span>Anwalts-PDF herunterladen</span>
+                  <span>Vorprüfungs-PDF herunterladen</span>
                 </>
               )}
             </button>
@@ -1720,7 +1720,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
           {(result?.usage || initialResult?.usage) && (
             <div className={styles.usageInfo}>
               <p>
-                Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
+                Rechtliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
                 <span className={styles.planBadge}>
                   {(result?.usage || initialResult?.usage)?.plan}
                 </span>

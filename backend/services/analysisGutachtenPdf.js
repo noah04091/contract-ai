@@ -876,7 +876,7 @@ function HeaderFixed({ contractName }) {
     e(View, { style: styles.headerLeft },
       e(Text, { style: styles.headerBrand }, 'CONTRACT AI'),
       e(Text, { style: styles.headerSep }, '·'),
-      e(Text, { style: styles.headerContract }, 'Anwalts-Gutachten'),
+      e(Text, { style: styles.headerContract }, 'Rechtliche Vorprüfung'),
     ),
     e(Text, { style: styles.headerContract }, contractName || ''),
   );
@@ -918,7 +918,7 @@ function CoverPage({ contract, companyProfile, analysisDate }) {
     ),
 
     e(View, { style: styles.coverCenter },
-      e(Text, { style: styles.coverKicker }, 'Anwaltsgutachten · Vertragsanalyse'),
+      e(Text, { style: styles.coverKicker }, 'Rechtliche Vorprüfung · Vertragsanalyse'),
       e(Text, { style: styles.coverTitle }, 'Rechtliche Bewertung\nIhres Vertrags'),
       e(Text, { style: styles.coverContractName }, safeStr(contract?.name) || safeStr(contract?.title) || 'Unbenannter Vertrag'),
 
@@ -1149,7 +1149,7 @@ function DetailedOpinionSection({ contract, sectionNumber }) {
   return e(View, { style: styles.sectionWrap, break: true },
     e(View, { style: styles.sectionHeader },
       e(Text, { style: styles.sectionKicker }, `${String(sectionNumber).padStart(2, '0')} · Ausführliche rechtliche Würdigung`),
-      e(Text, { style: styles.sectionTitle }, 'Anwaltliches Gutachten im Volltext'),
+      e(Text, { style: styles.sectionTitle }, 'Vollständige rechtliche Würdigung'),
     ),
 
     ...paragraphs.map((p, i) =>
@@ -1282,7 +1282,7 @@ function DisclaimerBlock() {
   return e(View, { style: styles.disclaimerWrap, wrap: false },
     e(Text, { style: styles.disclaimerTitle }, 'RECHTLICHER HINWEIS'),
     e(Text, { style: styles.disclaimerText },
-      'Dieses Gutachten wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Es ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Bewertung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.',
+      'Diese rechtliche Vorprüfung wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Sie ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Bewertung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.',
     ),
   );
 }
@@ -1327,7 +1327,7 @@ function GutachtenDocument({ contract, companyProfile }) {
   const opinionNum = hasOpinion ? nextNum++ : null;
 
   return e(Document, {
-    title: `Anwalts-Gutachten · ${contractName}`,
+    title: `Rechtliche Vorprüfung · ${contractName}`,
     author: 'Contract AI',
     subject: 'KI-gestützte Vertragsanalyse',
     creator: 'Contract AI',

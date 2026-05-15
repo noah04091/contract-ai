@@ -368,7 +368,7 @@ export default function AnalysisImportantDates({
           type: "kuendigungsfrist",
           title: `Kündigungsfrist ${cancellationPeriod.value} ${cancellationPeriod.unit === "months" ? "Monate" : cancellationPeriod.unit === "weeks" ? "Wochen" : cancellationPeriod.unit === "days" ? "Tage" : cancellationPeriod.unit}${cancellationPeriod.type === "end_of_period" ? " zum Laufzeitende" : ""}`,
           description:
-            "Aus dem Vertragstext erkannt. Komplexe Verträge enthalten oft mehrere Kündigungsregelungen — prüfe das Rechtsgutachten unten für den vollständigen Kontext.",
+            "Aus dem Vertragstext erkannt. Komplexe Verträge enthalten oft mehrere Kündigungsregelungen — prüfe die ausführliche rechtliche Würdigung unten für den vollständigen Kontext.",
         }
       : null;
 

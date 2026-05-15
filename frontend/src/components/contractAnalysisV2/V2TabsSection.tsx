@@ -208,7 +208,7 @@ export default function V2TabsSection({ data }: Props) {
       : []),
     { id: "suggestions", label: "Optimierungsvorschläge", icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
     { id: "market", label: "Marktvergleich", icon: <BarChart3 size={14} /> },
-    { id: "opinion", label: "Rechtsgutachten", icon: <Scale size={14} /> },
+    { id: "opinion", label: "Rechtliche Vorprüfung", icon: <Scale size={14} /> },
   ];
 
   // Tab-Refs für Arrow-Key-Navigation (WCAG Tabs-Pattern)

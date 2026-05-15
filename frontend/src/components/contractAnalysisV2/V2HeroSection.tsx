@@ -319,7 +319,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
   // Banner-Headline
   const bannerHead = d.analysisMessage
-    || (d.lawyerLevelAnalysis ? "Tiefenanalyse abgeschlossen · Anwaltsniveau" : "Analyse abgeschlossen");
+    || (d.lawyerLevelAnalysis ? "Juristische Tiefenanalyse abgeschlossen" : "Analyse abgeschlossen");
 
   return (
     <>
@@ -356,7 +356,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                     <Scale size={10} /> 7-Punkte-Analyse
                   </span>
                   <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
-                    <Gavel size={10} /> Anwaltsniveau
+                    <Gavel size={10} /> Tiefenanalyse
                   </span>
                   <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
                     <CheckSquare size={10} /> Vollständigkeitsgarantie
@@ -539,7 +539,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
           <div>
-            <div className={styles.heroEye}>Anwaltliche Gesamtbewertung</div>
+            <div className={styles.heroEye}>Rechtliche Gesamtbewertung</div>
             <h2 className={styles.heroTitle}>{buildHeroTitle(d)}</h2>
             {heroSub && (
               <p className={styles.heroSub}>

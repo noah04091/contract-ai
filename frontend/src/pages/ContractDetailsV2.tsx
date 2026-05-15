@@ -46,7 +46,10 @@ import {
   X,
   Pencil,
   Lock,
-  CalendarPlus
+  CalendarPlus,
+  Hash,
+  Repeat,
+  Wallet
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
 import { fixUtf8Display } from "../utils/textUtils";
@@ -1310,6 +1313,9 @@ export default function ContractDetailsV2() {
     startDate: <Calendar size={16} />,
     expiryDate: <Calendar size={16} />,
     kosten: <CreditCard size={16} />,
+    customerNumber: <Hash size={16} />,
+    paymentFrequency: <Repeat size={16} />,
+    paymentMethod: <Wallet size={16} />,
   };
 
   // ✅ Felder kommen jetzt aus der Shared-Utility — single source of truth mit Modal
@@ -2799,7 +2805,7 @@ export default function ContractDetailsV2() {
                             <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
                               <Shield size={18} />
                             </span>
-                            Ausführliches Rechtsgutachten
+                            Ausführliche rechtliche Würdigung
                           </h3>
                           <span className={styles.tabBadge} style={{ background: '#fef3c7', color: '#b45309' }}>
                             Premium

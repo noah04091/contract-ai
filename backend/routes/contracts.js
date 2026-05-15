@@ -4482,7 +4482,8 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
 
 /**
  * POST /api/contracts/:id/gutachten-pdf
- * Generiert das Anwalts-Gutachten-PDF einer Vertragsanalyse (React-PDF).
+ * Generiert das Rechtliche-Vorprüfung-PDF einer Vertragsanalyse (React-PDF).
+ * Route-Path bleibt /gutachten-pdf für Backwards-Kompatibilität mit dem Frontend.
  * Strikt adaptive: nur Sektionen mit echten Daten werden gerendert (Anti-Halluzination).
  * Content-Disposition: attachment — User soll bewusst herunterladen.
  */
@@ -4493,7 +4494,7 @@ router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
 
     if (!generateGutachtenPdf) {
       return res.status(503).json({
-        message: 'Gutachten-PDF Generator nicht verfügbar',
+        message: 'PDF-Generator für die rechtliche Vorprüfung nicht verfügbar',
         error: 'analysisGutachtenPdf-Modul konnte nicht geladen werden'
       });
     }
@@ -4591,14 +4592,14 @@ router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
     const pdfBuffer = await generateGutachtenPdf({ contract, companyProfile });
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', buildContentDisposition('attachment', buildSafePdfFilename(contract, '_Gutachten')));
+    res.setHeader('Content-Disposition', buildContentDisposition('attachment', buildSafePdfFilename(contract, '_Vorpruefung')));
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
 
   } catch (error) {
     console.error('❌ [GUTACHTEN-PDF] Generierung fehlgeschlagen:', error);
     res.status(500).json({
-      message: 'Gutachten-PDF-Generierung fehlgeschlagen',
+      message: 'Erstellung der rechtlichen Vorprüfung fehlgeschlagen',
       error: error.message
     });
   }
