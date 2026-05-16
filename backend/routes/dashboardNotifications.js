@@ -829,17 +829,29 @@ router.get("/", verifyToken, async (req, res) => {
       .limit(perSourceLimit)
       .toArray();
 
-    // 3. Kürzlich hochgeladene/analysierte Verträge (letzte X Tage)
+    // 3. Kürzlich hochgeladene/analysierte Verträge (letzte X Tage).
+    // Aggregation mit _lastActivity = max(analyzedAt, uploadedAt) — damit
+    // re-analysierte Verträge nach oben in der Glocke wandern, auch wenn
+    // sie schon vor Tagen hochgeladen wurden (Bug-Fix 16.05.2026).
     const recentContracts = await db.collection("contracts")
-      .find({
-        userId: new ObjectId(userId),
-        $or: [
-          { uploadedAt: { $gte: daysAgo } },
-          { analyzedAt: { $gte: daysAgo } }
-        ]
-      })
-      .sort({ uploadedAt: -1 })
-      .limit(perSourceLimit)
+      .aggregate([
+        {
+          $match: {
+            userId: new ObjectId(userId),
+            $or: [
+              { uploadedAt: { $gte: daysAgo } },
+              { analyzedAt: { $gte: daysAgo } }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            _lastActivity: { $max: ['$analyzedAt', '$uploadedAt'] }
+          }
+        },
+        { $sort: { _lastActivity: -1 } },
+        { $limit: perSourceLimit }
+      ])
       .toArray();
 
     // 4. Signatur-Status-Updates (letzte X Tage)
@@ -909,16 +921,19 @@ router.get("/", verifyToken, async (req, res) => {
 
     // Kürzlich analysierte Verträge
     for (const contract of recentContracts) {
+      // Konsistent mit Aggregation-Sort: zeige immer das spätere Datum
+      // (re-analysiert → analyzedAt, sonst → uploadedAt).
+      const lastActivity = contract._lastActivity || contract.analyzedAt || contract.uploadedAt;
       notifications.push({
         id: `analysis-${contract._id.toString()}`,
         type: 'success',
         title: 'Deine Rechtliche Vorprüfung steht bereit',
         message: `${contract.name} — jetzt ansehen oder als PDF herunterladen`,
-        time: formatRelativeTime(contract.analyzedAt || contract.uploadedAt),
+        time: formatRelativeTime(lastActivity),
         category: 'analysis',
         contractId: contract._id.toString(),
         actionUrl: `/contracts/${contract._id}`,
-        createdAt: contract.analyzedAt || contract.uploadedAt
+        createdAt: lastActivity
       });
     }
 
