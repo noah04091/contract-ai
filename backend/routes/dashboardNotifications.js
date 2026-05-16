@@ -912,8 +912,8 @@ router.get("/", verifyToken, async (req, res) => {
       notifications.push({
         id: `analysis-${contract._id.toString()}`,
         type: 'success',
-        title: 'Analyse abgeschlossen',
-        message: `${contract.name} wurde analysiert`,
+        title: 'Deine Rechtliche Vorprüfung steht bereit',
+        message: `${contract.name} — jetzt ansehen oder als PDF herunterladen`,
         time: formatRelativeTime(contract.analyzedAt || contract.uploadedAt),
         category: 'analysis',
         contractId: contract._id.toString(),
