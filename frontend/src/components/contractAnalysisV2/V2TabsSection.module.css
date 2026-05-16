@@ -134,6 +134,15 @@
 /* TEXT-BLOCKS in Tabs (Zusammenfassung etc.) */
 .textBlock { margin-bottom: 22px; }
 .textBlock:last-child { margin-bottom: 0; }
+/* Zwei aufeinanderfolgende textBlocks (z.B. Zusammenfassung + Rechtssicherheit
+   im Summary-Tab) bekommen einen dezenten Separator — dünne graue Linie
+   plus etwas Atemraum. So sieht der User dass es zwei eigenständige Abschnitte
+   sind, ohne aggressive Trennung. */
+.textBlock + .textBlock {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 18px;
+  margin-top: 4px;
+}
 .tbTitle {
   display: flex; align-items: center; gap: 7px;
   font-size: 13.5px; font-weight: 700; color: #0f172a;

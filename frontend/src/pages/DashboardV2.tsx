@@ -799,7 +799,7 @@ export default function DashboardV2() {
             <div className={styles.cardHeader}>
               <div className={styles.cardHeaderLeft}>
                 <AlertTriangle size={16} className={styles.cardIconOrange} />
-                <span>Bald fällig</span>
+                <span>Anstehende Termine</span>
               </div>
               <Link to="/calendar" className={styles.cardLink}>
                 Kalender <ArrowRight size={14} />
