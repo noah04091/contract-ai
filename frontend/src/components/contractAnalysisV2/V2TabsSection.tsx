@@ -1,7 +1,7 @@
 // V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
 //
 // Tab-Reihenfolge: Zusammenfassung | Risiken | Stärken | Empfehlungen
-//                  [Pilotprüfung] | Optimierungsvorschläge | Marktvergleich | Rechtsgutachten
+//                  [Pilotprüfung] | Verbesserungsideen | Marktvergleich | Rechtsgutachten
 // Pilot-Tab nur sichtbar bei vorhandenem typeSpecificFindings.
 //
 // Adaptive Default-Tab:
@@ -206,7 +206,7 @@ export default function V2TabsSection({ data }: Props) {
     ...(hasPilot
       ? [{ id: "pilot" as TabId, label: "Pilotprüfung", icon: <Target size={14} style={{ color: "#8b5cf6" }} />, count: pilot.length, pilotBadge: true }]
       : []),
-    { id: "suggestions", label: "Optimierungsvorschläge", icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
+    { id: "suggestions", label: "Verbesserungsideen", icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
     { id: "market", label: "Marktvergleich", icon: <BarChart3 size={14} /> },
     { id: "opinion", label: "Rechtliche Vorprüfung", icon: <Scale size={14} /> },
   ];
@@ -371,7 +371,7 @@ export default function V2TabsSection({ data }: Props) {
             icon="✓"
             iconCls={styles.esIconSuccess}
             title="Keine strategischen Schritte erforderlich"
-            text="Aus rechtlicher Sicht muss nichts verhandelt werden. Falls du trotzdem Klauseln umformulieren möchtest, schau in Optimierungsvorschläge."
+            text="Aus rechtlicher Sicht muss nichts verhandelt werden. Falls du trotzdem Klauseln umformulieren möchtest, schau in Verbesserungsideen."
           />
         ) : (
           <>
