@@ -539,6 +539,38 @@ export default function Contracts() {
     }
   }, [location]);
 
+  // 🆕 Filter aus URL-Parametern setzen (Dashboard-Stat-Cards & Feature-Links)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get('status');
+    const filterParam = params.get('filter');
+
+    let appliedFilter = false;
+
+    // Status-Filter aus URL → StatusFilter-Typ übersetzen
+    if (statusParam === 'active') {
+      setStatusFilter('aktiv');
+      setMobileNavTab('aktiv'); // Mobile Bottom-Nav synchron halten
+      appliedFilter = true;
+    } else if (statusParam === 'expiring') {
+      setStatusFilter('bald_ablaufend');
+      setMobileNavTab('faellig'); // Mobile Bottom-Nav synchron halten
+      appliedFilter = true;
+    }
+
+    // Source-Filter aus URL
+    if (filterParam === 'generated') {
+      setSourceFilter('generated');
+      appliedFilter = true;
+    }
+
+    // URL säubern, damit Filter nicht beim Re-Render erneut greift
+    if (appliedFilter) {
+      window.history.replaceState({}, document.title, location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ✅ NEW: Handle "upload" URL parameter to open upload section directly
   useEffect(() => {
     const params = new URLSearchParams(location.search);
