@@ -168,6 +168,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
   // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
   // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
+  // Accessibility: respektiert prefers-reduced-motion (WCAG 2.3.3) — bei aktivierter
+  // Reduced-Motion-Präferenz wird der finale Score sofort gesetzt, keine Animation.
   const [animatedScore, setAnimatedScore] = useState<number | null>(score == null ? null : 0);
   const animRef = useRef<number | null>(null);
   useEffect(() => {
@@ -176,6 +178,17 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
       return;
     }
     const targetScore = Math.round(score);
+
+    // Reduced-Motion-Check: kein Counter, direkt finalen Wert setzen.
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      setAnimatedScore(targetScore);
+      return;
+    }
+
     const duration = 1400;
     const startTime = performance.now();
     const tick = (now: number) => {

@@ -416,3 +416,24 @@
   .atAGlanceGrid { grid-template-columns: 1fr; gap: 10px; }
   .atAGlance { padding: 16px 16px 20px; }
 }
+
+/* ============================================================
+   ACCESSIBILITY — prefers-reduced-motion (WCAG 2.3.3)
+   ============================================================
+   User mit reduzierter Motion-Präferenz (Vestibular-/Motion-
+   Sensitivitäten): Animations stop, statische Indikatoren statt
+   rotation/pulse. Loading-Spinner bleibt sichtbar (kein hidden) —
+   nur die Rotation pausiert. Konsistent mit Pattern in
+   ContractDetailModal/LegalPulse-Modulen. */
+@media (prefers-reduced-motion: reduce) {
+  .spinIcon { animation: none !important; }
+  .fcBtnPrimary.fcBtnLoading { animation: none !important; }
+  /* Transitions deutlich verkürzen (nicht ganz ausschalten —
+     plötzliche Farbwechsel könnten als Glitch wahrgenommen werden). */
+  .fcBtn,
+  .fcBtnPrimary,
+  .reanalyzeBtn,
+  .heroEyeToggleBtn {
+    transition-duration: 0.01ms !important;
+  }
+}

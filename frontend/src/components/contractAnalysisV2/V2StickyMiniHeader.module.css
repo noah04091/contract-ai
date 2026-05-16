@@ -141,3 +141,12 @@
 @media print {
   .miniHeader { display: none !important; }
 }
+
+/* Accessibility — prefers-reduced-motion: Mini-Header erscheint
+   instant statt slide-in, Spinner pausiert. */
+@media (prefers-reduced-motion: reduce) {
+  .miniHeader { transition: none !important; }
+  .spinIcon { animation: none !important; }
+  .optimizeBtn,
+  .scorePill { transition-duration: 0.01ms !important; }
+}

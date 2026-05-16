@@ -109,3 +109,12 @@
   .divider { display: none; }
   .secondary { padding: 7px 8px; }
 }
+
+/* Accessibility — prefers-reduced-motion: Loading-Spinner pausiert,
+   Button-Color-Transitions deutlich verkürzt. */
+@media (prefers-reduced-motion: reduce) {
+  .primaryLoading svg,
+  .secondaryLoading svg { animation: none !important; }
+  .primary,
+  .secondary { transition-duration: 0.01ms !important; }
+}
