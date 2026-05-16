@@ -226,21 +226,21 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt mit Code ${PR
                   </div>
                 </td>
 
-                <!-- ENTERPRISE 🚀 UNBEGRENZT -->
-                <td class="compare-cell compare-cell-last" valign="top" style="width:33.33%;padding:0;background-color:#0f172a;">
+                <!-- ENTERPRISE 🚀 UNBEGRENZT (Gold-Premium) -->
+                <td class="compare-cell compare-cell-last" valign="top" style="width:33.33%;padding:0;background-color:#fffbeb;">
                   <div style="padding:10px 12px;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);background-color:#f59e0b;text-align:center;">
                     <span style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">&#x1F680;&nbsp; Unbegrenzt</span>
                   </div>
                   <div style="padding:24px 18px;">
-                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#fbbf24;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:8px;">Enterprise</div>
-                    <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#ffffff;font-weight:700;margin-bottom:14px;line-height:1.3;">
+                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#b45309;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:8px;">Enterprise</div>
+                    <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#92400e;font-weight:700;margin-bottom:14px;line-height:1.3;">
                       Du hast<br>keine Grenzen.
                     </div>
-                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#cbd5e1;line-height:1.7;">
-                      <span style="color:#fbbf24;font-weight:700;">&#10003;</span>&nbsp; Unbegrenzte Analysen<br>
-                      <span style="color:#fbbf24;font-weight:700;">&#10003;</span>&nbsp; Alles aus Business<br>
-                      <span style="color:#fbbf24;font-weight:700;">&#10003;</span>&nbsp; API-Zugang &amp; Excel-Export<br>
-                      <span style="color:#fbbf24;font-weight:700;">&#10003;</span>&nbsp; Outlook, Google &amp; CRM
+                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#44403c;line-height:1.7;">
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Unbegrenzte Analysen<br>
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Alles aus Business<br>
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; API-Zugang &amp; Excel-Export<br>
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Outlook, Google &amp; CRM
                     </div>
                   </div>
                 </td>
