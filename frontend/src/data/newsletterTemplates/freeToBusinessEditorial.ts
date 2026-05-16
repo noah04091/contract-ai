@@ -1,6 +1,6 @@
 import type { NewsletterTemplate } from './index';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1750277120336-ca98ec2e2f90?w=1200&q=80&auto=format&fit=crop';
+const HERO_IMAGE = 'https://www.contract-ai.de/newsletter/hero-contract-signing.jpg';
 const PROMO_CODE = 'AKTION10';
 const PROMO_PERCENT = '10';
 const PROMO_DAYS = '7';

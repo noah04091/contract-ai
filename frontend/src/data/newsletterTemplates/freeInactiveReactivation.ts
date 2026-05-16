@@ -1,6 +1,6 @@
 import type { NewsletterTemplate } from './index';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1631623843714-3b91f30ec1dc?w=1200&q=80&auto=format&fit=crop';
+const HERO_IMAGE = 'https://www.contract-ai.de/newsletter/hero-laptop-typing.jpg';
 const CTA_URL = 'https://contract-ai.de/contracts';
 
 const body = `<!doctype html>
