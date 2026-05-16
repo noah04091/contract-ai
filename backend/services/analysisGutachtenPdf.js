@@ -896,14 +896,15 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
 
-  // Disclaimer
+  // Disclaimer — dezent: graue Border-Linie statt blauer Akzent (RDG-Polish 16.05.2026).
+  // Juristisch unverändert: Box bleibt als Disclaimer-Zone erkennbar (Hintergrund + Linie).
   disclaimerWrap: {
     marginTop: 24,
     padding: 14,
     backgroundColor: C.panel,
     borderRadius: 6,
-    borderLeftWidth: 3,
-    borderLeftColor: C.brand,
+    borderLeftWidth: 2,
+    borderLeftColor: C.border,
   },
   disclaimerTitle: {
     fontSize: 9.5,
