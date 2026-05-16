@@ -3064,7 +3064,7 @@ router.get("/:id/analysis-report", verifyToken, async (req, res) => {
     if (analysisData.legalAssessment) {
       doc.fontSize(16)
          .fillColor('#111827')
-         .text('Rechtliche Bewertung', { underline: true })
+         .text('Rechtliche Einordnung', { underline: true })
          .moveDown(0.5);
 
       doc.fontSize(11)

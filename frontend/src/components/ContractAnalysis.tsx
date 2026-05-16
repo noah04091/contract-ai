@@ -1512,7 +1512,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
                       Ausführliche rechtliche Würdigung
                     </h5>
                     <p className={styles.legalOpinionSubtitle}>
-                      Detaillierte rechtliche Bewertung auf höchstem juristischen Niveau
+                      Detaillierte rechtliche Einordnung auf höchstem juristischen Niveau
                     </p>
                   </div>
                 </div>

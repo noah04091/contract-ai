@@ -978,7 +978,7 @@ function CoverPage({ contract, companyProfile, analysisDate }) {
 
     e(View, { style: styles.coverCenter },
       e(Text, { style: styles.coverKicker }, 'Rechtliche Vorprüfung · Vertragsanalyse'),
-      e(Text, { style: styles.coverTitle }, 'Rechtliche Bewertung\nIhres Vertrags'),
+      e(Text, { style: styles.coverTitle }, 'Rechtliche Einordnung\nIhres Vertrags'),
       e(Text, { style: styles.coverContractName }, safeStr(contract?.name) || safeStr(contract?.title) || 'Unbenannter Vertrag'),
 
       metaItems.length > 0 && e(View, { style: styles.coverMeta },
@@ -993,7 +993,7 @@ function CoverPage({ contract, companyProfile, analysisDate }) {
 
     e(View, { style: styles.coverFooter },
       e(Text, null,
-        'Erstellt durch Contract AI auf Basis Ihrer hochgeladenen Vertragsdaten. Die rechtliche Bewertung erfolgt KI-gestützt und ersetzt keine anwaltliche Beratung. Für verbindliche Auskünfte konsultieren Sie bitte einen Rechtsanwalt.',
+        'Erstellt durch Contract AI auf Basis Ihrer hochgeladenen Vertragsdaten. Die rechtliche Einordnung erfolgt KI-gestützt und ersetzt keine anwaltliche Beratung. Für verbindliche Auskünfte konsultieren Sie bitte einen Rechtsanwalt.',
       ),
     ),
   );
@@ -1103,7 +1103,7 @@ function OverviewSection({ contract, sectionNumber }) {
     ),
 
     assess.length > 0 && e(View, null,
-      e(Text, { style: styles.subSectionTitle }, 'Rechtliche Bewertung'),
+      e(Text, { style: styles.subSectionTitle }, 'Rechtliche Einordnung'),
       e(BulletList, { items: assess, keyPrefix: 'la' }),
     ),
 
@@ -1341,7 +1341,7 @@ function DisclaimerBlock() {
   return e(View, { style: styles.disclaimerWrap, wrap: false },
     e(Text, { style: styles.disclaimerTitle }, 'RECHTLICHER HINWEIS'),
     e(Text, { style: styles.disclaimerText },
-      'Diese rechtliche Vorprüfung wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Sie ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Bewertung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.',
+      'Diese rechtliche Vorprüfung wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Sie ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Einordnung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.',
     ),
   );
 }

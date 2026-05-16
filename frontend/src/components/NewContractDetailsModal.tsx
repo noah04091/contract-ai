@@ -2160,7 +2160,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Legal Assessment */}
         {legalAssessment && (
           <div className={styles.section}>
-            <h3>⚖️ Rechtliche Bewertung</h3>
+            <h3>⚖️ Rechtliche Einordnung</h3>
             <div className={styles.messageBox}>
               {Array.isArray(legalAssessment) ? (
                 <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>

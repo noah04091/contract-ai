@@ -605,7 +605,7 @@ export default function ContractDetailsV2() {
           ` : ''}
 
           ${legalAssessmentHtml ? `
-            <h2>Rechtliche Bewertung</h2>
+            <h2>Rechtliche Einordnung</h2>
             <div class="section">${legalAssessmentHtml}</div>
           ` : ''}
 
@@ -2716,7 +2716,7 @@ export default function ContractDetailsV2() {
                             <span className={styles.cardIcon} style={{ background: '#e0e7ff', color: '#4f46e5' }}>
                               <Shield size={18} />
                             </span>
-                            Rechtliche Bewertung
+                            Rechtliche Einordnung
                           </h3>
                         </div>
                         <div className={styles.cardBody}>
