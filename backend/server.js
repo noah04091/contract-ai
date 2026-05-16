@@ -2465,6 +2465,18 @@ const connectDB = async () => {
         logger.warn("Index-Erstellung übersprungen", { error: indexErr.message });
       }
 
+      // ✅ Proaktiver Cache-Warmup für Legal-Lens-RAG (fire-and-forget, blockt Boot nicht)
+      // Verhindert dass erster User-Klausel-Klick nach Pod-Restart 5 Sek warten muss.
+      try {
+        const legalLensSourcesEmb = require("./services/legalLensSourcesEmbeddings").getInstance();
+        legalLensSourcesEmb._warmupCache().catch(err => {
+          logger.warn("Legal Lens RAG cache warmup failed (will retry on first query)", { error: err.message });
+        });
+        logger.info("Legal Lens RAG cache warmup gestartet (async)");
+      } catch (warmupErr) {
+        logger.warn("Legal Lens RAG cache warmup nicht gestartet", { error: warmupErr.message });
+      }
+
       // ✅ Initialize Legal Pulse Monitoring
       try {
         const LegalPulseMonitor = require("./jobs/legalPulseMonitor");

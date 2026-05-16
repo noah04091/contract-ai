@@ -28,7 +28,61 @@ class LegalLensSourcesEmbeddingsService {
     this.vectorDimensions = 1536;
     this.rateLimitDelayMs = 100; // 100ms zwischen Calls (OpenAI Soft-Limit-Schutz)
 
-    console.log("[LEGAL-LENS:RAG] Initialized — legalLensSources Collection");
+    // ✅ In-Memory Cache (Perf-Fix 2026-05-16):
+    // Vorher lud jeder queryRelevantSections() ~50 MB aus Atlas (4829 Docs × 1536-Dim Embeddings).
+    // Bei Klausel-Analyse-Burst → Atlas M0 throttled → Klausel-Analyse 76 Sek statt 6 Sek.
+    // Cache lädt alle Embeddings einmal in RAM (async, beim ersten Aufruf), DB-Fallback bei Fehler.
+    this.cache = null;              // Array<doc> oder null wenn nicht geladen
+    this.cacheWarmupPromise = null; // Verhindert parallele Warmups (Race-Condition-Schutz)
+    this.cacheLoadedAt = null;      // Timestamp für Diagnostics
+
+    console.log("[LEGAL-LENS:RAG] Initialized — legalLensSources Collection (in-memory cache enabled)");
+  }
+
+  /**
+   * Lädt alle aktiven Sources einmalig in den In-Memory-Cache.
+   * Idempotent: parallele Aufrufe warten auf denselben Promise.
+   * @returns {Promise<void>}
+   */
+  async _warmupCache() {
+    if (this.cache !== null) return; // bereits geladen
+    if (this.cacheWarmupPromise) return this.cacheWarmupPromise; // läuft schon
+
+    this.cacheWarmupPromise = (async () => {
+      const start = Date.now();
+      console.log("[LEGAL-LENS:CACHE] Warmup gestartet ...");
+      try {
+        const docs = await LegalLensSource.find(
+          { isActive: true, embedding: { $exists: true, $ne: [] } },
+          // Projection: nur die Felder die RAG-Query oder Frontend braucht
+          { code: 1, section: 1, title: 1, text: 1, area: 1, sourceUrl: 1, embedding: 1, isActive: 1 }
+        ).lean();
+
+        this.cache = docs;
+        this.cacheLoadedAt = Date.now();
+        const elapsed = this.cacheLoadedAt - start;
+        const sizeMB = (JSON.stringify(docs).length / 1024 / 1024).toFixed(1);
+        console.log(`[LEGAL-LENS:CACHE] ✅ Warmup fertig: ${docs.length} Docs in ${elapsed}ms (~${sizeMB} MB)`);
+      } catch (error) {
+        console.error("[LEGAL-LENS:CACHE] ❌ Warmup fehlgeschlagen:", error.message);
+        // Reset Promise damit nächster Aufruf erneut versucht
+        this.cacheWarmupPromise = null;
+        throw error;
+      }
+    })();
+
+    return this.cacheWarmupPromise;
+  }
+
+  /**
+   * Invalidiert den Cache (z.B. nach upsertSources oder manuellem Sync).
+   * Nächster queryRelevantSections triggert Warmup neu.
+   */
+  _invalidateCache() {
+    this.cache = null;
+    this.cacheWarmupPromise = null;
+    this.cacheLoadedAt = null;
+    console.log("[LEGAL-LENS:CACHE] Cache invalidiert — nächste Query lädt neu");
   }
 
   /**
@@ -126,6 +180,12 @@ class LegalLensSourcesEmbeddingsService {
 
     const stats = { inserted, updated, skipped, errors, total: sections.length };
     console.log(`[LEGAL-LENS:RAG] Upsert-Stats:`, stats);
+
+    // ✅ Cache invalidieren wenn Sources tatsächlich geändert wurden
+    if (inserted > 0 || updated > 0) {
+      this._invalidateCache();
+    }
+
     return stats;
   }
 
@@ -146,18 +206,30 @@ class LegalLensSourcesEmbeddingsService {
       // 1. Query-Embedding generieren
       const queryEmbedding = await this.generateEmbedding(text);
 
-      // 2. Kandidaten aus DB laden (nur aktive mit Embedding)
-      const filter = { isActive: true, embedding: { $exists: true, $ne: [] } };
-      if (area) filter.area = area;
-
-      const candidates = await LegalLensSource.find(filter).lean();
+      // 2. Kandidaten aus In-Memory-Cache (mit DB-Fallback)
+      let candidates;
+      let source;
+      try {
+        await this._warmupCache();
+        candidates = area
+          ? this.cache.filter(c => c.area === area)
+          : this.cache;
+        source = "cache";
+      } catch (cacheError) {
+        // Fallback auf DB-Query wenn Cache-Warmup fehlschlägt
+        console.warn(`[LEGAL-LENS:CACHE] Fallback auf DB-Query (cache warmup failed): ${cacheError.message}`);
+        const filter = { isActive: true, embedding: { $exists: true, $ne: [] } };
+        if (area) filter.area = area;
+        candidates = await LegalLensSource.find(filter).lean();
+        source = "db-fallback";
+      }
 
       if (candidates.length === 0) {
         console.log("[LEGAL-LENS:RAG] Keine Kandidaten in legalLensSources Collection");
         return [];
       }
 
-      console.log(`[LEGAL-LENS:RAG] ${candidates.length} Kandidaten zur Bewertung`);
+      const scoringStart = Date.now();
 
       // 3. Cosine-Similarity berechnen
       const scoredResults = candidates
@@ -168,6 +240,9 @@ class LegalLensSourcesEmbeddingsService {
         }))
         .sort((a, b) => b.relevance - a.relevance)
         .slice(0, topK);
+
+      const scoringMs = Date.now() - scoringStart;
+      console.log(`[LEGAL-LENS:RAG] ${candidates.length} Kandidaten bewertet in ${scoringMs}ms (source=${source})`);
 
       if (scoredResults.length > 0) {
         const top = scoredResults[0];
