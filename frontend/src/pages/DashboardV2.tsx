@@ -307,6 +307,24 @@ export default function DashboardV2() {
         throw new Error('Dashboard konnte nicht geladen werden');
       }
 
+      // 🆕 Bald-fällig-Count separat (konsistent mit Contracts-Filter "bald_ablaufend")
+      try {
+        const baldFalligResponse = await fetch(
+          `${API_BASE}/api/contracts?status=bald_ablaufend&limit=1`,
+          { headers, credentials: "include" }
+        );
+        if (baldFalligResponse.ok) {
+          const baldFalligData = await baldFalligResponse.json();
+          const correctCount = baldFalligData?.pagination?.total;
+          if (typeof correctCount === 'number') {
+            setSummaryStats(prev => prev ? { ...prev, expiringSoon: correctCount } : prev);
+          }
+        }
+      } catch (baldFalligErr) {
+        console.warn("Bald-fällig-Count konnte nicht geladen werden:", baldFalligErr);
+        // Fallback: stats.expiringSoon bleibt auf Wert aus Summary
+      }
+
       // 📅 Kalender-Events separat laden
       try {
         const calendarResponse = await fetch(
