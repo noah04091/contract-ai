@@ -75,7 +75,7 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt f&uuml;r 3 Mo
         <tr>
           <td class="px-inner" style="padding:14px 56px 0;text-align:center;">
             <h1 class="hero-h" style="margin:0;font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-size:38px;line-height:1.15;color:#0f172a;font-weight:700;letter-spacing:-0.8px;">
-              Wann hast du das letzte Mal<br>einen Vertrag <em style="font-style:italic;font-weight:600;color:#1e3a8a;">wirklich</em> gelesen?
+              Wann hast du das letzte&nbsp;Mal<br>einen Vertrag <em style="font-style:italic;font-weight:600;color:#1e3a8a;">wirklich</em>&nbsp;gelesen?
             </h1>
           </td>
         </tr>
