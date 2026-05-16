@@ -2004,39 +2004,53 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   };
 
   // Download Analysis as PDF
+  // 📋 Rechtliche Vorprüfung als PDF herunterladen (10-seitiges Anwalts-Gutachten).
+  // Umgestellt 16.05.2026: von altem /analysis-report-Endpoint auf /gutachten-pdf
+  // (siehe backend/services/analysisGutachtenPdf.js). Selbes Pattern wie in
+  // ContractAnalysisV2.tsx und ContractDetailsV2.tsx — alle drei Stellen liefern
+  // identische PDF.
   const handleDownloadAnalysisPDF = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/contracts/${contract._id}/analysis-report`, {
+      const response = await fetch(`/api/contracts/${contract._id}/gutachten-pdf`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        credentials: 'include'
       });
 
       if (!response.ok) {
-        // Parse error message from backend
         const errorData = await response.json().catch(() => null);
-        if (response.status === 404) {
-          throw new Error(errorData?.message || 'Dieser Vertrag wurde noch nicht analysiert. Bitte führe zuerst eine Analyse durch.');
+        if (response.status === 409) {
+          throw new Error(errorData?.message || 'Für diesen Vertrag liegt noch keine Analyse vor.');
         }
-        throw new Error(errorData?.message || 'Fehler beim Generieren des Analyse-Reports');
+        throw new Error(errorData?.message || `Server antwortete mit Status ${response.status}`);
+      }
+
+      // Filename aus Content-Disposition (RFC 5987, UTF-8-safe für Umlaute)
+      const disposition = response.headers.get('content-disposition') || '';
+      let filename = `${fixUtf8Display(contract.name).replace(/\.pdf$/i, '')}_Vorpruefung.pdf`;
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      const asciiMatch = disposition.match(/filename="([^"]+)"/i);
+      if (utf8Match) {
+        try { filename = decodeURIComponent(utf8Match[1]); } catch { /* fallback bleibt */ }
+      } else if (asciiMatch) {
+        filename = asciiMatch[1];
       }
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${fixUtf8Display(contract.name)}_Analyse.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error downloading analysis PDF:', error);
-      // Show the specific error message to the user
-      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Herunterladen des Analyse-Reports';
+      console.error('Error downloading gutachten PDF:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Fehler beim Herunterladen der Vorprüfung';
       alert(errorMessage);
     }
   };
@@ -2978,10 +2992,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <button
                   onClick={handleDownloadAnalysisPDF}
                   className={styles.tabActionButton}
-                  title="Analyse als PDF herunterladen"
+                  title="Rechtliche Vorprüfung als PDF herunterladen"
                 >
                   <Download size={16} />
-                  <span>Analyse-PDF</span>
+                  <span>Vorprüfung als PDF</span>
                 </button>
               )}
             </div>

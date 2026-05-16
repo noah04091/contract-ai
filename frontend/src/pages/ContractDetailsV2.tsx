@@ -250,6 +250,7 @@ export default function ContractDetailsV2() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [downloadingGutachten, setDownloadingGutachten] = useState(false);
 
   // ESC-Taste Handler für Fullscreen-Modal
   useEffect(() => {
@@ -786,6 +787,63 @@ export default function ContractDetailsV2() {
       toast.error('Fehler beim Herunterladen');
     }
   }, [contract]);
+
+  // 📋 Rechtliche Vorprüfung als PDF herunterladen (10-seitiges Anwalts-Gutachten)
+  // Nutzt /api/contracts/:id/gutachten-pdf — exakt gleiches Pattern wie in
+  // ContractAnalysisV2.tsx, damit beide Stellen die identische PDF liefern.
+  const handleDownloadGutachten = useCallback(async () => {
+    if (!id) return;
+    setDownloadingGutachten(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/contracts/${id}/gutachten-pdf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        let serverMsg = '';
+        try {
+          const data = await response.json();
+          serverMsg = data?.message || '';
+        } catch { /* Non-JSON body — ignore */ }
+        throw new Error(serverMsg || `Server antwortete mit Status ${response.status}`);
+      }
+
+      // Filename aus Content-Disposition lesen (RFC 5987, UTF-8-safe für Umlaute)
+      const disposition = response.headers.get('content-disposition') || '';
+      const fallbackName = contract?.name || 'Vertrag';
+      let filename = `${fallbackName.replace(/\.pdf$/i, '')}_Vorpruefung.pdf`;
+      const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+      const asciiMatch = disposition.match(/filename="([^"]+)"/i);
+      if (utf8Match) {
+        try { filename = decodeURIComponent(utf8Match[1]); } catch { /* fallback bleibt */ }
+      } else if (asciiMatch) {
+        filename = asciiMatch[1];
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success('Rechtliche Vorprüfung heruntergeladen');
+    } catch (error) {
+      console.error('Error downloading gutachten PDF:', error);
+      const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      toast.error(`PDF konnte nicht erstellt werden: ${msg}`);
+    } finally {
+      setDownloadingGutachten(false);
+    }
+  }, [id, contract]);
 
   // ============================================
   // OTHER HANDLERS
@@ -3812,6 +3870,15 @@ export default function ContractDetailsV2() {
                     {contract.optimizedPdfS3Key && (
                       <button className={styles.quickActionBtn} onClick={handleDownloadOptimizedPDF}>
                         <Zap size={18} /> Optimiertes PDF
+                      </button>
+                    )}
+                    {contract.contractScore != null && (
+                      <button
+                        className={styles.quickActionBtn}
+                        onClick={handleDownloadGutachten}
+                        disabled={downloadingGutachten}
+                      >
+                        <Download size={18} /> {downloadingGutachten ? 'Erstelle PDF...' : 'Rechtliche Vorprüfung'}
                       </button>
                     )}
                     <button className={styles.quickActionBtn} onClick={() => navigate('/calendar')}>
