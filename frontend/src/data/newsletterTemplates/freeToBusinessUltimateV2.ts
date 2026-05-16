@@ -159,7 +159,7 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt mit Code ${PR
               <tr>
                 <td style="background-color:#3b82f6;border-radius:30px;">
                   <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:15px 34px;color:#ffffff;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0.3px;">
-                    Jetzt passenden Tarif w&auml;hlen &rarr;
+                    Jetzt passenden Schutz w&auml;hlen &rarr;
                   </a>
                 </td>
               </tr>
@@ -238,10 +238,13 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt mit Code ${PR
                     </div>
                     <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#44403c;line-height:1.7;">
                       <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Unbegrenzte Analysen<br>
-                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Alles aus Business<br>
-                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; API-Zugang &amp; Excel-Export<br>
-                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Outlook, Google &amp; CRM
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; Alle Business-Features<br>
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; REST-API &amp; Excel-Bulk-Export<br>
+                      <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp; CRM (Salesforce, HubSpot, SAP)
                     </div>
+                    <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;line-height:1.5;color:#92400e;font-style:italic;font-weight:600;">
+                      F&uuml;r Power-User &amp; Vielnutzer
+                    </p>
                   </div>
                 </td>
 
@@ -259,7 +262,7 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt mit Code ${PR
         <tr>
           <td class="px-inner" style="padding:48px 56px 0;text-align:center;">
             <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#3b82f6;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
-              Was Premium f&uuml;r dich macht
+              Was Premium f&uuml;r dich &uuml;bernimmt
             </div>
             <h2 class="section-h" style="margin:14px 0 0;font-family:'Playfair Display',Georgia,serif;font-size:30px;line-height:1.28;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
               Drei Werkzeuge,<br>die du sofort sp&uuml;rst.
@@ -399,7 +402,7 @@ Geht den meisten so. Genau deshalb gibt's ${PROMO_PERCENT}% Rabatt mit Code ${PR
                     <tr>
                       <td style="background-color:#ffffff;border-radius:30px;">
                         <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:17px 40px;color:#1e3a8a;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.3px;">
-                          Jetzt Tarif freischalten &rarr;
+                          Jetzt optimal absichern &rarr;
                         </a>
                       </td>
                     </tr>
@@ -443,7 +446,7 @@ export const freeToBusinessUltimateV2Template: NewsletterTemplate = {
   subject: '{{firstName}}, wann hast du das letzte Mal einen Vertrag wirklich gelesen?',
   preheader: 'Geht den meisten so. 10% Rabatt mit Code AKTION10 — nur 7 Tage. Im Jahresabo: aufs ganze Jahr.',
   title: 'Wann hast du das letzte Mal einen Vertrag wirklich gelesen?',
-  ctaText: 'Jetzt passenden Tarif wählen',
+  ctaText: 'Jetzt passenden Schutz wählen',
   ctaUrl: 'https://contract-ai.de/pricing?code=AKTION10',
   body
 };
