@@ -10,6 +10,7 @@ export interface NewsletterTemplate {
   ctaUrl: string;
 }
 
+import { freeToBusinessUltimateTemplate } from './freeToBusinessUltimate';
 import { freeToBusinessTemplate } from './freeToBusiness';
 import { freeToBusinessEditorialTemplate } from './freeToBusinessEditorial';
 import { freeToBusinessOutcomeTemplate } from './freeToBusinessOutcome';
@@ -18,6 +19,7 @@ import { freeToBusinessFeaturesTemplate } from './freeToBusinessFeatures';
 import { freeInactiveReactivationTemplate } from './freeInactiveReactivation';
 
 export const newsletterTemplates: NewsletterTemplate[] = [
+  freeToBusinessUltimateTemplate,
   freeToBusinessTemplate,
   freeToBusinessFeaturesTemplate,
   freeToBusinessOutcomeTemplate,

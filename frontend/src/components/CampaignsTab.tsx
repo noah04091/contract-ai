@@ -1261,7 +1261,8 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
   const [previewTemplate, setPreviewTemplate] = useState<NewsletterTemplate | null>(null);
   const [showAlternatives, setShowAlternatives] = useState(false);
 
-  const FEATURED_IDS = ['free-to-business', 'free-inactive-reactivation'];
+  const FEATURED_IDS = ['free-to-business-ultimate', 'free-inactive-reactivation'];
+  const TOP_RECOMMENDED_ID = 'free-to-business-ultimate';
   const featuredTemplates = newsletterTemplates.filter((t) => FEATURED_IDS.includes(t.id));
   const alternativeTemplates = newsletterTemplates.filter((t) => !FEATURED_IDS.includes(t.id));
 
@@ -1314,22 +1315,48 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
               <strong>Vorschau</strong> öffnet eine Live-Ansicht ohne den Composer zu überschreiben. <strong>Laden</strong> übernimmt die Vorlage in alle Felder.
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
-              {featuredTemplates.map((t) => (
+              {featuredTemplates.map((t) => {
+                const isTopRecommended = t.id === TOP_RECOMMENDED_ID;
+                return (
                 <div
                   key={t.id}
                   style={{
-                    padding: '0.7rem 0.85rem',
-                    background: '#ffffff',
-                    border: '1px solid #dbeafe',
-                    borderRadius: '6px',
+                    padding: isTopRecommended ? '0.85rem 0.95rem' : '0.7rem 0.85rem',
+                    background: isTopRecommended
+                      ? 'linear-gradient(135deg, #fffbeb 0%, #ffffff 60%)'
+                      : '#ffffff',
+                    border: isTopRecommended ? '2px solid #f59e0b' : '1px solid #dbeafe',
+                    borderRadius: '8px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '0.65rem'
+                    gap: '0.65rem',
+                    boxShadow: isTopRecommended ? '0 2px 8px rgba(245, 158, 11, 0.15)' : 'none',
+                    position: 'relative'
                   }}
                 >
+                  {isTopRecommended && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '-9px',
+                        left: '12px',
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        color: '#ffffff',
+                        fontSize: '0.62rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.08em',
+                        padding: '2px 9px',
+                        borderRadius: '10px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 1px 3px rgba(245, 158, 11, 0.4)'
+                      }}
+                    >
+                      ⭐ TOP-Empfehlung
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a', marginBottom: '0.2rem' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: isTopRecommended ? 700 : 600, color: '#0f172a', marginBottom: '0.2rem' }}>
                       {t.label}
                     </div>
                     <div style={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.45 }}>
@@ -1377,7 +1404,8 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {alternativeTemplates.length > 0 && (
