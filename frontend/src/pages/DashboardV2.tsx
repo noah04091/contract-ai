@@ -10,7 +10,6 @@ import {
   TrendingUp,
   Plus,
   Sparkles,
-  Bookmark,
   Scale,
   Clock,
   ArrowRight,
