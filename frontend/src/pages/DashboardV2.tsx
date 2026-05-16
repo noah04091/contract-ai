@@ -22,7 +22,8 @@ import {
   RefreshCw,
   Upload,
   AlertCircle,
-  X
+  X,
+  PenTool
 } from 'lucide-react';
 import { useAuth } from "../context/AuthContext";
 import { fixUtf8Display } from "../utils/textUtils";
@@ -71,6 +72,15 @@ interface Notification {
   id: string;
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
+}
+
+interface PendingEnvelope {
+  _id: string;
+  title: string;
+  status: string;
+  sentAt?: string;
+  expiresAt?: string;
+  contractId?: string;
 }
 
 // ============================================
@@ -208,6 +218,7 @@ export default function DashboardV2() {
   const [recentContractsData, setRecentContractsData] = useState<Contract[]>([]);
   const [urgentContractsData, setUrgentContractsData] = useState<Contract[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
+  const [pendingEnvelopes, setPendingEnvelopes] = useState<PendingEnvelope[]>([]);
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -272,6 +283,7 @@ export default function DashboardV2() {
           // Recent & Urgent Contracts separat speichern
           setRecentContractsData(data.recentContracts || []);
           setUrgentContractsData(data.urgentContracts || []);
+          setPendingEnvelopes(data.pendingEnvelopes || []);
 
           // Contracts zusammenführen (für Filter-Anzeige)
           const allContracts = [...(data.recentContracts || [])];
@@ -979,50 +991,50 @@ export default function DashboardV2() {
             )}
           </div>
 
-          {/* Gemerkte Verträge */}
+          {/* Ausstehende Signaturen */}
           <div className={styles.featureSection}>
             <div className={styles.featureSectionHeader}>
-              <div className={styles.featureSectionIcon} style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
-                <Bookmark size={18} />
+              <div className={styles.featureSectionIcon} style={{ background: 'linear-gradient(135deg, #6366F1, #4F46E5)' }}>
+                <PenTool size={18} />
               </div>
               <div>
-                <h3>Gemerkte Verträge</h3>
-                <p>Mit aktiver Erinnerung</p>
+                <h3>Ausstehende Signaturen</h3>
+                <p>Warten auf Unterschrift</p>
               </div>
             </div>
             <div className={styles.featureSectionContent}>
-              {contracts.filter(c => c.reminder).slice(0, 3).map(contract => (
+              {pendingEnvelopes.slice(0, 3).map(envelope => (
                 <div
-                  key={contract._id}
+                  key={envelope._id}
                   className={styles.featureItem}
-                  onClick={() => handleContractClick(contract._id)}
+                  onClick={() => navigate('/envelopes')}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && handleContractClick(contract._id)}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate('/envelopes')}
                 >
-                  <Bell size={14} />
-                  <span>{fixUtf8Display(contract.name)}</span>
-                  <span className={styles.featureItemMeta}>Erinnerung aktiv</span>
+                  <PenTool size={14} />
+                  <span>{fixUtf8Display(envelope.title)}</span>
+                  <span className={styles.featureItemMeta}>{getRelativeTime(envelope.sentAt)}</span>
                 </div>
               ))}
-              {contracts.filter(c => c.reminder).length === 0 && (
+              {pendingEnvelopes.length === 0 && (
                 <div className={styles.featureEmptyPremium}>
-                  <div className={styles.featureEmptyIcon} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1))' }}>
-                    <Bell size={20} style={{ color: '#F59E0B' }} />
+                  <div className={styles.featureEmptyIcon} style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(79, 70, 229, 0.1))' }}>
+                    <PenTool size={20} style={{ color: '#6366F1' }} />
                   </div>
                   <div className={styles.featureEmptyText}>
-                    <span>Keine Erinnerungen aktiv</span>
-                    <p>Aktiviere Erinnerungen für wichtige Fristen</p>
+                    <span>Keine ausstehenden Signaturen</span>
+                    <p>Versende Verträge zur digitalen Unterschrift</p>
                   </div>
-                  <Link to="/contracts" className={styles.featureEmptyCta}>
-                    Verträge ansehen
+                  <Link to="/envelopes" className={styles.featureEmptyCta}>
+                    Zur Signatur-Übersicht
                     <ArrowRight size={14} />
                   </Link>
                 </div>
               )}
             </div>
-            {contracts.filter(c => c.reminder).length > 0 && (
-              <Link to="/contracts?filter=reminder" className={styles.featureSectionLink}>
+            {pendingEnvelopes.length > 0 && (
+              <Link to="/envelopes" className={styles.featureSectionLink}>
                 Alle anzeigen <ArrowRight size={14} />
               </Link>
             )}

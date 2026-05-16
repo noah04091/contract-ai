@@ -98,7 +98,7 @@ router.get("/summary", verifyToken, async (req, res) => {
     in30Days.setDate(in30Days.getDate() + 30);
 
     // 🚀 OPTIMIERT: Alle 6 Queries parallel statt sequentiell (Promise.all)
-    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user] = await Promise.all([
+    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user, pendingEnvelopes] = await Promise.all([
       // 1. Schnelle Stats mit aggregation
       contractsCollection.aggregate([
         { $match: userIdFilter },
@@ -206,7 +206,25 @@ router.get("/summary", verifyToken, async (req, res) => {
       db.collection("users").findOne(
         { _id: new ObjectId(userId) },
         { projection: { email: 1, name: 1, subscriptionPlan: 1, analysisCount: 1, analysisLimit: 1, profilePicture: 1 } }
-      )
+      ),
+
+      // 7. Ausstehende Signaturen (Envelopes wartend auf Unterschrift, max 3)
+      db.collection("envelopes")
+        .find({
+          ownerId: new ObjectId(userId),
+          status: { $in: [
+            "SENT",
+            "AWAITING_SIGNER_1", "AWAITING_SIGNER_2", "AWAITING_SIGNER_3",
+            "AWAITING_SIGNER_4", "AWAITING_SIGNER_5", "AWAITING_SIGNER_6",
+            "AWAITING_SIGNER_7", "AWAITING_SIGNER_8", "AWAITING_SIGNER_9",
+            "AWAITING_SIGNER_10"
+          ]}
+        })
+        .project({ _id: 1, title: 1, status: 1, sentAt: 1, expiresAt: 1, contractId: 1 })
+        .sort({ sentAt: -1 })
+        .limit(3)
+        .toArray()
+        .catch(() => []) // 🛡️ Schutz: Bei Fehler leere Liste, Dashboard läuft weiter
     ]);
 
     const stats = statsResult[0] || {
@@ -226,6 +244,7 @@ router.get("/summary", verifyToken, async (req, res) => {
       urgentContracts,
       generatedContracts,
       reminderContracts,
+      pendingEnvelopes,
       user: {
         email: user?.email,
         name: user?.name,
