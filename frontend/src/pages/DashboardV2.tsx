@@ -415,7 +415,7 @@ export default function DashboardV2() {
         navigate('/contracts?status=expiring');
         break;
       case 'quota':
-        navigate('/subscribe');
+        navigate('/pricing');
         break;
     }
   };
