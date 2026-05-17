@@ -349,6 +349,22 @@ function normalize(s) {
 }
 
 /**
+ * Prüft ob normalisierte Evidence im normalisierten Vertragstext steht.
+ * Erweiterung: PDF-Extract verschluckt häufig den Satzend-Punkt vor
+ * folgender Aufzählungs-Nummerierung ("…in Kraft." → "…in Kraft 2.").
+ * Wenn der direkte Match scheitert, probieren wir den Match nochmal
+ * ohne letztes Satzzeichen — bevor wir die Evidence als Halluzination
+ * verwerfen. Halluzinationen, die NICHT im Text vorkommen, werden
+ * weiterhin abgelehnt (Strip ändert nur Trailing-Punctuation).
+ */
+function evidenceMatchesText(normEvidence, normText) {
+  if (normText.includes(normEvidence)) return true;
+  const stripped = normEvidence.replace(/[.!?,;]\s*$/, '').trim();
+  if (stripped === normEvidence) return false;  // Nichts zu strippen — kein Retry
+  return normText.includes(stripped);
+}
+
+/**
  * Validiert ein einzelnes Datum strikt.
  * Returns { valid: boolean, reason?: string }.
  */
@@ -392,10 +408,11 @@ function validateDateEntry(entry, contractText) {
       return { valid: false, reason: 'evidence_lacks_date_digits' };
     }
   }
-  // Evidence muss wörtlich im Volltext vorkommen.
+  // Evidence muss wörtlich im Volltext vorkommen (mit Trailing-Punctuation-
+  // Toleranz für PDF-Extract-Bugs — siehe evidenceMatchesText).
   const normEvidence = normalize(evidence);
   const normText = normalize(contractText);
-  if (!normText.includes(normEvidence)) {
+  if (!evidenceMatchesText(normEvidence, normText)) {
     return { valid: false, reason: 'evidence_not_in_text' };
   }
   if (!entry.type || typeof entry.type !== 'string') {
@@ -430,7 +447,7 @@ function validateFristHinweis(entry, contractText) {
   }
   const normEvidence = normalize(evidence);
   const normText = normalize(contractText);
-  if (!normText.includes(normEvidence)) {
+  if (!evidenceMatchesText(normEvidence, normText)) {
     return { valid: false, reason: 'evidence_not_in_text' };
   }
   return { valid: true };

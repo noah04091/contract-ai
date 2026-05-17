@@ -54,6 +54,16 @@ async function huntOnPdf(filePath, openai, label) {
   return { text, result, elapsedMs, pages: pdfData.numpages };
 }
 
+// Match-Logik synchron zum Service (evidenceMatchesText in dateHuntService.js):
+// Retry ohne Trailing-Punctuation, weil PDF-Extract diese vor Aufzählungs-
+// Nummern oft verschluckt.
+function evidenceMatchesText(normEvidence, normText) {
+  if (normText.includes(normEvidence)) return true;
+  const stripped = normEvidence.replace(/[.!?,;]\s*$/, '').trim();
+  if (stripped === normEvidence) return false;
+  return normText.includes(stripped);
+}
+
 function halluzinationCheck(items, contractText, label) {
   const normText = normalize(contractText);
   const halluzinationen = [];
@@ -63,7 +73,7 @@ function halluzinationCheck(items, contractText, label) {
       halluzinationen.push({ label, type: item.type || 'unbekannt', why: 'evidence leer', item });
       continue;
     }
-    if (!normText.includes(normalize(ev))) {
+    if (!evidenceMatchesText(normalize(ev), normText)) {
       halluzinationen.push({ label, type: item.type || 'unbekannt', why: 'evidence nicht im Vertrag', evidence: ev.slice(0, 80) });
     }
   }
