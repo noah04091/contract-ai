@@ -157,7 +157,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     analysis?.perspectives?.[currentPerspective]?.actionLevel;
   useEffect(() => {
     if (analysisActionLevel === 'reject') {
-      setExpandedSections(new Set(['explanation', 'worstCase', 'risks']));
+      setExpandedSections(new Set(['explanation', 'worstCase', 'risks', 'proposal']));
     } else {
       setExpandedSections(new Set(['explanation']));
     }
@@ -517,29 +517,6 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               </ul>
             )}
 
-            {/* 🏷️ Indikator-Tags mit Tooltips (Trust-Layer) */}
-            {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
-              <div className={styles.indicatorTags}>
-                {riskAssessment.reasons.map((reason: string, idx: number) => {
-                  const tooltip = getIndicatorTooltip(reason);
-                  return (
-                    <span
-                      key={idx}
-                      className={`${styles.indicatorTag}${tooltip ? ' ' + styles.indicatorTagInteractive : ''}`}
-                      title={tooltip || undefined}
-                    >
-                      <span aria-hidden="true">⚠️</span>
-                      <span>{reason}</span>
-                      {tooltip && (
-                        <span className={styles.indicatorTooltip} role="tooltip">
-                          {tooltip}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
           </>
         )}
       </div>
@@ -673,14 +650,62 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* ✍️ Verhandlungs-Vorschlag — prominente Card (nicht mehr collapsed) */}
+      {/* 🎯 Worauf wir bei dieser Klausel achten — collapsable Trust-Layer */}
+      {riskAssessment?.reasons && riskAssessment.reasons.length > 0 && (
+        <div className={styles.analysisSection}>
+          <div
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
+            onClick={() => toggleSection('risks')}
+          >
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>🎯</span>
+              Worauf wir bei dieser Klausel achten
+            </h4>
+            <span className={styles.sectionToggle}>
+              {expandedSections.has('risks') ? '▼' : '▶'}
+            </span>
+          </div>
+          {expandedSections.has('risks') && (
+            <div className={styles.indicatorTags}>
+              {riskAssessment.reasons.map((reason: string, idx: number) => {
+                const tooltip = getIndicatorTooltip(reason);
+                const displayText = reason.replace(/^[A-D]\d:\s*/, '');
+                return (
+                  <span
+                    key={idx}
+                    className={`${styles.indicatorTag}${tooltip ? ' ' + styles.indicatorTagInteractive : ''}`}
+                    title={tooltip || undefined}
+                  >
+                    <span aria-hidden="true">⚠️</span>
+                    <span>{displayText}</span>
+                    {tooltip && (
+                      <span className={styles.indicatorTooltip} role="tooltip">
+                        {tooltip}
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ✍️ Verhandlungs-Vorschlag — collapsable, default zu */}
       {betterAlternative && (
         <div className={styles.proposalCard}>
-          <div className={styles.proposalHeader}>
+          <div
+            className={styles.proposalHeader}
+            onClick={() => toggleSection('proposal')}
+          >
             <span className={styles.proposalLabel}>
               <span aria-hidden="true">✍️</span> So sollte es heißen
             </span>
+            <span className={styles.sectionToggle}>
+              {expandedSections.has('proposal') ? '▼' : '▶'}
+            </span>
           </div>
+          {expandedSections.has('proposal') && (
           <div className={styles.proposalContent}>
             {/* Vorgeschlagene Formulierung */}
             <div className={styles.suggestionBox}>
@@ -733,6 +758,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 </div>
               )}
           </div>
+          )}
         </div>
       )}
 
