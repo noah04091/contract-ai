@@ -335,6 +335,20 @@ const validateImportantDate = (dateObj, contract, requestId) => {
     }
   }
 
+  // 6. contract_signed kann logisch NIEMALS in der Zukunft liegen — ein
+  // Vertrag wird in der Vergangenheit oder spätestens heute unterzeichnet.
+  // Defense-in-Depth zusätzlich zum Phase-1.1-Evidence-Validator. Fängt
+  // Halluzinationen die durch andere Filter durchrutschen (z.B. OCR-Verlesungen,
+  // ungewöhnliche Annotation-Patterns). Tagesende-Toleranz wegen Timezone.
+  if (dateObj.type === 'contract_signed') {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    if (date > endOfToday) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: contract_signed in Zukunft (${dateObj.date})`);
+      return { valid: false, reason: 'contract_signed_in_future', confidence: 0 };
+    }
+  }
+
   // ✅ Bestimme Konfidenz basierend auf calculated Flag und Typ
   let confidence = 90; // Base für explizit extrahierte Daten
 
