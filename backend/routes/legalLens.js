@@ -1916,7 +1916,8 @@ router.get('/:contractId/progress', verifyToken, async (req, res) => {
           totalClauses: 0,
           percentComplete: 0,
           bookmarks: [],
-          notes: []
+          notes: [],
+          decisions: []
         }
       });
     }
@@ -1932,6 +1933,7 @@ router.get('/:contractId/progress', verifyToken, async (req, res) => {
         industryContext: progress.industryContext || 'general',
         bookmarks: progress.bookmarks,
         notes: progress.notes,
+        decisions: progress.decisions || [],
         status: progress.status,
         totalTimeSpent: progress.totalTimeSpent
       }
@@ -2113,6 +2115,58 @@ router.post('/:contractId/bookmark', verifyToken, async (req, res) => {
       success: false,
       error: 'Fehler beim Speichern des Bookmarks'
     });
+  }
+});
+
+/**
+ * PUT /api/legal-lens/:contractId/decision
+ *
+ * Speichert oder entfernt eine User-Entscheidung (Akzeptieren / Verhandeln / Ablehnen) pro Klausel.
+ * Body: { clauseId, decision: 'accepted'|'negotiate'|'rejected'|null }
+ * decision=null → entfernt die Entscheidung.
+ */
+router.put('/:contractId/decision', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { clauseId, decision } = req.body;
+    const userId = req.user.userId;
+
+    if (!clauseId || typeof clauseId !== 'string') {
+      return res.status(400).json({ success: false, error: 'clauseId fehlt' });
+    }
+    if (decision !== null && !['accepted', 'negotiate', 'rejected'].includes(decision)) {
+      return res.status(400).json({ success: false, error: 'Ungültige decision' });
+    }
+
+    if (decision === null) {
+      // Entscheidung entfernen
+      await LegalLensProgress.findOneAndUpdate(
+        { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+        { $pull: { decisions: { clauseId } } },
+        { upsert: true }
+      );
+    } else {
+      // Erst alte Entscheidung für diese Klausel entfernen
+      await LegalLensProgress.findOneAndUpdate(
+        { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+        { $pull: { decisions: { clauseId } } },
+        { upsert: true }
+      );
+      // Neue Entscheidung pushen
+      await LegalLensProgress.findOneAndUpdate(
+        { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+        {
+          $push: { decisions: { clauseId, decision, updatedAt: new Date() } },
+          $set: { updatedAt: new Date() }
+        },
+        { upsert: true }
+      );
+    }
+
+    res.json({ success: true, clauseId, decision });
+  } catch (error) {
+    console.error('❌ [Legal Lens] Decision error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Speichern der Entscheidung' });
   }
 });
 

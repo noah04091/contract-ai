@@ -144,7 +144,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     });
   }, []);
 
-  // Clause Decision Tracking (localStorage-persisted, scoped by contractId)
+  // Clause Decision Tracking — Server-First mit localStorage-Migration & Optimistic UI
   type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
   const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
   const [clauseDecisions, setClauseDecisions] = useState<Record<string, ClauseDecision>>(() => {
@@ -154,18 +154,60 @@ const ClauseList: React.FC<ClauseListProps> = ({
     } catch { return {}; }
   });
 
+  // Sync mit Server: wenn progress.decisions vorhanden → übernehmen (Server gewinnt).
+  // Wenn Server leer aber localStorage gefüllt → einmalig migrieren.
+  const migrationDoneRef = useRef(false);
+  useEffect(() => {
+    if (!contractId || !progress) return;
+    const serverDecisions = progress.decisions || [];
+    if (serverDecisions.length > 0) {
+      // Server gewinnt → State und localStorage damit überschreiben
+      const next: Record<string, ClauseDecision> = {};
+      serverDecisions.forEach(d => { next[d.clauseId] = d.decision; });
+      setClauseDecisions(next);
+      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
+    } else if (!migrationDoneRef.current) {
+      // Server leer → falls localStorage Daten hat: migrieren
+      let local: Record<string, ClauseDecision> = {};
+      try { local = JSON.parse(localStorage.getItem(decisionsKey) || '{}'); } catch { /* ignore */ }
+      const entries = Object.entries(local);
+      if (entries.length > 0) {
+        migrationDoneRef.current = true;
+        const token = localStorage.getItem('token');
+        entries.forEach(([clauseId, decision]) => {
+          fetch(`/api/legal-lens/${contractId}/decision`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ clauseId, decision })
+          }).catch(() => { /* migration ist fire-and-forget, retry beim nächsten Set */ });
+        });
+      }
+    }
+  }, [progress, contractId, decisionsKey]);
+
   const setDecision = useCallback((clauseId: string, decision: ClauseDecision) => {
     setClauseDecisions(prev => {
       const next = { ...prev };
-      if (next[clauseId] === decision) {
-        delete next[clauseId]; // Toggle off
+      const newDecision = next[clauseId] === decision ? null : decision;
+      if (newDecision === null) {
+        delete next[clauseId];
       } else {
-        next[clauseId] = decision;
+        next[clauseId] = newDecision;
       }
-      localStorage.setItem(decisionsKey, JSON.stringify(next));
+      // Lokal sofort (optimistic) + localStorage als Cache
+      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
+      // Backend-Sync (fire-and-forget mit Retry-Logik durch existierende withRetry-Patterns ist hier nicht eingebunden — Optimistic UI reicht)
+      if (contractId) {
+        const token = localStorage.getItem('token');
+        fetch(`/api/legal-lens/${contractId}/decision`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ clauseId, decision: newDecision })
+        }).catch(err => console.warn('[Legal Lens] Decision sync failed:', err));
+      }
       return next;
     });
-  }, [decisionsKey]);
+  }, [decisionsKey, contractId]);
 
   // Clause Annotations (localStorage-persisted, scoped by contractId)
   const annotationsKey = contractId ? `legalLens_annotations_${contractId}` : 'legalLens_annotations';
@@ -872,7 +914,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                 // ✅ FIX Issue #5: Ref für Auto-Scroll speichern
                 if (el) clauseRefs.current.set(clause.id, el);
               }}
-              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''} ${!isCached && !isSelected ? styles.pending : ''} ${focusMode && !isSelected && selectedClause ? styles.focusDimmed : ''}`}
+              className={`${styles.clauseItem} ${isSelected ? styles.selected : ''} ${isReviewed ? styles.reviewed : ''} ${!isCached && !isSelected ? styles.pending : ''} ${focusMode && !isSelected && selectedClause ? styles.focusDimmed : ''} ${clauseDecisions[clause.id] === 'accepted' ? styles.clauseDecisionAccepted : ''} ${clauseDecisions[clause.id] === 'negotiate' ? styles.clauseDecisionNegotiate : ''} ${clauseDecisions[clause.id] === 'rejected' ? styles.clauseDecisionRejected : ''}`}
               onClick={() => onSelectClause(clause)}
               onMouseEnter={(e) => handleClauseMouseEnter(clause.id, e)}
               onMouseLeave={handleClauseMouseLeave}

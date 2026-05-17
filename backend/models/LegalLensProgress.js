@@ -137,6 +137,23 @@ const legalLensProgressSchema = new mongoose.Schema({
     }
   }],
 
+  // User-Entscheidungen pro Klausel (Akzeptieren / Verhandeln / Ablehnen)
+  decisions: [{
+    clauseId: {
+      type: String,
+      required: true
+    },
+    decision: {
+      type: String,
+      enum: ["accepted", "negotiate", "rejected"],
+      required: true
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+
   // Session-Tracking
   sessions: [{
     startedAt: {
@@ -297,6 +314,15 @@ legalLensProgressSchema.methods.addBookmark = function(clauseId, label = "", col
 
 legalLensProgressSchema.methods.removeBookmark = function(clauseId) {
   this.bookmarks = this.bookmarks.filter(b => b.clauseId !== clauseId);
+  return this;
+};
+
+// Decision setzen oder entfernen (decision=null entfernt)
+legalLensProgressSchema.methods.setDecision = function(clauseId, decision) {
+  this.decisions = this.decisions.filter(d => d.clauseId !== clauseId);
+  if (decision) {
+    this.decisions.push({ clauseId, decision, updatedAt: new Date() });
+  }
   return this;
 };
 

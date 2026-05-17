@@ -315,31 +315,47 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     documentGateInfo
   } = useLegalLens();
 
-  // Decision Summary — reads from same localStorage as ClauseList (scoped by contractId)
+  // Decision Summary — Server-First (progress.decisions) mit localStorage-Fallback
   const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
   const decisionSummary = useMemo(() => {
-    try {
-      const stored = localStorage.getItem(decisionsKey);
-      if (!stored) return null;
-      const decisions: Record<string, string> = JSON.parse(stored);
-      const values = Object.values(decisions);
-      if (values.length === 0) return null;
-      return {
-        accepted: values.filter(v => v === 'accepted').length,
-        negotiate: values.filter(v => v === 'negotiate').length,
-        rejected: values.filter(v => v === 'rejected').length,
-        total: values.length
-      };
-    } catch { return null; }
-  }, [selectedClause, decisionsKey]); // Re-compute when clause changes (proxy for decision changes)
+    // Server-Decisions priorisieren falls vorhanden
+    const serverDecisions = progress?.decisions;
+    let values: string[] = [];
+    if (serverDecisions && serverDecisions.length > 0) {
+      values = serverDecisions.map(d => d.decision);
+    } else {
+      // Fallback auf localStorage (bis Migration durch ist oder offline)
+      try {
+        const stored = localStorage.getItem(decisionsKey);
+        if (stored) {
+          const decisions: Record<string, string> = JSON.parse(stored);
+          values = Object.values(decisions);
+        }
+      } catch { /* ignore */ }
+    }
+    if (values.length === 0) return null;
+    return {
+      accepted: values.filter(v => v === 'accepted').length,
+      negotiate: values.filter(v => v === 'negotiate').length,
+      rejected: values.filter(v => v === 'rejected').length,
+      total: values.length
+    };
+  }, [selectedClause, progress?.decisions, decisionsKey]);
 
   // Copy all decisions summary to clipboard
   const copyDecisionsSummary = useCallback(() => {
     if (!clauses) return;
     try {
-      const stored = localStorage.getItem(decisionsKey);
-      if (!stored) return;
-      const decisions: Record<string, string> = JSON.parse(stored);
+      // Server-First: progress.decisions, sonst localStorage-Fallback
+      let decisions: Record<string, string> = {};
+      const serverDecisions = progress?.decisions;
+      if (serverDecisions && serverDecisions.length > 0) {
+        serverDecisions.forEach(d => { decisions[d.clauseId] = d.decision; });
+      } else {
+        const stored = localStorage.getItem(decisionsKey);
+        if (!stored) return;
+        decisions = JSON.parse(stored);
+      }
 
       const groups: Record<string, string[]> = { accepted: [], negotiate: [], rejected: [] };
       for (const [clauseId, decision] of Object.entries(decisions)) {
@@ -375,7 +391,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       setDecisionsCopied(true);
       setTimeout(() => setDecisionsCopied(false), 2000);
     } catch { /* ignore */ }
-  }, [clauses, contractName, decisionsKey]);
+  }, [clauses, contractName, decisionsKey, progress?.decisions]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking

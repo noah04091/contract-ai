@@ -464,6 +464,11 @@ export interface LegalLensProgress {
     type: HighlightType;
     createdAt: Date;
   }>;
+  decisions?: Array<{
+    clauseId: string;
+    decision: 'accepted' | 'negotiate' | 'rejected';
+    updatedAt: Date;
+  }>;
   sessions: ReviewSession[];
   totalTimeSpent: number;
   status: ProgressStatus;
