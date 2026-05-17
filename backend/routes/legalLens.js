@@ -1555,13 +1555,19 @@ router.post(
           };
         }
 
-        // BetterAlternative
-        if (transformed.betterAlternative) {
+        // BetterAlternative — text-Pflicht, sonst null (verhindert leere Section im Frontend)
+        if (
+          transformed.betterAlternative &&
+          typeof transformed.betterAlternative.text === 'string' &&
+          transformed.betterAlternative.text.trim().length > 0
+        ) {
           transformed.betterAlternative = {
-            text: transformed.betterAlternative.text || '',
+            text: transformed.betterAlternative.text,
             whyBetter: transformed.betterAlternative.whyBetter || '',
             howToAsk: transformed.betterAlternative.howToAsk || ''
           };
+        } else {
+          transformed.betterAlternative = null;
         }
 
         // MarketComparison

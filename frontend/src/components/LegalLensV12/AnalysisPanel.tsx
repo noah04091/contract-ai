@@ -691,8 +691,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* ✍️ Verhandlungs-Vorschlag — collapsable, default zu, konsistent mit anderen Sections */}
-      {betterAlternative && (
+      {/* ✍️ Verhandlungs-Vorschlag — nur wenn nicht accept UND text vorhanden (Safety-Net zum Backend-Filter) */}
+      {betterAlternative && betterAlternative.text && analysisActionLevel !== 'accept' && (
         <div className={styles.analysisSection}>
           <div
             className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}

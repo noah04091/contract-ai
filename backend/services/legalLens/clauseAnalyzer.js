@@ -547,17 +547,23 @@ Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
     {"scenario": "...", "probability": "...", "impact": "..."}
   ],
   "recommendation": "KLARE Handlungsempfehlung: Was sollst du TUN?",
-  "betterAlternative": {
-    "text": "Bessere Formulierung der Klausel (falls nötig)",
-    "whyBetter": "Warum ist diese Formulierung fairer?",
-    "howToAsk": "So fragst du danach: 'Können wir die Klausel so anpassen, dass...'"
-  },
+  "betterAlternative": null,
   "marketComparison": {
     "isStandard": true|false,
     "marketRange": "Was ist marktüblich? MIT KONKRETEN ZAHLEN/FRISTEN",
     "deviation": "Wie weicht diese Klausel ab? Ist das zu deinem Nachteil?"
   }${hasLegalCandidates ? ',\n  "legalSources": null  // ODER {statutes: [...], caselaw: [...]} - siehe RECHTSQUELLEN-AUSWAHL oben' : ''}
 }
+
+PFLICHT für betterAlternative (Qualitäts-Anker):
+1. Wenn actionLevel === "accept" → IMMER null. Klausel ist fair, kein Verbesserungsvorschlag nötig.
+2. Wenn actionLevel === "negotiate" oder "reject":
+   - Die Alternative MUSS in Länge und Detailgrad zur Original-Klausel passen.
+   - Eine 1-Satz-Klausel → 1-2 Sätze Alternative.
+   - Eine halbseitige oder mehrabsätzige Klausel → vollständige proportionale Alternative (mehrere Sätze/Absätze).
+   - Niemals einen Einzeiler als "Alternative" zu einer langen Klausel — das wirkt unprofessionell und nutzt User nichts.
+3. Wenn du keine vollständige, juristisch tragfähige proportionale Alternative formulieren kannst → null zurückgeben.
+   Lieber ehrlich nichts liefern als einen unangemessenen Vorschlag.
 
 REGELN:
 - actionLevel: "reject" NUR bei echten Dealbreakern (unfair, unüblich, zu riskant)
