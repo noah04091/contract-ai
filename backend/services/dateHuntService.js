@@ -370,6 +370,28 @@ function validateDateEntry(entry, contractText) {
   if (evidence.length < EVIDENCE_MIN_LEN || evidence.length > EVIDENCE_MAX_LEN) {
     return { valid: false, reason: `evidence_length_${evidence.length}` };
   }
+  // Anti-Halluzination: Evidence darf nicht überwiegend aus leeren
+  // Unterschriftsfeldern (___), Whitespace oder dekorativen Punkten/Dashes
+  // bestehen. Trust-Bug-Guard: aktuell halluziniert GPT gerne "Vertrags-
+  // unterzeichnung = heute" aus leeren "Ort, Datum: ___"-Linien.
+  // Threshold 40% sinnvolle Zeichen (alphanumerisch + Umlaute + sonstige
+  // Symbole außer Padding-Chars). Konservativ — echte Datums-Sätze haben
+  // immer >70% sinnvolle Zeichen.
+  const meaningfulChars = evidence.replace(/[\s_.\-—–]/g, '');
+  if (meaningfulChars.length / evidence.length < 0.4) {
+    return { valid: false, reason: 'evidence_mostly_blank' };
+  }
+  // Ziffer-Check für nicht-berechnete Datums: jedes echte Kalenderdatum
+  // enthält mindestens 4 Ziffern (Jahresangabe YYYY). Berechnete Datums
+  // ("ab Vertragsbeginn", "6 Monate nach Unterzeichnung") sind explizit
+  // ausgenommen. Bewusst `=== false` statt `!== true` — wenn GPT das
+  // Feld vergisst, greift der Check NICHT (konservativ).
+  if (entry.calculated === false) {
+    const digitCount = (evidence.match(/\d/g) || []).length;
+    if (digitCount < 4) {
+      return { valid: false, reason: 'evidence_lacks_date_digits' };
+    }
+  }
   // Evidence muss wörtlich im Volltext vorkommen.
   const normEvidence = normalize(evidence);
   const normText = normalize(contractText);
