@@ -218,6 +218,13 @@ export default function DashboardV2() {
   const [urgentContractsData, setUrgentContractsData] = useState<Contract[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [pendingEnvelopes, setPendingEnvelopes] = useState<PendingEnvelope[]>([]);
+  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('dashboard-onboarding-dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -431,6 +438,15 @@ export default function DashboardV2() {
     navigate(`/contracts/${contractId}`);
   };
 
+  const handleDismissOnboarding = useCallback(() => {
+    setOnboardingDismissed(true);
+    try {
+      localStorage.setItem('dashboard-onboarding-dismissed', 'true');
+    } catch {
+      // localStorage unavailable (private browsing) - dismissal bleibt nur in-Memory
+    }
+  }, []);
+
   const handleStatCardClick = (filter: string) => {
     // Navigiere zur Vertragsseite mit entsprechendem Filter
     switch (filter) {
@@ -587,8 +603,39 @@ export default function DashboardV2() {
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge
             ============================================ */}
-        {stats.total === 0 ? (
-          <div className={styles.onboarding}>
+        {stats.total === 0 && !onboardingDismissed ? (
+          <div className={styles.onboarding} style={{ position: 'relative' }}>
+            <button
+              onClick={handleDismissOnboarding}
+              aria-label="Willkommens-Box ausblenden"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(0, 0, 0, 0.05)',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                color: 'rgba(0, 0, 0, 0.5)',
+                transition: 'background 0.15s ease, color 0.15s ease',
+                zIndex: 1
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.color = 'rgba(0, 0, 0, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
+                e.currentTarget.style.color = 'rgba(0, 0, 0, 0.5)';
+              }}
+            >
+              <X size={18} />
+            </button>
             <div className={styles.onboardingHero}>
               <div className={styles.onboardingIconWrapper}>
                 <div className={styles.onboardingIconBg} />
