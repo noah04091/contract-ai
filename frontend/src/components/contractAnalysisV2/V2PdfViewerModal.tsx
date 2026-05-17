@@ -90,6 +90,10 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
 
   if (!isOpen) return null;
 
+  // Säubere Filename: entferne Unix-Timestamp-Präfix wie "1775294941492-",
+  // die der Backend-Upload anhängt, damit der User den lesbaren Dateinamen sieht.
+  const displayName = fileName.replace(/^\d{10,}[-_]/, "");
+
   // Render via Portal direkt unter document.body. Damit liegt das Modal
   // außerhalb aller App-Container-Stacking-Contexts (z.B. transform-/filter-
   // basierte Stacking-Contexts) und überdeckt zuverlässig die globale Navbar.
@@ -103,19 +107,17 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
     >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <div className={styles.titleWrap}>
-            <span className={styles.titleIcon}>
-              <FileText size={15} aria-hidden="true" />
-            </span>
-            <div className={styles.title}>{fileName}</div>
+          <div className={styles.headerLeft}>
+            <FileText size={16} color="#2563eb" aria-hidden="true" />
+            <span className={styles.title}>{displayName}</span>
           </div>
           <button
             type="button"
             className={styles.closeBtn}
             onClick={onClose}
-            aria-label="Schließen"
+            aria-label="PDF-Vorschau schließen"
           >
-            <X size={18} aria-hidden="true" />
+            <X size={18} color="#475569" aria-hidden="true" />
           </button>
         </div>
         <div className={styles.body}>
