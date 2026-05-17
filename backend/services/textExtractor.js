@@ -40,7 +40,32 @@ async function extractTextFromBuffer(buffer, mimetype) {
         console.log(`📄 PDF-Formular: ${formFieldText.split('\n').length} Felder extrahiert (${formFieldText.length} Zeichen)`);
       }
     } catch (e) {
-      // Not a form PDF or corrupted — ignore silently
+      // Not a form PDF or corrupted — log so we notice if it crashes frequently
+      console.warn(`[TextExtractor] AcroForm-Read fehlgeschlagen: ${e.message}`);
+    }
+
+    // Extract PDF annotations (Acrobat Fill & Sign, FreeText comments, Stamps)
+    // Nachträglich in PDFs eingetragene Werte landen oft als Annotation, nicht
+    // als Text. pdfjs-dist liest die — pdf-parse nicht.
+    //
+    // Block-Header bewusst so formuliert, dass GPT die Annotation-Zeile als
+    // EIGENSTÄNDIGE Evidence zitiert und NICHT mit dem leeren Body-Feld
+    // ("Ort, Datum: _____") kombiniert. Sonst hätten wir Halluzinations-
+    // Look-Alikes ("Ort, Datum: Durmersheim, den 04.04.26"), die nirgendwo
+    // wörtlich im Text stehen und vom Evidence-Validator zu Recht abgelehnt
+    // würden.
+    try {
+      const annotationText = await extractPdfAnnotations(buffer);
+      if (annotationText) {
+        text = text + '\n\n--- Eingefügte Vertragsdaten (PDF-Anmerkungen) ---\n'
+          + 'Die folgenden Zeilen wurden nachträglich ins PDF eingefügt (z.B. via Acrobat Fill & Sign, Reviewer-Kommentare). '
+          + 'Jede Zeile ist ein VOLLSTÄNDIGER, eigenständiger Vertragseintrag — typischerweise Datum, Ort oder Stempelinhalt einer Unterschrift. '
+          + 'Bei Zitierung als Evidence bitte die Zeile EXAKT übernehmen und NICHT mit umliegenden Vertragstext-Platzhaltern (z.B. "Ort, Datum: ___") kombinieren.\n\n'
+          + annotationText;
+        console.log(`📝 PDF-Anmerkungen: ${annotationText.split('\n').length} Annotations extrahiert (${annotationText.length} Zeichen)`);
+      }
+    } catch (e) {
+      console.warn(`[TextExtractor] Annotation-Read fehlgeschlagen: ${e.message}`);
     }
 
     return {
@@ -142,6 +167,60 @@ async function extractPdfFormFields(buffer) {
         .trim() || name.trim();
 
       lines.push(`${cleanName}: ${value.trim()}`);
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n') : null;
+}
+
+/**
+ * Liest PDF-Annotations (Acrobat Fill & Sign FreeText, Stempel, Reviewer-
+ * Kommentare) via pdfjs-dist. pdf-parse erfasst diese Werte nicht, weil
+ * Annotations nicht im Haupt-Text-Stream stehen, sondern als Overlays.
+ *
+ * Gibt eine Zeile pro Annotation zurück: "Seite N - Subtype: Inhalt".
+ * Bewusst KEIN Sig-Subtype (digitale Signaturen liefern Image-Stempel,
+ * keinen Text — würden nur Noise erzeugen).
+ *
+ * Universal: kein Vertragstyp-Branch. Robust gegen fehlende Annotations
+ * (gibt dann null zurück).
+ */
+async function extractPdfAnnotations(buffer) {
+  const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(buffer),
+    // Reduziert Console-Spam bei Warnungen aus den PDFs
+    verbosity: 0
+  });
+  const pdfDoc = await loadingTask.promise;
+
+  // Welche Annotation-Subtypes liefern menschenlesbaren Text-Inhalt?
+  // FreeText: Acrobat Fill & Sign Text-Stempel, Notizen
+  // Text: Reviewer-Comments mit Inhalt
+  // Stamp: Genehmigt/Vertraulich/etc. mit Namen-Wert
+  // (Widget liegt schon im AcroForm-Reader; Sig würde nur "user1" o.ä. liefern)
+  const RELEVANT_SUBTYPES = new Set(['FreeText', 'Text', 'Stamp']);
+
+  const lines = [];
+  for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum);
+    const annotations = await page.getAnnotations();
+    if (!annotations || annotations.length === 0) continue;
+
+    for (const a of annotations) {
+      if (!RELEVANT_SUBTYPES.has(a.subtype)) continue;
+      // Inhalt aus mehreren möglichen Feldern lesen (je nach Annotation-Variante)
+      let content = '';
+      if (typeof a.contents === 'string') content = a.contents;
+      else if (a.contentsObj && typeof a.contentsObj.str === 'string') content = a.contentsObj.str;
+      else if (a.titleObj && typeof a.titleObj.str === 'string') content = a.titleObj.str;
+
+      content = (content || '').trim();
+      if (!content) continue;
+      // Whitespace normalisieren, damit der nachfolgende Date-Hunt/Evidence-
+      // Validator das Sätze sauber findet.
+      content = content.replace(/\s+/g, ' ');
+      lines.push(`Seite ${pageNum} - ${a.subtype}: ${content}`);
     }
   }
 
