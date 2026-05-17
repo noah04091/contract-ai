@@ -1596,38 +1596,12 @@
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   PROPOSAL CARD — "So sollte es heißen" (grün, prominent)
+   PROPOSAL CONTENT — "So sollte es heißen"
+   Wrapper läuft jetzt über analysisSection (Header-Konsistenz).
+   Inhalt behält die grüne suggestionBox für den Wow-Effekt beim Aufklappen.
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-.proposalCard {
-  border: 2px solid #10b981;
-  border-radius: 10px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #d1fae5 0%, #f0fdf4 30%, #ffffff 100%);
-  margin-bottom: 0.85rem;
-}
-
-.proposalHeader {
-  padding: 0.7rem 1rem 0.5rem;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  user-select: none;
-}
-
-.proposalLabel {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #047857;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 .proposalContent {
-  padding: 0 1rem 1rem;
+  padding: 0;
 }
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

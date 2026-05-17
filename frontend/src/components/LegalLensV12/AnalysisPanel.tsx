@@ -691,16 +691,17 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* ✍️ Verhandlungs-Vorschlag — collapsable, default zu */}
+      {/* ✍️ Verhandlungs-Vorschlag — collapsable, default zu, konsistent mit anderen Sections */}
       {betterAlternative && (
-        <div className={styles.proposalCard}>
+        <div className={styles.analysisSection}>
           <div
-            className={styles.proposalHeader}
+            className={`${styles.sectionHeader} ${styles.sectionHeaderClickable}`}
             onClick={() => toggleSection('proposal')}
           >
-            <span className={styles.proposalLabel}>
-              <span aria-hidden="true">✍️</span> So sollte es heißen
-            </span>
+            <h4 className={styles.sectionTitle}>
+              <span className={styles.sectionIcon}>✍️</span>
+              So sollte es heißen
+            </h4>
             <span className={styles.sectionToggle}>
               {expandedSections.has('proposal') ? '▼' : '▶'}
             </span>
