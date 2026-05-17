@@ -629,6 +629,8 @@
 .listContainer {
   padding: 8px;
   flex: 1;
+  max-height: 340px;
+  overflow-y: auto;
 }
 
 .listItem {
