@@ -117,7 +117,19 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
             onClick={onClose}
             aria-label="PDF-Vorschau schließen"
           >
-            <span className={styles.closeBtnIcon} aria-hidden="true">×</span>
+            <span
+              aria-hidden="true"
+              style={{
+                fontSize: "24px",
+                lineHeight: 1,
+                fontWeight: 400,
+                color: "#0f172a",
+                display: "inline-block",
+                fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              ×
+            </span>
           </button>
         </div>
         <div className={styles.body}>
