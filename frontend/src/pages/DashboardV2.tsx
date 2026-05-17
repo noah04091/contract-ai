@@ -597,7 +597,7 @@ export default function DashboardV2() {
             >
               <RefreshCw size={16} className={isRefreshing ? styles.spinning : ''} />
             </button>
-            <Link to="/contracts" className={styles.newBtn}>
+            <Link to="/contracts?upload=true" className={styles.newBtn}>
               <Plus size={18} />
               <span>Neuer Vertrag</span>
             </Link>
@@ -906,10 +906,10 @@ export default function DashboardV2() {
                 <div
                   key={`event-${event.id}`}
                   className={styles.listItem}
-                  onClick={() => navigate('/calendar')}
+                  onClick={() => navigate(`/calendar?eventId=${event.id}`)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && navigate('/calendar')}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/calendar?eventId=${event.id}`)}
                 >
                   <div className={`${styles.listItemIcon} ${event.severity === 'critical' ? styles.listItemIconRed : event.severity === 'warning' ? styles.listItemIconOrange : styles.listItemIconBlue}`}>
                     <Bell size={16} />
