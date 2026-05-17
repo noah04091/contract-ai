@@ -503,6 +503,18 @@ ${hasLegalCandidates ? '\n' + LEGAL_SOURCES_INSTRUCTION_BLOCK : ''}
 WICHTIG: Du bist ein erfahrener Rechtsexperte der für Laien und Gründer berät.
 Gib KONKRETE, ACTIONABLE Informationen - keine vagen Aussagen!
 
+PFLICHT für riskAssessment.reasons (Trust-Layer):
+Beginne JEDEN Grund mit dem passenden Indikator-Code aus der RISK-SCORE-SKALA oben (A1, A2, B1, B2, B3, C1, C2, D1, D2).
+Format: "A1: <konkrete Erklärung der Klausel-spezifischen Ausprägung>"
+Falls KEIN Indikator A1-D2 wirklich passt (z.B. bei vorteilhaften oder neutralen Klauseln), lasse den Grund weg statt ohne Code zu schreiben.
+Lieber weniger Reasons mit Indikator als viele ohne.
+
+Beispiele:
+- ✅ "A1: Verschuldensunabhängige Garantie für Sachmängel — haftest auch ohne eigenes Verschulden."
+- ✅ "B1: Pauschale Abzüge zu Lasten des Verkäufers ohne adäquate Gegenleistung."
+- ✅ "D1: Klausel verstößt gegen § 309 Nr. 7 BGB (Haftungsausschluss für grobe Fahrlässigkeit)."
+- ❌ "Mehrere Abzüge können den Kaufpreis reduzieren." (kein Indikator-Prefix → NICHT verwenden)
+
 Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
 {
   "actionLevel": "accept|negotiate|reject",
@@ -515,7 +527,7 @@ Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
   "riskAssessment": {
     "level": "low|medium|high",
     "score": 0-100,
-    "reasons": ["Konkreter Grund 1", "Konkreter Grund 2", "Konkreter Grund 3"]
+    "reasons": ["A1: Konkreter Indikator-Grund mit Klauselbezug", "B2: Konkreter Indikator-Grund mit Klauselbezug"]
   },
   "worstCase": {
     "scenario": "Das SCHLIMMSTE was passieren kann - sei konkret!",

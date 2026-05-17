@@ -36,7 +36,6 @@ const INDICATOR_TOOLTIPS: Record<string, string> = {
 };
 
 /** Findet passenden Tooltip-Text für einen Indikator-String (z.B. "A1: Verschuldens...") */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getIndicatorTooltip(reason: string): string | null {
   const match = reason.match(/^([A-D]\d):/);
   if (match) return INDICATOR_TOOLTIPS[match[1]] || null;
@@ -526,7 +525,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   return (
                     <span
                       key={idx}
-                      className={styles.indicatorTag}
+                      className={`${styles.indicatorTag}${tooltip ? ' ' + styles.indicatorTagInteractive : ''}`}
                       title={tooltip || undefined}
                     >
                       <span aria-hidden="true">⚠️</span>

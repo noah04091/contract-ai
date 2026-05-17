@@ -1544,13 +1544,17 @@
   border-radius: 6px;
   font-size: 0.78rem;
   font-weight: 500;
-  cursor: help;
+  cursor: default;
   position: relative;
   transition: background 0.15s;
   line-height: 1.3;
 }
 
-.indicatorTag:hover {
+.indicatorTagInteractive {
+  cursor: help;
+}
+
+.indicatorTagInteractive:hover {
   background: #fde68a;
 }
 
@@ -1587,7 +1591,7 @@
   border-top-color: #0f172a;
 }
 
-.indicatorTag:hover .indicatorTooltip {
+.indicatorTagInteractive:hover .indicatorTooltip {
   opacity: 1;
 }
 
