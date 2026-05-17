@@ -311,13 +311,13 @@ export default function Envelopes() {
 
     if (envelopeIdToView && envelopes.length > 0) {
       const envelope = envelopes.find(e => e._id === envelopeIdToView);
-      if (envelope && (!selectedEnvelope || selectedEnvelope._id !== envelope._id)) {
+      if (envelope) {
         setSelectedEnvelope(envelope);
-        // URL säubern damit's beim Re-Render nicht erneut greift
-        window.history.replaceState({}, document.title, location.pathname);
+        // URL via navigate säubern, damit React Router seine internal location aktualisiert
+        navigate(location.pathname, { replace: true });
       }
     }
-  }, [location.search, envelopes, selectedEnvelope, location.pathname]);
+  }, [location.search, envelopes, navigate, location.pathname]);
 
   const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0, signal?: AbortSignal) => {
     try {
