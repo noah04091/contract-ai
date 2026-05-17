@@ -8,6 +8,7 @@ const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { getEmailHealth, reactivateEmail } = require("../services/emailBounceService");
+const LegalPulseV2Result = require("../models/LegalPulseV2Result"); // 🆕 Pulse-V2 Mongoose Model
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -98,7 +99,7 @@ router.get("/summary", verifyToken, async (req, res) => {
     in30Days.setDate(in30Days.getDate() + 30);
 
     // 🚀 OPTIMIERT: Alle 6 Queries parallel statt sequentiell (Promise.all)
-    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user, pendingEnvelopes] = await Promise.all([
+    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user, pendingEnvelopes, pulseAnalyzedContracts] = await Promise.all([
       // 1. Schnelle Stats mit aggregation
       contractsCollection.aggregate([
         { $match: userIdFilter },
@@ -224,7 +225,41 @@ router.get("/summary", verifyToken, async (req, res) => {
         .sort({ sentAt: -1 })
         .limit(3)
         .toArray()
-        .catch(() => []) // 🛡️ Schutz: Bei Fehler leere Liste, Dashboard läuft weiter
+        .catch(() => []), // 🛡️ Schutz: Bei Fehler leere Liste, Dashboard läuft weiter
+
+      // 8. Pulse-V2-analysierte Verträge (3 zuletzt analysierte, dedupliziert pro Vertrag)
+      LegalPulseV2Result.aggregate([
+        { $match: { userId: userId, status: "completed" } },
+        { $sort: { completedAt: -1 } },
+        {
+          $group: {
+            _id: "$contractId",
+            overallScore: { $first: "$scores.overall" },
+            completedAt: { $first: "$completedAt" }
+          }
+        },
+        { $sort: { completedAt: -1 } },
+        { $limit: 3 },
+        // String contractId → ObjectId für $lookup
+        { $addFields: { contractObjectId: { $toObjectId: "$_id" } } },
+        {
+          $lookup: {
+            from: "contracts",
+            localField: "contractObjectId",
+            foreignField: "_id",
+            as: "contract"
+          }
+        },
+        { $unwind: { path: "$contract", preserveNullAndEmptyArrays: false } },
+        {
+          $project: {
+            _id: 1,                                            // contractId als String
+            name: "$contract.name",                            // Vertragsname
+            riskScore: { $subtract: [100, "$overallScore"] },  // Risk = 100 - Health (Frontend-Konsistenz)
+            completedAt: 1
+          }
+        }
+      ]).catch(() => []) // 🛡️ Schutz: Bei Fehler leere Liste, Dashboard läuft weiter
     ]);
 
     const stats = statsResult[0] || {
@@ -245,6 +280,7 @@ router.get("/summary", verifyToken, async (req, res) => {
       generatedContracts,
       reminderContracts,
       pendingEnvelopes,
+      pulseAnalyzedContracts,
       user: {
         email: user?.email,
         name: user?.name,

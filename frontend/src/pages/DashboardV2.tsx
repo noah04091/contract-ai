@@ -82,6 +82,13 @@ interface PendingEnvelope {
   contractId?: string;
 }
 
+interface PulseAnalyzedContract {
+  _id: string;
+  name: string;
+  riskScore: number;
+  completedAt?: string;
+}
+
 // ============================================
 // CONSTANTS
 // ============================================
@@ -218,6 +225,7 @@ export default function DashboardV2() {
   const [urgentContractsData, setUrgentContractsData] = useState<Contract[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [pendingEnvelopes, setPendingEnvelopes] = useState<PendingEnvelope[]>([]);
+  const [pulseAnalyzedContracts, setPulseAnalyzedContracts] = useState<PulseAnalyzedContract[]>([]);
   const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('dashboard-onboarding-dismissed') === 'true';
@@ -290,6 +298,7 @@ export default function DashboardV2() {
           setRecentContractsData(data.recentContracts || []);
           setUrgentContractsData(data.urgentContracts || []);
           setPendingEnvelopes(data.pendingEnvelopes || []);
+          setPulseAnalyzedContracts(data.pulseAnalyzedContracts || []);
 
           // Contracts zusammenführen (für Filter-Anzeige)
           const allContracts = [...(data.recentContracts || [])];
@@ -1098,8 +1107,8 @@ export default function DashboardV2() {
               </div>
             </div>
             <div className={styles.featureSectionContent}>
-              {contracts.filter(c => c.legalPulse?.riskScore != null).slice(0, 3).map(contract => {
-                const score = contract.legalPulse?.riskScore || 0;
+              {pulseAnalyzedContracts.map(contract => {
+                const score = contract.riskScore;
                 const color = score <= 30 ? '#10B981' : score <= 60 ? '#F59E0B' : '#EF4444';
                 return (
                   <div
@@ -1116,7 +1125,7 @@ export default function DashboardV2() {
                   </div>
                 );
               })}
-              {contracts.filter(c => c.legalPulse?.riskScore != null).length === 0 && (
+              {pulseAnalyzedContracts.length === 0 && (
                 <div className={styles.featureEmptyPremium}>
                   <div className={styles.featureEmptyIcon} style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1))' }}>
                     <Shield size={20} style={{ color: '#10B981' }} />
@@ -1132,7 +1141,7 @@ export default function DashboardV2() {
                 </div>
               )}
             </div>
-            {contracts.filter(c => c.legalPulse?.riskScore != null).length > 0 && (
+            {pulseAnalyzedContracts.length > 0 && (
               <Link to="/pulse" className={styles.featureSectionLink}>
                 Alle Analysen <ArrowRight size={14} />
               </Link>
