@@ -412,8 +412,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           )}
 
           <div className={styles.glanceFooter}>
-            {/* Empfehlung-Badge (klickbar mit Score-Popover) */}
-            {effectiveDisplay && (() => {
+            {/* Empfehlung-Badge — Action-basiert, mit Score als Sub-Info im Popover */}
+            {(() => {
+              const actionInfo = ACTION_LABELS[actionLevel] || ACTION_LABELS.negotiate;
               const scoreInfo = effectiveDisplay;
               return (
                 <div className={styles.scorePopoverAnchor} ref={scorePopoverRef}>
@@ -421,36 +422,46 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   <button
                     type="button"
                     className={styles.glanceBadge}
-                    style={{ '--score-color': scoreInfo.color } as React.CSSProperties}
+                    style={{ '--score-color': actionInfo.color } as React.CSSProperties}
                     onClick={() => setShowScoreInfo(prev => !prev)}
-                    title="Was bedeutet diese Bewertung?"
-                    aria-label="Bewertung erklären"
+                    title="Warum diese Empfehlung?"
+                    aria-label="Empfehlung erklären"
                     aria-expanded={showScoreInfo}
                   >
                     <span
                       className={styles.glanceBadgeDot}
-                      style={{ background: scoreInfo.color }}
+                      style={{ background: actionInfo.color }}
                       aria-hidden="true"
                     />
-                    <span style={{ color: scoreInfo.color }}>{scoreInfo.label}</span>
+                    <span style={{ color: actionInfo.color }}>{actionInfo.text}</span>
                     <span className={styles.scoreInfoIcon} aria-hidden="true">ⓘ</span>
                   </button>
                   {showScoreInfo && (
-                    <div className={styles.scoreInfoPopover} role="dialog" aria-label="So berechnet sich der Score">
-                      <div className={styles.scoreInfoHeader}>So berechnet sich der Score</div>
-                      <p className={styles.scoreInfoDesc}>
-                        Skala 0–100, basierend auf rechtlichem Risiko, finanzieller Tragweite, Marktüblichkeit und Verhandlungsbedarf.
-                      </p>
-                      <div className={styles.scoreInfoScale}>
-                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#059669' }} /><span className={styles.scoreScaleRange}>0–19</span><span className={styles.scoreScaleLabel}>Minimal — Unbedenklich</span></div>
-                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#16a34a' }} /><span className={styles.scoreScaleRange}>20–39</span><span className={styles.scoreScaleLabel}>Niedrig — Akzeptabel</span></div>
-                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ca8a04' }} /><span className={styles.scoreScaleRange}>40–59</span><span className={styles.scoreScaleLabel}>Mittel — Verhandeln empfohlen</span></div>
-                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ea580c' }} /><span className={styles.scoreScaleRange}>60–79</span><span className={styles.scoreScaleLabel}>Hoch — Aufmerksamkeit nötig</span></div>
-                        <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#dc2626' }} /><span className={styles.scoreScaleRange}>80–100</span><span className={styles.scoreScaleLabel}>Kritisch — Dringend prüfen</span></div>
-                      </div>
-                      <div className={styles.scoreInfoCurrent}>
-                        Diese Klausel: <strong style={{ color: scoreInfo.color }}>{effectiveScore} — {scoreInfo.label}</strong>
-                      </div>
+                    <div className={styles.scoreInfoPopover} role="dialog" aria-label="Warum diese Empfehlung">
+                      <div className={styles.scoreInfoHeader}>Warum diese Empfehlung?</div>
+                      {actionReason ? (
+                        <p className={styles.scoreInfoDesc} style={{ fontWeight: 500, color: '#1e293b' }}>
+                          {actionReason}
+                        </p>
+                      ) : (
+                        <p className={styles.scoreInfoDesc}>
+                          Basiert auf rechtlichem Risiko, finanzieller Tragweite, Marktüblichkeit und Verhandlungsbedarf.
+                        </p>
+                      )}
+                      {scoreInfo && typeof effectiveScore === 'number' && (
+                        <>
+                          <div className={styles.scoreInfoScale}>
+                            <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#059669' }} /><span className={styles.scoreScaleRange}>0–19</span><span className={styles.scoreScaleLabel}>Minimal — Unbedenklich</span></div>
+                            <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#16a34a' }} /><span className={styles.scoreScaleRange}>20–39</span><span className={styles.scoreScaleLabel}>Niedrig — Akzeptabel</span></div>
+                            <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ca8a04' }} /><span className={styles.scoreScaleRange}>40–59</span><span className={styles.scoreScaleLabel}>Mittel — Verhandeln empfohlen</span></div>
+                            <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#ea580c' }} /><span className={styles.scoreScaleRange}>60–79</span><span className={styles.scoreScaleLabel}>Hoch — Aufmerksamkeit nötig</span></div>
+                            <div className={styles.scoreScaleItem}><span className={styles.scoreScaleDot} style={{ background: '#dc2626' }} /><span className={styles.scoreScaleRange}>80–100</span><span className={styles.scoreScaleLabel}>Kritisch — Dringend prüfen</span></div>
+                          </div>
+                          <div className={styles.scoreInfoCurrent}>
+                            Risiko-Score: <strong style={{ color: scoreInfo.color }}>{effectiveScore} — {scoreInfo.label}</strong>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

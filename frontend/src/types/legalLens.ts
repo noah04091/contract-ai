@@ -686,7 +686,7 @@ export const NON_ANALYZABLE_LABELS: Record<string, string> = {
  */
 export const ACTION_LABELS: Record<ActionLevel, { text: string; emoji: string; color: string; bgColor: string }> = {
   accept: {
-    text: 'Unkritisch',
+    text: 'Akzeptabel',
     emoji: '🟢',
     color: '#16a34a',
     bgColor: '#f0fdf4'
@@ -698,7 +698,7 @@ export const ACTION_LABELS: Record<ActionLevel, { text: string; emoji: string; c
     bgColor: '#fffbeb'
   },
   reject: {
-    text: 'Kritisch',
+    text: 'Nicht akzeptieren',
     emoji: '🔴',
     color: '#dc2626',
     bgColor: '#fef2f2'
