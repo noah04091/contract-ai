@@ -3698,9 +3698,10 @@
 .scoreInfoPopover {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 200;
-  width: 320px;
+  width: 260px;
   max-width: calc(100vw - 32px);
   background: white;
   border: 1px solid #e2e8f0;
