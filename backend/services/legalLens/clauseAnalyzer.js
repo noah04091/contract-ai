@@ -548,11 +548,24 @@ Antworte IMMER auf Deutsch in diesem exakten JSON-Format:
   ],
   "recommendation": "KLARE Handlungsempfehlung: Was sollst du TUN?",
   "betterAlternative": null,
-  "marketComparison": {
-    "isStandard": true|false,
-    "marketRange": "Was ist marktüblich? MIT KONKRETEN ZAHLEN/FRISTEN",
-    "deviation": "Wie weicht diese Klausel ab? Ist das zu deinem Nachteil?"
-  }${hasLegalCandidates ? ',\n  "legalSources": null  // ODER {statutes: [...], caselaw: [...]} - siehe RECHTSQUELLEN-AUSWAHL oben' : ''}
+  "marketComparison": null${hasLegalCandidates ? ',\n  "legalSources": null  // ODER {statutes: [...], caselaw: [...]} - siehe RECHTSQUELLEN-AUSWAHL oben' : ''}
+}
+
+PFLICHT für marketComparison (Trust-Anker):
+Liefere marketComparison NUR wenn EINE dieser Bedingungen zutrifft:
+a) Du kannst einen anwendbaren § aus legalSources zitieren mit konkretem Marktbezug
+   (z.B. § 309 Nr. 7 BGB → "Klausel nach § 309 Nr. 7 BGB nicht marktüblich, weil...")
+b) Du kennst KONKRETE etablierte Marktstandards für genau diesen Klauseltyp MIT ZAHLEN
+   (z.B. "14 Tage Widerruf bei Verbraucherverträgen", "30 Tage Zahlungsziel B2B", "3 Monatskaltmieten Kaution")
+
+Sonst: marketComparison = null (Section verschwindet im Frontend).
+Lieber ehrlich keinen Marktvergleich liefern als einen geratenen.
+Wenn doch Object: marketRange MUSS konkrete Zahlen/Fristen/Paragrafen-Verweise enthalten — keine vagen Aussagen.
+Format wenn nicht null:
+{
+  "isStandard": true|false,
+  "marketRange": "Konkrete Marktdaten mit Zahlen ODER § XYZ-Verweis",
+  "deviation": "Wie weicht DIESE Klausel davon ab"
 }
 
 PFLICHT für betterAlternative (Qualitäts-Anker):

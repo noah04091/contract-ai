@@ -1570,13 +1570,19 @@ router.post(
           transformed.betterAlternative = null;
         }
 
-        // MarketComparison
-        if (transformed.marketComparison) {
+        // MarketComparison — marketRange-Pflicht (sonst null, verhindert leere/vague Section)
+        if (
+          transformed.marketComparison &&
+          typeof transformed.marketComparison.marketRange === 'string' &&
+          transformed.marketComparison.marketRange.trim().length > 0
+        ) {
           transformed.marketComparison = {
             isStandard: Boolean(transformed.marketComparison.isStandard),
-            marketRange: transformed.marketComparison.marketRange || '',
+            marketRange: transformed.marketComparison.marketRange,
             deviation: transformed.marketComparison.deviation || ''
           };
+        } else {
+          transformed.marketComparison = null;
         }
 
         return transformed;
