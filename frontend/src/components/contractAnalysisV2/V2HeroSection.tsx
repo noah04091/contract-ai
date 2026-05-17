@@ -99,18 +99,29 @@ function formatPercent(v: number | string | null | undefined): string {
   return "";
 }
 
+// Backend setzt einen technischen Enum-Marker als top-level `documentType`
+// (CONTRACT/INVOICE/RECEIPT/FINANCIAL_DOCUMENT/TABLE_DOCUMENT/UNKNOWN). Diese
+// Werte sind interne Detector-Outputs — niemals user-facing zeigen. Sie können
+// bei Mis-Klassifikation auch zu Pillen wie "TABLE_DOCUMENT" und Icon-
+// Abkürzungen wie "TAB" führen, was Verwirrung erzeugt.
+const BACKEND_DOC_TYPE_MARKERS = /^(CONTRACT|INVOICE|RECEIPT|FINANCIAL_DOCUMENT|TABLE_DOCUMENT|UNKNOWN)$/i;
+function isBackendDocTypeMarker(s: string | null | undefined): boolean {
+  return !!s && BACKEND_DOC_TYPE_MARKERS.test(s);
+}
+
 function buildHeroTitle(d: AnalysisData): string {
-  if (d.analysisMessage) return d.analysisMessage;
-  const rawDocType = d.documentCharacterization?.description || d.documentType || "Vertrag";
-  const cleanDocType = cleanOcrSpacing(rawDocType)
-    .replace(/^(aktiver,?\s*beidseitig\s*unterzeichneter\s*)/i, "")
-    .replace(/\s+über\s+.*/i, "")
-    .substring(0, 60);
+  // analysisMessage ist eine interne Backend-Strategy-Message (z.B. "Erweiterte
+  // Tabellenanalyse" bei Mis-Klassifikation als TABLE_DOCUMENT) — kein User-
+  // facing Titel. Wir bauen den Titel stattdessen aus dem sauberen DocType-
+  // Label + Score-Variante.
+  const cleanDocType = pickDocTypeLabel(d);
   if (d.contractScore == null) return `${cleanDocType} — Bewertung steht aus`;
-  if (d.contractScore >= 85) return `Sehr fair gestalteter ${cleanDocType}`;
-  if (d.contractScore >= 70) return `Solider ${cleanDocType} mit kleinen Stellen zum Verhandeln`;
-  if (d.contractScore >= 50) return `${cleanDocType} mit deutlichem Verbesserungsbedarf`;
-  return `Kritischer ${cleanDocType} — sorgfältig prüfen vor Unterschrift`;
+  // Genus-agnostische Templates: "Vertrag" (m) und "Vereinbarung" (f) sollen
+  // beide grammatikalisch sauber passen → Adjektiv hinter Substantiv.
+  if (d.contractScore >= 85) return `${cleanDocType} — sehr fair gestaltet`;
+  if (d.contractScore >= 70) return `${cleanDocType} — solide, mit kleinen Stellen zum Verhandeln`;
+  if (d.contractScore >= 50) return `${cleanDocType} — deutlicher Verbesserungsbedarf`;
+  return `${cleanDocType} — kritisch, sorgfältig prüfen vor Unterschrift`;
 }
 
 function truncateAtWord(s: string, max = 280): string {
@@ -148,13 +159,15 @@ function pickDocTypeLabel(d: AnalysisData): string {
     if (cleanDesc.length > 0 && cleanDesc.length <= 40) return cleanDesc;
   }
   const docTypeRaw = d.documentCharacterization?.documentType;
-  if (docTypeRaw) {
+  if (docTypeRaw && !isBackendDocTypeMarker(docTypeRaw)) {
     const cleaned = cleanOcrSpacing(docTypeRaw);
     if (cleaned.length <= 40) return cleaned;
   }
-  // 'UNKNOWN' wird vom Backend gesetzt, wenn der Typ nicht zuordenbar war — nicht anzeigen
+  // Backend-Enum-Marker (CONTRACT/INVOICE/RECEIPT/FINANCIAL_DOCUMENT/
+  // TABLE_DOCUMENT/UNKNOWN) sind interne Tech-Strings und werden niemals
+  // user-facing gezeigt → Fallback "Vertrag".
   const fallback = d.documentType;
-  if (!fallback || /^unknown$/i.test(fallback)) return "Vertrag";
+  if (!fallback || isBackendDocTypeMarker(fallback)) return "Vertrag";
   return fallback;
 }
 
@@ -280,7 +293,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
   // Counts für Hero-Stats
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
-  const fristCount = Array.isArray(d.fristHinweise) ? d.fristHinweise.length : 0;
+  // Termin-Count = importantDates (Vertragsdaten aus Hauptanalyse). Bewusst NICHT
+  // fristHinweise (Date-Hunt universelle Frist-Hinweise) — die ist oft 0 obwohl
+  // unten in der Termine-Sektion echte Daten stehen, was für User inkonsistent
+  // wirkt. Wir nutzen genau die Quelle, die unten in der Sektion sichtbar ist.
+  const terminCount = Array.isArray(d.importantDates) ? d.importantDates.length : 0;
   const recoCount = Array.isArray(d.recommendations) ? d.recommendations.length : 0;
   const tsfCount = Array.isArray(d.typeSpecificFindings) ? d.typeSpecificFindings.length : 0;
 
@@ -324,15 +341,20 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const conf = isMeaningfulPercent(d.confidence) ? formatPercent(d.confidence) : "";
   const qual = isMeaningfulPercent(d.qualityScore) ? formatPercent(d.qualityScore) : "";
 
-  // File-Type-Icon-Text — 'UNKNOWN' nicht als 'UNK' anzeigen, lieber Datei-Endung
+  // File-Type-Icon-Text — Backend-Enum-Marker (z.B. "TABLE_DOCUMENT" → "TAB",
+  // "INVOICE" → "INV") sind interne Tech-Marker. Statt die abzukürzen lieber
+  // die Dateiendung (PDF/DOCX) zeigen — die ist für User aussagekräftig.
   const dt = d.documentType;
   const fileExt = (fileName.match(/\.([a-z0-9]{1,4})$/i)?.[1] || "PDF").toUpperCase();
-  const fileIconText = (!dt || /^unknown$/i.test(dt) ? fileExt : dt).substring(0, 3).toUpperCase();
+  const fileIconText = (!dt || isBackendDocTypeMarker(dt) ? fileExt : dt).substring(0, 3).toUpperCase();
   const docTypeLabel = pickDocTypeLabel(d);
 
-  // Banner-Headline
-  const bannerHead = d.analysisMessage
-    || (d.lawyerLevelAnalysis ? "Juristische Tiefenanalyse abgeschlossen" : "Analyse abgeschlossen");
+  // Banner-Headline — analysisMessage (Backend-Strategy-Marker) wird hier
+  // bewusst nicht verwendet, weil er bei Mis-Klassifikation irreführend wird
+  // ("Erweiterte Tabellenanalyse" für einen NDA).
+  const bannerHead = d.lawyerLevelAnalysis
+    ? "Juristische Tiefenanalyse abgeschlossen"
+    : "Analyse abgeschlossen";
 
   return (
     <>
@@ -589,7 +611,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               </div>
               <div className={styles.hsItem}>
                 <span className={`${styles.hsDot} ${styles.hsDotAmber}`} />
-                <strong>{fristCount}</strong>&nbsp;{fristCount === 1 ? "Frist" : "Fristen"}
+                <strong>{terminCount}</strong>&nbsp;{terminCount === 1 ? "Termin" : "Termine"}
               </div>
               {tsfCount > 0 ? (
                 <div className={styles.hsItem}>
