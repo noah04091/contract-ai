@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, X } from "lucide-react";
+import { FileText } from "lucide-react";
 import styles from "./V2PdfViewerModal.module.css";
 
 // Vollbild-Modal zur Vorschau der hochgeladenen Original-PDF.
@@ -117,7 +117,7 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
             onClick={onClose}
             aria-label="PDF-Vorschau schließen"
           >
-            <X size={18} color="#475569" aria-hidden="true" />
+            <span className={styles.closeBtnIcon} aria-hidden="true">×</span>
           </button>
         </div>
         <div className={styles.body}>
