@@ -631,6 +631,25 @@
   flex: 1;
   max-height: 340px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.listContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.listContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.listContainer::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.listContainer::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .listItem {
