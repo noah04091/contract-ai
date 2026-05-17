@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { FileText, X } from "lucide-react";
 import styles from "./V2PdfViewerModal.module.css";
 
@@ -89,7 +90,10 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
 
   if (!isOpen) return null;
 
-  return (
+  // Render via Portal direkt unter document.body. Damit liegt das Modal
+  // außerhalb aller App-Container-Stacking-Contexts (z.B. transform-/filter-
+  // basierte Stacking-Contexts) und überdeckt zuverlässig die globale Navbar.
+  return createPortal(
     <div
       className={styles.backdrop}
       onClick={onClose}
@@ -136,6 +140,7 @@ export default function V2PdfViewerModal({ contractId, fileName, isOpen, onClose
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
