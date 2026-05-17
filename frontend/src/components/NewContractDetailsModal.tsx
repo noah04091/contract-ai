@@ -2105,6 +2105,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               data={data}
               fileName={contract.name || 'Vertrag'}
               isInitialResult={true}
+              contractId={contract._id ? String(contract._id) : undefined}
             />
             <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
             {contract._id && (

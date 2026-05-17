@@ -1056,6 +1056,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                     analyzing={analyzing}
                     onReanalyze={() => handleAnalyze(true)}
                     onReset={handleReset}
+                    contractId={(result?.originalContractId || initialResult?.originalContractId || propContractId) as string | undefined}
                     usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
                     userPlan={user?.subscriptionPlan}
                   />

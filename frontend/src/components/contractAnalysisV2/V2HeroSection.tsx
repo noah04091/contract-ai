@@ -10,10 +10,11 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare, Eye } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
+import V2PdfViewerModal from "./V2PdfViewerModal";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
 type AnalysisData = {
@@ -53,6 +54,9 @@ interface Props {
   analyzing?: boolean;
   onReanalyze?: () => void;
   onReset?: () => void;
+  // contractId aus dem Parent — wenn vorhanden, wird der "PDF anzeigen"-Button
+  // gezeigt. Backend liefert via /api/s3/view?contractId=X die signed S3-URL.
+  contractId?: string | null;
   // Conversion-Banner inline im Hero (Free→Business/Business→Enterprise)
   usage?: { analysisCount?: number; limit?: number; plan?: string } | null;
   userPlan?: string | null;
@@ -171,13 +175,14 @@ function pickDocTypeLabel(d: AnalysisData): string {
   return fallback;
 }
 
-export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, usage, userPlan }: Props) {
+export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, usage, userPlan }: Props) {
   const d = data;
   const score = d.contractScore;
   const variant = getScoreVariant(score);
   const [laymanMode, setLaymanMode] = useState(false);
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
 
   // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
   // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
@@ -406,8 +411,20 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
         </div>
-        {(onReanalyze || onReset) && (
+        {(onReanalyze || onReset || contractId) && (
           <div className={styles.fcActions}>
+            {contractId && (
+              <button
+                type="button"
+                className={`${styles.fcBtn} ${styles.fcBtnInfo}`}
+                onClick={() => setPdfViewerOpen(true)}
+                disabled={analyzing}
+                aria-label="Original-PDF in Vorschau anzeigen"
+              >
+                <Eye size={14} aria-hidden="true" />
+                <span>PDF anzeigen</span>
+              </button>
+            )}
             {canReanalyze && onReanalyze && (
               <button
                 type="button"
@@ -760,6 +777,16 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         confidence={d.confidence}
         qualityScore={d.qualityScore}
       />
+
+      {/* PDF-Viewer-Modal — öffnet beim Klick auf "PDF anzeigen" */}
+      {contractId && (
+        <V2PdfViewerModal
+          contractId={contractId}
+          fileName={fileName}
+          isOpen={pdfViewerOpen}
+          onClose={() => setPdfViewerOpen(false)}
+        />
+      )}
     </>
   );
 }

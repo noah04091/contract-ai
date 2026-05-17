@@ -73,6 +73,16 @@
 }
 .fcBtnPrimary:hover { background: #0ea271; }
 
+/* Info-Variante (blau, dezent) — z.B. für "PDF anzeigen". Bewusst hellblauer
+   Fond statt Solid-Blau, damit der grüne fcBtnPrimary "Erneut analysieren"
+   als primäre Aktion klar dominiert. */
+.fcBtnInfo {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+.fcBtnInfo:hover { background: #dbeafe; border-color: #93c5fd; }
+
 .analysisCard {
   /* Box-Soup entzaubert: analysisCard ist nur noch innere Sektion, der äußere
      v2UnifiedContainer trägt Border/Shadow/Radius. */

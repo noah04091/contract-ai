@@ -1,0 +1,158 @@
+/* V2 PDF-Viewer-Modal — Vollbild-Overlay für die hochgeladene Original-PDF.
+   Nutzt browser-natives PDF-Rendering via iframe (kein extra Lib). Robust
+   gegenüber allen modernen Browsern; Browser-eigene PDF-Toolbar (Zoom,
+   Print, Download) wird automatisch angeboten. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 150ms ease;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 1200px;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: scaleIn 200ms ease;
+}
+
+.header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fafbfc;
+  flex-shrink: 0;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.titleIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  padding: 6px;
+  color: #64748b;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease, color 150ms ease;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.closeBtn:hover { background: #f1f5f9; color: #0f172a; }
+.closeBtn:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+.body {
+  flex: 1;
+  position: relative;
+  background: #f6f8fb;
+  min-height: 0;
+}
+
+.iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.stateCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #475569;
+  font-size: 14px;
+  text-align: center;
+  padding: 24px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.errorTitle {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+.errorHint {
+  color: #64748b;
+  font-size: 12.5px;
+  max-width: 360px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .backdrop { padding: 0; }
+  .modal { border-radius: 0; max-width: 100%; height: 100vh; }
+  .header { padding: 10px 14px; }
+  .title { font-size: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal { animation: none !important; }
+  .spinner { animation: none !important; }
+}
