@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -143,6 +143,7 @@ type FilterTab = "all" | "open" | "completed" | "cancelled" | "archived";
 
 export default function Envelopes() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -302,6 +303,21 @@ export default function Envelopes() {
     loadEnvelopes(true, 0, abortController.signal);
     return () => abortController.abort();
   }, [activeFilter, debouncedSearchQuery, sortBy, statusFilter]);
+
+  // 🆕 Handle ?view=<id> URL-Param (Dashboard-Klick auf "Ausstehende Signaturen")
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const envelopeIdToView = params.get('view');
+
+    if (envelopeIdToView && envelopes.length > 0) {
+      const envelope = envelopes.find(e => e._id === envelopeIdToView);
+      if (envelope && (!selectedEnvelope || selectedEnvelope._id !== envelope._id)) {
+        setSelectedEnvelope(envelope);
+        // URL säubern damit's beim Re-Render nicht erneut greift
+        window.history.replaceState({}, document.title, location.pathname);
+      }
+    }
+  }, [location.search, envelopes, selectedEnvelope, location.pathname]);
 
   const loadEnvelopes = useCallback(async (isInitial: boolean = false, newOffset: number = 0, signal?: AbortSignal) => {
     try {

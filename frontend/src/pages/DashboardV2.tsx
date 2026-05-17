@@ -1006,10 +1006,10 @@ export default function DashboardV2() {
                 <div
                   key={envelope._id}
                   className={styles.featureItem}
-                  onClick={() => navigate('/envelopes')}
+                  onClick={() => navigate(`/envelopes?view=${envelope._id}`)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && navigate('/envelopes')}
+                  onKeyDown={(e) => e.key === 'Enter' && navigate(`/envelopes?view=${envelope._id}`)}
                 >
                   <PenTool size={14} />
                   <span>{fixUtf8Display(envelope.title)}</span>
