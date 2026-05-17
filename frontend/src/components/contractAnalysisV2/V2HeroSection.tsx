@@ -514,14 +514,17 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   strokeDashoffset={offset.toFixed(2)}
                   transform="rotate(-90 80 80)"
                 />
-                {/* Score-Zahl direkt IM SVG — robust gegen CSS-Module-Mismatch.
-                    Zusätzlich zum HTML-Overlay weiter unten, damit auch bei Cache-
-                    Issues die Zahl sichtbar ist. */}
+                {/* Score-Zahl + "VON 100" als optische Gruppe.
+                    Score y=74 statt 80 + VON-100 y=104 statt 112 verschiebt
+                    die Gruppe leicht nach oben, damit sie visuell zentriert im
+                    Kreis sitzt (sonst wirkt sie durch das Label darunter zu tief).
+                    dominantBaseline=middle ist robuster über Browser hinweg als
+                    central für Zahlen-Glyphen ohne Descender. */}
                 <text
                   x="80"
-                  y="80"
+                  y="74"
                   textAnchor="middle"
-                  dominantBaseline="central"
+                  dominantBaseline="middle"
                   fill="#0f172a"
                   fontSize="44"
                   fontWeight="700"
@@ -532,9 +535,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </text>
                 <text
                   x="80"
-                  y="112"
+                  y="104"
                   textAnchor="middle"
-                  dominantBaseline="central"
+                  dominantBaseline="middle"
                   fill="#94a3b8"
                   fontSize="10"
                   fontWeight="600"

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   FileText, AlertCircle, CheckCircle, Loader,
   Download, BarChart3, RefreshCw, WifiOff, Clock,
@@ -367,7 +368,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
     const contractId = analysisData?.originalContractId || propContractId;
 
     if (!contractId) {
-      alert('Kein Vertrag für das Gutachten gefunden. Bitte zuerst speichern.');
+      toast.error('Kein Vertrag für das Gutachten gefunden. Bitte zuerst speichern.');
       return;
     }
 
@@ -418,7 +419,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
     } catch (error) {
       console.error('❌ Gutachten-PDF fehlgeschlagen:', error);
       const msg = error instanceof Error ? error.message : 'Unbekannter Fehler';
-      alert(`Gutachten-PDF konnte nicht erstellt werden.\n\n${msg}`);
+      toast.error(`Gutachten-PDF konnte nicht erstellt werden: ${msg}`);
     } finally {
       setGeneratingPdf(false);
     }
