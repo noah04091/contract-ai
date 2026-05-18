@@ -90,7 +90,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
-  const [decisionsCopied, setDecisionsCopied] = useState<boolean>(false);
+
+  // Decision-Filter (vom Banner getriggert, wird an ClauseList als Prop weitergereicht)
+  const [decisionFilter, setDecisionFilter] = useState<'all' | 'accepted' | 'negotiate' | 'rejected' | 'open'>('all');
 
   // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
   const [hasPdfClicked, setHasPdfClicked] = useState<boolean>(() => {
@@ -385,49 +387,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       total: values.length
     };
   }, [clauseDecisions]);
-
-  // Copy all decisions summary to clipboard
-  const copyDecisionsSummary = useCallback(() => {
-    if (!clauses) return;
-    try {
-      const decisions = clauseDecisions;
-      if (Object.keys(decisions).length === 0) return;
-
-      const groups: Record<string, string[]> = { accepted: [], negotiate: [], rejected: [] };
-      for (const [clauseId, decision] of Object.entries(decisions)) {
-        const clause = clauses.find(c => c.id === clauseId);
-        let name = '';
-        if (clause?.number && clause?.title) {
-          name = `${clause.number} – ${clause.title}`;
-        } else if (clause?.title) {
-          name = clause.title;
-        } else if (clause?.number) {
-          name = clause.number;
-        } else if (clause) {
-          name = clause.text.substring(0, 60).trim() + '...';
-        } else {
-          continue; // Skip decisions for clauses that no longer exist
-        }
-        if (groups[decision]) groups[decision].push(name);
-      }
-
-      const sections: string[] = [];
-      if (groups.rejected.length > 0) {
-        sections.push(`Abgelehnt (${groups.rejected.length}):\n${groups.rejected.map(n => `  - ${n}`).join('\n')}`);
-      }
-      if (groups.negotiate.length > 0) {
-        sections.push(`Verhandeln (${groups.negotiate.length}):\n${groups.negotiate.map(n => `  - ${n}`).join('\n')}`);
-      }
-      if (groups.accepted.length > 0) {
-        sections.push(`Akzeptiert (${groups.accepted.length}):\n${groups.accepted.map(n => `  - ${n}`).join('\n')}`);
-      }
-
-      const summary = `Klausel-Entscheidungen — ${contractName}\n\n${sections.join('\n\n')}`;
-      navigator.clipboard.writeText(summary);
-      setDecisionsCopied(true);
-      setTimeout(() => setDecisionsCopied(false), 2000);
-    } catch { /* ignore */ }
-  }, [clauses, contractName, clauseDecisions]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
@@ -1973,27 +1932,38 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           {decisionSummary && decisionSummary.total > 0 && (
             <div className={styles.decisionSummaryBanner}>
               {decisionSummary.accepted > 0 && (
-                <span className={styles.decisionSummaryItem} data-type="accepted">
+                <button
+                  type="button"
+                  className={`${styles.decisionSummaryItem} ${decisionFilter === 'accepted' ? styles.decisionSummaryItemActive : ''}`}
+                  data-type="accepted"
+                  onClick={() => setDecisionFilter(decisionFilter === 'accepted' ? 'all' : 'accepted')}
+                  title="Akzeptierte Klauseln filtern"
+                >
                   ✅ {decisionSummary.accepted}
-                </span>
+                </button>
               )}
               {decisionSummary.negotiate > 0 && (
-                <span className={styles.decisionSummaryItem} data-type="negotiate">
+                <button
+                  type="button"
+                  className={`${styles.decisionSummaryItem} ${decisionFilter === 'negotiate' ? styles.decisionSummaryItemActive : ''}`}
+                  data-type="negotiate"
+                  onClick={() => setDecisionFilter(decisionFilter === 'negotiate' ? 'all' : 'negotiate')}
+                  title="Zu verhandelnde Klauseln filtern"
+                >
                   💬 {decisionSummary.negotiate}
-                </span>
+                </button>
               )}
               {decisionSummary.rejected > 0 && (
-                <span className={styles.decisionSummaryItem} data-type="rejected">
+                <button
+                  type="button"
+                  className={`${styles.decisionSummaryItem} ${decisionFilter === 'rejected' ? styles.decisionSummaryItemActive : ''}`}
+                  data-type="rejected"
+                  onClick={() => setDecisionFilter(decisionFilter === 'rejected' ? 'all' : 'rejected')}
+                  title="Abgelehnte Klauseln filtern"
+                >
                   ❌ {decisionSummary.rejected}
-                </span>
+                </button>
               )}
-              <button
-                className={styles.decisionCopyBtn}
-                onClick={copyDecisionsSummary}
-                title="Alle Entscheidungen kopieren"
-              >
-                {decisionsCopied ? '✓' : '📋'}
-              </button>
             </div>
           )}
         </div>
@@ -2219,6 +2189,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 onRetry={() => parseContract(contractId, true)}
                 clauseDecisions={clauseDecisions}
                 onSetDecision={handleSetDecision}
+                decisionFilter={decisionFilter}
               />
             </div>
           ) : (

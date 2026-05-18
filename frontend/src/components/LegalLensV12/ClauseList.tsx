@@ -95,6 +95,8 @@ interface ClauseListProps {
   // Shared Decision State (hochgezogen — Banner und Liste lesen aus selben Quellen)
   clauseDecisions?: Record<string, 'accepted' | 'negotiate' | 'rejected'>;
   onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
+  // Decision-Filter wird vom Banner im Parent gesetzt
+  decisionFilter?: 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open';
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -113,7 +115,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   contractId = '',
   onRetry,
   clauseDecisions: clauseDecisionsProp,
-  onSetDecision
+  onSetDecision,
+  decisionFilter: decisionFilterProp
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -137,9 +140,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   type RiskFilter = 'all' | 'high' | 'medium' | 'low';
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
 
-  // Decision-Filter (Stufe 3) — filtert nach User-Markierung
-  type DecisionFilter = 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open';
-  const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('all');
+  // Decision-Filter kommt aus Parent (LegalLensViewer) — Banner ist der Trigger
+  const decisionFilter = decisionFilterProp || 'all';
 
   // Compact-Modus: Nur Klausel-Header sichtbar, Klick öffnet (global, localStorage-persistiert)
   const [compactMode, setCompactMode] = useState<boolean>(() => {
@@ -288,16 +290,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
     };
   }, [safeClauses]);
 
-  // Decision-Filter Counts — basieren auf shared clauseDecisions
-  const decisionCounts = useMemo(() => {
-    const analyzable = safeClauses.filter(c => !c.nonAnalyzable);
-    const accepted = analyzable.filter(c => clauseDecisions[c.id] === 'accepted').length;
-    const negotiate = analyzable.filter(c => clauseDecisions[c.id] === 'negotiate').length;
-    const rejected = analyzable.filter(c => clauseDecisions[c.id] === 'rejected').length;
-    const marked = accepted + negotiate + rejected;
-    const open = analyzable.length - marked;
-    return { accepted, negotiate, rejected, open, total: marked };
-  }, [safeClauses, clauseDecisions]);
 
   // ✅ Section Grouping: Collapsible Sections für große Verträge (15+ Klauseln)
   const collapsedKey = contractId ? `legalLens_sections_${contractId}` : 'legalLens_sections';
@@ -688,56 +680,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
             </button>
           )}
         </div>
-
-        {/* Decision-Filter (Stufe 3) — nur sichtbar wenn der User mind. 1 Markierung gesetzt hat */}
-        {decisionCounts.total > 0 && (
-          <div className={styles.filterRowDecisions}>
-            <span className={styles.filterRowLabel}>Markierung:</span>
-            <button
-              className={`${styles.filterTab} ${decisionFilter === 'all' ? styles.filterTabActive : ''}`}
-              onClick={() => setDecisionFilter('all')}
-              title="Alle Markierungen anzeigen"
-            >
-              Alle
-            </button>
-            {decisionCounts.accepted > 0 && (
-              <button
-                className={`${styles.filterTab} ${styles.filterTabAccepted} ${decisionFilter === 'accepted' ? styles.filterTabActive : ''}`}
-                onClick={() => setDecisionFilter(decisionFilter === 'accepted' ? 'all' : 'accepted')}
-                title="Akzeptierte Klauseln"
-              >
-                ✅ {decisionCounts.accepted}
-              </button>
-            )}
-            {decisionCounts.negotiate > 0 && (
-              <button
-                className={`${styles.filterTab} ${styles.filterTabNegotiate} ${decisionFilter === 'negotiate' ? styles.filterTabActive : ''}`}
-                onClick={() => setDecisionFilter(decisionFilter === 'negotiate' ? 'all' : 'negotiate')}
-                title="Zu verhandelnde Klauseln"
-              >
-                💬 {decisionCounts.negotiate}
-              </button>
-            )}
-            {decisionCounts.rejected > 0 && (
-              <button
-                className={`${styles.filterTab} ${styles.filterTabRejected} ${decisionFilter === 'rejected' ? styles.filterTabActive : ''}`}
-                onClick={() => setDecisionFilter(decisionFilter === 'rejected' ? 'all' : 'rejected')}
-                title="Abgelehnte Klauseln"
-              >
-                ❌ {decisionCounts.rejected}
-              </button>
-            )}
-            {decisionCounts.open > 0 && (
-              <button
-                className={`${styles.filterTab} ${styles.filterTabOpen} ${decisionFilter === 'open' ? styles.filterTabActive : ''}`}
-                onClick={() => setDecisionFilter(decisionFilter === 'open' ? 'all' : 'open')}
-                title="Noch nicht markierte Klauseln"
-              >
-                ⚪ {decisionCounts.open}
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Keyboard Shortcut Hint — collapsible */}

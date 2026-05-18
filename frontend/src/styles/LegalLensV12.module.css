@@ -4519,12 +4519,22 @@
 }
 
 .decisionSummaryItem {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 1px 6px;
+  padding: 2px 7px;
+  border: 1.5px solid transparent;
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.decisionSummaryItem:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .decisionSummaryItem[data-type="accepted"] {
@@ -4542,16 +4552,21 @@
   background: #fef2f2;
 }
 
-.decisionCopyBtn {
-  padding: 2px 4px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 12px;
-  opacity: 0.5;
-  transition: opacity 0.15s;
+/* Active-State: aktiver Filter wird mit farbigem Ring hervorgehoben */
+.decisionSummaryItem[data-type="accepted"].decisionSummaryItemActive {
+  border-color: #16a34a;
+  background: #dcfce7;
 }
-.decisionCopyBtn:hover { opacity: 1; }
+
+.decisionSummaryItem[data-type="negotiate"].decisionSummaryItemActive {
+  border-color: #d97706;
+  background: #fef3c7;
+}
+
+.decisionSummaryItem[data-type="rejected"].decisionSummaryItemActive {
+  border-color: #dc2626;
+  background: #fee2e2;
+}
 
 /* ===== CLAUSE NAV BAR (Analysis Panel) ===== */
 .clauseNavBar {
@@ -5383,44 +5398,6 @@
 .filterCount {
   font-size: 10px;
   opacity: 0.7;
-}
-
-/* ===== DECISION-FILTER-TABS (Stufe 3) — Filter nach User-Markierung ===== */
-.filterRowDecisions {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-
-.filterRowLabel {
-  font-size: 10px;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-right: 4px;
-}
-
-.filterTabAccepted.filterTabActive {
-  background: #16a34a !important;
-  border-color: #16a34a !important;
-}
-
-.filterTabNegotiate.filterTabActive {
-  background: #d97706 !important;
-  border-color: #d97706 !important;
-}
-
-.filterTabRejected.filterTabActive {
-  background: #dc2626 !important;
-  border-color: #dc2626 !important;
-}
-
-.filterTabOpen.filterTabActive {
-  background: #64748b !important;
-  border-color: #64748b !important;
 }
 
 /* ===== STICKY-FOOTER IN ANALYSIS-PANEL (Stufe 4) — Entscheidungs-Buttons ===== */
