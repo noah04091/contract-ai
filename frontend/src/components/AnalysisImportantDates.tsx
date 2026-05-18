@@ -396,9 +396,18 @@ export default function AnalysisImportantDates({
           <p className={styles.subtitle}>
             {loading
               ? "Termine werden geladen..."
-              : sortedEvents.length === 0
-              ? "Noch keine Termine hinterlegt"
-              : `${sortedEvents.length} Termin${sortedEvents.length !== 1 ? "e" : ""} für diesen Vertrag`}
+              : (() => {
+                  // Subtitle zeigt beide Quellen sichtbar: konkrete Termine (sortedEvents)
+                  // + Frist-Hinweise (fristHinweise). Bei Rahmenverträgen sind oft 0-2
+                  // konkrete Datums, aber viele Frist-Hinweise — der User soll die
+                  // gesamte termin-relevante Menge sofort sehen.
+                  const fhCount = fristHinweise.length;
+                  const evCount = sortedEvents.length;
+                  if (evCount === 0 && fhCount === 0) return "Noch keine Termine hinterlegt";
+                  const evPart = `${evCount} Termin${evCount !== 1 ? "e" : ""}`;
+                  if (fhCount === 0) return `${evPart} für diesen Vertrag`;
+                  return `${evPart} + ${fhCount} Frist${fhCount !== 1 ? "en" : ""} für diesen Vertrag`;
+                })()}
           </p>
         </div>
         <button

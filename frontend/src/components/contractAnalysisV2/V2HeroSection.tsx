@@ -298,11 +298,14 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
   // Counts für Hero-Stats
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
-  // Termin-Count = importantDates (Vertragsdaten aus Hauptanalyse). Bewusst NICHT
-  // fristHinweise (Date-Hunt universelle Frist-Hinweise) — die ist oft 0 obwohl
-  // unten in der Termine-Sektion echte Daten stehen, was für User inkonsistent
-  // wirkt. Wir nutzen genau die Quelle, die unten in der Sektion sichtbar ist.
-  const terminCount = Array.isArray(d.importantDates) ? d.importantDates.length : 0;
+  // Termin-Count = importantDates (konkrete Kalenderdaten) + fristHinweise
+  // (universelle Frist-Hinweise aus Date Hunt). Bei Rahmenverträgen gibt's
+  // oft wenige konkrete Datums, aber viele Frist-Hinweise — der User soll die
+  // gesamte Menge an termin-relevanten Items im Hero sehen, nicht nur einen
+  // Teil. Beide Quellen werden unten in der Termine-Sektion gerendert.
+  const importantDatesCount = Array.isArray(d.importantDates) ? d.importantDates.length : 0;
+  const fristHinweiseCount = Array.isArray(d.fristHinweise) ? d.fristHinweise.length : 0;
+  const terminCount = importantDatesCount + fristHinweiseCount;
   const recoCount = Array.isArray(d.recommendations) ? d.recommendations.length : 0;
   const tsfCount = Array.isArray(d.typeSpecificFindings) ? d.typeSpecificFindings.length : 0;
 
@@ -628,7 +631,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               </div>
               <div className={styles.hsItem}>
                 <span className={`${styles.hsDot} ${styles.hsDotAmber}`} />
-                <strong>{terminCount}</strong>&nbsp;{terminCount === 1 ? "Termin" : "Termine"}
+                <strong>{terminCount}</strong>&nbsp;{terminCount === 1 ? "Termin / Frist" : "Termine & Fristen"}
               </div>
               {tsfCount > 0 ? (
                 <div className={styles.hsItem}>

@@ -80,7 +80,14 @@ type TabId = "summary" | "risks" | "strengths" | "recos" | "pilot" | "suggestion
 
 function asArray<T>(v: T[] | T | null | undefined): T[] {
   if (v == null) return [];
-  return Array.isArray(v) ? v : [v];
+  const arr = Array.isArray(v) ? v : [v];
+  // Leere Strings/Whitespace-only filtern, sonst rendert das Frontend einen
+  // leeren Bullet-Point. Tritt auf wenn GPT z.B. summary: "" (statt undefined)
+  // liefert — der Empty-State-Check `length === 0` würde sonst nicht greifen.
+  return arr.filter(item => {
+    if (typeof item === "string") return item.trim().length > 0;
+    return item != null;
+  }) as T[];
 }
 
 function getInsightSeverityClass(item: InsightItem): { card: string; icon: string; tag: string | null; tagLabel: string } {
