@@ -4876,27 +4876,6 @@
 }
 .annotationCancelBtn:hover { color: #475569; }
 
-/* ===== BATCH ACCEPT INLINE ===== */
-.batchAcceptInline {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px 7px;
-  border: 1px solid #d1fae5;
-  border-radius: 20px;
-  background: #ecfdf5;
-  font-size: 10px;
-  font-weight: 600;
-  color: #059669;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.batchAcceptInline:hover {
-  background: #d1fae5;
-  border-color: #059669;
-}
-
 /* ===== BATCH ACTIONS (legacy) ===== */
 .batchActions {
   display: flex;

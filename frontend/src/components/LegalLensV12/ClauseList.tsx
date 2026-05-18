@@ -658,24 +658,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
               🟢 {filterCounts.low}
             </button>
           )}
-          {/* Inline batch accept */}
-          {filterCounts.low > 0 && Object.keys(clauseDecisions).length < filterCounts.all && (
-            <button
-              className={styles.batchAcceptInline}
-              onClick={() => {
-                const lowRisk = safeClauses.filter(c =>
-                  !c.nonAnalyzable &&
-                  (c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low') === 'low' &&
-                  !clauseDecisions[c.id]
-                );
-                if (lowRisk.length === 0) return;
-                lowRisk.forEach(c => setDecision(c.id, 'accepted'));
-              }}
-              title="Alle grünen Klauseln akzeptieren"
-            >
-              <Check size={10} /> Alle 🟢
-            </button>
-          )}
         </div>
       </div>
 
