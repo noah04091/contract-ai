@@ -92,6 +92,9 @@ interface ClauseListProps {
   focusMode?: boolean;
   contractId?: string;
   onRetry?: () => void;
+  // Shared Decision State (hochgezogen — Banner und Liste lesen aus selben Quellen)
+  clauseDecisions?: Record<string, 'accepted' | 'negotiate' | 'rejected'>;
+  onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -108,7 +111,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
   currentPerspective = 'contractor',
   focusMode = false,
   contractId = '',
-  onRetry
+  onRetry,
+  clauseDecisions: clauseDecisionsProp,
+  onSetDecision
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -144,70 +149,12 @@ const ClauseList: React.FC<ClauseListProps> = ({
     });
   }, []);
 
-  // Clause Decision Tracking — Server-First mit localStorage-Migration & Optimistic UI
+  // Clause Decisions kommen jetzt aus dem Parent (LegalLensViewer) — shared State zwischen Banner und Liste
   type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
-  const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
-  const [clauseDecisions, setClauseDecisions] = useState<Record<string, ClauseDecision>>(() => {
-    try {
-      const stored = localStorage.getItem(decisionsKey);
-      return stored ? JSON.parse(stored) : {};
-    } catch { return {}; }
-  });
-
-  // Sync mit Server: wenn progress.decisions vorhanden → übernehmen (Server gewinnt).
-  // Wenn Server leer aber localStorage gefüllt → einmalig migrieren.
-  const migrationDoneRef = useRef(false);
-  useEffect(() => {
-    if (!contractId || !progress) return;
-    const serverDecisions = progress.decisions || [];
-    if (serverDecisions.length > 0) {
-      // Server gewinnt → State und localStorage damit überschreiben
-      const next: Record<string, ClauseDecision> = {};
-      serverDecisions.forEach(d => { next[d.clauseId] = d.decision; });
-      setClauseDecisions(next);
-      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
-    } else if (!migrationDoneRef.current) {
-      // Server leer → falls localStorage Daten hat: migrieren
-      let local: Record<string, ClauseDecision> = {};
-      try { local = JSON.parse(localStorage.getItem(decisionsKey) || '{}'); } catch { /* ignore */ }
-      const entries = Object.entries(local);
-      if (entries.length > 0) {
-        migrationDoneRef.current = true;
-        const token = localStorage.getItem('token');
-        entries.forEach(([clauseId, decision]) => {
-          fetch(`/api/legal-lens/${contractId}/decision`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ clauseId, decision })
-          }).catch(() => { /* migration ist fire-and-forget, retry beim nächsten Set */ });
-        });
-      }
-    }
-  }, [progress, contractId, decisionsKey]);
-
+  const clauseDecisions = useMemo(() => clauseDecisionsProp || {}, [clauseDecisionsProp]);
   const setDecision = useCallback((clauseId: string, decision: ClauseDecision) => {
-    setClauseDecisions(prev => {
-      const next = { ...prev };
-      const newDecision = next[clauseId] === decision ? null : decision;
-      if (newDecision === null) {
-        delete next[clauseId];
-      } else {
-        next[clauseId] = newDecision;
-      }
-      // Lokal sofort (optimistic) + localStorage als Cache
-      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
-      // Backend-Sync (fire-and-forget mit Retry-Logik durch existierende withRetry-Patterns ist hier nicht eingebunden — Optimistic UI reicht)
-      if (contractId) {
-        const token = localStorage.getItem('token');
-        fetch(`/api/legal-lens/${contractId}/decision`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ clauseId, decision: newDecision })
-        }).catch(err => console.warn('[Legal Lens] Decision sync failed:', err));
-      }
-      return next;
-    });
-  }, [decisionsKey, contractId]);
+    if (onSetDecision) onSetDecision(clauseId, decision);
+  }, [onSetDecision]);
 
   // Clause Annotations (localStorage-persisted, scoped by contractId)
   const annotationsKey = contractId ? `legalLens_annotations_${contractId}` : 'legalLens_annotations';
@@ -708,12 +655,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   !clauseDecisions[c.id]
                 );
                 if (lowRisk.length === 0) return;
-                setClauseDecisions(prev => {
-                  const next = { ...prev };
-                  lowRisk.forEach(c => { next[c.id] = 'accepted'; });
-                  localStorage.setItem(decisionsKey, JSON.stringify(next));
-                  return next;
-                });
+                lowRisk.forEach(c => setDecision(c.id, 'accepted'));
               }}
               title="Alle grünen Klauseln akzeptieren"
             >

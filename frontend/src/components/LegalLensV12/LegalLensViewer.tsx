@@ -315,24 +315,68 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     documentGateInfo
   } = useLegalLens();
 
-  // Decision Summary — Server-First (progress.decisions) mit localStorage-Fallback
+  // Decision State — shared zwischen Banner (hier) und ClauseList (prop). Server-First mit Migration.
   const decisionsKey = contractId ? `legalLens_decisions_${contractId}` : 'legalLens_decisions';
-  const decisionSummary = useMemo(() => {
-    // Server-Decisions priorisieren falls vorhanden
-    const serverDecisions = progress?.decisions;
-    let values: string[] = [];
-    if (serverDecisions && serverDecisions.length > 0) {
-      values = serverDecisions.map(d => d.decision);
-    } else {
-      // Fallback auf localStorage (bis Migration durch ist oder offline)
-      try {
-        const stored = localStorage.getItem(decisionsKey);
-        if (stored) {
-          const decisions: Record<string, string> = JSON.parse(stored);
-          values = Object.values(decisions);
-        }
-      } catch { /* ignore */ }
+  type ClauseDecision = 'accepted' | 'negotiate' | 'rejected';
+  const [clauseDecisions, setClauseDecisionsState] = useState<Record<string, ClauseDecision>>(() => {
+    try {
+      const stored = localStorage.getItem(decisionsKey);
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
+  const migrationDoneRef = useRef(false);
+  useEffect(() => {
+    if (!contractId || !progress) return;
+    const serverDecisions = progress.decisions || [];
+    if (serverDecisions.length > 0) {
+      const next: Record<string, ClauseDecision> = {};
+      serverDecisions.forEach(d => { next[d.clauseId] = d.decision; });
+      setClauseDecisionsState(next);
+      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
+    } else if (!migrationDoneRef.current) {
+      let local: Record<string, ClauseDecision> = {};
+      try { local = JSON.parse(localStorage.getItem(decisionsKey) || '{}'); } catch { /* ignore */ }
+      const entries = Object.entries(local);
+      if (entries.length > 0) {
+        migrationDoneRef.current = true;
+        const token = localStorage.getItem('token');
+        entries.forEach(([clauseId, decision]) => {
+          fetch(`/api/legal-lens/${contractId}/decision`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ clauseId, decision })
+          }).catch(() => { /* fire-and-forget */ });
+        });
+      }
     }
+  }, [progress, contractId, decisionsKey]);
+
+  const handleSetDecision = useCallback((clauseId: string, decision: ClauseDecision) => {
+    setClauseDecisionsState(prev => {
+      const next = { ...prev };
+      const newDecision = next[clauseId] === decision ? null : decision;
+      if (newDecision === null) {
+        delete next[clauseId];
+      } else {
+        next[clauseId] = newDecision;
+      }
+      try { localStorage.setItem(decisionsKey, JSON.stringify(next)); } catch { /* ignore */ }
+      if (contractId) {
+        const token = localStorage.getItem('token');
+        fetch(`/api/legal-lens/${contractId}/decision`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ clauseId, decision: newDecision })
+        }).catch(err => console.warn('[Legal Lens] Decision sync failed:', err));
+      }
+      return next;
+    });
+  }, [decisionsKey, contractId]);
+
+  // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
+  const decisionSummary = useMemo(() => {
+    const values = Object.values(clauseDecisions);
     if (values.length === 0) return null;
     return {
       accepted: values.filter(v => v === 'accepted').length,
@@ -340,22 +384,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       rejected: values.filter(v => v === 'rejected').length,
       total: values.length
     };
-  }, [selectedClause, progress?.decisions, decisionsKey]);
+  }, [clauseDecisions]);
 
   // Copy all decisions summary to clipboard
   const copyDecisionsSummary = useCallback(() => {
     if (!clauses) return;
     try {
-      // Server-First: progress.decisions, sonst localStorage-Fallback
-      let decisions: Record<string, string> = {};
-      const serverDecisions = progress?.decisions;
-      if (serverDecisions && serverDecisions.length > 0) {
-        serverDecisions.forEach(d => { decisions[d.clauseId] = d.decision; });
-      } else {
-        const stored = localStorage.getItem(decisionsKey);
-        if (!stored) return;
-        decisions = JSON.parse(stored);
-      }
+      const decisions = clauseDecisions;
+      if (Object.keys(decisions).length === 0) return;
 
       const groups: Record<string, string[]> = { accepted: [], negotiate: [], rejected: [] };
       for (const [clauseId, decision] of Object.entries(decisions)) {
@@ -391,7 +427,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       setDecisionsCopied(true);
       setTimeout(() => setDecisionsCopied(false), 2000);
     } catch { /* ignore */ }
-  }, [clauses, contractName, decisionsKey, progress?.decisions]);
+  }, [clauses, contractName, clauseDecisions]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
@@ -2181,6 +2217,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 focusMode={focusMode}
                 contractId={contractId}
                 onRetry={() => parseContract(contractId, true)}
+                clauseDecisions={clauseDecisions}
+                onSetDecision={handleSetDecision}
               />
             </div>
           ) : (
@@ -2297,6 +2335,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               focusMode={focusMode}
               contractId={contractId}
               onRetry={() => parseContract(contractId, true)}
+              clauseDecisions={clauseDecisions}
+              onSetDecision={handleSetDecision}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
