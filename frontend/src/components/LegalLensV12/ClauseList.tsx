@@ -97,6 +97,9 @@ interface ClauseListProps {
   onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
   // Decision-Filter wird vom Banner im Parent gesetzt
   decisionFilter?: 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open' | 'noted';
+  // Inline-Annotations vom Parent (damit Banner sie zählen kann)
+  clauseAnnotations?: Record<string, string>;
+  onSaveAnnotation?: (clauseId: string, text: string) => void;
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -116,7 +119,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
   onRetry,
   clauseDecisions: clauseDecisionsProp,
   onSetDecision,
-  decisionFilter: decisionFilterProp
+  decisionFilter: decisionFilterProp,
+  clauseAnnotations: clauseAnnotationsProp,
+  onSaveAnnotation
 }) => {
   // ✅ FIX Issue #5: Refs für Auto-Scroll zur ausgewählten Klausel
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -162,32 +167,17 @@ const ClauseList: React.FC<ClauseListProps> = ({
     if (onSetDecision) onSetDecision(clauseId, decision);
   }, [onSetDecision]);
 
-  // Clause Annotations (localStorage-persisted, scoped by contractId)
-  const annotationsKey = contractId ? `legalLens_annotations_${contractId}` : 'legalLens_annotations';
-  const [clauseAnnotations, setClauseAnnotations] = useState<Record<string, string>>(() => {
-    try {
-      const stored = localStorage.getItem(annotationsKey);
-      return stored ? JSON.parse(stored) : {};
-    } catch { return {}; }
-  });
+  // Clause Annotations — vom Parent (LegalLensViewer) als shared State
+  const clauseAnnotations = useMemo(() => clauseAnnotationsProp || {}, [clauseAnnotationsProp]);
   const [editingAnnotation, setEditingAnnotation] = useState<string | null>(null);
   const [annotationDraft, setAnnotationDraft] = useState('');
   const annotationInputRef = useRef<HTMLTextAreaElement>(null);
 
   const saveAnnotation = useCallback((clauseId: string) => {
-    setClauseAnnotations(prev => {
-      const next = { ...prev };
-      if (annotationDraft.trim()) {
-        next[clauseId] = annotationDraft.trim();
-      } else {
-        delete next[clauseId];
-      }
-      localStorage.setItem(annotationsKey, JSON.stringify(next));
-      return next;
-    });
+    if (onSaveAnnotation) onSaveAnnotation(clauseId, annotationDraft);
     setEditingAnnotation(null);
     setAnnotationDraft('');
-  }, [annotationDraft, annotationsKey]);
+  }, [annotationDraft, onSaveAnnotation]);
 
   const startAnnotation = useCallback((clauseId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -248,7 +238,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
       result = result.filter(clause => {
         if (clause.nonAnalyzable) return false;
         if (decisionFilter === 'noted') {
-          return (progress?.notes?.some(n => n.clauseId === clause.id)) || false;
+          const hasServerNote = progress?.notes?.some(n => n.clauseId === clause.id) || false;
+          const hasAnnotation = !!(clauseAnnotations[clause.id] && clauseAnnotations[clause.id].trim().length > 0);
+          return hasServerNote || hasAnnotation;
         }
         const dec = clauseDecisions[clause.id];
         if (decisionFilter === 'open') return !dec;
@@ -280,7 +272,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }
 
     return result;
-  }, [safeClauses, searchQuery, riskFilter, decisionFilter, clauseDecisions, progress?.notes]);
+  }, [safeClauses, searchQuery, riskFilter, decisionFilter, clauseDecisions, progress?.notes, clauseAnnotations]);
 
   // Filter counts for badges
   const filterCounts = useMemo(() => {
@@ -512,7 +504,9 @@ const ClauseList: React.FC<ClauseListProps> = ({
   };
 
   const getClauseNotes = (clauseId: string): number => {
-    return progress?.notes?.filter(n => n.clauseId === clauseId).length || 0;
+    const serverNotes = progress?.notes?.filter(n => n.clauseId === clauseId).length || 0;
+    const hasAnnotation = !!(clauseAnnotations[clauseId] && clauseAnnotations[clauseId].trim().length > 0);
+    return serverNotes + (hasAnnotation ? 1 : 0);
   };
 
   const getRiskEmoji = (level: RiskLevel): string => {

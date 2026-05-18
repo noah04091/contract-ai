@@ -94,6 +94,24 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Decision-Filter (vom Banner getriggert, wird an ClauseList als Prop weitergereicht)
   const [decisionFilter, setDecisionFilter] = useState<'all' | 'accepted' | 'negotiate' | 'rejected' | 'open' | 'noted'>('all');
 
+  // Clause-Annotations (Inline-Notizen, localStorage-persistiert) — hochgezogen damit Banner sie zählen kann
+  const annotationsKey = contractId ? `legalLens_annotations_${contractId}` : 'legalLens_annotations';
+  const [clauseAnnotations, setClauseAnnotationsState] = useState<Record<string, string>>(() => {
+    try {
+      const stored = localStorage.getItem(annotationsKey);
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+  const handleSaveAnnotation = useCallback((clauseId: string, text: string) => {
+    setClauseAnnotationsState(prev => {
+      const next = { ...prev };
+      if (text.trim()) next[clauseId] = text.trim();
+      else delete next[clauseId];
+      try { localStorage.setItem(annotationsKey, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, [annotationsKey]);
+
   // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
   const [hasPdfClicked, setHasPdfClicked] = useState<boolean>(() => {
     // LocalStorage-Persistenz
@@ -377,10 +395,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [decisionsKey, contractId]);
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
-  // Notes-Count: Anzahl unterschiedlicher Klauseln mit mindestens einer Notiz
+  // Notes-Count: Anzahl unterschiedlicher Klauseln mit Inline-Annotation ODER Server-Note
   const decisionSummary = useMemo(() => {
     const values = Object.values(clauseDecisions);
-    const notedClauseIds = new Set((progress?.notes || []).map(n => n.clauseId));
+    const notedClauseIds = new Set<string>();
+    (progress?.notes || []).forEach(n => notedClauseIds.add(n.clauseId));
+    Object.entries(clauseAnnotations).forEach(([clauseId, text]) => {
+      if (text && text.trim().length > 0) notedClauseIds.add(clauseId);
+    });
     const noted = notedClauseIds.size;
     if (values.length === 0 && noted === 0) return null;
     return {
@@ -390,7 +412,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       noted,
       total: values.length
     };
-  }, [clauseDecisions, progress?.notes]);
+  }, [clauseDecisions, progress?.notes, clauseAnnotations]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
@@ -2205,6 +2227,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 clauseDecisions={clauseDecisions}
                 onSetDecision={handleSetDecision}
                 decisionFilter={decisionFilter}
+                clauseAnnotations={clauseAnnotations}
+                onSaveAnnotation={handleSaveAnnotation}
               />
             </div>
           ) : (
@@ -2326,6 +2350,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               clauseDecisions={clauseDecisions}
               onSetDecision={handleSetDecision}
               decisionFilter={decisionFilter}
+              clauseAnnotations={clauseAnnotations}
+              onSaveAnnotation={handleSaveAnnotation}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
