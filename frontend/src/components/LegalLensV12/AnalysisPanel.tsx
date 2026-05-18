@@ -71,6 +71,9 @@ interface AnalysisPanelProps {
   onSendChatMessage: (message: string) => void;
   onRetry: () => void;
   onClauseSaved?: (clauseId: string) => void;
+  // Stufe 4 — Decision direkt in Sidebar setzen
+  currentDecision?: 'accepted' | 'negotiate' | 'rejected';
+  onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
@@ -100,7 +103,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   onLoadNegotiation,
   onSendChatMessage,
   onRetry,
-  onClauseSaved
+  onClauseSaved,
+  currentDecision,
+  onSetDecision
 }) => {
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
@@ -1158,6 +1163,42 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         <div className={styles.copiedToast}>
           <span>✓</span>
           <span>Alternative in Zwischenablage kopiert!</span>
+        </div>
+      )}
+
+      {/* Stufe 4 — Sticky Decision-Footer: nur bei vollständiger Analyse */}
+      {analysis && sourceClauseId && onSetDecision && (
+        <div className={styles.decisionStickyFooter}>
+          <div className={styles.decisionFooterLabel}>Wie entscheidest du?</div>
+          <div className={styles.decisionFooterBtns}>
+            <button
+              type="button"
+              className={`${styles.decisionFooterBtn} ${styles.decisionFooterBtnAccept} ${currentDecision === 'accepted' ? styles.decisionFooterBtnActive : ''}`}
+              onClick={() => onSetDecision(sourceClauseId, 'accepted')}
+              title="Klausel akzeptieren"
+            >
+              <Check size={14} />
+              <span>Akzeptieren</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.decisionFooterBtn} ${styles.decisionFooterBtnNegotiate} ${currentDecision === 'negotiate' ? styles.decisionFooterBtnActive : ''}`}
+              onClick={() => onSetDecision(sourceClauseId, 'negotiate')}
+              title="Klausel verhandeln"
+            >
+              <MessageSquare size={14} />
+              <span>Verhandeln</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.decisionFooterBtn} ${styles.decisionFooterBtnReject} ${currentDecision === 'rejected' ? styles.decisionFooterBtnActive : ''}`}
+              onClick={() => onSetDecision(sourceClauseId, 'rejected')}
+              title="Klausel ablehnen"
+            >
+              <AlertTriangle size={14} />
+              <span>Ablehnen</span>
+            </button>
+          </div>
         </div>
       )}
 

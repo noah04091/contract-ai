@@ -5385,6 +5385,128 @@
   opacity: 0.7;
 }
 
+/* ===== DECISION-FILTER-TABS (Stufe 3) — Filter nach User-Markierung ===== */
+.filterRowDecisions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.filterRowLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 4px;
+}
+
+.filterTabAccepted.filterTabActive {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+}
+
+.filterTabNegotiate.filterTabActive {
+  background: #d97706 !important;
+  border-color: #d97706 !important;
+}
+
+.filterTabRejected.filterTabActive {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.filterTabOpen.filterTabActive {
+  background: #64748b !important;
+  border-color: #64748b !important;
+}
+
+/* ===== STICKY-FOOTER IN ANALYSIS-PANEL (Stufe 4) — Entscheidungs-Buttons ===== */
+.decisionStickyFooter {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 16px;
+  margin-top: 16px;
+  z-index: 10;
+  box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.decisionFooterLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.decisionFooterBtns {
+  display: flex;
+  gap: 8px;
+}
+
+.decisionFooterBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.decisionFooterBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.decisionFooterBtnAccept:hover {
+  border-color: #86efac;
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.decisionFooterBtnNegotiate:hover {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.decisionFooterBtnReject:hover {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.decisionFooterBtnAccept.decisionFooterBtnActive {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: white;
+}
+
+.decisionFooterBtnNegotiate.decisionFooterBtnActive {
+  border-color: #d97706;
+  background: #d97706;
+  color: white;
+}
+
+.decisionFooterBtnReject.decisionFooterBtnActive {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: white;
+}
+
 /* ===== CLAUSE DECISION BUTTONS ===== */
 .clauseFooter {
   display: flex;

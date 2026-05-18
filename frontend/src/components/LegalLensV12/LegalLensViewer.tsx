@@ -2275,6 +2275,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       onLoadNegotiation={loadNegotiationTips}
                       onSendChatMessage={sendChatMessage}
                       onRetry={handleRetryAnalysis}
+                      currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
+                      onSetDecision={handleSetDecision}
                     />
                   </>
                 ) : (
@@ -2741,6 +2743,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 onLoadNegotiation={loadNegotiationTips}
                 onSendChatMessage={sendChatMessage}
                 onRetry={handleRetryAnalysis}
+                currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
+                onSetDecision={handleSetDecision}
               />
             </>
           ) : (

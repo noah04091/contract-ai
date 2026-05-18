@@ -137,6 +137,10 @@ const ClauseList: React.FC<ClauseListProps> = ({
   type RiskFilter = 'all' | 'high' | 'medium' | 'low';
   const [riskFilter, setRiskFilter] = useState<RiskFilter>('all');
 
+  // Decision-Filter (Stufe 3) — filtert nach User-Markierung
+  type DecisionFilter = 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open';
+  const [decisionFilter, setDecisionFilter] = useState<DecisionFilter>('all');
+
   // Compact-Modus: Nur Klausel-Header sichtbar, Klick öffnet (global, localStorage-persistiert)
   const [compactMode, setCompactMode] = useState<boolean>(() => {
     try { return localStorage.getItem('legalLens_compactMode') === 'true'; } catch { return false; }
@@ -224,7 +228,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     setTooltipClauseId(null);
   }, []);
 
-  // Gefilterte Klauseln basierend auf Suchanfrage + Risiko-Filter
+  // Gefilterte Klauseln basierend auf Suchanfrage + Risiko-Filter + Decision-Filter
   const filteredClauses = useMemo(() => {
     let result = safeClauses;
 
@@ -234,6 +238,16 @@ const ClauseList: React.FC<ClauseListProps> = ({
         if (clause.nonAnalyzable) return false;
         const level = clause.preAnalysis?.riskLevel || clause.riskIndicators?.level || 'low';
         return level === riskFilter;
+      });
+    }
+
+    // Decision filter (Stufe 3) — filtert nach User-Markierung
+    if (decisionFilter !== 'all') {
+      result = result.filter(clause => {
+        if (clause.nonAnalyzable) return false;
+        const dec = clauseDecisions[clause.id];
+        if (decisionFilter === 'open') return !dec;
+        return dec === decisionFilter;
       });
     }
 
@@ -261,7 +275,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }
 
     return result;
-  }, [safeClauses, searchQuery, riskFilter]);
+  }, [safeClauses, searchQuery, riskFilter, decisionFilter, clauseDecisions]);
 
   // Filter counts for badges
   const filterCounts = useMemo(() => {
@@ -273,6 +287,17 @@ const ClauseList: React.FC<ClauseListProps> = ({
       low: analyzable.filter(c => (c.preAnalysis?.riskLevel || c.riskIndicators?.level) === 'low').length
     };
   }, [safeClauses]);
+
+  // Decision-Filter Counts — basieren auf shared clauseDecisions
+  const decisionCounts = useMemo(() => {
+    const analyzable = safeClauses.filter(c => !c.nonAnalyzable);
+    const accepted = analyzable.filter(c => clauseDecisions[c.id] === 'accepted').length;
+    const negotiate = analyzable.filter(c => clauseDecisions[c.id] === 'negotiate').length;
+    const rejected = analyzable.filter(c => clauseDecisions[c.id] === 'rejected').length;
+    const marked = accepted + negotiate + rejected;
+    const open = analyzable.length - marked;
+    return { accepted, negotiate, rejected, open, total: marked };
+  }, [safeClauses, clauseDecisions]);
 
   // ✅ Section Grouping: Collapsible Sections für große Verträge (15+ Klauseln)
   const collapsedKey = contractId ? `legalLens_sections_${contractId}` : 'legalLens_sections';
@@ -318,7 +343,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
   // Clause Grouping — nutzt GPT-basierte Freiform-Kategorien (NUR Hauptklauseln)
   const clauseGroups = useMemo(() => {
-    if (mainFilteredClauses.length < 4 || searchQuery || riskFilter !== 'all') return null;
+    if (mainFilteredClauses.length < 4 || searchQuery || riskFilter !== 'all' || decisionFilter !== 'all') return null;
 
     // Prüfe ob GPT-Kategorien vorhanden sind (mindestens 30% der Klauseln)
     const withCategory = mainFilteredClauses.filter(c => c.category && c.category.trim());
@@ -344,7 +369,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }));
 
     return groups.length >= 2 ? groups : null;
-  }, [mainFilteredClauses, searchQuery, riskFilter]);
+  }, [mainFilteredClauses, searchQuery, riskFilter, decisionFilter]);
 
   // Section Detection — erkennt Sektionen anhand Nummernschema-Wechseln (nur Hauptklauseln, ungefilter)
   const detectedSections = useMemo((): ClauseSection[] | null => {
@@ -544,7 +569,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
         <span className={styles.clauseCount}>
           {safeClauses.length} Klauseln
-          {detectedSections && detectedSections.length > 0 && !searchQuery && riskFilter === 'all' && (
+          {detectedSections && detectedSections.length > 0 && !searchQuery && riskFilter === 'all' && decisionFilter === 'all' && (
             <button
               className={styles.sectionCollapseAll}
               onClick={() => {
@@ -663,6 +688,56 @@ const ClauseList: React.FC<ClauseListProps> = ({
             </button>
           )}
         </div>
+
+        {/* Decision-Filter (Stufe 3) — nur sichtbar wenn der User mind. 1 Markierung gesetzt hat */}
+        {decisionCounts.total > 0 && (
+          <div className={styles.filterRowDecisions}>
+            <span className={styles.filterRowLabel}>Markierung:</span>
+            <button
+              className={`${styles.filterTab} ${decisionFilter === 'all' ? styles.filterTabActive : ''}`}
+              onClick={() => setDecisionFilter('all')}
+              title="Alle Markierungen anzeigen"
+            >
+              Alle
+            </button>
+            {decisionCounts.accepted > 0 && (
+              <button
+                className={`${styles.filterTab} ${styles.filterTabAccepted} ${decisionFilter === 'accepted' ? styles.filterTabActive : ''}`}
+                onClick={() => setDecisionFilter(decisionFilter === 'accepted' ? 'all' : 'accepted')}
+                title="Akzeptierte Klauseln"
+              >
+                ✅ {decisionCounts.accepted}
+              </button>
+            )}
+            {decisionCounts.negotiate > 0 && (
+              <button
+                className={`${styles.filterTab} ${styles.filterTabNegotiate} ${decisionFilter === 'negotiate' ? styles.filterTabActive : ''}`}
+                onClick={() => setDecisionFilter(decisionFilter === 'negotiate' ? 'all' : 'negotiate')}
+                title="Zu verhandelnde Klauseln"
+              >
+                💬 {decisionCounts.negotiate}
+              </button>
+            )}
+            {decisionCounts.rejected > 0 && (
+              <button
+                className={`${styles.filterTab} ${styles.filterTabRejected} ${decisionFilter === 'rejected' ? styles.filterTabActive : ''}`}
+                onClick={() => setDecisionFilter(decisionFilter === 'rejected' ? 'all' : 'rejected')}
+                title="Abgelehnte Klauseln"
+              >
+                ❌ {decisionCounts.rejected}
+              </button>
+            )}
+            {decisionCounts.open > 0 && (
+              <button
+                className={`${styles.filterTab} ${styles.filterTabOpen} ${decisionFilter === 'open' ? styles.filterTabActive : ''}`}
+                onClick={() => setDecisionFilter(decisionFilter === 'open' ? 'all' : 'open')}
+                title="Noch nicht markierte Klauseln"
+              >
+                ⚪ {decisionCounts.open}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Keyboard Shortcut Hint — collapsible */}
@@ -686,7 +761,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
           // ── Section Header: Collapsible Section-Trenner ──
           const sectionHeader = (() => {
             if (clause.attachment) return null;
-            if (!detectedSections || !clauseSectionMap || searchQuery || riskFilter !== 'all') return null;
+            if (!detectedSections || !clauseSectionMap || searchQuery || riskFilter !== 'all' || decisionFilter !== 'all') return null;
 
             // Finde die Section zu dieser Klausel
             const sectionId = clauseSectionMap.get(clause.id);
@@ -738,7 +813,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
 
           // ── Skip collapsed section clauses ──
           const isInCollapsedSection = (() => {
-            if (!clauseSectionMap || !detectedSections || searchQuery || riskFilter !== 'all') return false;
+            if (!clauseSectionMap || !detectedSections || searchQuery || riskFilter !== 'all' || decisionFilter !== 'all') return false;
             const sectionId = clauseSectionMap.get(clause.id);
             return sectionId ? collapsedSections.has(sectionId) : false;
           })();
