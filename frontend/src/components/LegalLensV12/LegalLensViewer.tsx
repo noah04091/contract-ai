@@ -92,7 +92,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
 
   // Decision-Filter (vom Banner getriggert, wird an ClauseList als Prop weitergereicht)
-  const [decisionFilter, setDecisionFilter] = useState<'all' | 'accepted' | 'negotiate' | 'rejected' | 'open'>('all');
+  const [decisionFilter, setDecisionFilter] = useState<'all' | 'accepted' | 'negotiate' | 'rejected' | 'open' | 'noted'>('all');
 
   // ✅ FIX Issue #7: UX-Hinweis verstecken nach erstem Klick
   const [hasPdfClicked, setHasPdfClicked] = useState<boolean>(() => {
@@ -377,16 +377,20 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [decisionsKey, contractId]);
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
+  // Notes-Count: Anzahl unterschiedlicher Klauseln mit mindestens einer Notiz
   const decisionSummary = useMemo(() => {
     const values = Object.values(clauseDecisions);
-    if (values.length === 0) return null;
+    const notedClauseIds = new Set((progress?.notes || []).map(n => n.clauseId));
+    const noted = notedClauseIds.size;
+    if (values.length === 0 && noted === 0) return null;
     return {
       accepted: values.filter(v => v === 'accepted').length,
       negotiate: values.filter(v => v === 'negotiate').length,
       rejected: values.filter(v => v === 'rejected').length,
+      noted,
       total: values.length
     };
-  }, [clauseDecisions]);
+  }, [clauseDecisions, progress?.notes]);
 
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
@@ -1929,7 +1933,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               <span className={styles.reviewLabel}>{reviewStats.reviewed}/{reviewStats.total} geprüft</span>
             </div>
           )}
-          {decisionSummary && decisionSummary.total > 0 && (
+          {decisionSummary && (
             <div className={styles.decisionSummaryBanner}>
               {decisionSummary.accepted > 0 && (
                 <button
@@ -1962,6 +1966,17 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   title="Abgelehnte Klauseln filtern"
                 >
                   ❌ {decisionSummary.rejected}
+                </button>
+              )}
+              {decisionSummary.noted > 0 && (
+                <button
+                  type="button"
+                  className={`${styles.decisionSummaryItem} ${decisionFilter === 'noted' ? styles.decisionSummaryItemActive : ''}`}
+                  data-type="noted"
+                  onClick={() => setDecisionFilter(decisionFilter === 'noted' ? 'all' : 'noted')}
+                  title="Klauseln mit Notiz filtern"
+                >
+                  📝 {decisionSummary.noted}
                 </button>
               )}
             </div>
@@ -2310,6 +2325,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               onRetry={() => parseContract(contractId, true)}
               clauseDecisions={clauseDecisions}
               onSetDecision={handleSetDecision}
+              decisionFilter={decisionFilter}
             />
           ) : (
           <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>

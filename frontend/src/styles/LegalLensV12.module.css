@@ -4552,6 +4552,11 @@
   background: #fef2f2;
 }
 
+.decisionSummaryItem[data-type="noted"] {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
 /* Active-State: aktiver Filter wird mit farbigem Ring hervorgehoben */
 .decisionSummaryItem[data-type="accepted"].decisionSummaryItemActive {
   border-color: #16a34a;
@@ -4566,6 +4571,11 @@
 .decisionSummaryItem[data-type="rejected"].decisionSummaryItemActive {
   border-color: #dc2626;
   background: #fee2e2;
+}
+
+.decisionSummaryItem[data-type="noted"].decisionSummaryItemActive {
+  border-color: #2563eb;
+  background: #dbeafe;
 }
 
 /* ===== CLAUSE NAV BAR (Analysis Panel) ===== */

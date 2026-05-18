@@ -96,7 +96,7 @@ interface ClauseListProps {
   clauseDecisions?: Record<string, 'accepted' | 'negotiate' | 'rejected'>;
   onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
   // Decision-Filter wird vom Banner im Parent gesetzt
-  decisionFilter?: 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open';
+  decisionFilter?: 'all' | 'accepted' | 'negotiate' | 'rejected' | 'open' | 'noted';
 }
 
 const ClauseList: React.FC<ClauseListProps> = ({
@@ -243,10 +243,13 @@ const ClauseList: React.FC<ClauseListProps> = ({
       });
     }
 
-    // Decision filter (Stufe 3) — filtert nach User-Markierung
+    // Decision filter — filtert nach User-Markierung oder Notiz
     if (decisionFilter !== 'all') {
       result = result.filter(clause => {
         if (clause.nonAnalyzable) return false;
+        if (decisionFilter === 'noted') {
+          return (progress?.notes?.some(n => n.clauseId === clause.id)) || false;
+        }
         const dec = clauseDecisions[clause.id];
         if (decisionFilter === 'open') return !dec;
         return dec === decisionFilter;
@@ -277,7 +280,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
     }
 
     return result;
-  }, [safeClauses, searchQuery, riskFilter, decisionFilter, clauseDecisions]);
+  }, [safeClauses, searchQuery, riskFilter, decisionFilter, clauseDecisions, progress?.notes]);
 
   // Filter counts for badges
   const filterCounts = useMemo(() => {
