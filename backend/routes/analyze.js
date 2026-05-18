@@ -784,6 +784,85 @@ function detectDocumentType(filename, text, pageCount) {
 }
 
 /**
+ * 🚪 Phase Alpha — Zweiter Türsteher für Document-Type-Detection.
+ *
+ * Bei niedriger Confidence der naiven Keyword-Heuristik (detectDocumentType)
+ * oder bei Klassifikationen die historisch unzuverlässig waren (UNKNOWN,
+ * FINANCIAL_DOCUMENT, TABLE_DOCUMENT) fragt diese Funktion gpt-4o-mini um
+ * eine intelligente 2. Meinung. Bei API-Fehler oder Timeout: graceful
+ * Rückgabe von null → Caller fällt auf sicheren CONTRACT-Default zurück
+ * (95% der User-Uploads sind Verträge).
+ *
+ * Kosten: ~$0.0002 pro Call. Latenz: 500-1500ms.
+ * Pattern adaptiert aus services/legalLens/documentGate.js:gptClassify.
+ */
+async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) {
+  const sample = (textSample || '').substring(0, 2000);
+  if (sample.length < 200) {
+    // Zu wenig Text für sinnvolle Klassifikation
+    return null;
+  }
+  const TIMEOUT_MS = 8000;
+
+  try {
+    const completion = await Promise.race([
+      openaiClient.chat.completions.create({
+        model: 'gpt-4o-mini',
+        temperature: 0.1,
+        max_tokens: 150,
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `Du bist Klassifizierer für Dokumente in einer Vertragsanalyse-App.
+
+Antworte NUR mit JSON in diesem Format:
+{
+  "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
+  "confidence": 0-1,
+  "reason": "kurze Begründung auf Deutsch"
+}
+
+CONTRACT: alle Verträge & rechtsverbindliche Vereinbarungen — Mietvertrag,
+Arbeitsvertrag, NDA, Kaufvertrag, Factoring, AGB, Versicherungspolice,
+Datenschutzerklärung, Leasing, Kredit, Darlehen, SaaS, Dienstleistung,
+Energieliefervertrag, Telekommunikationsvertrag, Werkvertrag usw.
+INVOICE: Rechnungen mit Beträgen/Steuern.
+RECEIPT: Quittungen, Belege, Kassenbons.
+TABLE_DOCUMENT: reine Tabellen, Listen, Konditionsblätter ohne Vertragscharakter.
+UNKNOWN: alles andere.
+
+Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
+          },
+          {
+            role: 'user',
+            content: `Klassifiziere folgenden Dokumentanfang:\n\n---\n${sample}\n---`
+          }
+        ]
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`classifyDocumentTypeWithGPT timeout after ${TIMEOUT_MS}ms`)), TIMEOUT_MS)
+      )
+    ]);
+
+    const raw = completion.choices?.[0]?.message?.content || '{}';
+    const parsed = JSON.parse(raw);
+    const category = String(parsed.category || 'UNKNOWN').toUpperCase();
+    const validTypes = new Set(['CONTRACT', 'INVOICE', 'RECEIPT', 'FINANCIAL_DOCUMENT', 'TABLE_DOCUMENT', 'UNKNOWN']);
+    if (!validTypes.has(category)) {
+      console.warn(`⚠️ [${requestId}] Türsteher 2: ungültige category="${parsed.category}" — verwerfe`);
+      return null;
+    }
+    const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.7;
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini): ${category} (${confidence.toFixed(2)}) — ${parsed.reason || 'keine Begründung'}`);
+    return { type: category, confidence, source: 'gpt-4o-mini' };
+  } catch (err) {
+    console.warn(`⚠️ [${requestId}] Türsteher 2 (gpt-4o-mini) fehlgeschlagen: ${err.message} — Fallback auf Heuristik`);
+    return null;
+  }
+}
+
+/**
  * 🧪 Content Quality Assessment - UNCHANGED
  * Analyzes if the document has enough meaningful content
  */
@@ -2074,14 +2153,38 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
     // Get document properties
     const pageCount = pdfData?.numpages || 1;
     
-    // Detect document type using smart analysis
-    const documentType = detectDocumentType(filename, pdfText, pageCount);
-    console.log(`📋 [${requestId}] Document type detected: ${documentType.type} (confidence: ${documentType.confidence.toFixed(2)})`);
-    
+    // Detect document type using smart analysis (Türsteher 1 — naive Heuristik)
+    let documentType = detectDocumentType(filename, pdfText, pageCount);
+    console.log(`📋 [${requestId}] Türsteher 1 (Heuristik): ${documentType.type} (confidence: ${documentType.confidence.toFixed(2)})`);
+
+    // 🚪 Phase Alpha — Türsteher 2 (gpt-4o-mini) bei unsicheren Fällen
+    // Greift bei: niedriger Confidence (<0.6), UNKNOWN, oder historisch
+    // unzuverlässigen Typen (FINANCIAL_DOCUMENT, TABLE_DOCUMENT). Sicheres
+    // Sicherheitsnetz: bei beidseitiger Unsicherheit → CONTRACT (95% aller
+    // User-Uploads sind Verträge, sicherster Default für Vertragsanalyse-App).
+    const needsSecondOpinion =
+      documentType.confidence < 0.6 ||
+      documentType.type === 'UNKNOWN' ||
+      documentType.type === 'FINANCIAL_DOCUMENT' ||
+      documentType.type === 'TABLE_DOCUMENT';
+
+    if (needsSecondOpinion) {
+      const gptOpinion = await classifyDocumentTypeWithGPT(pdfText, getOpenAI(), requestId);
+      if (gptOpinion && gptOpinion.confidence >= 0.7) {
+        // GPT ist klar → Übernehmen
+        console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
+        documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence };
+      } else {
+        // Beide unsicher → CONTRACT-Fallback (sicherer Default)
+        console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
+        documentType = { type: 'CONTRACT', confidence: 0.5 };
+      }
+    }
+
     // Assess content quality using metrics
     const contentQuality = assessContentQuality(pdfText, pageCount);
     console.log(`📊 [${requestId}] Content quality: ${contentQuality.qualityScore.toFixed(2)} (${contentQuality.wordCount} words, ${contentQuality.sentenceCount} sentences)`);
-    
+
     // Select analysis strategy based on type and quality
     const strategy = selectAnalysisStrategy(documentType, contentQuality, filename);
     console.log(`🎯 [${requestId}] Analysis strategy: ${strategy.method} - ${strategy.message}`);
