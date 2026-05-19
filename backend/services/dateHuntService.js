@@ -28,15 +28,28 @@ const MAX_DATES = 10;
 //
 // Architektur-Linie (memory/feedback_datum-extraktion-universalitaet.md):
 // GPT entscheidet, niemals Regex. Universelle Logik, kein Vertragstyp-Branch.
-const JUNIOR_TIMEOUT_MS = 60_000;
+// 19.05.2026 — Konzern-Robustheit gegen Termin-Lotto (3-Schichten-Plan):
+// Timeouts verdoppelt (decken Render-Cold-Start + OpenAI Tail-Latency p99 ab).
+// Pipeline-Cap auf 240s erhöht (Render Standard 300s als Safety-Net).
+const JUNIOR_TIMEOUT_MS = 90_000;
 const JUNIOR_MAX_TOKENS = 2500;
-const CHUNK_AUDIT_TIMEOUT_MS = 30_000;     // pro Chunk
+const CHUNK_AUDIT_TIMEOUT_MS = 60_000;     // pro Chunk
 const CHUNK_AUDIT_MAX_TOKENS = 1200;       // pro Chunk — meist deutlich weniger nötig
-const SENIOR_TIMEOUT_MS = 60_000;
+const SENIOR_TIMEOUT_MS = 90_000;
 const SENIOR_MAX_TOKENS = 2500;
-// Hartes Cap für die ganze Pipeline. Stage-Timeouts sind enger gesetzt, dieser
-// Wert ist Worst-Case-Sicherheitsnetz, damit huntDates niemals länger blockt.
-const TOTAL_PIPELINE_TIMEOUT_MS = 150_000;
+const TOTAL_PIPELINE_TIMEOUT_MS = 240_000;
+
+// Schicht 2 — Sequential Re-Run für gefailte ClauseAudit-Chunks
+const CHUNK_RETRY_TIMEOUT_MS = 60_000;     // pro Re-Run-Chunk
+const CHUNK_RETRY_MAX_CHUNKS = 3;          // max 3 failed Chunks werden retry'd
+const CHUNK_RETRY_TOTAL_BUDGET_MS = 90_000;// gesamtes Re-Run-Budget
+
+// Schicht 3 — Anomaly Sanity Pass
+const ANOMALY_TIMEOUT_MS = 45_000;
+const ANOMALY_MAX_TOKENS = 1500;
+const ANOMALY_TRIGGER_MIN_CONTRACT_LEN = 10_000;  // ab hier "Anomalie wenn <2 Datums"
+const ANOMALY_TRIGGER_MAX_DATES = 2;              // <2 Datums = anomalieverdächtig
+const ANOMALY_SAMPLE_LEN = 3000;                  // Anfang + Ende, je 3000 chars
 // Sanity-Cap, KEIN Steuer-Limit. 25 ist de facto unbegrenzt für reale Verträge —
 // auch ein 50-seitiger Beratungsvertrag erreicht selten zweistellige Fristen-Zahlen.
 // Der Evidence-Validator filtert die Wahrheit. Niemals als "Quote" im Prompt
@@ -218,6 +231,25 @@ Drei Regeln, sonst keine:
 1. Liefere NUR ZUSÄTZE — was bereits in der Liste steht, NICHT noch einmal.
 2. evidence wörtlich aus dem Vertrag zitieren. Nicht paraphrasieren.
 3. Antworte NUR als JSON. Wenn nichts fehlt: leere Arrays.`;
+
+// ═══════════════════════════════════════════════════════════════════════
+// SCHICHT 3 — Anomaly Sanity Pass (Compliance-Layer)
+// ═══════════════════════════════════════════════════════════════════════
+// Triggert nur wenn die Hauptpipeline auffällig wenig Datums findet (<2)
+// bei langem Vertrag (>10k chars). Bekommt NUR Vertragsanfang + -ende
+// (typischer Sitz von Vertragsdatum, Beginn, Unterschrift, Kündigungsfrist).
+// Prompt-Wording bewusst defensiv ("Du musst NICHTS finden") gegen den
+// "Lücken-füll-Bias" — das hat in der Vergangenheit "Vertragsunterzeichnung
+// = heute" aus leeren "Ort, Datum: ___"-Linien produziert.
+const ANOMALY_SYSTEM_PROMPT = `Du bist Compliance-Anwalt im Endcheck. Du bekommst nur Anfang und Ende eines Vertrags.
+
+Wenn ein Vertragsdatum / Beginn / Unterschriftsdatum / Kündigungsfrist HIER WÖRTLICH steht, liefere es.
+Wenn nichts steht: leere Arrays. Du musst NICHTS finden.
+
+Drei Regeln, sonst keine:
+1. evidence wörtlich aus dem gezeigten Text — nicht paraphrasieren, nicht ergänzen.
+2. Nur was DA STEHT. Keine Vermutung aus "Ort, Datum: ___"-Leerlinien oder leeren Unterschriftsfeldern.
+3. Antworte NUR als JSON.`;
 
 // Schema-Bausteine — werden in jeden Stage-Prompt einmal eingebettet.
 // Bewusst KOMPAKT (nicht 22 Datums-Typen + 17 Frist-Typen wie der alte Prompt).
@@ -595,27 +627,33 @@ function validateAndCollect(parsed, contractText, source, requestId) {
 async function runSingleGPTCall({
   openaiClient, systemPrompt, userPrompt, maxTokens, timeoutMs, source, requestId
 }) {
+  // AbortController: bei Timeout wird die OpenAI-Connection sauber geschlossen,
+  // statt im Hintergrund weiterzulaufen (vorher: Memory-Leak, siehe Loop-Storm
+  // SIGABRT vom 15.05.).
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+
   let response;
   try {
-    response = await Promise.race([
-      openaiClient.chat.completions.create({
-        model: DATE_HUNT_MODEL,
-        temperature: 0,
-        response_format: { type: 'json_object' },
-        max_tokens: maxTokens,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ]
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`${source} timeout after ${timeoutMs}ms`)), timeoutMs)
-      )
-    ]);
+    response = await openaiClient.chat.completions.create({
+      model: DATE_HUNT_MODEL,
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ]
+    }, { signal: controller.signal });
   } catch (err) {
-    console.warn(`⚠️ [${requestId}] [${source}] GPT-Aufruf fehlgeschlagen: ${err.message}`);
+    const isAbort = err.name === 'AbortError' || controller.signal.aborted;
+    const label = isAbort ? `timeout after ${timeoutMs}ms` : err.message;
+    console.warn(`⚠️ [${requestId}] [${source}] GPT-Aufruf fehlgeschlagen: ${label}`);
     return null;
+  } finally {
+    clearTimeout(timeoutHandle);
   }
+
   const raw = response?.choices?.[0]?.message?.content || '';
   try {
     return JSON.parse(raw);
@@ -719,31 +757,89 @@ async function runClauseAuditPass(contractText, openaiClient, requestId) {
 
   const settled = await runWithConcurrency(tasks, CHUNK_AUDIT_CONCURRENCY);
 
-  // Pool aller Funde aus allen Chunks
+  // Pool aller Funde aus allen Chunks. Failed-Indizes für Re-Run merken.
   let succeeded = 0;
   let failed = 0;
   let rawDates = 0, rawFristen = 0, validDatesTotal = 0, validFristenTotal = 0;
   let poolDates = [];
   let poolFristen = [];
-  for (const r of settled) {
-    if (r.status === 'fulfilled' && r.value) {
+  const failedIndices = [];
+  for (let i = 0; i < settled.length; i++) {
+    const r = settled[i];
+    // Failed = rejected ODER fulfilled+null (runSingleGPTCall returnt null bei
+    // Timeout/Parse-Fail, deshalb beide Fälle prüfen — siehe Audit-Befund).
+    const isFailed = r.status === 'rejected' || (r.status === 'fulfilled' && !r.value);
+    if (!isFailed) {
       succeeded++;
       const { validDates, validFristen, stats } = r.value;
       rawDates += stats.raw_dates;
       rawFristen += stats.raw_fristen;
       validDatesTotal += stats.validated_dates;
       validFristenTotal += stats.validated_fristen;
-      // Inner-Pool dedup während wir aggregieren — verhindert duplikate aus
-      // Overlap-Bereichen, bevor wir am Ende mit Junior/Senior dedup-mergen.
       poolDates = dedupDates(poolDates, validDates);
       poolFristen = dedupFristen(poolFristen, validFristen);
     } else {
       failed++;
+      failedIndices.push(i);
     }
   }
+
+  // ── Schicht 2: Sequential Re-Run gefailter Chunks ─────────────────────────
+  // Wenn Chunk-Calls timeoutet sind (häufigster Fail-Modus durch OpenAI
+  // Tail-Latency oder Render-Cold-Start), bekommt jeder gefailte Chunk noch
+  // EINE Chance — sequenziell, ohne Concurrency-Stress, mit hartem Total-Budget.
+  let retryAttempted = 0;
+  let retryRecovered = 0;
+  let retryFailedAfter = 0;
+  if (failedIndices.length > 0) {
+    const retryBudgetStart = Date.now();
+    const targets = failedIndices.slice(0, CHUNK_RETRY_MAX_CHUNKS);
+    console.log(
+      `🔁 [${requestId}] [ClauseAudit] Re-Run: ${targets.length} von ${failedIndices.length} ` +
+      `gefailten Chunks (Budget ${CHUNK_RETRY_TOTAL_BUDGET_MS}ms)`
+    );
+    for (const idx of targets) {
+      if (Date.now() - retryBudgetStart > CHUNK_RETRY_TOTAL_BUDGET_MS) {
+        console.log(`🔁 [${requestId}] [ClauseAudit] Re-Run abgebrochen: Budget erschöpft`);
+        break;
+      }
+      retryAttempted++;
+      const chunk = chunks[idx];
+      const parsed = await runSingleGPTCall({
+        openaiClient,
+        systemPrompt: CHUNK_AUDIT_SYSTEM_PROMPT,
+        userPrompt: buildChunkPrompt(chunk.text, idx, chunks.length),
+        maxTokens: CHUNK_AUDIT_MAX_TOKENS,
+        timeoutMs: CHUNK_RETRY_TIMEOUT_MS,
+        source: `ClauseAudit#${idx}:retry`,
+        requestId
+      });
+      if (!parsed) {
+        retryFailedAfter++;
+        console.log(`🔁 [${requestId}] [ClauseAudit#${idx}] Retry FAILED`);
+        continue;
+      }
+      const collected = validateAndCollect(parsed, contractText, `ClauseAudit#${idx}:retry`, requestId);
+      retryRecovered++;
+      rawDates += collected.stats.raw_dates;
+      rawFristen += collected.stats.raw_fristen;
+      validDatesTotal += collected.stats.validated_dates;
+      validFristenTotal += collected.stats.validated_fristen;
+      poolDates = dedupDates(poolDates, collected.validDates);
+      poolFristen = dedupFristen(poolFristen, collected.validFristen);
+      console.log(`🔁 [${requestId}] [ClauseAudit#${idx}] Retry SUCCESS`);
+    }
+    succeeded += retryRecovered;
+    failed -= retryRecovered;
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   const durationMs = Date.now() - t0;
+  const retrySummary = retryAttempted > 0
+    ? ` | Re-Run: ${retryAttempted} versucht, ${retryRecovered} recovered, ${retryFailedAfter} weiter failed`
+    : '';
   console.log(
-    `📅 [${requestId}] [ClauseAudit] ${chunks.length} Chunks (${succeeded} ok, ${failed} fail) | ` +
+    `📅 [${requestId}] [ClauseAudit] ${chunks.length} Chunks (${succeeded} ok, ${failed} fail)${retrySummary} | ` +
     `Pool: ${poolDates.length} Datums + ${poolFristen.length} Fristen ` +
     `(roh: ${rawDates}+${rawFristen}, validiert: ${validDatesTotal}+${validFristenTotal}) in ${durationMs}ms`
   );
@@ -754,6 +850,9 @@ async function runClauseAuditPass(contractText, openaiClient, requestId) {
       source: 'ClauseAudit', durationMs,
       fallback: succeeded === 0,
       chunks: chunks.length, succeeded, failed,
+      retry_attempted: retryAttempted,
+      retry_recovered: retryRecovered,
+      retry_failed_after: retryFailedAfter,
       raw_dates: rawDates, raw_fristen: rawFristen,
       validated_dates: validDatesTotal, validated_fristen: validFristenTotal
     }
@@ -794,6 +893,75 @@ async function runSeniorPass(contractText, knownFindings, openaiClient, requestI
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Schicht 3 — Anomaly Sanity Pass
+// ═══════════════════════════════════════════════════════════════════════════
+// Letzter Sicherheitsnetz: wenn die Pipeline bei einem langen Vertrag <2
+// Datums findet, ist das suspekt. Ein fokussierter Call auf Anfang + Ende
+// des Vertrags (wo Vertragsdatum/Beginn/Unterschrift typischerweise stehen)
+// kann den Kopf-Bereich nachholen, falls Junior + ClauseAudit-Chunk-#1 + Senior
+// gleichzeitig die Datums-Findings verloren haben.
+//
+// Validator läuft gegen Vertragsvolltext (nicht gegen Sample) — sonst könnte
+// GPT ein Datum aus dem nicht-gezeigten Mittelteil erfinden.
+function buildAnomalyUserPrompt(contractText) {
+  const today = new Date().toISOString().slice(0, 10);
+  const t = (contractText || '').trim();
+  const headSection = t.substring(0, ANOMALY_SAMPLE_LEN);
+  const tailSection = t.length > ANOMALY_SAMPLE_LEN * 2
+    ? t.substring(t.length - ANOMALY_SAMPLE_LEN)
+    : '';
+  const sample = tailSection
+    ? `[Anfang des Vertrags]\n${headSection}\n\n[Ende des Vertrags]\n${tailSection}`
+    : headSection;
+  return `Heutiges Datum: ${today}
+
+Schau nur in Anfang und Ende dieses Vertrags. Liefere Vertragsdatum / Beginn / Unterschriftsdatum / Kündigungsfrist NUR wenn wörtlich vorhanden.
+
+Datums-Eintrag:
+${DATE_SCHEMA}
+
+Frist-Hinweis-Eintrag:
+${FRIST_SCHEMA}
+
+${OUTPUT_FORMAT_HINT}
+
+Auszug:
+${sample}`;
+}
+
+async function runAnomalyPass(contractText, openaiClient, requestId) {
+  const t0 = Date.now();
+  const empty = (extra = {}) => ({
+    importantDates: [], fristHinweise: [],
+    stats: { source: 'Anomaly', durationMs: Date.now() - t0, fallback: true, ...extra }
+  });
+  const parsed = await runSingleGPTCall({
+    openaiClient,
+    systemPrompt: ANOMALY_SYSTEM_PROMPT,
+    userPrompt: buildAnomalyUserPrompt(contractText),
+    maxTokens: ANOMALY_MAX_TOKENS,
+    timeoutMs: ANOMALY_TIMEOUT_MS,
+    source: 'Anomaly',
+    requestId
+  });
+  if (!parsed) return empty();
+  // Validator läuft gegen Vertragsvolltext — kein Halluzinations-Vector
+  // durch Sample-only-Validation.
+  const { validDates, validFristen, stats } = validateAndCollect(parsed, contractText, 'Anomaly', requestId);
+  const durationMs = Date.now() - t0;
+  console.log(
+    `🚨 [${requestId}] [Anomaly] Datums ${stats.raw_dates}→${stats.validated_dates} | ` +
+    `Fristen ${stats.raw_fristen}→${stats.validated_fristen} ` +
+    `(${stats.rejected_dates + stats.rejected_fristen} Evidence-Fail) in ${durationMs}ms`
+  );
+  return {
+    importantDates: validDates,
+    fristHinweise: validFristen,
+    stats: { source: 'Anomaly', durationMs, fallback: false, ...stats }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Hauptfunktion: 3-Stage-Kaskade
 // ═══════════════════════════════════════════════════════════════════════════
 /**
@@ -810,6 +978,7 @@ async function huntDates(contractText, openaiClient, requestId = '') {
     junior: null,
     clauseAudit: null,
     senior: null,
+    anomaly: null,
     finalCounts: { dates: 0, fristen: 0 }
   };
   const emptyResult = () => ({
@@ -859,22 +1028,54 @@ async function huntDates(contractText, openaiClient, requestId = '') {
     });
     stats.senior = seniorResult.stats;
 
-    // Final-Merge: Pool + Senior, dedup, cap
-    const finalDates = dedupDates(poolDates, seniorResult.importantDates).slice(0, MAX_DATES);
-    const finalFristen = dedupFristen(poolFristen, seniorResult.fristHinweise).slice(0, MAX_FRIST_HINWEISE);
+    // Pre-Anomaly-Merge: Pool + Senior
+    let mergedDates = dedupDates(poolDates, seniorResult.importantDates);
+    let mergedFristen = dedupFristen(poolFristen, seniorResult.fristHinweise);
+
+    // ── Schicht 3: Anomaly Sanity Pass ──────────────────────────────────────
+    // Wenn Pipeline auffällig wenig Datums findet bei langem Vertrag, ist das
+    // suspekt. Letzter fokussierter Call auf Anfang+Ende des Vertrags.
+    let anomalyResult = null;
+    const isAnomaly =
+      contractText.length > ANOMALY_TRIGGER_MIN_CONTRACT_LEN &&
+      mergedDates.length < ANOMALY_TRIGGER_MAX_DATES;
+    if (isAnomaly) {
+      console.log(
+        `🚨 [${requestId}] [Anomaly] TRIGGERED (${mergedDates.length} Datums bei ` +
+        `${contractText.length} chars, Threshold <${ANOMALY_TRIGGER_MAX_DATES}/${ANOMALY_TRIGGER_MIN_CONTRACT_LEN})`
+      );
+      anomalyResult = await runAnomalyPass(contractText, openaiClient, requestId).catch(err => {
+        console.warn(`⚠️ [${requestId}] [Anomaly] unerwarteter Fehler: ${err.message}`);
+        return { importantDates: [], fristHinweise: [], stats: { source: 'Anomaly', fallback: true, error: err.message, durationMs: 0 } };
+      });
+      stats.anomaly = { triggered: true, ...anomalyResult.stats };
+      mergedDates = dedupDates(mergedDates, anomalyResult.importantDates);
+      mergedFristen = dedupFristen(mergedFristen, anomalyResult.fristHinweise);
+    } else {
+      stats.anomaly = { triggered: false };
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
+    // Final-Cap
+    const finalDates = mergedDates.slice(0, MAX_DATES);
+    const finalFristen = mergedFristen.slice(0, MAX_FRIST_HINWEISE);
     stats.finalCounts.dates = finalDates.length;
     stats.finalCounts.fristen = finalFristen.length;
 
-    // Fallback nur wenn ALLE drei Stages gefailed sind
+    // Fallback nur wenn ALLE drei Stages gefailed sind (Anomaly ist optional,
+    // zählt nicht zum Fallback-Kriterium).
     const allFailed = juniorResult.stats.fallback && clauseAuditResult.stats.fallback && seniorResult.stats.fallback;
     stats.fallback = allFailed;
     stats.durationMs = Date.now() - t0;
 
+    const anomalySummary = anomalyResult
+      ? `, Anomaly +${anomalyResult.importantDates.length}+${anomalyResult.fristHinweise.length}`
+      : '';
     console.log(
       `🎯 [${requestId}] [DateHunt] FINAL: ${finalDates.length} Datums + ${finalFristen.length} Fristen ` +
       `(Junior ${juniorResult.importantDates.length}+${juniorResult.fristHinweise.length}, ` +
       `ClauseAudit ${clauseAuditResult.importantDates.length}+${clauseAuditResult.fristHinweise.length} aus ${stats.clauseAudit?.chunks || 0} Chunks, ` +
-      `Senior +${seniorResult.importantDates.length}+${seniorResult.fristHinweise.length}) ` +
+      `Senior +${seniorResult.importantDates.length}+${seniorResult.fristHinweise.length}${anomalySummary}) ` +
       `total ${stats.durationMs}ms${allFailed ? ' [FALLBACK]' : ''}`
     );
 
@@ -903,6 +1104,7 @@ module.exports = {
   buildJuniorPrompt,
   buildChunkPrompt,
   buildSeniorPrompt,
+  buildAnomalyUserPrompt,
   dedupDates,
   dedupFristen,
   // Phase 4: Klausel-Audit-Chunker (deterministisch)
@@ -914,6 +1116,14 @@ module.exports = {
   CHUNK_MAX_LEN,
   CHUNK_OVERLAP,
   CHUNK_AUDIT_CONCURRENCY,
+  CHUNK_AUDIT_TIMEOUT_MS,
+  CHUNK_RETRY_TIMEOUT_MS,
+  CHUNK_RETRY_MAX_CHUNKS,
+  CHUNK_RETRY_TOTAL_BUDGET_MS,
+  ANOMALY_TIMEOUT_MS,
+  ANOMALY_TRIGGER_MIN_CONTRACT_LEN,
+  ANOMALY_TRIGGER_MAX_DATES,
+  ANOMALY_SAMPLE_LEN,
   JUNIOR_TIMEOUT_MS,
   SENIOR_TIMEOUT_MS,
   TOTAL_PIPELINE_TIMEOUT_MS

@@ -16,6 +16,7 @@ const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provid
 const { generateEventsForContract, cleanAndRegenerateAIEvents } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
+const { createTrackedOpenAI } = require("../utils/openaiWithTracking"); // 💰 Tracked OpenAI Wrapper für DateHunt-Calls
 const { clauseParser } = require("../services/legalLens"); // 🔍 Legal Lens Pre-Processing
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
@@ -3428,7 +3429,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             setTimeout(() => reject(new Error("OpenAI API timeout after 90s")), 90000)
           )
         ]),
-        dateHuntService.huntDates(fullTextContent, getOpenAI(), requestId)
+        dateHuntService.huntDates(
+          fullTextContent,
+          createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'date-hunt', requestId }),
+          requestId
+        )
           .catch(err => {
             console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
             return { importantDates: [], stats: { fallback: true, error: err.message } };
