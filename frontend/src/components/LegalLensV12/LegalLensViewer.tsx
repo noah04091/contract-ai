@@ -398,6 +398,75 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     });
   }, [decisionsKey, contractId]);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // PDF-Markers (Highlighter-Style, Server-persistiert) — eigene Welt von Text-Decisions
+  // ─────────────────────────────────────────────────────────────────────────
+  type PdfMarkerColor = 'green' | 'orange' | 'red';
+  type PdfMarker = {
+    id: string;
+    page: number;
+    spanIndices: number[];
+    textSnippet: string;
+    color: PdfMarkerColor;
+    note?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+  };
+  const [pdfMarkers, setPdfMarkersState] = useState<PdfMarker[]>([]);
+
+  // Server-Sync: progress.pdfMarkers → State (Server gewinnt)
+  useEffect(() => {
+    if (!progress) return;
+    const serverMarkers = (progress as { pdfMarkers?: PdfMarker[] }).pdfMarkers || [];
+    setPdfMarkersState(serverMarkers);
+  }, [progress]);
+
+  const handleAddPdfMarker = useCallback((marker: PdfMarker) => {
+    setPdfMarkersState(prev => [...prev, marker]);
+    if (contractId) {
+      const token = localStorage.getItem('token');
+      fetch(`/api/legal-lens/${contractId}/pdf-marker`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(marker)
+      }).catch(err => console.warn('[Legal Lens] PDF-Marker create failed:', err));
+    }
+  }, [contractId]);
+
+  const handleUpdatePdfMarker = useCallback((markerId: string, updates: Partial<Pick<PdfMarker, 'color' | 'note'>>) => {
+    setPdfMarkersState(prev => prev.map(m =>
+      m.id === markerId ? { ...m, ...updates, updatedAt: new Date() } : m
+    ));
+    if (contractId) {
+      const token = localStorage.getItem('token');
+      fetch(`/api/legal-lens/${contractId}/pdf-marker/${markerId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(updates)
+      }).catch(err => console.warn('[Legal Lens] PDF-Marker update failed:', err));
+    }
+  }, [contractId]);
+
+  const handleDeletePdfMarker = useCallback((markerId: string) => {
+    setPdfMarkersState(prev => prev.filter(m => m.id !== markerId));
+    if (contractId) {
+      const token = localStorage.getItem('token');
+      fetch(`/api/legal-lens/${contractId}/pdf-marker/${markerId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(err => console.warn('[Legal Lens] PDF-Marker delete failed:', err));
+    }
+  }, [contractId]);
+
+  // Aktiver Markierungs-Modus (null = Lesemodus)
+  type ActiveMarkerMode = PdfMarkerColor | 'note' | null;
+  const [activeMarkerMode, setActiveMarkerMode] = useState<ActiveMarkerMode>(null);
+
+  // Marker werden in den nächsten Sub-Phasen verwendet (3=Render, 4=Toolbar, 5=Click, 7=Edit)
+  // Temporäre void-Statements verhindern unused-Warnings in Phase 2
+  void handleAddPdfMarker; void handleUpdatePdfMarker; void handleDeletePdfMarker;
+  void activeMarkerMode; void setActiveMarkerMode; void pdfMarkers;
+
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
   // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
   const decisionSummary = useMemo(() => {

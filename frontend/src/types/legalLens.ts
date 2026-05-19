@@ -445,6 +445,21 @@ export interface ProgressSummary {
 }
 
 /**
+ * PDF-Marker (Highlighter-Style Markierungen im PDF)
+ * Server-persistiert, eigene Welt von Text-Decisions
+ */
+export interface PdfMarker {
+  id: string;
+  page: number;             // 1-indexed
+  spanIndices: number[];    // Span-Indices auf der Page
+  textSnippet: string;      // max 200 chars (Vorschau für Sidebar-Liste)
+  color: 'green' | 'orange' | 'red';
+  note?: string;            // max 2000 chars
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
  * User-Fortschritt für einen Vertrag
  */
 export interface LegalLensProgress {
@@ -469,6 +484,7 @@ export interface LegalLensProgress {
     decision: 'accepted' | 'negotiate' | 'rejected';
     updatedAt: Date;
   }>;
+  pdfMarkers?: PdfMarker[];
   sessions: ReviewSession[];
   totalTimeSpent: number;
   status: ProgressStatus;
