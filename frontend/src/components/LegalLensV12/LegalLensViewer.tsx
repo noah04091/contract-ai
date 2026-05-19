@@ -462,10 +462,115 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   type ActiveMarkerMode = PdfMarkerColor | 'note' | null;
   const [activeMarkerMode, setActiveMarkerMode] = useState<ActiveMarkerMode>(null);
 
-  // Marker werden in den nächsten Sub-Phasen verwendet (3=Render, 4=Toolbar, 5=Click, 7=Edit)
-  // Temporäre void-Statements verhindern unused-Warnings in Phase 2
+  // ─────────────────────────────────────────────────────────────────────────
+  // Sub-Phase 3: Persistente Marker-Overlays auf dem PDF
+  // ─────────────────────────────────────────────────────────────────────────
+  const pdfMarkerContainersRef = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const MARKER_COLOR_BG: Record<PdfMarkerColor, string> = {
+    green: 'rgba(34, 197, 94, 0.35)',
+    orange: 'rgba(249, 115, 22, 0.38)',
+    red: 'rgba(239, 68, 68, 0.35)'
+  };
+
+  // Marker für eine bestimmte Page rendern (Overlay-Divs über den Text-Spans)
+  const renderPdfMarkersForPage = useCallback((pageNum: number) => {
+    const pageWrapper = document.querySelector(`[data-page-num="${pageNum}"]`);
+    if (!pageWrapper) return;
+    const pdfPage = pageWrapper.querySelector('.react-pdf__Page');
+    if (!pdfPage) return;
+    const textLayer = pdfPage.querySelector('.react-pdf__Page__textContent');
+    if (!textLayer || textLayer.querySelectorAll('span').length === 0) return; // noch nicht bereit
+
+    // Alten Marker-Container für diese Page entfernen
+    const existing = pdfMarkerContainersRef.current.get(pageNum);
+    if (existing) existing.remove();
+
+    const markersForPage = pdfMarkers.filter(m => m.page === pageNum);
+    if (markersForPage.length === 0) {
+      pdfMarkerContainersRef.current.delete(pageNum);
+      return;
+    }
+
+    const pageRect = pdfPage.getBoundingClientRect();
+    const allSpans = Array.from(textLayer.querySelectorAll('span')) as HTMLElement[];
+
+    const container = document.createElement('div');
+    container.className = 'legal-lens-pdf-markers';
+    container.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    `;
+
+    markersForPage.forEach(marker => {
+      marker.spanIndices.forEach(idx => {
+        const span = allSpans[idx];
+        if (!span) return;
+        const rect = span.getBoundingClientRect();
+        const overlay = document.createElement('div');
+        overlay.className = 'legal-lens-pdf-marker';
+        overlay.dataset.markerId = marker.id;
+        overlay.dataset.markerColor = marker.color;
+        overlay.style.cssText = `
+          position: absolute;
+          left: ${rect.left - pageRect.left}px;
+          top: ${rect.top - pageRect.top}px;
+          width: ${rect.width}px;
+          height: ${rect.height}px;
+          background-color: ${MARKER_COLOR_BG[marker.color]};
+          border-radius: 2px;
+          pointer-events: auto;
+          cursor: pointer;
+          transition: filter 0.15s;
+        `;
+        if (marker.note) {
+          overlay.title = marker.note;
+        }
+        container.appendChild(overlay);
+      });
+    });
+
+    pdfPage.insertBefore(container, textLayer);
+    pdfMarkerContainersRef.current.set(pageNum, container);
+  }, [pdfMarkers, MARKER_COLOR_BG]);
+
+  // Re-Render Marker bei pdfMarkers / scale / Page-Wechsel
+  useEffect(() => {
+    if (viewMode !== 'pdf') return;
+    const pagesWithMarkers = Array.from(new Set(pdfMarkers.map(m => m.page)));
+    if (pagesWithMarkers.length === 0) return;
+    const timer = setTimeout(() => {
+      pagesWithMarkers.forEach(p => renderPdfMarkersForPage(p));
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [pdfMarkers, scale, numPages, viewMode, renderPdfMarkersForPage]);
+
+  // Cleanup beim Wechsel zur Text-View (sonst hängen Marker-Container in der DOM-Hierarchie)
+  useEffect(() => {
+    if (viewMode === 'text') {
+      pdfMarkerContainersRef.current.forEach(c => c.remove());
+      pdfMarkerContainersRef.current.clear();
+    }
+  }, [viewMode]);
+
+  // Cleanup beim Unmount
+  useEffect(() => {
+    const containers = pdfMarkerContainersRef.current;
+    return () => {
+      containers.forEach(c => c.remove());
+      containers.clear();
+    };
+  }, []);
+
+  // Marker werden in Sub-Phasen 4-7 verwendet (Toolbar, Click, Edit)
+  // Temporäre void-Statements verhindern unused-Warnings
   void handleAddPdfMarker; void handleUpdatePdfMarker; void handleDeletePdfMarker;
-  void activeMarkerMode; void setActiveMarkerMode; void pdfMarkers;
+  void activeMarkerMode; void setActiveMarkerMode;
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
   // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
