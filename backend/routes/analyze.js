@@ -784,6 +784,41 @@ function detectDocumentType(filename, text, pageCount) {
 }
 
 /**
+ * Panoramisches Sampling — extrahiert mehrere strategische Stellen
+ * eines Vertragstexts statt nur den Anfang. Adaptiv nach Länge:
+ *   < 6000 chars  → ganzer Text (Sampling überflüssig)
+ *   6-15k chars   → Anfang 3000 + Ende 3000 (zwei Perspektiven)
+ *   > 15k chars   → Anfang 3000 + Mitte 3000 + Ende 3000 (panoramisch)
+ *
+ * Pattern adaptiert aus documentGate.js:forceGptClassify (bereits im Einsatz
+ * dort). Liefert für die Document-Type-Klassifikation deutlich mehr Kontext
+ * als ein reiner Header-Anfang — kritisch für komplexe Verträge (Factoring,
+ * AGB, Versicherungspolicen), wo der eigentliche Charakter erst in der
+ * Mitte/am Ende sichtbar wird.
+ */
+function buildPanoramicSample(text) {
+  const t = (text || '').trim();
+  if (t.length === 0) return '';
+
+  // Kurze Dokumente: ganzer Text
+  if (t.length < 6000) return t;
+
+  const SECTION_LEN = 3000;
+  const headSection = t.substring(0, SECTION_LEN);
+  const tailSection = t.substring(t.length - SECTION_LEN);
+
+  // Mittellange Dokumente: nur Anfang + Ende (kein Mittelpunkt nötig)
+  if (t.length < 15000) {
+    return `[Anfang des Dokuments]\n${headSection}\n\n[...]\n\n[Ende des Dokuments]\n${tailSection}`;
+  }
+
+  // Lange Dokumente: panoramisch (Anfang + Mitte + Ende)
+  const middleStart = Math.floor(t.length / 2 - SECTION_LEN / 2);
+  const middleSection = t.substring(middleStart, middleStart + SECTION_LEN);
+  return `[Anfang des Dokuments]\n${headSection}\n\n[...]\n\n[Mitte des Dokuments]\n${middleSection}\n\n[...]\n\n[Ende des Dokuments]\n${tailSection}`;
+}
+
+/**
  * 🚪 Phase Alpha — Zweiter Türsteher für Document-Type-Detection.
  *
  * Bei niedriger Confidence der naiven Keyword-Heuristik (detectDocumentType)
@@ -793,23 +828,30 @@ function detectDocumentType(filename, text, pageCount) {
  * Rückgabe von null → Caller fällt auf sicheren CONTRACT-Default zurück
  * (95% der User-Uploads sind Verträge).
  *
- * Kosten: ~$0.0002 pro Call. Latenz: 500-1500ms.
- * Pattern adaptiert aus services/legalLens/documentGate.js:gptClassify.
+ * Sampling-Strategie: Panoramisch — Anfang + Mitte + Ende (statt nur erste
+ * 2000 chars). Begründung: bei langen Verträgen (Factoring, AGB) steht der
+ * eigentliche Vertragscharakter oft in der Mitte oder am Ende. Mehr Kontext
+ * = präzisere Klassifikation, KEINE höhere Halluzinations-Gefahr (Validator
+ * + Confidence-Threshold + CONTRACT-Fallback bleiben scharf).
+ *
+ * Kosten: ~$0.0003-0.0004 pro Call (bei 9000 chars Input). Latenz: 700-1500ms.
+ * Pattern adaptiert aus services/legalLens/documentGate.js:forceGptClassify.
  */
 async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) {
-  const sample = (textSample || '').substring(0, 2000);
-  if (sample.length < 200) {
+  const rawText = (textSample || '').trim();
+  if (rawText.length < 200) {
     // Zu wenig Text für sinnvolle Klassifikation
     return null;
   }
-  const TIMEOUT_MS = 8000;
+  const sample = buildPanoramicSample(rawText);
+  const TIMEOUT_MS = 10000;
 
   try {
     const completion = await Promise.race([
       openaiClient.chat.completions.create({
         model: 'gpt-4o-mini',
         temperature: 0.1,
-        max_tokens: 150,
+        max_tokens: 200,
         response_format: { type: 'json_object' },
         messages: [
           {
@@ -820,7 +862,7 @@ Antworte NUR mit JSON in diesem Format:
 {
   "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
   "confidence": 0-1,
-  "reason": "kurze Begründung auf Deutsch"
+  "reason": "kurze Begründung auf Deutsch (1 Satz)"
 }
 
 CONTRACT: alle Verträge & rechtsverbindliche Vereinbarungen — Mietvertrag,
@@ -832,11 +874,16 @@ RECEIPT: Quittungen, Belege, Kassenbons.
 TABLE_DOCUMENT: reine Tabellen, Listen, Konditionsblätter ohne Vertragscharakter.
 UNKNOWN: alles andere.
 
+Du erhältst je nach Dokumentlänge bis zu drei Abschnitte: Anfang, ggf. Mitte,
+ggf. Ende. Berücksichtige alle Abschnitte für ein vollständiges Bild — bei
+Verträgen steht der eigentliche Charakter (z.B. Forderungsabtretung beim
+Factoring) oft in der Mitte oder am Ende.
+
 Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
           },
           {
             role: 'user',
-            content: `Klassifiziere folgenden Dokumentanfang:\n\n---\n${sample}\n---`
+            content: `Klassifiziere folgendes Dokument:\n\n---\n${sample}\n---`
           }
         ]
       }),
@@ -854,7 +901,21 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
       return null;
     }
     const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.7;
-    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini): ${category} (${confidence.toFixed(2)}) — ${parsed.reason || 'keine Begründung'}`);
+    // Cost-Tracking — Visibility für gpt-4o-mini Klassifikations-Calls (zuvor blind)
+    try {
+      if (completion.usage) {
+        const costTracker = require('../services/costTracking').getInstance();
+        costTracker.trackAPICall({
+          model: 'gpt-4o-mini',
+          inputTokens: completion.usage.prompt_tokens || 0,
+          outputTokens: completion.usage.completion_tokens || 0,
+          feature: 'document_type_classification',
+          requestId,
+          metadata: { sampleLength: sample.length, classified: category }
+        }).catch(() => { /* tracking failure must never break analysis */ });
+      }
+    } catch { /* costTracking optional */ }
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)}) — ${parsed.reason || 'keine Begründung'}`);
     return { type: category, confidence, source: 'gpt-4o-mini' };
   } catch (err) {
     console.warn(`⚠️ [${requestId}] Türsteher 2 (gpt-4o-mini) fehlgeschlagen: ${err.message} — Fallback auf Heuristik`);
@@ -2170,7 +2231,11 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
 
     if (needsSecondOpinion) {
       const gptOpinion = await classifyDocumentTypeWithGPT(pdfText, getOpenAI(), requestId);
-      if (gptOpinion && gptOpinion.confidence >= 0.7) {
+      // Threshold 0.75 (vorher 0.7) — konservative Anpassung nach Multi-Sample-
+      // Erweiterung. Mehr Kontext führt zu höheren Confidence-Werten, also
+      // wird auch der Threshold leicht angehoben damit nur klar überzeugende
+      // GPT-Klassifikationen den Heuristik-Output überschreiben.
+      if (gptOpinion && gptOpinion.confidence >= 0.75) {
         // GPT ist klar → Übernehmen
         console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
         documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence };
