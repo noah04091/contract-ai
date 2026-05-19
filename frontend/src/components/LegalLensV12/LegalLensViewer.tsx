@@ -103,6 +103,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     } catch { return {}; }
   });
   const handleSaveAnnotation = useCallback((clauseId: string, text: string) => {
+    // Guard: PDF-Klausel-IDs (pdf-XXX) sind temporär und nicht in der clauses-Liste —
+    // Notizen darauf wären "unsichtbar" für Banner-Filter. PDF-Markierungs-System
+    // kommt in eigener Phase mit Page/Position-Anker.
+    if (clauseId.startsWith('pdf-')) return;
     setClauseAnnotationsState(prev => {
       const next = { ...prev };
       if (text.trim()) next[clauseId] = text.trim();
@@ -395,12 +399,15 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [decisionsKey, contractId]);
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
-  // Notes-Count: Anzahl unterschiedlicher Klauseln mit Inline-Annotation ODER Server-Note
+  // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
   const decisionSummary = useMemo(() => {
     const values = Object.values(clauseDecisions);
     const notedClauseIds = new Set<string>();
-    (progress?.notes || []).forEach(n => notedClauseIds.add(n.clauseId));
+    (progress?.notes || []).forEach(n => {
+      if (!n.clauseId.startsWith('pdf-')) notedClauseIds.add(n.clauseId);
+    });
     Object.entries(clauseAnnotations).forEach(([clauseId, text]) => {
+      if (clauseId.startsWith('pdf-')) return;
       if (text && text.trim().length > 0) notedClauseIds.add(clauseId);
     });
     const noted = notedClauseIds.size;
@@ -2287,8 +2294,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       onRetry={handleRetryAnalysis}
                       currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
                       onSetDecision={handleSetDecision}
-                      currentAnnotation={selectedClause?.id ? clauseAnnotations[selectedClause.id] : undefined}
-                      onSaveAnnotation={handleSaveAnnotation}
                     />
                   </>
                 ) : (
@@ -2760,8 +2765,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 onRetry={handleRetryAnalysis}
                 currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
                 onSetDecision={handleSetDecision}
-                currentAnnotation={selectedClause?.id ? clauseAnnotations[selectedClause.id] : undefined}
-                onSaveAnnotation={handleSaveAnnotation}
               />
             </>
           ) : (
