@@ -2287,6 +2287,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       onRetry={handleRetryAnalysis}
                       currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
                       onSetDecision={handleSetDecision}
+                      currentAnnotation={selectedClause?.id ? clauseAnnotations[selectedClause.id] : undefined}
+                      onSaveAnnotation={handleSaveAnnotation}
                     />
                   </>
                 ) : (
@@ -2758,6 +2760,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 onRetry={handleRetryAnalysis}
                 currentDecision={selectedClause?.id ? clauseDecisions[selectedClause.id] : undefined}
                 onSetDecision={handleSetDecision}
+                currentAnnotation={selectedClause?.id ? clauseAnnotations[selectedClause.id] : undefined}
+                onSaveAnnotation={handleSaveAnnotation}
               />
             </>
           ) : (

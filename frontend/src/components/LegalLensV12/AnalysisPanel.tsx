@@ -74,6 +74,9 @@ interface AnalysisPanelProps {
   // Stufe 4 — Decision direkt in Sidebar setzen
   currentDecision?: 'accepted' | 'negotiate' | 'rejected';
   onSetDecision?: (clauseId: string, decision: 'accepted' | 'negotiate' | 'rejected') => void;
+  // Notiz/Annotation direkt in Sidebar setzen (für PDF + Text View)
+  currentAnnotation?: string;
+  onSaveAnnotation?: (clauseId: string, text: string) => void;
 }
 
 const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
@@ -105,7 +108,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   onRetry,
   onClauseSaved,
   currentDecision,
-  onSetDecision
+  onSetDecision,
+  currentAnnotation,
+  onSaveAnnotation
 }) => {
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
@@ -122,6 +127,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  // Notiz-Editor State (Sticky-Footer Annotation, vor allem für PDF-View)
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
   const scorePopoverRef = useRef<HTMLDivElement>(null);
 
   // Click-outside handler für Score-Popover
@@ -1166,8 +1174,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* Stufe 4 — Sticky Decision-Footer: nur bei vollständiger Analyse */}
-      {analysis && sourceClauseId && onSetDecision && (
+      {/* Sticky-Footer — PDF-Klauseln zeigen Notiz-Editor, Text-Klauseln zeigen Decision-Buttons */}
+      {analysis && sourceClauseId && !sourceClauseId.startsWith('pdf-') && onSetDecision && (
         <div className={styles.decisionStickyFooter}>
           <div className={styles.decisionFooterLabel}>Wie entscheidest du?</div>
           <div className={styles.decisionFooterBtns}>
@@ -1198,6 +1206,72 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <AlertTriangle size={14} />
               <span>Ablehnen</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* PDF-Klausel: Notiz-Editor statt Decision-Buttons */}
+      {analysis && sourceClauseId && sourceClauseId.startsWith('pdf-') && onSaveAnnotation && (
+        <div className={styles.decisionStickyFooter}>
+          <div className={styles.decisionFooterLabel}>Notiz zu diesem Bereich</div>
+
+          {isEditingNote ? (
+            <div className={styles.annotationFooterEditor}>
+              <textarea
+                className={styles.annotationFooterInput}
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSaveAnnotation(sourceClauseId, noteDraft);
+                    setIsEditingNote(false);
+                  }
+                  if (e.key === 'Escape') {
+                    setIsEditingNote(false);
+                  }
+                }}
+                placeholder="Notiz hinzufügen…"
+                rows={3}
+                autoFocus
+              />
+              <div className={styles.annotationFooterActions}>
+                <button
+                  type="button"
+                  className={styles.annotationFooterSaveBtn}
+                  onClick={() => { onSaveAnnotation(sourceClauseId, noteDraft); setIsEditingNote(false); }}
+                >
+                  <Check size={12} /> Speichern
+                </button>
+                <button
+                  type="button"
+                  className={styles.annotationFooterCancelBtn}
+                  onClick={() => setIsEditingNote(false)}
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {currentAnnotation && currentAnnotation.trim().length > 0 && (
+                <div className={styles.annotationFooterDisplay}>
+                  📝 {currentAnnotation}
+                </div>
+              )}
+              <button
+                type="button"
+                className={`${styles.decisionFooterBtn} ${styles.decisionFooterBtnNote}`}
+                onClick={() => { setNoteDraft(currentAnnotation || ''); setIsEditingNote(true); }}
+              >
+                <MessageSquare size={14} />
+                <span>{currentAnnotation ? 'Notiz bearbeiten' : 'Notiz hinzufügen'}</span>
+              </button>
+            </>
+          )}
+
+          <div className={styles.pdfDecisionHint}>
+            ℹ️ Akzeptieren / Verhandeln / Ablehnen findest du in der <strong>Text-Ansicht</strong> — dort bewertest du die ganze Klausel im Kontext.
           </div>
         </div>
       )}
