@@ -154,6 +154,46 @@ const legalLensProgressSchema = new mongoose.Schema({
     }
   }],
 
+  // PDF-Marker (Highlighter-Style Markierungen direkt im PDF, separate Welt von Text-Decisions)
+  pdfMarkers: [{
+    id: {
+      type: String,
+      required: true
+    },
+    page: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    spanIndices: [{
+      type: Number,
+      min: 0
+    }],
+    textSnippet: {
+      type: String,
+      required: true,
+      maxlength: 200
+    },
+    color: {
+      type: String,
+      enum: ["green", "orange", "red"],
+      required: true
+    },
+    note: {
+      type: String,
+      default: "",
+      maxlength: 2000
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+
   // Session-Tracking
   sessions: [{
     startedAt: {

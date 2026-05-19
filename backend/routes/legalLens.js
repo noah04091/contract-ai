@@ -1917,7 +1917,8 @@ router.get('/:contractId/progress', verifyToken, async (req, res) => {
           percentComplete: 0,
           bookmarks: [],
           notes: [],
-          decisions: []
+          decisions: [],
+          pdfMarkers: []
         }
       });
     }
@@ -1934,6 +1935,7 @@ router.get('/:contractId/progress', verifyToken, async (req, res) => {
         bookmarks: progress.bookmarks,
         notes: progress.notes,
         decisions: progress.decisions || [],
+        pdfMarkers: progress.pdfMarkers || [],
         status: progress.status,
         totalTimeSpent: progress.totalTimeSpent
       }
@@ -2167,6 +2169,128 @@ router.put('/:contractId/decision', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('❌ [Legal Lens] Decision error:', error);
     res.status(500).json({ success: false, error: 'Fehler beim Speichern der Entscheidung' });
+  }
+});
+
+// ============================================
+// PDF-MARKERS (Highlighter-System für PDF-View)
+// ============================================
+
+/**
+ * POST /api/legal-lens/:contractId/pdf-marker
+ * Erstellt einen neuen PDF-Marker (Highlighter-Style).
+ * Body: { id, page, spanIndices, textSnippet, color, note? }
+ */
+router.post('/:contractId/pdf-marker', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const { id, page, spanIndices, textSnippet, color, note } = req.body;
+    const userId = req.user.userId;
+
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ success: false, error: 'id fehlt' });
+    }
+    if (typeof page !== 'number' || page < 1) {
+      return res.status(400).json({ success: false, error: 'page muss >= 1 sein' });
+    }
+    if (!Array.isArray(spanIndices) || spanIndices.length === 0) {
+      return res.status(400).json({ success: false, error: 'spanIndices muss ein nicht-leeres Array sein' });
+    }
+    if (!textSnippet || typeof textSnippet !== 'string') {
+      return res.status(400).json({ success: false, error: 'textSnippet fehlt' });
+    }
+    if (!['green', 'orange', 'red'].includes(color)) {
+      return res.status(400).json({ success: false, error: 'Ungültige color' });
+    }
+
+    const marker = {
+      id,
+      page,
+      spanIndices,
+      textSnippet: textSnippet.slice(0, 200),
+      color,
+      note: typeof note === 'string' ? note.slice(0, 2000) : '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    await LegalLensProgress.findOneAndUpdate(
+      { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+      {
+        $push: { pdfMarkers: marker },
+        $set: { updatedAt: new Date() }
+      },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, marker });
+  } catch (error) {
+    console.error('❌ [Legal Lens] PDF-Marker create error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Speichern des Markers' });
+  }
+});
+
+/**
+ * PUT /api/legal-lens/:contractId/pdf-marker/:markerId
+ * Aktualisiert einen PDF-Marker (Farbe, Notiz).
+ * Body: { color?, note? }
+ */
+router.put('/:contractId/pdf-marker/:markerId', verifyToken, async (req, res) => {
+  try {
+    const { contractId, markerId } = req.params;
+    const { color, note } = req.body;
+    const userId = req.user.userId;
+
+    if (color !== undefined && !['green', 'orange', 'red'].includes(color)) {
+      return res.status(400).json({ success: false, error: 'Ungültige color' });
+    }
+    if (note !== undefined && typeof note !== 'string') {
+      return res.status(400).json({ success: false, error: 'note muss String sein' });
+    }
+
+    const setObj = { 'pdfMarkers.$.updatedAt': new Date() };
+    if (color !== undefined) setObj['pdfMarkers.$.color'] = color;
+    if (note !== undefined) setObj['pdfMarkers.$.note'] = note.slice(0, 2000);
+
+    const result = await LegalLensProgress.findOneAndUpdate(
+      {
+        userId: new ObjectId(userId),
+        contractId: new ObjectId(contractId),
+        'pdfMarkers.id': markerId
+      },
+      { $set: setObj },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ success: false, error: 'Marker nicht gefunden' });
+    }
+
+    res.json({ success: true, markerId });
+  } catch (error) {
+    console.error('❌ [Legal Lens] PDF-Marker update error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Aktualisieren des Markers' });
+  }
+});
+
+/**
+ * DELETE /api/legal-lens/:contractId/pdf-marker/:markerId
+ * Löscht einen PDF-Marker.
+ */
+router.delete('/:contractId/pdf-marker/:markerId', verifyToken, async (req, res) => {
+  try {
+    const { contractId, markerId } = req.params;
+    const userId = req.user.userId;
+
+    await LegalLensProgress.findOneAndUpdate(
+      { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
+      { $pull: { pdfMarkers: { id: markerId } } }
+    );
+
+    res.json({ success: true, markerId });
+  } catch (error) {
+    console.error('❌ [Legal Lens] PDF-Marker delete error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim Löschen des Markers' });
   }
 });
 
