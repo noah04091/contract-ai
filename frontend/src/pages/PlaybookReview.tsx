@@ -1455,18 +1455,18 @@ const PlaybookReview: React.FC = () => {
                       )}
                     </div>
 
-                    {rule.note && (
-                      <>
-                        <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Notiz</label>
-                        <div className={styles.standardBlock}>{rule.note}</div>
-                      </>
+                    <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Notiz</label>
+                    {rule.note ? (
+                      <div className={styles.standardBlock}>{rule.note}</div>
+                    ) : (
+                      <p className={styles.fieldHint}>Keine Notiz hinterlegt.</p>
                     )}
 
-                    {rule.standardText && (
-                      <>
-                        <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Standardtext</label>
-                        <div className={styles.standardBlock}>{rule.standardText}</div>
-                      </>
+                    <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Standardtext</label>
+                    {rule.standardText ? (
+                      <div className={styles.standardBlock}>{rule.standardText}</div>
+                    ) : (
+                      <p className={styles.fieldHint}>Kein Standardtext hinterlegt.</p>
                     )}
                   </div>
                 )}
