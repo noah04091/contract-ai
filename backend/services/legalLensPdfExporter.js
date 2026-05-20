@@ -1,10 +1,10 @@
 // backend/services/legalLensPdfExporter.js
-// PDF-Export mit eingebrannten Marker-Highlights + Notizen für Legal Lens
+// PDF-Export mit eingebrannten Marker-Highlights + Notiz-Seite am Ende
 
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
 
-// Farbpalette für Marker (RGB normalisiert, 0-1)
+// Farbpalette für Marker (RGB normalisiert, 0-1) — gleiche Werte wie Frontend
 const MARKER_COLORS = {
   green:  { r: 0.13, g: 0.77, b: 0.37 },
   orange: { r: 0.98, g: 0.45, b: 0.09 },
@@ -12,13 +12,18 @@ const MARKER_COLORS = {
   blue:   { r: 0.23, g: 0.51, b: 0.96 },
 };
 
+const MARKER_LABELS = {
+  green:  'Akzeptiert',
+  orange: 'Verhandeln',
+  red:    'Ablehnen',
+  blue:   'Notiz',
+};
+
 const MARKER_OPACITY = 0.25; // Highlighter-Light wie Frontend
-const NOTE_TEXT_MAX_LENGTH = 250;
-const NOTE_AREA_WIDTH = 140;
-const NOTE_FONT_SIZE = 7;
 
 /**
- * Annotiert ein PDF mit Marker-Highlights und Notiz-Texten am rechten Rand.
+ * Annotiert ein PDF mit Marker-Highlights und einer separaten Notiz-Übersichtsseite
+ * am Ende. Notizen liegen NICHT mehr über dem Text — Original-Layout unverändert.
  *
  * @param {Buffer} pdfBuffer - Original-PDF als Buffer
  * @param {Array} markers - Array von PdfMarker-Objekten
@@ -26,55 +31,58 @@ const NOTE_FONT_SIZE = 7;
  */
 async function exportPdfWithMarkers(pdfBuffer, markers) {
   if (!markers || markers.length === 0) {
-    // Nichts zu annotieren — Original zurückgeben
     return new Uint8Array(pdfBuffer);
   }
 
   // 1. pdfjs-dist: Text-Item-Positionen pro Page lesen
-  const pdfjsDoc = await pdfjsLib.getDocument({ data: new Uint8Array(pdfBuffer) }).promise;
+  const pdfjsDoc = await pdfjsLib.getDocument({
+    data: new Uint8Array(pdfBuffer),
+    verbosity: 0
+  }).promise;
 
   // 2. pdf-lib: zum Editieren öffnen
   const pdfLibDoc = await PDFDocument.load(pdfBuffer);
   const helveticaFont = await pdfLibDoc.embedFont(StandardFonts.Helvetica);
+  const helveticaBold = await pdfLibDoc.embedFont(StandardFonts.HelveticaBold);
   const pages = pdfLibDoc.getPages();
 
-  // 3. Marker nach Page gruppieren (Performance: Page-Items nur einmal laden)
-  const markersByPage = new Map();
-  markers.forEach(m => {
-    if (!markersByPage.has(m.page)) markersByPage.set(m.page, []);
-    markersByPage.get(m.page).push(m);
+  // 3. Marker sortieren: nach Page, dann nach erstem Span-Index (für Index-Nummerierung)
+  const sortedMarkers = [...markers].sort((a, b) => {
+    if (a.page !== b.page) return a.page - b.page;
+    const aFirst = a.spanIndices?.[0] ?? 0;
+    const bFirst = b.spanIndices?.[0] ?? 0;
+    return aFirst - bFirst;
   });
 
-  // 4. Pro Page: Text-Items holen, Marker zeichnen
+  // 4. Marker nach Page gruppieren
+  const markersByPage = new Map();
+  sortedMarkers.forEach((m, idx) => {
+    if (!markersByPage.has(m.page)) markersByPage.set(m.page, []);
+    markersByPage.get(m.page).push({ marker: m, globalIndex: idx + 1 });
+  });
+
+  // 5. Pro Page: Highlights zeichnen + kleines [N]-Badge bei Notiz-Markern
   for (const [pageNum, pageMarkers] of markersByPage.entries()) {
-    const pageIdx = pageNum - 1; // 1-indexed → 0-indexed
+    const pageIdx = pageNum - 1;
     if (pageIdx < 0 || pageIdx >= pages.length) continue;
 
     const pdfLibPage = pages[pageIdx];
     const pdfjsPage = await pdfjsDoc.getPage(pageNum);
     const textContent = await pdfjsPage.getTextContent();
-    const pageWidth = pdfLibPage.getWidth();
-    const pageHeight = pdfLibPage.getHeight();
 
-    for (const marker of pageMarkers) {
+    for (const { marker, globalIndex } of pageMarkers) {
       const color = MARKER_COLORS[marker.color] || MARKER_COLORS.green;
-
-      // 4a. Rechtecke für jeden span-Index zeichnen
       const rects = [];
+
       for (const spanIdx of (marker.spanIndices || [])) {
         if (spanIdx < 0 || spanIdx >= textContent.items.length) continue;
         const item = textContent.items[spanIdx];
         if (!item || !item.transform) continue;
 
-        // pdfjs transform: [a, b, c, d, e, f] — e/f sind Position
-        // f ist die BASELINE-y des Texts (bottom-up Koordinatensystem in PDFs)
         const x = item.transform[4];
         const yBaseline = item.transform[5];
         const width = item.width || 0;
-        // Höhe schätzen aus Font-Skalierung (transform[3] = scaleY)
         const fontHeight = Math.abs(item.transform[3]) || 10;
-        // pdf-lib drawRectangle nimmt bottom-left corner
-        // Baseline ist innerhalb des Glyph — wir ziehen leicht nach unten für volle Abdeckung
         const y = yBaseline - fontHeight * 0.2;
         const height = fontHeight * 1.15;
 
@@ -83,7 +91,7 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
         }
       }
 
-      // 4b. Highlight-Rechtecke zeichnen
+      // Highlight-Rechtecke
       rects.forEach(r => {
         pdfLibPage.drawRectangle({
           x: r.x,
@@ -96,58 +104,190 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
         });
       });
 
-      // 4c. Bei Notiz: Text-Anmerkung am rechten Rand zeichnen
+      // Bei Notiz: kleines [N]-Badge am Ende des markierten Bereichs (Verweis zur Notiz-Seite)
       if (marker.note && marker.note.trim().length > 0 && rects.length > 0) {
-        const firstRect = rects[0];
-        const noteRaw = marker.note.trim().slice(0, NOTE_TEXT_MAX_LENGTH);
+        const lastRect = rects[rects.length - 1];
+        const badgeText = `[${globalIndex}]`;
+        const badgeFontSize = 7;
+        const badgeWidth = helveticaBold.widthOfTextAtSize(badgeText, badgeFontSize) + 6;
+        const badgeHeight = badgeFontSize + 4;
+        const badgeX = lastRect.x + lastRect.width + 2;
+        const badgeY = lastRect.y + (lastRect.height / 2) - (badgeHeight / 2);
 
-        // Word-Wrap für Notiz-Text
-        const wrappedLines = wrapText(noteRaw, helveticaFont, NOTE_FONT_SIZE, NOTE_AREA_WIDTH - 16);
-        const lineHeight = NOTE_FONT_SIZE * 1.3;
-        const boxHeight = Math.min(wrappedLines.length, 8) * lineHeight + 8;
-        const visibleLines = wrappedLines.slice(0, 8); // Max 8 Zeilen
-
-        const noteX = Math.max(pageWidth - NOTE_AREA_WIDTH - 4, firstRect.x + firstRect.width + 8);
-        const noteY = Math.min(firstRect.y + firstRect.height, pageHeight - boxHeight - 4);
-
-        // Hintergrund-Box für Notiz (sanftes Blau wie im Frontend)
         pdfLibPage.drawRectangle({
-          x: noteX,
-          y: noteY - boxHeight + 4,
-          width: NOTE_AREA_WIDTH,
-          height: boxHeight,
-          color: rgb(0.95, 0.97, 1.0),
-          borderColor: rgb(0.58, 0.78, 0.98),
-          borderWidth: 0.8,
-          opacity: 0.95,
+          x: badgeX,
+          y: badgeY,
+          width: badgeWidth,
+          height: badgeHeight,
+          color: rgb(0.23, 0.51, 0.96),
+          borderColor: rgb(0.16, 0.40, 0.83),
+          borderWidth: 0.5,
+          opacity: 1,
         });
-
-        // Notiz-Text zeilenweise
-        visibleLines.forEach((line, i) => {
-          pdfLibPage.drawText(line, {
-            x: noteX + 4,
-            y: noteY - 8 - (i * lineHeight),
-            size: NOTE_FONT_SIZE,
-            font: helveticaFont,
-            color: rgb(0.12, 0.27, 0.55),
-          });
+        pdfLibPage.drawText(badgeText, {
+          x: badgeX + 3,
+          y: badgeY + 3,
+          size: badgeFontSize,
+          font: helveticaBold,
+          color: rgb(1, 1, 1),
         });
-
-        // Cut-Indicator wenn Notiz länger als 8 Zeilen
-        if (wrappedLines.length > 8) {
-          pdfLibPage.drawText('…', {
-            x: noteX + NOTE_AREA_WIDTH - 12,
-            y: noteY - boxHeight + 8,
-            size: NOTE_FONT_SIZE,
-            font: helveticaFont,
-            color: rgb(0.4, 0.55, 0.75),
-          });
-        }
       }
     }
   }
 
+  // 6. Notiz-Übersichtsseite(n) am Ende
+  const markersWithNotes = sortedMarkers
+    .map((m, idx) => ({ marker: m, globalIndex: idx + 1 }))
+    .filter(x => x.marker.note && x.marker.note.trim().length > 0);
+
+  if (markersWithNotes.length > 0) {
+    addNotesPages(pdfLibDoc, markersWithNotes, helveticaFont, helveticaBold);
+  }
+
   return await pdfLibDoc.save();
+}
+
+/**
+ * Fügt eine oder mehrere "Notizen"-Seiten am Ende des PDFs ein.
+ * Standard A4-Format, mit nummerierter Liste der Notizen + Seitenverweisen.
+ */
+function addNotesPages(pdfLibDoc, markersWithNotes, font, fontBold) {
+  const A4_WIDTH = 595.28;   // PDF-Punkte
+  const A4_HEIGHT = 841.89;
+  const MARGIN = 50;
+  const CONTENT_WIDTH = A4_WIDTH - 2 * MARGIN;
+  const TITLE_SIZE = 18;
+  const HEADER_SIZE = 9;
+  const TEXT_SIZE = 10;
+  const NOTE_SIZE = 9.5;
+  const LINE_HEIGHT_NOTE = NOTE_SIZE * 1.4;
+
+  let page = pdfLibDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+  let cursorY = A4_HEIGHT - MARGIN;
+
+  // Titel
+  page.drawText('Notizen zum Vertrag', {
+    x: MARGIN,
+    y: cursorY - TITLE_SIZE,
+    size: TITLE_SIZE,
+    font: fontBold,
+    color: rgb(0.12, 0.27, 0.55),
+  });
+  cursorY -= TITLE_SIZE + 8;
+
+  // Untertitel mit Stats
+  const counts = { green: 0, orange: 0, red: 0, blue: 0 };
+  markersWithNotes.forEach(({ marker }) => { counts[marker.color] = (counts[marker.color] || 0) + 1; });
+  const statsLine = `${markersWithNotes.length} Notiz${markersWithNotes.length === 1 ? '' : 'en'} insgesamt`;
+  page.drawText(statsLine, {
+    x: MARGIN,
+    y: cursorY - HEADER_SIZE,
+    size: HEADER_SIZE,
+    font: font,
+    color: rgb(0.4, 0.45, 0.55),
+  });
+  cursorY -= HEADER_SIZE + 6;
+
+  // Trennlinie
+  page.drawLine({
+    start: { x: MARGIN, y: cursorY },
+    end: { x: A4_WIDTH - MARGIN, y: cursorY },
+    thickness: 0.8,
+    color: rgb(0.85, 0.88, 0.92),
+  });
+  cursorY -= 18;
+
+  // Notizen-Liste
+  for (const { marker, globalIndex } of markersWithNotes) {
+    const color = MARKER_COLORS[marker.color] || MARKER_COLORS.green;
+    const label = MARKER_LABELS[marker.color] || '';
+    const snippet = (marker.textSnippet || '').replace(/\s+/g, ' ').trim();
+    const truncatedSnippet = snippet.length > 130 ? snippet.slice(0, 127) + '…' : snippet;
+
+    const noteText = marker.note.trim();
+    const wrappedNote = wrapText(noteText, font, NOTE_SIZE, CONTENT_WIDTH - 32);
+
+    // Höhe vorberechnen für Seitenumbruch
+    const headerHeight = TEXT_SIZE + 4;
+    const snippetHeight = wrapText(truncatedSnippet, font, NOTE_SIZE - 1, CONTENT_WIDTH - 32).length * (NOTE_SIZE - 1) * 1.35;
+    const noteHeight = wrappedNote.length * LINE_HEIGHT_NOTE;
+    const blockHeight = headerHeight + snippetHeight + noteHeight + 20;
+
+    if (cursorY - blockHeight < MARGIN) {
+      // Neue Seite
+      page = pdfLibDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+      cursorY = A4_HEIGHT - MARGIN;
+      page.drawText('Notizen zum Vertrag (Fortsetzung)', {
+        x: MARGIN,
+        y: cursorY - TITLE_SIZE,
+        size: TITLE_SIZE,
+        font: fontBold,
+        color: rgb(0.12, 0.27, 0.55),
+      });
+      cursorY -= TITLE_SIZE + 18;
+    }
+
+    // Index-Badge
+    const indexBadge = `[${globalIndex}]`;
+    const indexBadgeWidth = fontBold.widthOfTextAtSize(indexBadge, TEXT_SIZE) + 8;
+    page.drawRectangle({
+      x: MARGIN,
+      y: cursorY - TEXT_SIZE - 3,
+      width: indexBadgeWidth,
+      height: TEXT_SIZE + 5,
+      color: rgb(0.23, 0.51, 0.96),
+      borderWidth: 0,
+    });
+    page.drawText(indexBadge, {
+      x: MARGIN + 4,
+      y: cursorY - TEXT_SIZE,
+      size: TEXT_SIZE,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+
+    // Page-Info + Farb-Label
+    const pageInfo = `Seite ${marker.page} · ${label}`;
+    page.drawText(pageInfo, {
+      x: MARGIN + indexBadgeWidth + 8,
+      y: cursorY - TEXT_SIZE,
+      size: TEXT_SIZE,
+      font: fontBold,
+      color: rgb(color.r * 0.75, color.g * 0.75, color.b * 0.75),
+    });
+
+    cursorY -= TEXT_SIZE + 8;
+
+    // Snippet (Vorschau-Text)
+    if (truncatedSnippet) {
+      const snippetLines = wrapText(`„${truncatedSnippet}"`, font, NOTE_SIZE - 1, CONTENT_WIDTH - 16);
+      for (const line of snippetLines) {
+        page.drawText(line, {
+          x: MARGIN + 8,
+          y: cursorY - (NOTE_SIZE - 1),
+          size: NOTE_SIZE - 1,
+          font: font,
+          color: rgb(0.45, 0.50, 0.58),
+        });
+        cursorY -= (NOTE_SIZE - 1) * 1.35;
+      }
+      cursorY -= 4;
+    }
+
+    // Notiz-Text (eigentliche Notiz)
+    for (const line of wrappedNote) {
+      page.drawText(line, {
+        x: MARGIN + 8,
+        y: cursorY - NOTE_SIZE,
+        size: NOTE_SIZE,
+        font: font,
+        color: rgb(0.15, 0.18, 0.25),
+      });
+      cursorY -= LINE_HEIGHT_NOTE;
+    }
+
+    cursorY -= 14;
+  }
 }
 
 /**
@@ -169,7 +309,6 @@ function wrapText(text, font, fontSize, maxWidth) {
         currentLine = testLine;
       } else {
         if (currentLine) lines.push(currentLine);
-        // Falls einzelnes Wort zu lang: hart abschneiden
         if (font.widthOfTextAtSize(word, fontSize) > maxWidth) {
           let chunk = '';
           for (const ch of word) {
@@ -188,9 +327,8 @@ function wrapText(text, font, fontSize, maxWidth) {
       }
     }
     if (currentLine) lines.push(currentLine);
-    if (paragraphs.length > 1) lines.push(''); // Absatz-Leerzeile
+    if (paragraphs.length > 1) lines.push('');
   }
-  // Trailing-empty entfernen
   while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
   return lines;
 }

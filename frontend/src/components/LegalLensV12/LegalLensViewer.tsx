@@ -90,6 +90,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // Export Modal State
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [isExportingMarkedPdf, setIsExportingMarkedPdf] = useState<boolean>(false);
 
   // Decision-Filter (vom Banner getriggert, wird an ClauseList als Prop weitergereicht)
   const [decisionFilter, setDecisionFilter] = useState<'all' | 'accepted' | 'negotiate' | 'rejected' | 'open' | 'noted'>('all');
@@ -3087,8 +3088,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   <>
                     <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 0.5rem' }} />
                     <button
+                      disabled={isExportingMarkedPdf}
                       onClick={async () => {
-                        if (!contractId) return;
+                        if (!contractId || isExportingMarkedPdf) return;
+                        setIsExportingMarkedPdf(true);
                         try {
                           const token = localStorage.getItem('token');
                           const response = await fetch(`/api/legal-lens/${contractId}/pdf-export`, {
@@ -3112,25 +3115,47 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                           window.URL.revokeObjectURL(url);
                         } catch (err) {
                           console.warn('[Legal Lens] PDF-Export error:', err);
+                        } finally {
+                          setIsExportingMarkedPdf(false);
                         }
                       }}
                       style={{
                         padding: '0.375rem 0.625rem',
                         border: '1px solid #3b82f6',
                         borderRadius: '6px',
-                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                        background: isExportingMarkedPdf
+                          ? 'linear-gradient(135deg, #93c5fd, #60a5fa)'
+                          : 'linear-gradient(135deg, #3b82f6, #2563eb)',
                         color: 'white',
-                        cursor: 'pointer',
+                        cursor: isExportingMarkedPdf ? 'wait' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.35rem',
                         fontSize: '0.75rem',
                         fontWeight: 600,
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        opacity: isExportingMarkedPdf ? 0.85 : 1,
+                        pointerEvents: isExportingMarkedPdf ? 'none' : 'auto'
                       }}
-                      title={`Markierte PDF herunterladen (${pdfMarkers.length} Markierung${pdfMarkers.length === 1 ? '' : 'en'})`}
+                      title={isExportingMarkedPdf
+                        ? 'PDF wird vorbereitet…'
+                        : `Markierte PDF herunterladen (${pdfMarkers.length} Markierung${pdfMarkers.length === 1 ? '' : 'en'})`}
                     >
-                      📥 PDF mit Markierungen
+                      {isExportingMarkedPdf ? (
+                        <>
+                          <span style={{
+                            width: 10, height: 10,
+                            borderRadius: '50%',
+                            border: '2px solid white',
+                            borderTopColor: 'transparent',
+                            animation: 'spin 0.7s linear infinite',
+                            display: 'inline-block'
+                          }} />
+                          PDF wird erstellt…
+                        </>
+                      ) : (
+                        <>📥 PDF mit Markierungen</>
+                      )}
                     </button>
                   </>
                 )}
