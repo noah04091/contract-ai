@@ -566,13 +566,17 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           noteIcon.dataset.markerId = marker.id;
           noteIcon.style.cssText = `
             position: absolute;
-            left: ${fRect.right - pageRect.left + 2}px;
-            top: ${fRect.top - pageRect.top - 4}px;
-            font-size: 13px;
+            right: -8px;
+            top: ${fRect.top - pageRect.top - 2}px;
+            font-size: 14px;
             line-height: 1;
             pointer-events: auto;
             cursor: pointer;
-            text-shadow: 0 0 4px rgba(255,255,255,0.9);
+            background: white;
+            border: 1.5px solid #93c5fd;
+            border-radius: 6px;
+            padding: 2px 5px;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
             z-index: 5;
           `;
           noteIcon.addEventListener('click', (e) => {
