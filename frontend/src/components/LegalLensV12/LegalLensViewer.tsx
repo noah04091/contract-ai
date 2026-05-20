@@ -467,6 +467,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // ─────────────────────────────────────────────────────────────────────────
   const pdfMarkerContainersRef = useRef<Map<number, HTMLDivElement>>(new Map());
 
+  // Ref-Pattern: openMarkerEditor wird weiter unten definiert, aber Marker-onClick
+  // braucht stabilen Verweis (DOM-vanilla addEventListener kann keine stale closures)
+  const openMarkerEditorRef = useRef<(markerId: string, anchorEl: HTMLElement) => void>(() => {});
+
   const MARKER_COLOR_BG: Record<PdfMarkerColor, string> = {
     green: 'rgba(34, 197, 94, 0.35)',
     orange: 'rgba(249, 115, 22, 0.38)',
@@ -504,7 +508,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 1;
+      z-index: 3;
     `;
 
     markersForPage.forEach(marker => {
@@ -527,15 +531,29 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           pointer-events: auto;
           cursor: pointer;
           transition: filter 0.15s;
+          z-index: 4;
         `;
         if (marker.note) {
           overlay.title = marker.note;
         }
+        // Direkt einen Click-Listener attachen — robuster als target.closest in onClickCapture
+        overlay.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          openMarkerEditorRef.current(marker.id, overlay);
+        });
+        overlay.addEventListener('mouseenter', () => {
+          overlay.style.filter = 'brightness(0.85)';
+        });
+        overlay.addEventListener('mouseleave', () => {
+          overlay.style.filter = 'none';
+        });
         container.appendChild(overlay);
       });
     });
 
-    pdfPage.insertBefore(container, textLayer);
+    // Container NACH textLayer einfügen (höher im DOM-Stacking) damit Klicks ankommen
+    pdfPage.appendChild(container);
     pdfMarkerContainersRef.current.set(pageNum, container);
   }, [pdfMarkers, MARKER_COLOR_BG]);
 
@@ -608,6 +626,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       }
     });
   }, [pdfMarkers]);
+
+  // Sync Ref damit Marker-Click-Listener immer aktuelle Closure trifft
+  useEffect(() => {
+    openMarkerEditorRef.current = openMarkerEditor;
+  }, [openMarkerEditor]);
 
   // Klick außerhalb des Popovers → schließen
   useEffect(() => {

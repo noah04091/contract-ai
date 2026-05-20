@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Trash2,
   Edit3,
+  Check,
   Play,
   Star,
   Globe,
@@ -38,6 +39,7 @@ import styles from '../styles/PlaybookReview.module.css';
 // ============================================
 interface PlaybookRule {
   _id?: string;
+  _tempId?: string;
   title: string;
   description: string;
   category: string;
@@ -46,6 +48,9 @@ interface PlaybookRule {
   note?: string;
   standardText?: string;
 }
+
+const getRuleKey = (rule: PlaybookRule, index: number): string =>
+  rule._id || rule._tempId || String(index);
 
 interface Playbook {
   _id: string;
@@ -211,6 +216,7 @@ const PlaybookReview: React.FC = () => {
   });
   const [generatedRules, setGeneratedRules] = useState<PlaybookRule[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [expandedWizardRuleIndex, setExpandedWizardRuleIndex] = useState<number | null>(null);
 
   // Detail State
   const [selectedPlaybook, setSelectedPlaybook] = useState<Playbook | null>(null);
@@ -233,6 +239,8 @@ const PlaybookReview: React.FC = () => {
   const [editingRule, setEditingRule] = useState<PlaybookRule | null>(null);
   const [isRuleDirty, setIsRuleDirty] = useState(false);
   const [isSavingRule, setIsSavingRule] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  void isEditMode;
 
   // PDF + Negotiation Letter
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -262,6 +270,10 @@ const PlaybookReview: React.FC = () => {
 
   const loadPlaybookDetail = useCallback(async (id: string) => {
     setIsLoading(true);
+    setIsEditMode(false);
+    setExpandedRuleId(null);
+    setEditingRule(null);
+    setIsRuleDirty(false);
     try {
       const data = await playbookAPI.getPlaybook(id);
       setSelectedPlaybook(data.playbook);
@@ -402,6 +414,12 @@ const PlaybookReview: React.FC = () => {
 
   const handleRemoveRule = (index: number) => {
     setGeneratedRules(prev => prev.filter((_, i) => i !== index));
+    setExpandedWizardRuleIndex(prev => {
+      if (prev === null) return null;
+      if (prev === index) return null;
+      if (prev > index) return prev - 1;
+      return prev;
+    });
   };
 
   const handleUpdateRule = (index: number, field: string, value: string) => {
@@ -414,7 +432,10 @@ const PlaybookReview: React.FC = () => {
   // DETAIL ACTIONS
   // ============================================
   const handleDeletePlaybook = async (id: string) => {
-    if (!window.confirm('Playbook wirklich löschen?')) return;
+    const message = isRuleDirty
+      ? 'Playbook wirklich löschen? Ungespeicherte Änderungen gehen verloren.'
+      : 'Playbook wirklich löschen?';
+    if (!window.confirm(message)) return;
     try {
       await playbookAPI.deletePlaybook(id);
       toast.success('Playbook geloescht');
@@ -448,7 +469,7 @@ const PlaybookReview: React.FC = () => {
     } else {
       if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
       setExpandedRuleId(ruleId);
-      const rule = selectedPlaybook?.rules.find(r => r._id === ruleId);
+      const rule = selectedPlaybook?.rules.find(r => (r._id || r._tempId) === ruleId);
       setEditingRule(rule ? { ...rule } : null);
       setIsRuleDirty(false);
     }
@@ -464,11 +485,21 @@ const PlaybookReview: React.FC = () => {
     if (!selectedPlaybook || !editingRule || !expandedRuleId) return;
     setIsSavingRule(true);
     try {
-      const updatedRules = selectedPlaybook.rules.map(r =>
-        r._id === expandedRuleId ? { ...editingRule } : r
-      );
-      await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
-      setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      const updatedRules = selectedPlaybook.rules.map(r => {
+        const key = r._id || r._tempId;
+        if (key !== expandedRuleId) return r;
+        const { _tempId, ...rest } = { ...r, ...editingRule };
+        void _tempId;
+        return rest;
+      });
+      const data = await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
+      if (data?.playbook) {
+        setSelectedPlaybook(data.playbook);
+      } else {
+        setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      }
+      setExpandedRuleId(null);
+      setEditingRule(null);
       setIsRuleDirty(false);
       toast.success('Regel gespeichert');
     } catch (err) {
@@ -478,6 +509,59 @@ const PlaybookReview: React.FC = () => {
     }
   };
 
+  const handleToggleEditMode = () => {
+    if (!isEditMode) {
+      setIsEditMode(true);
+      return;
+    }
+    if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    if (selectedPlaybook) {
+      const cleaned = selectedPlaybook.rules.filter(r => r._id);
+      if (cleaned.length !== selectedPlaybook.rules.length) {
+        setSelectedPlaybook({ ...selectedPlaybook, rules: cleaned });
+      }
+    }
+    setIsEditMode(false);
+    setExpandedRuleId(null);
+    setEditingRule(null);
+    setIsRuleDirty(false);
+  };
+
+  const handleCancelRuleEdit = () => {
+    if (selectedPlaybook && editingRule && !editingRule._id && editingRule._tempId) {
+      const tempIdToRemove = editingRule._tempId;
+      setSelectedPlaybook({
+        ...selectedPlaybook,
+        rules: selectedPlaybook.rules.filter(r => r._tempId !== tempIdToRemove)
+      });
+    }
+    setExpandedRuleId(null);
+    setEditingRule(null);
+    setIsRuleDirty(false);
+  };
+
+  const handleAddRuleInDetail = () => {
+    if (!selectedPlaybook) return;
+    if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const newRule: PlaybookRule = {
+      _tempId: tempId,
+      title: '',
+      description: '',
+      category: 'sonstiges',
+      priority: 'soll',
+      threshold: '',
+      note: '',
+      standardText: ''
+    };
+
+    setSelectedPlaybook({ ...selectedPlaybook, rules: [...selectedPlaybook.rules, newRule] });
+    setExpandedRuleId(tempId);
+    setEditingRule({ ...newRule });
+    setIsRuleDirty(true);
+  };
+
   const handleDeleteRule = async (ruleId: string) => {
     if (!selectedPlaybook) return;
     if (selectedPlaybook.rules.length <= 1) {
@@ -485,10 +569,24 @@ const PlaybookReview: React.FC = () => {
       return;
     }
     if (!window.confirm('Regel wirklich entfernen?')) return;
+
+    const ruleToDelete = selectedPlaybook.rules.find(r => (r._id || r._tempId) === ruleId);
+    const isUnsavedRule = ruleToDelete && !ruleToDelete._id;
+
     try {
-      const updatedRules = selectedPlaybook.rules.filter(r => r._id !== ruleId);
-      await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
-      setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      const updatedRules = selectedPlaybook.rules.filter(r => (r._id || r._tempId) !== ruleId);
+
+      if (isUnsavedRule) {
+        setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+      } else {
+        const data = await playbookAPI.updatePlaybook(selectedPlaybook._id, { rules: updatedRules });
+        if (data?.playbook) {
+          setSelectedPlaybook(data.playbook);
+        } else {
+          setSelectedPlaybook({ ...selectedPlaybook, rules: updatedRules });
+        }
+      }
+
       setExpandedRuleId(null);
       setEditingRule(null);
       setIsRuleDirty(false);
@@ -515,6 +613,7 @@ const PlaybookReview: React.FC = () => {
   // CHECK ACTIONS
   // ============================================
   const handleOpenCheck = async () => {
+    if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
     setShowCheckModal(true);
     setSelectedContractId('');
     setContractSearch('');
@@ -1070,59 +1169,160 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.wizardContent}>
           <h3>Regeln prüfen & anpassen</h3>
           <p className={styles.hint}>
-            {generatedRules.length} Regeln erstellt. Passen Sie Titel, Schwellenwerte und Prioritaeten an.
+            {generatedRules.length} Regeln erstellt. Klicken Sie auf eine Regel, um Titel, Schwellenwert, Kategorie, Notiz und Standardtext zu bearbeiten.
           </p>
 
           <div className={styles.rulesList}>
-            {generatedRules.map((rule, index) => (
-              <div key={index} className={styles.ruleCard}>
-                <div className={styles.ruleHeader}>
-                  <input
-                    className={styles.ruleTitle}
-                    value={rule.title}
-                    onChange={e => handleUpdateRule(index, 'title', e.target.value)}
-                  />
-                  <button
-                    className={styles.btnIcon}
-                    onClick={() => handleRemoveRule(index)}
-                    title="Regel entfernen"
+            {generatedRules.map((rule, index) => {
+              const isExpanded = expandedWizardRuleIndex === index;
+              return (
+                <div
+                  key={index}
+                  className={`${styles.ruleCard} ${isExpanded ? styles.ruleCardExpanded : ''}`}
+                >
+                  {/* Klickbarer Header */}
+                  <div
+                    className={styles.ruleHeader}
+                    onClick={() => setExpandedWizardRuleIndex(isExpanded ? null : index)}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-                <textarea
-                  className={styles.ruleDesc}
-                  value={rule.description}
-                  onChange={e => handleUpdateRule(index, 'description', e.target.value)}
-                  rows={2}
-                />
-                <div className={styles.ruleFooter}>
-                  <select
-                    value={rule.priority}
-                    onChange={e => handleUpdateRule(index, 'priority', e.target.value)}
-                    className={styles.selectSmall}
-                  >
-                    <option value="muss">Pflicht</option>
-                    <option value="soll">Empfohlen</option>
-                    <option value="kann">Optional</option>
-                  </select>
-                  <span className={styles.ruleCategory}>
-                    {CATEGORY_LABELS[rule.category] || rule.category}
-                  </span>
-                  {rule.threshold && (
-                    <span className={styles.ruleThreshold}>{rule.threshold}</span>
+                    <span
+                      className={styles.priorityBadge}
+                      style={{ backgroundColor: PRIORITY_LABELS[rule.priority]?.color || '#6b7280' }}
+                    >
+                      {PRIORITY_LABELS[rule.priority]?.label || rule.priority}
+                    </span>
+                    <strong style={{ flex: 1 }}>{rule.title || <em style={{ opacity: 0.5 }}>Neue Regel — Titel fehlt</em>}</strong>
+                    <button
+                      className={styles.btnIcon}
+                      onClick={e => { e.stopPropagation(); handleRemoveRule(index); }}
+                      title="Regel entfernen"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <ChevronRight size={16} className={isExpanded ? styles.chevronOpen : ''} />
+                  </div>
+
+                  {/* Zugeklappt: Beschreibung + Badges */}
+                  {!isExpanded && (
+                    <>
+                      {rule.description && <p className={styles.ruleDescText}>{rule.description}</p>}
+                      <div className={styles.ruleFooter}>
+                        <span className={styles.ruleCategory}>
+                          {CATEGORY_LABELS[rule.category] || rule.category}
+                        </span>
+                        {rule.threshold && <span className={styles.ruleThreshold}>{rule.threshold}</span>}
+                        {rule.note && <span className={styles.ruleNoteIndicator} title={rule.note}>Notiz</span>}
+                        {rule.standardText && <span className={styles.ruleStandardIndicator}>Standardtext</span>}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Aufgeklappt: Editierbare Felder */}
+                  {isExpanded && (
+                    <div className={styles.ruleExpandedContent}>
+                      <label className={styles.fieldLabel}>Titel</label>
+                      <input
+                        className={styles.input}
+                        value={rule.title}
+                        onChange={e => handleUpdateRule(index, 'title', e.target.value)}
+                        maxLength={200}
+                      />
+
+                      <label className={styles.fieldLabel}>Beschreibung</label>
+                      <textarea
+                        className={styles.textarea}
+                        value={rule.description}
+                        onChange={e => handleUpdateRule(index, 'description', e.target.value)}
+                        rows={3}
+                        maxLength={1000}
+                      />
+
+                      <div className={styles.ruleEditRow}>
+                        <div>
+                          <label className={styles.fieldLabel}>Priorität</label>
+                          <select
+                            className={styles.selectSmall}
+                            value={rule.priority}
+                            onChange={e => handleUpdateRule(index, 'priority', e.target.value)}
+                          >
+                            <option value="muss">Pflicht</option>
+                            <option value="soll">Empfohlen</option>
+                            <option value="kann">Optional</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className={styles.fieldLabel}>Kategorie</label>
+                          <select
+                            className={styles.selectSmall}
+                            value={rule.category}
+                            onChange={e => handleUpdateRule(index, 'category', e.target.value)}
+                          >
+                            {Object.entries(CATEGORY_LABELS).map(([val, label]) => (
+                              <option key={val} value={val}>{label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <label className={styles.fieldLabel}>Schwellenwert</label>
+                      <input
+                        className={styles.input}
+                        value={rule.threshold || ''}
+                        onChange={e => handleUpdateRule(index, 'threshold', e.target.value)}
+                        placeholder="z.B. max. 30 Tage, nicht über 5%"
+                        maxLength={200}
+                      />
+
+                      <hr className={styles.ruleDivider} />
+
+                      <label className={styles.fieldLabel}>
+                        Notiz <span className={styles.fieldLabelOptional}>(optional)</span>
+                      </label>
+                      <textarea
+                        className={styles.textarea}
+                        value={rule.note || ''}
+                        onChange={e => handleUpdateRule(index, 'note', e.target.value)}
+                        placeholder="Warum ist diese Regel wichtig? z.B. Hatten 2024 Probleme mit 90-Tage-Zahlungsfristen"
+                        rows={2}
+                        maxLength={500}
+                      />
+                      <span className={styles.charCount}>{(rule.note || '').length}/500</span>
+
+                      <label className={styles.fieldLabel}>
+                        Standardtext <span className={styles.fieldLabelOptional}>(optional)</span>
+                      </label>
+                      <p className={styles.fieldHint}>
+                        Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
+                      </p>
+                      <textarea
+                        className={`${styles.textarea} ${styles.standardTextArea}`}
+                        value={rule.standardText || ''}
+                        onChange={e => handleUpdateRule(index, 'standardText', e.target.value)}
+                        placeholder='z.B. "Die Zahlungsfrist beträgt 14 Tage nach Rechnungseingang. Bei Zahlungsverzug werden Verzugszinsen in Höhe von 5 Prozentpunkten über dem Basiszinssatz erhoben."'
+                        rows={4}
+                        maxLength={2000}
+                      />
+                      <span className={styles.charCount}>{(rule.standardText || '').length}/2000</span>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Neue Regel hinzufügen */}
           <button
             className={styles.btnOutline}
-            onClick={() => setGeneratedRules(prev => [...prev, {
-              title: '', description: '', category: 'sonstiges', priority: 'soll', threshold: ''
-            }])}
+            onClick={() => {
+              setGeneratedRules(prev => {
+                const next = [...prev, {
+                  title: '', description: '', category: 'sonstiges', priority: 'soll', threshold: '', note: '', standardText: ''
+                }];
+                setExpandedWizardRuleIndex(next.length - 1);
+                return next;
+              });
+            }}
           >
             <Plus size={16} /> Regel hinzufügen
           </button>
@@ -1152,7 +1352,18 @@ const PlaybookReview: React.FC = () => {
 
     return (
       <div className={styles.detail}>
-        <button className={styles.backBtn} onClick={() => { setView('dashboard'); navigate('/playbook-review'); }}>
+        <button
+          className={styles.backBtn}
+          onClick={() => {
+            if (isRuleDirty && !window.confirm('Ungespeicherte Änderungen verwerfen?')) return;
+            setIsEditMode(false);
+            setExpandedRuleId(null);
+            setEditingRule(null);
+            setIsRuleDirty(false);
+            setView('dashboard');
+            navigate('/playbook-review');
+          }}
+        >
           <ArrowLeft size={16} /> Alle Playbooks
         </button>
 
@@ -1169,6 +1380,9 @@ const PlaybookReview: React.FC = () => {
             <button className={styles.btnPrimary} onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } handleOpenCheck(); }} disabled={isChecking}>
               {isChecking ? <Loader2 size={16} className={styles.spinner} /> : <Play size={16} />}
               Vertrag prüfen
+            </button>
+            <button className={styles.btnOutline} onClick={handleToggleEditMode} disabled={isSavingRule}>
+              {isEditMode ? <><Check size={16} /> Fertig</> : <><Edit3 size={16} /> Bearbeiten</>}
             </button>
             {!selectedPlaybook.isDefault && (
               <button className={styles.btnOutline} onClick={() => handleSetDefault(selectedPlaybook._id)}>
@@ -1188,7 +1402,7 @@ const PlaybookReview: React.FC = () => {
         </div>
         <div className={styles.rulesList}>
           {selectedPlaybook.rules.map((rule, index) => {
-            const ruleId = rule._id || String(index);
+            const ruleId = getRuleKey(rule, index);
             const isExpanded = expandedRuleId === ruleId;
             const currentData = isExpanded && editingRule ? editingRule : rule;
 
@@ -1206,7 +1420,9 @@ const PlaybookReview: React.FC = () => {
                   >
                     {PRIORITY_LABELS[rule.priority]?.label || rule.priority}
                   </span>
-                  <strong style={{ flex: 1 }}>{rule.title}</strong>
+                  <strong style={{ flex: 1 }}>
+                    {rule.title || <em style={{ opacity: 0.5 }}>Neue Regel — Titel fehlt</em>}
+                  </strong>
                   <ChevronRight size={16} className={isExpanded ? styles.chevronOpen : ''} />
                 </div>
 
@@ -1225,8 +1441,38 @@ const PlaybookReview: React.FC = () => {
                   </>
                 )}
 
-                {/* Aufgeklappt: Editierbare Felder */}
-                {isExpanded && editingRule && (
+                {/* Aufgeklappt im View-Modus: Read-Only-Anzeige */}
+                {isExpanded && !isEditMode && (
+                  <div className={styles.ruleExpandedContent}>
+                    <p className={styles.ruleDescText} style={{ marginTop: 0 }}>{rule.description}</p>
+
+                    <div className={styles.ruleFooter} style={{ marginTop: '0.75rem' }}>
+                      <span className={styles.ruleCategory}>
+                        {CATEGORY_LABELS[rule.category] || rule.category}
+                      </span>
+                      {rule.threshold && (
+                        <span className={styles.ruleThreshold}>{rule.threshold}</span>
+                      )}
+                    </div>
+
+                    {rule.note && (
+                      <>
+                        <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Notiz</label>
+                        <div className={styles.standardBlock}>{rule.note}</div>
+                      </>
+                    )}
+
+                    {rule.standardText && (
+                      <>
+                        <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Standardtext</label>
+                        <div className={styles.standardBlock}>{rule.standardText}</div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Aufgeklappt im Edit-Modus: Editierbare Felder */}
+                {isExpanded && isEditMode && editingRule && (
                   <div className={styles.ruleExpandedContent}>
                     <label className={styles.fieldLabel}>Titel</label>
                     <input
@@ -1324,7 +1570,7 @@ const PlaybookReview: React.FC = () => {
                       )}
                       <button
                         className={styles.btnOutline}
-                        onClick={() => { setExpandedRuleId(null); setEditingRule(null); setIsRuleDirty(false); }}
+                        onClick={handleCancelRuleEdit}
                       >
                         Abbrechen
                       </button>
@@ -1343,6 +1589,16 @@ const PlaybookReview: React.FC = () => {
             );
           })}
         </div>
+
+        {isEditMode && (
+          <button
+            className={styles.btnOutline}
+            onClick={handleAddRuleInDetail}
+            style={{ marginTop: '1rem' }}
+          >
+            <Plus size={16} /> Regel hinzufügen
+          </button>
+        )}
 
         {/* Check-Historie */}
         <div className={styles.sectionHeader} style={{ marginTop: '2rem' }}>
