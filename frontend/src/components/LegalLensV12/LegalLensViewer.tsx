@@ -3347,9 +3347,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   onClick={() => {
                     handleDeletePdfMarker(editingMarker.markerId);
                     setEditingMarker(null);
-                    // Nach Delete in Lesemodus wechseln — verhindert versehentlich neue Marker
-                    // wenn User auf gleiche Stelle nochmal klickt
-                    setActiveMarkerMode(null);
+                    // activeMarkerMode bleibt erhalten — User hat ihn bewusst gewählt,
+                    // will vermutlich weiter markieren (synchroner DOM-Cleanup in
+                    // handleDeletePdfMarker verhindert Geister-Klicks auf gelöschten Marker)
                   }}
                   style={{
                     width: '100%',
