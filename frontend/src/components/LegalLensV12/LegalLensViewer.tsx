@@ -584,8 +584,42 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [viewMode]);
 
-  // void-Statements werden nicht mehr gebraucht — Marker-System ist jetzt aktiv
-  void handleUpdatePdfMarker; void handleDeletePdfMarker;
+  // ─────────────────────────────────────────────────────────────────────────
+  // Sub-Phase 7: Edit-on-Click Popover für existing Marker
+  // ─────────────────────────────────────────────────────────────────────────
+  const [editingMarker, setEditingMarker] = useState<{
+    markerId: string;
+    color: PdfMarkerColor;
+    note: string;
+    position: { top: number; left: number };
+  } | null>(null);
+
+  const openMarkerEditor = useCallback((markerId: string, anchorEl: HTMLElement) => {
+    const marker = pdfMarkers.find(m => m.id === markerId);
+    if (!marker) return;
+    const rect = anchorEl.getBoundingClientRect();
+    setEditingMarker({
+      markerId,
+      color: marker.color,
+      note: marker.note || '',
+      position: {
+        top: rect.bottom + 8,
+        left: Math.max(8, Math.min(window.innerWidth - 320, rect.left))
+      }
+    });
+  }, [pdfMarkers]);
+
+  // Klick außerhalb des Popovers → schließen
+  useEffect(() => {
+    if (!editingMarker) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.legal-lens-marker-popover') || target.closest('.legal-lens-pdf-marker')) return;
+      setEditingMarker(null);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [editingMarker]);
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
   // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
@@ -1510,6 +1544,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (selectionMode === 'custom' && event.type === 'click') return;
 
     const target = event.target as HTMLElement;
+
+    // Sub-Phase 7: Klick auf existing Marker → Edit-Popover öffnen
+    const markerEl = target.closest('.legal-lens-pdf-marker') as HTMLElement | null;
+    if (markerEl) {
+      const markerId = markerEl.dataset.markerId;
+      if (markerId) {
+        event.stopPropagation();
+        openMarkerEditor(markerId, markerEl);
+        return;
+      }
+    }
+
     const textContent = target.closest('.react-pdf__Page__textContent');
 
     if (!textContent) {
@@ -3020,6 +3066,135 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               )}
 
             </div>
+
+            {/* Sub-Phase 7: Edit-Popover für existing Marker */}
+            {editingMarker && (
+              <div
+                className="legal-lens-marker-popover"
+                style={{
+                  position: 'fixed',
+                  top: `${editingMarker.position.top}px`,
+                  left: `${editingMarker.position.left}px`,
+                  width: '300px',
+                  background: 'white',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                  padding: '12px',
+                  zIndex: 300
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  <span>Marker bearbeiten</span>
+                  <button
+                    onClick={() => setEditingMarker(null)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '18px',
+                      color: '#64748b',
+                      lineHeight: 1,
+                      padding: '0 4px'
+                    }}
+                    title="Schließen (Esc)"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {/* Farb-Picker */}
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Farbe</div>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {(['green', 'orange', 'red'] as PdfMarkerColor[]).map(c => {
+                      const colorMap = { green: '#16a34a', orange: '#d97706', red: '#dc2626' };
+                      const emojiMap = { green: '🟢', orange: '🟡', red: '🔴' };
+                      return (
+                        <button
+                          key={c}
+                          onClick={() => {
+                            setEditingMarker(prev => prev ? { ...prev, color: c } : null);
+                            handleUpdatePdfMarker(editingMarker.markerId, { color: c });
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '6px',
+                            border: `2px solid ${editingMarker.color === c ? colorMap[c] : '#e2e8f0'}`,
+                            borderRadius: '6px',
+                            background: editingMarker.color === c ? colorMap[c] + '15' : 'white',
+                            cursor: 'pointer',
+                            fontSize: '16px'
+                          }}
+                          title={c === 'green' ? 'Akzeptieren' : c === 'orange' ? 'Verhandeln' : 'Ablehnen'}
+                        >
+                          {emojiMap[c]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Notiz-Editor */}
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Notiz</div>
+                  <textarea
+                    value={editingMarker.note}
+                    onChange={(e) => setEditingMarker(prev => prev ? { ...prev, note: e.target.value } : null)}
+                    onBlur={() => handleUpdatePdfMarker(editingMarker.markerId, { note: editingMarker.note })}
+                    placeholder="Notiz zu diesem Marker hinzufügen…"
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1.5px solid #e2e8f0',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontFamily: 'inherit',
+                      resize: 'vertical',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                    autoFocus={activeMarkerMode === 'note'}
+                  />
+                </div>
+
+                {/* Delete-Button */}
+                <button
+                  onClick={() => {
+                    handleDeletePdfMarker(editingMarker.markerId);
+                    setEditingMarker(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1.5px solid #fecaca',
+                    borderRadius: '6px',
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  🗑️ Marker löschen
+                </button>
+              </div>
+            )}
           </div>
         )}
 
