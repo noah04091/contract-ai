@@ -653,7 +653,7 @@ const PlaybookReview: React.FC = () => {
 
       // Warnungen wenn Backend Inhalt abschneiden musste
       if (result.truncated?.rulesSkipped > 0) {
-        toast.error(`${result.truncated.rulesSkipped} Regel(n) wurden in dieser Prüfung nicht berücksichtigt (Limit: 30). Bitte Playbook verschlanken.`);
+        toast.error(`${result.truncated.rulesSkipped} Regel(n) wurden in dieser Prüfung nicht berücksichtigt (Limit: 50). Bitte Playbook verschlanken.`);
       }
       if (result.truncated?.contractText) {
         toast.error('Vertrag war sehr lang — Anfang und Ende wurden geprüft, ein Mittelstück gekürzt.');
@@ -1183,7 +1183,7 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.wizardContent}>
           <h3>Regeln prüfen & anpassen</h3>
           <p className={styles.hint}>
-            {generatedRules.length} Regeln erstellt. Klicken Sie auf eine Regel, um Titel, Schwellenwert, Kategorie, Notiz und Standardtext zu bearbeiten.
+            {generatedRules.length} Regeln erstellt. Klicken Sie auf eine Regel, um Titel, Schwellenwert, Kategorie, Notiz und Soll-Formulierung zu bearbeiten.
           </p>
 
           <div className={styles.rulesList}>
@@ -1227,7 +1227,7 @@ const PlaybookReview: React.FC = () => {
                         </span>
                         {rule.threshold && <span className={styles.ruleThreshold}>{rule.threshold}</span>}
                         {rule.note && <span className={styles.ruleNoteIndicator} title={rule.note}>Notiz</span>}
-                        {rule.standardText && <span className={styles.ruleStandardIndicator}>Standardtext</span>}
+                        {rule.standardText && <span className={styles.ruleStandardIndicator}>Soll-Formulierung</span>}
                       </div>
                     </>
                   )}
@@ -1304,7 +1304,7 @@ const PlaybookReview: React.FC = () => {
                       <span className={styles.charCount}>{(rule.note || '').length}/500</span>
 
                       <label className={styles.fieldLabel}>
-                        Standardtext <span className={styles.fieldLabelOptional}>(optional)</span>
+                        Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                       </label>
                       <p className={styles.fieldHint}>
                         Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
@@ -1450,7 +1450,7 @@ const PlaybookReview: React.FC = () => {
                       </span>
                       {rule.threshold && <span className={styles.ruleThreshold}>{rule.threshold}</span>}
                       {rule.note && <span className={styles.ruleNoteIndicator} title={rule.note}>Notiz</span>}
-                      {rule.standardText && <span className={styles.ruleStandardIndicator}>Standardtext</span>}
+                      {rule.standardText && <span className={styles.ruleStandardIndicator}>Soll-Formulierung</span>}
                     </div>
                   </>
                 )}
@@ -1476,12 +1476,12 @@ const PlaybookReview: React.FC = () => {
                       <p className={styles.fieldHint}>Keine Notiz hinterlegt.</p>
                     )}
 
-                    <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Standardtext</label>
+                    <label className={styles.fieldLabel} style={{ marginTop: '1rem' }}>Soll-Formulierung</label>
                     {rule.standardText ? (
                       <div className={styles.standardBlock}>{rule.standardText}</div>
                     ) : (
                       <p className={styles.fieldHint}>
-                        Kein Standardtext hinterlegt — mit Standardtext vergleicht die Prüfung direkt gegen deine Wunschklausel und liefert präzisere Empfehlungen.
+                        Keine Soll-Formulierung hinterlegt — mit Soll-Formulierung vergleicht die Prüfung direkt gegen deine Wunschklausel und liefert präzisere Empfehlungen.
                       </p>
                     )}
                   </div>
@@ -1559,7 +1559,7 @@ const PlaybookReview: React.FC = () => {
                     <span className={styles.charCount}>{(currentData.note || '').length}/500</span>
 
                     <label className={styles.fieldLabel}>
-                      Standardtext <span className={styles.fieldLabelOptional}>(optional)</span>
+                      Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                     </label>
                     <p className={styles.fieldHint}>
                       Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
@@ -1792,7 +1792,7 @@ const PlaybookReview: React.FC = () => {
                             style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem' }}
                             onClick={() => {
                               navigate(`/playbook-review/${pbId}`);
-                              toast.success('Regel öffnen und Standardtext ergänzen');
+                              toast.success('Regel öffnen und Soll-Formulierung ergänzen');
                             }}
                           >
                             <Edit3 size={12} /> Regel öffnen
@@ -1868,6 +1868,15 @@ const PlaybookReview: React.FC = () => {
                   <div>
                     <strong>{result.ruleTitle}</strong>
                     {result.isGlobalRule && <span className={styles.globalTag}>Global</span>}
+                    {typeof result.confidence === 'number' && result.confidence < 60 && (
+                      <span
+                        className={styles.globalTag}
+                        title="Die KI ist sich bei dieser Klausel nicht sicher — bitte selbst gegenprüfen."
+                        style={{ background: '#fef3c7', color: '#92400e' }}
+                      >
+                        🤔 KI unsicher
+                      </span>
+                    )}
                     {getRuleNote(result.ruleId) && (
                       <span className={styles.resultNoteHint}>{getRuleNote(result.ruleId)}</span>
                     )}

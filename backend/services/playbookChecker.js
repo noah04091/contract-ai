@@ -11,8 +11,8 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Constants
 // ============================================
 const MODEL = "gpt-4o";
-const MAX_CONTRACT_CHARS = 140000; // ~35K tokens (gpt-4o 128K Context lässt massive Reserve)
-const MAX_RULES_PER_CHECK = 30;
+const MAX_CONTRACT_CHARS = 220000; // ~55K tokens (gpt-4o 128K Context lässt 70K Reserve für Prompt+Output)
+const MAX_RULES_PER_CHECK = 50;
 const CHECK_TIMEOUT = 120000; // 120s
 
 // Head+Tail-Pattern: bei sehr langen Verträgen behalten wir Anfang UND Ende
@@ -135,7 +135,7 @@ async function runSinglePass(truncatedText, ruleSubset, context) {
     parts.push(`   Kategorie: ${r.category}`);
     if (r.standardText) {
       const truncated = r.standardText.length > 2000 ? r.standardText.substring(0, 2000) + "..." : r.standardText;
-      parts.push(`   Referenz-Klausel (Standardtext): "${truncated}"`);
+      parts.push(`   Soll-Formulierung (User-Wunschklausel): "${truncated}"`);
     }
     return parts.join("\n");
   }).join("\n\n");
@@ -161,7 +161,7 @@ Pruefe JEDE Anforderung einzeln gegen den GESAMTEN Vertragstext. Durchsuche den 
 Fuer jede Anforderung:
 1. Durchsuche den gesamten Vertragstext nach relevanten Klauseln, Paragraphen oder Passagen
 2. Bewerte ob die Anforderung erfuellt ist (auch wenn die Formulierung anders ist aber inhaltlich passt)
-3. Wenn eine Referenz-Klausel (Standardtext) angegeben ist: Vergleiche die gefundene Klausel direkt mit diesem Standardtext und beschreibe Abweichungen praezise
+3. Wenn eine Soll-Formulierung angegeben ist: Vergleiche die gefundene Klausel direkt mit dieser Soll-Formulierung und beschreibe Abweichungen praezise
 4. Bei Abweichung: Formuliere eine konkrete bessere Klausel
 5. Gib einen konkreten Verhandlungstipp
 
@@ -192,17 +192,23 @@ WICHTIG:
 - "warning" = Klausel vorhanden aber Wert weicht ab, ist unklar oder nur teilweise erfuellt
 - "failed" = Klausel widerspricht der Anforderung direkt oder ist nachteilig
 - "not_found" = ERST wenn du den GESAMTEN Vertragstext durchsucht hast und SICHER bist, dass keine relevante Klausel existiert. Pruefe auch Synonyme und alternative Formulierungen.
+
+ENTSCHEIDUNGSREGEL (sehr wichtig — gegen False Negatives):
+Findest du eine Klausel die das Thema der Anforderung behandelt aber abweicht (anderer Wert,
+andere Frist, anders formuliert) → IMMER "warning", NIE "not_found".
+"not_found" nur wenn das Thema im Vertrag KOMPLETT FEHLT.
+
 - finding: IMMER ausfuellen — bei passed zeige was gefunden wurde, bei not_found erklaere was fehlt
 - alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel nach deutschem Recht
 - negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}
 
 ANWALTS-REFLEX (clarificationNeeded):
 Setze "clarificationNeeded": true UND fülle "clarificationRequest" NUR wenn die Anforderung so vage formuliert ist,
-dass du sie nicht zuverlaessig pruefen kannst — z.B. wenn kein Standardtext hinterlegt ist und die Beschreibung
+dass du sie nicht zuverlaessig pruefen kannst — z.B. wenn keine Soll-Formulierung hinterlegt ist und die Beschreibung
 mehrdeutig ist, oder wenn der Schwellenwert fehlt aber wichtig waere. In "clarificationRequest" formulierst du
-KONKRET, was der User ergaenzen muesste (z.B. "Bitte ergaenze einen Standardtext oder konkreten Schwellenwert
+KONKRET, was der User ergaenzen muesste (z.B. "Bitte ergaenze eine Soll-Formulierung oder konkreten Schwellenwert
 fuer 'angemessene Haftung' — sonst kann ich nicht beurteilen ob die Vertragsklausel passt.").
-Sei sparsam damit — nur bei echter Unsicherheit, nicht bei jeder Regel ohne Standardtext.
+Sei sparsam damit — nur bei echter Unsicherheit, nicht bei jeder Regel ohne Soll-Formulierung.
 Bei klaren Regeln IMMER "clarificationNeeded": false setzen.`;
 
   const response = await openai.chat.completions.create({
