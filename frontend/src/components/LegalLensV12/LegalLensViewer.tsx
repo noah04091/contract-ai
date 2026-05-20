@@ -449,6 +449,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   const handleDeletePdfMarker = useCallback((markerId: string) => {
     setPdfMarkersState(prev => prev.filter(m => m.id !== markerId));
+    // SOFORT DOM-Elemente entfernen (synchron) — verhindert Race-Condition:
+    // Wenn User direkt nach Delete nochmal klickt, soll der Marker visuell schon weg sein,
+    // damit kein "Geister-Klick" auf alten DOM-Marker erfolgt.
+    document.querySelectorAll(`[data-marker-id="${markerId}"]`).forEach(el => el.remove());
     if (contractId) {
       const token = localStorage.getItem('token');
       fetch(`/api/legal-lens/${contractId}/pdf-marker/${markerId}`, {
@@ -495,6 +499,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
     const markersForPage = pdfMarkers.filter(m => m.page === pageNum);
     if (markersForPage.length === 0) {
+      // Container aus DOM entfernen (sonst bleibt alter Marker visuell stehen)
+      const existing = pdfMarkerContainersRef.current.get(pageNum);
+      if (existing) existing.remove();
       pdfMarkerContainersRef.current.delete(pageNum);
       return;
     }
@@ -604,6 +611,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   useEffect(() => {
     if (viewMode !== 'pdf') return;
     const pagesWithMarkers = Array.from(new Set(pdfMarkers.map(m => m.page)));
+
+    // Cleanup: entferne Container für Pages die KEINE Marker mehr haben
+    // (verhindert dass alte DOM-Marker stehen bleiben nach Delete-All)
+    const pagesInDOM = Array.from(pdfMarkerContainersRef.current.keys());
+    pagesInDOM.forEach(p => {
+      if (!pagesWithMarkers.includes(p)) {
+        const c = pdfMarkerContainersRef.current.get(p);
+        if (c) c.remove();
+        pdfMarkerContainersRef.current.delete(p);
+      }
+    });
+
     if (pagesWithMarkers.length === 0) return;
 
     let totalAttempts = 0;
@@ -3303,6 +3322,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   onClick={() => {
                     handleDeletePdfMarker(editingMarker.markerId);
                     setEditingMarker(null);
+                    // Nach Delete in Lesemodus wechseln — verhindert versehentlich neue Marker
+                    // wenn User auf gleiche Stelle nochmal klickt
+                    setActiveMarkerMode(null);
                   }}
                   style={{
                     width: '100%',
