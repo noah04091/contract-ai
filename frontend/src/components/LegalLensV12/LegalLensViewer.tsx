@@ -600,14 +600,44 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [pdfMarkers]);
 
   // Re-Render Marker bei pdfMarkers / scale / Page-Wechsel
+  // Retry-Loop: pollt bis Text-Layer der Page bereit ist (PDF-Pages laden lazy)
   useEffect(() => {
     if (viewMode !== 'pdf') return;
     const pagesWithMarkers = Array.from(new Set(pdfMarkers.map(m => m.page)));
     if (pagesWithMarkers.length === 0) return;
-    const timer = setTimeout(() => {
-      pagesWithMarkers.forEach(p => renderPdfMarkersForPage(p));
-    }, 150);
-    return () => clearTimeout(timer);
+
+    let totalAttempts = 0;
+    const MAX_ATTEMPTS = 30; // 30 × 200ms = max 6s warten
+    const renderedPages = new Set<number>();
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const attemptRender = () => {
+      if (totalAttempts >= MAX_ATTEMPTS) return;
+      totalAttempts++;
+
+      let allDone = true;
+      pagesWithMarkers.forEach(p => {
+        if (renderedPages.has(p)) return;
+        const pageEl = document.querySelector(`[data-page-num="${p}"]`);
+        const textLayer = pageEl?.querySelector('.react-pdf__Page__textContent');
+        if (textLayer && textLayer.querySelectorAll('span').length > 0) {
+          renderPdfMarkersForPage(p);
+          renderedPages.add(p);
+        } else {
+          allDone = false;
+        }
+      });
+
+      if (!allDone) {
+        timeoutId = setTimeout(attemptRender, 200);
+      }
+    };
+
+    attemptRender();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [pdfMarkers, scale, numPages, viewMode, renderPdfMarkersForPage]);
 
   // Cleanup beim Wechsel zur Text-View (sonst hängen Marker-Container in der DOM-Hierarchie)
