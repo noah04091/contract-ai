@@ -193,10 +193,15 @@ WICHTIG:
 - "failed" = Klausel widerspricht der Anforderung direkt oder ist nachteilig
 - "not_found" = ERST wenn du den GESAMTEN Vertragstext durchsucht hast und SICHER bist, dass keine relevante Klausel existiert. Pruefe auch Synonyme und alternative Formulierungen.
 
-ENTSCHEIDUNGSREGEL (sehr wichtig — gegen False Negatives):
-Findest du eine Klausel die das Thema der Anforderung behandelt aber abweicht (anderer Wert,
-andere Frist, anders formuliert) → IMMER "warning", NIE "not_found".
-"not_found" nur wenn das Thema im Vertrag KOMPLETT FEHLT.
+ENTSCHEIDUNGSREGEL (sehr wichtig — gegen False Negatives UND False Failures):
+- Findest du eine Klausel die das Thema der Anforderung behandelt aber im WERT abweicht
+  (z.B. Frist 6 Monate statt 3 Monate, Gewährleistung 12 statt 24, Wettbewerb 24 statt 12)
+  → IMMER "warning", NIE "failed" und NIE "not_found".
+- "failed" NUR wenn die Klausel der Anforderung aktiv WIDERSPRICHT oder den User direkt
+  nachteilig stellt (z.B. Anforderung "Haftung begrenzt" — Vertrag "unbeschränkte Haftung").
+- "not_found" NUR wenn das Thema im Vertrag KOMPLETT FEHLT.
+- Bei Schwellenwert-Abweichungen ist die Klausel ja DA — also nie "not_found", und solange
+  sie nicht aktiv widerspricht: "warning".
 
 - finding: IMMER ausfuellen — bei passed zeige was gefunden wurde, bei not_found erklaere was fehlt
 - alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel nach deutschem Recht

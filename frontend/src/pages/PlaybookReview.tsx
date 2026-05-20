@@ -1911,7 +1911,7 @@ const PlaybookReview: React.FC = () => {
                     </div>
                     {getRuleStandardText(result.ruleId) && (
                       <div className={`${styles.detailBlock} ${styles.standardBlock}`}>
-                        <label>Ihr Standard:</label>
+                        <label>Ihre Soll-Formulierung:</label>
                         <p>{getRuleStandardText(result.ruleId)}</p>
                         <button
                           className={styles.copyBtn}
