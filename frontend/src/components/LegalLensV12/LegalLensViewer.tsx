@@ -673,17 +673,25 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     openMarkerEditorRef.current = openMarkerEditor;
   }, [openMarkerEditor]);
 
-  // Klick außerhalb des Popovers → schließen
+  // Helper: Editor schließen + aktuelle Notiz vorher speichern (verhindert Datenverlust)
+  const closeMarkerEditor = useCallback(() => {
+    if (editingMarker) {
+      handleUpdatePdfMarker(editingMarker.markerId, { note: editingMarker.note });
+    }
+    setEditingMarker(null);
+  }, [editingMarker, handleUpdatePdfMarker]);
+
+  // Klick außerhalb des Popovers → schließen (mit Save)
   useEffect(() => {
     if (!editingMarker) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('.legal-lens-marker-popover') || target.closest('.legal-lens-pdf-marker')) return;
-      setEditingMarker(null);
+      closeMarkerEditor();
     };
     window.addEventListener('mousedown', handler);
     return () => window.removeEventListener('mousedown', handler);
-  }, [editingMarker]);
+  }, [editingMarker, closeMarkerEditor]);
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
   // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
@@ -3180,7 +3188,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 }}>
                   <span>Marker bearbeiten</span>
                   <button
-                    onClick={() => setEditingMarker(null)}
+                    onClick={closeMarkerEditor}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -3190,7 +3198,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       lineHeight: 1,
                       padding: '0 4px'
                     }}
-                    title="Schließen (Esc)"
+                    title="Schließen + Speichern"
                   >
                     ×
                   </button>
