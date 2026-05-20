@@ -512,7 +512,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       height: 100%;
       pointer-events: none;
       z-index: 3;
+      overflow: visible;
     `;
+    // PdfPage explizit auf overflow:visible setzen damit Notiz-Icon außerhalb sichtbar bleibt
+    (pdfPage as HTMLElement).style.overflow = 'visible';
 
     markersForPage.forEach(marker => {
       marker.spanIndices.forEach(idx => {
@@ -566,7 +569,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           noteIcon.dataset.markerId = marker.id;
           noteIcon.style.cssText = `
             position: absolute;
-            right: -8px;
+            right: -34px;
             top: ${fRect.top - pageRect.top - 2}px;
             font-size: 14px;
             line-height: 1;
