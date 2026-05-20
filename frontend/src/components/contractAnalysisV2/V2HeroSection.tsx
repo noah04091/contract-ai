@@ -15,6 +15,7 @@ import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
 import V2PdfViewerModal from "./V2PdfViewerModal";
+import { classifyDocType, type DocClass } from "./v2TabLabels";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
 type AnalysisData = {
@@ -37,6 +38,7 @@ type AnalysisData = {
   confidence?: number | string | null;
   qualityScore?: number | string | null;
   documentType?: string | null;
+  contractType?: string | null; // 🎯 NEU 20.05.2026 — für typspezifische UI
   pageCount?: number | null;
   provider?: { name?: string } | null;
   isReanalysis?: boolean;
@@ -128,6 +130,40 @@ function buildHeroTitle(d: AnalysisData): string {
   return `${cleanDocType} — kritisch, sorgfältig prüfen vor Unterschrift`;
 }
 
+/**
+ * 🎯 Typspezifische Hero-Titel je Dokumentklasse (Erweiterung 20.05.2026)
+ * Verwendet typspezifische Score-Templates statt der vertragszentrischen Default-Texte.
+ */
+function buildHeroTitleByDocClass(d: AnalysisData, dc: DocClass): string {
+  const cleanDocType = pickDocTypeLabel(d);
+  if (d.contractScore == null) return `${cleanDocType} — Bewertung steht aus`;
+  const s = d.contractScore;
+
+  if (dc === "INVOICE" || dc === "RECEIPT") {
+    if (s >= 85) return `${cleanDocType} — formal einwandfrei`;
+    if (s >= 70) return `${cleanDocType} — weitgehend korrekt, kleine Punkte zu klären`;
+    if (s >= 50) return `${cleanDocType} — mehrere Mängel, vor Zahlung prüfen`;
+    return `${cleanDocType} — gravierende Mängel, nicht akzeptieren`;
+  }
+  if (dc === "AGB") {
+    if (s >= 85) return `${cleanDocType} — kundenfreundlich gestaltet`;
+    if (s >= 70) return `${cleanDocType} — überwiegend zulässig, einzelne Klauseln prüfen`;
+    if (s >= 50) return `${cleanDocType} — mehrere problematische Klauseln`;
+    return `${cleanDocType} — viele unwirksame Klauseln, dringend überarbeiten`;
+  }
+  if (dc === "TABLE_DOCUMENT" || dc === "FINANCIAL_DOCUMENT") {
+    if (s >= 85) return `${cleanDocType} — konsistent und plausibel`;
+    if (s >= 70) return `${cleanDocType} — überwiegend stimmig`;
+    if (s >= 50) return `${cleanDocType} — mehrere Auffälligkeiten`;
+    return `${cleanDocType} — gravierende Auffälligkeiten`;
+  }
+  if (dc === "UNKNOWN") {
+    return `${cleanDocType} — Einschätzung verfügbar (Typ unklar)`;
+  }
+  // CONTRACT (default) — bestehende vertragszentrische Templates
+  return buildHeroTitle(d);
+}
+
 function truncateAtWord(s: string, max = 280): string {
   if (s.length <= max) return s;
   const cut = s.substring(0, max);
@@ -179,6 +215,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const d = data;
   const score = d.contractScore;
   const variant = getScoreVariant(score);
+  // 🎯 DocClass für typspezifische UI (20.05.2026)
+  const docClass: DocClass = classifyDocType(d.documentType, d.contractType);
   const [laymanMode, setLaymanMode] = useState(false);
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
@@ -457,6 +495,49 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         )}
       </div>
 
+      {/* UNKNOWN-DOKUMENT-HINWEIS (20.05.2026) — erscheint wenn das System den
+          Dokumenttyp nicht eindeutig zuordnen konnte. Der Score-Donut wird weiterhin
+          gezeigt (Inhalt wurde ja analysiert), aber der User bekommt klare Info
+          über die Klassifikations-Unsicherheit + Action-Buttons. */}
+      {docClass === "UNKNOWN" && (
+        <div className={styles.unknownBanner} role="alert">
+          <div className={styles.unknownIcon} aria-hidden="true">🤔</div>
+          <div className={styles.unknownBody}>
+            <div className={styles.unknownTitle}>Dokument nicht eindeutig erkannt</div>
+            <div className={styles.unknownDesc}>
+              Wir haben dein Dokument analysiert, konnten den Typ aber nicht eindeutig zuordnen.
+              Unsere Spezialisten-Profile gibt es für: Verträge (Miete, Arbeit, NDA, Kauf, …), AGB,
+              Rechnungen, Quittungen, Tabellen und Finanzdokumente. Du kannst eine erneute Analyse
+              versuchen oder ein anderes Dokument hochladen.
+            </div>
+            {(canReanalyze && onReanalyze) || onReset ? (
+              <div className={styles.unknownActions}>
+                {canReanalyze && onReanalyze && (
+                  <button
+                    type="button"
+                    className={styles.unknownBtnPrimary}
+                    onClick={onReanalyze}
+                    disabled={analyzing}
+                  >
+                    Erneut analysieren
+                  </button>
+                )}
+                {onReset && (
+                  <button
+                    type="button"
+                    className={styles.unknownBtnSecondary}
+                    onClick={onReset}
+                    disabled={analyzing}
+                  >
+                    Anderes Dokument hochladen
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {/* RECOGNITION-BANNER — erscheint VOR der Analyse-Card, wenn die KI
           einen non-finalen Dokument-Status erkennt (Muster/Entwurf/LOI/etc.)
           oder completeness.isComplete === false meldet. Render-if-present. */}
@@ -598,7 +679,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           </div>
           <div>
             <div className={styles.heroEye}>Rechtliche Gesamtbewertung</div>
-            <h2 className={styles.heroTitle}>{buildHeroTitle(d)}</h2>
+            <h2 className={styles.heroTitle}>{buildHeroTitleByDocClass(d, docClass)}</h2>
             {heroSub && (
               <p className={styles.heroSub}>
                 {heroSub}
@@ -763,7 +844,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             Sichtbarkeit für Free→Business-Conversion (Wow-Effekt-Moment).
             Banner rendert nur für Free/Business — Enterprise = null. */}
         {(usage || userPlan) && (
-          <V2ConversionBanner usage={usage as Parameters<typeof V2ConversionBanner>[0]['usage']} userPlan={userPlan} />
+          <V2ConversionBanner
+            usage={usage as Parameters<typeof V2ConversionBanner>[0]['usage']}
+            userPlan={userPlan}
+            documentType={d.documentType}
+            contractType={d.contractType}
+          />
         )}
       </div>
 
@@ -779,6 +865,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         completeness={d.completeness}
         confidence={d.confidence}
         qualityScore={d.qualityScore}
+        documentType={d.documentType}
+        contractType={d.contractType}
       />
 
       {/* PDF-Viewer-Modal — öffnet beim Klick auf "PDF anzeigen" */}

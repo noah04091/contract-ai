@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Sparkles } from "lucide-react";
 import styles from "./V2StickyMiniHeader.module.css";
+import { classifyDocType, getAnalysisLabel, getDocNoun } from "./v2TabLabels";
 
 interface Props {
   filename: string;
@@ -19,6 +20,9 @@ interface Props {
   optimizeLabel?: string;
   isOptimizing?: boolean;
   sentinelSelector?: string;
+  // 🎯 NEU 20.05.2026 — für typspezifische UI
+  documentType?: string | null;
+  contractType?: string | null;
 }
 
 function truncate(s: string, max: number): string {
@@ -32,10 +36,17 @@ export default function V2StickyMiniHeader({
   score,
   scoreColor,
   onOptimize,
-  optimizeLabel = "Vertrag optimieren",
+  optimizeLabel,
   isOptimizing = false,
   sentinelSelector = "[data-v2-hero-sentinel]",
+  documentType,
+  contractType,
 }: Props) {
+  // 🎯 DocClass-spezifische Labels (20.05.2026)
+  const docClass = classifyDocType(documentType, contractType);
+  const analysisLabel = getAnalysisLabel(docClass);
+  const docNoun = getDocNoun(docClass);
+  const effectiveOptimizeLabel = optimizeLabel ?? `${docNoun} optimieren`;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -76,7 +87,7 @@ export default function V2StickyMiniHeader({
           <div
             className={styles.scorePill}
             style={scoreColor ? { borderColor: scoreColor, color: scoreColor } : undefined}
-            title={`Vertragsscore: ${displayScore} von 100`}
+            title={`${analysisLabel}-Score: ${displayScore} von 100`}
           >
             <span className={styles.scoreLabel}>Score</span>
             <span className={styles.scoreValue}>{displayScore}</span>
@@ -89,10 +100,10 @@ export default function V2StickyMiniHeader({
             className={`${styles.optimizeBtn} ${isOptimizing ? styles.optimizeBtnLoading : ""}`}
             onClick={onOptimize}
             disabled={isOptimizing}
-            aria-label={isOptimizing ? "Optimierung läuft" : optimizeLabel}
+            aria-label={isOptimizing ? "Optimierung läuft" : effectiveOptimizeLabel}
           >
             {isOptimizing ? <RefreshCw size={14} className={styles.spinIcon} aria-hidden="true" /> : <Sparkles size={14} aria-hidden="true" />}
-            <span className={styles.optimizeBtnText}>{isOptimizing ? "Optimiere..." : optimizeLabel}</span>
+            <span className={styles.optimizeBtnText}>{isOptimizing ? "Optimiere..." : effectiveOptimizeLabel}</span>
           </button>
         )}
       </div>

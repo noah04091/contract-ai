@@ -6,6 +6,7 @@
 
 import { X, Scale, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect } from "react";
+import { classifyDocType, getAnalysisLabel } from "./v2TabLabels";
 
 interface Props {
   open: boolean;
@@ -18,6 +19,9 @@ interface Props {
   completeness?: { isComplete?: boolean; observation?: string; openItems?: string[] } | null;
   confidence?: number | string | null;
   qualityScore?: number | string | null;
+  // 🎯 NEU 20.05.2026 — für typspezifische Drawer-Headline
+  documentType?: string | null;
+  contractType?: string | null;
 }
 
 const ASYM_LABELS: Record<string, string> = {
@@ -45,7 +49,12 @@ export default function V2ScoreDetailDrawer({
   completeness,
   confidence,
   qualityScore,
+  documentType,
+  contractType,
 }: Props) {
+  // 🎯 Typspezifische Drawer-Headline (20.05.2026)
+  const docClass = classifyDocType(documentType, contractType);
+  const analysisLabel = getAnalysisLabel(docClass);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -131,7 +140,7 @@ export default function V2ScoreDetailDrawer({
             </div>
             <div style={{ minWidth: 0 }}>
               <h3 id="score-drawer-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.015em" }}>
-                So setzt sich dein Score zusammen
+                {`So setzt sich dein ${analysisLabel}-Score zusammen`}
               </h3>
               <div style={{ fontSize: 12.5, color: scoreColor, fontWeight: 600, marginTop: 3 }}>{scoreRating}</div>
             </div>

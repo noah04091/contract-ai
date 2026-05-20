@@ -316,6 +316,88 @@
   .recognitionDesc { font-size: 13px; }
 }
 
+/* 🎯 UNKNOWN-BANNER (20.05.2026) — wenn DocClass nicht eindeutig erkannt */
+.unknownBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.unknownIcon {
+  font-size: 22px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.unknownBody {
+  flex: 1;
+  min-width: 0;
+}
+.unknownTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.005em;
+}
+.unknownDesc {
+  font-size: 13.5px;
+  color: #1e40af;
+  line-height: 1.55;
+}
+.unknownActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.unknownBtnPrimary,
+.unknownBtnSecondary {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+.unknownBtnPrimary {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+.unknownBtnPrimary:hover:not(:disabled) {
+  background: #2563eb;
+}
+.unknownBtnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.unknownBtnSecondary {
+  background: #ffffff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.unknownBtnSecondary:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+.unknownBtnSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .unknownBanner { padding: 14px 16px; gap: 10px; }
+  .unknownTitle { font-size: 13.5px; }
+  .unknownDesc { font-size: 13px; }
+  .unknownActions { gap: 6px; }
+}
+
 /* Loading-State für Reanalyze-Button: aktive Optik (NICHT disabled-grau),
    sichtbarer Spinner + Pulse. Höhere Specificity überschreibt .fcBtn:disabled. */
 @keyframes v2Spin {

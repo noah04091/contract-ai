@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { classifyDocType, getDocNounPlural } from "./v2TabLabels";
 
 interface UsageData {
   analysisCount?: number;
@@ -16,9 +17,15 @@ interface UsageData {
 interface Props {
   usage?: UsageData | null;
   userPlan?: string | null;
+  // 🎯 NEU 20.05.2026 — für typspezifische Banner-Headline
+  documentType?: string | null;
+  contractType?: string | null;
 }
 
-export default function V2ConversionBanner({ usage, userPlan }: Props) {
+export default function V2ConversionBanner({ usage, userPlan, documentType, contractType }: Props) {
+  // 🎯 Typspezifischer Plural (20.05.2026)
+  const docClass = classifyDocType(documentType, contractType);
+  const docPlural = getDocNounPlural(docClass);
   const plan = (usage?.plan || userPlan || "").toLowerCase();
   const count = usage?.analysisCount;
   const limit = usage?.limit;
@@ -56,7 +63,7 @@ export default function V2ConversionBanner({ usage, userPlan }: Props) {
       }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: "#bfdbfe", marginBottom: 4 }}>{eye}</div>
-          <div style={{ fontSize: 15.5, fontWeight: 700, marginBottom: 4, letterSpacing: "-.015em" }}>Mehrere Verträge gleichzeitig?</div>
+          <div style={{ fontSize: 15.5, fontWeight: 700, marginBottom: 4, letterSpacing: "-.015em" }}>{`Mehrere ${docPlural} gleichzeitig?`}</div>
           <div style={{ fontSize: 12.5, color: "rgba(255,255,255,.7)" }}>Enterprise: unbegrenzt · Team-Funktionen · Custom-Playbooks</div>
         </div>
         <a href="/pricing" style={{

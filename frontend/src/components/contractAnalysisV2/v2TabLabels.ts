@@ -143,6 +143,77 @@ export function showMarketTab(dc: DocClass): boolean {
 }
 
 /**
+ * 🎯 Liefert die sichtbaren Tabs je Dokumentklasse.
+ * Bei CONTRACT/AGB: alle Tabs (Standard-Vertragsfluss).
+ * Bei INVOICE/RECEIPT/FINANCIAL_DOCUMENT: kompakter Fluss (4 Tabs).
+ * Bei TABLE_DOCUMENT/UNKNOWN: minimaler Fluss (3 Tabs).
+ *
+ * Hinweis: Pilot-Tab wird in V2TabsSection zusätzlich an hasPilot gekoppelt.
+ */
+export function getVisibleTabs(dc: DocClass): TabId[] {
+  if (dc === "CONTRACT" || dc === "AGB") {
+    return ["summary", "risks", "strengths", "recos", "pilot", "suggestions", "market", "opinion"];
+  }
+  if (dc === "INVOICE" || dc === "RECEIPT" || dc === "FINANCIAL_DOCUMENT") {
+    return ["summary", "risks", "recos", "opinion"];
+  }
+  // TABLE_DOCUMENT, UNKNOWN — minimal
+  return ["summary", "risks", "opinion"];
+}
+
+/**
+ * 🎯 Liefert das Analyse-Label je Dokumentklasse.
+ * Genutzt in MiniHeader, ScoreDrawer, ConversionBanner.
+ */
+export function getAnalysisLabel(dc: DocClass): string {
+  switch (dc) {
+    case "INVOICE": return "Rechnungsanalyse";
+    case "RECEIPT": return "Belegprüfung";
+    case "TABLE_DOCUMENT": return "Datenanalyse";
+    case "FINANCIAL_DOCUMENT": return "Finanzanalyse";
+    case "UNKNOWN": return "Dokumentenanalyse";
+    case "CONTRACT":
+    case "AGB":
+    default: return "Vertragsanalyse";
+  }
+}
+
+/**
+ * 🎯 Liefert das Hauptwort je Dokumentklasse (Singular).
+ * Genutzt z.B. für "{Doc-Noun} optimieren".
+ */
+export function getDocNoun(dc: DocClass): string {
+  switch (dc) {
+    case "AGB": return "AGB";
+    case "INVOICE": return "Rechnung";
+    case "RECEIPT": return "Beleg";
+    case "TABLE_DOCUMENT": return "Tabelle";
+    case "FINANCIAL_DOCUMENT": return "Finanzdokument";
+    case "UNKNOWN": return "Dokument";
+    case "CONTRACT":
+    default: return "Vertrag";
+  }
+}
+
+/**
+ * 🎯 Liefert das Hauptwort je Dokumentklasse im Plural.
+ * Achtung: deutscher Plural ist unregelmäßig — nicht naiv +e/+en anhängen!
+ * Genutzt z.B. für "Mehrere {Doc-Noun-Plural} gleichzeitig?".
+ */
+export function getDocNounPlural(dc: DocClass): string {
+  switch (dc) {
+    case "AGB": return "AGB"; // AGB ist bereits Plural
+    case "INVOICE": return "Rechnungen";
+    case "RECEIPT": return "Belege";
+    case "TABLE_DOCUMENT": return "Tabellen";
+    case "FINANCIAL_DOCUMENT": return "Finanzdokumente";
+    case "UNKNOWN": return "Dokumente";
+    case "CONTRACT":
+    default: return "Verträge";
+  }
+}
+
+/**
  * Empty-State-Texte je Dokumentklasse und Tab.
  * Default = CONTRACT-Wording (für unbekannte/missende Klassen).
  */

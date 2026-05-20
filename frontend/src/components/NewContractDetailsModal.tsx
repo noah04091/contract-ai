@@ -2094,11 +2094,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           {/* Sticky Mini-Header — erscheint beim Runter-Scrollen mit Filename + Score-Pille.
               Optimieren wechselt zum Optimizer-Tab im Modal (kein Page-Reload). */}
           <V2StickyMiniHeader
-            filename={contract.name || 'Vertrag'}
+            filename={contract.name || 'Dokument'}
             score={heroScore}
             scoreColor={scoreColor}
             onOptimize={() => setActiveTab('optimizations')}
             optimizeLabel="Optimieren"
+            documentType={(data as { documentType?: string | null })?.documentType}
+            contractType={(data as { contractType?: string | null })?.contractType}
           />
           <div className={v2HeroStyles.v2UnifiedContainer}>
             <V2HeroSection

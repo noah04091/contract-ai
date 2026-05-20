@@ -1044,6 +1044,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                     scoreColor={scoreColor}
                     onOptimize={handleOptimize}
                     isOptimizing={optimizing}
+                    documentType={(data as { documentType?: string | null })?.documentType}
+                    contractType={(data as { contractType?: string | null })?.contractType}
                   />
                 )}
                 <div className={v2HeroStyles.v2UnifiedContainer}>

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import styles from "./V2TabsSection.module.css";
 import LegalRefPill from "../LegalRefPill";
-import { classifyDocType, getTabLabels, showMarketTab, getEmptyState } from "./v2TabLabels";
+import { classifyDocType, getTabLabels, showMarketTab, getEmptyState, getVisibleTabs } from "./v2TabLabels";
 
 type Severity = "high" | "medium" | "low" | string;
 
@@ -209,23 +209,47 @@ export default function V2TabsSection({ data }: Props) {
   const labels = getTabLabels(docClass);
   const marketVisible = showMarketTab(docClass);
 
-  // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback
+  // 🎯 Sichtbare Tabs basierend auf DocClass + Spill-over-Guard (20.05.2026):
+  // Wenn ein eigentlich ausgeblendeter Tab Daten enthält, zeigen wir ihn trotzdem
+  // an — verhindert silent Datenverlust z.B. bei einem als UNKNOWN klassifizierten
+  // Dokument, das aber doch Stärken/Empfehlungen liefert.
+  const visibleTabs = useMemo(() => {
+    const base = new Set<TabId>(getVisibleTabs(docClass));
+    if (positives.length > 0) base.add("strengths");
+    if (sugs.length > 0) base.add("suggestions");
+    if (cmpArr.length > 0 && marketVisible) base.add("market");
+    if (recos.length > 0) base.add("recos");
+    // pilot/market werden zusätzlich konditional in tabs-Array
+    return base;
+  }, [docClass, positives.length, sugs.length, cmpArr.length, recos.length, marketVisible]);
+
+  // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback auf summary
   useEffect(() => {
-    if (active === "pilot" && !hasPilot) setActive("summary");
-    // Wenn Market-Tab bei Nicht-Verträgen ausgeblendet wird und gerade aktiv ist → fallback
-    if (active === "market" && !marketVisible) setActive("summary");
-  }, [active, hasPilot, marketVisible]);
+    if (active === "pilot" && !hasPilot) {
+      setActive("summary");
+      return;
+    }
+    if (!visibleTabs.has(active)) {
+      setActive("summary");
+    }
+  }, [active, hasPilot, visibleTabs]);
 
   const tabs: { id: TabId; label: string; icon?: React.ReactNode; count?: number; pilotBadge?: boolean }[] = [
     { id: "summary", label: labels.summary, icon: <FileText size={14} /> },
     { id: "risks", label: labels.risks, icon: <AlertTriangle size={14} style={{ color: "#ef4444" }} />, count: criticals.length },
-    { id: "strengths", label: labels.strengths, icon: <CheckCircle size={14} style={{ color: "#10b981" }} />, count: positives.length },
-    { id: "recos", label: labels.recos, icon: <Zap size={14} style={{ color: "#8b5cf6" }} />, count: recos.length },
+    ...(visibleTabs.has("strengths")
+      ? [{ id: "strengths" as TabId, label: labels.strengths, icon: <CheckCircle size={14} style={{ color: "#10b981" }} />, count: positives.length }]
+      : []),
+    ...(visibleTabs.has("recos")
+      ? [{ id: "recos" as TabId, label: labels.recos, icon: <Zap size={14} style={{ color: "#8b5cf6" }} />, count: recos.length }]
+      : []),
     ...(hasPilot
       ? [{ id: "pilot" as TabId, label: labels.pilot, icon: <Target size={14} style={{ color: "#8b5cf6" }} />, count: pilot.length, pilotBadge: true }]
       : []),
-    { id: "suggestions", label: labels.suggestions, icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
-    ...(marketVisible
+    ...(visibleTabs.has("suggestions")
+      ? [{ id: "suggestions" as TabId, label: labels.suggestions, icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length }]
+      : []),
+    ...(visibleTabs.has("market") && marketVisible
       ? [{ id: "market" as TabId, label: labels.market, icon: <BarChart3 size={14} /> }]
       : []),
     { id: "opinion", label: labels.opinion, icon: <Scale size={14} /> },
@@ -345,7 +369,8 @@ export default function V2TabsSection({ data }: Props) {
         )}
       </div>
 
-      {/* STRENGTHS */}
+      {/* STRENGTHS — konditional je nach DocClass (ARIA-Korrektheit) */}
+      {visibleTabs.has("strengths") && (
       <div
         role="tabpanel"
         id="v2-panel-strengths"
@@ -378,8 +403,10 @@ export default function V2TabsSection({ data }: Props) {
           </div>
         )}
       </div>
+      )}
 
-      {/* RECOMMENDATIONS */}
+      {/* RECOMMENDATIONS — konditional je nach DocClass */}
+      {visibleTabs.has("recos") && (
       <div
         role="tabpanel"
         id="v2-panel-recos"
@@ -411,6 +438,7 @@ export default function V2TabsSection({ data }: Props) {
           </>
         )}
       </div>
+      )}
 
       {/* PILOT */}
       {hasPilot && (
@@ -458,7 +486,8 @@ export default function V2TabsSection({ data }: Props) {
         </div>
       )}
 
-      {/* SUGGESTIONS */}
+      {/* SUGGESTIONS — konditional je nach DocClass */}
+      {visibleTabs.has("suggestions") && (
       <div
         role="tabpanel"
         id="v2-panel-suggestions"
@@ -479,8 +508,10 @@ export default function V2TabsSection({ data }: Props) {
           </>
         )}
       </div>
+      )}
 
-      {/* MARKET */}
+      {/* MARKET — konditional je nach DocClass + marketVisible */}
+      {visibleTabs.has("market") && marketVisible && (
       <div
         role="tabpanel"
         id="v2-panel-market"
@@ -501,6 +532,7 @@ export default function V2TabsSection({ data }: Props) {
           </div>
         )}
       </div>
+      )}
 
       {/* OPINION */}
       <div
