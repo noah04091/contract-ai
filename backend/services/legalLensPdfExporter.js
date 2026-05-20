@@ -2,7 +2,7 @@
 // PDF-Export mit eingebrannten Marker-Highlights + Notizen für Legal Lens
 
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.mjs');
 
 // Farbpalette für Marker (RGB normalisiert, 0-1)
 const MARKER_COLORS = {
