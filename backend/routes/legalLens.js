@@ -2199,7 +2199,7 @@ router.post('/:contractId/pdf-marker', verifyToken, async (req, res) => {
     if (!textSnippet || typeof textSnippet !== 'string') {
       return res.status(400).json({ success: false, error: 'textSnippet fehlt' });
     }
-    if (!['green', 'orange', 'red'].includes(color)) {
+    if (!['green', 'orange', 'red', 'blue'].includes(color)) {
       return res.status(400).json({ success: false, error: 'Ungültige color' });
     }
 

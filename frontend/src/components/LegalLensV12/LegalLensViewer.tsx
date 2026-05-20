@@ -401,7 +401,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // ─────────────────────────────────────────────────────────────────────────
   // PDF-Markers (Highlighter-Style, Server-persistiert) — eigene Welt von Text-Decisions
   // ─────────────────────────────────────────────────────────────────────────
-  type PdfMarkerColor = 'green' | 'orange' | 'red';
+  type PdfMarkerColor = 'green' | 'orange' | 'red' | 'blue';
   type PdfMarker = {
     id: string;
     page: number;
@@ -474,7 +474,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const MARKER_COLOR_BG: Record<PdfMarkerColor, string> = {
     green: 'rgba(34, 197, 94, 0.35)',
     orange: 'rgba(249, 115, 22, 0.38)',
-    red: 'rgba(239, 68, 68, 0.35)'
+    red: 'rgba(239, 68, 68, 0.35)',
+    blue: 'rgba(59, 130, 246, 0.3)'
   };
 
   // Marker für eine bestimmte Page rendern (Overlay-Divs über den Text-Spans)
@@ -550,6 +551,38 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         });
         container.appendChild(overlay);
       });
+
+      // 📝-Indikator wenn Marker eine Notiz hat — am rechten Rand des ersten Spans
+      if (marker.note && marker.note.trim().length > 0 && marker.spanIndices.length > 0) {
+        const firstSpan = allSpans[marker.spanIndices[0]];
+        if (firstSpan) {
+          const fRect = firstSpan.getBoundingClientRect();
+          const noteIcon = document.createElement('div');
+          noteIcon.className = 'legal-lens-pdf-marker-note-icon';
+          noteIcon.textContent = '📝';
+          noteIcon.title = marker.note;
+          noteIcon.dataset.markerId = marker.id;
+          noteIcon.style.cssText = `
+            position: absolute;
+            left: ${fRect.right - pageRect.left + 2}px;
+            top: ${fRect.top - pageRect.top - 4}px;
+            font-size: 13px;
+            line-height: 1;
+            pointer-events: auto;
+            cursor: pointer;
+            text-shadow: 0 0 4px rgba(255,255,255,0.9);
+            z-index: 5;
+          `;
+          noteIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const allOverlays = container.querySelectorAll(`[data-marker-id="${marker.id}"]`);
+            const anchor = (allOverlays[0] as HTMLElement) || noteIcon;
+            openMarkerEditorRef.current(marker.id, anchor);
+          });
+          container.appendChild(noteIcon);
+        }
+      }
     });
 
     // Container NACH textLayer einfügen (höher im DOM-Stacking) damit Klicks ankommen
@@ -616,13 +649,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const marker = pdfMarkers.find(m => m.id === markerId);
     if (!marker) return;
     const rect = anchorEl.getBoundingClientRect();
+    const POPOVER_HEIGHT_ESTIMATE = 280;
+    const POPOVER_WIDTH = 300;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow >= POPOVER_HEIGHT_ESTIMATE + 16
+      ? rect.bottom + 8
+      : Math.max(8, rect.top - POPOVER_HEIGHT_ESTIMATE - 8);
     setEditingMarker({
       markerId,
       color: marker.color,
       note: marker.note || '',
       position: {
-        top: rect.bottom + 8,
-        left: Math.max(8, Math.min(window.innerWidth - 320, rect.left))
+        top,
+        left: Math.max(8, Math.min(window.innerWidth - POPOVER_WIDTH - 8, rect.left))
       }
     });
   }, [pdfMarkers]);
@@ -1656,9 +1695,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             .filter((i: number) => i >= 0);
 
           if (spanIndicesFromSelection.length > 0) {
-            const color: PdfMarkerColor = activeMarkerMode === 'note' ? 'orange' : activeMarkerMode;
+            const isNoteMode = activeMarkerMode === 'note';
+            const color: PdfMarkerColor = isNoteMode ? 'blue' : activeMarkerMode;
+            const newMarkerId = `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
             handleAddPdfMarker({
-              id: `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+              id: newMarkerId,
               page,
               spanIndices: spanIndicesFromSelection,
               textSnippet: selectedText.slice(0, 200),
@@ -1667,6 +1708,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             });
             clearHighlight();
             setTimeout(() => selection?.removeAllRanges(), 100);
+            // Auto-Open Editor wenn Notiz-Modus
+            if (isNoteMode) {
+              setTimeout(() => {
+                const newMarkerEl = document.querySelector(`[data-marker-id="${newMarkerId}"]`) as HTMLElement | null;
+                if (newMarkerEl) openMarkerEditorRef.current(newMarkerId, newMarkerEl);
+              }, 250);
+            }
           }
           return;
         }
@@ -1849,9 +1897,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       const page = pageEl ? parseInt(pageEl.getAttribute('data-page-num') || '1', 10) : 1;
       const spanIndicesRange: number[] = [];
       for (let i = startIdx; i <= endIdx; i++) spanIndicesRange.push(i);
-      const color: PdfMarkerColor = activeMarkerMode === 'note' ? 'orange' : activeMarkerMode;
+      const isNoteMode = activeMarkerMode === 'note';
+      const color: PdfMarkerColor = isNoteMode ? 'blue' : activeMarkerMode;
+      const newMarkerId = `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       handleAddPdfMarker({
-        id: `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        id: newMarkerId,
         page,
         spanIndices: spanIndicesRange,
         textSnippet: selectedText.slice(0, 200),
@@ -1859,6 +1909,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         note: ''
       });
       clearHighlight();
+      // Auto-Open Editor wenn Notiz-Modus
+      if (isNoteMode) {
+        setTimeout(() => {
+          const newMarkerEl = document.querySelector(`[data-marker-id="${newMarkerId}"]`) as HTMLElement | null;
+          if (newMarkerEl) openMarkerEditorRef.current(newMarkerId, newMarkerEl);
+        }, 250);
+      }
       return;
     }
 
@@ -2856,13 +2913,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
+                      gap: '0.25rem',
                       fontSize: '0.85rem',
                       color: activeMarkerMode === 'note' ? 'white' : '#2563eb',
                       boxShadow: activeMarkerMode === 'note' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
                     }}
-                    title="Notiz-Marker (4) — markiert Auswahl und öffnet Notiz-Editor"
+                    title="Notiz-Marker (4) — blau markiert, öffnet Notiz-Editor automatisch"
                   >
-                    📝
+                    🔵 📝
                   </button>
                 </div>
 
@@ -3140,9 +3198,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 <div style={{ marginBottom: '10px' }}>
                   <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '4px' }}>Farbe</div>
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    {(['green', 'orange', 'red'] as PdfMarkerColor[]).map(c => {
-                      const colorMap = { green: '#16a34a', orange: '#d97706', red: '#dc2626' };
-                      const emojiMap = { green: '🟢', orange: '🟡', red: '🔴' };
+                    {(['green', 'orange', 'red', 'blue'] as PdfMarkerColor[]).map(c => {
+                      const colorMap = { green: '#16a34a', orange: '#d97706', red: '#dc2626', blue: '#2563eb' };
+                      const emojiMap = { green: '🟢', orange: '🟡', red: '🔴', blue: '🔵' };
+                      const labelMap = { green: 'Akzeptieren', orange: 'Verhandeln', red: 'Ablehnen', blue: 'Notiz' };
                       return (
                         <button
                           key={c}
@@ -3159,7 +3218,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                             cursor: 'pointer',
                             fontSize: '16px'
                           }}
-                          title={c === 'green' ? 'Akzeptieren' : c === 'orange' ? 'Verhandeln' : 'Ablehnen'}
+                          title={labelMap[c]}
                         >
                           {emojiMap[c]}
                         </button>

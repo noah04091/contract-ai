@@ -453,7 +453,7 @@ export interface PdfMarker {
   page: number;             // 1-indexed
   spanIndices: number[];    // Span-Indices auf der Page
   textSnippet: string;      // max 200 chars (Vorschau für Sidebar-Liste)
-  color: 'green' | 'orange' | 'red';
+  color: 'green' | 'orange' | 'red' | 'blue';
   note?: string;            // max 2000 chars
   createdAt: Date;
   updatedAt: Date;

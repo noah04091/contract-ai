@@ -176,7 +176,7 @@ const legalLensProgressSchema = new mongoose.Schema({
     },
     color: {
       type: String,
-      enum: ["green", "orange", "red"],
+      enum: ["green", "orange", "red", "blue"],
       required: true
     },
     note: {
