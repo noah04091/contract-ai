@@ -1653,6 +1653,163 @@ CHECKPOINTS:
 12. Streitbeilegung, Schlichtung & Aufsicht — Schlichtungsstelle Energie (§ 111b EnWG) + Bundesnetzagentur-Verbraucherservice ausgewiesen? Bei Online-Vertragsschluss: VSBG-Hinweis (§ 36 VSBG)?`
     },
 
+    // 📜 AGB (Allgemeine Geschäftsbedingungen) — Erweiterung 20.05.2026
+    agb: {
+      title: "Fachanwalt für AGB-Recht",
+      expertise: `Als Fachanwalt für AGB-Recht weißt du: §§ 305-310 BGB regeln Einbeziehung, Inhaltskontrolle und Klauselverbote.
+
+Wichtige Schwerpunkte:
+• Einbeziehung (§ 305 Abs. 2 BGB): ausdrücklicher Hinweis + zumutbare Kenntnisnahme — bei Online besonders kritisch
+• Klauselverbote ohne Wertungsmöglichkeit (§ 309 BGB) sind das schärfste Schwert
+• Klauselverbote mit Wertungsmöglichkeit (§ 308 BGB)
+• Transparenzgebot (§ 307 Abs. 1 S. 2 BGB) — verschachtelte, mehrdeutige Klauseln sind oft kippbar
+• B2C strenger als B2B, aber § 309-Indizwirkung gilt auch im B2B (BGH-Rspr.)
+• Seit Faire-Verbraucherverträge-Gesetz 2022: max. 1 Monat Kündigungsfrist nach Erstlaufzeit, monatliche Verlängerung
+
+ABER: Prüfe NUR die Klauseln, die in DIESER konkreten AGB stehen.
+Bewerte AGB-Klauseln nüchtern (§ 306 BGB greift bei Unwirksamkeit ohnehin automatisch).`,
+      commonTraps: `Häufige Fallen bei AGB:
+• Überraschende Klauseln (§ 305c BGB) → unwirksam
+• Pauschaler Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit/Kardinalpflichten → UNWIRKSAM
+• Pauschalierter Schadensersatz ohne Gegenbeweis-Möglichkeit (§ 309 Nr. 5 BGB)
+• Doppelte Schriftformklauseln ggü. Verbrauchern (§ 309 Nr. 13 BGB) → unwirksam
+• Unklare Preisanpassungsklauseln ohne objektive Parameter → intransparent
+• Gerichtsstand-/Rechtswahlklauseln gegen Verbraucher (oft unwirksam, § 38 ZPO)
+• Salvatorische Klauseln heilen unwirksame AGB nicht — § 306 BGB greift mit gesetzlicher Regel`
+    },
+
+    // 📋 RECHNUNG — Erweiterung 20.05.2026
+    invoice: {
+      title: "Rechnungs- & Steuerprüfer",
+      expertise: `Du prüfst Rechnungen aus Sicht von Buchhaltung, Vorsteuerabzug und Compliance — KEIN Vertrags-Urteil.
+
+Wichtige Schwerpunkte:
+• Pflichtangaben § 14 Abs. 4 UStG: vollständiger Name/Anschrift beider Parteien, Steuer-/USt-IdNr., Ausstellungsdatum, fortlaufende Rechnungsnummer, Leistungsbeschreibung, Leistungsdatum, Entgelt netto, Steuersatz, Steuerbetrag
+• Kleinbetragsrechnung bis 250€ brutto (§ 33 UStDV) — reduzierte Pflichtangaben
+• Kleinunternehmer § 19 UStG: kein USt-Ausweis, aber Hinweis Pflicht (ab 2025: 25.000€ Vorjahr / 100.000€ lfd.)
+• Reverse-Charge § 13b UStG bei B2B-Auslands- oder Bauleistungen: fehlender Hinweis = Vorsteuerproblem
+• E-Rechnung 2025: B2B-Pflicht ZUGFeRD/XRechnung, PDF allein reicht nicht mehr inländisch
+
+ABER: Prüfe NUR die Angaben, die in DIESER Rechnung stehen.
+Wenn ein Punkt fehlt → konkret benennen mit gesetzlicher Grundlage.
+Wenn alles korrekt → klar bestätigen.`,
+      commonTraps: `Typische Probleme bei Rechnungen:
+• Fehlende USt-ID bei innergemeinschaftlichen Lieferungen
+• Falsche/fehlende Steuersatz-Aufschlüsselung (7% vs 19%)
+• Nicht fortlaufende Rechnungsnummer (FA-Risiko)
+• Fehlendes Leistungsdatum → Vorsteuerabzug gefährdet
+• Skonto-/Zahlungsbedingungen unklar (Fälligkeit, Skontofrist, Verzugszins § 288 BGB)
+• Vorsteuerabzug aus formal mangelhafter Rechnung → vom FA aberkannt`
+    },
+
+    // 🧾 QUITTUNG / BELEG — Erweiterung 20.05.2026
+    receipt: {
+      title: "Beleg-Prüfer (GoBD + Steuer)",
+      expertise: `Du prüfst Quittungen und Belege aus Sicht der Belegpflichten und Steuer-Tauglichkeit.
+
+Wichtige Schwerpunkte:
+• Quittung nach § 368 BGB: schriftliche Empfangsbestätigung über Zahlung (dokumentiert Erfüllung, nicht Forderung)
+• Mindestinhalt: Aussteller, Empfänger, Betrag, Datum, Unterschrift, Bezug auf Leistung
+• Bewirtungskosten § 4 Abs. 5 Nr. 2 EStG: Anlass + Teilnehmer für steuerlichen Abzug
+• Kassenbon-Pflicht § 146a AO seit 2020 bei elektronischen Kassen
+• Aufbewahrungsfristen § 147 AO: 10 Jahre für Geschäftsbelege
+
+ABER: Quittung ≠ Rechnung. Bei einer Quittung KEINE § 14 UStG-Pflichtangaben verlangen.
+Prüfe NUR was DA STEHT.`,
+      commonTraps: `Typische Probleme bei Quittungen/Belegen:
+• Quittung ohne Unterschrift → geringere Beweiskraft
+• Sammelquittungen ohne Einzelaufschlüsselung → wertlos für Vorsteuer/Betriebsausgaben
+• Eigenbelege ohne plausible Begründung → FA-skeptisch
+• Fehlender Bezug zur Leistung → wirtschaftlich unbrauchbar`
+    },
+
+    // 💲 PREISLISTE / KONDITIONSBLATT — Erweiterung 20.05.2026
+    pricelist: {
+      title: "Pricing- & Konditions-Analyst",
+      expertise: `Du analysierst Preislisten und Konditionsblätter aus Sicht von Konformität, Transparenz und Marktüblichkeit.
+
+Wichtige Schwerpunkte:
+• PAngV (Preisangabenverordnung): ggü. Verbrauchern Gesamtpreis inkl. USt + sonstiger Preisbestandteile
+• Grundpreisangabe § 4 PAngV bei Waren nach Gewicht/Volumen
+• Verknüpfung mit AGB: Preisliste als Vertragsbestandteil = einbeziehungsfest (§ 305 BGB)
+• Gültigkeitsdatum, Bindefristen, Anpassungsvorbehalte ("freibleibend" / "zzgl. MwSt" nur B2B-tauglich)
+• Mengen-/Staffelrabatte: Transparenz + kartellrechtliche Zulässigkeit (§§ 19, 20 GWB bei Marktstarken)
+• Nebenkosten (Versand, Verpackung, Mindermengenzuschläge) klar erkennbar vor Vertragsschluss
+
+ABER: Bewerte NUR was DA STEHT. Keine generische "AGB-Kontrolle" wenn keine AGB-Verweise existieren.`,
+      commonTraps: `Typische Probleme bei Preislisten:
+• Netto-Preise ggü. Verbrauchern → PAngV-Verstoß + Abmahnrisiko
+• Versteckte Service-/Bearbeitungsgebühren → bei Verbrauchern oft unangemessen (BGH zu Bankgebühren)
+• Preisanpassungsklauseln ohne objektive Parameter → intransparent
+• Fehlende Grundpreisangabe bei Gewicht/Volumen → PAngV-Verstoß`
+    },
+
+    // 📊 TABELLENDOKUMENT — Erweiterung 20.05.2026
+    table: {
+      title: "Daten- & Plausibilitäts-Analyst",
+      expertise: `Du analysierst tabellarische Daten aus Sicht von Vollständigkeit, Konsistenz und Plausibilität — KEIN juristisches Urteil.
+
+Wichtige Schwerpunkte:
+• Innere Konsistenz: Summen, Querverweise, Saldi — stimmen Zwischen- und Endsummen?
+• Vollständigkeit: fehlende Datensätze, leere Pflichtfelder?
+• Plausibilität: Ausreißer, unrealistische Größenordnungen, doppelte Einträge?
+• Einheiten/Formate konsistent: Währung, Datum, Dezimaltrennzeichen, Maßeinheiten
+• Datenherkunft/Stichtag klar erkennbar?
+• DSGVO-Relevanz bei personenbezogenen Daten: Rechtsgrundlage, Zweckbindung, Speicherdauer
+• GoBD-Tauglichkeit bei Geschäftsdaten
+
+ABER: Tabellen sind keine Verträge — kein "Anwalts-Gutachten", sondern sachliche Analyse.`,
+      commonTraps: `Typische Probleme bei Tabellen:
+• Rundungsdifferenzen zwischen Einzelposten und Summe (klassischer Excel-Fehler)
+• Verdeckte Filter/Sortierungen → unvollständige Datenbasis
+• Mischung kumulierter und periodischer Werte ohne Kennzeichnung
+• Fehlende Quellenangabe / Stichtag`
+    },
+
+    // 💰 FINANZDOKUMENT (Bilanz, Kontoauszug, Steuerbescheid) — Erweiterung 20.05.2026
+    financial: {
+      title: "Bilanz- & Buchhaltungs-Analyst",
+      expertise: `Du analysierst Finanzdokumente (Bilanzen, Kontoauszüge, Steuerbescheide) aus Sicht von Plausibilität und gesetzlichen Anforderungen — KEIN Vertrags-Gutachten.
+
+Wichtige Schwerpunkte:
+• Bilanz: § 266 HGB Aktiva/Passiva-Gliederung, Bewertungsmethoden §§ 246-256 HGB
+• Steuerbescheid: Festsetzung + Erläuterung + Rechtsbehelfsbelehrung, Einspruchsfrist 1 Monat (§ 355 AO)
+• Vorbehalt der Nachprüfung / Vorläufigkeit (§§ 164, 165 AO) — Bescheid nicht final
+• Kontoauszug: Saldofortschreibung, ungewöhnliche Bewegungen, Storno-Muster
+• Liquiditätskennzahlen: passt Cashflow zu Gewinn? "Profitabel aber illiquide" = Warnschuss
+• Plausibilität ggü. Vorjahr / Branchenkennzahlen
+
+ABER: Bewerte NUR was DA STEHT. Keine Empfehlungen ohne Anhaltspunkt im Dokument.`,
+      commonTraps: `Typische Probleme bei Finanzdokumenten:
+• Steuerbescheid: stillschweigende "Verböserung" durch FA — Einspruch kann bei drohender Verböserung zurückgenommen werden
+• Bilanz: nicht aktivierte stille Lasten (Pensionen, Rückstellungen) verzerren das Bild
+• Kontoauszug: Bankgebühren-Klauseln nach BGH XI ZR 26/20 oft unwirksam → Rückforderung möglich
+• Vorläufigkeits-/Nachprüfungsvermerk übersehen → falsche Endgültigkeits-Annahme`
+    },
+
+    // ❓ UNBEKANNTES DOKUMENT — Erweiterung 20.05.2026
+    unknown: {
+      title: "Forensischer Dokumenten-Sichter",
+      expertise: `Du analysierst ein Dokument unklarer Art — universeller Generalist mit Fokus auf Identifikation und Klarheit.
+
+Wichtige Schwerpunkte:
+• Identifiziere zuerst Dokumenttyp, Aussteller, Adressat und Zweck
+• Formale Klarheit: Datum, Unterschrift/Absender, eindeutige Bezugnahme
+• Vollständigkeit: fehlen Anhänge auf die verwiesen wird? Seitenzahlen-Lücken?
+• Verständlichkeit für den Adressaten — Fachjargon ohne Erklärung = Warnsignal
+• Rechtliche Bindungswirkung: bloße Information, Angebot (§ 145 BGB), Vertrag, Verwaltungsakt?
+• Fristen, Pflichten, Sanktionen — was muss der Empfänger bis wann tun?
+• Datenschutz/Vertraulichkeit bei sensiblen Daten
+
+ABER: Sei ehrlich was unklar ist. Nichts erfinden, nichts unterstellen.
+Wenn du den Typ nicht identifizieren kannst → sage das offen.`,
+      commonTraps: `Typische Probleme bei unklaren Dokumenten:
+• Verbindlichkeitsgrad falsch eingeschätzt: "Angebot" vs. "invitatio ad offerendum" (§ 145 BGB)
+• Verpasste Fristen mangels Markierung (Widerspruch, Einspruch, Widerruf)
+• Inoffizielle Hilfsschreiben werden als rechtsverbindlich missverstanden
+• Manipulationsindizien übersehen (Logo, Briefkopf, Aktenzeichen)`
+    },
+
     other: {
       title: "Fachanwalt für allgemeines Vertragsrecht",
       expertise: `Als Fachanwalt für allgemeines Vertragsrecht mit 20+ Jahren Erfahrung weißt du:
@@ -1674,7 +1831,31 @@ Wenn es ein sehr kurzer Vertrag ist → fokussiere auf die wenigen vorhandenen K
     }
   };
 
-  return awarenessMap[documentType] || awarenessMap.other;
+  // 🔑 Awareness-Key-Normalisierung (Erweiterung 20.05.2026):
+  // documentType kommt manchmal als lowercase contractType (rental, nda, agb, ...) und
+  // manchmal als UPPERCASE documentType-Enum (INVOICE, RECEIPT, TABLE_DOCUMENT, ...).
+  // Mappe UPPERCASE → lowercase Awareness-Keys, sonst fällt es auf "other" zurück.
+  const normalizedKey = resolveAwarenessKey(documentType);
+  return awarenessMap[normalizedKey] || awarenessMap.other;
+}
+
+/**
+ * Normalisiert UPPERCASE documentType-Enum → lowercase Awareness-Map-Key.
+ * Lässt unbekannte/bereits lowercase Keys unverändert durch (Map-Lookup
+ * findet dann entweder den Eintrag oder fällt auf "other" zurück).
+ */
+function resolveAwarenessKey(documentType) {
+  if (!documentType || typeof documentType !== 'string') return 'other';
+  const map = {
+    'CONTRACT': 'other',           // CONTRACT ohne erkannten Subtyp → generischer Anwalt
+    'INVOICE': 'invoice',
+    'RECEIPT': 'receipt',
+    'TABLE_DOCUMENT': 'table',
+    'FINANCIAL_DOCUMENT': 'financial',
+    'UNKNOWN': 'unknown',
+    'PRICELIST': 'pricelist'       // reserviert für zukünftige Detection
+  };
+  return map[documentType] || documentType;
 }
 
 /**
@@ -2228,7 +2409,9 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       documentType.confidence < 0.6 ||
       documentType.type === 'UNKNOWN' ||
       documentType.type === 'FINANCIAL_DOCUMENT' ||
-      documentType.type === 'TABLE_DOCUMENT';
+      documentType.type === 'TABLE_DOCUMENT' ||
+      documentType.type === 'INVOICE' ||
+      documentType.type === 'RECEIPT';
 
     if (needsSecondOpinion) {
       const gptOpinion = await classifyDocumentTypeWithGPT(pdfText, getOpenAI(), requestId);
@@ -3758,8 +3941,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             console.warn(`⚠️ [${requestId}] findOne lieferte null nach Update — nutze existingContract als Fallback für Calendar-Sync`);
           }
           const contractForCalendar = updatedContract || existingContract;
-          const result = await cleanAndRegenerateAIEvents(db, contractForCalendar);
-          console.log(`📅 [${requestId}] Calendar Events regeneriert für ${contractForCalendar.name}: ${result.deleted} alt → ${result.generated} neu${contractForCalendar.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+          // 🛡️ Calendar-Guard (20.05.2026): Nur bei echten CONTRACTs Events
+          // (re-)generieren. Bei INVOICE/RECEIPT/TABLE_DOCUMENT etc. erzeugt
+          // generateEventsForContract sonst Phantom-„Vertragsende"-Termine.
+          if (validationResult.documentType === 'CONTRACT') {
+            const result = await cleanAndRegenerateAIEvents(db, contractForCalendar);
+            console.log(`📅 [${requestId}] Calendar Events regeneriert für ${contractForCalendar.name}: ${result.deleted} alt → ${result.generated} neu${contractForCalendar.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+          } else {
+            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (kein CONTRACT)`);
+          }
         } catch (eventError) {
           console.warn(`⚠️ [${requestId}] Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }
@@ -4016,15 +4206,22 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         console.log(`✅ [${requestId}] New contract saved with FIXED deep lawyer-level analysis: ${savedContract._id} (${validationResult.documentType})`);
         
         // 🆕 CALENDAR EVENTS GENERIEREN FÜR NEUEN CONTRACT
+        // 🛡️ Calendar-Guard (20.05.2026): Nur bei echten CONTRACTs Events erzeugen.
+        // Bei INVOICE/RECEIPT/TABLE_DOCUMENT etc. macht generateEventsForContract sonst
+        // Phantom-Termine („Vertragsende für eine Rechnung").
         try {
-          const db = await database.connect();
-          const events = await generateEventsForContract(db, savedContract);
-          console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
-          console.log(`📅 Events:`, events.map(e => ({
-            type: e.type,
-            date: e.date,
-            severity: e.severity
-          })));
+          if (validationResult.documentType === 'CONTRACT') {
+            const db = await database.connect();
+            const events = await generateEventsForContract(db, savedContract);
+            console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+            console.log(`📅 Events:`, events.map(e => ({
+              type: e.type,
+              date: e.date,
+              severity: e.severity
+            })));
+          } else {
+            console.log(`⏭️ Calendar Events übersprungen für ${savedContract.name} — documentType=${validationResult.documentType} (kein CONTRACT)`);
+          }
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
         }

@@ -1564,6 +1564,16 @@ class ContractAnalyzer {
         strong: ['energieliefervertrag', 'stromliefervertrag', 'stromvertrag', 'gasliefervertrag', 'gasvertrag', 'fernwärmevertrag', 'stromlieferant', 'gaslieferant', 'energielieferant', 'grundversorgung', 'sondervertrag strom', 'sondervertrag gas'],
         medium: ['arbeitspreis', 'grundpreis', 'kwh', 'kilowattstunde', 'verbrauchsstelle', 'zählernummer', 'sonderkündigungsrecht', 'preisgarantie', 'preisbremse', 'ökostrom', 'bundesnetzagentur', 'stromgvv', 'gasgvv', 'enwg', 'netznutzung', 'konzessionsabgabe'],
         weak: ['strom', 'gas', 'energie', 'tarif']
+      },
+
+      // 📜 AGB (Allgemeine Geschäftsbedingungen) — Erweiterung 20.05.2026
+      // Eigener Typ, weil AGB rechtlich anders zu prüfen sind als Einzelverträge:
+      // §§ 305-310 BGB regeln Einbeziehung + Inhaltskontrolle + Klauselverbote.
+      // Fängt sowohl klassische AGB als auch Online-AGB / Nutzungsbedingungen ab.
+      agb: {
+        strong: ['allgemeine geschäftsbedingungen', 'agb', 'nutzungsbedingungen', 'geschäftsbedingungen', 'terms of service', 'terms and conditions'],
+        medium: ['§ 305', '§ 306', '§ 307', '§ 308', '§ 309', 'salvatorische klausel', 'klauselverbote', 'einbeziehungsvereinbarung', 'transparenzgebot', 'verbraucher', 'unternehmer', 'haftungsausschluss', 'kardinalpflicht', 'schriftformklausel', 'gerichtsstand'],
+        weak: ['geltungsbereich', 'schlussbestimmungen', 'anwendbares recht']
       }
     };
 
