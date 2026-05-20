@@ -1293,6 +1293,9 @@ const PlaybookReview: React.FC = () => {
                       <label className={styles.fieldLabel}>
                         Notiz <span className={styles.fieldLabelOptional}>(optional)</span>
                       </label>
+                      <p className={styles.fieldHint}>
+                        Nur für dich — die KI sieht diese Notiz nicht. Kann leer bleiben.
+                      </p>
                       <textarea
                         className={styles.textarea}
                         value={rule.note || ''}
@@ -1307,7 +1310,7 @@ const PlaybookReview: React.FC = () => {
                         Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                       </label>
                       <p className={styles.fieldHint}>
-                        Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
+                        Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
                       </p>
                       <textarea
                         className={`${styles.textarea} ${styles.standardTextArea}`}
@@ -1548,6 +1551,9 @@ const PlaybookReview: React.FC = () => {
                     <label className={styles.fieldLabel}>
                       Notiz <span className={styles.fieldLabelOptional}>(optional)</span>
                     </label>
+                    <p className={styles.fieldHint}>
+                      Nur für dich — die KI sieht diese Notiz nicht. Kann leer bleiben.
+                    </p>
                     <textarea
                       className={styles.textarea}
                       value={currentData.note || ''}
@@ -1562,7 +1568,7 @@ const PlaybookReview: React.FC = () => {
                       Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                     </label>
                     <p className={styles.fieldHint}>
-                      Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen.
+                      Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
                     </p>
                     <textarea
                       className={`${styles.textarea} ${styles.standardTextArea}`}
