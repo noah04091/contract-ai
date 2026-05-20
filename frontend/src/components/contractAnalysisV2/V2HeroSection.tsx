@@ -39,6 +39,7 @@ type AnalysisData = {
   qualityScore?: number | string | null;
   documentType?: string | null;
   contractType?: string | null; // 🎯 NEU 20.05.2026 — für typspezifische UI
+  textLength?: number | null; // 🎯 NEU 20.05.2026 Finding 2 — für Min-Text-Banner
   pageCount?: number | null;
   provider?: { name?: string } | null;
   isReanalysis?: boolean;
@@ -495,11 +496,27 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         )}
       </div>
 
+      {/* MIN-TEXT-HINWEIS (20.05.2026 Finding 2) — höchste Priorität, suppressed
+          alle anderen Banner. Wenn das Dokument <300 Zeichen Text hat, ist das
+          die fundamentalste Aussage (UNKNOWN/Recognition wären redundant). */}
+      {typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300 && (
+        <div className={styles.lowTextBanner} role="alert">
+          <div className={styles.lowTextIcon} aria-hidden="true">ℹ️</div>
+          <div className={styles.lowTextBody}>
+            <div className={styles.lowTextTitle}>Wenig Text im Dokument ({d.textLength} Zeichen)</div>
+            <div className={styles.lowTextDesc}>
+              Wir haben eine Analyse versucht, aber das Dokument enthält sehr wenig Text. Manche Felder können unvollständig sein — die KI liefert lieber leere Felder als erfundene Inhalte. Für eine ausführliche Analyse empfehlen wir Dokumente mit mindestens 500 Zeichen.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* UNKNOWN-DOKUMENT-HINWEIS (20.05.2026) — erscheint wenn das System den
           Dokumenttyp nicht eindeutig zuordnen konnte. Der Score-Donut wird weiterhin
           gezeigt (Inhalt wurde ja analysiert), aber der User bekommt klare Info
-          über die Klassifikations-Unsicherheit + Action-Buttons. */}
-      {docClass === "UNKNOWN" && (
+          über die Klassifikations-Unsicherheit + Action-Buttons.
+          Mutex: bei Min-Text-Banner (<300 chars) wird dieser Banner suppressed. */}
+      {docClass === "UNKNOWN" && !(typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300) && (
         <div className={styles.unknownBanner} role="alert">
           <div className={styles.unknownIcon} aria-hidden="true">🤔</div>
           <div className={styles.unknownBody}>
@@ -540,8 +557,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
       {/* RECOGNITION-BANNER — erscheint VOR der Analyse-Card, wenn die KI
           einen non-finalen Dokument-Status erkennt (Muster/Entwurf/LOI/etc.)
-          oder completeness.isComplete === false meldet. Render-if-present. */}
+          oder completeness.isComplete === false meldet. Render-if-present.
+          Mutex: bei Min-Text-Banner (<300 chars) wird dieser Banner suppressed,
+          weil „zu wenig Text" die fundamentalere Aussage ist. */}
       {(() => {
+        // Mutex-Suppression bei Min-Text (höhere Priorität)
+        if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300) return null;
         const docChar = d.documentCharacterization;
         const completeness = d.completeness;
         const desc = docChar?.description || "";

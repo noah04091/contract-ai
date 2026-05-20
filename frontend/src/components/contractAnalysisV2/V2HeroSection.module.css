@@ -398,6 +398,47 @@
   .unknownActions { gap: 6px; }
 }
 
+/* 🎯 MIN-TEXT-BANNER (20.05.2026 Finding 2) — höchste Priorität wenn <300 chars */
+.lowTextBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-left: 4px solid #64748b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.lowTextIcon {
+  font-size: 22px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.lowTextBody {
+  flex: 1;
+  min-width: 0;
+}
+.lowTextTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.005em;
+}
+.lowTextDesc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.55;
+}
+@media (max-width: 600px) {
+  .lowTextBanner { padding: 14px 16px; gap: 10px; }
+  .lowTextTitle { font-size: 13.5px; }
+  .lowTextDesc { font-size: 13px; }
+}
+
 /* Loading-State für Reanalyze-Button: aktive Optik (NICHT disabled-grau),
    sichtbarer Spinner + Pulse. Höhere Specificity überschreibt .fcBtn:disabled. */
 @keyframes v2Spin {

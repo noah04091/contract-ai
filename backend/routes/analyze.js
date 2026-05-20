@@ -847,17 +847,22 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
   const sample = buildPanoramicSample(rawText);
   const TIMEOUT_MS = 10000;
 
+  // 🎯 AbortController (20.05.2026 Finding 1) — bricht den OpenAI-Library-Call
+  // hart ab statt nur extern Promise.race zu killen. Verhindert dass der Call
+  // im Hintergrund weiterläuft und Memory/Connection hält.
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
   try {
-    const completion = await Promise.race([
-      openaiClient.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.1,
-        max_tokens: 200,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `Du bist Klassifizierer für Dokumente in einer Vertragsanalyse-App.
+    const completion = await openaiClient.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.1,
+      max_tokens: 200,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content: `Du bist Klassifizierer für Dokumente in einer Vertragsanalyse-App.
 
 Antworte NUR mit JSON in diesem Format:
 {
@@ -881,17 +886,14 @@ Verträgen steht der eigentliche Charakter (z.B. Forderungsabtretung beim
 Factoring) oft in der Mitte oder am Ende.
 
 Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
-          },
-          {
-            role: 'user',
-            content: `Klassifiziere folgendes Dokument:\n\n---\n${sample}\n---`
-          }
-        ]
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`classifyDocumentTypeWithGPT timeout after ${TIMEOUT_MS}ms`)), TIMEOUT_MS)
-      )
-    ]);
+        },
+        {
+          role: 'user',
+          content: `Klassifiziere folgendes Dokument:\n\n---\n${sample}\n---`
+        }
+      ]
+    }, { signal: controller.signal, maxRetries: 0 });
+    clearTimeout(timeoutHandle);
 
     const raw = completion.choices?.[0]?.message?.content || '{}';
     const parsed = JSON.parse(raw);
@@ -919,7 +921,10 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
     console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)}) — ${parsed.reason || 'keine Begründung'}`);
     return { type: category, confidence, source: 'gpt-4o-mini' };
   } catch (err) {
-    console.warn(`⚠️ [${requestId}] Türsteher 2 (gpt-4o-mini) fehlgeschlagen: ${err.message} — Fallback auf Heuristik`);
+    clearTimeout(timeoutHandle);
+    const isAbort = err.name === 'AbortError' || controller.signal.aborted;
+    const label = isAbort ? `timeout after ${TIMEOUT_MS}ms` : err.message;
+    console.warn(`⚠️ [${requestId}] Türsteher 2 (gpt-4o-mini) fehlgeschlagen: ${label} — Fallback auf Heuristik`);
     return null;
   }
 }
@@ -2455,8 +2460,20 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         // GPT ist klar → Übernehmen
         console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
         documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence };
+      } else if (
+        // 🎯 UNKNOWN-Erhaltung (20.05.2026 Finding 3) — wenn BEIDE Türsteher
+        // explizit UNKNOWN sagen, behalten wir UNKNOWN (User sieht blauen Banner)
+        // statt blind CONTRACT-Default zu verwenden. Nur bei wirklich beidseitig
+        // bekräftigter Unsicherheit greift dieser Pfad — sonst CONTRACT-Fallback.
+        documentType.type === 'UNKNOWN' &&
+        gptOpinion &&
+        gptOpinion.type === 'UNKNOWN' &&
+        gptOpinion.confidence >= 0.6
+      ) {
+        console.log(`❓ [${requestId}] Beide Türsteher explizit UNKNOWN (T1=${documentType.confidence.toFixed(2)}, T2=${gptOpinion.confidence.toFixed(2)}) → UNKNOWN behalten, blauer Banner im Frontend`);
+        documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence };
       } else {
-        // Beide unsicher → CONTRACT-Fallback (sicherer Default)
+        // Beide unsicher → CONTRACT-Fallback (sicherer Default, 95% sind Verträge)
         console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
         documentType = { type: 'CONTRACT', confidence: 0.5 };
       }
@@ -2924,19 +2941,24 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
  * AGB wird als contractType (Subtyp von CONTRACT) erkannt — eigener Prompt.
  */
 function resolveSystemPrompt(documentType, contractType) {
-  const DEFAULT_CONTRACT = "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen.";
+  // 🎯 HALLUCINATION_GUARD (20.05.2026 Finding 2) — Anti-Halluzinations-Hinweis
+  // wird an JEDEN Spezialisten-Prompt angehängt. Bei knappem Dokument-Input
+  // soll GPT ehrlich „nicht im Dokument enthalten" sagen statt zu spekulieren.
+  const HALLUCINATION_GUARD = " Wenn das Dokument zu wenig Text enthält, um ein Feld inhaltlich zu füllen: lasse das Feld weg oder leer — niemals spekulieren oder erfinden. Lieber leere Felder als halluzinierte Inhalte.";
+
+  const DEFAULT_CONTRACT = "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen." + HALLUCINATION_GUARD;
 
   // AGB hat Priorität — auch wenn documentType=CONTRACT ist
   if (contractType === 'agb') {
-    return "Du bist ein hochspezialisierter Fachanwalt für AGB-Recht mit 20+ Jahren Erfahrung. Schwerpunkte: §§ 305-310 BGB, Klauselverbote, Transparenzgebot, Verbraucherschutz. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Sei präzise, konkret und nüchtern — keine unnötigen Floskeln. Bewerte NUR die Klauseln, die tatsächlich in der vorliegenden AGB stehen.";
+    return "Du bist ein hochspezialisierter Fachanwalt für AGB-Recht mit 20+ Jahren Erfahrung. Schwerpunkte: §§ 305-310 BGB, Klauselverbote, Transparenzgebot, Verbraucherschutz. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Sei präzise, konkret und nüchtern — keine unnötigen Floskeln. Bewerte NUR die Klauseln, die tatsächlich in der vorliegenden AGB stehen." + HALLUCINATION_GUARD;
   }
 
   const docTypeMap = {
-    'INVOICE': "Du bist ein erfahrener Rechnungs- und Steuerprüfer (Buchhalter/Steuerfachgehilfe) mit 20+ Jahren Erfahrung. Schwerpunkt: § 14 UStG-Pflichtangaben, Kleinunternehmer-Regelung, Reverse-Charge, E-Rechnung 2025. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN juristisches Vertragsgutachten — sachliche Compliance- und Vorsteuer-Prüfung. Bewerte NUR was in der Rechnung steht.",
-    'RECEIPT': "Du bist ein erfahrener Beleg- und Compliance-Prüfer mit Schwerpunkt § 368 BGB (Quittung), § 146a AO (Kassenbon-Pflicht) und GoBD. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Quittung ≠ Rechnung — KEINE § 14 UStG-Pflichtangaben verlangen. Bewerte nur die formale Tauglichkeit + Beweiskraft des vorliegenden Belegs.",
-    'TABLE_DOCUMENT': "Du bist ein erfahrener Daten- und Plausibilitäts-Analyst. Du analysierst strukturierte Tabellen-Daten auf Vollständigkeit, Konsistenz und Plausibilität — KEIN juristisches Urteil. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Bewerte nur Auffälligkeiten und Datenqualität, die in der vorliegenden Tabelle erkennbar sind.",
-    'FINANCIAL_DOCUMENT': "Du bist ein erfahrener Bilanz-/Buchhaltungs-Analyst (Steuerberater-Niveau). Du analysierst Finanzdokumente (Bilanzen, Kontoauszüge, Steuerbescheide) auf Plausibilität, gesetzliche Anforderungen (HGB, AO) und auffällige Abweichungen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN Vertrags-Gutachten. Bewerte nur was im Dokument konkret erkennbar ist.",
-    'UNKNOWN': "Du bist ein erfahrener forensischer Dokumenten-Sichter — universeller Generalist. Identifiziere Dokumenttyp, Aussteller, Adressat und Zweck. Bewerte formale Klarheit, Vollständigkeit, rechtliche Bindungswirkung und ggf. Fristen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Wenn der Dokumenttyp unklar bleibt: sag das offen statt zu spekulieren."
+    'INVOICE': "Du bist ein erfahrener Rechnungs- und Steuerprüfer (Buchhalter/Steuerfachgehilfe) mit 20+ Jahren Erfahrung. Schwerpunkt: § 14 UStG-Pflichtangaben, Kleinunternehmer-Regelung, Reverse-Charge, E-Rechnung 2025. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN juristisches Vertragsgutachten — sachliche Compliance- und Vorsteuer-Prüfung. Bewerte NUR was in der Rechnung steht." + HALLUCINATION_GUARD,
+    'RECEIPT': "Du bist ein erfahrener Beleg- und Compliance-Prüfer mit Schwerpunkt § 368 BGB (Quittung), § 146a AO (Kassenbon-Pflicht) und GoBD. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Quittung ≠ Rechnung — KEINE § 14 UStG-Pflichtangaben verlangen. Bewerte nur die formale Tauglichkeit + Beweiskraft des vorliegenden Belegs." + HALLUCINATION_GUARD,
+    'TABLE_DOCUMENT': "Du bist ein erfahrener Daten- und Plausibilitäts-Analyst. Du analysierst strukturierte Tabellen-Daten auf Vollständigkeit, Konsistenz und Plausibilität — KEIN juristisches Urteil. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Bewerte nur Auffälligkeiten und Datenqualität, die in der vorliegenden Tabelle erkennbar sind." + HALLUCINATION_GUARD,
+    'FINANCIAL_DOCUMENT': "Du bist ein erfahrener Bilanz-/Buchhaltungs-Analyst (Steuerberater-Niveau). Du analysierst Finanzdokumente (Bilanzen, Kontoauszüge, Steuerbescheide) auf Plausibilität, gesetzliche Anforderungen (HGB, AO) und auffällige Abweichungen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN Vertrags-Gutachten. Bewerte nur was im Dokument konkret erkennbar ist." + HALLUCINATION_GUARD,
+    'UNKNOWN': "Du bist ein erfahrener forensischer Dokumenten-Sichter — universeller Generalist. Identifiziere Dokumenttyp, Aussteller, Adressat und Zweck. Bewerte formale Klarheit, Vollständigkeit, rechtliche Bindungswirkung und ggf. Fristen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Wenn der Dokumenttyp unklar bleibt: sag das offen statt zu spekulieren." + HALLUCINATION_GUARD
   };
 
   return docTypeMap[documentType] || DEFAULT_CONTRACT;
@@ -2966,20 +2988,31 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       if (documentType || contractType) {
         console.log(`🎯 [${requestId}] System-Prompt: documentType=${documentType}, contractType=${contractType}`);
       }
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
-        messages: [
-          {
-            role: "system",
-            content: systemPromptContent
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
-        temperature: 0.1, // Low for consistency
-        seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
-        max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
-      });
+      // 🎯 AbortController (20.05.2026 Finding 1) — bricht den OpenAI-Library-Call
+      // hart ab statt nur extern Promise.race zu killen. Verhindert dass der Call
+      // im Hintergrund weiterläuft und Memory/Connection 20+ Min hält.
+      // maxRetries: 0 — wir haben eigene Retry-Logik im outer-Loop (Z.2955).
+      const reqController = new AbortController();
+      const reqTimeoutHandle = setTimeout(() => reqController.abort(), 90_000);
+      let completion;
+      try {
+        completion = await openai.chat.completions.create({
+          model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
+          messages: [
+            {
+              role: "system",
+              content: systemPromptContent
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
+          temperature: 0.1, // Low for consistency
+          seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
+          max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
+        }, { signal: reqController.signal, maxRetries: 0 });
+      } finally {
+        clearTimeout(reqTimeoutHandle);
+      }
 
       // 💰 COST TRACKING - Note: Cost tracking is done at the higher level (line 2322-2341)
       // Removed redundant tracking here since we don't have access to req.user.userId
@@ -3679,8 +3712,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
           makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType),
+          // 🎯 Promise.race 95s — Library-AbortController (90s) soll zuerst feuern.
+          // Diese externe Race ist Backup für den Fall dass AbortController hängt.
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("OpenAI API timeout after 90s")), 90000)
+            setTimeout(() => reject(new Error("OpenAI API timeout after 95s")), 95000)
           )
         ]),
         dateHuntService.huntDates(
@@ -4511,6 +4546,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         tokenOptimized: "true",
         substantialContent: "true"
       },
+
+      // 🎯 textLength als numerisches Top-Level-Feld (20.05.2026 Finding 2)
+      // — Frontend-V2HeroSection nutzt das für den Min-Text-Banner bei <300 Zeichen.
+      textLength: fullTextContent.length,
       
       ...(storageInfo.s3Info && {
         s3Info: storageInfo.s3Info
