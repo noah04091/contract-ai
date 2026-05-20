@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import styles from "./V2TabsSection.module.css";
 import LegalRefPill from "../LegalRefPill";
+import { classifyDocType, getTabLabels, showMarketTab, getEmptyState } from "./v2TabLabels";
 
 type Severity = "high" | "medium" | "low" | string;
 
@@ -70,6 +71,9 @@ interface AnalysisData {
   detailedLegalOpinion?: string | null;
   typeSpecificFindings?: PilotItem[] | null;
   laymanSummary?: string[] | string | null;
+  // 🎯 Typspezifische Tab-Labels + Empty-States (20.05.2026)
+  documentType?: string | null;
+  contractType?: string | null;
 }
 
 interface Props {
@@ -200,22 +204,31 @@ export default function V2TabsSection({ data }: Props) {
   const [active, setActive] = useState<TabId>("summary");
   void hasHighRisk;
 
+  // 🎯 Dokumentklasse normalisieren (20.05.2026): documentType + contractType → DocClass
+  const docClass = classifyDocType(data.documentType, data.contractType);
+  const labels = getTabLabels(docClass);
+  const marketVisible = showMarketTab(docClass);
+
   // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback
   useEffect(() => {
     if (active === "pilot" && !hasPilot) setActive("summary");
-  }, [active, hasPilot]);
+    // Wenn Market-Tab bei Nicht-Verträgen ausgeblendet wird und gerade aktiv ist → fallback
+    if (active === "market" && !marketVisible) setActive("summary");
+  }, [active, hasPilot, marketVisible]);
 
   const tabs: { id: TabId; label: string; icon?: React.ReactNode; count?: number; pilotBadge?: boolean }[] = [
-    { id: "summary", label: "Zusammenfassung", icon: <FileText size={14} /> },
-    { id: "risks", label: "Risiken", icon: <AlertTriangle size={14} style={{ color: "#ef4444" }} />, count: criticals.length },
-    { id: "strengths", label: "Stärken", icon: <CheckCircle size={14} style={{ color: "#10b981" }} />, count: positives.length },
-    { id: "recos", label: "Empfehlungen", icon: <Zap size={14} style={{ color: "#8b5cf6" }} />, count: recos.length },
+    { id: "summary", label: labels.summary, icon: <FileText size={14} /> },
+    { id: "risks", label: labels.risks, icon: <AlertTriangle size={14} style={{ color: "#ef4444" }} />, count: criticals.length },
+    { id: "strengths", label: labels.strengths, icon: <CheckCircle size={14} style={{ color: "#10b981" }} />, count: positives.length },
+    { id: "recos", label: labels.recos, icon: <Zap size={14} style={{ color: "#8b5cf6" }} />, count: recos.length },
     ...(hasPilot
-      ? [{ id: "pilot" as TabId, label: "Pilotprüfung", icon: <Target size={14} style={{ color: "#8b5cf6" }} />, count: pilot.length, pilotBadge: true }]
+      ? [{ id: "pilot" as TabId, label: labels.pilot, icon: <Target size={14} style={{ color: "#8b5cf6" }} />, count: pilot.length, pilotBadge: true }]
       : []),
-    { id: "suggestions", label: "Verbesserungsideen", icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
-    { id: "market", label: "Marktvergleich", icon: <BarChart3 size={14} /> },
-    { id: "opinion", label: "Rechtliche Vorprüfung", icon: <Scale size={14} /> },
+    { id: "suggestions", label: labels.suggestions, icon: <Lightbulb size={14} style={{ color: "#f59e0b" }} />, count: sugs.length },
+    ...(marketVisible
+      ? [{ id: "market" as TabId, label: labels.market, icon: <BarChart3 size={14} /> }]
+      : []),
+    { id: "opinion", label: labels.opinion, icon: <Scale size={14} /> },
   ];
 
   // Tab-Refs für Arrow-Key-Navigation (WCAG Tabs-Pattern)
@@ -302,8 +315,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="🎉"
             iconCls={styles.esIconSuccess}
-            title="Keine kritischen Klauseln gefunden"
-            text="Unsere KI hat den gesamten Vertrag gegen typische Risiko-Muster geprüft — alle Klauseln sind im grünen Bereich. Du kannst entspannt unterschreiben."
+            title={getEmptyState(docClass, "risks").title}
+            text={getEmptyState(docClass, "risks").text}
           />
         ) : (
           <div className={styles.insightList}>
@@ -343,8 +356,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="📋"
             iconCls=""
-            title="Standard-Vertrag ohne herausragende Stärken"
-            text="Der Vertrag ist solide formuliert, aber ohne besondere Pluspunkte zugunsten einer Partei. Schau in die Zusammenfassung für die Eckdaten."
+            title={getEmptyState(docClass, "strengths").title}
+            text={getEmptyState(docClass, "strengths").text}
           />
         ) : (
           <div className={styles.insightList}>
@@ -377,8 +390,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="✓"
             iconCls={styles.esIconSuccess}
-            title="Keine strategischen Schritte erforderlich"
-            text="Aus rechtlicher Sicht muss nichts verhandelt werden. Falls du trotzdem Klauseln umformulieren möchtest, schau in Verbesserungsideen."
+            title={getEmptyState(docClass, "recos").title}
+            text={getEmptyState(docClass, "recos").text}
           />
         ) : (
           <>
@@ -456,8 +469,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="💡"
             iconCls={styles.esIconPrimary}
-            title="Kein konkreter Klausel-Optimierungsbedarf"
-            text="Vertragstexte sind klar und eindeutig formuliert. Für vollständige Klausel-Neuformulierungen kannst du jederzeit das Optimieren-Tool nutzen."
+            title={getEmptyState(docClass, "suggestions").title}
+            text={getEmptyState(docClass, "suggestions").text}
           />
         ) : (
           <>
@@ -478,8 +491,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="📊"
             iconCls={styles.esIconAmber}
-            title="Kein Branchenvergleich verfügbar"
-            text="Für diesen Vertragstyp haben wir aktuell zu wenig Marktdaten. Wir bauen unsere Benchmark-Datenbank kontinuierlich aus."
+            title={getEmptyState(docClass, "market").title}
+            text={getEmptyState(docClass, "market").text}
           />
         ) : (
           <div className={styles.textBlock}>
@@ -500,8 +513,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="⚖️"
             iconCls=""
-            title="Detaillierte Rechtsbewertung wird nachgereicht"
-            text='Die Hauptanalyse ist abgeschlossen. Für ein vollständiges Gutachten klick „Erneut analysieren" für volle Tiefe.'
+            title={getEmptyState(docClass, "opinion").title}
+            text={getEmptyState(docClass, "opinion").text}
           />
         ) : (
           <div className={styles.opinionContainer}>
