@@ -2468,7 +2468,7 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         documentType.type === 'UNKNOWN' &&
         gptOpinion &&
         gptOpinion.type === 'UNKNOWN' &&
-        gptOpinion.confidence >= 0.6
+        gptOpinion.confidence >= 0.65
       ) {
         console.log(`❓ [${requestId}] Beide Türsteher explizit UNKNOWN (T1=${documentType.confidence.toFixed(2)}, T2=${gptOpinion.confidence.toFixed(2)}) → UNKNOWN behalten, blauer Banner im Frontend`);
         documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence };
@@ -2992,8 +2992,9 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       // hart ab statt nur extern Promise.race zu killen. Verhindert dass der Call
       // im Hintergrund weiterläuft und Memory/Connection 20+ Min hält.
       // maxRetries: 0 — wir haben eigene Retry-Logik im outer-Loop (Z.2955).
+      // 180s (statt 90s) — fängt OpenAI-Latenz-Spitzen ab, ohne 20-Min-Hänger.
       const reqController = new AbortController();
-      const reqTimeoutHandle = setTimeout(() => reqController.abort(), 90_000);
+      const reqTimeoutHandle = setTimeout(() => reqController.abort(), 180_000);
       let completion;
       try {
         completion = await openai.chat.completions.create({
@@ -3712,10 +3713,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
           makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType),
-          // 🎯 Promise.race 95s — Library-AbortController (90s) soll zuerst feuern.
+          // 🎯 Promise.race 185s — Library-AbortController (180s) soll zuerst feuern.
           // Diese externe Race ist Backup für den Fall dass AbortController hängt.
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("OpenAI API timeout after 95s")), 95000)
+            setTimeout(() => reject(new Error("OpenAI API timeout after 185s")), 185000)
           )
         ]),
         dateHuntService.huntDates(

@@ -497,9 +497,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
       </div>
 
       {/* MIN-TEXT-HINWEIS (20.05.2026 Finding 2) — höchste Priorität, suppressed
-          alle anderen Banner. Wenn das Dokument <300 Zeichen Text hat, ist das
-          die fundamentalste Aussage (UNKNOWN/Recognition wären redundant). */}
-      {typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300 && (
+          alle anderen Banner. Wenn das Dokument <200 Zeichen Text hat, ist das
+          die fundamentalste Aussage (UNKNOWN/Recognition wären redundant).
+          200 chars = konsistent mit OCR-Trigger-Schwelle im Backend. */}
+      {typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200 && (
         <div className={styles.lowTextBanner} role="alert">
           <div className={styles.lowTextIcon} aria-hidden="true">ℹ️</div>
           <div className={styles.lowTextBody}>
@@ -516,7 +517,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           gezeigt (Inhalt wurde ja analysiert), aber der User bekommt klare Info
           über die Klassifikations-Unsicherheit + Action-Buttons.
           Mutex: bei Min-Text-Banner (<300 chars) wird dieser Banner suppressed. */}
-      {docClass === "UNKNOWN" && !(typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300) && (
+      {docClass === "UNKNOWN" && !(typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) && (
         <div className={styles.unknownBanner} role="alert">
           <div className={styles.unknownIcon} aria-hidden="true">🤔</div>
           <div className={styles.unknownBody}>
@@ -562,7 +563,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           weil „zu wenig Text" die fundamentalere Aussage ist. */}
       {(() => {
         // Mutex-Suppression bei Min-Text (höhere Priorität)
-        if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 300) return null;
+        if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) return null;
         const docChar = d.documentCharacterization;
         const completeness = d.completeness;
         const desc = docChar?.description || "";
