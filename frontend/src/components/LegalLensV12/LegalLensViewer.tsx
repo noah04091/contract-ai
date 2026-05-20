@@ -477,11 +477,12 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // MARKER_COLOR_BG ist stable via useRef damit useCallback-Identity nicht bei jedem Render wechselt
   // (verhindert Render-Loop in useEffect[renderPdfMarkersForPage])
+  // Highlighter-Farben: bewusst transparent damit Text darunter klar lesbar bleibt (wie echter Marker)
   const MARKER_COLOR_BG_REF = useRef<Record<PdfMarkerColor, string>>({
-    green: 'rgba(34, 197, 94, 0.35)',
-    orange: 'rgba(249, 115, 22, 0.38)',
-    red: 'rgba(239, 68, 68, 0.35)',
-    blue: 'rgba(59, 130, 246, 0.3)'
+    green: 'rgba(34, 197, 94, 0.22)',
+    orange: 'rgba(249, 115, 22, 0.25)',
+    red: 'rgba(239, 68, 68, 0.22)',
+    blue: 'rgba(59, 130, 246, 0.20)'
   });
 
   // Marker für eine bestimmte Page rendern (Overlay-Divs über den Text-Spans)
@@ -596,22 +597,22 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             const anchor = (allOverlays[0] as HTMLElement) || noteIcon;
             openMarkerEditorRef.current(marker.id, anchor);
 
-            // Pulse-Effekt: alle Marker-Overlays kurz hervorheben damit User
-            // sieht WO die Notiz im PDF ist (besonders nach Tagen wichtig)
+            // Pulse-Effekt: alle Marker-Overlays kurz hervorheben — weicher Glow + Brightness-Lift
+            // damit User sieht WO die Notiz im PDF ist (Tage später nachvollziehbar)
             setTimeout(() => {
               allOverlays.forEach((el) => {
                 const overlay = el as HTMLElement;
-                const originalOutline = overlay.style.outline;
-                const originalOffset = overlay.style.outlineOffset;
+                const originalBoxShadow = overlay.style.boxShadow;
+                const originalFilter = overlay.style.filter;
                 const originalTransition = overlay.style.transition;
-                overlay.style.transition = 'outline 0.25s ease-out';
-                overlay.style.outline = '3px solid rgba(59, 130, 246, 0.85)';
-                overlay.style.outlineOffset = '2px';
+                overlay.style.transition = 'box-shadow 0.4s ease-out, filter 0.4s ease-out';
+                overlay.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.18), 0 0 14px rgba(59, 130, 246, 0.35)';
+                overlay.style.filter = 'brightness(1.2) saturate(1.3)';
                 setTimeout(() => {
-                  overlay.style.outline = originalOutline || '';
-                  overlay.style.outlineOffset = originalOffset || '';
+                  overlay.style.boxShadow = originalBoxShadow || '';
+                  overlay.style.filter = originalFilter || '';
                   overlay.style.transition = originalTransition || '';
-                }, 1400);
+                }, 1500);
               });
             }, 50);
           });
