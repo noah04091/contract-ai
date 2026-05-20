@@ -3081,6 +3081,59 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                     </span>
                   </>
                 )}
+
+                {/* PDF-Export mit Markierungen */}
+                {pdfMarkers.length > 0 && (
+                  <>
+                    <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 0.5rem' }} />
+                    <button
+                      onClick={async () => {
+                        if (!contractId) return;
+                        try {
+                          const token = localStorage.getItem('token');
+                          const response = await fetch(`/api/legal-lens/${contractId}/pdf-export`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          if (!response.ok) {
+                            const err = await response.json().catch(() => ({}));
+                            console.warn('[Legal Lens] PDF-Export failed:', err);
+                            return;
+                          }
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          const cd = response.headers.get('content-disposition') || '';
+                          const fnMatch = cd.match(/filename="([^"]+)"/);
+                          a.download = fnMatch ? fnMatch[1] : 'vertrag_markiert.pdf';
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          window.URL.revokeObjectURL(url);
+                        } catch (err) {
+                          console.warn('[Legal Lens] PDF-Export error:', err);
+                        }
+                      }}
+                      style={{
+                        padding: '0.375rem 0.625rem',
+                        border: '1px solid #3b82f6',
+                        borderRadius: '6px',
+                        background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                        color: 'white',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap'
+                      }}
+                      title={`Markierte PDF herunterladen (${pdfMarkers.length} Markierung${pdfMarkers.length === 1 ? '' : 'en'})`}
+                    >
+                      📥 PDF mit Markierungen
+                    </button>
+                  </>
+                )}
               </div>
             </div>
 

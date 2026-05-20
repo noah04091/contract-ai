@@ -2294,6 +2294,76 @@ router.delete('/:contractId/pdf-marker/:markerId', verifyToken, async (req, res)
   }
 });
 
+/**
+ * GET /api/legal-lens/:contractId/pdf-export
+ * Lädt das Original-PDF aus S3, brennt die User-Marker als Highlights ein,
+ * fügt Notizen am rechten Rand hinzu und gibt das annotierte PDF als Download zurück.
+ */
+router.get('/:contractId/pdf-export', verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.params;
+    const userId = req.user.userId || req.user.id;
+
+    // 1. Contract laden für s3Key + Auth
+    const contract = await Contract.findOne({
+      _id: new ObjectId(contractId),
+      $or: [{ userId: new ObjectId(userId) }, { userId: userId }]
+    }).lean();
+
+    if (!contract) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+    if (!contract.s3Key) {
+      return res.status(400).json({ success: false, error: 'Keine PDF-Datei verfügbar' });
+    }
+
+    // 2. PDF-Marker für diesen Vertrag laden
+    const progress = await LegalLensProgress.findOne({
+      userId: new ObjectId(userId),
+      contractId: new ObjectId(contractId)
+    }).lean();
+
+    const markers = progress?.pdfMarkers || [];
+
+    // 3. PDF-Datei aus S3 als Buffer laden
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    const s3Response = await s3Client.send(new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: contract.s3Key,
+    }));
+
+    // Stream → Buffer
+    const chunks = [];
+    for await (const chunk of s3Response.Body) chunks.push(chunk);
+    const pdfBuffer = Buffer.concat(chunks);
+
+    // 4. PDF annotieren
+    const { exportPdfWithMarkers } = require('../services/legalLensPdfExporter');
+    const annotatedPdf = await exportPdfWithMarkers(pdfBuffer, markers);
+
+    // 5. Als Download zurückgeben
+    const safeName = (contract.fileName || contract.name || 'vertrag')
+      .replace(/[^a-zA-Z0-9äöüÄÖÜß_.\-\s]/g, '')
+      .replace(/\.pdf$/i, '');
+    const downloadName = `${safeName}_markiert.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    res.setHeader('Content-Length', annotatedPdf.length);
+    res.send(Buffer.from(annotatedPdf));
+  } catch (error) {
+    console.error('❌ [Legal Lens] PDF-Export error:', error);
+    res.status(500).json({ success: false, error: 'Fehler beim PDF-Export', details: error.message });
+  }
+});
+
 // ============================================
 // GET AVAILABLE PERSPECTIVES
 // ============================================
