@@ -606,14 +606,13 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     pdfMarkerContainersRef.current.set(pageNum, container);
   }, [pdfMarkers]);
 
-  // Re-Render Marker bei pdfMarkers / scale / Page-Wechsel
+  // Re-Render Marker bei pdfMarkers / Page-Wechsel (NICHT bei scale — siehe separater Effect unten)
   // Retry-Loop: pollt bis Text-Layer der Page bereit ist (PDF-Pages laden lazy)
   useEffect(() => {
     if (viewMode !== 'pdf') return;
     const pagesWithMarkers = Array.from(new Set(pdfMarkers.map(m => m.page)));
 
     // Cleanup: entferne Container für Pages die KEINE Marker mehr haben
-    // (verhindert dass alte DOM-Marker stehen bleiben nach Delete-All)
     const pagesInDOM = Array.from(pdfMarkerContainersRef.current.keys());
     pagesInDOM.forEach(p => {
       if (!pagesWithMarkers.includes(p)) {
@@ -657,7 +656,33 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [pdfMarkers, scale, numPages, viewMode, renderPdfMarkersForPage]);
+  }, [pdfMarkers, numPages, viewMode, renderPdfMarkersForPage]);
+
+  // Separater Effect für Scale-Change: alte Container entfernen + neu rendern mit Debounce
+  // Verhindert Scroll-Sprung weil react-pdf-internal beim Scale-Re-Render Page-Order verändern kann
+  useEffect(() => {
+    if (viewMode !== 'pdf') return;
+    if (pdfMarkers.length === 0) return;
+
+    // Alle existing Container entfernen (alte Position passt nicht mehr nach Scale)
+    pdfMarkerContainersRef.current.forEach(c => c.remove());
+    pdfMarkerContainersRef.current.clear();
+
+    // Nach 600ms (PDF fertig re-rendert) neu zeichnen
+    const timer = setTimeout(() => {
+      const pagesWithMarkers = Array.from(new Set(pdfMarkers.map(m => m.page)));
+      pagesWithMarkers.forEach(p => {
+        const pageEl = document.querySelector(`[data-page-num="${p}"]`);
+        const textLayer = pageEl?.querySelector('.react-pdf__Page__textContent');
+        if (textLayer && textLayer.querySelectorAll('span').length > 0) {
+          renderPdfMarkersForPage(p);
+        }
+      });
+    }, 600);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale]);
 
   // Cleanup beim Wechsel zur Text-View (sonst hängen Marker-Container in der DOM-Hierarchie)
   useEffect(() => {
