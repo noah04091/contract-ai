@@ -2729,6 +2729,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         ],
         response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1, // Low for consistency
+        seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
         max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
       });
 
@@ -2736,6 +2737,11 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       // Removed redundant tracking here since we don't have access to req.user.userId
       if (completion.usage) {
         console.log(`💰 [${requestId}] OpenAI Usage: ${completion.usage.total_tokens} tokens (prompt: ${completion.usage.prompt_tokens}, completion: ${completion.usage.completion_tokens})`);
+      }
+      // 🔑 system_fingerprint loggen — wenn er sich ändert, hat OpenAI das Modell intern gewechselt
+      // und seed wird kurzzeitig nicht-deterministisch. Ohne dieses Log fliegen wir blind.
+      if (completion.system_fingerprint) {
+        console.log(`🔑 [${requestId}] system_fingerprint: ${completion.system_fingerprint}`);
       }
 
       const response = completion.choices[0].message.content;

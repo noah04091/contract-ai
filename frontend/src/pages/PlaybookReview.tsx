@@ -1407,7 +1407,7 @@ const PlaybookReview: React.FC = () => {
             const currentData = isExpanded && editingRule ? editingRule : rule;
 
             return (
-              <div key={ruleId} className={`${styles.ruleCard} ${isExpanded ? styles.ruleCardExpanded : ''}`}>
+              <div key={ruleId} className={`${styles.ruleCard} ${isExpanded ? (isEditMode ? styles.ruleCardExpanded : styles.ruleCardExpandedView) : ''}`}>
                 {/* Klickbarer Header */}
                 <div
                   className={styles.ruleHeader}
