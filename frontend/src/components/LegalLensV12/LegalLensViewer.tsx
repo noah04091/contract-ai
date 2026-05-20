@@ -567,10 +567,25 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     };
   }, []);
 
-  // Marker werden in Sub-Phasen 4-7 verwendet (Toolbar, Click, Edit)
-  // Temporäre void-Statements verhindern unused-Warnings
-  void handleAddPdfMarker; void handleUpdatePdfMarker; void handleDeletePdfMarker;
-  void activeMarkerMode; void setActiveMarkerMode;
+  // Tastenkürzel für Marker-Modus (Sub-Phase 4)
+  useEffect(() => {
+    if (viewMode !== 'pdf') return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'Escape') { setActiveMarkerMode(null); }
+      else if (e.key === '1') { setActiveMarkerMode('green'); }
+      else if (e.key === '2') { setActiveMarkerMode('orange'); }
+      else if (e.key === '3') { setActiveMarkerMode('red'); }
+      else if (e.key === '4') { setActiveMarkerMode('note'); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [viewMode]);
+
+  // void-Statements werden nicht mehr gebraucht — Marker-System ist jetzt aktiv
+  void handleUpdatePdfMarker; void handleDeletePdfMarker;
 
   // Decision Summary — liest direkt aus shared State, synchron mit jeder Aktion
   // Notes-Count: nur Klauseln aus der echten clauses-Liste (KEINE pdf-XXX temporären IDs)
@@ -1513,9 +1528,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
         // Markiere alle Spans die im Selection-Range sind
         const range = selection?.getRangeAt(0);
+        // selectedSpans außerhalb des inneren Blocks deklariert (für Sub-Phase 5 Marker-Logic verfügbar)
+        const selectedSpans: HTMLElement[] = [];
         if (range) {
           const allSpans = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
-          const selectedSpans: HTMLElement[] = [];
 
           // Visuellen Bereich der Selektion berechnen (verhindert "alles unten drunter")
           const rangeRects = range.getClientRects();
@@ -1560,6 +1576,31 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         };
 
         devLog('[Legal Lens] FREI-MODUS:', selectedText.substring(0, 60) + '...');
+
+        // ========== Sub-Phase 5: Marker-Modus aktiv? → Marker erstellen statt Klausel-Selektion
+        if (activeMarkerMode !== null) {
+          const pageEl = target.closest('[data-page-num]') as HTMLElement | null;
+          const page = pageEl ? parseInt(pageEl.getAttribute('data-page-num') || '1', 10) : 1;
+          const allSpansForPage = Array.from(textContent.querySelectorAll('span')) as HTMLElement[];
+          const spanIndicesFromSelection = selectedSpans
+            .map((s: HTMLElement) => allSpansForPage.indexOf(s))
+            .filter((i: number) => i >= 0);
+
+          if (spanIndicesFromSelection.length > 0) {
+            const color: PdfMarkerColor = activeMarkerMode === 'note' ? 'orange' : activeMarkerMode;
+            handleAddPdfMarker({
+              id: `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+              page,
+              spanIndices: spanIndicesFromSelection,
+              textSnippet: selectedText.slice(0, 200),
+              color,
+              note: ''
+            });
+            clearHighlight();
+            setTimeout(() => selection?.removeAllRanges(), 100);
+          }
+          return;
+        }
 
         // ✅ FIX v4: Flag setzen BEVOR selectClause aufgerufen wird
         // Verhindert dass PDF-Sync useEffect die Markierung überschreibt
@@ -1730,6 +1771,25 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // Mindestlänge prüfen
     if (selectedText.length < 10) {
       devLog('[Legal Lens] Text zu kurz:', selectedText.length);
+      return;
+    }
+
+    // ========== Sub-Phase 5: Marker-Modus aktiv? → Marker erstellen statt Klausel-Selektion
+    if (activeMarkerMode !== null) {
+      const pageEl = target.closest('[data-page-num]') as HTMLElement | null;
+      const page = pageEl ? parseInt(pageEl.getAttribute('data-page-num') || '1', 10) : 1;
+      const spanIndicesRange: number[] = [];
+      for (let i = startIdx; i <= endIdx; i++) spanIndicesRange.push(i);
+      const color: PdfMarkerColor = activeMarkerMode === 'note' ? 'orange' : activeMarkerMode;
+      handleAddPdfMarker({
+        id: `marker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        page,
+        spanIndices: spanIndicesRange,
+        textSnippet: selectedText.slice(0, 200),
+        color,
+        note: ''
+      });
+      clearHighlight();
       return;
     }
 
@@ -2629,6 +2689,111 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   >
                     <MousePointer2 size={12} />
                     Frei
+                  </button>
+                </div>
+
+                <div style={{ width: '1px', height: '20px', background: '#e2e8f0' }} />
+
+                {/* Marker-Mode Picker (Sub-Phase 4) — Highlighter-Modi */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  background: '#f1f5f9',
+                  borderRadius: '6px',
+                  padding: '2px'
+                }}>
+                  <button
+                    onClick={() => setActiveMarkerMode(null)}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: activeMarkerMode === null ? 'white' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      color: activeMarkerMode === null ? '#3b82f6' : '#64748b',
+                      boxShadow: activeMarkerMode === null ? '0 1px 2px rgba(0,0,0,0.1)' : 'none'
+                    }}
+                    title="Lesen-Modus — kein Marker beim Klick (Esc)"
+                  >
+                    ✋ Lesen
+                  </button>
+                  <button
+                    onClick={() => setActiveMarkerMode('green')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: activeMarkerMode === 'green' ? '#16a34a' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '0.85rem',
+                      color: activeMarkerMode === 'green' ? 'white' : '#16a34a',
+                      boxShadow: activeMarkerMode === 'green' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                    title="Akzeptieren-Marker (1) — markiert Auswahl grün"
+                  >
+                    🟢
+                  </button>
+                  <button
+                    onClick={() => setActiveMarkerMode('orange')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: activeMarkerMode === 'orange' ? '#d97706' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '0.85rem',
+                      color: activeMarkerMode === 'orange' ? 'white' : '#d97706',
+                      boxShadow: activeMarkerMode === 'orange' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                    title="Verhandeln-Marker (2) — markiert Auswahl orange"
+                  >
+                    🟡
+                  </button>
+                  <button
+                    onClick={() => setActiveMarkerMode('red')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: activeMarkerMode === 'red' ? '#dc2626' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '0.85rem',
+                      color: activeMarkerMode === 'red' ? 'white' : '#dc2626',
+                      boxShadow: activeMarkerMode === 'red' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                    title="Ablehnen-Marker (3) — markiert Auswahl rot"
+                  >
+                    🔴
+                  </button>
+                  <button
+                    onClick={() => setActiveMarkerMode('note')}
+                    style={{
+                      padding: '0.375rem 0.5rem',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: activeMarkerMode === 'note' ? '#2563eb' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '0.85rem',
+                      color: activeMarkerMode === 'note' ? 'white' : '#2563eb',
+                      boxShadow: activeMarkerMode === 'note' ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                    title="Notiz-Marker (4) — markiert Auswahl und öffnet Notiz-Editor"
+                  >
+                    📝
                   </button>
                 </div>
 
