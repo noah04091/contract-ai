@@ -315,6 +315,8 @@ router.post("/:id/check", verifyToken, async (req, res) => {
     res.json({
       success: true,
       check,
+      truncated: checkResult.truncated,
+      chunkFailure: checkResult.chunkFailure,
       usage: checkResult.usage
     });
   } catch (err) {

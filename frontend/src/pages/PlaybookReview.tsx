@@ -85,6 +85,8 @@ interface CheckResult {
   alternativeText: string;
   negotiationTip: string;
   isGlobalRule: boolean;
+  clarificationNeeded?: boolean;
+  clarificationRequest?: string;
 }
 
 interface PlaybookCheck {
@@ -98,6 +100,7 @@ interface PlaybookCheck {
     warnings: number;
     failed: number;
     notFound: number;
+    clarifications?: number;
     totalRules: number;
     overallScore: number;
     overallRisk: string;
@@ -647,6 +650,17 @@ const PlaybookReview: React.FC = () => {
       setCheckResult(result.check);
       setView('check-result');
       toast.success('Prüfung abgeschlossen!');
+
+      // Warnungen wenn Backend Inhalt abschneiden musste
+      if (result.truncated?.rulesSkipped > 0) {
+        toast.error(`${result.truncated.rulesSkipped} Regel(n) wurden in dieser Prüfung nicht berücksichtigt (Limit: 30). Bitte Playbook verschlanken.`);
+      }
+      if (result.truncated?.contractText) {
+        toast.error('Vertrag war sehr lang — Anfang und Ende wurden geprüft, ein Mittelstück gekürzt.');
+      }
+      if (result.chunkFailure?.rulesAffected > 0) {
+        toast.error(`${result.chunkFailure.rulesAffected} Regel(n) konnten technisch nicht geprüft werden. Bitte Prüfung wiederholen.`);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('Text') || msg.includes('text') || msg.includes('kurz')) {
@@ -1466,7 +1480,9 @@ const PlaybookReview: React.FC = () => {
                     {rule.standardText ? (
                       <div className={styles.standardBlock}>{rule.standardText}</div>
                     ) : (
-                      <p className={styles.fieldHint}>Kein Standardtext hinterlegt.</p>
+                      <p className={styles.fieldHint}>
+                        Kein Standardtext hinterlegt — mit Standardtext vergleicht die Prüfung direkt gegen deine Wunschklausel und liefert präzisere Empfehlungen.
+                      </p>
                     )}
                   </div>
                 )}
@@ -1736,6 +1752,9 @@ const PlaybookReview: React.FC = () => {
               <span className={styles.statWarning}><AlertTriangle size={14} /> {summary.warnings} Warnung</span>
               <span className={styles.statFailed}><XCircle size={14} /> {summary.failed} Nicht erfüllt</span>
               <span className={styles.statNotFound}><HelpCircle size={14} /> {summary.notFound} Nicht gefunden</span>
+              {(summary.clarifications ?? 0) > 0 && (
+                <span className={styles.statNotFound}><Search size={14} /> {summary.clarifications} Klärung gewünscht</span>
+              )}
             </div>
           </div>
         </div>
@@ -1746,6 +1765,47 @@ const PlaybookReview: React.FC = () => {
             <strong>Empfehlung:</strong> {summary.recommendation}
           </div>
         )}
+
+        {/* Klärungs-Anfragen der KI ("Anwalt fragt nach") */}
+        {(() => {
+          const clarifications = checkResult.results.filter(r => r.clarificationNeeded && r.clarificationRequest);
+          if (clarifications.length === 0) return null;
+          return (
+            <div className={styles.recommendation} style={{ borderColor: '#3b82f6', background: '#eff6ff' }}>
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Search size={16} /> Die KI bittet um Klärung ({clarifications.length})
+              </strong>
+              <p style={{ margin: '0.5rem 0 0.75rem 0', fontSize: '0.85rem', color: '#475569' }}>
+                Damit die nächste Prüfung präziser wird, ergänze bitte die folgenden Punkte in deinem Playbook:
+              </p>
+              <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem' }}>
+                {clarifications.map(c => {
+                  const pbId = typeof checkResult.playbookId === 'object' ? checkResult.playbookId._id : checkResult.playbookId;
+                  return (
+                    <li key={c._id} style={{ marginBottom: '0.5rem' }}>
+                      <strong>{c.ruleTitle}:</strong> {c.clarificationRequest}
+                      {pbId && (
+                        <>
+                          {' '}
+                          <button
+                            className={styles.copyBtn}
+                            style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => {
+                              navigate(`/playbook-review/${pbId}`);
+                              toast.success('Regel öffnen und Standardtext ergänzen');
+                            }}
+                          >
+                            <Edit3 size={12} /> Regel öffnen
+                          </button>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })()}
 
         {/* Action Buttons */}
         <div className={styles.resultActions}>

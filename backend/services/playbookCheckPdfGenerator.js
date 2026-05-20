@@ -94,7 +94,9 @@ function generateCheckReportPdf({ check, playbookName }) {
         .text("Zusammenfassung", sx, y);
       y += 2;
       doc.font("Helvetica").fontSize(9).fillColor(medGray);
-      doc.text(`${check.summary?.passed || 0} Erfüllt  |  ${check.summary?.warnings || 0} Warnung  |  ${check.summary?.failed || 0} Nicht erfüllt  |  ${check.summary?.notFound || 0} Nicht gefunden`, sx, y + 16);
+      const clarifCount = check.summary?.clarifications || 0;
+      const statsLine = `${check.summary?.passed || 0} Erfüllt  |  ${check.summary?.warnings || 0} Warnung  |  ${check.summary?.failed || 0} Nicht erfüllt  |  ${check.summary?.notFound || 0} Nicht gefunden${clarifCount > 0 ? `  |  ${clarifCount} Klärung gewünscht` : ""}`;
+      doc.text(statsLine, sx, y + 16);
       y += 32;
 
       // Empfehlung
@@ -132,10 +134,20 @@ function generateCheckReportPdf({ check, playbookName }) {
 
         // Priorität + Status rechts
         const prioText = PRIORITY_LABELS[result.rulePriority] || "";
+        const statusSuffix = result.clarificationNeeded ? " | Klärung gewünscht" : "";
         doc.fillColor(lightGray).fontSize(7).font("Helvetica")
-          .text(`${prioText} | ${statusInfo.text}`, 430, y + 1, { width: 120, align: "right" });
+          .text(`${prioText} | ${statusInfo.text}${statusSuffix}`, 430, y + 1, { width: 160, align: "right" });
 
         y += 18;
+
+        // Klärungs-Anfrage (Anwalts-Reflex)
+        if (result.clarificationNeeded && result.clarificationRequest) {
+          doc.fillColor(blue).fontSize(8).font("Helvetica-Bold")
+            .text("Klärung von dir gewünscht: ", 70, y, { continued: true });
+          doc.fillColor(medGray).font("Helvetica")
+            .text(result.clarificationRequest, { width: pageWidth - 30 });
+          y += doc.heightOfString("Klärung von dir gewünscht: " + result.clarificationRequest, { width: pageWidth - 30, fontSize: 8 }) + 6;
+        }
 
         // Finding
         if (result.finding) {

@@ -89,6 +89,17 @@ const ruleResultSchema = new mongoose.Schema({
   isGlobalRule: {
     type: Boolean,
     default: false
+  },
+
+  // Anwalts-Reflex: KI darf zurückmelden dass sie mehr Kontext braucht
+  // (z.B. Standardtext fehlt, Schwellenwert zu vage, Anforderung unklar)
+  clarificationNeeded: {
+    type: Boolean,
+    default: false
+  },
+  clarificationRequest: {
+    type: String,
+    default: ""
   }
 }, { _id: true });
 
@@ -126,6 +137,7 @@ const playbookCheckSchema = new mongoose.Schema({
     warnings: { type: Number, default: 0 },
     failed: { type: Number, default: 0 },
     notFound: { type: Number, default: 0 },
+    clarifications: { type: Number, default: 0 },
     totalRules: { type: Number, default: 0 },
     // Gesamtscore (0-100, gewichtet nach Prioritaet)
     overallScore: { type: Number, default: 0 },

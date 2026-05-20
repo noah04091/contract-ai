@@ -11,9 +11,23 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Constants
 // ============================================
 const MODEL = "gpt-4o";
-const MAX_CONTRACT_CHARS = 80000; // ~20K tokens
-const MAX_RULES_PER_CHECK = 20;
+const MAX_CONTRACT_CHARS = 140000; // ~35K tokens (gpt-4o 128K Context lässt massive Reserve)
+const MAX_RULES_PER_CHECK = 30;
 const CHECK_TIMEOUT = 120000; // 120s
+
+// Head+Tail-Pattern: bei sehr langen Verträgen behalten wir Anfang UND Ende
+// (Schlussbestimmungen wie Kündigung, Gerichtsstand stehen oft am Ende)
+function truncateContractText(text, maxChars = MAX_CONTRACT_CHARS) {
+  if (text.length <= maxChars) return { text, wasTruncated: false };
+  const headSize = Math.floor(maxChars * 0.7); // 70% Anfang
+  const tailSize = maxChars - headSize - 50;   // 30% Ende, abzgl. Marker
+  const head = text.substring(0, headSize);
+  const tail = text.substring(text.length - tailSize);
+  return {
+    text: `${head}\n\n[... ${text.length - maxChars} Zeichen aus der Mitte gekuerzt ...]\n\n${tail}`,
+    wasTruncated: true
+  };
+}
 
 // ============================================
 // 1. REGEL-GENERIERUNG (Wizard)
@@ -108,32 +122,19 @@ Antworte NUR mit einem JSON-Array:
  * @param {Object} context - { contractName, role, contractType }
  * @returns {Promise<Object>} - { results: [], summary: {} }
  */
-async function checkContract(contractText, rules, context = {}) {
-  if (!contractText || contractText.trim().length < 50) {
-    throw new Error("Vertragstext zu kurz fuer Pruefung");
-  }
-
-  if (!rules || rules.length === 0) {
-    throw new Error("Keine Regeln fuer Pruefung vorhanden");
-  }
-
-  // Text kuerzen wenn noetig
-  const truncatedText = contractText.length > MAX_CONTRACT_CHARS
-    ? contractText.substring(0, MAX_CONTRACT_CHARS) + "\n[... Text gekuerzt ...]"
-    : contractText;
-
-  // Max Regeln begrenzen
-  const activeRules = rules.slice(0, MAX_RULES_PER_CHECK);
-
-  const rulesForPrompt = activeRules.map((r, i) => {
+/**
+ * Interner Helper: führt EINEN KI-Call für einen Regel-Subset durch.
+ * Wird vom Single-Pass UND vom parallelen Chunking-Pfad benutzt.
+ */
+async function runSinglePass(truncatedText, ruleSubset, context) {
+  const rulesForPrompt = ruleSubset.map((r, i) => {
     const parts = [`${i + 1}. "${r.title}"`];
     parts.push(`   Beschreibung: ${r.description}`);
     if (r.threshold) parts.push(`   Schwellenwert: ${r.threshold}`);
     parts.push(`   Prioritaet: ${r.priority}`);
     parts.push(`   Kategorie: ${r.category}`);
-    // Standardtext als Referenz-Klausel (max 500 Zeichen im Prompt)
     if (r.standardText) {
-      const truncated = r.standardText.length > 500 ? r.standardText.substring(0, 500) + "..." : r.standardText;
+      const truncated = r.standardText.length > 2000 ? r.standardText.substring(0, 2000) + "..." : r.standardText;
       parts.push(`   Referenz-Klausel (Standardtext): "${truncated}"`);
     }
     return parts.join("\n");
@@ -177,7 +178,9 @@ Antworte NUR mit einem JSON-Objekt:
       "riskLevel": "low|medium|high",
       "riskExplanation": "Warum das ein Risiko ist (1-2 Saetze, leer wenn passed)",
       "alternativeText": "Konkrete bessere Formulierung (leer wenn passed)",
-      "negotiationTip": "Wie man das beim Vertragspartner anspricht (leer wenn passed)"
+      "negotiationTip": "Wie man das beim Vertragspartner anspricht (leer wenn passed)",
+      "clarificationNeeded": false,
+      "clarificationRequest": "Leer lassen, AUSSER du brauchst mehr Kontext vom User (siehe ANWALTS-REFLEX unten)"
     }
   ],
   "overallRecommendation": "Gesamtempfehlung in 2-3 Saetzen"
@@ -191,7 +194,16 @@ WICHTIG:
 - "not_found" = ERST wenn du den GESAMTEN Vertragstext durchsucht hast und SICHER bist, dass keine relevante Klausel existiert. Pruefe auch Synonyme und alternative Formulierungen.
 - finding: IMMER ausfuellen — bei passed zeige was gefunden wurde, bei not_found erklaere was fehlt
 - alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel nach deutschem Recht
-- negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}`;
+- negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}
+
+ANWALTS-REFLEX (clarificationNeeded):
+Setze "clarificationNeeded": true UND fülle "clarificationRequest" NUR wenn die Anforderung so vage formuliert ist,
+dass du sie nicht zuverlaessig pruefen kannst — z.B. wenn kein Standardtext hinterlegt ist und die Beschreibung
+mehrdeutig ist, oder wenn der Schwellenwert fehlt aber wichtig waere. In "clarificationRequest" formulierst du
+KONKRET, was der User ergaenzen muesste (z.B. "Bitte ergaenze einen Standardtext oder konkreten Schwellenwert
+fuer 'angemessene Haftung' — sonst kann ich nicht beurteilen ob die Vertragsklausel passt.").
+Sei sparsam damit — nur bei echter Unsicherheit, nicht bei jeder Regel ohne Standardtext.
+Bei klaren Regeln IMMER "clarificationNeeded": false setzen.`;
 
   const response = await openai.chat.completions.create({
     model: MODEL,
@@ -200,26 +212,112 @@ WICHTIG:
       { role: "user", content: prompt }
     ],
     temperature: 0.2,
-    max_tokens: 8000
-  });
+    max_tokens: 12000
+  }, { timeout: CHECK_TIMEOUT });
 
   const content = response.choices[0]?.message?.content || "{}";
   const usage = response.usage || {};
 
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    console.error("❌ [PLAYBOOK-CHECK] Keine JSON-Antwort:", content.substring(0, 300));
+    throw new Error("KI-Antwort konnte nicht verarbeitet werden");
+  }
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  return {
+    aiResults: parsed.results || [],
+    overallRecommendation: parsed.overallRecommendation || "",
+    usage
+  };
+}
+
+async function checkContract(contractText, rules, context = {}) {
+  if (!contractText || contractText.trim().length < 50) {
+    throw new Error("Vertragstext zu kurz fuer Pruefung");
+  }
+
+  if (!rules || rules.length === 0) {
+    throw new Error("Keine Regeln fuer Pruefung vorhanden");
+  }
+
+  // Text kuerzen wenn noetig — Head+Tail-Pattern erhält Schlussbestimmungen
+  const { text: truncatedText, wasTruncated: textWasTruncated } = truncateContractText(contractText);
+
+  // Max Regeln begrenzen
+  const rulesSkipped = Math.max(0, rules.length - MAX_RULES_PER_CHECK);
+  const activeRules = rules.slice(0, MAX_RULES_PER_CHECK);
+
   try {
-    // JSON extrahieren
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error("❌ [PLAYBOOK-CHECK] Keine JSON-Antwort:", content.substring(0, 300));
-      throw new Error("KI-Antwort konnte nicht verarbeitet werden");
+    // Chunking-Entscheidung: >10 Regeln → parallele Calls à ~10 Regeln
+    // Bei ≤10 Regeln: ein Call (kein Overhead, gleiche Performance wie heute).
+    const CHUNK_SIZE = 10;
+    const CHUNK_THRESHOLD = 10;
+
+    let combinedAiResults = [];
+    let combinedRecommendation = "";
+    let combinedUsage = { prompt_tokens: 0, completion_tokens: 0 };
+    let chunkFailureInfo = null;
+
+    if (activeRules.length <= CHUNK_THRESHOLD) {
+      // Single-Pass
+      const { aiResults, overallRecommendation, usage } = await runSinglePass(truncatedText, activeRules, context);
+      combinedAiResults = aiResults;
+      combinedRecommendation = overallRecommendation;
+      combinedUsage = usage;
+    } else {
+      // Multi-Pass parallel: Regel-Chunks, jeweils mit vollem Vertragstext
+      const chunks = [];
+      for (let i = 0; i < activeRules.length; i += CHUNK_SIZE) {
+        chunks.push(activeRules.slice(i, i + CHUNK_SIZE));
+      }
+      console.log(`🔀 [PLAYBOOK-CHECK] Regel-Chunking: ${activeRules.length} Regeln → ${chunks.length} parallele Calls`);
+
+      const passResults = await Promise.allSettled(
+        chunks.map(chunk => runSinglePass(truncatedText, chunk, context))
+      );
+
+      // Ergebnisse mergen — pro Chunk ist ruleIndex lokal (1..N), wir mappen via Position auf den globalen Index
+      let offset = 0;
+      const failedChunks = [];
+      for (let chunkIdx = 0; chunkIdx < passResults.length; chunkIdx++) {
+        const pass = passResults[chunkIdx];
+        const chunkRules = chunks[chunkIdx];
+        if (pass.status === "fulfilled") {
+          // Range-Check: nur ruleIndex 1..chunkRules.length akzeptieren, dann auf globalen Offset verschieben
+          const adjustedResults = pass.value.aiResults
+            .filter(r => typeof r.ruleIndex === "number" && r.ruleIndex >= 1 && r.ruleIndex <= chunkRules.length)
+            .map(r => ({ ...r, ruleIndex: r.ruleIndex + offset }));
+          combinedAiResults = combinedAiResults.concat(adjustedResults);
+          if (pass.value.overallRecommendation && !combinedRecommendation) {
+            combinedRecommendation = pass.value.overallRecommendation;
+          }
+          combinedUsage.prompt_tokens += pass.value.usage.prompt_tokens || 0;
+          combinedUsage.completion_tokens += pass.value.usage.completion_tokens || 0;
+        } else {
+          console.error(`❌ [PLAYBOOK-CHECK] Chunk ${chunkIdx + 1}/${chunks.length} fehlgeschlagen:`, pass.reason?.message);
+          failedChunks.push({ chunkIdx, rulesAffected: chunkRules.length, reason: pass.reason?.message || "unbekannt" });
+        }
+        offset += chunkRules.length;
+      }
+
+      // Wenn ALLE Chunks fehlgeschlagen sind → Hardfail (sonst nur "leere" Ergebnisse)
+      if (failedChunks.length === chunks.length) {
+        throw new Error("Alle Pruef-Teilanfragen fehlgeschlagen. Bitte erneut versuchen.");
+      }
+      // Sonst: combinedAiResults enthält die erfolgreichen Chunks; failedChunks-Info wird unten ans Frontend durchgereicht
+      if (failedChunks.length > 0) {
+        chunkFailureInfo = {
+          failedChunks: failedChunks.length,
+          totalChunks: chunks.length,
+          rulesAffected: failedChunks.reduce((s, f) => s + f.rulesAffected, 0)
+        };
+      }
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
-    const aiResults = parsed.results || [];
-
-    // Ergebnisse mit Regeln zusammenfuehren
+    // Ergebnisse mit Regeln zusammenführen (jetzt einheitlich, egal ob Single oder Multi)
     const results = activeRules.map((rule, index) => {
-      const aiResult = aiResults.find(r => r.ruleIndex === index + 1) || aiResults[index] || {};
+      const aiResult = combinedAiResults.find(r => r.ruleIndex === index + 1) || {};
 
       return {
         ruleId: rule._id || rule.id,
@@ -235,19 +333,25 @@ WICHTIG:
         riskExplanation: String(aiResult.riskExplanation || ""),
         alternativeText: String(aiResult.alternativeText || ""),
         negotiationTip: String(aiResult.negotiationTip || ""),
-        isGlobalRule: rule.isGlobal || false
+        isGlobalRule: rule.isGlobal || false,
+        clarificationNeeded: Boolean(aiResult.clarificationNeeded),
+        clarificationRequest: String(aiResult.clarificationRequest || "")
       };
     });
 
-    // Zusammenfassung berechnen
-    const summary = calculateSummary(results, parsed.overallRecommendation);
+    const summary = calculateSummary(results, combinedRecommendation);
 
     return {
       results,
       summary,
+      truncated: {
+        contractText: textWasTruncated,
+        rulesSkipped
+      },
+      chunkFailure: chunkFailureInfo,
       usage: {
-        inputTokens: usage.prompt_tokens || 0,
-        outputTokens: usage.completion_tokens || 0,
+        inputTokens: combinedUsage.prompt_tokens || 0,
+        outputTokens: combinedUsage.completion_tokens || 0,
         model: MODEL
       }
     };
@@ -341,6 +445,7 @@ function calculateSummary(results, overallRecommendation = "") {
   const warnings = results.filter(r => r.status === "warning").length;
   const failed = results.filter(r => r.status === "failed").length;
   const notFound = results.filter(r => r.status === "not_found").length;
+  const clarifications = results.filter(r => r.clarificationNeeded).length;
   const total = results.length;
 
   // Score berechnen (gewichtet nach Prioritaet)
@@ -375,6 +480,7 @@ function calculateSummary(results, overallRecommendation = "") {
     warnings,
     failed,
     notFound,
+    clarifications,
     totalRules: total,
     overallScore,
     overallRisk,

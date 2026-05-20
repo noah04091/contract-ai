@@ -19,9 +19,11 @@ async function generateNegotiationLetter({ check, playbookName, role }) {
     : role === "auftragnehmer" ? "Auftragnehmer"
     : "Vertragspartei";
 
-  // Nur problematische Regeln im Brief erwähnen
+  // Nur problematische Regeln im Brief erwähnen — Klärungs-Anfragen EXKLUDIEREN
+  // (die richten sich an den User selbst, nicht an den Vertragspartner)
   const issues = (check.results || []).filter(r =>
-    r.status === "failed" || r.status === "warning" || r.status === "not_found"
+    !r.clarificationNeeded &&
+    (r.status === "failed" || r.status === "warning" || r.status === "not_found")
   );
 
   if (issues.length === 0) {
