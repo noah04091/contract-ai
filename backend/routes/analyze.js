@@ -2021,9 +2021,9 @@ B. **completeness** (Object, PFLICHTFELD):
    → Beispiel komplett: { "isComplete": true, "observation": "Alle Parteien benannt, Datum vorhanden, beidseitig unterzeichnet, alle Konditionen ausgefüllt", "openItems": [] }
    → Beispiel unvollständig: { "isComplete": false, "observation": "Mustervertrag — Lieferanten-Adresse, Unterschriften und Datum fehlen", "openItems": ["Adresse Supplier", "Unterschriftenblock", "Vertragsdatum"] }
 
-C. **asymmetryAssessment** (Object, PFLICHTFELD):
+C. **asymmetryAssessment** (Object, PFLICHTFELD bei echten Verträgen):
    Schema: {
-     "rating": "balanced" | "mostly-fair" | "one-sided" | "heavily-one-sided",
+     "rating": "balanced" | "mostly-fair" | "one-sided" | "heavily-one-sided" | "not_applicable",
      "favoredParty": "string oder null (z.B. 'Käufer', 'Vermieter', 'Auftraggeber')",
      "explanation": "2-4 Sätze: woran festgemacht, mit konkreten Klausel-Verweisen"
    }
@@ -2032,6 +2032,7 @@ C. **asymmetryAssessment** (Object, PFLICHTFELD):
    → "heavily-one-sided" wenn eine Partei fast nur Pflichten/Risiken trägt (Beispiel: Recall-Kosten + Vertragsstrafe + uneingeschränkte Compliance-Last bei einer Partei)
    → favoredParty: Wer profitiert? Bei "balanced" → null
    → explanation MIT konkreten Klausel-Verweisen aus DIESEM Vertrag
+   → 🆕 Bei NICHT-Verträgen (Rechnung, Quittung, Tabelle, Finanzdokument, unbekanntes Dokument): rating="not_applicable", favoredParty=null, explanation="Vertragsausgewogenheit nicht anwendbar — dies ist kein zweiseitiger Vertrag." (Frontend blendet not_applicable sauber aus.)
 
 D. **scoreReasoning** (String, PFLICHTFELD — gehört zu contractScore):
    → 3-5 Sätze: warum genau dieser Score und nicht 5 Punkte höher/niedriger?
@@ -2110,7 +2111,7 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
    → 30-49: Problematisch, kritische Risiken
    → 1-29: Inakzeptabel, nicht unterschreiben
 
-10. **quickFacts** (Object[], GENAU 3 Objekte - PFLICHTFELD):
+10. **quickFacts** (Object[], 3 Objekte — Pflichtfeld bei Verträgen, sonst nach Dokumenttyp):
    → Wähle die 3 WICHTIGSTEN Eckdaten basierend auf DOKUMENTTYP:
 
    📄 Bei KÜNDIGUNGSBESTÄTIGUNG:
@@ -2138,12 +2139,43 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
       - Label 2: "Kündigungsfrist"
       - Label 3: "Monatliche Miete"
 
+   📜 Bei AGB / GESCHÄFTSBEDINGUNGEN:
+      - Label 1: "Klauseln gesamt" (z.B. "23 Klauseln")
+      - Label 2: "Geltungsbereich" (z.B. "B2C / B2B")
+      - Label 3: "Anbieter" (Firmenname)
+
+   🧾 Bei RECHNUNG:
+      - Label 1: "Rechnungsdatum"
+      - Label 2: "Rechnungsbetrag" (brutto)
+      - Label 3: "Steuersatz" (z.B. "19% / 7% / Reverse-Charge / steuerbefreit")
+
+   📝 Bei QUITTUNG / BELEG:
+      - Label 1: "Belegdatum"
+      - Label 2: "Belegbetrag"
+      - Label 3: "Belegtyp" (z.B. "Quittung § 368 BGB" / "Kassenbon")
+
+   📊 Bei TABELLENDOKUMENT:
+      - Label 1: "Zeilen-Anzahl"
+      - Label 2: "Datenherkunft" oder "Stichtag"
+      - Label 3: "Spaltenformat" oder "Datentyp"
+
+   💰 Bei FINANZDOKUMENT (Bilanz / Kontoauszug / Steuerbescheid):
+      - Label 1: "Stichtag" / "Bescheid-Datum"
+      - Label 2: "Hauptbetrag" (z.B. Bilanzsumme, Saldo, Festsetzung)
+      - Label 3: "Status" (z.B. "endgültig" / "vorläufig § 165 AO" / "Vorbehalt § 164 AO")
+
+   ❓ Bei UNBEKANNTEM DOKUMENT:
+      - Label 1: "Dokumenttyp" (deine Einschätzung)
+      - Label 2: "Aussteller" oder "Datum"
+      - Label 3: "Adressat" oder "Hauptzweck"
+
    Schema: {
      "label": "Passender Label-Text (siehe oben)",
      "value": "Konkreter Wert aus Dokument",
      "rating": "good" | "neutral" | "bad"
    }
    → Für schnelle Übersicht der wichtigsten Eckdaten
+   → Nur faktisch extrahierbare Werte — niemals erfinden, lieber "n/a" als "value"
 
 11. **legalPulseHooks** (String[] - OPTIONAL für Legal Pulse Integration):
    → Markiere relevante Rechtsgebiete/Themen für Legal Pulse Radar
@@ -2883,9 +2915,37 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
 }
 
 /**
+ * 🎯 System-Prompt-Resolver (20.05.2026 Erweiterung — Spezialisten-Verzweigung)
+ *
+ * Liefert den passenden System-Prompt je documentType + contractType.
+ * Default-Fallback = heutiger Anwalts-Prompt → backwards-kompatibel bei
+ * unbekannten/missenden Werten.
+ *
+ * AGB wird als contractType (Subtyp von CONTRACT) erkannt — eigener Prompt.
+ */
+function resolveSystemPrompt(documentType, contractType) {
+  const DEFAULT_CONTRACT = "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen.";
+
+  // AGB hat Priorität — auch wenn documentType=CONTRACT ist
+  if (contractType === 'agb') {
+    return "Du bist ein hochspezialisierter Fachanwalt für AGB-Recht mit 20+ Jahren Erfahrung. Schwerpunkte: §§ 305-310 BGB, Klauselverbote, Transparenzgebot, Verbraucherschutz. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Sei präzise, konkret und nüchtern — keine unnötigen Floskeln. Bewerte NUR die Klauseln, die tatsächlich in der vorliegenden AGB stehen.";
+  }
+
+  const docTypeMap = {
+    'INVOICE': "Du bist ein erfahrener Rechnungs- und Steuerprüfer (Buchhalter/Steuerfachgehilfe) mit 20+ Jahren Erfahrung. Schwerpunkt: § 14 UStG-Pflichtangaben, Kleinunternehmer-Regelung, Reverse-Charge, E-Rechnung 2025. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN juristisches Vertragsgutachten — sachliche Compliance- und Vorsteuer-Prüfung. Bewerte NUR was in der Rechnung steht.",
+    'RECEIPT': "Du bist ein erfahrener Beleg- und Compliance-Prüfer mit Schwerpunkt § 368 BGB (Quittung), § 146a AO (Kassenbon-Pflicht) und GoBD. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Quittung ≠ Rechnung — KEINE § 14 UStG-Pflichtangaben verlangen. Bewerte nur die formale Tauglichkeit + Beweiskraft des vorliegenden Belegs.",
+    'TABLE_DOCUMENT': "Du bist ein erfahrener Daten- und Plausibilitäts-Analyst. Du analysierst strukturierte Tabellen-Daten auf Vollständigkeit, Konsistenz und Plausibilität — KEIN juristisches Urteil. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Bewerte nur Auffälligkeiten und Datenqualität, die in der vorliegenden Tabelle erkennbar sind.",
+    'FINANCIAL_DOCUMENT': "Du bist ein erfahrener Bilanz-/Buchhaltungs-Analyst (Steuerberater-Niveau). Du analysierst Finanzdokumente (Bilanzen, Kontoauszüge, Steuerbescheide) auf Plausibilität, gesetzliche Anforderungen (HGB, AO) und auffällige Abweichungen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN Vertrags-Gutachten. Bewerte nur was im Dokument konkret erkennbar ist.",
+    'UNKNOWN': "Du bist ein erfahrener forensischer Dokumenten-Sichter — universeller Generalist. Identifiziere Dokumenttyp, Aussteller, Adressat und Zweck. Bewerte formale Klarheit, Vollständigkeit, rechtliche Bindungswirkung und ggf. Fristen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Wenn der Dokumenttyp unklar bleibt: sag das offen statt zu spekulieren."
+  };
+
+  return docTypeMap[documentType] || DEFAULT_CONTRACT;
+}
+
+/**
  * 🛠️ FIXED: Enhanced Rate-Limited GPT-4 Request (Uses GPT-4-Turbo for 128k Context)
  */
-const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
+const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3, documentType = null, contractType = null) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -2901,12 +2961,17 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       console.log(`🛠️ [${requestId}] GPT-4-Turbo request (attempt ${attempt}/${maxRetries})...`);
 
       // ✅ V2: GPT-4o with JSON mode for structured analysis
+      // 🎯 System-Prompt typspezifisch via resolveSystemPrompt (20.05.2026)
+      const systemPromptContent = resolveSystemPrompt(documentType, contractType);
+      if (documentType || contractType) {
+        console.log(`🎯 [${requestId}] System-Prompt: documentType=${documentType}, contractType=${contractType}`);
+      }
       const completion = await openai.chat.completions.create({
         model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
         messages: [
           {
             role: "system",
-            content: "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen."
+            content: systemPromptContent
           },
           { role: "user", content: prompt },
         ],
@@ -3613,7 +3678,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     try {
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
-          makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3),
+          makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error("OpenAI API timeout after 90s")), 90000)
           )
