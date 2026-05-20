@@ -595,6 +595,25 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             const allOverlays = container.querySelectorAll(`[data-marker-id="${marker.id}"]`);
             const anchor = (allOverlays[0] as HTMLElement) || noteIcon;
             openMarkerEditorRef.current(marker.id, anchor);
+
+            // Pulse-Effekt: alle Marker-Overlays kurz hervorheben damit User
+            // sieht WO die Notiz im PDF ist (besonders nach Tagen wichtig)
+            setTimeout(() => {
+              allOverlays.forEach((el) => {
+                const overlay = el as HTMLElement;
+                const originalOutline = overlay.style.outline;
+                const originalOffset = overlay.style.outlineOffset;
+                const originalTransition = overlay.style.transition;
+                overlay.style.transition = 'outline 0.25s ease-out';
+                overlay.style.outline = '3px solid rgba(59, 130, 246, 0.85)';
+                overlay.style.outlineOffset = '2px';
+                setTimeout(() => {
+                  overlay.style.outline = originalOutline || '';
+                  overlay.style.outlineOffset = originalOffset || '';
+                  overlay.style.transition = originalTransition || '';
+                }, 1400);
+              });
+            }, 50);
           });
           container.appendChild(noteIcon);
         }
