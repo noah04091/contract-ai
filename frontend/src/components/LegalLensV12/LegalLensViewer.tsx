@@ -471,12 +471,14 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // braucht stabilen Verweis (DOM-vanilla addEventListener kann keine stale closures)
   const openMarkerEditorRef = useRef<(markerId: string, anchorEl: HTMLElement) => void>(() => {});
 
-  const MARKER_COLOR_BG: Record<PdfMarkerColor, string> = {
+  // MARKER_COLOR_BG ist stable via useRef damit useCallback-Identity nicht bei jedem Render wechselt
+  // (verhindert Render-Loop in useEffect[renderPdfMarkersForPage])
+  const MARKER_COLOR_BG_REF = useRef<Record<PdfMarkerColor, string>>({
     green: 'rgba(34, 197, 94, 0.35)',
     orange: 'rgba(249, 115, 22, 0.38)',
     red: 'rgba(239, 68, 68, 0.35)',
     blue: 'rgba(59, 130, 246, 0.3)'
-  };
+  });
 
   // Marker für eine bestimmte Page rendern (Overlay-Divs über den Text-Spans)
   const renderPdfMarkersForPage = useCallback((pageNum: number) => {
@@ -527,7 +529,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           top: ${rect.top - pageRect.top}px;
           width: ${rect.width}px;
           height: ${rect.height}px;
-          background-color: ${MARKER_COLOR_BG[marker.color]};
+          background-color: ${MARKER_COLOR_BG_REF.current[marker.color] || 'rgba(253, 224, 71, 0.4)'};
           border-radius: 2px;
           pointer-events: auto;
           cursor: pointer;
@@ -588,7 +590,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     // Container NACH textLayer einfügen (höher im DOM-Stacking) damit Klicks ankommen
     pdfPage.appendChild(container);
     pdfMarkerContainersRef.current.set(pageNum, container);
-  }, [pdfMarkers, MARKER_COLOR_BG]);
+  }, [pdfMarkers]);
 
   // Re-Render Marker bei pdfMarkers / scale / Page-Wechsel
   useEffect(() => {
