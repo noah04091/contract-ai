@@ -74,7 +74,7 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
   const helveticaBold = await pdfLibDoc.embedFont(StandardFonts.HelveticaBold);
   const pages = pdfLibDoc.getPages();
 
-  // 3. Marker sortieren: nach Page, dann nach erstem Span-Index (für Index-Nummerierung)
+  // 3. Marker sortieren: nach Page, dann nach erstem Span-Index
   const sortedMarkers = [...markers].sort((a, b) => {
     if (a.page !== b.page) return a.page - b.page;
     const aFirst = a.spanIndices?.[0] ?? 0;
@@ -82,14 +82,20 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
     return aFirst - bFirst;
   });
 
-  // 4. Marker nach Page gruppieren
+  // 4. Nur Marker MIT Notiz bekommen einen Index (lückenlos 1..N) — sonst springen Zahlen
+  const noteIndexMap = new Map(); // markerId -> noteIndex (1-based)
+  sortedMarkers
+    .filter(m => m.note && m.note.trim().length > 0)
+    .forEach((m, idx) => noteIndexMap.set(m.id, idx + 1));
+
+  // 5. Marker nach Page gruppieren
   const markersByPage = new Map();
-  sortedMarkers.forEach((m, idx) => {
+  sortedMarkers.forEach((m) => {
     if (!markersByPage.has(m.page)) markersByPage.set(m.page, []);
-    markersByPage.get(m.page).push({ marker: m, globalIndex: idx + 1 });
+    markersByPage.get(m.page).push(m);
   });
 
-  // 5. Pro Page: Highlights zeichnen + kleines [N]-Badge bei Notiz-Markern
+  // 6. Pro Page: Highlights zeichnen + kleines [N]-Badge im rechten Seitenrand bei Notiz-Markern
   for (const [pageNum, pageMarkers] of markersByPage.entries()) {
     const pageIdx = pageNum - 1;
     if (pageIdx < 0 || pageIdx >= pages.length) continue;
@@ -97,8 +103,9 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
     const pdfLibPage = pages[pageIdx];
     const pdfjsPage = await pdfjsDoc.getPage(pageNum);
     const textContent = await pdfjsPage.getTextContent();
+    const pageWidth = pdfLibPage.getWidth();
 
-    for (const { marker, globalIndex } of pageMarkers) {
+    for (const marker of pageMarkers) {
       const color = MARKER_COLORS[marker.color] || MARKER_COLORS.green;
       const rects = [];
 
@@ -132,15 +139,27 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
         });
       });
 
-      // Bei Notiz: kleines [N]-Badge am Ende des markierten Bereichs (Verweis zur Notiz-Seite)
-      if (marker.note && marker.note.trim().length > 0 && rects.length > 0) {
+      // Bei Notiz: [N]-Badge im rechten Seitenrand (Adobe-Acrobat-Style, kein Text-Overlap)
+      const noteIndex = noteIndexMap.get(marker.id);
+      if (noteIndex && rects.length > 0) {
         const lastRect = rects[rects.length - 1];
-        const badgeText = `[${globalIndex}]`;
-        const badgeFontSize = 7;
-        const badgeWidth = helveticaBold.widthOfTextAtSize(badgeText, badgeFontSize) + 6;
-        const badgeHeight = badgeFontSize + 4;
-        const badgeX = lastRect.x + lastRect.width + 2;
+        const badgeText = `[${noteIndex}]`;
+        const badgeFontSize = 8;
+        const badgeWidth = helveticaBold.widthOfTextAtSize(badgeText, badgeFontSize) + 8;
+        const badgeHeight = badgeFontSize + 5;
+        const badgeX = pageWidth - badgeWidth - 6;
         const badgeY = lastRect.y + (lastRect.height / 2) - (badgeHeight / 2);
+
+        // Weißer Hintergrund hinter dem Badge, falls Text im Margin liegt (Lesbarkeit)
+        pdfLibPage.drawRectangle({
+          x: badgeX - 2,
+          y: badgeY - 1,
+          width: badgeWidth + 4,
+          height: badgeHeight + 2,
+          color: rgb(1, 1, 1),
+          opacity: 0.85,
+          borderWidth: 0,
+        });
 
         pdfLibPage.drawRectangle({
           x: badgeX,
@@ -148,13 +167,12 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
           width: badgeWidth,
           height: badgeHeight,
           color: rgb(0.23, 0.51, 0.96),
-          borderColor: rgb(0.16, 0.40, 0.83),
-          borderWidth: 0.5,
+          borderWidth: 0,
           opacity: 1,
         });
         pdfLibPage.drawText(badgeText, {
-          x: badgeX + 3,
-          y: badgeY + 3,
+          x: badgeX + 4,
+          y: badgeY + 3.5,
           size: badgeFontSize,
           font: helveticaBold,
           color: rgb(1, 1, 1),
@@ -163,10 +181,10 @@ async function exportPdfWithMarkers(pdfBuffer, markers) {
     }
   }
 
-  // 6. Notiz-Übersichtsseite(n) am Ende
+  // 7. Notiz-Übersichtsseite(n) am Ende — nutzt denselben noteIndexMap wie Badges
   const markersWithNotes = sortedMarkers
-    .map((m, idx) => ({ marker: m, globalIndex: idx + 1 }))
-    .filter(x => x.marker.note && x.marker.note.trim().length > 0);
+    .filter(m => m.note && m.note.trim().length > 0)
+    .map(m => ({ marker: m, globalIndex: noteIndexMap.get(m.id) }));
 
   if (markersWithNotes.length > 0) {
     addNotesPages(pdfLibDoc, markersWithNotes, helveticaFont, helveticaBold);
