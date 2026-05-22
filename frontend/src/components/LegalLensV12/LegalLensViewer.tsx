@@ -2406,9 +2406,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 )}
               </div>
               <div className={styles.quickStats}>
-                {riskStats.high > 0 && <span className={styles.statBadgeHigh}>{riskStats.high}</span>}
-                {riskStats.medium > 0 && <span className={styles.statBadgeMedium}>{riskStats.medium}</span>}
-                {riskStats.low > 0 && <span className={styles.statBadgeLow}>{riskStats.low}</span>}
                 <span className={styles.statCount}>{riskStats.analyzed} analysiert</span>
               </div>
               {riskStats.worstClause && riskStats.worstScore >= 50 && (
