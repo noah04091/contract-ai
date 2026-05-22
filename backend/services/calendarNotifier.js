@@ -119,7 +119,10 @@ async function checkAndSendNotifications(db) {
           { _id: event._id, status: "scheduled" },
           { $set: { status: "queued", queuedAt: new Date(), updatedAt: new Date() } }
         );
-        if (!claimed.value) {
+        // Driver 6.x liefert das Dokument direkt; ältere Driver wrappen es in { value }.
+        // Gleiches Compat-Pattern wie in services/campaignService.js.
+        const claimedDoc = claimed?.value || claimed;
+        if (!claimedDoc) {
           console.log(`⏭️ Event ${event._id} bereits verarbeitet, überspringe`);
           continue;
         }
