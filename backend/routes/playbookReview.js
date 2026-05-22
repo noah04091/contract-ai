@@ -4,6 +4,8 @@
 const express = require("express");
 const router = express.Router();
 const verifyToken = require("../middleware/verifyToken");
+const requirePremium = require("../middleware/requirePremium");
+const { analyzeLimiter } = require("../middleware/rateLimiter");
 const Playbook = require("../models/Playbook");
 const PlaybookCheck = require("../models/PlaybookCheck");
 const { generateCheckReportPdf } = require("../services/playbookCheckPdfGenerator");
@@ -11,6 +13,43 @@ const { generateNegotiationLetter, generateNegotiationLetterPdf } = require("../
 const playbookChecker = require("../services/playbookChecker");
 const database = require("../config/database");
 const { ObjectId } = require("mongodb");
+
+// HTML-Entity-Decoder für contractHTML-Fallback
+// (Vorher wurden alle &xyz; durch Space ersetzt → Umlaute zerstört)
+const HTML_ENTITY_MAP = {
+  '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&#39;': "'",
+  '&nbsp;': ' ', '&ndash;': '–', '&mdash;': '—', '&hellip;': '…',
+  '&laquo;': '«', '&raquo;': '»', '&bdquo;': '„', '&ldquo;': '"', '&rdquo;': '"',
+  '&sbquo;': '‚', '&lsquo;': "'", '&rsquo;': "'",
+  '&auml;': 'ä', '&ouml;': 'ö', '&uuml;': 'ü',
+  '&Auml;': 'Ä', '&Ouml;': 'Ö', '&Uuml;': 'Ü',
+  '&szlig;': 'ß', '&euro;': '€', '&copy;': '©', '&reg;': '®', '&trade;': '™',
+  '&deg;': '°', '&para;': '¶', '&sect;': '§', '&middot;': '·',
+  '&aacute;': 'á', '&eacute;': 'é', '&iacute;': 'í', '&oacute;': 'ó', '&uacute;': 'ú',
+  '&agrave;': 'à', '&egrave;': 'è', '&igrave;': 'ì', '&ograve;': 'ò', '&ugrave;': 'ù',
+  '&acirc;': 'â', '&ecirc;': 'ê', '&icirc;': 'î', '&ocirc;': 'ô', '&ucirc;': 'û',
+  '&ccedil;': 'ç', '&ntilde;': 'ñ'
+};
+function decodeHtmlEntities(html) {
+  if (!html) return '';
+  return html
+    // Erst Tags raus
+    .replace(/<[^>]+>/g, ' ')
+    // Named entities (case-sensitive, deshalb keine /gi)
+    .replace(/&[a-zA-Z]+;/g, m => HTML_ENTITY_MAP[m] !== undefined ? HTML_ENTITY_MAP[m] : m)
+    // Numerische Entities (decimal): &#228; → ä
+    .replace(/&#(\d+);/g, (_, code) => {
+      const n = parseInt(code, 10);
+      return n > 0 && n < 0x10FFFF ? String.fromCodePoint(n) : '';
+    })
+    // Numerische Entities (hex): &#xe4; → ä
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => {
+      const n = parseInt(code, 16);
+      return n > 0 && n < 0x10FFFF ? String.fromCodePoint(n) : '';
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // S3 fuer PDF-Presigned-URLs
 let s3Client, GetObjectCommand, getSignedUrl;
@@ -200,7 +239,7 @@ router.delete("/:id", verifyToken, async (req, res) => {
 // ═══════════════════════════════════════════════
 // POST /api/playbook-review/generate-rules — KI generiert Regeln
 // ═══════════════════════════════════════════════
-router.post("/generate-rules", verifyToken, async (req, res) => {
+router.post("/generate-rules", verifyToken, requirePremium, analyzeLimiter, async (req, res) => {
   try {
     const { contractType, role, industry, additionalContext } = req.body;
 
@@ -228,7 +267,7 @@ router.post("/generate-rules", verifyToken, async (req, res) => {
 // ═══════════════════════════════════════════════
 // POST /api/playbook-review/extract-rules — Regeln aus Vertrag extrahieren
 // ═══════════════════════════════════════════════
-router.post("/extract-rules", verifyToken, async (req, res) => {
+router.post("/extract-rules", verifyToken, requirePremium, analyzeLimiter, async (req, res) => {
   try {
     const { contractText, role } = req.body;
 
@@ -251,7 +290,7 @@ router.post("/extract-rules", verifyToken, async (req, res) => {
 // ═══════════════════════════════════════════════
 // POST /api/playbook-review/:id/check — Vertrag gegen Playbook pruefen
 // ═══════════════════════════════════════════════
-router.post("/:id/check", verifyToken, async (req, res) => {
+router.post("/:id/check", verifyToken, requirePremium, analyzeLimiter, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
     const { contractText, contractName, contractId } = req.body;
@@ -266,19 +305,27 @@ router.post("/:id/check", verifyToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "Playbook nicht gefunden" });
     }
 
-    if (!playbook.rules || playbook.rules.length === 0) {
-      return res.status(400).json({ success: false, message: "Playbook hat keine Regeln" });
-    }
-
-    // Globale Regeln dazunehmen
-    let allRules = [...playbook.rules];
+    // Globale Regeln ZUERST laden + an den Anfang stellen
+    // Damit bei Cut (MAX_RULES_PER_CHECK) die Compliance-Regeln erhalten bleiben.
+    let allRules = [];
     const globalPlaybook = await Playbook.findGlobal(userId);
     if (globalPlaybook && globalPlaybook.rules.length > 0 && !playbook.isGlobal) {
       const globalRules = globalPlaybook.rules.map(r => ({
         ...r.toObject(),
         isGlobal: true
       }));
-      allRules = [...allRules, ...globalRules];
+      allRules = [...globalRules];
+    }
+    if (playbook.rules && playbook.rules.length > 0) {
+      allRules = [...allRules, ...playbook.rules.map(r => ({
+        ...(typeof r.toObject === 'function' ? r.toObject() : r),
+        isGlobal: false
+      }))];
+    }
+
+    // Punkt 4: Empty-Check NACH Laden der globalen — Globale-only-Workflow ist OK
+    if (allRules.length === 0) {
+      return res.status(400).json({ success: false, message: "Playbook hat keine Regeln" });
     }
 
     console.log(`🔍 [PLAYBOOK-CHECK] Starte Pruefung: "${contractName}" gegen "${playbook.name}" (${allRules.length} Regeln)`);
@@ -436,10 +483,8 @@ router.get("/contracts/:contractId/text", verifyToken, async (req, res) => {
     }
 
     // Bestes verfuegbares Text-Feld waehlen (laengstes gewinnt)
-    // contractHTML: HTML-Tags entfernen fuer sauberen Text
-    const htmlText = contract.contractHTML
-      ? contract.contractHTML.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/g, " ").replace(/\s+/g, " ").trim()
-      : "";
+    // contractHTML: HTML-Tags entfernen + Entities korrekt dekodieren (Umlaute, € etc.)
+    const htmlText = contract.contractHTML ? decodeHtmlEntities(contract.contractHTML) : "";
     const candidates = [
       contract.extractedText,
       contract.content,
@@ -509,7 +554,7 @@ router.get("/checks/:checkId/export-pdf", verifyToken, async (req, res) => {
 // ═══════════════════════════════════════════════
 // POST /api/playbook-review/checks/:checkId/negotiation-letter — Verhandlungsbrief generieren
 // ═══════════════════════════════════════════════
-router.post("/checks/:checkId/negotiation-letter", verifyToken, async (req, res) => {
+router.post("/checks/:checkId/negotiation-letter", verifyToken, requirePremium, analyzeLimiter, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
 
@@ -542,7 +587,7 @@ router.post("/checks/:checkId/negotiation-letter", verifyToken, async (req, res)
 // ═══════════════════════════════════════════════
 // POST /api/playbook-review/checks/:checkId/negotiation-letter/pdf — Brief als PDF
 // ═══════════════════════════════════════════════
-router.post("/checks/:checkId/negotiation-letter/pdf", verifyToken, async (req, res) => {
+router.post("/checks/:checkId/negotiation-letter/pdf", verifyToken, requirePremium, analyzeLimiter, async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
 
