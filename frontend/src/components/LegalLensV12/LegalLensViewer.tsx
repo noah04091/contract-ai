@@ -466,6 +466,19 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   // Aktiver Markierungs-Modus (null = Lesemodus)
   type ActiveMarkerMode = PdfMarkerColor | 'note' | null;
   const [activeMarkerMode, setActiveMarkerMode] = useState<ActiveMarkerMode>(null);
+  // Ref damit DOM-Listener und Render-Funktion den aktuellen Modus lesen können, ohne Re-Bind
+  const activeMarkerModeRef = useRef<ActiveMarkerMode>(null);
+  useEffect(() => {
+    activeMarkerModeRef.current = activeMarkerMode;
+    // Lesemodus: Marker-Overlays click-through (Klausel-Analyse fängt Klick ab)
+    // Marker-Modus: Marker-Overlays klickbar (Edit-Popover öffnet sich)
+    const inReadMode = activeMarkerMode === null;
+    document.querySelectorAll('.legal-lens-pdf-marker').forEach(el => {
+      const h = el as HTMLElement;
+      h.style.pointerEvents = inReadMode ? 'none' : 'auto';
+      h.style.cursor = inReadMode ? 'inherit' : 'pointer';
+    });
+  }, [activeMarkerMode]);
 
   // ─────────────────────────────────────────────────────────────────────────
   // Sub-Phase 3: Persistente Marker-Overlays auf dem PDF
@@ -535,6 +548,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         overlay.className = 'legal-lens-pdf-marker';
         overlay.dataset.markerId = marker.id;
         overlay.dataset.markerColor = marker.color;
+        // Im Lesemodus click-through, damit Klausel-Analyse durchgereicht wird
+        const inReadMode = activeMarkerModeRef.current === null;
         overlay.style.cssText = `
           position: absolute;
           left: ${rect.left - pageRect.left}px;
@@ -543,8 +558,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           height: ${rect.height}px;
           background-color: ${MARKER_COLOR_BG_REF.current[marker.color] || 'rgba(253, 224, 71, 0.4)'};
           border-radius: 2px;
-          pointer-events: auto;
-          cursor: pointer;
+          pointer-events: ${inReadMode ? 'none' : 'auto'};
+          cursor: ${inReadMode ? 'inherit' : 'pointer'};
           transition: filter 0.15s;
           z-index: 4;
         `;
