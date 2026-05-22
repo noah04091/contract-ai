@@ -6,10 +6,29 @@ import { useToast } from "../context/ToastContext";
 import { useCalendarStore } from "../stores/calendarStore";
 import type { CalendarEvent, CalendarAccess } from "../stores/calendarStore";
 import styles from "../styles/AnalysisImportantDates.module.css";
+import { classifyDocType, type DocClass } from "./contractAnalysisV2/v2TabLabels";
 
 interface AnalysisImportantDatesProps {
   contractId: string;
   contractName: string;
+  // 🎯 22.05.2026 — typspezifische User-Texte ("diesen Vertrag" / "diese Rechnung" / etc.)
+  documentType?: string | null;
+  contractType?: string | null;
+}
+
+// 🎯 22.05.2026 — typspezifische Dokument-Referenz für User-Texte
+// Liefert den passenden Bezug zum Dokumenttyp ("diesen Vertrag", "diese Rechnung", etc.)
+function docReference(dc: DocClass): string {
+  switch (dc) {
+    case "AGB": return "diese AGB";
+    case "INVOICE": return "diese Rechnung";
+    case "RECEIPT": return "diesen Beleg";
+    case "TABLE_DOCUMENT": return "diese Tabelle";
+    case "FINANCIAL_DOCUMENT": return "dieses Finanzdokument";
+    case "UNKNOWN": return "dieses Dokument";
+    case "CONTRACT":
+    default: return "diesen Vertrag";
+  }
 }
 
 type Severity = "info" | "warning" | "critical";
@@ -76,7 +95,12 @@ const INITIAL_FORM: FormState = {
 export default function AnalysisImportantDates({
   contractId,
   contractName,
+  documentType,
+  contractType,
 }: AnalysisImportantDatesProps) {
+  // 🎯 22.05.2026 — DocClass für typspezifische User-Texte
+  const docClass = classifyDocType(documentType, contractType);
+  const docRef = docReference(docClass);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [access, setAccess] = useState<CalendarAccess | null>(null);
   const [loading, setLoading] = useState(true);
@@ -405,8 +429,8 @@ export default function AnalysisImportantDates({
                   const evCount = sortedEvents.length;
                   if (evCount === 0 && fhCount === 0) return "Noch keine Termine hinterlegt";
                   const evPart = `${evCount} Termin${evCount !== 1 ? "e" : ""}`;
-                  if (fhCount === 0) return `${evPart} für diesen Vertrag`;
-                  return `${evPart} + ${fhCount} Frist${fhCount !== 1 ? "en" : ""} für diesen Vertrag`;
+                  if (fhCount === 0) return `${evPart} für ${docRef}`;
+                  return `${evPart} + ${fhCount} Frist${fhCount !== 1 ? "en" : ""} für ${docRef}`;
                 })()}
           </p>
         </div>
@@ -485,8 +509,8 @@ export default function AnalysisImportantDates({
               </p>
               <p className={styles.emptySubtitle}>
                 {displayedFristHinweise.length > 0
-                  ? "Dieser Vertrag enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben."
-                  : "Die KI hat für diesen Vertrag keine automatischen Termine erkannt."}
+                  ? `${docClass === "CONTRACT" ? "Dieser Vertrag" : docClass === "AGB" ? "Diese AGB" : docClass === "INVOICE" ? "Diese Rechnung" : docClass === "RECEIPT" ? "Dieser Beleg" : docClass === "TABLE_DOCUMENT" ? "Diese Tabelle" : docClass === "FINANCIAL_DOCUMENT" ? "Dieses Finanzdokument" : "Dieses Dokument"} enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben.`
+                  : `Die KI hat für ${docRef} keine automatischen Termine erkannt.`}
                 {canCreate
                   ? " Du kannst oben einen eigenen Termin hinzufügen."
                   : " Termin-Erstellung ist ein Business/Enterprise-Feature."}

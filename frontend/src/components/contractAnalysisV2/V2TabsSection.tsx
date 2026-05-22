@@ -307,8 +307,8 @@ export default function V2TabsSection({ data }: Props) {
           <EmptyState
             icon="📋"
             iconCls={styles.esIconPrimary}
-            title="Bei dieser Analyse fehlt die Zusammenfassung"
-            text={'Das kann bei komplexen oder gescannten Dokumenten gelegentlich passieren. Klicke oben rechts auf „Erneut analysieren" — meistens reicht ein zweiter Versuch. Falls weiterhin keine Zusammenfassung erscheint, schau zusätzlich in den Risiken-Tab und in das Rechtsgutachten.'}
+            title={getEmptyState(docClass, "summary").title}
+            text={getEmptyState(docClass, "summary").text}
           />
         ) : (
           <>

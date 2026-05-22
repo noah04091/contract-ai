@@ -1593,6 +1593,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               <AnalysisImportantDates
                 contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
                 contractName={displayName}
+                documentType={((result || initialResult) as { documentType?: string | null })?.documentType}
+                contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
               />
             </div>
           )}

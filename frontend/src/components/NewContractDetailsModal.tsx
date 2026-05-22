@@ -2113,7 +2113,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {contract._id && (
               <AnalysisImportantDates
                 contractId={String(contract._id)}
-                contractName={contract.name || 'Vertrag'}
+                contractName={contract.name || 'Dokument'}
+                documentType={(data as { documentType?: string | null })?.documentType}
+                contractType={(data as { contractType?: string | null })?.contractType}
               />
             )}
           </div>

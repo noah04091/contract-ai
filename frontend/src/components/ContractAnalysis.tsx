@@ -1542,6 +1542,8 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
             <AnalysisImportantDates
               contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
               contractName={displayName}
+              documentType={((result || initialResult) as { documentType?: string | null })?.documentType}
+              contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
             />
           )}
 

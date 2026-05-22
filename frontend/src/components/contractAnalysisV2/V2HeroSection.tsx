@@ -15,7 +15,7 @@ import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
 import V2PdfViewerModal from "./V2PdfViewerModal";
-import { classifyDocType, type DocClass } from "./v2TabLabels";
+import { classifyDocType, getDocNoun, type DocClass } from "./v2TabLabels";
 
 // Render-fähige Datenstruktur — Backend liefert je Vertrag andere Teilmengen
 type AnalysisData = {
@@ -206,9 +206,14 @@ function pickDocTypeLabel(d: AnalysisData): string {
   }
   // Backend-Enum-Marker (CONTRACT/INVOICE/RECEIPT/FINANCIAL_DOCUMENT/
   // TABLE_DOCUMENT/UNKNOWN) sind interne Tech-Strings und werden niemals
-  // user-facing gezeigt → Fallback "Vertrag".
+  // user-facing gezeigt → Fallback typspezifisch via getDocNoun.
+  // 22.05.2026: Typspezifisch statt hartcodiert "Vertrag" — bei INVOICE
+  // erscheint "Rechnung", bei RECEIPT "Beleg", etc.
   const fallback = d.documentType;
-  if (!fallback || isBackendDocTypeMarker(fallback)) return "Vertrag";
+  if (!fallback || isBackendDocTypeMarker(fallback)) {
+    const dc = classifyDocType(d.documentType, d.contractType);
+    return getDocNoun(dc);
+  }
   return fallback;
 }
 

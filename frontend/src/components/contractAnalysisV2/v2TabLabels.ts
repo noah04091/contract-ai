@@ -327,7 +327,39 @@ export function getEmptyState(dc: DocClass, tabId: TabId): { title: string; text
     };
   }
 
-  // summary, pilot — sind in V2TabsSection schon adaptiv genug, kein eigener Default nötig
+  // summary — typspezifisch je DocClass (Erweiterung 22.05.2026)
+  if (tabId === "summary") {
+    if (dc === "CONTRACT" || dc === "AGB") {
+      return {
+        title: "Bei dieser Analyse fehlt die Zusammenfassung",
+        text: 'Das kann bei komplexen oder gescannten Dokumenten gelegentlich passieren. Klicke oben rechts auf „Erneut analysieren" — meistens reicht ein zweiter Versuch. Falls weiterhin keine Zusammenfassung erscheint, schau zusätzlich in den Risiken-Tab und in das Rechtsgutachten.',
+      };
+    }
+    if (dc === "INVOICE") {
+      return {
+        title: "Keine Zusammenfassung verfügbar",
+        text: 'Die Eckdaten der Rechnung (Datum, Betrag, Steuersatz) findest du oben. Für Details schau in den „Mängel"- und „Steuerprüfung"-Tab.',
+      };
+    }
+    if (dc === "RECEIPT") {
+      return {
+        title: "Keine Zusammenfassung verfügbar",
+        text: 'Die wichtigsten Belegdaten findest du oben. Detail-Bewertung im „Beleg-Bewertung"-Tab.',
+      };
+    }
+    if (dc === "TABLE_DOCUMENT" || dc === "FINANCIAL_DOCUMENT") {
+      return {
+        title: "Keine Zusammenfassung verfügbar",
+        text: 'Eckdaten findest du oben. Detail-Auffälligkeiten im jeweiligen Analyse-Tab.',
+      };
+    }
+    return {
+      title: "Keine Zusammenfassung verfügbar",
+      text: 'Die KI konnte für dieses Dokument keine Zusammenfassung erstellen. Schau in die anderen Tabs für die wichtigsten Punkte.',
+    };
+  }
+
+  // pilot — in V2TabsSection schon adaptiv genug, kein eigener Default nötig
   return {
     title: "Keine Daten verfügbar",
     text: "Für diesen Bereich wurden keine Daten gefunden.",
