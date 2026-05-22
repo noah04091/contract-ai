@@ -243,7 +243,7 @@ const PlaybookReview: React.FC = () => {
   const [isRuleDirty, setIsRuleDirty] = useState(false);
   const [isSavingRule, setIsSavingRule] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  void isEditMode;
+  const [showAllClarifications, setShowAllClarifications] = useState(false);
 
   // PDF + Negotiation Letter
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -1776,6 +1776,9 @@ const PlaybookReview: React.FC = () => {
         {(() => {
           const clarifications = checkResult.results.filter(r => r.clarificationNeeded && r.clarificationRequest);
           if (clarifications.length === 0) return null;
+          const CLARIFICATION_CAP = 5;
+          const showCap = !showAllClarifications && clarifications.length > CLARIFICATION_CAP;
+          const visibleClarifications = showCap ? clarifications.slice(0, CLARIFICATION_CAP) : clarifications;
           return (
             <div className={styles.recommendation} style={{ borderColor: '#3b82f6', background: '#eff6ff' }}>
               <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1785,7 +1788,7 @@ const PlaybookReview: React.FC = () => {
                 Damit die nächste Prüfung präziser wird, ergänze bitte die folgenden Punkte in deinem Playbook:
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem' }}>
-                {clarifications.map(c => {
+                {visibleClarifications.map(c => {
                   const pbId = typeof checkResult.playbookId === 'object' ? checkResult.playbookId._id : checkResult.playbookId;
                   return (
                     <li key={c._id} style={{ marginBottom: '0.5rem' }}>
@@ -1828,6 +1831,17 @@ const PlaybookReview: React.FC = () => {
                   );
                 })}
               </ul>
+              {clarifications.length > CLARIFICATION_CAP && (
+                <button
+                  className={styles.copyBtn}
+                  style={{ marginTop: '0.5rem', padding: '0.2rem 0.6rem', fontSize: '0.75rem' }}
+                  onClick={() => setShowAllClarifications(v => !v)}
+                >
+                  {showAllClarifications
+                    ? `Weniger anzeigen`
+                    : `+ ${clarifications.length - CLARIFICATION_CAP} weitere anzeigen`}
+                </button>
+              )}
             </div>
           );
         })()}

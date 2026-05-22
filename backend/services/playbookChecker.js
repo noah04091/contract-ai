@@ -15,6 +15,42 @@ const MAX_CONTRACT_CHARS = 220000; // ~55K tokens (gpt-4o 128K Context lässt 70
 const MAX_RULES_PER_CHECK = 50;
 const CHECK_TIMEOUT = 120000; // 120s
 
+// Subjektive Bewertungswörter ohne objektiven Maßstab.
+// Wenn eine Regel diese enthält UND weder Schwellenwert noch Soll-Formulierung hat,
+// triggert das Backend-Safety-Net eine Klärungs-Anfrage (Hybrid-Pattern).
+const EVALUATION_WORDS = [
+  "angemessen", "angemessene", "angemessener", "angemessenes", "angemessenen",
+  "fair", "faire", "fairer", "faires", "fairen",
+  "ausreichend", "ausreichende", "ausreichender", "ausreichendes", "ausreichenden",
+  "zumutbar", "zumutbare", "zumutbarer", "zumutbares", "zumutbaren",
+  "üblich", "übliche", "üblicher", "übliches", "üblichen",
+  "marktüblich", "marktübliche", "marktüblicher", "marktübliches", "marktüblichen",
+  "branchenüblich", "branchenübliche", "branchenüblicher", "branchenübliches", "branchenüblichen",
+  "ortsüblich", "ortsübliche", "ortsüblicher", "ortsübliches", "ortsüblichen",
+  "geeignet", "geeignete", "geeigneter", "geeignetes", "geeigneten",
+  "sinnvoll", "sinnvolle", "sinnvoller", "sinnvolles", "sinnvollen",
+  "erforderlich", "erforderliche", "erforderlicher", "erforderliches", "erforderlichen",
+  "vernünftig", "vernünftige", "vernünftiger", "vernünftiges", "vernünftigen"
+];
+const EVALUATION_REGEX = new RegExp(
+  "\\b(" + EVALUATION_WORDS.join("|") + ")\\b",
+  "i"
+);
+
+/**
+ * Prüft ob eine Regel ein subjektives Bewertungswort enthält OHNE konkreten Maßstab.
+ * Wird vom Hybrid-Safety-Net genutzt: bei true + LLM sagt clarificationNeeded:false
+ * forciert das Backend trotzdem clarificationNeeded:true.
+ */
+function hasEvaluationWordWithoutAnchor(rule) {
+  if (!rule) return false;
+  const hasThreshold = rule.threshold && String(rule.threshold).trim().length > 0;
+  const hasStandard = rule.standardText && String(rule.standardText).trim().length > 0;
+  if (hasThreshold || hasStandard) return false;
+  const searchText = `${rule.title || ""} ${rule.description || ""}`;
+  return EVALUATION_REGEX.test(searchText);
+}
+
 // Head+Tail-Pattern: bei sehr langen Verträgen behalten wir Anfang UND Ende
 // (Schlussbestimmungen wie Kündigung, Gerichtsstand stehen oft am Ende)
 function truncateContractText(text, maxChars = MAX_CONTRACT_CHARS) {
@@ -232,33 +268,50 @@ ENTSCHEIDUNGSREGEL (sehr wichtig — gegen False Negatives UND False Failures):
 - alternativeText: Formuliere eine konkrete, rechtlich saubere Klausel nach deutschem Recht
 - negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}
 
-ANWALTS-REFLEX (clarificationNeeded):
-Setze "clarificationNeeded": true UND fülle "clarificationRequest", wenn:
-- Die Anforderung ein Bewertungs-Wort OHNE konkreten Maßstab enthält
-  ("angemessen", "üblich", "ausreichend", "fair", "sinnvoll", "marktüblich",
-   "branchenüblich", "ortsüblich") UND KEINE Soll-Formulierung UND KEINEN
-   Schwellenwert hat. Solche Wörter sind subjektiv — du musst aktiv nachfragen.
-- ODER die Beschreibung mehrdeutig ist und mehrere Interpretationen zulässt.
+ANWALTS-REFLEX (clarificationNeeded) — SEHR WICHTIG:
 
-Bei diesen Fällen reicht es NICHT, eine vage passende Klausel im Vertrag zu finden
-und "passed" zu sagen — du musst den User aktiv um eine Präzisierung bitten,
-unabhängig vom Status.
+WANN clarificationNeeded:true setzen?
+- IMMER, wenn die Anforderung ein subjektives Bewertungs-Wort enthält
+  (angemessen, fair, ausreichend, zumutbar, üblich, marktüblich, branchenüblich,
+   ortsüblich, geeignet, sinnvoll, erforderlich, vernünftig — auch deren Beugungen)
+  UND KEINE Soll-Formulierung hinterlegt ist
+  UND KEINEN Schwellenwert hat.
+- ODER wenn die Beschreibung so mehrdeutig ist, dass mehrere Interpretationen
+  möglich sind.
 
-BEISPIEL (sehr wichtig):
-- Regel: "Datenschutz angemessen" — KEINE Soll-Formulierung, KEIN Schwellenwert
-- Vertrag enthält: Verweis auf DSGVO
-- FALSCH: nur status "passed" mit Hinweis auf DSGVO setzen
-- RICHTIG: status "passed" (DSGVO ist da) PLUS clarificationNeeded: true
-  mit clarificationRequest: "Bitte präzisiere, was 'angemessen' konkret
-  bedeutet — DSGVO-Compliance? Ende-zu-Ende-Verschlüsselung? Auftragsverarbeiter-
-  Whitelist? Ohne präzisen Maßstab kann ich nicht garantieren, dass deine
-  konkrete Vorstellung erfüllt ist."
+KRITISCH: clarificationNeeded ist UNABHÄNGIG vom Status!
+Du kannst gleichzeitig "passed" UND clarificationNeeded:true setzen. Beide
+Werte messen verschiedene Dinge:
+- status = "Was im Vertrag steht (relativ zur Regel)"
+- clarificationNeeded = "Brauche ich mehr Kontext vom User für eine sichere Bewertung?"
+
+BEISPIEL 1 — "Datenschutz angemessen" (Vertrag erwähnt DSGVO):
+{
+  "status": "passed",
+  "finding": "Vertrag verweist auf DSGVO und enthält Auftragsverarbeitung gemäß Art. 28",
+  "clauseReference": "§ 10",
+  "clarificationNeeded": true,
+  "clarificationRequest": "Bitte präzisiere, was 'angemessen' konkret bedeutet — DSGVO-Compliance? Ende-zu-Ende-Verschlüsselung? Auftragsverarbeiter-Whitelist? Ohne präzisen Maßstab kann ich nicht garantieren, dass deine konkrete Vorstellung erfüllt ist."
+}
+
+BEISPIEL 2 — "Haftung fair geregelt" (Vertrag hat strukturierte Haftungsklausel):
+{
+  "status": "passed",
+  "finding": "Haftung in § 9 strukturiert geregelt: unbeschränkt bei Vorsatz/grober Fahrlässigkeit, Cap auf EUR 500.000",
+  "clauseReference": "§ 9",
+  "clarificationNeeded": true,
+  "clarificationRequest": "Bitte präzisiere, was du unter 'fair' verstehst — konkrete Höchsthaftung in EUR? Ausschluss mittelbarer Schäden? Versicherungspflicht des Auftragnehmers? Ohne konkreten Maßstab ist die Bewertung subjektiv."
+}
+
+In beiden Beispielen: status:"passed" UND clarificationNeeded:true GLEICHZEITIG.
+Status sagt "Klausel ist da", die Klärung sagt "aber subjektiv unklar".
 
 In "clarificationRequest" IMMER konkret nennen, was der User ergänzen sollte
 (Soll-Formulierung ODER Schwellenwert ODER beides).
 
-Bei klar formulierten Regeln (mit Schwellenwert ODER Soll-Formulierung)
-IMMER "clarificationNeeded": false setzen.`;
+Bei klar formulierten Regeln (Regel hat Schwellenwert ODER Soll-Formulierung):
+IMMER "clarificationNeeded": false. Eine konkrete Soll-Formulierung macht
+die Klärung unnötig.`;
 
   const response = await openai.chat.completions.create({
     model: MODEL,
@@ -371,8 +424,22 @@ async function checkContract(contractText, rules, context = {}) {
     }
 
     // Ergebnisse mit Regeln zusammenführen (jetzt einheitlich, egal ob Single oder Multi)
+    let safetyNetOverrides = 0;
     const results = activeRules.map((rule, index) => {
       const aiResult = combinedAiResults.find(r => r.ruleIndex === index + 1) || {};
+
+      // Hybrid-Safety-Net: deterministisches Override für Bewertungswörter
+      // Wenn Regel ein subjektives Bewertungswort enthält (ohne Schwellenwert/Soll-Formulierung)
+      // UND die KI clarificationNeeded:false gesetzt hat → wir overrulen auf true.
+      let clarificationNeeded = Boolean(aiResult.clarificationNeeded);
+      let clarificationRequest = String(aiResult.clarificationRequest || "");
+      if (!clarificationNeeded && hasEvaluationWordWithoutAnchor(rule)) {
+        clarificationNeeded = true;
+        if (!clarificationRequest) {
+          clarificationRequest = `Diese Regel enthält ein subjektives Bewertungswort. Bitte präzisiere mit einer Soll-Formulierung oder einem konkreten Schwellenwert, was du genau erwartest — sonst kann die Prüfung nicht garantieren, dass deine konkrete Vorstellung erfüllt ist.`;
+        }
+        safetyNetOverrides++;
+      }
 
       return {
         ruleId: rule._id || rule.id,
@@ -389,10 +456,13 @@ async function checkContract(contractText, rules, context = {}) {
         alternativeText: String(aiResult.alternativeText || ""),
         negotiationTip: String(aiResult.negotiationTip || ""),
         isGlobalRule: rule.isGlobal || false,
-        clarificationNeeded: Boolean(aiResult.clarificationNeeded),
-        clarificationRequest: String(aiResult.clarificationRequest || "")
+        clarificationNeeded,
+        clarificationRequest
       };
     });
+    if (safetyNetOverrides > 0) {
+      console.log(`🛡️  [PLAYBOOK-CHECK] Safety-Net: ${safetyNetOverrides} Klärung(en) forciert (Bewertungswort-Trigger).`);
+    }
 
     const summary = calculateSummary(results, combinedRecommendation);
 
