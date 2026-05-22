@@ -17,6 +17,7 @@ import ExportAnalysisModal from './ExportAnalysisModal';
 import RiskScoreGauge from './RiskScoreGauge';
 import PerspectiveSelectionModal from './PerspectiveSelectionModal';
 import * as legalLensAPI from '../../services/legalLensAPI';
+import { handleAuthResponse } from '../../utils/api';
 import type { IndustryType } from '../../types/legalLens';
 import styles from '../../styles/LegalLensV12.module.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -381,7 +382,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ clauseId, decision })
-          }).catch(() => { /* fire-and-forget */ });
+          })
+            .then(handleAuthResponse)
+            .catch(() => { /* fire-and-forget */ });
         });
       }
     }
@@ -403,7 +406,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ clauseId, decision: newDecision })
-        }).catch(err => console.warn('[Legal Lens] Decision sync failed:', err));
+        })
+          .then(handleAuthResponse)
+          .catch(err => console.warn('[Legal Lens] Decision sync failed:', err));
       }
       return next;
     });
@@ -440,7 +445,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(marker)
-      }).catch(err => console.warn('[Legal Lens] PDF-Marker create failed:', err));
+      })
+        .then(handleAuthResponse)
+        .catch(err => console.warn('[Legal Lens] PDF-Marker create failed:', err));
     }
   }, [contractId]);
 
@@ -454,7 +461,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(updates)
-      }).catch(err => console.warn('[Legal Lens] PDF-Marker update failed:', err));
+      })
+        .then(handleAuthResponse)
+        .catch(err => console.warn('[Legal Lens] PDF-Marker update failed:', err));
     }
   }, [contractId]);
 
@@ -469,7 +478,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       fetch(`/api/legal-lens/${contractId}/pdf-marker/${markerId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
-      }).catch(err => console.warn('[Legal Lens] PDF-Marker delete failed:', err));
+      })
+        .then(handleAuthResponse)
+        .catch(err => console.warn('[Legal Lens] PDF-Marker delete failed:', err));
     }
   }, [contractId]);
 
@@ -1149,6 +1160,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             'Content-Type': 'application/json'
           }
         });
+        await handleAuthResponse(response);
 
         if (!response.ok) {
           throw new Error('PDF konnte nicht geladen werden');
@@ -3122,6 +3134,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                           const response = await fetch(`/api/legal-lens/${contractId}/pdf-export`, {
                             headers: { Authorization: `Bearer ${token}` }
                           });
+                          await handleAuthResponse(response);
                           if (!response.ok) {
                             const err = await response.json().catch(() => ({}));
                             console.warn('[Legal Lens] PDF-Export failed:', err);
