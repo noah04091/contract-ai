@@ -25,13 +25,12 @@ export function canSeeAnalysisV2(user: UserData | null | undefined): boolean {
   return ANALYSIS_V2_WHITELIST.includes(user.email.toLowerCase());
 }
 
-export function isAnalysisV2Enabled(user: UserData | null | undefined): boolean {
-  if (!canSeeAnalysisV2(user)) return false;
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
+export function isAnalysisV2Enabled(_user: UserData | null | undefined): boolean {
+  // V2 ist seit 22.05.2026 Default für alle User. Whitelist + localStorage werden
+  // bewusst ignoriert. Rollback = diese Funktion wieder auf die alte Whitelist-Logik
+  // setzen. canSeeAnalysisV2 + setAnalysisV2Enabled bleiben für BetaFeatureToggle.tsx
+  // (nicht mehr gerendert, aber Code-Kohärenz für möglichen Phase-2-Cleanup).
+  return true;
 }
 
 export function setAnalysisV2Enabled(value: boolean): void {

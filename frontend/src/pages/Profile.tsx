@@ -10,7 +10,6 @@ import {
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
-import BetaFeatureToggle from "../components/BetaFeatureToggle";
 
 interface NotificationProps {
   message: string;
@@ -620,9 +619,6 @@ export default function Profile() {
 
           {user ? (
             <>
-              {/* Beta-Feature-Toggle (nur für Whitelist-User sichtbar) */}
-              <BetaFeatureToggle />
-
               {/* Profile Card */}
               <motion.div
                 className={styles.profileCard}
