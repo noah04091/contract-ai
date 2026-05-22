@@ -969,9 +969,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
                       📝 {notesCount}
                     </span>
                   )}
-                  {isReviewed && (
-                    <span className={styles.clauseIcon} title="Durchgesehen">✓</span>
-                  )}
                 </div>
 
                 {/* Annotation Button — far right */}

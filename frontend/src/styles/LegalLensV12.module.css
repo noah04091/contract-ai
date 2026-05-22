@@ -5391,14 +5391,19 @@
 
 /* ===== STICKY-FOOTER IN ANALYSIS-PANEL (Stufe 4) — Entscheidungs-Buttons ===== */
 .decisionStickyFooter {
-  position: sticky;
-  bottom: 0;
   background: white;
   border-top: 1px solid #e2e8f0;
   padding: 12px 16px;
   margin-top: 16px;
-  z-index: 10;
-  box-shadow: 0 -2px 8px rgba(15, 23, 42, 0.04);
+}
+
+/* Mobile: Sticky bleibt, damit Decision-Buttons im Tab-Panel erreichbar bleiben */
+@media (max-width: 768px) {
+  .decisionStickyFooter {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
 }
 
 .decisionFooterLabel {

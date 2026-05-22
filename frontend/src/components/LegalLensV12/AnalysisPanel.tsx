@@ -1166,10 +1166,9 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
       )}
 
-      {/* Sticky-Footer — PDF-Klauseln zeigen Notiz-Editor, Text-Klauseln zeigen Decision-Buttons */}
+      {/* Footer — PDF-Klauseln zeigen Notiz-Editor, Text-Klauseln zeigen Decision-Buttons */}
       {analysis && sourceClauseId && !sourceClauseId.startsWith('pdf-') && onSetDecision && (
         <div className={styles.decisionStickyFooter}>
-          <div className={styles.decisionFooterLabel}>Wie entscheidest du?</div>
           <div className={styles.decisionFooterBtns}>
             <button
               type="button"
