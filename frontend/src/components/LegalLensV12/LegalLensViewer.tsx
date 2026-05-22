@@ -854,6 +854,16 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     };
   }, [clauseDecisions, progress?.notes, clauseAnnotations]);
 
+  // Sub-Phase 8: Im PDF-Modus zeigt der Banner PDF-Marker-Counts statt Text-Decisions
+  const pdfMarkerSummary = useMemo(() => {
+    if (!pdfMarkers || pdfMarkers.length === 0) return null;
+    const counts = { green: 0, orange: 0, red: 0, blue: 0 };
+    pdfMarkers.forEach(m => {
+      if (m.color in counts) counts[m.color]++;
+    });
+    return counts;
+  }, [pdfMarkers]);
+
   // ============================================
   // URL ANCHORING — #clause=<id> for deep-linking
   // ============================================
@@ -2487,7 +2497,31 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               <span className={styles.reviewLabel}>{reviewStats.reviewed}/{reviewStats.total} geprüft</span>
             </div>
           )}
-          {decisionSummary && (
+          {/* Sub-Phase 8: PDF-Modus zeigt Marker-Counts, sonst Decision-Counts */}
+          {viewMode === 'pdf' && pdfMarkerSummary ? (
+            <div className={styles.decisionSummaryBanner} title="Deine PDF-Markierungen">
+              {pdfMarkerSummary.green > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="accepted">
+                  🟢 {pdfMarkerSummary.green}
+                </span>
+              )}
+              {pdfMarkerSummary.orange > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="negotiate">
+                  🟡 {pdfMarkerSummary.orange}
+                </span>
+              )}
+              {pdfMarkerSummary.red > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="rejected">
+                  🔴 {pdfMarkerSummary.red}
+                </span>
+              )}
+              {pdfMarkerSummary.blue > 0 && (
+                <span className={styles.decisionSummaryItem} data-type="noted">
+                  🔵 {pdfMarkerSummary.blue}
+                </span>
+              )}
+            </div>
+          ) : decisionSummary && (
             <div className={styles.decisionSummaryBanner}>
               {decisionSummary.accepted > 0 && (
                 <button
