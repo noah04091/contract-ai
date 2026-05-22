@@ -208,13 +208,32 @@ ENTSCHEIDUNGSREGEL (sehr wichtig — gegen False Negatives UND False Failures):
 - negotiationTip: Diplomatisch, professionell, aus Perspektive ${roleLabel}
 
 ANWALTS-REFLEX (clarificationNeeded):
-Setze "clarificationNeeded": true UND fülle "clarificationRequest" NUR wenn die Anforderung so vage formuliert ist,
-dass du sie nicht zuverlaessig pruefen kannst — z.B. wenn keine Soll-Formulierung hinterlegt ist und die Beschreibung
-mehrdeutig ist, oder wenn der Schwellenwert fehlt aber wichtig waere. In "clarificationRequest" formulierst du
-KONKRET, was der User ergaenzen muesste (z.B. "Bitte ergaenze eine Soll-Formulierung oder konkreten Schwellenwert
-fuer 'angemessene Haftung' — sonst kann ich nicht beurteilen ob die Vertragsklausel passt.").
-Sei sparsam damit — nur bei echter Unsicherheit, nicht bei jeder Regel ohne Soll-Formulierung.
-Bei klaren Regeln IMMER "clarificationNeeded": false setzen.`;
+Setze "clarificationNeeded": true UND fülle "clarificationRequest", wenn:
+- Die Anforderung ein Bewertungs-Wort OHNE konkreten Maßstab enthält
+  ("angemessen", "üblich", "ausreichend", "fair", "sinnvoll", "marktüblich",
+   "branchenüblich", "ortsüblich") UND KEINE Soll-Formulierung UND KEINEN
+   Schwellenwert hat. Solche Wörter sind subjektiv — du musst aktiv nachfragen.
+- ODER die Beschreibung mehrdeutig ist und mehrere Interpretationen zulässt.
+
+Bei diesen Fällen reicht es NICHT, eine vage passende Klausel im Vertrag zu finden
+und "passed" zu sagen — du musst den User aktiv um eine Präzisierung bitten,
+unabhängig vom Status.
+
+BEISPIEL (sehr wichtig):
+- Regel: "Datenschutz angemessen" — KEINE Soll-Formulierung, KEIN Schwellenwert
+- Vertrag enthält: Verweis auf DSGVO
+- FALSCH: nur status "passed" mit Hinweis auf DSGVO setzen
+- RICHTIG: status "passed" (DSGVO ist da) PLUS clarificationNeeded: true
+  mit clarificationRequest: "Bitte präzisiere, was 'angemessen' konkret
+  bedeutet — DSGVO-Compliance? Ende-zu-Ende-Verschlüsselung? Auftragsverarbeiter-
+  Whitelist? Ohne präzisen Maßstab kann ich nicht garantieren, dass deine
+  konkrete Vorstellung erfüllt ist."
+
+In "clarificationRequest" IMMER konkret nennen, was der User ergänzen sollte
+(Soll-Formulierung ODER Schwellenwert ODER beides).
+
+Bei klar formulierten Regeln (mit Schwellenwert ODER Soll-Formulierung)
+IMMER "clarificationNeeded": false setzen.`;
 
   const response = await openai.chat.completions.create({
     model: MODEL,
