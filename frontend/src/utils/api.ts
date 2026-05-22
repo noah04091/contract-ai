@@ -311,15 +311,22 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 /**
  * Universelle API-Fetch-Funktion mit verbesserter Fehlerbehandlung & Retry
  * ✅ WICHTIG: Verwendet relativen API_BASE_URL für API-Calls (nicht für Files!)
+ *
+ * disableRetry: true bei langlaufenden, teuren Endpoints (z.B. /analyze, /optimize).
+ * Grund: Bei 502/Timeout läuft der ursprüngliche Backend-Request weiter (kein
+ * req.on('close')-Handler) und ein Auto-Retry erzeugt PARALLELE Backend-Pipelines,
+ * die jeweils OpenAI-Geld verbrennen. Live-Vorfall 22.05.2026: 3× Geld-Burn bei
+ * 65-Seiter-Darlehensvertrag wegen 3-fach-Retry.
  */
 export const apiCall = async (
   endpoint: string,
   options: RequestInit = {},
-  retryCount: number = 0
+  retryCount: number = 0,
+  disableRetry: boolean = false
 ): Promise<unknown> => {
   const authToken = localStorage.getItem("authToken");
   const isFormData = options.body instanceof FormData;
-  const maxRetries = 2;
+  const maxRetries = disableRetry ? 0 : 2;
 
   const defaultHeaders: Record<string, string> = {
     Accept: "application/json",
@@ -529,11 +536,13 @@ export const uploadAndAnalyze = async (
   try {
     if (onProgress) onProgress(30); // PDF wird gelesen
     
+    // ⚠️ disableRetry: true — siehe apiCall-Doku.
+    // Auto-Retry bei /analyze würde parallele Backend-Pipelines erzeugen → Geld-Burn.
     const result = await apiCall('/analyze', {
       method: 'POST',
       body: formData,
-    });
-    
+    }, 0, true);
+
     if (onProgress) onProgress(100); // Fertig
     
     console.log("✅ Analyse erfolgreich:", result);
@@ -695,11 +704,12 @@ export const uploadAndOptimize = async (
       }
     }, 2000);
 
+    // ⚠️ disableRetry: true — siehe apiCall-Doku. Gleiche Logik wie /analyze.
     const result = await apiCall('/optimize', {
       method: 'POST',
       body: formData,
-    });
-    
+    }, 0, true);
+
     clearInterval(progressInterval);
     if (onProgress) onProgress(100); // Fertig
     
@@ -1279,11 +1289,11 @@ export const validateBatchUpload = (
  * ⭐ KORRIGIERT: Erweiterte uploadAndAnalyze mit besserer Fehlerbehandlung für Batch - TypeScript-Lint-Fix
  */
 export const uploadAndAnalyzeBatch = async (
-  file: File, 
+  file: File,
   onProgress?: (progress: number) => void,
   forceReanalyze: boolean = false,
   retryCount: number = 0,
-  maxRetries: number = 2
+  maxRetries: number = 0  // ⚠️ Default 0 — /analyze ist zu teuer für Auto-Retry (siehe apiCall-Doku)
 ): Promise<AnalysisResult> => {
   console.log(`📤 Upload & Analyze (Batch): ${file.name} (Versuch ${retryCount + 1}/${maxRetries + 1})`);
 
