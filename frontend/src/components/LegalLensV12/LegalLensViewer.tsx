@@ -951,6 +951,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, [analysisCache, currentPerspective, clauses]);
 
   // Navigate to next high-risk clause (skips already-reviewed if possible)
+  // Bevorzugt Tiefenanalyse-Score (≥30 = mittel/hoch), fällt auf Pre-Analyse zurück
+  // wenn noch keine Tiefenanalyse vorliegt — synchron mit riskStats im Header.
   const goToNextRisk = useCallback(() => {
     if (!clauses || clauses.length === 0) return;
 
@@ -959,10 +961,27 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       ? analyzable.findIndex(c => c.id === selectedClause.id)
       : -1;
 
-    // Find unreviewed high-risk clauses first
     const reviewed = new Set(progress?.reviewedClauses || []);
     const candidates = analyzable.filter((c, idx) => {
       if (idx === currentIdx) return false;
+
+      // 1. Versuche Tiefenanalyse-Score aus dem Cache (gleicher Lookup wie riskStats)
+      const hash = generateContentHash(c.text);
+      const cacheKey = `v2-${hash}-${currentPerspective}`;
+      const cached = (analysisCache as Record<string, unknown>)[cacheKey] as
+        { riskAssessment?: { score?: number }; actionLevel?: string } | undefined;
+
+      if (cached) {
+        let score = 0;
+        if (cached.riskAssessment?.score != null) {
+          score = cached.riskAssessment.score;
+        } else if (cached.actionLevel) {
+          score = cached.actionLevel === 'reject' ? 80 : cached.actionLevel === 'negotiate' ? 50 : 20;
+        }
+        return score >= 30; // mittel + hoch
+      }
+
+      // 2. Fallback: Pre-Analyse (wenn Tiefenanalyse fehlt)
       const riskLevel = c.preAnalysis?.riskLevel || c.riskIndicators?.level || 'low';
       return riskLevel === 'high' || riskLevel === 'medium';
     });
@@ -974,7 +993,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (target) {
       selectClause(target);
     }
-  }, [clauses, selectedClause, progress, selectClause]);
+  }, [clauses, selectedClause, progress, selectClause, analysisCache, currentPerspective]);
 
   // ============================================
   // KEYBOARD NAVIGATION (Opt 2: Wow-Effect)
