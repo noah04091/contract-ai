@@ -3169,6 +3169,48 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   let incrementedUserId = null;
   let usersCollectionRef = null;
 
+  // 🛑 Stufe 2 (22.05.2026): Abort-Handler bei Client-Disconnect (Browser zu,
+  // Render-Proxy-Abbruch, Netz weg). Stoppt Pipeline, setzt Counter zurück,
+  // schützt Calendar. Verhindert Geld-Burn nach Stufe 1 (Retry-Disable) auch
+  // bei einmaligem Disconnect.
+  const abortController = new AbortController();
+  let clientDisconnected = false;
+  let calendarEventsBackup = null; // Backup vor cleanAndRegenerateAIEvents
+  let calendarEventsBackupContractId = null;
+  const handleClientClose = async () => {
+    if (res.headersSent) return; // Response schon raus, nichts zu tun
+    if (clientDisconnected) return; // Nur einmal verarbeiten
+    clientDisconnected = true;
+    abortController.abort('Client disconnected');
+    console.log(`🛑 [${requestId}] Client disconnected — Pipeline wird gestoppt`);
+
+    // Counter-Rollback (atomar) falls bereits hochgezählt
+    if (analysisCountIncremented && incrementedUserId && usersCollectionRef) {
+      try {
+        await usersCollectionRef.updateOne(
+          { _id: incrementedUserId },
+          { $inc: { analysisCount: -1 } }
+        );
+        console.log(`↩️ [${requestId}] analysisCount nach Disconnect zurückgesetzt`);
+      } catch (e) {
+        console.error(`⚠️ [${requestId}] Counter-Rollback fehlgeschlagen: ${e.message}`);
+      }
+    }
+
+    // Calendar-Restore falls cleanAndRegenerateAIEvents bereits Events gelöscht hat
+    // aber Contract-Update noch nicht durch ist → User würde sonst Termine verlieren
+    if (calendarEventsBackup && calendarEventsBackupContractId) {
+      try {
+        const dbConn = await database.connect();
+        await dbConn.collection('calendar_events').insertMany(calendarEventsBackup);
+        console.log(`↩️ [${requestId}] ${calendarEventsBackup.length} Calendar-Events nach Disconnect wiederhergestellt`);
+      } catch (e) {
+        console.error(`⚠️ [${requestId}] Calendar-Restore fehlgeschlagen: ${e.message}`);
+      }
+    }
+  };
+  req.on('close', handleClientClose);
+
   try {
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     const db = await database.connect(); // 🔧 FIX: db im Scope für triggerEmail-Funktionen
@@ -3722,7 +3764,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         dateHuntService.huntDates(
           fullTextContent,
           createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'date-hunt', requestId }),
-          requestId
+          requestId,
+          { signal: abortController.signal } // 🛑 Stufe 2: bei Client-Disconnect bricht DateHunt zwischen Stages ab
         )
           .catch(err => {
             console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
@@ -4048,8 +4091,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // bleibt der Guard greifen (Phantom-„Vertragsende"-Termine vermeiden).
           const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'].includes(validationResult.documentType);
           if (canCreateEvents) {
+            // 🛡️ Stufe 2 (22.05.2026): Calendar-Backup vor Cleanup. Falls Pipeline
+            // zwischen "alte Events gelöscht" und "neue Events erzeugt" abbricht
+            // (Client-Disconnect, OpenAI-Fehler nach Event-Generation), kann der
+            // handleClientClose-Handler die alten Events wiederherstellen.
+            try {
+              calendarEventsBackup = await db.collection('calendar_events').find({
+                contractId: contractForCalendar._id,
+                source: 'ai'
+              }).toArray();
+              calendarEventsBackupContractId = contractForCalendar._id;
+            } catch (e) {
+              console.warn(`⚠️ [${requestId}] Calendar-Backup konnte nicht erstellt werden: ${e.message}`);
+            }
             const result = await cleanAndRegenerateAIEvents(db, contractForCalendar);
             console.log(`📅 [${requestId}] Calendar Events regeneriert für ${contractForCalendar.name}: ${result.deleted} alt → ${result.generated} neu${contractForCalendar.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
+            // ✅ Erfolgreich neue Events erzeugt — Backup nicht mehr nötig
+            calendarEventsBackup = null;
+            calendarEventsBackupContractId = null;
           } else {
             console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (nur CONTRACT/TABLE/FINANCIAL erlaubt)`);
           }
@@ -4601,7 +4660,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     // ✅ DIREKT responseData senden, KEIN data wrapper!
-    res.json(responseData);
+    // 🛑 Stufe 2: Guard gegen Race-Condition mit Client-Disconnect
+    if (!res.headersSent && !clientDisconnected) {
+      res.json(responseData);
+    } else if (clientDisconnected) {
+      console.log(`ℹ️ [${requestId}] Response nicht gesendet — Client war disconnected. Pipeline-Ergebnis ist in DB persistiert.`);
+    }
+    // Listener-Cleanup: nach erfolgreicher Pipeline kein Abort mehr nötig
+    req.removeListener('close', handleClientClose);
 
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -4663,21 +4729,27 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       errorCode = "STORAGE_ERROR";
     }
 
-    res.status(500).json({
-      success: false,
-      message: errorMessage,
-      error: errorCode,
-      requestId,
-      uploadType: storageInfo.uploadType,
-      deepLawyerLevelAnalysis: true,
-      lawyerLevelAnalysis: true,
-      modelUsed: 'gpt-4-turbo',
-      tokenOptimized: true,
-      substantialContent: true,
-      fixedVersion: 'v5',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    // 🛑 Stufe 2: Guard gegen Race-Condition mit Client-Disconnect
+    if (!res.headersSent && !clientDisconnected) {
+      res.status(500).json({
+        success: false,
+        message: errorMessage,
+        error: errorCode,
+        requestId,
+        uploadType: storageInfo.uploadType,
+        deepLawyerLevelAnalysis: true,
+        lawyerLevelAnalysis: true,
+        modelUsed: 'gpt-4-turbo',
+        tokenOptimized: true,
+        substantialContent: true,
+        fixedVersion: 'v5',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
   } finally {
+    // 🛑 Stufe 2: Listener-Cleanup (idempotent, sicher auch wenn schon entfernt)
+    req.removeListener('close', handleClientClose);
+
     // Final cleanup: Delete local file if S3 upload was successful
     if (cleanupLocalFile && req.file && req.file.path && fsSync.existsSync(req.file.path)) {
       try {

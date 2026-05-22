@@ -968,9 +968,11 @@ async function runAnomalyPass(contractText, openaiClient, requestId) {
  * @param {string} contractText - Vertragsvolltext
  * @param {object} openaiClient - OpenAI-Instanz
  * @param {string} requestId - für Logging
+ * @param {object} [options] - { signal?: AbortSignal } — bei Client-Disconnect Pipeline frühzeitig beenden
  * @returns {Promise<{importantDates: Array, fristHinweise: Array, stats: object}>}
  */
-async function huntDates(contractText, openaiClient, requestId = '') {
+async function huntDates(contractText, openaiClient, requestId = '', options = {}) {
+  const { signal } = options;
   const t0 = Date.now();
   const stats = {
     durationMs: 0,
@@ -988,6 +990,13 @@ async function huntDates(contractText, openaiClient, requestId = '') {
 
   if (!contractText || contractText.length < 100) {
     console.warn(`⚠️ [${requestId}] [DateHunt] Kein/zu kurzer Vertragstext — übersprungen`);
+    return emptyResult();
+  }
+
+  // 🛑 Stufe 2 (22.05.2026): Abort-Check vor Pipeline-Start. Wenn Client schon
+  // weg ist, sparen wir uns die ganze Pipeline (366 GPT-Calls bei großen Verträgen).
+  if (signal?.aborted) {
+    console.log(`🛑 [${requestId}] [DateHunt] aborted vor Pipeline-Start`);
     return emptyResult();
   }
 
@@ -1015,6 +1024,21 @@ async function huntDates(contractText, openaiClient, requestId = '') {
     // sehen nur ihren Abschnitt).
     const poolDates = dedupDates(juniorResult.importantDates, clauseAuditResult.importantDates);
     const poolFristen = dedupFristen(juniorResult.fristHinweise, clauseAuditResult.fristHinweise);
+
+    // 🛑 Stufe 2: Abort-Check zwischen Stage 1+2 und Stage 3. Wenn Client weg ist,
+    // spart das den Senior-Call (~125k Tokens) und Anomaly-Call.
+    if (signal?.aborted) {
+      console.log(`🛑 [${requestId}] [DateHunt] aborted nach ClauseAudit — überspringe Senior+Anomaly`);
+      stats.fallback = false; // Wir haben echte Daten aus Stage 1+2, kein Fallback
+      stats.finalCounts.dates = poolDates.slice(0, MAX_DATES).length;
+      stats.finalCounts.fristen = poolFristen.slice(0, MAX_FRIST_HINWEISE).length;
+      stats.durationMs = Date.now() - t0;
+      return {
+        importantDates: poolDates.slice(0, MAX_DATES),
+        fristHinweise: poolFristen.slice(0, MAX_FRIST_HINWEISE),
+        stats
+      };
+    }
 
     // Stage 3 — Senior schließt verbliebene Lücken
     const seniorResult = await runSeniorPass(
